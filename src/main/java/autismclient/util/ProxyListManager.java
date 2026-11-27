@@ -26,69 +26,69 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public final class ProxyListManager extends AtomicNbtListStore<bW> implements Iterable<bW> {
-   private static final ProxyListManager init_bY = new ProxyListManager();
-   private final AtomicBoolean init_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicBoolean load_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicInteger init_AtomicInteger = new AtomicInteger();
-   private final AtomicInteger load_AtomicInteger = new AtomicInteger();
-   private final AtomicBoolean read_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicBoolean write_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicInteger read_AtomicInteger = new AtomicInteger();
-   private final AtomicInteger write_AtomicInteger = new AtomicInteger();
-   private final AtomicInteger update_AtomicInteger = new AtomicInteger();
-   private final AtomicBoolean update_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicBoolean sync_AtomicBoolean = new AtomicBoolean(false);
-   private final AtomicBoolean flush_AtomicBoolean = new AtomicBoolean(false);
-   private int init_I = 3000;
-   private int load_I = 64;
-   private int read_I = 0;
-   private boolean init_Z_2 = true;
-   private boolean load_Z = true;
+   private static final ProxyListManager INSTANCE = new ProxyListManager();
+   private final AtomicBoolean refreshRunning = new AtomicBoolean(false);
+   private final AtomicBoolean refreshCancelRequested = new AtomicBoolean(false);
+   private final AtomicInteger refreshCheckedCount = new AtomicInteger();
+   private final AtomicInteger refreshTotalCount = new AtomicInteger();
+   private final AtomicBoolean importRunning = new AtomicBoolean(false);
+   private final AtomicBoolean importCancelRequested = new AtomicBoolean(false);
+   private final AtomicInteger importScannedCount = new AtomicInteger();
+   private final AtomicInteger importParsedCount = new AtomicInteger();
+   private final AtomicInteger importAddedCount = new AtomicInteger();
+   private final AtomicBoolean saveWorkerRunning = new AtomicBoolean(false);
+   private final AtomicBoolean geoLookupRunning = new AtomicBoolean(false);
+   private final AtomicBoolean geoLookupRerunPending = new AtomicBoolean(false);
+   private int timeoutMs = 3000;
+   private int workerThreads = 64;
+   private int retryCount = 0;
+   private boolean sortByLatency = true;
+   private boolean pruneDead = true;
    private volatile boolean auditGeoLookup;
-   private int write_I = 2000;
-   private int update_I = 0;
-   private volatile long init_J_2;
-   private volatile long load_J;
-   private volatile long read_J;
-   private volatile long write_J;
-   private volatile long update_J;
-   private volatile long sync_J;
-   private volatile long flush_J;
-   private volatile long close = -9223372036854775808L;
-   private volatile long open;
-   private volatile long poll;
-   private volatile long push;
-   private volatile boolean read_Z;
-   private volatile ExecutorService init_ExecutorService;
-   private volatile Thread init_Thread;
-   private volatile List<bW> load_List = List.of();
-   private static final Pattern init_Pattern = Pattern.compile(
+   private int pruneLatencyMs = 2000;
+   private int pruneToCount = 0;
+   private volatile long refreshGeneration;
+   private volatile long refreshRevision;
+   private volatile long refreshCancelNoticeUntilMs;
+   private volatile long importGeneration;
+   private volatile long importRevision;
+   private volatile long importCancelNoticeUntilMs;
+   private volatile long geoLookupGeneration;
+   private volatile long canceledImportGeneration = -9223372036854775808L;
+   private volatile long listRevision;
+   private volatile long lastRefreshNotifyMs;
+   private volatile long lastImportNotifyMs;
+   private volatile boolean savePending;
+   private volatile ExecutorService refreshExecutor;
+   private volatile Thread importThread;
+   private volatile List<bW> activeRefreshProxies = List.of();
+   private static final Pattern NAMED_OR_HOST_PORT_PATTERN = Pattern.compile(
       "^(?:([\\w\\s]+)=)?((?:0*(?:\\d|[1-9]\\d|1\\d\\d|2[0-4]\\d|25[0-5])(?:\\.(?!:)|)){4}):(?!0)(\\d{1,4}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])(?i:@(socks[45]))?$",
       8
    );
-   private static final Pattern load_Pattern = Pattern.compile(
+   private static final Pattern HOST_PORT_AUTH_PATTERN = Pattern.compile(
       "^((?:0*(?:\\d|[1-9]\\d|1\\d\\d|2[0-4]\\d|25[0-5])(?:\\.(?!:)|)){4}):(?!0)(\\d{1,4}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5]):([^:]+)(?::(.+))?$",
       8
    );
-   private static final Pattern read_Pattern = Pattern.compile(
+   private static final Pattern URI_PROXY_PATTERN = Pattern.compile(
       "^(?:(?<type>socks|socks4|socks5)://)?(?:(?<user>[\\w~-]+)(:(?<pass>[\\w~-]+))?@)?(?<addr>(?:0*(?:\\d|[1-9]\\d|1\\d\\d|2[0-4]\\d|25[0-5])(?:\\.(?!:)|)){4}):(?!0)(?<port>\\d{1,4}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$",
       8
    );
-   private static final int sync_I = 100;
+   private static final int GEO_BATCH_SIZE = 100;
 
    private ProxyListManager() {
    }
 
-   public static ProxyListManager init_bY() {
-      init_bY.load_V();
-      init_bY.write_V();
-      return init_bY;
+   public static ProxyListManager getInstance() {
+      INSTANCE.ensureLoaded();
+      INSTANCE.normalizeLoadedProxies();
+      return INSTANCE;
    }
 
-   private synchronized void write_V() {
+   private synchronized void normalizeLoadedProxies() {
       boolean changed = false;
 
-      for (bW proxy : this.init_List) {
+      for (bW proxy : this.items) {
          if (proxy != null) {
             proxy.write();
             changed |= proxy.load_Z;
@@ -97,13 +97,13 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
 
       if (changed) {
-         this.read_V();
+         this.save();
       }
    }
 
-   public synchronized bW init_bW_Str(String id) {
+   public synchronized bW findById(String id) {
       if (id != null && !id.isBlank()) {
-         for (bW proxy : this.init_List) {
+         for (bW proxy : this.items) {
             if (id.equals(proxy.write())) {
                return proxy;
             }
@@ -116,70 +116,70 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
    }
 
    @Override
-   protected File init_File() {
+   protected File getStoreFile() {
       return new File(Minecraft.getInstance().gameDirectory, "autism-proxies.nbt");
    }
 
    @Override
-   protected String init_Str() {
+   protected String getListTagKey() {
       return "proxies";
    }
 
    @Override
-   protected bW init_Obj_CompoundTag(CompoundTag tag) {
+   protected bW deserializeItem(CompoundTag tag) {
       return new bW().init_bW_CompoundTag(tag);
    }
 
    @Override
-   protected CompoundTag init_CompoundTag_Obj(bW item) {
+   protected CompoundTag serializeItem(bW item) {
       return item.init_CompoundTag();
    }
 
    @Override
-   protected String load_Str() {
+   protected String getStoreLabel() {
       return "Autism proxies";
    }
 
    @Override
-   protected void init_V_CompoundTag(CompoundTag tag) {
-      this.init_I = tag.getIntOr("timeoutMs", this.init_I);
-      this.load_I = tag.getIntOr("threads", this.load_I);
-      this.read_I = tag.getIntOr("retries", this.read_I);
-      this.init_Z_2 = tag.getBooleanOr("sortByLatency", this.init_Z_2);
-      this.load_Z = tag.getBooleanOr("pruneDead", this.load_Z);
-      this.write_I = tag.getIntOr("pruneLatency", this.write_I);
-      this.update_I = tag.getIntOr("pruneToCount", this.update_I);
+   protected void readMetadata(CompoundTag tag) {
+      this.timeoutMs = tag.getIntOr("timeoutMs", this.timeoutMs);
+      this.workerThreads = tag.getIntOr("threads", this.workerThreads);
+      this.retryCount = tag.getIntOr("retries", this.retryCount);
+      this.sortByLatency = tag.getBooleanOr("sortByLatency", this.sortByLatency);
+      this.pruneDead = tag.getBooleanOr("pruneDead", this.pruneDead);
+      this.pruneLatencyMs = tag.getIntOr("pruneLatency", this.pruneLatencyMs);
+      this.pruneToCount = tag.getIntOr("pruneToCount", this.pruneToCount);
       this.auditGeoLookup = tag.getBooleanOr("geoLookup", false);
    }
 
    @Override
-   protected void load_V_CompoundTag(CompoundTag tag) {
-      tag.putInt("timeoutMs", this.init_I);
-      tag.putInt("threads", this.load_I);
-      tag.putInt("retries", this.read_I);
-      tag.putBoolean("sortByLatency", this.init_Z_2);
-      tag.putBoolean("pruneDead", this.load_Z);
-      tag.putInt("pruneLatency", this.write_I);
-      tag.putInt("pruneToCount", this.update_I);
+   protected void writeMetadata(CompoundTag tag) {
+      tag.putInt("timeoutMs", this.timeoutMs);
+      tag.putInt("threads", this.workerThreads);
+      tag.putInt("retries", this.retryCount);
+      tag.putBoolean("sortByLatency", this.sortByLatency);
+      tag.putBoolean("pruneDead", this.pruneDead);
+      tag.putInt("pruneLatency", this.pruneLatencyMs);
+      tag.putInt("pruneToCount", this.pruneToCount);
       tag.putBoolean("geoLookup", this.auditGeoLookup);
    }
 
-   private void update_V() {
-      this.read_Z = true;
-      if (this.update_AtomicBoolean.compareAndSet(false, true)) {
+   private void scheduleSave() {
+      this.savePending = true;
+      if (this.saveWorkerRunning.compareAndSet(false, true)) {
          Thread thread = new Thread(() -> {
             try {
                while (true) {
-                  this.read_Z = false;
-                  this.read_V();
-                  if (!this.read_Z) {
+                  this.savePending = false;
+                  this.save();
+                  if (!this.savePending) {
                      break;
                   }
                }
             } finally {
-               this.update_AtomicBoolean.set(false);
-               if (this.read_Z) {
-                  this.update_V();
+               this.saveWorkerRunning.set(false);
+               if (this.savePending) {
+                  this.scheduleSave();
                }
             }
          }, "Autism-Proxy-Save");
@@ -188,10 +188,10 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   public synchronized int init_I_2() {
+   public synchronized int countEnabledValidProxies() {
       int count = 0;
 
-      for (bW proxy : this.init_List) {
+      for (bW proxy : this.items) {
          if (proxy.init_Z && proxy.init_Z()) {
             count++;
          }
@@ -200,51 +200,51 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return count;
    }
 
-   public long init_J() {
-      return this.open;
+   public long getListRevision() {
+      return this.listRevision;
    }
 
-   public synchronized boolean init_Z_bW(bW proxy) {
-      if (proxy != null && proxy.init_Z() && !this.init_List.contains(proxy)) {
-         if (this.init_List.isEmpty()) {
+   public synchronized boolean addProxy(bW proxy) {
+      if (proxy != null && proxy.init_Z() && !this.items.contains(proxy)) {
+         if (this.items.isEmpty()) {
             proxy.init_Z = true;
          }
 
-         this.init_List.add(proxy);
-         this.flush_V();
-         this.update_V();
-         this.init_Z_Z(false);
+         this.items.add(proxy);
+         this.bumpListRevision();
+         this.scheduleSave();
+         this.startGeoLookup(false);
          return true;
       } else {
          return false;
       }
    }
 
-   public synchronized void init_V_bW(bW proxy) {
-      if (this.init_List.remove(proxy)) {
-         this.flush_V();
-         this.update_V();
+   public synchronized void removeProxy(bW proxy) {
+      if (this.items.remove(proxy)) {
+         this.bumpListRevision();
+         this.scheduleSave();
       }
    }
 
-   public synchronized int load_I() {
-      if (!this.init_AtomicBoolean.get() && !this.read_AtomicBoolean.get() && !this.init_List.isEmpty()) {
-         int removed = this.init_List.size();
-         this.init_List.clear();
-         this.flush_V();
-         this.update_V();
+   public synchronized int clearAllProxies() {
+      if (!this.refreshRunning.get() && !this.importRunning.get() && !this.items.isEmpty()) {
+         int removed = this.items.size();
+         this.items.clear();
+         this.bumpListRevision();
+         this.scheduleSave();
          return removed;
       } else {
          return 0;
       }
    }
 
-   public synchronized boolean init_Z_bW_bW(bW existing, bW updated) {
+   public synchronized boolean updateProxy(bW existing, bW updated) {
       if (existing != null && updated != null && updated.init_Z()) {
          int index = -1;
 
-         for (int i = 0; i < this.init_List.size(); i++) {
-            bW proxy = this.init_List.get(i);
+         for (int i = 0; i < this.items.size(); i++) {
+            bW proxy = this.items.get(i);
             if (proxy == existing) {
                index = i;
                break;
@@ -255,8 +255,8 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
             return false;
          }
 
-         for (int i = 0; i < this.init_List.size(); i++) {
-            if (i != index && this.init_List.get(i).equals(updated)) {
+         for (int i = 0; i < this.items.size(); i++) {
+            if (i != index && this.items.get(i).equals(updated)) {
                return false;
             }
          }
@@ -274,10 +274,10 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
             existing.init_V();
          }
 
-         this.flush_V();
-         this.update_V();
+         this.bumpListRevision();
+         this.scheduleSave();
          if (identityChanged) {
-            this.init_Z_Z(false);
+            this.startGeoLookup(false);
          }
 
          return true;
@@ -286,8 +286,8 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   public synchronized void init_V_bW_Z(bW proxy, boolean enabled) {
-      for (bW current : this.init_List) {
+   public synchronized void setProxyEnabled(bW proxy, boolean enabled) {
+      for (bW current : this.items) {
          current.init_Z = false;
       }
 
@@ -295,12 +295,12 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          proxy.init_Z = enabled;
       }
 
-      this.flush_V();
-      this.update_V();
+      this.bumpListRevision();
+      this.scheduleSave();
    }
 
-   public synchronized bW init_bW() {
-      for (bW proxy : this.init_List) {
+   public synchronized bW getActiveProxy() {
+      for (bW proxy : this.items) {
          if (proxy.init_Z && proxy.init_Z()) {
             return proxy;
          }
@@ -309,113 +309,113 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return null;
    }
 
-   public boolean init_Z() {
-      return this.init_AtomicBoolean.get();
+   public boolean isRefreshing() {
+      return this.refreshRunning.get();
    }
 
-   public ProxyListManager.Inner_TaskQueue init_bY_TaskQueue() {
-      boolean running = this.init_AtomicBoolean.get();
-      boolean canceling = !running && System.currentTimeMillis() < this.read_J;
-      return new ProxyListManager.Inner_TaskQueue(running, canceling, this.init_AtomicInteger.get(), this.load_AtomicInteger.get(), this.init_J_2, this.load_J);
+   public ProxyListManager.Inner_TaskQueue getRefreshStatus() {
+      boolean running = this.refreshRunning.get();
+      boolean canceling = !running && System.currentTimeMillis() < this.refreshCancelNoticeUntilMs;
+      return new ProxyListManager.Inner_TaskQueue(running, canceling, this.refreshCheckedCount.get(), this.refreshTotalCount.get(), this.refreshGeneration, this.refreshRevision);
    }
 
-   public ProxyListManager.Inner_BufferHelper init_bY_BufferHelper() {
-      boolean running = this.read_AtomicBoolean.get();
-      boolean canceling = !running && System.currentTimeMillis() < this.sync_J;
-      boolean canceled = !running && this.write_J == this.close;
+   public ProxyListManager.Inner_BufferHelper getImportStatus() {
+      boolean running = this.importRunning.get();
+      boolean canceling = !running && System.currentTimeMillis() < this.importCancelNoticeUntilMs;
+      boolean canceled = !running && this.importGeneration == this.canceledImportGeneration;
       return new ProxyListManager.Inner_BufferHelper(
          running,
          canceling,
-         this.read_AtomicInteger.get(),
-         this.write_AtomicInteger.get(),
-         this.update_AtomicInteger.get(),
-         this.write_J,
-         this.update_J,
+         this.importScannedCount.get(),
+         this.importParsedCount.get(),
+         this.importAddedCount.get(),
+         this.importGeneration,
+         this.importRevision,
          canceled
       );
    }
 
-   public int read_I() {
-      return this.init_I;
+   public int getTimeoutMs() {
+      return this.timeoutMs;
    }
 
-   public void init_V_I(int v) {
-      this.init_I = Math.max(1, v);
-      this.update_V();
+   public void setTimeoutMs(int v) {
+      this.timeoutMs = Math.max(1, v);
+      this.scheduleSave();
    }
 
-   public int write_I() {
-      return this.load_I;
+   public int getWorkerThreads() {
+      return this.workerThreads;
    }
 
-   public void load_V_I(int v) {
-      this.load_I = Math.max(1, v);
-      this.update_V();
+   public void setWorkerThreads(int v) {
+      this.workerThreads = Math.max(1, v);
+      this.scheduleSave();
    }
 
-   public int update_I() {
-      return this.read_I;
+   public int getRetryCount() {
+      return this.retryCount;
    }
 
-   public void read_V_I(int v) {
-      this.read_I = Math.max(0, v);
-      this.update_V();
+   public void setRetryCount(int v) {
+      this.retryCount = Math.max(0, v);
+      this.scheduleSave();
    }
 
-   public boolean load_Z() {
-      return this.init_Z_2;
+   public boolean isSortByLatency() {
+      return this.sortByLatency;
    }
 
-   public synchronized void init_V_Z(boolean v) {
-      this.init_Z_2 = v;
+   public synchronized void setSortByLatency(boolean v) {
+      this.sortByLatency = v;
       if (v) {
-         this.close_V();
+         this.sortByLatencyInternal();
       }
 
-      this.flush_V();
-      this.update_V();
+      this.bumpListRevision();
+      this.scheduleSave();
    }
 
-   public boolean read_Z() {
-      return this.load_Z;
+   public boolean isPruneDead() {
+      return this.pruneDead;
    }
 
-   public void load_V_Z(boolean v) {
-      this.load_Z = v;
-      this.update_V();
+   public void setPruneDead(boolean v) {
+      this.pruneDead = v;
+      this.scheduleSave();
    }
 
-   public int sync_I() {
-      return this.write_I;
+   public int getPruneLatencyMs() {
+      return this.pruneLatencyMs;
    }
 
-   public void write(int v) {
-      this.write_I = Math.max(0, v);
-      this.update_V();
+   public void setPruneLatencyMs(int v) {
+      this.pruneLatencyMs = Math.max(0, v);
+      this.scheduleSave();
    }
 
-   public int flush_I() {
-      return this.update_I;
+   public int getPruneToCount() {
+      return this.pruneToCount;
    }
 
-   public void update(int v) {
-      this.update_I = Math.max(0, v);
-      this.update_V();
+   public void setPruneToCount(int v) {
+      this.pruneToCount = Math.max(0, v);
+      this.scheduleSave();
    }
 
-   public synchronized boolean write_Z() {
-      if (!this.init_AtomicBoolean.get() && !this.read_AtomicBoolean.get() && this.init_List.size() >= 2) {
-         this.close_V();
-         this.flush_V();
-         this.update_V();
+   public synchronized boolean sortNow() {
+      if (!this.refreshRunning.get() && !this.importRunning.get() && this.items.size() >= 2) {
+         this.sortByLatencyInternal();
+         this.bumpListRevision();
+         this.scheduleSave();
          return true;
       } else {
          return false;
       }
    }
 
-   public void read_V_Z(boolean all) {
-      this.load_Z_Z(all);
+   public void refreshAsync(boolean all) {
+      this.startRefresh(all);
    }
 
    public boolean auditGeoLookup() {
@@ -424,59 +424,59 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
 
    public void auditSetGeoLookup(boolean v) {
       this.auditGeoLookup = v;
-      this.update_V();
+      this.scheduleSave();
       if (v) {
-         this.init_Z_Z(false);
+         this.startGeoLookup(false);
       }
    }
 
-   public boolean init_Z_Z(boolean force) {
+   public boolean startGeoLookup(boolean force) {
       if (!this.auditGeoLookup) {
          return false;
       }
 
-      this.load_V();
-      if (!this.sync_AtomicBoolean.compareAndSet(false, true)) {
-         this.flush_AtomicBoolean.set(true);
+      this.ensureLoaded();
+      if (!this.geoLookupRunning.compareAndSet(false, true)) {
+         this.geoLookupRerunPending.set(true);
          return false;
       }
 
       List<ProxyListManager.Inner_StreamUtil> targets;
       long generation;
       synchronized (this) {
-         targets = this.init_List_Z(force);
+         targets = this.collectGeoTargets(force);
          if (targets.isEmpty()) {
-            this.sync_AtomicBoolean.set(false);
+            this.geoLookupRunning.set(false);
             return false;
          }
 
-         generation = this.flush_J + 1L;
-         this.flush_J = generation;
+         generation = this.geoLookupGeneration + 1L;
+         this.geoLookupGeneration = generation;
          long now = System.currentTimeMillis();
 
          for (ProxyListManager.Inner_StreamUtil target : targets) {
-            target.init_bW().init_V_J(now);
+            target.proxy().init_V_J(now);
          }
 
-         this.flush_V();
+         this.bumpListRevision();
       }
 
-      Thread thread = new Thread(() -> this.load(generation, targets), "Autism-Proxy-Geo");
+      Thread thread = new Thread(() -> this.runGeoLookupWorker(generation, targets), "Autism-Proxy-Geo");
       thread.setDaemon(true);
       thread.start();
       return true;
    }
 
-   public boolean load_Z_Z(boolean all) {
-      return this.load(all, "", 0);
+   public boolean startRefresh(boolean all) {
+      return this.beginRefresh(all, "", 0);
    }
 
-   public boolean init(boolean all, String host, int port) {
+   public boolean startRefreshForTarget(boolean all, String host, int port) {
       String destination = host == null ? "" : host.trim();
-      return !destination.isBlank() && port > 0 && port <= 65535 ? this.load(all, destination, port) : false;
+      return !destination.isBlank() && port > 0 && port <= 65535 ? this.beginRefresh(all, destination, port) : false;
    }
 
-   private boolean load(boolean all, String destinationHost, int destinationPort) {
+   private boolean beginRefresh(boolean all, String destinationHost, int destinationPort) {
       List<ProxyListManager.Inner_NetHelper> targets = new ArrayList<>();
       List<bW> active = new ArrayList<>();
       ExecutorService executor;
@@ -485,13 +485,13 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       int retryCount;
       int workerCount;
       synchronized (this) {
-         if (this.init_AtomicBoolean.get() || this.read_AtomicBoolean.get() || this.init_List.isEmpty()) {
+         if (this.refreshRunning.get() || this.importRunning.get() || this.items.isEmpty()) {
             return false;
          }
 
-         for (bW proxy : this.init_List) {
+         for (bW proxy : this.items) {
             if (proxy != null && proxy.init_Z() && (all || proxy.init_bW_CachePool == bW.Inner_CachePool.UNCHECKED)) {
-               targets.add(new ProxyListManager.Inner_NetHelper(proxy, init_Str_bW(proxy)));
+               targets.add(new ProxyListManager.Inner_NetHelper(proxy, buildIdentityKey(proxy)));
                active.add(proxy);
             }
          }
@@ -500,54 +500,54 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
             return false;
          }
 
-         generation = this.init_J_2 + 1L;
-         this.init_J_2 = generation;
-         this.load_AtomicBoolean.set(false);
-         this.read_J = 0L;
-         this.init_AtomicInteger.set(0);
-         this.load_AtomicInteger.set(targets.size());
-         this.load_List = List.copyOf(active);
+         generation = this.refreshGeneration + 1L;
+         this.refreshGeneration = generation;
+         this.refreshCancelRequested.set(false);
+         this.refreshCancelNoticeUntilMs = 0L;
+         this.refreshCheckedCount.set(0);
+         this.refreshTotalCount.set(targets.size());
+         this.activeRefreshProxies = List.copyOf(active);
 
          for (bW proxy : active) {
             proxy.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
             proxy.init_J = 0L;
          }
 
-         timeout = this.load_I_I(targets.size());
-         retryCount = this.read_I_I(targets.size());
-         workerCount = this.init_I_I(targets.size());
+         timeout = this.resolveEffectiveTimeoutMs(targets.size());
+         retryCount = this.resolveEffectiveRetries(targets.size());
+         workerCount = this.resolveEffectiveWorkerCount(targets.size());
          executor = Executors.newFixedThreadPool(workerCount, runnable -> {
             Thread worker = new Thread(runnable, "Autism-Proxy-Worker");
             worker.setDaemon(true);
             return worker;
          });
-         this.init_ExecutorService = executor;
-         this.init_AtomicBoolean.set(true);
-         this.update(true);
+         this.refreshExecutor = executor;
+         this.refreshRunning.set(true);
+         this.bumpRefreshRevision(true);
       }
 
       Thread thread = new Thread(
-         () -> this.init(generation, executor, targets, timeout, retryCount, workerCount, destinationHost, destinationPort), "Autism-Proxy-Refresh"
+         () -> this.runRefreshPool(generation, executor, targets, timeout, retryCount, workerCount, destinationHost, destinationPort), "Autism-Proxy-Refresh"
       );
       thread.setDaemon(true);
       thread.start();
       return true;
    }
 
-   public boolean update_Z() {
+   public boolean cancelRefresh() {
       ExecutorService executor;
       synchronized (this) {
-         if (!this.init_AtomicBoolean.get()) {
+         if (!this.refreshRunning.get()) {
             return false;
          }
 
-         this.load_AtomicBoolean.set(true);
-         this.init_AtomicBoolean.set(false);
-         this.read_J = System.currentTimeMillis() + 800L;
-         executor = this.init_ExecutorService;
-         this.init_ExecutorService = null;
-         List<bW> active = this.load_List;
-         this.load_List = List.of();
+         this.refreshCancelRequested.set(true);
+         this.refreshRunning.set(false);
+         this.refreshCancelNoticeUntilMs = System.currentTimeMillis() + 800L;
+         executor = this.refreshExecutor;
+         this.refreshExecutor = null;
+         List<bW> active = this.activeRefreshProxies;
+         this.activeRefreshProxies = List.of();
 
          for (bW proxy : active) {
             if (proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING) {
@@ -556,13 +556,13 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
             }
          }
 
-         if (this.init_Z_2) {
-            this.close_V();
-            this.flush_V();
-            this.update_V();
+         if (this.sortByLatency) {
+            this.sortByLatencyInternal();
+            this.bumpListRevision();
+            this.scheduleSave();
          }
 
-         this.update(true);
+         this.bumpRefreshRevision(true);
       }
 
       if (executor != null) {
@@ -572,54 +572,54 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return true;
    }
 
-   public boolean init_Z_File(File file) {
-      return file != null && file.isFile() ? this.init_Z_bY_CachePool(() -> new BufferedReader(new FileReader(file))) : false;
+   public boolean importFromFileAsync(File file) {
+      return file != null && file.isFile() ? this.startImportAsync(() -> new BufferedReader(new FileReader(file))) : false;
    }
 
-   public boolean init_Z_Str(String text) {
-      return text != null && !text.isBlank() ? this.init_Z_bY_CachePool(() -> new BufferedReader(new StringReader(text))) : false;
+   public boolean importFromTextAsync(String text) {
+      return text != null && !text.isBlank() ? this.startImportAsync(() -> new BufferedReader(new StringReader(text))) : false;
    }
 
-   private boolean init_Z_bY_CachePool(ProxyListManager.Inner_CachePool source) {
+   private boolean startImportAsync(ProxyListManager.Inner_CachePool source) {
       long generation;
       synchronized (this) {
-         if (this.read_AtomicBoolean.get() || this.init_AtomicBoolean.get()) {
+         if (this.importRunning.get() || this.refreshRunning.get()) {
             return false;
          }
 
-         generation = this.write_J + 1L;
-         this.write_J = generation;
-         this.close = -9223372036854775808L;
-         this.write_AtomicBoolean.set(false);
-         this.sync_J = 0L;
-         this.read_AtomicInteger.set(0);
-         this.write_AtomicInteger.set(0);
-         this.update_AtomicInteger.set(0);
-         this.read_AtomicBoolean.set(true);
-         this.write(true);
+         generation = this.importGeneration + 1L;
+         this.importGeneration = generation;
+         this.canceledImportGeneration = -9223372036854775808L;
+         this.importCancelRequested.set(false);
+         this.importCancelNoticeUntilMs = 0L;
+         this.importScannedCount.set(0);
+         this.importParsedCount.set(0);
+         this.importAddedCount.set(0);
+         this.importRunning.set(true);
+         this.bumpImportRevision(true);
       }
 
-      Thread thread = new Thread(() -> this.init_V_J_bY_CachePool(generation, source), "Autism-Proxy-Import");
+      Thread thread = new Thread(() -> this.runImportWorker(generation, source), "Autism-Proxy-Import");
       thread.setDaemon(true);
-      this.init_Thread = thread;
+      this.importThread = thread;
       thread.start();
       return true;
    }
 
-   public boolean sync_Z() {
+   public boolean cancelImport() {
       Thread thread;
       synchronized (this) {
-         if (!this.read_AtomicBoolean.get()) {
+         if (!this.importRunning.get()) {
             return false;
          }
 
-         this.write_AtomicBoolean.set(true);
-         this.read_AtomicBoolean.set(false);
-         this.close = this.write_J;
-         this.sync_J = System.currentTimeMillis() + 800L;
-         thread = this.init_Thread;
-         this.init_Thread = null;
-         this.write(true);
+         this.importCancelRequested.set(true);
+         this.importRunning.set(false);
+         this.canceledImportGeneration = this.importGeneration;
+         this.importCancelNoticeUntilMs = System.currentTimeMillis() + 800L;
+         thread = this.importThread;
+         this.importThread = null;
+         this.bumpImportRevision(true);
       }
 
       if (thread != null) {
@@ -629,84 +629,84 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return true;
    }
 
-   private void init_V_J_bY_CachePool(long generation, ProxyListManager.Inner_CachePool source) {
+   private void runImportWorker(long generation, ProxyListManager.Inner_CachePool source) {
       List<bW> parsed = new ArrayList<>();
       Set<String> knownKeys;
       synchronized (this) {
-         knownKeys = new HashSet<>(this.init_List.size() + 1024);
+         knownKeys = new HashSet<>(this.items.size() + 1024);
 
-         for (bW proxy : this.init_List) {
-            knownKeys.add(init_Str_bW(proxy));
+         for (bW proxy : this.items) {
+            knownKeys.add(buildIdentityKey(proxy));
          }
       }
 
       try {
          String line;
          try (BufferedReader reader = source.open()) {
-            for (; this.init_Z_J(generation) && (line = reader.readLine()) != null; this.write(false)) {
-               this.read_AtomicInteger.incrementAndGet();
-               bW proxy = load_bW_Str(line.trim());
-               if (proxy != null && proxy.init_Z() && knownKeys.add(init_Str_bW(proxy))) {
+            for (; this.isImportActive(generation) && (line = reader.readLine()) != null; this.bumpImportRevision(false)) {
+               this.importScannedCount.incrementAndGet();
+               bW proxy = parseProxyLine(line.trim());
+               if (proxy != null && proxy.init_Z() && knownKeys.add(buildIdentityKey(proxy))) {
                   parsed.add(proxy);
-                  this.write_AtomicInteger.set(parsed.size());
+                  this.importParsedCount.set(parsed.size());
                }
             }
          } catch (Exception e) {
-            if (this.init_Z_J(generation)) {
+            if (this.isImportActive(generation)) {
                AutismClientAddon.LOG.error("Failed to import proxies", e);
             }
          }
       } finally {
-         this.init_V_J_List(generation, parsed);
+         this.finishImport(generation, parsed);
       }
    }
 
-   private synchronized void init_V_J_List(long generation, List<bW> parsed) {
-      if (this.write_J == generation && this.read_AtomicBoolean.get()) {
+   private synchronized void finishImport(long generation, List<bW> parsed) {
+      if (this.importGeneration == generation && this.importRunning.get()) {
          int added = 0;
-         if (!this.write_AtomicBoolean.get() && parsed != null && !parsed.isEmpty()) {
-            Set<String> knownKeys = new HashSet<>(this.init_List.size() + parsed.size() + 16);
+         if (!this.importCancelRequested.get() && parsed != null && !parsed.isEmpty()) {
+            Set<String> knownKeys = new HashSet<>(this.items.size() + parsed.size() + 16);
 
-            for (bW proxy : this.init_List) {
-               knownKeys.add(init_Str_bW(proxy));
+            for (bW proxy : this.items) {
+               knownKeys.add(buildIdentityKey(proxy));
             }
 
             for (bW proxy : parsed) {
-               if (knownKeys.add(init_Str_bW(proxy))) {
+               if (knownKeys.add(buildIdentityKey(proxy))) {
                   proxy.init_Z = false;
-                  this.init_List.add(proxy);
+                  this.items.add(proxy);
                   added++;
                }
             }
          }
 
-         this.update_AtomicInteger.set(added);
-         this.read_AtomicBoolean.set(false);
-         this.write_AtomicBoolean.set(false);
-         this.init_Thread = null;
+         this.importAddedCount.set(added);
+         this.importRunning.set(false);
+         this.importCancelRequested.set(false);
+         this.importThread = null;
          if (added > 0) {
-            this.flush_V();
-            this.update_V();
-            this.init_Z_Z(false);
+            this.bumpListRevision();
+            this.scheduleSave();
+            this.startGeoLookup(false);
          }
 
-         this.write(true);
+         this.bumpImportRevision(true);
       }
    }
 
-   private boolean init_Z_J(long generation) {
-      return this.read_AtomicBoolean.get() && this.write_J == generation && !this.write_AtomicBoolean.get();
+   private boolean isImportActive(long generation) {
+      return this.importRunning.get() && this.importGeneration == generation && !this.importCancelRequested.get();
    }
 
-   private void write(boolean force) {
+   private void bumpImportRevision(boolean force) {
       long now = System.currentTimeMillis();
-      if (force || now - this.push >= 150L) {
-         this.push = now;
-         this.update_J++;
+      if (force || now - this.lastImportNotifyMs >= 150L) {
+         this.lastImportNotifyMs = now;
+         this.importRevision++;
       }
    }
 
-   private void init(
+   private void runRefreshPool(
       long generation,
       ExecutorService executor,
       List<ProxyListManager.Inner_NetHelper> targets,
@@ -721,12 +721,12 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       try {
          AtomicInteger nextIndex = new AtomicInteger();
 
-         for (int i = 0; i < workerCount && this.load_Z_J(generation); i++) {
+         for (int i = 0; i < workerCount && this.isRefreshActive(generation); i++) {
             executor.execute(() -> {
-               while (this.load_Z_J(generation)) {
+               while (this.isRefreshActive(generation)) {
                   int index = nextIndex.getAndIncrement();
                   if (index < targets.size()) {
-                     this.init(generation, targets.get(index), timeout, retryCount, destinationHost, destinationPort);
+                     this.checkRefreshTarget(generation, targets.get(index), timeout, retryCount, destinationHost, destinationPort);
                      continue;
                   }
                   break;
@@ -737,7 +737,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          executor.shutdown();
 
          do {
-            if (!this.load_Z_J(generation)) {
+            if (!this.isRefreshActive(generation)) {
                executor.shutdownNow();
                return;
             }
@@ -749,7 +749,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          executor.shutdownNow();
          return;
       } catch (RejectedExecutionException e) {
-         if (this.load_Z_J(generation)) {
+         if (this.isRefreshActive(generation)) {
             AutismClientAddon.LOG.error("Proxy refresh rejected a check task", e);
          }
 
@@ -760,26 +760,26 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          executor.shutdownNow();
          return;
       } finally {
-         this.init_V_J_Z(generation, completed && this.load_Z_J(generation));
+         this.finishRefresh(generation, completed && this.isRefreshActive(generation));
       }
    }
 
-   private void init(long generation, ProxyListManager.Inner_NetHelper target, int timeout, int retryCount, String destinationHost, int destinationPort) {
-      if (this.load_Z_J(generation)) {
-         ProxyListManager.Inner_ConfigStore probe = init(target.init_bW(), timeout, destinationHost, destinationPort);
+   private void checkRefreshTarget(long generation, ProxyListManager.Inner_NetHelper target, int timeout, int retryCount, String destinationHost, int destinationPort) {
+      if (this.isRefreshActive(generation)) {
+         ProxyListManager.Inner_ConfigStore probe = probeProxy(target.proxy(), timeout, destinationHost, destinationPort);
 
          for (int attempts = 0;
-            probe.init_bW_DataUtil().init_bW_CachePool() != bW.Inner_CachePool.ALIVE && attempts < retryCount && this.load_Z_J(generation);
+            probe.checkResult().init_bW_CachePool() != bW.Inner_CachePool.ALIVE && attempts < retryCount && this.isRefreshActive(generation);
             attempts++
          ) {
-            probe = init(target.init_bW(), timeout, destinationHost, destinationPort);
+            probe = probeProxy(target.proxy(), timeout, destinationHost, destinationPort);
          }
 
-         this.init(generation, target, probe);
+         this.applyRefreshProbeResult(generation, target, probe);
       }
    }
 
-   private static ProxyListManager.Inner_ConfigStore init(bW proxy, int timeout, String destinationHost, int destinationPort) {
+   private static ProxyListManager.Inner_ConfigStore probeProxy(bW proxy, int timeout, String destinationHost, int destinationPort) {
       if (destinationHost != null && !destinationHost.isBlank() && destinationPort > 0) {
          ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(proxy, destinationHost, destinationPort, timeout);
          bW.Inner_DataUtil result = verified.init_Z()
@@ -791,94 +791,94 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   public synchronized boolean init(bW proxy, bW.Inner_DataUtil result, ProxyProtocolType workingType) {
-      if (proxy != null && result != null && !this.init_AtomicBoolean.get() && this.init_List.contains(proxy)) {
+   public synchronized boolean applyManualCheckResult(bW proxy, bW.Inner_DataUtil result, ProxyProtocolType workingType) {
+      if (proxy != null && result != null && !this.refreshRunning.get() && this.items.contains(proxy)) {
          if (result.init_bW_CachePool() == bW.Inner_CachePool.ALIVE && workingType != null) {
             proxy.init_bZ = workingType;
          }
 
          proxy.init_V_bW_DataUtil(result);
-         this.close_V();
-         this.flush_V();
-         this.update_V();
+         this.sortByLatencyInternal();
+         this.bumpListRevision();
+         this.scheduleSave();
          return true;
       } else {
          return false;
       }
    }
 
-   private synchronized void init(long generation, ProxyListManager.Inner_NetHelper target, ProxyListManager.Inner_ConfigStore probe) {
-      if (this.init_J_2 == generation && this.init_AtomicBoolean.get() && !this.load_AtomicBoolean.get()) {
-         bW proxy = target.init_bW();
-         if (this.init_List.contains(proxy) && target.init_Str().equals(init_Str_bW(proxy))) {
-            if (probe.init_bW_DataUtil().init_bW_CachePool() == bW.Inner_CachePool.ALIVE && probe.init_bZ() != null) {
-               proxy.init_bZ = probe.init_bZ();
+   private synchronized void applyRefreshProbeResult(long generation, ProxyListManager.Inner_NetHelper target, ProxyListManager.Inner_ConfigStore probe) {
+      if (this.refreshGeneration == generation && this.refreshRunning.get() && !this.refreshCancelRequested.get()) {
+         bW proxy = target.proxy();
+         if (this.items.contains(proxy) && target.identityKey().equals(buildIdentityKey(proxy))) {
+            if (probe.checkResult().init_bW_CachePool() == bW.Inner_CachePool.ALIVE && probe.detectedProtocol() != null) {
+               proxy.init_bZ = probe.detectedProtocol();
             }
 
-            proxy.init_V_bW_DataUtil(probe.init_bW_DataUtil());
+            proxy.init_V_bW_DataUtil(probe.checkResult());
          }
 
-         this.init_AtomicInteger.incrementAndGet();
-         this.update(false);
+         this.refreshCheckedCount.incrementAndGet();
+         this.bumpRefreshRevision(false);
       }
    }
 
-   private synchronized void init_V_J_Z(long generation, boolean completed) {
-      if (this.init_J_2 == generation && this.init_AtomicBoolean.get()) {
-         this.init_AtomicBoolean.set(false);
-         this.load_AtomicBoolean.set(false);
-         this.init_ExecutorService = null;
-         this.load_List = List.of();
-         if (completed && this.init_Z_2) {
-            this.close_V();
+   private synchronized void finishRefresh(long generation, boolean completed) {
+      if (this.refreshGeneration == generation && this.refreshRunning.get()) {
+         this.refreshRunning.set(false);
+         this.refreshCancelRequested.set(false);
+         this.refreshExecutor = null;
+         this.activeRefreshProxies = List.of();
+         if (completed && this.sortByLatency) {
+            this.sortByLatencyInternal();
          }
 
-         if (completed && this.init_Z_2) {
-            this.flush_V();
-            this.update_V();
+         if (completed && this.sortByLatency) {
+            this.bumpListRevision();
+            this.scheduleSave();
          }
 
          if (completed) {
-            this.init_Z_Z(false);
+            this.startGeoLookup(false);
          }
 
-         this.update(true);
+         this.bumpRefreshRevision(true);
       }
    }
 
-   private boolean load_Z_J(long generation) {
-      return this.init_AtomicBoolean.get() && this.init_J_2 == generation && !this.load_AtomicBoolean.get();
+   private boolean isRefreshActive(long generation) {
+      return this.refreshRunning.get() && this.refreshGeneration == generation && !this.refreshCancelRequested.get();
    }
 
-   private synchronized List<ProxyListManager.Inner_StreamUtil> init_List_Z(boolean force) {
+   private synchronized List<ProxyListManager.Inner_StreamUtil> collectGeoTargets(boolean force) {
       long now = System.currentTimeMillis();
       List<ProxyListManager.Inner_StreamUtil> targets = new ArrayList<>();
 
-      for (bW proxy : this.init_List) {
+      for (bW proxy : this.items) {
          if (proxy != null && proxy.init_Z_J_Z(now, force)) {
-            targets.add(new ProxyListManager.Inner_StreamUtil(proxy, init_Str_bW(proxy)));
+            targets.add(new ProxyListManager.Inner_StreamUtil(proxy, buildIdentityKey(proxy)));
          }
       }
 
       return targets;
    }
 
-   private void load(long generation, List<ProxyListManager.Inner_StreamUtil> targets) {
+   private void runGeoLookupWorker(long generation, List<ProxyListManager.Inner_StreamUtil> targets) {
       if (!AutismLiteVariant.enabled()) {
          try {
             Map<String, List<ProxyListManager.Inner_StreamUtil>> byIp = new LinkedHashMap<>();
             List<ProxyListManager.Inner_DataUtil> immediate = new ArrayList<>();
 
             for (ProxyListManager.Inner_StreamUtil target : targets) {
-               if (!this.read_Z_J(generation)) {
+               if (!this.isGeoLookupActive(generation)) {
                   return;
                }
 
-               bX.Inner_StreamUtil resolved = bX.init_bX_StreamUtil_Str(target.init_bW().read);
+               bX.Inner_StreamUtil resolved = bX.init_bX_StreamUtil_Str(target.proxy().read);
                if (resolved.init_bX_DataUtil() != null) {
                   immediate.add(new ProxyListManager.Inner_DataUtil(target, resolved.init_bX_DataUtil()));
                   if (immediate.size() >= 100) {
-                     this.read(generation, immediate);
+                     this.applyGeoResults(generation, immediate);
                      immediate.clear();
                   }
                } else if (!resolved.init_Str().isBlank()) {
@@ -887,34 +887,34 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
             }
 
             if (!immediate.isEmpty()) {
-               this.read(generation, immediate);
+               this.applyGeoResults(generation, immediate);
             }
 
             List<String> batch = new ArrayList<>(100);
 
             for (String ip : byIp.keySet()) {
-               if (!this.read_Z_J(generation)) {
+               if (!this.isGeoLookupActive(generation)) {
                   return;
                }
 
                batch.add(ip);
                if (batch.size() >= 100) {
-                  this.init(generation, batch, byIp);
+                  this.fetchGeoBatch(generation, batch, byIp);
                   batch.clear();
-                  sync_V();
+                  sleepBetweenGeoBatches();
                }
             }
 
-            if (!batch.isEmpty() && this.read_Z_J(generation)) {
-               this.init(generation, batch, byIp);
+            if (!batch.isEmpty() && this.isGeoLookupActive(generation)) {
+               this.fetchGeoBatch(generation, batch, byIp);
             }
          } finally {
-            this.init_V_J(generation);
+            this.finishGeoLookup(generation);
          }
       }
    }
 
-   private void init(long generation, List<String> batch, Map<String, List<ProxyListManager.Inner_StreamUtil>> byIp) {
+   private void fetchGeoBatch(long generation, List<String> batch, Map<String, List<ProxyListManager.Inner_StreamUtil>> byIp) {
       Map<String, bX.Inner_DataUtil> results = bX.init_Map_List(List.copyOf(batch));
       List<ProxyListManager.Inner_DataUtil> applications = new ArrayList<>();
 
@@ -928,48 +928,48 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          }
       }
 
-      this.read(generation, applications);
+      this.applyGeoResults(generation, applications);
    }
 
-   private synchronized void read(long generation, List<ProxyListManager.Inner_DataUtil> applications) {
-      if (this.flush_J == generation && applications != null && !applications.isEmpty()) {
+   private synchronized void applyGeoResults(long generation, List<ProxyListManager.Inner_DataUtil> applications) {
+      if (this.geoLookupGeneration == generation && applications != null && !applications.isEmpty()) {
          int changed = 0;
 
          for (ProxyListManager.Inner_DataUtil application : applications) {
-            ProxyListManager.Inner_StreamUtil target = application.init_bY_StreamUtil();
-            bW proxy = target.init_bW();
-            if (this.init_List.contains(proxy) && target.init_Str().equals(init_Str_bW(proxy))) {
-               proxy.init_V_bX_DataUtil(application.init_bX_DataUtil());
+            ProxyListManager.Inner_StreamUtil target = application.target();
+            bW proxy = target.proxy();
+            if (this.items.contains(proxy) && target.identityKey().equals(buildIdentityKey(proxy))) {
+               proxy.init_V_bX_DataUtil(application.geoResult());
                changed++;
             }
          }
 
          if (changed > 0) {
-            this.flush_V();
-            this.update_V();
+            this.bumpListRevision();
+            this.scheduleSave();
          }
       }
    }
 
-   private void init_V_J(long generation) {
+   private void finishGeoLookup(long generation) {
       boolean runAgain = false;
       synchronized (this) {
-         if (this.flush_J == generation) {
-            runAgain = this.flush_AtomicBoolean.getAndSet(false);
-            this.sync_AtomicBoolean.set(false);
+         if (this.geoLookupGeneration == generation) {
+            runAgain = this.geoLookupRerunPending.getAndSet(false);
+            this.geoLookupRunning.set(false);
          }
       }
 
       if (runAgain) {
-         this.init_Z_Z(false);
+         this.startGeoLookup(false);
       }
    }
 
-   private boolean read_Z_J(long generation) {
-      return this.sync_AtomicBoolean.get() && this.flush_J == generation;
+   private boolean isGeoLookupActive(long generation) {
+      return this.geoLookupRunning.get() && this.geoLookupGeneration == generation;
    }
 
-   private static void sync_V() {
+   private static void sleepBetweenGeoBatches() {
       try {
          Thread.sleep(120L);
       } catch (InterruptedException e) {
@@ -977,27 +977,27 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private void update(boolean force) {
+   private void bumpRefreshRevision(boolean force) {
       long now = System.currentTimeMillis();
-      if (force || now - this.poll >= 150L || this.init_AtomicInteger.get() >= this.load_AtomicInteger.get()) {
-         this.poll = now;
-         this.load_J++;
+      if (force || now - this.lastRefreshNotifyMs >= 150L || this.refreshCheckedCount.get() >= this.refreshTotalCount.get()) {
+         this.lastRefreshNotifyMs = now;
+         this.refreshRevision++;
       }
    }
 
-   private void flush_V() {
-      this.open++;
-      this.load_J++;
+   private void bumpListRevision() {
+      this.listRevision++;
+      this.refreshRevision++;
    }
 
-   private int init_I_I(int targetCount) {
-      int configured = Math.max(1, this.load_I);
+   private int resolveEffectiveWorkerCount(int targetCount) {
+      int configured = Math.max(1, this.workerThreads);
       int floor = targetCount >= 2000 ? 256 : (targetCount >= 500 ? 128 : (targetCount >= 100 ? 64 : (targetCount >= 32 ? 32 : configured)));
       return Math.max(1, Math.min(targetCount, Math.max(configured, floor)));
    }
 
-   private int load_I_I(int targetCount) {
-      int configured = Math.max(1, this.init_I);
+   private int resolveEffectiveTimeoutMs(int targetCount) {
+      int configured = Math.max(1, this.timeoutMs);
       if (targetCount >= 500) {
          return Math.min(configured, 2500);
       } else {
@@ -1005,56 +1005,56 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private int read_I_I(int targetCount) {
-      return Math.max(1, targetCount >= 100 ? 0 : Math.max(0, this.read_I));
+   private int resolveEffectiveRetries(int targetCount) {
+      return Math.max(1, targetCount >= 100 ? 0 : Math.max(0, this.retryCount));
    }
 
-   private static String init_Str_bW(bW proxy) {
+   private static String buildIdentityKey(bW proxy) {
       return proxy == null ? "" : (proxy.init_bZ == null ? "" : proxy.init_bZ.name()) + "\u0000" + proxy.read + "\u0000" + proxy.init_I;
    }
 
-   public synchronized void init_V_2() {
-      if (!this.init_AtomicBoolean.get() && !this.read_AtomicBoolean.get()) {
-         int before = this.init_List.size();
-         this.init_List.removeIf(proxy -> this.load_Z && proxy.init_bW_CachePool == bW.Inner_CachePool.DEAD);
-         this.init_List.removeIf(proxy -> this.write_I > 0 && proxy.init_bW_CachePool == bW.Inner_CachePool.ALIVE && proxy.init_J >= this.write_I);
-         List<bW> sorted = new ArrayList<>(this.init_List);
-         sorted.sort(ProxyListManager::init_I_bW_bW);
-         if (this.update_I > 0 && sorted.size() > this.update_I) {
-            sorted.subList(this.update_I, sorted.size()).clear();
-            this.init_List.removeIf(proxy -> !sorted.contains(proxy));
+   public synchronized void pruneAndSort() {
+      if (!this.refreshRunning.get() && !this.importRunning.get()) {
+         int before = this.items.size();
+         this.items.removeIf(proxy -> this.pruneDead && proxy.init_bW_CachePool == bW.Inner_CachePool.DEAD);
+         this.items.removeIf(proxy -> this.pruneLatencyMs > 0 && proxy.init_bW_CachePool == bW.Inner_CachePool.ALIVE && proxy.init_J >= this.pruneLatencyMs);
+         List<bW> sorted = new ArrayList<>(this.items);
+         sorted.sort(ProxyListManager::compareByLatency);
+         if (this.pruneToCount > 0 && sorted.size() > this.pruneToCount) {
+            sorted.subList(this.pruneToCount, sorted.size()).clear();
+            this.items.removeIf(proxy -> !sorted.contains(proxy));
          }
 
-         if (this.init_Z_2) {
-            this.init_List.clear();
-            this.init_List.addAll(sorted);
+         if (this.sortByLatency) {
+            this.items.clear();
+            this.items.addAll(sorted);
          }
 
-         if (before != this.init_List.size() || this.init_Z_2) {
-            this.flush_V();
+         if (before != this.items.size() || this.sortByLatency) {
+            this.bumpListRevision();
          }
 
-         this.update_V();
+         this.scheduleSave();
       }
    }
 
-   public int init_I_File(File file) {
+   public int importFromFileSync(File file) {
       List<bW> parsed = new ArrayList<>();
       int added = 0;
       Set<String> knownKeys;
       synchronized (this) {
-         knownKeys = new HashSet<>(this.init_List.size() + 1024);
+         knownKeys = new HashSet<>(this.items.size() + 1024);
 
-         for (bW proxy : this.init_List) {
-            knownKeys.add(init_Str_bW(proxy));
+         for (bW proxy : this.items) {
+            knownKeys.add(buildIdentityKey(proxy));
          }
       }
 
       String line;
       try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
          while ((line = reader.readLine()) != null) {
-            bW proxy = load_bW_Str(line.trim());
-            if (proxy != null && proxy.init_Z() && knownKeys.add(init_Str_bW(proxy))) {
+            bW proxy = parseProxyLine(line.trim());
+            if (proxy != null && proxy.init_Z() && knownKeys.add(buildIdentityKey(proxy))) {
                parsed.add(proxy);
             }
          }
@@ -1067,38 +1067,38 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
 
       synchronized (this) {
-         Set<String> currentKeys = new HashSet<>(this.init_List.size() + parsed.size() + 16);
+         Set<String> currentKeys = new HashSet<>(this.items.size() + parsed.size() + 16);
 
-         for (bW proxy : this.init_List) {
-            currentKeys.add(init_Str_bW(proxy));
+         for (bW proxy : this.items) {
+            currentKeys.add(buildIdentityKey(proxy));
          }
 
          for (bW proxy : parsed) {
-            if (currentKeys.add(init_Str_bW(proxy))) {
-               if (this.init_List.isEmpty() && added == 0) {
+            if (currentKeys.add(buildIdentityKey(proxy))) {
+               if (this.items.isEmpty() && added == 0) {
                   proxy.init_Z = true;
                }
 
-               this.init_List.add(proxy);
+               this.items.add(proxy);
                added++;
             }
          }
 
          if (added > 0) {
-            this.flush_V();
-            this.update_V();
-            this.init_Z_Z(false);
+            this.bumpListRevision();
+            this.scheduleSave();
+            this.startGeoLookup(false);
          }
 
          return added;
       }
    }
 
-   private void close_V() {
-      this.init_List.sort(ProxyListManager::init_I_bW_bW);
+   private void sortByLatencyInternal() {
+      this.items.sort(ProxyListManager::compareByLatency);
    }
 
-   private static int init_I_bW_bW(bW a, bW b) {
+   private static int compareByLatency(bW a, bW b) {
       boolean aliveA = a != null && a.init_bW_CachePool == bW.Inner_CachePool.ALIVE;
       boolean aliveB = b != null && b.init_bW_CachePool == bW.Inner_CachePool.ALIVE;
       if (aliveA != aliveB) {
@@ -1108,16 +1108,16 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private static bW load_bW_Str(String line) {
+   private static bW parseProxyLine(String line) {
       if (!line.isBlank() && !line.startsWith("#")) {
-         Matcher m = init_Pattern.matcher(line);
+         Matcher m = NAMED_OR_HOST_PORT_PATTERN.matcher(line);
          if (m.find()) {
-            return init(m.group(1), init_Str_Str(m.group(2)), Integer.parseInt(m.group(3)), m.group(4), ProxyProtocolType.Socks4);
+            return createProxyEntry(m.group(1), normalizeIpAddress(m.group(2)), Integer.parseInt(m.group(3)), m.group(4), ProxyProtocolType.Socks4);
          }
 
-         m = load_Pattern.matcher(line);
+         m = HOST_PORT_AUTH_PATTERN.matcher(line);
          if (m.find()) {
-            bW proxy = init(null, init_Str_Str(m.group(1)), Integer.parseInt(m.group(2)), null, ProxyProtocolType.Socks5);
+            bW proxy = createProxyEntry(null, normalizeIpAddress(m.group(1)), Integer.parseInt(m.group(2)), null, ProxyProtocolType.Socks5);
             if (m.group(3) != null) {
                proxy.write = m.group(3);
             }
@@ -1128,14 +1128,14 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
 
             return proxy;
          } else {
-            m = read_Pattern.matcher(line);
+            m = URI_PROXY_PATTERN.matcher(line);
             if (!m.find()) {
                return null;
             }
 
             String typeName = m.group("type");
             ProxyProtocolType defaultType = m.group("pass") == null && !"socks".equals(typeName) ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
-            bW proxy = init(null, init_Str_Str(m.group("addr")), Integer.parseInt(m.group("port")), typeName, defaultType);
+            bW proxy = createProxyEntry(null, normalizeIpAddress(m.group("addr")), Integer.parseInt(m.group("port")), typeName, defaultType);
             if (m.group("user") != null) {
                proxy.write = m.group("user");
             }
@@ -1151,11 +1151,11 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private static String init_Str_Str(String address) {
+   private static String normalizeIpAddress(String address) {
       return address == null ? "" : address.replaceAll("\\b0+\\B", "");
    }
 
-   private static bW init(String name, String address, int port, String typeName, ProxyProtocolType defaultType) {
+   private static bW createProxyEntry(String name, String address, int port, String typeName, ProxyProtocolType defaultType) {
       bW proxy = new bW();
       proxy.load_Str = name == null ? "" : name.trim();
       proxy.read = address;
@@ -1175,28 +1175,28 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
 
    @Override
    public Iterator<bW> iterator() {
-      return this.init_List().iterator();
+      return this.getItems().iterator();
    }
 
-   public record Inner_BufferHelper(boolean init_Z, boolean load_Z, int init_I, int load_I, int read_I, long init_J, long load_J, boolean read_Z) {
+   public record Inner_BufferHelper(boolean running, boolean canceling, int scannedCount, int parsedCount, int addedCount, long generation, long revision, boolean canceled) {
    }
 
    private interface Inner_CachePool {
       BufferedReader open() throws IOException;
    }
 
-   private record Inner_ConfigStore(bW.Inner_DataUtil init_bW_DataUtil, ProxyProtocolType init_bZ) {
+   private record Inner_ConfigStore(bW.Inner_DataUtil checkResult, ProxyProtocolType detectedProtocol) {
    }
 
-   private record Inner_DataUtil(ProxyListManager.Inner_StreamUtil init_bY_StreamUtil, bX.Inner_DataUtil init_bX_DataUtil) {
+   private record Inner_DataUtil(ProxyListManager.Inner_StreamUtil target, bX.Inner_DataUtil geoResult) {
    }
 
-   private record Inner_NetHelper(bW init_bW, String init_Str) {
+   private record Inner_NetHelper(bW proxy, String identityKey) {
    }
 
-   private record Inner_StreamUtil(bW init_bW, String init_Str) {
+   private record Inner_StreamUtil(bW proxy, String identityKey) {
    }
 
-   public record Inner_TaskQueue(boolean init_Z, boolean load_Z, int init_I, int load_I, long init_J, long load_J) {
+   public record Inner_TaskQueue(boolean running, boolean canceling, int checkedCount, int totalCount, long generation, long revision) {
    }
 }

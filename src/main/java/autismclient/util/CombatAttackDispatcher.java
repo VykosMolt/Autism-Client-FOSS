@@ -16,7 +16,7 @@ public final class CombatAttackDispatcher {
 
    public static boolean init(String owner, EntityHitResult hit, Runnable dispatched) {
       Objects.requireNonNull(dispatched);
-      if (!ClientInteractionOverride.init(owner, hit)) {
+      if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
          return false;
       }
 
@@ -26,7 +26,7 @@ public final class CombatAttackDispatcher {
 
    public static void init(Player player, Entity target) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc != null && player == mc.player && !init.init_Z(target) && ClientInteractionOverride.close_Z()) {
+      if (mc != null && player == mc.player && !init.init_Z(target) && ClientInteractionOverride.ownsAttackInput()) {
          init.load(target);
       }
    }

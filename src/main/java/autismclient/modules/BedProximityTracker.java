@@ -126,7 +126,7 @@ final class BedProximityTracker {
                ArrayList<BedProximityTracker.Inner_StreamUtil> people = new ArrayList<>();
 
                for (AbstractClientPlayer player : mc.level.players()) {
-                  if (player != mc.player && player.isAlive() && !player.isSpectator() && !AntiBotTracker.init_Z(player)) {
+                  if (player != mc.player && player.isAlive() && !player.isSpectator() && !AntiBotTracker.isBot(player)) {
                      PlayerTeam team = player.getTeam();
                      TextColor fallback = team == null ? null : team.getColor().map(TeamColor::textColor).orElse(null);
                      PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(player.getUUID());

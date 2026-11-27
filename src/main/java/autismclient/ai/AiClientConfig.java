@@ -747,7 +747,7 @@ final class AiClientConfig {
       String action = init(args, "list");
       return init(
          () -> {
-            autismclient.util.ProxyListManager m = autismclient.util.ProxyListManager.init_bY();
+            autismclient.util.ProxyListManager m = autismclient.util.ProxyListManager.getInstance();
             switch (action) {
                case "list":
                   break;
@@ -765,7 +765,7 @@ final class AiClientConfig {
 
                   proxy.write = AiJson.getString(args, "username", "");
                   proxy.update = AiJson.getString(args, "password", "");
-                  if (!m.init_Z_bW(proxy)) {
+                  if (!m.addProxy(proxy)) {
                      throw new IllegalStateException("The proxy could not be added");
                   }
                   break;
@@ -773,18 +773,18 @@ final class AiClientConfig {
                case "enable":
                case "disable": {
                   autismclient.util.bW proxy = init(m, args);
-                  m.init_V_bW_Z(proxy, action.equals("enable"));
+                  m.setProxyEnabled(proxy, action.equals("enable"));
                   break;
                }
                case "remove":
-                  m.init_V_bW(init(m, args));
+                  m.removeProxy(init(m, args));
                   break;
                default:
                   throw new IllegalArgumentException("Unknown action '" + action + "'; use list, add, enable, disable or remove");
             }
 
             JsonArray list = new JsonArray();
-            autismclient.util.bW active = m.init_bW();
+            autismclient.util.bW active = m.getActiveProxy();
 
             for (autismclient.util.bW p : m) {
                list.add(
@@ -816,7 +816,7 @@ final class AiClientConfig {
 
    private static autismclient.util.bW init(autismclient.util.ProxyListManager m, JsonObject args) {
       String key = load(args, "proxy");
-      autismclient.util.bW byId = m.init_bW_Str(key);
+      autismclient.util.bW byId = m.findById(key);
       if (byId != null) {
          return byId;
       }

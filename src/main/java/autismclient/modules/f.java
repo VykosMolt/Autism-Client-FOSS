@@ -7279,30 +7279,30 @@ public final class f {
          this.load_Z = true;
          double gcd = RotationMath.gcdStep();
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
-         this.init_q_DataUtil.init_q_DataUtil_Vec3_2(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.init(target.getBoundingBox(), point.y));
-         this.init_q_DataUtil.write_Z = true;
-         this.init_q_DataUtil.open_D = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
-            ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, AutismSessionState.getInstance().getClientTick())
+         this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.computeAnchorAtHeight(target.getBoundingBox(), point.y));
+         this.init_q_DataUtil.clampInsideBox = true;
+         this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
+            ? this.init_cj.init(eyes, this.init_q_DataUtil.targetYaw, AutismSessionState.getInstance().getClientTick())
             : 0.0;
          if (noCooldown) {
-            this.init_q_DataUtil.sync_D = Math.max(2.0, target.hurtTime - 1);
+            this.init_q_DataUtil.ticksUntilAttack = Math.max(2.0, target.hurtTime - 1);
          } else {
             float delay = (float)(1.0 / MC.player.getAttributeValue(Attributes.ATTACK_SPEED) * 20.0);
-            this.init_q_DataUtil.sync_D = Math.max(0.0, delay - 0.5 - ticker);
+            this.init_q_DataUtil.ticksUntilAttack = Math.max(0.0, delay - 0.5 - ticker);
             if (target.hurtTime > 1) {
-               this.init_q_DataUtil.sync_D = Math.max(this.init_q_DataUtil.sync_D, target.hurtTime - 1);
+               this.init_q_DataUtil.ticksUntilAttack = Math.max(this.init_q_DataUtil.ticksUntilAttack, target.hurtTime - 1);
             }
          }
 
-         this.init_q_DataUtil.init_I = this.update_I;
-         this.init_q_DataUtil.init_Z = this.update_I <= 1;
-         this.init_q_DataUtil.poll_D = gcd;
-         this.init_q_DataUtil.pop_Z = noCooldown;
-         this.init_q_DataUtil.push_D = 18.0;
-         this.init_q_DataUtil.push_Z = false;
-         this.init_q_DataUtil.read_Z = false;
+         this.init_q_DataUtil.comboCount = this.update_I;
+         this.init_q_DataUtil.inAttackWindow = this.update_I <= 1;
+         this.init_q_DataUtil.gcdStep = gcd;
+         this.init_q_DataUtil.legacyNoCooldown = noCooldown;
+         this.init_q_DataUtil.maxAccelUp = 18.0;
+         this.init_q_DataUtil.forceWhiff = false;
+         this.init_q_DataUtil.allowExcursion = false;
          int id = target.getId();
-         this.init_q_DataUtil.load_Z = id != this.write_I;
+         this.init_q_DataUtil.targetChanged = id != this.write_I;
          this.write_I = id;
          if (!autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
             autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, current);
@@ -7310,7 +7310,7 @@ public final class f {
             autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_3(this.init_ap_TaskQueue, current, this.sync_D, this.flush_D, gcd);
          }
 
-         double[] want = hand.init(this.init_q_DataUtil, current.yaw(), current.pitch(), 40.0, 40.0);
+         double[] want = hand.computeStep(this.init_q_DataUtil, current.yaw(), current.pitch(), 40.0, 40.0);
          double horizontal = "Vertical".equals(axis) ? 0.0 : this.init("horizontal-speed", 0.8);
          double vertical = "Horizontal".equals(axis) ? 0.0 : this.init("vertical-speed", 0.2);
          double yaw = want[0] * horizontal;
@@ -7364,16 +7364,16 @@ public final class f {
             return 0.0;
          }
 
-         if (atPitch >= frame.load_D - frame.write_D && atPitch <= frame.load_D + frame.update_D) {
+         if (atPitch >= frame.targetPitch - frame.pitchUpHalfWidth && atPitch <= frame.targetPitch + frame.pitchDownHalfWidth) {
             return want;
          }
 
-         double gcd = frame.poll_D;
+         double gcd = frame.gcdStep;
          double pitch = want * share;
          if (!(gcd > 0.5) && !(Math.abs(pitch) > 0.5)) {
             double fastYaw = Math.min(2.6, 2.75 - 1.6 * gcd);
             if (Math.abs(pitch) < 0.13 && (Math.abs(yaw) > fastYaw || realized > 20.4)) {
-               double toward = frame.load_D - atPitch;
+               double toward = frame.targetPitch - atPitch;
                double sign = want != 0.0 ? Math.signum(want) : (toward != 0.0 ? Math.signum(toward) : 1.0);
                pitch = sign * Math.min(0.42, Math.max(0.13, gcd * 1.02));
             }
@@ -7386,7 +7386,7 @@ public final class f {
 
       private autismclient.util.CombatAimEngine init_q_2() {
          if (this.init_q == null) {
-            this.init_q = autismclient.util.CombatAimEngine.init_q();
+            this.init_q = autismclient.util.CombatAimEngine.createDefault();
          }
 
          return this.init_q;
@@ -7407,13 +7407,13 @@ public final class f {
 
       private void init(autismclient.util.CombatAimEngine hand, LivingEntity target, RotationMath.Rotation current) {
          float perfectYaw = (float)(Math.toDegrees(Math.atan2(target.getZ() - MC.player.getZ(), target.getX() - MC.player.getX())) - 90.0);
-         hand.init_V_D(current.yaw(), current.pitch(), perfectYaw, this.update_I * 50L <= 1050L && this.init_Z);
+         hand.recordRealizedSample(current.yaw(), current.pitch(), perfectYaw, this.update_I * 50L <= 1050L && this.init_Z);
       }
 
       private void init_V_46() {
          autismclient.util.MouseDeltaAccumulator.init(0.0, false, false);
          if (this.init_q != null) {
-            this.init_q.init_V();
+            this.init_q.reset();
          }
 
          if (this.init_ap_TaskQueue != null) {
@@ -7488,7 +7488,7 @@ public final class f {
             return false;
          }
 
-         if (AntiBotTracker.load_Z(entity)) {
+         if (AntiBotTracker.shouldIgnoreEntity(entity)) {
             return false;
          }
 

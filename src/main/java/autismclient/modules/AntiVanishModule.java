@@ -351,7 +351,7 @@ public final class AntiVanishModule extends Module {
          && player.tickCount >= 5
          && !(player.distanceToSqr(MC.player) > (double)this.integer("range") * this.integer("range"))) {
          String name = player.getGameProfile().name();
-         boolean npc = ArmorFilterMatcher.init_Z_UUID(player.getUUID()) || AntiBotTracker.init_Z(player.getUUID());
+         boolean npc = ArmorFilterMatcher.init_Z_UUID(player.getUUID()) || AntiBotTracker.isConfirmedBotUuid(player.getUUID());
          this.init_CachePool.init(new autismclient.util.AntiVanishRosterTracker.Inner_DataUtil(player.getUUID(), name, true, npc), action, at);
       }
    }
@@ -370,7 +370,7 @@ public final class AntiVanishModule extends Module {
          && !id.equals(MC.player.getUUID())
          && TabPlayerListParser.load_Z(name)
          && !ArmorFilterMatcher.init_Z_UUID(id)
-         && !AntiBotTracker.init_Z(id)
+         && !AntiBotTracker.isConfirmedBotUuid(id)
          && this.init_Z_Str(name);
    }
 
@@ -424,7 +424,7 @@ public final class AntiVanishModule extends Module {
                return;
             }
 
-            if (this.init_ClientPacketListen.getPlayerInfo(id) == null && !this.init_Set.contains(id) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.init_Z(id)
+            if (this.init_ClientPacketListen.getPlayerInfo(id) == null && !this.init_Set.contains(id) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.isConfirmedBotUuid(id)
                )
              {
                unknown.add(id);
@@ -446,7 +446,7 @@ public final class AntiVanishModule extends Module {
    private boolean init_Z_UUID_2(UUID id, String name, boolean unresolved) {
       return !unresolved
          ? this.init_Z_UUID_Str(id, name)
-         : id != null && !id.equals(MC.player.getUUID()) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.init_Z(id) && !this.bool("player-filter");
+         : id != null && !id.equals(MC.player.getUUID()) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.isConfirmedBotUuid(id) && !this.bool("player-filter");
    }
 
    private void load_V_J(long at) {

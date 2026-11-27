@@ -198,8 +198,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.reset = this.get_I_15();
       this.start = this.set_I_15();
       this.stop = this.start;
-      this.init_I_2 = 200;
-      this.load_I = 40;
+      this.windowX = 200;
+      this.windowY = 40;
       this.init_k = new ThemedTextInputBox(init_Minecraft, textRenderer, 0, 0, this.next_I_5(), this.reset_I_5(), false);
       this.init_k.setPlaceholder(Component.literal("Search..."));
       this.init_k.setMaxLength(160);
@@ -213,7 +213,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.init_bC = new PayloadRegistrationManager();
       this.init_AutismPacketLogger_3 = new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay();
       this.init_F_2 = new OverlayContextMenu<>(this.init_CharEncoder, textRenderer, this::init_StrArr_AutismPacketLogger, this.put_I_6());
-      this.init_V_F(this.init_F_2);
+      this.setActiveContextMenu(this.init_F_2);
       OverlayManager.getInstance().register(this.init_AutismPacketInspec);
       OverlayManager.getInstance().register(this.init_AutismPacketLogger);
       OverlayManager.getInstance().register(this.init_AutismPacketLogger_3);
@@ -222,12 +222,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   protected boolean d_() {
+   protected boolean supportsPinning() {
       return true;
    }
 
    public void write_V_18() {
-      this.a__V();
+      this.saveBounds();
    }
 
    public synchronized String load_Str_9() {
@@ -352,7 +352,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    public void flush_V_13() {
-      this.b__V();
+      this.loadBounds();
       this.init_bB.reloadFromConfig();
       this.init_bC.init_V();
       this.pop_Z = true;
@@ -364,48 +364,48 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.get_I_15();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return 14 + this.clear_I_6() + this.stop_I_5() + 12 + this.put_I_6() * 2;
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   protected int a__I() {
-      return this.load_I() + this.put_I_6();
+   protected int getResizeMinHeight() {
+      return this.getMinHeight() + this.put_I_6();
    }
 
    @Override
-   protected void c_() {
-      if (!this.set_Z()) {
+   protected void onSizeChanged() {
+      if (!this.hasCustomStoredSize()) {
          this.reset = this.get_I_15();
          this.start = this.set_I_15();
       }
    }
 
    @Override
-   public OverlayBounds init_cH() {
-      return new OverlayBounds(this.init_I_2, this.load_I, this.reset, this.stop, this.init_Z, this.load_Z);
+   public OverlayBounds getBounds() {
+      return new OverlayBounds(this.windowX, this.windowY, this.reset, this.stop, this.windowVisible, this.windowCollapsed);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
-         this.init_I_2 = clamped.x;
-         this.load_I = clamped.y;
+         this.windowX = clamped.x;
+         this.windowY = clamped.y;
          this.reset = clamped.width;
          this.start = clamped.height;
-         this.init_Z = clamped.visible;
-         this.load_Z = clamped.collapsed;
+         this.windowVisible = clamped.visible;
+         this.windowCollapsed = clamped.collapsed;
       }
    }
 
@@ -426,8 +426,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       if (leavingOfflineSetup) {
          this.init_AutismPacketInspec.write_V_17();
-         this.init_AutismPacketLogger.init_V_Z(false);
-         this.init_AutismPacketLogger_3.init_V_Z(false);
+         this.init_AutismPacketLogger.setVisible(false);
+         this.init_AutismPacketLogger_3.setVisible(false);
       }
    }
 
@@ -952,8 +952,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_Z(boolean v) {
-      this.init_Z = v;
+   public void setVisible(boolean v) {
+      this.windowVisible = v;
       if (v) {
          this.next = 0;
          this.init_CacheEntry.jumpTo(0, 0);
@@ -964,58 +964,58 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.init_AutismPacketInspec.write_V_17();
       }
 
-      this.a__V();
+      this.saveBounds();
    }
 
    public void close_V_12() {
-      this.init_V_Z(!this.init_Z);
+      this.setVisible(!this.windowVisible);
    }
 
    @Override
-   public boolean sync_Z() {
-      return this.init_Z;
+   public boolean isVisible() {
+      return this.windowVisible;
    }
 
    @Override
-   public boolean flush_Z() {
-      return this.load_Z;
+   public boolean isCollapsed() {
+      return this.windowCollapsed;
    }
 
    @Override
-   public void write_V_Z(boolean c) {
-      if (this.load_Z != c) {
-         this.load_Z = c;
+   public void setCollapsed(boolean c) {
+      if (this.windowCollapsed != c) {
+         this.windowCollapsed = c;
          this.sync_Z = false;
          this.flush_Z = false;
          this.close_Z = false;
          if (c) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
             this.init_F_2.init_V();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_k != null && this.init_k.isFocused();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       if (this.init_k != null) {
          this.init_k.setFocused(false);
       }
    }
 
    @Override
-   public int b__I() {
+   public int getZPriority() {
       return 10;
    }
 
@@ -1024,28 +1024,28 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_D(double mx, double my) {
-      if (!this.init_Z) {
+   public boolean containsPoint(double mx, double my) {
+      if (!this.windowVisible) {
          return false;
       }
 
-      int panelHeight = this.load_Z ? 14 : this.stop;
-      OverlayBounds bounds = new OverlayBounds(this.init_I_2, this.load_I, this.reset, panelHeight, this.init_Z, this.load_Z);
-      int h = this.renderedHeight(bounds, this.load_Z);
-      boolean overPanel = mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= this.load_I && my <= this.load_I + h;
+      int panelHeight = this.windowCollapsed ? 14 : this.stop;
+      OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, panelHeight, this.windowVisible, this.windowCollapsed);
+      int h = this.renderedHeight(bounds, this.windowCollapsed);
+      boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.reset && my >= this.windowY && my <= this.windowY + h;
       return overPanel | this.init_F_2.init(mx, my);
    }
 
    @Override
-   public boolean load_Z_D_D(double mx, double my) {
-      return !this.init_Z
+   public boolean isOverHeader(double mx, double my) {
+      return !this.windowVisible
          ? false
-         : mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= this.load_I && my <= this.load_I + 14 && !this.isOverHeaderControl(mx, my, this.init_cH());
+         : mx >= this.windowX && mx <= this.windowX + this.reset && my >= this.windowY && my <= this.windowY + 14 && !this.isOverHeaderControl(mx, my, this.getBounds());
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
-      if (this.init_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
+      if (this.windowVisible || this.isClosing()) {
          this.reset_V_5();
          if (this.pop_Z) {
             this.prev_V_5();
@@ -1053,10 +1053,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          OverlayBounds clamped = this.clampToScreen(
-            this, new OverlayBounds(this.init_I_2, this.load_I, this.init_I_I_I(this.reset, this.init_I()), this.tick_I_17(), this.init_Z, this.load_Z)
+            this, new OverlayBounds(this.windowX, this.windowY, this.resolveWindowWidth(this.reset, this.getMinWidth()), this.tick_I_17(), this.windowVisible, this.windowCollapsed)
          );
-         this.init_I_2 = clamped.x;
-         this.load_I = clamped.y;
+         this.windowX = clamped.x;
+         this.windowY = clamped.y;
          this.reset = clamped.width;
          this.stop = clamped.height;
          int ph = this.stop;
@@ -1074,15 +1074,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          String title = "Packet Logger";
-         OverlayBounds bounds = new OverlayBounds(this.init_I_2, this.load_I, this.reset, ph, this.init_Z, this.load_Z);
-         this.renderWindowFrame(ctx, bodyMx, bodyMy, bounds, title, this.load_Z, this.sync_Z);
-         this.init_V_GuiGraphicsExtract_13(ctx, bodyMx, bodyMy, bounds);
-         boolean clipBody = this.beginBodyClip(ctx, bounds, this.load_Z);
+         OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, ph, this.windowVisible, this.windowCollapsed);
+         this.renderWindowFrame(ctx, bodyMx, bodyMy, bounds, title, this.windowCollapsed, this.sync_Z);
+         this.renderPinButton(ctx, bodyMx, bodyMy, bounds);
+         boolean clipBody = this.beginBodyClip(ctx, bounds, this.windowCollapsed);
          if (!clipBody) {
-            this.renderInactiveDim(ctx, bounds, this.load_Z, this.sync_Z);
+            this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.sync_Z);
          } else {
             try {
-               int tabY = this.load_I + 14 + 2;
+               int tabY = this.windowY + 14 + 2;
                this.init_V_GuiGraphicsExtract_6(ctx, bodyMx, bodyMy, tabY, total);
                int filterY = tabY + this.clear_I_6() + 2;
                this.init_V_GuiGraphicsExtract_9(ctx, bodyMx, bodyMy, filterY);
@@ -1090,7 +1090,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                int contentEndY = contentY + this.pop_I_19();
                if (this.load_List.isEmpty()) {
                   this.init_V_GuiGraphicsExtract_8(
-                     ctx, "No packets matching filters", autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), this.init_I_2 + 10, this.init_I_I_8(contentY)
+                     ctx, "No packets matching filters", autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), this.windowX + 10, this.init_I_I_8(contentY)
                   );
                } else {
                   int contentHeight = this.load_List.size() * this.put_I_6();
@@ -1100,7 +1100,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.init_CacheEntry.setOffset(this.next, maxScroll);
                   int drawScroll = this.init_CacheEntry.tickAndClamp(delta, maxScroll);
                   autismclient.gui.ui.UiClipStack.getInstance()
-                     .push(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2, contentY, this.reset, contentEndY - contentY));
+                     .push(ctx, autismclient.gui.f.NetHelper.init(this.windowX, contentY, this.reset, contentEndY - contentY));
                   int drawBase = contentY - drawScroll;
 
                   for (int i = 0; i < this.load_List.size(); i++) {
@@ -1121,7 +1121,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
             } finally {
                this.endBodyClip(ctx, clipBody);
-               this.renderInactiveDim(ctx, bounds, this.load_Z, this.sync_Z);
+               this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.sync_Z);
             }
 
             if (this.init_F_2.init_Z()) {
@@ -1133,7 +1133,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, int mx, int my, int y, int total) {
-      int x = this.init_I_2 + 4;
+      int x = this.windowX + 4;
 
       for (AutismPacketLoggerOverlay.LogCategory cat : AutismPacketLoggerOverlay.LogCategory.values()) {
          int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
@@ -1154,7 +1154,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int summaryWidth = autismclient.gui.f.b.k.init(
          this.init_Font, summary, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), summaryColor
       );
-      int summaryX = this.init_I_2 + this.reset - 6 - summaryWidth;
+      int summaryX = this.windowX + this.reset - 6 - summaryWidth;
       int minSummaryX = x + 4;
       if (summaryX >= minSummaryX) {
          int summaryY = UiLayoutMath.centerTextY(y, this.clear_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
@@ -1163,7 +1163,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private int push_I_19() {
-      return this.load_I + 14 + 2 + this.clear_I_6() + 2 + this.stop_I_5() + 2;
+      return this.windowY + 14 + 2 + this.clear_I_6() + 2 + this.stop_I_5() + 2;
    }
 
    private int pop_I_19() {
@@ -1176,7 +1176,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int viewHeight = this.pop_I_19();
       int maxScroll = Math.max(0, contentHeight - viewHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-         contentHeight, viewHeight, this.init_I_2 + this.reset - 5, this.push_I_19(), 3, viewHeight, this.init_CacheEntry.tickAndClamp(0.0F, maxScroll)
+         contentHeight, viewHeight, this.windowX + this.reset - 5, this.push_I_19(), 3, viewHeight, this.init_CacheEntry.tickAndClamp(0.0F, maxScroll)
       );
    }
 
@@ -1219,7 +1219,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int gap = 2;
       int row1Y = y;
       int row2Y = y + this.reset_I_5() + this.start_I_12();
-      int x = this.init_I_2 + 4;
+      int x = this.windowX + 4;
       AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.init_AutismPacketLogger_2();
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[0], this.reset_I_5(), row1.init_StrArr[0], !this.write_Z, "packet-logger:capture", mx, my);
       x += row1.init_IArr[0] + row1.init_I;
@@ -1244,7 +1244,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract_3(
          ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
-      x = this.init_I_2 + 4;
+      x = this.windowX + 4;
       int sw = this.prev_I_4();
       this.init_k.setX(x);
       this.init_k.setY(row2Y);
@@ -1293,16 +1293,16 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.DisplayRow row, int y, int mx, int my) {
-      int x = this.init_I_2 + 4;
+      int x = this.windowX + 4;
       boolean exp = this.close_Set.contains(row.init_Str);
-      boolean hov = mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= y && my < y + this.put_I_6();
+      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.put_I_6();
       PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = row.init_AutismPayloadSuppo == null
          ? null
          : this.init_bB.findMatchingRuleForEntry(row.init_AutismPayloadSuppo, row.load);
       if (listenerMatch != null) {
-         ctx.fill(this.init_I_2 + 2, y, this.init_I_2 + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
+         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
       } else if (hov) {
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.put_I_6(), true, false);
       }
 
       autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
@@ -1324,7 +1324,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       String summary = row.init_AutismPayloadSuppo == null ? "" : AutismPayloadSupport.formatSummary(row.init_AutismPayloadSuppo, true);
       String listenText = listenerMatch == null ? "" : " [" + listenerMatch.load() + "]";
       String line = displayName + " (x" + row.init_I + ")" + listenText + (summary.isBlank() ? "" : " " + summary);
-      int maxW = this.reset - (x - this.init_I_2) - 32;
+      int maxW = this.reset - (x - this.windowX) - 32;
       if (autismclient.gui.f.b.k.init(this.init_Font, line, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), color) > maxW) {
          line = autismclient.gui.f.b.k.init(
             this.init_Font, line, Math.max(1, maxW), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), color
@@ -1332,19 +1332,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       this.init_V_GuiGraphicsExtract_8(ctx, line, autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
-      int bx = this.init_I_2 + this.reset - 28;
+      int bx = this.windowX + this.reset - 28;
       boolean hb = mx >= bx && mx <= bx + 24 && my >= y && my < y + this.put_I_6();
       this.init_V_GuiGraphicsExtract_8(ctx, "BLK", autismclient.gui.f.b.l.write, hb ? -48060 : UiColorPalette.textSecondary(), bx, this.init_I_I_8(y));
    }
 
    private void init_V_GuiGraphicsExtract_8(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.LoggedPacketEntry e, int y, int mx, int my) {
-      int x = this.init_I_2 + 4;
-      boolean hov = mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= y && my < y + this.put_I_6();
+      int x = this.windowX + 4;
+      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.put_I_6();
       PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = this.init_bB_StreamUtil_AutismPacketLogger(e);
       if (listenerMatch != null) {
-         ctx.fill(this.init_I_2 + 2, y, this.init_I_2 + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
+         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
       } else if (hov) {
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.put_I_6(), true, false);
       }
 
       int color = e.init_Str.equals("C2S") ? -12268289 : -21948;
@@ -1356,7 +1356,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       String tick = "T" + e.init_I;
       this.init_V_GuiGraphicsExtract_8(ctx, tick, autismclient.gui.f.b.l.write, -6114880, x, this.init_I_I_8(y));
       x += autismclient.gui.f.b.k.init(this.init_Font, tick, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), -6114880) + 4;
-      int maxW = this.reset - (x - this.init_I_2) - 30;
+      int maxW = this.reset - (x - this.windowX) - 30;
       String name = e.load_Str;
       if (e.init_AutismPayloadSuppo != null) {
          String summary = AutismPayloadSupport.formatSummary(e.init_AutismPayloadSuppo, true);
@@ -1376,19 +1376,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       this.init_V_GuiGraphicsExtract_8(ctx, name, autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
-      int bx = this.init_I_2 + this.reset - 16;
+      int bx = this.windowX + this.reset - 16;
       boolean hb = mx >= bx && mx <= bx + 12 && my >= y && my < y + this.put_I_6();
       this.init_V_GuiGraphicsExtract_8(ctx, "=", autismclient.gui.f.b.l.write, hb ? -8875 : UiColorPalette.textSecondary(), bx, this.init_I_I_8(y));
    }
 
    private void load(GuiGraphicsExtractor ctx, int mx, int my, int startY, int endY) {
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, this.init_I_2 + 4, startY, this.reset - 8);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, this.windowX + 4, startY, this.reset - 8);
       int y = startY + 3;
-      boolean hh = mx >= this.init_I_2 + 4 && mx <= this.init_I_2 + 150 && my >= y && my < y + this.put_I_6();
+      boolean hh = mx >= this.windowX + 4 && mx <= this.windowX + 150 && my >= y && my < y + this.put_I_6();
       int blockedColor = hh ? ThemePaletteManager.recolor(-30584, ThemePaletteManager.ColorRole.DANGER) : ThemePaletteManager.recolor(-39322, ThemePaletteManager.ColorRole.DANGER);
-      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 6, y + 1, 9, 9), this.push_Z, blockedColor);
-      this.init_V_GuiGraphicsExtract_8(ctx, "Blocked (" + this.sync_Set.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.init_I_2 + 17, y + 1);
-      int ubX = this.init_I_2 + this.reset - 58;
+      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.windowX + 6, y + 1, 9, 9), this.push_Z, blockedColor);
+      this.init_V_GuiGraphicsExtract_8(ctx, "Blocked (" + this.sync_Set.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.windowX + 17, y + 1);
+      int ubX = this.windowX + this.reset - 58;
       boolean hua = mx >= ubX && mx <= ubX + 54 && my >= y && my < y + this.put_I_6();
       this.init_V_GuiGraphicsExtract_8(ctx, "CLR ALL", autismclient.gui.f.b.l.write, hua ? -12255420 : UiColorPalette.textBody(), ubX, y + 1);
       int rstX = ubX - 44;
@@ -1410,10 +1410,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   ),
                autismclient.gui.f.b.l.read,
                -5609882,
-               this.init_I_2 + 8,
+               this.windowX + 8,
                y + 1
             );
-            int ux = this.init_I_2 + this.reset - 28;
+            int ux = this.windowX + this.reset - 28;
             boolean hu = mx >= ux && mx <= ux + 24 && my >= y && my < y + this.put_I_6();
             this.init_V_GuiGraphicsExtract_8(ctx, "UB", autismclient.gui.f.b.l.write, hu ? -12255420 : UiColorPalette.textBody(), ux, y + 1);
             y += this.put_I_6();
@@ -1449,8 +1449,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
-      if (!this.init_Z) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
+      if (!this.windowVisible) {
          return false;
       }
 
@@ -1462,36 +1462,36 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      if (mouseY >= this.load_I && mouseY <= this.load_I + 14 && mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.reset) {
-         OverlayBounds bounds = new OverlayBounds(this.init_I_2, this.load_I, this.reset, this.tick_I_17(), this.init_Z, this.load_Z);
-         if (this.load_Z_D_2(mouseX, mouseY, bounds)) {
-            this.pop_V();
+      if (mouseY >= this.windowY && mouseY <= this.windowY + 14 && mouseX >= this.windowX && mouseX <= this.windowX + this.reset) {
+         OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, this.tick_I_17(), this.windowVisible, this.windowCollapsed);
+         if (this.isOverPinButton(mouseX, mouseY, bounds)) {
+            this.togglePinned();
             return true;
          }
 
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          }
 
          if (button == 0) {
             this.sync_Z = true;
             this.flush_Z = false;
-            this.init_D = mouseX - this.init_I_2;
-            this.load_D = mouseY - this.load_I;
+            this.init_D = mouseX - this.windowX;
+            this.load_D = mouseY - this.windowY;
          }
 
          return true;
       } else {
-         if (this.load_Z) {
+         if (this.windowCollapsed) {
             return false;
          }
 
-         int tabY = this.load_I + 14 + 2;
+         int tabY = this.windowY + 14 + 2;
          int filterY = tabY + this.clear_I_6() + 2;
          int contentY = filterY + this.stop_I_5() + 2;
          if (mouseY >= tabY && mouseY < tabY + this.clear_I_6() && button == 0) {
-            int x = this.init_I_2 + 4;
+            int x = this.windowX + 4;
 
             for (AutismPacketLoggerOverlay.LogCategory cat : AutismPacketLoggerOverlay.LogCategory.values()) {
                int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
@@ -1542,7 +1542,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int gap = 2;
       int row1Y = y;
       int row2Y = y + this.reset_I_5() + this.start_I_12();
-      int x = this.init_I_2 + 4;
+      int x = this.windowX + 4;
       AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.init_AutismPacketLogger_2();
       if (mouseY >= row1Y && mouseY < row1Y + this.reset_I_5()) {
          for (int i = 0; i < row1.init_IArr.length; i++) {
@@ -1579,7 +1579,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      x = this.init_I_2 + 4;
+      x = this.windowX + 4;
       int sw = this.prev_I_4();
       if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + sw) {
          this.init_k.mouseClicked(mouseX, mouseY, 0);
@@ -1621,7 +1621,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (idx >= 0 && idx < this.load_List.size()) {
          AutismPacketLoggerOverlay.DisplayRow row = this.load_List.get(idx);
          if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
-            int bx = this.init_I_2 + this.reset - 28;
+            int bx = this.windowX + this.reset - 28;
             if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.init_Class != null) {
                String n = PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)row.init_Class);
                this.load(n);
@@ -1641,7 +1641,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.ENTRY && row.init_AutismPacketLogger != null) {
-            int menuIconX = this.init_I_2 + this.reset - 16;
+            int menuIconX = this.windowX + this.reset - 16;
             if (button == 1 || button == 0 && mouseX >= menuIconX) {
                this.init_V_AutismPacketLogger_2(row.init_AutismPacketLogger, (int)mouseX, (int)mouseY);
                return true;
@@ -1719,7 +1719,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                bi.init("Copied packet info.");
                break;
             case "Inspect":
-               this.init_AutismPacketInspec.init_V_AutismPacketLogger(e, this.init_I_2 + this.reset + 10, this.load_I + 8);
+               this.init_AutismPacketInspec.init_V_AutismPacketLogger(e, this.windowX + this.reset + 10, this.windowY + 8);
          }
       }
    }
@@ -1727,7 +1727,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private boolean write(double mouseX, double mouseY, int contentEndY) {
       int y = contentEndY + 3;
       if (mouseY >= y && mouseY < y + this.put_I_6()) {
-         int ubX = this.init_I_2 + this.reset - 58;
+         int ubX = this.windowX + this.reset - 58;
          if (mouseX >= ubX && mouseX <= ubX + 54) {
             this.add_V_7();
             return true;
@@ -1744,7 +1744,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       } else {
          if (this.push_Z) {
             int ey = y + this.put_I_6();
-            int ux = this.init_I_2 + this.reset - 28;
+            int ux = this.windowX + this.reset - 28;
 
             for (String name : new ArrayList<>(this.sync_Set)) {
                if (mouseX >= ux && mouseX <= ux + 24 && mouseY >= ey && mouseY < ey + this.put_I_6()) {
@@ -1761,7 +1761,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mx, double my, int b, double dx, double dy) {
+   public boolean mouseDragged(double mx, double my, int b, double dx, double dy) {
       if (this.close_Z && b == 0) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
          this.next = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)my, this.prev), this.put_I_6(), scrollbarMetrics.maxScroll());
@@ -1770,13 +1770,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       if (this.sync_Z && b == 0) {
-         OverlayBounds nextBounds = this.clampToScreen(this, new OverlayBounds((int)(mx - this.init_D), (int)(my - this.load_D), this.reset, this.start, this.init_Z, this.load_Z));
-         if (nextBounds.x != this.init_I_2 || nextBounds.y != this.load_I) {
+         OverlayBounds nextBounds = this.clampToScreen(this, new OverlayBounds((int)(mx - this.init_D), (int)(my - this.load_D), this.reset, this.start, this.windowVisible, this.windowCollapsed));
+         if (nextBounds.x != this.windowX || nextBounds.y != this.windowY) {
             this.flush_Z = true;
          }
 
-         this.init_I_2 = nextBounds.x;
-         this.load_I = nextBounds.y;
+         this.windowX = nextBounds.x;
+         this.windowY = nextBounds.y;
          return true;
       } else {
          return this.init_k.mouseDragged(mx, my, b, dx, dy);
@@ -1784,14 +1784,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mx, double my, int b) {
+   public boolean mouseReleased(double mx, double my, int b) {
       if (b == 0 && this.close_Z) {
          this.close_Z = false;
          return true;
       } else if (b == 0 && this.sync_Z) {
          this.sync_Z = false;
          this.flush_Z = false;
-         this.a__V();
+         this.saveBounds();
          return true;
       } else {
          return this.init_k.mouseReleased(mx, my, b);
@@ -1799,8 +1799,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mx, double my, double amt) {
-      if (this.init_Z && !this.load_Z) {
+   public boolean mouseScrolled(double mx, double my, double amt) {
+      if (this.windowVisible && !this.windowCollapsed) {
          int totalH = this.load_List.size() * this.put_I_6();
          int visH = this.pop_I_19();
          int maxScroll = Math.max(0, totalH - visH);
@@ -1812,13 +1812,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int key, int scan, int mods) {
-      return this.init_Z && !this.load_Z ? this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, mods)) : false;
+   public boolean keyPressed(int key, int scan, int mods) {
+      return this.windowVisible && !this.windowCollapsed ? this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, mods)) : false;
    }
 
    @Override
-   public boolean init_Z_C_I(char c, int mods) {
-      return this.init_Z && !this.load_Z ? this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(c)) : false;
+   public boolean charTyped(char c, int mods) {
+      return this.windowVisible && !this.windowCollapsed ? this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(c)) : false;
    }
 
    private synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> init_List_10() {
@@ -1946,7 +1946,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int rc = Math.min(this.load_List.size(), this.valid_I_3());
       int chrome = 14 + this.clear_I_6() + this.stop_I_5() + 12 + this.run_I_17();
       int content = Math.max(rc * this.put_I_6(), this.put_I_6() * 2);
-      return this.load_I_I_I(Math.max(this.load_I(), Math.min(chrome + content, Math.max(this.start, this.set_I_15()))), this.a__I());
+      return this.resolveWindowHeight(Math.max(this.getMinHeight(), Math.min(chrome + content, Math.max(this.start, this.set_I_15()))), this.getResizeMinHeight());
    }
 
    private int run_I_17() {
@@ -1956,9 +1956,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private void size() {
       int sw = cA.init_I();
       int sh = cA.load_I();
-      this.init_AutismPacketLogger.init_I_2 = Math.max(4, (sw - this.init_AutismPacketLogger.read_I) / 2);
-      this.init_AutismPacketLogger.load_I = Math.max(4, (sh - this.init_AutismPacketLogger.write) / 2);
-      this.init_AutismPacketLogger.init_V_Z(true);
+      this.init_AutismPacketLogger.windowX = Math.max(4, (sw - this.init_AutismPacketLogger.windowWidth) / 2);
+      this.init_AutismPacketLogger.windowY = Math.max(4, (sh - this.init_AutismPacketLogger.windowHeight) / 2);
+      this.init_AutismPacketLogger.setVisible(true);
       this.init_AutismPacketLogger.write_V_19();
       OverlayManager.getInstance().bringToFront(this.init_AutismPacketLogger);
    }
@@ -1968,9 +1968,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int sh = cA.load_I();
       this.init_bB.reloadFromConfig();
       this.init_bC.init_V();
-      this.init_AutismPacketLogger_3.init_I_2 = Math.max(4, (sw - this.init_AutismPacketLogger_3.read_I) / 2);
-      this.init_AutismPacketLogger_3.load_I = Math.max(4, (sh - this.init_AutismPacketLogger_3.write) / 2);
-      this.init_AutismPacketLogger_3.init_V_Z(true);
+      this.init_AutismPacketLogger_3.windowX = Math.max(4, (sw - this.init_AutismPacketLogger_3.windowWidth) / 2);
+      this.init_AutismPacketLogger_3.windowY = Math.max(4, (sh - this.init_AutismPacketLogger_3.windowHeight) / 2);
+      this.init_AutismPacketLogger_3.setVisible(true);
       this.init_AutismPacketLogger_3.put_V_7();
       OverlayManager.getInstance().bringToFront(this.init_AutismPacketLogger_3);
    }
@@ -2152,9 +2152,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       BlockedPacketListOverlay() {
          super("PacketLoggerBlockedList", 250, 248);
-         this.init_I_2 = 260;
-         this.load_I = 56;
-         this.init_Z = false;
+         this.windowX = 260;
+         this.windowY = 56;
+         this.windowVisible = false;
          this.init_k.setPlaceholder(Component.literal("Search packets..."));
          this.init_k.setMaxLength(120);
          this.init_k.setChangedListener(value -> this.flush_Z = true);
@@ -2169,7 +2169,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int run_I_18() {
-         return this.load_I + 14 + 4;
+         return this.windowY + 14 + 4;
       }
 
       private int get_I_16() {
@@ -2186,28 +2186,28 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
-         if (this.init_Z || this.a__Z()) {
+      public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
+         if (this.windowVisible || this.isClosing()) {
             if (this.flush_Z) {
                this.flush_Z = false;
                this.write_V_19();
             }
 
-            OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
-            this.init_I_2 = bounds.x;
-            this.load_I = bounds.y;
-            this.renderWindowFrame(ctx, mx, my, bounds, "Block List", this.load_Z, false);
-            boolean clip = this.beginBodyClip(ctx, bounds, this.load_Z);
+            OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.windowX, this.windowY, this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
+            this.windowX = bounds.x;
+            this.windowY = bounds.y;
+            this.renderWindowFrame(ctx, mx, my, bounds, "Block List", this.windowCollapsed, false);
+            boolean clip = this.beginBodyClip(ctx, bounds, this.windowCollapsed);
             if (!clip) {
-               this.renderInactiveDim(ctx, bounds, this.load_Z, false);
+               this.renderInactiveDim(ctx, bounds, this.windowCollapsed, false);
             } else {
                try {
-                  int x = this.init_I_2 + 6;
+                  int x = this.windowX + 6;
                   int y = this.run_I_18();
                   int rowH = AutismPacketLoggerOverlay.this.add_I_13();
                   this.init_k.setX(x);
                   this.init_k.setY(y);
-                  this.init_k.setWidth(Math.max(80, this.read_I - 12));
+                  this.init_k.setWidth(Math.max(80, this.windowWidth - 12));
                   this.init_k.setHeight(rowH);
                   this.init_k.render(ctx, mx, my, delta);
                   y = this.get_I_16();
@@ -2258,13 +2258,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      )
                   );
                   int listTop = this.set_I_16();
-                  int listH = Math.max(20, this.load_I + this.write - listTop - 6);
+                  int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
                   int contentH = this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6();
                   int maxScroll = Math.max(0, contentH - listH);
                   this.flush_I = this.quantizeScrollOffset(this.flush_I, AutismPacketLoggerOverlay.this.put_I_6(), maxScroll);
                   this.init_CacheEntry.setOffset(this.flush_I, maxScroll);
                   int drawScroll = this.init_CacheEntry.tickAndClamp(delta, maxScroll);
-                  autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 4, listTop, this.read_I - 8, listH));
+                  autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.windowX + 4, listTop, this.windowWidth - 8, listH));
                   int base = listTop - drawScroll;
                   int rowHeight = AutismPacketLoggerOverlay.this.put_I_6();
                   int firstVisible = Math.max(0, drawScroll / rowHeight);
@@ -2275,14 +2275,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      Class<? extends Packet<?>> cls = this.load_List.get(i);
                      boolean c2s = this.init_Set.contains(cls);
                      boolean blocked = AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.init_Str_Class(cls));
-                     boolean hover = mx >= this.init_I_2 + 4
-                        && mx < this.init_I_2 + this.read_I - 8
+                     boolean hover = mx >= this.windowX + 4
+                        && mx < this.windowX + this.windowWidth - 8
                         && my >= ry
                         && my < ry + AutismPacketLoggerOverlay.this.put_I_6();
                      int fill = blocked ? UiColorPalette.blockedRowFill(hover) : UiColorPalette.packetRowFill(c2s, i, hover);
-                     ctx.fill(this.init_I_2 + 4, ry, this.init_I_2 + this.read_I - 8, ry + AutismPacketLoggerOverlay.this.put_I_6(), fill);
+                     ctx.fill(this.windowX + 4, ry, this.windowX + this.windowWidth - 8, ry + AutismPacketLoggerOverlay.this.put_I_6(), fill);
                      if (blocked) {
-                        ctx.fill(this.init_I_2 + 4, ry, this.init_I_2 + 6, ry + AutismPacketLoggerOverlay.this.put_I_6(), UiColorPalette.blockedRowBar());
+                        ctx.fill(this.windowX + 4, ry, this.windowX + 6, ry + AutismPacketLoggerOverlay.this.put_I_6(), UiColorPalette.blockedRowBar());
                      }
 
                      int color = UiColorPalette.packetRowAccent(c2s, i);
@@ -2290,23 +2290,23 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      String label = autismclient.gui.f.b.k.init(
                         AutismPacketLoggerOverlay.this.init_Font,
                         name,
-                        Math.max(1, this.read_I - 24),
+                        Math.max(1, this.windowWidth - 24),
                         AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
                         color
                      );
                      AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-                        ctx, label, autismclient.gui.f.b.l.read, color, this.init_I_2 + 9, AutismPacketLoggerOverlay.this.init_I_I_8(ry)
+                        ctx, label, autismclient.gui.f.b.l.read, color, this.windowX + 9, AutismPacketLoggerOverlay.this.init_I_I_8(ry)
                      );
                   }
 
                   autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-                     contentH, listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, drawScroll
+                     contentH, listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, drawScroll
                   );
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, metrics, metrics.containsTrack(mx, my), this.write_Z);
                } finally {
                   this.endBodyClip(ctx, clip);
-                  this.renderInactiveDim(ctx, bounds, this.load_Z, false);
+                  this.renderInactiveDim(ctx, bounds, this.windowCollapsed, false);
                }
             }
          }
@@ -2333,34 +2333,34 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean load_Z() {
+      public boolean supportsHeaderCollapseClick() {
          return true;
       }
 
       @Override
-      public boolean init_Z_D_3(double mx, double my, int button) {
-         if (!this.init_Z) {
+      public boolean mouseClicked(double mx, double my, int button) {
+         if (!this.windowVisible) {
             return false;
          }
 
-         OverlayBounds bounds = this.init_cH();
+         OverlayBounds bounds = this.getBounds();
          if (button == 0 && this.isOverHeaderCloseButton(mx, my, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          }
 
-         if (button == 0 && this.load_Z_D_D(mx, my)) {
+         if (button == 0 && this.isOverHeader(mx, my)) {
             this.sync_Z = true;
-            this.init_D = mx - this.init_I_2;
-            this.load_D = my - this.load_I;
+            this.init_D = mx - this.windowX;
+            this.load_D = my - this.windowY;
             return true;
          }
 
-         if (this.load_Z) {
+         if (this.windowCollapsed) {
             return true;
          }
 
-         int x = this.init_I_2 + 6;
+         int x = this.windowX + 6;
          if (this.init_k.mouseClicked(mx, my, button)) {
             return true;
          }
@@ -2390,9 +2390,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          int listTop = this.set_I_16();
-         int listH = Math.max(20, this.load_I + this.write - listTop - 6);
+         int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-            this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
+            this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.flush_I
          );
          if (button == 0 && metrics.isScrollable() && metrics.containsTrack((int)mx, (int)my)) {
             this.write_Z = true;
@@ -2419,19 +2419,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mx, my);
+         return this.containsPoint(mx, my);
       }
 
       @Override
-      public boolean init_Z_D(double mx, double my, int button, double dx, double dy) {
+      public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
          if (this.sync_Z && button == 0) {
-            this.init_V_cH(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+            this.setBounds(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
             return true;
          } else if (this.write_Z && button == 0) {
             int listTop = this.set_I_16();
-            int listH = Math.max(20, this.load_I + this.write - listTop - 6);
+            int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
+               this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.flush_I
             );
             this.flush_I = this.quantizeScrollOffset(
                autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.close_I), AutismPacketLoggerOverlay.this.put_I_6(), metrics.maxScroll()
@@ -2443,10 +2443,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean load_Z_D_3(double mx, double my, int button) {
+      public boolean mouseReleased(double mx, double my, int button) {
          if (button == 0 && this.sync_Z) {
             this.sync_Z = false;
-            this.a__V();
+            this.saveBounds();
             return true;
          } else if (button == 0 && this.write_Z) {
             this.write_Z = false;
@@ -2457,10 +2457,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_D_2(double mx, double my, double amount) {
-         if (this.init_Z && !this.load_Z && this.init_Z_D_D(mx, my)) {
+      public boolean mouseScrolled(double mx, double my, double amount) {
+         if (this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my)) {
             int listTop = this.set_I_16();
-            int listH = Math.max(20, this.load_I + this.write - listTop - 6);
+            int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
             int maxScroll = Math.max(0, this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6() - listH);
             this.flush_I = this.quantizeScrollOffset(
                this.flush_I - (int)Math.signum(amount) * AutismPacketLoggerOverlay.this.put_I_6(), AutismPacketLoggerOverlay.this.put_I_6(), maxScroll
@@ -2473,22 +2473,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
-         return this.init_Z && this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers));
+      public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+         return this.windowVisible && this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers));
       }
 
       @Override
-      public boolean init_Z_C_I(char chr, int modifiers) {
-         return this.init_Z && this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(chr));
+      public boolean charTyped(char chr, int modifiers) {
+         return this.windowVisible && this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(chr));
       }
 
       @Override
-      public boolean write_Z() {
-         return this.init_Z && this.init_k.isFocused();
+      public boolean hasFocusedTextInput() {
+         return this.windowVisible && this.init_k.isFocused();
       }
 
       @Override
-      public void push_V() {
+      public void clearInputFocus() {
          this.init_k.setFocused(false);
       }
    }
@@ -2803,9 +2803,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       PayloadChannelListenerOverlay() {
          super("PacketLoggerPayloadChannels", 492, 336);
-         this.init_I_2 = 270;
-         this.load_I = 58;
-         this.init_Z = false;
+         this.windowX = 270;
+         this.windowY = 58;
+         this.windowVisible = false;
          this.init_k.setPlaceholder(Component.literal("Search presets/channels..."));
          this.init_k.setMaxLength(120);
          this.init_k.setChangedListener(value -> this.open_Z = true);
@@ -2818,7 +2818,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int pop_I_21() {
-         return this.load_I + 14 + 4;
+         return this.windowY + 14 + 4;
       }
 
       private int tick_I_19() {
@@ -2842,11 +2842,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int add_I_14() {
-         return this.init_I_2 + 6;
+         return this.windowX + 6;
       }
 
       private int clear_I_7() {
-         return this.init_I_2 + this.read_I - 6 - 7;
+         return this.windowX + this.windowWidth - 6 - 7;
       }
 
       private int reset_I_6() {
@@ -2858,11 +2858,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int stop_I_6() {
-         return this.init_I_2 + this.read_I - 5;
+         return this.windowX + this.windowWidth - 5;
       }
 
       private int next_I_6() {
-         int raw = Math.max(14, this.load_I + this.write - this.put_I_7() - 8);
+         int raw = Math.max(14, this.windowY + this.windowHeight - this.put_I_7() - 8);
          return Math.max(14, this.alignHeightToStep(raw, 14));
       }
 
@@ -2872,7 +2872,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private int prev_I_5() {
          int buttons = this.valid() + (this.poll_Z_14() ? 2 + this.size() : 0);
-         return Math.max(120, this.read_I - 12 - buttons - 2);
+         return Math.max(120, this.windowWidth - 12 - buttons - 2);
       }
 
       private int valid() {
@@ -2911,7 +2911,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             total += widths[i];
          }
 
-         return total + 2 * (labels.length - 1) <= this.read_I - 12
+         return total + 2 * (labels.length - 1) <= this.windowWidth - 12
             ? new AutismPacketLoggerOverlay.PacketColumnLayout(labels, widths, 2)
             : new AutismPacketLoggerOverlay.PacketColumnLayout(labels, new int[]{88, 62, 56, 62, 46, 50, 50}, 2);
       }
@@ -2943,38 +2943,38 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public void init_V_Z(boolean v) {
+      public void setVisible(boolean v) {
          if (!v) {
             this.flush_V_14();
             this.write_V_20();
             this.close_Z = false;
          }
 
-         super.init_V_Z(v);
+         super.setVisible(v);
       }
 
       @Override
-      public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
-         if (this.init_Z || this.a__Z()) {
+      public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
+         if (this.windowVisible || this.isClosing()) {
             if (this.open_Z) {
                this.open_Z = false;
                this.put_V_7();
             }
 
-            OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
-            this.init_I_2 = bounds.x;
-            this.load_I = bounds.y;
-            this.renderWindowFrame(ctx, mx, my, bounds, "Payload Channels", this.load_Z, false);
-            boolean clip = this.beginBodyClip(ctx, bounds, this.load_Z);
+            OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.windowX, this.windowY, this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
+            this.windowX = bounds.x;
+            this.windowY = bounds.y;
+            this.renderWindowFrame(ctx, mx, my, bounds, "Payload Channels", this.windowCollapsed, false);
+            boolean clip = this.beginBodyClip(ctx, bounds, this.windowCollapsed);
             if (!clip) {
-               this.renderInactiveDim(ctx, bounds, this.load_Z, false);
+               this.renderInactiveDim(ctx, bounds, this.windowCollapsed, false);
             } else {
                try {
-                  int x = this.init_I_2 + 6;
+                  int x = this.windowX + 6;
                   int y = this.pop_I_21();
                   this.init_k.setX(x);
                   this.init_k.setY(y);
-                  this.init_k.setWidth(Math.max(80, this.read_I - 12));
+                  this.init_k.setWidth(Math.max(80, this.windowWidth - 12));
                   this.init_k.setHeight(AutismPacketLoggerOverlay.this.add_I_13());
                   this.init_k.render(ctx, mx, my, delta);
                   y = this.tick_I_19();
@@ -3126,7 +3126,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
                   boolean registrationUnlocked = PayloadSubscriptionManager.init_Z();
                   int lockW = this.data();
-                  int lockX = this.init_I_2 + this.read_I - 8 - lockW;
+                  int lockX = this.windowX + this.windowWidth - 8 - lockW;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
@@ -3187,7 +3187,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
                   autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-                     contentH, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, drawScroll
+                     contentH, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, drawScroll
                   );
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, metrics, metrics.containsTrack(mx, my), this.write_Z);
                   if (this.close_Z) {
@@ -3195,15 +3195,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
                } finally {
                   this.endBodyClip(ctx, clip);
-                  this.renderInactiveDim(ctx, bounds, this.load_Z, false);
+                  this.renderInactiveDim(ctx, bounds, this.windowCollapsed, false);
                }
             }
          }
       }
 
       private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, int mx, int my) {
-         int bodyTop = this.load_I + 14;
-         ctx.fill(this.init_I_2 + 4, bodyTop + 2, this.init_I_2 + this.read_I - 4, this.load_I + this.write - 5, -872086265);
+         int bodyTop = this.windowY + 14;
+         ctx.fill(this.windowX + 4, bodyTop + 2, this.windowX + this.windowWidth - 4, this.windowY + this.windowHeight - 5, -872086265);
          AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.init_AutismPacketLogger_3();
          int x = bounds.init;
          int y = bounds.load;
@@ -3294,7 +3294,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics init_AutismPacketLogger_3() {
-         int bodyTop = this.load_I + 14;
+         int bodyTop = this.windowY + 14;
          int contentW = 0;
          contentW = Math.max(
             contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.recolor(-19276, ThemePaletteManager.ColorRole.DANGER))
@@ -3303,11 +3303,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          contentW = Math.max(contentW, this.init_I_Str_3("This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, UiColorPalette.textBright()));
          contentW = Math.max(contentW, this.init_I_Str_3("Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, UiColorPalette.textBody()));
          int buttonsW = this.value() + 6 + this.cache();
-         int maxW = Math.max(180, this.read_I - 24);
+         int maxW = Math.max(180, this.windowWidth - 24);
          int w = Math.min(maxW, Math.max(buttonsW + 28, contentW + 28));
          int h = 75 + AutismPacketLoggerOverlay.this.add_I_13() + 10;
-         int x = this.init_I_2 + (this.read_I - w) / 2;
-         int y = bodyTop + Math.max(8, (this.write - 14 - h) / 2);
+         int x = this.windowX + (this.windowWidth - w) / 2;
+         int y = bodyTop + Math.max(8, (this.windowHeight - 14 - h) / 2);
          return new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics(x, y, w, h, y + h - 10 - AutismPacketLoggerOverlay.this.add_I_13());
       }
 
@@ -4443,19 +4443,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean load_Z() {
+      public boolean supportsHeaderCollapseClick() {
          return true;
       }
 
       @Override
-      public boolean init_Z_D_3(double mx, double my, int button) {
-         if (!this.init_Z) {
+      public boolean mouseClicked(double mx, double my, int button) {
+         if (!this.windowVisible) {
             return false;
          }
 
-         OverlayBounds bounds = this.init_cH();
+         OverlayBounds bounds = this.getBounds();
          if (button == 0 && this.isOverHeaderCloseButton(mx, my, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          }
 
@@ -4463,14 +4463,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return this.read(mx, my, button);
          }
 
-         if (button == 0 && this.load_Z_D_D(mx, my)) {
+         if (button == 0 && this.isOverHeader(mx, my)) {
             this.update_Z = true;
-            this.init_D = mx - this.init_I_2;
-            this.load_D = my - this.load_I;
+            this.init_D = mx - this.windowX;
+            this.load_D = my - this.windowY;
             return true;
          }
 
-         if (this.load_Z) {
+         if (this.windowCollapsed) {
             return true;
          }
 
@@ -4485,7 +4485,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int y = this.tick_I_19();
          int customW = this.prev_I_5();
          int addW = this.valid();
-         int addX = this.init_I_2 + 6 + customW + 2;
+         int addX = this.windowX + 6 + customW + 2;
          if (button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.add_I_13()) {
             if (mx >= addX && mx < addX + addW) {
                this.clear_V_7();
@@ -4503,7 +4503,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          y = this.run_I_19();
          AutismPacketLoggerOverlay.PacketColumnLayout controls = this.init_AutismPacketLogger_4();
-         int cx = this.init_I_2 + 6;
+         int cx = this.windowX + 6;
          boolean inControlsRow = button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.add_I_13();
          if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[0]) {
             AutismPacketLoggerOverlay.this.init_bB.resetToDefaultsInMemory();
@@ -4556,7 +4556,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          int lockW = this.data();
-         int lockX = this.init_I_2 + this.read_I - 8 - lockW;
+         int lockX = this.windowX + this.windowWidth - 8 - lockW;
          int lockY = this.set_I_17();
          if (button == 0 && my >= lockY && my < lockY + AutismPacketLoggerOverlay.this.add_I_13() && mx >= lockX && mx < lockX + lockW) {
             if (PayloadSubscriptionManager.init_Z()) {
@@ -4570,7 +4570,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
+               this.init_List.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.flush_I
             );
             if (button == 0 && metrics.isScrollable() && metrics.containsTrack((int)mx, (int)my)) {
                this.write_Z = true;
@@ -4701,7 +4701,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
             }
 
-            return this.init_Z_D_D(mx, my);
+            return this.containsPoint(mx, my);
          }
       }
 
@@ -5035,7 +5035,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
             List<String> applied = status == null ? List.of() : status.init_List();
             PayloadStudyTracker.init(label, patterns == null ? List.of() : patterns, applied);
-            this.init_V_Z(false);
+            this.setVisible(false);
             if (AutismPacketLoggerOverlay.init_Minecraft != null) {
                AutismPacketLoggerOverlay.init_Minecraft.gui.setScreen(null);
             }
@@ -5355,15 +5355,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_D(double mx, double my, int button, double dx, double dy) {
+      public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
          if (this.update_Z && button == 0) {
-            this.init_V_cH(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+            this.setBounds(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
             return true;
          } else if (this.write_Z && button == 0) {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
+               this.init_List.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.flush_I
             );
             this.flush_I = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.close_I), 14, metrics.maxScroll());
             return true;
@@ -5373,10 +5373,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean load_Z_D_3(double mx, double my, int button) {
+      public boolean mouseReleased(double mx, double my, int button) {
          if (button == 0 && this.update_Z) {
             this.update_Z = false;
-            this.a__V();
+            this.saveBounds();
             return true;
          } else if (button == 0 && this.write_Z) {
             this.write_Z = false;
@@ -5387,8 +5387,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_D_2(double mx, double my, double amount) {
-         if (this.init_Z && !this.load_Z && this.init_Z_D_D(mx, my)) {
+      public boolean mouseScrolled(double mx, double my, double amount) {
+         if (this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my)) {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
             int maxScroll = Math.max(0, this.init_List.size() * 14 - listH);
@@ -5401,8 +5401,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
-         if (!this.init_Z) {
+      public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+         if (!this.windowVisible) {
             return false;
          } else {
             KeyEvent event = Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers);
@@ -5415,8 +5415,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean init_Z_C_I(char chr, int modifiers) {
-         if (!this.init_Z) {
+      public boolean charTyped(char chr, int modifiers) {
+         if (!this.windowVisible) {
             return false;
          } else {
             CharacterEvent event = new CharacterEvent(chr);
@@ -5429,12 +5429,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       @Override
-      public boolean write_Z() {
-         return this.init_Z && (this.init_k.isFocused() || this.load_k.isFocused());
+      public boolean hasFocusedTextInput() {
+         return this.windowVisible && (this.init_k.isFocused() || this.load_k.isFocused());
       }
 
       @Override
-      public void push_V() {
+      public void clearInputFocus() {
          this.init_k.setFocused(false);
          this.load_k.setFocused(false);
       }

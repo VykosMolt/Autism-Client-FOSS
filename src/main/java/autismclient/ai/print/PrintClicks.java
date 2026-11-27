@@ -73,22 +73,22 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 final class PrintClicks {
-   private static final double[] init_DArr = new double[]{0.5, 0.2, 0.8};
-   private static final double[] load_DArr = new double[]{0.3, 0.7, 0.12, 0.88};
-   private static final double[] read = new double[]{0.5, 0.2, 0.8, 0.04, 0.96, 0.0, 1.0};
-   static final double init_D = 4.1000000000000005;
-   private static final double[][] init_DArr2 = new double[][]{{0.0, 0.0}, {0.75, 0.0}, {-0.75, 0.0}, {0.0, 0.75}, {0.0, -0.75}};
-   private static final double[][] load_DArr2 = init();
+   private static final double[] FACE_FRACTIONS_HORIZ = new double[]{0.5, 0.2, 0.8};
+   private static final double[] FACE_FRACTIONS_VERT = new double[]{0.3, 0.7, 0.12, 0.88};
+   private static final double[] FACE_FRACTIONS_EDGE = new double[]{0.5, 0.2, 0.8, 0.04, 0.96, 0.0, 1.0};
+   static final double DEFAULT_CLICK_REACH = 4.1000000000000005;
+   private static final double[][] COARSE_FEET_OFFSETS = new double[][]{{0.0, 0.0}, {0.75, 0.0}, {-0.75, 0.0}, {0.0, 0.75}, {0.0, -0.75}};
+   private static final double[][] DETAILED_FEET_OFFSETS = buildDetailedFeetOffsets();
 
    private PrintClicks() {
    }
 
-   static boolean init_Z_ArrayUtil(PrintView view, PrintEnv env, PrintTarget target, PrintClicks.Inner_CachePool mode) {
+   static boolean isServerLookAlignedWithTarget(PrintView view, PrintEnv env, PrintTarget target, PrintClicks.Inner_CachePool mode) {
       Vec3 eye = env.serverEyePos();
       BlockHitResult hit = view.raycastOutline(eye, eye.add(PrintGeometry.init_Vec3(env.serverYaw(), env.serverPitch()).scale(4.5)));
       if (hit != null && !(hit.getLocation().distanceTo(eye) > 4.4)) {
          BlockState state = view.getBlockState(hit.getBlockPos());
-         boolean waterloggable = state.getBlock() instanceof LiquidBlockContainer && init(target) == Items.WATER_BUCKET;
+         boolean waterloggable = state.getBlock() instanceof LiquidBlockContainer && getFluidBucketItem(target) == Items.WATER_BUCKET;
          BlockPos destination = waterloggable ? hit.getBlockPos() : hit.getBlockPos().relative(hit.getDirection());
          return destination.equals(target.pos()) && (mode != PrintClicks.Inner_CachePool.WATERLOG || waterloggable);
       } else {
@@ -96,7 +96,7 @@ final class PrintClicks {
       }
    }
 
-   static boolean init(PrintTarget target, PlacementGoal.PlaceConstraint constraint) {
+   static boolean isOrientationSensitive(PrintTarget target, PlacementGoal.PlaceConstraint constraint) {
       BlockState state = target.wanted();
       return PrintCore.sync_Z_BlockState(state)
          || state.getBlock() instanceof HopperBlock
@@ -115,7 +115,7 @@ final class PrintClicks {
             );
    }
 
-   static boolean init(BlockState wanted, Direction face) {
+   static boolean isValidHopperClickFace(BlockState wanted, Direction face) {
       if (wanted.getBlock().getClass() != HopperBlock.class) {
          return true;
       }
@@ -124,30 +124,30 @@ final class PrintClicks {
       return outlet == Direction.DOWN ? face.getAxis() == Axis.Y : outlet == face.getOpposite();
    }
 
-   private static boolean load(BlockState state) {
+   private static boolean isReplaceableTargetState(BlockState state) {
       return state != PrintView.UNLOADED_SENTINEL && (state.canBeReplaced() || state.isAir());
    }
 
-   private static boolean read(BlockState state) {
+   private static boolean isValidSupportState(BlockState state) {
       return state != PrintView.UNLOADED_SENTINEL && !state.isAir() && !state.canBeReplaced();
    }
 
-   private static boolean init(BlockState wanted, Direction face, PlacementGoal.@Nullable PlaceConstraint constraint) {
+   private static boolean acceptsSupportFace(BlockState wanted, Direction face, PlacementGoal.@Nullable PlaceConstraint constraint) {
       return wanted.getBlock() instanceof MultifaceBlock && !MultifaceBlock.hasFace(wanted, face.getOpposite())
          ? false
-         : init(wanted, face) && (constraint == null || constraint.acceptsFace(face));
+         : isValidHopperClickFace(wanted, face) && (constraint == null || constraint.acceptsFace(face));
    }
 
-   static boolean init_Z_ArrayUtil_2(PrintView view, PrintTarget target, PlacementGoal.@Nullable PlaceConstraint constraint, @Nullable BlockPos requiredSupport) {
-      if (!load(view.getBlockState(target.pos()))) {
+   static boolean hasPlaceableSupport(PrintView view, PrintTarget target, PlacementGoal.@Nullable PlaceConstraint constraint, @Nullable BlockPos requiredSupport) {
+      if (!isReplaceableTargetState(view.getBlockState(target.pos()))) {
          return false;
       }
 
       for (Direction direction : Direction.values()) {
          BlockPos support = target.pos().relative(direction);
-         if ((requiredSupport == null || support.equals(requiredSupport)) && init(target.wanted(), direction.getOpposite(), constraint)) {
+         if ((requiredSupport == null || support.equals(requiredSupport)) && acceptsSupportFace(target.wanted(), direction.getOpposite(), constraint)) {
             BlockState state = view.getBlockState(support);
-            if (read(state) && !view.getOutlineBoxes(state, support).isEmpty()) {
+            if (isValidSupportState(state) && !view.getOutlineBoxes(state, support).isEmpty()) {
                return true;
             }
          }
@@ -156,7 +156,7 @@ final class PrintClicks {
       return false;
    }
 
-   static @Nullable Direction init_Direction(BlockState wanted) {
+   static @Nullable Direction getRequiredLookDirection(BlockState wanted) {
       Class<?> type = wanted.getBlock().getClass();
       if (type == ObserverBlock.class) {
          return wanted.getValue(BlockStateProperties.FACING);
@@ -167,7 +167,7 @@ final class PrintClicks {
       }
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init_ConfigStore_Stream_ArrayUtil(
+   static PrintClicks.@Nullable Inner_StreamUtil findClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -179,10 +179,10 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget
    ) {
-      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, 4.4);
+      return findClick(view, env, rules, target, item, mode, feet, crouch, exact, budget, 4.4);
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil findClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -195,12 +195,12 @@ final class PrintClicks {
       PrintClicks.Inner_DataUtil budget,
       double reach
    ) {
-      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, null);
+      return findClick(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, null);
    }
 
-   static boolean init(PrintView view, PrintEnv env, PrintRules rules, PrintClicks.Inner_StreamUtil click, Vec3 feet, double reach) {
-      if (init(click.target(), null)) {
-         PrintClicks.Inner_StreamUtil aligned = init(
+   static boolean isClickValidFromFeet(PrintView view, PrintEnv env, PrintRules rules, PrintClicks.Inner_StreamUtil click, Vec3 feet, double reach) {
+      if (isOrientationSensitive(click.target(), null)) {
+         PrintClicks.Inner_StreamUtil aligned = tryClickWithLook(
             view,
             env,
             rules,
@@ -228,7 +228,7 @@ final class PrintClicks {
 
       float yaw = PrintGeometry.init(eye, point);
       float pitch = PrintGeometry.load(eye, point);
-      Direction required = init_Direction(click.target().wanted());
+      Direction required = getRequiredLookDirection(click.target().wanted());
       if (required != null && AiPlacementContext.init(yaw, pitch)[0] != required) {
          return false;
       }
@@ -238,14 +238,14 @@ final class PrintClicks {
       if (hit != null && hit.getBlockPos().equals(click.support()) && hit.getDirection() == click.face() && !(hit.getLocation().distanceToSqr(point) >= 4.0E-4)
          )
        {
-         RailShape rail = init_RailShape(view, click.target());
+         RailShape rail = getRequiredUnconnectedRailShape(view, click.target());
          if (rail != null && Direction.fromYRot(yaw).getAxis() != (rail == RailShape.NORTH_SOUTH ? Axis.Z : Axis.X)) {
             return false;
          }
 
-         if (init(click.target(), null)) {
+         if (isOrientationSensitive(click.target(), null)) {
             BlockState predicted = env.predictPlacedState(click.item(), hit, yaw, pitch, click.crouch(), click.target().pos());
-            if (predicted == null || !init(view, rules, click.target(), predicted, rail)) {
+            if (predicted == null || !matchesPredictedState(view, rules, click.target(), predicted, rail)) {
                return false;
             }
          }
@@ -256,7 +256,7 @@ final class PrintClicks {
       }
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil tryClickWithLook(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -271,41 +271,41 @@ final class PrintClicks {
       double reach,
       PlacementGoal.@Nullable PlaceConstraint constraint
    ) {
-      if (!budget.init() && load(view.getBlockState(target.pos()))) {
+      if (!budget.isExhausted() && isReplaceableTargetState(view.getBlockState(target.pos()))) {
          boolean compact = crouch && !env.canUseFlight();
          AABB body = PrintGeometry.init(feet.x, feet.y, feet.z, compact);
-         if (!budget.init(view, body)) {
+         if (!budget.isBodyClear(view, body)) {
             return null;
          }
 
          Vec3 eye = PrintGeometry.init(feet, compact);
-         budget.init_I++;
+         budget.raycastCount++;
          BlockHitResult hit = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
          if (hit != null
             && hit.getBlockPos().relative(hit.getDirection()).equals(target.pos())
             && !(hit.getLocation().distanceTo(eye) > reach)
-            && read(view.getBlockState(hit.getBlockPos()))
-            && init(target.wanted(), hit.getDirection(), constraint)
-            && init(constraint, hit.getDirection(), eye, hit.getLocation(), hit.getBlockPos())) {
-            Direction required = init_Direction(target.wanted());
+            && isValidSupportState(view.getBlockState(hit.getBlockPos()))
+            && acceptsSupportFace(target.wanted(), hit.getDirection(), constraint)
+            && satisfiesPlaceConstraint(constraint, hit.getDirection(), eye, hit.getLocation(), hit.getBlockPos())) {
+            Direction required = getRequiredLookDirection(target.wanted());
             if (required != null && AiPlacementContext.init(yaw, pitch)[0] != required) {
                return null;
             }
 
-            RailShape shape = init_RailShape(view, target);
+            RailShape shape = getRequiredUnconnectedRailShape(view, target);
             if (shape != null && Direction.fromYRot(yaw).getAxis() != (shape == RailShape.NORTH_SOUTH ? Axis.Z : Axis.X)) {
                return null;
             }
 
             BlockState predicted;
             if (exact) {
-               budget.load++;
+               budget.predictCount++;
                predicted = env.predictPlacedState(item, hit, yaw, pitch, crouch, target.pos());
             } else {
-               predicted = init_BlockState(view, target);
+               predicted = approximatePlacedState(view, target);
             }
 
-            return predicted != null && init(view, rules, target, predicted, shape) && !init_Z_ArrayUtil_5(view, predicted, target.pos(), body)
+            return predicted != null && matchesPredictedState(view, rules, target, predicted, shape) && !collidesWithPlacedState(view, predicted, target.pos(), body)
                ? new PrintClicks.Inner_StreamUtil(
                   target, PrintClicks.Inner_CachePool.PLACE, item, hit.getBlockPos(), hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, predicted
                )
@@ -318,7 +318,7 @@ final class PrintClicks {
       }
    }
 
-   static boolean init(PlacementGoal.PlaceConstraint c, Direction face, Vec3 eye, Vec3 hit, BlockPos support) {
+   static boolean satisfiesPlaceConstraint(PlacementGoal.PlaceConstraint c, Direction face, Vec3 eye, Vec3 hit, BlockPos support) {
       if (c == null) {
          return true;
       }
@@ -341,7 +341,7 @@ final class PrintClicks {
       return true;
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil findClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -355,10 +355,10 @@ final class PrintClicks {
       double reach,
       PlacementGoal.PlaceConstraint constraint
    ) {
-      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, null);
+      return findClick(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, null);
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil findClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -373,10 +373,10 @@ final class PrintClicks {
       PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport
    ) {
-      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, requiredSupport, env.canUseFlight());
+      return findClickCore(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, requiredSupport, env.canUseFlight());
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil findGroundedClickAndPredict(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -390,12 +390,12 @@ final class PrintClicks {
       PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport
    ) {
-      PrintClicks.Inner_StreamUtil click = init(view, env, rules, target, item, mode, feet, crouch, false, budget, reach, constraint, requiredSupport, false);
+      PrintClicks.Inner_StreamUtil click = findClickCore(view, env, rules, target, item, mode, feet, crouch, false, budget, reach, constraint, requiredSupport, false);
       if (click != null && mode == PrintClicks.Inner_CachePool.PLACE && !view.hasHypotheses()) {
          BlockState placed = env.predictPlacedState(item, click.result(), click.yaw(), click.pitch(), click.crouch(), target.pos());
-         if (placed != null && init_Z_ArrayUtil_3(view, rules, target, placed) && placed != click.predicted()) {
+         if (placed != null && matchesPredictedState(view, rules, target, placed) && placed != click.predicted()) {
             boolean compact = click.eye().y - feet.y < 1.61;
-            return init_Z_ArrayUtil_5(view, placed, target.pos(), PrintGeometry.init(feet.x, feet.y, feet.z, compact))
+            return collidesWithPlacedState(view, placed, target.pos(), PrintGeometry.init(feet.x, feet.y, feet.z, compact))
                ? click
                : new PrintClicks.Inner_StreamUtil(
                   target, mode, item, click.support(), click.face(), click.result(), click.eye(), feet, click.crouch(), click.yaw(), click.pitch(), placed
@@ -408,7 +408,7 @@ final class PrintClicks {
       }
    }
 
-   private static PrintClicks.@Nullable Inner_StreamUtil init(
+   private static PrintClicks.@Nullable Inner_StreamUtil findClickCore(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -426,21 +426,21 @@ final class PrintClicks {
    ) {
       boolean compact = crouch && !flightPose;
       AABB body = PrintGeometry.init(feet.x, feet.y, feet.z, compact);
-      if (!budget.init(view, body)) {
+      if (!budget.isBodyClear(view, body)) {
          if (compact || flightPose) {
             return null;
          }
 
          compact = true;
          body = PrintGeometry.init(feet.x, feet.y, feet.z, true);
-         if (!budget.init(view, body)) {
+         if (!budget.isBodyClear(view, body)) {
             return null;
          }
       }
 
       Vec3 eye = PrintGeometry.init(feet, compact);
       BlockPos cell = target.pos();
-      if (eye.distanceToSqr(PrintView.blockCenter(cell)) > init(reach + 0.9)) {
+      if (eye.distanceToSqr(PrintView.blockCenter(cell)) > square(reach + 0.9)) {
          return null;
       }
 
@@ -450,24 +450,24 @@ final class PrintClicks {
             return null;
          }
 
-         if (mode == PrintClicks.Inner_CachePool.PLACE && !load(here)) {
+         if (mode == PrintClicks.Inner_CachePool.PLACE && !isReplaceableTargetState(here)) {
             return null;
          }
 
          if (mode != PrintClicks.Inner_CachePool.POUR || here.isAir() || here.canBeReplaced() && !here.getFluidState().isSource()) {
-            Direction requiredLook = mode == PrintClicks.Inner_CachePool.PLACE ? init_Direction(target.wanted()) : null;
-            RailShape railShape = mode == PrintClicks.Inner_CachePool.PLACE ? init_RailShape(view, target) : null;
-            int passes = mode == PrintClicks.Inner_CachePool.PLACE && init(target, constraint) ? 2 : 1;
+            Direction requiredLook = mode == PrintClicks.Inner_CachePool.PLACE ? getRequiredLookDirection(target.wanted()) : null;
+            RailShape railShape = mode == PrintClicks.Inner_CachePool.PLACE ? getRequiredUnconnectedRailShape(view, target) : null;
+            int passes = mode == PrintClicks.Inner_CachePool.PLACE && isOrientationSensitive(target, constraint) ? 2 : 1;
 
             for (int pass = 0; pass < passes; pass++) {
                for (Direction d : Direction.values()) {
                   BlockPos support = cell.relative(d);
                   if (requiredSupport == null || support.equals(requiredSupport)) {
                      Direction face = d.getOpposite();
-                     if (mode != PrintClicks.Inner_CachePool.PLACE || init(target.wanted(), face, exact ? null : constraint)) {
+                     if (mode != PrintClicks.Inner_CachePool.PLACE || acceptsSupportFace(target.wanted(), face, exact ? null : constraint)) {
                         BlockState supportState = view.getBlockState(support);
-                        if (read(supportState)
-                           && (crouch || !init_Z(supportState))
+                        if (isValidSupportState(supportState)
+                           && (crouch || !isInteractableBlock(supportState))
                            && (
                               mode != PrintClicks.Inner_CachePool.POUR
                                  || !(supportState.getBlock() instanceof LiquidBlockContainer)
@@ -478,11 +478,11 @@ final class PrintClicks {
                               for (AABB box : outline) {
                                  AABB b = box.move(support);
                                  double plane = face.getAxisDirection() == AxisDirection.POSITIVE ? b.max(face.getAxis()) : b.min(face.getAxis());
-                                 double eyeSide = init(eye, face.getAxis()) - plane;
+                                 double eyeSide = getAxisCoordinate(eye, face.getAxis()) - plane;
                                  if (face.getAxisDirection() == AxisDirection.POSITIVE ? !(eyeSide <= 0.001) : !(eyeSide >= -0.001)) {
-                                    for (Vec3 point : init_List_AABB(b, face, plane, pass > 0)) {
-                                       if (!(eye.distanceToSqr(point) > init(reach))
-                                          && (mode != PrintClicks.Inner_CachePool.PLACE || exact || init(constraint, face, eye, point, support))) {
+                                    for (Vec3 point : sampleFacePoints(b, face, plane, pass > 0)) {
+                                       if (!(eye.distanceToSqr(point) > square(reach))
+                                          && (mode != PrintClicks.Inner_CachePool.PLACE || exact || satisfiesPlaceConstraint(constraint, face, eye, point, support))) {
                                           float yaw = 0.0F;
                                           float pitch = 0.0F;
                                           if (requiredLook != null || railShape != null) {
@@ -495,11 +495,11 @@ final class PrintClicks {
                                              }
                                           }
 
-                                          if (budget.init()) {
+                                          if (budget.isExhausted()) {
                                              return null;
                                           }
 
-                                          budget.init_I++;
+                                          budget.raycastCount++;
                                           Vec3 dir = point.subtract(eye).normalize();
                                           BlockHitResult hit = view.raycastBlock(eye, point.add(dir.scale(0.02)));
                                           if (hit != null
@@ -530,16 +530,16 @@ final class PrintClicks {
                                              }
 
                                              if (exact) {
-                                                budget.load++;
+                                                budget.predictCount++;
                                                 predicted = env.predictPlacedState(item, hit, yaw, pitch, crouch, cell);
-                                                if (predicted == null || !init(view, rules, target, predicted, railShape)) {
+                                                if (predicted == null || !matchesPredictedState(view, rules, target, predicted, railShape)) {
                                                    continue;
                                                 }
                                              } else {
-                                                predicted = init_BlockState(view, target);
+                                                predicted = approximatePlacedState(view, target);
                                              }
 
-                                             if (!init_Z_ArrayUtil_5(view, predicted, cell, body)) {
+                                             if (!collidesWithPlacedState(view, predicted, cell, body)) {
                                                 return new PrintClicks.Inner_StreamUtil(
                                                    target, mode, item, support, face, hit, eye, feet, crouch, yaw, pitch, predicted
                                                 );
@@ -561,13 +561,13 @@ final class PrintClicks {
             return null;
          }
       } else {
-         return mode == PrintClicks.Inner_CachePool.INTERACT && !init(view, target, body)
+         return mode == PrintClicks.Inner_CachePool.INTERACT && !isSafeToInteract(view, target, body)
             ? null
-            : init(view, env, rules, target, item, mode, eye, feet, crouch, exact, budget, reach);
+            : findDirectBlockClick(view, env, rules, target, item, mode, eye, feet, crouch, exact, budget, reach);
       }
    }
 
-   private static BlockState init_BlockState(PrintView view, PrintTarget target) {
+   private static BlockState approximatePlacedState(PrintView view, PrintTarget target) {
       BlockState state = target.wanted();
       Block block = state.getBlock();
       if (block instanceof TrapDoorBlock || block instanceof FenceGateBlock || block instanceof DoorBlock) {
@@ -582,11 +582,11 @@ final class PrintClicks {
       return state;
    }
 
-   static boolean init_Z_ArrayUtil_3(PrintView view, PrintRules rules, PrintTarget target, BlockState predicted) {
-      return init(view, rules, target, predicted, init_RailShape(view, target));
+   static boolean matchesPredictedState(PrintView view, PrintRules rules, PrintTarget target, BlockState predicted) {
+      return matchesPredictedState(view, rules, target, predicted, getRequiredUnconnectedRailShape(view, target));
    }
 
-   private static boolean init(PrintView view, PrintRules rules, PrintTarget target, BlockState predicted, @Nullable RailShape railShape) {
+   private static boolean matchesPredictedState(PrintView view, PrintRules rules, PrintTarget target, BlockState predicted, @Nullable RailShape railShape) {
       if (target.index() < 0 && target.cell() == null) {
          return target.wanted().getBlock() instanceof BaseRailBlock rail && predicted.is(rail)
             ? predicted.setValue(rail.getShapeProperty(), target.wanted().getValue(rail.getShapeProperty())) == target.wanted()
@@ -618,7 +618,7 @@ final class PrintClicks {
       }
    }
 
-   private static @Nullable RailShape init_RailShape(PrintView view, PrintTarget target) {
+   private static @Nullable RailShape getRequiredUnconnectedRailShape(PrintView view, PrintTarget target) {
       if (!(target.wanted().getBlock() instanceof BaseRailBlock rail)) {
          return null;
       } else {
@@ -636,7 +636,7 @@ final class PrintClicks {
                   return null;
                }
 
-               if (state.getBlock() instanceof BaseRailBlock && init_Z_ArrayUtil_4(view, neighbor.offset(0, dy, 0), state, target.pos())) {
+               if (state.getBlock() instanceof BaseRailBlock && neighborRailCanConnectToTarget(view, neighbor.offset(0, dy, 0), state, target.pos())) {
                   return null;
                }
             }
@@ -646,9 +646,9 @@ final class PrintClicks {
       }
    }
 
-   private static boolean init_Z_ArrayUtil_4(PrintView view, BlockPos at, BlockState state, BlockPos target) {
+   private static boolean neighborRailCanConnectToTarget(PrintView view, BlockPos at, BlockState state, BlockPos target) {
       BaseRailBlock rail = (BaseRailBlock)state.getBlock();
-      Direction[] ends = init(state.getValue(rail.getShapeProperty()));
+      Direction[] ends = getRailEndDirections(state.getValue(rail.getShapeProperty()));
       int connected = 0;
 
       for (Direction end : ends) {
@@ -665,7 +665,7 @@ final class PrintClicks {
             }
 
             if (other.getBlock() instanceof BaseRailBlock next) {
-               for (Direction toward : init(other.getValue(next.getShapeProperty()))) {
+               for (Direction toward : getRailEndDirections(other.getValue(next.getShapeProperty()))) {
                   if (toward == end.getOpposite()) {
                      connected++;
                      break;
@@ -679,7 +679,7 @@ final class PrintClicks {
       return connected < 2;
    }
 
-   private static Direction[] init(RailShape shape) {
+   private static Direction[] getRailEndDirections(RailShape shape) {
       Direction[] var10000;
       switch (shape) {
          case NORTH_SOUTH:
@@ -711,7 +711,7 @@ final class PrintClicks {
       return var10000;
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init(
+   static PrintClicks.@Nullable Inner_StreamUtil findPlacementClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -722,10 +722,10 @@ final class PrintClicks {
       double reach,
       PlacementGoal.PlaceConstraint constraint
    ) {
-      return init_ConfigStore_Stream_ArrayUtil_2(view, env, rules, target, feet, exact, budget, reach, constraint, null);
+      return findPlacementClick(view, env, rules, target, feet, exact, budget, reach, constraint, null);
    }
 
-   static PrintClicks.@Nullable Inner_StreamUtil init_ConfigStore_Stream_ArrayUtil_2(
+   static PrintClicks.@Nullable Inner_StreamUtil findPlacementClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -737,15 +737,15 @@ final class PrintClicks {
       PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos support
    ) {
-      PrintClicks.Inner_StreamUtil click = init(
+      PrintClicks.Inner_StreamUtil click = findClick(
          view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.PLACE, feet, true, exact, budget, reach, constraint, support
       );
       return click != null
          ? click
-         : init(view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.PLACE, feet, false, exact, budget, reach, constraint, support);
+         : findClick(view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.PLACE, feet, false, exact, budget, reach, constraint, support);
    }
 
-   static @Nullable Direction init(BlockState live, BlockState wanted) {
+   static @Nullable Direction getDoubleSlabMergeFace(BlockState live, BlockState wanted) {
       if (live.getBlock() instanceof SlabBlock
          && live.is(wanted.getBlock())
          && wanted.hasProperty(SlabBlock.TYPE)
@@ -771,7 +771,7 @@ final class PrintClicks {
       }
    }
 
-   private static PrintClicks.@Nullable Inner_StreamUtil init(
+   private static PrintClicks.@Nullable Inner_StreamUtil findDirectBlockClick(
       PrintView view,
       PrintEnv env,
       PrintRules rules,
@@ -809,7 +809,7 @@ final class PrintClicks {
          return null;
       }
 
-      Direction merge = mode == PrintClicks.Inner_CachePool.INTERACT && item == state.getBlock().asItem() ? init(state, target.wanted()) : null;
+      Direction merge = mode == PrintClicks.Inner_CachePool.INTERACT && item == state.getBlock().asItem() ? getDoubleSlabMergeFace(state, target.wanted()) : null;
       Set<Direction> pulse = mode == PrintClicks.Inner_CachePool.INTERACT && PrintCore.init_Z_ListPool_Item(target, item)
          ? PrintCore.init_Set_ArrayUtil_BlockPos(view, cell)
          : null;
@@ -825,15 +825,15 @@ final class PrintClicks {
          for (Direction face : Direction.values()) {
             if ((merge == null || face == merge) && (pulse == null || pulse.contains(face)) && (only == null || face == only)) {
                double plane = face.getAxisDirection() == AxisDirection.POSITIVE ? b.max(face.getAxis()) : b.min(face.getAxis());
-               double eyeSide = init(eye, face.getAxis()) - plane;
+               double eyeSide = getAxisCoordinate(eye, face.getAxis()) - plane;
                if (face.getAxisDirection() == AxisDirection.POSITIVE ? !(eyeSide <= 0.001) : !(eyeSide >= -0.001)) {
-                  for (Vec3 point : init(b, face, plane)) {
-                     if (budget.init()) {
+                  for (Vec3 point : sampleFacePoints(b, face, plane)) {
+                     if (budget.isExhausted()) {
                         return null;
                      }
 
-                     if (!(eye.distanceToSqr(point) > init(reach))) {
-                        budget.init_I++;
+                     if (!(eye.distanceToSqr(point) > square(reach))) {
+                        budget.raycastCount++;
                         Vec3 dir = point.subtract(eye).normalize();
                         BlockHitResult hit = view.raycastBlock(eye, point.add(dir.scale(0.02)));
                         if (hit != null && hit.getBlockPos().equals(cell) && hit.getDirection() == face) {
@@ -846,7 +846,7 @@ final class PrintClicks {
                            BlockHitResult wire = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
                            if (wire != null
                               && wire.getBlockPos().equals(cell)
-                              && init_Z_ArrayUtil(view, env, rules, target, item, wire, yaw, pitch, crouch, exact)) {
+                              && canExtendMultifaceBlock(view, env, rules, target, item, wire, yaw, pitch, crouch, exact)) {
                               hit = wire;
                               return new PrintClicks.Inner_StreamUtil(target, mode, item, cell, hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, null);
                            }
@@ -861,7 +861,7 @@ final class PrintClicks {
       return null;
    }
 
-   static boolean init_Z_ArrayUtil(
+   static boolean canExtendMultifaceBlock(
       PrintView view, PrintEnv env, PrintRules rules, PrintTarget target, Item item, BlockHitResult hit, float yaw, float pitch, boolean crouch, boolean exact
    ) {
       BlockState live = view.getBlockState(target.pos());
@@ -884,25 +884,25 @@ final class PrintClicks {
       }
    }
 
-   static boolean init_Z_J(long stanceKey, double feetY, BlockPos cell, double reach) {
+   static boolean isCellWithinStanceReach(long stanceKey, double feetY, BlockPos cell, double reach) {
       double dx = Math.max(0.0, Math.abs(BlockPos.getX(stanceKey) - cell.getX()) - 0.85);
       double dz = Math.max(0.0, Math.abs(BlockPos.getZ(stanceKey) - cell.getZ()) - 0.85);
       double cy = cell.getY() + 0.5;
       double lo = feetY + 1.27;
       double hi = feetY + 1.62;
       double dy = cy < lo ? lo - cy : (cy > hi ? cy - hi : 0.0);
-      return dx * dx + dy * dy + dz * dz <= init(reach + 0.9) + 1.0E-6;
+      return dx * dx + dy * dy + dz * dz <= square(reach + 0.9) + 1.0E-6;
    }
 
-   static List<Vec3> init(PrintView view, long stanceKey, double feetY) {
-      return init_List_ArrayUtil(view, stanceKey, feetY, true);
+   static List<Vec3> getCandidateFeetPositions(PrintView view, long stanceKey, double feetY) {
+      return getCandidateFeetPositions(view, stanceKey, feetY, true);
    }
 
-   static List<Vec3> init_List_ArrayUtil(PrintView view, long stanceKey, double feetY, boolean detailed) {
-      return init(view, stanceKey, feetY, detailed, null);
+   static List<Vec3> getCandidateFeetPositions(PrintView view, long stanceKey, double feetY, boolean detailed) {
+      return getCandidateFeetPositions(view, stanceKey, feetY, detailed, null);
    }
 
-   static List<Vec3> init(PrintView view, long stanceKey, double feetY, boolean detailed, Vec3 current) {
+   static List<Vec3> getCandidateFeetPositions(PrintView view, long stanceKey, double feetY, boolean detailed, Vec3 current) {
       if (current == null && PrintView.FEET_CACHE_ENABLED) {
          List<Vec3> cached = view.getCachedClickPoints(stanceKey, feetY, detailed);
          if (cached != null) {
@@ -910,14 +910,14 @@ final class PrintClicks {
          }
       }
 
-      return new PrintClicks.Inner_BufferHelper(view, stanceKey, feetY, detailed ? load_DArr2 : init_DArr2, current);
+      return new PrintClicks.Inner_BufferHelper(view, stanceKey, feetY, detailed ? DETAILED_FEET_OFFSETS : COARSE_FEET_OFFSETS, current);
    }
 
-   static List<Vec3> load(PrintView view, long stanceKey, double feetY, boolean detailed) {
-      return List.copyOf(new PrintClicks.Inner_BufferHelper(view, stanceKey, feetY, detailed ? load_DArr2 : init_DArr2, null));
+   static List<Vec3> computeCandidateFeetPositions(PrintView view, long stanceKey, double feetY, boolean detailed) {
+      return List.copyOf(new PrintClicks.Inner_BufferHelper(view, stanceKey, feetY, detailed ? DETAILED_FEET_OFFSETS : COARSE_FEET_OFFSETS, null));
    }
 
-   private static double[][] init() {
+   private static double[][] buildDetailedFeetOffsets() {
       ArrayList<double[]> offsets = new ArrayList<>();
       offsets.add(new double[]{0.0, 0.0});
       double clear = 0.199;
@@ -933,7 +933,7 @@ final class PrintClicks {
       return offsets.toArray(double[][]::new);
    }
 
-   static boolean init_Z(BlockState state) {
+   static boolean isInteractableBlock(BlockState state) {
       Block b = state.getBlock();
       return b instanceof BaseEntityBlock
          || b instanceof DoorBlock
@@ -958,27 +958,27 @@ final class PrintClicks {
          || b instanceof SmithingTableBlock;
    }
 
-   static boolean init(PrintView view, PrintTarget target, AABB body) {
+   static boolean isSafeToInteract(PrintView view, PrintTarget target, AABB body) {
       BooleanProperty open = BlockStateProperties.OPEN;
       BlockState live = view.getBlockState(target.pos());
       if (!PrintContainerAccess.init(view, target.pos(), live, body)) {
          return false;
       }
 
-      if (init(live, target.wanted()) != null && init_Z_ArrayUtil_5(view, live.setValue(SlabBlock.TYPE, SlabType.DOUBLE), target.pos(), body)) {
+      if (getDoubleSlabMergeFace(live, target.wanted()) != null && collidesWithPlacedState(view, live.setValue(SlabBlock.TYPE, SlabType.DOUBLE), target.pos(), body)) {
          return false;
       }
 
       if (live.hasProperty(open) && target.wanted().hasProperty(open) && !live.getValue(open).equals(target.wanted().getValue(open))) {
          BlockState next = live.cycle(open);
-         if (init_Z_ArrayUtil_5(view, next, target.pos(), body)) {
+         if (collidesWithPlacedState(view, next, target.pos(), body)) {
             return false;
          }
 
          if (live.getBlock() instanceof DoorBlock) {
             BlockPos other = live.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER ? target.pos().above() : target.pos().below();
             BlockState half = view.getBlockState(other);
-            if (half.is(live.getBlock()) && init_Z_ArrayUtil_5(view, half.setValue(open, next.getValue(open)), other, body)) {
+            if (half.is(live.getBlock()) && collidesWithPlacedState(view, half.setValue(open, next.getValue(open)), other, body)) {
                return false;
             }
          }
@@ -989,8 +989,8 @@ final class PrintClicks {
       }
    }
 
-   static boolean init_Z_ArrayUtil_5(PrintView view, BlockState state, BlockPos cell, AABB body) {
-      if (load(view, state, cell, body)) {
+   static boolean collidesWithPlacedState(PrintView view, BlockState state, BlockPos cell, AABB body) {
+      if (intersectsBlockCollision(view, state, cell, body)) {
          return true;
       }
 
@@ -1004,7 +1004,7 @@ final class PrintClicks {
       return false;
    }
 
-   static boolean load(PrintView view, BlockState state, BlockPos cell, AABB body) {
+   static boolean intersectsBlockCollision(PrintView view, BlockState state, BlockPos cell, AABB body) {
       for (AABB box : view.getCollisionBoxesForState(state, cell)) {
          if (box.move(cell).intersects(body.deflate(1.0E-4))) {
             return true;
@@ -1014,11 +1014,11 @@ final class PrintClicks {
       return false;
    }
 
-   static List<Vec3> init(AABB b, Direction face, double plane) {
-      return init_List_AABB(b, face, plane, false);
+   static List<Vec3> sampleFacePoints(AABB b, Direction face, double plane) {
+      return sampleFacePoints(b, face, plane, false);
    }
 
-   private static List<Vec3> init_List_AABB(AABB b, Direction face, final double plane, final boolean edges) {
+   private static List<Vec3> sampleFacePoints(AABB b, Direction face, final double plane, final boolean edges) {
       final Axis axis = face.getAxis();
       final Axis u = axis == Axis.X ? Axis.Y : Axis.X;
       final Axis v = axis == Axis.Z ? Axis.Y : Axis.Z;
@@ -1028,8 +1028,8 @@ final class PrintClicks {
       final double v1 = b.max(v);
       final double insetU = edges ? Math.min(0.015, (u1 - u0) * 0.15) : Math.min(0.15, (u1 - u0) * 0.25);
       final double insetV = edges ? Math.min(0.015, (v1 - v0) * 0.15) : Math.min(0.15, (v1 - v0) * 0.25);
-      final double[] us = edges ? read : (u == Axis.Y ? load_DArr : init_DArr);
-      final double[] vs = edges ? read : (v == Axis.Y ? load_DArr : init_DArr);
+      final double[] us = edges ? FACE_FRACTIONS_EDGE : (u == Axis.Y ? FACE_FRACTIONS_VERT : FACE_FRACTIONS_HORIZ);
+      final double[] vs = edges ? FACE_FRACTIONS_EDGE : (v == Axis.Y ? FACE_FRACTIONS_VERT : FACE_FRACTIONS_HORIZ);
       return new AbstractList<Vec3>() {
          @Override
          public int size() {
@@ -1046,12 +1046,12 @@ final class PrintClicks {
             double fv = vs[index % vs.length];
             double pu = !edges && u == Axis.Y ? u0 + (u1 - u0) * fu : u0 + insetU + (u1 - u0 - 2.0 * insetU) * fu;
             double pv = !edges && v == Axis.Y ? v0 + (v1 - v0) * fv : v0 + insetV + (v1 - v0 - 2.0 * insetV) * fv;
-            return PrintClicks.init(axis, plane, u, pu, v, pv);
+            return PrintClicks.pointOnFacePlane(axis, plane, u, pu, v, pv);
          }
       };
    }
 
-   private static Vec3 init(Axis axis, double a, Axis u, double pu, Axis v, double pv) {
+   private static Vec3 pointOnFacePlane(Axis axis, double a, Axis u, double pu, Axis v, double pv) {
       double x = 0.0;
       double y = 0.0;
       double z = 0.0;
@@ -1091,7 +1091,7 @@ final class PrintClicks {
       return new Vec3(x, y, z);
    }
 
-   static double init(Vec3 v, Axis axis) {
+   static double getAxisCoordinate(Vec3 v, Axis axis) {
       double var10000;
       switch (axis) {
          case X:
@@ -1110,97 +1110,97 @@ final class PrintClicks {
       return var10000;
    }
 
-   static double init(double v) {
+   static double square(double v) {
       return v * v;
    }
 
-   static Item init(PrintTarget target) {
+   static Item getFluidBucketItem(PrintTarget target) {
       return target.wanted().getFluidState().getType().isSame(Fluids.LAVA) ? Items.LAVA_BUCKET : Items.WATER_BUCKET;
    }
 
    private static final class Inner_BufferHelper extends AbstractList<Vec3> {
-      private final PrintView init_ArrayUtil;
-      private final int init_I;
-      private final int load_I;
-      private final double init_D;
-      private final double[][] init_DArr2;
-      private final ArrayList<Vec3> init_ArrayList = new ArrayList<>();
-      private int read;
-      private List<Vec3> init_List;
-      private int write;
-      private List<AABB> load_List;
+      private final PrintView view;
+      private final int cellX;
+      private final int cellZ;
+      private final double feetY;
+      private final double[][] offsets;
+      private final ArrayList<Vec3> resolved = new ArrayList<>();
+      private int nextOffsetIndex;
+      private List<Vec3> edgeCandidates;
+      private int nextEdgeIndex;
+      private List<AABB> nearbyCollisions;
 
       Inner_BufferHelper(PrintView view, long key, double y, double[][] offsets, Vec3 current) {
-         this.init_ArrayUtil = view;
-         this.init_I = BlockPos.getX(key);
-         this.load_I = BlockPos.getZ(key);
-         this.init_D = y;
-         this.init_DArr2 = offsets;
+         this.view = view;
+         this.cellX = BlockPos.getX(key);
+         this.cellZ = BlockPos.getZ(key);
+         this.feetY = y;
+         this.offsets = offsets;
          if (current != null) {
-            this.init_ArrayList.add(current);
+            this.resolved.add(current);
          }
       }
 
-      private boolean init_Z(int index) {
+      private boolean ensureResolved(int index) {
          while (true) {
             Vec3 feet;
             while (true) {
-               if (this.init_ArrayList.size() <= index) {
-                  if (this.read < this.init_DArr2.length) {
-                     double[] offset = this.init_DArr2[this.read++];
-                     feet = new Vec3(this.init_I + 0.5 + offset[0], this.init_D, this.load_I + 0.5 + offset[1]);
+               if (this.resolved.size() <= index) {
+                  if (this.nextOffsetIndex < this.offsets.length) {
+                     double[] offset = this.offsets[this.nextOffsetIndex++];
+                     feet = new Vec3(this.cellX + 0.5 + offset[0], this.feetY, this.cellZ + 0.5 + offset[1]);
                      if (offset[0] == 0.0 && offset[1] == 0.0) {
-                        this.init_ArrayList.add(feet);
+                        this.resolved.add(feet);
                         continue;
                      }
                      break;
                   }
 
-                  if (this.init_List == null) {
-                     this.init_List = this.init();
+                  if (this.edgeCandidates == null) {
+                     this.edgeCandidates = this.buildFloorEdgeCandidates();
                   }
 
-                  if (this.write < this.init_List.size()) {
-                     feet = this.init_List.get(this.write++);
-                     if (this.init_ArrayList.contains(feet)) {
+                  if (this.nextEdgeIndex < this.edgeCandidates.size()) {
+                     feet = this.edgeCandidates.get(this.nextEdgeIndex++);
+                     if (this.resolved.contains(feet)) {
                         continue;
                      }
                      break;
                   }
                }
 
-               return index < this.init_ArrayList.size();
+               return index < this.resolved.size();
             }
 
-            AABB body = PrintGeometry.init(feet.x, this.init_D, feet.z, true);
-            if (this.init_ArrayUtil.isBoxClear(body)
-               && !this.init_ArrayUtil.intersectsHazard(body)
-               && !PrintView.isHazardBlock(this.init_ArrayUtil.getBlockState(BlockPos.containing(feet.x, this.init_D - 0.2, feet.z)))) {
-               AABB under = new AABB(body.minX, this.init_D - 0.01, body.minZ, body.maxX, this.init_D - 0.001, body.maxZ);
-               if (!this.init_ArrayUtil.isBoxClear(under) && this.init(feet)) {
-                  this.init_ArrayList.add(feet);
+            AABB body = PrintGeometry.init(feet.x, this.feetY, feet.z, true);
+            if (this.view.isBoxClear(body)
+               && !this.view.intersectsHazard(body)
+               && !PrintView.isHazardBlock(this.view.getBlockState(BlockPos.containing(feet.x, this.feetY - 0.2, feet.z)))) {
+               AABB under = new AABB(body.minX, this.feetY - 0.01, body.minZ, body.maxX, this.feetY - 0.001, body.maxZ);
+               if (!this.view.isBoxClear(under) && this.hasContinuousFooting(feet)) {
+                  this.resolved.add(feet);
                }
             }
          }
       }
 
-      private boolean init(Vec3 feet) {
-         double cx = this.init_I + 0.5;
-         double cz = this.load_I + 0.5;
-         if (this.load_List == null) {
-            this.load_List = this.init_ArrayUtil.collectCollisions(new AABB(cx - 1.55, this.init_D - 0.01, cz - 1.55, cx + 1.55, this.init_D + 1.5, cz + 1.55));
+      private boolean hasContinuousFooting(Vec3 feet) {
+         double cx = this.cellX + 0.5;
+         double cz = this.cellZ + 0.5;
+         if (this.nearbyCollisions == null) {
+            this.nearbyCollisions = this.view.collectCollisions(new AABB(cx - 1.55, this.feetY - 0.01, cz - 1.55, cx + 1.55, this.feetY + 1.5, cz + 1.55));
          }
 
          ArrayList<PrintClicks.Inner_BufferHelper.Inner_DataUtil> footing = new ArrayList<>();
 
-         for (AABB box : this.load_List) {
-            PrintClicks.Inner_BufferHelper.Inner_DataUtil interval = init(cx, cz, feet.x - cx, feet.z - cz, box);
+         for (AABB box : this.nearbyCollisions) {
+            PrintClicks.Inner_BufferHelper.Inner_DataUtil interval = intersectFootprintSegment(cx, cz, feet.x - cx, feet.z - cz, box);
             if (interval != null) {
-               if (box.maxY > this.init_D + 1.0E-4 && box.minY < this.init_D + 1.5 - 1.0E-4) {
+               if (box.maxY > this.feetY + 1.0E-4 && box.minY < this.feetY + 1.5 - 1.0E-4) {
                   return false;
                }
 
-               if (box.maxY > this.init_D - 0.01 && box.maxY <= this.init_D + 1.0E-4) {
+               if (box.maxY > this.feetY - 0.01 && box.maxY <= this.feetY + 1.0E-4) {
                   footing.add(interval);
                }
             }
@@ -1223,7 +1223,7 @@ final class PrintClicks {
          return false;
       }
 
-      private static PrintClicks.Inner_BufferHelper.Inner_DataUtil init(double x, double z, double dx, double dz, AABB box) {
+      private static PrintClicks.Inner_BufferHelper.Inner_DataUtil intersectFootprintSegment(double x, double z, double dx, double dz, AABB box) {
          double radius = 0.2999;
          double start = 0.0;
          double end = 1.0;
@@ -1252,17 +1252,17 @@ final class PrintClicks {
          return start < end ? new PrintClicks.Inner_BufferHelper.Inner_DataUtil(start, end) : null;
       }
 
-      private List<Vec3> init() {
+      private List<Vec3> buildFloorEdgeCandidates() {
          LinkedHashSet<Double> xs = new LinkedHashSet<>();
          LinkedHashSet<Double> zs = new LinkedHashSet<>();
-         xs.add(this.init_I + 0.5);
-         zs.add(this.load_I + 0.5);
+         xs.add(this.cellX + 0.5);
+         zs.add(this.cellZ + 0.5);
          AABB under = new AABB(
-            this.init_I + 0.5 - 0.3, this.init_D - 0.01, this.load_I + 0.5 - 0.3, this.init_I + 0.5 + 0.3, this.init_D - 0.001, this.load_I + 0.5 + 0.3
+            this.cellX + 0.5 - 0.3, this.feetY - 0.01, this.cellZ + 0.5 - 0.3, this.cellX + 0.5 + 0.3, this.feetY - 0.001, this.cellZ + 0.5 + 0.3
          );
 
-         for (AABB floor : this.init_ArrayUtil.collectCollisions(under)) {
-            if (!(Math.abs(floor.maxY - this.init_D) > 1.0E-6)) {
+         for (AABB floor : this.view.collectCollisions(under)) {
+            if (!(Math.abs(floor.maxY - this.feetY) > 1.0E-6)) {
                xs.add(floor.minX - 0.015);
                xs.add(floor.maxX + 0.015);
                zs.add(floor.minZ - 0.015);
@@ -1274,7 +1274,7 @@ final class PrintClicks {
 
          for (double fx : xs) {
             for (double fz : zs) {
-               out.add(new Vec3(fx, this.init_D, fz));
+               out.add(new Vec3(fx, this.feetY, fz));
             }
          }
 
@@ -1282,12 +1282,12 @@ final class PrintClicks {
       }
 
       public Vec3 get(int index) {
-         return this.init_Vec3(index);
+         return this.getAt(index);
       }
 
-      public Vec3 init_Vec3(int index) {
-         if (index >= 0 && this.init_Z(index)) {
-            return this.init_ArrayList.get(index);
+      public Vec3 getAt(int index) {
+         if (index >= 0 && this.ensureResolved(index)) {
+            return this.resolved.get(index);
          } else {
             throw new IndexOutOfBoundsException(index);
          }
@@ -1295,8 +1295,8 @@ final class PrintClicks {
 
       @Override
       public int size() {
-         this.init_Z(2147483647);
-         return this.init_ArrayList.size();
+         this.ensureResolved(2147483647);
+         return this.resolved.size();
       }
 
       @Override
@@ -1306,7 +1306,7 @@ final class PrintClicks {
 
             @Override
             public boolean hasNext() {
-               return Inner_BufferHelper.this.init_Z(this.init);
+               return Inner_BufferHelper.this.ensureResolved(this.init);
             }
 
             public Vec3 next() {
@@ -1314,10 +1314,10 @@ final class PrintClicks {
             }
 
             public Vec3 init() {
-               if (!Inner_BufferHelper.this.init_Z(this.init)) {
+               if (!Inner_BufferHelper.this.ensureResolved(this.init)) {
                   throw new NoSuchElementException();
                } else {
-                  return Inner_BufferHelper.this.init_ArrayList.get(this.init++);
+                  return Inner_BufferHelper.this.resolved.get(this.init++);
                }
             }
          };
@@ -1336,33 +1336,33 @@ final class PrintClicks {
    }
 
    static final class Inner_DataUtil {
-      int init_I;
-      int load;
-      final int read;
-      private PrintView init_ArrayUtil;
-      private long init_J;
-      private final Map<AABB, Boolean> init_Map = new HashMap<>();
+      int raycastCount;
+      int predictCount;
+      final int maxRaycasts;
+      private PrintView cachedView;
+      private long cachedViewRevision;
+      private final Map<AABB, Boolean> bodyClearCache = new HashMap<>();
 
       Inner_DataUtil() {
-         this.read = -1;
+         this.maxRaycasts = -1;
       }
 
       Inner_DataUtil(int maxRays) {
-         this.read = maxRays;
+         this.maxRaycasts = maxRays;
       }
 
-      boolean init() {
-         return this.read >= 0 && this.init_I >= this.read;
+      boolean isExhausted() {
+         return this.maxRaycasts >= 0 && this.raycastCount >= this.maxRaycasts;
       }
 
-      boolean init(PrintView view, AABB body) {
-         if (this.init_ArrayUtil != view || this.init_J != view.viewRevision()) {
-            this.init_Map.clear();
-            this.init_ArrayUtil = view;
-            this.init_J = view.viewRevision();
+      boolean isBodyClear(PrintView view, AABB body) {
+         if (this.cachedView != view || this.cachedViewRevision != view.viewRevision()) {
+            this.bodyClearCache.clear();
+            this.cachedView = view;
+            this.cachedViewRevision = view.viewRevision();
          }
 
-         return this.init_Map.computeIfAbsent(body, box -> view.isBoxClear(box.deflate(0.001)));
+         return this.bodyClearCache.computeIfAbsent(body, box -> view.isBoxClear(box.deflate(0.001)));
       }
    }
 

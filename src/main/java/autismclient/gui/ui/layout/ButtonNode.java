@@ -7,201 +7,201 @@ import java.util.Objects;
 import net.minecraft.resources.Identifier;
 
 public class ButtonNode extends LayoutNode {
-   private String init_Str;
-   private ButtonNode.Variant init_ByteReader_StreamU;
-   private Runnable init_Runnable;
-   private float sync_F = 24.0F;
-   private float flush = 3.4028235E38F;
-   private float close = -1.0F;
-   private int init_I = 5;
-   private int load_I = -1;
-   private int read_I = 0;
-   private Identifier init_Identifier;
-   private int write_I = 10;
-   private int update_I = 4;
-   private ButtonNode.TextAlign init_ByteReader_DataUti = ButtonNode.TextAlign.CENTER;
-   private l init_l = l.read;
-   private boolean write_Z;
-   private boolean update_Z;
-   private ConnectedButtonRenderer.Inner_DataUtil init_MethodUtil_DataUti = ConnectedButtonRenderer.init;
-   private float open;
-   private boolean sync_Z;
-   private long init_J_2 = System.nanoTime();
+   private String label;
+   private ButtonNode.Variant variant;
+   private Runnable onPress;
+   private float minWidth = 24.0F;
+   private float maxWidth = 3.4028235E38F;
+   private float preferredWidth = -1.0F;
+   private int horizontalPadding = 5;
+   private int fixedHeight = -1;
+   private int textYOffset = 0;
+   private Identifier leadingIcon;
+   private int iconSize = 10;
+   private int iconGap = 4;
+   private ButtonNode.TextAlign textAlign = ButtonNode.TextAlign.CENTER;
+   private l textTone = l.read;
+   private boolean connectedStyle;
+   private boolean connectedToggle;
+   private ConnectedButtonRenderer.Inner_DataUtil connectedEdges = ConnectedButtonRenderer.init;
+   private float toggleProgress;
+   private boolean toggleInitialized;
+   private long lastAnimNanos = System.nanoTime();
 
-   private Identifier init_Identifier_CharEncoder_I(autismclient.gui.f.b.CharEncoder theme, int height) {
-      return theme.init_Identifier_l(this.init_l);
+   private Identifier resolveFont(autismclient.gui.f.b.CharEncoder theme, int height) {
+      return theme.init_Identifier_l(this.textTone);
    }
 
    public ButtonNode(String text, ButtonNode.Variant variant, Runnable onPress) {
-      this.init_Str = text == null ? "" : text;
-      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Variant.SECONDARY : variant;
-      this.init_Runnable = onPress;
+      this.label = text == null ? "" : text;
+      this.variant = variant == null ? ButtonNode.Variant.SECONDARY : variant;
+      this.onPress = onPress;
       this.nodeHeight = 13.0F;
    }
 
-   public ButtonNode init_ByteReader_Str(String text) {
+   public ButtonNode setText(String text) {
       String next = text == null ? "" : text;
-      if (!this.init_Str.equals(next)) {
-         this.init_Str = next;
+      if (!this.label.equals(next)) {
+         this.label = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode init_ByteReader_ByteReader_StreamU(ButtonNode.Variant variant) {
-      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Variant.SECONDARY : variant;
+   public ButtonNode setVariant(ButtonNode.Variant variant) {
+      this.variant = variant == null ? ButtonNode.Variant.SECONDARY : variant;
       return this;
    }
 
-   public ButtonNode init_ByteReader_Runnable(Runnable onPress) {
-      this.init_Runnable = onPress;
+   public ButtonNode setOnPress(Runnable onPress) {
+      this.onPress = onPress;
       return this;
    }
 
-   public ButtonNode init_ByteReader_F(float minWidth) {
+   public ButtonNode setMinWidth(float minWidth) {
       float next = Math.max(0.0F, minWidth);
-      if (Float.compare(this.sync_F, next) != 0) {
-         this.sync_F = next;
+      if (Float.compare(this.minWidth, next) != 0) {
+         this.minWidth = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode load_ByteReader_F(float maxWidth) {
-      float next = Math.max(this.sync_F, maxWidth);
-      if (Float.compare(this.flush, next) != 0) {
-         this.flush = next;
+   public ButtonNode setMaxWidth(float maxWidth) {
+      float next = Math.max(this.minWidth, maxWidth);
+      if (Float.compare(this.maxWidth, next) != 0) {
+         this.maxWidth = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode read_ByteReader_F(float preferredWidth) {
-      if (Float.compare(this.close, preferredWidth) != 0) {
-         this.close = preferredWidth;
+   public ButtonNode setPreferredWidth(float preferredWidth) {
+      if (Float.compare(this.preferredWidth, preferredWidth) != 0) {
+         this.preferredWidth = preferredWidth;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode init_ByteReader_I(int horizontalPadding) {
+   public ButtonNode setHorizontalPadding(int horizontalPadding) {
       int next = Math.max(0, horizontalPadding);
-      if (this.init_I != next) {
-         this.init_I = next;
+      if (this.horizontalPadding != next) {
+         this.horizontalPadding = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode load_ByteReader_I(int fixedHeight) {
+   public ButtonNode setFixedHeight(int fixedHeight) {
       int next = Math.max(1, fixedHeight);
-      if (this.load_I != next) {
-         this.load_I = next;
+      if (this.fixedHeight != next) {
+         this.fixedHeight = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode read_ByteReader_I(int textYOffset) {
-      this.read_I = textYOffset;
+   public ButtonNode setTextYOffset(int textYOffset) {
+      this.textYOffset = textYOffset;
       return this;
    }
 
-   public ButtonNode init_ByteReader_Identifier(Identifier leadingIcon) {
-      if (!Objects.equals(this.init_Identifier, leadingIcon)) {
-         this.init_Identifier = leadingIcon;
+   public ButtonNode setLeadingIcon(Identifier leadingIcon) {
+      if (!Objects.equals(this.leadingIcon, leadingIcon)) {
+         this.leadingIcon = leadingIcon;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode write(int iconSize) {
+   public ButtonNode setIconSize(int iconSize) {
       int next = Math.max(1, iconSize);
-      if (this.write_I != next) {
-         this.write_I = next;
+      if (this.iconSize != next) {
+         this.iconSize = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode update(int iconGap) {
+   public ButtonNode setIconGap(int iconGap) {
       int next = Math.max(0, iconGap);
-      if (this.update_I != next) {
-         this.update_I = next;
+      if (this.iconGap != next) {
+         this.iconGap = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode init_ByteReader_ByteReader_DataUti(ButtonNode.TextAlign contentAlignment) {
-      this.init_ByteReader_DataUti = contentAlignment == null ? ButtonNode.TextAlign.CENTER : contentAlignment;
+   public ButtonNode setTextAlign(ButtonNode.TextAlign contentAlignment) {
+      this.textAlign = contentAlignment == null ? ButtonNode.TextAlign.CENTER : contentAlignment;
       return this;
    }
 
-   public ButtonNode init_ByteReader_l(l tone) {
+   public ButtonNode setTextTone(l tone) {
       l next = tone == null ? l.read : tone;
-      if (this.init_l != next) {
-         this.init_l = next;
+      if (this.textTone != next) {
+         this.textTone = next;
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public ButtonNode init_ByteReader_Z(boolean connectedStyle) {
-      this.write_Z = connectedStyle;
+   public ButtonNode setConnectedStyle(boolean connectedStyle) {
+      this.connectedStyle = connectedStyle;
       return this;
    }
 
-   public ButtonNode load_ByteReader_Z(boolean connectedToggle) {
-      this.update_Z = connectedToggle;
+   public ButtonNode setConnectedToggle(boolean connectedToggle) {
+      this.connectedToggle = connectedToggle;
       if (connectedToggle) {
-         this.write_Z = true;
+         this.connectedStyle = true;
       }
 
       return this;
    }
 
-   public ButtonNode init_ByteReader_MethodUtil_DataUti(ConnectedButtonRenderer.Inner_DataUtil connectedEdges) {
-      this.init_MethodUtil_DataUti = connectedEdges == null ? ConnectedButtonRenderer.load : connectedEdges;
+   public ButtonNode setConnectedEdges(ConnectedButtonRenderer.Inner_DataUtil connectedEdges) {
+      this.connectedEdges = connectedEdges == null ? ConnectedButtonRenderer.load : connectedEdges;
       return this;
    }
 
-   public ButtonNode read_ByteReader_Z(boolean growX) {
+   public ButtonNode withGrowX(boolean growX) {
       super.setGrowX(growX);
       return this;
    }
 
    @Override
    public float measurePreferredWidth(LayoutContext context) {
-      int measureHeight = this.load_I > 0 ? this.load_I : context.theme().update();
-      Identifier font = this.init_Identifier_CharEncoder_I(context.theme(), measureHeight);
-      int scaledHorizontalPadding = context.theme().load(this.init_I);
-      int scaledIconSize = context.theme().load(this.write_I);
-      int scaledIconGap = context.theme().load(this.update_I);
+      int measureHeight = this.fixedHeight > 0 ? this.fixedHeight : context.theme().update();
+      Identifier font = this.resolveFont(context.theme(), measureHeight);
+      int scaledHorizontalPadding = context.theme().load(this.horizontalPadding);
+      int scaledIconSize = context.theme().load(this.iconSize);
+      int scaledIconGap = context.theme().load(this.iconGap);
       float fittedWidth = UiLayoutMath.measurePaddedWidthFloat(
-         context.font(), this.init_Str, font, context.theme().load(l.read), scaledHorizontalPadding, this.sync_F, this.flush
+         context.font(), this.label, font, context.theme().load(l.read), scaledHorizontalPadding, this.minWidth, this.maxWidth
       );
-      if (this.init_Identifier != null) {
+      if (this.leadingIcon != null) {
          fittedWidth += scaledIconSize + scaledIconGap;
       }
 
-      return this.close > 0.0F ? UiLayoutMath.clamp(Math.max(this.close, fittedWidth), this.sync_F, this.flush) : UiLayoutMath.clamp(fittedWidth, this.sync_F, this.flush);
+      return this.preferredWidth > 0.0F ? UiLayoutMath.clamp(Math.max(this.preferredWidth, fittedWidth), this.minWidth, this.maxWidth) : UiLayoutMath.clamp(fittedWidth, this.minWidth, this.maxWidth);
    }
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
-      int resolvedFixedHeight = this.load_I > 0 ? this.load_I : context.theme().update();
-      int contentHeight = context.theme().init_I_l(this.init_l) + context.theme().load(4);
+      int resolvedFixedHeight = this.fixedHeight > 0 ? this.fixedHeight : context.theme().update();
+      int contentHeight = context.theme().init_I_l(this.textTone) + context.theme().load(4);
       return Math.max(12, Math.max(resolvedFixedHeight, contentHeight));
    }
 
@@ -213,24 +213,24 @@ public class ButtonNode extends LayoutNode {
          int drawW = Math.round(this.nodeWidth);
          int drawH = Math.round(this.nodeHeight);
          boolean hovered = this.nodeEnabled && this.containsPoint(context.mouseX(), context.mouseY());
-         if (this.write_Z) {
-            this.load(context, drawX, drawY, drawW, drawH, hovered);
+         if (this.connectedStyle) {
+            this.renderConnected(context, drawX, drawY, drawW, drawH, hovered);
          } else {
-            this.init_V_SyncManager(context, drawX, drawY, drawW, drawH, hovered);
+            this.renderStandard(context, drawX, drawY, drawW, drawH, hovered);
          }
       }
    }
 
-   private void init_V_SyncManager(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
+   private void renderStandard(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(
          context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
-      autismclient.gui.f.b.CachePool.Inner_DataUtil buttonTone = this.init_CachePool_DataUtil();
-      if (this.init_Identifier == null) {
-         autismclient.gui.f.b.CachePool.init(ui, bounds, this.init_Str, buttonTone, hovered, false);
+      autismclient.gui.f.b.CachePool.Inner_DataUtil buttonTone = this.resolveButtonTone();
+      if (this.leadingIcon == null) {
+         autismclient.gui.f.b.CachePool.init(ui, bounds, this.label, buttonTone, hovered, false);
       } else {
-         autismclient.gui.f.b.CachePool.init(ui, bounds, this.init_Str, this.init_Identifier, buttonTone, hovered, false, 0.0F);
+         autismclient.gui.f.b.CachePool.init(ui, bounds, this.label, this.leadingIcon, buttonTone, hovered, false, 0.0F);
       }
 
       if (!this.nodeEnabled) {
@@ -238,43 +238,43 @@ public class ButtonNode extends LayoutNode {
       }
    }
 
-   private void load(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
+   private void renderConnected(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(
          context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
-      if (this.update_Z) {
-         float target = this.init_ByteReader_StreamU == ButtonNode.Variant.SUCCESS ? 1.0F : 0.0F;
-         if (!this.sync_Z) {
-            this.open = target;
-            this.sync_Z = true;
+      if (this.connectedToggle) {
+         float target = this.variant == ButtonNode.Variant.SUCCESS ? 1.0F : 0.0F;
+         if (!this.toggleInitialized) {
+            this.toggleProgress = target;
+            this.toggleInitialized = true;
          } else {
-            this.open = this.init_F_F_F(this.open, target);
+            this.toggleProgress = this.stepToggleAnimation(this.toggleProgress, target);
          }
 
-         ConnectedButtonRenderer.init(ui, bounds, this.init_Str, this.init_Identifier, hovered, this.open, this.init_MethodUtil_DataUti);
+         ConnectedButtonRenderer.init(ui, bounds, this.label, this.leadingIcon, hovered, this.toggleProgress, this.connectedEdges);
       } else {
-         ConnectedButtonRenderer.init(ui, bounds, this.init_Str, this.init_Identifier, this.init_CachePool_DataUtil(), hovered, this.init_MethodUtil_DataUti);
+         ConnectedButtonRenderer.init(ui, bounds, this.label, this.leadingIcon, this.resolveButtonTone(), hovered, this.connectedEdges);
       }
    }
 
-   boolean init_Z_2() {
-      return this.write_Z;
+   boolean isConnectedStyle() {
+      return this.connectedStyle;
    }
 
-   int init_I_SyncManager(autismclient.gui.f.SyncManager ui) {
-      return this.update_Z ? ConnectedButtonRenderer.init(ui, this.open) : ConnectedButtonRenderer.init(ui, this.init_CachePool_DataUtil());
+   int resolveConnectedColor(autismclient.gui.f.SyncManager ui) {
+      return this.connectedToggle ? ConnectedButtonRenderer.init(ui, this.toggleProgress) : ConnectedButtonRenderer.init(ui, this.resolveButtonTone());
    }
 
-   float init_F() {
-      return ConnectedButtonRenderer.init_F_CachePool_DataUtil(this.init_CachePool_DataUtil(), this.update_Z, this.update_Z ? this.open : 0.0F);
+   float resolveConnectedWeight() {
+      return ConnectedButtonRenderer.init_F_CachePool_DataUtil(this.resolveButtonTone(), this.connectedToggle, this.connectedToggle ? this.toggleProgress : 0.0F);
    }
 
-   private autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil() {
-      return init_CachePool_DataUtil_ByteReader_StreamU(this.init_ByteReader_StreamU);
+   private autismclient.gui.f.b.CachePool.Inner_DataUtil resolveButtonTone() {
+      return toButtonTone(this.variant);
    }
 
-   public static autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(ButtonNode.Variant variant) {
+   public static autismclient.gui.f.b.CachePool.Inner_DataUtil toButtonTone(ButtonNode.Variant variant) {
       autismclient.gui.f.b.CachePool.Inner_DataUtil var10000;
       switch (variant) {
          case PRIMARY:
@@ -297,10 +297,10 @@ public class ButtonNode extends LayoutNode {
       return var10000;
    }
 
-   private float init_F_F_F(float current, float target) {
+   private float stepToggleAnimation(float current, float target) {
       long now = System.nanoTime();
-      float delta = Math.max(0.0F, Math.min(0.05F, (float)(now - this.init_J_2) / 1.0E9F));
-      this.init_J_2 = now;
+      float delta = Math.max(0.0F, Math.min(0.05F, (float)(now - this.lastAnimNanos) / 1.0E9F));
+      this.lastAnimNanos = now;
       float step = delta / 0.16F;
       if (current < target) {
          return Math.min(target, current + step);
@@ -312,8 +312,8 @@ public class ButtonNode extends LayoutNode {
    @Override
    public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
       if (this.nodeEnabled && this.containsPoint(mouseX, mouseY) && button == 0) {
-         if (this.init_Runnable != null) {
-            this.init_Runnable.run();
+         if (this.onPress != null) {
+            this.onPress.run();
          }
 
          return true;

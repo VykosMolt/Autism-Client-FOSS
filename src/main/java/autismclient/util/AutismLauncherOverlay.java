@@ -134,7 +134,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.update_Z = includeScreenSection;
       this.sync_Z = includeChatSection;
       this.write_V_11();
-      this.b__V();
+      this.loadBounds();
       if (this.init_DataUtil != null) {
          this.init_DataUtil.load_DataUtil(this.init_DataUtil.init_Z_3());
       }
@@ -195,9 +195,9 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.layout.ButtonNode macrosButton = this.init(
          "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
-            if (macroEditorOverlay != null && macroEditorOverlay.sync_Z()) {
+            if (macroEditorOverlay != null && macroEditorOverlay.isVisible()) {
                if (this.init_AutismMacroListOve != null) {
-                  this.init_AutismMacroListOve.init_V_Z(false);
+                  this.init_AutismMacroListOve.setVisible(false);
                }
 
                OverlayManager.getInstance().bringToFront(macroEditorOverlay);
@@ -274,8 +274,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       this.init_V_Str_Identifier("PACKET", autismclient.gui.f.a.DataUtil.tick);
-      this.init_ByteReader = this.init("Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::update_V_9).load_ByteReader_Z(true);
-      this.load_ByteReader = this.init("Delay", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::sync_V_8).load_ByteReader_Z(true);
+      this.init_ByteReader = this.init("Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::update_V_9).setConnectedToggle(true);
+      this.load_ByteReader = this.init("Delay", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::sync_V_8).setConnectedToggle(true);
       this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), this.init_ByteReader, this.load_ByteReader);
       this.init_V_PacketUtil(
          this.init_DataUtil.init_PacketUtil_2(),
@@ -341,7 +341,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       if (!this.sync_Z && !this.init_DataUtil.init_PacketUtil_2().getChildren().isEmpty()) {
          autismclient.gui.ui.layout.LayoutNode last = this.init_DataUtil.init_PacketUtil_2().getChildren().getLast();
          if (last instanceof autismclient.gui.ui.layout.ButtonNode button) {
-            button.init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(true, true));
+            button.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(true, true));
          } else if (last instanceof autismclient.gui.ui.layout.RowLayout pair) {
             List<autismclient.gui.ui.layout.ButtonNode> buttons = pair.getChildren()
                .stream()
@@ -350,7 +350,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
                .toList();
 
             for (int i = 0; i < buttons.size(); i++) {
-               buttons.get(i).init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(i == 0, i == buttons.size() - 1));
+               buttons.get(i).setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(i == 0, i == buttons.size() - 1));
             }
          }
       }
@@ -362,11 +362,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          boolean wasRegistered = manager.getOverlays().contains(overlay);
          manager.register(overlay);
          manager.setHidden(overlay, false);
-         if (!wasRegistered && overlay.sync_Z()) {
+         if (!wasRegistered && overlay.isVisible()) {
             manager.bringToFront(overlay);
          } else {
-            overlay.init_V_Z(!overlay.sync_Z());
-            if (overlay.sync_Z()) {
+            overlay.setVisible(!overlay.isVisible());
+            if (overlay.isVisible()) {
                manager.bringToFront(overlay);
             }
          }
@@ -394,55 +394,55 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          .init(this.get_I_9())
          .init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
          .init_StreamUtil(false);
-      left.read_ByteReader_Z(true);
-      right.read_ByteReader_Z(true);
-      row.addChild(left.init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write));
-      row.addChild(right.init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write));
+      left.withGrowX(true);
+      right.withGrowX(true);
+      row.addChild(left.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write));
+      row.addChild(right.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write));
       row.setGrowX(true);
       parent.addChild(row);
    }
 
    private autismclient.gui.ui.layout.ButtonNode init(String label, Identifier icon, autismclient.gui.ui.layout.ButtonNode.Variant variant, Runnable action) {
       autismclient.gui.ui.layout.ButtonNode button = new autismclient.gui.ui.layout.ButtonNode(label, variant, action)
-         .read_ByteReader_Z(false)
-         .init_ByteReader_Z(true)
-         .init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write)
-         .load_ByteReader_I(this.set_I_9())
-         .init_ByteReader_I(this.put_I_3())
-         .init_ByteReader_F(this.init_I_Str_Identifier(label, icon))
-         .read_ByteReader_I(0);
+         .withGrowX(false)
+         .setConnectedStyle(true)
+         .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write)
+         .setFixedHeight(this.set_I_9())
+         .setHorizontalPadding(this.put_I_3())
+         .setMinWidth(this.init_I_Str_Identifier(label, icon))
+         .setTextYOffset(0);
       if (icon != null) {
-         button.init_ByteReader_Identifier(icon)
-            .init_ByteReader_ByteReader_DataUti(autismclient.gui.ui.layout.ButtonNode.TextAlign.START)
-            .write(this.add_I_9())
-            .update(this.clear_I_3());
+         button.setLeadingIcon(icon)
+            .setTextAlign(autismclient.gui.ui.layout.ButtonNode.TextAlign.START)
+            .setIconSize(this.add_I_9())
+            .setIconGap(this.clear_I_3());
       }
 
       return button;
    }
 
    @Override
-   public String init_Str() {
+   public String getOverlayId() {
       return this.read_Str;
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.push_I_13();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.next();
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.init_Z_3());
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH_cH_2(bounds);
          this.stop = clamped.x;
@@ -457,24 +457,24 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void a__V() {
-      AutismSessionState.getInstance().setOverlayBounds(this.init_Str(), this.init_cH());
+   public void saveBounds() {
+      AutismSessionState.getInstance().setOverlayBounds(this.getOverlayId(), this.getBounds());
       AutismConfig config = AutismConfig.getGlobal();
       AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.computeIfAbsent("MAIN_MENU", ignored -> new AutismConfig.ModuleCategoryLayout());
-      OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(this.init_Str());
+      OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(this.getOverlayId());
       int saveX = trueGeometry != null ? trueGeometry.x : this.stop;
       int saveY = trueGeometry != null ? trueGeometry.y : this.next;
-      if (layout.f_x_I != saveX || layout.f_y_I != saveY || layout.collapsed != this.flush_Z()) {
+      if (layout.f_x_I != saveX || layout.f_y_I != saveY || layout.collapsed != this.isCollapsed()) {
          layout.f_x_I = saveX;
          layout.f_y_I = saveY;
-         layout.collapsed = this.flush_Z();
+         layout.collapsed = this.isCollapsed();
          config.save();
       }
    }
 
    @Override
-   public void b__V() {
-      OverlayBounds saved = AutismSessionState.getInstance().getOverlayBounds(this.init_Str());
+   public void loadBounds() {
+      OverlayBounds saved = AutismSessionState.getInstance().getOverlayBounds(this.getOverlayId());
       boolean savedVisible = saved == null || saved.visible;
       boolean savedCollapsed = saved != null && saved.collapsed;
       AutismConfig config = AutismConfig.getGlobal();
@@ -491,30 +491,30 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       if (layout != null && layout.f_x_I >= 0 && layout.f_y_I >= 0) {
-         this.init_V_cH(new OverlayBounds(layout.f_x_I, layout.f_y_I, this.prev, this.valid, savedVisible, layout.collapsed || savedCollapsed));
+         this.setBounds(new OverlayBounds(layout.f_x_I, layout.f_y_I, this.prev, this.valid, savedVisible, layout.collapsed || savedCollapsed));
       } else if (saved != null) {
-         this.init_V_cH(saved);
+         this.setBounds(saved);
       }
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.flush_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.flush_Z || this.isClosing()) {
          AutismSessionState shared = AutismSessionState.getInstance();
          if (this.init_ByteReader != null) {
             boolean sending = shared.isSendPacketsEnabled();
-            this.init_ByteReader.init_ByteReader_Str("Send");
+            this.init_ByteReader.setText("Send");
             this.init_ByteReader
-               .init_ByteReader_ByteReader_StreamU(
+               .setVariant(
                   sending ? autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS : autismclient.gui.ui.layout.ButtonNode.Variant.DANGER
                );
          }
 
          if (this.load_ByteReader != null) {
             boolean delaying = shared.isDelayPacketsEnabled();
-            this.load_ByteReader.init_ByteReader_Str("Delay");
+            this.load_ByteReader.setText("Delay");
             this.load_ByteReader
-               .init_ByteReader_ByteReader_StreamU(
+               .setVariant(
                   delaying ? autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS : autismclient.gui.ui.layout.ButtonNode.Variant.DANGER
                );
          }
@@ -528,7 +528,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
             context, init_Minecraft.font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
          );
-         this.valid = Math.max(this.load_I(), Math.round(this.init_StateCache.measureHeight(metrics, this.prev)));
+         this.valid = Math.max(this.getMinHeight(), Math.round(this.init_StateCache.measureHeight(metrics, this.prev)));
          OverlayBounds clamped = this.init_cH_cH_2(
             new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
          );
@@ -543,7 +543,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.flush_Z) {
          return false;
       } else {
@@ -561,16 +561,16 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.data = this.next;
             return true;
          } else {
-            return this.init_TextFormat.mouseClicked(mouseX, mouseY, button) ? true : this.init_Z_D_D(mouseX, mouseY);
+            return this.init_TextFormat.mouseClicked(mouseX, mouseY, button) ? true : this.containsPoint(mouseX, mouseY);
          }
       }
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (this.close_Z) {
          this.close_Z = false;
-         this.a__V();
+         this.saveBounds();
          return true;
       } else {
          return this.init_TextFormat.mouseReleased(mouseX, mouseY, button);
@@ -578,7 +578,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (!this.close_Z) {
          return this.init_TextFormat.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
       }
@@ -607,13 +607,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       return this.init_TextFormat.mouseScrolled(mouseX, mouseY, amount);
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
-      if (!this.flush_Z || this.flush_Z()) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+      if (!this.flush_Z || this.isCollapsed()) {
          return false;
       }
 
@@ -631,17 +631,17 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
-      return this.flush_Z && !this.flush_Z() ? this.init_TextFormat.charTyped(chr, modifiers) : false;
+   public boolean charTyped(char chr, int modifiers) {
+      return this.flush_Z && !this.isCollapsed() ? this.init_TextFormat.charTyped(chr, modifiers) : false;
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.flush_Z;
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.flush_Z = visible;
       if (!visible) {
          this.init_TextFormat.clearFocus();
@@ -653,7 +653,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.flush_Z) {
          return false;
       }
@@ -665,7 +665,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.flush_Z) {
          return false;
       }
@@ -675,37 +675,37 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.init_DataUtil != null && !this.init_DataUtil.init_Z_3();
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
-      if (this.flush_Z() != collapsed) {
+   public void setCollapsed(boolean collapsed) {
+      if (this.isCollapsed() != collapsed) {
          if (this.init_DataUtil != null) {
             this.init_DataUtil.init_DataUtil(!collapsed);
          }
 
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_TextFormat.hasFocusedInput();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.init_TextFormat.clearFocus();
    }
 
@@ -724,8 +724,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.height());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.prev(), viewportH - margin * 2);
-      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));
-      int minHeight = bounds.collapsed ? this.prev() : this.load_I();
+      int width = Math.max(Math.min(this.getMinWidth(), availableW), Math.min(bounds.width, availableW));
+      int minHeight = bounds.collapsed ? this.prev() : this.getMinHeight();
       int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.height, availableH));
       int renderedHeight = bounds.collapsed ? this.prev() : height;
       int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportW - margin - width)));

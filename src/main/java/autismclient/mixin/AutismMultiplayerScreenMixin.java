@@ -303,7 +303,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
             graphics.text(this.font, this.autism$fitPlain("Logged in as " + username, leftTextWidth), 4, 4, -1, false);
          }
 
-         bW proxy = ProxyListManager.init_bY().init_bW();
+         bW proxy = ProxyListManager.getInstance().getActiveProxy();
          int statusY = 16;
          if (proxy != null) {
             String proxyLabel = "Using proxy " + proxy.read + ":" + proxy.init_I;

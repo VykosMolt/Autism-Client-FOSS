@@ -283,8 +283,8 @@ final class PrintAccess {
                return null;
             }
 
-            if (++expanded > maxNodes || budget.init()) {
-               this.init_Str = (budget.init() ? "click budget" : "node budget")
+            if (++expanded > maxNodes || budget.isExhausted()) {
+               this.init_Str = (budget.isExhausted() ? "click budget" : "node budget")
                   + " after "
                   + expanded
                   + " nodes, closest "
@@ -441,7 +441,7 @@ final class PrintAccess {
       LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
 
       try {
-         List<Vec3> points = PrintClicks.init(this.init_ArrayUtil, n.key, n.feet);
+         List<Vec3> points = PrintClicks.getCandidateFeetPositions(this.init_ArrayUtil, n.key, n.feet);
 
          for (long t : this.load_LongArrayList) {
             int tx = BlockPos.getX(t);
@@ -453,7 +453,7 @@ final class PrintAccess {
                   PrintTarget probe = new PrintTarget(-1, p, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
 
                   for (Vec3 feet : points) {
-                     PrintClicks.Inner_StreamUtil click = PrintClicks.init(
+                     PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
                         this.init_ArrayUtil,
                         this.init_UiHelper.init_EventBus,
                         this.init_UiHelper.init_PathHelper,
@@ -469,7 +469,7 @@ final class PrintAccess {
                      if (click != null) {
                         PrintCore.P proof = this.init_UiHelper.new P(click, this.init_UiHelper.init_TokenStore_TaskQue);
 
-                        while (!proof.init_Z && this.init_ArrayUtil.workUnits() - started <= this.init_J && !budget.init()) {
+                        while (!proof.init_Z && this.init_ArrayUtil.workUnits() - started <= this.init_J && !budget.isExhausted()) {
                            proof.init(1L);
                         }
 
@@ -958,8 +958,8 @@ final class PrintAccess {
          for (int g : inReach) {
             BlockPos p = this.init_UiHelper.init_ListPoolArr[g].pos();
             PrintTarget tg = this.init_UiHelper.init_ListPoolArr[g];
-            List<Vec3> points = PrintClicks.init_List_ArrayUtil(
-               this.init_ArrayUtil, n.key, n.feet, PrintClicks.init(tg, this.init_UiHelper.init_u_DataUtil_I(g))
+            List<Vec3> points = PrintClicks.getCandidateFeetPositions(
+               this.init_ArrayUtil, n.key, n.feet, PrintClicks.isOrientationSensitive(tg, this.init_UiHelper.init_u_DataUtil_I(g))
             );
             boolean pour = tg.kind() == PrintTarget.Inner_DataUtil.FLUID;
             boolean waterlog = !pour && this.init_UiHelper.init_BArr[g] == 2;
@@ -967,7 +967,7 @@ final class PrintAccess {
                for (Vec3 feet : points) {
                   boolean exact = !pour && !waterlog && this.init_ArrayUtil.hasNoHypothesisInNeighborhood(p);
                   PrintClicks.Inner_StreamUtil geo = !pour && !waterlog
-                     ? PrintClicks.init(
+                     ? PrintClicks.findPlacementClick(
                         this.init_ArrayUtil,
                         this.init_UiHelper.init_EventBus,
                         this.init_UiHelper.init_PathHelper,
@@ -978,12 +978,12 @@ final class PrintAccess {
                         4.1000000000000005,
                         this.init_UiHelper.init_u_DataUtil_I(g)
                      )
-                     : PrintClicks.init(
+                     : PrintClicks.findClick(
                         this.init_ArrayUtil,
                         this.init_UiHelper.init_EventBus,
                         this.init_UiHelper.init_PathHelper,
                         tg,
-                        PrintClicks.init(tg),
+                        PrintClicks.getFluidBucketItem(tg),
                         waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
                         feet,
                         !waterlog,
@@ -1022,7 +1022,7 @@ final class PrintAccess {
             PrintTarget probe = new PrintTarget(-1, sn, tempState, PrintTarget.Inner_DataUtil.PLACE, temp, null);
 
             for (Vec3 feet : points) {
-               if (PrintClicks.init(
+               if (PrintClicks.findClick(
                      this.init_ArrayUtil,
                      this.init_UiHelper.init_EventBus,
                      this.init_UiHelper.init_PathHelper,
@@ -1039,7 +1039,7 @@ final class PrintAccess {
                   this.init_ArrayUtil.pushHypothesis(sn, tempState);
 
                   try {
-                     PrintClicks.Inner_StreamUtil targetClick = PrintClicks.init_ConfigStore_Stream_ArrayUtil_2(
+                     PrintClicks.Inner_StreamUtil targetClick = PrintClicks.findPlacementClick(
                         this.init_ArrayUtil,
                         this.init_UiHelper.init_EventBus,
                         this.init_UiHelper.init_PathHelper,
@@ -1056,7 +1056,7 @@ final class PrintAccess {
                      for (int k = 0; targetClick == null && k < points.size(); k++) {
                         Vec3 other = points.get(k);
                         if (!other.equals(feet)) {
-                           targetClick = PrintClicks.init_ConfigStore_Stream_ArrayUtil_2(
+                           targetClick = PrintClicks.findPlacementClick(
                               this.init_ArrayUtil,
                               this.init_UiHelper.init_EventBus,
                               this.init_UiHelper.init_PathHelper,
@@ -1274,7 +1274,7 @@ final class PrintAccess {
                      double off = 0.75;
                      Vec3 lean = new Vec3(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off);
                      PrintTarget probe = new PrintTarget(-1, cell, tempState, PrintTarget.Inner_DataUtil.PLACE, tempState.getBlock().asItem(), null);
-                     if (PrintClicks.init(
+                     if (PrintClicks.findClick(
                            this.init_ArrayUtil,
                            this.init_UiHelper.init_EventBus,
                            this.init_UiHelper.init_PathHelper,
@@ -2487,9 +2487,9 @@ final class PrintAccess {
                         }
 
                         this.read_Z = false;
-                        if (PrintClicks.init(target, PrintAccess.this.init_UiHelper.init_u_DataUtil_I(g))) {
+                        if (PrintClicks.isOrientationSensitive(target, PrintAccess.this.init_UiHelper.init_u_DataUtil_I(g))) {
                            if (this.load_List == null) {
-                              this.load_List = PrintClicks.init_List_ArrayUtil(
+                              this.load_List = PrintClicks.getCandidateFeetPositions(
                                  PrintAccess.this.init_ArrayUtil, this.init_StreamUtil_CachePo.key, this.init_StreamUtil_CachePo.feet, true
                               );
                            }
@@ -2497,7 +2497,7 @@ final class PrintAccess {
                            this.init_List = this.load_List;
                         } else {
                            if (this.read_List == null) {
-                              this.read_List = PrintClicks.init_List_ArrayUtil(
+                              this.read_List = PrintClicks.getCandidateFeetPositions(
                                  PrintAccess.this.init_ArrayUtil, this.init_StreamUtil_CachePo.key, this.init_StreamUtil_CachePo.feet, false
                               );
                            }
@@ -2517,7 +2517,7 @@ final class PrintAccess {
                                     == null
                            );
                         if (directPlacement
-                           && !PrintClicks.init_Z_ArrayUtil_2(
+                           && !PrintClicks.hasPlaceableSupport(
                               PrintAccess.this.init_ArrayUtil,
                               target,
                               PrintAccess.this.init_ArrayUtil.hasNoHypothesisInNeighborhood(target.pos()) ? null : PrintAccess.this.init_UiHelper.init_u_DataUtil_I(g),
@@ -2559,7 +2559,7 @@ final class PrintAccess {
                               }
                            } else {
                               if (!PrintAccess.this.init_UiHelper.close_LongOpenHashSet.contains(PrintCore.init_J_I_J(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.init_ConfigStore_Stream = PrintClicks.init(
+                                 this.init_ConfigStore_Stream = PrintClicks.findClick(
                                     PrintAccess.this.init_ArrayUtil,
                                     PrintAccess.this.init_UiHelper.init_EventBus,
                                     PrintAccess.this.init_UiHelper.init_PathHelper,
@@ -2583,7 +2583,7 @@ final class PrintAccess {
 
                               if (this.init_ConfigStore_Stream == null
                                  && !PrintAccess.this.init_UiHelper.open_LongOpenHashSet.contains(PrintCore.init_J_I_J(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.init_ConfigStore_Stream = PrintClicks.init(
+                                 this.init_ConfigStore_Stream = PrintClicks.findClick(
                                     PrintAccess.this.init_ArrayUtil,
                                     PrintAccess.this.init_UiHelper.init_EventBus,
                                     PrintAccess.this.init_UiHelper.init_PathHelper,
@@ -2604,12 +2604,12 @@ final class PrintAccess {
                               }
                            }
                         } else if (!PrintAccess.this.init_UiHelper.close_LongOpenHashSet.contains(PrintCore.init_J_I_J(g, this.init_StreamUtil_CachePo.key))) {
-                           this.init_ConfigStore_Stream = PrintClicks.init(
+                           this.init_ConfigStore_Stream = PrintClicks.findClick(
                               PrintAccess.this.init_ArrayUtil,
                               PrintAccess.this.init_UiHelper.init_EventBus,
                               PrintAccess.this.init_UiHelper.init_PathHelper,
                               target,
-                              PrintClicks.init(target),
+                              PrintClicks.getFluidBucketItem(target),
                               waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
                               position,
                               !waterlog,
@@ -2760,7 +2760,7 @@ final class PrintAccess {
 
                      Vec3 feet = this.init_List.get(this.load_I++);
                      PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
-                     if (PrintClicks.init(
+                     if (PrintClicks.findClick(
                            PrintAccess.this.init_ArrayUtil,
                            PrintAccess.this.init_UiHelper.init_EventBus,
                            PrintAccess.this.init_UiHelper.init_PathHelper,
@@ -2781,7 +2781,7 @@ final class PrintAccess {
 
                      PrintClicks.Inner_StreamUtil sourceClick;
                      try {
-                        sourceClick = PrintClicks.init_ConfigStore_Stream_ArrayUtil_2(
+                        sourceClick = PrintClicks.findPlacementClick(
                            PrintAccess.this.init_ArrayUtil,
                            PrintAccess.this.init_UiHelper.init_EventBus,
                            PrintAccess.this.init_UiHelper.init_PathHelper,
@@ -3022,9 +3022,9 @@ final class PrintAccess {
                         }
                      }
                   }
-               } else if (this.init_I != PrintAccess.this.load_LongArrayList.size() && !Inner_StreamUtil.this.init_ConfigStore_DataUt.init()) {
+               } else if (this.init_I != PrintAccess.this.load_LongArrayList.size() && !Inner_StreamUtil.this.init_ConfigStore_DataUt.isExhausted()) {
                   if (this.init_List == null) {
-                     this.init_List = PrintClicks.init(
+                     this.init_List = PrintClicks.getCandidateFeetPositions(
                         PrintAccess.this.init_ArrayUtil, Inner_StreamUtil.this.init_StreamUtil_CachePo.key, Inner_StreamUtil.this.init_StreamUtil_CachePo.feet
                      );
                   }
@@ -3057,7 +3057,7 @@ final class PrintAccess {
                      this.load = 0;
                      this.init_ListPool = null;
                   } else {
-                     Inner_StreamUtil.this.init_ConfigStore_Stream = PrintClicks.init(
+                     Inner_StreamUtil.this.init_ConfigStore_Stream = PrintClicks.findClick(
                         PrintAccess.this.init_ArrayUtil,
                         PrintAccess.this.init_UiHelper.init_EventBus,
                         PrintAccess.this.init_UiHelper.init_PathHelper,

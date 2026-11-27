@@ -23,16 +23,16 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class PrintFlight {
-   private static final int[][] init_IArr2 = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-   static final double init_D = 0.3;
-   static final double load = 0.4;
-   private static final AABB init_AABB = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+   private static final int[][] CARDINAL_OFFSETS = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+   static final double LAVA_MARGIN_XZ = 0.3;
+   static final double LAVA_MARGIN_Y = 0.4;
+   private static final AABB UNIT_BLOCK_BOX = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 
-   static Vec3 init(long key) {
+   static Vec3 cellFlightPoint(long key) {
       return new Vec3(BlockPos.getX(key) + 0.5, BlockPos.getY(key) + 0.15, BlockPos.getZ(key) + 0.5);
    }
 
-   static boolean init(PrintView view, Vec3 point) {
+   static boolean isNearObservedLava(PrintView view, Vec3 point) {
       if (view.observedLavaCells.isEmpty()) {
          return false;
       }
@@ -58,7 +58,7 @@ final class PrintFlight {
       return false;
    }
 
-   static boolean load(PrintView view, Vec3 point) {
+   static boolean isFlightPointSafe(PrintView view, Vec3 point) {
       AABB box = PrintGeometry.init(point.x, point.y, point.z, false);
       if (!view.isBoxClear(box)) {
          return false;
@@ -74,11 +74,11 @@ final class PrintFlight {
       return true;
    }
 
-   static boolean init_Z(PrintView view, Vec3 from, Vec3 to) {
-      return init_BlockPos(view, from, to) == null;
+   static boolean isFlightSegmentClear(PrintView view, Vec3 from, Vec3 to) {
+      return findSegmentBlocker(view, from, to) == null;
    }
 
-   static BlockPos init_BlockPos(PrintView view, Vec3 from, Vec3 to) {
+   static BlockPos findSegmentBlocker(PrintView view, Vec3 from, Vec3 to) {
       int legs = Math.max(1, (int)Math.ceil(Math.max(Math.abs(to.x - from.x), Math.max(Math.abs(to.y - from.y), Math.abs(to.z - from.z)))));
       MutableBlockPos position = new MutableBlockPos();
       Vec3 start = from;
@@ -98,12 +98,12 @@ final class PrintFlight {
                   position.set(x, y, z);
                   BlockState state = view.getBlockState(position);
                   if (!state.isAir()) {
-                     if ((state == PrintView.UNLOADED_SENTINEL || PrintView.isHazardBlock(state)) && init_Z_Vec3(start, end, init_AABB, x, y, z, -1.0E-7)) {
+                     if ((state == PrintView.UNLOADED_SENTINEL || PrintView.isHazardBlock(state)) && sweptBoxIntersectsBlock(start, end, UNIT_BLOCK_BOX, x, y, z, -1.0E-7)) {
                         return position.immutable();
                      }
 
                      for (AABB box : view.getCollisionBoxesForState(state, position)) {
-                        if (init_Z_Vec3(start, end, box, x, y, z, 1.0E-6)) {
+                        if (sweptBoxIntersectsBlock(start, end, box, x, y, z, 1.0E-6)) {
                            return position.immutable();
                         }
                      }
@@ -118,7 +118,7 @@ final class PrintFlight {
       return null;
    }
 
-   private static boolean init_Z_Vec3(Vec3 from, Vec3 to, AABB box, int x, int y, int z, double inset) {
+   private static boolean sweptBoxIntersectsBlock(Vec3 from, Vec3 to, AABB box, int x, int y, int z, double inset) {
       double enter = 0.0;
       double leave = 1.0;
       double dx = to.x - from.x;
@@ -172,9 +172,9 @@ final class PrintFlight {
       return enter < leave;
    }
 
-   static int init_I_ArrayUtil(PrintView view, Vec3 body, List<Vec3> points, int current) {
+   static int advanceVisibleWaypoint(PrintView view, Vec3 body, List<Vec3> points, int current) {
       for (int next = Math.min(points.size() - 1, current + 8); next > current; next--) {
-         if (init_Z(view, body, points.get(next))) {
+         if (isFlightSegmentClear(view, body, points.get(next))) {
             return next;
          }
       }
@@ -182,13 +182,13 @@ final class PrintFlight {
       return current;
    }
 
-   static PrintFlight.Inner_BufferHelper init_TextFormat_BufferH_ArrayUtil(PrintView view, Vec3 start, Set<Long> goals, int limit) {
+   static PrintFlight.Inner_BufferHelper findFlightPath(PrintView view, Vec3 start, Set<Long> goals, int limit) {
       PrintFlight.Inner_ConfigStore search = new PrintFlight.Inner_ConfigStore(view, start, goals, limit);
-      search.init(9223372036854775807L);
-      return search.init_TextFormat_BufferH;
+      search.stepSearch(9223372036854775807L);
+      return search.result;
    }
 
-   private static double init(Vec3 point, Set<Long> goals) {
+   private static double estimateDistanceToGoals(Vec3 point, Set<Long> goals) {
       boolean lattice = point.x == Math.floor(point.x) + 0.5 && point.y == Math.floor(point.y) + 0.15 && point.z == Math.floor(point.z) + 0.5;
       double best = 1.0 / 0.0;
 
@@ -202,7 +202,7 @@ final class PrintFlight {
       return best;
    }
 
-   static AiPhysics.MotionState init_NodeWalker_StreamU_NodeWalker_StreamU(
+   static AiPhysics.MotionState simulateFlightTick(
       AiPhysics.MotionState body, PrintMover.Inner_StreamUtil keys, float yaw, float speed, AiPhysics.PhysicsWorld world
    ) {
       AiPhysics.MoveInput input = PrintMover.init(keys, yaw);
@@ -258,39 +258,39 @@ final class PrintFlight {
       );
    }
 
-   static boolean init(AiPhysics.MotionState body, Vec3 goal) {
+   static boolean hasArrivedAtGoal(AiPhysics.MotionState body, Vec3 goal) {
       return body.position().distanceToSqr(goal) < 0.25 && body.speed() < 0.025 && Math.abs(body.vy()) < 0.025;
    }
 
-   static boolean load(AiPhysics.MotionState body, Vec3 goal) {
+   static boolean hasSettledAtGoal(AiPhysics.MotionState body, Vec3 goal) {
       return body.position().distanceToSqr(goal) < 0.16 && body.speed() < 0.015 && Math.abs(body.vy()) < 0.015;
    }
 
-   static PrintMover.Inner_StreamUtil init(PrintEnv env, Vec3 goal) {
-      return init(env, goal, env.playerYaw());
+   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal) {
+      return chooseFlightInput(env, goal, env.playerYaw());
    }
 
-   static PrintMover.Inner_StreamUtil init(PrintEnv env, Vec3 goal, float yaw) {
-      return init_CharEncoder_Stream_EventBus(env, goal, yaw, 0.4);
+   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw) {
+      return chooseFlightInput(env, goal, yaw, 0.4);
    }
 
-   static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus(PrintEnv env, Vec3 goal, float yaw, double tolerance) {
-      return init_CharEncoder_Stream_EventBus(env, goal, yaw, tolerance, null);
+   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance) {
+      return chooseFlightInput(env, goal, yaw, tolerance, null);
    }
 
-   static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation) {
-      return init(env, goal, yaw, tolerance, continuation, null);
+   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation) {
+      return chooseFlightInput(env, goal, yaw, tolerance, continuation, null);
    }
 
-   static PrintMover.Inner_StreamUtil init(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
-      return init_CharEncoder_Stream_EventBus(env, goal, yaw, tolerance, continuation, nextStep, false);
+   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
+      return solveFlightInput(env, goal, yaw, tolerance, continuation, nextStep, false);
    }
 
-   static PrintMover.Inner_StreamUtil load(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
-      return init_CharEncoder_Stream_EventBus(env, goal, yaw, tolerance, continuation, nextStep, true);
+   static PrintMover.Inner_StreamUtil chooseTransitFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
+      return solveFlightInput(env, goal, yaw, tolerance, continuation, nextStep, true);
    }
 
-   private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus_2(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
+   private static PrintMover.Inner_StreamUtil chooseCruiseFlightInput(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
       AiPhysics.MotionState body = env.playerMotionState();
       double dx = goal.x - body.x();
       double dz = goal.z - body.z();
@@ -316,7 +316,7 @@ final class PrintFlight {
                      PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                         forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, sprint > 0
                      );
-                     AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.flyingSpeed(), env.livePhysicsWorld());
+                     AiPhysics.MotionState next = simulateFlightTick(body, keys, yaw, env.flyingSpeed(), env.livePhysicsWorld());
                      double value = Math.pow(next.vx() - vx, 2.0)
                         + Math.pow(next.vz() - vz, 2.0)
                         + Math.pow(next.vy() - vy, 2.0)
@@ -336,13 +336,13 @@ final class PrintFlight {
                boolean safe = true;
 
                for (int tick = 0; tick <= 25; tick++) {
-                  if (init(env.livePhysicsWorld(), prior, next)) {
+                  if (segmentHitsHazard(env.livePhysicsWorld(), prior, next)) {
                      safe = false;
                      break;
                   }
 
                   prior = next;
-                  next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), env.livePhysicsWorld());
+                  next = simulateFlightTick(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), env.livePhysicsWorld());
                }
 
                if (safe) {
@@ -357,7 +357,7 @@ final class PrintFlight {
       }
    }
 
-   private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
+   private static boolean segmentHitsHazard(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
       int samples = Math.max(1, (int)Math.ceil(from.position().distanceTo(to.position()) / 0.25));
       if (samples > 256) {
          return true;
@@ -377,13 +377,13 @@ final class PrintFlight {
       return false;
    }
 
-   private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus(
+   private static PrintMover.Inner_StreamUtil solveFlightInput(
       PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep, boolean transit
    ) {
       AiPhysics.MotionState body = env.playerMotionState();
       AiPhysics.PhysicsWorld world = env.livePhysicsWorld();
       if (body.position().distanceToSqr(goal) > 4.0) {
-         PrintMover.Inner_StreamUtil travel = init_CharEncoder_Stream_EventBus_2(env, goal, yaw, nextStep);
+         PrintMover.Inner_StreamUtil travel = chooseCruiseFlightInput(env, goal, yaw, nextStep);
          if (travel != null) {
             return travel;
          }
@@ -397,7 +397,7 @@ final class PrintFlight {
 
          while (true) {
             if (tick < 25) {
-               coast = init_NodeWalker_StreamU_NodeWalker_StreamU(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
+               coast = simulateFlightTick(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
                if (!PrintMover.init(world, body, coast) && (tick != 0 || nextStep == null || nextStep.test(coast.position()))) {
                   tick++;
                   continue;
@@ -428,7 +428,7 @@ final class PrintFlight {
                PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                   forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, false
                );
-               AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.flyingSpeed(), world);
+               AiPhysics.MotionState next = simulateFlightTick(body, keys, yaw, env.flyingSpeed(), world);
                if (!PrintMover.init(world, body, next) && (nextStep == null || nextStep.test(next.position()))) {
                   double distance = next.position().distanceToSqr(goal);
                   double fineValue = distance + 2.0 * (next.vx() * next.vx() + next.vy() * next.vy() + next.vz() * next.vz());
@@ -436,7 +436,7 @@ final class PrintFlight {
                   boolean safe = true;
 
                   for (int i = 0; i < 25; i++) {
-                     next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
+                     next = simulateFlightTick(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
                      if (PrintMover.init(world, body, next)) {
                         safe = false;
                         break;
@@ -482,47 +482,47 @@ final class PrintFlight {
    }
 
    static final class Inner_CachePool {
-      private Vec3 init_Vec3;
-      private double init_D;
-      private long init_J;
+      private Vec3 lastDestination;
+      private double bestDistanceSq;
+      private long lastProgressTick;
 
-      boolean init(Vec3 position, Vec3 destination, long tick) {
+      boolean isStalled(Vec3 position, Vec3 destination, long tick) {
          double distance = position.distanceToSqr(destination);
-         if (this.init_Vec3 != null && !(this.init_Vec3.distanceToSqr(destination) > 1.0E-8) && !(distance + 0.0025 < this.init_D)) {
-            return tick - this.init_J >= 40L;
+         if (this.lastDestination != null && !(this.lastDestination.distanceToSqr(destination) > 1.0E-8) && !(distance + 0.0025 < this.bestDistanceSq)) {
+            return tick - this.lastProgressTick >= 40L;
          }
 
-         this.init_Vec3 = destination;
-         this.init_D = distance;
-         this.init_J = tick;
+         this.lastDestination = destination;
+         this.bestDistanceSq = distance;
+         this.lastProgressTick = tick;
          return false;
       }
 
-      void init() {
-         this.init_Vec3 = null;
+      void reset() {
+         this.lastDestination = null;
       }
    }
 
    static final class Inner_ConfigStore {
-      private static final int read = 256;
-      private static final int write = 64;
-      final PrintView init_ArrayUtil;
-      final Set<Long> init_Set;
-      final Vec3 init_Vec3;
-      final int init_I;
-      final PriorityQueue<PrintFlight.Inner_StreamUtil> init_PriorityQueue = new PriorityQueue<>(
+      private static final int REVERSE_PROBE_AFTER_EXPANSIONS = 256;
+      private static final int MAX_REVERSE_PROBE_GOALS = 64;
+      final PrintView view;
+      final Set<Long> goalCells;
+      final Vec3 exactGoal;
+      final int maxExpansions;
+      final PriorityQueue<PrintFlight.Inner_StreamUtil> openQueue = new PriorityQueue<>(
          Comparator.comparingDouble(PrintFlight.Inner_StreamUtil::estimate)
             .thenComparing(Comparator.comparingDouble(PrintFlight.Inner_StreamUtil::cost).reversed())
             .thenComparingLong(PrintFlight.Inner_StreamUtil::key)
       );
-      final Long2DoubleOpenHashMap init_Long2DoubleOpenHas = new Long2DoubleOpenHashMap();
-      final long init_J;
-      Vec3 load_Vec3;
-      PrintFlight.Inner_ConfigStore.Inner_DataUtil init_TextFormat_ConfigS;
-      boolean init_Z;
-      int load_I;
-      boolean load_Z;
-      PrintFlight.Inner_BufferHelper init_TextFormat_BufferH;
+      final Long2DoubleOpenHashMap bestCostByCell = new Long2DoubleOpenHashMap();
+      final long startCellKey;
+      Vec3 initialPoint;
+      PrintFlight.Inner_ConfigStore.Inner_DataUtil reverseProbe;
+      boolean reverseProbeStarted;
+      int expandedNodes;
+      boolean finished;
+      PrintFlight.Inner_BufferHelper result;
 
       Inner_ConfigStore(PrintView view, Vec3 start, Set<Long> goals, int limit) {
          this(view, start, goals, null, limit);
@@ -533,68 +533,68 @@ final class PrintFlight {
       }
 
       private Inner_ConfigStore(PrintView view, Vec3 start, Set<Long> goals, Vec3 exactGoal, int limit) {
-         this.init_ArrayUtil = view;
-         this.init_Set = new LinkedHashSet<>(goals);
-         this.init_Vec3 = exactGoal;
-         this.init_I = limit;
-         this.init_J = BlockPos.containing(start).asLong();
-         this.load_Vec3 = start;
-         this.init_Long2DoubleOpenHas.defaultReturnValue(1.0 / 0.0);
+         this.view = view;
+         this.goalCells = new LinkedHashSet<>(goals);
+         this.exactGoal = exactGoal;
+         this.maxExpansions = limit;
+         this.startCellKey = BlockPos.containing(start).asLong();
+         this.initialPoint = start;
+         this.bestCostByCell.defaultReturnValue(1.0 / 0.0);
          if (goals.isEmpty()) {
-            this.load_Z = true;
-         } else if (exactGoal != null && start.distanceToSqr(exactGoal) <= 4.0 && PrintFlight.init_Z(view, start, exactGoal)) {
-            this.init_TextFormat_BufferH = new PrintFlight.Inner_BufferHelper(List.of(exactGoal), BlockPos.containing(exactGoal).asLong());
-            this.load_Z = true;
+            this.finished = true;
+         } else if (exactGoal != null && start.distanceToSqr(exactGoal) <= 4.0 && PrintFlight.isFlightSegmentClear(view, start, exactGoal)) {
+            this.result = new PrintFlight.Inner_BufferHelper(List.of(exactGoal), BlockPos.containing(exactGoal).asLong());
+            this.finished = true;
          } else {
-            Vec3 entry = PrintFlight.init(this.init_J);
-            PrintFlight.Inner_StreamUtil origin = new PrintFlight.Inner_StreamUtil(this.init_J, start, 0.0, 0.0, null);
-            boolean centred = PrintFlight.init_Z(view, start, entry);
+            Vec3 entry = PrintFlight.cellFlightPoint(this.startCellKey);
+            PrintFlight.Inner_StreamUtil origin = new PrintFlight.Inner_StreamUtil(this.startCellKey, start, 0.0, 0.0, null);
+            boolean centred = PrintFlight.isFlightSegmentClear(view, start, entry);
             Vec3 initial = centred ? entry : start;
-            this.load_Vec3 = initial;
+            this.initialPoint = initial;
             double initialCost = start.distanceTo(initial);
-            this.init_PriorityQueue
+            this.openQueue
                .add(
                   new PrintFlight.Inner_StreamUtil(
-                     this.init_J, initial, initialCost, initialCost + this.init(initial), centred && initialCost > 1.0E-7 ? origin : null
+                     this.startCellKey, initial, initialCost, initialCost + this.heuristic(initial), centred && initialCost > 1.0E-7 ? origin : null
                   )
                );
-            this.init_Long2DoubleOpenHas.put(this.init_J, initialCost);
+            this.bestCostByCell.put(this.startCellKey, initialCost);
          }
       }
 
-      void init(long workBudget) {
-         long started = this.init_ArrayUtil.workUnits();
+      void stepSearch(long workBudget) {
+         long started = this.view.workUnits();
 
-         while (!this.load_Z && this.init_ArrayUtil.workUnits() - started < workBudget) {
-            if (!this.init_Z && this.init_Vec3 == null && this.load_I >= 256) {
-               this.init_Z = true;
-               if (this.init_Set.size() <= 64) {
-                  this.init_TextFormat_ConfigS = new PrintFlight.Inner_ConfigStore.Inner_DataUtil();
+         while (!this.finished && this.view.workUnits() - started < workBudget) {
+            if (!this.reverseProbeStarted && this.exactGoal == null && this.expandedNodes >= 256) {
+               this.reverseProbeStarted = true;
+               if (this.goalCells.size() <= 64) {
+                  this.reverseProbe = new PrintFlight.Inner_ConfigStore.Inner_DataUtil();
                }
             }
 
-            if (this.init_TextFormat_ConfigS != null && !this.init_TextFormat_ConfigS.init_Z) {
-               this.init_TextFormat_ConfigS.init(workBudget - (this.init_ArrayUtil.workUnits() - started));
-               if (!this.init_TextFormat_ConfigS.init_Z) {
+            if (this.reverseProbe != null && !this.reverseProbe.done) {
+               this.reverseProbe.stepProbe(workBudget - (this.view.workUnits() - started));
+               if (!this.reverseProbe.done) {
                   return;
                }
 
-               if (this.init_TextFormat_ConfigS.load) {
-                  this.load_Z = true;
+               if (this.reverseProbe.provedUnreachable) {
+                  this.finished = true;
                   return;
                }
             }
 
-            if (this.init_PriorityQueue.isEmpty() || this.load_I++ >= this.init_I) {
-               this.load_Z = true;
+            if (this.openQueue.isEmpty() || this.expandedNodes++ >= this.maxExpansions) {
+               this.finished = true;
                return;
             }
 
-            PrintFlight.Inner_StreamUtil at = this.init_PriorityQueue.remove();
-            if (!(at.cost > this.init_Long2DoubleOpenHas.get(at.key) + 1.0E-7)) {
-               Vec3 finish = this.init_Vec3 == null ? PrintFlight.init(at.key) : this.init_Vec3;
-               boolean nearGoal = this.init_Vec3 == null ? this.init_Set.contains(at.key) : at.point.distanceToSqr(this.init_Vec3) <= 4.0;
-               if (nearGoal && PrintFlight.init_Z(this.init_ArrayUtil, at.point, finish)) {
+            PrintFlight.Inner_StreamUtil at = this.openQueue.remove();
+            if (!(at.cost > this.bestCostByCell.get(at.key) + 1.0E-7)) {
+               Vec3 finish = this.exactGoal == null ? PrintFlight.cellFlightPoint(at.key) : this.exactGoal;
+               boolean nearGoal = this.exactGoal == null ? this.goalCells.contains(at.key) : at.point.distanceToSqr(this.exactGoal) <= 4.0;
+               if (nearGoal && PrintFlight.isFlightSegmentClear(this.view, at.point, finish)) {
                   ArrayList<Vec3> reverse = new ArrayList<>();
                   reverse.add(finish);
 
@@ -605,93 +605,93 @@ final class PrintFlight {
                   }
 
                   Collections.reverse(reverse);
-                  this.init_TextFormat_BufferH = new PrintFlight.Inner_BufferHelper(
-                     List.copyOf(reverse), this.init_Vec3 == null ? at.key : BlockPos.containing(this.init_Vec3).asLong()
+                  this.result = new PrintFlight.Inner_BufferHelper(
+                     List.copyOf(reverse), this.exactGoal == null ? at.key : BlockPos.containing(this.exactGoal).asLong()
                   );
-                  this.load_Z = true;
+                  this.finished = true;
                   return;
                }
 
                BlockPos cell = BlockPos.of(at.key);
 
-               for (int[] d : PrintFlight.init_IArr2) {
+               for (int[] d : PrintFlight.CARDINAL_OFFSETS) {
                   long key = cell.offset(d[0], d[1], d[2]).asLong();
-                  Vec3 next = PrintFlight.init(key);
+                  Vec3 next = PrintFlight.cellFlightPoint(key);
                   double cost = at.cost + at.point.distanceTo(next);
-                  if (!(cost + 1.0E-7 >= this.init_Long2DoubleOpenHas.get(key))
-                     && PrintFlight.init_Z(this.init_ArrayUtil, at.point, next)
-                     && (this.init_Set.contains(key) || !PrintFlight.init(this.init_ArrayUtil, next))) {
-                     this.init_Long2DoubleOpenHas.put(key, cost);
-                     this.init_PriorityQueue.add(new PrintFlight.Inner_StreamUtil(key, next, cost, cost + this.init(next), at));
+                  if (!(cost + 1.0E-7 >= this.bestCostByCell.get(key))
+                     && PrintFlight.isFlightSegmentClear(this.view, at.point, next)
+                     && (this.goalCells.contains(key) || !PrintFlight.isNearObservedLava(this.view, next))) {
+                     this.bestCostByCell.put(key, cost);
+                     this.openQueue.add(new PrintFlight.Inner_StreamUtil(key, next, cost, cost + this.heuristic(next), at));
                   }
                }
             }
          }
       }
 
-      private double init(Vec3 point) {
-         return this.init_Vec3 == null ? PrintFlight.init(point, this.init_Set) : point.distanceTo(this.init_Vec3);
+      private double heuristic(Vec3 point) {
+         return this.exactGoal == null ? PrintFlight.estimateDistanceToGoals(point, this.goalCells) : point.distanceTo(this.exactGoal);
       }
 
       final class Inner_DataUtil {
-         final Iterator<Long> init_Iterator = Inner_ConfigStore.this.init_Set.iterator();
-         final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-         final LongArrayFIFOQueue init_LongArrayFIFOQueue = new LongArrayFIFOQueue();
-         long init_J;
-         Vec3 init_Vec3;
-         int init_I;
-         boolean init_Z;
-         boolean load;
+         final Iterator<Long> goalIterator = Inner_ConfigStore.this.goalCells.iterator();
+         final LongOpenHashSet visited = new LongOpenHashSet();
+         final LongArrayFIFOQueue frontier = new LongArrayFIFOQueue();
+         long currentKey;
+         Vec3 currentPoint;
+         int nextDirIndex;
+         boolean done;
+         boolean provedUnreachable;
 
-         private boolean init_Z(long key, Vec3 to) {
-            int distance = Math.abs(BlockPos.getX(key) - BlockPos.getX(Inner_ConfigStore.this.init_J))
-               + Math.abs(BlockPos.getY(key) - BlockPos.getY(Inner_ConfigStore.this.init_J))
-               + Math.abs(BlockPos.getZ(key) - BlockPos.getZ(Inner_ConfigStore.this.init_J));
-            return distance <= 1 && PrintFlight.init_Z(Inner_ConfigStore.this.init_ArrayUtil, Inner_ConfigStore.this.load_Vec3, to);
+         private boolean reachesStart(long key, Vec3 to) {
+            int distance = Math.abs(BlockPos.getX(key) - BlockPos.getX(Inner_ConfigStore.this.startCellKey))
+               + Math.abs(BlockPos.getY(key) - BlockPos.getY(Inner_ConfigStore.this.startCellKey))
+               + Math.abs(BlockPos.getZ(key) - BlockPos.getZ(Inner_ConfigStore.this.startCellKey));
+            return distance <= 1 && PrintFlight.isFlightSegmentClear(Inner_ConfigStore.this.view, Inner_ConfigStore.this.initialPoint, to);
          }
 
-         private void init_V(long key, Vec3 value) {
-            if (!this.init_Z(key, value) && this.init_LongOpenHashSet.size() < 64) {
-               this.init_LongOpenHashSet.add(key);
-               this.init_LongArrayFIFOQueue.enqueue(key);
+         private void enqueueOrComplete(long key, Vec3 value) {
+            if (!this.reachesStart(key, value) && this.visited.size() < 64) {
+               this.visited.add(key);
+               this.frontier.enqueue(key);
             } else {
-               this.init_Z = true;
+               this.done = true;
             }
          }
 
-         void init(long allowance) {
-            long started = Inner_ConfigStore.this.init_ArrayUtil.workUnits();
+         void stepProbe(long allowance) {
+            long started = Inner_ConfigStore.this.view.workUnits();
             int structural = 0;
 
-            while (!this.init_Z && structural++ < 1024 && Inner_ConfigStore.this.init_ArrayUtil.workUnits() - started < allowance) {
-               if (this.init_Iterator.hasNext()) {
-                  long key = this.init_Iterator.next();
-                  if (!this.init_LongOpenHashSet.contains(key) && PrintFlight.load(Inner_ConfigStore.this.init_ArrayUtil, PrintFlight.init(key))) {
-                     this.init_V(key, PrintFlight.init(key));
+            while (!this.done && structural++ < 1024 && Inner_ConfigStore.this.view.workUnits() - started < allowance) {
+               if (this.goalIterator.hasNext()) {
+                  long key = this.goalIterator.next();
+                  if (!this.visited.contains(key) && PrintFlight.isFlightPointSafe(Inner_ConfigStore.this.view, PrintFlight.cellFlightPoint(key))) {
+                     this.enqueueOrComplete(key, PrintFlight.cellFlightPoint(key));
                   }
                } else {
-                  if (this.init_Vec3 == null) {
-                     if (this.init_LongArrayFIFOQueue.isEmpty()) {
-                        this.load = true;
-                        this.init_Z = true;
+                  if (this.currentPoint == null) {
+                     if (this.frontier.isEmpty()) {
+                        this.provedUnreachable = true;
+                        this.done = true;
                         return;
                      }
 
-                     this.init_J = this.init_LongArrayFIFOQueue.dequeueLong();
-                     this.init_Vec3 = PrintFlight.init(this.init_J);
-                     this.init_I = 0;
+                     this.currentKey = this.frontier.dequeueLong();
+                     this.currentPoint = PrintFlight.cellFlightPoint(this.currentKey);
+                     this.nextDirIndex = 0;
                   }
 
-                  if (this.init_I == PrintFlight.init_IArr2.length) {
-                     this.init_Vec3 = null;
+                  if (this.nextDirIndex == PrintFlight.CARDINAL_OFFSETS.length) {
+                     this.currentPoint = null;
                   } else {
-                     int[] d = PrintFlight.init_IArr2[this.init_I++];
-                     long key = BlockPos.offset(this.init_J, d[0], d[1], d[2]);
-                     if (!this.init_LongOpenHashSet.contains(key)) {
-                        Vec3 predecessor = PrintFlight.init(key);
-                        if (PrintFlight.load(Inner_ConfigStore.this.init_ArrayUtil, predecessor)
-                           && PrintFlight.init_Z(Inner_ConfigStore.this.init_ArrayUtil, predecessor, this.init_Vec3)) {
-                           this.init_V(key, predecessor);
+                     int[] d = PrintFlight.CARDINAL_OFFSETS[this.nextDirIndex++];
+                     long key = BlockPos.offset(this.currentKey, d[0], d[1], d[2]);
+                     if (!this.visited.contains(key)) {
+                        Vec3 predecessor = PrintFlight.cellFlightPoint(key);
+                        if (PrintFlight.isFlightPointSafe(Inner_ConfigStore.this.view, predecessor)
+                           && PrintFlight.isFlightSegmentClear(Inner_ConfigStore.this.view, predecessor, this.currentPoint)) {
+                           this.enqueueOrComplete(key, predecessor);
                         }
                      }
                   }

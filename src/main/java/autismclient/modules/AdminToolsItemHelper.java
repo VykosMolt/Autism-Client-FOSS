@@ -21,7 +21,7 @@ public final class AdminToolsItemHelper {
          AutismAdminToolsOverlay overlay = AutismAdminToolsOverlay.init_AutismAdminToolsOv();
          OverlayManager manager = OverlayManager.getInstance();
          manager.register(overlay);
-         overlay.init_V_Z(true);
+         overlay.setVisible(true);
          overlay.read_V_2();
          manager.bringToFront(overlay);
       } catch (Throwable var3) {

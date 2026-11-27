@@ -1410,8 +1410,8 @@ public final class AiVisualization {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(8, 8, width, height);
 
       for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
-         if (overlay.sync_Z() && overlay.init_Str().equals("ai-assistant")) {
-            OverlayBounds window = overlay.init_cH();
+         if (overlay.isVisible() && overlay.getOverlayId().equals("ai-assistant")) {
+            OverlayBounds window = overlay.getBounds();
             if (bounds.read() < window.x + window.width
                && bounds.init() > window.x
                && bounds.write() < window.y + window.height

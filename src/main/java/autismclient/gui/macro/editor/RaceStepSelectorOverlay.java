@@ -124,12 +124,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.write_Z;
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.write_Z && this.init_BitSetUtil.isFocused();
    }
 
@@ -190,7 +190,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       this.init_CharEncoder.init_V(this.write_Z);
       if (this.init_CharEncoder.load_Z(this.write_Z) && init_Minecraft != null && init_Minecraft.font != null) {
          boolean closing = !this.write_Z;
@@ -287,7 +287,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.write_Z) {
          return false;
       }
@@ -349,7 +349,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
@@ -360,7 +360,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
             && Math.abs(uiMouseY - this.update_F) < 3.0F
             && this.init_Z_F_F(uiMouseX, uiMouseY)
             && !this.load_Z_F_F(uiMouseX, uiMouseY)) {
-            this.write_V_Z(!this.update_Z);
+            this.setCollapsed(!this.update_Z);
          }
 
          this.flush_Z = false;
@@ -375,7 +375,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (!this.write_Z) {
          return false;
       }
@@ -408,7 +408,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       if (this.write_Z && !this.update_Z && this.init_EventBus != null) {
          LayoutViewport viewport = this.init_TextFormat.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
@@ -432,7 +432,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (!this.write_Z) {
          return false;
       } else if (keyCode == 256) {
@@ -444,12 +444,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       return this.write_Z && !this.update_Z && this.init_TextFormat.charTyped(chr, modifiers);
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.write_Z) {
          return false;
       }
@@ -462,7 +462,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.write_Z) {
          return false;
       }
@@ -474,32 +474,32 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          this.sync_Z = false;
          this.flush_Z = false;
          this.init_CharEncoder_3.setShowBody(!collapsed);
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH(bounds);
          this.add = clamped.x;
@@ -513,17 +513,17 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.init_TextFormat.clearFocus();
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 160;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.init_CharEncoder_2.load() + 20;
    }
 

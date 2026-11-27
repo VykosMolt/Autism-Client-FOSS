@@ -4,62 +4,62 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public abstract class DraggableOverlayWindow extends OverlayLayoutBase implements AutismOverlay {
-   private final String init_Str;
-   protected int init_I_2;
-   protected int load_I;
-   protected int read_I;
-   protected int write;
-   protected boolean init_Z;
-   protected boolean load_Z;
-   private OverlayContextMenu<?> init_F;
-   protected boolean read_Z;
-   private OverlayWindowSizeStore init_do;
-   private int flush;
-   private int close;
+   private final String overlayId;
+   protected int windowX;
+   protected int windowY;
+   protected int windowWidth;
+   protected int windowHeight;
+   protected boolean windowVisible;
+   protected boolean windowCollapsed;
+   private OverlayContextMenu<?> activeContextMenu;
+   protected boolean windowPinned;
+   private OverlayWindowSizeStore windowSizeStore;
+   private int lastMouseX;
+   private int lastMouseY;
 
    protected DraggableOverlayWindow() {
       this(null, 0, 0);
    }
 
    protected DraggableOverlayWindow(String overlayId, int initialWidth, int initialHeight) {
-      this.init_Str = overlayId;
-      this.read_I = initialWidth;
-      this.write = initialHeight;
-      this.read_Z = AutismSessionState.getInstance().isOverlayPinned(this.init_Str());
+      this.overlayId = overlayId;
+      this.windowWidth = initialWidth;
+      this.windowHeight = initialHeight;
+      this.windowPinned = AutismSessionState.getInstance().isOverlayPinned(this.getOverlayId());
    }
 
-   protected boolean d_() {
+   protected boolean supportsPinning() {
       return false;
    }
 
    @Override
-   public boolean f_() {
-      return this.read_Z;
+   public boolean isPersistent() {
+      return this.windowPinned;
    }
 
    @Override
-   public AutismOverlay.RenderLayer init_cX_DataUtil() {
-      return this.read_Z ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.super.init_cX_DataUtil();
+   public AutismOverlay.RenderLayer getRenderLayer() {
+      return this.windowPinned ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.super.getRenderLayer();
    }
 
-   protected void pop_V() {
-      this.read_Z = !this.read_Z;
-      AutismSessionState.getInstance().setOverlayPinned(this.init_Str(), this.read_Z);
+   protected void togglePinned() {
+      this.windowPinned = !this.windowPinned;
+      AutismSessionState.getInstance().setOverlayPinned(this.getOverlayId(), this.windowPinned);
       OverlayManager.getInstance().refreshRenderLayer(this);
-      this.a__V();
+      this.saveBounds();
    }
 
-   public boolean get_Z() {
-      return this.read_Z;
+   public boolean isPinned() {
+      return this.windowPinned;
    }
 
-   public void update_V_Z(boolean value) {
-      if (this.read_Z != value) {
-         this.pop_V();
+   public void setPinned(boolean value) {
+      if (this.windowPinned != value) {
+         this.togglePinned();
       }
    }
 
-   protected autismclient.gui.f.NetHelper init_NetHelper_cH(OverlayBounds bounds) {
+   protected autismclient.gui.f.NetHelper getPinButtonRect(OverlayBounds bounds) {
       autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, 14);
       autismclient.gui.f.NetHelper bar = autismclient.gui.ui.widgets.WindowHeaderHelper.init(window, 14);
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.WindowHeaderHelper.load(window, 14);
@@ -69,220 +69,220 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
       return autismclient.gui.f.NetHelper.init(x, y, size, size);
    }
 
-   protected boolean load_Z_D_2(double mouseX, double mouseY, OverlayBounds bounds) {
-      return this.d_() && this.init_NetHelper_cH(bounds).init_Z((int)mouseX, (int)mouseY);
+   protected boolean isOverPinButton(double mouseX, double mouseY, OverlayBounds bounds) {
+      return this.supportsPinning() && this.getPinButtonRect(bounds).init_Z((int)mouseX, (int)mouseY);
    }
 
-   protected void init_V_GuiGraphicsExtract_13(GuiGraphicsExtractor context, int mouseX, int mouseY, OverlayBounds bounds) {
-      if (this.d_()) {
-         autismclient.gui.f.NetHelper pin = this.init_NetHelper_cH(bounds);
+   protected void renderPinButton(GuiGraphicsExtractor context, int mouseX, int mouseY, OverlayBounds bounds) {
+      if (this.supportsPinning()) {
+         autismclient.gui.f.NetHelper pin = this.getPinButtonRect(bounds);
          autismclient.gui.ui.UiColorScheme colors = autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, mouseX, mouseY)
             .init_TableIndex()
             .colors();
          boolean hovered = pin.init_Z(mouseX, mouseY);
-         int color = this.read_Z ? colors.accent : (hovered ? colors.textPrimary : colors.textSecondary);
+         int color = this.windowPinned ? colors.accent : (hovered ? colors.textPrimary : colors.textSecondary);
          GuiIconAtlas.draw(context, GuiIconAtlas.PIN, pin.read(), pin.write(), pin.update(), pin.sync(), color);
       }
    }
 
    @Override
-   public String init_Str() {
-      return this.init_Str != null ? this.init_Str : this.getClass().getSimpleName();
+   public String getOverlayId() {
+      return this.overlayId != null ? this.overlayId : this.getClass().getSimpleName();
    }
 
    @Override
-   public boolean sync_Z() {
-      return this.init_Z;
+   public boolean isVisible() {
+      return this.windowVisible;
    }
 
    @Override
-   public void init_V_Z(boolean v) {
-      this.init_Z = v;
+   public void setVisible(boolean v) {
+      this.windowVisible = v;
       if (!v) {
-         this.get_V();
+         this.clearFocusAndDismissMenu();
       }
 
-      this.a__V();
+      this.saveBounds();
    }
 
    @Override
-   public boolean flush_Z() {
-      return this.load_Z;
+   public boolean isCollapsed() {
+      return this.windowCollapsed;
    }
 
    @Override
-   public void write_V_Z(boolean c) {
-      if (this.load_Z != c) {
-         this.load_Z = c;
+   public void setCollapsed(boolean c) {
+      if (this.windowCollapsed != c) {
+         this.windowCollapsed = c;
          if (c) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public OverlayBounds init_cH() {
-      return new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z);
+   public OverlayBounds getBounds() {
+      return new OverlayBounds(this.windowX, this.windowY, this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds c = this.clampToScreen(this, bounds);
-         this.init_I_2 = c.x;
-         this.load_I = c.y;
-         this.read_I = c.width;
-         this.write = c.height;
-         this.init_Z = c.visible;
-         if (this.load_Z != c.collapsed) {
+         this.windowX = c.x;
+         this.windowY = c.y;
+         this.windowWidth = c.width;
+         this.windowHeight = c.height;
+         this.windowVisible = c.visible;
+         if (this.windowCollapsed != c.collapsed) {
             this.snapCollapseState(c.collapsed);
          }
 
-         this.load_Z = c.collapsed;
+         this.windowCollapsed = c.collapsed;
       }
    }
 
-   protected final OverlayWindowSizeStore init_do() {
-      if (this.init_do == null) {
-         this.init_do = new OverlayWindowSizeStore(this.init_Str());
+   protected final OverlayWindowSizeStore getSizeStore() {
+      if (this.windowSizeStore == null) {
+         this.windowSizeStore = new OverlayWindowSizeStore(this.getOverlayId());
       }
 
-      return this.init_do;
+      return this.windowSizeStore;
    }
 
-   protected static int update_I() {
+   protected static int getMaxScreenWindowWidth() {
       return Math.max(1, cA.init_I() - 8);
    }
 
-   protected static int sync_I() {
+   protected static int getMaxScreenWindowHeight() {
       return Math.max(1, cA.load_I() - 8);
    }
 
-   protected int init_I_I_I(int autoWidth, int minWidth) {
-      return this.read_Z() ? this.init_do().init(autoWidth, minWidth, update_I()) : autoWidth;
+   protected int resolveWindowWidth(int autoWidth, int minWidth) {
+      return this.isResizable() ? this.getSizeStore().init(autoWidth, minWidth, getMaxScreenWindowWidth()) : autoWidth;
    }
 
-   protected int load_I_I_I(int autoHeight, int minHeight) {
-      return this.read_Z() ? this.init_do().load(autoHeight, minHeight, sync_I()) : autoHeight;
+   protected int resolveWindowHeight(int autoHeight, int minHeight) {
+      return this.isResizable() ? this.getSizeStore().load(autoHeight, minHeight, getMaxScreenWindowHeight()) : autoHeight;
    }
 
-   protected int flush_I() {
-      return this.init_I();
+   protected int getResizeMinWidth() {
+      return this.getMinWidth();
    }
 
-   protected int a__I() {
-      return this.load_I();
+   protected int getResizeMinHeight() {
+      return this.getMinHeight();
    }
 
-   protected boolean set_Z() {
-      return this.read_Z() && this.init_do().init_Z();
+   protected boolean hasCustomStoredSize() {
+      return this.isResizable() && this.getSizeStore().init_Z();
    }
 
    @Override
-   public void init_V_I_I(int width, int height) {
-      if (!this.read_Z()) {
-         AutismOverlay.super.init_V_I_I(width, height);
+   public void resizeTo(int width, int height) {
+      if (!this.isResizable()) {
+         AutismOverlay.super.resizeTo(width, height);
       } else {
-         OverlayBounds b = this.init_cH();
+         OverlayBounds b = this.getBounds();
          int screenW = cA.init_I();
          int screenH = cA.load_I();
-         int minW = this.flush_I();
-         int minH = this.a__I();
+         int minW = this.getResizeMinWidth();
+         int minH = this.getResizeMinHeight();
          int w = OverlayWindowSizeStore.read(width, minW, screenW > 0 ? screenW - 4 - b.x : width);
          int h = OverlayWindowSizeStore.read(height, minH, screenH > 0 ? screenH - 4 - b.y : height);
          OverlayBounds clamped = clampBounds(new OverlayBounds(b.x, b.y, w, h, b.visible, b.collapsed), minW, minH, screenW, screenH);
-         this.init_do().init(clamped.width, clamped.height);
-         this.init_V_cH(clamped);
-         this.c_();
+         this.getSizeStore().init(clamped.width, clamped.height);
+         this.setBounds(clamped);
+         this.onSizeChanged();
       }
    }
 
    @Override
-   public void tick_V() {
-      if (this.read_Z()) {
-         this.init_do().init_V();
+   public void onResizeFinished() {
+      if (this.isResizable()) {
+         this.getSizeStore().init_V();
       }
    }
 
    @Override
-   public void run_V() {
-      if (this.read_Z()) {
-         this.init_do().load();
-         this.c_();
+   public void resetSize() {
+      if (this.isResizable()) {
+         this.getSizeStore().load();
+         this.onSizeChanged();
       }
    }
 
-   protected void c_() {
+   protected void onSizeChanged() {
    }
 
    @Override
    protected boolean isOverHeaderControl(double mouseX, double mouseY, OverlayBounds bounds) {
-      return super.isOverHeaderControl(mouseX, mouseY, bounds) || this.load_Z_D_2(mouseX, mouseY, bounds);
+      return super.isOverHeaderControl(mouseX, mouseY, bounds) || this.isOverPinButton(mouseX, mouseY, bounds);
    }
 
    @Override
-   public boolean init_Z_D_D(double mx, double my) {
-      if (!this.init_Z) {
+   public boolean containsPoint(double mx, double my) {
+      if (!this.windowVisible) {
          return false;
       }
 
-      int frameH = this.close_I();
-      boolean overPanel = mx >= this.init_I_2 && mx <= this.init_I_2 + this.read_I && my >= this.load_I && my <= this.load_I + frameH;
-      return this.init_F != null && this.init_F.init(mx, my) ? true : overPanel;
+      int frameH = this.getRenderedFrameHeight();
+      boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.windowWidth && my >= this.windowY && my <= this.windowY + frameH;
+      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? true : overPanel;
    }
 
    @Override
-   public boolean load_Z_D_D(double mx, double my) {
-      if (!this.init_Z) {
+   public boolean isOverHeader(double mx, double my) {
+      if (!this.windowVisible) {
          return false;
-      } else if (!(mx < this.init_I_2) && !(mx > this.init_I_2 + this.read_I)) {
-         return !(my < this.load_I) && !(my > this.load_I + 14) ? !this.isOverHeaderControl(mx, my, this.init_cH()) : false;
+      } else if (!(mx < this.windowX) && !(mx > this.windowX + this.windowWidth)) {
+         return !(my < this.windowY) && !(my > this.windowY + 14) ? !this.isOverHeaderControl(mx, my, this.getBounds()) : false;
       } else {
          return false;
       }
    }
 
-   protected int close_I() {
-      return this.load_Z ? 14 : this.write;
+   protected int getRenderedFrameHeight() {
+      return this.windowCollapsed ? 14 : this.windowHeight;
    }
 
-   protected void init_V_F(OverlayContextMenu<?> menu) {
-      this.init_F = menu;
+   protected void setActiveContextMenu(OverlayContextMenu<?> menu) {
+      this.activeContextMenu = menu;
    }
 
-   protected OverlayContextMenu<?> init_F_3() {
-      return this.init_F;
+   protected OverlayContextMenu<?> getActiveContextMenu() {
+      return this.activeContextMenu;
    }
 
-   protected final void get_V() {
-      this.push_V();
-      if (this.init_F != null) {
-         this.init_F.init_V();
+   protected final void clearFocusAndDismissMenu() {
+      this.clearInputFocus();
+      if (this.activeContextMenu != null) {
+         this.activeContextMenu.init_V();
       }
    }
 
-   protected int read_I_I_I(int mouse, int axis) {
-      if (this.init_F != null && this.init_F.init_Z()) {
-         int otherAxis = axis == 0 ? this.close : this.flush;
-         boolean covered = axis == 0 ? this.init_F.init(mouse, otherAxis) : this.init_F.init(otherAxis, mouse);
+   protected int maskMouseCoordIfMenuCovers(int mouse, int axis) {
+      if (this.activeContextMenu != null && this.activeContextMenu.init_Z()) {
+         int otherAxis = axis == 0 ? this.lastMouseY : this.lastMouseX;
+         boolean covered = axis == 0 ? this.activeContextMenu.init(mouse, otherAxis) : this.activeContextMenu.init(otherAxis, mouse);
          return covered ? -10000 : mouse;
       } else {
          return mouse;
       }
    }
 
-   protected final void load_V_I_I(int mx, int my) {
-      this.flush = mx;
-      this.close = my;
+   protected final void recordMousePosition(int mx, int my) {
+      this.lastMouseX = mx;
+      this.lastMouseY = my;
    }
 
-   protected int write_I_I_I(int mx, int my) {
-      return this.init_F != null && this.init_F.init(mx, my) ? -10000 : mx;
+   protected int maskMouseXIfMenuCovers(int mx, int my) {
+      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? -10000 : mx;
    }
 
-   protected int update_I_I_I(int mx, int my) {
-      return this.init_F != null && this.init_F.init(mx, my) ? -10000 : my;
+   protected int maskMouseYIfMenuCovers(int mx, int my) {
+      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? -10000 : my;
    }
 }

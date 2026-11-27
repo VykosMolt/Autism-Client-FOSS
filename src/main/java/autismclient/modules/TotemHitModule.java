@@ -55,7 +55,7 @@ public final class TotemHitModule extends Module {
          && entityHit.getEntity() instanceof LivingEntity enemy
          && enemy.isAlive()
          && !enemy.isSpectator()
-         && !AntiBotTracker.load_Z(enemy)
+         && !AntiBotTracker.shouldIgnoreEntity(enemy)
          && !TeamsModule.init(enemy, "killaura")) {
          Reference<Enchantment> knockback = MC.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.KNOCKBACK);
          int best = -1;

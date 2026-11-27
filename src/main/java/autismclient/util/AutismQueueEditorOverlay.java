@@ -45,44 +45,44 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   protected boolean d_() {
+   protected boolean supportsPinning() {
       return true;
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.add_I_16();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.reset();
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   protected int a__I() {
+   protected int getResizeMinHeight() {
       return this.pop_I_23() + 3 * this.start_I_14() + this.queue();
    }
 
    @Override
-   protected void c_() {
-      if (!this.set_Z()) {
+   protected void onSizeChanged() {
+      if (!this.hasCustomStoredSize()) {
          this.open_I = this.add_I_16();
       }
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.poll_I, this.sync_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
          this.flush_I = clamped.x;
@@ -99,7 +99,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.sync_Z = visible;
       if (visible) {
          this.push = 0;
@@ -111,7 +111,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void write_V_23() {
-      this.init_V_Z(!this.sync_Z);
+      this.setVisible(!this.sync_Z);
    }
 
    public void load(boolean configurationOnly) {
@@ -119,34 +119,34 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.sync_Z;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
@@ -159,12 +159,12 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       return mouseX >= this.flush_I
          && mouseX <= this.flush_I + this.open_I
          && mouseY >= this.close_I
@@ -177,12 +177,12 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       shared.setQueueEditorVisible(this.sync_Z);
       shared.setQueueEditorX(this.flush_I);
       shared.setQueueEditorY(this.close_I);
-      this.a__V();
+      this.saveBounds();
    }
 
    public void sync_V_17() {
       AutismSessionState shared = AutismSessionState.getInstance();
-      this.b__V();
+      this.loadBounds();
       this.sync_Z = shared.isQueueEditorVisible();
       this.flush_I = shared.getQueueEditorX();
       this.close_I = shared.getQueueEditorY();
@@ -193,7 +193,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int pop_I_23() {
-      int toolbarRows = LanSyncManager.init_aE().write_Z() ? 4 : 3;
+      int toolbarRows = LanSyncManager.getInstance().isInSession() ? 4 : 3;
       return this.cache() + toolbarRows * this.next() + (toolbarRows - 1) * this.value() + this.state();
    }
 
@@ -267,7 +267,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private int init_I(List<AutismSessionState.DelayedPacket> displayQueue) {
       int size = displayQueue.size();
       int rows = size == 0 ? 1 : Math.min(size, this.prev());
-      return this.load_I_I_I(Math.max(this.load_I(), this.pop_I_23() + rows * this.start_I_14() + this.queue()), this.a__I());
+      return this.resolveWindowHeight(Math.max(this.getMinHeight(), this.pop_I_23() + rows * this.start_I_14() + this.queue()), this.getResizeMinHeight());
    }
 
    private AutismSessionState.DelayedPacket init_ck_CachePool(List<AutismSessionState.DelayedPacket> queue) {
@@ -447,8 +447,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.sync_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.sync_Z || this.isClosing()) {
          AutismSessionState shared = AutismSessionState.getInstance();
          List<AutismSessionState.DelayedPacket> staggeredQueue = shared.getSendingPackets();
          if (staggeredQueue.isEmpty()) {
@@ -460,7 +460,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
 
          AutismSessionState.DelayedPacket selectedPacket = this.init_ck_CachePool(this.init_List);
          OverlayBounds clamped = this.clampToScreen(
-            this, new OverlayBounds(this.flush_I, this.close_I, this.init_I_I_I(this.open_I, this.init_I()), this.init_I(this.init_List), this.sync_Z, this.update_Z)
+            this, new OverlayBounds(this.flush_I, this.close_I, this.resolveWindowWidth(this.open_I, this.getMinWidth()), this.init_I(this.init_List), this.sync_Z, this.update_Z)
          );
          this.flush_I = clamped.x;
          this.close_I = clamped.y;
@@ -478,7 +478,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          String title = "Queue (" + this.init_List.size() + ")";
          OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
          this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.update_Z, this.write_Z);
-         this.init_V_GuiGraphicsExtract_13(context, mouseX, mouseY, bounds);
+         this.renderPinButton(context, mouseX, mouseY, bounds);
          boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
          if (!clipBody) {
             this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
@@ -741,7 +741,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
                );
-               boolean inLanSession = LanSyncManager.init_aE().write_Z();
+               boolean inLanSession = LanSyncManager.getInstance().isInSession();
                if (inLanSession) {
                   int syncWidth = this.init_I_Str_5("Sync", 46, 58);
                   int syncExecWidth = Math.max(this.init_I_Str_5("Sync Exec", 92, 118), rowWidth - syncWidth - gap);
@@ -771,7 +771,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      mouseX,
                      mouseY,
                      this.flush_Z ? "Join a world to execute packet queues" : "Tell LAN peers to execute their queues together",
-                     () -> LanSyncManager.init_aE().flush_V()
+                     () -> LanSyncManager.getInstance().triggerQueueFlushSync()
                   );
                }
 
@@ -941,7 +941,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.sync_Z) {
          return false;
       }
@@ -953,11 +953,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          : this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
       if (button == 0 && mouseX >= this.flush_I && mouseX <= this.flush_I + this.open_I && mouseY >= this.close_I && mouseY <= this.close_I + 14) {
          OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
-         if (this.load_Z_D_2(mouseX, mouseY, bounds)) {
-            this.pop_V();
+         if (this.isOverPinButton(mouseX, mouseY, bounds)) {
+            this.togglePinned();
             return true;
          } else if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          } else {
             this.write_Z = true;
@@ -1024,12 +1024,12 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mouseX, mouseY);
+         return this.containsPoint(mouseX, mouseY);
       }
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.write_Z && button == 0) {
          OverlayBounds nextBounds = this.clampToScreen(
             this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open_I, this.poll_I, this.sync_Z, this.update_Z)
@@ -1052,7 +1052,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0 && this.write_Z) {
          this.write_Z = false;
          this.update_V_20();
@@ -1066,8 +1066,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      if (this.sync_Z && !this.update_Z && this.init_Z_D_D(mouseX, mouseY)) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      if (this.sync_Z && !this.update_Z && this.containsPoint(mouseX, mouseY)) {
          List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
          int panelHeight = this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
          int visibleHeight = this.load(panelHeight);
@@ -1084,19 +1084,19 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       return false;
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       return false;
    }
 
    private void close_V_14() {
       if (!this.flush_Z) {
-         LanSyncManager sync = LanSyncManager.init_aE();
-         if (!sync.write_Z()) {
+         LanSyncManager sync = LanSyncManager.getInstance();
+         if (!sync.isInSession()) {
             AutismClientMessaging.sendPrefixed("§cNot in LAN session");
          } else {
             List<AutismSessionState.DelayedPacket> queue = this.init_List_12();
@@ -1107,8 +1107,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                if (queueData == null) {
                   AutismClientMessaging.sendPrefixed("§cFailed to serialize queue");
                } else {
-                  sync.write(queueData);
-                  AutismClientMessaging.sendPrefixed("§aQueue sent to " + sync.write_I() + " clients");
+                  sync.broadcastQueueData(queueData);
+                  AutismClientMessaging.sendPrefixed("§aQueue sent to " + sync.getSessionPeerCount() + " clients");
                }
             }
          }

@@ -54,7 +54,7 @@ final class WTapController {
          && !target.isSpectator()
          && (!this.init_bf_DataUtil.init_Z() || target instanceof Player)
          && !TeamsModule.init_Z_Entity_5(target)
-         && !AntiBotTracker.init_Z(target)) {
+         && !AntiBotTracker.isBot(target)) {
          long now = System.nanoTime();
          int chance = this.init_bf_DataUtil.init_I();
          boolean selected = chance > 0 && this.init_Random.nextInt(100) < chance;
@@ -143,7 +143,7 @@ final class WTapController {
                && living.isAlive()
                && target.getUUID().equals(this.init_UUID)
                && !TeamsModule.init_Z_Entity_5(living)
-               && !AntiBotTracker.init_Z(living)
+               && !AntiBotTracker.isBot(living)
          )) {
             this.init_be.init_V();
             this.write_V();

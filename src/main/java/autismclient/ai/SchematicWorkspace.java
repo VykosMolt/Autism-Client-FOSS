@@ -148,8 +148,8 @@ public final class SchematicWorkspace {
          SchematicWorkspace workspace = init_cV();
          OverlayManager manager = OverlayManager.getInstance();
          SchematicLibraryOverlay window = workspace.init_SchematicLibraryOv;
-         if (window != null && window.sync_Z() && manager.getOverlays().contains(window) && !manager.isHidden(window)) {
-            window.init_V_Z(false);
+         if (window != null && window.isVisible() && manager.getOverlays().contains(window) && !manager.isHidden(window)) {
+            window.setVisible(false);
          } else {
             workspace.init_SchematicLibraryOv();
          }
@@ -168,7 +168,7 @@ public final class SchematicWorkspace {
             workspace.init_SchematicLibraryOv = new SchematicLibraryOverlay(workspace);
          }
 
-         if (init_cV.init_SchematicLibraryOv.sync_Z()) {
+         if (init_cV.init_SchematicLibraryOv.isVisible()) {
             OverlayManager manager = OverlayManager.getInstance();
             manager.register(init_cV.init_SchematicLibraryOv);
             manager.setHidden(init_cV.init_SchematicLibraryOv, false);
@@ -221,8 +221,8 @@ public final class SchematicWorkspace {
 
       manager.register(this.init_SchematicLibraryOv);
       manager.setHidden(this.init_SchematicLibraryOv, false);
-      this.init_SchematicLibraryOv.init_V_Z(true);
-      this.init_SchematicLibraryOv.write_V_Z(false);
+      this.init_SchematicLibraryOv.setVisible(true);
+      this.init_SchematicLibraryOv.setCollapsed(false);
       manager.bringToFront(this.init_SchematicLibraryOv);
       return this.init_SchematicLibraryOv;
    }
@@ -700,7 +700,7 @@ public final class SchematicWorkspace {
             this.close = "";
             this.flush = "";
             if (this.init_SchematicLibraryOv != null) {
-               this.init_SchematicLibraryOv.init_V_Z(false);
+               this.init_SchematicLibraryOv.setVisible(false);
             }
 
             autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);

@@ -48,19 +48,19 @@ public final class SyncCommand extends Command {
    }
 
    private static int init(String message) {
-      LanSyncManager sync = LanSyncManager.init_aE();
-      if (!sync.write_Z()) {
+      LanSyncManager sync = LanSyncManager.getInstance();
+      if (!sync.isInSession()) {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
       } else {
-         sync.init_Z_Str(message);
+         sync.sendSyncedChat(message);
          return 1;
       }
    }
 
    private static int load(String name) {
-      LanSyncManager sync = LanSyncManager.init_aE();
-      if (!sync.write_Z()) {
+      LanSyncManager sync = LanSyncManager.getInstance();
+      if (!sync.isInSession()) {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
       } else {
@@ -69,7 +69,7 @@ public final class SyncCommand extends Command {
             AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
             return 1;
          } else {
-            sync.load_V(macro.name);
+            sync.triggerMacroSync(macro.name);
             return 1;
          }
       }

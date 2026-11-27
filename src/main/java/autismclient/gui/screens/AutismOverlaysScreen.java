@@ -84,7 +84,7 @@ public class AutismOverlaysScreen extends Screen {
 
       if (this.write) {
          this.write = false;
-         if (this.init_cX != null && this.init_cX.sync_Z()) {
+         if (this.init_cX != null && this.init_cX.isVisible()) {
             OverlayManager.getInstance().markClosing(this.init_cX);
          }
       }
@@ -108,7 +108,7 @@ public class AutismOverlaysScreen extends Screen {
    @Override
    public void tick() {
       super.tick();
-      if (this.init_cX != null && !this.init_cX.sync_Z() && !this.init_cX.a__Z() && this.minecraft != null && this.minecraft.gui.screen() == this) {
+      if (this.init_cX != null && !this.init_cX.isVisible() && !this.init_cX.isClosing() && this.minecraft != null && this.minecraft.gui.screen() == this) {
          OverlayScreenController.setScreenExplicit(this.minecraft, this.init_Screen);
       }
    }
@@ -196,7 +196,7 @@ public class AutismOverlaysScreen extends Screen {
 
    private void load() {
       if (this.init_cX != null && (this.init_Z || this.load_Z)) {
-         this.init_cX.init_V_Z(false);
+         this.init_cX.setVisible(false);
       }
 
       if (this.load_Z) {

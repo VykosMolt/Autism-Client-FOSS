@@ -52,18 +52,18 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       int panelX = this.close();
       int panelW = this.open();
       int y = this.add() - this.write_I;
-      ProxyListManager mgr = ProxyListManager.init_bY();
-      this.init("Timeout", "How long each proxy check can take.", mgr.read_I(), mgr::init_V_I, init_IArr, this::init_Str_I, panelX, panelW, y);
+      ProxyListManager mgr = ProxyListManager.getInstance();
+      this.init("Timeout", "How long each proxy check can take.", mgr.getTimeoutMs(), mgr::setTimeoutMs, init_IArr, this::init_Str_I, panelX, panelW, y);
       y += this.flush();
-      this.init("Threads", "How many proxies can be checked at once.", mgr.write_I(), mgr::load_V_I, load_IArr, Integer::toString, panelX, panelW, y);
+      this.init("Threads", "How many proxies can be checked at once.", mgr.getWorkerThreads(), mgr::setWorkerThreads, load_IArr, Integer::toString, panelX, panelW, y);
       y += this.flush();
-      this.init("Retries", "Extra attempts when a proxy check times out.", mgr.update_I(), mgr::read_V_I, read_IArr, Integer::toString, panelX, panelW, y);
+      this.init("Retries", "Extra attempts when a proxy check times out.", mgr.getRetryCount(), mgr::setRetryCount, read_IArr, Integer::toString, panelX, panelW, y);
       y += this.flush();
       this.init(
          "Prune latency",
          "Cleanup removes alive proxies slower than this.",
-         mgr.sync_I(),
-         mgr::write,
+         mgr.getPruneLatencyMs(),
+         mgr::setPruneLatencyMs,
          write_IArr,
          value -> value <= 0 ? "Off" : this.init_Str_I(value),
          panelX,
@@ -74,8 +74,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       this.init(
          "Prune limit",
          "Cleanup keeps only the fastest proxies when enabled.",
-         mgr.flush_I(),
-         mgr::update,
+         mgr.getPruneToCount(),
+         mgr::setPruneToCount,
          update_IArr,
          value -> value <= 0 ? "No limit" : Integer.toString(value),
          panelX,
@@ -83,9 +83,9 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          y
       );
       y += this.flush();
-      this.init("Sort by latency", mgr.load_Z(), "Refresh/cancel sorts alive proxies from fastest to slowest.", value -> mgr.init_V_Z(value), panelX, panelW, y);
+      this.init("Sort by latency", mgr.isSortByLatency(), "Refresh/cancel sorts alive proxies from fastest to slowest.", value -> mgr.setSortByLatency(value), panelX, panelW, y);
       y += this.flush();
-      this.init("Prune dead", mgr.read_Z(), "Cleanup removes proxies marked as dead.", value -> mgr.load_V_Z(value), panelX, panelW, y);
+      this.init("Prune dead", mgr.isPruneDead(), "Cleanup removes proxies marked as dead.", value -> mgr.setPruneDead(value), panelX, panelW, y);
       y += this.flush();
       this.init("Location lookup", mgr.auditGeoLookup(), "Sends proxy IPs to api.country.is to show their country.", value -> mgr.auditSetGeoLookup(value), panelX, panelW, y);
       int wanted = this.poll();
@@ -162,14 +162,14 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private void read_V_5() {
-      ProxyListManager mgr = ProxyListManager.init_bY();
-      mgr.init_V_I(3000);
-      mgr.load_V_I(64);
-      mgr.read_V_I(0);
-      mgr.write(2000);
-      mgr.update(0);
-      mgr.init_V_Z(true);
-      mgr.load_V_Z(true);
+      ProxyListManager mgr = ProxyListManager.getInstance();
+      mgr.setTimeoutMs(3000);
+      mgr.setWorkerThreads(64);
+      mgr.setRetryCount(0);
+      mgr.setPruneLatencyMs(2000);
+      mgr.setPruneToCount(0);
+      mgr.setSortByLatency(true);
+      mgr.setPruneDead(true);
       mgr.auditSetGeoLookup(false);
       this.load_V_7();
    }

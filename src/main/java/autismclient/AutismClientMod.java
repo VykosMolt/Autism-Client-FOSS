@@ -266,7 +266,7 @@ public final class AutismClientMod implements ClientModInitializer {
             logTickError("builderLifeguard", t);
          }
       });
-      ClientTickEvents.END_LEVEL_TICK.register(level -> runSafe("lan.levelTick", () -> LanSyncManager.init_aE().init_V_J(level.getGameTime())));
+      ClientTickEvents.END_LEVEL_TICK.register(level -> runSafe("lan.levelTick", () -> LanSyncManager.getInstance().onWorldTick(level.getGameTime())));
       ClientConfigurationConnectionEvents.INIT.register((listener, client) -> {
          runSafe("cfg.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
          runSafe("cfg.hideMenuOverlays", () -> ModuleRuntimeManager.getInstance().hideProfilesOverlayIfUnretained());
@@ -317,7 +317,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));
          runSafe("leave.packFailureGuard", PackFailureGuard::load);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::flush_V_9);
-         runSafe("leave.lanSync", () -> LanSyncManager.init_aE().sync_V());
+         runSafe("leave.lanSync", () -> LanSyncManager.getInstance().resetActiveExecution());
          runSafe("leave.hideOverlays", () -> {
             if (!OverlayScreenController.hasRetainedForeground()) {
                OverlayManager.getInstance().minimizeAll();

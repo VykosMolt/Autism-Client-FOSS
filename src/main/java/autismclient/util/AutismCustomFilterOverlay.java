@@ -72,27 +72,27 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public String init_Str() {
+   public String getOverlayId() {
       return "autism-custom-filter";
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.pop_I_5();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.push_I_5() + this.load(1) * 2;
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.tick, this.run, this.get, this.set, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
          this.tick = clamped.x;
@@ -105,7 +105,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.write_Z = visible;
       if (visible) {
          OverlayManager.getInstance().bringToFront(this);
@@ -114,64 +114,64 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          this.init_AutismPacketSelect.write_V_21();
       }
 
-      this.a__V();
+      this.saveBounds();
    }
 
    public void load_V_5() {
-      this.init_V_Z(!this.write_Z);
+      this.setVisible(!this.write_Z);
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.write_Z;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
             this.init_AutismPacketSelect.write_V_21();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.write_Z) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       return mouseX >= this.tick && mouseX <= this.tick + this.get && mouseY >= this.run && mouseY <= this.run + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    @Override
-   public boolean write_Z() {
-      return this.init_AutismPacketSelect.sync_Z() || this.init_BitSetUtil.isFocused() || this.load_BitSetUtil.isFocused();
+   public boolean hasFocusedTextInput() {
+      return this.init_AutismPacketSelect.isVisible() || this.init_BitSetUtil.isFocused() || this.load_BitSetUtil.isFocused();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.write_V_6();
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.write_Z || this.isClosing()) {
          this.init_List.clear();
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          int wantC2s = this.load(this.init(module.getCustomC2sPacketsCopy().size()));
@@ -229,8 +229,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
             }
 
-            if (this.init_AutismPacketSelect.sync_Z()) {
-               this.init_AutismPacketSelect.init_V_GuiGraphicsExtract_15(context, mouseX, mouseY, delta);
+            if (this.init_AutismPacketSelect.isVisible()) {
+               this.init_AutismPacketSelect.render(context, mouseX, mouseY, delta);
             }
          }
       }
@@ -505,19 +505,19 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.write_Z) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_D_3(mouseX, mouseY, button);
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.mouseClicked(mouseX, mouseY, button);
       }
 
       if (button == 0 && mouseX >= this.tick && mouseX < this.tick + this.get && mouseY >= this.run && mouseY < this.run + 14) {
-         OverlayBounds bounds = this.init_cH();
+         OverlayBounds bounds = this.getBounds();
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          } else {
             this.sync_Z = true;
@@ -565,7 +565,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mouseX, mouseY);
+         return this.containsPoint(mouseX, mouseY);
       }
    }
 
@@ -580,8 +580,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      if (this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.load_Z_D_3(mouseX, mouseY, button)) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
+      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
 
@@ -600,7 +600,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
       if (button == 0) {
          if (this.sync_Z) {
-            this.a__V();
+            this.saveBounds();
          }
 
          this.sync_Z = false;
@@ -610,8 +610,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-      if (this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.init_Z_D(mouseX, mouseY, button, deltaX, deltaY)) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
          return true;
       } else if (this.init_BitSetUtil
          .mouseDragged(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
@@ -638,9 +638,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_D_2(mouseX, mouseY, amount);
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.mouseScrolled(mouseX, mouseY, amount);
       } else if (this.init_AutismCustomFilter.init(mouseX, mouseY)) {
          int maxScroll = this.init(
                this.init_AutismCustomFilter.init_I,
@@ -691,9 +691,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_I(keyCode, scanCode, modifiers);
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.keyPressed(keyCode, scanCode, modifiers);
       } else if (!this.write_Z) {
          return false;
       } else if (keyCode == 256) {
@@ -713,9 +713,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_C_I(chr, modifiers);
+   public boolean charTyped(char chr, int modifiers) {
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.charTyped(chr, modifiers);
       }
 
       if (!this.write_Z) {
@@ -727,16 +727,16 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.write_Z) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.sync_Z()) {
+      if (this.init_AutismPacketSelect.isVisible()) {
          return true;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       int frameHeight = this.update_Z ? 14 : this.set;
       return mouseX >= bounds.x && mouseX <= bounds.x + bounds.width && mouseY >= bounds.y && mouseY <= bounds.y + frameHeight
          ? true

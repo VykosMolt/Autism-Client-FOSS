@@ -14,7 +14,7 @@ public final class SilentMiningCoordinator {
    }
 
    public static boolean init(String requester, BlockHitResult ray) {
-      if (requester != null && ClientInteractionOverride.load(ray)) {
+      if (requester != null && ClientInteractionOverride.queueHoldAttack(ray)) {
          init_Str = requester;
          return true;
       } else {
@@ -23,7 +23,7 @@ public final class SilentMiningCoordinator {
    }
 
    public static boolean init(String requester, BlockHitResult ray, InteractionHand hand) {
-      if (requester != null && ClientInteractionOverride.load(ray, hand)) {
+      if (requester != null && ClientInteractionOverride.queueHoldUse(ray, hand)) {
          init_Str = requester;
          return true;
       } else {
@@ -37,7 +37,7 @@ public final class SilentMiningCoordinator {
 
    public static void init_V(String requester) {
       if (init_Z(requester)) {
-         ClientInteractionOverride.read_V();
+         ClientInteractionOverride.releaseHoldOverrides();
       }
    }
 

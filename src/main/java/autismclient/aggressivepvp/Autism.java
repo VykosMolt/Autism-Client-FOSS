@@ -32,7 +32,7 @@ public final class Autism {
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */
     public static boolean excluded(Entity entity) {
-        return AntiBotTracker.load_Z(entity) || TeamsModule.init(entity, "killaura");
+        return AntiBotTracker.shouldIgnoreEntity(entity) || TeamsModule.init(entity, "killaura");
     }
 
     public static boolean friend(Entity entity) {

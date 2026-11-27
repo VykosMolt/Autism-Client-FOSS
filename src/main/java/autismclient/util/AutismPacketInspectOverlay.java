@@ -195,10 +195,10 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.write_Z || this.isClosing()) {
          this.flush_V_12();
-         OverlayBounds bounds = this.init_cH();
+         OverlayBounds bounds = this.getBounds();
          String title = this.init_bu_JsonUtil == null ? "Packet Inspect" : this.init_bu_JsonUtil.init_Str();
          this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.update_Z, this.sync_Z);
          boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
@@ -489,12 +489,12 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.write_Z) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       if (button == 0 && mouseY >= this.poll && mouseY <= this.poll + 14 && mouseX >= this.open && mouseX <= this.open + this.push) {
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.write_V_17();
@@ -536,16 +536,16 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mouseX, mouseY);
+         return this.containsPoint(mouseX, mouseY);
       }
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0 && this.sync_Z) {
          this.sync_Z = false;
          this.open_V_9();
-         this.a__V();
+         this.saveBounds();
          return true;
       } else if (button == 0 && this.init_EventBus != null) {
          this.init_EventBus.mouseReleased();
@@ -558,14 +558,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.init_EventBus != null) {
          this.init_EventBus.mouseDragged(mouseX, mouseY);
          this.open_V_9();
       }
 
       if (this.write_Z && button == 0 && this.sync_Z) {
-         this.init_V_cH(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.push, this.pop, this.write_Z, this.update_Z));
+         this.setBounds(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.push, this.pop, this.write_Z, this.update_Z));
          return true;
       } else {
          return false;
@@ -573,7 +573,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       if (this.write_Z && !this.update_Z) {
          int tabsHeight = this.value();
          int progressHeight = this.data();
@@ -596,7 +596,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (!this.write_Z) {
          return false;
       } else if (keyCode == 256) {
@@ -608,17 +608,17 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       return false;
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.write_Z;
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.write_Z = visible;
       if (!visible) {
          this.write_V_17();
@@ -626,7 +626,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.write_Z) {
          return false;
       }
@@ -636,51 +636,51 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       return !this.write_Z
          ? false
          : mouseX >= this.open
             && mouseX <= this.open + this.push
             && mouseY >= this.poll
             && mouseY <= this.poll + 14
-            && !this.isOverHeaderControl(mouseX, mouseY, this.init_cH());
+            && !this.isOverHeaderControl(mouseX, mouseY, this.getBounds());
    }
 
    @Override
-   public int b__I() {
+   public int getZPriority() {
       return 12;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          this.sync_Z = false;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.open, this.poll, this.push, this.pop, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
          boolean sizeChanged = this.push != clamped.width || this.pop != clamped.height;
@@ -697,12 +697,12 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.pop_I_18();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.tick_I_16();
    }
 
@@ -907,7 +907,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.add_I_12() * 2 + 2);
       int desiredHeight = 14 + this.size() + this.value() + this.data() + desiredListHeight + this.set_I_14() + this.buffer();
       desiredHeight = Math.min(maxHeight, Math.max(this.tick_I_16(), desiredHeight));
-      this.init_V_cH(new OverlayBounds(anchorX, anchorY, desiredWidth, desiredHeight, true, false));
+      this.setBounds(new OverlayBounds(anchorX, anchorY, desiredWidth, desiredHeight, true, false));
    }
 
    private void open_V_9() {

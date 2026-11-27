@@ -163,7 +163,7 @@ public final class ModuleRuntimeManager {
          });
          this.runInitStepSafely("lanSync", () -> {
             if (this.config.lanSyncEnabled && !aD.init_Z()) {
-               autismclient.util.LanSyncManager.init_aE().init_V();
+               autismclient.util.LanSyncManager.getInstance().startService();
             }
          });
          if (!AutismLiteVariant.enabled()) {
@@ -234,10 +234,10 @@ public final class ModuleRuntimeManager {
          }
 
          if (!panicNow) {
-            if (next.lanSyncEnabled && !autismclient.util.LanSyncManager.init_aE().init_Z()) {
-               autismclient.util.LanSyncManager.init_aE().init_V();
-            } else if (!next.lanSyncEnabled && autismclient.util.LanSyncManager.init_aE().init_Z()) {
-               autismclient.util.LanSyncManager.init_aE().load_V();
+            if (next.lanSyncEnabled && !autismclient.util.LanSyncManager.getInstance().isRunning()) {
+               autismclient.util.LanSyncManager.getInstance().startService();
+            } else if (!next.lanSyncEnabled && autismclient.util.LanSyncManager.getInstance().isRunning()) {
+               autismclient.util.LanSyncManager.getInstance().stopService();
             }
          }
       }
@@ -306,10 +306,10 @@ public final class ModuleRuntimeManager {
             PayloadSubscriptionManager.init(MC, this.isPacketLoggerCapturing());
          }
 
-         autismclient.util.LanSyncManager lanSync = autismclient.util.LanSyncManager.init_aE();
-         if (!hidden && lanSync.read_Z()) {
+         autismclient.util.LanSyncManager lanSync = autismclient.util.LanSyncManager.getInstance();
+         if (!hidden && lanSync.isActiveOrConnecting()) {
             long perf = bK.read_J();
-            lanSync.poll();
+            lanSync.tick();
             bK.load("join.lanSync.tick", perf);
          }
 
@@ -337,7 +337,7 @@ public final class ModuleRuntimeManager {
 
          this.refreshXCarryActiveState();
          AutismServerInfoOverlay serverInfo = this.getServerInfoOverlay();
-         if (!hidden && serverInfo != null && (serverInfo.sync_Z() || serverInfo.run_Z_5())) {
+         if (!hidden && serverInfo != null && (serverInfo.isVisible() || serverInfo.run_Z_5())) {
             serverInfo.close_V_15();
          }
 
@@ -425,12 +425,12 @@ public final class ModuleRuntimeManager {
          this.getOrCreatePacketLoggerOverlay();
       }
 
-      if (this.config.lanSyncEnabled && !aD.init_Z() && !autismclient.util.LanSyncManager.init_aE().init_Z()) {
-         autismclient.util.LanSyncManager.init_aE().init_V();
+      if (this.config.lanSyncEnabled && !aD.init_Z() && !autismclient.util.LanSyncManager.getInstance().isRunning()) {
+         autismclient.util.LanSyncManager.getInstance().startService();
       }
 
       if (!aD.init_Z()) {
-         autismclient.util.LanSyncManager.init_aE().tick();
+         autismclient.util.LanSyncManager.getInstance().refreshClientList();
       }
 
       if (!aD.init_Z()) {
@@ -1591,7 +1591,7 @@ public final class ModuleRuntimeManager {
 
       if (this.profilesOverlay == null && MC != null && MC.font != null) {
          this.profilesOverlay = new AutismProfilesOverlay(MC.font);
-         this.profilesOverlay.b__V();
+         this.profilesOverlay.loadBounds();
       }
 
       return this.profilesOverlay;
@@ -1604,8 +1604,8 @@ public final class ModuleRuntimeManager {
    public void hideProfilesOverlayIfUnretained() {
       if (!OverlayScreenController.hasRetainedForeground() && !AutismLiteVariant.enabled()) {
          try {
-            if (this.profilesOverlay != null && this.profilesOverlay.sync_Z()) {
-               this.profilesOverlay.init_V_Z(false);
+            if (this.profilesOverlay != null && this.profilesOverlay.isVisible()) {
+               this.profilesOverlay.setVisible(false);
             }
          } catch (Throwable var2) {
          }
@@ -1626,8 +1626,8 @@ public final class ModuleRuntimeManager {
          return false;
       }
 
-      if (overlay.sync_Z()) {
-         overlay.init_V_Z(false);
+      if (overlay.isVisible()) {
+         overlay.setVisible(false);
          return true;
       }
 

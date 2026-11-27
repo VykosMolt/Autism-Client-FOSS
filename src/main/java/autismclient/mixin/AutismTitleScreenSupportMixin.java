@@ -67,7 +67,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
                   pf.load(true);
                }
 
-               overlay.init_V_Z(true);
+               overlay.setVisible(true);
                this.minecraft.gui.setScreen(new AutismOverlaysScreen(overlay, this, true));
             }
          }

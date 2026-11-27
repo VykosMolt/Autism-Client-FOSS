@@ -116,7 +116,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    }
 
    public boolean load_Z_2() {
-      return this.init_ConfigStore != null && this.init_ConfigStore.init_Z() || this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z();
+      return this.init_ConfigStore != null && this.init_ConfigStore.init_Z() || this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.isVisible();
    }
 
    @Override
@@ -131,7 +131,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
          int mx = cA.init_I_D(mouseX);
          int my = cA.init_I_D(mouseY);
-         boolean selectorOpen = this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z();
+         boolean selectorOpen = this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.isVisible();
          this.init_V_Z_2(selectorOpen || this.init_ConfigStore.load_Z());
          boolean overlayBlocksMenuHover = !selectorOpen && !this.init_ConfigStore.load_Z() && OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY);
          int menuMouseX = overlayBlocksMenuHover ? -10000 : mx;
@@ -141,7 +141,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          try {
             if (selectorOpen) {
                autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -1442511609);
-               this.init_AutismPacketSelect.init_V_GuiGraphicsExtract_15(graphics, mx, my, delta);
+               this.init_AutismPacketSelect.render(graphics, mx, my, delta);
             } else {
                this.init_ConfigStore.init_V_GuiGraphicsExtract(graphics, menuMouseX, menuMouseY, delta, this.init_I(), this.load_I());
             }
@@ -162,8 +162,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       } else {
          int mx = cA.init_I_D(event.x());
          int my = cA.init_I_D(event.y());
-         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z()) {
-            return this.init_AutismPacketSelect.init_Z_D_3(mx, my, Compat263.mouseEventGlfwButton(event));
+         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.isVisible()) {
+            return this.init_AutismPacketSelect.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event));
          } else {
             return this.init_ConfigStore != null
                   && !this.init_ConfigStore.load_Z()
@@ -183,8 +183,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          int mx = cA.init_I_D(event.x());
          int my = cA.init_I_D(event.y());
          if (this.init_AutismPacketSelect != null
-            && this.init_AutismPacketSelect.sync_Z()
-            && this.init_AutismPacketSelect.load_Z_D_3(mx, my, Compat263.mouseEventGlfwButton(event))) {
+            && this.init_AutismPacketSelect.isVisible()
+            && this.init_AutismPacketSelect.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event))) {
             return true;
          } else {
             return this.init_ConfigStore != null
@@ -204,8 +204,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          int mx = cA.init_I_D(event.x());
          int my = cA.init_I_D(event.y());
          if (this.init_AutismPacketSelect != null
-            && this.init_AutismPacketSelect.sync_Z()
-            && this.init_AutismPacketSelect.init_Z_D(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+            && this.init_AutismPacketSelect.isVisible()
+            && this.init_AutismPacketSelect.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
             return true;
          } else {
             return this.init_ConfigStore != null
@@ -224,8 +224,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       } else {
          int mx = cA.init_I_D(x);
          int my = cA.init_I_D(y);
-         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z()) {
-            return this.init_AutismPacketSelect.init_Z_D_2(mx, my, scrollY);
+         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.isVisible()) {
+            return this.init_AutismPacketSelect.mouseScrolled(mx, my, scrollY);
          } else {
             return this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && OverlayManager.getInstance().mouseScrolled(x, y, scrollY)
                ? true
@@ -239,8 +239,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       if (this.init_J != 0L) {
          return true;
       } else if (this.init_AutismPacketSelect != null
-         && this.init_AutismPacketSelect.sync_Z()
-         && this.init_AutismPacketSelect.init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+         && this.init_AutismPacketSelect.isVisible()
+         && this.init_AutismPacketSelect.keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          return true;
       } else if (this.init_ConfigStore != null
          && !this.init_ConfigStore.load_Z()
@@ -265,7 +265,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          return true;
       } else {
          char chr = (char)input.codepoint();
-         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.init_Z_C_I(chr, 0)) {
+         if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.charTyped(chr, 0)) {
             return true;
          } else if (this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && OverlayManager.getInstance().charTyped(chr, 0)) {
             return true;
@@ -388,7 +388,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             manager.register(this.init_AutismCustomFilter);
             if (this.init_AutismCustomFilter.init_AutismCustomFilter() != null) {
                if (this.init(AutismCustomFilterPresetOverlay.class, null) == null) {
-                  this.init_AutismCustomFilter.init_AutismCustomFilter().b__V();
+                  this.init_AutismCustomFilter.init_AutismCustomFilter().loadBounds();
                }
 
                manager.register(this.init_AutismCustomFilter.init_AutismCustomFilter());
@@ -398,7 +398,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          this.init_AutismKeybindOverl = this.init(AutismKeybindOverlay.class, null);
          if (this.init_AutismKeybindOverl == null) {
             this.init_AutismKeybindOverl = new AutismKeybindOverlay();
-            this.init_AutismKeybindOverl.b__V();
+            this.init_AutismKeybindOverl.loadBounds();
          }
 
          manager.register(this.init_AutismKeybindOverl);
@@ -470,7 +470,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             manager.register(this.init_AutismCustomFilter);
             if (this.init_AutismCustomFilter.init_AutismCustomFilter() != null) {
                if (this.init(AutismCustomFilterPresetOverlay.class, null) == null) {
-                  this.init_AutismCustomFilter.init_AutismCustomFilter().b__V();
+                  this.init_AutismCustomFilter.init_AutismCustomFilter().loadBounds();
                }
 
                manager.register(this.init_AutismCustomFilter.init_AutismCustomFilter());
@@ -480,14 +480,14 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          this.init_AutismKeybindOverl = this.init(AutismKeybindOverlay.class, null);
          if (this.init_AutismKeybindOverl == null) {
             this.init_AutismKeybindOverl = new AutismKeybindOverlay();
-            this.init_AutismKeybindOverl.b__V();
+            this.init_AutismKeybindOverl.loadBounds();
          }
 
          manager.register(this.init_AutismKeybindOverl);
          this.init_AutismAdminToolsOv = this.init(AutismAdminToolsOverlay.class, null);
          if (this.init_AutismAdminToolsOv == null) {
             this.init_AutismAdminToolsOv = AutismAdminToolsOverlay.init_AutismAdminToolsOv();
-            this.init_AutismAdminToolsOv.b__V();
+            this.init_AutismAdminToolsOv.loadBounds();
          }
 
          manager.register(this.init_AutismAdminToolsOv);
@@ -540,7 +540,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       this.init_V_cX(this.init_AutismAdminToolsOv);
       if (!AutismLiteVariant.enabled()) {
          AutismOverlay assistant = autismclient.ai.AiAssistant.init_ConfigStore().init_cX();
-         if (assistant != null && !assistant.f_()) {
+         if (assistant != null && !assistant.isPersistent()) {
             this.init_V_cX(assistant);
          }
       }
@@ -559,8 +559,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    }
 
    private void init_V_cX(AutismOverlay overlay) {
-      if (overlay != null && overlay.sync_Z() && !overlay.f_()) {
-         init_Set.add(overlay.init_Str());
+      if (overlay != null && overlay.isVisible() && !overlay.isPersistent()) {
+         init_Set.add(overlay.getOverlayId());
          OverlayManager.getInstance().setHidden(overlay, true);
       }
    }
@@ -571,7 +571,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          init_Set.clear();
 
          for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
-            if (overlay != null && restoreIds.contains(overlay.init_Str())) {
+            if (overlay != null && restoreIds.contains(overlay.getOverlayId())) {
                OverlayManager.getInstance().setHidden(overlay, false);
             }
          }
@@ -583,15 +583,15 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       this.load.clear();
 
       for (AutismOverlay overlay : manager.getOverlays()) {
-         if (overlay != null && overlay.sync_Z() && !this.init_Z_cX(overlay)) {
-            this.load.add(overlay.init_Str());
+         if (overlay != null && overlay.isVisible() && !this.init_Z_cX(overlay)) {
+            this.load.add(overlay.getOverlayId());
             manager.setHidden(overlay, true);
          }
       }
    }
 
    private boolean init_Z_cX(AutismOverlay overlay) {
-      return "ai-assistant".equals(overlay.init_Str())
+      return "ai-assistant".equals(overlay.getOverlayId())
          || overlay == this.init_AutismMacroListOve
          || overlay == this.init_AutismLANSyncOverl
          || overlay == this.init_AutismQueueEditorO
@@ -609,7 +609,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          OverlayManager manager = OverlayManager.getInstance();
 
          for (AutismOverlay overlay : manager.getOverlays()) {
-            if (overlay != null && this.load.contains(overlay.init_Str())) {
+            if (overlay != null && this.load.contains(overlay.getOverlayId())) {
                manager.setHidden(overlay, false);
             }
          }
@@ -620,7 +620,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    private <T extends AutismOverlay> T init(Class<T> type, String overlayId) {
       for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
-         if (overlay != null && type.isInstance(overlay) && (overlayId == null || overlayId.equals(overlay.init_Str()))) {
+         if (overlay != null && type.isInstance(overlay) && (overlayId == null || overlayId.equals(overlay.getOverlayId()))) {
             return type.cast(overlay);
          }
       }
@@ -633,13 +633,13 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
             this.init_AutismCustomFilter = new AutismCustomFilterOverlay(this.font);
-            this.init_AutismCustomFilter.b__V();
+            this.init_AutismCustomFilter.loadBounds();
          }
 
          manager.register(this.init_AutismCustomFilter);
          if (this.init_AutismCustomFilter.init_AutismCustomFilter() != null) {
             if (this.init(AutismCustomFilterPresetOverlay.class, null) == null) {
-               this.init_AutismCustomFilter.init_AutismCustomFilter().b__V();
+               this.init_AutismCustomFilter.init_AutismCustomFilter().loadBounds();
             }
 
             manager.register(this.init_AutismCustomFilter.init_AutismCustomFilter());
@@ -702,7 +702,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
                case "logger":
                   AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
                   if (logger != null) {
-                     logger.b__V();
+                     logger.loadBounds();
                      OverlayManager.getInstance().register(logger);
                      this.load(logger);
                   }
@@ -739,9 +739,9 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          OverlayManager.getInstance().register(editor);
       }
 
-      if (editor != null && editor.sync_Z()) {
+      if (editor != null && editor.isVisible()) {
          if (this.init_AutismMacroListOve != null) {
-            this.init_AutismMacroListOve.init_V_Z(false);
+            this.init_AutismMacroListOve.setVisible(false);
          }
 
          OverlayManager.getInstance().bringToFront(editor);
@@ -753,8 +753,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private void load(AutismOverlay overlay) {
       if (overlay != null) {
          OverlayManager.getInstance().register(overlay);
-         overlay.init_V_Z(!overlay.sync_Z());
-         if (overlay.sync_Z()) {
+         overlay.setVisible(!overlay.isVisible());
+         if (overlay.isVisible()) {
             OverlayManager.getInstance().bringToFront(overlay);
          }
       }
@@ -779,15 +779,15 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             OverlayManager manager = OverlayManager.getInstance();
             manager.register(editor);
             manager.setHidden(editor, false);
-            if (editor.sync_Z() && AutismSessionState.getInstance().getEditingMacro() != null) {
-               editor.init_V_Z(true);
+            if (editor.isVisible() && AutismSessionState.getInstance().getEditingMacro() != null) {
+               editor.setVisible(true);
                manager.bringToFront(editor);
             } else {
                editor.init_V_aM_Z(null, true);
             }
 
             if (this.init_AutismMacroListOve != null) {
-               this.init_AutismMacroListOve.init_V_Z(false);
+               this.init_AutismMacroListOve.setVisible(false);
             }
 
             editor.init_V_MacroAction_2(new ak(module.name()));
@@ -864,9 +864,9 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          } else if (overlay instanceof AutismQueueEditorOverlay queue) {
             queue.update_V_20();
          } else if (overlay instanceof AutismCustomFilterOverlay filter) {
-            filter.a__V();
+            filter.saveBounds();
          } else if (overlay instanceof AutismKeybindOverlay keybind) {
-            keybind.a__V();
+            keybind.saveBounds();
          } else if (overlay instanceof AutismPacketLoggerOverlay logger) {
             logger.write_V_18();
          } else if (overlay instanceof AutismServerInfoOverlay serverInfo) {
@@ -874,7 +874,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          } else if (overlay instanceof AutismMacroEditorOverlay macroEditor) {
             macroEditor.open_V_7();
          } else {
-            overlay.a__V();
+            overlay.saveBounds();
          }
       }
    }
@@ -974,10 +974,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             manager.register(editor);
             manager.setHidden(editor, false);
             editor.init_V_aM_Z(macro, true);
-            editor.init_V_Z(true);
+            editor.setVisible(true);
             manager.bringToFront(editor);
             if (AutismModulesScreen.this.init_AutismMacroListOve != null) {
-               AutismModulesScreen.this.init_AutismMacroListOve.init_V_Z(false);
+               AutismModulesScreen.this.init_AutismMacroListOve.setVisible(false);
             }
          }
       }

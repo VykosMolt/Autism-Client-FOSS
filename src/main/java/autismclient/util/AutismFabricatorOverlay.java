@@ -369,22 +369,22 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.flush_I;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.drain();
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.get, this.set, this.put, this.add, this.sync_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
          this.get = clamped.x;
@@ -400,11 +400,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    public void load_V_7() {
-      this.init_V_Z(!this.sync_Z);
+      this.setVisible(!this.sync_Z);
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.sync_Z = visible;
       if (visible) {
          this.update_V_6();
@@ -417,34 +417,34 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.sync_Z;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
@@ -454,17 +454,17 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       return mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       for (ThemedTextInputBox field : this.init_List) {
          if (field.isFocused()) {
             return true;
@@ -475,7 +475,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       for (ThemedTextInputBox field : this.init_List) {
          field.setFocused(false);
       }
@@ -500,12 +500,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       shared.setFabricatorCraftEntries(this.open_List);
       shared.setFabricatorSelectedCraftIndex(this.data);
       shared.setFabricatorCraftScrollOffset(this.value);
-      this.a__V();
+      this.saveBounds();
    }
 
    public void write_V_8() {
       AutismSessionState shared = AutismSessionState.getInstance();
-      this.b__V();
+      this.loadBounds();
       this.sync_Z = shared.isFabricatorVisible();
       this.get = shared.getFabricatorX();
       this.set = shared.getFabricatorY();
@@ -639,7 +639,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.sync_Z) {
          return false;
       }
@@ -657,7 +657,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (button == 0 && mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14) {
          OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, this.update_Z ? 14 : this.add, this.sync_Z, this.update_Z);
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          }
 
@@ -871,7 +871,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               if (macroEditor != null && macroEditor.sync_Z()) {
+               if (macroEditor != null && macroEditor.isVisible()) {
                   this.init_V_AutismMacroEditorO(macroEditor);
                } else {
                   this.init_V_Str_ChatFormatting("Open a macro editor first!", ChatFormatting.RED);
@@ -890,7 +890,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List);
       if (button == 0 && this.state != 0) {
          this.state = 0;
@@ -916,7 +916,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.sync_List, mouseX, mouseY, button)) {
          return true;
       }
@@ -955,7 +955,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       if (this.sync_Z && !this.update_Z) {
          if (!this.sync_List.isEmpty()
             && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, mouseX, mouseY))
@@ -1378,7 +1378,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (this.sync_Z && !this.update_Z) {
          boolean anyFocused = false;
 
@@ -1415,7 +1415,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       int codepoint = chr;
       if (this.sync_Z && !this.update_Z) {
          CharacterEvent input = new CharacterEvent(codepoint);
@@ -1433,8 +1433,8 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.sync_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.sync_Z || this.isClosing()) {
          this.stop_V_2();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;

@@ -101,7 +101,7 @@ public class OverlayManager {
                visible.append(", ");
             }
 
-            visible.append(overlay.init_Str());
+            visible.append(overlay.getOverlayId());
          }
       }
 
@@ -114,7 +114,7 @@ public class OverlayManager {
 
    public void refreshRenderLayer(AutismOverlay overlay) {
       if (overlay != null && this.overlays.contains(overlay)) {
-         this.renderLayers.put(overlay, overlay.init_cX_DataUtil());
+         this.renderLayers.put(overlay, overlay.getRenderLayer());
       }
    }
 
@@ -125,7 +125,7 @@ public class OverlayManager {
             this.overlays.add(overlay);
          }
 
-         this.renderLayers.put(overlay, scope == null ? overlay.init_cX_DataUtil() : scope);
+         this.renderLayers.put(overlay, scope == null ? overlay.getRenderLayer() : scope);
          this.closingOverlays.remove(overlay);
          this.getOrCreateAdapter(overlay);
          this.layerHostDirty = true;
@@ -134,7 +134,7 @@ public class OverlayManager {
          this.invalidateHoverCache();
          this.restoreSavedOrder();
          this.keepLaunchersFirst();
-         if (overlay instanceof AutismLauncherOverlay || "autism-launcher".equals(overlay.init_Str())) {
+         if (overlay instanceof AutismLauncherOverlay || "autism-launcher".equals(overlay.getOverlayId())) {
             this.reclampAll();
          }
       }
@@ -143,7 +143,7 @@ public class OverlayManager {
    public void unregister(AutismOverlay overlay) {
       if (overlay != null) {
          autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(overlay);
-         if (adapter != null && this.overlays.contains(overlay) && !overlay.sync_Z()) {
+         if (adapter != null && this.overlays.contains(overlay) && !overlay.isVisible()) {
             adapter.init_V();
             Minecraft mc = Minecraft.getInstance();
             Screen screen = mc == null ? null : mc.gui.screen();
@@ -168,10 +168,10 @@ public class OverlayManager {
    }
 
    private void removeDuplicateId(AutismOverlay incoming) {
-      String id = incoming.init_Str();
+      String id = incoming.getOverlayId();
       if (id != null && !id.isEmpty()) {
          for (AutismOverlay existing : this.overlays) {
-            if (existing != incoming && id.equals(existing.init_Str())) {
+            if (existing != incoming && id.equals(existing.getOverlayId())) {
                this.removeImmediate(existing);
             }
          }
@@ -184,7 +184,7 @@ public class OverlayManager {
       this.adapters.remove(overlay);
       this.renderLayers.remove(overlay);
       this.layerHostDirty = true;
-      this.hiddenOverlayIds.remove(overlay.init_Str());
+      this.hiddenOverlayIds.remove(overlay.getOverlayId());
       if (this.focusedOverlay == overlay) {
          this.focusedOverlay = null;
       }
@@ -193,7 +193,7 @@ public class OverlayManager {
          this.cachedTextInputOverlay = null;
       }
 
-      overlay.push_V();
+      overlay.clearInputFocus();
       if (this.draggingOverlay == overlay) {
          this.draggingOverlay = null;
          this.dragStartBounds = null;
@@ -248,12 +248,12 @@ public class OverlayManager {
 
          this.screenContextDirty = true;
          this.overlays.removeIf(overlay -> {
-            if (overlay.f_()) {
+            if (overlay.isPersistent()) {
                return false;
             }
 
             if (!AutismLiteVariant.enabled() && overlay instanceof AutismProfilesOverlay) {
-               overlay.init_V_Z(false);
+               overlay.setVisible(false);
             }
 
             this.adapters.remove(overlay);
@@ -281,11 +281,11 @@ public class OverlayManager {
 
    public void setHidden(AutismOverlay overlay, boolean hidden) {
       if (overlay != null) {
-         String id = overlay.init_Str();
+         String id = overlay.getOverlayId();
          if (id != null && !id.isEmpty()) {
             if (hidden) {
                this.hiddenOverlayIds.add(id);
-               overlay.push_V();
+               overlay.clearInputFocus();
                if (this.focusedOverlay == overlay) {
                   this.focusedOverlay = null;
                }
@@ -323,7 +323,7 @@ public class OverlayManager {
          return false;
       }
 
-      String id = overlay.init_Str();
+      String id = overlay.getOverlayId();
       return id != null && this.hiddenOverlayIds.contains(id);
    }
 
@@ -333,25 +333,25 @@ public class OverlayManager {
    }
 
    private boolean isVisibleOnScreen(AutismOverlay overlay, Screen screen) {
-      return !OverlayScreenController.hasModalScreen() && overlay != null && overlay.sync_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
+      return !OverlayScreenController.hasModalScreen() && overlay != null && overlay.isVisible() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
    }
 
    private AutismOverlay.RenderLayer resolveRenderLayer(AutismOverlay overlay) {
       Minecraft mc = Minecraft.getInstance();
       Screen screen = mc == null ? null : mc.gui.screen();
-      if (overlay != null && overlay.init_cX_DataUtil() == AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
+      if (overlay != null && overlay.getRenderLayer() == AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
          return AutismOverlay.RenderLayer.BACKGROUND_STATUS;
       } else if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.screens.AutismModulesScreen) {
          return AutismOverlay.RenderLayer.MODULE_MENU;
       } else if (!(screen instanceof autismclient.gui.screens.AutismOverlaysScreen) && screen != null && !(screen instanceof ChatScreen)) {
          return AutismOverlay.RenderLayer.CONTAINER_GUI;
       } else {
-         return overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.init_cX_DataUtil();
+         return overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.getRenderLayer();
       }
    }
 
    private boolean isAllowedOnScreen(AutismOverlay overlay, Screen screen) {
-      AutismOverlay.RenderLayer scope = this.renderLayers.getOrDefault(overlay, overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.init_cX_DataUtil());
+      AutismOverlay.RenderLayer scope = this.renderLayers.getOrDefault(overlay, overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.getRenderLayer());
       if (scope == AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
          return true;
       }
@@ -391,8 +391,8 @@ public class OverlayManager {
       boolean changed = false;
 
       for (AutismOverlay overlay : this.overlays) {
-         if (overlay != null && overlay.sync_Z() && !this.isAllowedOnScreen(overlay, screen)) {
-            overlay.push_V();
+         if (overlay != null && overlay.isVisible() && !this.isAllowedOnScreen(overlay, screen)) {
+            overlay.clearInputFocus();
             if (this.focusedOverlay == overlay) {
                this.focusedOverlay = null;
             }
@@ -432,16 +432,16 @@ public class OverlayManager {
       this.hiddenOverlayIds.clear();
 
       for (AutismOverlay overlay : this.overlays) {
-         if (overlay != null && this.renderLayers.getOrDefault(overlay, overlay.init_cX_DataUtil()) != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
-            if (overlay.sync_Z()) {
-               if (rememberWindows && overlay.update_Z()) {
+         if (overlay != null && this.renderLayers.getOrDefault(overlay, overlay.getRenderLayer()) != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
+            if (overlay.isVisible()) {
+               if (rememberWindows && overlay.shouldRememberOnDismiss()) {
                   this.setHidden(overlay, true);
                } else {
-                  overlay.init_V_Z(false);
+                  overlay.setVisible(false);
                }
             }
 
-            overlay.push_V();
+            overlay.clearInputFocus();
          }
       }
 
@@ -458,7 +458,7 @@ public class OverlayManager {
 
    public boolean hasVisibleWindows() {
       for (AutismOverlay overlay : this.overlays) {
-         if (overlay != null && overlay.sync_Z() && !this.isHidden(overlay) && !this.isLauncherOverlay(overlay) && overlay.init_cX_DataUtil() != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
+         if (overlay != null && overlay.isVisible() && !this.isHidden(overlay) && !this.isLauncherOverlay(overlay) && overlay.getRenderLayer() != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
             return true;
          }
       }
@@ -475,7 +475,7 @@ public class OverlayManager {
          this.setActive(true);
          this.focusedOverlay = overlay;
          this.textInputCacheDirty = true;
-         AutismSessionState.getInstance().setActiveOverlayId(overlay.init_Str());
+         AutismSessionState.getInstance().setActiveOverlayId(overlay.getOverlayId());
          this.invalidateHoverCache();
          this.keepLaunchersFirst();
          this.saveOrderToSession();
@@ -512,8 +512,8 @@ public class OverlayManager {
 
             List<AutismOverlay> ordered = new ArrayList<>(this.overlays);
             ordered.sort(
-               Comparator.<AutismOverlay>comparingInt(overlay -> positions.getOrDefault(overlay.init_Str(), 2147483647))
-                  .thenComparingInt(overlay -> focusedId.equals(overlay.init_Str()) ? 1 : 0)
+               Comparator.<AutismOverlay>comparingInt(overlay -> positions.getOrDefault(overlay.getOverlayId(), 2147483647))
+                  .thenComparingInt(overlay -> focusedId.equals(overlay.getOverlayId()) ? 1 : 0)
             );
             this.overlays.clear();
             this.overlays.addAll(ordered);
@@ -533,7 +533,7 @@ public class OverlayManager {
 
          for (int i = this.overlays.size() - 1; i >= 0; i--) {
             AutismOverlay overlay = this.overlays.get(i);
-            if (overlay != null && focusedId.equals(overlay.init_Str()) && this.isVisibleNow(overlay)) {
+            if (overlay != null && focusedId.equals(overlay.getOverlayId()) && this.isVisibleNow(overlay)) {
                this.focusedOverlay = overlay;
                break;
             }
@@ -545,7 +545,7 @@ public class OverlayManager {
       List<String> order = new ArrayList<>(this.overlays.size());
 
       for (AutismOverlay overlay : this.overlays) {
-         String id = overlay.init_Str();
+         String id = overlay.getOverlayId();
          if (id != null && !id.isEmpty() && !order.contains(id) && !this.isLauncherOverlay(overlay) && !this.isStepPickerOverlay(overlay)) {
             order.add(id);
          }
@@ -577,11 +577,11 @@ public class OverlayManager {
    }
 
    private boolean isLauncherOverlay(AutismOverlay overlay) {
-      return overlay instanceof AutismLauncherOverlay || overlay != null && "autism-launcher".equals(overlay.init_Str());
+      return overlay instanceof AutismLauncherOverlay || overlay != null && "autism-launcher".equals(overlay.getOverlayId());
    }
 
    private boolean isStepPickerOverlay(AutismOverlay overlay) {
-      return overlay != null && "macro-step-picker".equals(overlay.init_Str());
+      return overlay != null && "macro-step-picker".equals(overlay.getOverlayId());
    }
 
    public void reclampAll() {
@@ -603,8 +603,8 @@ public class OverlayManager {
                Set<String> live = new HashSet<>();
 
                for (AutismOverlay overlay : this.overlays) {
-                  if (overlay != null && overlay.init_Str() != null) {
-                     live.add(overlay.init_Str());
+                  if (overlay != null && overlay.getOverlayId() != null) {
+                     live.add(overlay.getOverlayId());
                   }
                }
 
@@ -625,23 +625,23 @@ public class OverlayManager {
          int sw = cA.init_I();
          int sh = cA.load_I();
          if (sw > 0 && sh > 0) {
-            String id = overlay.init_Str();
+            String id = overlay.getOverlayId();
             OverlayBounds stashed = id == null ? null : this.stashedBoundsById.get(id);
             OverlayBounds basis = stashed != null ? stashed : this.resolveBasisBounds(overlay, sw, sh);
             if (basis != null) {
-               basis = mergeGeometryWithLiveFlags(basis, overlay.init_cH());
-               OverlayBounds clamped = OverlayLayoutBase.clampBounds(basis, overlay.init_I(), overlay.load_I(), sw, sh);
+               basis = mergeGeometryWithLiveFlags(basis, overlay.getBounds());
+               OverlayBounds clamped = OverlayLayoutBase.clampBounds(basis, overlay.getMinWidth(), overlay.getMinHeight(), sw, sh);
                if (sameGeometry(clamped, basis)) {
                   if (stashed != null) {
                      this.stashedBoundsById.remove(id);
-                     overlay.init_V_cH(basis);
+                     overlay.setBounds(basis);
                   }
                } else {
                   if (stashed == null && id != null) {
                      this.stashedBoundsById.put(id, basis);
                   }
 
-                  overlay.init_V_cH(basis);
+                  overlay.setBounds(basis);
                }
             }
          }
@@ -657,17 +657,17 @@ public class OverlayManager {
    }
 
    private OverlayBounds resolveBasisBounds(AutismOverlay overlay, int sw, int sh) {
-      OverlayBounds current = overlay.init_cH();
+      OverlayBounds current = overlay.getBounds();
       if (current == null) {
          return null;
       }
 
-      OverlayBounds persisted = AutismSessionState.getInstance().getOverlayBounds(overlay.init_Str());
+      OverlayBounds persisted = AutismSessionState.getInstance().getOverlayBounds(overlay.getOverlayId());
       if (persisted == null) {
          return current;
       }
 
-      OverlayBounds clampOfPersisted = OverlayLayoutBase.clampBounds(persisted, overlay.init_I(), overlay.load_I(), sw, sh);
+      OverlayBounds clampOfPersisted = OverlayLayoutBase.clampBounds(persisted, overlay.getMinWidth(), overlay.getMinHeight(), sw, sh);
       return !sameGeometry(persisted, clampOfPersisted) && sameGeometry(current, clampOfPersisted) ? persisted : current;
    }
 
@@ -685,14 +685,14 @@ public class OverlayManager {
          int sh = cA.load_I();
          if (sw > 0 && sh > 0) {
             for (AutismOverlay overlay : this.overlays) {
-               if (overlay != null && overlay.init_Str() != null) {
-                  OverlayBounds stashed = this.stashedBoundsById.get(overlay.init_Str());
+               if (overlay != null && overlay.getOverlayId() != null) {
+                  OverlayBounds stashed = this.stashedBoundsById.get(overlay.getOverlayId());
                   if (stashed != null) {
-                     stashed = mergeGeometryWithLiveFlags(stashed, overlay.init_cH());
-                     OverlayBounds clamped = OverlayLayoutBase.clampBounds(stashed, overlay.init_I(), overlay.load_I(), sw, sh);
+                     stashed = mergeGeometryWithLiveFlags(stashed, overlay.getBounds());
+                     OverlayBounds clamped = OverlayLayoutBase.clampBounds(stashed, overlay.getMinWidth(), overlay.getMinHeight(), sw, sh);
                      if (sameGeometry(clamped, stashed)) {
-                        this.stashedBoundsById.remove(overlay.init_Str());
-                        overlay.init_V_cH(stashed);
+                        this.stashedBoundsById.remove(overlay.getOverlayId());
+                        overlay.setBounds(stashed);
                      }
                   }
                }
@@ -777,7 +777,7 @@ public class OverlayManager {
 
                for (int i = this.visibleOverlaysScratch.size() - 1; i >= 0; i--) {
                   AutismOverlay overlay = this.visibleOverlaysScratch.get(i);
-                  if (overlay.init_Z_D_D(virtualMouseX, virtualMouseY)) {
+                  if (overlay.containsPoint(virtualMouseX, virtualMouseY)) {
                      hoveredOverlayIndex = i;
                      break;
                   }
@@ -836,7 +836,7 @@ public class OverlayManager {
 
    private boolean isMouseOverVirtual(double mouseX, double mouseY) {
       for (AutismOverlay overlay : this.overlays) {
-         if (this.isVisibleNow(overlay) && overlay.init_Z_D_D(mouseX, mouseY)) {
+         if (this.isVisibleNow(overlay) && overlay.containsPoint(mouseX, mouseY)) {
             return true;
          }
       }
@@ -883,8 +883,8 @@ public class OverlayManager {
 
    private void blurTextInputs() {
       for (AutismOverlay overlay : this.overlays) {
-         if (this.isVisibleNow(overlay) && overlay.write_Z()) {
-            overlay.push_V();
+         if (this.isVisibleNow(overlay) && overlay.hasFocusedTextInput()) {
+            overlay.clearInputFocus();
          }
       }
 
@@ -895,7 +895,7 @@ public class OverlayManager {
    private AutismOverlay topOverlayAt(double mouseX, double mouseY) {
       for (int i = this.overlays.size() - 1; i >= 0; i--) {
          AutismOverlay overlay = this.overlays.get(i);
-         if (this.isVisibleNow(overlay) && overlay.init_Z_D_D(mouseX, mouseY)) {
+         if (this.isVisibleNow(overlay) && overlay.containsPoint(mouseX, mouseY)) {
             return overlay;
          }
       }
@@ -948,11 +948,11 @@ public class OverlayManager {
 
       this.blurTextInputs();
       if (button == 0) {
-         if (topOverlay.read_Z_D_D(mouseX, mouseY)) {
+         if (topOverlay.isOverResizeGrip(mouseX, mouseY)) {
             long now = System.currentTimeMillis();
-            if (topOverlay.read_Z() && this.lastResizeGripOverlay == topOverlay && now - this.lastResizeGripClickMs <= 350L) {
+            if (topOverlay.isResizable() && this.lastResizeGripOverlay == topOverlay && now - this.lastResizeGripClickMs <= 350L) {
                this.lastResizeGripOverlay = null;
-               topOverlay.run_V();
+               topOverlay.resetSize();
                this.bringToFront(topOverlay);
                this.invalidateHoverCache();
                return true;
@@ -961,22 +961,22 @@ public class OverlayManager {
             this.lastResizeGripOverlay = topOverlay;
             this.lastResizeGripClickMs = now;
             this.resizingOverlay = topOverlay;
-            this.resizeStartBounds = topOverlay.init_cH();
+            this.resizeStartBounds = topOverlay.getBounds();
             this.resizeStartX = mouseX;
             this.resizeStartY = mouseY;
             this.bringToFront(topOverlay);
             return true;
          }
 
-         if (topOverlay.load_Z_D_D(mouseX, mouseY)) {
+         if (topOverlay.isOverHeader(mouseX, mouseY)) {
             this.draggingOverlay = topOverlay;
-            this.dragStartBounds = topOverlay.init_cH();
-            if (topOverlay.load_Z()) {
+            this.dragStartBounds = topOverlay.getBounds();
+            if (topOverlay.supportsHeaderCollapseClick()) {
                this.headerClickCandidate = topOverlay;
                this.headerDragExceededThreshold = false;
                this.headerClickStartX = mouseX;
                this.headerClickStartY = mouseY;
-               this.headerClickStartBounds = topOverlay.init_cH();
+               this.headerClickStartBounds = topOverlay.getBounds();
             } else {
                this.headerClickCandidate = null;
                this.headerDragExceededThreshold = false;
@@ -1024,26 +1024,26 @@ public class OverlayManager {
       boolean shouldToggleHeaderCollapse = button == 0
          && prevDragging != null
          && prevDragging == this.headerClickCandidate
-         && prevDragging.load_Z()
+         && prevDragging.supportsHeaderCollapseClick()
          && !this.headerDragExceededThreshold
          && Math.abs(mouseX - this.headerClickStartX) < 3.0
          && Math.abs(mouseY - this.headerClickStartY) < 3.0
-         && prevDragging.load_Z_D_D(mouseX, mouseY);
+         && prevDragging.isOverHeader(mouseX, mouseY);
       OverlayBounds headerStartBounds = this.headerClickStartBounds;
       if (button == 0) {
-         if (prevDragging != null && prevDragging.init_Str() != null && this.dragStartBounds != null && !sameGeometry(prevDragging.init_cH(), this.dragStartBounds)) {
-            this.stashedBoundsById.remove(prevDragging.init_Str());
+         if (prevDragging != null && prevDragging.getOverlayId() != null && this.dragStartBounds != null && !sameGeometry(prevDragging.getBounds(), this.dragStartBounds)) {
+            this.stashedBoundsById.remove(prevDragging.getOverlayId());
          }
 
-         if (prevResizing != null && prevResizing.init_Str() != null) {
-            this.stashedBoundsById.remove(prevResizing.init_Str());
+         if (prevResizing != null && prevResizing.getOverlayId() != null) {
+            this.stashedBoundsById.remove(prevResizing.getOverlayId());
          }
 
          this.draggingOverlay = null;
          this.dragStartBounds = null;
          if (this.resizingOverlay != null) {
-            this.resizingOverlay.tick_V();
-            this.resizingOverlay.a__V();
+            this.resizingOverlay.onResizeFinished();
+            this.resizingOverlay.saveBounds();
          }
 
          this.resizingOverlay = null;
@@ -1063,12 +1063,12 @@ public class OverlayManager {
 
       if (shouldToggleHeaderCollapse && this.isVisibleNow(prevDragging)) {
          if (headerStartBounds != null) {
-            OverlayBounds current = prevDragging.init_cH();
-            prevDragging.init_V_cH(new OverlayBounds(headerStartBounds.x, headerStartBounds.y, current.width, current.height, current.visible, current.collapsed));
+            OverlayBounds current = prevDragging.getBounds();
+            prevDragging.setBounds(new OverlayBounds(headerStartBounds.x, headerStartBounds.y, current.width, current.height, current.visible, current.collapsed));
          }
 
-         prevDragging.start_V();
-         prevDragging.a__V();
+         prevDragging.toggleCollapsed();
+         prevDragging.saveBounds();
          this.invalidateHoverCache();
          return true;
       } else {
@@ -1106,7 +1106,7 @@ public class OverlayManager {
       deltaX = cA.init_D_D(deltaX);
       deltaY = cA.init_D_D(deltaY);
       if (button == 0 && this.resizingOverlay != null && this.resizeStartBounds != null && this.isVisibleNow(this.resizingOverlay)) {
-         this.resizingOverlay.init_V_I_I(this.resizeStartBounds.width + (int)Math.round(mouseX - this.resizeStartX), this.resizeStartBounds.height + (int)Math.round(mouseY - this.resizeStartY));
+         this.resizingOverlay.resizeTo(this.resizeStartBounds.width + (int)Math.round(mouseX - this.resizeStartX), this.resizeStartBounds.height + (int)Math.round(mouseY - this.resizeStartY));
          this.invalidateHoverCache();
          return true;
       }
@@ -1183,7 +1183,7 @@ public class OverlayManager {
 
       for (int i = this.overlays.size() - 1; i >= 0; i--) {
          AutismOverlay overlay = this.overlays.get(i);
-         if (this.isVisibleNow(overlay) && overlay.e_() && this.getOrCreateAdapter(overlay).onKeyPressed(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
+         if (this.isVisibleNow(overlay) && overlay.isCapturingKeybind() && this.getOrCreateAdapter(overlay).onKeyPressed(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
             this.bringToFront(overlay);
             this.updateFocusedTextCache(overlay);
             return true;
@@ -1195,7 +1195,7 @@ public class OverlayManager {
          this.getOrCreateAdapter(focusedTextOverlay).onKeyPressed(keyCode, scanCode, modifiers);
          this.updateFocusedTextCache(focusedTextOverlay);
          this.focusedOverlay = focusedTextOverlay;
-         AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.init_Str());
+         AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.getOverlayId());
          return true;
       } else {
          AutismOverlay keyboardTarget = this.findKeyboardTarget();
@@ -1219,7 +1219,7 @@ public class OverlayManager {
             this.getOrCreateAdapter(focusedTextOverlay).init(chr, modifiers);
             this.updateFocusedTextCache(focusedTextOverlay);
             this.focusedOverlay = focusedTextOverlay;
-            AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.init_Str());
+            AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.getOverlayId());
             return true;
          } else {
             AutismOverlay keyboardTarget = this.findKeyboardTarget();
@@ -1236,14 +1236,14 @@ public class OverlayManager {
    private AutismOverlay findFocusedTextOverlay() {
       if (!this.textInputCacheDirty) {
          AutismOverlay cached = this.cachedTextInputOverlay;
-         if (cached != null && this.isVisibleNow(cached) && cached.write_Z()) {
+         if (cached != null && this.isVisibleNow(cached) && cached.hasFocusedTextInput()) {
             return cached;
          }
       }
 
       for (int i = this.overlays.size() - 1; i >= 0; i--) {
          AutismOverlay overlay = this.overlays.get(i);
-         if (this.isVisibleNow(overlay) && overlay.write_Z()) {
+         if (this.isVisibleNow(overlay) && overlay.hasFocusedTextInput()) {
             this.cachedTextInputOverlay = overlay;
             this.textInputCacheDirty = false;
             return overlay;
@@ -1256,7 +1256,7 @@ public class OverlayManager {
    }
 
    private void updateFocusedTextCache(AutismOverlay overlay) {
-      this.cachedTextInputOverlay = this.isVisibleNow(overlay) && overlay.write_Z() ? overlay : null;
+      this.cachedTextInputOverlay = this.isVisibleNow(overlay) && overlay.hasFocusedTextInput() ? overlay : null;
       this.textInputCacheDirty = false;
    }
 
@@ -1324,7 +1324,7 @@ public class OverlayManager {
       if (!this.closingOverlays.isEmpty()) {
          for (AutismOverlay pending : new ArrayList<>(this.closingOverlays)) {
             autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(pending);
-            if (pending.sync_Z()) {
+            if (pending.isVisible()) {
                this.closingOverlays.remove(pending);
             } else if (adapter == null || !adapter.load_Z()) {
                this.removeImmediate(pending);

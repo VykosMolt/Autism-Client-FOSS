@@ -74,7 +74,7 @@ public final class ScreenOverlayHost {
                } catch (Throwable ignored) {
                }
             } else if (this.launcherOverlay != null) {
-               this.launcherOverlay.init_V_Z(true);
+               this.launcherOverlay.setVisible(true);
             }
          }
       } else if (this.isActive() && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
@@ -89,7 +89,7 @@ public final class ScreenOverlayHost {
    }
 
    private void buildOverlays(Font font) {
-      LanSyncManager.init_aE().flush(() -> {});
+      LanSyncManager.getInstance().setOnSessionChanged(() -> {});
       this.lanSyncOverlay = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
       this.macroListOverlay = new AutismMacroListOverlay(font);
       this.queueEditorOverlay = new AutismQueueEditorOverlay(font);
@@ -98,9 +98,9 @@ public final class ScreenOverlayHost {
       this.lanSyncOverlay.write_V_10();
       this.macroListOverlay.update_V_11();
       this.queueEditorOverlay.sync_V_17();
-      this.customFilterOverlay.b__V();
+      this.customFilterOverlay.loadBounds();
       if (this.customFilterPresetOverlay != null) {
-         this.customFilterPresetOverlay.b__V();
+         this.customFilterPresetOverlay.loadBounds();
       }
 
       Minecraft mc = Minecraft.getInstance();
@@ -135,7 +135,7 @@ public final class ScreenOverlayHost {
 
       ModuleRuntimeManager autismModule = ModuleRuntimeManager.getInstance();
       this.keybindOverlay = new AutismKeybindOverlay();
-      this.keybindOverlay.b__V();
+      this.keybindOverlay.loadBounds();
       manager.register(this.keybindOverlay);
       this.launcherOverlay = new AutismLauncherOverlay(
          this.macroListOverlay, null, this.lanSyncOverlay, this.queueEditorOverlay, this.packetLoggerOverlay, this.customFilterOverlay
@@ -174,7 +174,7 @@ public final class ScreenOverlayHost {
          this.packetLoggerOverlay = mod == null ? null : mod.getOrCreatePacketLoggerOverlay();
          if (this.packetLoggerOverlay != null) {
             this.packetLoggerOverlay.flush_V_13();
-            if (this.packetLoggerOverlay.sync_Z()) {
+            if (this.packetLoggerOverlay.isVisible()) {
                manager.register(this.packetLoggerOverlay);
             }
          }
@@ -185,7 +185,7 @@ public final class ScreenOverlayHost {
          this.serverInfoOverlay = mod == null ? null : mod.getOrCreateServerInfoOverlay();
          if (this.serverInfoOverlay != null) {
             this.serverInfoOverlay.update_V_21();
-            if (this.serverInfoOverlay.sync_Z()) {
+            if (this.serverInfoOverlay.isVisible()) {
                manager.register(this.serverInfoOverlay);
             }
          }
@@ -194,14 +194,14 @@ public final class ScreenOverlayHost {
       if (this.dialogMode && !AutismLiteVariant.enabled()) {
          ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
          AutismOverlay profilesOverlay = mod == null ? null : mod.getOrCreateProfilesOverlay();
-         if (profilesOverlay != null && profilesOverlay.sync_Z()) {
+         if (profilesOverlay != null && profilesOverlay.isVisible()) {
             manager.register(profilesOverlay);
          }
       }
 
-      this.launcherOverlay.b__V();
+      this.launcherOverlay.loadBounds();
       if (this.dialogMode) {
-         this.launcherOverlay.init_V_Z(true);
+         this.launcherOverlay.setVisible(true);
       }
 
       manager.register(this.launcherOverlay);
@@ -244,7 +244,7 @@ public final class ScreenOverlayHost {
       }
 
       if (this.launcherOverlay != null) {
-         this.launcherOverlay.a__V();
+         this.launcherOverlay.saveBounds();
       }
 
       if (this.packetLoggerOverlay != null) {
@@ -252,15 +252,15 @@ public final class ScreenOverlayHost {
       }
 
       if (this.customFilterOverlay != null) {
-         this.customFilterOverlay.a__V();
+         this.customFilterOverlay.saveBounds();
       }
 
       if (this.customFilterPresetOverlay != null) {
-         this.customFilterPresetOverlay.a__V();
+         this.customFilterPresetOverlay.saveBounds();
       }
 
       if (this.keybindOverlay != null) {
-         this.keybindOverlay.a__V();
+         this.keybindOverlay.saveBounds();
       }
 
       if (this.serverInfoOverlay != null) {

@@ -61,8 +61,8 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
    private AutismAdminToolsOverlay() {
       super("admin-tools-panel", 320, 200);
-      this.init_I_2 = 88;
-      this.load_I = 32;
+      this.windowX = 88;
+      this.windowY = 32;
    }
 
    public static synchronized AutismAdminToolsOverlay init_AutismAdminToolsOv() {
@@ -81,23 +81,23 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.put = 1;
       this.add = 0;
       this.reset = 0;
-      this.init_V_Z(true);
+      this.setVisible(true);
    }
 
    public void read_V_2() {
       this.put = 1;
       this.add = 3;
       this.reset = 0;
-      this.init_V_Z(true);
+      this.setVisible(true);
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 288;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return 18 + pop_I_4() + 4 + run_I_2() * 2 + 4;
    }
 
@@ -138,47 +138,47 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private int reset() {
-      return this.load_I + 14 + 4 + pop_I_4() + 4;
+      return this.windowY + 14 + 4 + pop_I_4() + 4;
    }
 
    @Override
-   public boolean read_Z_D_D(double mouseX, double mouseY) {
-      return this.init_Z && !this.load_Z
-         ? mouseX >= this.init_I_2 + this.read_I - 8
-            && mouseX <= this.init_I_2 + this.read_I
-            && mouseY >= this.load_I + this.write - 8
-            && mouseY <= this.load_I + this.write
+   public boolean isOverResizeGrip(double mouseX, double mouseY) {
+      return this.windowVisible && !this.windowCollapsed
+         ? mouseX >= this.windowX + this.windowWidth - 8
+            && mouseX <= this.windowX + this.windowWidth
+            && mouseY >= this.windowY + this.windowHeight - 8
+            && mouseY <= this.windowY + this.windowHeight
          : false;
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-      if (this.init_Z || this.a__Z()) {
-         this.load_V_I_I(mouseX, mouseY);
+   public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+      if (this.windowVisible || this.isClosing()) {
+         this.recordMousePosition(mouseX, mouseY);
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             f.Inner_DataUtil module = this.init_f_DataUtil();
             if (module != null) {
                this.update_V_4();
                OverlayBounds bounds = this.clampCurrentBounds(this);
-               this.init_I_2 = bounds.x;
-               this.load_I = bounds.y;
-               this.read_I = bounds.width;
-               this.write = bounds.height;
+               this.windowX = bounds.x;
+               this.windowY = bounds.y;
+               this.windowWidth = bounds.width;
+               this.windowHeight = bounds.height;
                boolean topPopup = this.init_RefQueue != null;
                int baseMouseX = topPopup ? -10000 : mouseX;
                int baseMouseY = topPopup ? -10000 : mouseY;
                autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, mc.font, baseMouseX, baseMouseY);
-               this.renderWindowFrame(graphics, baseMouseX, baseMouseY, bounds, "Admin Tools", this.load_Z, false);
+               this.renderWindowFrame(graphics, baseMouseX, baseMouseY, bounds, "Admin Tools", this.windowCollapsed, false);
                this.init_List.clear();
-               if (!this.isVisuallyCollapsed(this.load_Z)) {
-                  boolean clipped = this.beginBodyClip(graphics, bounds, this.load_Z);
+               if (!this.isVisuallyCollapsed(this.windowCollapsed)) {
+                  boolean clipped = this.beginBodyClip(graphics, bounds, this.windowCollapsed);
 
                   try {
                      this.init_V_SyncManager_8(context, module, bounds, baseMouseX, baseMouseY);
                   } finally {
                      this.endBodyClip(graphics, clipped);
-                     this.renderInactiveDim(graphics, bounds, this.load_Z, false);
+                     this.renderInactiveDim(graphics, bounds, this.windowCollapsed, false);
                   }
 
                   if (this.init_RefQueue != null) {
@@ -256,12 +256,12 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private void update_V_4() {
-      if (!this.load_Z) {
-         int bodyWidth = Math.max(1, this.read_I - 8);
+      if (!this.windowCollapsed) {
+         int bodyWidth = Math.max(1, this.windowWidth - 8);
          int desired = 18 + pop_I_4() + 4 + this.init_I_I_3(bodyWidth) + 4;
          int screenHeight = cA.load_I();
-         int maxHeight = screenHeight > 0 ? Math.max(this.load_I(), screenHeight - 8) : Math.max(200, desired);
-         this.write = load_I_I(desired, this.load_I(), maxHeight);
+         int maxHeight = screenHeight > 0 ? Math.max(this.getMinHeight(), screenHeight - 8) : Math.max(200, desired);
+         this.windowHeight = load_I_I(desired, this.getMinHeight(), maxHeight);
       }
    }
 
@@ -1129,25 +1129,25 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
-      if (!this.init_Z) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
+      if (!this.windowVisible) {
          return false;
       }
 
       if (button == 0) {
-         OverlayBounds bounds = this.init_cH();
+         OverlayBounds bounds = this.getBounds();
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          }
 
-         if (this.load_Z_D_D(mouseX, mouseY)) {
+         if (this.isOverHeader(mouseX, mouseY)) {
             this.sync_Z = true;
             return true;
          }
       }
 
-      if (this.load_Z) {
+      if (this.windowCollapsed) {
          return true;
       }
 
@@ -1241,7 +1241,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mouseX, mouseY);
+         return this.containsPoint(mouseX, mouseY);
       } else {
          if (button == 0) {
             long handle = Minecraft.getInstance().getWindow().handle();
@@ -1356,8 +1356,8 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          this.load_V_Z_2(true);
          this.open_V_3();
          this.flush_Z = true;
-         this.close_Z = this.init_Z;
-         this.init_Z = false;
+         this.close_Z = this.windowVisible;
+         this.windowVisible = false;
          this.open_Z = !(mc.gui.screen() instanceof AbstractContainerScreen);
          this.init_Screen = this.open_Z ? mc.gui.screen() : null;
          AutismSessionState.getInstance().setTimedCaptureMode(true);
@@ -1433,7 +1433,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    private void sync_V_3() {
       Minecraft mc = Minecraft.getInstance();
       this.flush_Z = false;
-      this.init_Z = this.close_Z;
+      this.windowVisible = this.close_Z;
       this.close_Z = false;
       AutismSessionState.getInstance().setTimedCaptureMode(false);
       AutismSessionState.getInstance().setCaptureCancelCallback(null);
@@ -1512,7 +1512,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (this.init_RefQueue != null) {
          this.init_RefQueue.onMouseReleased((int)mouseX, (int)mouseY, button);
       }
@@ -1521,14 +1521,14 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.update_Z = false;
       this.write_Z = false;
       this.read_Setting = null;
-      return this.init_Z && this.init_Z_D_D(mouseX, mouseY);
+      return this.windowVisible && this.containsPoint(mouseX, mouseY);
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (button == 0 && this.sync_Z) {
-         OverlayBounds current = this.init_cH();
-         this.init_V_cH(
+         OverlayBounds current = this.getBounds();
+         this.setBounds(
             new OverlayBounds(
                current.x + (int)Math.round(deltaX), current.y + (int)Math.round(deltaY), current.width, current.height, current.visible, current.collapsed
             )
@@ -1565,13 +1565,13 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      if (!this.init_Z || this.load_Z) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      if (!this.windowVisible || this.windowCollapsed) {
          return false;
       }
 
@@ -1580,7 +1580,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (!this.init_Z_D_D(mouseX, mouseY)) {
+      if (!this.containsPoint(mouseX, mouseY)) {
          return false;
       }
 
@@ -1589,7 +1589,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       f.Inner_DataUtil module = this.init_f_DataUtil();
       if (module == null) {
          return false;
@@ -1675,7 +1675,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       if (this.init_AutismAdminToolsOv == null) {
          return false;
       }
@@ -1688,12 +1688,12 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_AutismAdminToolsOv != null || this.load_Setting != null;
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.load_V_Z_2(true);
       this.load_Setting = null;
       this.open_V_3();
@@ -1884,7 +1884,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       int y = this.reset();
-      return autismclient.gui.f.NetHelper.init(this.init_I_2 + 4, y, this.read_I - 8, Math.max(1, this.load_I + this.write - y - 4));
+      return autismclient.gui.f.NetHelper.init(this.windowX + 4, y, this.windowWidth - 8, Math.max(1, this.windowY + this.windowHeight - y - 4));
    }
 
    private int open(int viewHeight) {

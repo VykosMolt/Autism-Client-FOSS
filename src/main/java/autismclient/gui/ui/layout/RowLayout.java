@@ -163,8 +163,8 @@ public class RowLayout extends LayoutContainer {
             if (child != null && child.isVisible()) {
                if (previous instanceof ButtonNode left
                   && child instanceof ButtonNode right
-                  && left.init_Z_2()
-                  && right.init_Z_2()
+                  && left.isConnectedStyle()
+                  && right.isConnectedStyle()
                   && Math.abs(left.x() + left.width() - right.x()) <= 0.5F) {
                   if (ui == null) {
                      ui = autismclient.gui.f.UiHelper.init(
@@ -172,10 +172,10 @@ public class RowLayout extends LayoutContainer {
                      );
                   }
 
-                  int leftColor = left.init_I_SyncManager(ui);
-                  int rightColor = right.init_I_SyncManager(ui);
-                  float leftWeight = left.init_F();
-                  float rightWeight = right.init_F();
+                  int leftColor = left.resolveConnectedColor(ui);
+                  int rightColor = right.resolveConnectedColor(ui);
+                  float leftWeight = left.resolveConnectedWeight();
+                  float rightWeight = right.resolveConnectedWeight();
                   int seamColor = ConnectedButtonRenderer.init(leftColor, leftWeight, rightColor, rightWeight);
                   int seamX = Math.round(right.x());
                   int seamY = Math.round(Math.max(left.y(), right.y()));

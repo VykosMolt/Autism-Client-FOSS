@@ -403,7 +403,7 @@ public final class PrintView implements SignalGetter {
       if (entry != null && entry.feetY() == feetY) {
          if (!needsInputs) {
             long before = this.untrackedReadCount;
-            List<Vec3> all = PrintClicks.load(this, key, feetY, detailed);
+            List<Vec3> all = PrintClicks.computeCandidateFeetPositions(this, key, feetY, detailed);
             this.clickCacheMisses++;
             if (this.untrackedReadCount == before) {
                this.putClickCacheEntry(map, key, feetY, all, null);
@@ -414,7 +414,7 @@ public final class PrintView implements SignalGetter {
             return all;
          } else {
             try (PrintView.Inner_ConfigStore reads = new PrintView.Inner_ConfigStore()) {
-               List<Vec3> all = PrintClicks.load(this, key, feetY, detailed);
+               List<Vec3> all = PrintClicks.computeCandidateFeetPositions(this, key, feetY, detailed);
                this.clickCacheMisses++;
                if (reads.isPure()) {
                   this.putClickCacheEntry(map, key, feetY, all, this.buildReceiptFromTracker(reads));

@@ -1448,7 +1448,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             () -> this.init_V_BufferHelper_Cache_I(plan, AutismSessionState.getInstance().getClientTick())
          )
          && !PerTickPlacementLock.init("anchor-aura")) {
-         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.ClientInteractionOverride.clearAll();
       }
    }
 
@@ -1610,7 +1610,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                && entity.isAlive()
                && !entity.isSpectator()
                && this.init_Z_Entity(entity)
-               && !AntiBotTracker.load_Z(entity)
+               && !AntiBotTracker.shouldIgnoreEntity(entity)
                && !TeamsModule.init(entity, "killaura")
                && autismclient.util.ExplosionDamageCalculator.effectiveHealth(entity) > 0.0
                && entity.hurtTime <= this.integer("hurt-time")

@@ -41,194 +41,194 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
 public class LanSyncManager {
-   private static volatile LanSyncManager init_aE;
-   private static final int init_I = 60000;
-   private static final int load_I = 32000;
-   private static final long init_J = 120000L;
-   private static final int read_I = 10;
-   private static final String init_Str = "__QUEUE_FLUSH__";
-   private static final String load_Str = "__DELAY_PACKETS__\t";
-   private final AtomicBoolean init_AtomicBoolean = new AtomicBoolean(false);
-   private volatile boolean init_Z;
-   private volatile String read_Str;
-   private volatile boolean load_Z = false;
-   private volatile String write_Str = "";
-   private final Map<String, LanSyncManager.Inner_DataUtil> init_Map = new ConcurrentHashMap<>();
-   private final Map<String, String> load_Map = new ConcurrentHashMap<>();
-   private final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(r -> {
+   private static volatile LanSyncManager instance;
+   private static final int MAX_INLINE_MACRO_UTF_BYTES = 60000;
+   private static final int MACRO_CHUNK_SIZE_BYTES = 32000;
+   private static final long CHUNK_TRANSFER_TIMEOUT_MS = 120000L;
+   private static final int TICK_SYNC_LEAD_TICKS = 10;
+   private static final String QUEUE_FLUSH_COMMAND = "__QUEUE_FLUSH__";
+   private static final String DELAY_PACKETS_PREFIX = "__DELAY_PACKETS__\t";
+   private final AtomicBoolean running = new AtomicBoolean(false);
+   private volatile boolean configurationOnly;
+   private volatile String sessionId;
+   private volatile boolean isHost = false;
+   private volatile String localUsername = "";
+   private final Map<String, LanSyncManager.Inner_DataUtil> connectedClients = new ConcurrentHashMap<>();
+   private final Map<String, String> discoveredSessions = new ConcurrentHashMap<>();
+   private final ExecutorService asyncSendExecutor = Executors.newSingleThreadExecutor(r -> {
       Thread t = new Thread(r, "Autism-LAN-Send");
       t.setDaemon(true);
       return t;
    });
-   private final Set<String> init_Set = ConcurrentHashMap.newKeySet();
-   private volatile boolean read_Z = false;
-   private int write_I = 0;
-   private static final int update_I = 400;
-   private static final int sync_I = 5;
-   private volatile Runnable init_Runnable;
-   private volatile Runnable load_Runnable;
-   private volatile Runnable read_Runnable;
-   private volatile Runnable write_Runnable;
-   private volatile Runnable update_Runnable;
-   private volatile Runnable sync_Runnable;
-   private volatile Runnable flush_Runnable;
-   private volatile Runnable close_Runnable;
-   private volatile ConcurrentHashMap<String, Map<String, AutismMacro>> init_ConcurrentHashMap = new ConcurrentHashMap<>();
-   private final Map<String, LanSyncManager.Inner_BufferHelper> write_Map = new ConcurrentHashMap<>();
-   private volatile Map<String, String> update_Map = new ConcurrentHashMap<>();
-   private volatile String update_Str = "";
-   private volatile Runnable open_Runnable;
-   private volatile LanSyncManager.Inner_TaskQueue init_aE_TaskQueue = null;
-   private final CopyOnWriteArrayList<LanSyncManager.Inner_TaskQueue> init_CopyOnWriteArrayLi = new CopyOnWriteArrayList<>();
-   private static final int flush_I = 10;
-   private volatile LanSyncManager.Inner_NetHelper init_aE_NetHelper = null;
-   private volatile LanSyncManager.Inner_JsonUtil init_aE_JsonUtil = LanSyncManager.Inner_JsonUtil.IDLE;
-   private volatile LanSyncManager.Inner_StreamUtil init_aE_StreamUtil = LanSyncManager.Inner_StreamUtil.INSTANT;
-   private volatile LanSyncManager.Inner_ConfigStore init_aE_ConfigStore = null;
-   private volatile long load_J = -1L;
-   private final Map<String, Long> sync_Map = new ConcurrentHashMap<>();
-   private final Map<String, Long> flush_Map = new ConcurrentHashMap<>();
-   private final Map<String, LanSyncManager.Inner_StateCache> close_Map = new ConcurrentHashMap<>();
-   private final Set<Long> load_Set = ConcurrentHashMap.newKeySet();
-   private final Map<String, Integer> open_Map = new ConcurrentHashMap<>();
-   private volatile Runnable poll_Runnable;
-   private static final int close_I = 25568;
-   private ServerSocket init_ServerSocket;
-   private Thread init_Thread;
-   private final Map<String, Socket> poll_Map = new ConcurrentHashMap<>();
-   private Socket init_Socket;
-   private Thread load_Thread;
-   private final Object init_Obj = new Object();
-   private final Map<String, Object> push = new ConcurrentHashMap<>();
-   private final Map<String, Long> pop = new ConcurrentHashMap<>();
-   private long read_J = 0L;
-   private static final long write_J = 9000L;
-   private static final long update_J = 15000L;
-   private static final long sync_J = 30000L;
-   private volatile boolean write_Z = false;
-   private volatile String sync_Str = null;
-   private volatile String flush_Str = null;
-   private final AtomicLong init_AtomicLong = new AtomicLong();
+   private final Set<String> readyClients = ConcurrentHashMap.newKeySet();
+   private volatile boolean searching = false;
+   private int searchTicksRemaining = 0;
+   private static final int SEARCH_DURATION_TICKS = 400;
+   private static final int UNUSED_SEARCH_CONSTANT = 5;
+   private volatile Runnable onClientJoinedCallback;
+   private volatile Runnable onClientLeftCallback;
+   private volatile Runnable unusedEventCallback1;
+   private volatile Runnable unusedEventCallback2;
+   private volatile Runnable onSessionChangedCallback;
+   private volatile Runnable onSyncStateChangedCallback;
+   private volatile Runnable onSpreadUpdatedCallback;
+   private volatile Runnable onPeerStateChangedCallback;
+   private volatile ConcurrentHashMap<String, Map<String, AutismMacro>> peerMacros = new ConcurrentHashMap<>();
+   private final Map<String, LanSyncManager.Inner_BufferHelper> incomingChunkTransfers = new ConcurrentHashMap<>();
+   private volatile Map<String, String> syncedMacroAssignments = new ConcurrentHashMap<>();
+   private volatile String syncedAssignmentsSender = "";
+   private volatile Runnable onAssignmentsChangedCallback;
+   private volatile LanSyncManager.Inner_TaskQueue lastSpreadResult = null;
+   private final CopyOnWriteArrayList<LanSyncManager.Inner_TaskQueue> spreadHistory = new CopyOnWriteArrayList<>();
+   private static final int MAX_SPREAD_HISTORY = 10;
+   private volatile LanSyncManager.Inner_NetHelper activeExecution = null;
+   private volatile LanSyncManager.Inner_JsonUtil syncState = LanSyncManager.Inner_JsonUtil.IDLE;
+   private volatile LanSyncManager.Inner_StreamUtil executionMethod = LanSyncManager.Inner_StreamUtil.INSTANT;
+   private volatile LanSyncManager.Inner_ConfigStore scheduledTickExecution = null;
+   private volatile long lastKnownGameTick = -1L;
+   private final Map<String, Long> executionClientTimestampsMs = new ConcurrentHashMap<>();
+   private final Map<String, Long> executionHostReceiptNanos = new ConcurrentHashMap<>();
+   private final Map<String, LanSyncManager.Inner_StateCache> executionTickReports = new ConcurrentHashMap<>();
+   private final Set<Long> executedIds = ConcurrentHashMap.newKeySet();
+   private final Map<String, Integer> peerMacroStepProgress = new ConcurrentHashMap<>();
+   private volatile Runnable onStepProgressChangedCallback;
+   private static final int TCP_PORT = 25568;
+   private ServerSocket tcpServerSocket;
+   private Thread tcpAcceptThread;
+   private final Map<String, Socket> hostClientSockets = new ConcurrentHashMap<>();
+   private Socket clientSocket;
+   private Thread clientReaderThread;
+   private final Object clientWriteLock = new Object();
+   private final Map<String, Object> hostClientWriteLocks = new ConcurrentHashMap<>();
+   private final Map<String, Long> peerLastHeartbeatMs = new ConcurrentHashMap<>();
+   private long lastHeartbeatSentMs = 0L;
+   private static final long HEARTBEAT_INTERVAL_MS = 9000L;
+   private static final long PEER_STALE_MS = 15000L;
+   private static final long PEER_TIMEOUT_MS = 30000L;
+   private volatile boolean reconnecting = false;
+   private volatile String reconnectHostIp = null;
+   private volatile String reconnectSessionId = null;
+   private final AtomicLong peerMacrosRevision = new AtomicLong();
 
    private LanSyncManager() {
    }
 
-   public static LanSyncManager init_aE() {
-      LanSyncManager local = init_aE;
+   public static LanSyncManager getInstance() {
+      LanSyncManager local = instance;
       if (local == null) {
          synchronized (LanSyncManager.class) {
-            if (init_aE == null) {
-               init_aE = new LanSyncManager();
+            if (instance == null) {
+               instance = new LanSyncManager();
             }
 
-            local = init_aE;
+            local = instance;
          }
       }
 
       return local;
    }
 
-   public void init_V() {
-      if (!autismclient.modules.aD.read_Z() && !this.init_AtomicBoolean.get()) {
-         this.init_AtomicBoolean.set(true);
+   public void startService() {
+      if (!autismclient.modules.aD.read_Z() && !this.running.get()) {
+         this.running.set(true);
          AutismClientMessaging.sendPrefixed("§aLAN Sync started (TCP mode on port 25568).");
          AutismClientAddon.LOG.info("[Autism-LAN] Started in TCP-only mode on port {}", 25568);
       }
    }
 
-   public void load_V() {
-      if (this.init_AtomicBoolean.get()) {
-         if (this.read_Str != null) {
-            this.update_V();
+   public void stopService() {
+      if (this.running.get()) {
+         if (this.sessionId != null) {
+            this.leaveSession();
          }
 
-         this.init_AtomicBoolean.set(false);
-         this.set();
-         this.load_Map.clear();
+         this.running.set(false);
+         this.resetSessionState();
+         this.discoveredSessions.clear();
          AutismClientMessaging.sendPrefixed("§eLAN Sync stopped.");
       }
    }
 
-   public void read_V() {
-      if (this.read_Str != null) {
-         this.write_Z = false;
-         this.sync_Str = null;
-         this.flush_Str = null;
-         this.load(new autismclient.util.sync.LanSyncPacket.StateCache(this.read_Str, this.update_Str()));
+   public void shutdownSilently() {
+      if (this.sessionId != null) {
+         this.reconnecting = false;
+         this.reconnectHostIp = null;
+         this.reconnectSessionId = null;
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.StateCache(this.sessionId, this.resolvePlayerUsername()));
       }
 
-      this.init_AtomicBoolean.set(false);
-      this.set();
-      this.load_Map.clear();
+      this.running.set(false);
+      this.resetSessionState();
+      this.discoveredSessions.clear();
    }
 
-   public void write_V() {
-      if (!this.init_AtomicBoolean.get()) {
+   public void createSession() {
+      if (!this.running.get()) {
          AutismClientMessaging.sendPrefixed("§cStart LAN Sync first.");
       } else {
-         this.open_V();
-         this.load_Map.clear();
-         if (this.read_Str != null) {
-            this.update_V();
+         this.cancelSessionSearch();
+         this.discoveredSessions.clear();
+         if (this.sessionId != null) {
+            this.leaveSession();
          }
 
-         this.prev();
-         this.read_Str = this.write_Str();
-         this.load_Z = true;
-         this.write_Str = this.update_Str();
-         if (this.write_Str.isEmpty()) {
-            this.write_Str = "Host";
+         this.closeAllSockets();
+         this.sessionId = this.generateSessionCode();
+         this.isHost = true;
+         this.localUsername = this.resolvePlayerUsername();
+         if (this.localUsername.isEmpty()) {
+            this.localUsername = "Host";
          }
 
-         this.init_Map.put(this.write_Str, new LanSyncManager.Inner_DataUtil(this.write_Str, true));
-         this.put();
-         this.stop();
-         AutismClientMessaging.sendPrefixed("§aSession created: " + this.read_Str + " [TCP Sync]");
-         this.push(this.update_Runnable);
+         this.connectedClients.put(this.localUsername, new LanSyncManager.Inner_DataUtil(this.localUsername, true));
+         this.clearExecutionState();
+         this.startTcpServer();
+         AutismClientMessaging.sendPrefixed("§aSession created: " + this.sessionId + " [TCP Sync]");
+         this.dispatchCallbackOnClientThread(this.onSessionChangedCallback);
       }
    }
 
-   public void init_V_Str(String targetSessionId) {
-      this.init_V_Str_Str(targetSessionId, "127.0.0.1");
+   public void joinSession(String targetSessionId) {
+      this.joinSession(targetSessionId, "127.0.0.1");
    }
 
-   public void init_V_Str_Str(String targetSessionId, String hostIp) {
-      if (!this.init_AtomicBoolean.get()) {
+   public void joinSession(String targetSessionId, String hostIp) {
+      if (!this.running.get()) {
          AutismClientMessaging.sendPrefixed("§cStart LAN Sync first.");
-      } else if (this.read_Str != null && this.read_Str.equals(targetSessionId)) {
-         AutismClientMessaging.sendPrefixed("§cAlready in session " + this.read_Str);
+      } else if (this.sessionId != null && this.sessionId.equals(targetSessionId)) {
+         AutismClientMessaging.sendPrefixed("§cAlready in session " + this.sessionId);
       } else {
-         this.open_V();
-         this.load_Map.clear();
-         if (this.read_Str != null) {
-            this.update_V();
+         this.cancelSessionSearch();
+         this.discoveredSessions.clear();
+         if (this.sessionId != null) {
+            this.leaveSession();
          }
 
-         this.prev();
-         this.read_Str = targetSessionId;
-         this.flush_Str = targetSessionId;
-         this.load_Z = false;
-         this.write_Str = this.update_Str();
-         if (this.write_Str.isEmpty()) {
-            this.write_Str = "Player";
+         this.closeAllSockets();
+         this.sessionId = targetSessionId;
+         this.reconnectSessionId = targetSessionId;
+         this.isHost = false;
+         this.localUsername = this.resolvePlayerUsername();
+         if (this.localUsername.isEmpty()) {
+            this.localUsername = "Player";
          }
 
-         this.init_Map.put(this.write_Str, new LanSyncManager.Inner_DataUtil(this.write_Str, false));
-         this.put();
-         if (hostIp != null && !hostIp.isBlank() && !read_Z_Str(hostIp)) {
+         this.connectedClients.put(this.localUsername, new LanSyncManager.Inner_DataUtil(this.localUsername, false));
+         this.clearExecutionState();
+         if (hostIp != null && !hostIp.isBlank() && !isLoopbackHost(hostIp)) {
             AutismClientMessaging.sendPrefixed("§cLAN Sync is same-machine only; ignoring remote host " + hostIp + ".");
             AutismClientAddon.LOG.warn("[TCP] Refused non-loopback LAN Sync host {}", hostIp);
          } else {
-            this.sync_Str = "127.0.0.1";
-            this.close(this.sync_Str);
-            AutismClientAddon.LOG.info("[TCP] Connecting to {}:{}", this.sync_Str, 25568);
-            this.push(this.init_Runnable);
-            this.push(this.update_Runnable);
+            this.reconnectHostIp = "127.0.0.1";
+            this.connectToHost(this.reconnectHostIp);
+            AutismClientAddon.LOG.info("[TCP] Connecting to {}:{}", this.reconnectHostIp, 25568);
+            this.dispatchCallbackOnClientThread(this.onClientJoinedCallback);
+            this.dispatchCallbackOnClientThread(this.onSessionChangedCallback);
          }
       }
    }
 
-   private static boolean read_Z_Str(String host) {
+   private static boolean isLoopbackHost(String host) {
       String h = host.trim().toLowerCase(Locale.ROOT);
       if (!h.equals("localhost") && !h.equals("::1") && !h.equals("0:0:0:0:0:0:0:1")) {
          try {
@@ -247,91 +247,91 @@ public class LanSyncManager {
       }
    }
 
-   public void update_V() {
-      if (this.read_Str != null) {
-         this.write_Z = false;
-         this.sync_Str = null;
-         this.flush_Str = null;
-         this.load(new autismclient.util.sync.LanSyncPacket.StateCache(this.read_Str, this.update_Str()));
-         this.set();
+   public void leaveSession() {
+      if (this.sessionId != null) {
+         this.reconnecting = false;
+         this.reconnectHostIp = null;
+         this.reconnectSessionId = null;
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.StateCache(this.sessionId, this.resolvePlayerUsername()));
+         this.resetSessionState();
          AutismClientMessaging.sendPrefixed("§eLeft session.");
-         this.push(this.update_Runnable);
+         this.dispatchCallbackOnClientThread(this.onSessionChangedCallback);
       }
    }
 
-   private void set() {
-      this.read_Str = null;
-      this.load_Z = false;
-      this.write_Str = "";
-      this.write_Z = false;
-      this.sync_Str = null;
-      this.flush_Str = null;
-      this.init_Map.clear();
-      this.init_ConcurrentHashMap.clear();
-      this.init_AtomicLong.incrementAndGet();
-      this.update_Map.clear();
-      this.update_Str = "";
-      this.read_Z = false;
-      this.write_I = 0;
-      this.init_aE_TaskQueue = null;
-      this.load_J = -1L;
-      this.put();
-      this.pop.clear();
-      this.prev();
+   private void resetSessionState() {
+      this.sessionId = null;
+      this.isHost = false;
+      this.localUsername = "";
+      this.reconnecting = false;
+      this.reconnectHostIp = null;
+      this.reconnectSessionId = null;
+      this.connectedClients.clear();
+      this.peerMacros.clear();
+      this.peerMacrosRevision.incrementAndGet();
+      this.syncedMacroAssignments.clear();
+      this.syncedAssignmentsSender = "";
+      this.searching = false;
+      this.searchTicksRemaining = 0;
+      this.lastSpreadResult = null;
+      this.lastKnownGameTick = -1L;
+      this.clearExecutionState();
+      this.peerLastHeartbeatMs.clear();
+      this.closeAllSockets();
    }
 
-   public void sync_V() {
-      if (this.read_Str != null) {
-         this.put();
+   public void resetActiveExecution() {
+      if (this.sessionId != null) {
+         this.clearExecutionState();
       }
    }
 
-   private void put() {
-      this.init_aE_NetHelper = null;
-      this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
-      this.sync_Map.clear();
-      this.flush_Map.clear();
-      this.close_Map.clear();
-      this.init_aE_ConfigStore = null;
-      this.load_Set.clear();
-      this.init_Set.clear();
-      this.open_Map.clear();
+   private void clearExecutionState() {
+      this.activeExecution = null;
+      this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
+      this.executionClientTimestampsMs.clear();
+      this.executionHostReceiptNanos.clear();
+      this.executionTickReports.clear();
+      this.scheduledTickExecution = null;
+      this.executedIds.clear();
+      this.readyClients.clear();
+      this.peerMacroStepProgress.clear();
    }
 
-   private void init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil state) {
-      this.init_aE_JsonUtil = state;
-      this.push(this.sync_Runnable);
+   private void setSyncState(LanSyncManager.Inner_JsonUtil state) {
+      this.syncState = state;
+      this.dispatchCallbackOnClientThread(this.onSyncStateChangedCallback);
    }
 
-   private void init_V_Z(boolean isMacro, String macroName, String command) {
-      this.init(isMacro, macroName, command, null);
+   private void initiateGoSync(boolean isMacro, String macroName, String command) {
+      this.initiateGoSync(isMacro, macroName, command, null);
    }
 
-   private void init(boolean isMacro, String macroName, String command, Map<String, String> macroAssignments) {
-      if (this.open_Z()) {
-         if (!this.close_Z()) {
+   private void initiateGoSync(boolean isMacro, String macroName, String command, Map<String, String> macroAssignments) {
+      if (this.canExecuteInWorld()) {
+         if (!this.isSyncIdle()) {
             AutismClientMessaging.sendPrefixed("§cLAN Sync is busy with another synchronized action.");
          } else {
             long executionId = System.nanoTime();
             if (isMacro) {
                if (macroAssignments != null && !macroAssignments.isEmpty()) {
-                  Map<String, String> missingAssignments = this.init_Map_Map(macroAssignments);
+                  Map<String, String> missingAssignments = this.findMissingAssignedMacros(macroAssignments);
                   if (!missingAssignments.isEmpty()) {
-                     AutismClientMessaging.sendPrefixed("§cMissing assigned macros on: " + this.init_Str_Map(missingAssignments));
+                     AutismClientMessaging.sendPrefixed("§cMissing assigned macros on: " + this.formatAssignmentPreview(missingAssignments));
                      return;
                   }
                } else if (macroName != null && !macroName.isBlank()) {
-                  List<String> missingPeers = this.init_List_Str(macroName);
+                  List<String> missingPeers = this.findPeersMissingMacro(macroName);
                   if (!missingPeers.isEmpty()) {
-                     AutismClientMessaging.sendPrefixed("§cMissing '" + macroName + "' on: " + this.init_Str_List(missingPeers));
+                     AutismClientMessaging.sendPrefixed("§cMissing '" + macroName + "' on: " + this.formatNamePreview(missingPeers));
                      return;
                   }
                }
             }
 
             String myMacroName = macroName;
-            if (macroAssignments != null && macroAssignments.containsKey(this.write_Str)) {
-               myMacroName = macroAssignments.get(this.write_Str);
+            if (macroAssignments != null && macroAssignments.containsKey(this.localUsername)) {
+               myMacroName = macroAssignments.get(this.localUsername);
             }
 
             AutismMacro macro = null;
@@ -345,17 +345,17 @@ public class LanSyncManager {
                macro.regeneratePackets();
             }
 
-            LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil;
-            this.init_aE_NetHelper = new LanSyncManager.Inner_NetHelper(executionId, isMacro, myMacroName, command, macro, true, method, -1L);
-            this.init_Set.clear();
-            this.sync_Map.clear();
-            this.flush_Map.clear();
-            this.close_Map.clear();
-            this.load_Set.clear();
-            this.init_aE_ConfigStore = null;
-            this.open_Map.clear();
-            this.init_Set.add(this.write_Str);
-            this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.PREPARING);
+            LanSyncManager.Inner_StreamUtil method = this.executionMethod;
+            this.activeExecution = new LanSyncManager.Inner_NetHelper(executionId, isMacro, myMacroName, command, macro, true, method, -1L);
+            this.readyClients.clear();
+            this.executionClientTimestampsMs.clear();
+            this.executionHostReceiptNanos.clear();
+            this.executionTickReports.clear();
+            this.executedIds.clear();
+            this.scheduledTickExecution = null;
+            this.peerMacroStepProgress.clear();
+            this.readyClients.add(this.localUsername);
+            this.setSyncState(LanSyncManager.Inner_JsonUtil.PREPARING);
             AutismClientAddon.LOG.info("[Sync] Initiating GO-sync: execId={}", executionId);
             String assignmentStr = "";
             if (macroAssignments != null && !macroAssignments.isEmpty()) {
@@ -373,62 +373,62 @@ public class LanSyncManager {
             }
 
             autismclient.util.sync.LanSyncPacket.HashUtil preparePacket = new autismclient.util.sync.LanSyncPacket.HashUtil(
-               this.read_Str, executionId, isMacro, macroName != null ? macroName : "", command, this.write_Str
+               this.sessionId, executionId, isMacro, macroName != null ? macroName : "", command, this.localUsername
             );
-            preparePacket.update = assignmentStr;
-            preparePacket.init_I = method.ordinal();
-            preparePacket.load_J = -1L;
-            this.load(preparePacket);
-            this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
+            preparePacket.macroAssignments = assignmentStr;
+            preparePacket.executionMethod = method.ordinal();
+            preparePacket.targetTick = -1L;
+            this.sendPacket(preparePacket);
+            this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.PREPARING, this.readyClients.size() + "/" + this.connectedClients.size() + " ready");
             (new Thread(
                   () -> {
                      Thread.currentThread().setPriority(10);
 
                      try {
                         long waitStart = System.currentTimeMillis();
-                        int expectedClients = this.init_Map.size();
+                        int expectedClients = this.connectedClients.size();
 
-                        while (this.init_Set.size() < expectedClients) {
+                        while (this.readyClients.size() < expectedClients) {
                            if (System.currentTimeMillis() - waitStart > 3000L) {
-                              AutismClientAddon.LOG.warn("[Sync] Timeout waiting for clients. Got {}/{}", this.init_Set.size(), expectedClients);
+                              AutismClientAddon.LOG.warn("[Sync] Timeout waiting for clients. Got {}/{}", this.readyClients.size(), expectedClients);
                               break;
                            }
 
                            LockSupport.parkNanos(500000L);
                         }
 
-                        this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.ALL_READY);
-                        this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.ALL_READY, this.init_Set.size() + "/" + expectedClients + " ready");
-                        AutismClientAddon.LOG.info("[Sync] All {} clients ready!", this.init_Set.size());
-                        this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.DISPATCHING_GO);
+                        this.setSyncState(LanSyncManager.Inner_JsonUtil.ALL_READY);
+                        this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.ALL_READY, this.readyClients.size() + "/" + expectedClients + " ready");
+                        AutismClientAddon.LOG.info("[Sync] All {} clients ready!", this.readyClients.size());
+                        this.setSyncState(LanSyncManager.Inner_JsonUtil.DISPATCHING_GO);
                         long targetTick = -1L;
                         if (method == LanSyncManager.Inner_StreamUtil.TICK) {
-                           long currentTick = this.load_J();
+                           long currentTick = this.resolveCurrentGameTick();
                            if (currentTick < 0L) {
                               AutismClientMessaging.sendPrefixed("§cCannot tick-sync without a loaded world.");
-                              this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+                              this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
                               return;
                            }
 
                            targetTick = currentTick + 10L;
-                           LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-                           if (ctx != null && ctx.init_J == executionId) {
-                              ctx.load_J = targetTick;
+                           LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+                           if (ctx != null && ctx.executionId == executionId) {
+                              ctx.targetTick = targetTick;
                            }
                         }
 
-                        byte[] goPayload = this.init_BArr_DataUtil(
-                           new autismclient.util.sync.LanSyncPacket.TaskQueue(this.read_Str, executionId, method.ordinal(), targetTick)
+                        byte[] goPayload = this.encodePacket(
+                           new autismclient.util.sync.LanSyncPacket.TaskQueue(this.sessionId, executionId, method.ordinal(), targetTick)
                         );
-                        this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
+                        this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
 
-                        for (Entry<String, Socket> entryx : this.poll_Map.entrySet()) {
+                        for (Entry<String, Socket> entryx : this.hostClientSockets.entrySet()) {
                            Socket clientSocket = entryx.getValue();
                            String clientName = entryx.getKey();
 
                            try {
                               if (!clientSocket.isClosed()) {
-                                 synchronized (this.push.computeIfAbsent(clientName, k -> new Object())) {
+                                 synchronized (this.hostClientWriteLocks.computeIfAbsent(clientName, k -> new Object())) {
                                     OutputStream out = clientSocket.getOutputStream();
                                     out.write(goPayload);
                                     out.flush();
@@ -440,9 +440,9 @@ public class LanSyncManager {
                         }
 
                         if (method == LanSyncManager.Inner_StreamUtil.TICK) {
-                           this.init_V_J_J(executionId, targetTick);
+                           this.scheduleTickExecution(executionId, targetTick);
                         } else {
-                           int hostOffset = this.load_I(this.write_Str);
+                           int hostOffset = this.getClientOffsetMs(this.localUsername);
                            if (hostOffset > 0) {
                               try {
                                  Thread.sleep(hostOffset);
@@ -450,11 +450,11 @@ public class LanSyncManager {
                               }
                            }
 
-                           this.clear();
+                           this.executePreparedAction();
                         }
                      } catch (Exception e) {
                         AutismClientAddon.LOG.error("[Sync] Error in GO-sync: ", e);
-                        this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+                        this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
                      }
                   },
                   "Sync-GO-Initiator"
@@ -468,72 +468,72 @@ public class LanSyncManager {
       }
    }
 
-   private void add() {
-      if (this.open_Z()) {
+   private void initiateQueueFlushGoSync() {
+      if (this.canExecuteInWorld()) {
          long executionId = System.nanoTime();
-         LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil;
-         this.init_aE_NetHelper = new LanSyncManager.Inner_NetHelper(executionId, false, null, "__QUEUE_FLUSH__", null, true, method, -1L);
-         this.init_Set.clear();
-         this.sync_Map.clear();
-         this.flush_Map.clear();
-         this.close_Map.clear();
-         this.load_Set.clear();
-         this.init_aE_ConfigStore = null;
-         this.init_Set.add(this.write_Str);
-         this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.PREPARING);
+         LanSyncManager.Inner_StreamUtil method = this.executionMethod;
+         this.activeExecution = new LanSyncManager.Inner_NetHelper(executionId, false, null, "__QUEUE_FLUSH__", null, true, method, -1L);
+         this.readyClients.clear();
+         this.executionClientTimestampsMs.clear();
+         this.executionHostReceiptNanos.clear();
+         this.executionTickReports.clear();
+         this.executedIds.clear();
+         this.scheduledTickExecution = null;
+         this.readyClients.add(this.localUsername);
+         this.setSyncState(LanSyncManager.Inner_JsonUtil.PREPARING);
          AutismClientAddon.LOG.info("[Sync] Initiating queue flush GO-sync: execId={}", executionId);
          autismclient.util.sync.LanSyncPacket.HashUtil preparePacket = new autismclient.util.sync.LanSyncPacket.HashUtil(
-            this.read_Str, executionId, false, "", "__QUEUE_FLUSH__", this.write_Str
+            this.sessionId, executionId, false, "", "__QUEUE_FLUSH__", this.localUsername
          );
-         preparePacket.init_I = method.ordinal();
-         preparePacket.load_J = -1L;
-         this.load(preparePacket);
-         this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
+         preparePacket.executionMethod = method.ordinal();
+         preparePacket.targetTick = -1L;
+         this.sendPacket(preparePacket);
+         this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.PREPARING, this.readyClients.size() + "/" + this.connectedClients.size() + " ready");
          (new Thread(() -> {
             Thread.currentThread().setPriority(10);
 
             try {
                long waitStart = System.currentTimeMillis();
-               int expectedClients = this.init_Map.size();
+               int expectedClients = this.connectedClients.size();
 
-               while (this.init_Set.size() < expectedClients) {
+               while (this.readyClients.size() < expectedClients) {
                   if (System.currentTimeMillis() - waitStart > 3000L) {
-                     AutismClientAddon.LOG.warn("[Sync] Timeout waiting for clients. Got {}/{}", this.init_Set.size(), expectedClients);
+                     AutismClientAddon.LOG.warn("[Sync] Timeout waiting for clients. Got {}/{}", this.readyClients.size(), expectedClients);
                      break;
                   }
 
                   LockSupport.parkNanos(500000L);
                }
 
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.ALL_READY);
-               this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.ALL_READY, this.init_Set.size() + "/" + expectedClients + " ready");
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.DISPATCHING_GO);
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.ALL_READY);
+               this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.ALL_READY, this.readyClients.size() + "/" + expectedClients + " ready");
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.DISPATCHING_GO);
                long targetTick = -1L;
                if (method == LanSyncManager.Inner_StreamUtil.TICK) {
-                  long currentTick = this.load_J();
+                  long currentTick = this.resolveCurrentGameTick();
                   if (currentTick < 0L) {
                      AutismClientMessaging.sendPrefixed("§cCannot tick-sync without a loaded world.");
-                     this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+                     this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
                      return;
                   }
 
                   targetTick = currentTick + 10L;
-                  LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-                  if (ctx != null && ctx.init_J == executionId) {
-                     ctx.load_J = targetTick;
+                  LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+                  if (ctx != null && ctx.executionId == executionId) {
+                     ctx.targetTick = targetTick;
                   }
                }
 
-               byte[] goPayload = this.init_BArr_DataUtil(new autismclient.util.sync.LanSyncPacket.TaskQueue(this.read_Str, executionId, method.ordinal(), targetTick));
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
+               byte[] goPayload = this.encodePacket(new autismclient.util.sync.LanSyncPacket.TaskQueue(this.sessionId, executionId, method.ordinal(), targetTick));
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
 
-               for (Entry<String, Socket> entry : this.poll_Map.entrySet()) {
+               for (Entry<String, Socket> entry : this.hostClientSockets.entrySet()) {
                   Socket clientSocket = entry.getValue();
                   String clientName = entry.getKey();
 
                   try {
                      if (!clientSocket.isClosed()) {
-                        synchronized (this.push.computeIfAbsent(clientName, k -> new Object())) {
+                        synchronized (this.hostClientWriteLocks.computeIfAbsent(clientName, k -> new Object())) {
                            OutputStream out = clientSocket.getOutputStream();
                            out.write(goPayload);
                            out.flush();
@@ -545,9 +545,9 @@ public class LanSyncManager {
                }
 
                if (method == LanSyncManager.Inner_StreamUtil.TICK) {
-                  this.init_V_J_J(executionId, targetTick);
+                  this.scheduleTickExecution(executionId, targetTick);
                } else {
-                  int hostOffset = this.load_I(this.write_Str);
+                  int hostOffset = this.getClientOffsetMs(this.localUsername);
                   if (hostOffset > 0) {
                      try {
                         Thread.sleep(hostOffset);
@@ -555,11 +555,11 @@ public class LanSyncManager {
                      }
                   }
 
-                  this.clear();
+                  this.executePreparedAction();
                }
             } catch (Exception e) {
                AutismClientAddon.LOG.error("[Sync] Error in queue GO-sync: ", e);
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
             }
          }, "Sync-GO-QueueFlush") {
             {
@@ -569,21 +569,21 @@ public class LanSyncManager {
       }
    }
 
-   private void init(
+   private void handlePrepareExecution(
       long executionId, boolean isMacro, String macroName, String command, String senderUsername, String macroAssignments, int methodOrdinal, long targetTick
    ) {
-      if (this.open_Z() && (senderUsername == null || !senderUsername.equals(this.write_Str))) {
+      if (this.canExecuteInWorld() && (senderUsername == null || !senderUsername.equals(this.localUsername))) {
          AutismClientAddon.LOG.info("[Sync] Received PREPARE from {}", senderUsername);
-         this.open_Map.clear();
-         this.close_Map.clear();
-         this.load_Set.clear();
-         this.init_aE_ConfigStore = null;
+         this.peerMacroStepProgress.clear();
+         this.executionTickReports.clear();
+         this.executedIds.clear();
+         this.scheduledTickExecution = null;
          String myMacroName = macroName;
          if (macroAssignments != null && !macroAssignments.isEmpty()) {
             String[] parts = macroAssignments.split("\t");
 
             for (int pi = 0; pi + 1 < parts.length; pi += 2) {
-               if (parts[pi].equals(this.write_Str)) {
+               if (parts[pi].equals(this.localUsername)) {
                   myMacroName = parts[pi + 1];
                   break;
                }
@@ -600,85 +600,85 @@ public class LanSyncManager {
             AutismSessionState.getInstance().regenerateQueuedPackets();
          }
 
-         LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
-         this.init_aE_StreamUtil = method;
-         this.init_aE_NetHelper = new LanSyncManager.Inner_NetHelper(executionId, isMacro, myMacroName, command, macro, false, method, targetTick);
-         this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.PREPARING);
-         this.load(new autismclient.util.sync.LanSyncPacket.BufferHelper(this.read_Str, executionId, this.write_Str));
+         LanSyncManager.Inner_StreamUtil method = this.executionMethodFromOrdinal(methodOrdinal);
+         this.executionMethod = method;
+         this.activeExecution = new LanSyncManager.Inner_NetHelper(executionId, isMacro, myMacroName, command, macro, false, method, targetTick);
+         this.setSyncState(LanSyncManager.Inner_JsonUtil.PREPARING);
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.BufferHelper(this.sessionId, executionId, this.localUsername));
          AutismClientAddon.LOG.info("[Sync] Sent READY signal");
       }
    }
 
-   private void init_V_J_Str(long executionId, String username) {
-      LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-      if (ctx != null && executionId == ctx.init_J) {
-         this.init_Set.add(username);
-         this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
-         AutismClientAddon.LOG.info("[Sync] Client ready: {} (total: {})", username, this.init_Set.size());
+   private void handleClientReady(long executionId, String username) {
+      LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+      if (ctx != null && executionId == ctx.executionId) {
+         this.readyClients.add(username);
+         this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.PREPARING, this.readyClients.size() + "/" + this.connectedClients.size() + " ready");
+         AutismClientAddon.LOG.info("[Sync] Client ready: {} (total: {})", username, this.readyClients.size());
       }
    }
 
-   private void init_V_J(long executionId, int methodOrdinal, long targetTick) {
-      if (this.open_Z()) {
-         LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-         if (ctx == null || executionId != ctx.init_J) {
+   private void handleGoSignal(long executionId, int methodOrdinal, long targetTick) {
+      if (this.canExecuteInWorld()) {
+         LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+         if (ctx == null || executionId != ctx.executionId) {
             AutismClientAddon.LOG.warn("[Sync] GO for wrong execId, ignoring");
-         } else if (!ctx.load_Z) {
-            LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
-            ctx.load_J = targetTick;
-            this.init_aE_StreamUtil = method;
+         } else if (!ctx.isInitiator) {
+            LanSyncManager.Inner_StreamUtil method = this.executionMethodFromOrdinal(methodOrdinal);
+            ctx.targetTick = targetTick;
+            this.executionMethod = method;
             if (method == LanSyncManager.Inner_StreamUtil.TICK && targetTick >= 0L) {
                AutismClientAddon.LOG.info("[Sync] Received GO! Scheduling tick execution for {}", targetTick);
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
-               this.init_V_J_J(executionId, targetTick);
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
+               this.scheduleTickExecution(executionId, targetTick);
             } else {
-               int offset = this.load_I(this.write_Str);
+               int offset = this.getClientOffsetMs(this.localUsername);
                if (offset > 0) {
                   AutismClientAddon.LOG.info("[Sync] Received GO! Applying {}ms offset before executing.", offset);
-                  this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
+                  this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
 
                   try {
                      Thread.sleep(offset);
                   } catch (InterruptedException var10) {
                   }
 
-                  this.clear();
+                  this.executePreparedAction();
                } else {
                   AutismClientAddon.LOG.info("[Sync] Received GO! Executing immediately.");
-                  this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
-                  this.clear();
+                  this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
+                  this.executePreparedAction();
                }
             }
          }
       }
    }
 
-   private void clear() {
-      if ((AutismLiteVariant.enabled() || autismclient.e.BitSetUtil.init()) && this.open_Z() && !autismclient.modules.aD.read_Z()) {
-         LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
+   private void executePreparedAction() {
+      if ((AutismLiteVariant.enabled() || autismclient.e.BitSetUtil.init()) && this.canExecuteInWorld() && !autismclient.modules.aD.read_Z()) {
+         LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
          if (ctx != null) {
             Minecraft mc = Minecraft.getInstance();
             if (!mc.isSameThread()) {
-               mc.execute(this::clear);
-            } else if (this.load_Set.add(ctx.init_J)) {
+               mc.execute(this::executePreparedAction);
+            } else if (this.executedIds.add(ctx.executionId)) {
                long executedAtMs = System.currentTimeMillis();
-               long actualTick = this.load_J();
-               boolean tickMode = ctx.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK;
-               boolean late = tickMode && (actualTick < 0L || ctx.load_J >= 0L && actualTick > ctx.load_J);
-               if ("__QUEUE_FLUSH__".equals(ctx.load_Str)) {
+               long actualTick = this.resolveCurrentGameTick();
+               boolean tickMode = ctx.executionMethod == LanSyncManager.Inner_StreamUtil.TICK;
+               boolean late = tickMode && (actualTick < 0L || ctx.targetTick >= 0L && actualTick > ctx.targetTick);
+               if ("__QUEUE_FLUSH__".equals(ctx.command)) {
                   ClientPacketListener nh = mc.getConnection();
                   if (nh != null) {
                      int count = AutismSessionState.getInstance().flushDelayedPackets(nh);
                      AutismClientAddon.LOG.info("[Sync] Queue flushed! {} packets sent", count);
                   }
-               } else if (ctx.load_Str != null && ctx.load_Str.startsWith("__DELAY_PACKETS__\t")) {
-                  boolean enabled = "1".equals(ctx.load_Str.substring("__DELAY_PACKETS__\t".length()));
+               } else if (ctx.command != null && ctx.command.startsWith("__DELAY_PACKETS__\t")) {
+                  boolean enabled = "1".equals(ctx.command.substring("__DELAY_PACKETS__\t".length()));
                   autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
                   int flushed = module.toggleDelayPackets(enabled);
                   module.notifyDelayToggle(enabled, flushed);
                   AutismClientAddon.LOG.info("[Sync] Delay packets set to {} (flushed={})", enabled, flushed);
-               } else if (ctx.load_Str != null && ctx.load_Str.startsWith("__CHAT__\t")) {
-                  String chatMsg = ctx.load_Str.substring("__CHAT__\t".length());
+               } else if (ctx.command != null && ctx.command.startsWith("__CHAT__\t")) {
+                  String chatMsg = ctx.command.substring("__CHAT__\t".length());
                   ClientPacketListener nh = mc.getConnection();
                   if (nh != null) {
                      if (chatMsg.startsWith("/")) {
@@ -689,37 +689,37 @@ public class LanSyncManager {
 
                      AutismClientAddon.LOG.info("[Sync] Chat sent: {}", chatMsg);
                   }
-               } else if (ctx.init_Z && ctx.init_aM != null) {
-                  ctx.init_aM.execute(false);
+               } else if (ctx.isMacro && ctx.macro != null) {
+                  ctx.macro.execute(false);
                }
 
                AutismClientAddon.LOG.info("[Sync] EXECUTED at {} tick {}", executedAtMs, actualTick);
-               this.sync_Map.put(this.write_Str, executedAtMs);
-               this.flush_Map.put(this.write_Str, System.nanoTime());
+               this.executionClientTimestampsMs.put(this.localUsername, executedAtMs);
+               this.executionHostReceiptNanos.put(this.localUsername, System.nanoTime());
                if (tickMode) {
-                  this.close_Map.put(this.write_Str, new LanSyncManager.Inner_StateCache(actualTick, late));
+                  this.executionTickReports.put(this.localUsername, new LanSyncManager.Inner_StateCache(actualTick, late));
                }
 
-               this.load(
+               this.sendPacket(
                   new autismclient.util.sync.LanSyncPacket.MethodUtil(
-                     this.read_Str, this.write_Str, executedAtMs, ctx.init_aE_StreamUtil.ordinal(), ctx.load_J, actualTick, late
+                     this.sessionId, this.localUsername, executedAtMs, ctx.executionMethod.ordinal(), ctx.targetTick, actualTick, late
                   )
                );
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.REPORTING);
-               if (ctx.load_Z) {
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.REPORTING);
+               if (ctx.isInitiator) {
                   (new Thread(() -> {
                      try {
-                        int expected = this.init_Map.size();
+                        int expected = this.connectedClients.size();
                         long start = System.currentTimeMillis();
 
-                        while (this.init_I_aE_StreamUtil(ctx.init_aE_StreamUtil) < expected && System.currentTimeMillis() - start < 1500L) {
+                        while (this.getReceivedReportCount(ctx.executionMethod) < expected && System.currentTimeMillis() - start < 1500L) {
                            LockSupport.parkNanos(1000000L);
                         }
 
-                        if (ctx.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK) {
-                           this.load(ctx.load_J);
+                        if (ctx.executionMethod == LanSyncManager.Inner_StreamUtil.TICK) {
+                           this.computeAndBroadcastTickSpread(ctx.targetTick);
                         } else {
-                           this.reset();
+                           this.computeAndBroadcastInstantSpread();
                         }
                      } catch (Exception e) {
                         AutismClientAddon.LOG.error("[Sync] Error calculating spread", e);
@@ -735,36 +735,36 @@ public class LanSyncManager {
       }
    }
 
-   private void init(String username, long timestampMs, int methodOrdinal, long targetTick, long actualTick, boolean late) {
-      this.sync_Map.put(username, timestampMs);
-      this.flush_Map.put(username, System.nanoTime());
-      LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
+   private void handleExecutionAck(String username, long timestampMs, int methodOrdinal, long targetTick, long actualTick, boolean late) {
+      this.executionClientTimestampsMs.put(username, timestampMs);
+      this.executionHostReceiptNanos.put(username, System.nanoTime());
+      LanSyncManager.Inner_StreamUtil method = this.executionMethodFromOrdinal(methodOrdinal);
       if (method == LanSyncManager.Inner_StreamUtil.TICK) {
-         this.close_Map.put(username, new LanSyncManager.Inner_StateCache(actualTick, late || targetTick >= 0L && actualTick > targetTick));
+         this.executionTickReports.put(username, new LanSyncManager.Inner_StateCache(actualTick, late || targetTick >= 0L && actualTick > targetTick));
       }
 
       AutismClientAddon.LOG
-         .info("[Sync] ACK from {}: remoteMs={}, hostReceiptNano={}, tick={}", username, timestampMs, this.flush_Map.get(username), actualTick);
+         .info("[Sync] ACK from {}: remoteMs={}, hostReceiptNano={}, tick={}", username, timestampMs, this.executionHostReceiptNanos.get(username), actualTick);
    }
 
-   private long load_J() {
+   private long resolveCurrentGameTick() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null) {
          return -1L;
       }
 
       if (mc.isSameThread()) {
-         this.load_J = mc.level.getGameTime();
+         this.lastKnownGameTick = mc.level.getGameTime();
       }
 
-      return this.load_J >= 0L ? this.load_J : mc.level.getGameTime();
+      return this.lastKnownGameTick >= 0L ? this.lastKnownGameTick : mc.level.getGameTime();
    }
 
-   private void init_V_J_J(long executionId, long targetTick) {
-      LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-      if (ctx != null && ctx.init_J == executionId) {
-         ctx.load_J = targetTick;
-         long currentTick = this.load_J();
+   private void scheduleTickExecution(long executionId, long targetTick) {
+      LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+      if (ctx != null && ctx.executionId == executionId) {
+         ctx.targetTick = targetTick;
+         long currentTick = this.resolveCurrentGameTick();
          if (currentTick >= 0L && currentTick < targetTick) {
             LanSyncManager.Inner_ConfigStore sched = new LanSyncManager.Inner_ConfigStore(executionId, targetTick);
             if (autismclient.util.macro.ServerTickPhaseTracker.init_Z()) {
@@ -779,7 +779,7 @@ public class LanSyncManager {
                   fireAt = now;
                }
 
-               sched.read = fireAt;
+               sched.fireAtNano = fireAt;
                long fireAtFinal = fireAt;
                long execId = executionId;
                Thread t = new Thread(() -> {
@@ -798,55 +798,55 @@ public class LanSyncManager {
                   while (System.nanoTime() < fireAtFinal) {
                   }
 
-                  LanSyncManager.Inner_NetHelper sc = this.init_aE_NetHelper;
-                  if (sc != null && sc.init_J == execId && sc.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK) {
-                     LanSyncManager.Inner_ConfigStore s = this.init_aE_ConfigStore;
-                     if (s != null && s.init_J == execId) {
-                        this.init_aE_ConfigStore = null;
-                        this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
-                        this.clear();
+                  LanSyncManager.Inner_NetHelper sc = this.activeExecution;
+                  if (sc != null && sc.executionId == execId && sc.executionMethod == LanSyncManager.Inner_StreamUtil.TICK) {
+                     LanSyncManager.Inner_ConfigStore s = this.scheduledTickExecution;
+                     if (s != null && s.executionId == execId) {
+                        this.scheduledTickExecution = null;
+                        this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
+                        this.executePreparedAction();
                      }
                   }
                }, "Sync-TickPrecise-" + executionId);
-               sched.init_Thread = t;
+               sched.timerThread = t;
                t.setDaemon(true);
                t.start();
             }
 
-            this.init_aE_ConfigStore = sched;
+            this.scheduledTickExecution = sched;
          } else {
-            this.init_aE_ConfigStore = null;
-            this.clear();
+            this.scheduledTickExecution = null;
+            this.executePreparedAction();
          }
       }
    }
 
-   public void init_V_J(long currentTick) {
-      this.load_J = currentTick;
-      LanSyncManager.Inner_ConfigStore scheduled = this.init_aE_ConfigStore;
-      if (scheduled != null && currentTick >= scheduled.load) {
-         LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-         if (ctx != null && ctx.init_J == scheduled.init_J && ctx.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK) {
-            ctx.load_J = scheduled.load;
-            this.init_aE_ConfigStore = null;
-            this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.EXECUTING);
-            this.clear();
+   public void onWorldTick(long currentTick) {
+      this.lastKnownGameTick = currentTick;
+      LanSyncManager.Inner_ConfigStore scheduled = this.scheduledTickExecution;
+      if (scheduled != null && currentTick >= scheduled.targetTick) {
+         LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+         if (ctx != null && ctx.executionId == scheduled.executionId && ctx.executionMethod == LanSyncManager.Inner_StreamUtil.TICK) {
+            ctx.targetTick = scheduled.targetTick;
+            this.scheduledTickExecution = null;
+            this.setSyncState(LanSyncManager.Inner_JsonUtil.EXECUTING);
+            this.executePreparedAction();
          } else {
-            this.init_aE_ConfigStore = null;
+            this.scheduledTickExecution = null;
          }
       }
    }
 
-   private int init_I_aE_StreamUtil(LanSyncManager.Inner_StreamUtil method) {
-      return method == LanSyncManager.Inner_StreamUtil.TICK ? this.close_Map.size() : this.flush_Map.size();
+   private int getReceivedReportCount(LanSyncManager.Inner_StreamUtil method) {
+      return method == LanSyncManager.Inner_StreamUtil.TICK ? this.executionTickReports.size() : this.executionHostReceiptNanos.size();
    }
 
-   private LanSyncManager.Inner_StreamUtil init_aE_StreamUtil_I(int ordinal) {
+   private LanSyncManager.Inner_StreamUtil executionMethodFromOrdinal(int ordinal) {
       LanSyncManager.Inner_StreamUtil[] values = LanSyncManager.Inner_StreamUtil.values();
       return ordinal >= 0 && ordinal < values.length ? values[ordinal] : LanSyncManager.Inner_StreamUtil.INSTANT;
    }
 
-   private LanSyncManager.Inner_StreamUtil init_aE_StreamUtil_Str(String name) {
+   private LanSyncManager.Inner_StreamUtil parseExecutionMethod(String name) {
       if (name == null) {
          return LanSyncManager.Inner_StreamUtil.INSTANT;
       }
@@ -858,10 +858,10 @@ public class LanSyncManager {
       }
    }
 
-   private void reset() {
-      Map<String, Long> timings = this.flush_Map.isEmpty() ? this.sync_Map : this.flush_Map;
+   private void computeAndBroadcastInstantSpread() {
+      Map<String, Long> timings = this.executionHostReceiptNanos.isEmpty() ? this.executionClientTimestampsMs : this.executionHostReceiptNanos;
       if (timings.size() < 2) {
-         this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.DONE);
+         this.setSyncState(LanSyncManager.Inner_JsonUtil.DONE);
       } else {
          long earliest = 9223372036854775807L;
          long latest = -9223372036854775808L;
@@ -881,14 +881,14 @@ public class LanSyncManager {
             }
          }
 
-         boolean isNanos = !this.flush_Map.isEmpty();
+         boolean isNanos = !this.executionHostReceiptNanos.isEmpty();
          long spreadNanos = latest - earliest;
          long totalSpreadMs = isNanos ? spreadNanos / 1000000L : latest - earliest;
-         this.init_aE_TaskQueue = new LanSyncManager.Inner_TaskQueue(isNanos ? spreadNanos : totalSpreadMs * 1000000L, latestClient, timings.size());
-         this.init_CopyOnWriteArrayLi.add(this.init_aE_TaskQueue);
+         this.lastSpreadResult = new LanSyncManager.Inner_TaskQueue(isNanos ? spreadNanos : totalSpreadMs * 1000000L, latestClient, timings.size());
+         this.spreadHistory.add(this.lastSpreadResult);
 
-         while (this.init_CopyOnWriteArrayLi.size() > 10) {
-            this.init_CopyOnWriteArrayLi.remove(0);
+         while (this.spreadHistory.size() > 10) {
+            this.spreadHistory.remove(0);
          }
 
          String report;
@@ -899,19 +899,19 @@ public class LanSyncManager {
          }
 
          AutismClientMessaging.sendPrefixed(report);
-         this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, "__SYNC__", report));
-         this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, "__SPREAD_DATA__", spreadNanos + "\t" + latestClient + "\t" + timings.size()));
-         this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.DONE, totalSpreadMs + "ms spread");
-         this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.DONE);
-         this.push(this.flush_Runnable);
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, "__SYNC__", report));
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, "__SPREAD_DATA__", spreadNanos + "\t" + latestClient + "\t" + timings.size()));
+         this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.DONE, totalSpreadMs + "ms spread");
+         this.setSyncState(LanSyncManager.Inner_JsonUtil.DONE);
+         this.dispatchCallbackOnClientThread(this.onSpreadUpdatedCallback);
          (new Thread(() -> {
             try {
                Thread.sleep(3000L);
             } catch (InterruptedException var2x) {
             }
 
-            if (this.init_aE_JsonUtil == LanSyncManager.Inner_JsonUtil.DONE) {
-               this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+            if (this.syncState == LanSyncManager.Inner_JsonUtil.DONE) {
+               this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
             }
          }, "Sync-ResetIdle") {
             {
@@ -921,27 +921,27 @@ public class LanSyncManager {
       }
    }
 
-   private void load(long targetTick) {
-      int expected = this.init_Map.size();
-      TreeSet<String> peers = new TreeSet<>(this.init_Map.keySet());
-      boolean perfect = targetTick >= 0L && this.close_Map.size() >= expected;
+   private void computeAndBroadcastTickSpread(long targetTick) {
+      int expected = this.connectedClients.size();
+      TreeSet<String> peers = new TreeSet<>(this.connectedClients.keySet());
+      boolean perfect = targetTick >= 0L && this.executionTickReports.size() >= expected;
       int maxOffset = 0;
       List<String> offPeers = new ArrayList<>();
 
       for (String peer : peers) {
-         LanSyncManager.Inner_StateCache report = this.close_Map.get(peer);
+         LanSyncManager.Inner_StateCache report = this.executionTickReports.get(peer);
          if (report == null) {
             perfect = false;
             offPeers.add(peer + " no report");
          } else {
-            long deltaLong = targetTick >= 0L ? report.init_J - targetTick : 0L;
+            long deltaLong = targetTick >= 0L ? report.actualTick - targetTick : 0L;
             int delta = (int)Math.max(-2147483648L, Math.min(2147483647L, deltaLong));
             maxOffset = Math.max(maxOffset, Math.abs(delta));
-            if (delta != 0 || report.init_Z) {
+            if (delta != 0 || report.late) {
                perfect = false;
                String direction = delta >= 0 ? "+" : "";
                String timing = delta >= 0 ? "late" : "early";
-               offPeers.add(peer + " was " + direction + delta + " tick(s) " + timing + " on tick " + report.init_J + ", target " + targetTick);
+               offPeers.add(peer + " was " + direction + delta + " tick(s) " + timing + " on tick " + report.actualTick + ", target " + targetTick);
             }
          }
       }
@@ -953,42 +953,42 @@ public class LanSyncManager {
          report = "§eTick sync target " + targetTick + ": §c" + String.join("; ", offPeers);
       }
 
-      this.init_aE_TaskQueue = new LanSyncManager.Inner_TaskQueue(
+      this.lastSpreadResult = new LanSyncManager.Inner_TaskQueue(
          maxOffset * 50000000L,
          perfect ? "" : "tick",
-         Math.max(this.close_Map.size(), expected),
+         Math.max(this.executionTickReports.size(), expected),
          LanSyncManager.Inner_StreamUtil.TICK,
          targetTick,
          maxOffset,
          perfect,
          report
       );
-      this.init_CopyOnWriteArrayLi.add(this.init_aE_TaskQueue);
+      this.spreadHistory.add(this.lastSpreadResult);
 
-      while (this.init_CopyOnWriteArrayLi.size() > 10) {
-         this.init_CopyOnWriteArrayLi.remove(0);
+      while (this.spreadHistory.size() > 10) {
+         this.spreadHistory.remove(0);
       }
 
       AutismClientMessaging.sendPrefixed(report);
-      this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, "__SYNC__", report));
-      this.load(
+      this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, "__SYNC__", report));
+      this.sendPacket(
          new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(
-            this.read_Str,
+            this.sessionId,
             "__TICK_SPREAD_DATA__",
-            targetTick + "\t" + maxOffset + "\t" + Math.max(this.close_Map.size(), expected) + "\t" + perfect + "\t" + report
+            targetTick + "\t" + maxOffset + "\t" + Math.max(this.executionTickReports.size(), expected) + "\t" + perfect + "\t" + report
          )
       );
-      this.init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil.DONE, perfect ? "tick perfect" : maxOffset + " tick offset");
-      this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.DONE);
-      this.push(this.flush_Runnable);
+      this.broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil.DONE, perfect ? "tick perfect" : maxOffset + " tick offset");
+      this.setSyncState(LanSyncManager.Inner_JsonUtil.DONE);
+      this.dispatchCallbackOnClientThread(this.onSpreadUpdatedCallback);
       (new Thread(() -> {
          try {
             Thread.sleep(3000L);
          } catch (InterruptedException var2) {
          }
 
-         if (this.init_aE_JsonUtil == LanSyncManager.Inner_JsonUtil.DONE) {
-            this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+         if (this.syncState == LanSyncManager.Inner_JsonUtil.DONE) {
+            this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
          }
       }, "Sync-ResetIdle") {
          {
@@ -997,69 +997,69 @@ public class LanSyncManager {
       }).start();
    }
 
-   public void flush_V() {
-      if (this.open_Z()) {
-         if (this.read_Str == null) {
+   public void triggerQueueFlushSync() {
+      if (this.canExecuteInWorld()) {
+         if (this.sessionId == null) {
             AutismClientMessaging.sendPrefixed("§cJoin a session first.");
          } else {
             AutismSessionState.getInstance().regenerateQueuedPackets();
-            if (this.load_Z) {
-               this.add();
+            if (this.isHost) {
+               this.initiateQueueFlushGoSync();
             } else {
                autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(
-                  this.read_Str, this.write_Str, false, "", "__QUEUE_FLUSH__"
+                  this.sessionId, this.localUsername, false, "", "__QUEUE_FLUSH__"
                );
-               request.init_I = this.init_aE_StreamUtil.ordinal();
-               this.load(request);
+               request.executionMethod = this.executionMethod.ordinal();
+               this.sendPacket(request);
                AutismClientMessaging.sendPrefixed("§eRequested sync execution from host...");
             }
          }
       }
    }
 
-   public void init_V_Z(boolean enabled) {
-      if (this.open_Z()) {
-         if (this.read_Str == null) {
+   public void triggerDelayPacketsSync(boolean enabled) {
+      if (this.canExecuteInWorld()) {
+         if (this.sessionId == null) {
             AutismClientMessaging.sendPrefixed("§cJoin a session first.");
          } else {
             String command = "__DELAY_PACKETS__\t" + (enabled ? "1" : "0");
-            if (this.load_Z) {
-               this.init_V_Z(false, "", command);
+            if (this.isHost) {
+               this.initiateGoSync(false, "", command);
             } else {
-               autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.read_Str, this.write_Str, false, "", command);
-               request.init_I = this.init_aE_StreamUtil.ordinal();
-               this.load(request);
+               autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.sessionId, this.localUsername, false, "", command);
+               request.executionMethod = this.executionMethod.ordinal();
+               this.sendPacket(request);
                AutismClientMessaging.sendPrefixed("§eRequested sync delay toggle from host...");
             }
          }
       }
    }
 
-   public void load_V(String macroName) {
-      if (!this.open_Z()) {
+   public void triggerMacroSync(String macroName) {
+      if (!this.canExecuteInWorld()) {
          AutismClientMessaging.sendPrefixed("§cLAN Sync execution requires a connected world.");
-      } else if (this.read_Str == null) {
+      } else if (this.sessionId == null) {
          AutismClientMessaging.sendPrefixed("§cJoin a session first.");
-      } else if (!this.close_Z()) {
+      } else if (!this.isSyncIdle()) {
          AutismClientMessaging.sendPrefixed("§cLAN Sync is busy with another synchronized action.");
-      } else if (this.load_Z) {
-         this.init_V_Z(true, macroName, "");
+      } else if (this.isHost) {
+         this.initiateGoSync(true, macroName, "");
       } else {
-         autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.read_Str, this.write_Str, true, macroName, "");
-         request.init_I = this.init_aE_StreamUtil.ordinal();
-         this.load(request);
+         autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.sessionId, this.localUsername, true, macroName, "");
+         request.executionMethod = this.executionMethod.ordinal();
+         this.sendPacket(request);
          AutismClientMessaging.sendPrefixed("§eRequested sync execution from host...");
       }
    }
 
-   public void init_V_Map(Map<String, String> assignments) {
-      if (this.open_Z()) {
-         if (this.read_Str == null) {
+   public void triggerPerUserMacroSync(Map<String, String> assignments) {
+      if (this.canExecuteInWorld()) {
+         if (this.sessionId == null) {
             AutismClientMessaging.sendPrefixed("§cJoin a session first.");
          } else if (assignments != null && !assignments.isEmpty()) {
             String defaultMacro = assignments.values().iterator().next();
-            if (this.load_Z) {
-               this.init(true, defaultMacro, "", assignments);
+            if (this.isHost) {
+               this.initiateGoSync(true, defaultMacro, "", assignments);
             } else {
                StringBuilder sb = new StringBuilder();
 
@@ -1072,31 +1072,31 @@ public class LanSyncManager {
                }
 
                autismclient.util.sync.LanSyncPacket.BitSetUtil rsp = new autismclient.util.sync.LanSyncPacket.BitSetUtil(
-                  this.read_Str, this.write_Str, true, defaultMacro, "__PER_USER__\t" + sb
+                  this.sessionId, this.localUsername, true, defaultMacro, "__PER_USER__\t" + sb
                );
-               rsp.init_I = this.init_aE_StreamUtil.ordinal();
-               this.load(rsp);
+               rsp.executionMethod = this.executionMethod.ordinal();
+               this.sendPacket(rsp);
                AutismClientMessaging.sendPrefixed("§eRequested per-user sync from host...");
             }
          }
       }
    }
 
-   public void close_V() {
-      if (!this.init_AtomicBoolean.get()) {
+   public void startSessionSearch() {
+      if (!this.running.get()) {
          AutismClientMessaging.sendPrefixed("§cStart LAN Sync first.");
-      } else if (this.write_Z()) {
+      } else if (this.isInSession()) {
          AutismClientMessaging.sendPrefixed("§cAlready in session.");
       } else {
-         if (this.write_Str.isEmpty()) {
-            this.write_Str = this.update_Str();
+         if (this.localUsername.isEmpty()) {
+            this.localUsername = this.resolvePlayerUsername();
          }
 
-         this.load_Map.clear();
-         this.read_Z = true;
-         this.write_I = 400;
+         this.discoveredSessions.clear();
+         this.searching = true;
+         this.searchTicksRemaining = 400;
          (new Thread(() -> {
-            while (this.read_Z && this.write_I > 0) {
+            while (this.searching && this.searchTicksRemaining > 0) {
                try {
                   Socket searchSocket = new Socket();
                   searchSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568), 500);
@@ -1110,9 +1110,9 @@ public class LanSyncManager {
                   String foundSessionId = in.readUTF();
                   if (typeId == autismclient.util.sync.LanSyncPacketType.SESSION.init()) {
                      autismclient.util.sync.LanSyncPacket.TokenStore session = new autismclient.util.sync.LanSyncPacket.TokenStore();
-                     session.init(foundSessionId);
-                     session.init(in);
-                     this.load_Map.put(foundSessionId, session.load);
+                     session.setSessionId(foundSessionId);
+                     session.read(in);
+                     this.discoveredSessions.put(foundSessionId, session.hostName);
                   }
 
                   searchSocket.close();
@@ -1134,43 +1134,43 @@ public class LanSyncManager {
       }
    }
 
-   public void open_V() {
-      this.read_Z = false;
-      this.write_I = 0;
+   public void cancelSessionSearch() {
+      this.searching = false;
+      this.searchTicksRemaining = 0;
    }
 
-   public void poll() {
-      if (this.init_AtomicBoolean.get() || this.read_Str != null) {
-         if (this.read_Str != null) {
+   public void tick() {
+      if (this.running.get() || this.sessionId != null) {
+         if (this.sessionId != null) {
             long nowMs = System.currentTimeMillis();
-            if (nowMs - this.read_J >= 9000L) {
-               this.read_J = nowMs;
-               this.load(new autismclient.util.sync.LanSyncPacket.NetHelper(this.read_Str, this.write_Str, nowMs));
-               this.start();
+            if (nowMs - this.lastHeartbeatSentMs >= 9000L) {
+               this.lastHeartbeatSentMs = nowMs;
+               this.sendPacket(new autismclient.util.sync.LanSyncPacket.NetHelper(this.sessionId, this.localUsername, nowMs));
+               this.pruneTimedOutPeers();
             }
          }
 
          Minecraft mc = Minecraft.getInstance();
          if (mc.level != null) {
             long currentTick = mc.level.getGameTime();
-            if (this.read_Str != null && !this.init_Map.isEmpty() && currentTick % 600L == 37L) {
-               this.push();
+            if (this.sessionId != null && !this.connectedClients.isEmpty() && currentTick % 600L == 37L) {
+               this.broadcastLocalMacroRoster();
             }
 
-            if (this.read_Z && this.write_I > 0) {
-               this.write_I--;
-               if (!this.load_Map.isEmpty()) {
-                  String firstSessionId = this.load_Map.keySet().iterator().next();
-                  String hostName = this.load_Map.get(firstSessionId);
-                  this.read_Z = false;
-                  this.write_I = 0;
-                  this.init_V_Str(firstSessionId);
+            if (this.searching && this.searchTicksRemaining > 0) {
+               this.searchTicksRemaining--;
+               if (!this.discoveredSessions.isEmpty()) {
+                  String firstSessionId = this.discoveredSessions.keySet().iterator().next();
+                  String hostName = this.discoveredSessions.get(firstSessionId);
+                  this.searching = false;
+                  this.searchTicksRemaining = 0;
+                  this.joinSession(firstSessionId);
                   AutismClientMessaging.sendPrefixed("§aJoined session " + firstSessionId + " (Host: " + hostName + ").");
                   return;
                }
 
-               if (this.write_I == 0) {
-                  this.read_Z = false;
+               if (this.searchTicksRemaining == 0) {
+                  this.searching = false;
                   AutismClientMessaging.sendPrefixed("§cNo sessions found.");
                }
             }
@@ -1178,13 +1178,13 @@ public class LanSyncManager {
       }
    }
 
-   private void start() {
+   private void pruneTimedOutPeers() {
       long now = System.currentTimeMillis();
       List<String> deadPeers = new ArrayList<>();
 
-      for (Entry<String, Long> entry : this.pop.entrySet()) {
+      for (Entry<String, Long> entry : this.peerLastHeartbeatMs.entrySet()) {
          String peer = entry.getKey();
-         if (!peer.equals(this.write_Str)) {
+         if (!peer.equals(this.localUsername)) {
             long elapsed = now - entry.getValue();
             if (elapsed > 30000L) {
                deadPeers.add(peer);
@@ -1193,13 +1193,13 @@ public class LanSyncManager {
       }
 
       for (String dead : deadPeers) {
-         this.init_Map.remove(dead);
-         this.pop.remove(dead);
-         this.init_ConcurrentHashMap.remove(dead);
-         this.init_AtomicLong.incrementAndGet();
-         this.open_Map.remove(dead);
-         if (this.load_Z) {
-            Socket s = this.poll_Map.remove(dead);
+         this.connectedClients.remove(dead);
+         this.peerLastHeartbeatMs.remove(dead);
+         this.peerMacros.remove(dead);
+         this.peerMacrosRevision.incrementAndGet();
+         this.peerMacroStepProgress.remove(dead);
+         if (this.isHost) {
+            Socket s = this.hostClientSockets.remove(dead);
             if (s != null) {
                try {
                   s.close();
@@ -1207,27 +1207,27 @@ public class LanSyncManager {
                }
             }
 
-            this.push.remove(dead);
+            this.hostClientWriteLocks.remove(dead);
          }
 
          AutismClientMessaging.sendPrefixed("§e" + dead + " timed out.");
          AutismClientAddon.LOG.info("[Heartbeat] Peer timed out: {}", dead);
-         this.push(this.load_Runnable);
-         this.push(this.close_Runnable);
+         this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
+         this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
          MacroWaitRegistry.update();
       }
 
-      if (this.load_Z && !deadPeers.isEmpty()) {
-         this.valid();
+      if (this.isHost && !deadPeers.isEmpty()) {
+         this.broadcastClientList();
       }
    }
 
-   public LanSyncManager.Inner_CachePool init_aE_CachePool_Str(String username) {
-      if (username.equals(this.write_Str)) {
+   public LanSyncManager.Inner_CachePool getPeerHealth(String username) {
+      if (username.equals(this.localUsername)) {
          return LanSyncManager.Inner_CachePool.HEALTHY;
       }
 
-      Long lastBeat = this.pop.get(username);
+      Long lastBeat = this.peerLastHeartbeatMs.get(username);
       if (lastBeat == null) {
          return LanSyncManager.Inner_CachePool.UNKNOWN;
       }
@@ -1236,9 +1236,9 @@ public class LanSyncManager {
       return elapsed > 15000L ? LanSyncManager.Inner_CachePool.STALE : LanSyncManager.Inner_CachePool.HEALTHY;
    }
 
-   private void init_V_DataUtil(autismclient.util.sync.LanSyncPacket packet) {
+   private void handlePacket(autismclient.util.sync.LanSyncPacket packet) {
       try {
-         switch (packet.init_StreamUtil()) {
+         switch (packet.getType()) {
             case SEARCH_REQUEST:
             case PLAYER_OFFSETS:
             case CLIENT_OFFSET_UPDATE:
@@ -1247,11 +1247,11 @@ public class LanSyncManager {
                break;
             case SESSION:
                if (packet instanceof autismclient.util.sync.LanSyncPacket.TokenStore p) {
-                  String sid = p.init_Str();
-                  String host = p.load;
-                  if (!host.equals(this.write_Str) && !this.write_Z()) {
-                     boolean isNew = !this.load_Map.containsKey(sid);
-                     this.load_Map.put(sid, host);
+                  String sid = p.getSessionId();
+                  String host = p.hostName;
+                  if (!host.equals(this.localUsername) && !this.isInSession()) {
+                     boolean isNew = !this.discoveredSessions.containsKey(sid);
+                     this.discoveredSessions.put(sid, host);
                      if (isNew) {
                         AutismClientMessaging.sendPrefixed("§eFound session " + sid + " (Host: " + host + ").");
                      }
@@ -1259,75 +1259,75 @@ public class LanSyncManager {
                }
                break;
             case JOIN:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.JsonUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.JsonUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.JsonUtil p = (autismclient.util.sync.LanSyncPacket.JsonUtil)packet;
-                  String username = p.load;
-                  if (username != null && !username.isEmpty() && !username.equals(this.write_Str) && !this.init_Map.containsKey(username)) {
-                     this.init_Map.put(username, new LanSyncManager.Inner_DataUtil(username, false));
-                     this.pop.put(username, System.currentTimeMillis());
+                  String username = p.username;
+                  if (username != null && !username.isEmpty() && !username.equals(this.localUsername) && !this.connectedClients.containsKey(username)) {
+                     this.connectedClients.put(username, new LanSyncManager.Inner_DataUtil(username, false));
+                     this.peerLastHeartbeatMs.put(username, System.currentTimeMillis());
                      AutismClientMessaging.sendPrefixed("§e" + username + " joined.");
-                     this.sync_Map.clear();
-                     if (this.load_Z) {
-                        this.valid();
-                        this.push();
+                     this.executionClientTimestampsMs.clear();
+                     if (this.isHost) {
+                        this.broadcastClientList();
+                        this.broadcastLocalMacroRoster();
                      }
 
-                     this.push(this.init_Runnable);
-                     this.push(this.close_Runnable);
+                     this.dispatchCallbackOnClientThread(this.onClientJoinedCallback);
+                     this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
                   }
                }
                break;
             case CLIENT_LIST:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.Inner_StreamUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.Inner_StreamUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.Inner_StreamUtil p = (autismclient.util.sync.LanSyncPacket.Inner_StreamUtil)packet;
-                  if (!this.load_Z) {
-                     LanSyncManager.Inner_StreamUtil hostMethod = this.init_aE_StreamUtil_I(p.init_I);
-                     if (this.init_aE_StreamUtil != hostMethod) {
-                        this.init_aE_StreamUtil = hostMethod;
-                        this.push(this.close_Runnable);
+                  if (!this.isHost) {
+                     LanSyncManager.Inner_StreamUtil hostMethod = this.executionMethodFromOrdinal(p.executionMethod);
+                     if (this.executionMethod != hostMethod) {
+                        this.executionMethod = hostMethod;
+                        this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
                      }
                   }
 
-                  if (!p.init_List.isEmpty()) {
-                     LanSyncManager.Inner_DataUtil ourInfo = this.init_Map.get(this.write_Str);
+                  if (!p.clients.isEmpty()) {
+                     LanSyncManager.Inner_DataUtil ourInfo = this.connectedClients.get(this.localUsername);
                      long now = System.currentTimeMillis();
                      Set<String> listedPeers = new HashSet<>();
                      Set<String> listed = new HashSet<>();
 
-                     for (autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil entry : p.init_List) {
-                        this.init_Map.put(entry.init_Str, new LanSyncManager.Inner_DataUtil(entry.init_Str, entry.init_Z));
-                        listed.add(entry.init_Str);
-                        if (!entry.init_Str.equals(this.write_Str)) {
-                           this.pop.put(entry.init_Str, now);
-                           listedPeers.add(entry.init_Str);
+                     for (autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil entry : p.clients) {
+                        this.connectedClients.put(entry.name, new LanSyncManager.Inner_DataUtil(entry.name, entry.isHost));
+                        listed.add(entry.name);
+                        if (!entry.name.equals(this.localUsername)) {
+                           this.peerLastHeartbeatMs.put(entry.name, now);
+                           listedPeers.add(entry.name);
                         }
                      }
 
-                     if (!listed.contains(this.write_Str) && ourInfo != null) {
-                        this.init_Map.put(this.write_Str, ourInfo);
-                        listed.add(this.write_Str);
+                     if (!listed.contains(this.localUsername) && ourInfo != null) {
+                        this.connectedClients.put(this.localUsername, ourInfo);
+                        listed.add(this.localUsername);
                      }
 
-                     this.init_Map.keySet().retainAll(listed);
-                     this.pop.keySet().retainAll(listedPeers);
+                     this.connectedClients.keySet().retainAll(listed);
+                     this.peerLastHeartbeatMs.keySet().retainAll(listedPeers);
                   }
                }
                break;
             case LEAVE:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.StateCache && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.StateCache && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.StateCache p = (autismclient.util.sync.LanSyncPacket.StateCache)packet;
-                  String username = p.load;
-                  if (username != null && !username.isEmpty() && !username.equals(this.write_Str)) {
-                     LanSyncManager.Inner_DataUtil leavingClient = this.init_Map.get(username);
-                     boolean leavingWasHost = leavingClient != null && leavingClient.init_Z;
-                     this.init_Map.remove(username);
-                     this.pop.remove(username);
-                     this.init_ConcurrentHashMap.remove(username);
-                     this.init_AtomicLong.incrementAndGet();
-                     this.open_Map.remove(username);
+                  String username = p.username;
+                  if (username != null && !username.isEmpty() && !username.equals(this.localUsername)) {
+                     LanSyncManager.Inner_DataUtil leavingClient = this.connectedClients.get(username);
+                     boolean leavingWasHost = leavingClient != null && leavingClient.isHost;
+                     this.connectedClients.remove(username);
+                     this.peerLastHeartbeatMs.remove(username);
+                     this.peerMacros.remove(username);
+                     this.peerMacrosRevision.incrementAndGet();
+                     this.peerMacroStepProgress.remove(username);
                      AutismClientMessaging.sendPrefixed("§e" + username + " left.");
-                     if (this.load_Z) {
-                        Socket s = this.poll_Map.remove(username);
+                     if (this.isHost) {
+                        Socket s = this.hostClientSockets.remove(username);
                         if (s != null) {
                            try {
                               s.close();
@@ -1335,169 +1335,169 @@ public class LanSyncManager {
                            }
                         }
 
-                        this.push.remove(username);
-                        this.init_V_DataUtil_Str(packet, username);
-                        this.valid();
+                        this.hostClientWriteLocks.remove(username);
+                        this.relayPacketToOthers(packet, username);
+                        this.broadcastClientList();
                      }
 
-                     if (leavingWasHost && !this.init_Map.isEmpty()) {
-                        String newHostUsername = this.init_Map.keySet().stream().sorted().findFirst().orElse(null);
-                        if (newHostUsername != null && newHostUsername.equals(this.write_Str)) {
-                           this.load_Z = true;
-                           this.init_Map.put(this.write_Str, new LanSyncManager.Inner_DataUtil(this.write_Str, true));
+                     if (leavingWasHost && !this.connectedClients.isEmpty()) {
+                        String newHostUsername = this.connectedClients.keySet().stream().sorted().findFirst().orElse(null);
+                        if (newHostUsername != null && newHostUsername.equals(this.localUsername)) {
+                           this.isHost = true;
+                           this.connectedClients.put(this.localUsername, new LanSyncManager.Inner_DataUtil(this.localUsername, true));
                            AutismClientMessaging.sendPrefixed("§aYou are now the host!");
-                           this.sync_Map.clear();
-                           this.valid();
+                           this.executionClientTimestampsMs.clear();
+                           this.broadcastClientList();
                         }
                      }
 
-                     this.push(this.load_Runnable);
-                     this.push(this.close_Runnable);
+                     this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
+                     this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
                      MacroWaitRegistry.update();
                   }
                }
                break;
             case REQUEST_CLIENT_LIST:
-               if (this.load_Z) {
-                  this.valid();
+               if (this.isHost) {
+                  this.broadcastClientList();
                }
                break;
             case REQUEST_MACRO:
-               this.update(packet);
+               this.handleRequestMacroPacket(packet);
                break;
             case MACRO_DATA:
-               this.read_V_DataUtil(packet);
+               this.handleMacroDataPacket(packet);
                break;
             case MACRO_DATA_CHUNK:
-               this.write(packet);
+               this.handleMacroDataChunkPacket(packet);
                break;
             case MACRO_DELETE:
-               this.flush(packet);
+               this.handleMacroDeletePacket(packet);
                break;
             case MACRO_LIST:
-               this.close(packet);
+               this.handleMacroListPacket(packet);
                break;
             case PRESET_DATA:
-               this.sync(packet);
+               this.handlePresetDataPacket(packet);
                break;
             case QUEUE_SYNC:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.PoolEntry && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.PoolEntry && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.PoolEntry qp = (autismclient.util.sync.LanSyncPacket.PoolEntry)packet;
-                  this.read(qp.load, qp.read);
+                  this.handleQueueSync(qp.queueData, qp.senderUsername);
                }
                break;
             case CHAT_MESSAGE:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.Inner_DataUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.Inner_DataUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.Inner_DataUtil cp = (autismclient.util.sync.LanSyncPacket.Inner_DataUtil)packet;
-                  this.write(cp.load, cp.read);
+                  this.handleChatOrControlMessage(cp.senderUsername, cp.message);
                }
                break;
             case PREPARE_EXECUTION:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.HashUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.HashUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.HashUtil p = (autismclient.util.sync.LanSyncPacket.HashUtil)packet;
-                  this.init(p.init_J, p.init_Z, p.load_Str, p.read, p.write, p.update, p.init_I, p.load_J);
+                  this.handlePrepareExecution(p.executionId, p.isMacro, p.targetName, p.queueData, p.senderUsername, p.macroAssignments, p.executionMethod, p.targetTick);
                }
                break;
             case CLIENT_READY:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.BufferHelper && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.BufferHelper && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.BufferHelper p = (autismclient.util.sync.LanSyncPacket.BufferHelper)packet;
-                  this.init_V_J_Str(p.init_J, p.load);
+                  this.handleClientReady(p.executionId, p.senderUsername);
                }
                break;
             case GO:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.TaskQueue && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.TaskQueue && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.TaskQueue p = (autismclient.util.sync.LanSyncPacket.TaskQueue)packet;
-                  this.init_V_J(p.init_J, p.init_I, p.load);
+                  this.handleGoSignal(p.executionId, p.executionMethod, p.targetTick);
                }
                break;
             case TCP_COMMAND_ACK:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.MethodUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.MethodUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.MethodUtil p = (autismclient.util.sync.LanSyncPacket.MethodUtil)packet;
-                  this.init(p.load_Str, p.init_J, p.init_I, p.load_J, p.read, p.init_Z);
+                  this.handleExecutionAck(p.senderUsername, p.executeTimestamp, p.executionMethod, p.targetTick, p.actualTick, p.late);
                }
                break;
             case HEARTBEAT:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.NetHelper && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.NetHelper && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.NetHelper p = (autismclient.util.sync.LanSyncPacket.NetHelper)packet;
-                  if (!p.load.equals(this.write_Str)) {
-                     this.pop.put(p.load, System.currentTimeMillis());
-                     if (this.load_Z) {
-                        this.init_V_DataUtil_Str(packet, p.load);
+                  if (!p.senderUsername.equals(this.localUsername)) {
+                     this.peerLastHeartbeatMs.put(p.senderUsername, System.currentTimeMillis());
+                     if (this.isHost) {
+                        this.relayPacketToOthers(packet, p.senderUsername);
                      }
                   }
                }
                break;
             case REQUEST_SYNC:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.BitSetUtil && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.BitSetUtil && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.BitSetUtil p = (autismclient.util.sync.LanSyncPacket.BitSetUtil)packet;
-                  this.init(p.load, p.init_Z, p.read, p.write);
+                  this.handleSyncRequest(p.senderUsername, p.isMacro, p.macroName, p.command);
                }
                break;
             case OFFSET_SYNC:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.ByteReader && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.ByteReader && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.ByteReader p = (autismclient.util.sync.LanSyncPacket.ByteReader)packet;
-                  this.init_V_Str_2(p.load, p.read, p.init_I);
+                  this.handleOffsetSync(p.senderUsername, p.targetUsername, p.offsetMs);
                }
                break;
             case MACRO_STEP_PROGRESS:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.TextFormat && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.TextFormat && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.TextFormat p = (autismclient.util.sync.LanSyncPacket.TextFormat)packet;
-                  this.init(p.load_Str, p.init_I, p.load_I, p.read);
+                  this.handleMacroStepProgress(p.senderUsername, p.completedStep, p.totalSteps, p.macroName);
                }
                break;
             case SYNC_STATE_UPDATE:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.FieldCache && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.FieldCache && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.FieldCache p = (autismclient.util.sync.LanSyncPacket.FieldCache)packet;
                   LanSyncManager.Inner_JsonUtil[] states = LanSyncManager.Inner_JsonUtil.values();
-                  if (p.init_I >= 0 && p.init_I < states.length) {
-                     LanSyncManager.Inner_NetHelper ctx = this.init_aE_NetHelper;
-                     if (ctx == null || !ctx.load_Z) {
-                        this.init_aE_JsonUtil = states[p.init_I];
-                        this.push(this.sync_Runnable);
+                  if (p.stateOrdinal >= 0 && p.stateOrdinal < states.length) {
+                     LanSyncManager.Inner_NetHelper ctx = this.activeExecution;
+                     if (ctx == null || !ctx.isInitiator) {
+                        this.syncState = states[p.stateOrdinal];
+                        this.dispatchCallbackOnClientThread(this.onSyncStateChangedCallback);
                      }
                   }
                }
                break;
             case MACRO_ASSIGNMENT_SYNC:
-               if (packet instanceof autismclient.util.sync.LanSyncPacket.SyncManager && packet.init_Str().equals(this.read_Str)) {
+               if (packet instanceof autismclient.util.sync.LanSyncPacket.SyncManager && packet.getSessionId().equals(this.sessionId)) {
                   autismclient.util.sync.LanSyncPacket.SyncManager p = (autismclient.util.sync.LanSyncPacket.SyncManager)packet;
-                  if (!p.load.equals(this.write_Str)) {
-                     this.update(p.load, p.read);
+                  if (!p.senderUsername.equals(this.localUsername)) {
+                     this.applyRemoteMacroAssignments(p.senderUsername, p.assignments);
                   }
                }
          }
       } catch (Exception e) {
-         AutismClientAddon.LOG.error("[Autism-LAN] Error handling packet: {}", packet.init_StreamUtil(), e);
+         AutismClientAddon.LOG.error("[Autism-LAN] Error handling packet: {}", packet.getType(), e);
       }
    }
 
-   private void stop() {
+   private void startTcpServer() {
       try {
-         this.init_ServerSocket = new ServerSocket();
-         this.init_ServerSocket.setReuseAddress(true);
-         this.init_ServerSocket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568));
-         this.init_Thread = new Thread(() -> {
-            while (this.init_AtomicBoolean.get() && this.load_Z && this.init_ServerSocket != null && !this.init_ServerSocket.isClosed()) {
+         this.tcpServerSocket = new ServerSocket();
+         this.tcpServerSocket.setReuseAddress(true);
+         this.tcpServerSocket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568));
+         this.tcpAcceptThread = new Thread(() -> {
+            while (this.running.get() && this.isHost && this.tcpServerSocket != null && !this.tcpServerSocket.isClosed()) {
                try {
-                  Socket clientSocket = this.init_ServerSocket.accept();
+                  Socket clientSocket = this.tcpServerSocket.accept();
                   clientSocket.setTcpNoDelay(true);
-                  this.init_V_Socket(clientSocket);
+                  this.acceptTcpClient(clientSocket);
                } catch (IOException e) {
-                  if (this.init_AtomicBoolean.get() && this.load_Z) {
+                  if (this.running.get() && this.isHost) {
                      AutismClientAddon.LOG.warn("[TCP] Accept error: {}", e.getMessage());
                   }
                }
             }
          }, "TCP-Accept");
-         this.init_Thread.setDaemon(true);
-         this.init_Thread.start();
+         this.tcpAcceptThread.setDaemon(true);
+         this.tcpAcceptThread.start();
          AutismClientAddon.LOG.info("[TCP] Server started on port {}", 25568);
       } catch (IOException e) {
          AutismClientAddon.LOG.error("[TCP] Failed to start server: {}", e.getMessage());
       }
    }
 
-   private void init_V_Socket(Socket clientSocket) {
+   private void acceptTcpClient(Socket clientSocket) {
       (new Thread(() -> {
          try {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
@@ -1507,8 +1507,8 @@ public class LanSyncManager {
             if (packetType == autismclient.util.sync.LanSyncPacketType.SEARCH_REQUEST.init()) {
                AutismClientAddon.LOG.info("[TCP] Received search request, responding with session info");
                out.writeInt(autismclient.util.sync.LanSyncPacketType.SESSION.init());
-               out.writeUTF(this.read_Str);
-               new autismclient.util.sync.LanSyncPacket.TokenStore(this.read_Str, 0L, this.write_Str).init(out);
+               out.writeUTF(this.sessionId);
+               new autismclient.util.sync.LanSyncPacket.TokenStore(this.sessionId, 0L, this.localUsername).write(out);
                out.flush();
                clientSocket.close();
                return;
@@ -1519,22 +1519,22 @@ public class LanSyncManager {
             }
 
             autismclient.util.sync.LanSyncPacket.JsonUtil joinPacket = new autismclient.util.sync.LanSyncPacket.JsonUtil();
-            joinPacket.init(packetSession);
-            joinPacket.init(in);
-            String clientUsername = joinPacket.load;
+            joinPacket.setSessionId(packetSession);
+            joinPacket.read(in);
+            String clientUsername = joinPacket.username;
             if (clientUsername == null || clientUsername.isBlank()) {
                AutismClientAddon.LOG.warn("[TCP] Rejected client with empty username");
                clientSocket.close();
                return;
             }
 
-            if (this.read_Str == null || !this.read_Str.equals(packetSession)) {
+            if (this.sessionId == null || !this.sessionId.equals(packetSession)) {
                AutismClientAddon.LOG.warn("[TCP] Rejected client '{}' with wrong/missing session code", clientUsername);
                clientSocket.close();
                return;
             }
 
-            Socket oldSocket = this.poll_Map.put(clientUsername, clientSocket);
+            Socket oldSocket = this.hostClientSockets.put(clientUsername, clientSocket);
             if (oldSocket != null && oldSocket != clientSocket) {
                try {
                   oldSocket.close();
@@ -1542,36 +1542,36 @@ public class LanSyncManager {
                }
             }
 
-            this.push.put(clientUsername, new Object());
-            this.pop.put(clientUsername, System.currentTimeMillis());
-            if (!clientUsername.equals(this.write_Str) && !this.init_Map.containsKey(clientUsername)) {
-               this.init_Map.put(clientUsername, new LanSyncManager.Inner_DataUtil(clientUsername, false));
+            this.hostClientWriteLocks.put(clientUsername, new Object());
+            this.peerLastHeartbeatMs.put(clientUsername, System.currentTimeMillis());
+            if (!clientUsername.equals(this.localUsername) && !this.connectedClients.containsKey(clientUsername)) {
+               this.connectedClients.put(clientUsername, new LanSyncManager.Inner_DataUtil(clientUsername, false));
                AutismClientMessaging.sendPrefixed("§e" + clientUsername + " joined.");
-               this.sync_Map.clear();
-               this.valid();
-               this.push(this.init_Runnable);
-               this.push(this.close_Runnable);
+               this.executionClientTimestampsMs.clear();
+               this.broadcastClientList();
+               this.dispatchCallbackOnClientThread(this.onClientJoinedCallback);
+               this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
             }
 
-            if (!clientUsername.equals(this.write_Str)) {
-               this.load(clientSocket, clientUsername);
-               this.read(clientSocket, clientUsername);
+            if (!clientUsername.equals(this.localUsername)) {
+               this.sendLocalMacrosToClient(clientSocket, clientUsername);
+               this.forwardPeerMacrosToClient(clientSocket, clientUsername);
             }
 
-            this.init_V_Socket_Str(clientSocket, clientUsername);
+            this.sendClientListToSocket(clientSocket, clientUsername);
             AutismClientAddon.LOG.info("[TCP] Client joined: {}", clientUsername);
 
-            while (this.init_AtomicBoolean.get() && !clientSocket.isClosed()) {
+            while (this.running.get() && !clientSocket.isClosed()) {
                int nextPacketType = in.readInt();
                String nextPacketSession = in.readUTF();
                autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.init(nextPacketType);
-               autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.init(type, nextPacketSession);
+               autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.create(type, nextPacketSession);
                if (packet == null) {
                   throw new IOException("Unknown LAN packet id " + nextPacketType);
                }
 
-               packet.init(in);
-               this.init_V_DataUtil(packet);
+               packet.read(in);
+               this.handlePacket(packet);
             }
          } catch (Exception var28) {
             return;
@@ -1581,10 +1581,10 @@ public class LanSyncManager {
             } catch (IOException var27) {
             }
 
-            if (this.init_AtomicBoolean.get() && this.load_Z) {
+            if (this.running.get() && this.isHost) {
                String disconnectedUser = null;
 
-               for (Entry<String, Socket> entry : this.poll_Map.entrySet()) {
+               for (Entry<String, Socket> entry : this.hostClientSockets.entrySet()) {
                   if (entry.getValue() == clientSocket) {
                      disconnectedUser = entry.getKey();
                      break;
@@ -1592,17 +1592,17 @@ public class LanSyncManager {
                }
 
                if (disconnectedUser != null) {
-                  this.poll_Map.remove(disconnectedUser);
-                  this.push.remove(disconnectedUser);
-                  this.init_Map.remove(disconnectedUser);
-                  this.init_ConcurrentHashMap.remove(disconnectedUser);
-                  this.init_AtomicLong.incrementAndGet();
-                  this.pop.remove(disconnectedUser);
-                  this.open_Map.remove(disconnectedUser);
+                  this.hostClientSockets.remove(disconnectedUser);
+                  this.hostClientWriteLocks.remove(disconnectedUser);
+                  this.connectedClients.remove(disconnectedUser);
+                  this.peerMacros.remove(disconnectedUser);
+                  this.peerMacrosRevision.incrementAndGet();
+                  this.peerLastHeartbeatMs.remove(disconnectedUser);
+                  this.peerMacroStepProgress.remove(disconnectedUser);
                   AutismClientMessaging.sendPrefixed("§e" + disconnectedUser + " disconnected.");
                   AutismClientAddon.LOG.info("[TCP] Client disconnected: {}", disconnectedUser);
-                  this.valid();
-                  this.push(this.load_Runnable);
+                  this.broadcastClientList();
+                  this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
                   MacroWaitRegistry.update();
                }
             }
@@ -1614,19 +1614,19 @@ public class LanSyncManager {
       }).start();
    }
 
-   private void init_V_Socket_Str(Socket clientSocket, String clientUsername) {
+   private void sendClientListToSocket(Socket clientSocket, String clientUsername) {
       try {
          List<autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil> entries = new ArrayList<>();
 
-         for (Entry<String, LanSyncManager.Inner_DataUtil> entry : this.init_Map.entrySet()) {
-            entries.add(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil(entry.getKey(), entry.getValue().init_Z));
+         for (Entry<String, LanSyncManager.Inner_DataUtil> entry : this.connectedClients.entrySet()) {
+            entries.add(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil(entry.getKey(), entry.getValue().isHost));
          }
 
          autismclient.util.sync.LanSyncPacket.Inner_StreamUtil packet = new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil(
-            this.read_Str, entries, this.init_aE_StreamUtil.ordinal()
+            this.sessionId, entries, this.executionMethod.ordinal()
          );
-         byte[] data = this.init_BArr_DataUtil(packet);
-         synchronized (this.push.computeIfAbsent(clientUsername, k -> new Object())) {
+         byte[] data = this.encodePacket(packet);
+         synchronized (this.hostClientWriteLocks.computeIfAbsent(clientUsername, k -> new Object())) {
             clientSocket.getOutputStream().write(data);
             clientSocket.getOutputStream().flush();
          }
@@ -1635,46 +1635,46 @@ public class LanSyncManager {
       }
    }
 
-   private void load(Socket clientSocket, String clientUsername) {
+   private void sendLocalMacrosToClient(Socket clientSocket, String clientUsername) {
       try {
          List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
-         Object lock = this.push.computeIfAbsent(clientUsername, k -> new Object());
+         Object lock = this.hostClientWriteLocks.computeIfAbsent(clientUsername, k -> new Object());
          OutputStream out = clientSocket.getOutputStream();
 
          for (AutismMacro macro : localMacros) {
-            this.init(out, lock, this.write_Str, macro, (byte)0);
+            this.writeMacroPackets(out, lock, this.localUsername, macro, (byte)0);
          }
 
-         this.init_V_OutputStream(
-            out, lock, new autismclient.util.sync.LanSyncPacket.FileCache(this.read_Str, this.write_Str, init_List_List(localMacros))
+         this.writePacketToStream(
+            out, lock, new autismclient.util.sync.LanSyncPacket.FileCache(this.sessionId, this.localUsername, extractMacroNames(localMacros))
          );
       } catch (IOException e) {
          AutismClientAddon.LOG.warn("[TCP] Failed to send macro list: {}", e.getMessage());
       }
    }
 
-   private void read(Socket clientSocket, String clientUsername) {
-      String session = this.read_Str;
+   private void forwardPeerMacrosToClient(Socket clientSocket, String clientUsername) {
+      String session = this.sessionId;
       if (session != null) {
          try {
-            Object lock = this.push.computeIfAbsent(clientUsername, k -> new Object());
+            Object lock = this.hostClientWriteLocks.computeIfAbsent(clientUsername, k -> new Object());
             OutputStream out = clientSocket.getOutputStream();
 
-            for (String peer : this.init_Map.keySet()) {
-               if (!peer.equals(this.write_Str) && !peer.equals(clientUsername)) {
+            for (String peer : this.connectedClients.keySet()) {
+               if (!peer.equals(this.localUsername) && !peer.equals(clientUsername)) {
                   List<String> names = new ArrayList<>();
-                  Map<String, AutismMacro> peerMacros = this.init_ConcurrentHashMap.get(peer);
+                  Map<String, AutismMacro> peerMacros = this.peerMacros.get(peer);
                   if (peerMacros != null) {
                      for (AutismMacro macro : peerMacros.values()) {
                         if (macro != null) {
-                           this.init(out, lock, peer, macro, (byte)0);
+                           this.writeMacroPackets(out, lock, peer, macro, (byte)0);
                            names.add(macro.name);
                         }
                      }
                   }
 
                   if (!names.isEmpty()) {
-                     this.init_V_OutputStream(out, lock, new autismclient.util.sync.LanSyncPacket.FileCache(session, peer, names));
+                     this.writePacketToStream(out, lock, new autismclient.util.sync.LanSyncPacket.FileCache(session, peer, names));
                   }
                }
             }
@@ -1684,51 +1684,51 @@ public class LanSyncManager {
       }
    }
 
-   private void close(String hostIp) {
+   private void connectToHost(String hostIp) {
       (new Thread(() -> {
          try {
-            this.init_Socket = new Socket();
-            this.init_Socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568), 5000);
-            this.init_Socket.setTcpNoDelay(true);
-            DataOutputStream out = new DataOutputStream(this.init_Socket.getOutputStream());
-            autismclient.util.sync.LanSyncPacket.JsonUtil joinPacket = new autismclient.util.sync.LanSyncPacket.JsonUtil(this.read_Str, this.write_Str);
-            synchronized (this.init_Obj) {
-               out.writeInt(joinPacket.init_StreamUtil().init());
-               out.writeUTF(joinPacket.init_Str());
-               joinPacket.init(out);
+            this.clientSocket = new Socket();
+            this.clientSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568), 5000);
+            this.clientSocket.setTcpNoDelay(true);
+            DataOutputStream out = new DataOutputStream(this.clientSocket.getOutputStream());
+            autismclient.util.sync.LanSyncPacket.JsonUtil joinPacket = new autismclient.util.sync.LanSyncPacket.JsonUtil(this.sessionId, this.localUsername);
+            synchronized (this.clientWriteLock) {
+               out.writeInt(joinPacket.getType().init());
+               out.writeUTF(joinPacket.getSessionId());
+               joinPacket.write(out);
                out.flush();
             }
 
             AutismClientAddon.LOG.info("[TCP] Connected to host at {}:{}", hostIp, 25568);
-            this.write_Z = false;
-            this.load_Thread = new Thread(() -> {
+            this.reconnecting = false;
+            this.clientReaderThread = new Thread(() -> {
                try {
-                  DataInputStream in = new DataInputStream(this.init_Socket.getInputStream());
+                  DataInputStream in = new DataInputStream(this.clientSocket.getInputStream());
 
-                  while (this.init_AtomicBoolean.get() && this.init_Socket != null && !this.init_Socket.isClosed()) {
+                  while (this.running.get() && this.clientSocket != null && !this.clientSocket.isClosed()) {
                      int packetType = in.readInt();
                      String packetSession = in.readUTF();
                      autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.init(packetType);
-                     autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.init(type, packetSession);
+                     autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.create(type, packetSession);
                      if (packet == null) {
                         throw new IOException("Unknown LAN packet id " + packetType);
                      }
 
-                     packet.init(in);
-                     this.init_V_DataUtil(packet);
+                     packet.read(in);
+                     this.handlePacket(packet);
                   }
                } catch (Exception ex) {
                   AutismClientAddon.LOG.warn("[TCP] Disconnected from host: {}", ex.getMessage());
-                  this.next();
+                  this.startReconnectLoop();
                }
             }, "TCP-Reader");
-            this.load_Thread.setDaemon(true);
-            this.load_Thread.start();
-            this.load(new autismclient.util.sync.LanSyncPacket.TableIndex(this.read_Str));
-            this.init_V_DataOutputStream(out);
+            this.clientReaderThread.setDaemon(true);
+            this.clientReaderThread.start();
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.TableIndex(this.sessionId));
+            this.sendLocalMacrosToHost(out);
          } catch (IOException e) {
             AutismClientAddon.LOG.warn("[TCP] Failed to connect to host: {}", e.getMessage());
-            this.next();
+            this.startReconnectLoop();
          }
       }, "TCP-Connect") {
          {
@@ -1737,22 +1737,22 @@ public class LanSyncManager {
       }).start();
    }
 
-   private void next() {
-      if (!this.write_Z && this.init_AtomicBoolean.get() && this.sync_Str != null && this.flush_Str != null && !this.load_Z) {
-         this.write_Z = true;
+   private void startReconnectLoop() {
+      if (!this.reconnecting && this.running.get() && this.reconnectHostIp != null && this.reconnectSessionId != null && !this.isHost) {
+         this.reconnecting = true;
          AutismClientMessaging.sendPrefixed("§eConnection lost. Reconnecting...");
          (new Thread(() -> {
             long backoffMs = 1000L;
             int attempt = 0;
 
-            while (this.write_Z && this.init_AtomicBoolean.get() && this.sync_Str != null) {
+            while (this.reconnecting && this.running.get() && this.reconnectHostIp != null) {
                try {
                   Thread.sleep(backoffMs);
                } catch (InterruptedException e) {
                   return;
                }
 
-               if (!this.write_Z || !this.init_AtomicBoolean.get() || this.sync_Str == null) {
+               if (!this.reconnecting || !this.running.get() || this.reconnectHostIp == null) {
                   return;
                }
 
@@ -1763,13 +1763,13 @@ public class LanSyncManager {
                   testSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), 25568), 2000);
                   testSocket.setTcpNoDelay(true);
                   testSocket.close();
-                  this.read_Str = this.flush_Str;
-                  if (this.write_Str.isEmpty()) {
-                     this.write_Str = this.update_Str();
+                  this.sessionId = this.reconnectSessionId;
+                  if (this.localUsername.isEmpty()) {
+                     this.localUsername = this.resolvePlayerUsername();
                   }
 
-                  this.init_Map.putIfAbsent(this.write_Str, new LanSyncManager.Inner_DataUtil(this.write_Str, false));
-                  this.close(this.sync_Str);
+                  this.connectedClients.putIfAbsent(this.localUsername, new LanSyncManager.Inner_DataUtil(this.localUsername, false));
+                  this.connectToHost(this.reconnectHostIp);
                   AutismClientMessaging.sendPrefixed("§aReconnected to session!");
                   return;
                } catch (IOException e) {
@@ -1778,7 +1778,7 @@ public class LanSyncManager {
                }
             }
 
-            this.write_Z = false;
+            this.reconnecting = false;
          }, "TCP-Reconnect") {
             {
                this.setDaemon(true);
@@ -1787,16 +1787,16 @@ public class LanSyncManager {
       }
    }
 
-   private void init_V_DataOutputStream(DataOutputStream out) {
+   private void sendLocalMacrosToHost(DataOutputStream out) {
       try {
          List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
-         synchronized (this.init_Obj) {
+         synchronized (this.clientWriteLock) {
             for (AutismMacro macro : localMacros) {
-               this.init(out, null, this.write_Str, macro, (byte)0);
+               this.writeMacroPackets(out, null, this.localUsername, macro, (byte)0);
             }
 
-            this.init_V_OutputStream(
-               out, null, new autismclient.util.sync.LanSyncPacket.FileCache(this.read_Str, this.write_Str, init_List_List(localMacros))
+            this.writePacketToStream(
+               out, null, new autismclient.util.sync.LanSyncPacket.FileCache(this.sessionId, this.localUsername, extractMacroNames(localMacros))
             );
          }
       } catch (IOException e) {
@@ -1804,27 +1804,27 @@ public class LanSyncManager {
       }
    }
 
-   private byte[] init_BArr_DataUtil(autismclient.util.sync.LanSyncPacket packet) throws IOException {
+   private byte[] encodePacket(autismclient.util.sync.LanSyncPacket packet) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream out = new DataOutputStream(baos);
-      out.writeInt(packet.init_StreamUtil().init());
-      out.writeUTF(packet.init_Str());
-      packet.init(out);
+      out.writeInt(packet.getType().init());
+      out.writeUTF(packet.getSessionId());
+      packet.write(out);
       return baos.toByteArray();
    }
 
-   private void init(OutputStream out, Object lock, String senderUsername, AutismMacro macro, byte sourceType) throws IOException {
+   private void writeMacroPackets(OutputStream out, Object lock, String senderUsername, AutismMacro macro, byte sourceType) throws IOException {
       if (macro != null) {
          String nbtString = macro.toSharedTag().toString();
 
-         for (autismclient.util.sync.LanSyncPacket packet : this.init(senderUsername, macro.name, nbtString, sourceType)) {
-            this.init_V_OutputStream(out, lock, packet);
+         for (autismclient.util.sync.LanSyncPacket packet : this.buildMacroPacketsFromNbt(senderUsername, macro.name, nbtString, sourceType)) {
+            this.writePacketToStream(out, lock, packet);
          }
       }
    }
 
-   private void init_V_OutputStream(OutputStream out, Object lock, autismclient.util.sync.LanSyncPacket packet) throws IOException {
-      byte[] data = this.init_BArr_DataUtil(packet);
+   private void writePacketToStream(OutputStream out, Object lock, autismclient.util.sync.LanSyncPacket packet) throws IOException {
+      byte[] data = this.encodePacket(packet);
       if (lock != null) {
          synchronized (lock) {
             out.write(data);
@@ -1836,18 +1836,18 @@ public class LanSyncManager {
       }
    }
 
-   private void load(autismclient.util.sync.LanSyncPacket packet) {
+   private void sendPacket(autismclient.util.sync.LanSyncPacket packet) {
       if (!autismclient.modules.aD.read_Z()) {
          try {
-            byte[] data = this.init_BArr_DataUtil(packet);
-            if (this.load_Z) {
-               for (Entry<String, Socket> entry : this.poll_Map.entrySet()) {
+            byte[] data = this.encodePacket(packet);
+            if (this.isHost) {
+               for (Entry<String, Socket> entry : this.hostClientSockets.entrySet()) {
                   Socket client = entry.getValue();
                   String clientName = entry.getKey();
 
                   try {
                      if (!client.isClosed()) {
-                        synchronized (this.push.computeIfAbsent(clientName, k -> new Object())) {
+                        synchronized (this.hostClientWriteLocks.computeIfAbsent(clientName, k -> new Object())) {
                            client.getOutputStream().write(data);
                            client.getOutputStream().flush();
                         }
@@ -1856,10 +1856,10 @@ public class LanSyncManager {
                   }
                }
             } else {
-               synchronized (this.init_Obj) {
-                  if (this.init_Socket != null && !this.init_Socket.isClosed()) {
-                     this.init_Socket.getOutputStream().write(data);
-                     this.init_Socket.getOutputStream().flush();
+               synchronized (this.clientWriteLock) {
+                  if (this.clientSocket != null && !this.clientSocket.isClosed()) {
+                     this.clientSocket.getOutputStream().write(data);
+                     this.clientSocket.getOutputStream().flush();
                   }
                }
             }
@@ -1869,19 +1869,19 @@ public class LanSyncManager {
       }
    }
 
-   private void init_V_DataUtil_Str(autismclient.util.sync.LanSyncPacket packet, String excludedUsername) {
-      if (!autismclient.modules.aD.read_Z() && this.load_Z) {
+   private void relayPacketToOthers(autismclient.util.sync.LanSyncPacket packet, String excludedUsername) {
+      if (!autismclient.modules.aD.read_Z() && this.isHost) {
          try {
-            byte[] data = this.init_BArr_DataUtil(packet);
+            byte[] data = this.encodePacket(packet);
 
-            for (Entry<String, Socket> entry : this.poll_Map.entrySet()) {
+            for (Entry<String, Socket> entry : this.hostClientSockets.entrySet()) {
                String clientName = entry.getKey();
                if (excludedUsername == null || !excludedUsername.equals(clientName)) {
                   Socket client = entry.getValue();
 
                   try {
                      if (!client.isClosed()) {
-                        synchronized (this.push.computeIfAbsent(clientName, k -> new Object())) {
+                        synchronized (this.hostClientWriteLocks.computeIfAbsent(clientName, k -> new Object())) {
                            client.getOutputStream().write(data);
                            client.getOutputStream().flush();
                         }
@@ -1896,73 +1896,73 @@ public class LanSyncManager {
       }
    }
 
-   private void prev() {
+   private void closeAllSockets() {
       try {
-         if (this.init_ServerSocket != null) {
-            this.init_ServerSocket.close();
-            this.init_ServerSocket = null;
+         if (this.tcpServerSocket != null) {
+            this.tcpServerSocket.close();
+            this.tcpServerSocket = null;
          }
 
-         if (this.init_Socket != null) {
-            this.init_Socket.close();
-            this.init_Socket = null;
+         if (this.clientSocket != null) {
+            this.clientSocket.close();
+            this.clientSocket = null;
          }
 
-         for (Socket s : this.poll_Map.values()) {
+         for (Socket s : this.hostClientSockets.values()) {
             try {
                s.close();
             } catch (IOException var4) {
             }
          }
 
-         this.poll_Map.clear();
-         this.push.clear();
-         this.write_Map.clear();
+         this.hostClientSockets.clear();
+         this.hostClientWriteLocks.clear();
+         this.incomingChunkTransfers.clear();
       } catch (IOException e) {
          AutismClientAddon.LOG.warn("[TCP] Stop error: {}", e.getMessage());
       }
    }
 
-   private void valid() {
-      if (this.load_Z) {
+   private void broadcastClientList() {
+      if (this.isHost) {
          List<autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil> entries = new ArrayList<>();
 
-         for (Entry<String, LanSyncManager.Inner_DataUtil> entry : this.init_Map.entrySet()) {
-            entries.add(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil(entry.getKey(), entry.getValue().init_Z));
+         for (Entry<String, LanSyncManager.Inner_DataUtil> entry : this.connectedClients.entrySet()) {
+            entries.add(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil.Inner_DataUtil(entry.getKey(), entry.getValue().isHost));
          }
 
-         this.load(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil(this.read_Str, entries, this.init_aE_StreamUtil.ordinal()));
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_StreamUtil(this.sessionId, entries, this.executionMethod.ordinal()));
       }
    }
 
-   private void init_V_aE_JsonUtil_Str(LanSyncManager.Inner_JsonUtil state, String detail) {
-      if (this.load_Z) {
-         this.load(new autismclient.util.sync.LanSyncPacket.FieldCache(this.read_Str, state.ordinal(), detail));
+   private void broadcastSyncStateUpdate(LanSyncManager.Inner_JsonUtil state, String detail) {
+      if (this.isHost) {
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.FieldCache(this.sessionId, state.ordinal(), detail));
       }
    }
 
-   public void push() {
-      String session = this.read_Str;
+   public void broadcastLocalMacroRoster() {
+      String session = this.sessionId;
       if (session != null) {
          List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
-         String sender = this.write_Str;
+         String sender = this.localUsername;
          List<autismclient.util.sync.LanSyncPacket> packets = new ArrayList<>();
 
          for (AutismMacro macro : localMacros) {
-            packets.addAll(this.init_List_Str(sender, macro, (byte)0));
+            packets.addAll(this.buildMacroPackets(sender, macro, (byte)0));
          }
 
-         packets.add(new autismclient.util.sync.LanSyncPacket.FileCache(session, sender, init_List_List(localMacros)));
-         this.init_V_List(packets);
+         packets.add(new autismclient.util.sync.LanSyncPacket.FileCache(session, sender, extractMacroNames(localMacros)));
+         this.enqueueAsyncPackets(packets);
       }
    }
 
-   private void init_V_List(List<autismclient.util.sync.LanSyncPacket> packets) {
+   private void enqueueAsyncPackets(List<autismclient.util.sync.LanSyncPacket> packets) {
       if (!packets.isEmpty()) {
          try {
-            this.init_ExecutorService.execute(() -> {
+            this.asyncSendExecutor.execute(() -> {
                for (autismclient.util.sync.LanSyncPacket packet : packets) {
-                  this.load(packet);
+                  this.sendPacket(packet);
                }
             });
          } catch (RejectedExecutionException var3) {
@@ -1970,7 +1970,7 @@ public class LanSyncManager {
       }
    }
 
-   private static List<String> init_List_List(List<AutismMacro> local) {
+   private static List<String> extractMacroNames(List<AutismMacro> local) {
       List<String> names = new ArrayList<>(local.size());
 
       for (AutismMacro macro : local) {
@@ -1982,23 +1982,23 @@ public class LanSyncManager {
       return names;
    }
 
-   private void init_V_Str(String senderUsername, AutismMacro macro, byte sourceType) {
-      for (autismclient.util.sync.LanSyncPacket packet : this.init_List_Str(senderUsername, macro, sourceType)) {
-         this.load(packet);
+   private void sendMacroPackets(String senderUsername, AutismMacro macro, byte sourceType) {
+      for (autismclient.util.sync.LanSyncPacket packet : this.buildMacroPackets(senderUsername, macro, sourceType)) {
+         this.sendPacket(packet);
       }
    }
 
-   private List<autismclient.util.sync.LanSyncPacket> init_List_Str(String senderUsername, AutismMacro macro, byte sourceType) {
-      return macro != null && this.read_Str != null ? this.init(senderUsername, macro.name, macro.toSharedTag().toString(), sourceType) : List.of();
+   private List<autismclient.util.sync.LanSyncPacket> buildMacroPackets(String senderUsername, AutismMacro macro, byte sourceType) {
+      return macro != null && this.sessionId != null ? this.buildMacroPacketsFromNbt(senderUsername, macro.name, macro.toSharedTag().toString(), sourceType) : List.of();
    }
 
-   private List<autismclient.util.sync.LanSyncPacket> init(String senderUsername, String macroName, String nbtData, byte sourceType) {
+   private List<autismclient.util.sync.LanSyncPacket> buildMacroPacketsFromNbt(String senderUsername, String macroName, String nbtData, byte sourceType) {
       String safeSender = senderUsername != null ? senderUsername : "";
       String safeName = macroName != null ? macroName : "";
       String safeNbt = nbtData != null ? nbtData : "";
       List<autismclient.util.sync.LanSyncPacket> packets = new ArrayList<>();
-      if (read_I_Str(safeNbt) <= 60000) {
-         packets.add(new autismclient.util.sync.LanSyncPacket.RenderState(this.read_Str, safeSender, safeName, safeNbt, sourceType));
+      if (computeModifiedUtf8Length(safeNbt) <= 60000) {
+         packets.add(new autismclient.util.sync.LanSyncPacket.RenderState(this.sessionId, safeSender, safeName, safeNbt, sourceType));
          return packets;
       }
 
@@ -2010,13 +2010,13 @@ public class LanSyncManager {
          int len = Math.min(32000, bytes.length - start);
          byte[] chunk = new byte[len];
          System.arraycopy(bytes, start, chunk, 0, len);
-         packets.add(new autismclient.util.sync.LanSyncPacket.UiHelper(this.read_Str, safeSender, safeName, sourceType, i, totalChunks, chunk));
+         packets.add(new autismclient.util.sync.LanSyncPacket.UiHelper(this.sessionId, safeSender, safeName, sourceType, i, totalChunks, chunk));
       }
 
       return packets;
    }
 
-   private static int read_I_Str(String value) {
+   private static int computeModifiedUtf8Length(String value) {
       if (value == null) {
          return 0;
       }
@@ -2037,31 +2037,31 @@ public class LanSyncManager {
       return length;
    }
 
-   private void read_V_DataUtil(autismclient.util.sync.LanSyncPacket packet) {
-      this.init_V_DataUtil_Z(packet, true);
+   private void handleMacroDataPacket(autismclient.util.sync.LanSyncPacket packet) {
+      this.handleMacroDataPacket(packet, true);
    }
 
-   private void init_V_DataUtil_Z(autismclient.util.sync.LanSyncPacket packet, boolean relayIfHost) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.RenderState && packet.init_Str().equals(this.read_Str)) {
+   private void handleMacroDataPacket(autismclient.util.sync.LanSyncPacket packet, boolean relayIfHost) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.RenderState && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.RenderState p = (autismclient.util.sync.LanSyncPacket.RenderState)packet;
-         String sender = p.load;
-         if (sender == null || !sender.equals(this.write_Str)) {
+         String sender = p.senderUsername;
+         if (sender == null || !sender.equals(this.localUsername)) {
             try {
-               CompoundTag nbt = TagParser.parseCompoundFully(p.write);
+               CompoundTag nbt = TagParser.parseCompoundFully(p.nbtData);
                AutismMacro macro = new AutismMacro();
                macro.fromTag(nbt);
                String relayNbt = macro.toTag().toString();
-               if (p.init_B != 1) {
-                  this.init_ConcurrentHashMap.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.init(macro.name), macro);
+               if (p.sourceType != 1) {
+                  this.peerMacros.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.init(macro.name), macro);
                }
 
-               this.init_AtomicLong.incrementAndGet();
-               if (p.init_B == 2) {
-                  this.init_V_aM_Str(macro, sender);
+               this.peerMacrosRevision.incrementAndGet();
+               if (p.sourceType == 2) {
+                  this.scheduleInstallSharedMacro(macro, sender);
                }
 
-               if (relayIfHost && this.load_Z && sender != null && !sender.isBlank()) {
-                  this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.RenderState(this.read_Str, sender, macro.name, relayNbt, p.init_B), sender);
+               if (relayIfHost && this.isHost && sender != null && !sender.isBlank()) {
+                  this.relayPacketToOthers(new autismclient.util.sync.LanSyncPacket.RenderState(this.sessionId, sender, macro.name, relayNbt, p.sourceType), sender);
                }
             } catch (Exception e) {
                AutismClientAddon.LOG.error("[Autism-LAN] Failed to deserialize macro", e);
@@ -2070,49 +2070,49 @@ public class LanSyncManager {
       }
    }
 
-   private void write(autismclient.util.sync.LanSyncPacket packet) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.UiHelper && packet.init_Str().equals(this.read_Str)) {
+   private void handleMacroDataChunkPacket(autismclient.util.sync.LanSyncPacket packet) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.UiHelper && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.UiHelper p = (autismclient.util.sync.LanSyncPacket.UiHelper)packet;
-         String sender = p.load_Str;
-         if ((sender == null || !sender.equals(this.write_Str))
-            && p.read_I > 0
-            && p.read_I <= 4096
-            && p.load_I >= 0
-            && p.load_I < p.read_I
-            && p.init_BArr != null
-            && p.init_BArr.length != 0
-            && p.init_BArr.length <= 32000) {
-            if (this.load_Z && sender != null && !sender.isBlank()) {
-               this.init_V_DataUtil_Str(
-                  new autismclient.util.sync.LanSyncPacket.UiHelper(this.read_Str, sender, p.read_Str, p.init_B, p.load_I, p.read_I, p.init_BArr), sender
+         String sender = p.senderUsername;
+         if ((sender == null || !sender.equals(this.localUsername))
+            && p.totalChunks > 0
+            && p.totalChunks <= 4096
+            && p.chunkIndex >= 0
+            && p.chunkIndex < p.totalChunks
+            && p.chunkData != null
+            && p.chunkData.length != 0
+            && p.chunkData.length <= 32000) {
+            if (this.isHost && sender != null && !sender.isBlank()) {
+               this.relayPacketToOthers(
+                  new autismclient.util.sync.LanSyncPacket.UiHelper(this.sessionId, sender, p.macroName, p.sourceType, p.chunkIndex, p.totalChunks, p.chunkData), sender
                );
             }
 
-            this.data();
-            String key = sender + "\u0000" + p.read_Str + "\u0000" + p.init_B + "\u0000" + p.read_I;
-            LanSyncManager.Inner_BufferHelper transfer = this.write_Map.computeIfAbsent(key, ignored -> new LanSyncManager.Inner_BufferHelper(p.read_I));
-            byte[] complete = transfer.init(p.load_I, p.init_BArr);
+            this.purgeExpiredChunkTransfers();
+            String key = sender + "\u0000" + p.macroName + "\u0000" + p.sourceType + "\u0000" + p.totalChunks;
+            LanSyncManager.Inner_BufferHelper transfer = this.incomingChunkTransfers.computeIfAbsent(key, ignored -> new LanSyncManager.Inner_BufferHelper(p.totalChunks));
+            byte[] complete = transfer.acceptChunk(p.chunkIndex, p.chunkData);
             if (complete != null) {
-               this.write_Map.remove(key);
+               this.incomingChunkTransfers.remove(key);
                String nbtData = new String(complete, StandardCharsets.UTF_8);
-               this.init_V_DataUtil_Z(new autismclient.util.sync.LanSyncPacket.RenderState(this.read_Str, sender, p.read_Str, nbtData, p.init_B), false);
+               this.handleMacroDataPacket(new autismclient.util.sync.LanSyncPacket.RenderState(this.sessionId, sender, p.macroName, nbtData, p.sourceType), false);
             }
          }
       }
    }
 
-   private void data() {
+   private void purgeExpiredChunkTransfers() {
       long now = System.currentTimeMillis();
-      this.write_Map.entrySet().removeIf(entry -> now - entry.getValue().init_J > 120000L);
+      this.incomingChunkTransfers.entrySet().removeIf(entry -> now - entry.getValue().createdAtMs > 120000L);
    }
 
-   private void init_V_aM_Str(AutismMacro macro, String sender) {
+   private void scheduleInstallSharedMacro(AutismMacro macro, String sender) {
       if (macro != null && macro.name != null && !macro.name.isBlank()) {
-         Minecraft.getInstance().execute(() -> this.load(macro, sender));
+         Minecraft.getInstance().execute(() -> this.installSharedMacroOnClientThread(macro, sender));
       }
    }
 
-   private void load(AutismMacro macro, String sender) {
+   private void installSharedMacroOnClientThread(AutismMacro macro, String sender) {
       MacroLibraryManager manager = MacroLibraryManager.getInstance();
       AutismMacro existing = manager.findByName(macro.name);
       if (existing != null) {
@@ -2133,75 +2133,75 @@ public class LanSyncManager {
       }
    }
 
-   private void update(autismclient.util.sync.LanSyncPacket packet) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.RingBuffer && packet.init_Str().equals(this.read_Str)) {
+   private void handleRequestMacroPacket(autismclient.util.sync.LanSyncPacket packet) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.RingBuffer && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.RingBuffer p = (autismclient.util.sync.LanSyncPacket.RingBuffer)packet;
-         String requestedName = p.load == null ? "" : p.load.trim();
+         String requestedName = p.macroName == null ? "" : p.macroName.trim();
          if (!requestedName.isEmpty()) {
             AutismMacro macro = MacroLibraryManager.getInstance().findByName(requestedName);
             if (macro != null) {
-               this.init_V_Str(this.write_Str, macro, (byte)2);
+               this.sendMacroPackets(this.localUsername, macro, (byte)2);
             }
          }
       }
    }
 
-   private void sync(autismclient.util.sync.LanSyncPacket packet) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.IoWorker && packet.init_Str().equals(this.read_Str)) {
+   private void handlePresetDataPacket(autismclient.util.sync.LanSyncPacket packet) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.IoWorker && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.IoWorker p = (autismclient.util.sync.LanSyncPacket.IoWorker)packet;
-         if ((p.load == null || !p.load.equals(this.write_Str))
-            && PacketPresetManager.init_bT().init(p.read, p.write, p.load)
-            && this.load_Z
-            && p.load != null
-            && !p.load.isBlank()) {
-            this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.IoWorker(this.read_Str, p.load, p.read, p.write), p.load);
+         if ((p.senderUsername == null || !p.senderUsername.equals(this.localUsername))
+            && PacketPresetManager.init_bT().init(p.presetName, p.presetJson, p.senderUsername)
+            && this.isHost
+            && p.senderUsername != null
+            && !p.senderUsername.isBlank()) {
+            this.relayPacketToOthers(new autismclient.util.sync.LanSyncPacket.IoWorker(this.sessionId, p.senderUsername, p.presetName, p.presetJson), p.senderUsername);
          }
       }
    }
 
-   private void flush(autismclient.util.sync.LanSyncPacket packet) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.EventBus && packet.init_Str().equals(this.read_Str)) {
+   private void handleMacroDeletePacket(autismclient.util.sync.LanSyncPacket packet) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.EventBus && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.EventBus p = (autismclient.util.sync.LanSyncPacket.EventBus)packet;
-         if (p.load == null || !p.load.equals(this.write_Str)) {
-            this.init_AtomicLong.incrementAndGet();
-            Map<String, AutismMacro> senderMacros = this.init_ConcurrentHashMap.get(p.load);
+         if (p.senderUsername == null || !p.senderUsername.equals(this.localUsername)) {
+            this.peerMacrosRevision.incrementAndGet();
+            Map<String, AutismMacro> senderMacros = this.peerMacros.get(p.senderUsername);
             if (senderMacros != null) {
-               senderMacros.remove(MacroNameNormalizer.init(p.read));
+               senderMacros.remove(MacroNameNormalizer.init(p.macroName));
             }
 
-            if (this.load_Z && p.load != null && !p.load.isBlank()) {
-               this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.EventBus(this.read_Str, p.load, p.read), p.load);
+            if (this.isHost && p.senderUsername != null && !p.senderUsername.isBlank()) {
+               this.relayPacketToOthers(new autismclient.util.sync.LanSyncPacket.EventBus(this.sessionId, p.senderUsername, p.macroName), p.senderUsername);
             }
          }
       }
    }
 
-   private void close(autismclient.util.sync.LanSyncPacket packet) {
-      if (packet instanceof autismclient.util.sync.LanSyncPacket.FileCache && packet.init_Str().equals(this.read_Str)) {
+   private void handleMacroListPacket(autismclient.util.sync.LanSyncPacket packet) {
+      if (packet instanceof autismclient.util.sync.LanSyncPacket.FileCache && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.FileCache p = (autismclient.util.sync.LanSyncPacket.FileCache)packet;
-         if (p.load != null && !p.load.isBlank() && !p.load.equals(this.write_Str)) {
+         if (p.senderUsername != null && !p.senderUsername.isBlank() && !p.senderUsername.equals(this.localUsername)) {
             Set<String> live = new HashSet<>();
 
-            for (String name : p.init_List) {
+            for (String name : p.macroNames) {
                live.add(MacroNameNormalizer.init(name));
             }
 
-            this.init_AtomicLong.incrementAndGet();
-            Map<String, AutismMacro> senderMacros = this.init_ConcurrentHashMap.get(p.load);
+            this.peerMacrosRevision.incrementAndGet();
+            Map<String, AutismMacro> senderMacros = this.peerMacros.get(p.senderUsername);
             if (senderMacros != null) {
                senderMacros.keySet().retainAll(live);
             }
 
-            if (this.load_Z) {
-               this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.FileCache(this.read_Str, p.load, new ArrayList<>(p.init_List)), p.load);
+            if (this.isHost) {
+               this.relayPacketToOthers(new autismclient.util.sync.LanSyncPacket.FileCache(this.sessionId, p.senderUsername, new ArrayList<>(p.macroNames)), p.senderUsername);
             }
          }
       }
    }
 
-   private void read(String queueData, String senderUsername) {
+   private void handleQueueSync(String queueData, String senderUsername) {
       try {
-         if (senderUsername != null && senderUsername.equals(this.write_Str)) {
+         if (senderUsername != null && senderUsername.equals(this.localUsername)) {
             return;
          }
 
@@ -2220,7 +2220,7 @@ public class LanSyncManager {
       }
    }
 
-   private void write(String senderUsername, String message) {
+   private void handleChatOrControlMessage(String senderUsername, String message) {
       String safeSender = senderUsername != null && !senderUsername.isBlank() ? senderUsername : "Peer";
       String safeMessage = message == null ? "" : message.trim();
       if (!safeMessage.isEmpty()) {
@@ -2236,14 +2236,14 @@ public class LanSyncManager {
                   long nanos = Long.parseLong(parts[0]);
                   String lateClient = parts[1];
                   int count = Integer.parseInt(parts[2]);
-                  this.init_aE_TaskQueue = new LanSyncManager.Inner_TaskQueue(nanos, lateClient, count);
-                  this.init_CopyOnWriteArrayLi.add(this.init_aE_TaskQueue);
+                  this.lastSpreadResult = new LanSyncManager.Inner_TaskQueue(nanos, lateClient, count);
+                  this.spreadHistory.add(this.lastSpreadResult);
 
-                  while (this.init_CopyOnWriteArrayLi.size() > 10) {
-                     this.init_CopyOnWriteArrayLi.remove(0);
+                  while (this.spreadHistory.size() > 10) {
+                     this.spreadHistory.remove(0);
                   }
 
-                  this.push(this.flush_Runnable);
+                  this.dispatchCallbackOnClientThread(this.onSpreadUpdatedCallback);
                }
             } catch (NumberFormatException var13) {
             }
@@ -2256,23 +2256,23 @@ public class LanSyncManager {
                   int count = Integer.parseInt(parts[2]);
                   boolean perfect = Boolean.parseBoolean(parts[3]);
                   String tickReport = parts[4];
-                  this.init_aE_TaskQueue = new LanSyncManager.Inner_TaskQueue(
+                  this.lastSpreadResult = new LanSyncManager.Inner_TaskQueue(
                      maxOffset * 50000000L, perfect ? "" : "tick", count, LanSyncManager.Inner_StreamUtil.TICK, targetTick, maxOffset, perfect, tickReport
                   );
-                  this.init_CopyOnWriteArrayLi.add(this.init_aE_TaskQueue);
+                  this.spreadHistory.add(this.lastSpreadResult);
 
-                  while (this.init_CopyOnWriteArrayLi.size() > 10) {
-                     this.init_CopyOnWriteArrayLi.remove(0);
+                  while (this.spreadHistory.size() > 10) {
+                     this.spreadHistory.remove(0);
                   }
 
-                  this.push(this.flush_Runnable);
+                  this.dispatchCallbackOnClientThread(this.onSpreadUpdatedCallback);
                }
             } catch (NumberFormatException var12) {
             }
          } else {
             boolean isExecMethodControl = "__EXEC_METHOD__".equals(safeSender) || safeMessage != null && safeMessage.startsWith("__EXEC_METHOD__:");
             if (!isExecMethodControl) {
-               if (!safeSender.equals(this.write_Str)) {
+               if (!safeSender.equals(this.localUsername)) {
                   AutismClientMessaging.send("[LAN] <" + safeSender + "> " + safeMessage);
                }
             } else {
@@ -2286,46 +2286,46 @@ public class LanSyncManager {
                   modeName = safeMessage;
                }
 
-               LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil_Str(modeName);
-               if (this.load_Z) {
-                  if (this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.DONE) {
-                     this.load(
-                        new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, this.write_Str, "__EXEC_METHOD__:" + this.init_aE_StreamUtil.name())
+               LanSyncManager.Inner_StreamUtil method = this.parseExecutionMethod(modeName);
+               if (this.isHost) {
+                  if (this.syncState != LanSyncManager.Inner_JsonUtil.IDLE && this.syncState != LanSyncManager.Inner_JsonUtil.DONE) {
+                     this.sendPacket(
+                        new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, this.localUsername, "__EXEC_METHOD__:" + this.executionMethod.name())
                      );
                      return;
                   }
 
-                  this.init_aE_StreamUtil = method;
-                  this.valid();
-                  this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, originator, "__EXEC_METHOD__:" + this.init_aE_StreamUtil.name()));
-                  if (!originator.equals(this.write_Str)) {
-                     AutismClientMessaging.sendPrefixed("§eExecution method set to " + this.init_aE_StreamUtil.name() + " by " + originator);
+                  this.executionMethod = method;
+                  this.broadcastClientList();
+                  this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, originator, "__EXEC_METHOD__:" + this.executionMethod.name()));
+                  if (!originator.equals(this.localUsername)) {
+                     AutismClientMessaging.sendPrefixed("§eExecution method set to " + this.executionMethod.name() + " by " + originator);
                   }
 
-                  this.push(this.close_Runnable);
+                  this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
                } else {
-                  this.init_aE_StreamUtil = method;
-                  if (!originator.equals(this.write_Str)) {
-                     AutismClientMessaging.sendPrefixed("§eExecution method set to " + this.init_aE_StreamUtil.name() + " by " + originator);
+                  this.executionMethod = method;
+                  if (!originator.equals(this.localUsername)) {
+                     AutismClientMessaging.sendPrefixed("§eExecution method set to " + this.executionMethod.name() + " by " + originator);
                   }
 
-                  this.push(this.close_Runnable);
+                  this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
                }
             }
          }
       }
    }
 
-   private void init(String senderUsername, boolean isMacro, String macroName, String command) {
-      if (this.open_Z() && senderUsername != null && !senderUsername.equals(this.write_Str)) {
-         if (!this.load_Z) {
+   private void handleSyncRequest(String senderUsername, boolean isMacro, String macroName, String command) {
+      if (this.canExecuteInWorld() && senderUsername != null && !senderUsername.equals(this.localUsername)) {
+         if (!this.isHost) {
             AutismClientAddon.LOG.warn("[Sync] Non-host received REQUEST_SYNC from {} - ignoring", senderUsername);
          } else {
             AutismClientAddon.LOG.info("[Sync] Received sync request from {}: isMacro={}, name={}, cmd={}", senderUsername, isMacro, macroName, command);
             if ("__QUEUE_FLUSH__".equals(command)) {
-               this.add();
+               this.initiateQueueFlushGoSync();
             } else if (command != null && command.startsWith("__DELAY_PACKETS__\t")) {
-               this.init_V_Z(false, "", command);
+               this.initiateGoSync(false, "", command);
             } else if (command != null && command.startsWith("__PER_USER__\t")) {
                String assignStr = command.substring("__PER_USER__\t".length());
                String[] parts = assignStr.split("\t");
@@ -2335,59 +2335,59 @@ public class LanSyncManager {
                   assignments.put(parts[pi], parts[pi + 1]);
                }
 
-               this.init(isMacro, macroName, "", assignments);
+               this.initiateGoSync(isMacro, macroName, "", assignments);
             } else {
-               this.init_V_Z(isMacro, macroName, command);
+               this.initiateGoSync(isMacro, macroName, command);
             }
          }
       }
    }
 
-   private void init(String senderUsername, int completedStep, int totalSteps, String macroName) {
-      if (senderUsername != null && !senderUsername.equals(this.write_Str)) {
-         if (this.load_Z) {
-            this.load(new autismclient.util.sync.LanSyncPacket.TextFormat(this.read_Str, senderUsername, completedStep, totalSteps, macroName));
+   private void handleMacroStepProgress(String senderUsername, int completedStep, int totalSteps, String macroName) {
+      if (senderUsername != null && !senderUsername.equals(this.localUsername)) {
+         if (this.isHost) {
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.TextFormat(this.sessionId, senderUsername, completedStep, totalSteps, macroName));
          }
 
          if (completedStep < 0) {
-            this.open_Map.remove(senderUsername);
+            this.peerMacroStepProgress.remove(senderUsername);
          } else {
-            this.open_Map.put(senderUsername, completedStep);
+            this.peerMacroStepProgress.put(senderUsername, completedStep);
          }
 
          MacroWaitRegistry.update();
-         Runnable listener = this.poll_Runnable;
+         Runnable listener = this.onStepProgressChangedCallback;
          if (listener != null) {
             listener.run();
          }
       }
    }
 
-   private void init_V_Str_2(String senderUsername, String targetUsername, int offsetMs) {
-      if (senderUsername != null && !senderUsername.equals(this.write_Str)) {
-         LanSyncManager.Inner_DataUtil info = this.init_Map.get(targetUsername);
+   private void handleOffsetSync(String senderUsername, String targetUsername, int offsetMs) {
+      if (senderUsername != null && !senderUsername.equals(this.localUsername)) {
+         LanSyncManager.Inner_DataUtil info = this.connectedClients.get(targetUsername);
          if (info != null) {
-            info.init_I = Math.max(0, offsetMs);
+            info.offsetMs = Math.max(0, offsetMs);
             AutismClientAddon.LOG.info("[Sync] Offset for {} set to {}ms by {}", targetUsername, offsetMs, senderUsername);
          }
 
-         if (this.load_Z) {
-            this.load(new autismclient.util.sync.LanSyncPacket.ByteReader(this.read_Str, senderUsername, targetUsername, offsetMs));
+         if (this.isHost) {
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.ByteReader(this.sessionId, senderUsername, targetUsername, offsetMs));
          }
       }
    }
 
-   public boolean init_Z() {
-      return this.init_AtomicBoolean.get();
+   public boolean isRunning() {
+      return this.running.get();
    }
 
-   private boolean close_Z() {
-      return this.init_aE_JsonUtil == LanSyncManager.Inner_JsonUtil.IDLE || this.init_aE_JsonUtil == LanSyncManager.Inner_JsonUtil.DONE;
+   private boolean isSyncIdle() {
+      return this.syncState == LanSyncManager.Inner_JsonUtil.IDLE || this.syncState == LanSyncManager.Inner_JsonUtil.DONE;
    }
 
-   private boolean open_Z() {
+   private boolean canExecuteInWorld() {
       Minecraft minecraft = Minecraft.getInstance();
-      return !this.init_Z
+      return !this.configurationOnly
          && !autismclient.modules.aD.read_Z()
          && minecraft != null
          && minecraft.level != null
@@ -2395,145 +2395,145 @@ public class LanSyncManager {
          && minecraft.getConnection() != null;
    }
 
-   public void load(boolean configurationOnly) {
-      this.init_Z = configurationOnly;
+   public void setConfigurationOnly(boolean configurationOnly) {
+      this.configurationOnly = configurationOnly;
       if (configurationOnly) {
-         this.init_aE_NetHelper = null;
-         this.init_aE_ConfigStore = null;
-         this.load_Set.clear();
-         if (this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.DONE) {
-            this.init_V_aE_JsonUtil(LanSyncManager.Inner_JsonUtil.IDLE);
+         this.activeExecution = null;
+         this.scheduledTickExecution = null;
+         this.executedIds.clear();
+         if (this.syncState != LanSyncManager.Inner_JsonUtil.IDLE && this.syncState != LanSyncManager.Inner_JsonUtil.DONE) {
+            this.setSyncState(LanSyncManager.Inner_JsonUtil.IDLE);
          }
       }
    }
 
-   public boolean load_Z() {
-      return this.init_Z;
+   public boolean isConfigurationOnly() {
+      return this.configurationOnly;
    }
 
-   public boolean read_Z() {
-      return this.init_AtomicBoolean.get() && (this.read_Str != null || this.read_Z || this.write_Z);
+   public boolean isActiveOrConnecting() {
+      return this.running.get() && (this.sessionId != null || this.searching || this.reconnecting);
    }
 
-   public boolean write_Z() {
-      return this.read_Str != null;
+   public boolean isInSession() {
+      return this.sessionId != null;
    }
 
-   public LanSyncManager.Inner_StreamUtil init_aE_StreamUtil() {
-      return this.init_aE_StreamUtil;
+   public LanSyncManager.Inner_StreamUtil getExecutionMethod() {
+      return this.executionMethod;
    }
 
-   public int init_I() {
+   public int getTickSyncLeadTicks() {
       return 10;
    }
 
-   public void init_V_aE_StreamUtil(LanSyncManager.Inner_StreamUtil method) {
+   public void setExecutionMethod(LanSyncManager.Inner_StreamUtil method) {
       LanSyncManager.Inner_StreamUtil next = method != null ? method : LanSyncManager.Inner_StreamUtil.INSTANT;
-      if (this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != LanSyncManager.Inner_JsonUtil.DONE) {
+      if (this.syncState != LanSyncManager.Inner_JsonUtil.IDLE && this.syncState != LanSyncManager.Inner_JsonUtil.DONE) {
          AutismClientMessaging.sendPrefixed("§cCannot change execution method while LAN Sync is active.");
-      } else if (this.read_Str != null && !this.load_Z) {
-         this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, this.write_Str, "__EXEC_METHOD__:" + next.name()));
+      } else if (this.sessionId != null && !this.isHost) {
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, this.localUsername, "__EXEC_METHOD__:" + next.name()));
          AutismClientMessaging.sendPrefixed("§eRequested execution method: " + next.name());
       } else {
-         LanSyncManager.Inner_StreamUtil previous = this.init_aE_StreamUtil;
-         this.init_aE_StreamUtil = next;
-         if (this.read_Str != null) {
-            this.valid();
-            this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, this.write_Str, "__EXEC_METHOD__:" + next.name()));
+         LanSyncManager.Inner_StreamUtil previous = this.executionMethod;
+         this.executionMethod = next;
+         if (this.sessionId != null) {
+            this.broadcastClientList();
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, this.localUsername, "__EXEC_METHOD__:" + next.name()));
          }
 
          if (previous != next) {
             AutismClientMessaging.sendPrefixed("§eExecution method set to " + next.name());
          }
 
-         this.push(this.close_Runnable);
+         this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
       }
    }
 
-   public void pop() {
-      this.init_V_aE_StreamUtil(this.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.INSTANT ? LanSyncManager.Inner_StreamUtil.TICK : LanSyncManager.Inner_StreamUtil.INSTANT);
+   public void toggleExecutionMethod() {
+      this.setExecutionMethod(this.executionMethod == LanSyncManager.Inner_StreamUtil.INSTANT ? LanSyncManager.Inner_StreamUtil.TICK : LanSyncManager.Inner_StreamUtil.INSTANT);
    }
 
-   public void tick() {
-      if (this.read_Str != null) {
-         if (this.load_Z) {
-            this.valid();
+   public void refreshClientList() {
+      if (this.sessionId != null) {
+         if (this.isHost) {
+            this.broadcastClientList();
          } else {
-            this.load(new autismclient.util.sync.LanSyncPacket.TableIndex(this.read_Str));
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.TableIndex(this.sessionId));
          }
       }
    }
 
-   public boolean update_Z() {
-      return this.load_Z;
+   public boolean isHost() {
+      return this.isHost;
    }
 
-   public String init_Str() {
-      return this.read_Str;
+   public String getSessionId() {
+      return this.sessionId;
    }
 
-   public int load_I() {
-      return this.init_Map.size();
+   public int getConnectedClientCount() {
+      return this.connectedClients.size();
    }
 
-   public boolean sync_Z() {
-      return this.read_Z;
+   public boolean isSearching() {
+      return this.searching;
    }
 
-   public int read_I() {
-      return this.write_I / 20;
+   public int getSearchSecondsRemaining() {
+      return this.searchTicksRemaining / 20;
    }
 
-   public boolean flush_Z() {
-      return this.write_Z;
+   public boolean isReconnecting() {
+      return this.reconnecting;
    }
 
-   public LanSyncManager.Inner_JsonUtil init_aE_JsonUtil() {
-      return this.init_aE_JsonUtil;
+   public LanSyncManager.Inner_JsonUtil getSyncState() {
+      return this.syncState;
    }
 
-   public LanSyncManager.Inner_NetHelper init_aE_NetHelper() {
-      return this.init_aE_NetHelper;
+   public LanSyncManager.Inner_NetHelper getActiveExecution() {
+      return this.activeExecution;
    }
 
-   public LanSyncManager.Inner_TaskQueue init_aE_TaskQueue() {
-      return this.init_aE_TaskQueue;
+   public LanSyncManager.Inner_TaskQueue getLastSpreadResult() {
+      return this.lastSpreadResult;
    }
 
-   public List<LanSyncManager.Inner_TaskQueue> init_List() {
-      return new ArrayList<>(this.init_CopyOnWriteArrayLi);
+   public List<LanSyncManager.Inner_TaskQueue> getSpreadHistory() {
+      return new ArrayList<>(this.spreadHistory);
    }
 
-   public String load_Str() {
-      return this.write_Str;
+   public String getLocalUsername() {
+      return this.localUsername;
    }
 
-   public Map<String, LanSyncManager.Inner_DataUtil> init_Map() {
-      return new ConcurrentHashMap<>(this.init_Map);
+   public Map<String, LanSyncManager.Inner_DataUtil> getConnectedClients() {
+      return new ConcurrentHashMap<>(this.connectedClients);
    }
 
-   public void read_V_Str(String macroName) {
-      if (this.read_Str != null) {
-         this.load(new autismclient.util.sync.LanSyncPacket.EventBus(this.read_Str, this.write_Str, macroName));
+   public void notifyMacroDeleted(String macroName) {
+      if (this.sessionId != null) {
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.EventBus(this.sessionId, this.localUsername, macroName));
       }
    }
 
-   public void write(String queueData) {
-      if (!this.init_Z && this.write_Z()) {
-         this.load(new autismclient.util.sync.LanSyncPacket.PoolEntry(this.read_Str, queueData, this.write_Str));
+   public void broadcastQueueData(String queueData) {
+      if (!this.configurationOnly && this.isInSession()) {
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.PoolEntry(this.sessionId, queueData, this.localUsername));
       }
    }
 
-   public void run() {
-      if (!this.init_Z && this.write_Z()) {
+   public void stopAllMacrosOnLan() {
+      if (!this.configurationOnly && this.isInSession()) {
          MacroExecutor.stopAll();
-         AutismClientMessaging.sendPrefixed("§c[LAN] Macros stopped by " + this.write_Str);
-         this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, "__STOP_ALL__", this.write_Str));
+         AutismClientMessaging.sendPrefixed("§c[LAN] Macros stopped by " + this.localUsername);
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.sessionId, "__STOP_ALL__", this.localUsername));
       }
    }
 
-   public boolean init_Z_Str(String message) {
-      if (!this.open_Z()) {
+   public boolean sendSyncedChat(String message) {
+      if (!this.canExecuteInWorld()) {
          AutismClientMessaging.sendPrefixed("§cLAN Sync execution requires a connected world.");
          return false;
       }
@@ -2543,77 +2543,77 @@ public class LanSyncManager {
          return false;
       }
 
-      if (!this.write_Z()) {
+      if (!this.isInSession()) {
          AutismClientMessaging.sendPrefixed("Join a LAN Sync session first.");
          return false;
       }
 
-      if (!this.close_Z()) {
+      if (!this.isSyncIdle()) {
          AutismClientMessaging.sendPrefixed("§cLAN Sync is busy with another synchronized action.");
          return false;
       }
 
       String command = "__CHAT__\t" + safeMessage;
-      if (this.load_Z) {
-         this.init_V_Z(false, null, command);
+      if (this.isHost) {
+         this.initiateGoSync(false, null, command);
       } else {
-         autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.read_Str, this.write_Str, false, "", command);
-         request.init_I = this.init_aE_StreamUtil.ordinal();
-         this.load(request);
+         autismclient.util.sync.LanSyncPacket.BitSetUtil request = new autismclient.util.sync.LanSyncPacket.BitSetUtil(this.sessionId, this.localUsername, false, "", command);
+         request.executionMethod = this.executionMethod.ordinal();
+         this.sendPacket(request);
          AutismClientMessaging.sendPrefixed("§eRequested sync chat from host...");
       }
 
       return true;
    }
 
-   public int write_I() {
-      return this.init_Map.size();
+   public int getSessionPeerCount() {
+      return this.connectedClients.size();
    }
 
-   public void init_V_I(int completedStep, int totalSteps, String macroName) {
-      if (this.read_Str != null) {
+   public void reportMacroStepProgress(int completedStep, int totalSteps, String macroName) {
+      if (this.sessionId != null) {
          if (completedStep < 0) {
-            this.open_Map.remove(this.write_Str);
+            this.peerMacroStepProgress.remove(this.localUsername);
          } else {
-            this.open_Map.put(this.write_Str, completedStep);
+            this.peerMacroStepProgress.put(this.localUsername, completedStep);
          }
 
-         this.load(new autismclient.util.sync.LanSyncPacket.TextFormat(this.read_Str, this.write_Str, completedStep, totalSteps, macroName != null ? macroName : ""));
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.TextFormat(this.sessionId, this.localUsername, completedStep, totalSteps, macroName != null ? macroName : ""));
          MacroWaitRegistry.update();
       }
    }
 
-   public int init_I_Str(String username) {
-      return this.open_Map.getOrDefault(username, 0);
+   public int getPeerCompletedStep(String username) {
+      return this.peerMacroStepProgress.getOrDefault(username, 0);
    }
 
-   public Map<String, Integer> load_Map() {
-      return new ConcurrentHashMap<>(this.open_Map);
+   public Map<String, Integer> getPeerStepProgressMap() {
+      return new ConcurrentHashMap<>(this.peerMacroStepProgress);
    }
 
-   public void get() {
-      this.open_Map.clear();
+   public void clearStepProgress() {
+      this.peerMacroStepProgress.clear();
    }
 
-   public void init_V_Runnable(Runnable callback) {
-      this.poll_Runnable = callback;
+   public void setOnStepProgressChanged(Runnable callback) {
+      this.onStepProgressChangedCallback = callback;
    }
 
-   public long init_J() {
-      return this.init_AtomicLong.get();
+   public long getPeerMacrosRevision() {
+      return this.peerMacrosRevision.get();
    }
 
-   public Map<String, Map<String, AutismMacro>> read_Map() {
-      return new HashMap<>(this.init_ConcurrentHashMap);
+   public Map<String, Map<String, AutismMacro>> getPeerMacros() {
+      return new HashMap<>(this.peerMacros);
    }
 
-   public List<String> init_List_Str(String macroName) {
+   public List<String> findPeersMissingMacro(String macroName) {
       List<String> missing = new ArrayList<>();
       if (macroName != null && !macroName.isBlank()) {
-         Map<String, Map<String, AutismMacro>> remote = this.read_Map();
+         Map<String, Map<String, AutismMacro>> remote = this.getPeerMacros();
 
-         for (String peer : new TreeSet<>(this.init_Map.keySet())) {
-            if (!peer.equals(this.write_Str)) {
+         for (String peer : new TreeSet<>(this.connectedClients.keySet())) {
+            if (!peer.equals(this.localUsername)) {
                Map<String, AutismMacro> peerMacros = remote.get(peer);
                if (peerMacros == null || !peerMacros.containsKey(MacroNameNormalizer.init(macroName))) {
                   missing.add(peer);
@@ -2627,16 +2627,16 @@ public class LanSyncManager {
       }
    }
 
-   public Map<String, String> init_Map_Map(Map<String, String> assignments) {
+   public Map<String, String> findMissingAssignedMacros(Map<String, String> assignments) {
       Map<String, String> missing = new LinkedHashMap<>();
       if (assignments != null && !assignments.isEmpty()) {
-         Map<String, Map<String, AutismMacro>> remote = this.read_Map();
+         Map<String, Map<String, AutismMacro>> remote = this.getPeerMacros();
 
          for (Entry<String, String> entry : new LinkedHashMap<>(assignments).entrySet()) {
             String username = entry.getKey();
             String macroName = entry.getValue();
             if (username != null && !username.isBlank() && macroName != null && !macroName.isBlank()) {
-               if (username.equals(this.write_Str)) {
+               if (username.equals(this.localUsername)) {
                   if (MacroLibraryManager.getInstance().findByName(macroName) == null) {
                      missing.put(username, macroName);
                   }
@@ -2655,11 +2655,11 @@ public class LanSyncManager {
       }
    }
 
-   public List<String> load_List() {
+   public List<String> getRemoteMacroNames() {
       Map<String, String> remoteMacros = new LinkedHashMap<>();
 
-      for (Entry<String, Map<String, AutismMacro>> entry : this.init_ConcurrentHashMap.entrySet()) {
-         if (!entry.getKey().equals(this.write_Str)) {
+      for (Entry<String, Map<String, AutismMacro>> entry : this.peerMacros.entrySet()) {
+         if (!entry.getKey().equals(this.localUsername)) {
             for (AutismMacro macro : entry.getValue().values()) {
                if (macro != null) {
                   String key = MacroNameNormalizer.init(macro.name);
@@ -2672,8 +2672,8 @@ public class LanSyncManager {
       return new ArrayList<>(remoteMacros.values());
    }
 
-   public void load(String clientUsername, String macroName) {
-      Map<String, AutismMacro> clientMacros = this.init_ConcurrentHashMap.get(clientUsername);
+   public void importPeerMacro(String clientUsername, String macroName) {
+      Map<String, AutismMacro> clientMacros = this.peerMacros.get(clientUsername);
       AutismMacro remoteMacro = clientMacros == null ? null : clientMacros.get(MacroNameNormalizer.init(macroName));
       if (remoteMacro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: " + macroName);
@@ -2694,11 +2694,11 @@ public class LanSyncManager {
       }
    }
 
-   public void load(Map<String, String> assignments) {
-      if (this.read_Str != null && this.write_Z()) {
-         this.update_Map.clear();
-         this.update_Map.putAll(assignments);
-         this.update_Str = this.write_Str;
+   public void broadcastMacroAssignments(Map<String, String> assignments) {
+      if (this.sessionId != null && this.isInSession()) {
+         this.syncedMacroAssignments.clear();
+         this.syncedMacroAssignments.putAll(assignments);
+         this.syncedAssignmentsSender = this.localUsername;
          StringBuilder sb = new StringBuilder();
 
          for (Entry<String, String> entry : assignments.entrySet()) {
@@ -2709,38 +2709,38 @@ public class LanSyncManager {
             sb.append(entry.getKey()).append('\t').append(entry.getValue());
          }
 
-         this.load(new autismclient.util.sync.LanSyncPacket.SyncManager(this.read_Str, this.write_Str, sb.toString()));
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.SyncManager(this.sessionId, this.localUsername, sb.toString()));
       }
    }
 
-   private void update(String sender, String encoded) {
-      this.update_Map.clear();
-      this.update_Str = sender;
+   private void applyRemoteMacroAssignments(String sender, String encoded) {
+      this.syncedMacroAssignments.clear();
+      this.syncedAssignmentsSender = sender;
       if (encoded != null && !encoded.isEmpty()) {
          String[] parts = encoded.split("\t");
 
          for (int i = 0; i + 1 < parts.length; i += 2) {
-            this.update_Map.put(parts[i], parts[i + 1]);
+            this.syncedMacroAssignments.put(parts[i], parts[i + 1]);
          }
       }
 
-      this.push(this.open_Runnable);
+      this.dispatchCallbackOnClientThread(this.onAssignmentsChangedCallback);
    }
 
-   public Map<String, String> update_Map() {
-      return new LinkedHashMap<>(this.update_Map);
+   public Map<String, String> getSyncedMacroAssignments() {
+      return new LinkedHashMap<>(this.syncedMacroAssignments);
    }
 
-   public String read_Str() {
-      return this.update_Str;
+   public String getSyncedAssignmentsSender() {
+      return this.syncedAssignmentsSender;
    }
 
-   public void load(Runnable callback) {
-      this.open_Runnable = callback;
+   public void setOnAssignmentsChanged(Runnable callback) {
+      this.onAssignmentsChangedCallback = callback;
    }
 
-   public List<String> load_List(String peerUsername) {
-      Map<String, AutismMacro> peerMacros = this.init_ConcurrentHashMap.get(peerUsername);
+   public List<String> getPeerMacroNames(String peerUsername) {
+      Map<String, AutismMacro> peerMacros = this.peerMacros.get(peerUsername);
       if (peerMacros != null && !peerMacros.isEmpty()) {
          List<String> names = new ArrayList<>(peerMacros.size());
 
@@ -2756,8 +2756,8 @@ public class LanSyncManager {
       }
    }
 
-   public boolean load_Z(String macroName) {
-      if (this.read_Str == null || !this.write_Z()) {
+   public boolean shareMacroWithPeers(String macroName) {
+      if (this.sessionId == null || !this.isInSession()) {
          AutismClientMessaging.sendPrefixed("§cJoin a session first.");
          return false;
       }
@@ -2768,7 +2768,7 @@ public class LanSyncManager {
             AutismClientMessaging.sendPrefixed("§cMacro not found: " + macroName);
             return false;
          } else {
-            this.init_V_Str(this.write_Str, macro, (byte)2);
+            this.sendMacroPackets(this.localUsername, macro, (byte)2);
             AutismClientMessaging.sendPrefixed("§aSent macro to peers: " + macro.name);
             return true;
          }
@@ -2778,8 +2778,8 @@ public class LanSyncManager {
       }
    }
 
-   public void update(String presetName) {
-      if (this.read_Str == null) {
+   public void sharePresetWithPeers(String presetName) {
+      if (this.sessionId == null) {
          AutismClientMessaging.sendPrefixed("§cNot in session.");
       } else {
          File file = new File(new File(AutismClientAddon.FOLDER, "presets"), presetName + ".json");
@@ -2788,7 +2788,7 @@ public class LanSyncManager {
          } else {
             try {
                String json = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-               this.load(new autismclient.util.sync.LanSyncPacket.IoWorker(this.read_Str, this.write_Str, presetName, json));
+               this.sendPacket(new autismclient.util.sync.LanSyncPacket.IoWorker(this.sessionId, this.localUsername, presetName, json));
                AutismClientMessaging.sendPrefixed("§aShared preset '" + presetName + "' with LAN.");
             } catch (IOException e) {
                AutismClientMessaging.sendPrefixed("§cFailed to read preset: " + e.getMessage());
@@ -2797,26 +2797,26 @@ public class LanSyncManager {
       }
    }
 
-   public void sync(String macroName) {
-      if (this.read_Str != null && this.write_Z()) {
-         this.load(new autismclient.util.sync.LanSyncPacket.RingBuffer(this.read_Str, macroName));
+   public void requestMacroFromPeers(String macroName) {
+      if (this.sessionId != null && this.isInSession()) {
+         this.sendPacket(new autismclient.util.sync.LanSyncPacket.RingBuffer(this.sessionId, macroName));
          AutismClientMessaging.sendPrefixed("§eRequesting macro: " + macroName);
       } else {
          AutismClientMessaging.sendPrefixed("§cNot in a LAN Sync session!");
       }
    }
 
-   public void init_V_Str_Z(String targetName, boolean isMacro) {
-      if (this.write_Z()) {
+   public void triggerActionSync(String targetName, boolean isMacro) {
+      if (this.isInSession()) {
          if (isMacro) {
-            this.load_V(targetName);
+            this.triggerMacroSync(targetName);
          } else {
-            this.flush_V();
+            this.triggerQueueFlushSync();
          }
       }
    }
 
-   private String init_Str_List(List<String> names) {
+   private String formatNamePreview(List<String> names) {
       if (names != null && !names.isEmpty()) {
          return names.size() <= 3 ? String.join(", ", names) : String.join(", ", names.subList(0, 3)) + " +" + (names.size() - 3) + " more";
       } else {
@@ -2824,7 +2824,7 @@ public class LanSyncManager {
       }
    }
 
-   private String init_Str_Map(Map<String, String> assignments) {
+   private String formatAssignmentPreview(Map<String, String> assignments) {
       if (assignments != null && !assignments.isEmpty()) {
          List<String> parts = new ArrayList<>();
 
@@ -2845,99 +2845,99 @@ public class LanSyncManager {
       }
    }
 
-   public void read_V_Runnable(Runnable callback) {
-      this.init_Runnable = callback;
+   public void setOnClientJoined(Runnable callback) {
+      this.onClientJoinedCallback = callback;
    }
 
-   public void write(Runnable callback) {
-      this.load_Runnable = callback;
+   public void setOnClientLeft(Runnable callback) {
+      this.onClientLeftCallback = callback;
    }
 
-   public void update(Runnable callback) {
-      this.read_Runnable = callback;
+   public void setUnusedEventCallback1(Runnable callback) {
+      this.unusedEventCallback1 = callback;
    }
 
-   public void sync(Runnable callback) {
-      this.write_Runnable = callback;
+   public void setUnusedEventCallback2(Runnable callback) {
+      this.unusedEventCallback2 = callback;
    }
 
-   public void flush(Runnable callback) {
-      this.update_Runnable = callback;
+   public void setOnSessionChanged(Runnable callback) {
+      this.onSessionChangedCallback = callback;
    }
 
-   public void close(Runnable callback) {
-      this.sync_Runnable = callback;
+   public void setOnSyncStateChanged(Runnable callback) {
+      this.onSyncStateChangedCallback = callback;
    }
 
-   public void open(Runnable callback) {
-      this.flush_Runnable = callback;
+   public void setOnSpreadUpdated(Runnable callback) {
+      this.onSpreadUpdatedCallback = callback;
    }
 
-   public void poll(Runnable callback) {
-      this.close_Runnable = callback;
+   public void setOnPeerStateChanged(Runnable callback) {
+      this.onPeerStateChangedCallback = callback;
    }
 
-   private void push(Runnable callback) {
+   private void dispatchCallbackOnClientThread(Runnable callback) {
       if (callback != null) {
          Minecraft.getInstance().execute(callback);
       }
    }
 
-   private String write_Str() {
+   private String generateSessionCode() {
       return String.format("%04d", (int)(Math.random() * 10000.0));
    }
 
-   private String update_Str() {
+   private String resolvePlayerUsername() {
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null ? mc.player.getName().getString() : "Player";
    }
 
-   public void init_V_Str_I(String username, int offsetMs) {
-      LanSyncManager.Inner_DataUtil info = this.init_Map.get(username);
+   public void setClientOffsetMs(String username, int offsetMs) {
+      LanSyncManager.Inner_DataUtil info = this.connectedClients.get(username);
       if (info != null) {
          int clamped = Math.max(0, offsetMs);
-         info.init_I = clamped;
-         if (this.read_Str != null) {
-            this.load(new autismclient.util.sync.LanSyncPacket.ByteReader(this.read_Str, this.write_Str, username, clamped));
+         info.offsetMs = clamped;
+         if (this.sessionId != null) {
+            this.sendPacket(new autismclient.util.sync.LanSyncPacket.ByteReader(this.sessionId, this.localUsername, username, clamped));
          }
       }
    }
 
-   public int load_I(String username) {
-      LanSyncManager.Inner_DataUtil info = this.init_Map.get(username);
-      return info != null ? info.init_I : 0;
+   public int getClientOffsetMs(String username) {
+      LanSyncManager.Inner_DataUtil info = this.connectedClients.get(username);
+      return info != null ? info.offsetMs : 0;
    }
 
-   public void flush(String message) {
-      this.init_Z_Str(message);
+   public void broadcastSyncedChat(String message) {
+      this.sendSyncedChat(message);
    }
 
    private static final class Inner_BufferHelper {
-      private final long init_J = System.currentTimeMillis();
-      private final byte[][] init_BArr2;
-      private int init_I;
-      private int load;
+      private final long createdAtMs = System.currentTimeMillis();
+      private final byte[][] chunks;
+      private int receivedChunks;
+      private int totalBytes;
 
       private Inner_BufferHelper(int totalChunks) {
-         this.init_BArr2 = new byte[totalChunks][];
+         this.chunks = new byte[totalChunks][];
       }
 
-      private synchronized byte[] init(int index, byte[] data) {
-         if (index >= 0 && index < this.init_BArr2.length && data != null) {
-            if (this.init_BArr2[index] == null) {
-               this.init_BArr2[index] = data;
-               this.init_I++;
-               this.load += data.length;
+      private synchronized byte[] acceptChunk(int index, byte[] data) {
+         if (index >= 0 && index < this.chunks.length && data != null) {
+            if (this.chunks[index] == null) {
+               this.chunks[index] = data;
+               this.receivedChunks++;
+               this.totalBytes += data.length;
             }
 
-            if (this.init_I != this.init_BArr2.length) {
+            if (this.receivedChunks != this.chunks.length) {
                return null;
             }
 
-            byte[] complete = new byte[this.load];
+            byte[] complete = new byte[this.totalBytes];
             int offset = 0;
 
-            for (byte[] chunk : this.init_BArr2) {
+            for (byte[] chunk : this.chunks) {
                if (chunk == null) {
                   return null;
                }
@@ -2960,28 +2960,28 @@ public class LanSyncManager {
    }
 
    private static final class Inner_ConfigStore {
-      final long init_J;
-      final long load;
-      volatile long read = 0L;
-      volatile Thread init_Thread = null;
+      final long executionId;
+      final long targetTick;
+      volatile long fireAtNano = 0L;
+      volatile Thread timerThread = null;
 
       Inner_ConfigStore(long executionId, long targetTick) {
-         this.init_J = executionId;
-         this.load = targetTick;
+         this.executionId = executionId;
+         this.targetTick = targetTick;
       }
    }
 
    public static class Inner_DataUtil {
-      public String init_Str;
-      public boolean init_Z;
-      public long init_J;
-      public int init_I;
+      public String username;
+      public boolean isHost;
+      public long joinedAtMs;
+      public int offsetMs;
 
       Inner_DataUtil(String username, boolean isHost) {
-         this.init_Str = username;
-         this.init_Z = isHost;
-         this.init_J = System.currentTimeMillis();
-         this.init_I = 0;
+         this.username = username;
+         this.isHost = isHost;
+         this.joinedAtMs = System.currentTimeMillis();
+         this.offsetMs = 0;
       }
    }
 
@@ -2996,14 +2996,14 @@ public class LanSyncManager {
    }
 
    public static class Inner_NetHelper {
-      public final long init_J;
-      public final boolean init_Z;
-      public final String init_Str;
-      public final String load_Str;
-      public final AutismMacro init_aM;
-      public final boolean load_Z;
-      public final LanSyncManager.Inner_StreamUtil init_aE_StreamUtil;
-      public volatile long load_J;
+      public final long executionId;
+      public final boolean isMacro;
+      public final String macroName;
+      public final String command;
+      public final AutismMacro macro;
+      public final boolean isInitiator;
+      public final LanSyncManager.Inner_StreamUtil executionMethod;
+      public volatile long targetTick;
 
       public Inner_NetHelper(long executionId, boolean isMacro, String macroName, String command, AutismMacro macro, boolean isInitiator) {
          this(executionId, isMacro, macroName, command, macro, isInitiator, LanSyncManager.Inner_StreamUtil.INSTANT, -1L);
@@ -3019,24 +3019,24 @@ public class LanSyncManager {
          LanSyncManager.Inner_StreamUtil executionMethod,
          long targetTick
       ) {
-         this.init_J = executionId;
-         this.init_Z = isMacro;
-         this.init_Str = macroName;
-         this.load_Str = command;
-         this.init_aM = macro;
-         this.load_Z = isInitiator;
-         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : LanSyncManager.Inner_StreamUtil.INSTANT;
-         this.load_J = targetTick;
+         this.executionId = executionId;
+         this.isMacro = isMacro;
+         this.macroName = macroName;
+         this.command = command;
+         this.macro = macro;
+         this.isInitiator = isInitiator;
+         this.executionMethod = executionMethod != null ? executionMethod : LanSyncManager.Inner_StreamUtil.INSTANT;
+         this.targetTick = targetTick;
       }
    }
 
    private static final class Inner_StateCache {
-      final long init_J;
-      final boolean init_Z;
+      final long actualTick;
+      final boolean late;
 
       Inner_StateCache(long actualTick, boolean late) {
-         this.init_J = actualTick;
-         this.init_Z = late;
+         this.actualTick = actualTick;
+         this.late = late;
       }
    }
 
@@ -3046,14 +3046,14 @@ public class LanSyncManager {
    }
 
    public static class Inner_TaskQueue {
-      public final long init_J;
-      public final String init_Str;
-      public final int init_I;
-      public final LanSyncManager.Inner_StreamUtil init_aE_StreamUtil;
-      public final long load_J;
-      public final int load_I;
-      public final boolean init_Z;
-      public final String load_Str;
+      public final long spreadNanos;
+      public final String lateClient;
+      public final int clientCount;
+      public final LanSyncManager.Inner_StreamUtil executionMethod;
+      public final long targetTick;
+      public final int maxTickOffset;
+      public final boolean perfectTickSync;
+      public final String tickReport;
 
       public Inner_TaskQueue(long spreadNanos, String lateClient, int clientCount) {
          this(spreadNanos, lateClient, clientCount, LanSyncManager.Inner_StreamUtil.INSTANT, -1L, 0, false, "");
@@ -3069,18 +3069,18 @@ public class LanSyncManager {
          boolean perfectTickSync,
          String tickReport
       ) {
-         this.init_J = spreadNanos;
-         this.init_Str = lateClient;
-         this.init_I = clientCount;
-         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : LanSyncManager.Inner_StreamUtil.INSTANT;
-         this.load_J = targetTick;
-         this.load_I = maxTickOffset;
-         this.init_Z = perfectTickSync;
-         this.load_Str = tickReport != null ? tickReport : "";
+         this.spreadNanos = spreadNanos;
+         this.lateClient = lateClient;
+         this.clientCount = clientCount;
+         this.executionMethod = executionMethod != null ? executionMethod : LanSyncManager.Inner_StreamUtil.INSTANT;
+         this.targetTick = targetTick;
+         this.maxTickOffset = maxTickOffset;
+         this.perfectTickSync = perfectTickSync;
+         this.tickReport = tickReport != null ? tickReport : "";
       }
 
-      public double init() {
-         return this.init_J / 1000000.0;
+      public double getSpreadMs() {
+         return this.spreadNanos / 1000000.0;
       }
    }
 }

@@ -94,7 +94,7 @@ public final class aP {
          }
 
          init_aO.init_V();
-         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.ClientInteractionOverride.clearAll();
          long window = mc.getWindow().handle();
 
          for (int key = 32; key <= 348; key++) {
@@ -530,9 +530,9 @@ public final class aP {
             try {
                mc.hitResult = hit;
                attackBlocked = !((AutismMinecraftAccessor)mc).autism$startAttack();
-               autismclient.util.ClientInteractionOverride.init("kill-aura", hit, true);
-               autismclient.util.ClientInteractionOverride.update_V();
-               attackBlocked &= !autismclient.util.ClientInteractionOverride.close_Z() && !((AutismMultiPlayerGameModeAccessor)mc.gameMode).autism$isDestroying();
+               autismclient.util.ClientInteractionOverride.queueAttackMiss("kill-aura", hit, true);
+               autismclient.util.ClientInteractionOverride.applyBeforeInputTick();
+               attackBlocked &= !autismclient.util.ClientInteractionOverride.ownsAttackInput() && !((AutismMultiPlayerGameModeAccessor)mc.gameMode).autism$isDestroying();
             } finally {
                mc.hitResult = previousHit;
             }

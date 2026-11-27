@@ -1471,13 +1471,13 @@ public class MacroWaitRegistry {
       }
 
       boolean load_Z() {
-         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
-         if (!sync.write_Z()) {
+         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.getInstance();
+         if (!sync.isInSession()) {
             return true;
          }
 
-         String myUsername = sync.load_Str();
-         Map<String, Integer> steps = sync.load_Map();
+         String myUsername = sync.getLocalUsername();
+         Map<String, Integer> steps = sync.getPeerStepProgressMap();
          if (!this.init_az.filterByUser) {
             return this.init(steps, myUsername, this.init_az.defaultStep);
          }
@@ -1486,7 +1486,7 @@ public class MacroWaitRegistry {
             return this.init(steps, myUsername, this.init_az.defaultStep);
          }
 
-         int peerCount = sync.load_I();
+         int peerCount = sync.getConnectedClientCount();
 
          for (WaitForLanStepAction.Inner_DataUtil req : this.init_az.entries) {
             String targetUser = req.init_Str;
@@ -1519,7 +1519,7 @@ public class MacroWaitRegistry {
                   return false;
                }
             } else {
-               Map<String, ?> clients = sync.init_Map();
+               Map<String, ?> clients = sync.getConnectedClients();
                if (clients.containsKey(targetUser)) {
                   int peerStep = steps.getOrDefault(targetUser, 0);
                   if (peerStep < req.init_I) {

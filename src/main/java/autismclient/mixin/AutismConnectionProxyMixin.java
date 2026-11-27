@@ -25,10 +25,10 @@ public abstract class AutismConnectionProxyMixin {
    private void autism$applyProxy(ChannelPipeline pipeline, CallbackInfo ci) {
       Connection connection = (Connection)(Object)this;
       if (connection.getReceiving() == PacketFlow.CLIENTBOUND && !(pipeline.channel() instanceof LocalChannel)) {
-         ProxyListManager manager = ProxyListManager.init_bY();
+         ProxyListManager manager = ProxyListManager.getInstance();
          ConnectionPrivacyRegistry.ProxyEndpoint route;
          synchronized (manager) {
-            bW main = manager.init_bW();
+            bW main = manager.getActiveProxy();
             route = main == null ? null : new ConnectionPrivacyRegistry.ProxyEndpoint(main.init_bZ, main.read, main.init_I, main.write, main.update);
          }
 

@@ -71,7 +71,7 @@ public class AutismMultiPlayerGameModeMixin {
          WTappingModule.init(player, entity);
          CombatAttackDispatcher.init(player, entity);
          RecentCombatTracker.init(player, entity);
-         AntiBotTracker.init_V(entity);
+         AntiBotTracker.onLocalPlayerAttackEntity(entity);
       }
    }
 

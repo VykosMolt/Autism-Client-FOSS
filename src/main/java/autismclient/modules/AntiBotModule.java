@@ -89,21 +89,21 @@ public final class AntiBotModule extends Module {
 
    @Override
    public void tick() {
-      AntiBotTracker.init_V();
+      AntiBotTracker.tick();
    }
 
    @Override
    public void onDisable() {
-      AntiBotTracker.load();
+      AntiBotTracker.resetAll();
    }
 
    @Override
    public void onGameJoin() {
-      AntiBotTracker.load();
+      AntiBotTracker.resetAll();
    }
 
    @Override
    public void onGameLeft() {
-      AntiBotTracker.load();
+      AntiBotTracker.resetAll();
    }
 }

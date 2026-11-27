@@ -212,7 +212,7 @@ public final class LoggedPacketActions {
 
    private static AutismMacroEditorOverlay load() {
       for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
-         if (overlay instanceof AutismMacroEditorOverlay macroEditor && macroEditor.sync_Z()) {
+         if (overlay instanceof AutismMacroEditorOverlay macroEditor && macroEditor.isVisible()) {
             return macroEditor;
          }
       }

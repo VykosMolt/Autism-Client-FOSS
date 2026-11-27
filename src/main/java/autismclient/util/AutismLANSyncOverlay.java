@@ -83,12 +83,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.close_V_6();
       this.run = this.push;
       this.get = this.reset();
-      LanSyncManager sync = LanSyncManager.init_aE();
-      sync.read_V_Runnable(() -> {});
-      sync.write(() -> {});
-      sync.close(() -> {});
-      sync.open(() -> {});
-      sync.poll(() -> {});
+      LanSyncManager sync = LanSyncManager.getInstance();
+      sync.setOnClientJoined(() -> {});
+      sync.setOnClientLeft(() -> {});
+      sync.setOnSyncStateChanged(() -> {});
+      sync.setOnSpreadUpdated(() -> {});
+      sync.setOnPeerStateChanged(() -> {});
    }
 
    public static synchronized AutismLANSyncOverlay init_AutismLANSyncOverl_Font(Font textRenderer) {
@@ -101,22 +101,22 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.push;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.clear();
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.pop, this.tick, this.run, this.push_I_12(), this.sync_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampToScreen(this, bounds);
          this.pop = clamped.x;
@@ -129,25 +129,25 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    public void load_V_10() {
-      this.init_V_Z(!this.sync_Z);
+      this.setVisible(!this.sync_Z);
    }
 
    public void load(boolean configurationOnly) {
       this.flush_Z = configurationOnly;
-      LanSyncManager.init_aE().load(configurationOnly);
+      LanSyncManager.getInstance().setConfigurationOnly(configurationOnly);
       if (configurationOnly && this.init_k != null) {
          this.init_k.setFocused(false);
       }
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       this.sync_Z = visible;
       if (visible) {
-         LanSyncManager sync = LanSyncManager.init_aE();
+         LanSyncManager sync = LanSyncManager.getInstance();
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
-         if ((this.flush_Z || module.isActive() && module.isLanSyncEnabled()) && !sync.init_Z()) {
-            sync.init_V();
+         if ((this.flush_Z || module.isActive() && module.isLanSyncEnabled()) && !sync.isRunning()) {
+            sync.startService();
          }
 
          OverlayManager.getInstance().bringToFront(this);
@@ -159,21 +159,21 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.sync_Z;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.update_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       if (this.update_Z != collapsed) {
          this.update_Z = collapsed;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
          this.read_V_5();
@@ -181,24 +181,24 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_k != null && this.init_k.isFocused();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       if (this.init_k != null && this.init_k.isFocused()) {
          this.init_k.setFocused(false);
       }
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
@@ -208,23 +208,23 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.sync_Z) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
+      OverlayBounds bounds = this.getBounds();
       return mouseX >= this.pop && mouseX <= this.pop + this.run && mouseY >= this.tick && mouseY <= this.tick + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    private int push_I_12() {
-      LanSyncManager sync = LanSyncManager.init_aE();
-      if (!sync.init_Z()) {
+      LanSyncManager sync = LanSyncManager.getInstance();
+      if (!sync.isRunning()) {
          return 18 + this.reset * 2 + 4;
       }
 
-      if (!sync.write_Z()) {
-         return sync.sync_Z() ? 14 + this.set_I_8() + this.add + 4 : 14 + this.get_I_8() + this.add + 4;
+      if (!sync.isInSession()) {
+         return sync.isSearching() ? 14 + this.set_I_8() + this.add + 4 : 14 + this.get_I_8() + this.add + 4;
       }
 
       int contentH = this.init_I_aE(sync);
@@ -236,22 +236,22 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       switch (this.valid) {
          case 0:
             int h = 4 + this.reset * 3;
-            if (sync.flush_Z()) {
+            if (sync.isReconnecting()) {
                h += this.reset;
             }
 
             h += 2 + this.reset;
-            if (sync.init_aE_TaskQueue() != null) {
+            if (sync.getLastSpreadResult() != null) {
                h += this.reset;
             }
 
-            if (!sync.init_List().isEmpty()) {
+            if (!sync.getSpreadHistory().isEmpty()) {
                h += this.reset;
             }
 
             return h + 4 + this.add + 4;
          case 1:
-            int peerCount = sync.load_I();
+            int peerCount = sync.getConnectedClientCount();
             int h1 = 4 + this.reset + this.add + 2 + this.reset + 2 + peerCount * (this.clear + 1);
             if (this.read_Str != null) {
                h1 += this.add_I_8() + 2;
@@ -279,11 +279,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             }
 
             h2 += 4 + this.reset;
-            if (this.open_Z && !sync.read_Str().isEmpty()) {
+            if (this.open_Z && !sync.getSyncedAssignmentsSender().isEmpty()) {
                h2 += this.reset;
             }
 
-            if (sync.init_aE_TaskQueue() != null) {
+            if (sync.getLastSpreadResult() != null) {
                h2 += this.reset;
             }
 
@@ -306,12 +306,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       shared.setLanSyncSelectedMacroName(this.init_Str_2);
       shared.setLanSyncExpandedExecutePeer(this.load_Str);
       shared.setLanSyncSelectedPeer(this.read_Str);
-      this.a__V();
+      this.saveBounds();
    }
 
    public void write_V_10() {
       AutismSessionState shared = AutismSessionState.getInstance();
-      this.b__V();
+      this.loadBounds();
       this.sync_Z = shared.isLanSyncOverlayVisible();
       this.pop = shared.getLanSyncOverlayX();
       this.tick = shared.getLanSyncOverlayY();
@@ -343,7 +343,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_aE(LanSyncManager sync) {
-      return sync.init_Z() && sync.write_Z() && !sync.sync_Z();
+      return sync.isRunning() && sync.isInSession() && !sync.isSearching();
    }
 
    private int pop_I_12() {
@@ -416,14 +416,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_aE(LanSyncManager sync) {
-      Set<String> connectedPeers = sync.init_Map().keySet();
+      Set<String> connectedPeers = sync.getConnectedClients().keySet();
 
       for (String peer : connectedPeers) {
          this.init_Map.putIfAbsent(peer, "");
       }
 
       this.init_Map.keySet().retainAll(connectedPeers);
-      Map<String, String> synced = sync.update_Map();
+      Map<String, String> synced = sync.getSyncedMacroAssignments();
 
       for (Entry<String, String> se : synced.entrySet()) {
          if (connectedPeers.contains(se.getKey())) {
@@ -456,11 +456,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          myMacroKeys.add(MacroNameNormalizer.init(macro.name));
       }
 
-      if (peer.equals(sync.load_Str())) {
+      if (peer.equals(sync.getLocalUsername())) {
          return myMacroList.size() * this.run_I_10();
       }
 
-      Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+      Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
       Map<String, AutismMacro> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
       Set<String> peerMacroKeys = new LinkedHashSet<>();
 
@@ -555,15 +555,15 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
-      if (this.sync_Z || this.a__Z()) {
-         LanSyncManager sync = LanSyncManager.init_aE();
+   public void render(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
+      if (this.sync_Z || this.isClosing()) {
+         LanSyncManager sync = LanSyncManager.getInstance();
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          this.count++;
          if (this.count >= 10) {
             this.count = 0;
-            if (!sync.init_Z() && (this.flush_Z || module.isActive() && module.isLanSyncEnabled())) {
-               sync.init_V();
+            if (!sync.isRunning() && (this.flush_Z || module.isActive() && module.isLanSyncEnabled())) {
+               sync.startService();
             }
          }
 
@@ -580,11 +580,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                this.init_V_I_5(panelHeight);
                int contentY = this.tick + 14;
                int chatTopY = this.tick + panelHeight - this.prev;
-               if (!sync.init_Z()) {
+               if (!sync.isRunning()) {
                   this.init_V_GuiGraphicsExtract_4(ctx, mouseX, mouseY, contentY);
-               } else if (!sync.write_Z() && !sync.sync_Z()) {
+               } else if (!sync.isInSession() && !sync.isSearching()) {
                   this.load(ctx, mouseX, mouseY, contentY);
-               } else if (sync.sync_Z()) {
+               } else if (sync.isSearching()) {
                   this.read(ctx, mouseX, mouseY, contentY);
                } else {
                   this.write(ctx, mouseX, mouseY, contentY);
@@ -614,7 +614,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(mouseX, mouseY), this.close_Z);
                }
 
-               if (sync.init_Z() && sync.write_Z()) {
+               if (sync.isRunning() && sync.isInSession()) {
                   this.init_V_GuiGraphicsExtract_3(ctx, mouseX, mouseY);
                }
             } finally {
@@ -655,13 +655,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int createX = this.pop + this.start + Math.max(0, (this.run - this.start * 2 - totalW) / 2);
       int searchX = createX + createW + gap;
       this.init(ctx, createX, btnY, createW, this.add, "Create", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(createX, btnY, createW, this.add, () -> LanSyncManager.init_aE().write_V()));
+      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(createX, btnY, createW, this.add, () -> LanSyncManager.getInstance().createSession()));
       this.init(ctx, searchX, btnY, searchW, this.add, "Search", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(searchX, btnY, searchW, this.add, () -> LanSyncManager.init_aE().close_V()));
+      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(searchX, btnY, searchW, this.add, () -> LanSyncManager.getInstance().startSessionSearch()));
    }
 
    private void read(GuiGraphicsExtractor ctx, int mx, int my, int y) {
-      int secondsLeft = LanSyncManager.init_aE().read_I();
+      int secondsLeft = LanSyncManager.getInstance().getSearchSecondsRemaining();
       String text = "Searching... " + secondsLeft + "s";
       int tw = autismclient.gui.f.b.k.init(this.init_Font, text, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), -22016);
       this.init(ctx, text, autismclient.gui.f.b.l.load, -22016, this.pop + (this.run - tw) / 2, y + 4);
@@ -674,14 +674,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       );
       int cancelX = this.pop + (this.run - cancelW) / 2;
       this.init(ctx, cancelX, btnY, cancelW, this.add, "Cancel Search", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(cancelX, btnY, cancelW, this.add, () -> LanSyncManager.init_aE().open_V()));
+      this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(cancelX, btnY, cancelW, this.add, () -> LanSyncManager.getInstance().cancelSessionSearch()));
    }
 
    private void init_V_I_5(int panelHeight) {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, this.pop + this.start, this.tick, this.run - this.start * 2, this.stop, true);
          this.init_k.setHistoryNavigationEnabled(true);
-         this.init_k.setSubmitHandler(message -> LanSyncManager.init_aE().init_Z_Str(message));
+         this.init_k.setSubmitHandler(message -> LanSyncManager.getInstance().sendSyncedChat(message));
       }
 
       int fieldX = this.pop + this.start;
@@ -691,7 +691,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.init_k.setY(fieldY);
       this.init_k.setWidth(fieldWidth);
       this.init_k.setHeight(this.stop);
-      boolean enabled = !this.flush_Z && LanSyncManager.init_aE().init_Z() && LanSyncManager.init_aE().write_Z();
+      boolean enabled = !this.flush_Z && LanSyncManager.getInstance().isRunning() && LanSyncManager.getInstance().isInSession();
       this.init_k.setEditable(enabled);
       this.init_k.setSubmitOnEnter(enabled);
       this.init_k
@@ -730,45 +730,45 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
-      LanSyncManager sync = LanSyncManager.init_aE();
+      LanSyncManager sync = LanSyncManager.getInstance();
       int lx = this.pop + this.start;
       int cy = y + 4;
       int vx = lx + this.put();
       this.init(ctx, "Session", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
-      this.init(ctx, sync.init_Str(), autismclient.gui.f.b.l.read, -1, vx, cy);
+      this.init(ctx, sync.getSessionId(), autismclient.gui.f.b.l.read, -1, vx, cy);
       cy += this.reset;
-      String role = sync.update_Z() ? "Host" : "Client";
-      int roleColor = sync.update_Z() ? -22016 : -11141291;
+      String role = sync.isHost() ? "Host" : "Client";
+      int roleColor = sync.isHost() ? -22016 : -11141291;
       this.init(ctx, "Role", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
       this.init(ctx, role, autismclient.gui.f.b.l.read, roleColor, vx, cy);
       cy += this.reset;
       this.init(ctx, "Peers", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
-      this.init(ctx, String.valueOf(sync.load_I()), autismclient.gui.f.b.l.read, -1, vx, cy);
+      this.init(ctx, String.valueOf(sync.getConnectedClientCount()), autismclient.gui.f.b.l.read, -1, vx, cy);
       cy += this.reset;
-      if (sync.flush_Z()) {
+      if (sync.isReconnecting()) {
          this.init(ctx, "Reconnecting...", autismclient.gui.f.b.l.load, -22016, lx, cy);
          cy += this.reset;
       }
 
       cy += 2;
-      LanSyncManager.Inner_JsonUtil state = sync.init_aE_JsonUtil();
+      LanSyncManager.Inner_JsonUtil state = sync.getSyncState();
       String stateStr = state.name();
       int stateColor = this.init_I_aE_JsonUtil(state);
       this.init(ctx, "Sync", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
       this.init(ctx, stateStr, autismclient.gui.f.b.l.read, stateColor, vx, cy);
       cy += this.reset;
-      LanSyncManager.Inner_TaskQueue spread = sync.init_aE_TaskQueue();
+      LanSyncManager.Inner_TaskQueue spread = sync.getLastSpreadResult();
       if (spread != null) {
-         String spreadStr = spread.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK
-            ? (spread.init_Z ? "Tick perfect" : spread.load_I + " tick off")
-            : String.format("%.1fms", spread.init());
-         int spreadColor = this.init_I_D(spread.init());
+         String spreadStr = spread.executionMethod == LanSyncManager.Inner_StreamUtil.TICK
+            ? (spread.perfectTickSync ? "Tick perfect" : spread.maxTickOffset + " tick off")
+            : String.format("%.1fms", spread.getSpreadMs());
+         int spreadColor = this.init_I_D(spread.getSpreadMs());
          this.init(ctx, "Spread", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
          this.init(ctx, spreadStr, autismclient.gui.f.b.l.read, spreadColor, vx, cy);
-         if (spread.init_Str != null && !spread.init_Str.isEmpty() && spread.init() > 0.0) {
+         if (spread.lateClient != null && !spread.lateClient.isEmpty() && spread.getSpreadMs() > 0.0) {
             this.init(
                ctx,
-               " (" + spread.init_Str + ")",
+               " (" + spread.lateClient + ")",
                autismclient.gui.f.b.l.write,
                UiColorPalette.textSecondary(),
                vx + autismclient.gui.f.b.k.init(this.init_Font, spreadStr, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), spreadColor),
@@ -779,13 +779,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          cy += this.reset;
       }
 
-      List<LanSyncManager.Inner_TaskQueue> history = sync.init_List();
+      List<LanSyncManager.Inner_TaskQueue> history = sync.getSpreadHistory();
       if (!history.isEmpty()) {
          this.init(ctx, "History", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
          int dotX = vx + 2;
 
          for (LanSyncManager.Inner_TaskQueue sr : history) {
-            int dotColor = this.init_I_D(sr.init());
+            int dotColor = this.init_I_D(sr.getSpreadMs());
             autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(ctx, dotX, cy + 2, 6, 6, dotColor);
             dotX += 9;
          }
@@ -807,7 +807,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       this.init_List
-         .add(new AutismLANSyncOverlay.Inner_StreamUtil(this.pop + this.start, btnY, this.run - this.start * 2, this.add, () -> LanSyncManager.init_aE().update_V()));
+         .add(new AutismLANSyncOverlay.Inner_StreamUtil(this.pop + this.start, btnY, this.run - this.start * 2, this.add, () -> LanSyncManager.getInstance().leaveSession()));
    }
 
    private int put() {
@@ -825,18 +825,18 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private void load(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
-      LanSyncManager sync = LanSyncManager.init_aE();
+      LanSyncManager sync = LanSyncManager.getInstance();
       int lx = this.pop + this.start;
       int cy = y + 4;
       int rowWidth = this.tick_I_10() + 4;
-      Map<String, LanSyncManager.Inner_DataUtil> clients = sync.init_Map();
+      Map<String, LanSyncManager.Inner_DataUtil> clients = sync.getConnectedClients();
       List<LanSyncManager.Inner_DataUtil> sortedClients = new ArrayList<>(clients.values());
-      sortedClients.sort((a, b) -> Boolean.compare(b.init_Z, a.init_Z));
+      sortedClients.sort((a, b) -> Boolean.compare(b.isHost, a.isHost));
       this.init(ctx, "Execution Method", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
       cy += this.reset;
       int methodW = (rowWidth - 2) / 2;
-      boolean instant = sync.init_aE_StreamUtil() == LanSyncManager.Inner_StreamUtil.INSTANT;
-      boolean syncIdle = sync.init_aE_JsonUtil() == LanSyncManager.Inner_JsonUtil.IDLE || sync.init_aE_JsonUtil() == LanSyncManager.Inner_JsonUtil.DONE;
+      boolean instant = sync.getExecutionMethod() == LanSyncManager.Inner_StreamUtil.INSTANT;
+      boolean syncIdle = sync.getSyncState() == LanSyncManager.Inner_JsonUtil.IDLE || sync.getSyncState() == LanSyncManager.Inner_JsonUtil.DONE;
       boolean canChangeMethod = syncIdle;
       this.init(
          ctx,
@@ -851,7 +851,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(LanSyncManager.Inner_StreamUtil.INSTANT)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.setExecutionMethod(LanSyncManager.Inner_StreamUtil.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -869,12 +869,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(LanSyncManager.Inner_StreamUtil.TICK)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.setExecutionMethod(LanSyncManager.Inner_StreamUtil.TICK)));
       }
 
       cy += this.add + 2;
-      String methodHint = instant ? "Current: immediate GO-sync" : "Current: executes +" + sync.init_I() + " server ticks";
-      if (sync.write_Z() && !sync.update_Z()) {
+      String methodHint = instant ? "Current: immediate GO-sync" : "Current: executes +" + sync.getTickSyncLeadTicks() + " server ticks";
+      if (sync.isInSession() && !sync.isHost()) {
          methodHint = methodHint + " (host verified)";
       }
 
@@ -882,7 +882,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       cy += this.reset + 2;
 
       for (LanSyncManager.Inner_DataUtil client : sortedClients) {
-         boolean isSelected = client.init_Str.equals(this.read_Str);
+         boolean isSelected = client.username.equals(this.read_Str);
          boolean isHov = this.init(mx, my, lx - 2, cy, this.run - this.start * 2 + 4, this.clear);
          autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
             ctx, this.init_Font, "", lx - 2, cy, rowWidth, this.clear, isHov, isSelected, autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
@@ -897,22 +897,22 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             ThemePaletteManager.recolor(-1204284392, ThemePaletteManager.ColorRole.OUTLINE),
             1.0F
          );
-         LanSyncManager.Inner_CachePool status = sync.init_aE_CachePool_Str(client.init_Str);
+         LanSyncManager.Inner_CachePool status = sync.getPeerHealth(client.username);
          int dotColor = status == LanSyncManager.Inner_CachePool.HEALTHY ? -11141291 : (status == LanSyncManager.Inner_CachePool.STALE ? -22016 : -7829368);
          autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(ctx, lx + 10, cy + 4, 5, 5, dotColor);
-         boolean isSelf = client.init_Str.equals(sync.load_Str());
-         int nameColor = isHov ? -2245633 : (client.init_Z ? -22016 : -1);
+         boolean isSelf = client.username.equals(sync.getLocalUsername());
+         int nameColor = isHov ? -2245633 : (client.isHost ? -22016 : -1);
          int rightReserve = 4;
          if (isSelf) {
             rightReserve += autismclient.gui.f.b.k.init(this.init_Font, " (YOU)", init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), UiColorPalette.textBody())
                + 2;
          }
 
-         if (client.init_Z) {
+         if (client.isHost) {
             rightReserve += autismclient.gui.f.b.k.init(this.init_Font, " [HOST]", init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), -22016) + 2;
          }
 
-         int offset = client.init_I;
+         int offset = client.offsetMs;
          if (offset > 0) {
             rightReserve += autismclient.gui.f.b.k.init(
                   this.init_Font, "+" + offset + "ms", init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), -11149825
@@ -921,7 +921,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          int nameMaxW = Math.max(20, rowWidth - 18 - rightReserve);
-         String displayName = ThemedTextHelper.init(this.init_Font, client.init_Str, nameMaxW, ThemedTextHelper.TextTone.BODY);
+         String displayName = ThemedTextHelper.init(this.init_Font, client.username, nameMaxW, ThemedTextHelper.TextTone.BODY);
          autismclient.gui.f.b.k.init(
             ctx, this.init_Font, displayName, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), nameColor, lx + 18, cy + 3, false
          );
@@ -934,7 +934,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             badgeX += autismclient.gui.f.b.k.init(this.init_Font, "(YOU)", init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), UiColorPalette.textBody()) + 4;
          }
 
-         if (client.init_Z) {
+         if (client.isHost) {
             this.init(ctx, "[HOST]", autismclient.gui.f.b.l.load, -22016, badgeX, cy + 3);
          }
 
@@ -944,7 +944,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             this.init(ctx, offsetStr, autismclient.gui.f.b.l.read, -11149825, this.pop + this.run - this.start - ofw, cy + 3);
          }
 
-         String peerName = client.init_Str;
+         String peerName = client.username;
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx - 2, cy, rowWidth, this.clear, () -> {
             this.read_Str = peerName.equals(this.read_Str) ? null : peerName;
             this.read_V_5();
@@ -975,8 +975,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                false
             );
             this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(ctrlX, dy, btnS, btnS, () -> {
-               int cur = sync.load_I(peerName);
-               sync.init_V_Str_I(peerName, Math.max(0, cur - 1));
+               int cur = sync.getClientOffsetMs(peerName);
+               sync.setClientOffsetMs(peerName, Math.max(0, cur - 1));
             }));
             ctrlX += btnS + 2;
             String valStr = offset + "ms";
@@ -994,8 +994,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                false
             );
             this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(ctrlX, dy, btnS, btnS, () -> {
-               int cur = sync.load_I(peerName);
-               sync.init_V_Str_I(peerName, cur + 1);
+               int cur = sync.getClientOffsetMs(peerName);
+               sync.setClientOffsetMs(peerName, cur + 1);
             }));
             ctrlX += btnS + 4;
             int resetW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
@@ -1004,7 +1004,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                )
             );
             this.init(ctx, ctrlX, dy, resetW, btnS, "Reset", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-            this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(ctrlX, dy, resetW, btnS, () -> sync.init_V_Str_I(peerName, 0)));
+            this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(ctrlX, dy, resetW, btnS, () -> sync.setClientOffsetMs(peerName, 0)));
             cy += detailH + 2;
          }
       }
@@ -1014,7 +1014,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private void read(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
-      LanSyncManager sync = LanSyncManager.init_aE();
+      LanSyncManager sync = LanSyncManager.getInstance();
       int lx = this.pop + this.start;
       int cy = y + 4;
       AutismSessionState state = AutismSessionState.getInstance();
@@ -1023,8 +1023,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.init(ctx, "Execution Method", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, cy);
       cy += this.reset;
       int methodW = (btnW - 2) / 2;
-      boolean instant = sync.init_aE_StreamUtil() == LanSyncManager.Inner_StreamUtil.INSTANT;
-      boolean syncIdle = sync.init_aE_JsonUtil() == LanSyncManager.Inner_JsonUtil.IDLE || sync.init_aE_JsonUtil() == LanSyncManager.Inner_JsonUtil.DONE;
+      boolean instant = sync.getExecutionMethod() == LanSyncManager.Inner_StreamUtil.INSTANT;
+      boolean syncIdle = sync.getSyncState() == LanSyncManager.Inner_JsonUtil.IDLE || sync.getSyncState() == LanSyncManager.Inner_JsonUtil.DONE;
       this.init(
          ctx,
          lx,
@@ -1038,7 +1038,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(LanSyncManager.Inner_StreamUtil.INSTANT)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.setExecutionMethod(LanSyncManager.Inner_StreamUtil.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -1056,7 +1056,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(LanSyncManager.Inner_StreamUtil.TICK)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.setExecutionMethod(LanSyncManager.Inner_StreamUtil.TICK)));
       }
 
       cy += this.add + 2;
@@ -1079,7 +1079,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle && !this.flush_Z) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.init_V_Z(!AutismSessionState.getInstance().isDelayPacketsEnabled())));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.triggerDelayPacketsSync(!AutismSessionState.getInstance().isDelayPacketsEnabled())));
       }
 
       cy += this.add + 2;
@@ -1088,8 +1088,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> {
             try {
                String queueData = MacroClipboardCodec.init_Str(AutismSessionState.getInstance().getDelayedPackets());
-               sync.write(queueData);
-               AutismClientMessaging.sendPrefixed("§aQueue broadcasted to " + (sync.load_I() - 1) + " peers");
+               sync.broadcastQueueData(queueData);
+               AutismClientMessaging.sendPrefixed("§aQueue broadcasted to " + (sync.getConnectedClientCount() - 1) + " peers");
             } catch (Exception e) {
                AutismClientMessaging.sendPrefixed("§cFailed to broadcast queue");
             }
@@ -1110,14 +1110,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle && !this.flush_Z) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.flush_V()));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.triggerQueueFlushSync()));
       }
 
       this.data = 0;
    }
 
    private void write(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
-      LanSyncManager sync = LanSyncManager.init_aE();
+      LanSyncManager sync = LanSyncManager.getInstance();
       int lx = this.pop + this.start;
       int cy = y + 4;
       int btnW = this.run - this.start * 2;
@@ -1132,9 +1132,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.flush_V_7();
          if (this.open_Z) {
             this.init_Map.clear();
-            Map<String, String> synced = sync.update_Map();
+            Map<String, String> synced = sync.getSyncedMacroAssignments();
 
-            for (String peer : sync.init_Map().keySet()) {
+            for (String peer : sync.getConnectedClients().keySet()) {
                this.init_Map.put(peer, synced.getOrDefault(peer, ""));
             }
          }
@@ -1153,33 +1153,33 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       boolean anyRunning = MacroExecutor.hasVisibleActiveRun();
       if (anyRunning && !this.flush_Z) {
          this.init(ctx, lx, cy, btnW, this.add, "Sync Stop All", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.run()));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.stopAllMacrosOnLan()));
          cy += this.add + 4;
       }
 
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, lx - 2, cy, this.pop + this.run - this.start - lx + 4);
       cy += 4;
-      LanSyncManager.Inner_JsonUtil state = sync.init_aE_JsonUtil();
+      LanSyncManager.Inner_JsonUtil state = sync.getSyncState();
       String stateStr = this.init_Str_aE_JsonUtil_aE(state, sync);
       int stateColor = this.init_I_aE_JsonUtil(state);
       this.init(ctx, "Status: " + stateStr, autismclient.gui.f.b.l.read, stateColor, lx, cy);
       cy += this.reset;
-      String setBy = sync.read_Str();
+      String setBy = sync.getSyncedAssignmentsSender();
       if (this.open_Z && !setBy.isEmpty()) {
          this.init(ctx, "Assigned by: " + setBy, autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), lx, cy);
          cy += this.reset;
       }
 
-      LanSyncManager.Inner_TaskQueue spread = sync.init_aE_TaskQueue();
+      LanSyncManager.Inner_TaskQueue spread = sync.getLastSpreadResult();
       if (spread != null) {
-         String spreadStr = spread.init_aE_StreamUtil == LanSyncManager.Inner_StreamUtil.TICK
+         String spreadStr = spread.executionMethod == LanSyncManager.Inner_StreamUtil.TICK
             ? (
-               spread.init_Z
-                  ? "Last: perfect tick " + spread.load_J + " (" + spread.init_I + " clients)"
-                  : "Last: " + spread.load_I + " tick off @ " + spread.load_J + " (" + spread.init_I + " clients)"
+               spread.perfectTickSync
+                  ? "Last: perfect tick " + spread.targetTick + " (" + spread.clientCount + " clients)"
+                  : "Last: " + spread.maxTickOffset + " tick off @ " + spread.targetTick + " (" + spread.clientCount + " clients)"
             )
-            : String.format("Last spread: %.1fms (%d clients)", spread.init(), spread.init_I);
-         this.init(ctx, spreadStr, autismclient.gui.f.b.l.read, this.init_I_D(spread.init()), lx, cy);
+            : String.format("Last spread: %.1fms (%d clients)", spread.getSpreadMs(), spread.clientCount);
+         this.init(ctx, spreadStr, autismclient.gui.f.b.l.read, this.init_I_D(spread.getSpreadMs()), lx, cy);
          cy += this.reset;
       }
 
@@ -1251,7 +1251,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          if (syncStatus.init_List.isEmpty() && syncStatus.init_Map.isEmpty()) {
-            String readyLine = sync.load_I() > 1 ? "All peers have this macro" : "Ready to execute";
+            String readyLine = sync.getConnectedClientCount() > 1 ? "All peers have this macro" : "Ready to execute";
             this.init(ctx, readyLine, autismclient.gui.f.b.l.read, -9837157, lx, cy);
             cy += this.reset;
          } else if (syncStatus.init_List.isEmpty()) {
@@ -1265,13 +1265,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       );
       int executeX = lx + shareW + 2;
       int executeW = btnW - shareW - 2;
-      boolean shareEnabled = this.init_Str_2 != null && sync.load_I() > 1;
+      boolean shareEnabled = this.init_Str_2 != null && sync.getConnectedClientCount() > 1;
       boolean executeEnabled = !this.flush_Z && this.init_Str_2 != null && syncStatus.init();
       if (shareEnabled) {
          this.init(ctx, lx, cy, shareW, this.add, "Send To Peers", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, shareW, this.add, () -> {
             if (this.init_Str_2 != null) {
-               sync.load_Z(this.init_Str_2);
+               sync.shareMacroWithPeers(this.init_Str_2);
             }
          }));
       } else {
@@ -1293,7 +1293,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init(ctx, executeX, cy, executeW, this.add, executeLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(executeX, cy, executeW, this.add, () -> {
             if (this.init_Str_2 != null) {
-               sync.load_V(this.init_Str_2);
+               sync.triggerMacroSync(this.init_Str_2);
             }
          }));
       } else {
@@ -1337,7 +1337,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             String peer = entry.getKey();
             String assigned = entry.getValue();
             boolean isExpanded = peer.equals(this.load_Str);
-            boolean isMe = peer.equals(sync.load_Str());
+            boolean isMe = peer.equals(sync.getLocalUsername());
             boolean rowVisible = cy + rowPitch > clipTop && cy < clipBottom;
             boolean rowHov = rowVisible && this.init(mx, my, lx - 2, cy, rowW, rowPitch);
             String peerLabel = peer + (isMe ? " (you)" : "");
@@ -1411,7 +1411,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                      );
                   }
                } else {
-                  Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+                  Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
                   Map<String, AutismMacro> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
                   Set<String> peerMacroKeys = new LinkedHashSet<>();
 
@@ -1524,7 +1524,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init(ctx, lx, cy, shareW, this.add, sendLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, shareW, this.add, () -> {
             for (String macroName : var521) {
-               sync.load_Z(macroName);
+               sync.shareMacroWithPeers(macroName);
             }
          }));
       } else {
@@ -1544,7 +1544,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init(ctx, executeX, cy, executeW, this.add, puLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(executeX, cy, executeW, this.add, () -> {
             if (!var51.init.isEmpty()) {
-               sync.init_V_Map(var51.init);
+               sync.triggerPerUserMacroSync(var51.init);
             }
          }));
       } else {
@@ -1566,7 +1566,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private AutismLANSyncOverlay.Inner_CachePool init_AutismLANSyncOverl_aE_Str(LanSyncManager sync, String macroName) {
-      List<String> missingPeers = new ArrayList<>(sync.init_List_Str(macroName));
+      List<String> missingPeers = new ArrayList<>(sync.findPeersMissingMacro(macroName));
       Map<String, Integer> differentPeers = new LinkedHashMap<>();
       if (macroName != null && !macroName.isBlank()) {
          AutismMacro localMacro = MacroLibraryManager.getInstance().findByName(macroName);
@@ -1575,12 +1575,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          Set<String> missingPeerSet = new HashSet<>(missingPeers);
-         Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
-         List<String> peers = new ArrayList<>(sync.init_Map().keySet());
+         Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
+         List<String> peers = new ArrayList<>(sync.getConnectedClients().keySet());
          Collections.sort(peers);
 
          for (String peer : peers) {
-            if (!peer.equals(sync.load_Str()) && !missingPeerSet.contains(peer)) {
+            if (!peer.equals(sync.getLocalUsername()) && !missingPeerSet.contains(peer)) {
                Map<String, AutismMacro> peerMacros = allRemote.get(peer);
                if (peerMacros != null) {
                   AutismMacro remoteMacro = peerMacros.get(MacroNameNormalizer.init(macroName));
@@ -1600,7 +1600,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
    private AutismLANSyncOverlay.Inner_DataUtil init_AutismLANSyncOverl_aE(LanSyncManager sync) {
       Map<String, String> assignments = new LinkedHashMap<>();
-      Set<String> connectedPeers = new LinkedHashSet<>(sync.init_Map().keySet());
+      Set<String> connectedPeers = new LinkedHashSet<>(sync.getConnectedClients().keySet());
 
       for (Entry<String, String> entry : new LinkedHashMap<>(this.init_Map).entrySet()) {
          String username = entry.getKey();
@@ -1610,7 +1610,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
       }
 
-      Map<String, String> missingAssignments = sync.init_Map_Map(assignments);
+      Map<String, String> missingAssignments = sync.findMissingAssignedMacros(assignments);
       return new AutismLANSyncOverlay.Inner_DataUtil(assignments, missingAssignments);
    }
 
@@ -1727,7 +1727,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       if (rowVisible) {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(detailLx - 2, cy, assignW, rowPitch, () -> {
             this.init_Map.put(peerKey, mName.equals(this.init_Map.get(peerKey)) ? "" : mName);
-            sync.load(this.init_Map);
+            sync.broadcastMacroAssignments(this.init_Map);
          }));
       }
 
@@ -1751,7 +1751,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
          if (rowVisible) {
             this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(importX, cy, importW - 4, rowPitch, () -> {
-               Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+               Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
                Map<String, AutismMacro> peerMacros = allRemote.get(peerKey);
                AutismMacro sourceMacro = peerMacros != null ? peerMacros.get(MacroNameNormalizer.init(mName)) : null;
                if (sourceMacro == null) {
@@ -1797,7 +1797,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.sync_Z) {
          return false;
       }
@@ -1805,7 +1805,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       if (button == 0 && mouseX >= this.pop && mouseX <= this.pop + this.run && mouseY >= this.tick && mouseY <= this.tick + 14) {
          OverlayBounds bounds = new OverlayBounds(this.pop, this.tick, this.run, this.update_Z ? 14 : this.push_I_12(), this.sync_Z, this.update_Z);
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
-            this.init_V_Z(false);
+            this.setVisible(false);
             return true;
          } else {
             this.write_Z = true;
@@ -1818,8 +1818,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             return false;
          }
 
-         LanSyncManager sync = LanSyncManager.init_aE();
-         if (this.init_k != null && sync.init_Z() && sync.write_Z()) {
+         LanSyncManager sync = LanSyncManager.getInstance();
+         if (this.init_k != null && sync.isRunning() && sync.isInSession()) {
             MouseButtonEvent click = new MouseButtonEvent(mouseX, mouseY, Compat263.newGlfwMouseButtonInfo(button, 0));
             if (this.init_k.mouseClicked(click, false)) {
                this.init_k.setFocused(true);
@@ -1880,13 +1880,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                }
             }
 
-            return this.init_Z_D_D(mouseX, mouseY);
+            return this.containsPoint(mouseX, mouseY);
          }
       }
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0) {
          if (this.poll_Z_7()) {
             this.init_RenderState.load_V();
@@ -1912,7 +1912,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.close_Z) {
          int panelHeight = this.push_I_12();
          int tabContentY = this.pop_I_12();
@@ -1940,7 +1940,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int key, int scancode, int modifiers) {
+   public boolean keyPressed(int key, int scancode, int modifiers) {
       if (!this.sync_Z || this.update_Z) {
          return false;
       } else if (this.init_k == null || !this.init_k.isFocused()) {
@@ -1955,8 +1955,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      if (!this.sync_Z || this.update_Z || !this.init_Z_D_D(mouseX, mouseY)) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      if (!this.sync_Z || this.update_Z || !this.containsPoint(mouseX, mouseY)) {
          return false;
       }
 
@@ -1974,7 +1974,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       if (this.sync_Z && !this.update_Z) {
          return this.init_k != null && this.init_k.isFocused() ? this.init_k.charTyped(new CharacterEvent(chr)) : false;
       } else {
@@ -2013,7 +2013,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             return "Idle";
          case PREPARING:
             int ready = 0;
-            int total = sync.load_I();
+            int total = sync.getConnectedClientCount();
             return "Preparing (" + ready + "/" + total + " ready)";
          case ALL_READY:
             return "All Ready!";

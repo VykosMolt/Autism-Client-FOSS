@@ -406,7 +406,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       if (source.init_InteractionHand() == InteractionHand.OFF_HAND) {
-         if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) || autismclient.util.ClientInteractionOverride.load_Z()) {
+         if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) || autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
             return null;
          }
       } else if (autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(source.load(), this.id())) {
@@ -509,7 +509,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       if (items.contains(offhand.getItem())
          && (this.init_PathHelper_CachePo == null || !offhand.is(Items.LAVA_BUCKET))
          && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())
-         && !autismclient.util.ClientInteractionOverride.load_Z()) {
+         && !autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return new AutoTrapModule.Inner_ConfigStore(-1, InteractionHand.OFF_HAND, offhand);
       }
 
@@ -564,7 +564,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return false;
       } else if (entity.hurtTime > this.integer("hurt-time")) {
          return false;
-      } else if (AntiBotTracker.load_Z(entity)) {
+      } else if (AntiBotTracker.shouldIgnoreEntity(entity)) {
          return false;
       } else if (TeamsModule.init(entity, "killaura")) {
          return false;
@@ -1039,7 +1039,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return null;
       }
 
@@ -1100,7 +1100,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return null;
       }
 
@@ -1220,7 +1220,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    private boolean init(AutoTrapModule.Inner_BufferHelper plan, BlockHitResult ray, ItemStack stack) {
       if (!stack.isEmpty() && stack.isItemEnabled(MC.level.enabledFeatures())) {
-         return !PerTickPlacementLock.init(this.id()) ? false : autismclient.util.ClientInteractionOverride.init(ray, plan.init_InteractionHand());
+         return !PerTickPlacementLock.init(this.id()) ? false : autismclient.util.ClientInteractionOverride.queueUseBlock(ray, plan.init_InteractionHand());
       } else {
          return false;
       }

@@ -27,7 +27,7 @@ public final class CombatAimSpeedController {
 
    public void init_V() {
       this.init_Obj = null;
-      this.init_q_CachePool.init();
+      this.init_q_CachePool.reset();
    }
 
    void init(Object enemy, int tick, int ticks) {
@@ -35,7 +35,7 @@ public final class CombatAimSpeedController {
          if (this.init_Obj != enemy) {
             this.init_Obj = enemy;
             this.load = tick;
-            this.init_q_CachePool.init();
+            this.init_q_CachePool.reset();
          }
 
          if (this.load - tick < ticks) {
@@ -67,11 +67,11 @@ public final class CombatAimSpeedController {
       if (owner.equals(SilentRotationManager.getActiveOwnerId())) {
          this.init(enemy, AutismSessionState.getInstance().getClientTick(), 2);
          if (pin) {
-            this.init_q_CachePool.init();
+            this.init_q_CachePool.reset();
             SilentRotationManager.tickPinQuiet(owner, player, true);
          } else {
             double scale = 2.0 * init_D(speed);
-            SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.init_q_CachePool.init(at, goal, yaw, pitch, scale));
+            SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.init_q_CachePool.stepToward(at, goal, yaw, pitch, scale));
             float cap = init_F(scale);
             SilentRotationManager.tick(owner, player, cap, cap);
          }
@@ -84,7 +84,7 @@ public final class CombatAimSpeedController {
          if (current == null || !SilentRotationManager.isVisibleAimActive() || player.getYRot() == current.yaw() && player.getXRot() == current.pitch()) {
             SilentRotationManager.requestRotation(owner, priority, current == null ? wire : current);
             SilentRotationManager.tickPinQuiet(owner, player, true);
-            this.init_q_CachePool.init();
+            this.init_q_CachePool.reset();
             return true;
          } else {
             return false;

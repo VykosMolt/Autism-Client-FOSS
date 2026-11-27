@@ -780,7 +780,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          || target.hasEffect(MobEffects.SLOW_FALLING)
          || MC.player.getMainHandItem().has(DataComponents.PIERCING_WEAPON)
          || TeamsModule.init_Z_Entity_5(target)
-         || AntiBotTracker.init_Z(target)) {
+         || AntiBotTracker.isBot(target)) {
          return false;
       }
 

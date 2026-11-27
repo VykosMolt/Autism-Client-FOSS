@@ -791,7 +791,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != IncomingProjectileScanner.Inner_StreamUtil.PEARL)
                   || TeamsModule.init_Z_Entity_5(player)
                   || !this.init_Z_Player_3(player)
-                  || AntiBotTracker.init_Z(player)
+                  || AntiBotTracker.isBot(player)
             );
             players.sort(Comparator.comparingDouble(player -> player.distanceToSqr(MC.player)));
 

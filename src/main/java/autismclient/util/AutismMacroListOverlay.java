@@ -114,7 +114,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       this.init_Font = textRenderer;
       this.init_AutismMacroEditorO = activeEditor;
       this.init_F_3 = new OverlayContextMenu<>(this.init_CharEncoder, textRenderer, ignored -> this.init_StrArr(), 12);
-      this.init_V_F(this.init_F_3);
+      this.setActiveContextMenu(this.init_F_3);
       this.flush_V_10();
    }
 
@@ -144,8 +144,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void close_V_9() {
-      LanSyncManager sync = LanSyncManager.init_aE();
-      this.update_List = this.init_List_List(MacroLibraryManager.getInstance().getMacros(), sync.read_Map(), sync);
+      LanSyncManager sync = LanSyncManager.getInstance();
+      this.update_List = this.init_List_List(MacroLibraryManager.getInstance().getMacros(), sync.getPeerMacros(), sync);
       if (!this.init_LinkedHashSet.isEmpty()) {
          Set<String> visibleKeys = new HashSet<>();
 
@@ -227,12 +227,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private autismclient.gui.ui.layout.ButtonNode init_ByteReader_Str(
       String label, autismclient.gui.ui.layout.ButtonNode.Variant variant, Runnable onPress, boolean grow
    ) {
-      autismclient.gui.ui.layout.ButtonNode button = new autismclient.gui.ui.layout.ButtonNode(label, variant, onPress).load_ByteReader_I(this.stop_I_4());
-      button.init_ByteReader_I(5);
+      autismclient.gui.ui.layout.ButtonNode button = new autismclient.gui.ui.layout.ButtonNode(label, variant, onPress).setFixedHeight(this.stop_I_4());
+      button.setHorizontalPadding(5);
       if (grow) {
-         button.read_ByteReader_Z(true);
+         button.withGrowX(true);
       } else {
-         button.init_ByteReader_F(24.0F);
+         button.setMinWidth(24.0F);
       }
 
       return button;
@@ -333,12 +333,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       shared.setMacroListOverlayY(this.run_I);
       shared.setMacroListScrollOffset(this.init_CacheEntry.getOffset());
       shared.setMacroListSearchQuery(this.init_BitSetUtil.getValue());
-      this.a__V();
+      this.saveBounds();
    }
 
    public void update_V_11() {
       AutismSessionState shared = AutismSessionState.getInstance();
-      this.b__V();
+      this.loadBounds();
       this.update_Z = shared.isMacroListOverlayVisible();
       this.tick_I = shared.getMacroListOverlayX();
       this.run_I = shared.getMacroListOverlayY();
@@ -349,37 +349,37 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public String init_Str() {
+   public String getOverlayId() {
       return "autism-macrolist";
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return this.run_I_13();
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.init_CharEncoder.load() + this.reset_I_4() + this.stop_I_4() + this.add_I_11() * 2 + this.clear_I_5();
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   protected int a__I() {
-      return this.add_I > 0 ? this.add_I + this.init_I_I_7(3) : this.load_I();
+   protected int getResizeMinHeight() {
+      return this.add_I > 0 ? this.add_I + this.init_I_I_7(3) : this.getMinHeight();
    }
 
    @Override
-   public OverlayBounds init_cH() {
+   public OverlayBounds getBounds() {
       return new OverlayBounds(this.tick_I, this.run_I, this.get_I, this.put_I, this.update_Z, this.sync_Z);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds bounds) {
+   public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH_cH_3(
             new OverlayBounds(bounds.x, bounds.y, Math.max(this.run_I_13(), bounds.width), bounds.height, bounds.visible, bounds.collapsed)
@@ -394,8 +394,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
-      if (visible && this.init_AutismMacroEditorO != null && this.init_AutismMacroEditorO.sync_Z()) {
+   public void setVisible(boolean visible) {
+      if (visible && this.init_AutismMacroEditorO != null && this.init_AutismMacroEditorO.isVisible()) {
          this.update_Z = false;
          this.write_V_13();
          OverlayManager.getInstance().bringToFront(this.init_AutismMacroEditorO);
@@ -419,21 +419,21 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    public void sync_V_10() {
-      this.init_V_Z(!this.update_Z);
+      this.setVisible(!this.update_Z);
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.update_Z;
    }
 
    @Override
-   public boolean flush_Z() {
+   public boolean isCollapsed() {
       return this.sync_Z;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
+   public void setCollapsed(boolean collapsed) {
       this.sync_Z = collapsed;
       this.flush_Z = false;
       if (collapsed) {
@@ -448,22 +448,22 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_TextFormat.hasFocusedInput();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.init_TextFormat.clearFocus();
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
+   public boolean containsPoint(double mouseX, double mouseY) {
       if (!this.update_Z) {
          return false;
       } else {
@@ -481,7 +481,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
+   public boolean isOverHeader(double mouseX, double mouseY) {
       if (!this.update_Z) {
          return false;
       }
@@ -493,9 +493,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if ((this.update_Z || this.a__Z()) && init_Minecraft != null && init_Minecraft.font != null) {
-         long remoteRevision = LanSyncManager.init_aE().init_J();
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if ((this.update_Z || this.isClosing()) && init_Minecraft != null && init_Minecraft.font != null) {
+         long remoteRevision = LanSyncManager.getInstance().getPeerMacrosRevision();
          if (remoteRevision != this.load_J) {
             this.load_J = remoteRevision;
             this.clear_Z = true;
@@ -533,7 +533,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder_2.setExpanded(!this.sync_Z);
          this.init_CharEncoder_2.setActive(active);
          this.init_CharEncoder_2.setHeaderHovered(headerHovered);
-         this.get_I = this.init_I_I_I(this.run_I_13(), this.run_I_13());
+         this.get_I = this.resolveWindowWidth(this.run_I_13(), this.run_I_13());
          int autoList = this.init_I_I_7(this.update_List.size());
          if (!this.update_List.isEmpty()) {
             this.init_BitSetUtil_2.init(autoList);
@@ -542,8 +542,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.put_I = Math.round(this.init_CharEncoder_2.measureHeight(metrics, this.get_I));
          if (!this.update_List.isEmpty() && !this.sync_Z) {
             this.add_I = this.put_I - autoList;
-            if (this.set_Z()) {
-               int want = this.load_I_I_I(this.put_I, this.a__I());
+            if (this.hasCustomStoredSize()) {
+               int want = this.resolveWindowHeight(this.put_I, this.getResizeMinHeight());
                this.init_BitSetUtil_2.init(Math.max(this.init_I_I_7(3), want - this.add_I));
                this.put_I = Math.round(this.init_CharEncoder_2.measureHeight(metrics, this.get_I));
             }
@@ -912,7 +912,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             ui,
             autismclient.gui.f.NetHelper.init(x, y, width, h),
             button.init_Str,
-            autismclient.gui.ui.layout.ButtonNode.init_CachePool_DataUtil_ByteReader_StreamU(button.init_ByteReader_StreamU),
+            autismclient.gui.ui.layout.ButtonNode.toButtonTone(button.init_ByteReader_StreamU),
             hovered,
             false
          );
@@ -1039,7 +1039,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                   return;
                }
 
-               this.init_V_Z(false);
+               this.setVisible(false);
                AutismMacroEditorOverlay.init_AutismMacroEditorO_2().init_V_aM_Z(item.init_aM, true);
                break;
             case COPY:
@@ -1097,8 +1097,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
    private void init_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
       if (item.load != null && !item.load.isBlank()) {
-         LanSyncManager sync = LanSyncManager.init_aE();
-         Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+         LanSyncManager sync = LanSyncManager.getInstance();
+         Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
          Map<String, AutismMacro> remoteMacros = allRemote.get(item.load);
          AutismMacro source = remoteMacros != null ? remoteMacros.get(MacroNameNormalizer.init(item.init_Str)) : null;
          if (source == null) {
@@ -1116,7 +1116,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void poll_V_6() {
-      this.init_V_Z(false);
+      this.setVisible(false);
       AutismMacroEditorOverlay.init_AutismMacroEditorO_2().init_V_aM_Z(null, true);
    }
 
@@ -1170,7 +1170,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.update_Z) {
          return false;
       }
@@ -1196,7 +1196,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
 
       if (button == 0 && this.load_Z_F_F_3(uiMouseX, uiMouseY)) {
-         this.init_V_Z(false);
+         this.setVisible(false);
          return true;
       }
 
@@ -1312,11 +1312,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          }
       }
 
-      return this.init_Z_D_D(mouseX, mouseY);
+      return this.containsPoint(mouseX, mouseY);
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
@@ -1343,7 +1343,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
 
       if (button != 0 || !this.run_Z && this.flush_Str == null) {
-         return !this.sync_Z && this.init_TextFormat.mouseReleased(mouseX, mouseY, button) ? true : this.init_Z_D_D(mouseX, mouseY);
+         return !this.sync_Z && this.init_TextFormat.mouseReleased(mouseX, mouseY, button) ? true : this.containsPoint(mouseX, mouseY);
       }
 
       this.valid_V_2();
@@ -1351,7 +1351,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (!this.update_Z) {
          return false;
       }
@@ -1396,12 +1396,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.init_V_F_F(uiMouseX, uiMouseY);
          return true;
       } else {
-         return !this.sync_Z && this.init_TextFormat.mouseDragged(mouseX, mouseY, button, deltaX, deltaY) ? true : this.init_Z_D_D(mouseX, mouseY);
+         return !this.sync_Z && this.init_TextFormat.mouseDragged(mouseX, mouseY, button, deltaX, deltaY) ? true : this.containsPoint(mouseX, mouseY);
       }
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       if (this.update_Z && !this.sync_Z) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
@@ -1429,7 +1429,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             this.init_CacheEntry.scrollByWheel(amount, this.set_I_11(), listLayout.maxScroll());
             return true;
          } else {
-            return this.init_Z_D_D(mouseX, mouseY);
+            return this.containsPoint(mouseX, mouseY);
          }
       } else {
          return false;
@@ -1437,7 +1437,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (!this.update_Z) {
          return false;
       }
@@ -1512,7 +1512,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       return this.update_Z && !this.sync_Z && this.init_TextFormat.charTyped(chr, modifiers);
    }
 
@@ -1526,7 +1526,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          items.add(row.init_Z() ? AutismMacroListOverlay.Inner_StreamUtil.init(row, null) : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM()));
       }
 
-      if (sync.write_Z()) {
+      if (sync.isInSession()) {
          for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
             List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.load(m)).filter(m -> MacroLibraryManager.getInstance().findByName(m.name) == null).toList();
             List<MacroFolderLayout.Inner_DataUtil> remoteRows = MacroFolderLayout.init(
@@ -2570,8 +2570,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.height());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.init_CharEncoder.load(), viewportH - margin * 2);
-      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));
-      int minHeight = bounds.collapsed ? this.init_CharEncoder.load() : this.load_I();
+      int width = Math.max(Math.min(this.getMinWidth(), availableW), Math.min(bounds.width, availableW));
+      int minHeight = bounds.collapsed ? this.init_CharEncoder.load() : this.getMinHeight();
       int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.height, availableH));
       int renderedHeight = bounds.collapsed ? this.init_CharEncoder.load() : height;
       int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportW - margin - width)));

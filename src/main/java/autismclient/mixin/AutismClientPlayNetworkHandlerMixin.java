@@ -733,42 +733,42 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled() && packet.getType() == EntityTypes.PLAYER) {
-         AntiBotTracker.init_V(packet.getId());
+         AntiBotTracker.onPlayerSpawnPacket(packet.getId());
       }
    }
 
    @Inject(method = "handleRemoveEntities", at = @At("RETURN"))
    private void autism$antiBotRemove(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiBotTracker.init(packet.entityIds());
+         AntiBotTracker.onRemoveEntitiesPacket(packet.entityIds());
       }
    }
 
    @Inject(method = "handleUpdateAttributes", at = @At("RETURN"))
    private void autism$antiBotAttributes(ClientboundUpdateAttributesPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiBotTracker.load(packet.getEntityId());
+         AntiBotTracker.onUpdateAttributesPacket(packet.getEntityId());
       }
    }
 
    @Inject(method = "handleAnimate", at = @At("RETURN"))
    private void autism$antiBotAnimate(ClientboundAnimatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiBotTracker.init(packet.getId(), packet.getAction());
+         AntiBotTracker.onAnimatePacket(packet.getId(), packet.getAction());
       }
    }
 
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))
    private void autism$antiBotInfoUpdate(ClientboundPlayerInfoUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiBotTracker.init(packet);
+         AntiBotTracker.onPlayerInfoUpdatePacket(packet);
       }
    }
 
    @Inject(method = "handlePlayerInfoRemove", at = @At("RETURN"))
    private void autism$antiBotInfoRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiBotTracker.init(packet.profileIds());
+         AntiBotTracker.onPlayerInfoRemovePacket(packet.profileIds());
       }
    }
 
@@ -777,7 +777,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled() && packet.hasPosition()) {
          ClientLevel level = Minecraft.getInstance().level;
          if (level != null) {
-            AntiBotTracker.load_V(packet.getEntity(level));
+            AntiBotTracker.onEntityMovePacket(packet.getEntity(level));
          }
       }
    }
@@ -787,7 +787,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          ClientLevel level = Minecraft.getInstance().level;
          if (level != null) {
-            AntiBotTracker.load_V(level.getEntity(packet.id()));
+            AntiBotTracker.onEntityMovePacket(level.getEntity(packet.id()));
          }
       }
    }

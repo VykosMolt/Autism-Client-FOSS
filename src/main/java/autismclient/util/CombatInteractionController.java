@@ -108,7 +108,7 @@ public final class CombatInteractionController {
 
    public static boolean read() {
       Minecraft mc = Minecraft.getInstance();
-      return mc.options != null && init_AutismKeyMappingAc(mc).autism$clickCount() > 0 && !ClientInteractionOverride.flush_Z();
+      return mc.options != null && init_AutismKeyMappingAc(mc).autism$clickCount() > 0 && !ClientInteractionOverride.ownsUseInput();
    }
 
    public static boolean write() {
@@ -331,7 +331,7 @@ public final class CombatInteractionController {
    public static boolean init_Z(Minecraft mc) {
       if (!read_Z
          && open()
-         && !ClientInteractionOverride.flush_Z()
+         && !ClientInteractionOverride.ownsUseInput()
          && !autismclient.modules.KillAuraModule.init_Z_31()
          && !autismclient.modules.ScaffoldModule.init_Z_26()
          && !f.load()
@@ -465,25 +465,25 @@ public final class CombatInteractionController {
                ? new AABB(block.getBlockPos())
                : new AABB(point, point).inflate(0.1)
          );
-      init_q_DataUtil.init_q_DataUtil_Vec3_2(eye, box, point);
-      init_q_DataUtil.init_D = read_ce_DataUtil.yaw();
-      init_q_DataUtil.load_D = read_ce_DataUtil.pitch();
-      init_q_DataUtil.read_D = Math.max(0.25, Math.min(2.5, init_q_DataUtil.read_D));
-      init_q_DataUtil.write_D = init_q_DataUtil.update_D = Math.max(0.25, Math.min(1.5, init_q_DataUtil.read_D));
-      init_q_DataUtil.read_Z = false;
-      init_q_DataUtil.write_Z = true;
-      init_q_DataUtil.update_Z = !close;
-      init_q_DataUtil.flush_Z = true;
-      init_q_DataUtil.close_Z = true;
-      init_q_DataUtil.open_Z = true;
-      init_q_DataUtil.sync_D = 0.0;
-      init_q_DataUtil.init_I = 0;
-      init_q_DataUtil.init_Z = false;
-      init_q_DataUtil.poll_D = RotationMath.gcdStep();
-      init_q_DataUtil.push_D = 18.0;
-      init_q_DataUtil.push_Z = false;
-      init_q_DataUtil.pop_Z = LegacyCombatDetector.init(init_LocalPlayer);
-      init_q_DataUtil.load_Z = close;
+      init_q_DataUtil.setTarget(eye, box, point);
+      init_q_DataUtil.targetYaw = read_ce_DataUtil.yaw();
+      init_q_DataUtil.targetPitch = read_ce_DataUtil.pitch();
+      init_q_DataUtil.yawHalfWidth = Math.max(0.25, Math.min(2.5, init_q_DataUtil.yawHalfWidth));
+      init_q_DataUtil.pitchUpHalfWidth = init_q_DataUtil.pitchDownHalfWidth = Math.max(0.25, Math.min(1.5, init_q_DataUtil.yawHalfWidth));
+      init_q_DataUtil.allowExcursion = false;
+      init_q_DataUtil.clampInsideBox = true;
+      init_q_DataUtil.compensateObserverMotion = !close;
+      init_q_DataUtil.allowPromptFlick = true;
+      init_q_DataUtil.instantPromptFlick = true;
+      init_q_DataUtil.prioritizeStrike = true;
+      init_q_DataUtil.ticksUntilAttack = 0.0;
+      init_q_DataUtil.comboCount = 0;
+      init_q_DataUtil.inAttackWindow = false;
+      init_q_DataUtil.gcdStep = RotationMath.gcdStep();
+      init_q_DataUtil.maxAccelUp = 18.0;
+      init_q_DataUtil.forceWhiff = false;
+      init_q_DataUtil.legacyNoCooldown = LegacyCombatDetector.init(init_LocalPlayer);
+      init_q_DataUtil.targetChanged = close;
    }
 
    private static void update_V(Minecraft mc) {

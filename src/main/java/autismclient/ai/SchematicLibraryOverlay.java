@@ -97,9 +97,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          }
       );
       this.init_cV = workspace;
-      this.init_I_2 = 100;
-      this.load_I = 38;
-      this.b__V();
+      this.windowX = 100;
+      this.windowY = 38;
+      this.loadBounds();
       this.write_V_2();
    }
 
@@ -114,32 +114,32 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean update_Z() {
+   public boolean shouldRememberOnDismiss() {
       return true;
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 238;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.init_I_I(1);
    }
 
    @Override
-   protected int a__I() {
+   protected int getResizeMinHeight() {
       return this.init_I_I(Math.clamp(this.push_I(), 1, 3));
    }
 
@@ -198,26 +198,26 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_k != null && this.init_k.isFocused();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       if (this.init_k != null) {
          this.init_k.setFocused(false);
       }
    }
 
    @Override
-   public void init_V_Z(boolean value) {
+   public void setVisible(boolean value) {
       if (!value) {
          this.update_V_2();
-         this.push_V();
+         this.clearInputFocus();
          this.update_Z = this.write_Z = false;
       }
 
-      super.init_V_Z(value);
+      super.setVisible(value);
    }
 
    private void write_V_2() {
@@ -258,25 +258,25 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor graphics, int mx, int my, float delta) {
-      if (this.init_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor graphics, int mx, int my, float delta) {
+      if (this.windowVisible || this.isClosing()) {
          this.init_List.clear();
          this.init_TextFormat_DataUti = null;
          this.load_NetHelper = null;
          int auto = this.init_I_I(Math.clamp(this.push_I(), 1, 5));
-         this.read_I = this.init_I_I_I(270, this.init_I());
-         this.write = this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE
-            ? Math.min(auto, sync_I())
-            : this.load_I_I_I(auto, this.a__I());
+         this.windowWidth = this.resolveWindowWidth(270, this.getMinWidth());
+         this.windowHeight = this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE
+            ? Math.min(auto, getMaxScreenWindowHeight())
+            : this.resolveWindowHeight(auto, this.getResizeMinHeight());
          OverlayBounds clamped = this.clampCurrentBounds(this);
-         this.init_I_2 = clamped.x;
-         this.load_I = clamped.y;
-         this.read_I = clamped.width;
-         this.write = clamped.height;
-         this.init_NetHelper = autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, this.write);
-         this.renderWindowFrame(graphics, mx, my, this.init_cH(), "Schematic Library", this.load_Z, this.update_Z);
-         if (!this.isVisuallyCollapsed(this.load_Z) && this.init_NetHelper.update() >= 190 && this.init_NetHelper.sync() >= 27) {
-            boolean clipped = this.beginBodyClip(graphics, this.init_cH(), this.load_Z);
+         this.windowX = clamped.x;
+         this.windowY = clamped.y;
+         this.windowWidth = clamped.width;
+         this.windowHeight = clamped.height;
+         this.init_NetHelper = autismclient.gui.f.NetHelper.init(this.windowX, this.windowY, this.windowWidth, this.windowHeight);
+         this.renderWindowFrame(graphics, mx, my, this.getBounds(), "Schematic Library", this.windowCollapsed, this.update_Z);
+         if (!this.isVisuallyCollapsed(this.windowCollapsed) && this.init_NetHelper.update() >= 190 && this.init_NetHelper.sync() >= 27) {
+            boolean clipped = this.beginBodyClip(graphics, this.getBounds(), this.windowCollapsed);
 
             try {
                int width = this.init_NetHelper.update();
@@ -506,9 +506,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean init_Z_D_D(double x, double y) {
+   public boolean containsPoint(double x, double y) {
       autismclient.gui.ui.widgets.DropdownMenu menu = this.init_RefQueue();
-      return super.init_Z_D_D(x, y) || this.init_Z && menu != null && menu.containsPopupPoint((int)x, (int)y);
+      return super.containsPoint(x, y) || this.windowVisible && menu != null && menu.containsPopupPoint((int)x, (int)y);
    }
 
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {
@@ -852,27 +852,27 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean init_Z_D_3(double mx, double my, int button) {
-      if (this.init_Z && button == 0 && this.init_Z_D_D(mx, my)) {
+   public boolean mouseClicked(double mx, double my, int button) {
+      if (this.windowVisible && button == 0 && this.containsPoint(mx, my)) {
          autismclient.gui.ui.widgets.DropdownMenu popup = this.init_RefQueue();
          if (popup != null && popup.containsPopupPoint((int)mx, (int)my)) {
             popup.onMouseClicked((int)mx, (int)my, button);
             return true;
          }
 
-         if (this.isOverHeaderCloseButton(mx, my, this.init_cH())) {
-            this.init_V_Z(false);
+         if (this.isOverHeaderCloseButton(mx, my, this.getBounds())) {
+            this.setVisible(false);
             return true;
          }
 
-         if (this.load_Z_D_D(mx, my)) {
+         if (this.isOverHeader(mx, my)) {
             this.update_Z = true;
-            this.init_D = mx - this.init_I_2;
-            this.load_D = my - this.load_I;
+            this.init_D = mx - this.windowX;
+            this.load_D = my - this.windowY;
             return true;
          }
 
-         if (this.load_Z) {
+         if (this.windowCollapsed) {
             return false;
          }
 
@@ -886,7 +886,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             }
 
             if (this.load_RefQueue.getBounds().init_Z(x, y) || this.init_RefQueue.getBounds().init_Z(x, y)) {
-               this.push_V();
+               this.clearInputFocus();
                (this.load_RefQueue.getBounds().init_Z(x, y) ? this.load_RefQueue : this.init_RefQueue).onMouseClicked(x, y, button);
                return true;
             }
@@ -896,7 +896,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             return true;
          }
 
-         this.push_V();
+         this.clearInputFocus();
          if (this.init_TextFormat_DataUti != null
             && this.init_TextFormat_DataUti.scrollbar().isScrollable()
             && this.init_TextFormat_DataUti.scrollbar().containsTrack(x, y)) {
@@ -922,12 +922,12 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean init_Z_D_2(double x, double y, double amount) {
+   public boolean mouseScrolled(double x, double y, double amount) {
       autismclient.gui.ui.widgets.DropdownMenu menu = this.init_RefQueue();
-      if (this.init_Z && !this.load_Z && menu != null && menu.containsPopupPoint((int)x, (int)y)) {
+      if (this.windowVisible && !this.windowCollapsed && menu != null && menu.containsPopupPoint((int)x, (int)y)) {
          menu.onMouseScrolled((int)x, (int)y, amount);
          return true;
-      } else if (this.init_Z && !this.load_Z && this.init_TextFormat_DataUti != null && this.load_NetHelper.init_Z((int)x, (int)y)) {
+      } else if (this.windowVisible && !this.windowCollapsed && this.init_TextFormat_DataUti != null && this.load_NetHelper.init_Z((int)x, (int)y)) {
          this.init_CacheEntry.scrollByWheel(amount, 42.0F, this.init_TextFormat_DataUti.maxScroll());
          return true;
       } else {
@@ -936,11 +936,11 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean init_Z_D(double x, double y, int button, double dx, double dy) {
+   public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
       if (this.update_Z) {
-         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds((int)(x - this.init_D), (int)(y - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
-         this.init_I_2 = clamped.x;
-         this.load_I = clamped.y;
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds((int)(x - this.init_D), (int)(y - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
+         this.windowX = clamped.x;
+         this.windowY = clamped.y;
          return true;
       } else {
          autismclient.gui.ui.widgets.DropdownMenu menu = this.init_RefQueue();
@@ -957,10 +957,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean load_Z_D_3(double x, double y, int button) {
+   public boolean mouseReleased(double x, double y, int button) {
       if (this.update_Z) {
          this.update_Z = false;
-         this.a__V();
+         this.saveBounds();
          return true;
       } else {
          autismclient.gui.ui.widgets.DropdownMenu menu = this.init_RefQueue();
@@ -977,18 +977,18 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    @Override
-   public boolean init_Z_I(int key, int scan, int modifiers) {
-      if (this.init_Z && this.init_RefQueue() != null && key == 256) {
+   public boolean keyPressed(int key, int scan, int modifiers) {
+      if (this.windowVisible && this.init_RefQueue() != null && key == 256) {
          this.update_V_2();
          return true;
       } else {
-         return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, modifiers));
+         return this.windowVisible && !this.windowCollapsed && this.init_k != null && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, modifiers));
       }
    }
 
    @Override
-   public boolean init_Z_C_I(char value, int modifiers) {
-      return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.charTyped(new CharacterEvent(value));
+   public boolean charTyped(char value, int modifiers) {
+      return this.windowVisible && !this.windowCollapsed && this.init_k != null && this.init_k.charTyped(new CharacterEvent(value));
    }
 
    private record Inner_BufferHelper(autismclient.gui.f.NetHelper bounds, Runnable action) {

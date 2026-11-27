@@ -29,8 +29,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    public AutismItemNbtInspectOverlay(Font textRenderer) {
       super("item-nbt-viewer", 260, 180);
       this.init_Font = textRenderer;
-      this.init_I_2 = 110;
-      this.load_I = 42;
+      this.windowX = 110;
+      this.windowY = 42;
    }
 
    public static AutismItemNbtInspectOverlay init_AutismItemNbtInspe_Font(Font textRenderer) {
@@ -47,7 +47,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    public static void load_V_8() {
       if (init_AutismItemNbtInspe != null) {
-         init_AutismItemNbtInspe.init_V_Z(false);
+         init_AutismItemNbtInspe.setVisible(false);
          OverlayManager.getInstance().unregister(init_AutismItemNbtInspe);
       }
    }
@@ -95,16 +95,16 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          manager.register(this);
          this.init_az_StreamUtil = inspection;
          this.sync_Z = false;
-         this.init_Z = true;
-         this.load_Z = false;
+         this.windowVisible = true;
+         this.windowCollapsed = false;
          this.init_EventBus = null;
          this.write_Z = true;
          int screenW = init_Minecraft.getWindow() == null ? 640 : cA.init_I();
          int screenH = init_Minecraft.getWindow() == null ? 360 : cA.load_I();
-         int width = this.init_I_I_I(this.push_I_10(), this.init_I());
-         this.read_I = width;
-         int height = this.load_I_I_I(this.pop_I_10(), this.load_I());
-         this.init_V_cH(
+         int width = this.resolveWindowWidth(this.push_I_10(), this.getMinWidth());
+         this.windowWidth = width;
+         int height = this.resolveWindowHeight(this.pop_I_10(), this.getMinHeight());
+         this.setBounds(
             new OverlayBounds(Math.max(8, Math.min(anchorX, screenW - width - 8)), Math.max(8, Math.min(anchorY, screenH - height - 8)), width, height, true, false)
          );
          manager.bringToFront(this);
@@ -113,45 +113,45 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    private int push_I_10() {
       int screenW = init_Minecraft.getWindow() == null ? 640 : cA.init_I();
-      return Math.min(Math.max(1, screenW - 18), Math.max(this.init_I(), Math.min(300, screenW / 3)));
+      return Math.min(Math.max(1, screenW - 18), Math.max(this.getMinWidth(), Math.min(300, screenW / 3)));
    }
 
    private int pop_I_10() {
       int screenH = init_Minecraft.getWindow() == null ? 360 : cA.load_I();
       int availableH = Math.max(14, screenH - 18);
-      int maxH = Math.min(availableH, Math.max(this.load_I(), screenH * 65 / 100));
-      return Math.min(maxH, Math.max(this.load_I(), this.run_I_8() + this.init_List_5().size() * this.start_I_6() + 2));
+      int maxH = Math.min(availableH, Math.max(this.getMinHeight(), screenH * 65 / 100));
+      return Math.min(maxH, Math.max(this.getMinHeight(), this.run_I_8() + this.init_List_5().size() * this.start_I_6() + 2));
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   protected void c_() {
+   protected void onSizeChanged() {
       this.write_Z = true;
-      if (!this.set_Z()) {
-         OverlayBounds b = this.init_cH();
-         this.init_V_cH(new OverlayBounds(b.x, b.y, this.push_I_10(), this.pop_I_10(), b.visible, b.collapsed));
+      if (!this.hasCustomStoredSize()) {
+         OverlayBounds b = this.getBounds();
+         this.setBounds(new OverlayBounds(b.x, b.y, this.push_I_10(), this.pop_I_10(), b.visible, b.collapsed));
       }
    }
 
    public void read_V_4() {
-      this.init_Z = false;
+      this.windowVisible = false;
       this.flush_Z = false;
       this.init_EventBus = null;
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.init_Z || this.a__Z()) {
-         OverlayBounds bounds = this.init_cH();
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.windowVisible || this.isClosing()) {
+         OverlayBounds bounds = this.getBounds();
          String title = this.init_az_StreamUtil == null ? "NBT Inspector" : this.init_az_StreamUtil.init_Str();
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.load_Z, this.flush_Z);
-         boolean clipped = this.beginBodyClip(context, bounds, this.load_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.windowCollapsed, this.flush_Z);
+         boolean clipped = this.beginBodyClip(context, bounds, this.windowCollapsed);
          if (!clipped) {
-            this.renderInactiveDim(context, bounds, this.load_Z, this.flush_Z);
+            this.renderInactiveDim(context, bounds, this.windowCollapsed, this.flush_Z);
          } else {
             try {
                if (this.init_az_StreamUtil != null) {
@@ -172,9 +172,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      );
                   }
 
-                  int listX = this.init_I_2 + this.set_I_6();
+                  int listX = this.windowX + this.set_I_6();
                   int listY = tabY + this.clear() + 2;
-                  int listWidth = this.read_I - this.set_I_6() * 2;
+                  int listWidth = this.windowWidth - this.set_I_6() * 2;
                   int footerY = this.get_I_6();
                   int listHeight = Math.max(1, footerY - listY - 4);
                   int lineH = this.start_I_6();
@@ -211,7 +211,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      this.init_List.size() + " lines",
                      this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                      this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
-                     this.init_I_2 + this.set_I_6() + 2,
+                     this.windowX + this.set_I_6() + 2,
                      UiLayoutMath.centerTextY(footerY, this.clear(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
                   );
@@ -239,13 +239,13 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   context,
                   this.init_Font,
                   "No item selected.",
-                  this.init_I_2 + this.set_I_6(),
-                  this.load_I + 14 + this.set_I_6(),
-                  this.read_I - this.set_I_6() * 2
+                  this.windowX + this.set_I_6(),
+                  this.windowY + 14 + this.set_I_6(),
+                  this.windowWidth - this.set_I_6() * 2
                );
             } finally {
                this.endBodyClip(context, clipped);
-               this.renderInactiveDim(context, bounds, this.load_Z, this.flush_Z);
+               this.renderInactiveDim(context, bounds, this.windowCollapsed, this.flush_Z);
             }
 
             return;
@@ -254,24 +254,24 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
-      if (!this.init_Z) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
+      if (!this.windowVisible) {
          return false;
       }
 
-      OverlayBounds bounds = this.init_cH();
-      if (button == 0 && mouseY >= this.load_I && mouseY <= this.load_I + 14 && mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.read_I) {
+      OverlayBounds bounds = this.getBounds();
+      if (button == 0 && mouseY >= this.windowY && mouseY <= this.windowY + 14 && mouseX >= this.windowX && mouseX <= this.windowX + this.windowWidth) {
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.read_V_4();
             return true;
          } else {
             this.flush_Z = true;
-            this.init_D = mouseX - this.init_I_2;
-            this.load_D = mouseY - this.load_I;
+            this.init_D = mouseX - this.windowX;
+            this.load_D = mouseY - this.windowY;
             return true;
          }
       } else {
-         if (this.load_Z) {
+         if (this.windowCollapsed) {
             return true;
          }
 
@@ -304,15 +304,15 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_Z_D_D(mouseX, mouseY);
+         return this.containsPoint(mouseX, mouseY);
       }
    }
 
    @Override
-   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+   public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0 && this.flush_Z) {
          this.flush_Z = false;
-         this.a__V();
+         this.saveBounds();
          return true;
       } else if (button == 0 && this.init_EventBus != null) {
          this.init_EventBus.mouseReleased();
@@ -324,13 +324,13 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.init_EventBus != null) {
          this.init_EventBus.mouseDragged(mouseX, mouseY);
       }
 
-      if (this.init_Z && button == 0 && this.flush_Z) {
-         this.init_V_cH(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+      if (this.windowVisible && button == 0 && this.flush_Z) {
+         this.setBounds(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
          return true;
       } else {
          return false;
@@ -338,15 +338,15 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      return this.init_Z && !this.load_Z && this.init_EventBus != null && this.init_EventBus.containsPoint(mouseX, mouseY)
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      return this.windowVisible && !this.windowCollapsed && this.init_EventBus != null && this.init_EventBus.containsPoint(mouseX, mouseY)
          ? this.init_EventBus.mouseScrolled(mouseX, mouseY, amount)
          : false;
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
-      if (!this.init_Z) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+      if (!this.windowVisible) {
          return false;
       } else if (keyCode == 256) {
          this.read_V_4();
@@ -357,75 +357,75 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       return false;
    }
 
    @Override
-   public void init_V_Z(boolean visible) {
+   public void setVisible(boolean visible) {
       if (!visible) {
          this.read_V_4();
       } else {
-         this.init_Z = true;
+         this.windowVisible = true;
       }
    }
 
    @Override
-   public boolean init_Z_D_D(double mouseX, double mouseY) {
-      if (!this.init_Z) {
+   public boolean containsPoint(double mouseX, double mouseY) {
+      if (!this.windowVisible) {
          return false;
       }
 
-      int height = this.load_Z ? 14 : this.write;
-      return mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.read_I && mouseY >= this.load_I && mouseY <= this.load_I + height;
+      int height = this.windowCollapsed ? 14 : this.windowHeight;
+      return mouseX >= this.windowX && mouseX <= this.windowX + this.windowWidth && mouseY >= this.windowY && mouseY <= this.windowY + height;
    }
 
    @Override
-   public boolean load_Z_D_D(double mouseX, double mouseY) {
-      return !this.init_Z
+   public boolean isOverHeader(double mouseX, double mouseY) {
+      return !this.windowVisible
          ? false
-         : mouseX >= this.init_I_2
-            && mouseX <= this.init_I_2 + this.read_I
-            && mouseY >= this.load_I
-            && mouseY <= this.load_I + 14
-            && !this.isOverHeaderControl(mouseX, mouseY, this.init_cH());
+         : mouseX >= this.windowX
+            && mouseX <= this.windowX + this.windowWidth
+            && mouseY >= this.windowY
+            && mouseY <= this.windowY + 14
+            && !this.isOverHeaderControl(mouseX, mouseY, this.getBounds());
    }
 
    @Override
-   public boolean flush_Z() {
-      return this.load_Z;
+   public boolean isCollapsed() {
+      return this.windowCollapsed;
    }
 
    @Override
-   public void write_V_Z(boolean collapsed) {
-      if (this.load_Z != collapsed) {
-         this.load_Z = collapsed;
+   public void setCollapsed(boolean collapsed) {
+      if (this.windowCollapsed != collapsed) {
+         this.windowCollapsed = collapsed;
          this.flush_Z = false;
          if (collapsed) {
-            this.get_V();
+            this.clearFocusAndDismissMenu();
          }
 
-         this.a__V();
+         this.saveBounds();
       }
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public int b__I() {
+   public int getZPriority() {
       return 13;
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 220;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.run_I_8() + this.start_I_6() * 4 + 2;
    }
 
@@ -727,7 +727,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private List<AutismItemNbtInspectOverlay.Inner_DataUtil> init_List_I(int y) {
-      int x = this.init_I_2 + this.set_I_6();
+      int x = this.windowX + this.set_I_6();
       int w = Math.max(40, Math.max(this.write("Nice"), this.write("Raw")));
       return List.of(
          new AutismItemNbtInspectOverlay.Inner_DataUtil("Nice", x, y, w, false), new AutismItemNbtInspectOverlay.Inner_DataUtil("Raw", x + w + 2, y, w, false)
@@ -735,7 +735,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int tick_I_8() {
-      return this.load_I + 14 + this.set_I_6();
+      return this.windowY + 14 + this.set_I_6();
    }
 
    private int run_I_8() {
@@ -743,7 +743,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int get_I_6() {
-      return this.load_I + this.write - this.add_I_6();
+      return this.windowY + this.windowHeight - this.add_I_6();
    }
 
    private boolean poll_Z_6() {
@@ -768,7 +768,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          need += this.read("Fill Editor") + this.reset();
       }
 
-      return need <= this.read_I - this.set_I_6() * 2;
+      return need <= this.windowWidth - this.set_I_6() * 2;
    }
 
    private List<AutismItemNbtInspectOverlay.Inner_DataUtil> load(int y) {
@@ -778,18 +778,18 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          && this.init_az_StreamUtil.init_ItemStack() != null
          && !this.init_az_StreamUtil.init_ItemStack().isEmpty();
       if (!this.push_Z_5()) {
-         int firstCursor = this.init_I_2 + this.read_I - this.set_I_6();
+         int firstCursor = this.windowX + this.windowWidth - this.set_I_6();
          if (editor) {
             this.init_I_List(buttons, firstCursor, y, "Fill Editor", true);
          }
 
          int rowY = y + this.clear() + 2;
-         int secondCursor = this.init_I_2 + this.read_I - this.set_I_6();
+         int secondCursor = this.windowX + this.windowWidth - this.set_I_6();
          secondCursor = this.init_I_List(buttons, secondCursor, rowY, "Copy Raw", false);
          this.init_I_List(buttons, secondCursor, rowY, "Copy Nice", false);
          return buttons;
       } else {
-         int cursor = this.init_I_2 + this.read_I - this.set_I_6();
+         int cursor = this.windowX + this.windowWidth - this.set_I_6();
          if (editor) {
             cursor = this.init_I_List(buttons, cursor, y, "Fill Editor", true);
          }

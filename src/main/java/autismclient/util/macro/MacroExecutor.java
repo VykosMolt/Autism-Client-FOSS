@@ -805,9 +805,9 @@ public class MacroExecutor {
    private static void init_V_MacroExecutor_Tabl_2(MacroExecutor.MacroRun run, int step, int total, String macroName) {
       if (run == null || !run.init_MacroExecutor_Pool.suppressLanSync()) {
          try {
-            autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
-            if (sync.write_Z()) {
-               sync.init_V_I(step, total, macroName);
+            autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.getInstance();
+            if (sync.isInSession()) {
+               sync.reportMacroStepProgress(step, total, macroName);
             }
          } catch (Exception var5) {
          }
@@ -8998,9 +8998,9 @@ public class MacroExecutor {
       MacroVariableContext.clear();
 
       try {
-         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
-         if (sync.write_Z()) {
-            sync.init_V_I(-1, 0, "");
+         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.getInstance();
+         if (sync.isInSession()) {
+            sync.reportMacroStepProgress(-1, 0, "");
          }
       } catch (Exception var7) {
       }

@@ -33,15 +33,15 @@ final class PrintFlightWorkstations {
    }
 
    static List<Vec3> init(PrintView view, PrintTarget target, PrintClicks.Inner_CachePool mode, long key) {
-      Vec3 center = PrintFlight.init(key);
-      if (!PrintFlight.load(view, center)) {
+      Vec3 center = PrintFlight.cellFlightPoint(key);
+      if (!PrintFlight.isFlightPointSafe(view, center)) {
          return List.of(center);
       }
 
       ArrayList<Vec3> connected = new ArrayList<>();
 
       for (Vec3 point : load(view, target, mode, key)) {
-         if (point.equals(center) || PrintFlight.init_Z(view, center, point)) {
+         if (point.equals(center) || PrintFlight.isFlightSegmentClear(view, center, point)) {
             connected.add(point);
          }
       }
@@ -50,7 +50,7 @@ final class PrintFlightWorkstations {
    }
 
    static List<Vec3> load(PrintView view, PrintTarget target, PrintClicks.Inner_CachePool mode, long key) {
-      Vec3 center = PrintFlight.init(key);
+      Vec3 center = PrintFlight.cellFlightPoint(key);
       double low = BlockPos.getY(key);
       double high = low + 1.0;
       AABB column = new AABB(center.x - 0.3, low, center.z - 0.3, center.x + 0.3, high + 1.8, center.z + 0.3);
@@ -100,7 +100,7 @@ final class PrintFlightWorkstations {
                }
             }
 
-            if (free && Math.abs(point.y - center.y) > 1.0E-6 && PrintFlight.load(view, point)) {
+            if (free && Math.abs(point.y - center.y) > 1.0E-6 && PrintFlight.isFlightPointSafe(view, point)) {
                alternatives.add(point);
             }
          }

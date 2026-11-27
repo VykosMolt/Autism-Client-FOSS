@@ -24,7 +24,7 @@ public final class QueuedCombatAction {
    public static boolean init(String owner, BlockHitResult hit, InteractionHand hand, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
          QueuedCombatAction.Inner_DataUtil action = new QueuedCombatAction.Inner_DataUtil(owner, hit, hand, null, legal, dispatched);
-         if (!ClientInteractionOverride.init(hit, hand)) {
+         if (!ClientInteractionOverride.queueUseBlock(hit, hand)) {
             return false;
          }
 
@@ -38,7 +38,7 @@ public final class QueuedCombatAction {
    public static boolean init(String owner, EntityHitResult hit, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
          QueuedCombatAction.Inner_DataUtil action = new QueuedCombatAction.Inner_DataUtil(owner, null, null, hit.getEntity(), legal, dispatched);
-         if (!ClientInteractionOverride.init(owner, hit)) {
+         if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
             return false;
          }
 
@@ -82,7 +82,7 @@ public final class QueuedCombatAction {
 
    public static void init(String owner) {
       if (init != null && init.init_Str.equals(owner) || load != null && load.init_Str.equals(owner)) {
-         ClientInteractionOverride.write_V();
+         ClientInteractionOverride.clearAll();
       }
    }
 

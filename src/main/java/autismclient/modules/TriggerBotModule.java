@@ -453,7 +453,7 @@ final class TriggerBotModule extends Module {
          return false;
       }
 
-      if (AntiBotTracker.load_Z(entity)) {
+      if (AntiBotTracker.shouldIgnoreEntity(entity)) {
          return false;
       }
 

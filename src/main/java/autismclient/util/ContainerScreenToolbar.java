@@ -91,7 +91,7 @@ public final class ContainerScreenToolbar {
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
                if (queueEditorOverlay != null) {
-                  queueEditorOverlay.init_V_Z(!queueEditorOverlay.sync_Z());
+                  queueEditorOverlay.setVisible(!queueEditorOverlay.isVisible());
                }
             }
          )

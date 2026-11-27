@@ -275,7 +275,7 @@ final class PrintCleanupAccess {
                      BlockPos pos = BlockPos.of(this.init_J);
                      if (!PrintCleanupAccess.this.init_UiHelper.init_EventBus.hasChunkAt(pos)
                         || !PrintCleanupAccess.this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(this.init_J)
-                        || !PrintFlight.load(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_BufferHelper_DataU.point)
+                        || !PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_BufferHelper_DataU.point)
                         || !PrintCleanupAccess.this.init_UiHelper.load_Z_BlockPos(pos)) {
                         this.init_Z = true;
                         return;
@@ -284,7 +284,7 @@ final class PrintCleanupAccess {
                      PrintTarget target = new PrintTarget(
                         -1, pos, PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
                      );
-                     if (PrintClicks.init(
+                     if (PrintClicks.findClick(
                            PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil,
                            PrintCleanupAccess.this.init_UiHelper.init_EventBus,
                            PrintCleanupAccess.this.init_UiHelper.init_PathHelper,
@@ -314,8 +314,8 @@ final class PrintCleanupAccess {
                      try {
                         if (this.load_I < route.points().size()) {
                            Vec3 next = route.points().get(this.load_I++);
-                           if (!PrintFlight.load(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)
-                              || !PrintFlight.init_Z(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3, next)) {
+                           if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)
+                              || !PrintFlight.isFlightSegmentClear(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3, next)) {
                               this.init_Z = true;
                               return;
                            }
@@ -797,8 +797,8 @@ final class PrintCleanupAccess {
 
             if (this.init_Vec3 == null) {
                if (this.init_List == null || this.load_I >= this.init_List.size()) {
-                  if (this.init_I >= this.init_ArrayList.size() || this.init_ConfigStore_DataUt.init()) {
-                     this.load_Z = this.load_Z | this.init_ConfigStore_DataUt.init();
+                  if (this.init_I >= this.init_ArrayList.size() || this.init_ConfigStore_DataUt.isExhausted()) {
+                     this.load_Z = this.load_Z | this.init_ConfigStore_DataUt.isExhausted();
                      this.init_Z = true;
                      return;
                   }
@@ -814,12 +814,12 @@ final class PrintCleanupAccess {
                }
 
                this.init_Vec3 = this.init_List.get(this.load_I++);
-               if (!PrintFlight.load(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)) {
+               if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)) {
                   this.init_Vec3 = null;
                   continue;
                }
 
-               PrintClicks.Inner_StreamUtil click = PrintClicks.init(
+               PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
                   PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil,
                   PrintCleanupAccess.this.init_UiHelper.init_EventBus,
                   PrintCleanupAccess.this.init_UiHelper.init_PathHelper,
@@ -858,7 +858,7 @@ final class PrintCleanupAccess {
                PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.pushHypothesis(this.init_ListPool.pos(), Blocks.AIR.defaultBlockState());
 
                try {
-                  if (!PrintFlight.load(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)) {
+                  if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_Vec3)) {
                      this.init_Vec3 = null;
                      this.init_UiHelper_h = this.load_UiHelper_h = null;
                      this.read_I = 0;
@@ -901,9 +901,9 @@ final class PrintCleanupAccess {
 
       private boolean init(PrintCore.h exit) {
          return exit.init_TextFormat_ConfigS != null
-            && exit.init_TextFormat_ConfigS.init_TextFormat_BufferH == null
-            && !exit.init_TextFormat_ConfigS.init_PriorityQueue.isEmpty()
-            && exit.init_TextFormat_ConfigS.load_I >= exit.init_TextFormat_ConfigS.init_I;
+            && exit.init_TextFormat_ConfigS.result == null
+            && !exit.init_TextFormat_ConfigS.openQueue.isEmpty()
+            && exit.init_TextFormat_ConfigS.expandedNodes >= exit.init_TextFormat_ConfigS.maxExpansions;
       }
    }
 

@@ -1158,7 +1158,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                && entity.isAlive()
                && !entity.isSpectator()
                && this.init_Z_Entity_8(entity)
-               && !AntiBotTracker.load_Z(entity)
+               && !AntiBotTracker.shouldIgnoreEntity(entity)
                && !TeamsModule.init(entity, "killaura")
                && entity.hurtTime <= this.integer("hurt-time")
                && autismclient.util.ExplosionDamageCalculator.effectiveHealth(entity) > 0.0
@@ -1762,7 +1762,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private BlockHitResult init_BlockHitResult_t_NetHelper_ce_DataUtil(CrystalAuraModule.Inner_NetHelper plan, RotationMath.Rotation wire) {
       if (plan.init_InteractionHand() == null) {
          return null;
-      } else if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
+      } else if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return null;
       } else {
          BlockPos support = plan.init_BlockPos();
@@ -1805,7 +1805,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          )) {
             return false;
          } else if (!PerTickPlacementLock.init("crystal-aura")) {
-            autismclient.util.ClientInteractionOverride.write_V();
+            autismclient.util.ClientInteractionOverride.clearAll();
             return false;
          } else {
             return true;
@@ -1842,7 +1842,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return null;
       }
 
-      boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
+      boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.isMainHandUseableItem();
       int slot = offhand ? -1 : this.init_I_30();
       if (!offhand && slot < 0) {
          return null;
@@ -1983,7 +1983,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return null;
       }
 
@@ -2034,7 +2034,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          )) {
             return false;
          } else if (!PerTickPlacementLock.init("crystal-aura")) {
-            autismclient.util.ClientInteractionOverride.write_V();
+            autismclient.util.ClientInteractionOverride.clearAll();
             return false;
          } else {
             return true;
@@ -2162,7 +2162,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             return null;
          }
 
-         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
+         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.isMainHandUseableItem();
          int slot = offhand ? -1 : this.init_I_30();
          if (!offhand && slot < 0) {
             return null;
@@ -2242,7 +2242,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          LocalPlayer player = MC.player;
-         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
+         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.isMainHandUseableItem();
          int slot = offhand ? -1 : this.init_I_30();
          if (!offhand && slot < 0) {
             return null;
@@ -2351,7 +2351,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          .getEntitiesOfClass(
             Player.class,
             search,
-            entityx -> entityx != player && entityx.isAlive() && !entityx.isSpectator() && !AntiBotTracker.load_Z(entityx) && !TeamsModule.init(entityx, "killaura")
+            entityx -> entityx != player && entityx.isAlive() && !entityx.isSpectator() && !AntiBotTracker.shouldIgnoreEntity(entityx) && !TeamsModule.init(entityx, "killaura")
          );
       Vec3 eye = player.getEyePosition();
       double rangeSq = range * range;
@@ -2713,7 +2713,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private InteractionHand init_InteractionHand_5() {
       LocalPlayer player = MC.player;
-      if (load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z()) {
+      if (load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") && !autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
          return InteractionHand.OFF_HAND;
       }
 
@@ -2835,7 +2835,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && enemy.isAlive()
          && MC.level.getEntity(enemy.getId()) == enemy
          && !TeamsModule.init(enemy, "killaura")
-         && !AntiBotTracker.load_Z(enemy)
+         && !AntiBotTracker.shouldIgnoreEntity(enemy)
          && this.init_Z_LivingEntity_S_BufferHelper(
             enemy,
             this.init_S_BufferHelper_LivingEntity(enemy, source, this.init_AABB_LivingEntity(enemy, placing ? this.read_I_10() : 0, placing ? 1.5 : 0.5))

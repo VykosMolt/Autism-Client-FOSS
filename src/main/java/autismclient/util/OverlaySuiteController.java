@@ -16,7 +16,7 @@ public final class OverlaySuiteController {
    private AutismServerInfoOverlay init_AutismServerInfoOv;
 
    private OverlaySuiteController(Font font, AutismOverlay tiedOverlay) {
-      LanSyncManager.init_aE().flush(() -> {});
+      LanSyncManager.getInstance().setOnSessionChanged(() -> {});
       this.init_AutismLANSyncOverl = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
       this.init_AutismMacroListOve = tiedOverlay instanceof AutismMacroListOverlay library ? library : new AutismMacroListOverlay(font);
       this.init_AutismQueueEditorO = new AutismQueueEditorOverlay(font);
@@ -28,9 +28,9 @@ public final class OverlaySuiteController {
       }
 
       this.init_AutismQueueEditorO.sync_V_17();
-      this.init_AutismCustomFilter.b__V();
+      this.init_AutismCustomFilter.loadBounds();
       if (this.init_AutismCustomFilter_2 != null) {
-         this.init_AutismCustomFilter_2.b__V();
+         this.init_AutismCustomFilter_2.loadBounds();
       }
 
       this.init_AutismMacroEditorO = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
@@ -65,7 +65,7 @@ public final class OverlaySuiteController {
       }
 
       this.init_AutismKeybindOverl = new AutismKeybindOverlay();
-      this.init_AutismKeybindOverl.b__V();
+      this.init_AutismKeybindOverl.loadBounds();
       manager.register(this.init_AutismKeybindOverl);
       this.init_AutismLauncherOver = new AutismLauncherOverlay(
          this.init_AutismMacroListOve,
@@ -105,7 +105,7 @@ public final class OverlaySuiteController {
          this.init_AutismPacketLogger = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
          if (this.init_AutismPacketLogger != null) {
             this.init_AutismPacketLogger.flush_V_13();
-            if (this.init_AutismPacketLogger.sync_Z()) {
+            if (this.init_AutismPacketLogger.isVisible()) {
                manager.register(this.init_AutismPacketLogger);
             }
          }
@@ -115,7 +115,7 @@ public final class OverlaySuiteController {
          this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
          if (this.init_AutismServerInfoOv != null) {
             this.init_AutismServerInfoOv.update_V_21();
-            if (this.init_AutismServerInfoOv.sync_Z()) {
+            if (this.init_AutismServerInfoOv.isVisible()) {
                manager.register(this.init_AutismServerInfoOv);
             }
          }
@@ -123,12 +123,12 @@ public final class OverlaySuiteController {
 
       if (!AutismLiteVariant.enabled() && autismModule != null) {
          AutismOverlay profilesOverlay = autismModule.getOrCreateProfilesOverlay();
-         if (profilesOverlay != null && profilesOverlay.sync_Z()) {
+         if (profilesOverlay != null && profilesOverlay.isVisible()) {
             manager.register(profilesOverlay);
          }
       }
 
-      this.init_AutismLauncherOver.b__V();
+      this.init_AutismLauncherOver.loadBounds();
       manager.register(this.init_AutismLauncherOver);
    }
 
@@ -158,7 +158,7 @@ public final class OverlaySuiteController {
       }
 
       if (this.init_AutismLauncherOver != null) {
-         this.init_AutismLauncherOver.a__V();
+         this.init_AutismLauncherOver.saveBounds();
       }
 
       if (this.init_AutismPacketLogger != null) {
@@ -166,15 +166,15 @@ public final class OverlaySuiteController {
       }
 
       if (this.init_AutismCustomFilter != null) {
-         this.init_AutismCustomFilter.a__V();
+         this.init_AutismCustomFilter.saveBounds();
       }
 
       if (this.init_AutismCustomFilter_2 != null) {
-         this.init_AutismCustomFilter_2.a__V();
+         this.init_AutismCustomFilter_2.saveBounds();
       }
 
       if (this.init_AutismKeybindOverl != null) {
-         this.init_AutismKeybindOverl.a__V();
+         this.init_AutismKeybindOverl.saveBounds();
       }
 
       if (this.init_AutismServerInfoOv != null) {

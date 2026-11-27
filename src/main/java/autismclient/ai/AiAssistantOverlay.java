@@ -42,9 +42,9 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    AiAssistantOverlay(AiService service) {
       super("ai-assistant", 360, 240);
       this.init_cc = service;
-      this.init_I_2 = 35;
-      this.load_I = 30;
-      this.b__V();
+      this.windowX = 35;
+      this.windowY = 30;
+      this.loadBounds();
       this.init_cF = new AiViewState(service);
       this.init_TaskTimer = new AiChatView(service, this.init_cF, this);
       this.init_ce = new AiSessionsDrawer(service, this.init_cF, this);
@@ -66,34 +66,34 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       all.addAll(this.init_cf.init_List());
       this.init_List = List.copyOf(all);
       this.init_F_2 = new autismclient.util.OverlayContextMenu<>(this.init_cE.theme, Minecraft.getInstance().font, id -> AiSessionsDrawer.init_StrArr, AiUiKit.rowHeight());
-      this.init_V_F(this.init_F_2);
+      this.setActiveContextMenu(this.init_F_2);
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 280;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && this.init_TaskTimer != null
          ? Math.max(180, 22 + AiUiKit.toolbarHeight() + 4 + 1 + this.init_TaskTimer.init_I())
          : 180;
    }
 
    @Override
-   public boolean f_() {
+   public boolean isPersistent() {
       return this.write_Z;
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public AutismOverlay.RenderLayer init_cX_DataUtil() {
-      return this.write_Z ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : super.init_cX_DataUtil();
+   public AutismOverlay.RenderLayer getRenderLayer() {
+      return this.write_Z ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : super.getRenderLayer();
    }
 
    private void set_V() {
@@ -102,28 +102,28 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_cc.editSettingsAsync(s -> s.pinned = next);
       OverlayManager.getInstance().register(this, next ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.RenderLayer.HOST_SCREEN);
       if (!next && Minecraft.getInstance().gui.screen() == null) {
-         this.init_V_Z(false);
+         this.setVisible(false);
       }
 
       this.init_cF.invalidate();
    }
 
    @Override
-   public boolean init_Z_D_D(double x, double y) {
-      return super.init_Z_D_D(x, y)
-         || this.init_Z && !this.load_Z && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(x, y);
+   public boolean containsPoint(double x, double y) {
+      return super.containsPoint(x, y)
+         || this.windowVisible && !this.windowCollapsed && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(x, y);
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isResizable() {
       return true;
    }
 
    @Override
-   protected void c_() {
-      if (!this.set_Z()) {
-         this.read_I = 360;
-         this.write = 240;
+   protected void onSizeChanged() {
+      if (!this.hasCustomStoredSize()) {
+         this.windowWidth = 360;
+         this.windowHeight = 240;
       }
    }
 
@@ -188,7 +188,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    void open_V() {
-      this.init_V_Z(false);
+      this.setVisible(false);
    }
 
    void poll_V() {
@@ -277,32 +277,32 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor graphics, int mx, int my, float delta) {
-      if (this.init_Z || this.a__Z()) {
-         this.read_I = this.init_I_I_I(this.read_I, this.init_I());
-         this.write = this.load_I_I_I(this.write, this.load_I());
+   public void render(GuiGraphicsExtractor graphics, int mx, int my, float delta) {
+      if (this.windowVisible || this.isClosing()) {
+         this.windowWidth = this.resolveWindowWidth(this.windowWidth, this.getMinWidth());
+         this.windowHeight = this.resolveWindowHeight(this.windowHeight, this.getMinHeight());
          if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT) {
-            int body = this.init_TaskTimer.init_I_I(this.read_I - 8);
+            int body = this.init_TaskTimer.init_I_I(this.windowWidth - 8);
             if (body > 0) {
-               this.write = Math.min(this.write, Math.max(this.load_I(), 22 + AiUiKit.toolbarHeight() + 4 + 1 + body));
+               this.windowHeight = Math.min(this.windowHeight, Math.max(this.getMinHeight(), 22 + AiUiKit.toolbarHeight() + 4 + 1 + body));
             }
          }
 
          OverlayBounds bounds = this.clampCurrentBounds(this);
-         this.init_I_2 = bounds.x;
-         this.load_I = bounds.y;
-         this.read_I = bounds.width;
-         this.write = bounds.height;
-         this.renderWindowFrame(graphics, mx, my, this.init_cH(), "AI Assistant", this.load_Z, this.sync_Z);
-         if (!this.isVisuallyCollapsed(this.load_Z)) {
+         this.windowX = bounds.x;
+         this.windowY = bounds.y;
+         this.windowWidth = bounds.width;
+         this.windowHeight = bounds.height;
+         this.renderWindowFrame(graphics, mx, my, this.getBounds(), "AI Assistant", this.windowCollapsed, this.sync_Z);
+         if (!this.isVisuallyCollapsed(this.windowCollapsed)) {
             long now = System.currentTimeMillis();
             this.init_cF.refresh(now, this.init_ce.init_Z);
-            this.load_V_I_I(mx, my);
+            this.recordMousePosition(mx, my);
             boolean blocked = this.init_F_2.init(mx, my)
                || this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(mx, my);
             this.init_cE.beginFrame(graphics, mx, my, blocked, delta);
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(
-               this.init_I_2 + 4, this.load_I + 14 + 4, this.read_I - 8, this.write - 14 - 8
+               this.windowX + 4, this.windowY + 14 + 4, this.windowWidth - 8, this.windowHeight - 14 - 8
             );
             autismclient.gui.f.NetHelper toolbar = autismclient.gui.f.NetHelper.init(content.read(), content.write(), content.update(), AiUiKit.toolbarHeight());
             int divider = toolbar.load() + 2;
@@ -431,8 +431,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean init_Z_D_3(double x, double y, int button) {
-      if (this.init_Z && this.init_Z_D_D(x, y)) {
+   public boolean mouseClicked(double x, double y, int button) {
+      if (this.windowVisible && this.containsPoint(x, y)) {
          this.push = (int)x;
          this.pop = (int)y;
          if (this.init_F_2.init_Z()) {
@@ -440,19 +440,19 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             return true;
          }
 
-         if (this.isOverHeaderCloseButton(x, y, this.init_cH())) {
-            this.init_V_Z(false);
+         if (this.isOverHeaderCloseButton(x, y, this.getBounds())) {
+            this.setVisible(false);
             return true;
          }
 
-         if (this.load_Z_D_D(x, y)) {
+         if (this.isOverHeader(x, y)) {
             this.sync_Z = true;
-            this.init_D = x - this.init_I_2;
-            this.load_D = y - this.load_I;
+            this.init_D = x - this.windowX;
+            this.load_D = y - this.windowY;
             return true;
          }
 
-         if (!this.load_Z && this.init_cE.isInitialized()) {
+         if (!this.windowCollapsed && this.init_cE.isInitialized()) {
             this.flush_Z = true;
             if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_2(x, y, button)) {
                return true;
@@ -475,11 +475,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean load_Z_D_3(double x, double y, int button) {
+   public boolean mouseReleased(double x, double y, int button) {
       boolean moved = this.sync_Z;
       this.sync_Z = false;
       if (moved) {
-         this.a__V();
+         this.saveBounds();
       }
 
       boolean used = this.init_cE.mouseReleased();
@@ -496,10 +496,10 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean init_Z_D(double x, double y, int button, double dx, double dy) {
+   public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
       if (this.sync_Z) {
-         this.init_I_2 = (int)(x - this.init_D);
-         this.load_I = (int)(y - this.load_D);
+         this.windowX = (int)(x - this.init_D);
+         this.windowY = (int)(y - this.load_D);
          return true;
       }
 
@@ -518,8 +518,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean init_Z_D_2(double x, double y, double amount) {
-      if (!this.init_Z || this.load_Z || !this.init_Z_D_D(x, y)) {
+   public boolean mouseScrolled(double x, double y, double amount) {
+      if (!this.windowVisible || this.windowCollapsed || !this.containsPoint(x, y)) {
          return false;
       }
 
@@ -536,7 +536,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean init_Z_I(int key, int scan, int mods) {
+   public boolean keyPressed(int key, int scan, int mods) {
       if (!this.init_cE.isInitialized()) {
          return false;
       }
@@ -599,7 +599,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean init_Z_C_I(char c, int mods) {
+   public boolean charTyped(char c, int mods) {
       if (!this.init_cE.isInitialized()) {
          return false;
       }
@@ -640,12 +640,12 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean hasFocusedTextInput() {
       return this.init_BitSetUtil() != null || this.push_Z();
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       for (autismclient.gui.ui.widgets.TextInputWidget field : this.init_List) {
          field.setFocused(false);
       }

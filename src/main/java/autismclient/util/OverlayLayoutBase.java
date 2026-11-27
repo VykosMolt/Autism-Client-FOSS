@@ -14,12 +14,12 @@ public abstract class OverlayLayoutBase {
    }
 
    protected OverlayBounds clampCurrentBounds(AutismOverlay overlay) {
-      return this.clampToScreen(overlay, overlay.init_cH());
+      return this.clampToScreen(overlay, overlay.getBounds());
    }
 
    protected OverlayBounds clampToScreen(AutismOverlay overlay, OverlayBounds bounds) {
       Minecraft mc = Minecraft.getInstance();
-      return mc != null && mc.getWindow() != null && bounds != null ? clampBounds(bounds, overlay.init_I(), overlay.load_I(), cA.init_I(), cA.load_I()) : bounds;
+      return mc != null && mc.getWindow() != null && bounds != null ? clampBounds(bounds, overlay.getMinWidth(), overlay.getMinHeight(), cA.init_I(), cA.load_I()) : bounds;
    }
 
    static OverlayBounds clampBounds(OverlayBounds bounds, int overlayMinWidth, int overlayMinHeight, int screenWidth, int screenHeight) {
@@ -180,6 +180,6 @@ public abstract class OverlayLayoutBase {
    }
 
    private boolean isClickHeaderCollapse() {
-      return this instanceof AutismOverlay overlay && overlay.load_Z();
+      return this instanceof AutismOverlay overlay && overlay.supportsHeaderCollapseClick();
    }
 }

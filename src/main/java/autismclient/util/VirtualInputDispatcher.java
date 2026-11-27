@@ -267,8 +267,8 @@ public final class VirtualInputDispatcher {
       if (!flush_Z()) {
          set();
       } else {
-         boolean combatOwnsUse = ClientInteractionOverride.flush_Z();
-         boolean combatOwnsAttack = ClientInteractionOverride.close_Z();
+         boolean combatOwnsUse = ClientInteractionOverride.ownsUseInput();
+         boolean combatOwnsAttack = ClientInteractionOverride.ownsAttackInput();
          if (init_cW != null && !init_cW.init_Z()) {
             run();
          }

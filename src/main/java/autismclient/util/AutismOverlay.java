@@ -3,120 +3,120 @@ package autismclient.util;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public interface AutismOverlay {
-   void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor var1, int var2, int var3, float var4);
+   void render(GuiGraphicsExtractor var1, int var2, int var3, float var4);
 
-   boolean init_Z_D_3(double var1, double var3, int var5);
+   boolean mouseClicked(double var1, double var3, int var5);
 
-   boolean load_Z_D_3(double var1, double var3, int var5);
+   boolean mouseReleased(double var1, double var3, int var5);
 
-   boolean init_Z_D(double var1, double var3, int var5, double var6, double var8);
+   boolean mouseDragged(double var1, double var3, int var5, double var6, double var8);
 
-   boolean init_Z_D_2(double var1, double var3, double var5);
+   boolean mouseScrolled(double var1, double var3, double var5);
 
-   boolean init_Z_I(int var1, int var2, int var3);
+   boolean keyPressed(int var1, int var2, int var3);
 
-   boolean init_Z_C_I(char var1, int var2);
+   boolean charTyped(char var1, int var2);
 
-   boolean sync_Z();
+   boolean isVisible();
 
-   void init_V_Z(boolean var1);
+   void setVisible(boolean var1);
 
-   default boolean a__Z() {
+   default boolean isClosing() {
       return OverlayManager.getInstance().isClosing(this);
    }
 
-   boolean init_Z_D_D(double var1, double var3);
+   boolean containsPoint(double var1, double var3);
 
-   boolean load_Z_D_D(double var1, double var3);
+   boolean isOverHeader(double var1, double var3);
 
-   default int b__I() {
+   default int getZPriority() {
       return 0;
    }
 
-   default boolean flush_Z() {
+   default boolean isCollapsed() {
       return false;
    }
 
-   default void write_V_Z(boolean collapsed) {
+   default void setCollapsed(boolean collapsed) {
    }
 
-   default void start_V() {
-      this.write_V_Z(!this.flush_Z());
+   default void toggleCollapsed() {
+      this.setCollapsed(!this.isCollapsed());
    }
 
-   default boolean write_Z() {
+   default boolean hasFocusedTextInput() {
       return false;
    }
 
-   default void push_V() {
+   default void clearInputFocus() {
    }
 
-   default boolean e_() {
+   default boolean isCapturingKeybind() {
       return false;
    }
 
-   default String init_Str() {
+   default String getOverlayId() {
       return this.getClass().getSimpleName();
    }
 
-   default AutismOverlay.RenderLayer init_cX_DataUtil() {
+   default AutismOverlay.RenderLayer getRenderLayer() {
       return AutismOverlay.RenderLayer.HOST_SCREEN;
    }
 
-   default boolean f_() {
+   default boolean isPersistent() {
       return false;
    }
 
-   default boolean update_Z() {
+   default boolean shouldRememberOnDismiss() {
       return false;
    }
 
-   default OverlayBounds init_cH() {
-      return new OverlayBounds(0, 0, this.init_I(), this.load_I(), this.sync_Z(), this.flush_Z());
+   default OverlayBounds getBounds() {
+      return new OverlayBounds(0, 0, this.getMinWidth(), this.getMinHeight(), this.isVisible(), this.isCollapsed());
    }
 
-   default void init_V_cH(OverlayBounds bounds) {
+   default void setBounds(OverlayBounds bounds) {
    }
 
-   default int init_I() {
+   default int getMinWidth() {
       return 240;
    }
 
-   default int load_I() {
+   default int getMinHeight() {
       return 140;
    }
 
-   default boolean read_Z() {
+   default boolean isResizable() {
       return false;
    }
 
-   default boolean read_Z_D_D(double mouseX, double mouseY) {
-      return this.read_Z() && this.sync_Z() && !this.flush_Z() ? autismclient.gui.ui.widgets.ResizeGripRenderer.init(this.init_cH(), mouseX, mouseY) : false;
+   default boolean isOverResizeGrip(double mouseX, double mouseY) {
+      return this.isResizable() && this.isVisible() && !this.isCollapsed() ? autismclient.gui.ui.widgets.ResizeGripRenderer.init(this.getBounds(), mouseX, mouseY) : false;
    }
 
-   default void init_V_I_I(int width, int height) {
-      OverlayBounds b = this.init_cH();
-      this.init_V_cH(new OverlayBounds(b.x, b.y, Math.max(this.init_I(), width), Math.max(this.load_I(), height), b.visible, b.collapsed));
+   default void resizeTo(int width, int height) {
+      OverlayBounds b = this.getBounds();
+      this.setBounds(new OverlayBounds(b.x, b.y, Math.max(this.getMinWidth(), width), Math.max(this.getMinHeight(), height), b.visible, b.collapsed));
    }
 
-   default void tick_V() {
+   default void onResizeFinished() {
    }
 
-   default void run_V() {
+   default void resetSize() {
    }
 
-   default boolean load_Z() {
+   default boolean supportsHeaderCollapseClick() {
       return false;
    }
 
-   default void a__V() {
-      AutismSessionState.getInstance().setOverlayBounds(this.init_Str(), this.init_cH());
+   default void saveBounds() {
+      AutismSessionState.getInstance().setOverlayBounds(this.getOverlayId(), this.getBounds());
    }
 
-   default void b__V() {
-      OverlayBounds layout = AutismSessionState.getInstance().getOverlayBounds(this.init_Str());
+   default void loadBounds() {
+      OverlayBounds layout = AutismSessionState.getInstance().getOverlayBounds(this.getOverlayId());
       if (layout != null) {
-         this.init_V_cH(layout);
+         this.setBounds(layout);
       }
    }
 

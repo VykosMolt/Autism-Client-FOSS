@@ -121,7 +121,7 @@ public final class aD {
          am.init_V();
          config.save();
          if (config.lanSyncEnabled) {
-            autismclient.util.LanSyncManager.init_aE().init_V();
+            autismclient.util.LanSyncManager.getInstance().startService();
          }
 
          al.tick_V();
@@ -163,7 +163,7 @@ public final class aD {
       autismclient.util.PacketCaptureState.update();
       al.tick_V();
       autismclient.util.VirtualInputDispatcher.pop();
-      autismclient.util.LanSyncManager.init_aE().read_V();
+      autismclient.util.LanSyncManager.getInstance().shutdownSilently();
       if (MacroExecutor.isRunning()) {
          MacroExecutor.stopAll();
       }

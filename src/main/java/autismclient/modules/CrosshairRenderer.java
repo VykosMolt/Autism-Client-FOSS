@@ -190,7 +190,7 @@ public final class CrosshairRenderer {
                Entity entity = hit.getEntity();
                if (!(entity instanceof LivingEntity living && living.isAlive() && !(entity instanceof ArmorStand))) {
                   return 0;
-               } else if (AntiBotTracker.load_Z(entity)) {
+               } else if (AntiBotTracker.shouldIgnoreEntity(entity)) {
                   return 0;
                } else {
                   boolean inReach = from.distanceTo(hit.getLocation()) <= reach;

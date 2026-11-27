@@ -20,25 +20,25 @@ public class StoreRecoveryCheck {
          this.file = file;
       }
 
-      protected File init_File() {
+      protected File getStoreFile() {
          return this.file;
       }
 
-      protected String init_Str() {
+      protected String getListTagKey() {
          return "items";
       }
 
-      protected String init_Obj_CompoundTag(CompoundTag tag) {
+      protected String deserializeItem(CompoundTag tag) {
          return tag.getStringOr("v", "");
       }
 
-      protected CompoundTag init_CompoundTag_Obj(String item) {
+      protected CompoundTag serializeItem(String item) {
          CompoundTag tag = new CompoundTag();
          tag.putString("v", item);
          return tag;
       }
 
-      protected String load_Str() {
+      protected String getStoreLabel() {
          return "check store";
       }
    }
@@ -93,21 +93,21 @@ public class StoreRecoveryCheck {
       Files.write(f1.toPath(), garbage);
       write(new File(dir1, "s.nbt.bak"), "a", "b");
       Store s1 = new Store(f1);
-      s1.load_V();
-      check(s1.init_List().equals(Arrays.asList("a", "b")), "corrupt primary + good bak loads bak, got " + s1.init_List());
+      s1.ensureLoaded();
+      check(s1.getItems().equals(Arrays.asList("a", "b")), "corrupt primary + good bak loads bak, got " + s1.getItems());
       check(corrupt(dir1).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir1)[0].toPath()), garbage), "corrupt primary kept aside");
       DebouncedPersistenceScheduler.init(5000L);
       check(f1.exists(), "bak recovery writes primary back to disk");
       Store s1Second = new Store(f1);
-      s1Second.load_V();
-      check(s1Second.init_List().equals(Arrays.asList("a", "b")), "second launch keeps recovered data, got " + s1Second.init_List());
+      s1Second.ensureLoaded();
+      check(s1Second.getItems().equals(Arrays.asList("a", "b")), "second launch keeps recovered data, got " + s1Second.getItems());
 
       File dirMissing = Files.createTempDirectory("dfcheck").toFile();
       File fMissing = new File(dirMissing, "s.nbt");
       write(new File(dirMissing, "s.nbt.bak"), "m1", "m2");
       Store sMissing = new Store(fMissing);
-      sMissing.load_V();
-      check(sMissing.init_List().equals(Arrays.asList("m1", "m2")), "missing primary + good bak loads bak, got " + sMissing.init_List());
+      sMissing.ensureLoaded();
+      check(sMissing.getItems().equals(Arrays.asList("m1", "m2")), "missing primary + good bak loads bak, got " + sMissing.getItems());
       DebouncedPersistenceScheduler.init(5000L);
       check(fMissing.exists(), "missing primary recovery recreates primary file");
 
@@ -117,33 +117,33 @@ public class StoreRecoveryCheck {
       Files.write(f2.toPath(), garbage);
       Files.write(bak2.toPath(), garbage);
       Store s2 = new Store(f2);
-      s2.load_V();
-      check(s2.close_I() == 0, "both corrupt loads empty");
-      s2.init_List.add("new");
-      s2.read_V();
+      s2.ensureLoaded();
+      check(s2.size() == 0, "both corrupt loads empty");
+      s2.items.add("new");
+      s2.save();
       DebouncedPersistenceScheduler.init(5000L);
       check(corrupt(dir2).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir2)[0].toPath()), garbage), "save kept the corrupt original");
       check(Arrays.equals(Files.readAllBytes(bak2.toPath()), garbage), "save did not clobber the bak");
       Store again = new Store(f2);
-      again.load_V();
-      check(again.init_List().equals(Arrays.asList("new")), "new save readable");
+      again.ensureLoaded();
+      check(again.getItems().equals(Arrays.asList("new")), "new save readable");
 
       File dir3 = Files.createTempDirectory("dfcheck").toFile();
       File f3 = new File(dir3, "s.nbt");
       File bak3 = new File(dir3, "s.nbt.bak");
       write(f3, "x");
       Store s3 = new Store(f3);
-      s3.load_V();
+      s3.ensureLoaded();
       Files.write(f3.toPath(), garbage);
-      s3.read_V();
+      s3.save();
       DebouncedPersistenceScheduler.init(5000L);
       check(!bak3.exists(), "unparseable primary is not copied to bak");
       write(f3, "x");
-      s3.read_V();
+      s3.save();
       DebouncedPersistenceScheduler.init(5000L);
       Store b3 = new Store(bak3);
-      b3.load_V();
-      check(b3.init_List().equals(Arrays.asList("x")), "parseable primary is copied to bak");
+      b3.ensureLoaded();
+      check(b3.getItems().equals(Arrays.asList("x")), "parseable primary is copied to bak");
 
       System.out.println("PASS StoreRecoveryCheck");
    }

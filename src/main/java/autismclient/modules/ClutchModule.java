@@ -576,7 +576,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.pool = -2147483648;
       this.write_V_20();
       if (this.init_Z) {
-         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.ClientInteractionOverride.clearAll();
          this.push_V_4();
       }
    }
@@ -679,7 +679,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       if (clutch != null && MC.player != null && before != null) {
          if (MC.player.position().distanceToSqr(before) > 16.0) {
             if (clutch.init_Z) {
-               autismclient.util.ClientInteractionOverride.write_V();
+               autismclient.util.ClientInteractionOverride.clearAll();
             }
 
             int slot = clutch.valid;
@@ -1192,7 +1192,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               this.update_Z = false;
                               this.next = this.write_I_7();
                               this.valid = -1;
-                              autismclient.util.ClientInteractionOverride.write_V();
+                              autismclient.util.ClientInteractionOverride.clearAll();
                               autismclient.util.SilentRotationManager.syncFromServerRotation();
                            }
 
@@ -1397,7 +1397,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       if (placement) {
          this.valid = -1;
          autismclient.util.SilentRotationManager.syncFromServerRotation();
-         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.ClientInteractionOverride.clearAll();
          autismclient.util.VirtualInputDispatcher.update_V();
          if (MC.player.isUsingItem()) {
             MC.gameMode.releaseUsingItem(MC.player);
@@ -2374,8 +2374,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                }
 
                if (this.init_j_DataUtil.read
-                  ? autismclient.util.ClientInteractionOverride.init(hit, InteractionHand.MAIN_HAND, rotation)
-                  : autismclient.util.ClientInteractionOverride.init(hit, InteractionHand.MAIN_HAND)) {
+                  ? autismclient.util.ClientInteractionOverride.queueUseBlock(hit, InteractionHand.MAIN_HAND, rotation)
+                  : autismclient.util.ClientInteractionOverride.queueUseBlock(hit, InteractionHand.MAIN_HAND)) {
                   this.init_BlockHitResult = hit;
                   this.update_BlockPos = placedCell.immutable();
                   this.frame = this.init_j_DataUtil.load_I;
@@ -2926,7 +2926,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.init_i_TaskQueue = null;
       this.poll_I = -2147483648;
       if (this.init_Z) {
-         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.ClientInteractionOverride.clearAll();
       }
 
       this.push_V_4();

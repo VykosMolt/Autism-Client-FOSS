@@ -602,7 +602,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             if (overlay != null) {
                OverlayManager.getInstance().register(overlay);
                ((AutismProfilesOverlay)overlay).load(true);
-               overlay.init_V_Z(true);
+               overlay.setVisible(true);
                this.minecraft.gui.setScreen(new AutismOverlaysScreen(overlay, this, true));
             }
          }

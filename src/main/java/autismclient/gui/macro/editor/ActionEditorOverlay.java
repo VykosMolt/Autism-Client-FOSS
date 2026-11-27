@@ -1211,27 +1211,27 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public String init_Str() {
+   public String getOverlayId() {
       return "autism-action-editor";
    }
 
    @Override
-   public int init_I() {
+   public int getMinWidth() {
       return 168;
    }
 
    @Override
-   public int load_I() {
+   public int getMinHeight() {
       return this.push_I_2();
    }
 
    @Override
-   public boolean sync_Z() {
+   public boolean isVisible() {
       return this.write_Z;
    }
 
    @Override
-   public void init_V_Z(boolean v) {
+   public void setVisible(boolean v) {
       this.write_Z = v;
       if (v) {
          this.valid_List.clear();
@@ -1239,25 +1239,25 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       } else {
          this.push(true);
          autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
-         this.init_AutismPacketSelect.init_V_Z(false);
-         this.init_RaceStepSelectorOv.init_V_Z(false);
-         this.push_V();
+         this.init_AutismPacketSelect.setVisible(false);
+         this.init_RaceStepSelectorOv.setVisible(false);
+         this.clearInputFocus();
       }
    }
 
    @Override
-   public boolean flush_Z() {
-      return this.load_Z;
+   public boolean isCollapsed() {
+      return this.windowCollapsed;
    }
 
    @Override
-   public void write_V_Z(boolean value) {
-      if (this.load_Z != value) {
-         super.write_V_Z(value);
+   public void setCollapsed(boolean value) {
+      if (this.windowCollapsed != value) {
+         super.setCollapsed(value);
          if (value) {
             autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
-            this.init_AutismPacketSelect.init_V_Z(false);
-            this.init_RaceStepSelectorOv.init_V_Z(false);
+            this.init_AutismPacketSelect.setVisible(false);
+            this.init_RaceStepSelectorOv.setVisible(false);
             this.valid_List.clear();
             this.size_List.clear();
          }
@@ -1265,54 +1265,54 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public OverlayBounds init_cH() {
-      return new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z);
+   public OverlayBounds getBounds() {
+      return new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.windowCollapsed);
    }
 
    @Override
-   public void init_V_cH(OverlayBounds b) {
+   public void setBounds(OverlayBounds b) {
       OverlayBounds c = this.clampToScreen(this, b);
       this.bind = c.x;
       this.f_a_I = c.y;
       this.f_b_I = c.width;
       this.f_c_I = c.height;
       this.write_Z = c.visible;
-      this.load_Z = c.collapsed;
+      this.windowCollapsed = c.collapsed;
    }
 
    @Override
-   public boolean init_Z_D_D(double mx, double my) {
+   public boolean containsPoint(double mx, double my) {
       return this.write_Z
          && (
-            this.init_AutismPacketSelect.sync_Z()
-               || this.init_RaceStepSelectorOv.sync_Z()
+            this.init_AutismPacketSelect.isVisible()
+               || this.init_RaceStepSelectorOv.isVisible()
                || autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)
-               || mx >= this.bind && mx < this.bind + this.f_b_I && my >= this.f_a_I && my < this.f_a_I + (this.load_Z ? 14 : this.f_c_I)
+               || mx >= this.bind && mx < this.bind + this.f_b_I && my >= this.f_a_I && my < this.f_a_I + (this.windowCollapsed ? 14 : this.f_c_I)
          );
    }
 
    @Override
-   public boolean load_Z_D_D(double mx, double my) {
+   public boolean isOverHeader(double mx, double my) {
       return this.write_Z
          && mx >= this.bind
          && mx < this.bind + this.f_b_I
          && my >= this.f_a_I
          && my < this.f_a_I + 14
-         && !this.isOverHeaderControl(mx, my, this.init_cH());
+         && !this.isOverHeaderControl(mx, my, this.getBounds());
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean supportsHeaderCollapseClick() {
       return true;
    }
 
    @Override
-   public boolean write_Z() {
-      if (this.init_AutismPacketSelect.write_Z()) {
+   public boolean hasFocusedTextInput() {
+      if (this.init_AutismPacketSelect.hasFocusedTextInput()) {
          return true;
       }
 
-      if (this.init_RaceStepSelectorOv.write_Z()) {
+      if (this.init_RaceStepSelectorOv.hasFocusedTextInput()) {
          return true;
       }
 
@@ -1332,7 +1332,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void push_V() {
+   public void clearInputFocus() {
       this.init_Map.values().forEach(f -> f.setFocused(false));
       this.flush_Map.values().forEach(f -> f.setFocused(false));
    }
@@ -1569,8 +1569,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.a__Z()) {
+   public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.write_Z || this.isClosing()) {
          this.push(false);
          this.init_F_2 = delta;
          this.valid_List.clear();
@@ -1589,22 +1589,22 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.pool();
          }
 
-         if (!this.load_Z) {
+         if (!this.windowCollapsed) {
             int neededH = 18 + this.stop_I() + this.run_I() + 4;
             int minH = this.push_I_2();
             int maxH = Math.max(minH, cA.load_I() * 4 / 5);
             this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
          }
 
-         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.windowCollapsed));
          this.bind = clamped.x;
          this.f_a_I = clamped.y;
          this.f_b_I = clamped.width;
          this.f_c_I = clamped.height;
          String title = this.start_Str();
-         OverlayBounds bounds = this.init_cH();
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.load_Z, this.update_Z);
-         boolean clipBody = this.beginBodyClip(context, bounds, this.load_Z);
+         OverlayBounds bounds = this.getBounds();
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.windowCollapsed, this.update_Z);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.windowCollapsed);
          if (clipBody) {
             try {
                int frameH = this.renderedHeight(bounds, false);
@@ -1622,18 +1622,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.renderInactiveDim(context, bounds, this.load_Z, this.update_Z);
+         this.renderInactiveDim(context, bounds, this.windowCollapsed, this.update_Z);
          if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             context.nextStratum();
             autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
          }
 
-         if (this.init_AutismPacketSelect.sync_Z()) {
-            this.init_AutismPacketSelect.init_V_GuiGraphicsExtract_15(context, mouseX, mouseY, delta);
+         if (this.init_AutismPacketSelect.isVisible()) {
+            this.init_AutismPacketSelect.render(context, mouseX, mouseY, delta);
          }
 
-         if (this.init_RaceStepSelectorOv.sync_Z()) {
-            this.init_RaceStepSelectorOv.init_V_GuiGraphicsExtract_15(context, mouseX, mouseY, delta);
+         if (this.init_RaceStepSelectorOv.isVisible()) {
+            this.init_RaceStepSelectorOv.render(context, mouseX, mouseY, delta);
          }
       }
    }
@@ -8165,15 +8165,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.poll_List = new ArrayList<>();
 
       for (AutismOverlay o : OverlayManager.getInstance().getOverlays()) {
-         if (o != this && o.sync_Z()) {
-            o.a__V();
+         if (o != this && o.isVisible()) {
+            o.saveBounds();
             this.poll_List.add(o);
-            o.init_V_Z(false);
+            o.setVisible(false);
          }
       }
 
-      this.a__V();
-      this.push_V();
+      this.saveBounds();
+      this.clearInputFocus();
       this.sync_Z = this.write_Z;
       this.write_Z = false;
       AutismSessionState.getInstance().setTimedCaptureMode(true);
@@ -8207,8 +8207,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          for (AutismOverlay overlay : this.poll_List) {
             manager.register(overlay);
-            overlay.init_V_Z(true);
-            overlay.a__V();
+            overlay.setVisible(true);
+            overlay.saveBounds();
          }
 
          this.poll_List = null;
@@ -9072,18 +9072,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_3(double mx, double my, int button) {
+   public boolean mouseClicked(double mx, double my, int button) {
       this.variableWarningStale = true;
       if (!this.write_Z) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_D_3(mx, my, button);
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.mouseClicked(mx, my, button);
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z()) {
-         return this.init_RaceStepSelectorOv.init_Z_D_3(mx, my, button);
+      if (this.init_RaceStepSelectorOv.isVisible()) {
+         return this.init_RaceStepSelectorOv.mouseClicked(mx, my, button);
       }
 
       int imx = (int)mx;
@@ -9099,12 +9099,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      if (this.isOverHeaderCloseButton(mx, my, this.init_cH())) {
+      if (this.isOverHeaderCloseButton(mx, my, this.getBounds())) {
          this.set(false);
          return true;
       }
 
-      if (this.load_Z_D_D(mx, my)) {
+      if (this.isOverHeader(mx, my)) {
          this.update_Z = true;
          this.load_D = mx - this.bind;
          this.read_D = my - this.f_a_I;
@@ -9112,11 +9112,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (!this.init_Z_D_D(mx, my)) {
+      if (!this.containsPoint(mx, my)) {
          return false;
       }
 
-      if (this.load_Z) {
+      if (this.windowCollapsed) {
          return true;
       }
 
@@ -9154,7 +9154,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      this.push_V();
+      this.clearInputFocus();
       if (button == 0 && this.load_Z_I_I(imx, imy)) {
          this.size_Z = true;
          this.pop(imx);
@@ -9220,13 +9220,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean load_Z_D_3(double mx, double my, int button) {
+   public boolean mouseReleased(double mx, double my, int button) {
       this.variableWarningStale = true;
-      if (this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.load_Z_D_3(mx, my, button)) {
+      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseReleased(mx, my, button)) {
          return true;
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z() && this.init_RaceStepSelectorOv.load_Z_D_3(mx, my, button)) {
+      if (this.init_RaceStepSelectorOv.isVisible() && this.init_RaceStepSelectorOv.mouseReleased(mx, my, button)) {
          return true;
       }
 
@@ -9291,13 +9291,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D(double mx, double my, int button, double dx, double dy) {
+   public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
       this.variableWarningStale = true;
-      if (this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.init_Z_D(mx, my, button, dx, dy)) {
+      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseDragged(mx, my, button, dx, dy)) {
          return true;
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z() && this.init_RaceStepSelectorOv.init_Z_D(mx, my, button, dx, dy)) {
+      if (this.init_RaceStepSelectorOv.isVisible() && this.init_RaceStepSelectorOv.mouseDragged(mx, my, button, dx, dy)) {
          return true;
       }
 
@@ -9364,17 +9364,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_D_2(double mx, double my, double amount) {
+   public boolean mouseScrolled(double mx, double my, double amount) {
       this.variableWarningStale = true;
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_D_2(mx, my, amount);
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.mouseScrolled(mx, my, amount);
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z()) {
-         return this.init_RaceStepSelectorOv.init_Z_D_2(mx, my, amount);
+      if (this.init_RaceStepSelectorOv.isVisible()) {
+         return this.init_RaceStepSelectorOv.mouseScrolled(mx, my, amount);
       }
 
-      if (this.write_Z && this.init_Z_D_D(mx, my)) {
+      if (this.write_Z && this.containsPoint(mx, my)) {
          if (!this.sync_List.isEmpty()
             && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, mx, my))
             && autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.sync_List, mx, my, amount)) {
@@ -9425,26 +9425,26 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       this.variableWarningStale = true;
       if (!this.write_Z) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_I(keyCode, scanCode, modifiers);
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.keyPressed(keyCode, scanCode, modifiers);
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z()) {
-         return this.init_RaceStepSelectorOv.init_Z_I(keyCode, scanCode, modifiers);
+      if (this.init_RaceStepSelectorOv.isVisible()) {
+         return this.init_RaceStepSelectorOv.keyPressed(keyCode, scanCode, modifiers);
       }
 
       if (!autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
          if (keyCode == 256) {
             if (this.poll_Z_2()) {
                return true;
-            } else if (this.write_Z()) {
-               this.push_V();
+            } else if (this.hasFocusedTextInput()) {
+               this.clearInputFocus();
                return true;
             } else {
                this.set(false);
@@ -9477,18 +9477,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public boolean init_Z_C_I(char chr, int modifiers) {
+   public boolean charTyped(char chr, int modifiers) {
       this.variableWarningStale = true;
       if (!this.write_Z) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.sync_Z()) {
-         return this.init_AutismPacketSelect.init_Z_C_I(chr, modifiers);
+      if (this.init_AutismPacketSelect.isVisible()) {
+         return this.init_AutismPacketSelect.charTyped(chr, modifiers);
       }
 
-      if (this.init_RaceStepSelectorOv.sync_Z()) {
-         return this.init_RaceStepSelectorOv.init_Z_C_I(chr, modifiers);
+      if (this.init_RaceStepSelectorOv.isVisible()) {
+         return this.init_RaceStepSelectorOv.charTyped(chr, modifiers);
       }
 
       CharacterEvent ci = new CharacterEvent(chr);
@@ -10106,7 +10106,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int minH = this.push_I_2();
       int maxH = Math.max(minH, cA.load_I() * 4 / 5);
       this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
-      OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+      OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.windowCollapsed));
       this.bind = clamped.x;
       this.f_a_I = clamped.y;
       this.f_b_I = clamped.width;

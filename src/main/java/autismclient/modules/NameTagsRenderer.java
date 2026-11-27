@@ -166,7 +166,7 @@ public final class NameTagsRenderer {
 
             for (Entity entity : init_Minecraft.level.entitiesForRendering()) {
                try {
-                  if (entity != self && !AntiBotTracker.load_Z(entity)) {
+                  if (entity != self && !AntiBotTracker.shouldIgnoreEntity(entity)) {
                      boolean friend = TeamsModule.init_Z_Entity_5(entity);
                      if (!friend || TeamsModule.read_Z_Str("nametags")) {
                         double x = Mth.lerp(tickDelta, entity.xOld, entity.getX());
@@ -254,7 +254,7 @@ public final class NameTagsRenderer {
          return false;
       }
 
-      if (AntiBotTracker.init_Z(entity)) {
+      if (AntiBotTracker.isBot(entity)) {
          return false;
       }
 

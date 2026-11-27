@@ -74,10 +74,10 @@ public final class ViaFabricPlusBridge {
          );
       }
 
-      ProxyListManager manager = ProxyListManager.init_bY();
+      ProxyListManager manager = ProxyListManager.getInstance();
       ViaFabricPlusBridge.ConfigStore route;
       synchronized (manager) {
-         route = ViaFabricPlusBridge.ConfigStore.init(manager.init_bW());
+         route = ViaFabricPlusBridge.ConfigStore.init(manager.getActiveProxy());
       }
 
       return init(host, port, route, original);

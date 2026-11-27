@@ -426,8 +426,8 @@ public class MacroLibraryManager {
          editor.update_V_10();
       }
 
-      if (!this.suppressLanBroadcast && LanSyncManager.init_aE().write_Z()) {
-         LanSyncManager.init_aE().read_V_Str(macro.name);
+      if (!this.suppressLanBroadcast && LanSyncManager.getInstance().isInSession()) {
+         LanSyncManager.getInstance().notifyMacroDeleted(macro.name);
       }
 
       return true;
@@ -546,8 +546,8 @@ public class MacroLibraryManager {
          DebouncedPersistenceScheduler.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> writeAtomicNbt(target, tag), target, tag));
       }
 
-      if (broadcast && LanSyncManager.init_aE().write_Z()) {
-         LanSyncManager.init_aE().push();
+      if (broadcast && LanSyncManager.getInstance().isInSession()) {
+         LanSyncManager.getInstance().broadcastLocalMacroRoster();
       }
    }
 
@@ -615,8 +615,8 @@ public class MacroLibraryManager {
                this.suppressLanBroadcast = prevSuppress;
             }
 
-            if (announce && !this.suppressLanBroadcast && LanSyncManager.init_aE().write_Z()) {
-               LanSyncManager.init_aE().push();
+            if (announce && !this.suppressLanBroadcast && LanSyncManager.getInstance().isInSession()) {
+               LanSyncManager.getInstance().broadcastLocalMacroRoster();
             }
          }
       }

@@ -224,7 +224,7 @@ public final class BacktrackModule extends Module {
          && !candidate.isSpectator()
          && init_Minecraft.level.getEntity(candidate.getId()) == candidate
          && !candidate.isPassenger()
-         && !AntiBotTracker.load_Z(candidate)
+         && !AntiBotTracker.shouldIgnoreEntity(candidate)
          && !TeamsModule.init(candidate, "killaura");
    }
 

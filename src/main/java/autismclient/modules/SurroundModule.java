@@ -628,12 +628,12 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       InteractionHand hand = InteractionHand.MAIN_HAND;
       if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
-            if (!autismclient.util.ClientInteractionOverride.init(hit, hand)) {
+            if (!autismclient.util.ClientInteractionOverride.queueUseBlock(hit, hand)) {
                return;
             }
 
             if (!PerTickPlacementLock.init(this.id())) {
-               autismclient.util.ClientInteractionOverride.write_V();
+               autismclient.util.ClientInteractionOverride.clearAll();
                return;
             }
 

@@ -23,95 +23,95 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class ClientInteractionOverride {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static BlockHitResult init_BlockHitResult;
-   private static InteractionHand init_InteractionHand;
-   private static RotationMath.Rotation init_ce_DataUtil;
-   private static EntityHitResult init_EntityHitResult;
-   private static String init_Str;
-   private static String load_Str;
-   private static String read_Str;
-   private static BlockHitResult load_BlockHitResult;
-   private static int init_I;
-   private static int load_I;
-   private static boolean init_Z;
-   private static BlockHitResult read_BlockHitResult;
-   private static InteractionHand load_InteractionHand;
-   private static BlockHitResult write_BlockHitResult;
-   private static boolean load_Z;
-   private static boolean read_Z;
-   private static String write_Str;
-   private static String update_Str;
-   private static InteractionHand read_InteractionHand;
-   private static ItemStack init_ItemStack = ItemStack.EMPTY;
-   private static ItemStack load_ItemStack = ItemStack.EMPTY;
-   private static int read_I = -1;
-   private static boolean write_Z;
-   private static long init_J;
-   private static Player init_Player;
-   private static InteractionHand write_InteractionHand;
-   private static ItemStack read_ItemStack = ItemStack.EMPTY;
-   private static boolean update_Z;
-   private static boolean sync;
-   private static boolean flush;
-   private static boolean close;
-   private static boolean open;
-   private static boolean poll;
-   private static Float init_Float;
-   private static float init_F;
-   private static boolean push;
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static BlockHitResult pendingUseHit;
+   private static InteractionHand pendingUseHand;
+   private static RotationMath.Rotation pendingUseRotation;
+   private static EntityHitResult pendingAttackHit;
+   private static String pendingAttackOwner;
+   private static String pendingMissOwner;
+   private static String activeAttackOwner;
+   private static BlockHitResult pendingMissHit;
+   private static int pendingAttackClicks;
+   private static int remainingAttackClicks;
+   private static boolean pendingMissTap;
+   private static BlockHitResult pendingHoldUseRay;
+   private static InteractionHand pendingHoldUseHand;
+   private static BlockHitResult pendingHoldAttackRay;
+   private static boolean holdingUse;
+   private static boolean holdingAttack;
+   private static String pendingGuardOwner;
+   private static String activeGuardOwner;
+   private static InteractionHand guardHand;
+   private static ItemStack guardItem = ItemStack.EMPTY;
+   private static ItemStack guardMainHandItem = ItemStack.EMPTY;
+   private static int guardHotbarSlot = -1;
+   private static boolean guardUseDispatched;
+   private static long guardAbortedCount;
+   private static Player deferredReleasePlayer;
+   private static InteractionHand deferredReleaseHand;
+   private static ItemStack deferredReleaseItem = ItemStack.EMPTY;
+   private static boolean useDispatchPending;
+   private static boolean attackDispatchPending;
+   private static boolean simulatedUsePress;
+   private static boolean simulatedAttackPress;
+   private static boolean suppressedUseKey;
+   private static boolean suppressedAttackKey;
+   private static Float savedPlayerYaw;
+   private static float savedPlayerPitch;
+   private static boolean deferredKeyResetPending;
 
    private ClientInteractionOverride() {
    }
 
-   public static boolean init(BlockHitResult hit, InteractionHand hand) {
+   public static boolean queueUseBlock(BlockHitResult hit, InteractionHand hand) {
       if (hit != null
          && hand != null
          && !autismclient.modules.aD.read_Z()
-         && init_BlockHitResult == null
-         && init_EntityHitResult == null
-         && load_BlockHitResult == null
-         && !init_Z()
-         && !open()) {
-         init_BlockHitResult = hit;
-         init_InteractionHand = hand;
+         && pendingUseHit == null
+         && pendingAttackHit == null
+         && pendingMissHit == null
+         && !isHoldingAnyKey()
+         && !hasPendingHoldRay()) {
+         pendingUseHit = hit;
+         pendingUseHand = hand;
          return true;
       } else {
          return false;
       }
    }
 
-   public static boolean init(BlockHitResult hit, InteractionHand hand, RotationMath.Rotation look) {
-      if (look != null && init(hit, hand)) {
-         init_ce_DataUtil = look;
+   public static boolean queueUseBlock(BlockHitResult hit, InteractionHand hand, RotationMath.Rotation look) {
+      if (look != null && queueUseBlock(hit, hand)) {
+         pendingUseRotation = look;
          return true;
       } else {
          return false;
       }
    }
 
-   public static boolean init(String owner, EntityHitResult hit) {
+   public static boolean queueAttackEntity(String owner, EntityHitResult hit) {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
 
-      if (init_EntityHitResult != null && !Objects.equals(owner, init_Str)) {
+      if (pendingAttackHit != null && !Objects.equals(owner, pendingAttackOwner)) {
          return false;
       }
 
-      if (!init(hit)) {
+      if (!queueAttackEntity(hit)) {
          return false;
       }
 
-      init_Str = owner;
+      pendingAttackOwner = owner;
       return true;
    }
 
-   public static boolean init(EntityHitResult hit) {
-      if (hit != null && init_EntityHitResult != null && init_I < 2 && !autismclient.modules.aD.read_Z() && init_EntityHitResult.getEntity() == hit.getEntity()
+   public static boolean queueAttackEntity(EntityHitResult hit) {
+      if (hit != null && pendingAttackHit != null && pendingAttackClicks < 2 && !autismclient.modules.aD.read_Z() && pendingAttackHit.getEntity() == hit.getEntity()
          )
        {
-         init_I++;
+         pendingAttackClicks++;
          if (!AutismLiteVariant.enabled()) {
             CombatAttackDispatcher.init();
          }
@@ -119,13 +119,13 @@ public final class ClientInteractionOverride {
          return true;
       } else if (hit != null
          && !autismclient.modules.aD.read_Z()
-         && init_BlockHitResult == null
-         && init_EntityHitResult == null
-         && load_BlockHitResult == null
-         && !init_Z()
-         && !open()) {
-         init_EntityHitResult = hit;
-         init_I = 1;
+         && pendingUseHit == null
+         && pendingAttackHit == null
+         && pendingMissHit == null
+         && !isHoldingAnyKey()
+         && !hasPendingHoldRay()) {
+         pendingAttackHit = hit;
+         pendingAttackClicks = 1;
          if (!AutismLiteVariant.enabled()) {
             CombatAttackDispatcher.init();
          }
@@ -136,139 +136,139 @@ public final class ClientInteractionOverride {
       }
    }
 
-   public static boolean init(BlockHitResult miss) {
-      return init(miss, false);
+   public static boolean queueAttackMiss(BlockHitResult miss) {
+      return queueAttackMiss(miss, false);
    }
 
-   public static boolean init(String owner, BlockHitResult miss, boolean tap) {
+   public static boolean queueAttackMiss(String owner, BlockHitResult miss, boolean tap) {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
 
-      if (!init(miss, tap)) {
+      if (!queueAttackMiss(miss, tap)) {
          return false;
       }
 
-      load_Str = owner;
+      pendingMissOwner = owner;
       return true;
    }
 
-   public static void init_V(String owner) {
+   public static void cancelAttackOwner(String owner) {
       if (!AutismLiteVariant.enabled() && owner != null) {
-         if (owner.equals(init_Str)) {
-            init_EntityHitResult = null;
-            init_I = 0;
-            init_Str = null;
+         if (owner.equals(pendingAttackOwner)) {
+            pendingAttackHit = null;
+            pendingAttackClicks = 0;
+            pendingAttackOwner = null;
             CombatAttackDispatcher.read();
          }
 
-         if (owner.equals(load_Str)) {
-            load_BlockHitResult = null;
-            load_Str = null;
+         if (owner.equals(pendingMissOwner)) {
+            pendingMissHit = null;
+            pendingMissOwner = null;
          }
 
-         if (owner.equals(read_Str)) {
-            sync = false;
-            load_I = 0;
-            read_Str = null;
+         if (owner.equals(activeAttackOwner)) {
+            attackDispatchPending = false;
+            remainingAttackClicks = 0;
+            activeAttackOwner = null;
             CombatAttackDispatcher.load();
-            if (close && init_Minecraft != null && init_Minecraft.options != null) {
-               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-               ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
-               close = false;
+            if (simulatedAttackPress && MC != null && MC.options != null) {
+               KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+               ((AutismKeyMappingAccessor)MC.options.keyAttack).autism$setClickCount(0);
+               KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
+               simulatedAttackPress = false;
             }
          }
 
-         load_V();
+         requestDeferredKeyReset();
       }
    }
 
-   public static boolean init(BlockHitResult miss, boolean tap) {
+   public static boolean queueAttackMiss(BlockHitResult miss, boolean tap) {
       if (miss != null
          && !autismclient.modules.aD.read_Z()
-         && init_BlockHitResult == null
-         && init_EntityHitResult == null
-         && load_BlockHitResult == null
-         && !init_Z()
-         && !open()) {
-         load_BlockHitResult = miss;
-         init_Z = tap;
+         && pendingUseHit == null
+         && pendingAttackHit == null
+         && pendingMissHit == null
+         && !isHoldingAnyKey()
+         && !hasPendingHoldRay()) {
+         pendingMissHit = miss;
+         pendingMissTap = tap;
          return true;
       } else {
          return false;
       }
    }
 
-   public static boolean load(BlockHitResult ray) {
+   public static boolean queueHoldAttack(BlockHitResult ray) {
       if (ray == null
-         || init_Minecraft == null
-         || init_Minecraft.player == null
-         || init_Minecraft.options == null
+         || MC == null
+         || MC.player == null
+         || MC.options == null
          || autismclient.modules.aD.read_Z()
-         || init_BlockHitResult != null
-         || init_EntityHitResult != null
-         || load_BlockHitResult != null
-         || init_Minecraft.gui.screen() != null
-         || init_Minecraft.gui.overlay() != null) {
+         || pendingUseHit != null
+         || pendingAttackHit != null
+         || pendingMissHit != null
+         || MC.gui.screen() != null
+         || MC.gui.overlay() != null) {
          return false;
-      } else if (!load_Z && read_BlockHitResult == null) {
-         write_BlockHitResult = ray;
+      } else if (!holdingUse && pendingHoldUseRay == null) {
+         pendingHoldAttackRay = ray;
          return true;
       } else {
          return false;
       }
    }
 
-   public static boolean load(BlockHitResult ray, InteractionHand hand) {
-      return init(ray, hand, (String)null);
+   public static boolean queueHoldUse(BlockHitResult ray, InteractionHand hand) {
+      return queueHoldUseInternal(ray, hand, (String)null);
    }
 
-   private static boolean init(BlockHitResult ray, InteractionHand hand, String guard) {
+   private static boolean queueHoldUseInternal(BlockHitResult ray, InteractionHand hand, String guard) {
       if (ray == null
          || hand == null
-         || init_Minecraft == null
-         || init_Minecraft.player == null
-         || init_Minecraft.options == null
+         || MC == null
+         || MC.player == null
+         || MC.options == null
          || autismclient.modules.aD.read_Z()
-         || init_BlockHitResult != null
-         || init_EntityHitResult != null
-         || load_BlockHitResult != null
-         || init_Minecraft.gui.screen() != null
-         || init_Minecraft.gui.overlay() != null) {
+         || pendingUseHit != null
+         || pendingAttackHit != null
+         || pendingMissHit != null
+         || MC.gui.screen() != null
+         || MC.gui.overlay() != null) {
          return false;
       }
 
-      if (!read_Z && write_BlockHitResult == null) {
-         if (init_Str() != null && !init_Str().equals(guard)) {
+      if (!holdingAttack && pendingHoldAttackRay == null) {
+         if (getGuardOwner() != null && !getGuardOwner().equals(guard)) {
             return false;
          }
 
-         read_BlockHitResult = ray;
-         load_InteractionHand = hand;
+         pendingHoldUseRay = ray;
+         pendingHoldUseHand = hand;
          return true;
       } else {
          return false;
       }
    }
 
-   public static boolean init(String owner, InteractionHand hand) {
-      if (owner != null && init_Minecraft != null && init_Minecraft.player != null) {
-         String existing = init_Str();
-         if ((!load_Z && read_BlockHitResult == null || existing != null) && (existing == null || existing.equals(owner))) {
-            if (!init(BlockHitResult.miss(init_Minecraft.player.getEyePosition(), Direction.DOWN, init_Minecraft.player.blockPosition()), hand, owner)) {
+   public static boolean queueShieldGuard(String owner, InteractionHand hand) {
+      if (owner != null && MC != null && MC.player != null) {
+         String existing = getGuardOwner();
+         if ((!holdingUse && pendingHoldUseRay == null || existing != null) && (existing == null || existing.equals(owner))) {
+            if (!queueHoldUseInternal(BlockHitResult.miss(MC.player.getEyePosition(), Direction.DOWN, MC.player.blockPosition()), hand, owner)) {
                return false;
             }
 
-            write_Str = owner;
+            pendingGuardOwner = owner;
             if (existing == null) {
-               write_Z = false;
+               guardUseDispatched = false;
             }
 
-            read_InteractionHand = hand;
-            init_ItemStack = init_Minecraft.player.getItemInHand(hand);
-            load_ItemStack = init_Minecraft.player.getMainHandItem();
-            read_I = init_Minecraft.player.getInventory().getSelectedSlot();
+            guardHand = hand;
+            guardItem = MC.player.getItemInHand(hand);
+            guardMainHandItem = MC.player.getMainHandItem();
+            guardHotbarSlot = MC.player.getInventory().getSelectedSlot();
             return true;
          } else {
             return false;
@@ -278,118 +278,118 @@ public final class ClientInteractionOverride {
       }
    }
 
-   public static String init_Str() {
-      return write_Str != null ? write_Str : update_Str;
+   public static String getGuardOwner() {
+      return pendingGuardOwner != null ? pendingGuardOwner : activeGuardOwner;
    }
 
-   public static boolean init_Z(String owner) {
-      return owner != null && owner.equals(init_Str()) && write_Z;
+   public static boolean isGuardDispatchedFor(String owner) {
+      return owner != null && owner.equals(getGuardOwner()) && guardUseDispatched;
    }
 
-   public static void load(String owner) {
-      if (owner != null && owner.equals(init_Str())) {
-         read_V();
+   public static void releaseGuard(String owner) {
+      if (owner != null && owner.equals(getGuardOwner())) {
+         releaseHoldOverrides();
       }
    }
 
-   public static void init(InteractionHand hand, ItemStack item) {
-      if (init_Minecraft != null && init_Minecraft.player != null) {
-         init_Player = init_Minecraft.player;
-         write_InteractionHand = hand;
-         read_ItemStack = item;
+   public static void scheduleDeferredReleaseUsingItem(InteractionHand hand, ItemStack item) {
+      if (MC != null && MC.player != null) {
+         deferredReleasePlayer = MC.player;
+         deferredReleaseHand = hand;
+         deferredReleaseItem = item;
       }
    }
 
-   public static void init_V() {
-      Player player = init_Player;
-      InteractionHand hand = write_InteractionHand;
-      ItemStack item = read_ItemStack;
-      init_Player = null;
-      write_InteractionHand = null;
-      read_ItemStack = ItemStack.EMPTY;
+   public static void flushDeferredReleaseUsingItem() {
+      Player player = deferredReleasePlayer;
+      InteractionHand hand = deferredReleaseHand;
+      ItemStack item = deferredReleaseItem;
+      deferredReleasePlayer = null;
+      deferredReleaseHand = null;
+      deferredReleaseItem = ItemStack.EMPTY;
       if (player != null
-         && init_Minecraft != null
-         && init_Minecraft.player == player
-         && init_Minecraft.gameMode != null
-         && init_Minecraft.getConnection() != null
-         && (init_Minecraft.options == null || !KeyMappingControl.of(init_Minecraft.options.keyUse).autism$physicalForBody())
+         && MC != null
+         && MC.player == player
+         && MC.gameMode != null
+         && MC.getConnection() != null
+         && (MC.options == null || !KeyMappingControl.of(MC.options.keyUse).autism$physicalForBody())
          && (!player.isUsingItem() || player.getUsedItemHand() == hand && ItemStack.isSameItem(player.getUseItem(), item))) {
-         init_Minecraft.gameMode.releaseUsingItem(player);
+         MC.gameMode.releaseUsingItem(player);
       }
    }
 
-   public static long init_J() {
-      return init_J;
+   public static long getGuardAbortedCount() {
+      return guardAbortedCount;
    }
 
-   public static void load_V() {
-      push = true;
+   public static void requestDeferredKeyReset() {
+      deferredKeyResetPending = true;
    }
 
-   private static void flush_V() {
-      if (push && init_Minecraft != null && init_Minecraft.options != null) {
-         push = false;
-         boolean attackOwned = read_Z || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(false);
-         boolean useOwned = load_Z || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(true);
+   private static void applyDeferredKeyReset() {
+      if (deferredKeyResetPending && MC != null && MC.options != null) {
+         deferredKeyResetPending = false;
+         boolean attackOwned = holdingAttack || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(false);
+         boolean useOwned = holdingUse || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(true);
          if (!attackOwned) {
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
          }
 
          if (!useOwned) {
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
          }
       }
    }
 
-   public static void read_V() {
+   public static void releaseHoldOverrides() {
       if (!AutismLiteVariant.enabled()) {
          SilentMiningCoordinator.init();
       }
 
-      write_Str = null;
-      update_Str = null;
-      read_InteractionHand = null;
-      init_ItemStack = ItemStack.EMPTY;
-      load_ItemStack = ItemStack.EMPTY;
-      read_I = -1;
-      write_Z = false;
-      read_BlockHitResult = null;
-      load_InteractionHand = null;
-      write_BlockHitResult = null;
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         if (read_Z) {
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
-            read_Z = false;
+      pendingGuardOwner = null;
+      activeGuardOwner = null;
+      guardHand = null;
+      guardItem = ItemStack.EMPTY;
+      guardMainHandItem = ItemStack.EMPTY;
+      guardHotbarSlot = -1;
+      guardUseDispatched = false;
+      pendingHoldUseRay = null;
+      pendingHoldUseHand = null;
+      pendingHoldAttackRay = null;
+      if (MC != null && MC.options != null) {
+         if (holdingAttack) {
+            KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+            KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
+            holdingAttack = false;
          }
 
-         if (load_Z) {
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
-            load_Z = false;
+         if (holdingUse) {
+            KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(false);
+            KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
+            holdingUse = false;
          }
 
-         if (init_Float != null && init_Minecraft.player != null) {
-            init_Minecraft.player.setYRot(init_Float);
-            init_Minecraft.player.setXRot(init_F);
-            init_Float = null;
+         if (savedPlayerYaw != null && MC.player != null) {
+            MC.player.setYRot(savedPlayerYaw);
+            MC.player.setXRot(savedPlayerPitch);
+            savedPlayerYaw = null;
          }
       } else {
-         load_Z = false;
-         read_Z = false;
+         holdingUse = false;
+         holdingAttack = false;
       }
    }
 
-   public static boolean init_Z() {
-      return load_Z || read_Z;
+   public static boolean isHoldingAnyKey() {
+      return holdingUse || holdingAttack;
    }
 
-   private static boolean open() {
-      return read_BlockHitResult != null || write_BlockHitResult != null;
+   private static boolean hasPendingHoldRay() {
+      return pendingHoldUseRay != null || pendingHoldAttackRay != null;
    }
 
-   public static boolean load_Z() {
-      ItemStack main = init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getMainHandItem() : ItemStack.EMPTY;
+   public static boolean isMainHandUseableItem() {
+      ItemStack main = MC != null && MC.player != null ? MC.player.getMainHandItem() : ItemStack.EMPTY;
       if (main.isEmpty()) {
          return false;
       } else if (main.getItem() instanceof BlockItem) {
@@ -427,27 +427,27 @@ public final class ClientInteractionOverride {
       }
    }
 
-   public static void write_V() {
-      if (update_Str != null
-         && init_Minecraft != null
-         && init_Minecraft.player != null
+   public static void clearAll() {
+      if (activeGuardOwner != null
+         && MC != null
+         && MC.player != null
          && (
-            write_Z
-               || init_Minecraft.player.isUsingItem()
-                  && init_Minecraft.player.getUsedItemHand() == read_InteractionHand
-                  && ItemStack.isSameItem(init_Minecraft.player.getUseItem(), init_ItemStack)
+            guardUseDispatched
+               || MC.player.isUsingItem()
+                  && MC.player.getUsedItemHand() == guardHand
+                  && ItemStack.isSameItem(MC.player.getUseItem(), guardItem)
          )) {
-         init(read_InteractionHand, init_ItemStack);
+         scheduleDeferredReleaseUsingItem(guardHand, guardItem);
       }
 
-      init_BlockHitResult = null;
-      init_InteractionHand = null;
-      init_ce_DataUtil = null;
-      init_EntityHitResult = null;
-      init_I = 0;
-      read_Str = null;
-      load_Str = null;
-      init_Str = null;
+      pendingUseHit = null;
+      pendingUseHand = null;
+      pendingUseRotation = null;
+      pendingAttackHit = null;
+      pendingAttackClicks = 0;
+      activeAttackOwner = null;
+      pendingMissOwner = null;
+      pendingAttackOwner = null;
       if (!AutismLiteVariant.enabled()) {
          CombatAttackDispatcher.write();
       }
@@ -456,86 +456,86 @@ public final class ClientInteractionOverride {
          QueuedCombatAction.load();
       }
 
-      load_I = 0;
-      load_BlockHitResult = null;
-      update_Z = false;
-      sync = false;
-      read_V();
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         if (flush) {
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
-            ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$setClickCount(0);
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
-            flush = false;
+      remainingAttackClicks = 0;
+      pendingMissHit = null;
+      useDispatchPending = false;
+      attackDispatchPending = false;
+      releaseHoldOverrides();
+      if (MC != null && MC.options != null) {
+         if (simulatedUsePress) {
+            KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(false);
+            ((AutismKeyMappingAccessor)MC.options.keyUse).autism$setClickCount(0);
+            KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
+            simulatedUsePress = false;
          }
 
-         if (close) {
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-            ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
-            close = false;
+         if (simulatedAttackPress) {
+            KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+            ((AutismKeyMappingAccessor)MC.options.keyAttack).autism$setClickCount(0);
+            KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
+            simulatedAttackPress = false;
          }
       }
 
-      if (init_Float != null && init_Minecraft != null && init_Minecraft.player != null) {
-         init_Minecraft.player.setYRot(init_Float);
-         init_Minecraft.player.setXRot(init_F);
-         init_Float = null;
+      if (savedPlayerYaw != null && MC != null && MC.player != null) {
+         MC.player.setYRot(savedPlayerYaw);
+         MC.player.setXRot(savedPlayerPitch);
+         savedPlayerYaw = null;
       }
    }
 
-   public static boolean read_Z() {
-      return update_Z;
+   public static boolean isUseDispatchPending() {
+      return useDispatchPending;
    }
 
-   public static boolean write_Z() {
-      if (!update_Z) {
+   public static boolean consumeUseDispatch() {
+      if (!useDispatchPending) {
          return false;
       }
 
-      update_Z = false;
+      useDispatchPending = false;
       if (!AutismLiteVariant.enabled() && !QueuedCombatAction.init_Z()) {
          return false;
       }
 
-      if (update_Str != null) {
-         ItemStack current = read_InteractionHand != null && init_Minecraft.player != null
-            ? init_Minecraft.player.getItemInHand(read_InteractionHand)
+      if (activeGuardOwner != null) {
+         ItemStack current = guardHand != null && MC.player != null
+            ? MC.player.getItemInHand(guardHand)
             : ItemStack.EMPTY;
-         boolean sameMain = init_Minecraft.player != null
+         boolean sameMain = MC.player != null
             && (
-               init_Minecraft.player.getMainHandItem().isEmpty() && load_ItemStack.isEmpty()
-                  || ItemStack.isSameItem(init_Minecraft.player.getMainHandItem(), load_ItemStack)
+               MC.player.getMainHandItem().isEmpty() && guardMainHandItem.isEmpty()
+                  || ItemStack.isSameItem(MC.player.getMainHandItem(), guardMainHandItem)
             );
-         if (init_Minecraft.player == null
-            || init_Minecraft.gameMode == null
-            || init_Minecraft.gameMode.isDestroying()
-            || init_Minecraft.player.isHandsBusy()
-            || init_Minecraft.level == null
-            || !current.isItemEnabled(init_Minecraft.level.enabledFeatures())
-            || !init_Minecraft.player.getMainHandItem().isItemEnabled(init_Minecraft.level.enabledFeatures())
-            || init_Minecraft.player.getInventory().getSelectedSlot() != read_I
+         if (MC.player == null
+            || MC.gameMode == null
+            || MC.gameMode.isDestroying()
+            || MC.player.isHandsBusy()
+            || MC.level == null
+            || !current.isItemEnabled(MC.level.enabledFeatures())
+            || !MC.player.getMainHandItem().isItemEnabled(MC.level.enabledFeatures())
+            || MC.player.getInventory().getSelectedSlot() != guardHotbarSlot
             || !sameMain
-            || !ItemStack.isSameItem(current, init_ItemStack)
+            || !ItemStack.isSameItem(current, guardItem)
             || current.getUseAnimation() != ItemUseAnimation.BLOCK
-            || init_Minecraft.player.getCooldowns().isOnCooldown(current)) {
-            init_J++;
-            load(update_Str);
+            || MC.player.getCooldowns().isOnCooldown(current)) {
+            guardAbortedCount++;
+            releaseGuard(activeGuardOwner);
             return false;
          }
 
-         write_Z = true;
+         guardUseDispatched = true;
       }
 
       return true;
    }
 
-   public static boolean update_Z() {
-      return sync;
+   public static boolean isAttackDispatchPending() {
+      return attackDispatchPending;
    }
 
-   public static boolean sync_Z() {
-      if (!sync) {
+   public static boolean consumeAttackDispatch() {
+      if (!attackDispatchPending) {
          return false;
       }
 
@@ -543,237 +543,237 @@ public final class ClientInteractionOverride {
          return false;
       }
 
-      if (load_I > 0) {
-         load_I--;
+      if (remainingAttackClicks > 0) {
+         remainingAttackClicks--;
       } else {
-         sync = false;
+         attackDispatchPending = false;
       }
 
       return true;
    }
 
-   public static boolean flush_Z() {
-      return init_BlockHitResult != null || update_Z || flush || load_Z || read_BlockHitResult != null;
+   public static boolean ownsUseInput() {
+      return pendingUseHit != null || useDispatchPending || simulatedUsePress || holdingUse || pendingHoldUseRay != null;
    }
 
-   public static boolean close_Z() {
-      return init_EntityHitResult != null || load_BlockHitResult != null || sync || close || read_Z || write_BlockHitResult != null;
+   public static boolean ownsAttackInput() {
+      return pendingAttackHit != null || pendingMissHit != null || attackDispatchPending || simulatedAttackPress || holdingAttack || pendingHoldAttackRay != null;
    }
 
-   public static void update_V() {
+   public static void applyBeforeInputTick() {
       if (!AutismLiteVariant.enabled() && autismclient.ai.aP.load_Z()) {
-         write_V();
-      } else if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.options != null && !autismclient.modules.aD.read_Z()) {
-         flush_V();
+         clearAll();
+      } else if (MC != null && MC.player != null && MC.options != null && !autismclient.modules.aD.read_Z()) {
+         applyDeferredKeyReset();
          if (!AutismLiteVariant.enabled()) {
             QueuedCombatAction.init_V();
          }
 
-         BlockHitResult useHit = init_BlockHitResult;
-         RotationMath.Rotation useLook = init_ce_DataUtil;
-         EntityHitResult attackHit = init_EntityHitResult;
+         BlockHitResult useHit = pendingUseHit;
+         RotationMath.Rotation useLook = pendingUseRotation;
+         EntityHitResult attackHit = pendingAttackHit;
          if (!AutismLiteVariant.enabled()) {
             CombatAttackDispatcher.init_V(attackHit == null ? null : attackHit.getEntity());
          }
 
-         read_Str = attackHit != null ? init_Str : load_Str;
-         load_Str = null;
-         init_Str = null;
-         int attackClicks = Math.max(1, init_I);
-         init_I = 0;
-         BlockHitResult missHit = load_BlockHitResult;
-         BlockHitResult holdAttackRay = write_BlockHitResult;
-         BlockHitResult holdUseRay = read_BlockHitResult;
-         String guard = write_Str;
+         activeAttackOwner = attackHit != null ? pendingAttackOwner : pendingMissOwner;
+         pendingMissOwner = null;
+         pendingAttackOwner = null;
+         int attackClicks = Math.max(1, pendingAttackClicks);
+         pendingAttackClicks = 0;
+         BlockHitResult missHit = pendingMissHit;
+         BlockHitResult holdAttackRay = pendingHoldAttackRay;
+         BlockHitResult holdUseRay = pendingHoldUseRay;
+         String guard = pendingGuardOwner;
          if (useHit == null && attackHit == null && missHit == null && holdAttackRay == null && holdUseRay == null) {
-            if (read_Z || load_Z) {
-               read_V();
+            if (holdingAttack || holdingUse) {
+               releaseHoldOverrides();
             }
-         } else if (init_Minecraft.gui.screen() == null && init_Minecraft.gui.overlay() == null) {
-            init_BlockHitResult = null;
-            init_InteractionHand = null;
-            init_ce_DataUtil = null;
-            init_EntityHitResult = null;
-            load_BlockHitResult = null;
-            write_BlockHitResult = null;
-            read_BlockHitResult = null;
-            load_InteractionHand = null;
-            write_Str = null;
+         } else if (MC.gui.screen() == null && MC.gui.overlay() == null) {
+            pendingUseHit = null;
+            pendingUseHand = null;
+            pendingUseRotation = null;
+            pendingAttackHit = null;
+            pendingMissHit = null;
+            pendingHoldAttackRay = null;
+            pendingHoldUseRay = null;
+            pendingHoldUseHand = null;
+            pendingGuardOwner = null;
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-            if (!AutismLiteVariant.enabled() && "kill-aura".equals(read_Str) && attackHit != null) {
+            if (!AutismLiteVariant.enabled() && "kill-aura".equals(activeAttackOwner) && attackHit != null) {
                attackHit = autismclient.modules.KillAuraModule.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
                if (attackHit == null) {
-                  read_Str = null;
+                  activeAttackOwner = null;
                   return;
                }
             }
 
-            init_Float = init_Minecraft.player.getYRot();
-            init_F = init_Minecraft.player.getXRot();
+            savedPlayerYaw = MC.player.getYRot();
+            savedPlayerPitch = MC.player.getXRot();
             if (wire.initialized()) {
-               init_Minecraft.player.setYRot(wire.currentYaw());
-               init_Minecraft.player.setXRot(wire.currentPitch());
+               MC.player.setYRot(wire.currentYaw());
+               MC.player.setXRot(wire.currentPitch());
             }
 
             if (attackHit != null) {
-               init_Minecraft.hitResult = attackHit;
-               close_V();
-               init(init_Minecraft.options.keyUse, true);
-               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+               MC.hitResult = attackHit;
+               drainVanillaClickCounts();
+               suppressOpposingKey(MC.options.keyUse, true);
+               KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(true);
 
                for (int i = 1; i < attackClicks; i++) {
-                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+                  KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(true);
                }
 
-               load_I = attackClicks - 1;
-               close = true;
-               sync = true;
+               remainingAttackClicks = attackClicks - 1;
+               simulatedAttackPress = true;
+               attackDispatchPending = true;
             } else if (missHit != null) {
-               boolean tap = init_Z;
-               init_Z = false;
-               init_Minecraft.hitResult = missHit;
-               close_V();
-               init(init_Minecraft.options.keyUse, true);
-               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+               boolean tap = pendingMissTap;
+               pendingMissTap = false;
+               MC.hitResult = missHit;
+               drainVanillaClickCounts();
+               suppressOpposingKey(MC.options.keyUse, true);
+               KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(true);
                if (tap) {
-                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
                }
 
-               close = true;
-               sync = true;
+               simulatedAttackPress = true;
+               attackDispatchPending = true;
             } else if (useHit != null) {
                if (useLook != null) {
                   PlacementTickStamp.init_V();
-                  init_Minecraft.player.setYRot(useLook.yaw());
-                  init_Minecraft.player.setXRot(useLook.pitch());
+                  MC.player.setYRot(useLook.yaw());
+                  MC.player.setXRot(useLook.pitch());
                }
 
-               init_Minecraft.hitResult = useHit;
-               close_V();
-               init(init_Minecraft.options.keyAttack, false);
-               KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(true);
-               flush = true;
-               update_Z = true;
+               MC.hitResult = useHit;
+               drainVanillaClickCounts();
+               suppressOpposingKey(MC.options.keyAttack, false);
+               KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(true);
+               simulatedUsePress = true;
+               useDispatchPending = true;
             } else if (holdAttackRay != null) {
-               init_Minecraft.hitResult = holdAttackRay;
-               close_V();
-               init(init_Minecraft.options.keyUse, true);
-               if (!read_Z) {
-                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
-                  read_Z = true;
-                  sync = true;
+               MC.hitResult = holdAttackRay;
+               drainVanillaClickCounts();
+               suppressOpposingKey(MC.options.keyUse, true);
+               if (!holdingAttack) {
+                  KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(true);
+                  holdingAttack = true;
+                  attackDispatchPending = true;
                }
             } else {
-               init_Minecraft.hitResult = holdUseRay;
-               update_Str = guard;
-               close_V();
-               init(init_Minecraft.options.keyAttack, false);
-               if (!load_Z) {
-                  KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
-                  KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(true);
-                  load_Z = true;
+               MC.hitResult = holdUseRay;
+               activeGuardOwner = guard;
+               drainVanillaClickCounts();
+               suppressOpposingKey(MC.options.keyAttack, false);
+               if (!holdingUse) {
+                  KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(false);
+                  KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(true);
+                  holdingUse = true;
                }
 
-               update_Z = true;
+               useDispatchPending = true;
             }
          } else {
-            write_V();
+            clearAll();
          }
       } else {
-         write_V();
+         clearAll();
       }
    }
 
-   private static void init(KeyMapping key, boolean use) {
+   private static void suppressOpposingKey(KeyMapping key, boolean use) {
       KeyMappingControl.of(key).autism$simulatePress(false);
       if (use) {
-         open = true;
+         suppressedUseKey = true;
       } else {
-         poll = true;
+         suppressedAttackKey = true;
       }
    }
 
-   private static void close_V() {
-      while (init_Minecraft.options.keyUse.consumeClick()) {
+   private static void drainVanillaClickCounts() {
+      while (MC.options.keyUse.consumeClick()) {
       }
 
-      while (init_Minecraft.options.keyAttack.consumeClick()) {
+      while (MC.options.keyAttack.consumeClick()) {
       }
 
-      while (init_Minecraft.options.keyPickItem.consumeClick()) {
+      while (MC.options.keyPickItem.consumeClick()) {
       }
    }
 
-   public static void sync_V() {
+   public static void cleanupAfterInputTick() {
       if (!AutismLiteVariant.enabled()) {
          QueuedCombatAction.load();
       }
 
-      read_Str = null;
-      init_EntityHitResult = null;
-      init_I = 0;
-      load_Str = null;
-      init_Str = null;
-      load_BlockHitResult = null;
-      init_Z = false;
+      activeAttackOwner = null;
+      pendingAttackHit = null;
+      pendingAttackClicks = 0;
+      pendingMissOwner = null;
+      pendingAttackOwner = null;
+      pendingMissHit = null;
+      pendingMissTap = false;
       if (!AutismLiteVariant.enabled()) {
          CombatAttackDispatcher.write();
       }
 
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         if (flush) {
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
-            ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$setClickCount(0);
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
-            flush = false;
+      if (MC != null && MC.options != null) {
+         if (simulatedUsePress) {
+            KeyMappingControl.of(MC.options.keyUse).autism$simulatePress(false);
+            ((AutismKeyMappingAccessor)MC.options.keyUse).autism$setClickCount(0);
+            KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
+            simulatedUsePress = false;
          }
 
-         if (close) {
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-            ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
-            close = false;
+         if (simulatedAttackPress) {
+            KeyMappingControl.of(MC.options.keyAttack).autism$simulatePress(false);
+            ((AutismKeyMappingAccessor)MC.options.keyAttack).autism$setClickCount(0);
+            KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
+            simulatedAttackPress = false;
          }
 
-         if (open) {
-            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
-            open = false;
+         if (suppressedUseKey) {
+            KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
+            suppressedUseKey = false;
          }
 
-         if (poll) {
-            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
-            poll = false;
+         if (suppressedAttackKey) {
+            KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
+            suppressedAttackKey = false;
          }
 
-         if (update_Str != null) {
-            ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$setClickCount(0);
+         if (activeGuardOwner != null) {
+            ((AutismKeyMappingAccessor)MC.options.keyUse).autism$setClickCount(0);
          }
 
-         update_Z = false;
-         sync = false;
-         load_I = 0;
-         if (init_Float != null && init_Minecraft.player != null) {
-            init_Minecraft.player.setYRot(init_Float);
-            init_Minecraft.player.setXRot(init_F);
-            init_Float = null;
+         useDispatchPending = false;
+         attackDispatchPending = false;
+         remainingAttackClicks = 0;
+         if (savedPlayerYaw != null && MC.player != null) {
+            MC.player.setYRot(savedPlayerYaw);
+            MC.player.setXRot(savedPlayerPitch);
+            savedPlayerYaw = null;
          }
 
-         flush_V();
+         applyDeferredKeyReset();
       } else {
-         flush = false;
-         close = false;
-         open = false;
-         poll = false;
-         load_Z = false;
-         read_Z = false;
-         write_Str = null;
-         update_Str = null;
-         update_Z = false;
-         sync = false;
-         load_I = 0;
-         init_Float = null;
+         simulatedUsePress = false;
+         simulatedAttackPress = false;
+         suppressedUseKey = false;
+         suppressedAttackKey = false;
+         holdingUse = false;
+         holdingAttack = false;
+         pendingGuardOwner = null;
+         activeGuardOwner = null;
+         useDispatchPending = false;
+         attackDispatchPending = false;
+         remainingAttackClicks = 0;
+         savedPlayerYaw = null;
       }
    }
 }
