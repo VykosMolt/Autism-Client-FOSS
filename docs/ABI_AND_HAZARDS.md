@@ -93,6 +93,7 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - **Silent Member-Rename Traps (permanently blocked in `AstBatchRenamer`):**
   - *Arity-colliding overload merges:* Fernflower often omits widening casts (e.g., `int -> float`) when disambiguated overloads had distinct names. Merging two previously distinct same-arity methods onto one name can silently redirect an `int` wrapper into infinite self-recursion (`StackOverflowError`). `AstBatchRenamer` refuses any arity-colliding merge of distinct original methods.
   - *Lexical shadowing of unqualified references:* Renaming a field or method to match an in-scope local variable, parameter, or enclosing/inner member silently turns field writes (`PUTSTATIC`/`PUTFIELD`) into no-op local stores (`ISTORE`) or hijacks unqualified calls. `AstBatchRenamer` validates every unqualified identifier edit against `Trees.getScope` and refuses any shadowed target.
+  - *Shifted record-component accessors:* On some obfuscated records, an explicit zero-arg method shares a record component's source name while its body computes a different value than `return this.<comp>;` (and/or maps to a distinct original `M` key in `mappings/disambig.tsv`). Because Java record syntax couples a component and its same-named accessor to one identifier, leave shifted `R` components untouched when renaming non-colliding `M` methods and unshifted `R` components.
 
 ## 7. Internal Reflection Lock (`MacroAction` Public Fields)
 - `autismclient.util.macro.MacroAction` reflects `"listenDuringPreviousAction"`.
