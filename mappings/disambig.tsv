@@ -17179,7 +17179,7 @@ F	autismclient/util/S	read	F	autismclient/util/ExplosionDamageCalculator	BED_EXP
 F	autismclient/util/S	read	I	autismclient/util/ExplosionDamageCalculator	cachedTick	I
 F	autismclient/util/S	read	J	autismclient/util/ExplosionDamageCalculator	cacheGeneration	J
 F	autismclient/util/S$CachePool	init	Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	DEFAULT	Lautismclient/util/ExplosionDamageCalculator$SimOptions;
-F	autismclient/util/S$CachePool	init	Ljava/lang/Float;	autismclient/util/ExplosionDamageCalculator$SimOptions	maxBlastResistance	Ljava/lang/Float;
+F	autismclient/util/S$CachePool	init	Ljava/lang/Float;	autismclient/util/ExplosionDamageCalculator$SimOptions	minBlockingBlastResistance	Ljava/lang/Float;
 F	autismclient/util/S$CachePool	init	Ljava/util/List;	autismclient/util/ExplosionDamageCalculator$SimOptions	excludedBlocks	Ljava/util/List;
 F	autismclient/util/S$CachePool	init	Lnet/minecraft/core/BlockPos;	autismclient/util/ExplosionDamageCalculator$SimOptions	placedObsidian	Lnet/minecraft/core/BlockPos;
 F	autismclient/util/S$CachePool	init	Lnet/minecraft/world/damagesource/DamageSource;	autismclient/util/ExplosionDamageCalculator$SimOptions	damageSource	Lnet/minecraft/world/damagesource/DamageSource;
@@ -37031,7 +37031,7 @@ M	autismclient/util/S	load	(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecr
 M	autismclient/util/S	load	(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/phys/Vec3;FLautismclient/util/S$CachePool;)Z	autismclient/util/ExplosionDamageCalculator	willKillTarget	(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/phys/Vec3;FLautismclient/util/ExplosionDamageCalculator$SimOptions;)Z
 M	autismclient/util/S$BufferHelper	init	()D	autismclient/util/ExplosionDamageCalculator$DamagePair	netAdvantage	()D
 M	autismclient/util/S$BufferHelper	init	()Z	autismclient/util/ExplosionDamageCalculator$DamagePair	favorsTarget	()Z
-M	autismclient/util/S$CachePool	init	()Ljava/lang/Float;	autismclient/util/ExplosionDamageCalculator$SimOptions	maxBlastResistance	()Ljava/lang/Float;
+M	autismclient/util/S$CachePool	init	()Ljava/lang/Float;	autismclient/util/ExplosionDamageCalculator$SimOptions	minBlockingBlastResistance	()Ljava/lang/Float;
 M	autismclient/util/S$CachePool	init	()Ljava/util/List;	autismclient/util/ExplosionDamageCalculator$SimOptions	excludedBlocks	()Ljava/util/List;
 M	autismclient/util/S$CachePool	init	()Lnet/minecraft/core/BlockPos;	autismclient/util/ExplosionDamageCalculator$SimOptions	placedObsidian	()Lnet/minecraft/core/BlockPos;
 M	autismclient/util/S$CachePool	init	()Lnet/minecraft/world/damagesource/DamageSource;	autismclient/util/ExplosionDamageCalculator$SimOptions	damageSource	()Lnet/minecraft/world/damagesource/DamageSource;
@@ -48242,7 +48242,7 @@ M	autismclient/util/S	read	(Lnet/minecraft/world/phys/Vec3;FLautismclient/util/S
 M	autismclient/util/S$BufferHelper	init	(DD)Z	autismclient/util/ExplosionDamageCalculator$DamagePair	meetsThresholds	(DD)Z
 M	autismclient/util/S$BufferHelper	read	()D	autismclient/util/ExplosionDamageCalculator$DamagePair	selfDamage	()D
 M	autismclient/util/S$StreamUtil	read	()Z	autismclient/util/ExplosionDamageCalculator$SafetyResult	popsOrKillsSelf	()Z
-M	autismclient/util/S$CachePool	init	(Ljava/lang/Float;)Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	withMaxBlastResistance	(Ljava/lang/Float;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
+M	autismclient/util/S$CachePool	init	(Ljava/lang/Float;)Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	withMinBlockingBlastResistance	(Ljava/lang/Float;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
 M	autismclient/util/S$CachePool	init	(Ljava/util/List;)Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	withExcludedBlocks	(Ljava/util/List;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
 M	autismclient/util/S$CachePool	init	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	withPlacedObsidian	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
 M	autismclient/util/S$CachePool	init	(Lnet/minecraft/world/damagesource/DamageSource;)Lautismclient/util/S$CachePool;	autismclient/util/ExplosionDamageCalculator$SimOptions	withDamageSource	(Lnet/minecraft/world/damagesource/DamageSource;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
@@ -48658,8 +48658,8 @@ M	autismclient/ai/a/ClassCache$StreamUtil	putAt_Z_J	(J)Z	autismclient/ai/engine/
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt_V_FileStore_TableCac	(Lautismclient/ai/a/ClassCache$StreamUtil$DataUtil;III)V	autismclient/ai/engine/AiPathfinder$LiveGridView	scanColumnIntoSlice	(Lautismclient/ai/engine/AiPathfinder$LiveGridView$SectionSlice;III)V
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt_IArr_I_I	(II)[I	autismclient/ai/engine/AiPathfinder$LiveGridView	spiralColumnOrder	(II)[I
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt_FileStore_TableCac_I_J	(IJ)Lautismclient/ai/a/ClassCache$StreamUtil$DataUtil;	autismclient/ai/engine/AiPathfinder$LiveGridView	allocateSlice	(IJ)Lautismclient/ai/engine/AiPathfinder$LiveGridView$SectionSlice;
-M	autismclient/ai/a/ClassCache$StreamUtil	putAt_Long	()Ljava/lang/Long;	autismclient/ai/engine/AiPathfinder$LiveGridView	pollNearestPriorityColumn	()Ljava/lang/Long;
-M	autismclient/ai/a/ClassCache$StreamUtil	fill_Long	()Ljava/lang/Long;	autismclient/ai/engine/AiPathfinder$LiveGridView	pollNearestPendingChunk	()Ljava/lang/Long;
+M	autismclient/ai/a/ClassCache$StreamUtil	putAt_Long	()Ljava/lang/Long;	autismclient/ai/engine/AiPathfinder$LiveGridView	peekNearestPriorityColumn	()Ljava/lang/Long;
+M	autismclient/ai/a/ClassCache$StreamUtil	fill_Long	()Ljava/lang/Long;	autismclient/ai/engine/AiPathfinder$LiveGridView	peekNearestPendingChunk	()Ljava/lang/Long;
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt_J_I_I	(II)J	autismclient/ai/engine/AiPathfinder$LiveGridView	packChunkKey	(II)J
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt_FileStore_BitCache_Minecraft	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;[Lnet/minecraft/world/item/ItemStack;)Lautismclient/ai/a/ClassCache$FileCache;	autismclient/ai/engine/AiPathfinder$LiveGridView	classifyCell	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;[Lnet/minecraft/world/item/ItemStack;)Lautismclient/ai/engine/AiPathfinder$CellInfo;
 M	autismclient/ai/a/ClassCache$StreamUtil	putAt	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;[Lnet/minecraft/world/item/ItemStack;Ljava/util/function/BiPredicate;)Lautismclient/ai/a/ClassCache$FileCache;	autismclient/ai/engine/AiPathfinder$LiveGridView	classifyCell	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;[Lnet/minecraft/world/item/ItemStack;Ljava/util/function/BiPredicate;)Lautismclient/ai/engine/AiPathfinder$CellInfo;

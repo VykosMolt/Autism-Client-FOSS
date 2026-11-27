@@ -438,7 +438,7 @@ public final class ExplosionDamageCalculator {
    private static BlockHitResult clipWithOverrides(Level level, ClipContext context, ExplosionDamageCalculator.SimOptions options) {
       List<BlockPos> exclude = options.excludedBlocks();
       BlockPos include = options.placedObsidian();
-      Float maxBlastResistance = options.maxBlastResistance();
+      Float maxBlastResistance = options.minBlockingBlastResistance();
       return BlockGetter.traverseBlocks(context.getFrom(), context.getTo(), context, (ctx, pos) -> {
          boolean excluded = !exclude.isEmpty() && exclude.contains(pos);
          BlockState blockState;
@@ -656,7 +656,7 @@ public final class ExplosionDamageCalculator {
    }
 
    public record SimOptions(
-      List<BlockPos> excludedBlocks, BlockPos placedObsidian, Float maxBlastResistance, AABB targetBoxOverride, DamageSource damageSource, boolean init_Z
+      List<BlockPos> excludedBlocks, BlockPos placedObsidian, Float minBlockingBlastResistance, AABB targetBoxOverride, DamageSource damageSource, boolean init_Z
    ) {
       public static final ExplosionDamageCalculator.SimOptions DEFAULT = new ExplosionDamageCalculator.SimOptions(List.of(), null, null, null, null, true);
 
@@ -665,35 +665,35 @@ public final class ExplosionDamageCalculator {
       }
 
       public ExplosionDamageCalculator.SimOptions withExcludedBlocks(List<BlockPos> positions) {
-         return new ExplosionDamageCalculator.SimOptions(positions, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
+         return new ExplosionDamageCalculator.SimOptions(positions, this.placedObsidian, this.minBlockingBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
       public ExplosionDamageCalculator.SimOptions withPlacedObsidian(BlockPos pos) {
-         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, pos, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, pos, this.minBlockingBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions withMaxBlastResistance(Float resistance) {
+      public ExplosionDamageCalculator.SimOptions withMinBlockingBlastResistance(Float resistance) {
          return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, resistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
       public ExplosionDamageCalculator.SimOptions withIgnoreTerrain(boolean terrain) {
-         return this.withMaxBlastResistance(terrain ? 9.0F : null);
+         return this.withMinBlockingBlastResistance(terrain ? 9.0F : null);
       }
 
       public ExplosionDamageCalculator.SimOptions withTargetBox(AABB box) {
-         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, box, this.damageSource, this.init_Z);
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.minBlockingBlastResistance, box, this.damageSource, this.init_Z);
       }
 
       public ExplosionDamageCalculator.SimOptions withDamageSource(DamageSource source) {
-         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, source, this.init_Z);
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.minBlockingBlastResistance, this.targetBoxOverride, source, this.init_Z);
       }
 
       public ExplosionDamageCalculator.SimOptions withEstimateProtection(boolean estimate) {
-         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, estimate);
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.minBlockingBlastResistance, this.targetBoxOverride, this.damageSource, estimate);
       }
 
       public boolean init_Z() {
-         return !this.excludedBlocks.isEmpty() || this.placedObsidian != null || this.maxBlastResistance != null || this.targetBoxOverride != null;
+         return !this.excludedBlocks.isEmpty() || this.placedObsidian != null || this.minBlockingBlastResistance != null || this.targetBoxOverride != null;
       }
 
       public boolean estimateProtection() {

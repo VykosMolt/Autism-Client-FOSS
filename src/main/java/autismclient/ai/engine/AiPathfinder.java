@@ -6822,7 +6822,7 @@ public final class AiPathfinder {
          int var5 = this.maxY - this.minY + 1;
 
          while (this.nanoClock.getAsLong() < var3) {
-            Long var6 = this.pollNearestPriorityColumn();
+            Long var6 = this.peekNearestPriorityColumn();
             if (var6 != null) {
                this.priorityColumnKeys.remove(var6);
                int var7 = (int)(var6 >> 32);
@@ -6851,7 +6851,7 @@ public final class AiPathfinder {
             }
 
             if (this.activeSlice == null) {
-               Long var13 = this.pollNearestPendingChunk();
+               Long var13 = this.peekNearestPendingChunk();
                if (var13 == null) {
                   if (this.savingChunkKey != -9223372036854775808L) {
                      this.stepMemorySave(var3);
@@ -7114,7 +7114,7 @@ public final class AiPathfinder {
          );
       }
 
-      private Long pollNearestPriorityColumn() {
+      private Long peekNearestPriorityColumn() {
          Long var1 = null;
          long var2 = 9223372036854775807L;
 
@@ -7131,7 +7131,7 @@ public final class AiPathfinder {
          return var1;
       }
 
-      private Long pollNearestPendingChunk() {
+      private Long peekNearestPendingChunk() {
          Long var1 = null;
          double var2 = 1.7976931348623157E308;
 
