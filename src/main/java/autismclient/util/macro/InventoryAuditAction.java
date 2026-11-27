@@ -51,11 +51,11 @@ public class InventoryAuditAction implements MacroAction {
    private boolean enabled = true;
 
    public boolean isConfigured() {
-      return this.load_Z_2();
+      return this.hasConfiguredTarget();
    }
 
-   public boolean load_Z_2() {
-      for (MacroItemTarget target : this.init_List_3()) {
+   public boolean hasConfiguredTarget() {
+      for (MacroItemTarget target : this.configuredTargets()) {
          if (target != null && (target.hasSlot() || target.hasItemFilter())) {
             return true;
          }
@@ -82,32 +82,32 @@ public class InventoryAuditAction implements MacroAction {
 
                for (int iter = 0; iter < runIterations; iter++) {
                   this.checkInterrupted();
-                  if (!this.init_Z_Minecraft(mc, cmd, 12000L)) {
+                  if (!this.openContainerAndWait(mc, cmd, 12000L)) {
                      return;
                   }
 
-                  InventoryAuditAction.Inner_CachePool before = this.load_ListPool_CachePool(mc);
+                  InventoryAuditAction.Inner_CachePool before = this.snapshotOpenContainer(mc);
                   if (before == null || before.slots().isEmpty()) {
                      return;
                   }
 
                   Map<String, Integer> targetContainerItems = this.targetItemTotals(before);
                   if (targetContainerItems.isEmpty()) {
-                     InventoryAuditAction.Inner_CachePool playerSnapshot = this.init_ListPool_CachePool_Minecraft(mc);
+                     InventoryAuditAction.Inner_CachePool playerSnapshot = this.snapshotPlayerInventory(mc);
                      Map<String, Integer> playerTargetItems = this.load(playerSnapshot);
                      if (!playerTargetItems.isEmpty()) {
-                        boolean transferred = this.init_Z_Minecraft_Map(mc, playerTargetItems);
+                        boolean transferred = this.depositPlayerTargets(mc, playerTargetItems);
                         if (transferred) {
-                           this.init_V_Minecraft_Z(mc, true);
-                           if (!this.read_Z_Minecraft_J(mc, 12000L)) {
+                           this.closeOpenContainer(mc, true);
+                           if (!this.awaitContainerClosed(mc, 12000L)) {
                               return;
                            }
 
-                           if (!this.init_Z_Minecraft(mc, cmd, 12000L)) {
+                           if (!this.openContainerAndWait(mc, cmd, 12000L)) {
                               return;
                            }
 
-                           before = this.load_ListPool_CachePool(mc);
+                           before = this.snapshotOpenContainer(mc);
                            if (before == null || before.slots().isEmpty()) {
                               return;
                            }
@@ -117,7 +117,7 @@ public class InventoryAuditAction implements MacroAction {
                      }
 
                      if (targetContainerItems.isEmpty()) {
-                        this.init_V_Minecraft_Z(mc, true);
+                        this.closeOpenContainer(mc, true);
                         continue;
                      }
                   }
@@ -129,21 +129,21 @@ public class InventoryAuditAction implements MacroAction {
                      this.sleep(100L);
                   }
 
-                  this.init_ListPool_NetHelper_Minecraft(mc);
+                  this.runDupeVector(mc);
                   int totalTransferAttempts = 0;
                   int emptyVisibleTransferPasses = 0;
                   Set<Integer> targetSlots = this.targetSlots(mc);
 
                   while (totalTransferAttempts < maxAttempts) {
                      this.checkInterrupted();
-                     if (!this.init_Z_Minecraft(mc, cmd, 12000L)) {
+                     if (!this.openContainerAndWait(mc, cmd, 12000L)) {
                         break;
                      }
 
                      this.sleep(retryDelay);
-                     InventoryAuditAction.Inner_NetHelper attempt = this.init_ListPool_NetHelper_Minecraft_Set(mc, targetSlots);
+                     InventoryAuditAction.Inner_NetHelper attempt = this.quickMoveTargetSlots(mc, targetSlots);
                      totalTransferAttempts++;
-                     if (attempt.init_I() <= 0 && targetSlots.isEmpty()) {
+                     if (attempt.slotCount() <= 0 && targetSlots.isEmpty()) {
                         if (++emptyVisibleTransferPasses >= 2) {
                            break;
                         }
@@ -156,11 +156,11 @@ public class InventoryAuditAction implements MacroAction {
                      return;
                   }
 
-                  if (!this.init_Z_Minecraft(mc, cmd, 12000L)) {
+                  if (!this.openContainerAndWait(mc, cmd, 12000L)) {
                      return;
                   }
 
-                  this.init_V_Minecraft_Z(mc, true);
+                  this.closeOpenContainer(mc, true);
                   if (iter < runIterations - 1) {
                      this.sleep(500L);
                   }
@@ -184,7 +184,7 @@ public class InventoryAuditAction implements MacroAction {
       return slots;
    }
 
-   private InventoryAuditAction.Inner_NetHelper init_ListPool_NetHelper_Minecraft_Set(Minecraft mc, Set<Integer> targetSlots) throws InterruptedException {
+   private InventoryAuditAction.Inner_NetHelper quickMoveTargetSlots(Minecraft mc, Set<Integer> targetSlots) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper[] result = new InventoryAuditAction.Inner_NetHelper[1];
       CountDownLatch latch = new CountDownLatch(1);
       mc.execute(() -> {
@@ -227,7 +227,7 @@ public class InventoryAuditAction implements MacroAction {
                      ItemStack stack = slot.getItem();
                      if (stack != null && !stack.isEmpty()) {
                         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                        if (this.init_Z_ItemStack_I(stack, visibleSlot)) {
+                        if (this.isTargetStack(stack, visibleSlot)) {
                            firedSlots.add(i);
                            slotCount++;
                            items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
@@ -250,11 +250,11 @@ public class InventoryAuditAction implements MacroAction {
    private void init(InventoryAuditAction.Inner_CachePool before, InventoryAuditAction.Inner_CachePool after, InventoryAuditAction.Inner_NetHelper transfer, String iterLabel, int transferAttempts) {
    }
 
-   private InventoryAuditAction.Inner_NetHelper init_ListPool_NetHelper_Minecraft(Minecraft mc) throws InterruptedException {
+   private InventoryAuditAction.Inner_NetHelper runDupeVector(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper var10000;
       switch (this.dupeVector) {
          case DESYNC_REOPEN:
-            var10000 = this.load_ListPool_NetHelper(mc);
+            var10000 = this.desyncReopen(mc);
             break;
          case CLOSE_NO_PACKET:
             var10000 = this.read(mc);
@@ -287,7 +287,7 @@ public class InventoryAuditAction implements MacroAction {
       return var10000;
    }
 
-   private InventoryAuditAction.Inner_NetHelper load_ListPool_NetHelper(Minecraft mc) throws InterruptedException {
+   private InventoryAuditAction.Inner_NetHelper desyncReopen(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper transfer = this.push(mc);
       CountDownLatch latch = new CountDownLatch(1);
       mc.execute(() -> {
@@ -301,13 +301,13 @@ public class InventoryAuditAction implements MacroAction {
       });
       this.awaitLatch(latch, 2000L);
       this.sleep(100L);
-      this.init_V_Minecraft_Z(mc, false);
+      this.closeOpenContainer(mc, false);
       return transfer;
    }
 
    private InventoryAuditAction.Inner_NetHelper read(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper transfer = this.push(mc);
-      this.init_V_Minecraft_Z(mc, false);
+      this.closeOpenContainer(mc, false);
       return transfer;
    }
 
@@ -336,7 +336,7 @@ public class InventoryAuditAction implements MacroAction {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                     if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
+                     if (this.isTargetStack(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
                      }
@@ -359,9 +359,9 @@ public class InventoryAuditAction implements MacroAction {
 
    private InventoryAuditAction.Inner_NetHelper update(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper transfer = this.pop(mc);
-      this.load_V_2(mc);
+      this.sendContainerClose(mc);
       this.sleep(100L);
-      this.init_V_Minecraft_Z(mc, false);
+      this.closeOpenContainer(mc, false);
       return transfer;
    }
 
@@ -393,7 +393,7 @@ public class InventoryAuditAction implements MacroAction {
             }
          });
          this.awaitLatch(flushLatch, 3000L);
-         this.init_V_Minecraft_Z(mc, false);
+         this.closeOpenContainer(mc, false);
          return transfer;
       } finally {
          shared.setDelayPacketsEnabled(previousDelayPackets);
@@ -431,7 +431,7 @@ public class InventoryAuditAction implements MacroAction {
          });
          this.awaitLatch(flushLatch, 3000L);
          this.sleep(100L);
-         this.init_V_Minecraft_Z(mc, false);
+         this.closeOpenContainer(mc, false);
          return transfer;
       } finally {
          shared.setDelayPacketsEnabled(previousDelayPackets);
@@ -467,7 +467,7 @@ public class InventoryAuditAction implements MacroAction {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                     if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
+                     if (this.isTargetStack(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
                      }
@@ -490,7 +490,7 @@ public class InventoryAuditAction implements MacroAction {
 
    private InventoryAuditAction.Inner_NetHelper open(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_NetHelper transfer = this.tick(mc);
-      this.init_V_Minecraft_Z(mc, false);
+      this.closeOpenContainer(mc, false);
       return transfer;
    }
 
@@ -521,7 +521,7 @@ public class InventoryAuditAction implements MacroAction {
             }
          });
          this.awaitLatch(flushLatch, 3000L);
-         this.init_V_Minecraft_Z(mc, false);
+         this.closeOpenContainer(mc, false);
          return transfer;
       } finally {
          shared.setDelayPacketsEnabled(previousDelayPackets);
@@ -551,7 +551,7 @@ public class InventoryAuditAction implements MacroAction {
       });
    }
 
-   private void load_V_2(Minecraft mc) throws InterruptedException {
+   private void sendContainerClose(Minecraft mc) throws InterruptedException {
       CountDownLatch latch = new CountDownLatch(1);
       mc.execute(() -> {
          try {
@@ -565,7 +565,7 @@ public class InventoryAuditAction implements MacroAction {
       this.awaitLatch(latch, 2000L);
    }
 
-   private boolean init_Z_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
+   private boolean awaitScreenOpen(Minecraft mc, long timeoutMs) throws InterruptedException {
       CompletableFuture<Void> future = MacroWaitRegistry.awaitGuiTitle("");
 
       try {
@@ -575,8 +575,8 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private boolean load_Z_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
-      if (!this.init_ListPool_StreamUti_Minecraft(mc).init_Z() && !this.init_Z_Minecraft_J(mc, timeoutMs)) {
+   private boolean awaitStableContainer(Minecraft mc, long timeoutMs) throws InterruptedException {
+      if (!this.sampleContainerState(mc).open() && !this.awaitScreenOpen(mc, timeoutMs)) {
          return false;
       }
 
@@ -586,8 +586,8 @@ public class InventoryAuditAction implements MacroAction {
 
       while (System.currentTimeMillis() <= deadline) {
          this.checkInterrupted();
-         InventoryAuditAction.Inner_StreamUtil current = this.init_ListPool_StreamUti_Minecraft(mc);
-         if (current.init_Z()) {
+         InventoryAuditAction.Inner_StreamUtil current = this.sampleContainerState(mc);
+         if (current.open()) {
             if (current.equals(previous)) {
                stablePolls++;
             } else {
@@ -614,12 +614,12 @@ public class InventoryAuditAction implements MacroAction {
       return false;
    }
 
-   private boolean read_Z_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
+   private boolean awaitContainerClosed(Minecraft mc, long timeoutMs) throws InterruptedException {
       long deadline = System.currentTimeMillis() + timeoutMs;
 
       while (System.currentTimeMillis() <= deadline) {
          this.checkInterrupted();
-         if (!this.init_ListPool_StreamUti_Minecraft(mc).init_Z()) {
+         if (!this.sampleContainerState(mc).open()) {
             return true;
          }
 
@@ -631,18 +631,18 @@ public class InventoryAuditAction implements MacroAction {
          this.sleep(Math.min(50L, remaining));
       }
 
-      return !this.init_ListPool_StreamUti_Minecraft(mc).init_Z();
+      return !this.sampleContainerState(mc).open();
    }
 
    private boolean write(Minecraft mc, long timeoutMs) throws InterruptedException {
-      if (this.init_ListPool_StreamUti_Minecraft(mc).init_Z()) {
-         this.init_V_Minecraft_Z(mc, true);
+      if (this.sampleContainerState(mc).open()) {
+         this.closeOpenContainer(mc, true);
       }
 
-      return this.read_Z_Minecraft_J(mc, timeoutMs);
+      return this.awaitContainerClosed(mc, timeoutMs);
    }
 
-   private boolean init_Z_Minecraft(Minecraft mc, String cmd, long timeoutMs) throws InterruptedException {
+   private boolean openContainerAndWait(Minecraft mc, String cmd, long timeoutMs) throws InterruptedException {
       long deadline = System.currentTimeMillis() + timeoutMs;
       long retryIntervalMs = this.retryIntervalMs();
       long nextAttemptAt = 0L;
@@ -654,8 +654,8 @@ public class InventoryAuditAction implements MacroAction {
       while (System.currentTimeMillis() <= deadline) {
          this.checkInterrupted();
          long now = System.currentTimeMillis();
-         InventoryAuditAction.Inner_StreamUtil current = this.init_ListPool_StreamUti_Minecraft(mc);
-         if (current.init_Z()) {
+         InventoryAuditAction.Inner_StreamUtil current = this.sampleContainerState(mc);
+         if (current.open()) {
             if (current.equals(previous)) {
                stablePolls++;
             } else {
@@ -719,7 +719,7 @@ public class InventoryAuditAction implements MacroAction {
       return Math.max(50L, Math.min(configuredDelay > 0 ? configuredDelay : fallback, 400L));
    }
 
-   private InventoryAuditAction.Inner_StreamUtil init_ListPool_StreamUti_Minecraft(Minecraft mc) throws InterruptedException {
+   private InventoryAuditAction.Inner_StreamUtil sampleContainerState(Minecraft mc) throws InterruptedException {
       InventoryAuditAction.Inner_StreamUtil[] state = new InventoryAuditAction.Inner_StreamUtil[]{new InventoryAuditAction.Inner_StreamUtil(false, -1, -1, 0, 0)};
       CountDownLatch latch = new CountDownLatch(1);
       mc.execute(() -> {
@@ -751,7 +751,7 @@ public class InventoryAuditAction implements MacroAction {
       return state[0];
    }
 
-   private void init_V_Minecraft_Z(Minecraft mc, boolean sendPacket) throws InterruptedException {
+   private void closeOpenContainer(Minecraft mc, boolean sendPacket) throws InterruptedException {
       CountDownLatch latch = new CountDownLatch(1);
       mc.execute(() -> {
          try {
@@ -800,7 +800,7 @@ public class InventoryAuditAction implements MacroAction {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                     if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
+                     if (this.isTargetStack(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
                      }
@@ -843,7 +843,7 @@ public class InventoryAuditAction implements MacroAction {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                     if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
+                     if (this.isTargetStack(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
                      }
@@ -885,7 +885,7 @@ public class InventoryAuditAction implements MacroAction {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                     if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 1, ContainerInput.THROW)) {
+                     if (this.isTargetStack(stack, visibleSlot) && this.init(mc, handler, i, 1, ContainerInput.THROW)) {
                         slotCount++;
                         items.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
                      }
@@ -976,15 +976,15 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private boolean init_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
+   private boolean isTargetStack(ItemStack stack, int visibleSlot) {
       if (stack != null && !stack.isEmpty()) {
-         return this.targetItems.isEmpty() ? false : this.load_Z_ItemStack_I(stack, visibleSlot);
+         return this.targetItems.isEmpty() ? false : this.matchesRuntimeTarget(stack, visibleSlot);
       } else {
          return false;
       }
    }
 
-   private boolean load_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
+   private boolean matchesRuntimeTarget(ItemStack stack, int visibleSlot) {
       List<MacroItemTarget> targets = this.runtimeTargets();
       if (targets.isEmpty()) {
          return false;
@@ -1015,7 +1015,7 @@ public class InventoryAuditAction implements MacroAction {
 
       for (InventoryAuditAction.Inner_TaskQueue slot : snapshot.slots().values()) {
          ItemStack stack = slot.stack();
-         if (stack != null && !stack.isEmpty() && !this.isPlayerSlot(slot.visibleSlot()) && this.init_Z_ItemStack_I(stack, slot.visibleSlot())) {
+         if (stack != null && !stack.isEmpty() && !this.isPlayerSlot(slot.visibleSlot()) && this.isTargetStack(stack, slot.visibleSlot())) {
             totals.merge(this.itemKey(stack), stack.getCount(), Integer::sum);
          }
       }
@@ -1037,7 +1037,7 @@ public class InventoryAuditAction implements MacroAction {
       return visibleSlot >= 0 && visibleSlot < 41;
    }
 
-   private InventoryAuditAction.Inner_CachePool init_ListPool_CachePool_Minecraft(Minecraft mc) throws InterruptedException {
+   private InventoryAuditAction.Inner_CachePool snapshotPlayerInventory(Minecraft mc) throws InterruptedException {
       CompletableFuture<InventoryAuditAction.Inner_CachePool> future = new CompletableFuture<>();
       mc.execute(
          () -> {
@@ -1107,7 +1107,7 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private boolean init_Z_Minecraft_Map(Minecraft mc, Map<String, Integer> targetItemsToTransfer) throws InterruptedException {
+   private boolean depositPlayerTargets(Minecraft mc, Map<String, Integer> targetItemsToTransfer) throws InterruptedException {
       if (targetItemsToTransfer != null && !targetItemsToTransfer.isEmpty()) {
          boolean[] result = new boolean[]{false};
          CountDownLatch latch = new CountDownLatch(1);
@@ -1152,7 +1152,7 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private boolean read_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
+   private boolean matchesAnyTarget(ItemStack stack, int visibleSlot) {
       List<MacroItemTarget> targets = this.runtimeTargets();
       if (targets.isEmpty()) {
          return false;
@@ -1167,7 +1167,7 @@ public class InventoryAuditAction implements MacroAction {
       return false;
    }
 
-   private boolean load_Z_Minecraft_Map(Minecraft mc, Map<String, Integer> targetItemsToExtract) throws InterruptedException {
+   private boolean withdrawContainerTargets(Minecraft mc, Map<String, Integer> targetItemsToExtract) throws InterruptedException {
       if (targetItemsToExtract != null && !targetItemsToExtract.isEmpty()) {
          boolean[] result = new boolean[]{false};
          CountDownLatch latch = new CountDownLatch(1);
@@ -1187,7 +1187,7 @@ public class InventoryAuditAction implements MacroAction {
                            ItemStack stack = slot.getItem();
                            if (stack != null && !stack.isEmpty()) {
                               int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                              if (this.init_Z_ItemStack_I(stack, visibleSlot)
+                              if (this.isTargetStack(stack, visibleSlot)
                                  && targetItemsToExtract.containsKey(this.itemKey(stack))
                                  && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                                  result[0] = true;
@@ -1211,7 +1211,7 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private InventoryAuditAction.Inner_CachePool load_ListPool_CachePool(Minecraft mc) throws InterruptedException {
+   private InventoryAuditAction.Inner_CachePool snapshotOpenContainer(Minecraft mc) throws InterruptedException {
       CompletableFuture<InventoryAuditAction.Inner_CachePool> future = new CompletableFuture<>();
       mc.execute(() -> {
          try {
@@ -1221,7 +1221,7 @@ public class InventoryAuditAction implements MacroAction {
             }
 
             AbstractContainerMenu handler = mc.player.containerMenu;
-            future.complete(this.init_ListPool_CachePool_Minecraft_AbstractContainerM(mc, handler));
+            future.complete(this.snapshotMenu(mc, handler));
          } catch (Exception e) {
             future.complete(null);
          }
@@ -1229,13 +1229,13 @@ public class InventoryAuditAction implements MacroAction {
       return this.join(future, 3000L);
    }
 
-   private InventoryAuditAction.Inner_CachePool init_ListPool_CachePool_Minecraft_AbstractContainerM(Minecraft mc, AbstractContainerMenu handler) {
+   private InventoryAuditAction.Inner_CachePool snapshotMenu(Minecraft mc, AbstractContainerMenu handler) {
       String title = mc.gui.screen() != null && mc.gui.screen().getTitle() != null ? mc.gui.screen().getTitle().getString() : "";
-      Map<Integer, InventoryAuditAction.Inner_TaskQueue> slots = this.init_Map_Minecraft_AbstractContainerM(mc, handler);
+      Map<Integer, InventoryAuditAction.Inner_TaskQueue> slots = this.menuSlotsByVisibleIndex(mc, handler);
       return new InventoryAuditAction.Inner_CachePool(title, System.currentTimeMillis(), slots);
    }
 
-   private Map<Integer, InventoryAuditAction.Inner_TaskQueue> init_Map_Minecraft_AbstractContainerM(Minecraft mc, AbstractContainerMenu handler) {
+   private Map<Integer, InventoryAuditAction.Inner_TaskQueue> menuSlotsByVisibleIndex(Minecraft mc, AbstractContainerMenu handler) {
       Map<Integer, InventoryAuditAction.Inner_TaskQueue> slots = new LinkedHashMap<>();
 
       for (Slot slot : handler.slots) {
@@ -1357,7 +1357,7 @@ public class InventoryAuditAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("mode", this.mode.name());
-      tag.put("targetItems", MacroItemTarget.toListTag(this.init_List_3()));
+      tag.put("targetItems", MacroItemTarget.toListTag(this.configuredTargets()));
       tag.putString("openCommand", this.openCommandOrDefault());
       tag.putString("openMode", this.openMode.name());
       tag.putInt("containerX", this.containerPos.getX());
@@ -1508,7 +1508,7 @@ public class InventoryAuditAction implements MacroAction {
       this.enabled = enabled;
    }
 
-   private List<MacroItemTarget> init_List_3() {
+   private List<MacroItemTarget> configuredTargets() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
@@ -1527,7 +1527,7 @@ public class InventoryAuditAction implements MacroAction {
       List<MacroItemTarget> runtime = new ArrayList<>();
       Minecraft mc = Minecraft.getInstance();
 
-      for (MacroItemTarget target : this.init_List_3()) {
+      for (MacroItemTarget target : this.configuredTargets()) {
          if (target != null) {
             MacroItemTarget resolved = target.resolveTemplates(mc);
             if (resolved != null && (resolved.hasSlot() || resolved.hasItemFilter())) {
@@ -1557,7 +1557,7 @@ public class InventoryAuditAction implements MacroAction {
       DUPE_SPAM;
    }
 
-   private record Inner_CachePool(String init_Str, long init_J, Map<Integer, InventoryAuditAction.Inner_TaskQueue> slots) {
+   private record Inner_CachePool(String title, long capturedAtMillis, Map<Integer, InventoryAuditAction.Inner_TaskQueue> slots) {
    }
 
    public enum Inner_ConfigStore {
@@ -1577,10 +1577,10 @@ public class InventoryAuditAction implements MacroAction {
       DROP_DELAYED_PACKETS;
    }
 
-   private record Inner_NetHelper(int init_I, Map<String, Integer> init_Map) {
+   private record Inner_NetHelper(int slotCount, Map<String, Integer> items) {
    }
 
-   private record Inner_StreamUtil(boolean init_Z, int init_I, int load, int read, int write) {
+   private record Inner_StreamUtil(boolean open, int containerId, int load, int read, int write) {
    }
 
    private record Inner_TaskQueue(int visibleSlot, String label, ItemStack stack) {

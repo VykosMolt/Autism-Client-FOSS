@@ -12,17 +12,17 @@ import net.minecraft.resources.Identifier;
 
 public final class MacroStatusHudRenderer {
    private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
-   private static final long init_J = 50000000L;
+   private static final long REFRESH_INTERVAL_NANOS = 50000000L;
    private static final int init_I = -9448565;
-   private static final Identifier init_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
-   private static final Identifier load_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
-   private static final Identifier read_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
-   private static final int load_I = THEME.load(autismclient.gui.f.b.l.write);
-   private static final int read_I = THEME.load(autismclient.gui.f.b.l.read);
-   private static String[] init_StrArr = new String[0];
+   private static final Identifier STATUS_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
+   private static final Identifier ACTION_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
+   private static final Identifier TITLE_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
+   private static final int STATUS_COLOR = THEME.load(autismclient.gui.f.b.l.write);
+   private static final int TITLE_COLOR = THEME.load(autismclient.gui.f.b.l.read);
+   private static String[] cachedNames = new String[0];
    private static int[] cachedSteps = new int[0];
    private static int[] cachedTotals = new int[0];
-   private static int[] read_IArr = new int[0];
+   private static int[] cachedCompletedSteps = new int[0];
    private static int write = -2147483648;
    private static int update = -2147483648;
    private static int sync = -2147483648;
@@ -31,15 +31,15 @@ public final class MacroStatusHudRenderer {
    private static int open = -2147483648;
    private static int poll = -2147483648;
    private static String title = null;
-   private static String load_Str = "";
+   private static String cachedTitle = "";
    private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> cachedLines = List.of();
    private static long lastRefreshNanos;
    private static Font cachedFont;
    private static int push = -2147483648;
    private static int pop = -2147483648;
-   private static long read_J;
-   private static boolean init_Z;
-   private static boolean load_Z;
+   private static long visibilityCheckedAt;
+   private static boolean cachedVisible;
+   private static boolean visibilityCached;
 
    private MacroStatusHudRenderer() {
    }
@@ -52,32 +52,32 @@ public final class MacroStatusHudRenderer {
       if (textRenderer == null) {
          return 0;
       } else {
-         return !init_Z(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.init(cachedLines.size());
+         return !isVisibleCached(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.init(cachedLines.size());
       }
    }
 
    public static int init(
       GuiGraphicsExtractor context, Font textRenderer, int x, int y, int panelWidth, int maxLines, boolean topBorder, boolean bottomBorder, boolean rightBorder
    ) {
-      return textRenderer != null && init_Z(textRenderer, panelWidth, maxLines)
+      return textRenderer != null && isVisibleCached(textRenderer, panelWidth, maxLines)
          ? autismclient.gui.ui.layout.InfoCardRenderer.init(
-            context, textRenderer, x, y, panelWidth, load_Str, cachedLines, THEME.run(), 0, true, rightBorder, topBorder, bottomBorder
+            context, textRenderer, x, y, panelWidth, cachedTitle, cachedLines, THEME.run(), 0, true, rightBorder, topBorder, bottomBorder
          )
          : 0;
    }
 
-   private static boolean init_Z(Font textRenderer, int panelWidth, int maxLines) {
-      if (load_Z && textRenderer == cachedFont && panelWidth == push && maxLines == pop && System.nanoTime() - read_J < 8000000L) {
-         load_Z = false;
-         return init_Z;
+   private static boolean isVisibleCached(Font textRenderer, int panelWidth, int maxLines) {
+      if (visibilityCached && textRenderer == cachedFont && panelWidth == push && maxLines == pop && System.nanoTime() - visibilityCheckedAt < 8000000L) {
+         visibilityCached = false;
+         return cachedVisible;
       } else {
          boolean result = load(textRenderer, panelWidth, maxLines);
          cachedFont = textRenderer;
          push = panelWidth;
          pop = maxLines;
-         read_J = System.nanoTime();
-         init_Z = result;
-         load_Z = true;
+         visibilityCheckedAt = System.nanoTime();
+         cachedVisible = result;
+         visibilityCached = true;
          return result;
       }
    }
@@ -124,10 +124,10 @@ public final class MacroStatusHudRenderer {
    }
 
    private static boolean init(List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun) {
-      if (rowsPerRun == write && runs.size() == init_StrArr.length) {
+      if (rowsPerRun == write && runs.size() == cachedNames.length) {
          for (int i = 0; i < runs.size(); i++) {
             MacroExecutor.ActiveRunSnapshot run = runs.get(i);
-            if (run.currentStep() != cachedSteps[i] || run.totalSteps() != cachedTotals[i] || run.lastCompletedStep() != read_IArr[i] || !Objects.equals(run.macroName(), init_StrArr[i])) {
+            if (run.currentStep() != cachedSteps[i] || run.totalSteps() != cachedTotals[i] || run.lastCompletedStep() != cachedCompletedSteps[i] || !Objects.equals(run.macroName(), cachedNames[i])) {
                return false;
             }
          }
@@ -149,13 +149,13 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   private static int init_I() {
+   private static int accentColor() {
       return ThemePaletteManager.recolor(-9448565, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    private static void init(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
       int contentWidth = panelWidth - 12;
-      int nowColor = init_I();
+      int nowColor = accentColor();
       ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
 
       for (MacroExecutor.ActiveRunSnapshot run : runs) {
@@ -169,10 +169,10 @@ public final class MacroStatusHudRenderer {
             rows.add(
                new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
                   autismclient.gui.f.b.k.init(
-                     textRenderer, run.macroName() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, read_Identifier, read_I
+                     textRenderer, run.macroName() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, TITLE_FONT, TITLE_COLOR
                   ),
-                  read_Identifier,
-                  read_I
+                  TITLE_FONT,
+                  TITLE_COLOR
                )
             );
 
@@ -181,8 +181,8 @@ public final class MacroStatusHudRenderer {
                int color = MacroStepColorHelper.init(i, current, run.lastCompletedStep(), nowColor);
                rows.add(
                   new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
-                     autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, load_Identifier, color),
-                     load_Identifier,
+                     autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, ACTION_FONT, color),
+                     ACTION_FONT,
                      color
                   )
                );
@@ -191,7 +191,7 @@ public final class MacroStatusHudRenderer {
             if (run.statusText() != null && !run.statusText().isBlank()) {
                rows.add(
                   new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
-                     autismclient.gui.f.b.k.init(textRenderer, run.statusText(), contentWidth, init_Identifier, load_I), init_Identifier, load_I
+                     autismclient.gui.f.b.k.init(textRenderer, run.statusText(), contentWidth, STATUS_FONT, STATUS_COLOR), STATUS_FONT, STATUS_COLOR
                   )
                );
             }
@@ -200,17 +200,17 @@ public final class MacroStatusHudRenderer {
 
       MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       int runCount = runs.size();
-      init_StrArr = new String[runCount];
+      cachedNames = new String[runCount];
       cachedSteps = new int[runCount];
       cachedTotals = new int[runCount];
-      read_IArr = new int[runCount];
+      cachedCompletedSteps = new int[runCount];
 
       for (int i = 0; i < runCount; i++) {
          MacroExecutor.ActiveRunSnapshot run = runs.get(i);
-         init_StrArr[i] = run.macroName();
+         cachedNames[i] = run.macroName();
          cachedSteps[i] = run.currentStep();
          cachedTotals[i] = run.totalSteps();
-         read_IArr[i] = run.lastCompletedStep();
+         cachedCompletedSteps[i] = run.lastCompletedStep();
       }
 
       int primaryTotal = init(primary, primary.macro());
@@ -223,16 +223,16 @@ public final class MacroStatusHudRenderer {
       open = panelWidth;
       poll = ThemePaletteManager.generation();
       title = runs.size() == 1 ? primary.macroName() : runs.size() + " macros";
-      load_Str = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, read_Identifier, read_I);
+      cachedTitle = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, TITLE_FONT, TITLE_COLOR);
       cachedLines = rows;
       lastRefreshNanos = now;
    }
 
    private static void clearCache() {
-      init_StrArr = new String[0];
+      cachedNames = new String[0];
       cachedSteps = new int[0];
       cachedTotals = new int[0];
-      read_IArr = new int[0];
+      cachedCompletedSteps = new int[0];
       write = -2147483648;
       update = -2147483648;
       sync = -2147483648;
@@ -241,7 +241,7 @@ public final class MacroStatusHudRenderer {
       open = -2147483648;
       poll = -2147483648;
       title = null;
-      load_Str = "";
+      cachedTitle = "";
       cachedLines = List.of();
       lastRefreshNanos = 0L;
    }

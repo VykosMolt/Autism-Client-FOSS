@@ -40,7 +40,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private int rowHeight = 12;
    private int listHeight = 72;
    private static final int poll_I = 6;
-   private int push_I = 52;
+   private int planListHeight = 52;
    private static final int pop = 4;
    private static final int tick = 8;
    private static final int run = 4;
@@ -53,10 +53,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private int start = 64;
    private int stop = -1;
    private float cachedFontScale = 0.0F / 0.0F;
-   private boolean write_Z = false;
+   private boolean dragging = false;
    private double dragOffsetX = 0.0;
    private double dragOffsetY = 0.0;
-   private boolean update_Z = false;
+   private boolean collapsed = false;
    private boolean visible = false;
    private AbstractContainerScreen<?> parentScreen;
    private final List<ThemedTextInputBox> textFields = new ArrayList<>();
@@ -100,9 +100,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    });
    private final AtomicReference<AutismFabricatorOverlay.Inner_StreamUtil> pendingRecipeResult = new AtomicReference<>();
    private final AtomicLong recipeRequestId = new AtomicLong();
-   private volatile boolean close_Z;
+   private volatile boolean recipeScanRunning;
    private int cache;
-   private boolean open_Z;
+   private boolean recipeScanStarted;
    private volatile boolean crafting = false;
    private boolean useMaxAmount = false;
    private int state = 0;
@@ -131,7 +131,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return UiLayoutMath.centerTextY(rowY, fieldHeight(), THEME.init_I_l(autismclient.gui.f.b.l.write), 0);
    }
 
-   private int tick_I_5() {
+   private int labelColumnWidth() {
       if (MINECRAFT.font == null) {
          return this.start;
       }
@@ -160,37 +160,37 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return widest;
    }
 
-   private int run_I_5() {
-      return this.get + 4 + this.tick_I_5() + 4;
+   private int fieldX() {
+      return this.get + 4 + this.labelColumnWidth() + 4;
    }
 
-   private int get_I_5() {
-      return Math.max(80, this.get + this.put - 4 - this.run_I_5());
+   private int fieldWidth() {
+      return Math.max(80, this.get + this.put - 4 - this.fieldX());
    }
 
-   private int set_I_5() {
+   private int buttonRowY() {
       return this.set + this.add - this.reset - 4;
    }
 
-   private int put_I_2() {
-      return Math.max(this.clear_I_2(), this.add_I_5() - 11);
+   private int statusLineY() {
+      return Math.max(this.contentBottomY(), this.descriptionY() - 11);
    }
 
-   private int add_I_5() {
-      return Math.max(this.clear_I_2() + 11, this.set_I_5() - 3 - this.init_List_4().size() * 10);
+   private int descriptionY() {
+      return Math.max(this.contentBottomY() + 11, this.buttonRowY() - 3 - this.descriptionLines().size() * 10);
    }
 
-   private List<String> init_List_4() {
+   private List<String> descriptionLines() {
       return autismclient.gui.f.UiHelper.init(MINECRAFT.font).wrapLines(this.action.description(this.dropWholeStack), Math.max(1, this.put - 8));
    }
 
-   private int clear_I_2() {
-      return this.isCraftMode() ? this.count() + this.listHeight + 12 : this.prev_I() + fieldHeight() + 4;
+   private int contentBottomY() {
+      return this.isCraftMode() ? this.count() + this.listHeight + 12 : this.timesRowY() + fieldHeight() + 4;
    }
 
-   private int load_I(int floorY) {
+   private int heightForFloor(int floorY) {
       int relativeFloor = Math.max(0, floorY - this.set);
-      return relativeFloor + 11 + this.init_List_4().size() * 10 + 3 + this.reset + 4;
+      return relativeFloor + 11 + this.descriptionLines().size() * 10 + 3 + this.reset + 4;
    }
 
    private boolean isCraftMode() {
@@ -201,28 +201,28 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return !this.isCraftMode();
    }
 
-   private boolean pop_Z_3() {
+   private boolean showsSlotFields() {
       return this.isClickMode() && !this.action.write();
    }
 
-   private int reset_I_2() {
+   private int actionRowY() {
       return this.set + 14 + 4;
    }
 
-   private int start_I_5() {
-      return this.reset_I_2() + fieldPitch();
+   private int slotRowY() {
+      return this.actionRowY() + fieldPitch();
    }
 
-   private int stop_I_2() {
-      return this.start_I_5() + (this.pop_Z_3() ? fieldPitch() : 0);
+   private int itemRowY() {
+      return this.slotRowY() + (this.showsSlotFields() ? fieldPitch() : 0);
    }
 
-   private int next_I_2() {
-      return this.stop_I_2() + (this.pop_Z_3() ? fieldPitch() : 0);
+   private int modeRowY() {
+      return this.itemRowY() + (this.showsSlotFields() ? fieldPitch() : 0);
    }
 
-   private int prev_I() {
-      return !this.tick_Z_3() && !this.run_Z_2() ? this.stop_I_2() + fieldPitch() : this.next_I_2() + fieldPitch();
+   private int timesRowY() {
+      return !this.usesClickDropdown() && !this.isDropAction() ? this.itemRowY() + fieldPitch() : this.modeRowY() + fieldPitch();
    }
 
    private int valid() {
@@ -247,7 +247,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private int value() {
-      return this.run_I_5();
+      return this.fieldX();
    }
 
    private int cache() {
@@ -255,11 +255,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private int state() {
-      return Math.max(40, this.get_I_5() - this.data() - 4);
+      return Math.max(40, this.fieldWidth() - this.data() - 4);
    }
 
    private int queue() {
-      return this.start_I_5() + 1;
+      return this.slotRowY() + 1;
    }
 
    private int buffer() {
@@ -267,14 +267,14 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private int entry() {
-      return this.buffer() + this.push_I + 2;
+      return this.buffer() + this.planListHeight + 2;
    }
 
    private int node() {
       return this.size() + fieldHeight() + 4;
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_2() {
+   private autismclient.gui.f.NetHelper clearAllButtonBounds() {
       int listRight = this.flags() + this.level();
       int w = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
          autismclient.gui.f.b.k.init(
@@ -289,7 +289,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return autismclient.gui.f.NetHelper.init(listRight - w - 2, y, w, h);
    }
 
-   private boolean tick_Z_3() {
+   private boolean usesClickDropdown() {
       return this.action.init();
    }
 
@@ -297,17 +297,17 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return this.action.write() ? ContainerClickSnapshot.Inner_DataUtil.values().length : 2;
    }
 
-   private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil_2() {
+   private ContainerClickSnapshot.Inner_DataUtil selectedPacketClick() {
       return ContainerClickSnapshot.Inner_DataUtil.init(this.prev);
    }
 
-   private boolean run_Z_2() {
+   private boolean isDropAction() {
       return this.action.load();
    }
 
    private int pool() {
       if (this.action.write()) {
-         return this.init_bo_DataUtil_2().init_I;
+         return this.selectedPacketClick().init_I;
       }
 
       if (this.action.load()) {
@@ -318,12 +318,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return packetAction.load() ? packetAction.defaultButton() : Math.min(this.prev, 1);
    }
 
-   private String load_Str_5() {
+   private String unusedClickModeLabel() {
       if (this.action.write()) {
-         return this.init_bo_DataUtil_2().init_Str;
-      } else if (this.tick_Z_3()) {
+         return this.selectedPacketClick().init_Str;
+      } else if (this.usesClickDropdown()) {
          return this.clickLabels[Math.min(this.prev, 1)];
-      } else if (this.run_Z_2()) {
+      } else if (this.isDropAction()) {
          return this.dropWholeStack ? "Whole Stack" : "Single Item";
       } else {
          return "Auto";
@@ -380,7 +380,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.get, this.set, this.put, this.add, this.visible, this.update_Z);
+      return new OverlayBounds(this.get, this.set, this.put, this.add, this.visible, this.collapsed);
    }
 
    @Override
@@ -392,7 +392,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          this.put = Math.min(clamped.width, this.defaultWidth);
          this.add = clamped.height;
          this.visible = clamped.visible;
-         this.update_Z = clamped.collapsed;
+         this.collapsed = clamped.collapsed;
          if (this.visible) {
             this.rebuildWidgets();
          }
@@ -423,13 +423,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isCollapsed() {
-      return this.update_Z;
+      return this.collapsed;
    }
 
    @Override
    public void setCollapsed(boolean collapsed) {
-      if (this.update_Z != collapsed) {
-         this.update_Z = collapsed;
+      if (this.collapsed != collapsed) {
+         this.collapsed = collapsed;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
          }
@@ -449,7 +449,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      int panelHeight = this.update_Z ? 14 : this.add;
+      int panelHeight = this.collapsed ? 14 : this.add;
       return mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + panelHeight;
    }
 
@@ -544,15 +544,15 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void rebuildWidgets() {
       this.clearTextFields();
-      if (!this.write_Z) {
+      if (!this.dragging) {
          this.computeLayout();
          this.add = this.isCraftMode() ? this.fill() : this.drain();
       }
 
-      int fieldX = this.run_I_5();
-      int fieldWidth = this.get_I_5();
+      int fieldX = this.fieldX();
+      int fieldWidth = this.fieldWidth();
       this.action = this.actions[this.next];
-      this.slotField = new ThemedTextInputBox(MINECRAFT, MINECRAFT.font, fieldX, this.start_I_5(), fieldWidth, fieldHeight(), false);
+      this.slotField = new ThemedTextInputBox(MINECRAFT, MINECRAFT.font, fieldX, this.slotRowY(), fieldWidth, fieldHeight(), false);
       this.slotField.setPlaceholder(Component.literal("Optional slot - right-click to fill"));
       this.slotField.setValue(this.slotInput);
       this.slotField.setMaxLength(5);
@@ -575,11 +575,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          } catch (NumberFormatException var6x) {
          }
       });
-      if (this.pop_Z_3()) {
+      if (this.showsSlotFields()) {
          this.textFields.add(this.slotField);
       }
 
-      this.itemField = new ThemedTextInputBox(MINECRAFT, MINECRAFT.font, fieldX, this.stop_I_2(), fieldWidth, fieldHeight(), false);
+      this.itemField = new ThemedTextInputBox(MINECRAFT, MINECRAFT.font, fieldX, this.itemRowY(), fieldWidth, fieldHeight(), false);
       this.itemField.setPlaceholder(Component.literal("Optional item match").withStyle(style -> style.withColor(ChatFormatting.DARK_GRAY)));
       this.itemField.setValue(this.itemInput);
       this.itemField.setMaxLength(50);
@@ -595,11 +595,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
          this.clearStatus();
       });
-      if (this.pop_Z_3()) {
+      if (this.showsSlotFields()) {
          this.textFields.add(this.itemField);
       }
 
-      int timesY = this.isCraftMode() ? this.size() : this.prev_I();
+      int timesY = this.isCraftMode() ? this.size() : this.timesRowY();
       int timesX = this.isCraftMode() ? this.value() : fieldX;
       int timesWidth = this.isCraftMode() ? this.state() : fieldWidth;
       this.timesField = new ThemedTextInputBox(MINECRAFT, MINECRAFT.font, timesX, timesY, timesWidth, fieldHeight(), false);
@@ -655,13 +655,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       if (button == 0 && mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14) {
-         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, this.update_Z ? 14 : this.add, this.visible, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, this.collapsed ? 14 : this.add, this.visible, this.collapsed);
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.setVisible(false);
             return true;
          }
 
-         this.write_Z = true;
+         this.dragging = true;
          this.dragOffsetX = mouseX - this.get;
          this.dragOffsetY = mouseY - this.set;
 
@@ -671,7 +671,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
          return true;
       } else {
-         if (this.update_Z) {
+         if (this.collapsed) {
             return false;
          }
 
@@ -706,7 +706,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   this.state = 1;
                   this.queue = Math.max(0, (int)mouseY - craftPlanScrollbar.thumbY());
                   this.value = this.dragScrollOffset(craftPlanScrollbar, (int)mouseY, this.queue, 13, Math.max(0, this.craftPlan.size() - 4));
-                  this.planScroll.jumpTo(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.push_I));
+                  this.planScroll.jumpTo(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.planListHeight));
                   this.saveState();
                   return true;
                }
@@ -722,7 +722,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
             }
 
-            if (!this.craftPlan.isEmpty() && this.init_NetHelper_2().init_Z((int)mouseX, (int)mouseY) && button == 0) {
+            if (!this.craftPlan.isEmpty() && this.clearAllButtonBounds().init_Z((int)mouseX, (int)mouseY) && button == 0) {
                this.craftPlan.clear();
                this.data = -1;
                this.value = 0;
@@ -732,13 +732,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                return true;
             }
 
-            if (mouseX >= listX && mouseX <= listX + listWidth && mouseY >= planListY && mouseY <= planListY + this.push_I && button == 0) {
-               int maxPlanScrollPx = Math.max(0, this.craftPlan.size() * 13 - this.push_I);
+            if (mouseX >= listX && mouseX <= listX + listWidth && mouseY >= planListY && mouseY <= planListY + this.planListHeight && button == 0) {
+               int maxPlanScrollPx = Math.max(0, this.craftPlan.size() * 13 - this.planListHeight);
                int drawPlanScroll = this.planScroll.tickAndClamp(0.0F, maxPlanScrollPx);
                int firstIndex = drawPlanScroll / 13;
                int rowY = planListY - drawPlanScroll % 13;
 
-               for (int index = firstIndex; index < this.craftPlan.size() && rowY < planListY + this.push_I; rowY += 13) {
+               for (int index = firstIndex; index < this.craftPlan.size() && rowY < planListY + this.planListHeight; rowY += 13) {
                   if (!(mouseY < rowY) && !(mouseY >= rowY + 12)) {
                      if (mouseX >= listX + planContentWidth - 16 && mouseX < listX + planContentWidth - 2) {
                         this.removePlanEntry(index);
@@ -833,7 +833,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         int btnY = this.set_I_5();
+         int btnY = this.buttonRowY();
          int btnArea = this.put - 8;
          int gap = 2;
          int bw = (btnArea - gap * 2) / 3;
@@ -899,11 +899,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       if (button == 0) {
-         if (this.write_Z) {
+         if (this.dragging) {
             this.saveState();
          }
 
-         this.write_Z = false;
+         this.dragging = false;
       }
 
       for (ThemedTextInputBox field : this.textFields) {
@@ -923,7 +923,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
       if (this.state == 1) {
          this.value = this.dragScrollOffset(this.planScrollbar(), (int)mouseY, this.queue, 13, Math.max(0, this.craftPlan.size() - 4));
-         this.planScroll.jumpTo(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.push_I));
+         this.planScroll.jumpTo(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.planListHeight));
          return true;
       }
 
@@ -935,9 +935,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (this.write_Z) {
+      if (this.dragging) {
          OverlayBounds nextBounds = this.clampToScreen(
-            this, new OverlayBounds((int)(mouseX - this.dragOffsetX), (int)(mouseY - this.dragOffsetY), this.put, this.add, this.visible, this.update_Z)
+            this, new OverlayBounds((int)(mouseX - this.dragOffsetX), (int)(mouseY - this.dragOffsetY), this.put, this.add, this.visible, this.collapsed)
          );
          this.get = nextBounds.x;
          this.set = nextBounds.y;
@@ -956,7 +956,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-      if (this.visible && !this.update_Z) {
+      if (this.visible && !this.collapsed) {
          if (!this.dropdowns.isEmpty()
             && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.dropdowns, mouseX, mouseY))
             && autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.dropdowns, mouseX, mouseY, amount)) {
@@ -967,10 +967,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             int planX = this.flags();
             int planY = this.buffer();
             int listWidth = this.level();
-            if (mouseX >= planX && mouseX <= planX + listWidth && mouseY >= planY && mouseY <= planY + this.push_I) {
+            if (mouseX >= planX && mouseX <= planX + listWidth && mouseY >= planY && mouseY <= planY + this.planListHeight) {
                int maxPlanScroll = Math.max(0, this.craftPlan.size() - 4);
                this.value = Math.max(0, Math.min(maxPlanScroll, this.value - (int)Math.signum(amount)));
-               this.planScroll.setOffset(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.push_I));
+               this.planScroll.setOffset(this.value * 13, Math.max(0, this.craftPlan.size() * 13 - this.planListHeight));
                this.saveState();
                return true;
             }
@@ -1019,10 +1019,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             this.applyCraftOptions(result.options);
          }
 
-         if (!this.close_Z) {
+         if (!this.recipeScanRunning) {
             int fingerprint = this.index();
-            if (!this.open_Z || fingerprint != this.cache) {
-               this.open_Z = true;
+            if (!this.recipeScanStarted || fingerprint != this.cache) {
+               this.recipeScanStarted = true;
                this.cache = fingerprint;
                this.startRecipeScan();
             }
@@ -1036,7 +1036,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       bK.load("craft.snapshot", perfStart, 5000000L);
       if (snapshot != null) {
          long generation = this.recipeRequestId.incrementAndGet();
-         this.close_Z = true;
+         this.recipeScanRunning = true;
          RECIPE_EXECUTOR.execute(() -> {
             try {
                List<AutoCraftingEngine.CraftOption> options = AutoCraftingEngine.scanOptions(snapshot);
@@ -1044,7 +1044,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             } catch (Throwable t) {
                AutismClientAddon.LOG.warn("[Autism] craft recipe scan failed", t);
             } finally {
-               this.close_Z = false;
+               this.recipeScanRunning = false;
             }
          });
       }
@@ -1062,8 +1062,8 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       this.applySearch(this.searchField != null ? this.searchField.getValue() : this.recipeSearch, false);
-      this.close_V_5();
-      this.open_V_5();
+      this.reselectSameRecipe();
+      this.restoreSavedRecipe();
    }
 
    private int index() {
@@ -1105,7 +1105,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.size = resetScroll ? 0 : Math.max(0, Math.min(maxScroll, this.size));
    }
 
-   private void close_V_5() {
+   private void reselectSameRecipe() {
       if (this.selectedOption != null) {
          for (AutoCraftingEngine.CraftOption option : this.craftOptions) {
             if (!option.recipeKey.isBlank() && option.recipeKey.equalsIgnoreCase(this.selectedOption.recipeKey)
@@ -1126,7 +1126,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void open_V_5() {
+   private void restoreSavedRecipe() {
       if (this.selectedRecipeKey != null && !this.selectedRecipeKey.isBlank() || this.task >= 0) {
          if (this.selectedOption != null) {
             if (!this.selectedRecipeKey.isBlank() && this.selectedRecipeKey.equalsIgnoreCase(this.selectedOption.recipeKey)) {
@@ -1183,9 +1183,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       int listY = this.buffer();
       int listWidth = this.level();
       int contentHeight = this.craftPlan.size() * 13;
-      int maxScroll = Math.max(0, contentHeight - this.push_I);
+      int maxScroll = Math.max(0, contentHeight - this.planListHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-         contentHeight, this.push_I, listX + listWidth - 5, listY, 3, this.push_I, this.planScroll.tickAndClamp(0.0F, maxScroll)
+         contentHeight, this.planListHeight, listX + listWidth - 5, listY, 3, this.planListHeight, this.planScroll.tickAndClamp(0.0F, maxScroll)
       );
    }
 
@@ -1379,7 +1379,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (this.visible && !this.update_Z) {
+      if (this.visible && !this.collapsed) {
          boolean anyFocused = false;
 
          for (ThemedTextInputBox field : this.textFields) {
@@ -1417,7 +1417,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    @Override
    public boolean charTyped(char chr, int modifiers) {
       int codepoint = chr;
-      if (this.visible && !this.update_Z) {
+      if (this.visible && !this.collapsed) {
          CharacterEvent input = new CharacterEvent(codepoint);
 
          for (ThemedTextInputBox field : this.textFields) {
@@ -1445,25 +1445,25 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
          this.dropdowns.clear();
          this.computeLayout();
-         if (!this.write_Z) {
+         if (!this.dragging) {
             this.add = this.isCraftMode() ? this.fill() : this.drain();
          }
 
          int panelHeight = this.add;
-         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, panelHeight, this.visible, this.update_Z);
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Fabricator", this.update_Z, this.write_Z);
-         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, panelHeight, this.visible, this.collapsed);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Fabricator", this.collapsed, this.dragging);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.collapsed);
          if (!clipBody) {
-            this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
+            this.renderInactiveDim(context, bounds, this.collapsed, this.dragging);
          } else {
             try {
                int labelX = this.get + 4;
-               int fieldX = this.run_I_5();
-               int fieldWidth = this.get_I_5();
-               ThemedTextHelper.init(context, MINECRAFT.font, "Action", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.reset_I_2()), false);
+               int fieldX = this.fieldX();
+               int fieldWidth = this.fieldWidth();
+               ThemedTextHelper.init(context, MINECRAFT.font, "Action", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.actionRowY()), false);
                if (this.actionDropdown == null) {
                   this.actionDropdown = new autismclient.gui.ui.widgets.DropdownWidget(
-                     fieldX, this.reset_I_2(), fieldWidth, fieldHeight(), this.actionLabels, this.next, idx -> {
+                     fieldX, this.actionRowY(), fieldWidth, fieldHeight(), this.actionLabels, this.next, idx -> {
                         if (idx >= 0 && idx < this.actions.length && idx != this.next) {
                            this.next = idx;
                            this.action = this.actions[idx];
@@ -1476,7 +1476,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                this.actionDropdown
-                  .setBounds(fieldX, this.reset_I_2(), fieldWidth, fieldHeight())
+                  .setBounds(fieldX, this.actionRowY(), fieldWidth, fieldHeight())
                   .setOptions(this.actionLabels)
                   .setSelectedIndex(this.next);
                this.dropdowns.add(this.actionDropdown);
@@ -1485,29 +1485,29 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   field.render(context, mouseX, mouseY, delta);
                }
 
-               if (this.pop_Z_3()) {
-                  ThemedTextHelper.init(context, MINECRAFT.font, "Slot", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.start_I_5()), false);
-                  ThemedTextHelper.init(context, MINECRAFT.font, "Item", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.stop_I_2()), false);
+               if (this.showsSlotFields()) {
+                  ThemedTextHelper.init(context, MINECRAFT.font, "Slot", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.slotRowY()), false);
+                  ThemedTextHelper.init(context, MINECRAFT.font, "Item", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.itemRowY()), false);
                }
 
                if (this.isClickMode()) {
-                  if (this.tick_Z_3() || this.run_Z_2()) {
+                  if (this.usesClickDropdown() || this.isDropAction()) {
                      ThemedTextHelper.init(
                         context,
                         MINECRAFT.font,
-                        this.run_Z_2() ? "Drop Mode" : "Click",
+                        this.isDropAction() ? "Drop Mode" : "Click",
                         ThemedTextHelper.TextTone.MUTED,
                         labelX,
-                        this.labelY(this.next_I_2()),
+                        this.labelY(this.modeRowY()),
                         false
                      );
-                     if (this.tick_Z_3()) {
+                     if (this.usesClickDropdown()) {
                         boolean packetMode = this.action.write();
                         List<String> options = packetMode ? PACKET_CLICK_OPTIONS : CLICK_OPTIONS;
                         int clamped = Math.min(this.prev, options.size() - 1);
                         if (this.clickDropdown == null) {
                            this.clickDropdown = new autismclient.gui.ui.widgets.DropdownWidget(
-                              fieldX, this.next_I_2(), fieldWidth, fieldHeight(), options, clamped, idx -> {
+                              fieldX, this.modeRowY(), fieldWidth, fieldHeight(), options, clamped, idx -> {
                                  if (idx >= 0 && idx < 3) {
                                     this.prev = idx;
                                     this.clearStatus();
@@ -1518,7 +1518,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         }
 
                         this.clickDropdown
-                           .setBounds(fieldX, this.next_I_2(), fieldWidth, fieldHeight())
+                           .setBounds(fieldX, this.modeRowY(), fieldWidth, fieldHeight())
                            .setOptions(options)
                            .setSelectedIndex(clamped);
                         this.dropdowns.add(this.clickDropdown);
@@ -1526,7 +1526,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         List<String> options = AMOUNT_MODES;
                         int sel = this.dropWholeStack ? 1 : 0;
                         if (this.amountDropdown == null) {
-                           this.amountDropdown = new autismclient.gui.ui.widgets.DropdownWidget(fieldX, this.next_I_2(), fieldWidth, fieldHeight(), options, sel, idx -> {
+                           this.amountDropdown = new autismclient.gui.ui.widgets.DropdownWidget(fieldX, this.modeRowY(), fieldWidth, fieldHeight(), options, sel, idx -> {
                               this.dropWholeStack = idx == 1;
                               this.clearStatus();
                               this.saveState();
@@ -1534,14 +1534,14 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         }
 
                         this.amountDropdown
-                           .setBounds(fieldX, this.next_I_2(), fieldWidth, fieldHeight())
+                           .setBounds(fieldX, this.modeRowY(), fieldWidth, fieldHeight())
                            .setOptions(options)
                            .setSelectedIndex(sel);
                         this.dropdowns.add(this.amountDropdown);
                      }
                   }
 
-                  ThemedTextHelper.init(context, MINECRAFT.font, this.amountLabel(), ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.prev_I()), false);
+                  ThemedTextHelper.init(context, MINECRAFT.font, this.amountLabel(), ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.timesRowY()), false);
                } else {
                   this.pollRecipeResults();
                   int listX = this.flags();
@@ -1553,22 +1553,22 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
                   int planListY = this.buffer();
                   int planContentWidth = this.frame();
-                  autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(context, listX, planListY, listWidth, this.push_I, this.data >= 0);
+                  autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(context, listX, planListY, listWidth, this.planListHeight, this.data >= 0);
                   if (this.craftPlan.isEmpty()) {
                      autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(
                         context, MINECRAFT.font, "(no plan - pick recipe and Add)", listX, planListY + 2, planContentWidth
                      );
                   } else {
-                     int maxPlanScrollPx = Math.max(0, this.craftPlan.size() * 13 - this.push_I);
+                     int maxPlanScrollPx = Math.max(0, this.craftPlan.size() * 13 - this.planListHeight);
                      this.value = Math.max(0, Math.min(this.value, Math.max(0, this.craftPlan.size() - 4)));
                      this.planScroll.setOffset(this.value * 13, maxPlanScrollPx);
                      int drawPlanScroll = this.planScroll.tickAndClamp(delta, maxPlanScrollPx);
                      autismclient.gui.ui.UiClipStack.getInstance()
-                        .push(context, autismclient.gui.f.NetHelper.init(listX + 1, planListY + 1, Math.max(0, listWidth - 2), Math.max(0, this.push_I - 2)));
+                        .push(context, autismclient.gui.f.NetHelper.init(listX + 1, planListY + 1, Math.max(0, listWidth - 2), Math.max(0, this.planListHeight - 2)));
                      int startIndex = drawPlanScroll / 13;
                      int rowY = planListY - drawPlanScroll % 13;
 
-                     for (int index = startIndex; index < this.craftPlan.size() && rowY < planListY + this.push_I; rowY += 13) {
+                     for (int index = startIndex; index < this.craftPlan.size() && rowY < planListY + this.planListHeight; rowY += 13) {
                         boolean hovered = mouseX >= listX && mouseX < listX + planContentWidth && mouseY >= rowY && mouseY < rowY + 12;
                         boolean selected = index == this.data;
                         autismclient.gui.ui.widgets.ListRowRenderer.drawComponentRow(
@@ -1624,7 +1624,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      String emptyText;
                      if (MINECRAFT.player == null || MINECRAFT.level == null) {
                         emptyText = "Join a world to load crafting recipes.";
-                     } else if (this.craftOptions.isEmpty() && this.close_Z) {
+                     } else if (this.craftOptions.isEmpty() && this.recipeScanRunning) {
                         emptyText = "Scanning crafting recipes...";
                      } else {
                         emptyText = "No crafting recipes match this search.";
@@ -1673,7 +1673,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   ThemedTextHelper.init(context, MINECRAFT.font, recipeCountLine, ThemedTextHelper.TextTone.MUTED, listX, listY + this.listHeight + 2, false);
                }
 
-               int btnY = this.set_I_5();
+               int btnY = this.buttonRowY();
                int btnArea = this.put - 8;
                int gap = 2;
                int bw = (btnArea - gap * 2) / 3;
@@ -1685,7 +1685,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                bx += bw + gap;
                this.init(context, bx, btnY, bw, this.reset, "Macro", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mouseX, mouseY);
                int infoWidth = this.put - 8;
-               int statusY = this.put_I_2();
+               int statusY = this.statusLineY();
                if (statusY + 9 < btnY) {
                   if (!this.statusMessage.isEmpty()) {
                      int color = colorOf(this.statusColor);
@@ -1704,7 +1704,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      autismclient.gui.f.b.k.init(
                         context,
                         MINECRAFT.font,
-                        this.write_Str_2(),
+                        this.statusSummary(),
                         THEME.init_Identifier_l(autismclient.gui.f.b.l.write),
                         THEME.load(autismclient.gui.f.b.l.write),
                         this.get + 4,
@@ -1715,10 +1715,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               List<String> actionLines = this.init_List_4();
+               List<String> actionLines = this.descriptionLines();
 
                for (int i = 0; i < actionLines.size(); i++) {
-                  int lineY = this.add_I_5() + i * 10;
+                  int lineY = this.descriptionY() + i * 10;
                   if (lineY + 9 >= btnY) {
                      break;
                   }
@@ -1731,7 +1731,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
             } finally {
                this.endBodyClip(context, clipBody);
-               this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
+               this.renderInactiveDim(context, bounds, this.collapsed, this.dragging);
             }
 
             if (!this.dropdowns.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns)) {
@@ -1845,7 +1845,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   screenTitle,
                   menuClass,
                   itemName == null ? "" : itemName,
-                  this.init_bo_DataUtil_2(),
+                  this.selectedPacketClick(),
                   System.currentTimeMillis()
                );
                this.showStatus("Captured Packet " + this.capturedClick.init_Str(), ChatFormatting.GREEN);
@@ -1983,7 +1983,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private ContainerClickSnapshot.Inner_StreamUtil getCapturedClick() {
-      return this.capturedClick == null ? null : this.capturedClick.withMode(this.init_bo_DataUtil_2());
+      return this.capturedClick == null ? null : this.capturedClick.withMode(this.selectedPacketClick());
    }
 
    private Packet<?> capturedPacket() {
@@ -2256,11 +2256,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (this.isCraftMode()) {
          return "Amount";
       } else {
-         return this.run_Z_2() && !this.dropWholeStack ? "Items" : "Times";
+         return this.isDropAction() && !this.dropWholeStack ? "Items" : "Times";
       }
    }
 
-   private String write_Str_2() {
+   private String statusSummary() {
       if (this.isCraftMode()) {
          String planInfo = this.craftPlan.isEmpty() ? "Plan: none" : "Plan: " + this.craftPlan.size() + " entr" + (this.craftPlan.size() == 1 ? "y" : "ies");
          if (this.selectedOutput.isEmpty()) {
@@ -2458,13 +2458,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             return List.of();
          }
 
-         packets.add(this.init_Packet_Packet(built));
+         packets.add(this.regenerateClickPacket(built));
       }
 
       return packets;
    }
 
-   private Packet<?> init_Packet_Packet(Packet<?> packet) {
+   private Packet<?> regenerateClickPacket(Packet<?> packet) {
       if (this.action.write()) {
          return packet;
       } else {
@@ -2503,26 +2503,26 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.defaultWidth = 204;
       this.rowHeight = 12;
       this.listHeight = 6 * this.rowHeight;
-      this.push_I = 52;
+      this.planListHeight = 52;
       this.clear = 100;
       this.reset = 13;
       this.start = 64;
    }
 
    private int drain() {
-      return Math.max(80, this.load_I(this.clear_I_2()));
+      return Math.max(80, this.heightForFloor(this.contentBottomY()));
    }
 
    private int fill() {
-      return Math.max(120, this.load_I(this.clear_I_2()));
+      return Math.max(120, this.heightForFloor(this.contentBottomY()));
    }
 
    private void computeLayout() {
       int listHeight = Math.max(this.rowHeight * 2, Math.min(6 * this.rowHeight, this.filteredOptions.size() * this.rowHeight));
       int planHeight = Math.max(26, Math.min(52, this.craftPlan.size() * 13));
-      if (listHeight != this.listHeight || planHeight != this.push_I) {
+      if (listHeight != this.listHeight || planHeight != this.planListHeight) {
          this.listHeight = listHeight;
-         this.push_I = planHeight;
+         this.planListHeight = planHeight;
          if (this.isCraftMode()) {
             if (this.timesField != null) {
                this.timesField.setY(this.size());

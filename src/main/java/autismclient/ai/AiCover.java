@@ -24,17 +24,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 
 final class AiCover {
-   static final int init_I = 80;
-   static final int load_I = 7;
+   static final int HIDDEN_TICKS_TO_SUCCEED = 80;
+   static final int STANCE_HORIZONTAL_RADIUS = 7;
    static final int read_I = 3;
-   static final int write_I = 12;
-   static final int update_I = 48;
-   static final double init_D = 4.5;
+   static final int STANCE_MAX_DROP = 12;
+   static final int MAX_STANCES = 48;
+   static final double FIGHT_RANGE = 4.5;
    static final int sync_I = 6;
-   static final double load_D = 2.5;
+   static final double REPLAN_SHOOTER_MOVE = 2.5;
    static final double read_D = 3.0;
    static final double write_D = 3.0;
-   static final double update_D = 8.0;
+   static final double CREEPER_KEEP_AWAY = 8.0;
    static final double sync_D = 6.0;
    private static int flush = -1073741824;
 
@@ -52,34 +52,34 @@ final class AiCover {
          final float healTo = (float)AiJson.getDouble(args, "healTo", 0.0);
          final boolean sealOnly = AiJson.getBoolean(args, "sealOnly", false);
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final Object init_Obj = mc.level;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            int init_I;
-            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
-            final Set<Long> init_Set = new HashSet<>();
-            final Set<Integer> load_Set = new HashSet<>();
-            AiGoto.GotoOp init_HashUtil_CachePool;
-            Vec3 init_Vec3;
-            BlockPos init_BlockPos;
-            int load_I;
-            int read_I;
-            int write_I;
-            int update_I;
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final Object level = mc.level;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            int offTargetTicks;
+            final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
+            final Set<Long> rejectedStances = new HashSet<>();
+            final Set<Integer> seenShooters = new HashSet<>();
+            AiGoto.GotoOp coverRoute;
+            Vec3 plannedFromEye;
+            BlockPos startPos;
+            int hiddenTicks;
+            int routeFailures;
+            int shieldsPlaced;
+            int coverPlans;
             int sync;
             int flush;
             int close;
-            AiOperation init_AiOperation;
-            boolean init_Z;
-            boolean load_Z;
-            boolean read_Z;
-            boolean write_Z;
-            String init_Str = "shooter";
-            Vec3 load_Vec3;
-            boolean update_Z;
+            AiOperation eatOp;
+            boolean placingShield;
+            boolean shieldColumnActive;
+            boolean jumpHeld;
+            boolean cancelled;
+            String shooterName = "shooter";
+            Vec3 creeperSightedAt;
+            boolean backingOff;
 
             {
-               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
+               this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
             }
 
             @Override
@@ -88,16 +88,16 @@ final class AiCover {
                   AiCover.flush = mc.player.tickCount;
                }
 
-               if (this.write_Z || mc.player == null || mc.level == null) {
+               if (this.cancelled || mc.player == null || mc.level == null) {
                   return this.init(AiOperation.Status.CANCELLED, "Cover cancelled");
                }
 
-               if (mc.level != this.init_Obj) {
+               if (mc.level != this.level) {
                   return this.init(AiOperation.Status.FAILED, "World changed while taking cover");
                }
 
-               if (System.nanoTime() > this.init_J) {
-                  return this.load_I > 0
+               if (System.nanoTime() > this.deadline) {
+                  return this.hiddenTicks > 0
                      ? this.init(AiOperation.Status.SUCCEEDED, "Hidden at the deadline")
                      : this.load("No cover reached in " + timeoutSeconds + " s");
                }
@@ -106,7 +106,7 @@ final class AiCover {
                   this.sync--;
                }
 
-               List<Entity> shooters = this.init_List_8();
+               List<Entity> shooters = this.nearbyShooters();
                if (shooters.isEmpty()) {
                   return this.init(AiOperation.Status.SUCCEEDED, "No shooter or creeper left near");
                }
@@ -120,7 +120,7 @@ final class AiCover {
                   double d = shooter.distanceTo(mc.player);
                   if (!(d > 16.5)
                      && autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, shooter.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
-                     this.load_Set.add(shooter.getId());
+                     this.seenShooters.add(shooter.getId());
                      if (shooter instanceof Creeper) {
                         creeperSees = true;
                      }
@@ -133,28 +133,28 @@ final class AiCover {
                }
 
                if (creeperSees) {
-                  this.load_Vec3 = eye;
+                  this.creeperSightedAt = eye;
                }
 
-               Entity striker = this.init_Entity_7();
+               Entity striker = this.meleeThreat();
                if (!sealOnly && striker != null) {
                   this.update();
-                  if (this.init_Z && this.init_DataPipe.needsReconciliation()) {
-                     return this.init_AiOperation_Result_37();
+                  if (this.placingShield && this.placer.needsReconciliation()) {
+                     return this.tickShieldPlacement();
                   }
 
-                  if (this.init_HashUtil_CachePool == null
-                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
+                  if (this.coverRoute == null
+                     || !this.coverRoute.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      this.write();
-                     if (this.init_Z) {
-                        this.init_DataPipe.reset();
-                        this.init_Z = false;
+                     if (this.placingShield) {
+                        this.placer.reset();
+                        this.placingShield = false;
                      }
 
                      this.load();
-                     this.load_Z = false;
-                     this.init_I = this.init_Z(striker) ? 0 : this.init_I + 1;
-                     if (this.init_I > 10) {
+                     this.shieldColumnActive = false;
+                     this.offTargetTicks = this.aimAndStrike(striker) ? 0 : this.offTargetTicks + 1;
+                     if (this.offTargetTicks > 10) {
                         if (this.load(striker)) {
                            return this.init("Stepping back from the " + BuiltInRegistries.ENTITY_TYPE.getKey(striker.getType()).getPath());
                         }
@@ -164,7 +164,7 @@ final class AiCover {
 
                      return this.init("Defending cover against the " + BuiltInRegistries.ENTITY_TYPE.getKey(striker.getType()).getPath());
                   } else {
-                     AiOperation.Result settling = this.init_HashUtil_CachePool.tick();
+                     AiOperation.Result settling = this.coverRoute.tick();
                      if (settling.status() == AiOperation.Status.UNCERTAIN) {
                         return this.init(AiOperation.Status.UNCERTAIN, settling.message());
                      }
@@ -177,27 +177,27 @@ final class AiCover {
                   }
                } else {
                   boolean baitExposed = seer == null
-                     && this.load_Vec3 != null
-                     && this.init_Z_2(shooters)
+                     && this.creeperSightedAt != null
+                     && this.creeperNearby(shooters)
                      && (
-                        this.load_Vec3.distanceTo(eye) < 6.0
-                           || autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, this.load_Vec3, eye, -9223372036854775808L, -9223372036854775808L)
+                        this.creeperSightedAt.distanceTo(eye) < 6.0
+                           || autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, this.creeperSightedAt, eye, -9223372036854775808L, -9223372036854775808L)
                      );
                   if (seer != null || !sealOnly && baitExposed) {
-                     this.load_I = 0;
+                     this.hiddenTicks = 0;
                      this.update();
                      if (seer == null) {
-                        seer = this.init_Entity(shooters);
+                        seer = this.firstCreeperOrNearest(shooters);
                         seerDistance = seer.distanceTo(mc.player);
                      }
 
-                     this.init_Str = BuiltInRegistries.ENTITY_TYPE.getKey(seer.getType()).getPath();
+                     this.shooterName = BuiltInRegistries.ENTITY_TYPE.getKey(seer.getType()).getPath();
                      if (seerDistance <= 3.0 && !(seer instanceof Creeper)) {
                         this.write();
                         Entity mount = seer.getVehicle() instanceof Mob m && m.isAlive() ? m : null;
-                        Entity melee = this.init_Entity_7();
+                        Entity melee = this.meleeThreat();
                         Entity strike = mount != null ? mount : (melee != null && !autismclient.ai.engine.AiSight.init(melee) ? melee : seer);
-                        this.init_Z(strike);
+                        this.aimAndStrike(strike);
                         return this.init("Hitting the " + BuiltInRegistries.ENTITY_TYPE.getKey(strike.getType()).getPath());
                      }
 
@@ -205,18 +205,18 @@ final class AiCover {
                         || !(Math.abs(seer.getY() - mc.player.getY()) <= 3.0)
                         || AiCombat.init(seer)
                         || seer instanceof Creeper
-                        || this.init_I_2(shooters) > 1
+                        || this.visibleShooterCount(shooters) > 1
                         || seer instanceof Blaze && !AiThreats.isLegacyCombatEnabled() && (mc.player.getHealth() < 16.0F || AiWorldScan.findEntitiesByType("minecraft:blaze", 16.0).size() > 1)) {
-                        if (this.init_Z) {
-                           return this.init_AiOperation_Result_37();
+                        if (this.placingShield) {
+                           return this.tickShieldPlacement();
                         }
 
-                        if (this.load_Z) {
-                           if (this.write_I < 6 && this.init_Item_5() != null && this.init_BlockPos(seer) != null) {
+                        if (this.shieldColumnActive) {
+                           if (this.shieldsPlaced < 6 && this.shieldBlockItem() != null && this.shieldCellAgainst(seer) != null) {
                               return this.init(seer, "finishing the shield column");
                            }
 
-                           this.load_Z = false;
+                           this.shieldColumnActive = false;
                         }
 
                         this.load();
@@ -224,20 +224,20 @@ final class AiCover {
                            return this.init(seer, "no safe walking escape");
                         }
 
-                        if (this.init_HashUtil_CachePool != null
-                           && this.init_Vec3 != null
-                           && seer.getEyePosition().distanceTo(this.init_Vec3) > 2.5
+                        if (this.coverRoute != null
+                           && this.plannedFromEye != null
+                           && seer.getEyePosition().distanceTo(this.plannedFromEye) > 2.5
                            && this.sync == 0) {
                            this.write();
                         }
 
-                        if (this.init_HashUtil_CachePool == null) {
+                        if (this.coverRoute == null) {
                            if (!mc.player.onGround() && !mc.player.isInWater()) {
                               return this.init("Landing before taking cover");
                            }
 
                            BlockPos feet = mc.player.blockPosition();
-                           List<Vec3> eyes = this.init_List_2(shooters);
+                           List<Vec3> eyes = this.shooterEyes(shooters);
                            List<Vec3> keepAway = new ArrayList<>();
 
                            for (Entity e : shooters) {
@@ -246,13 +246,13 @@ final class AiCover {
                               }
                            }
 
-                           if (!keepAway.isEmpty() && this.load_Vec3 != null) {
-                              eyes.add(this.load_Vec3);
-                              keepAway.add(this.load_Vec3);
+                           if (!keepAway.isEmpty() && this.creeperSightedAt != null) {
+                              eyes.add(this.creeperSightedAt);
+                              keepAway.add(this.creeperSightedAt);
                            }
 
                            boolean creeper = !keepAway.isEmpty();
-                           List<BlockPos> stances = this.read_I >= 3
+                           List<BlockPos> stances = this.routeFailures >= 3
                               ? List.of()
                               : autismclient.ai.engine.AiSight.init(
                                  mc.level,
@@ -264,7 +264,7 @@ final class AiCover {
                                  7 + (creeper ? 7 : 0),
                                  3,
                                  creeper ? 3 : 12,
-                                 this.init_Set,
+                                 this.rejectedStances,
                                  48,
                                  mc.player.isInWater()
                               );
@@ -283,28 +283,28 @@ final class AiCover {
                                     || !mc.level.getBlockState(nearest.above()).getCollisionShape(mc.level, nearest.above()).isEmpty()
                               );
                            boolean far = wetDig || autismclient.ai.engine.AiSight.init(mc.level, feet, nearest) > 3.0;
-                           if ((far || this.init_Z_25())
+                           if ((far || this.enemyNearby())
                               && keepAway.isEmpty()
-                              && this.write_I < 6
-                              && this.init_Item_5() != null
-                              && this.init_BlockPos(seer) != null) {
+                              && this.shieldsPlaced < 6
+                              && this.shieldBlockItem() != null
+                              && this.shieldCellAgainst(seer) != null) {
                               return this.init(seer, far ? "the cover is far" : "mobs on the way to cover");
                            }
 
-                           this.update_I++;
+                           this.coverPlans++;
                            this.sync = 10;
-                           this.init_Vec3 = seer.getEyePosition();
-                           this.init_BlockPos = feet;
+                           this.plannedFromEye = seer.getEyePosition();
+                           this.startPos = feet;
                            AutismClientAddon.LOG
                               .info(
                                  "[AI] cover: from the {} at {} ({} m), {} stances, nearest {}",
-                                 this.init_Str,
+                                 this.shooterName,
                                  seer.blockPosition().toShortString(),
                                  (int)seerDistance,
                                  stances.size(),
                                  stances.get(0).toShortString()
                               );
-                           this.init_HashUtil_CachePool = AiGoto.createGotoOpCompat(
+                           this.coverRoute = AiGoto.createGotoOpCompat(
                               feet,
                               0.6,
                               !creeper,
@@ -320,28 +320,28 @@ final class AiCover {
                            );
                         }
 
-                        AiOperation.Result r = this.init_HashUtil_CachePool.tick();
+                        AiOperation.Result r = this.coverRoute.tick();
                         if (r.terminal()) {
                            this.write();
                            if (r.status() == AiOperation.Status.SUCCEEDED) {
-                              this.init_Set.add(mc.player.blockPosition().asLong());
+                              this.rejectedStances.add(mc.player.blockPosition().asLong());
                            } else {
-                              this.read_I++;
-                              AutismClientAddon.LOG.info("[AI] cover: route failed ({}): {}", this.read_I, r.message());
+                              this.routeFailures++;
+                              AutismClientAddon.LOG.info("[AI] cover: route failed ({}): {}", this.routeFailures, r.message());
                            }
                         }
 
-                        return this.init("Taking cover from the " + this.init_Str + " (" + (int)seerDistance + " m)");
+                        return this.init("Taking cover from the " + this.shooterName + " (" + (int)seerDistance + " m)");
                      } else {
                         return this.init(
-                           AiOperation.Status.SUCCEEDED, "The " + this.init_Str + " came within " + (int)Math.ceil(seerDistance) + " blocks: fight it"
+                           AiOperation.Status.SUCCEEDED, "The " + this.shooterName + " came within " + (int)Math.ceil(seerDistance) + " blocks: fight it"
                         );
                      }
                   } else {
                      if (sealOnly) {
-                        if (this.init_Z) {
-                           AiOperation.Result progress = this.init_AiOperation_Result_37();
-                           if (this.init_Z) {
+                        if (this.placingShield) {
+                           AiOperation.Result progress = this.tickShieldPlacement();
+                           if (this.placingShield) {
                               return progress;
                            }
                         }
@@ -352,81 +352,81 @@ final class AiCover {
                      }
 
                      this.load();
-                     this.load_Z = false;
-                     this.load_I++;
-                     if (this.init_Z) {
-                        this.init_DataPipe.reset();
-                        this.init_Z = false;
+                     this.shieldColumnActive = false;
+                     this.hiddenTicks++;
+                     if (this.placingShield) {
+                        this.placer.reset();
+                        this.placingShield = false;
                      }
 
-                     if (this.init_HashUtil_CachePool != null) {
+                     if (this.coverRoute != null) {
                         BlockPos feet = mc.player.blockPosition();
                         if (!mc.player.onGround()
-                           || autismclient.ai.engine.AiSight.isVisibleFrom(mc.level, this.init_List_2(shooters), feet.getX(), feet.getY(), feet.getZ())) {
-                           AiOperation.Result r = this.init_HashUtil_CachePool.tick();
+                           || autismclient.ai.engine.AiSight.isVisibleFrom(mc.level, this.shooterEyes(shooters), feet.getX(), feet.getY(), feet.getZ())) {
+                           AiOperation.Result r = this.coverRoute.tick();
                            if (r.terminal()) {
                               this.write();
                            }
 
-                           return this.init("In cover from the " + this.init_Str + ", settling in");
+                           return this.init("In cover from the " + this.shooterName + ", settling in");
                         }
 
                         this.write();
                      }
 
-                     Entity melee = this.init_Entity_7();
+                     Entity melee = this.meleeThreat();
                      if (melee != null) {
                         this.update();
-                        this.init_Z(melee);
+                        this.aimAndStrike(melee);
                      } else if (healTo > 0.0F
                         && mc.player.getHealth() < healTo
                         && (
-                           this.init_AiOperation != null
+                           this.eatOp != null
                               || mc.player.getFoodData().getFoodLevel() < 18 && this.close < 3 && AiSurvival.init(mc.player.getInventory()) >= 0
                         )) {
-                        if (this.init_AiOperation == null) {
+                        if (this.eatOp == null) {
                            this.close++;
-                           this.init_AiOperation = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
+                           this.eatOp = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                         }
 
-                        AiOperation.Result r = this.init_AiOperation.tick();
+                        AiOperation.Result r = this.eatOp.tick();
                         if (!r.terminal()) {
                            return this.init("Eating in cover");
                         }
 
-                        this.init_AiOperation = null;
+                        this.eatOp = null;
                      }
 
                      boolean healing = healTo > 0.0F && mc.player.getHealth() < healTo && mc.player.getFoodData().getFoodLevel() >= 18 && ++this.flush < 1200;
-                     return this.load_I >= 80 && !healing
-                        ? this.init(AiOperation.Status.SUCCEEDED, "Out of sight of " + this.load_Set.size() + " shooter(s) for " + this.load_I / 20 + " s")
-                        : this.init(healing ? "Healing in cover" : "In cover from the " + this.init_Str + " (" + this.load_I / 20 + " s)");
+                     return this.hiddenTicks >= 80 && !healing
+                        ? this.init(AiOperation.Status.SUCCEEDED, "Out of sight of " + this.seenShooters.size() + " shooter(s) for " + this.hiddenTicks / 20 + " s")
+                        : this.init(healing ? "Healing in cover" : "In cover from the " + this.shooterName + " (" + this.hiddenTicks / 20 + " s)");
                   }
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_37() {
-               this.init_V_29();
-               autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe.tick();
+            AiOperation.Result tickShieldPlacement() {
+               this.prepareForPlacement();
+               autismclient.ai.engine.AiPlacer.PlaceStatus s = this.placer.tick();
                if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
-                  return this.init("Putting a block between the " + this.init_Str + " and me");
+                  return this.init("Putting a block between the " + this.shooterName + " and me");
                }
 
-               this.init_Z = false;
+               this.placingShield = false;
                if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                  this.write_I++;
+                  this.shieldsPlaced++;
                   AutismClientAddon.LOG
-                     .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.targetPos().toShortString(), this.init_Str);
+                     .info("[AI] cover: shield block at {} against the {}", this.placer.targetPos().toShortString(), this.shooterName);
                } else {
-                  AutismClientAddon.LOG.info("[AI] cover: shield placement failed: {}", this.init_DataPipe.statusSummary());
-                  this.load_Z = false;
-                  this.write_I = 6;
+                  AutismClientAddon.LOG.info("[AI] cover: shield placement failed: {}", this.placer.statusSummary());
+                  this.shieldColumnActive = false;
+                  this.shieldsPlaced = 6;
                }
 
                return this.init("Checking the shield");
             }
 
-            int init_I_2(List<Entity> shooters) {
+            int visibleShooterCount(List<Entity> shooters) {
                int n = 0;
 
                for (Entity e : shooters) {
@@ -439,56 +439,56 @@ final class AiCover {
             }
 
             AiOperation.Result init(Entity seer, String why) {
-               if (this.write_I >= 6) {
-                  return this.load("No cover from the " + this.init_Str + ": " + why + ", and no shield block would go down");
+               if (this.shieldsPlaced >= 6) {
+                  return this.load("No cover from the " + this.shooterName + ": " + why + ", and no shield block would go down");
                }
 
-               Item block = this.init_Item_5();
-               BlockPos cell = block == null ? null : this.init_BlockPos(seer);
+               Item block = this.shieldBlockItem();
+               BlockPos cell = block == null ? null : this.shieldCellAgainst(seer);
                if (cell == null) {
                   return this.load(
-                     "No cover from the " + this.init_Str + ": " + why + (block == null ? ", and no building block to shield with" : ", and no cell to shield")
+                     "No cover from the " + this.shooterName + ": " + why + (block == null ? ", and no building block to shield with" : ", and no cell to shield")
                   );
                }
 
-               this.init_DataPipe.start(cell, block);
-               this.init_Z = true;
-               this.load_Z = true;
-               this.init_V_29();
-               return this.init("Putting a block between the " + this.init_Str + " and me");
+               this.placer.start(cell, block);
+               this.placingShield = true;
+               this.shieldColumnActive = true;
+               this.prepareForPlacement();
+               return this.init("Putting a block between the " + this.shooterName + " and me");
             }
 
-            void init_V_29() {
+            void prepareForPlacement() {
                mc.options.keySprint.setDown(false);
                mc.player.setSprinting(false);
                if (mc.player.isInWater()) {
                   mc.options.keyJump.setDown(true);
-                  this.read_Z = true;
+                  this.jumpHeld = true;
                } else {
                   this.load();
                }
             }
 
             void load() {
-               if (this.read_Z) {
+               if (this.jumpHeld) {
                   mc.options.keyJump.setDown(false);
-                  this.read_Z = false;
+                  this.jumpHeld = false;
                }
             }
 
-            BlockPos init_BlockPos(Entity seer) {
+            BlockPos shieldCellAgainst(Entity seer) {
                return AiShield.init(mc, seer);
             }
 
-            Item init_Item_5() {
+            Item shieldBlockItem() {
                return AiShield.init(mc);
             }
 
-            boolean init_Z_25() {
+            boolean enemyNearby() {
                return AiShield.hasEnemyWithin(mc, 6.0);
             }
 
-            List<Vec3> init_List_2(List<Entity> shooters) {
+            List<Vec3> shooterEyes(List<Entity> shooters) {
                List<Vec3> eyes = new ArrayList<>();
 
                for (Entity shooter : shooters) {
@@ -498,7 +498,7 @@ final class AiCover {
                return eyes;
             }
 
-            List<Entity> init_List_8() {
+            List<Entity> nearbyShooters() {
                List<Entity> found = new ArrayList<>();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -511,7 +511,7 @@ final class AiCover {
                return found;
             }
 
-            boolean init_Z_2(List<Entity> watched) {
+            boolean creeperNearby(List<Entity> watched) {
                for (Entity e : watched) {
                   if (e instanceof Creeper && e.distanceTo(mc.player) <= 16.0) {
                      return true;
@@ -521,7 +521,7 @@ final class AiCover {
                return false;
             }
 
-            Entity init_Entity(List<Entity> watched) {
+            Entity firstCreeperOrNearest(List<Entity> watched) {
                for (Entity e : watched) {
                   if (e instanceof Creeper) {
                      return e;
@@ -531,7 +531,7 @@ final class AiCover {
                return watched.get(0);
             }
 
-            Entity init_Entity_7() {
+            Entity meleeThreat() {
                Entity best = null;
                double bestDistance = 3.0;
 
@@ -548,15 +548,15 @@ final class AiCover {
                return best;
             }
 
-            boolean init_Z(Entity mob) {
+            boolean aimAndStrike(Entity mob) {
                int slot = AiItems.bestHotbarWeaponSlot();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                }
 
-               this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(mob));
-               this.init_DataUtil.tick();
-               boolean onTarget = this.init_DataUtil.isAimedAtEntity(mob);
+               this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(mob));
+               this.aim.tick();
+               boolean onTarget = this.aim.isAimedAtEntity(mob);
                if (onTarget && mc.player.getAttackStrengthScale(0.0F) >= 0.92F) {
                   AiRunTrace.emitServiceEvent(
                      "cover_attack",
@@ -592,48 +592,48 @@ final class AiCover {
                mc.options.keyLeft.setDown(false);
                mc.options.keyRight.setDown(false);
                mc.options.keySprint.setDown(false);
-               this.update_Z = safe;
+               this.backingOff = safe;
                return safe;
             }
 
             void read() {
-               if (this.update_Z) {
-                  this.update_Z = false;
+               if (this.backingOff) {
+                  this.backingOff = false;
                   mc.options.keyDown.setDown(false);
                }
             }
 
             void write() {
-               if (this.init_HashUtil_CachePool != null) {
-                  this.init_HashUtil_CachePool.cancel();
-                  this.init_HashUtil_CachePool = null;
+               if (this.coverRoute != null) {
+                  this.coverRoute.cancel();
+                  this.coverRoute = null;
                }
             }
 
             void update() {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               if (this.eatOp != null) {
+                  this.eatOp.cancel();
+                  this.eatOp = null;
                }
             }
 
-            JsonObject init_JsonObject_55() {
+            JsonObject progressData() {
                return AiJson.objectOf(
                   "shooters",
-                  this.load_Set.size(),
+                  this.seenShooters.size(),
                   "plans",
-                  this.update_I,
+                  this.coverPlans,
                   "shields",
-                  this.write_I,
+                  this.shieldsPlaced,
                   "hiddenTicks",
-                  this.load_I,
+                  this.hiddenTicks,
                   "startedAt",
-                  this.init_BlockPos == null ? "" : this.init_BlockPos.toShortString()
+                  this.startPos == null ? "" : this.startPos.toShortString()
                );
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_55());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressData());
             }
 
             AiOperation.Result load(String message) {
@@ -646,38 +646,38 @@ final class AiCover {
                this.read();
                this.write();
                this.update();
-               if (this.init_Z) {
-                  this.init_DataPipe.reset();
-                  this.init_Z = false;
+               if (this.placingShield) {
+                  this.placer.reset();
+                  this.placingShield = false;
                }
 
-               this.init_DataUtil.clear();
-               return AiGameOperations.result(status, message, this.init_JsonObject_55());
+               this.aim.clear();
+               return AiGameOperations.result(status, message, this.progressData());
             }
 
             @Override
             public boolean canInterruptNow() {
-               return (!this.init_Z || !this.init_DataPipe.needsReconciliation())
-                  && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterruptNow())
-                  && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+               return (!this.placingShield || !this.placer.needsReconciliation())
+                  && (this.coverRoute == null || this.coverRoute.canInterruptNow())
+                  && (this.eatOp == null || this.eatOp.canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_Z && this.init_DataPipe.needsReconciliation()
-                  || this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency()
-                  || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+               return this.placingShield && this.placer.needsReconciliation()
+                  || this.coverRoute != null && this.coverRoute.requiresReconciliationAfterEmergency()
+                  || this.eatOp != null && this.eatOp.requiresReconciliationAfterEmergency();
             }
 
             @Override
             public void cancel() {
                this.load();
                this.read();
-               this.write_Z = true;
+               this.cancelled = true;
                this.write();
                this.update();
-               this.init_DataPipe.reset();
-               this.init_DataUtil.clear();
+               this.placer.reset();
+               this.aim.clear();
             }
          };
       } else {

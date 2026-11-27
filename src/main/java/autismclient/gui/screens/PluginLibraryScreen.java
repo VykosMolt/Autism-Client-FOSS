@@ -34,15 +34,15 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private final Screen parent;
    private final List<autismclient.gui.ui.widgets.OverlayActionButton> buttons = new ArrayList<>();
    private final List<PluginLibraryScreen.Inner_CachePool> rowHits = new ArrayList<>();
-   private final List<PluginLibraryScreen.Inner_StreamUtil> read_List = new ArrayList<>();
+   private final List<PluginLibraryScreen.Inner_StreamUtil> visibleRows = new ArrayList<>();
    private final Set<String> expandedKeys = new HashSet<>();
    private EditBox searchField;
    private String searchQuery = "";
    private PluginLibraryScreen.Inner_DataUtil groupMode = PluginLibraryScreen.Inner_DataUtil.BY_SERVER;
    private List<PluginLibraryScreen.Inner_StreamUtil> filteredRows = List.of();
-   private int write_I;
+   private int headerCount;
    private int update;
-   private boolean init_Z;
+   private boolean draggingScrollbar;
    private int sync;
    private long seenScanRevision = -9223372036854775808L;
 
@@ -108,7 +108,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       for (Entry<String, AutismConfig.PluginScanCacheEntry> item : all.entrySet()) {
          AutismConfig.PluginScanCacheEntry entry = item.getValue();
          if (entry != null && entry.plugins != null && !entry.plugins.isEmpty()) {
-            String address = entry.serverAddress != null && !entry.serverAddress.isBlank() ? entry.serverAddress : load_Str_Str_4(item.getKey());
+            String address = entry.serverAddress != null && !entry.serverAddress.isBlank() ? entry.serverAddress : addressFromScanKey(item.getKey());
             if (address != null && !address.isBlank()) {
                String lower = address.toLowerCase(Locale.ROOT);
                PluginLibraryScreen.Inner_ConfigStore existing = byAddress.get(lower);
@@ -125,7 +125,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return servers;
    }
 
-   private static String load_Str_Str_4(String key) {
+   private static String addressFromScanKey(String key) {
       if (key == null) {
          return "";
       }
@@ -149,14 +149,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private List<PluginLibraryScreen.Inner_StreamUtil> buildRows() {
       String query = this.searchQuery.toLowerCase(Locale.ROOT);
       List<PluginLibraryScreen.Inner_ConfigStore> servers = this.serverEntries();
-      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? this.init_List_List_Str(servers, query) : this.load(servers, query);
+      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? this.rowsByServer(servers, query) : this.load(servers, query);
    }
 
-   private List<PluginLibraryScreen.Inner_StreamUtil> init_List_List_Str(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
+   private List<PluginLibraryScreen.Inner_StreamUtil> rowsByServer(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
       List<PluginLibraryScreen.Inner_StreamUtil> rows = new ArrayList<>();
 
       for (PluginLibraryScreen.Inner_ConfigStore server : servers) {
-         boolean nameHit = query.isEmpty() || fuzzyMatches(server.load, query) || fuzzyMatches(server.init_Str, query);
+         boolean nameHit = query.isEmpty() || fuzzyMatches(server.load, query) || fuzzyMatches(server.address, query);
          boolean pluginHit = false;
          if (!query.isEmpty()) {
             for (String p : server.plugins) {
@@ -168,7 +168,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
 
          if (query.isEmpty() || nameHit || pluginHit) {
-            String key = "srv:" + server.init_Str.toLowerCase(Locale.ROOT);
+            String key = "srv:" + server.address.toLowerCase(Locale.ROOT);
             boolean open = this.expandedKeys.contains(key);
             PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.init(
                PluginLibraryScreen.Inner_BufferHelper.SERVER,
@@ -177,7 +177,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                server.plugins.size() + (server.plugins.size() == 1 ? " plugin  " : " plugins  ") + ago(server.scannedAtMs),
                open
             );
-            row.write = server.init_Str;
+            row.write = server.address;
             row.plugins = server.plugins;
             rows.add(row);
             if (open) {
@@ -203,7 +203,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
       }
 
-      this.write_I = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER).count();
+      this.headerCount = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.type == PluginLibraryScreen.Inner_BufferHelper.SERVER).count();
       return rows;
    }
 
@@ -242,7 +242,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
       }
 
-      this.write_I = ordered.size();
+      this.headerCount = ordered.size();
       return rows;
    }
 
@@ -314,7 +314,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private void rebuildButtons() {
       this.buttons.clear();
       this.rowHits.clear();
-      this.read_List.clear();
+      this.visibleRows.clear();
       int ctl = this.sync();
       this.buttons.add(autismclient.gui.ui.widgets.OverlayActionButton.create(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
       int toggleY = this.get();
@@ -363,17 +363,17 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          if (rowY + rowH > top) {
             PluginLibraryScreen.Inner_StreamUtil row = this.filteredRows.get(i);
             row.y = rowY;
-            this.read_List.add(row);
+            this.visibleRows.add(row);
             boolean fullyVisible = rowY >= top && rowY + rowH <= bottom;
-            boolean parent = row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER || row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.PLUGIN;
+            boolean parent = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN;
             if (parent && fullyVisible) {
                int btnY = rowY + (rowH - btnH) / 2;
                int cursor = this.data() - 1;
-               if (row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER) {
+               if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER) {
                   cursor -= btnH;
                   this.buttons
                      .add(
-                        autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
+                        autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, btnH, btnH, Component.empty(), b -> this.removeServerScan(row))
                            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER)
                            .setIcon(GuiIconAtlas.DELETE)
                      );
@@ -383,10 +383,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                cursor -= copyW;
                this.buttons
                   .add(
-                     autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
+                     autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.copyRow(row))
                         .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                   );
-               this.rowHits.add(new PluginLibraryScreen.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.init_Str));
+               this.rowHits.add(new PluginLibraryScreen.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.key));
             }
          }
 
@@ -410,23 +410,23 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return this.buttonWidth("Copy");
    }
 
-   private void init_V_MapStore_StreamUti(PluginLibraryScreen.Inner_StreamUtil row) {
-      if (row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.write != null) {
+   private void removeServerScan(PluginLibraryScreen.Inner_StreamUtil row) {
+      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.write != null) {
          AutismConfig.getGlobal().removePluginScan(row.write);
-         this.expandedKeys.remove(row.init_Str);
+         this.expandedKeys.remove(row.key);
          this.seenScanRevision = AutismConfig.getGlobal().pluginScanRevision();
          this.rebuildButtons();
       }
    }
 
-   private void load_V_MapStore_StreamUti(PluginLibraryScreen.Inner_StreamUtil row) {
+   private void copyRow(PluginLibraryScreen.Inner_StreamUtil row) {
       String text;
       String note;
-      if (row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.plugins != null) {
+      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.plugins != null) {
          text = String.join("\n", row.plugins);
-         note = "Copied " + row.plugins.size() + " plugins from " + row.load_Str;
+         note = "Copied " + row.plugins.size() + " plugins from " + row.label;
       } else {
-         if (row.init_MapStore_BufferHel != PluginLibraryScreen.Inner_BufferHelper.PLUGIN || row.servers == null) {
+         if (row.type != PluginLibraryScreen.Inner_BufferHelper.PLUGIN || row.servers == null) {
             return;
          }
 
@@ -437,7 +437,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
 
          text = String.join("\n", names);
-         note = "Copied " + names.size() + " servers running " + row.load_Str;
+         note = "Copied " + names.size() + " servers running " + row.label;
       }
 
       if (!text.isBlank() && this.minecraft != null) {
@@ -456,14 +456,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
          this.drawCard(graphics, this.push(), this.run(), this.poll(), this.set(), -401402080);
          this.drawCard(graphics, this.reset(), this.clear(), this.start(), this.stop(), -1206840035);
-         String count = this.write_I
+         String count = this.headerCount
             + (
                this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
-                  ? (this.write_I == 1 ? " server" : " servers")
-                  : (this.write_I == 1 ? " plugin" : " plugins")
+                  ? (this.headerCount == 1 ? " server" : " servers")
+                  : (this.headerCount == 1 ? " plugin" : " plugins")
             );
          int countW = k.init(this.font, count, labelFont(), GuiColorPalette.close);
-         int countX = this.pop() + this.tick_I_9() - countW;
+         int countX = this.pop() + this.innerWidth() - countW;
          int headerTextY = this.centeredTextY(this.run() + 4, this.sync());
          int titleX = this.pop() + this.read() + 4;
          this.init(graphics, "Plugin Library", titleX, headerTextY, GuiColorPalette.flush, Math.max(1, countX - 8 - titleX));
@@ -483,7 +483,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   graphics, this.emptyMessage(), this.size() + 4, this.centeredTextY(this.next(), this.flush()), GuiColorPalette.close, this.data() - this.size() - 4
                );
             } else {
-               for (PluginLibraryScreen.Inner_StreamUtil row : this.read_List) {
+               for (PluginLibraryScreen.Inner_StreamUtil row : this.visibleRows) {
                   this.init(graphics, row, mx, my, queryLower);
                }
             }
@@ -497,7 +497,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
          if (!this.isCompact()) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.scrollbarMetrics(this.filteredRows.size());
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, sb, sb.containsTrack(mx, my), this.init_Z);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, sb, sb.containsTrack(mx, my), this.draggingScrollbar);
          }
 
          super.extractRenderState(graphics, mx, my, delta);
@@ -513,7 +513,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, PluginLibraryScreen.Inner_StreamUtil row, int mx, int my, String queryLower) {
-      boolean child = row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN || row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER;
+      boolean child = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER;
       int x = this.size();
       int y = row.y;
       int w = this.data() - this.size();
@@ -522,13 +522,13 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       if (!child) {
          int fill = hovered ? 620756991 : 352321535;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, 2, h), row.init_Z ? GuiColorPalette.sync : 872415231);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, 2, h), row.expanded ? GuiColorPalette.sync : 872415231);
       }
 
       int textY = this.centeredTextY(y, h);
       int textLeft = x + 6 + (child ? 12 : 0);
       if (!child) {
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x + 5, y + (h - 8) / 2, 8, 8), row.init_Z, GuiColorPalette.close);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x + 5, y + (h - 8) / 2, 8, 8), row.expanded, GuiColorPalette.close);
          textLeft += 10;
       } else {
          this.init(graphics, "-", x + 6 + 12 - 8, textY, GuiColorPalette.close, 8);
@@ -537,11 +537,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       int baseColor = child ? -3158065 : GuiColorPalette.flush;
       int secondaryColor = GuiColorPalette.close;
       int secondaryW = row.read.isEmpty() ? 0 : k.init(this.font, row.read, labelFont(), secondaryColor);
-      int rowActionReserve = child ? 0 : this.update() + 2 + (row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.open() + 2 : 0);
+      int rowActionReserve = child ? 0 : this.update() + 2 + (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.open() + 2 : 0);
       int rightLimit = this.data() - rowActionReserve - 4;
       int secondaryX = Math.max(textLeft + 20, rightLimit - secondaryW);
       int primaryMax = Math.max(20, (row.read.isEmpty() ? rightLimit : secondaryX - 8) - textLeft);
-      this.init(graphics, row.load_Str, textLeft, textY, primaryMax, baseColor, queryLower);
+      this.init(graphics, row.label, textLeft, textY, primaryMax, baseColor, queryLower);
       if (!row.read.isEmpty() && secondaryX > textLeft) {
          this.init(graphics, row.read, secondaryX, textY, secondaryColor, secondaryW + 2);
       }
@@ -584,7 +584,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       if (Compat263.mouseEventGlfwButton(ve) == 0 && !this.isCompact()) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.scrollbarMetrics(this.filteredRows.size());
          if (sb.isScrollable() && sb.containsTrack(mx, my)) {
-            this.init_Z = true;
+            this.draggingScrollbar = true;
             this.sync = sb.containsThumb(mx, my) ? (int)Math.round(my) - sb.thumbY() : sb.thumbHeight() / 2;
             this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, my, this.sync);
             this.rebuildButtons();
@@ -612,8 +612,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      if (this.init_Z) {
-         this.init_Z = false;
+      if (this.draggingScrollbar) {
+         this.draggingScrollbar = false;
          return true;
       } else {
          return super.mouseReleased(toVirtual(event));
@@ -623,7 +623,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
       MouseButtonEvent ve = toVirtual(event);
-      if (this.init_Z) {
+      if (this.draggingScrollbar) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.scrollbarMetrics(this.filteredRows.size());
          this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, ve.y(), this.sync);
          this.rebuildButtons();
@@ -699,7 +699,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return this.push() + 4;
    }
 
-   private int tick_I_9() {
+   private int innerWidth() {
       return Math.max(1, this.poll() - 8);
    }
 
@@ -720,7 +720,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int add() {
-      return Math.max(40, this.pop() + this.tick_I_9() - this.put());
+      return Math.max(40, this.pop() + this.innerWidth() - this.put());
    }
 
    private int clear() {
@@ -809,14 +809,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private static final class Inner_ConfigStore {
-      final String init_Str;
+      final String address;
       final String load;
       final String read;
       final List<String> plugins;
       final long scannedAtMs;
 
       Inner_ConfigStore(String address, String name, List<String> plugins, long scannedAtMs) {
-         this.init_Str = address;
+         this.address = address;
          this.load = name;
          this.read = address;
          this.plugins = plugins;
@@ -830,11 +830,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private static final class Inner_StreamUtil {
-      PluginLibraryScreen.Inner_BufferHelper init_MapStore_BufferHel;
-      String init_Str = "";
-      String load_Str = "";
+      PluginLibraryScreen.Inner_BufferHelper type;
+      String key = "";
+      String label = "";
       String read = "";
-      boolean init_Z;
+      boolean expanded;
       String write;
       List<String> plugins;
       List<PluginLibraryScreen.Inner_ConfigStore> servers;
@@ -842,18 +842,18 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
       static PluginLibraryScreen.Inner_StreamUtil init(PluginLibraryScreen.Inner_BufferHelper type, String key, String primary, String secondary, boolean expanded) {
          PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
-         row.init_MapStore_BufferHel = type;
-         row.init_Str = key;
-         row.load_Str = primary;
+         row.type = type;
+         row.key = key;
+         row.label = primary;
          row.read = secondary;
-         row.init_Z = expanded;
+         row.expanded = expanded;
          return row;
       }
 
       static PluginLibraryScreen.Inner_StreamUtil init(PluginLibraryScreen.Inner_BufferHelper type, String primary, String secondary) {
          PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
-         row.init_MapStore_BufferHel = type;
-         row.load_Str = primary;
+         row.type = type;
+         row.label = primary;
          row.read = secondary;
          return row;
       }

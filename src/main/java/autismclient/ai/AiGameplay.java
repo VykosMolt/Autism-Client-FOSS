@@ -274,14 +274,14 @@ final class AiGameplay {
             final int container = mc.player.containerMenu.containerId;
             return new AiOperation() {
                final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
-               int init_I;
-               int load_I;
-               boolean init_Z;
-               boolean load_Z;
+               int ticksSinceInteract;
+               int aimTicks;
+               boolean cancelled;
+               boolean interactionSent;
 
                @Override
                public AiOperation.Result tick() {
-                  if (this.init_Z || mc.player == null) {
+                  if (this.cancelled || mc.player == null) {
                      return AiGameOperations.result(AiOperation.Status.CANCELLED, "Entity interaction cancelled", new JsonObject());
                   }
 
@@ -297,10 +297,10 @@ final class AiGameplay {
                      );
                   }
 
-                  if (!this.load_Z) {
+                  if (!this.interactionSent) {
                      AiGameOperations.aimAndStep(this.aim, autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity));
                      if (!autismclient.ai.engine.AiAim.isLookingAtEntity(entity)) {
-                        if (++this.load_I > 40) {
+                        if (++this.aimTicks > 40) {
                            return AiGameOperations.result(
                               AiOperation.Status.FAILED, "Could not bring the crosshair onto the entity", AiJson.objectOf("entityId", entity.getId())
                            );
@@ -315,11 +315,11 @@ final class AiGameplay {
                         .interact(
                            mc.player, entity, new EntityHitResult(entity, autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity)), InteractionHand.MAIN_HAND
                         );
-                     this.load_Z = true;
+                     this.interactionSent = true;
                   }
 
                   return AiGameOperations.result(
-                     ++this.init_I > 60 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.RUNNING,
+                     ++this.ticksSinceInteract > 60 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.RUNNING,
                      "Interaction sent once; inspect entity/server state for its intended effect",
                      AiJson.objectOf("entityId", entity.getId())
                   );
@@ -327,7 +327,7 @@ final class AiGameplay {
 
                @Override
                public void cancel() {
-                  this.init_Z = true;
+                  this.cancelled = true;
                   this.aim.clear();
                }
             };
@@ -355,19 +355,19 @@ final class AiGameplay {
             int sync;
             int flush = this.startCount;
             int close;
-            long load_J;
-            boolean init_Z;
+            long revisionAtResultClick;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && this.mc.player != null) {
+               if (!this.cancelled && this.mc.player != null) {
                   if (System.nanoTime() > this.deadline) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Craft target not observed before timeout; do not repeat uncertain clicks");
                   }
 
                   int count = AiGameState.countInventoryItem(item);
                   if (count >= this.targetCount) {
-                     boolean confirmed = AiServerEvidence.containerRevision(this.read) > this.load_J;
+                     boolean confirmed = AiServerEvidence.containerRevision(this.read) > this.revisionAtResultClick;
                      return ++this.sync >= (confirmed ? 10 : 20)
                         ? this.init(AiOperation.Status.SUCCEEDED, "Crafted output inventory target observed")
                         : this.init("Verifying crafted inventory");
@@ -398,7 +398,7 @@ final class AiGameplay {
                      if (this.write == 1) {
                         ItemStack output = menu.getResultSlot().getItem();
                         if (!output.isEmpty() && BuiltInRegistries.ITEM.getKey(output.getItem()).toString().equals(item)) {
-                           this.load_J = AiServerEvidence.containerRevision(this.read);
+                           this.revisionAtResultClick = AiServerEvidence.containerRevision(this.read);
                            AiContainerTransactions.sendPredictedClick(this.read, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
                            this.write = 2;
                            this.update = 0;
@@ -443,7 +443,7 @@ final class AiGameplay {
 
             @Override
             public void cancel() {
-               this.init_Z = true;
+               this.cancelled = true;
             }
          };
       } else {
@@ -464,22 +464,22 @@ final class AiGameplay {
          final int seconds = Math.max(20, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 120)));
          final long deadline = System.nanoTime() + seconds * 1000000000L;
          AiOperation collection = new AiOperation() {
-            boolean init_Z;
+            boolean cancelled;
             boolean load;
             boolean read;
             boolean write;
-            AiOperation init_AiOperation;
-            AiGameplay.Inner_DataUtil init_T_DataUtil = AiGameplay.init(ids, seconds, false);
+            AiOperation mineOp;
+            AiGameplay.Inner_DataUtil capacityPrep = AiGameplay.init(ids, seconds, false);
             final AiPreparationReceipt preparation = new AiPreparationReceipt();
             final AiFireControl fireControl = new AiFireControl();
 
             AiOperation init() {
-               return this.load ? this.init_AiOperation : this.init_T_DataUtil;
+               return this.load ? this.mineOp : this.capacityPrep;
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (this.init_Z) {
+               if (this.cancelled) {
                   return this.init(AiGameOperations.result(AiOperation.Status.CANCELLED, "Drop collection cancelled", new JsonObject()));
                }
 
@@ -492,13 +492,13 @@ final class AiGameplay {
                }
 
                if (!this.load) {
-                  AiOperation.Result r = this.preparation.tickChild(this.init_T_DataUtil);
+                  AiOperation.Result r = this.preparation.tickChild(this.capacityPrep);
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  this.read = this.read | this.init_T_DataUtil.init_Z;
-                  this.preparation.cancelChild(this.init_T_DataUtil);
+                  this.read = this.read | this.capacityPrep.tidyingStarted;
+                  this.preparation.cancelChild(this.capacityPrep);
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
                      return this.init(r);
                   }
@@ -506,8 +506,8 @@ final class AiGameplay {
                   this.load = true;
                }
 
-               if (this.init_AiOperation == null) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
+               if (this.mineOp == null) {
+                  this.mineOp = autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "blocks",
                         autismclient.ai.engine.AiBlockMine.init(ids),
@@ -527,23 +527,23 @@ final class AiGameplay {
                   );
                }
 
-               if (ids.contains("minecraft:blaze_rod") && (this.fireControl.hasPendingFire() || this.init_AiOperation.canInterruptNow()) && this.fireControl.init(true, null)) {
+               if (ids.contains("minecraft:blaze_rod") && (this.fireControl.hasPendingFire() || this.mineOp.canInterruptNow()) && this.fireControl.init(true, null)) {
                   return AiGameOperations.result(
                      AiOperation.Status.RUNNING, this.fireControl.status(), AiJson.objectOf("firesExtinguished", this.fireControl.firesExtinguished())
                   );
                } else {
-                  AiOperation.Result r = this.preparation.tickChild(this.init_AiOperation);
+                  AiOperation.Result r = this.preparation.tickChild(this.mineOp);
                   if (!r.terminal()) {
                      return r;
                   } else {
-                     this.preparation.cancelChild(this.init_AiOperation);
-                     if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.init_AiOperation)) {
+                     this.preparation.cancelChild(this.mineOp);
+                     if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.mineOp)) {
                         return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
-                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.preparation.requiresReconciliation(this.init_AiOperation) && !this.read && !this.write) {
+                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.preparation.requiresReconciliation(this.mineOp) && !this.read && !this.write) {
                         this.write = true;
-                        this.init_AiOperation = null;
+                        this.mineOp = null;
                         this.load = false;
-                        this.init_T_DataUtil = AiGameplay.init(ids, (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L), false);
+                        this.capacityPrep = AiGameplay.init(ids, (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L), false);
                         return AiGameOperations.result(AiOperation.Status.RUNNING, "Making room for the observed drops", AiRunResources.parseEvidenceJson(r.dataJson()));
                      } else {
                         return this.init(r);
@@ -575,12 +575,12 @@ final class AiGameplay {
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   this.preparation.markReconciliationPending(this.fireControl.read());
                   this.fireControl.reset();
-                  this.preparation.cancelChild(this.init_AiOperation);
-                  this.preparation.cancelChild(this.init_T_DataUtil);
+                  this.preparation.cancelChild(this.mineOp);
+                  this.preparation.cancelChild(this.capacityPrep);
                }
             }
          };
@@ -599,8 +599,8 @@ final class AiGameplay {
       Object world = mc.level;
       Object player = mc.player;
       return new AiGameplay.Inner_DataUtil(
-         () -> !beforeBreak && !init_Z(ids) || load(ids),
-         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && init_Z(mc),
+         () -> !beforeBreak && !matchingDropNearby(ids) || load(ids),
+         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && ensureInventoryMenu(mc),
          () -> AiTidy.init(
             AiJson.objectOf(
                "action",
@@ -620,7 +620,7 @@ final class AiGameplay {
       );
    }
 
-   private static boolean init_Z(Minecraft mc) {
+   private static boolean ensureInventoryMenu(Minecraft mc) {
       if (!mc.player.containerMenu.getCarried().isEmpty()) {
          return false;
       } else if (mc.player.containerMenu != mc.player.inventoryMenu) {
@@ -631,7 +631,7 @@ final class AiGameplay {
       }
    }
 
-   private static boolean init_Z(List<String> ids) {
+   private static boolean matchingDropNearby(List<String> ids) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -744,26 +744,26 @@ final class AiGameplay {
             final LocalPlayer player = this.mc.player;
             final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
             int containerId = -1;
-            int read_I;
-            int write_I = -1;
+            int pendingWaitTicks;
+            int pendingSlot = -1;
             int update;
             int sync;
             int flush;
             long containerRevision;
             final int close = AiGameState.countInventoryItem(output);
-            boolean init_Z;
-            boolean load_Z;
+            boolean cancelled;
+            boolean ejecting;
             long replyCount;
             int open;
             final boolean loadOnly = AiJson.getBoolean(args, "loadOnly", false);
             final int poll = Math.max(1, AiJson.getInt(args, "batchSize", 64));
             final int push = Math.max(1, AiJson.getInt(args, "cookTicksPerItem", 200));
-            final AiGameplay.Inner_StreamUtil init_T_StreamUtil = new AiGameplay.Inner_StreamUtil(fuel, AiJson.getBoolean(args, "collect", false));
+            final AiGameplay.Inner_StreamUtil fuelPlan = new AiGameplay.Inner_StreamUtil(fuel, AiJson.getBoolean(args, "collect", false));
             final boolean fuelFlexible = AiJson.getBoolean(args, "fuelFlexible", false);
 
             @Override
             public AiOperation.Result tick() {
-               if (this.init_Z
+               if (this.cancelled
                   || this.mc.player == null
                   || this.mc.level != this.level
                   || this.mc.getConnection() != this.connection
@@ -773,10 +773,10 @@ final class AiGameplay {
                   return this.init(AiOperation.Status.FAILED, "Player died while smelting");
                } else if (System.nanoTime() > this.deadline) {
                   return this.init(
-                     this.write_I >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
+                     this.pendingSlot >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                      "Smelting target not reached; reobserve any pending transfer"
                   );
-               } else if (AiGameState.countInventoryItem(output) >= this.targetCount && this.write_I < 0) {
+               } else if (AiGameState.countInventoryItem(output) >= this.targetCount && this.pendingSlot < 0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Smelted output inventory target observed after transfer reconciliation");
                } else {
                   this.flush = 0;
@@ -792,18 +792,18 @@ final class AiGameplay {
                         return this.init(AiOperation.Status.CANCELLED, "Furnace container changed");
                      }
 
-                     if (this.write_I >= 0) {
-                        this.read_I++;
+                     if (this.pendingSlot >= 0) {
+                        this.pendingWaitTicks++;
                         boolean acknowledged = AiServerEvidence.containerReplyCount(this.containerId) - this.replyCount >= this.open;
                         if (!acknowledged || !this.init(menu) || !menu.getCarried().isEmpty()) {
-                           return this.read_I > 100
+                           return this.pendingWaitTicks > 100
                               ? this.init(AiOperation.Status.UNCERTAIN, "Furnace transfer dispatched without observed slot change; inspect before repeating")
                               : this.init("Waiting for server furnace state");
                         }
 
-                        this.write_I = -1;
-                        this.read_I = 0;
-                        this.load_Z = false;
+                        this.pendingSlot = -1;
+                        this.pendingWaitTicks = 0;
+                        this.ejecting = false;
                      }
 
                      if (AiGameState.countInventoryItem(output) >= this.targetCount) {
@@ -820,26 +820,26 @@ final class AiGameplay {
                         if (!inputStack.isEmpty() && !BuiltInRegistries.ITEM.getKey(inputStack.getItem()).toString().equals(input)) {
                            this.markRevision();
                            this.init(0, 0, ContainerInput.QUICK_MOVE);
-                           this.write_I = 0;
-                           this.read_I = 0;
-                           this.load_Z = true;
+                           this.pendingSlot = 0;
+                           this.pendingWaitTicks = 0;
+                           this.ejecting = true;
                            return this.init("Ejecting foreign furnace input " + BuiltInRegistries.ITEM.getKey(inputStack.getItem()));
                         }
 
                         ItemStack fuelStack = menu.getSlot(1).getItem();
-                        this.init_T_StreamUtil.init(fuelStack, menu.isLit(), AiItems.fuelBurnTime(fuelStack), this::init_Str_6);
-                        if (this.init_T_StreamUtil.init(fuelStack)) {
+                        this.fuelPlan.init(fuelStack, menu.isLit(), AiItems.fuelBurnTime(fuelStack), this::availableFuelId);
+                        if (this.fuelPlan.init(fuelStack)) {
                            this.markRevision();
                            this.init(1, 0, ContainerInput.QUICK_MOVE);
-                           this.write_I = 1;
-                           this.read_I = 0;
-                           this.load_Z = true;
+                           this.pendingSlot = 1;
+                           this.pendingWaitTicks = 0;
+                           this.ejecting = true;
                            return this.init("Ejecting foreign furnace fuel " + BuiltInRegistries.ITEM.getKey(fuelStack.getItem()));
                         }
 
                         for (int destination = 0; destination <= 1; destination++) {
                            if (menu.getSlot(destination).getItem().isEmpty() && (destination == 0 || !menu.isLit())) {
-                              String wanted = destination == 0 ? input : this.init_T_StreamUtil.init();
+                              String wanted = destination == 0 ? input : this.fuelPlan.init();
                               int source = -1;
 
                               for (int slot = 3; slot < menu.slots.size(); slot++) {
@@ -852,8 +852,8 @@ final class AiGameplay {
                                  }
                               }
 
-                              if (source < 0 && destination == 1 && this.fuelFlexible && this.init_T_StreamUtil.init(this.init_Str_6())) {
-                                 return this.init("Switching fuel to " + this.init_T_StreamUtil.init());
+                              if (source < 0 && destination == 1 && this.fuelFlexible && this.fuelPlan.init(this.availableFuelId())) {
+                                 return this.init("Switching fuel to " + this.fuelPlan.init());
                               }
 
                               if (source < 0) {
@@ -898,8 +898,8 @@ final class AiGameplay {
                                  }
                               }
 
-                              this.write_I = destination;
-                              this.read_I = 0;
+                              this.pendingSlot = destination;
+                              this.pendingWaitTicks = 0;
                               return this.init("Loading furnace " + (destination == 0 ? "input" : "fuel"));
                            }
                         }
@@ -911,26 +911,26 @@ final class AiGameplay {
                         String existing = BuiltInRegistries.ITEM.getKey(result.getItem()).toString();
                         this.markRevision();
                         this.init(2, 0, ContainerInput.QUICK_MOVE);
-                        this.write_I = 2;
-                        this.read_I = 0;
-                        this.load_Z = true;
+                        this.pendingSlot = 2;
+                        this.pendingWaitTicks = 0;
+                        this.ejecting = true;
                         return this.init("Collecting existing furnace output " + existing + " before the requested recipe");
                      } else {
                         this.sync = AiGameState.countInventoryItem(output);
                         this.markRevision();
                         this.init(2, 0, ContainerInput.QUICK_MOVE);
-                        this.write_I = 2;
-                        this.read_I = 0;
+                        this.pendingSlot = 2;
+                        this.pendingWaitTicks = 0;
                         return this.init("Collecting smelted output");
                      }
                   }
                }
             }
 
-            String init_Str_6() {
+            String availableFuelId() {
                Item inputItem = AiItems.resolveItem(input).items().iterator().next();
                int left = Math.max(1, this.targetCount - AiGameState.countInventoryItem(output));
-               Item available = AiSmelt.init(this.init_T_StreamUtil.init(), inputItem, left);
+               Item available = AiSmelt.init(this.fuelPlan.init(), inputItem, left);
                if (available == null) {
                   available = AiSmelt.init("", inputItem, left);
                }
@@ -950,12 +950,12 @@ final class AiGameplay {
             }
 
             boolean init(AbstractFurnaceMenu menu) {
-               if (this.load_Z) {
-                  return menu.getSlot(this.write_I).getItem().isEmpty();
+               if (this.ejecting) {
+                  return menu.getSlot(this.pendingSlot).getItem().isEmpty();
                } else {
-                  return this.write_I == 2
+                  return this.pendingSlot == 2
                      ? AiGameState.countInventoryItem(output) > this.sync
-                     : !menu.getSlot(this.write_I).getItem().isEmpty() || this.write_I == 1 && menu.isLit();
+                     : !menu.getSlot(this.pendingSlot).getItem().isEmpty() || this.pendingSlot == 1 && menu.isLit();
                }
             }
 
@@ -968,11 +968,11 @@ final class AiGameplay {
                   "containerId",
                   this.containerId,
                   "fuel",
-                  this.init_T_StreamUtil.init(),
+                  this.fuelPlan.init(),
                   "pendingSlot",
-                  this.write_I,
+                  this.pendingSlot,
                   "ejecting",
-                  this.load_Z,
+                  this.ejecting,
                   "clicksDispatched",
                   this.open,
                   "repliesBefore",
@@ -1011,12 +1011,12 @@ final class AiGameplay {
 
             @Override
             public void cancel() {
-               this.init_Z = true;
+               this.cancelled = true;
             }
 
             @Override
             public boolean canInterruptNow() {
-               return this.write_I < 0;
+               return this.pendingSlot < 0;
             }
          };
       } else {
@@ -1046,15 +1046,15 @@ final class AiGameplay {
             final int span = radius * 2 + 1;
             final int load_I = 49;
             final int read = this.span * this.span * 49;
-            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> init_List = new ArrayList<>();
+            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> scanHits = new ArrayList<>();
             final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> remembered = autismclient.ai.engine.AiChunkMemory.getInstance()
                .findRemembered(this.origin, radius, wanted::contains);
             int write;
-            boolean init_Z;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z
+               if (!this.cancelled
                   && this.mc.level != null
                   && this.mc.player != null
                   && this.mc.level == this.level
@@ -1069,8 +1069,8 @@ final class AiGameplay {
                      if (AiTerrain.isLoaded(this.mc.level, p)) {
                         BlockState state = this.mc.level.getBlockState(p);
                         double distanceSqr = p.distSqr(this.origin);
-                        if (target.matches(state) && distanceSqr <= (double)radius * radius && this.init_List.size() < 256) {
-                           this.init_List.add(new autismclient.ai.engine.AiChunkMemory.Inner_CachePool(p.immutable(), Math.sqrt(distanceSqr), false));
+                        if (target.matches(state) && distanceSqr <= (double)radius * radius && this.scanHits.size() < 256) {
+                           this.scanHits.add(new autismclient.ai.engine.AiChunkMemory.Inner_CachePool(p.immutable(), Math.sqrt(distanceSqr), false));
                         }
                      }
 
@@ -1083,11 +1083,11 @@ final class AiGameplay {
                      );
                   }
 
-                  this.init_List
+                  this.scanHits
                      .removeIf(hitx -> !AiTerrain.isLoaded(this.mc.level, hitx.pos()) || !target.matches(this.mc.level.getBlockState(hitx.pos())));
                   this.remembered
                      .removeIf(hitx -> AiTerrain.isLoaded(this.mc.level, hitx.pos()) && !target.matches(this.mc.level.getBlockState(hitx.pos())));
-                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.merge(this.init_List, this.remembered, limit);
+                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.merge(this.scanHits, this.remembered, limit);
                   JsonArray results = new JsonArray();
 
                   for (autismclient.ai.engine.AiChunkMemory.Inner_CachePool hit : merged) {
@@ -1132,7 +1132,7 @@ final class AiGameplay {
                         "results",
                         results,
                         "live",
-                        this.init_List.size(),
+                        this.scanHits.size(),
                         "remembered",
                         this.remembered.size(),
                         "terrainRevision",
@@ -1150,7 +1150,7 @@ final class AiGameplay {
 
             @Override
             public void cancel() {
-               this.init_Z = true;
+               this.cancelled = true;
             }
          };
       } else {
@@ -1193,12 +1193,12 @@ final class AiGameplay {
                final int span = radius * 2 + 1;
                final int load = this.span * this.span * 17;
                int read;
-               boolean init_Z;
+               boolean cancelled;
                final Set<Block> wantedBlocks = AiGameplay.init(wanted);
 
                @Override
                public AiOperation.Result tick() {
-                  if (!this.init_Z && this.mc.level != null) {
+                  if (!this.cancelled && this.mc.level != null) {
                      long until = System.nanoTime() + 2000000L;
                      MutableBlockPos p = new MutableBlockPos();
 
@@ -1255,7 +1255,7 @@ final class AiGameplay {
 
                @Override
                public void cancel() {
-                  this.init_Z = true;
+                  this.cancelled = true;
                }
             };
          } else {
@@ -1275,8 +1275,8 @@ final class AiGameplay {
       final AiPreparationReceipt preparation = new AiPreparationReceipt();
       AiOperation child;
       AiOperation.Result childResult;
-      boolean init_Z;
-      boolean load_Z;
+      boolean tidyingStarted;
+      boolean cancelled;
 
       Inner_DataUtil(BooleanSupplier room, BooleanSupplier safe, Supplier<AiOperation> tidying, long deadline, LongSupplier now) {
          this.hasRoom = room;
@@ -1292,10 +1292,10 @@ final class AiGameplay {
             return this.childResult;
          }
 
-         if (this.load_Z || this.clock.getAsLong() > this.deadline) {
+         if (this.cancelled || this.clock.getAsLong() > this.deadline) {
             return this.init(
                AiGameOperations.result(
-                  this.load_Z ? AiOperation.Status.CANCELLED : AiOperation.Status.TIMED_OUT, "Pickup capacity preparation stopped", new JsonObject()
+                  this.cancelled ? AiOperation.Status.CANCELLED : AiOperation.Status.TIMED_OUT, "Pickup capacity preparation stopped", new JsonObject()
                )
             );
          }
@@ -1310,7 +1310,7 @@ final class AiGameplay {
          }
 
          if (this.child == null) {
-            this.init_Z = true;
+            this.tidyingStarted = true;
             this.child = this.tidying.get();
          }
 
@@ -1349,8 +1349,8 @@ final class AiGameplay {
 
       @Override
       public void cancel() {
-         if (!this.load_Z) {
-            this.load_Z = true;
+         if (!this.cancelled) {
+            this.cancelled = true;
             this.preparation.cancelChild(this.child);
          }
       }

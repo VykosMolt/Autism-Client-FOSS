@@ -49,19 +49,19 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class BedEspModule extends Module {
-   private static final Set<Block> init_Set = init_Set_2();
+   private static final Set<Block> COVER_BLOCKS = buildCoverBlocks();
    private volatile List<BedEspModule.Inner_DataUtil> beds = List.of();
    private final Map<BlockPos, BedEspModule.Inner_DataUtil> bedsByPos = new HashMap<>();
-   private final Map<BlockPos, Long> load_Map = new HashMap<>();
-   private final Map<BlockPos, BlockState[]> read_Map = new HashMap<>();
-   private final Map<BlockPos, BedCoverPathSolver.Inner_CachePool> write_Map = new HashMap<>();
-   private final IdentityHashMap<ItemStack, Double> init_IdentityHashMap = new IdentityHashMap<>();
-   private List<BlockPos> load_List = List.of();
-   private Object init_Obj;
-   private int init_I;
-   private int load_I;
-   private volatile int read_I;
-   private int write_I = -1;
+   private final Map<BlockPos, Long> bedInputStamps = new HashMap<>();
+   private final Map<BlockPos, BlockState[]> observedSurroundings = new HashMap<>();
+   private final Map<BlockPos, BedCoverPathSolver.Inner_CachePool> coverCache = new HashMap<>();
+   private final IdentityHashMap<ItemStack, Double> breakSpeedByStack = new IdentityHashMap<>();
+   private List<BlockPos> bedPositions = List.of();
+   private Object lastLevel;
+   private int tickCounter;
+   private int refreshCursor;
+   private volatile int blockUpdateRevision;
+   private int scannedRevision = -1;
 
    public BedEspModule() {
       super("bed-esp", "BedESP", ae.update, "Beds, cover and the quickest way in.");
@@ -100,21 +100,21 @@ public final class BedEspModule extends Module {
             .stream()
             .map(
                b -> {
-                  BedBreachRouteSolver.Inner_BufferHelper route = BedNukerModule.routeFor(b.init_BlockPos());
+                  BedBreachRouteSolver.Inner_BufferHelper route = BedNukerModule.routeFor(b.pos());
                   if (route == null) {
                      return (BedEspModule.Inner_DataUtil)b;
                   }
 
                   List<BlockPos> cuts = route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList();
                   return new BedEspModule.Inner_DataUtil(
-                     b.init_BlockPos(),
-                     b.load_BlockPos(),
+                     b.pos(),
+                     b.partner(),
                      b.color(),
                      b.box(),
                      b.labelPos(),
                      b.materials(),
                      cuts,
-                     b.read_List(),
+                     b.routeTools(),
                      route.ticks(),
                      cuts.isEmpty() ? "Open" : "",
                      !cuts.isEmpty(),
@@ -128,7 +128,7 @@ public final class BedEspModule extends Module {
    }
 
    public static boolean init_Z_Block(Block block) {
-      return init_Set.contains(block);
+      return COVER_BLOCKS.contains(block);
    }
 
    static List<EspChunkWorker.EspBox> scanChunk(LevelChunk chunk) {
@@ -164,7 +164,7 @@ public final class BedEspModule extends Module {
          );
    }
 
-   private static Set<Block> init_Set_2() {
+   private static Set<Block> buildCoverBlocks() {
       Set<Block> blocks = new HashSet<>(List.of(Blocks.GLASS, Blocks.OBSIDIAN, Blocks.OAK_PLANKS, Blocks.END_STONE));
 
       for (DyeColor color : DyeColor.values()) {
@@ -195,14 +195,14 @@ public final class BedEspModule extends Module {
       BedMiningEstimator.init();
       this.beds = List.of();
       this.bedsByPos.clear();
-      this.load_Map.clear();
-      this.read_Map.clear();
-      this.write_Map.clear();
-      this.init_IdentityHashMap.clear();
-      this.load_List = List.of();
-      this.init_Obj = null;
-      this.init_I = this.load_I = 0;
-      this.write_I = -1;
+      this.bedInputStamps.clear();
+      this.observedSurroundings.clear();
+      this.coverCache.clear();
+      this.breakSpeedByStack.clear();
+      this.bedPositions = List.of();
+      this.lastLevel = null;
+      this.tickCounter = this.refreshCursor = 0;
+      this.scannedRevision = -1;
    }
 
    @Override
@@ -211,7 +211,7 @@ public final class BedEspModule extends Module {
          || packet instanceof ClientboundSectionBlocksUpdatePacket
          || packet instanceof ClientboundLevelChunkWithLightPacket
          || packet instanceof ClientboundForgetLevelChunkPacket) {
-         this.read_I++;
+         this.blockUpdateRevision++;
       }
 
       return false;
@@ -220,31 +220,31 @@ public final class BedEspModule extends Module {
    @Override
    public void tick() {
       if (MC.level != null && MC.player != null) {
-         if (this.init_Obj != MC.level) {
+         if (this.lastLevel != MC.level) {
             this.resetCaches();
-            this.init_Obj = MC.level;
+            this.lastLevel = MC.level;
          }
 
          EspChunkWorker.setLevel(MC.level);
-         this.init_I++;
+         this.tickCounter++;
          DyeColor own = TeamDyeColorResolver.init();
-         if (this.write_I != this.read_I || this.init_I % 20 == 1) {
+         if (this.scannedRevision != this.blockUpdateRevision || this.tickCounter % 20 == 1) {
             this.scan();
-            this.write_I = this.read_I;
+            this.scannedRevision = this.blockUpdateRevision;
          }
 
-         this.bedsByPos.keySet().removeIf(px -> !this.load_List.contains(px));
-         this.load_Map.keySet().retainAll(this.bedsByPos.keySet());
-         this.read_Map.keySet().retainAll(this.load_List);
-         this.write_Map.keySet().retainAll(this.load_List);
-         if (!this.load_List.isEmpty()) {
-            BlockPos p = this.load_List.get(Math.floorMod(this.load_I++, this.load_List.size()));
+         this.bedsByPos.keySet().removeIf(px -> !this.bedPositions.contains(px));
+         this.bedInputStamps.keySet().retainAll(this.bedsByPos.keySet());
+         this.observedSurroundings.keySet().retainAll(this.bedPositions);
+         this.coverCache.keySet().retainAll(this.bedPositions);
+         if (!this.bedPositions.isEmpty()) {
+            BlockPos p = this.bedPositions.get(Math.floorMod(this.refreshCursor++, this.bedPositions.size()));
             BlockState state = MC.level.getBlockState(p);
             if (state.getBlock() instanceof BedBlock bed && this.shouldShow(bed.getColor(), own)) {
-               long stamp = this.init_J_BlockPos(p);
-               if (!Objects.equals(this.load_Map.get(p), stamp)) {
-                  this.bedsByPos.put(p, this.init_ClassCache_DataUti_BlockPos_BlockState(p, state));
-                  this.load_Map.put(p, stamp);
+               long stamp = this.bedInputStamp(p);
+               if (!Objects.equals(this.bedInputStamps.get(p), stamp)) {
+                  this.bedsByPos.put(p, this.analyzeBed(p, state));
+                  this.bedInputStamps.put(p, stamp);
                }
             }
          }
@@ -252,7 +252,7 @@ public final class BedEspModule extends Module {
          ArrayList<BedEspModule.Inner_DataUtil> visible = new ArrayList<>();
          double range = this.integer("range");
 
-         for (BlockPos p : this.load_List) {
+         for (BlockPos p : this.bedPositions) {
             BedEspModule.Inner_DataUtil bed = this.bedsByPos.get(p);
             if (bed != null
                && MC.level.isLoaded(p)
@@ -291,7 +291,7 @@ public final class BedEspModule extends Module {
                         if (s.getBlock() instanceof BedBlock) {
                            if (s.getValue(BedBlock.PART) == BedPart.HEAD) {
                               BlockPos foot = p.relative(BedBlock.getConnectedDirection(s));
-                              if (MC.level.isLoaded(foot) && init_Z_BlockState_BlockState(s, MC.level.getBlockState(foot))) {
+                              if (MC.level.isLoaded(foot) && isPartnerHalf(s, MC.level.getBlockState(foot))) {
                                  continue;
                               }
                            }
@@ -307,10 +307,10 @@ public final class BedEspModule extends Module {
          }
       }
 
-      this.load_List = List.copyOf(found);
+      this.bedPositions = List.copyOf(found);
    }
 
-   private long init_J_BlockPos(BlockPos bed) {
+   private long bedInputStamp(BlockPos bed) {
       long h = this.bool("my-tools") ? 1L : 2L;
 
       for (int i = 0; i < 9; i++) {
@@ -346,9 +346,9 @@ public final class BedEspModule extends Module {
          }
       }
 
-      if (!Arrays.equals(observed, this.read_Map.get(bed))) {
-         this.read_Map.put(bed, observed);
-         this.write_Map.remove(bed);
+      if (!Arrays.equals(observed, this.observedSurroundings.get(bed))) {
+         this.observedSurroundings.put(bed, observed);
+         this.coverCache.remove(bed);
       }
 
       h = h * 31L + MC.player.blockPosition().hashCode();
@@ -369,17 +369,17 @@ public final class BedEspModule extends Module {
       return h * 31L + Double.doubleToLongBits(MC.player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED));
    }
 
-   private BedEspModule.Inner_DataUtil init_ClassCache_DataUti_BlockPos_BlockState(BlockPos p, BlockState state) {
+   private BedEspModule.Inner_DataUtil analyzeBed(BlockPos p, BlockState state) {
       BlockPos partner = p.relative(BedBlock.getConnectedDirection(state));
-      boolean hasPartner = MC.level.isLoaded(partner) && init_Z_BlockState_BlockState(state, MC.level.getBlockState(partner));
+      boolean hasPartner = MC.level.isLoaded(partner) && isPartnerHalf(state, MC.level.getBlockState(partner));
       BedCoverPathSolver.Inner_ConfigStore grid = new BedCoverPathSolver.Inner_ConfigStore(p.offset(-8, -3, -8), 18, 12, 18);
       Map<Block, BedEspModule.Inner_BufferHelper> toolCache = new HashMap<>();
       boolean loaded = true;
-      this.init_IdentityHashMap.clear();
+      this.breakSpeedByStack.clear();
       List<ItemStack> hotbar = this.read();
       List<ItemStack> recommended = this.write();
       List<ItemStack> tools = this.bool("my-tools") ? hotbar : recommended;
-      BlockState[] states = this.read_Map.get(p);
+      BlockState[] states = this.observedSurroundings.get(p);
 
       for (int i = 0; i < grid.write; i++) {
          BlockPos at = grid.posAt(i);
@@ -391,7 +391,7 @@ public final class BedEspModule extends Module {
                grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
             } else if (init_Z_Block(s.getBlock())) {
                BedEspModule.Inner_BufferHelper best = toolCache.computeIfAbsent(s.getBlock(), b -> this.init(s, at, tools));
-               grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(2, best.init_D(), tools.indexOf(best.tool()));
+               grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(2, best.breakTicks(), tools.indexOf(best.tool()));
             }
          } else {
             grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(3, 0.0, -1);
@@ -399,7 +399,7 @@ public final class BedEspModule extends Module {
          }
       }
 
-      BedCoverPathSolver.Inner_CachePool cover = this.write_Map.computeIfAbsent(p, ignored -> BedCoverPathSolver.minimalCover(grid));
+      BedCoverPathSolver.Inner_CachePool cover = this.coverCache.computeIfAbsent(p, ignored -> BedCoverPathSolver.minimalCover(grid));
       BedBreachRouteSolver.Inner_BufferHelper local = BedMiningEstimator.init(p, true, null, 0.0F);
       BedCoverPathSolver.Inner_NetHelper plan = local == null
          ? BedCoverPathSolver.plan(grid, MC.player.position(), MC.player.blockInteractionRange(), cover)
@@ -416,7 +416,7 @@ public final class BedEspModule extends Module {
       Map<String, List<BlockPos>> groups = new LinkedHashMap<>();
 
       for (BlockPos at : plan.init_Set()) {
-         groups.computeIfAbsent(init_Str_Block(MC.level.getBlockState(at).getBlock()), k -> new ArrayList<>()).add(at);
+         groups.computeIfAbsent(materialGroupName(MC.level.getBlockState(at).getBlock()), k -> new ArrayList<>()).add(at);
       }
 
       List<BedEspModule.Inner_StreamUtil> materials = new ArrayList<>();
@@ -436,7 +436,7 @@ public final class BedEspModule extends Module {
       for (BlockPos at : plan.path()) {
          BlockState block = MC.level.getBlockState(at);
          BedEspModule.Inner_BufferHelper actual = actualTools.computeIfAbsent(block.getBlock(), b -> this.init(block, at, hotbar));
-         actualTicks += actual.init_D();
+         actualTicks += actual.breakTicks();
          ItemStack tool = actual.tool();
          if (!tool.isEmpty() && routeTools.stream().noneMatch(t -> ItemStack.isSameItemSameComponents(t, tool))) {
             routeTools.add(tool);
@@ -483,7 +483,7 @@ public final class BedEspModule extends Module {
       }
    }
 
-   private static boolean init_Z_BlockState_BlockState(BlockState first, BlockState other) {
+   private static boolean isPartnerHalf(BlockState first, BlockState other) {
       return other.is(first.getBlock())
          && other.hasProperty(BedBlock.PART)
          && other.getValue(BedBlock.PART) != first.getValue(BedBlock.PART)
@@ -550,7 +550,7 @@ public final class BedEspModule extends Module {
                speed *= var10001;
             }
 
-            speed *= this.init_IdentityHashMap.computeIfAbsent(stack, this::init_D_ItemStack);
+            speed *= this.breakSpeedByStack.computeIfAbsent(stack, this::breakSpeedWith);
             boolean correct = !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state);
             double ticks = init(hardness, speed, correct, MC.player.hasInfiniteMaterials());
             if (ticks < best) {
@@ -563,7 +563,7 @@ public final class BedEspModule extends Module {
       return new BedEspModule.Inner_BufferHelper(chosen, best);
    }
 
-   private double init_D_ItemStack(ItemStack stack) {
+   private double breakSpeedWith(ItemStack stack) {
       Holder<Attribute> attribute = Attributes.BLOCK_BREAK_SPEED;
       AttributeInstance live = MC.player.getAttribute(attribute);
       if (live == null) {
@@ -594,7 +594,7 @@ public final class BedEspModule extends Module {
       }
    }
 
-   private static String init_Str_Block(Block block) {
+   private static String materialGroupName(Block block) {
       String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
       return path.endsWith("_wool")
          ? "Wool"
@@ -605,30 +605,30 @@ public final class BedEspModule extends Module {
          );
    }
 
-   record Inner_BufferHelper(ItemStack tool, double init_D) {
+   record Inner_BufferHelper(ItemStack tool, double breakTicks) {
    }
 
    record Inner_CachePool(boolean init_Z, boolean load, boolean read, int range) {
    }
 
    record Inner_DataUtil(
-      BlockPos init_BlockPos,
-      BlockPos load_BlockPos,
+      BlockPos pos,
+      BlockPos partner,
       DyeColor color,
       AABB box,
       Vec3 labelPos,
       List<BedEspModule.Inner_StreamUtil> materials,
       List<BlockPos> load_List,
-      List<ItemStack> read_List,
+      List<ItemStack> routeTools,
       double ticks,
       String init_Str,
       boolean init_Z,
       List<BlockPos> write,
-      Vec3 load_Vec3,
-      Vec3 read_Vec3
+      Vec3 fromEye,
+      Vec3 routeEye
    ) {
    }
 
-   record Inner_StreamUtil(String name, Block init_Block, int count, ItemStack icon) {
+   record Inner_StreamUtil(String name, Block block, int count, ItemStack icon) {
    }
 }

@@ -9,61 +9,61 @@ import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.network.protocol.game.ClientboundMoveEntityPacket.Pos;
 
 public class ServerTickPhaseTracker {
-   private static final long init_J = 50000000L;
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final long load_J = 2000L;
+   private static final long TICK_NANOS = 50000000L;
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final long MIN_WARMUP_MS = 2000L;
    private static final int MIN_SAMPLES = 40;
    private static final int SAMPLE_WINDOW = 60;
-   private static final long[] init_JArr = new long[60];
-   private static int read_I = 0;
-   private static int write_I = 0;
-   private static volatile long read_J = 0L;
-   private static volatile long write_J = 0L;
-   private static volatile long update_J = -9223372036854775808L;
-   private static volatile double init_D = 20.0;
+   private static final long[] sendTimes = new long[60];
+   private static int sampleCursor = 0;
+   private static int sampleCount = 0;
+   private static volatile long firstPacketNanos = 0L;
+   private static volatile long lastPacketNanos = 0L;
+   private static volatile long lastGameTime = -9223372036854775808L;
+   private static volatile double estimatedTps = 20.0;
    private static volatile long sync = 0L;
    private static volatile long flush = 0L;
    private static volatile long close = 0L;
-   private static volatile int update_I = 0;
+   private static volatile int burstPacketCount = 0;
    private static final long open = 5000000L;
 
    public static void init(ClientboundSetTimePacket packet) {
       long now = System.nanoTime();
-      if (read_J == 0L) {
-         read_J = now;
+      if (firstPacketNanos == 0L) {
+         firstPacketNanos = now;
       }
 
-      long previousPacketTime = write_J;
-      long previousGameTime = update_J;
-      write_J = now;
-      update_J = packet.gameTime();
+      long previousPacketTime = lastPacketNanos;
+      long previousGameTime = lastGameTime;
+      lastPacketNanos = now;
+      lastGameTime = packet.gameTime();
       if (previousPacketTime > 0L && previousGameTime != -9223372036854775808L) {
          long gameTicks = packet.gameTime() - previousGameTime;
          long elapsedNanos = now - previousPacketTime;
          if (gameTicks > 0L && gameTicks <= 200L && elapsedNanos > 0L) {
             double sample = Math.max(0.0, Math.min(20.0, gameTicks * 1.0E9 / elapsedNanos));
-            init_D = init_D <= 0.0 ? sample : init_D * 0.75 + sample * 0.25;
+            estimatedTps = estimatedTps <= 0.0 ? sample : estimatedTps * 0.75 + sample * 0.25;
          }
       }
 
       int pingMs = getLatencyMs();
       long halfPingNanos = pingMs * 1000000L / 2L;
       long serverSendTime = now - halfPingNanos;
-      init_JArr[read_I] = serverSendTime;
-      read_I = (read_I + 1) % 60;
-      if (write_I < 60) {
-         write_I++;
+      sendTimes[sampleCursor] = serverSendTime;
+      sampleCursor = (sampleCursor + 1) % 60;
+      if (sampleCount < 60) {
+         sampleCount++;
       }
 
-      read_V();
+      recomputePhase();
    }
 
-   public static void init_V() {
+   public static void noteBurstPacket() {
       long now = System.nanoTime();
       if (now - close < 5000000L) {
-         update_I++;
+         burstPacketCount++;
       } else {
-         update_I = 1;
+         burstPacketCount = 1;
       }
 
       close = now;
@@ -73,22 +73,22 @@ public class ServerTickPhaseTracker {
       if (packet instanceof ClientboundSetTimePacket worldTimePacket) {
          init(worldTimePacket);
       } else if (packet instanceof Pos || packet instanceof ClientboundSetEntityMotionPacket || packet instanceof ClientboundPlayerPositionPacket) {
-         init_V();
+         noteBurstPacket();
       }
    }
 
-   private static void read_V() {
-      if (write_I >= 3) {
+   private static void recomputePhase() {
+      if (sampleCount >= 3) {
          long sumPhase = 0L;
-         int validSamples = Math.min(write_I, 60);
+         int validSamples = Math.min(sampleCount, 60);
 
          for (int i = 0; i < validSamples; i++) {
-            long phase = init_JArr[i] % 50000000L;
+            long phase = sendTimes[i] % 50000000L;
             sumPhase += phase;
          }
 
          sync = sumPhase / validSamples;
-         long mostRecent = init_JArr[(read_I - 1 + 60) % 60];
+         long mostRecent = sendTimes[(sampleCursor - 1 + 60) % 60];
          long tickNumber = mostRecent / 50000000L;
          flush = tickNumber * 50000000L + sync;
          long now = System.nanoTime();
@@ -99,8 +99,8 @@ public class ServerTickPhaseTracker {
    }
 
    public static int getLatencyMs() {
-      if (init_Minecraft.getConnection() != null && init_Minecraft.player != null) {
-         PlayerInfo entry = init_Minecraft.getConnection().getPlayerInfo(init_Minecraft.player.getUUID());
+      if (MC.getConnection() != null && MC.player != null) {
+         PlayerInfo entry = MC.getConnection().getPlayerInfo(MC.player.getUUID());
          return entry == null ? 0 : entry.getLatency();
       } else {
          return 0;
@@ -134,8 +134,8 @@ public class ServerTickPhaseTracker {
    }
 
    public static boolean isWarmedUp() {
-      if (read_J != 0L && write_I >= 40) {
-         long elapsedMs = (System.nanoTime() - read_J) / 1000000L;
+      if (firstPacketNanos != 0L && sampleCount >= 40) {
+         long elapsedMs = (System.nanoTime() - firstPacketNanos) / 1000000L;
          return elapsedMs >= 2000L && flush > 0L;
       } else {
          return false;
@@ -143,23 +143,23 @@ public class ServerTickPhaseTracker {
    }
 
    public static float getWarmupProgress() {
-      if (read_J == 0L) {
+      if (firstPacketNanos == 0L) {
          return 0.0F;
       }
 
-      long elapsedMs = (System.nanoTime() - read_J) / 1000000L;
+      long elapsedMs = (System.nanoTime() - firstPacketNanos) / 1000000L;
       float timeProgress = Math.min(1.0F, (float)elapsedMs / 2000.0F);
-      float sampleProgress = Math.min(1.0F, write_I / 40.0F);
+      float sampleProgress = Math.min(1.0F, sampleCount / 40.0F);
       return Math.min(timeProgress, sampleProgress);
    }
 
-   public static float load_F() {
+   public static float confidence() {
       if (!isWarmedUp()) {
          return 0.0F;
       }
 
-      float sampleConfidence = Math.min(1.0F, write_I / 60.0F);
-      long timeSinceLast = System.nanoTime() - write_J;
+      float sampleConfidence = Math.min(1.0F, sampleCount / 60.0F);
+      long timeSinceLast = System.nanoTime() - lastPacketNanos;
       float freshnessConfidence = timeSinceLast < 100000000L ? 1.0F : Math.max(0.0F, 1.0F - (float)timeSinceLast / 5.0E8F);
       return sampleConfidence * freshnessConfidence;
    }
@@ -169,25 +169,25 @@ public class ServerTickPhaseTracker {
       return Math.max(0L, (optimalTime - System.nanoTime()) / 1000000L);
    }
 
-   public static long load_J() {
+   public static long msUntilNextTick() {
       long nextTick = nextTickNanos();
       return Math.max(0L, (nextTick - System.nanoTime()) / 1000000L);
    }
 
-   public static long read_J() {
-      return write_J == 0L ? 0L : Math.max(0L, (System.nanoTime() - write_J) / 1000000L);
+   public static long msSinceLastPacket() {
+      return lastPacketNanos == 0L ? 0L : Math.max(0L, (System.nanoTime() - lastPacketNanos) / 1000000L);
    }
 
    public static double getTps() {
-      return Math.max(0.0, Math.min(20.0, init_D));
+      return Math.max(0.0, Math.min(20.0, estimatedTps));
    }
 
    public static int getSampleCount() {
-      return write_I;
+      return sampleCount;
    }
 
    public static long write() {
-      return read_J == 0L ? 0L : (System.nanoTime() - read_J) / 1000000L;
+      return firstPacketNanos == 0L ? 0L : (System.nanoTime() - firstPacketNanos) / 1000000L;
    }
 
    public static long update() {
@@ -195,19 +195,19 @@ public class ServerTickPhaseTracker {
    }
 
    public static void reset() {
-      write_I = 0;
-      read_I = 0;
-      read_J = 0L;
-      write_J = 0L;
-      update_J = -9223372036854775808L;
-      init_D = 20.0;
+      sampleCount = 0;
+      sampleCursor = 0;
+      firstPacketNanos = 0L;
+      lastPacketNanos = 0L;
+      lastGameTime = -9223372036854775808L;
+      estimatedTps = 20.0;
       sync = 0L;
       flush = 0L;
       close = 0L;
-      update_I = 0;
+      burstPacketCount = 0;
    }
 
-   public static String init_Str() {
-      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", getLatencyMs(), write_I, 40, update(), load_F() * 100.0F);
+   public static String debugSummary() {
+      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", getLatencyMs(), sampleCount, 40, update(), confidence() * 100.0F);
    }
 }

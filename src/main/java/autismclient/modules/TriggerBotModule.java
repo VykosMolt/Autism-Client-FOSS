@@ -33,21 +33,21 @@ final class TriggerBotModule extends Module {
    static final ValueRange MODERN_HOLD_DEFAULT = new ValueRange(60, 110);
    static final ValueRange update_ValueRange = new ValueRange(0.2, 0.6);
    static final ValueRange EDGE_TOLERANCE_DEFAULT = new ValueRange(0.08, 0.22);
-   private static final long init_J = 300000000L;
-   private static final long load_J = 250000000L;
-   private static final double init_D = 40.0;
-   private static final double load_D = 80.0;
+   private static final long TARGET_MEMORY_NANOS = 300000000L;
+   private static final long CLICK_LOCKOUT_NANOS = 250000000L;
+   private static final double FLINCH_DELAY_MIN_MS = 40.0;
+   private static final double FLINCH_DELAY_SPAN_MS = 80.0;
    private static final long read_J = 80000000L;
    private static final long write_J = 80000000L;
-   private static final double read_D = 30.0;
+   private static final double ENGAGE_CONE_DEG = 30.0;
    private static final double write_D = 1.5;
-   private static final double update_D = 15.0;
+   private static final double FOLLOW_UP_DELAY_MIN_MS = 15.0;
    private static final double sync_D = 35.0;
    private final ClickerSettingsGroup combatClicker;
    private final HeldItemFilter heldItemFilter;
    private final autismclient.util.clicker.ClickPatternEngine patternEngine = new autismclient.util.clicker.ClickPatternEngine();
    private final autismclient.util.clicker.KeyClickOutput keyOutput = autismclient.util.clicker.KeyClickOutput.attack();
-   private final autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper init_DataUtil_NetHelper = new autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper() {
+   private final autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper crosshairGatedSink = new autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper() {
       @Override
       public boolean init_Z_J(long now) {
          return Module.MC.hitResult != null && Module.MC.hitResult.getType() != Type.MISS || TriggerBotModule.this.keyOutput.init_Z_J(now);
@@ -74,20 +74,20 @@ final class TriggerBotModule extends Module {
    private autismclient.util.HumanHandProfile handProfile;
    private int lastTargetId = -1;
    private long reactAt;
-   private long sync_J = -9223372036854775808L;
-   private int load_I = -1;
-   private int read_I;
-   private boolean init_Z;
-   private long flush_J;
-   private int write_I = -2147483648;
-   private int update_I = -2147483648;
-   private int sync_I = -1;
-   private int flush_I = -2147483648;
-   private double flush_D;
+   private long targetLostAt = -9223372036854775808L;
+   private int lastAttackTicker = -1;
+   private int lastTickerTick;
+   private boolean awaitingSwing;
+   private long lastClickNanos;
+   private int lastClickTick = -2147483648;
+   private int followUpTick = -2147483648;
+   private int followUpTargetId = -1;
+   private int followUpClickTick = -2147483648;
+   private double swingOffset;
    private double edgeTolerance;
    private double open = 0.0 / 0.0;
    private long edgeRerollAt = -9223372036854775808L;
-   private boolean load_Z;
+   private boolean physicalPressed;
    private float lastHealth = -1.0F;
    private String entityFilterSource = "";
    private Set<String> entityFilterIds = Set.of();
@@ -152,12 +152,12 @@ final class TriggerBotModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init_V(System.nanoTime());
+      this.resetState(System.nanoTime());
    }
 
    @Override
    public void onGameLeft() {
-      this.init_V(System.nanoTime());
+      this.resetState(System.nanoTime());
    }
 
    @Override
@@ -174,19 +174,19 @@ final class TriggerBotModule extends Module {
    public void onInputFrame() {
       long now = System.nanoTime();
       this.keyOutput.init_V();
-      if (this.init_Z_35()) {
-         this.init_V(now);
+      if (this.shouldPause()) {
+         this.resetState(now);
       } else {
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
          boolean timed = !noCooldown && this.bool("respect-cooldown");
          boolean rage = !timed && this.combatClicker.technique() == autismclient.util.clicker.ClickTechnique.RAGE;
          boolean flinched = this.tookDamage();
          boolean physical = this.keyOutput.isPhysicallyDown();
-         if (physical && !this.load_Z && !timed) {
+         if (physical && !this.physicalPressed && !timed) {
             this.patternEngine.init_V_J(now);
          }
 
-         this.load_Z = physical;
+         this.physicalPressed = physical;
          autismclient.util.clicker.ClickProfile profile = this.combatClicker.profile();
          this.patternEngine.setPersonality(this.combatClicker.init_DataUtil_ConfigSto());
          LivingEntity target = this.init(now, noCooldown, rage);
@@ -197,14 +197,14 @@ final class TriggerBotModule extends Module {
          }
 
          if (target == null) {
-            if (this.sync_J == -9223372036854775808L) {
-               this.sync_J = now;
+            if (this.targetLostAt == -9223372036854775808L) {
+               this.targetLostAt = now;
             }
 
             this.patternEngine.init(now, false, profile, this.keyOutput);
             this.keyOutput.read(now);
          } else {
-            boolean sameTarget = target.getId() == this.lastTargetId && (this.sync_J == -9223372036854775808L || now - this.sync_J <= 300000000L);
+            boolean sameTarget = target.getId() == this.lastTargetId && (this.targetLostAt == -9223372036854775808L || now - this.targetLostAt <= 300000000L);
             if (!sameTarget) {
                this.lastTargetId = target.getId();
                this.rollPreReach();
@@ -212,19 +212,19 @@ final class TriggerBotModule extends Module {
                this.rollSwingOffset();
             }
 
-            this.sync_J = -9223372036854775808L;
+            this.targetLostAt = -9223372036854775808L;
             boolean reacted = now >= this.reactAt;
             if (timed) {
                this.patternEngine.init(now, false, profile, this.keyOutput);
                if (flinched && this.random.nextBoolean()) {
-                  this.flush_D = this.flush_D + (40.0 + 80.0 * this.random.nextDouble());
+                  this.swingOffset = this.swingOffset + (40.0 + 80.0 * this.random.nextDouble());
                }
 
                this.init(now, reacted, target);
                this.keyOutput.read(now);
             } else {
                this.keyOutput.read(now);
-               this.patternEngine.init(now, reacted, profile, engaged ? this.init_DataUtil_NetHelper : this.keyOutput);
+               this.patternEngine.init(now, reacted, profile, engaged ? this.crosshairGatedSink : this.keyOutput);
             }
          }
       }
@@ -261,7 +261,7 @@ final class TriggerBotModule extends Module {
       return Math.max(0.0, angle - radius);
    }
 
-   private boolean init_Z_35() {
+   private boolean shouldPause() {
       return MC == null
          || MC.player == null
          || MC.level == null
@@ -339,42 +339,42 @@ final class TriggerBotModule extends Module {
    private void init(long now, boolean reacted, LivingEntity target) {
       int ticker = ((AutismLivingEntityAccessor)MC.player).autism$getAttackStrengthTicker();
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (this.load_I >= 0 && ticker < this.load_I + (tick - this.read_I)) {
+      if (this.lastAttackTicker >= 0 && ticker < this.lastAttackTicker + (tick - this.lastTickerTick)) {
          this.rollSwingOffset();
       }
 
-      this.load_I = ticker;
-      this.read_I = tick;
-      if (tick != this.write_I) {
-         if (this.update_I != -2147483648 && tick >= this.update_I) {
-            boolean onTarget = target.getId() == this.sync_I && MC.hitResult instanceof EntityHitResult hit && hit.getEntity() == target;
-            if (onTarget && tick <= this.update_I + 1) {
+      this.lastAttackTicker = ticker;
+      this.lastTickerTick = tick;
+      if (tick != this.lastClickTick) {
+         if (this.followUpTick != -2147483648 && tick >= this.followUpTick) {
+            boolean onTarget = target.getId() == this.followUpTargetId && MC.hitResult instanceof EntityHitResult hit && hit.getEntity() == target;
+            if (onTarget && tick <= this.followUpTick + 1) {
                if (this.keyOutput.init(now, this.followUpDelayNanos())) {
-                  this.update_I = -2147483648;
-                  this.flush_J = now;
-                  this.write_I = tick;
-                  this.flush_I = tick;
+                  this.followUpTick = -2147483648;
+                  this.lastClickNanos = now;
+                  this.lastClickTick = tick;
+                  this.followUpClickTick = tick;
                }
 
                return;
             }
 
-            this.update_I = -2147483648;
+            this.followUpTick = -2147483648;
          }
 
-         if (this.init_Z) {
-            if (now - this.flush_J < 250000000L) {
+         if (this.awaitingSwing) {
+            if (now - this.lastClickNanos < 250000000L) {
                return;
             }
 
-            this.init_Z = false;
+            this.awaitingSwing = false;
          }
 
          if (reacted) {
             boolean opening = autismclient.util.RecentCombatTracker.init(target, now);
             double scored = ticker + 0.5;
             double shown = opening ? scored : Math.max(scored, ticker + MC.getDeltaTracker().getGameTimeDeltaPartialTick(false));
-            double offset = opening ? 0.0 : this.flush_D;
+            double offset = opening ? 0.0 : this.swingOffset;
             Vec3 step = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
             boolean lastChance = MC.player.getAttackStrengthScale(0.5F) > 0.9F
                && MC.hitResult instanceof EntityHitResult hit
@@ -391,11 +391,11 @@ final class TriggerBotModule extends Module {
                int followUp = lastChance ? 0 : this.doubleClickSampler.init();
                long holdNanos = followUp > 0 ? this.followUpDelayNanos() : this.swingTiming.init(hold.min(), hold.max());
                if (this.keyOutput.init(now, holdNanos)) {
-                  this.init_Z = true;
-                  this.flush_J = now;
-                  this.write_I = tick;
-                  this.update_I = followUp > 0 ? tick + followUp : -2147483648;
-                  this.sync_I = target.getId();
+                  this.awaitingSwing = true;
+                  this.lastClickNanos = now;
+                  this.lastClickTick = tick;
+                  this.followUpTick = followUp > 0 ? tick + followUp : -2147483648;
+                  this.followUpTargetId = target.getId();
                }
             }
          }
@@ -411,16 +411,16 @@ final class TriggerBotModule extends Module {
    }
 
    private void rollSwingOffset() {
-      this.init_Z = false;
+      this.awaitingSwing = false;
       ValueRange offset = ValueRange.parse(this.value("swing-offset"), SWING_OFFSET_DEFAULT);
       double hesitation = ValueRange.parse(this.value("hesitation"), HESITATION_DEFAULT).random(this.random) * 0.01;
-      this.flush_D = this.swingTiming.init(offset.min(), offset.max(), hesitation);
+      this.swingOffset = this.swingTiming.init(offset.min(), offset.max(), hesitation);
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (this.flush_I != -2147483648 && tick - this.flush_I <= 2) {
-         this.flush_D = -1.0 / 0.0;
+      if (this.followUpClickTick != -2147483648 && tick - this.followUpClickTick <= 2) {
+         this.swingOffset = -1.0 / 0.0;
       }
 
-      this.flush_I = -2147483648;
+      this.followUpClickTick = -2147483648;
    }
 
    private static double tickMillis() {
@@ -497,7 +497,7 @@ final class TriggerBotModule extends Module {
       return this.entityFilterIds;
    }
 
-   private void init_V(long now) {
+   private void resetState(long now) {
       this.patternEngine.init_V_J_DataUtil_NetHelper(now, this.keyOutput);
       this.keyOutput.release();
       this.read();
@@ -506,12 +506,12 @@ final class TriggerBotModule extends Module {
    private void read() {
       this.lastTargetId = -1;
       this.reactAt = 0L;
-      this.sync_J = -9223372036854775808L;
-      this.load_I = -1;
-      this.init_Z = false;
-      this.write_I = -2147483648;
-      this.update_I = -2147483648;
+      this.targetLostAt = -9223372036854775808L;
+      this.lastAttackTicker = -1;
+      this.awaitingSwing = false;
+      this.lastClickTick = -2147483648;
+      this.followUpTick = -2147483648;
       this.open = 0.0 / 0.0;
-      this.load_Z = false;
+      this.physicalPressed = false;
    }
 }

@@ -25,42 +25,42 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class AiBlazeArena implements AiOperation {
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final Object init_Obj = this.init_Minecraft.level;
-   private final Object load_Obj = this.init_Minecraft.getConnection();
-   private final Object read_Obj = this.init_Minecraft.player;
-   private final BlockPos init_BlockPos;
-   private final List<BlockPos> init_List;
-   private final BlockPos load_BlockPos;
-   private final List<BlockPos> load_List = new ArrayList<>();
-   private int init_I;
-   private int load_I;
-   private int read_I;
-   private AiOperation init_AiOperation;
-   private AiOperation load_AiOperation;
-   private final Set<BlockPos> init_Set = new HashSet<>();
-   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
-   private final AiFireControl init_K = new AiFireControl();
-   private final long init_J;
+   private final Minecraft mc = Minecraft.getInstance();
+   private final Object level = this.mc.level;
+   private final Object connection = this.mc.getConnection();
+   private final Object player = this.mc.player;
+   private final BlockPos spawner;
+   private final List<BlockPos> plannedCells;
+   private final BlockPos home;
+   private final List<BlockPos> stairStands = new ArrayList<>();
+   private int stairCellCount;
+   private int stairIndex;
+   private int stairsReached;
+   private AiOperation stairWalk;
+   private AiOperation faceApproach;
+   private final Set<BlockPos> approachedCells = new HashSet<>();
+   private final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
+   private final AiFireControl fireControl = new AiFireControl();
+   private final long deadline;
    private int write;
    private int update;
    private int sync;
    private int flush;
-   private final JsonArray init_JsonArray = new JsonArray();
-   private final JsonArray load_JsonArray = new JsonArray();
-   private boolean init_Z;
-   private boolean load_Z;
+   private final JsonArray placementOutcomes = new JsonArray();
+   private final JsonArray constructionWalks = new JsonArray();
+   private boolean placing;
+   private boolean cancelled;
 
    AiBlazeArena(BlockPos spawner, int seconds) {
-      this.init_BlockPos = spawner.immutable();
-      this.init_J = System.nanoTime() + Math.max(1, seconds) * 1000000000L;
-      this.load_BlockPos = this.init_Minecraft.player.blockPosition();
-      this.init_List = new ArrayList<>();
-      int rise = Math.max(0, Math.min(2, (int)Math.ceil(spawner.getY() + 2.05 - this.init_Minecraft.player.getEyeY())));
-      if (init_List_BlockPos(spawner)
+      this.spawner = spawner.immutable();
+      this.deadline = System.nanoTime() + Math.max(1, seconds) * 1000000000L;
+      this.home = this.mc.player.blockPosition();
+      this.plannedCells = new ArrayList<>();
+      int rise = Math.max(0, Math.min(2, (int)Math.ceil(spawner.getY() + 2.05 - this.mc.player.getEyeY())));
+      if (capCells(spawner)
          .stream()
          .filter(p -> p.getY() == spawner.getY() + 2)
-         .noneMatch(p -> this.init_Minecraft.level.getBlockState(p).canBeReplaced())) {
+         .noneMatch(p -> this.mc.level.getBlockState(p).canBeReplaced())) {
          rise = 0;
       }
 
@@ -71,15 +71,15 @@ final class AiBlazeArena implements AiOperation {
             boolean safe = true;
 
             for (int n = 1; n <= rise; n++) {
-               BlockPos base = this.load_BlockPos.relative(direction, n);
-               if (!AiTerrain.isLoaded(this.init_Minecraft.level, base)
-                  || !this.init_Minecraft.level.getBlockState(base.below()).isCollisionShapeFullBlock(this.init_Minecraft.level, base.below())) {
+               BlockPos base = this.home.relative(direction, n);
+               if (!AiTerrain.isLoaded(this.mc.level, base)
+                  || !this.mc.level.getBlockState(base.below()).isCollisionShapeFullBlock(this.mc.level, base.below())) {
                   safe = false;
                   break;
                }
 
                for (int y = 0; y <= n + 1; y++) {
-                  if (!this.init_Minecraft.level.getBlockState(base.above(y)).isAir() || !this.init_Minecraft.level.getFluidState(base.above(y)).isEmpty()) {
+                  if (!this.mc.level.getBlockState(base.above(y)).isAir() || !this.mc.level.getFluidState(base.above(y)).isEmpty()) {
                      safe = false;
                   }
                }
@@ -100,32 +100,32 @@ final class AiBlazeArena implements AiOperation {
 
             if (safe) {
                for (int n = columns.size() - 1; n >= 0; n--) {
-                  this.init_List.addAll(columns.get(n));
+                  this.plannedCells.addAll(columns.get(n));
                }
 
-               this.load_List.addAll(stands);
+               this.stairStands.addAll(stands);
                break;
             }
          }
       }
 
-      this.init_I = this.init_List.size();
-      this.init_List.addAll(init_List_BlockPos(spawner));
+      this.stairCellCount = this.plannedCells.size();
+      this.plannedCells.addAll(capCells(spawner));
 
       for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 20.0)) {
-         if (!(e.distanceToSqr(this.init_Minecraft.player) < 25.0) && this.init_Minecraft.player.hasLineOfSight(e)) {
-            Vec3 line = e.getEyePosition().subtract(this.init_Minecraft.player.getEyePosition()).normalize();
-            BlockPos screen = BlockPos.containing(this.init_Minecraft.player.position().add(line.x * 2.0, 0.0, line.z * 2.0));
-            if (!(screen.distSqr(spawner) < 4.0) && !screen.equals(this.init_Minecraft.player.blockPosition())) {
-               this.init_List.add(screen);
-               this.init_List.add(screen.above());
+         if (!(e.distanceToSqr(this.mc.player) < 25.0) && this.mc.player.hasLineOfSight(e)) {
+            Vec3 line = e.getEyePosition().subtract(this.mc.player.getEyePosition()).normalize();
+            BlockPos screen = BlockPos.containing(this.mc.player.position().add(line.x * 2.0, 0.0, line.z * 2.0));
+            if (!(screen.distSqr(spawner) < 4.0) && !screen.equals(this.mc.player.blockPosition())) {
+               this.plannedCells.add(screen);
+               this.plannedCells.add(screen.above());
                break;
             }
          }
       }
    }
 
-   static List<BlockPos> init_List_BlockPos(BlockPos spawner) {
+   static List<BlockPos> capCells(BlockPos spawner) {
       List<BlockPos> cells = new ArrayList<>();
       cells.add(spawner.above());
       cells.add(spawner.above(2));
@@ -145,85 +145,85 @@ final class AiBlazeArena implements AiOperation {
 
    @Override
    public AiOperation.Result tick() {
-      if (this.load_Z
-         || this.init_Minecraft.player != this.read_Obj
-         || this.init_Minecraft.level != this.init_Obj
-         || this.init_Minecraft.getConnection() != this.load_Obj) {
+      if (this.cancelled
+         || this.mc.player != this.player
+         || this.mc.level != this.level
+         || this.mc.getConnection() != this.connection) {
          return this.init(AiOperation.Status.CANCELLED, "Spawner setup world/player changed");
       }
 
-      if (!this.init_Minecraft.player.isAlive()) {
+      if (!this.mc.player.isAlive()) {
          return this.init(AiOperation.Status.FAILED, "Player died during spawner setup");
       }
 
       this.flush++;
-      if (System.nanoTime() > this.init_J && this.canInterruptNow()) {
+      if (System.nanoTime() > this.deadline && this.canInterruptNow()) {
          return this.init(AiOperation.Status.SUCCEEDED, "Spawner setup budget ended; partial geometry recorded");
       }
 
-      if (this.init_Minecraft.level.getBlockState(this.init_BlockPos).is(Blocks.SPAWNER)
-         && this.init_Minecraft.level.getBlockEntity(this.init_BlockPos) instanceof SpawnerBlockEntity be
+      if (this.mc.level.getBlockState(this.spawner).is(Blocks.SPAWNER)
+         && this.mc.level.getBlockEntity(this.spawner) instanceof SpawnerBlockEntity be
          && "minecraft:blaze".equals(AiWorldScan.spawnerEntityId(be))) {
-         if (!this.init_Z_7()
-            && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-            && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())) {
+         if (!this.placementNeedsReconciliation()
+            && (this.stairWalk == null || this.stairWalk.canInterruptNow())
+            && (this.faceApproach == null || this.faceApproach.canInterruptNow())) {
             for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 5.0)) {
-               if (e instanceof Blaze && AiDefense.load(this.init_Minecraft, e) || e.distanceToSqr(this.init_Minecraft.player) < 9.0) {
+               if (e instanceof Blaze && AiDefense.load(this.mc, e) || e.distanceToSqr(this.mc.player) < 9.0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "A blaze is in melee range; prioritize its kill over more construction");
                }
             }
 
-            if (AiCombat.nextIncoming(this.init_Minecraft) != null) {
+            if (AiCombat.nextIncoming(this.mc) != null) {
                return this.init(AiOperation.Status.SUCCEEDED, "Incoming shot; hand control back to combat");
             }
 
-            if (this.init_K.init(false, null)) {
-               return this.init_AiOperation_Result_Str_4(this.init_K.status());
+            if (this.fireControl.init(false, null)) {
+               return this.running(this.fireControl.status());
             }
          }
 
-         if (this.write >= this.init_List.size()) {
+         if (this.write >= this.plannedCells.size()) {
             return this.init(AiOperation.Status.SUCCEEDED, "Small spawner cap and observed shooter screen settled");
          }
 
-         if (this.load_AiOperation != null) {
-            AiOperation.Result r = this.load_AiOperation.tick();
+         if (this.faceApproach != null) {
+            AiOperation.Result r = this.faceApproach.tick();
             if (r.terminal()) {
-               this.load_JsonArray
+               this.constructionWalks
                   .add(
                      AiJson.objectOf(
                         "kind",
                         "placement-face",
                         "cell",
-                        this.init_List.get(this.write).toShortString(),
+                        this.plannedCells.get(this.write).toShortString(),
                         "result",
                         r.status(),
                         "message",
                         r.message(),
                         "body",
-                        this.init_Minecraft.player.position().toString()
+                        this.mc.player.position().toString()
                      )
                   );
-               this.load_AiOperation.cancel();
-               this.load_AiOperation = null;
+               this.faceApproach.cancel();
+               this.faceApproach = null;
                if (r.status() != AiOperation.Status.SUCCEEDED) {
-                  this.init_JsonArray
-                     .add(AiJson.objectOf("cell", this.init_List.get(this.write).toShortString(), "result", "kept", "reason", r.message()));
+                  this.placementOutcomes
+                     .add(AiJson.objectOf("cell", this.plannedCells.get(this.write).toShortString(), "result", "kept", "reason", r.message()));
                   this.sync++;
                   this.write++;
                }
             }
 
-            return this.init_AiOperation_Result_Str_4("Reach the roof's actual support side over existing floor");
-         } else if (this.load_I < this.load_List.size() && this.write >= this.init_I) {
-            BlockPos stand = this.load_List.get(this.load_I);
-            if (!this.init_Minecraft.level.getBlockState(stand.below()).isCollisionShapeFullBlock(this.init_Minecraft.level, stand.below())) {
-               this.load_I = this.load_List.size();
-               return this.init_AiOperation_Result_Str_4("Construction step unavailable; keep reachable existing cover");
+            return this.running("Reach the roof's actual support side over existing floor");
+         } else if (this.stairIndex < this.stairStands.size() && this.write >= this.stairCellCount) {
+            BlockPos stand = this.stairStands.get(this.stairIndex);
+            if (!this.mc.level.getBlockState(stand.below()).isCollisionShapeFullBlock(this.mc.level, stand.below())) {
+               this.stairIndex = this.stairStands.size();
+               return this.running("Construction step unavailable; keep reachable existing cover");
             }
 
-            if (this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.travelToCompat(
+            if (this.stairWalk == null) {
+               this.stairWalk = AiGoto.travelToCompat(
                   stand,
                   0.6,
                   false,
@@ -238,61 +238,61 @@ final class AiBlazeArena implements AiOperation {
                );
             }
 
-            AiOperation.Result r = this.init_AiOperation.tick();
+            AiOperation.Result r = this.stairWalk.tick();
             if (r.terminal()) {
-               this.load_JsonArray
+               this.constructionWalks
                   .add(
                      AiJson.objectOf(
-                        "stand", stand.toShortString(), "result", r.status(), "message", r.message(), "body", this.init_Minecraft.player.position().toString()
+                        "stand", stand.toShortString(), "result", r.status(), "message", r.message(), "body", this.mc.player.position().toString()
                      )
                   );
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+               this.stairWalk.cancel();
+               this.stairWalk = null;
                if (r.status() == AiOperation.Status.SUCCEEDED) {
-                  this.load_I++;
-                  this.read_I++;
+                  this.stairIndex++;
+                  this.stairsReached++;
                } else {
-                  this.load_I = this.load_List.size();
+                  this.stairIndex = this.stairStands.size();
                }
             }
 
-            return this.init_AiOperation_Result_Str_4("Walk onto the confirmed construction stair to reach roof faces");
+            return this.running("Walk onto the confirmed construction stair to reach roof faces");
          } else {
-            BlockPos cell = this.init_List.get(this.write);
-            if (!this.init_Z) {
-               String refusal = this.init_Str_BlockPos_2(cell);
+            BlockPos cell = this.plannedCells.get(this.write);
+            if (!this.placing) {
+               String refusal = this.keepReason(cell);
                if (!refusal.isEmpty() && !refusal.equals("outside current placement reach")) {
-                  this.init_JsonArray.add(AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", refusal));
+                  this.placementOutcomes.add(AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", refusal));
                   this.sync++;
                   this.write++;
-                  return this.init_AiOperation_Result_Str_4("Reusing existing cover or preserving the open exit");
+                  return this.running("Reusing existing cover or preserving the open exit");
                }
 
-               Item material = this.init_Item();
+               Item material = this.expendableBlock();
                if (material == null) {
                   return this.init(AiOperation.Status.SUCCEEDED, "No expendable nonflammable blocks; use existing fortress cover");
                }
 
                if (!autismclient.ai.engine.AiPlacer.canPlaceFromHere(cell, material)) {
-                  if (this.write >= this.init_I && this.init_Set.add(cell)) {
-                     this.load_AiOperation = AiGoto.approachToPlaceCompat(cell, material, 2);
-                     return this.init_AiOperation_Result_Str_4("Find a visible support face without more scaffolding");
+                  if (this.write >= this.stairCellCount && this.approachedCells.add(cell)) {
+                     this.faceApproach = AiGoto.approachToPlaceCompat(cell, material, 2);
+                     return this.running("Find a visible support face without more scaffolding");
                   }
 
-                  this.init_JsonArray
+                  this.placementOutcomes
                      .add(
                         AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", "no reachable support face after bounded approach")
                      );
                   this.sync++;
                   this.write++;
-                  return this.init_AiOperation_Result_Str_4("Keep a partial cap where no legal support side is reachable");
+                  return this.running("Keep a partial cap where no legal support side is reachable");
                }
 
-               this.init_DataPipe.start(cell, material);
-               this.init_Z = true;
+               this.placer.start(cell, material);
+               this.placing = true;
             }
 
-            autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+            autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
             if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.update++;
@@ -300,7 +300,7 @@ final class AiBlazeArena implements AiOperation {
                   this.sync++;
                }
 
-               this.init_JsonArray
+               this.placementOutcomes
                   .add(
                      AiJson.objectOf(
                         "cell",
@@ -308,65 +308,65 @@ final class AiBlazeArena implements AiOperation {
                         "result",
                         status,
                         "reason",
-                        status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.init_DataPipe.failureReason() : "server block change confirmed",
+                        status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.placer.failureReason() : "server block change confirmed",
                         "body",
-                        this.init_Minecraft.player.position().toString(),
+                        this.mc.player.position().toString(),
                         "eyeY",
-                        this.init_Minecraft.player.getEyeY(),
+                        this.mc.player.getEyeY(),
                         "onGround",
-                        this.init_Minecraft.player.onGround(),
+                        this.mc.player.onGround(),
                         "velocity",
-                        this.init_Minecraft.player.getDeltaMovement().toString()
+                        this.mc.player.getDeltaMovement().toString()
                      )
                   );
-               this.init_DataPipe.reset();
-               this.init_Z = false;
+               this.placer.reset();
+               this.placing = false;
                this.write++;
             }
 
-            return this.init_AiOperation_Result_Str_4("Set minimal spawner escape cap / fireball screen (" + this.update + " blocks confirmed)");
+            return this.running("Set minimal spawner escape cap / fireball screen (" + this.update + " blocks confirmed)");
          }
       } else {
          return this.init(AiOperation.Status.FAILED, "Observed blaze spawner no longer present");
       }
    }
 
-   private String init_Str_BlockPos_2(BlockPos cell) {
-      if (!AiTerrain.isLoaded(this.init_Minecraft.level, cell)) {
+   private String keepReason(BlockPos cell) {
+      if (!AiTerrain.isLoaded(this.mc.level, cell)) {
          return "unobserved cell";
       }
 
-      if (!this.init_Minecraft.level.getBlockState(cell).canBeReplaced()) {
+      if (!this.mc.level.getBlockState(cell).canBeReplaced()) {
          return "existing block retained";
       }
 
-      if (!this.init_Minecraft.level.getFluidState(cell).isEmpty()) {
+      if (!this.mc.level.getFluidState(cell).isEmpty()) {
          return "fluid preserved";
       }
 
-      if (new AABB(cell).inflate(0.15).intersects(this.init_Minecraft.player.getBoundingBox())) {
+      if (new AABB(cell).inflate(0.15).intersects(this.mc.player.getBoundingBox())) {
          return "body/exit clearance";
       }
 
-      if (!AiCombat.isSafeStep(this.init_Minecraft, this.init_Minecraft.player.blockPosition())) {
+      if (!AiCombat.isSafeStep(this.mc, this.mc.player.blockPosition())) {
          return "unsafe current footing";
       }
 
-      if (this.init_Minecraft.player.getEyePosition().distanceTo(Vec3.atCenterOf(cell)) > this.init_Minecraft.player.blockInteractionRange() - 0.2) {
+      if (this.mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(cell)) > this.mc.player.blockInteractionRange() - 0.2) {
          return "outside current placement reach";
       }
 
-      if (!this.init_Minecraft.level.getEntitiesOfClass(LivingEntity.class, new AABB(cell)).isEmpty()) {
+      if (!this.mc.level.getEntitiesOfClass(LivingEntity.class, new AABB(cell)).isEmpty()) {
          return "living entity occupies cell";
       }
 
-      if (cell.getY() < this.init_BlockPos.getY() + 1
-         && new AABB(cell).clip(this.init_Minecraft.player.getEyePosition(), Vec3.atCenterOf(this.init_BlockPos)).isPresent()) {
+      if (cell.getY() < this.spawner.getY() + 1
+         && new AABB(cell).clip(this.mc.player.getEyePosition(), Vec3.atCenterOf(this.spawner)).isPresent()) {
          return "melee lane preserved";
       }
 
       for (Direction d : Direction.values()) {
-         if (!this.init_Minecraft.level.getBlockState(cell.relative(d)).getCollisionShape(this.init_Minecraft.level, cell.relative(d)).isEmpty()) {
+         if (!this.mc.level.getBlockState(cell.relative(d)).getCollisionShape(this.mc.level, cell.relative(d)).isEmpty()) {
             return "";
          }
       }
@@ -374,13 +374,13 @@ final class AiBlazeArena implements AiOperation {
       return "no existing support face";
    }
 
-   private Item init_Item() {
+   private Item expendableBlock() {
       if (AiRunResources.isCampaignActive() && AiRunResources.spareBuildingBlockCount() <= 32) {
          return null;
       }
 
       for (int i = 0; i < 36; i++) {
-         ItemStack stack = this.init_Minecraft.player.getInventory().getItem(i);
+         ItemStack stack = this.mc.player.getInventory().getItem(i);
          if (AiItems.isPlainItem(stack) && stack.getItem() instanceof BlockItem block) {
             Block b = block.getBlock();
             if (b == Blocks.COBBLESTONE || b == Blocks.COBBLED_DEEPSLATE || b == Blocks.NETHERRACK || b == Blocks.NETHER_BRICKS || b == Blocks.STONE) {
@@ -392,16 +392,16 @@ final class AiBlazeArena implements AiOperation {
       return null;
    }
 
-   private JsonObject init_JsonObject_16() {
+   private JsonObject progressData() {
       return AiJson.objectOf(
          "spawner",
-         this.init_BlockPos.toShortString(),
+         this.spawner.toShortString(),
          "blocksConfirmed",
          this.update,
          "skipped",
          this.sync,
          "planned",
-         this.init_List.size(),
+         this.plannedCells.size(),
          "visited",
          this.write,
          "ticks",
@@ -409,61 +409,61 @@ final class AiBlazeArena implements AiOperation {
          "completeEnclosure",
          false,
          "placementOutcomes",
-         this.init_JsonArray,
+         this.placementOutcomes,
          "constructionStairs",
-         this.load_List.size(),
+         this.stairStands.size(),
          "constructionStairsReached",
-         this.read_I,
+         this.stairsReached,
          "constructionWalks",
-         this.load_JsonArray,
+         this.constructionWalks,
          "home",
-         this.load_BlockPos.toShortString(),
+         this.home.toShortString(),
          "purpose",
          "limit hover/escape locally and screen observed fireball lane"
       );
    }
 
-   private AiOperation.Result init_AiOperation_Result_Str_4(String m) {
-      return AiGameOperations.result(AiOperation.Status.RUNNING, m, this.init_JsonObject_16());
+   private AiOperation.Result running(String m) {
+      return AiGameOperations.result(AiOperation.Status.RUNNING, m, this.progressData());
    }
 
    private AiOperation.Result init(AiOperation.Status s, String m) {
-      JsonObject d = this.init_JsonObject_16();
+      JsonObject d = this.progressData();
       this.cancel();
       return AiGameOperations.result(s, m, d);
    }
 
-   private boolean init_Z_7() {
-      return this.init_Z && this.init_DataPipe.needsReconciliation();
+   private boolean placementNeedsReconciliation() {
+      return this.placing && this.placer.needsReconciliation();
    }
 
    @Override
    public boolean canInterruptNow() {
-      return !this.init_Z_7()
-         && this.init_K.canInterrupt()
-         && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-         && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
+      return !this.placementNeedsReconciliation()
+         && this.fireControl.canInterrupt()
+         && (this.stairWalk == null || this.stairWalk.canInterruptNow())
+         && (this.faceApproach == null || this.faceApproach.canInterruptNow());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_Z_7()
-         || this.init_K.read()
-         || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
+      return this.placementNeedsReconciliation()
+         || this.fireControl.read()
+         || this.stairWalk != null && this.stairWalk.requiresReconciliationAfterEmergency()
+         || this.faceApproach != null && this.faceApproach.requiresReconciliationAfterEmergency();
    }
 
    @Override
    public void cancel() {
-      this.load_Z = true;
-      this.init_DataPipe.reset();
-      this.init_K.reset();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
+      this.cancelled = true;
+      this.placer.reset();
+      this.fireControl.reset();
+      if (this.stairWalk != null) {
+         this.stairWalk.cancel();
       }
 
-      if (this.load_AiOperation != null) {
-         this.load_AiOperation.cancel();
+      if (this.faceApproach != null) {
+         this.faceApproach.cancel();
       }
    }
 }

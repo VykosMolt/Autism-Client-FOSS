@@ -13,40 +13,40 @@ import net.minecraft.world.level.GameType;
 
 final class AiPrintRepeat implements AiOperation {
    private static final int push = 32;
-   final Minecraft init_Minecraft = Minecraft.getInstance();
-   final AiBuilder.Blueprint init_TableIndex_DataUti;
-   final AiBuilder.BuildOptions init_TableIndex_ConfigS;
-   final boolean init_Z;
-   final long init_J;
-   int init_I;
-   int load_I;
-   int read_I;
+   final Minecraft mc = Minecraft.getInstance();
+   final AiBuilder.Blueprint base;
+   final AiBuilder.BuildOptions options;
+   final boolean verify;
+   final long deadline;
+   int copiesBuilt;
+   int placedTotal;
+   int skippedTotal;
    int write;
-   final JsonArray init_JsonArray = new JsonArray();
-   AiOperation init_AiOperation;
-   boolean load_Z;
-   final AiPreparationReceipt init_bb = new AiPreparationReceipt();
-   AiOperation.Result init_AiOperation_Result;
-   boolean read_Z;
-   final Object init_Obj;
-   final Object load_Obj;
-   List<autismclient.ai.print.PrintTarget> init_List;
-   AiSchematicMachinePlan.MachineSpec init_bV_StreamUtil;
-   autismclient.ai.print.PrintCore.ao init_UiHelper_ao;
-   final Provider init_HolderLookup_Provi;
-   BlockPos init_BlockPos;
-   AiPrintPreparation.Inner_SyncManager init_bg_SyncManager;
-   Future<AiPrintRepeat.Inner_DataUtil> init_Future;
-   AiPrintRepeat.Inner_DataUtil init_bh_DataUtil;
-   AiPrintPreparation.Inner_CachePool init_bg_CachePool;
-   AiPrintPreparation.Inner_NetHelper init_bg_NetHelper;
+   final JsonArray failures = new JsonArray();
+   AiOperation copyOp;
+   boolean copyTicked;
+   final AiPreparationReceipt receipt = new AiPreparationReceipt();
+   AiOperation.Result finalResult;
+   boolean cancelled;
+   final Object level;
+   final Object player;
+   List<autismclient.ai.print.PrintTarget> firstTargets;
+   AiSchematicMachinePlan.MachineSpec firstActions;
+   autismclient.ai.print.PrintCore.ao firstGeometry;
+   final Provider registries;
+   BlockPos knownStock;
+   AiPrintPreparation.Inner_SyncManager prepareWorker;
+   Future<AiPrintRepeat.Inner_DataUtil> pendingCopy;
+   AiPrintRepeat.Inner_DataUtil preparedCopy;
+   AiPrintPreparation.Inner_CachePool materialCheck;
+   AiPrintPreparation.Inner_NetHelper stockSearch;
    int update;
    int sync;
    int flush;
    int close;
    int open;
    int poll;
-   final JsonArray load_JsonArray = new JsonArray();
+   final JsonArray skippedContents = new JsonArray();
 
    AiPrintRepeat(
       AiBuilder.Blueprint base,
@@ -58,92 +58,92 @@ final class AiPrintRepeat implements AiOperation {
       AiSchematicMachinePlan.MachineSpec firstActions,
       autismclient.ai.print.PrintCore.ao firstGeometry
    ) {
-      this.init_TableIndex_DataUti = base;
-      this.init_TableIndex_ConfigS = power;
-      this.init_Z = verify;
-      this.init_J = timeoutSeconds > 0 ? System.nanoTime() + timeoutSeconds * 1000000000L : 9223372036854775807L;
-      this.init_List = firstTargets;
-      this.init_bV_StreamUtil = firstActions;
-      this.init_UiHelper_ao = firstGeometry;
-      this.init_HolderLookup_Provi = this.init_Minecraft.level.registryAccess();
-      this.init_BlockPos = knownStock;
-      this.init_Obj = this.init_Minecraft.level;
-      this.load_Obj = this.init_Minecraft.player;
+      this.base = base;
+      this.options = power;
+      this.verify = verify;
+      this.deadline = timeoutSeconds > 0 ? System.nanoTime() + timeoutSeconds * 1000000000L : 9223372036854775807L;
+      this.firstTargets = firstTargets;
+      this.firstActions = firstActions;
+      this.firstGeometry = firstGeometry;
+      this.registries = this.mc.level.registryAccess();
+      this.knownStock = knownStock;
+      this.level = this.mc.level;
+      this.player = this.mc.player;
    }
 
    @Override
    public AiOperation.Result tick() {
-      if (this.init_AiOperation_Result != null) {
-         return this.init_AiOperation_Result;
+      if (this.finalResult != null) {
+         return this.finalResult;
       }
 
-      if (!this.read_Z
-         && this.init_Minecraft.player != null
-         && this.init_Minecraft.level != null
-         && this.init_Minecraft.level == this.init_Obj
-         && this.init_Minecraft.player == this.load_Obj) {
-         if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str_9(
-               AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+      if (!this.cancelled
+         && this.mc.player != null
+         && this.mc.level != null
+         && this.mc.level == this.level
+         && this.mc.player == this.player) {
+         if (this.mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+            return this.finish(
+               AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
             );
          }
 
-         if (System.nanoTime() > this.init_J) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status.TIMED_OUT, "Build deadline reached");
+         if (System.nanoTime() > this.deadline) {
+            return this.finish(AiOperation.Status.TIMED_OUT, "Build deadline reached");
          }
 
-         if (this.init_AiOperation != null) {
-            AiOperation.Result r = this.init_bb.tickChild(this.init_AiOperation);
-            this.load_Z = true;
+         if (this.copyOp != null) {
+            AiOperation.Result r = this.receipt.tickChild(this.copyOp);
+            this.copyTicked = true;
             if (!r.terminal()) {
-               return this.init("Building copy " + (this.init_I + 1) + " of " + this.init_Str_16());
+               return this.init("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
             }
 
-            this.init_V_24();
+            this.collectCopyResult();
             if (r.status() != AiOperation.Status.SUCCEEDED) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str_9(r.status(), r.message());
+               return this.finish(r.status(), r.message());
             }
 
-            this.init_I++;
+            this.copiesBuilt++;
          }
 
-         AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
-         return repeat.count() >= 0 && this.init_I > repeat.count()
-            ? this.init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status.SUCCEEDED, "Built " + this.init_I + " copies")
-            : this.init_AiOperation_Result_27();
+         AiBuilder.RepeatSpec repeat = this.options.repeat();
+         return repeat.count() >= 0 && this.copiesBuilt > repeat.count()
+            ? this.finish(AiOperation.Status.SUCCEEDED, "Built " + this.copiesBuilt + " copies")
+            : this.startNextCopy();
       } else {
-         return this.init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status.CANCELLED, "Build cancelled or world changed");
+         return this.finish(AiOperation.Status.CANCELLED, "Build cancelled or world changed");
       }
    }
 
-   private AiOperation.Result init_AiOperation_Result_27() {
+   private AiOperation.Result startNextCopy() {
       AiBuilder.Blueprint shifted = new AiBuilder.Blueprint(
-         this.init_TableIndex_DataUti
+         this.base
             .origin()
             .offset(
-               this.init_TableIndex_ConfigS.repeat().dx() * this.init_I,
-               this.init_TableIndex_ConfigS.repeat().dy() * this.init_I,
-               this.init_TableIndex_ConfigS.repeat().dz() * this.init_I
+               this.options.repeat().dx() * this.copiesBuilt,
+               this.options.repeat().dy() * this.copiesBuilt,
+               this.options.repeat().dz() * this.copiesBuilt
             ),
-         this.init_TableIndex_DataUti.cells()
+         this.base.cells()
       );
-      int remaining = this.init_J == 9223372036854775807L ? 0 : (int)Math.max(1L, Math.min(2147483647L, (this.init_J - System.nanoTime()) / 1000000000L));
-      if (this.init_I == 0 && this.init_List != null) {
-         AiPrintOp operation = new AiPrintOp(shifted, remaining, this.init_TableIndex_ConfigS, this.init_List, this.init_bV_StreamUtil, this.init_UiHelper_ao);
-         if (this.init_BlockPos != null) {
-            operation.notifyBlockChanged(this.init_BlockPos);
+      int remaining = this.deadline == 9223372036854775807L ? 0 : (int)Math.max(1L, Math.min(2147483647L, (this.deadline - System.nanoTime()) / 1000000000L));
+      if (this.copiesBuilt == 0 && this.firstTargets != null) {
+         AiPrintOp operation = new AiPrintOp(shifted, remaining, this.options, this.firstTargets, this.firstActions, this.firstGeometry);
+         if (this.knownStock != null) {
+            operation.notifyBlockChanged(this.knownStock);
          }
 
-         this.init_List = null;
-         this.init_bV_StreamUtil = null;
-         this.init_UiHelper_ao = null;
-         this.init_AiOperation = operation;
-         return this.init("Building copy 1 of " + this.init_Str_16());
+         this.firstTargets = null;
+         this.firstActions = null;
+         this.firstGeometry = null;
+         this.copyOp = operation;
+         return this.init("Building copy 1 of " + this.copyCountLabel());
       } else {
-         if (this.init_bh_DataUtil == null) {
-            if (this.init_Future == null) {
-               this.init_bg_SyncManager = new AiPrintPreparation.Inner_SyncManager();
-               this.init_Future = this.init_bg_SyncManager
+         if (this.preparedCopy == null) {
+            if (this.pendingCopy == null) {
+               this.prepareWorker = new AiPrintPreparation.Inner_SyncManager();
+               this.pendingCopy = this.prepareWorker
                   .init(
                      () -> {
                         List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
@@ -152,118 +152,118 @@ final class AiPrintRepeat implements AiOperation {
                            AiBuilder.stripPoweredLevers(shifted),
                            targets,
                            AiPrintPreparation.Inner_JsonUtil.of(shifted),
-                           this.init_TableIndex_ConfigS
+                           this.options
                               .machine()
-                              .machineSpec(shifted.origin(), this.init_HolderLookup_Provi),
+                              .machineSpec(shifted.origin(), this.registries),
                            autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled)
                         );
                      }
                   );
-               return this.init("Preparing copy " + (this.init_I + 1));
+               return this.init("Preparing copy " + (this.copiesBuilt + 1));
             }
 
-            if (!this.init_Future.isDone()) {
-               return this.init("Preparing copy " + (this.init_I + 1));
+            if (!this.pendingCopy.isDone()) {
+               return this.init("Preparing copy " + (this.copiesBuilt + 1));
             }
 
             try {
-               this.init_bh_DataUtil = this.init_Future.get();
+               this.preparedCopy = this.pendingCopy.get();
             } catch (Exception failure) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str_9(
+               return this.finish(
                   AiOperation.Status.FAILED, "Could not prepare schematic copy: " + failure.getMessage()
                );
             } finally {
-               if (this.init_bg_SyncManager != null) {
-                  this.init_bg_SyncManager.close();
+               if (this.prepareWorker != null) {
+                  this.prepareWorker.close();
                }
 
-               this.init_bg_SyncManager = null;
-               this.init_Future = null;
+               this.prepareWorker = null;
+               this.pendingCopy = null;
             }
 
-            this.init_bg_CachePool = new AiPrintPreparation.Inner_CachePool(this.init_bh_DataUtil.stockPlan(), this.init_bh_DataUtil.source().keys());
+            this.materialCheck = new AiPrintPreparation.Inner_CachePool(this.preparedCopy.stockPlan(), this.preparedCopy.source().keys());
          }
 
-         boolean creative = this.init_Minecraft.gameMode != null
-            && this.init_Minecraft.gameMode.getPlayerMode() == GameType.CREATIVE
-            && this.init_Minecraft.player.getAbilities().instabuild;
+         boolean creative = this.mc.gameMode != null
+            && this.mc.gameMode.getPlayerMode() == GameType.CREATIVE
+            && this.mc.player.getAbilities().instabuild;
          if (!creative) {
-            if (!this.init_bg_CachePool.isDone()) {
-               this.init_bg_CachePool.init(4096, System.nanoTime() + 2000000L, this.init_Minecraft.level);
-               return this.init("Checking materials for copy " + (this.init_I + 1));
+            if (!this.materialCheck.isDone()) {
+               this.materialCheck.init(4096, System.nanoTime() + 2000000L, this.mc.level);
+               return this.init("Checking materials for copy " + (this.copiesBuilt + 1));
             }
 
             JsonObject missing = AiBuilder.missingMaterialsForContainer(
-               this.init_bg_CachePool.requirements(), this.init_Minecraft.player.getInventory(), this.init_TableIndex_ConfigS.shulkerStock()
+               this.materialCheck.requirements(), this.mc.player.getInventory(), this.options.shulkerStock()
             );
             if (!missing.isEmpty()) {
-               if (this.init_TableIndex_ConfigS.shulkerStock()) {
-                  if (this.init_bg_NetHelper == null) {
-                     this.init_bg_NetHelper = new AiPrintPreparation.Inner_NetHelper(
-                        this.init_Minecraft.player.blockPosition(), shifted.origin(), this.init_bh_DataUtil.source()
+               if (this.options.shulkerStock()) {
+                  if (this.stockSearch == null) {
+                     this.stockSearch = new AiPrintPreparation.Inner_NetHelper(
+                        this.mc.player.blockPosition(), shifted.origin(), this.preparedCopy.source()
                      );
                   }
 
-                  this.init_bg_NetHelper
-                     .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
-                  if (!this.init_bg_NetHelper.done && !this.init_bg_NetHelper.isDone()) {
-                     return this.init("Checking stock for copy " + (this.init_I + 1));
+                  this.stockSearch
+                     .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.mc.level, pos), this.mc.level::getBlockState);
+                  if (!this.stockSearch.done && !this.stockSearch.isDone()) {
+                     return this.init("Checking stock for copy " + (this.copiesBuilt + 1));
                   }
 
-                  if (this.init_bg_NetHelper.done) {
-                     this.init_BlockPos = this.init_bg_NetHelper.stockPos;
+                  if (this.stockSearch.done) {
+                     this.knownStock = this.stockSearch.stockPos;
                   }
                }
 
-               if (this.init_bg_NetHelper == null || !this.init_bg_NetHelper.done) {
-                  JsonObject data = this.init_JsonObject_44();
+               if (this.stockSearch == null || !this.stockSearch.done) {
+                  JsonObject data = this.progressData();
                   data.add("missing", missing);
-                  return this.init_I > 0 && this.init_TableIndex_ConfigS.repeat().count() < 0
-                     ? this.init(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.init_I + " copies", data)
-                     : this.init(AiOperation.Status.FAILED, "Missing placement materials for copy " + (this.init_I + 1), data);
+                  return this.copiesBuilt > 0 && this.options.repeat().count() < 0
+                     ? this.init(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.copiesBuilt + " copies", data)
+                     : this.init(AiOperation.Status.FAILED, "Missing placement materials for copy " + (this.copiesBuilt + 1), data);
                }
             }
          }
 
          AiPrintOp operation = new AiPrintOp(
-            this.init_bh_DataUtil.blueprint(),
+            this.preparedCopy.blueprint(),
             remaining,
-            this.init_TableIndex_ConfigS,
-            this.init_bh_DataUtil.targets(),
-            this.init_bh_DataUtil.actions(),
-            this.init_bh_DataUtil.geometry()
+            this.options,
+            this.preparedCopy.targets(),
+            this.preparedCopy.actions(),
+            this.preparedCopy.geometry()
          );
-         if (this.init_BlockPos != null) {
-            operation.notifyBlockChanged(this.init_BlockPos);
+         if (this.knownStock != null) {
+            operation.notifyBlockChanged(this.knownStock);
          }
 
-         this.init_AiOperation = operation;
-         this.init_bh_DataUtil = null;
-         this.init_bg_CachePool = null;
-         this.init_bg_NetHelper = null;
-         return this.init("Building copy " + (this.init_I + 1) + " of " + this.init_Str_16());
+         this.copyOp = operation;
+         this.preparedCopy = null;
+         this.materialCheck = null;
+         this.stockSearch = null;
+         return this.init("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
       }
    }
 
-   String init_Str_16() {
-      return this.init_TableIndex_ConfigS.repeat().count() < 0 ? "many" : String.valueOf(this.init_TableIndex_ConfigS.repeat().count() + 1);
+   String copyCountLabel() {
+      return this.options.repeat().count() < 0 ? "many" : String.valueOf(this.options.repeat().count() + 1);
    }
 
-   JsonObject init_JsonObject_44() {
-      AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
+   JsonObject progressData() {
+      AiBuilder.RepeatSpec repeat = this.options.repeat();
       return AiJson.objectOf(
          "copies",
-         this.init_I,
+         this.copiesBuilt,
          "placed",
-         this.load_I,
+         this.placedTotal,
          "skipped",
-         this.read_I,
+         this.skippedTotal,
          "failed",
-         this.init_JsonArray,
+         this.failures,
          "failedTotal",
          this.write,
          "cells",
-         this.init_TableIndex_DataUti.cells().size(),
+         this.base.cells().size(),
          "containersFilled",
          this.update,
          "containersSkipped",
@@ -275,40 +275,40 @@ final class AiPrintRepeat implements AiOperation {
          "machineComplete",
          false,
          "skippedContents",
-         this.load_JsonArray,
+         this.skippedContents,
          "repeat",
          AiJson.objectOf("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
       );
    }
 
    AiOperation.Result init(String message) {
-      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_44());
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressData());
    }
 
-   AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status status, String message) {
-      if (this.init_AiOperation_Result != null) {
-         return this.init_AiOperation_Result;
+   AiOperation.Result finish(AiOperation.Status status, String message) {
+      if (this.finalResult != null) {
+         return this.finalResult;
       }
 
       this.cancel();
-      return this.init(status, message, this.init_JsonObject_44());
+      return this.init(status, message, this.progressData());
    }
 
    AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
-      if (this.init_AiOperation_Result != null) {
-         return this.init_AiOperation_Result;
+      if (this.finalResult != null) {
+         return this.finalResult;
       }
 
       this.cancel();
-      boolean pending = this.init_bb.requiresReconciliation(null);
+      boolean pending = this.receipt.requiresReconciliation(null);
       data.addProperty("clocksVerified", this.open);
       data.addProperty("clockItemsVerified", this.poll);
       data.addProperty("machineComplete", status == AiOperation.Status.SUCCEEDED && this.sync == 0 && !pending);
-      this.init_AiOperation_Result = init_AiOperation_Result_AiOperation_Result_bb(AiGameOperations.result(status, message, data), this.init_bb);
-      return this.init_AiOperation_Result;
+      this.finalResult = withReceiptEvidence(AiGameOperations.result(status, message, data), this.receipt);
+      return this.finalResult;
    }
 
-   static AiOperation.Result init_AiOperation_Result_AiOperation_Result_bb(AiOperation.Result result, AiPreparationReceipt receipt) {
+   static AiOperation.Result withReceiptEvidence(AiOperation.Result result, AiPreparationReceipt receipt) {
       boolean pending = receipt.requiresReconciliation(null);
       JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
       if (receipt.lastChildResult() != null) {
@@ -330,19 +330,19 @@ final class AiPrintRepeat implements AiOperation {
       return receipt.finalizeResult(new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure()), pending);
    }
 
-   static void init_V_bb_AiOperation(AiPreparationReceipt receipt, AiOperation child) {
+   static void releaseChild(AiPreparationReceipt receipt, AiOperation child) {
       receipt.cancelChild(child);
       if (child != null) {
          receipt.markReconciliationPending(child.requiresReconciliationAfterEmergency());
       }
    }
 
-   private void init_V_24() {
-      if (this.init_AiOperation != null) {
-         if (this.load_Z && this.init_bb.lastChildResult() != null) {
-            JsonObject legData = AiRunResources.parseEvidenceJson(this.init_bb.lastChildResult().dataJson());
-            this.load_I = this.load_I + AiJson.getInt(legData, "placed", 0);
-            this.read_I = this.read_I + AiJson.getInt(legData, "skipped", 0);
+   private void collectCopyResult() {
+      if (this.copyOp != null) {
+         if (this.copyTicked && this.receipt.lastChildResult() != null) {
+            JsonObject legData = AiRunResources.parseEvidenceJson(this.receipt.lastChildResult().dataJson());
+            this.placedTotal = this.placedTotal + AiJson.getInt(legData, "placed", 0);
+            this.skippedTotal = this.skippedTotal + AiJson.getInt(legData, "skipped", 0);
             this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
             this.update = this.update + AiJson.getInt(legData, "containersFilled", 0);
             this.sync = this.sync + AiJson.getInt(legData, "containersSkipped", 0);
@@ -352,58 +352,58 @@ final class AiPrintRepeat implements AiOperation {
             this.poll = this.poll + AiJson.getInt(legData, "clockItemsVerified", 0);
             if (legData.has("skippedContents")) {
                for (JsonElement omission : legData.getAsJsonArray("skippedContents")) {
-                  if (this.load_JsonArray.size() >= 32) {
+                  if (this.skippedContents.size() >= 32) {
                      break;
                   }
 
-                  this.load_JsonArray.add(omission);
+                  this.skippedContents.add(omission);
                }
             }
 
             if (legData.has("failed")) {
                for (JsonElement failure : legData.getAsJsonArray("failed")) {
-                  if (this.init_JsonArray.size() >= 32) {
+                  if (this.failures.size() >= 32) {
                      break;
                   }
 
-                  this.init_JsonArray.add(failure);
+                  this.failures.add(failure);
                }
             }
          }
 
-         this.load_Z = false;
-         init_V_bb_AiOperation(this.init_bb, this.init_AiOperation);
-         this.init_AiOperation = null;
+         this.copyTicked = false;
+         releaseChild(this.receipt, this.copyOp);
+         this.copyOp = null;
       }
    }
 
    @Override
    public boolean canInterruptNow() {
-      return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+      return !this.receipt.requiresReconciliation(this.copyOp) && (this.copyOp == null || this.copyOp.canInterruptNow());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_bb.requiresReconciliation(this.init_AiOperation);
+      return this.receipt.requiresReconciliation(this.copyOp);
    }
 
    @Override
    public void cancel() {
-      if (!this.read_Z) {
-         this.read_Z = true;
-         if (this.init_bg_SyncManager != null) {
-            this.init_bg_SyncManager.close();
-            this.init_bg_SyncManager = null;
+      if (!this.cancelled) {
+         this.cancelled = true;
+         if (this.prepareWorker != null) {
+            this.prepareWorker.close();
+            this.prepareWorker = null;
          }
 
-         this.init_Future = null;
-         this.init_bh_DataUtil = null;
-         this.init_bg_CachePool = null;
-         this.init_bg_NetHelper = null;
-         this.init_List = null;
-         this.init_bV_StreamUtil = null;
-         this.init_UiHelper_ao = null;
-         this.init_V_24();
+         this.pendingCopy = null;
+         this.preparedCopy = null;
+         this.materialCheck = null;
+         this.stockSearch = null;
+         this.firstTargets = null;
+         this.firstActions = null;
+         this.firstGeometry = null;
+         this.collectCopyResult();
       }
    }
 

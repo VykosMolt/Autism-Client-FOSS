@@ -34,18 +34,18 @@ final class AiBarter {
    static final String ENDER_PEARL_ID = "minecraft:ender_pearl";
    private static final double init_D = 32.0;
    private static final double load_D = 4.0;
-   private static final int init_I = 30;
-   private static final int load_I = 40;
-   private static final int read_I = 200;
-   private static final int write_I = 360;
+   private static final int AIM_SETTLE_TICKS = 30;
+   private static final int THROW_CONFIRM_TICKS = 40;
+   private static final int PICKUP_WAIT_TICKS = 200;
+   private static final int ADMIRE_WAIT_TICKS = 360;
    private static final double read_D = 12.0;
    private static final double write_D = 24.0;
    private static final int update_I = 3;
-   private static final int sync_I = 2;
-   private static final int flush_I = 25;
-   private static final double update_D = 9.0;
-   private static final double sync_D = 400.0;
-   private static final double flush_D = 900.0;
+   private static final int MAX_PICKUP_FAILURES = 2;
+   private static final int PICKUP_TIMEOUT_SECONDS = 25;
+   private static final double BABY_PIGLIN_RADIUS = 9.0;
+   private static final double BABY_NEARBY_PENALTY = 400.0;
+   private static final double LAVA_NEARBY_PENALTY = 900.0;
    private static final int close = 60;
    private static final int open = 4;
 
@@ -97,23 +97,23 @@ final class AiBarter {
                final int originalSlot = mc.player.getInventory().getSelectedSlot();
                final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
                final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
-               final Set<Integer> init_Set = new LinkedHashSet<>();
-               final Set<Integer> load_Set = new LinkedHashSet<>();
+               final Set<Integer> ignoringPiglins = new LinkedHashSet<>();
+               final Set<Integer> preexistingDrops = new LinkedHashSet<>();
                final Map<String, Integer> dropsGained = new LinkedHashMap<>();
-               final Map<String, Integer> load_Map = new LinkedHashMap<>();
-               final Map<String, Integer> read_Map = new LinkedHashMap<>();
+               final Map<String, Integer> dropBaseline = new LinkedHashMap<>();
+               final Map<String, Integer> pickupFailures = new LinkedHashMap<>();
                final List<String> uncollected = new ArrayList<>();
                AiOperation child;
-               AiOperation load_AiOperation;
-               AiOperation read_AiOperation;
+               AiOperation guardOp;
+               AiOperation armorOp;
                String interruptReason = "";
                Piglin piglin;
                Piglin admirer;
                BlockPos piglinPos;
                AiBarter.Inner_DataUtil stage = AiBarter.Inner_DataUtil.APPROACH;
-               boolean init_Z;
-               boolean load_Z;
-               boolean read_Z;
+               boolean armorChecked;
+               boolean armorWarning;
+               boolean cancelled;
                int write;
                int update;
                int sync;
@@ -126,13 +126,13 @@ final class AiBarter {
                int tick;
                int run;
                int get;
-               final Set<Integer> read_Set = new LinkedHashSet<>();
-               long load_J = -1L;
-               String load_Str;
+               final Set<Integer> holdersBeforeThrow = new LinkedHashSet<>();
+               long throwRevision = -1L;
+               String pickupItem;
 
                @Override
                public AiOperation.Result tick() {
-                  if (!this.read_Z && mc.player != null && mc.level != null) {
+                  if (!this.cancelled && mc.player != null && mc.level != null) {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                         return this.init(
                            AiFailure.LOW_HEALTH,
@@ -196,15 +196,15 @@ final class AiBarter {
                            AiOperation.Result guarded = this.sync();
                            if (guarded != null) {
                               return guarded;
-                           } else if (this.read_AiOperation != null) {
-                              AiOperation.Result r = this.read_AiOperation.tick();
+                           } else if (this.armorOp != null) {
+                              AiOperation.Result r = this.armorOp.tick();
                               if (!r.terminal()) {
                                  return this.running("Equipping a gold armor piece for piglin neutrality");
                               } else {
-                                 this.read_AiOperation.cancel();
-                                 this.read_AiOperation = null;
+                                 this.armorOp.cancel();
+                                 this.armorOp = null;
                                  if (r.status() != AiOperation.Status.SUCCEEDED) {
-                                    this.load_Z = true;
+                                    this.armorWarning = true;
                                  }
 
                                  return this.running(
@@ -214,20 +214,20 @@ final class AiBarter {
                                  );
                               }
                            } else {
-                              if (!this.init_Z) {
-                                 this.init_Z = true;
+                              if (!this.armorChecked) {
+                                 this.armorChecked = true;
                                  if (!this.wearsGoldArmor()) {
-                                    this.read_AiOperation = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_*"));
+                                    this.armorOp = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_*"));
                                     return this.running("Equipping a gold armor piece for piglin neutrality");
                                  }
                               }
 
                               if (this.stage == AiBarter.Inner_DataUtil.APPROACH) {
-                                 return this.init_AiOperation_Result_6();
+                                 return this.tickApproach();
                               } else if (this.stage == AiBarter.Inner_DataUtil.THROW) {
-                                 return this.load_AiOperation_Result_5();
+                                 return this.tickThrow();
                               } else if (this.stage == AiBarter.Inner_DataUtil.AWAIT) {
-                                 return this.read_AiOperation_Result_3();
+                                 return this.tickAwait();
                               } else {
                                  return this.stage == AiBarter.Inner_DataUtil.RECOVER ? this.write() : this.update();
                               }
@@ -238,12 +238,12 @@ final class AiBarter {
                   }
                }
 
-               AiOperation.Result init_AiOperation_Result_6() {
+               AiOperation.Result tickApproach() {
                   if (this.piglin == null
                      || !this.piglin.isAlive()
                      || this.piglin.isBaby()
                      || this.piglin.isConverting()
-                     || this.init_Set.contains(this.piglin.getId())) {
+                     || this.ignoringPiglins.contains(this.piglin.getId())) {
                      this.piglin = this.nearestPiglin();
                      this.push = 0;
                      if (this.piglin == null) {
@@ -253,7 +253,7 @@ final class AiBarter {
                            );
                         }
 
-                        if (!this.init_Set.isEmpty()) {
+                        if (!this.ignoringPiglins.isEmpty()) {
                            return this.init(AiFailure.UNREACHABLE, "unreachable", "No route to any adult piglin nearby");
                         }
 
@@ -278,7 +278,7 @@ final class AiBarter {
                         this.child.cancel();
                         this.child = null;
                         if (r.status() != AiOperation.Status.SUCCEEDED) {
-                           this.init_Set.add(this.piglin.getId());
+                           this.ignoringPiglins.add(this.piglin.getId());
                            this.piglin = null;
                            return this.running("Piglin unreachable: " + r.message());
                         } else {
@@ -298,7 +298,7 @@ final class AiBarter {
                   }
                }
 
-               AiOperation.Result load_AiOperation_Result_5() {
+               AiOperation.Result tickThrow() {
                   if (this.piglin != null && this.piglin.isAlive()) {
                      if (mc.player.containerMenu != mc.player.inventoryMenu) {
                         return this.finish(AiOperation.Status.FAILED, "Close the open container before bartering");
@@ -308,19 +308,19 @@ final class AiBarter {
                         return this.finish(AiOperation.Status.FAILED, "Clear the cursor stack before bartering");
                      }
 
-                     if (this.load_J >= 0L) {
+                     if (this.throwRevision >= 0L) {
                         int now = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                         if (now < this.run) {
                            int spent = this.run - now;
                            this.poll += spent;
                            this.sync += spent;
                            this.pop = 0;
-                           this.load_J = -1L;
+                           this.throwRevision = -1L;
                            this.stage = AiBarter.Inner_DataUtil.AWAIT;
                            this.write = 0;
                            return this.running("Ingot thrown; waiting for the piglin to pick it up");
-                        } else if (AiServerEvidence.inventoryRevision() > this.load_J) {
-                           this.load_J = -1L;
+                        } else if (AiServerEvidence.inventoryRevision() > this.throwRevision) {
+                           this.throwRevision = -1L;
                            this.write = 0;
                            return ++this.pop >= 3
                               ? this.finish(
@@ -361,22 +361,22 @@ final class AiBarter {
                            }
                         } else {
                            Vec3 toss = mc.player.position().add(this.piglin.position().subtract(mc.player.position()).scale(0.6));
-                           if (this.init_Z_Vec3_D(toss, 9.0) && ++this.tick <= 60) {
+                           if (this.babyPiglinNear(toss, 9.0) && ++this.tick <= 60) {
                               return this.running("A baby piglin is near the toss; waiting");
                            }
 
                            this.tick = 0;
-                           this.read_Set.clear();
+                           this.holdersBeforeThrow.clear();
 
                            for (Entity entity : mc.level.entitiesForRendering()) {
                               if (entity instanceof Piglin piglin && piglin.getOffhandItem().is(Items.GOLD_INGOT)) {
-                                 this.read_Set.add(piglin.getId());
+                                 this.holdersBeforeThrow.add(piglin.getId());
                               }
                            }
 
-                           this.load_V_3();
+                           this.snapshotDrops();
                            this.run = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
-                           this.load_J = AiServerEvidence.inventoryRevision();
+                           this.throwRevision = AiServerEvidence.inventoryRevision();
                            AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, this.screenSlot(slot), 0, ContainerInput.THROW);
                            return this.running("Throwing one gold ingot at the piglin");
                         }
@@ -388,7 +388,7 @@ final class AiBarter {
                   }
                }
 
-               AiOperation.Result read_AiOperation_Result_3() {
+               AiOperation.Result tickAwait() {
                   if (this.admirer == null) {
                      this.admirer = this.findAdmiringPiglin();
                      if (this.admirer != null) {
@@ -397,10 +397,10 @@ final class AiBarter {
                   }
 
                   if (this.admirer == null) {
-                     Piglin taker = this.load_Piglin();
+                     Piglin taker = this.ingotTaker();
                      if (taker != null && taker.isBaby()) {
                         this.close++;
-                        this.read_Set.add(taker.getId());
+                        this.holdersBeforeThrow.add(taker.getId());
                         AutismClientAddon.LOG.info("[AI] barter: a baby piglin took the ingot ({} stolen, {} bartered)", this.close, this.open);
                         if (++this.get >= 4 && this.open == 0) {
                            return this.init(AiFailure.TARGET_GONE, "babies", "Baby piglins took " + this.close + " ingots here; barter elsewhere");
@@ -415,7 +415,7 @@ final class AiBarter {
                         if (this.nearestItem(16.0) != null) {
                            if (++this.push >= 3) {
                               if (this.piglin != null) {
-                                 this.init_Set.add(this.piglin.getId());
+                                 this.ignoringPiglins.add(this.piglin.getId());
                               }
 
                               this.piglin = null;
@@ -437,7 +437,7 @@ final class AiBarter {
                      }
                   } else {
                      this.piglinPos = this.admirer.blockPosition();
-                     this.read_V();
+                     this.trackNewDrops();
                      if (this.admirer.isAlive() && !this.admirer.isConverting()) {
                         if (!this.admirer.getOffhandItem().is(Items.GOLD_INGOT)) {
                            this.open++;
@@ -490,7 +490,7 @@ final class AiBarter {
                }
 
                AiOperation.Result update() {
-                  this.read_V();
+                  this.trackNewDrops();
                   if (this.child != null) {
                      AiOperation.Result r = this.child.tick();
                      if (!r.terminal()) {
@@ -499,30 +499,30 @@ final class AiBarter {
 
                      this.child.cancel();
                      this.child = null;
-                     if (r.status() != AiOperation.Status.SUCCEEDED && this.load_Str != null) {
-                        this.read_Map.merge(this.load_Str, 1, Integer::sum);
+                     if (r.status() != AiOperation.Status.SUCCEEDED && this.pickupItem != null) {
+                        this.pickupFailures.merge(this.pickupItem, 1, Integer::sum);
                      }
 
-                     this.load_Str = null;
+                     this.pickupItem = null;
                      return this.running("Drop collection leg " + r.status().name().toLowerCase(Locale.ROOT));
                   } else {
                      String next = null;
 
-                     for (String itemId : this.load_Map.keySet()) {
-                        if (this.read_Map.getOrDefault(itemId, 0) < 2 && this.groundCount(itemId) > 0) {
+                     for (String itemId : this.dropBaseline.keySet()) {
+                        if (this.pickupFailures.getOrDefault(itemId, 0) < 2 && this.groundCount(itemId) > 0) {
                            next = itemId;
                            break;
                         }
                      }
 
                      if (next != null) {
-                        this.load_Str = next;
+                        this.pickupItem = next;
                         int onGround = this.groundCount(next);
                         this.child = AiGameplay.write(AiJson.objectOf("item", next, "count", onGround, "additional", true, "timeoutSeconds", 25));
                         return this.running("Collecting " + onGround + " " + next);
                      }
 
-                     for (Entry<String, Integer> entry : this.load_Map.entrySet()) {
+                     for (Entry<String, Integer> entry : this.dropBaseline.entrySet()) {
                         int gained = AiGameState.countInventoryItem(entry.getKey()) - entry.getValue();
                         if (gained > 0) {
                            this.dropsGained.merge(entry.getKey(), gained, Integer::sum);
@@ -534,8 +534,8 @@ final class AiBarter {
                         }
                      }
 
-                     this.load_Map.clear();
-                     this.read_Map.clear();
+                     this.dropBaseline.clear();
+                     this.pickupFailures.clear();
                      this.admirer = null;
                      this.piglin = null;
                      this.stage = AiBarter.Inner_DataUtil.APPROACH;
@@ -545,14 +545,14 @@ final class AiBarter {
                }
 
                AiOperation.Result sync() {
-                  if (this.load_AiOperation != null) {
-                     AiOperation.Result result = this.load_AiOperation.tick();
+                  if (this.guardOp != null) {
+                     AiOperation.Result result = this.guardOp.tick();
                      if (!result.terminal()) {
                         return this.running("Interrupted: " + this.interruptReason + " - " + result.message());
                      }
 
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+                     this.guardOp.cancel();
+                     this.guardOp = null;
                      return this.running("Resuming after " + this.interruptReason);
                   } else {
                      AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
@@ -562,7 +562,7 @@ final class AiBarter {
                         return null;
                      }
 
-                     this.load_AiOperation = action;
+                     this.guardOp = action;
                      this.interruptReason = AiGuard.decisionReason(this.guardPolicy, vitals);
                      this.update++;
                      if (this.child != null) {
@@ -570,10 +570,10 @@ final class AiBarter {
                         this.child = null;
                      }
 
-                     if (this.read_AiOperation != null) {
-                        this.read_AiOperation.cancel();
-                        this.read_AiOperation = null;
-                        this.load_Z = true;
+                     if (this.armorOp != null) {
+                        this.armorOp.cancel();
+                        this.armorOp = null;
+                        this.armorWarning = true;
                      }
 
                      return this.running("Interrupted: " + this.interruptReason);
@@ -589,10 +589,10 @@ final class AiBarter {
                         String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(piglin.getType()).toString();
                         if (AiBarter.init(typeId, piglin.isBaby(), piglin.isAlive(), piglin.isConverting())
                            && !piglin.isAggressive()
-                           && !this.init_Set.contains(piglin.getId())) {
+                           && !this.ignoringPiglins.contains(piglin.getId())) {
                            double distance = piglin.distanceToSqr(mc.player)
-                              + (this.init_Z_Vec3_D(piglin.position(), 9.0) ? 400.0 : 0.0)
-                              + (this.init_Z_BlockPos_I(piglin.blockPosition(), 3) ? 900.0 : 0.0);
+                              + (this.babyPiglinNear(piglin.position(), 9.0) ? 400.0 : 0.0)
+                              + (this.lavaNear(piglin.blockPosition(), 3) ? 900.0 : 0.0);
                            boolean hoglin = false;
 
                            for (Entity other : mc.level.entitiesForRendering()) {
@@ -613,7 +613,7 @@ final class AiBarter {
                   return best;
                }
 
-               boolean init_Z_BlockPos_I(BlockPos at, int radius) {
+               boolean lavaNear(BlockPos at, int radius) {
                   for (int dx = -radius; dx <= radius; dx++) {
                      for (int dz = -radius; dz <= radius; dz++) {
                         for (int dy = -3; dy <= 1; dy++) {
@@ -627,7 +627,7 @@ final class AiBarter {
                   return false;
                }
 
-               boolean init_Z_Vec3_D(Vec3 point, double radius) {
+               boolean babyPiglinNear(Vec3 point, double radius) {
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Piglin piglin
                         && piglin.isAlive()
@@ -641,11 +641,11 @@ final class AiBarter {
                   return false;
                }
 
-               Piglin load_Piglin() {
+               Piglin ingotTaker() {
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Piglin piglin
                         && piglin.isAlive()
-                        && !this.read_Set.contains(piglin.getId())
+                        && !this.holdersBeforeThrow.contains(piglin.getId())
                         && piglin.getOffhandItem().is(Items.GOLD_INGOT)
                         && piglin.distanceToSqr(mc.player) < 576.0) {
                         return piglin;
@@ -702,26 +702,26 @@ final class AiBarter {
                   return best;
                }
 
-               void load_V_3() {
-                  this.load_Set.clear();
+               void snapshotDrops() {
+                  this.preexistingDrops.clear();
                   Vec3 center = this.piglin.position();
 
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof ItemEntity drop && drop.isAlive() && drop.position().distanceToSqr(center) <= 576.0) {
-                        this.load_Set.add(drop.getId());
+                        this.preexistingDrops.add(drop.getId());
                      }
                   }
                }
 
-               void read_V() {
+               void trackNewDrops() {
                   if (this.piglinPos != null) {
                      Vec3 center = Vec3.atCenterOf(this.piglinPos);
 
                      for (Entity entity : mc.level.entitiesForRendering()) {
-                        if (entity instanceof ItemEntity drop && drop.isAlive() && !this.load_Set.contains(drop.getId())) {
+                        if (entity instanceof ItemEntity drop && drop.isAlive() && !this.preexistingDrops.contains(drop.getId())) {
                            String itemId = BuiltInRegistries.ITEM.getKey(drop.getItem().getItem()).toString();
                            if (!"minecraft:gold_ingot".equals(itemId) && !(drop.position().distanceToSqr(center) > 144.0)) {
-                              this.load_Map.putIfAbsent(itemId, AiGameState.countInventoryItem(itemId));
+                              this.dropBaseline.putIfAbsent(itemId, AiGameState.countInventoryItem(itemId));
                            }
                         }
                      }
@@ -817,7 +817,7 @@ final class AiBarter {
                      out.addProperty("pearlsMet", pearlsGained >= pearlsTarget);
                   }
 
-                  if (this.load_Z) {
+                  if (this.armorWarning) {
                      out.addProperty("warning", "No gold armor worn; piglins stay hostile and may attack between barters");
                   }
 
@@ -858,8 +858,8 @@ final class AiBarter {
 
                @Override
                public void cancel() {
-                  if (!this.read_Z) {
-                     this.read_Z = true;
+                  if (!this.cancelled) {
+                     this.cancelled = true;
                      this.releaseMovementKeys();
                      this.aim.clear();
                      if (this.child != null) {
@@ -867,14 +867,14 @@ final class AiBarter {
                         this.child = null;
                      }
 
-                     if (this.load_AiOperation != null) {
-                        this.load_AiOperation.cancel();
-                        this.load_AiOperation = null;
+                     if (this.guardOp != null) {
+                        this.guardOp.cancel();
+                        this.guardOp = null;
                      }
 
-                     if (this.read_AiOperation != null) {
-                        this.read_AiOperation.cancel();
-                        this.read_AiOperation = null;
+                     if (this.armorOp != null) {
+                        this.armorOp.cancel();
+                        this.armorOp = null;
                      }
 
                      if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.originalSlot) {
