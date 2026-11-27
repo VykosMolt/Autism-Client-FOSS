@@ -45,20 +45,20 @@ final class SchematicLibrary {
       t.setDaemon(true);
       return t;
    }, new AbortPolicy());
-   final Path init_Path;
+   final Path game;
    final Path defaultRoot;
    final Path read;
    volatile List<Path> roots = List.of();
    volatile List<SchematicLibrary.Inner_DataUtil> entries = List.of();
    volatile String status = "";
-   volatile int init_I;
+   volatile int percent;
    private Future<?> init_Future;
    private long init_J;
    private final Map<String, SchematicLibrary.Inner_DataUtil> init_Map = new HashMap<>();
    private final Gson init_Gson = new GsonBuilder().setPrettyPrinting().create();
 
    SchematicLibrary(Path game) {
-      this.init_Path = game;
+      this.game = game;
       this.defaultRoot = game.resolve("autismclient/schematics").toAbsolutePath().normalize();
       this.read = game.resolve("config/autism/schematic-library.json");
       this.roots = List.of(this.defaultRoot);
@@ -84,7 +84,7 @@ final class SchematicLibrary {
       LinkedHashSet<String> roots = new LinkedHashSet<>();
       roots.add(this.defaultRoot.toString());
       ArrayList<SchematicLibrary.Inner_StreamUtil> placed = new ArrayList<>();
-      Path legacy = this.init_Path.resolve("schematics").toAbsolutePath().normalize();
+      Path legacy = this.game.resolve("schematics").toAbsolutePath().normalize();
       if (!Files.exists(this.read) && Files.isDirectory(legacy)) {
          roots.add(legacy.toString());
       }
@@ -199,7 +199,7 @@ final class SchematicLibrary {
 
       List<Path> roots = List.copyOf(this.roots);
       this.status = "Finding files";
-      this.init_I = 0;
+      this.percent = 0;
       Map<String, SchematicLibrary.Inner_DataUtil> cached = new HashMap<>(this.init_Map);
       this.init_Future = EXECUTOR.submit(
          () -> {
@@ -302,7 +302,7 @@ final class SchematicLibrary {
                }
 
                this.status = status;
-               this.init_I = percent;
+               this.percent = percent;
             }
          }
       });

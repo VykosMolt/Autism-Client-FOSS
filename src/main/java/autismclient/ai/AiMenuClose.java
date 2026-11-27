@@ -46,7 +46,7 @@ public final class AiMenuClose {
 
    public static boolean init(ServerboundContainerClosePacket packet) {
       AiMenuClose.Inner_DataUtil receipt = load;
-      if (receipt != null && receipt.init_I == packet.getContainerId()) {
+      if (receipt != null && receipt.menu == packet.getContainerId()) {
          receipt.init_Packet = packet;
          return true;
       } else {
@@ -107,10 +107,10 @@ public final class AiMenuClose {
    }
 
    static final class Inner_DataUtil {
-      final Object init_Obj;
-      final Object load_Obj;
-      final int init_I;
-      final long init_J;
+      final Object player;
+      final Object world;
+      final int menu;
+      final long started;
       volatile Packet<?> init_Packet;
       volatile Packet<?> load_Packet;
       volatile boolean init_Z;
@@ -119,10 +119,10 @@ public final class AiMenuClose {
       AiMenuClose.Inner_StreamUtil init_aq_StreamUtil;
 
       Inner_DataUtil(Object player, Object world, int menu, long started) {
-         this.init_Obj = player;
-         this.load_Obj = world;
-         this.init_I = menu;
-         this.init_J = started;
+         this.player = player;
+         this.world = world;
+         this.menu = menu;
+         this.started = started;
       }
 
       void init(Packet<?> packet) {
@@ -142,14 +142,14 @@ public final class AiMenuClose {
       }
 
       AiMenuClose.Inner_StreamUtil init(Object player, Object world, boolean inventoryMenu, long now) {
-         if (player != this.init_Obj || world != this.load_Obj || !inventoryMenu) {
+         if (player != this.player || world != this.world || !inventoryMenu) {
             return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.UNCERTAIN;
          } else if (this.read) {
             return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.READY;
          } else if (this.init_aq_StreamUtil != null) {
             return this.init_aq_StreamUtil;
          } else {
-            return now - this.init_J >= 10000000000L ? (this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.UNCERTAIN) : AiMenuClose.Inner_StreamUtil.WAITING;
+            return now - this.started >= 10000000000L ? (this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.UNCERTAIN) : AiMenuClose.Inner_StreamUtil.WAITING;
          }
       }
    }

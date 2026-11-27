@@ -17,7 +17,7 @@ final class ThrownPearlTracker {
    private Object init_Obj;
    private Object load;
    private long init_J = -9223372036854775808L;
-   private ThrownPearlTracker.Inner_DataUtil init_aV_DataUtil;
+   private ThrownPearlTracker.Inner_DataUtil remembered;
    private double init_D;
    private final List<ThrownEnderpearl> init_List = new ArrayList<>();
    private final Map<UUID, ThrownPearlTracker.Inner_DataUtil> init_Map = new HashMap<>();
@@ -25,7 +25,7 @@ final class ThrownPearlTracker {
    private static final int init_I = 32;
 
    ThrownPearlTracker.Inner_DataUtil remembered() {
-      return this.init_aV_DataUtil;
+      return this.remembered;
    }
 
    double init_D() {
@@ -35,7 +35,7 @@ final class ThrownPearlTracker {
    void reset() {
       this.init_Obj = this.load = null;
       this.init_J = -9223372036854775808L;
-      this.init_aV_DataUtil = null;
+      this.remembered = null;
       this.init_D = 0.0;
       this.init_List.clear();
       this.init_Map.clear();
@@ -81,7 +81,7 @@ final class ThrownPearlTracker {
                latest = init_aV_DataUtil_aV_DataUtil_aV_DataUtil(latest, forecast);
             }
 
-            this.init_aV_DataUtil = latest;
+            this.remembered = latest;
             this.init_D = (System.nanoTime() - started) / 1000000.0;
          }
       } else {

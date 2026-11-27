@@ -780,8 +780,8 @@ final class AiFill {
 
    private static final class Inner_BufferHelper implements AiOperation {
       final Minecraft init_Minecraft = Minecraft.getInstance();
-      final List<BlockPos> init_List;
-      final AiBuilder.Blueprint init_TableIndex_DataUti;
+      final List<BlockPos> digCells;
+      final AiBuilder.Blueprint blueprint;
       final long init_J;
       AiOperation init_AiOperation;
       final JsonArray init_JsonArray = new JsonArray();
@@ -794,8 +794,8 @@ final class AiFill {
       boolean init_Z;
 
       Inner_BufferHelper(List<BlockPos> digCells, AiBuilder.Blueprint blueprint, int timeoutSeconds) {
-         this.init_List = digCells;
-         this.init_TableIndex_DataUti = blueprint;
+         this.digCells = digCells;
+         this.blueprint = blueprint;
          this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
       }
 
@@ -832,8 +832,8 @@ final class AiFill {
                   this.init_BlockPos = null;
                }
 
-               while (this.init_I < this.init_List.size()) {
-                  BlockPos cell = this.init_List.get(this.init_I++);
+               while (this.init_I < this.digCells.size()) {
+                  BlockPos cell = this.digCells.get(this.init_I++);
                   autismclient.ai.engine.AiPathfinder.CellInfo probe = autismclient.ai.engine.AiPathfinder.LiveGridView.classifyCellCompat(
                      this.init_Minecraft, this.init_Minecraft.level, cell, new ItemStack[9]
                   );
@@ -859,7 +859,7 @@ final class AiFill {
                }
 
                if (this.load_AiOperation == null) {
-                  this.load_AiOperation = AiBuilder.buildBlueprint(this.init_TableIndex_DataUti, true, this.init_I_5());
+                  this.load_AiOperation = AiBuilder.buildBlueprint(this.blueprint, true, this.init_I_5());
                   return this.init("Placing replacement blocks");
                } else {
                   return this.init("Placing replacement blocks");
@@ -905,7 +905,7 @@ final class AiFill {
             "dug",
             this.load_I,
             "digTotal",
-            this.init_List.size(),
+            this.digCells.size(),
             "failed",
             this.init_JsonArray,
             "skipped",

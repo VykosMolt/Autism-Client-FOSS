@@ -419,17 +419,17 @@ final class AiWeb {
    }
 
    private static final class Inner_StreamUtil {
-      private final InputStream init_InputStream;
-      private final long init_J;
-      private final Runnable init_Runnable;
+      private final InputStream input;
+      private final long deadline;
+      private final Runnable checkpoint;
       private final byte[] init_BArr = new byte[8192];
       private int init_I;
       private int load;
 
       Inner_StreamUtil(InputStream in, long deadline, Runnable checkpoint) {
-         this.init_InputStream = in;
-         this.init_J = deadline;
-         this.init_Runnable = checkpoint;
+         this.input = in;
+         this.deadline = deadline;
+         this.checkpoint = checkpoint;
       }
 
       int init() throws IOException {
@@ -461,13 +461,13 @@ final class AiWeb {
 
       private int load(byte[] b, int off, int n) throws IOException {
          while (true) {
-            this.init_Runnable.run();
-            if (System.nanoTime() > this.init_J) {
+            this.checkpoint.run();
+            if (System.nanoTime() > this.deadline) {
                throw new IOException("HTTP response deadline reached");
             }
 
             try {
-               return this.init_InputStream.read(b, off, n);
+               return this.input.read(b, off, n);
             } catch (SocketTimeoutException var5) {
             }
          }

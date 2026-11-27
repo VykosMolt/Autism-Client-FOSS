@@ -219,7 +219,7 @@ public final class AiVisualization {
    static void init(Object owner, AiTaskStatus.Inner_StreamUtil content) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null) {
-         l.read_cs_StreamUtil = content;
+         l.content = content;
          l.update = ++flush_J;
       }
    }
@@ -682,7 +682,7 @@ public final class AiVisualization {
    static void showCells(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null) {
-         l.init_Predicate = hiddenSolid;
+         l.hiddenSolid = hiddenSolid;
          init(owner, origin, cells, 0, true, true);
       }
    }
@@ -698,7 +698,7 @@ public final class AiVisualization {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null && init_AiSettings.visualizeGhosts && l.init_J - l.load_J >= 200000000L) {
          l.load_J = l.init_J;
-         l.init_Z = fullPlan;
+         l.fullPlan = fullPlan;
          l.load_I = preview ? 60 : 50;
          if (fullPlan) {
             init(l, origin, cells, cursor, preview);
@@ -750,14 +750,14 @@ public final class AiVisualization {
    private static void init(AiVisualization.Inner_CachePool l, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
       if (l.init_aT == null || !l.init_aT.init(origin, cells, preview)) {
          l.init();
-         l.init_aT = new AiPlanMesh(origin, cells, preview, l.init_Predicate);
+         l.init_aT = new AiPlanMesh(origin, cells, preview, l.hiddenSolid);
       }
 
       if (preview) {
          l.init_aT.setOrigin(origin);
       }
 
-      l.init_aT.setMoving(l.load_Z);
+      l.init_aT.setMoving(l.moving);
       l.init_aT.refreshFromWorld(l.init_ClientLevel);
       if (!l.init_aT.isReady()) {
          l.init_cs_StreamUtil = AiTaskStatus.init(
@@ -806,7 +806,7 @@ public final class AiVisualization {
    static void init(Object owner, boolean moving) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null) {
-         l.load_Z = moving;
+         l.moving = moving;
          if (l.init_aT != null) {
             l.init_aT.setMoving(moving);
          }
@@ -852,8 +852,8 @@ public final class AiVisualization {
 
                if (init_AiSettings.visualizeGhosts) {
                   for (AiVisualization.Inner_StreamUtil g : l.init_List) {
-                     if ((l.init_Z || g.pos.distToCenterSqr(camera) <= range) && (ghosts.size() < cap || ghosts.containsKey(g.pos.asLong()))) {
-                        if (l.init_Z) {
+                     if ((l.fullPlan || g.pos.distToCenterSqr(camera) <= range) && (ghosts.size() < cap || ghosts.containsKey(g.pos.asLong()))) {
+                        if (l.fullPlan) {
                            ghosts.put(g.pos.asLong(), g);
                         } else {
                            ghosts.putIfAbsent(g.pos.asLong(), g);
@@ -887,7 +887,7 @@ public final class AiVisualization {
                   }
                }
 
-               if (l.init_AABB != null && (l.init_Z || bounds == null)) {
+               if (l.init_AABB != null && (l.fullPlan || bounds == null)) {
                   bounds = l.init_AABB;
                }
 
@@ -906,8 +906,8 @@ public final class AiVisualization {
                   statuses.add(new AiTaskStatus.Inner_DataUtil(l.load_cs_StreamUtil, 100, l.write, l.immediateStatus));
                }
 
-               if (l.read_cs_StreamUtil.visible()) {
-                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.read_cs_StreamUtil, 200, l.update));
+               if (l.content.visible()) {
+                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.content, 200, l.update));
                }
             }
          }
@@ -1313,7 +1313,7 @@ public final class AiVisualization {
       long now = System.nanoTime();
       List<AiVisualization.Inner_CachePool> plans = init_Map.values()
          .stream()
-         .filter(l -> l.init_Z && l.init_ClientLevel == Minecraft.getInstance().level && now - l.init_J <= 450000000L)
+         .filter(l -> l.fullPlan && l.init_ClientLevel == Minecraft.getInstance().level && now - l.init_J <= 450000000L)
          .toList();
       return AiJson.objectOf(
          "ghosts",
@@ -1459,16 +1459,16 @@ public final class AiVisualization {
       AiTaskStatus.Inner_StreamUtil init_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
       AiTaskStatus.Inner_StreamUtil navStatus = AiTaskStatus.Inner_StreamUtil.EMPTY;
       AiTaskStatus.Inner_StreamUtil load_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
-      AiTaskStatus.Inner_StreamUtil read_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
+      AiTaskStatus.Inner_StreamUtil content = AiTaskStatus.Inner_StreamUtil.EMPTY;
       int load_I;
       int navPriority;
       long navOrder;
-      boolean init_Z;
-      boolean load_Z;
+      boolean fullPlan;
+      boolean moving;
       boolean read_Z;
       boolean immediateStatus;
       AiPlanMesh init_aT;
-      Predicate<BlockPos> init_Predicate;
+      Predicate<BlockPos> hiddenSolid;
 
       void init() {
          if (this.init_aT != null) {

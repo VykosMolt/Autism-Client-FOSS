@@ -6,15 +6,15 @@ import autismclient.util.ThemePaletteManager;
 public class RowLayout extends LayoutContainer {
    private EdgeInsets init_IoWorker;
    private int init_I;
-   private boolean write_Z;
-   private int load_I;
+   private boolean underlineOnHover;
+   private int underlineColor;
    private float sync;
 
    public RowLayout() {
       this.init_IoWorker = EdgeInsets.ZERO;
       this.init_I = 0;
-      this.write_Z = false;
-      this.load_I = -50373;
+      this.underlineOnHover = false;
+      this.underlineColor = -50373;
       this.sync = 0.0F;
    }
 
@@ -39,12 +39,12 @@ public class RowLayout extends LayoutContainer {
    }
 
    public RowLayout setUnderlineOnHover(boolean underlineOnHover) {
-      this.write_Z = underlineOnHover;
+      this.underlineOnHover = underlineOnHover;
       return this;
    }
 
    public RowLayout load(int underlineColor) {
-      this.load_I = underlineColor;
+      this.underlineColor = underlineColor;
       return this;
    }
 
@@ -130,7 +130,7 @@ public class RowLayout extends LayoutContainer {
       if (this.nodeVisible) {
          super.render(context);
          this.write(context);
-         if (this.write_Z) {
+         if (this.underlineOnHover) {
             float hover = this.stepHover(this.containsPoint(context.mouseX(), context.mouseY()), context.delta());
             if (hover <= 0.0F || context.graphics() == null) {
                return;
@@ -148,7 +148,7 @@ public class RowLayout extends LayoutContainer {
                   drawY,
                   underlineX + underlineWidth,
                   drawY + context.theme().load(1),
-                  ThemePaletteManager.recolor(this.load_I, ThemePaletteManager.ColorRole.ACCENT)
+                  ThemePaletteManager.recolor(this.underlineColor, ThemePaletteManager.ColorRole.ACCENT)
                );
          }
       }

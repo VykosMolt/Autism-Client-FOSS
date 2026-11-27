@@ -19,8 +19,8 @@ import java.util.Locale;
 final class MacroPickerPopup {
    private static final int init_I = 8;
    private final ModulesMenuController init_ConfigStore;
-   private final Module init_Module;
-   private final Setting<?, ?> init_Setting;
+   private final Module module;
+   private final Setting<?, ?> option;
    private final NetHelper init_NetHelper;
    private final InlineTextEditState init_StreamUtil = new InlineTextEditState(this, "", value -> {});
    private UiTextRenderer init_PoolEntry;
@@ -32,12 +32,12 @@ final class MacroPickerPopup {
    private NetHelper write = NetHelper.init(0, 0, 0, 0);
    private NetHelper update = NetHelper.init(0, 0, 0, 0);
    private NetHelper sync = NetHelper.init(0, 0, 0, 0);
-   private List<String> init_List = List.of();
+   private List<String> names = List.of();
 
    MacroPickerPopup(ModulesMenuController controller, Module module, Setting<?, ?> option, NetHelper anchor) {
       this.init_ConfigStore = controller;
-      this.init_Module = module;
-      this.init_Setting = option;
+      this.module = module;
+      this.option = option;
       this.init_NetHelper = anchor == null ? NetHelper.init(0, 0, 120, 16) : anchor;
       this.init();
    }
@@ -49,7 +49,7 @@ final class MacroPickerPopup {
       int controlH = UiDensityMetrics.scaledHeight(13);
       int pad = 3;
       int width = Math.min(Math.max(this.init_NetHelper.update(), ModulesMenuController.scaled(150)), Math.max(120, context.init_I() - 8));
-      int rows = Math.max(1, Math.min(8, Math.max(this.init_List.size(), 1)));
+      int rows = Math.max(1, Math.min(8, Math.max(this.names.size(), 1)));
       int listH = rows * this.read_I;
       int height = pad + controlH + 2 + controlH + 2 + listH + pad;
       int x = ModulesMenuController.clampInt(this.init_NetHelper.read(), 4, Math.max(4, context.init_I() - width - 4));
@@ -86,7 +86,7 @@ final class MacroPickerPopup {
       try {
          int rowY = this.sync.write() - this.load_I;
 
-         for (String name : this.init_List) {
+         for (String name : this.names) {
             NetHelper row = NetHelper.init(this.sync.read(), rowY, this.sync.update(), this.read_I);
             if (row.load() >= this.sync.write() && row.write() <= this.sync.load()) {
                boolean hovered = row.init_Z(context.read(), context.write());
@@ -109,7 +109,7 @@ final class MacroPickerPopup {
             rowY += this.read_I;
          }
 
-         if (this.init_List.isEmpty()) {
+         if (this.names.isEmpty()) {
             context.init_PoolEntry()
                .drawCentered(
                   context.init_GuiGraphicsExtract(),
@@ -143,19 +143,19 @@ final class MacroPickerPopup {
       }
 
       if (this.write.init_Z(mouseX, mouseY)) {
-         this.init_ConfigStore.setValue(this.init_Module, this.init_Setting, "");
+         this.init_ConfigStore.setValue(this.module, this.option, "");
          return false;
       }
 
       if (this.update.init_Z(mouseX, mouseY)) {
-         this.init_ConfigStore.init_V_Module_Setting(this.init_Module, this.init_Setting);
+         this.init_ConfigStore.init_V_Module_Setting(this.module, this.option);
          return false;
       }
 
       if (this.sync.init_Z(mouseX, mouseY)) {
          int index = (mouseY - this.sync.write() + this.load_I) / this.read_I;
-         if (index >= 0 && index < this.init_List.size()) {
-            this.init_ConfigStore.setValue(this.init_Module, this.init_Setting, this.init_List.get(index));
+         if (index >= 0 && index < this.names.size()) {
+            this.init_ConfigStore.setValue(this.module, this.option, this.names.get(index));
             return false;
          }
       }
@@ -191,7 +191,7 @@ final class MacroPickerPopup {
    }
 
    boolean mouseScrolled(int mouseX, int mouseY, double amount) {
-      int max = Math.max(0, this.init_List.size() * this.read_I - this.sync.sync());
+      int max = Math.max(0, this.names.size() * this.read_I - this.sync.sync());
       this.load_I = ModulesMenuController.clampInt(this.load_I - (int)Math.round(amount * this.read_I), 0, max);
       return true;
    }
@@ -219,7 +219,7 @@ final class MacroPickerPopup {
    private void init() {
       List<String> names = new ArrayList<>();
       String needle = this.init_StreamUtil.text.toLowerCase(Locale.ROOT);
-      if (this.init_Setting != null && this.init_Setting.displayMode() == DisplayMode.CONDITIONAL_MACRO_PICKER) {
+      if (this.option != null && this.option.displayMode() == DisplayMode.CONDITIONAL_MACRO_PICKER) {
          for (String preset : new String[]{"AutoFish - Free Slots Stop", "AutoFish - Durability Stop", "AutoFish - Custom Stop"}) {
             if (needle.isEmpty() || preset.toLowerCase(Locale.ROOT).contains(needle)) {
                names.add(preset);
@@ -233,7 +233,7 @@ final class MacroPickerPopup {
          }
       }
 
-      this.init_List = names;
+      this.names = names;
       this.load_I = 0;
    }
 }

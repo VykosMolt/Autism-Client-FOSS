@@ -38,7 +38,7 @@ public final class PhaseModule extends Module {
    private static final PhaseModule.Inner_ConfigStore init_aF_ConfigStore = new PhaseModule.Inner_ConfigStore();
    private static volatile PhaseModule init_aF;
    private static volatile int write;
-   private volatile PhaseModule.Inner_BufferHelper init_aF_BufferHelper;
+   private volatile PhaseModule.Inner_BufferHelper mode;
 
    public PhaseModule() {
       super("phase", "Phase", ae.load_ae, "Phase through blocks.");
@@ -56,7 +56,7 @@ public final class PhaseModule extends Module {
    @Override
    public String info() {
       String mode = this.choice("mode");
-      PhaseModule.Inner_BufferHelper current = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper current = this.mode;
       if (current == null) {
          return mode;
       }
@@ -77,7 +77,7 @@ public final class PhaseModule extends Module {
 
    @Override
    public void onGameJoin() {
-      if (this.isEnabled() && this.init_aF_BufferHelper == null) {
+      if (this.isEnabled() && this.mode == null) {
          this.init_V_aF_BufferHelper(init_aF_BufferHelper_Str(this.choice("mode")));
       }
    }
@@ -104,7 +104,7 @@ public final class PhaseModule extends Module {
    @Override
    public void preMovementTick() {
       if (!AutismLiteVariant.enabled()) {
-         PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+         PhaseModule.Inner_BufferHelper mode = this.mode;
          if (mode != null) {
             mode.sync();
          }
@@ -113,7 +113,7 @@ public final class PhaseModule extends Module {
 
    @Override
    public void onNetworkMovementTickPre() {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
       if (mode != null) {
          mode.read();
       }
@@ -121,7 +121,7 @@ public final class PhaseModule extends Module {
 
    @Override
    public void onPacketProcessFrame() {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
       if (mode != null) {
          mode.write();
       }
@@ -129,13 +129,13 @@ public final class PhaseModule extends Module {
 
    @Override
    public boolean shouldCancelPlayerTick() {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
       return mode != null && mode.init_Z();
    }
 
    @Override
    public boolean onPacketReceive(Packet<?> packet) {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
       if (mode != null && packet instanceof ClientboundPlayerPositionPacket) {
          mode.update();
       }
@@ -159,21 +159,21 @@ public final class PhaseModule extends Module {
 
    private void init() {
       PhaseModule.Inner_BufferHelper next = init_aF_BufferHelper_Str(this.choice("mode"));
-      if (next != this.init_aF_BufferHelper) {
+      if (next != this.mode) {
          this.load();
          this.init_V_aF_BufferHelper(next);
       }
    }
 
    private void init_V_aF_BufferHelper(PhaseModule.Inner_BufferHelper mode) {
-      this.init_aF_BufferHelper = mode;
+      this.mode = mode;
       this.read();
       mode.init_V();
    }
 
    private void load() {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
-      this.init_aF_BufferHelper = null;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
+      this.mode = null;
       this.read();
       if (mode != null) {
          mode.load();
@@ -181,7 +181,7 @@ public final class PhaseModule extends Module {
    }
 
    private void read() {
-      PhaseModule.Inner_BufferHelper mode = this.init_aF_BufferHelper;
+      PhaseModule.Inner_BufferHelper mode = this.mode;
       if (mode == init_aF_ConfigStore) {
          write = 1;
       } else if (mode == init_aF_DataUtil) {

@@ -232,7 +232,7 @@ final class AiEndRun {
             AiOperation.Result init_AiOperation_Result;
             JsonObject init_JsonObject;
             boolean init_Z;
-            String load_Str = "";
+            String label = "";
             boolean load_Z;
             boolean read_Z;
             boolean write_Z;
@@ -310,7 +310,7 @@ final class AiEndRun {
 
                         boolean liveDragon = !AiWorldScan.findEntitiesByType("minecraft:ender_dragon", 256.0).isEmpty();
                         this.load_Z = this.load_Z | (!liveDragon && this.load_BlockPos_7() != null);
-                        if (!this.load_Str.startsWith("fight the dragon")) {
+                        if (!this.label.startsWith("fight the dragon")) {
                            AiOperation.Result g = this.init_Y
                               .tick(
                                  this.init_AiOperation, this::init_V_33, () -> (int)Math.max(10L, (this.init_J - System.nanoTime()) / 1000000000L)
@@ -324,38 +324,38 @@ final class AiEndRun {
                            AiOperation.Result r = this.init_AiOperation.tick();
                            this.init_AiOperation_Result = r;
                            if (!r.terminal()) {
-                              return this.init(this.load_Str + ": " + r.message());
+                              return this.init(this.label + ": " + r.message());
                            }
 
                            r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, r);
                            this.init_AiOperation_Result = r;
                            this.init_AiOperation = null;
-                           AiSpeedrun.log("[AI] end step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.clip(r.message()));
+                           AiSpeedrun.log("[AI] end step {}: {} - {}", r.status(), this.label, AiSpeedrun.clip(r.message()));
                            this.init_JsonArray
-                              .add(AiJson.objectOf("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.clip(r.message())));
+                              .add(AiJson.objectOf("step", this.label, "status", r.status().name(), "message", AiSpeedrun.clip(r.message())));
                            if (r.status() == AiOperation.Status.CANCELLED) {
-                              return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.load_Str, r);
+                              return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.label, r);
                            }
 
                            if (r.status() == AiOperation.Status.UNCERTAIN) {
-                              return this.init(AiOperation.Status.UNCERTAIN, this.load_Str + ": " + r.message(), r);
+                              return this.init(AiOperation.Status.UNCERTAIN, this.label + ": " + r.message(), r);
                            }
 
-                           if (this.load_Str.startsWith("fight the dragon") && r.status() == AiOperation.Status.SUCCEEDED) {
+                           if (this.label.startsWith("fight the dragon") && r.status() == AiOperation.Status.SUCCEEDED) {
                               this.load_Z = this.load_Z | AiJson.getBoolean(AiRunResources.parseEvidenceJson(r.dataJson()), "dragonDead", false);
                            }
 
-                           if (this.load_Str.equals("heal in a hole") && r.status() != AiOperation.Status.SUCCEEDED && this.read_BlockPos != null) {
+                           if (this.label.equals("heal in a hole") && r.status() != AiOperation.Status.SUCCEEDED && this.read_BlockPos != null) {
                               this.init_Set.add(this.read_BlockPos.below().asLong());
                               this.read_BlockPos = null;
                               this.read_J = 0L;
                            }
 
-                           if (this.load_Str.startsWith("fight the dragon") && r.failure() == AiFailure.LOW_HEALTH) {
+                           if (this.label.startsWith("fight the dragon") && r.failure() == AiFailure.LOW_HEALTH) {
                               this.init_F = Math.min(20.0F, mc.player.getMaxHealth()) - 0.01F;
                            }
 
-                           if (this.load_Str.startsWith("fight the dragon")
+                           if (this.label.startsWith("fight the dragon")
                               && r.status() != AiOperation.Status.SUCCEEDED
                               && r.failure() != AiFailure.LOW_HEALTH
                               && ++this.read_I >= 3
@@ -647,7 +647,7 @@ final class AiEndRun {
             }
 
             AiOperation.Result init(String label, AiOperation op) {
-               this.load_Str = label;
+               this.label = label;
                this.init_AiOperation_Result = null;
                AiSpeedrun.log("[AI] end: {}", label);
                this.init_AiOperation = AiRunDiagnostics.trace("end", label, op);

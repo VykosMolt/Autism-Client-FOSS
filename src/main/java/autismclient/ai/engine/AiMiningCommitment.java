@@ -15,12 +15,12 @@ public final class AiMiningCommitment {
    static final int init_I = 256;
    private final Set<Long> init_Set = new LinkedHashSet<>();
    private final Set<Long> load = new LinkedHashSet<>();
-   private BlockPos init_BlockPos;
+   private BlockPos anchor;
    private long init_J = -1L;
 
    public void init(BlockPos seed, Collection<BlockPos> observed, Predicate<BlockPos> allowed) {
       this.clear();
-      this.init_BlockPos = seed.immutable();
+      this.anchor = seed.immutable();
       this.init_Set.add(seed.asLong());
       if (observed.contains(seed) && allowed.test(seed)) {
          this.load.add(seed.asLong());
@@ -30,7 +30,7 @@ public final class AiMiningCommitment {
    }
 
    public void init(Collection<BlockPos> observed, Predicate<BlockPos> allowed) {
-      if (this.init_BlockPos != null) {
+      if (this.anchor != null) {
          Map<Long, BlockPos> pending = new HashMap<>();
 
          for (BlockPos cell : observed) {
@@ -95,7 +95,7 @@ public final class AiMiningCommitment {
    }
 
    public boolean init(long now, boolean scanSettled, long grace) {
-      if (this.init_BlockPos == null) {
+      if (this.anchor == null) {
          return true;
       }
 
@@ -122,7 +122,7 @@ public final class AiMiningCommitment {
    }
 
    public boolean isActive() {
-      return this.init_BlockPos != null;
+      return this.anchor != null;
    }
 
    public boolean isIdle() {
@@ -142,7 +142,7 @@ public final class AiMiningCommitment {
    }
 
    public BlockPos getAnchor() {
-      return this.init_BlockPos;
+      return this.anchor;
    }
 
    public int load_I() {
@@ -152,7 +152,7 @@ public final class AiMiningCommitment {
    public void clear() {
       this.init_Set.clear();
       this.load.clear();
-      this.init_BlockPos = null;
+      this.anchor = null;
       this.init_J = -1L;
    }
 }

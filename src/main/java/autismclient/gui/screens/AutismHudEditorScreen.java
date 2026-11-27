@@ -29,9 +29,9 @@ public class AutismHudEditorScreen extends Screen {
    private static final int update = 10;
    private static final int sync = 6;
    private static final int flush = 0;
-   private final Screen init_Screen;
+   private final Screen parent;
    private String init_Str;
-   private String load_Str;
+   private String hit;
    private int close;
    private int open;
    private boolean init_Z;
@@ -65,7 +65,7 @@ public class AutismHudEditorScreen extends Screen {
 
    public AutismHudEditorScreen(Screen parent) {
       super(Component.literal("Autism HUD Editor"));
-      this.init_Screen = parent;
+      this.parent = parent;
       AutismHudManager.ensureInitialized();
    }
 
@@ -309,7 +309,7 @@ public class AutismHudEditorScreen extends Screen {
 
             if (Compat263.mouseEventGlfwButton(event) == 0 && hit != null) {
                this.init_Str = hit;
-               this.load_Str = hit;
+               this.hit = hit;
                AutismHudManager.HudElementBounds bounds = AutismHudManager.bounds(hit, this.font);
                this.close = mx - bounds.read();
                this.open = my - bounds.write();
@@ -325,7 +325,7 @@ public class AutismHudEditorScreen extends Screen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      this.load_Str = null;
+      this.hit = null;
       this.pop = -1;
       this.init_Integer = null;
       this.load_Integer = null;
@@ -341,12 +341,12 @@ public class AutismHudEditorScreen extends Screen {
          return true;
       }
 
-      if (this.load_Str == null) {
+      if (this.hit == null) {
          return true;
       }
 
-      int[] snapped = this.init(this.load_Str, mx - this.close, my - this.open);
-      AutismHudManager.setPosition(this.load_Str, snapped[0], snapped[1], cA.init_I(), cA.load_I());
+      int[] snapped = this.init(this.hit, mx - this.close, my - this.open);
+      AutismHudManager.setPosition(this.hit, snapped[0], snapped[1], cA.init_I(), cA.load_I());
       this.init_Z = true;
       return true;
    }
@@ -354,7 +354,7 @@ public class AutismHudEditorScreen extends Screen {
    @Override
    public boolean keyPressed(KeyEvent input) {
       if (Compat263.keyEventGlfwKey(input) == 256) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
          return true;
       }
 
@@ -409,12 +409,12 @@ public class AutismHudEditorScreen extends Screen {
       AutismHudEditorScreen.Inner_StreamUtil snappedX = this.init(id, x, bounds.update(), sw, true);
       AutismHudEditorScreen.Inner_StreamUtil snappedY = this.init(id, y, bounds.sync(), sh, false);
       if (snappedX.init_Z()) {
-         outX = snappedX.init_I();
+         outX = snappedX.candidatePosition();
          this.init_Integer = snappedX.load();
       }
 
       if (snappedY.init_Z()) {
-         outY = snappedY.init_I();
+         outY = snappedY.candidatePosition();
          this.load_Integer = snappedY.load();
       }
 
@@ -608,7 +608,7 @@ public class AutismHudEditorScreen extends Screen {
    private record Inner_DataUtil(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
    }
 
-   private record Inner_StreamUtil(int init_I, int load, int read, boolean init_Z) {
+   private record Inner_StreamUtil(int candidatePosition, int load, int read, boolean init_Z) {
       static AutismHudEditorScreen.Inner_StreamUtil init_RenderState_Stream() {
          return new AutismHudEditorScreen.Inner_StreamUtil(0, 0, 2147483647, false);
       }

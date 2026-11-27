@@ -484,18 +484,18 @@ public final class PackUrlValidator {
    public record Inner_BufferHelper(Type proxyType, PackUrlValidator.Inner_CachePool endpoint, String init_Str, boolean init_Z) {
    }
 
-   public record Inner_CachePool(URI init_URI, String init_Str, int port, List<InetAddress> addresses) {
+   public record Inner_CachePool(URI uri, String init_Str, int port, List<InetAddress> addresses) {
       public Inner_CachePool {
          addresses = List.copyOf(addresses);
       }
 
       public String init_Str() {
-         return this.init_URI.getScheme().toLowerCase(Locale.ROOT);
+         return this.uri.getScheme().toLowerCase(Locale.ROOT);
       }
 
       public PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS() {
          try {
-            return PackUrlValidator.parseUri(this.init_URI);
+            return PackUrlValidator.parseUri(this.uri);
          } catch (IOException e) {
             throw new IllegalStateException(e);
          }

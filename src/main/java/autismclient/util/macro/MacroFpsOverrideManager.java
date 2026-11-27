@@ -88,7 +88,7 @@ public final class MacroFpsOverrideManager {
             return 9223372036854775807L;
          }
 
-         longest = Math.max(longest, override.init_J - now);
+         longest = Math.max(longest, override.expiry - now);
       }
 
       return longest > 0L ? longest / 1000000L : 0L;
@@ -115,7 +115,7 @@ public final class MacroFpsOverrideManager {
          } else {
             effective = Math.min(effective, override.init_I);
             if (!override.init_Z || override.init_I == 0) {
-               nextExpiry = Math.min(nextExpiry, override.init_J);
+               nextExpiry = Math.min(nextExpiry, override.expiry);
             }
          }
       }
@@ -124,9 +124,9 @@ public final class MacroFpsOverrideManager {
       read = init_I < 0 ? 9223372036854775807L : nextExpiry;
    }
 
-   private record Inner_DataUtil(int init_I, long init_J, boolean init_Z) {
+   private record Inner_DataUtil(int init_I, long expiry, boolean init_Z) {
       boolean init(long now) {
-         return this.init_Z && this.init_I != 0 ? true : now - this.init_J < 0L;
+         return this.init_Z && this.init_I != 0 ? true : now - this.expiry < 0L;
       }
    }
 }

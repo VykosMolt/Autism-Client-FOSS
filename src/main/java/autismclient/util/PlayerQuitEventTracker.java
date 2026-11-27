@@ -51,7 +51,7 @@ public final class PlayerQuitEventTracker {
                && !duplicates.contains(init_Str_Str(p.name()))
                && !duplicateIds.contains(p.uuid())) {
                PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(p.uuid());
-               if (m != null && !m.init_Str.equals(p.name())) {
+               if (m != null && !m.name.equals(p.name())) {
                   this.init_Map.remove(p.uuid());
                   m = null;
                }
@@ -81,10 +81,10 @@ public final class PlayerQuitEventTracker {
             owners.put(init_Str_Str(p.name()), p.uuid());
          }
 
-         this.init_Map.values().removeIf(mx -> !live.containsKey(mx.init_UUID) && owners.containsKey(init_Str_Str(mx.init_Str)));
+         this.init_Map.values().removeIf(mx -> !live.containsKey(mx.id) && owners.containsKey(init_Str_Str(mx.name)));
 
          for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
-            if (!live.containsKey(m.init_UUID)) {
+            if (!live.containsKey(m.id)) {
                this.init_V_StreamUtil_StreamU_J(m, now);
             }
          }
@@ -117,7 +117,7 @@ public final class PlayerQuitEventTracker {
          m.read_Z = false;
          m.write_Z = false;
          if (m.load_Z) {
-            this.init_ArrayDeque.addLast(new PlayerQuitEventTracker.Inner_CachePool(m.init_UUID, now));
+            this.init_ArrayDeque.addLast(new PlayerQuitEventTracker.Inner_CachePool(m.id, now));
          }
       }
    }
@@ -141,7 +141,7 @@ public final class PlayerQuitEventTracker {
                   Object argument = translated.getArgs()[0];
                   String display = argument instanceof Component c ? c.getString(96) : (argument instanceof String s ? s : "");
                   if (display.length() <= 96) {
-                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.init_Map.values().stream().filter(mx -> NormalizedTextMatcher.matchesName(display, mx.init_Str)).toList();
+                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.init_Map.values().stream().filter(mx -> NormalizedTextMatcher.matchesName(display, mx.name)).toList();
                      if (matches.size() == 1) {
                         matches.getFirst().write_J = now;
                      }
@@ -183,7 +183,7 @@ public final class PlayerQuitEventTracker {
       for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
          if (init_Z_StreamUtil_StreamU_J(m, now) && !m.read_Z) {
             m.read_Z = true;
-            alerts.add(new PlayerQuitEventTracker.Inner_DataUtil(m.init_UUID, m.init_Str, m.read_J + 3000L + 20000L));
+            alerts.add(new PlayerQuitEventTracker.Inner_DataUtil(m.id, m.name, m.read_J + 3000L + 20000L));
          }
       }
 
@@ -222,8 +222,8 @@ public final class PlayerQuitEventTracker {
    }
 
    private static final class Inner_StreamUtil {
-      final UUID init_UUID;
-      final String init_Str;
+      final UUID id;
+      final String name;
       final String load_Str;
       long init_J = -1L;
       long load_J;
@@ -235,8 +235,8 @@ public final class PlayerQuitEventTracker {
       boolean write_Z;
 
       Inner_StreamUtil(UUID id, String name) {
-         this.init_UUID = id;
-         this.init_Str = name;
+         this.id = id;
+         this.name = name;
          this.load_Str = NormalizedTextMatcher.normalize(name);
       }
 

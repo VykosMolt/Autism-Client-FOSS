@@ -20,7 +20,7 @@ public final class JoinSecretKeyHelper {
       return value.matches("[a-z0-9_.-]{1,64}") ? value : "";
    }
 
-   public static String init() {
+   public static String generateRandomKey() {
       SecureRandom random = new SecureRandom();
       String alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
       int length = 9 + random.nextInt(8);

@@ -33,8 +33,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private static final int[] init_IArr = new int[]{
       16777215, 13158600, 8026746, 0, 16726843, 16747039, 16769333, 9240379, 2873707, 2876384, 3909631, 3890175, 10178047, 16731608, 16748468, 9132587
    };
-   private final Screen init_Screen;
-   private final CrosshairModule init_n;
+   private final Screen parent;
+   private final CrosshairModule module;
    private final CrosshairPixelArt init_m;
    private final ArrayDeque<CrosshairEditorScreen.Inner_BufferHelper> init_ArrayDeque = new ArrayDeque<>();
    private final ArrayDeque<CrosshairEditorScreen.Inner_BufferHelper> load_ArrayDeque = new ArrayDeque<>();
@@ -43,7 +43,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private final List<String> read_List = new ArrayList<>();
    private int open;
    private int[] load_IArr;
-   private CrosshairEditorScreen.Inner_ConfigStore init_NetHelper_ConfigSt;
+   private CrosshairEditorScreen.Inner_ConfigStore option;
    private CrosshairEditorScreen.Inner_ConfigStore load_NetHelper_ConfigSt;
    private int poll;
    private boolean init_Z;
@@ -78,7 +78,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    public CrosshairEditorScreen(Screen parent, CrosshairModule module, CrosshairPixelArt start) {
       super(Component.literal("Crosshair Editor"));
-      this.init_NetHelper_ConfigSt = CrosshairEditorScreen.Inner_ConfigStore.PEN;
+      this.option = CrosshairEditorScreen.Inner_ConfigStore.PEN;
       this.load_NetHelper_ConfigSt = CrosshairEditorScreen.Inner_ConfigStore.PEN;
       this.poll = 1;
       this.write_Z = true;
@@ -88,8 +88,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       this.sync_Z = true;
       this.stop = -1;
       this.next = -1;
-      this.init_Screen = parent;
-      this.init_n = module;
+      this.parent = parent;
+      this.module = module;
       this.init_m = module.art();
       this.open = start.size();
       this.load_IArr = start.pixels();
@@ -104,8 +104,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       CrosshairEditorScreen.Inner_CachePool layout = this.init_NetHelper_CachePoo();
       double scale = cA.init_F();
       return new double[]{
-         (layout.load_NetHelper().read() + (cellX + 0.5) * layout.load_I()) * scale,
-         (layout.load_NetHelper().write() + (cellY + 0.5) * layout.load_I()) * scale
+         (layout.canvas().read() + (cellX + 0.5) * layout.load_I()) * scale,
+         (layout.canvas().write() + (cellY + 0.5) * layout.load_I()) * scale
       };
    }
 
@@ -168,7 +168,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
                   autismclient.gui.f.NetHelper.init(tx + i % 2 * (half + gap), ty + i / 2 * (ctl + gap), half, ctl),
                   CrosshairEditorScreen.Inner_StreamUtil.CHIP,
                   option.init_Str,
-                  this.init_NetHelper_ConfigSt == option,
+                  this.option == option,
                   null,
                   0,
                   option.load_Str,
@@ -363,20 +363,20 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             graphics, this.font, this.init_NetHelper_2 == null ? mx : -10000, this.init_NetHelper_2 == null ? my : -10000
          );
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-         autismclient.gui.f.NetHelper window = layout.init_NetHelper();
+         autismclient.gui.f.NetHelper window = layout.window();
          autismclient.gui.ui.widgets.DialogFrameRenderer.init(
             context,
             window,
-            layout.init_I(),
+            layout.header(),
             "Crosshair Editor",
-            this.init_NetHelper_2 == null && my >= window.write() && my < window.write() + layout.init_I() && window.init_Z(mx, my)
+            this.init_NetHelper_2 == null && my >= window.write() && my < window.write() + layout.header() && window.init_Z(mx, my)
          );
 
          for (int i = 0; i < this.load_List.size(); i++) {
             autismclient.gui.f.b.BufferHelper.init_V(context, this.load_List.get(i), this.read_List.get(i));
          }
 
-         int rowY = window.write() + layout.init_I() + 6;
+         int rowY = window.write() + layout.header() + 6;
          int ctl = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
          context.init_PoolEntry()
             .draw(
@@ -401,7 +401,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
                   autismclient.gui.f.b.CachePool.init(context, control.init_NetHelper(), control.init_Str(), control.init_CachePool_DataUtil(), over, false);
                   break;
                case SWATCH:
-                  this.init(context, control.init_NetHelper(), control.init_I(), control.init_Z(), over);
+                  this.init(context, control.init_NetHelper(), control.argb(), control.init_Z(), over);
             }
          }
 
@@ -416,7 +416,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             autismclient.gui.ui.widgets.SliderRenderer.ratio(this.pop, 5.0, 100.0),
             this.init_NetHelper_2 == null && (this.update_Z || opacityBounds.init_Z(mx, my))
          );
-         String status = this.stop >= 0 ? this.init_NetHelper_ConfigSt.read_Str + "   " + this.stop + ", " + this.next : this.init_NetHelper_ConfigSt.read_Str;
+         String status = this.stop >= 0 ? this.option.read_Str + "   " + this.stop + ", " + this.next : this.option.read_Str;
          context.init_PoolEntry()
             .drawFitted(graphics, status, layout.update().read(), context.init_PoolEntry().centerTextY(layout.update()), layout.update().update(), colors.textSecondary);
          if (layout.write() != null) {
@@ -443,7 +443,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private void init(autismclient.gui.f.SyncManager context, CrosshairEditorScreen.Inner_CachePool layout, int mx, int my) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-      autismclient.gui.f.NetHelper canvas = layout.load_NetHelper();
+      autismclient.gui.f.NetHelper canvas = layout.canvas();
       int cell = layout.load_I();
       autismclient.gui.f.PacketUtil.load(graphics, canvas.init(-3), 5, colors.inputSurface, colors.borderSubtle);
       int tile = Math.max(cell, canvas.update() / 8);
@@ -497,17 +497,17 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          this.stop = Math.min(this.open - 1, (mx - canvas.read()) / cell);
          this.next = Math.min(this.open - 1, (my - canvas.write()) / cell);
          if (this.tick < 0) {
-            int mark = this.init_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.ERASER
+            int mark = this.option == CrosshairEditorScreen.Inner_ConfigStore.ERASER
                ? 1728007501
                : (
-                  this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.PICKER
-                        && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.FILL
+                  this.option != CrosshairEditorScreen.Inner_ConfigStore.PICKER
+                        && this.option != CrosshairEditorScreen.Inner_ConfigStore.FILL
                      ? this.read_I_9() & 16777215 | -1728053248
                      : 1728053247
                );
-            int span = this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.PEN
-                  && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.ERASER
-                  && !this.init_NetHelper_ConfigSt.init()
+            int span = this.option != CrosshairEditorScreen.Inner_ConfigStore.PEN
+                  && this.option != CrosshairEditorScreen.Inner_ConfigStore.ERASER
+                  && !this.option.init()
                ? 1
                : this.poll;
 
@@ -542,7 +542,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box) {
-      CrosshairRenderState.Inner_DataUtil look = this.init_n.init_q_DataUtil_m(this.init_m());
+      CrosshairRenderState.Inner_DataUtil look = this.module.init_q_DataUtil_m(this.init_m());
       CrosshairRenderState.Inner_DataUtil shown = new CrosshairRenderState.Inner_DataUtil(
          CrosshairPresetGeometry.Inner_NetHelper.CUSTOM,
          look.init_D(),
@@ -621,12 +621,12 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          return true;
       } else {
          CrosshairEditorScreen.Inner_CachePool layout = this.init_NetHelper_CachePoo();
-         if (button == 0 && autismclient.gui.ui.widgets.DialogFrameRenderer.init(layout.init_NetHelper(), layout.init_I(), mx, my)) {
+         if (button == 0 && autismclient.gui.ui.widgets.DialogFrameRenderer.init(layout.window(), layout.header(), mx, my)) {
             this.pop();
             return true;
          }
 
-         autismclient.gui.f.NetHelper canvas = layout.load_NetHelper();
+         autismclient.gui.f.NetHelper canvas = layout.canvas();
          if (!canvas.init_Z(mx, my)) {
             if (button != 0) {
                return true;
@@ -649,7 +649,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          } else {
             int cx = Math.min(this.open - 1, (mx - canvas.read()) / layout.load_I());
             int cy = Math.min(this.open - 1, (my - canvas.write()) / layout.load_I());
-            if (button != 2 && (button != 0 || !event.hasAltDown() && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.PICKER)) {
+            if (button != 2 && (button != 0 || !event.hasAltDown() && this.option != CrosshairEditorScreen.Inner_ConfigStore.PICKER)) {
                if (button == 0 || button == 1) {
                   this.init(button, cx, cy, event.hasShiftDown());
                }
@@ -678,7 +678,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       }
 
       if (this.tick >= 0 && Compat263.mouseEventGlfwButton(event) == this.tick) {
-         autismclient.gui.f.NetHelper canvas = layout.load_NetHelper();
+         autismclient.gui.f.NetHelper canvas = layout.canvas();
          int cx = Math.max(0, Math.min(this.open - 1, Math.floorDiv(mx - canvas.read(), layout.load_I())));
          int cy = Math.max(0, Math.min(this.open - 1, Math.floorDiv(my - canvas.write(), layout.load_I())));
          this.init(cx, cy, event.hasShiftDown());
@@ -719,7 +719,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
       int mx = cA.init_I_D(mouseX);
       int my = cA.init_I_D(mouseY);
-      if (this.init_NetHelper_CachePoo().load_NetHelper().init_Z(mx, my) && vertical != 0.0) {
+      if (this.init_NetHelper_CachePoo().canvas().init_Z(mx, my) && vertical != 0.0) {
          this.poll = Math.max(1, Math.min(4, this.poll + (vertical > 0.0 ? 1 : -1)));
       }
 
@@ -800,11 +800,11 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init_V_NetHelper_ConfigSt(CrosshairEditorScreen.Inner_ConfigStore option) {
-      if (option == CrosshairEditorScreen.Inner_ConfigStore.PICKER && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.PICKER) {
-         this.load_NetHelper_ConfigSt = this.init_NetHelper_ConfigSt;
+      if (option == CrosshairEditorScreen.Inner_ConfigStore.PICKER && this.option != CrosshairEditorScreen.Inner_ConfigStore.PICKER) {
+         this.load_NetHelper_ConfigSt = this.option;
       }
 
-      this.init_NetHelper_ConfigSt = option;
+      this.option = option;
    }
 
    private int read_I_9() {
@@ -817,12 +817,12 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void write_V_8() {
-      if (this.init_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.PICKER) {
-         this.init_NetHelper_ConfigSt = this.load_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.ERASER
+      if (this.option == CrosshairEditorScreen.Inner_ConfigStore.PICKER) {
+         this.option = this.load_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.ERASER
             ? CrosshairEditorScreen.Inner_ConfigStore.PEN
             : this.load_NetHelper_ConfigSt;
-      } else if (this.init_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.ERASER) {
-         this.init_NetHelper_ConfigSt = CrosshairEditorScreen.Inner_ConfigStore.PEN;
+      } else if (this.option == CrosshairEditorScreen.Inner_ConfigStore.ERASER) {
+         this.option = CrosshairEditorScreen.Inner_ConfigStore.PEN;
       }
    }
 
@@ -851,7 +851,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       this.run = this.set = x;
       this.get = this.put = y;
       int paint = this.write_I_8();
-      switch (this.init_NetHelper_ConfigSt) {
+      switch (this.option) {
          case FILL:
             for (int[] seed : this.init_List(x, y)) {
                this.read(seed[0], seed[1], paint);
@@ -870,8 +870,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init(int x, int y, boolean shift) {
-      if (x != this.set || y != this.put || this.init_NetHelper_ConfigSt.init()) {
-         switch (this.init_NetHelper_ConfigSt) {
+      if (x != this.set || y != this.put || this.option.init()) {
+         switch (this.option) {
             case PEN:
             case ERASER:
                this.read(this.set, this.put, x, y, this.write_I_8());
@@ -912,14 +912,14 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private int write_I_8() {
-      return this.tick != 1 && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.ERASER ? this.read_I_9() : 0;
+      return this.tick != 1 && this.option != CrosshairEditorScreen.Inner_ConfigStore.ERASER ? this.read_I_9() : 0;
    }
 
    private void load(int x, int y, boolean shift) {
       int paint = this.write_I_8();
       int dx = x - this.run;
       int dy = y - this.get;
-      switch (this.init_NetHelper_ConfigSt) {
+      switch (this.option) {
          case LINE:
             if (shift) {
                if (Math.abs(dx) > 2 * Math.abs(dy)) {
@@ -947,7 +947,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             int x1 = Math.max(this.run, this.init_I_I_9(this.run + dx));
             int y0 = Math.min(this.get, this.init_I_I_9(this.get + dy));
             int y1 = Math.max(this.get, this.init_I_I_9(this.get + dy));
-            if (this.init_NetHelper_ConfigSt == CrosshairEditorScreen.Inner_ConfigStore.BOX) {
+            if (this.option == CrosshairEditorScreen.Inner_ConfigStore.BOX) {
                this.init(x0, y0, x1, y1, paint);
             } else {
                this.load(x0, y0, x1, y1, paint);
@@ -1026,9 +1026,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init_V(int x, int y, int paint) {
-      int span = !this.init_NetHelper_ConfigSt.init()
-            && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.PEN
-            && this.init_NetHelper_ConfigSt != CrosshairEditorScreen.Inner_ConfigStore.ERASER
+      int span = !this.option.init()
+            && this.option != CrosshairEditorScreen.Inner_ConfigStore.PEN
+            && this.option != CrosshairEditorScreen.Inner_ConfigStore.ERASER
          ? 1
          : this.poll;
       int from = -(span - 1) / 2;
@@ -1124,7 +1124,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void init_V_p_NetHelper(CrosshairPresetGeometry.Inner_NetHelper style) {
       this.init_V_NetHelper_BufferHe(new CrosshairEditorScreen.Inner_BufferHelper(this.open, (int[])this.load_IArr.clone()));
-      this.load_IArr = CrosshairPresetGeometry.init(style, this.open, this.init_n.thickness(), this.init_n.gap(), this.read_I_9()).pixels();
+      this.load_IArr = CrosshairPresetGeometry.init(style, this.open, this.module.thickness(), this.module.gap(), this.read_I_9()).pixels();
       this.push();
    }
 
@@ -1194,23 +1194,23 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
       CrosshairPixelArt drawn = this.init_m();
       if (!drawn.equals(this.init_m)) {
-         this.init_n.setArt(drawn);
+         this.module.setArt(drawn);
       }
 
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 
    private void run() {
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 
    private record Inner_BufferHelper(int init_I, int[] init_IArr) {
    }
 
    private record Inner_CachePool(
-      autismclient.gui.f.NetHelper init_NetHelper,
-      int init_I,
-      autismclient.gui.f.NetHelper load_NetHelper,
+      autismclient.gui.f.NetHelper window,
+      int header,
+      autismclient.gui.f.NetHelper canvas,
       int load_I,
       autismclient.gui.f.NetHelper read,
       autismclient.gui.f.NetHelper write,
@@ -1250,7 +1250,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       String init_Str,
       boolean init_Z,
       autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil,
-      int init_I,
+      int argb,
       String load,
       Runnable init_Runnable
    ) {

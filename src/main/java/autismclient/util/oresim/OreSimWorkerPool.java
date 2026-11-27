@@ -13,7 +13,7 @@ final class OreSimWorkerPool {
    private final int workerCount;
    private final ThreadPoolExecutor init_ThreadPoolExecutor;
    private final Set<Future<?>> activeTasks = Collections.newSetFromMap(new IdentityHashMap<>());
-   private OreSimWorkerPool.Inner_DataUtil init_ConfigStore_DataUt;
+   private OreSimWorkerPool.Inner_DataUtil work;
 
    OreSimWorkerPool(String threadName) {
       this.workerCount = Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
@@ -39,7 +39,7 @@ final class OreSimWorkerPool {
 
       this.read();
       OreSimWorkerPool.Inner_DataUtil work = new OreSimWorkerPool.Inner_DataUtil();
-      this.init_ConfigStore_DataUt = work;
+      this.work = work;
       Future<?> future = this.init_ThreadPoolExecutor.submit(() -> {
          try {
             task.run();
@@ -49,7 +49,7 @@ final class OreSimWorkerPool {
       });
       work.init = future;
       this.activeTasks.add(future);
-      if (this.init_ConfigStore_DataUt != work) {
+      if (this.work != work) {
          future.cancel(true);
          this.activeTasks.remove(future);
       }
@@ -83,12 +83,12 @@ final class OreSimWorkerPool {
    }
 
    synchronized boolean isIdle() {
-      return this.init_ConfigStore_DataUt == null && this.activeTasks.isEmpty() && this.init_ThreadPoolExecutor.getQueue().isEmpty();
+      return this.work == null && this.activeTasks.isEmpty() && this.init_ThreadPoolExecutor.getQueue().isEmpty();
    }
 
    private void read() {
-      OreSimWorkerPool.Inner_DataUtil work = this.init_ConfigStore_DataUt;
-      this.init_ConfigStore_DataUt = null;
+      OreSimWorkerPool.Inner_DataUtil work = this.work;
+      this.work = null;
       this.init_ThreadPoolExecutor.getQueue().clear();
       if (work != null && work.init != null) {
          work.init.cancel(true);
@@ -110,8 +110,8 @@ final class OreSimWorkerPool {
          this.activeTasks.remove(work.init);
       }
 
-      if (this.init_ConfigStore_DataUt == work) {
-         this.init_ConfigStore_DataUt = null;
+      if (this.work == work) {
+         this.work = null;
       }
    }
 

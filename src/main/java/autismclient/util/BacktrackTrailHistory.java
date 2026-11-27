@@ -10,30 +10,30 @@ public final class BacktrackTrailHistory {
    public static final int init_I = 24;
    public static final long init_J = 450000000L;
    private final ArrayDeque<BacktrackTrailHistory.Inner_StreamUtil> init_ArrayDeque = new ArrayDeque<>();
-   private Object init_Obj;
-   private Vec3 init_Vec3;
+   private Object target;
+   private Vec3 position;
    private long load;
    private long read;
    private BacktrackTrailHistory.Inner_DataUtil init_cP_DataUtil;
 
    public void init() {
-      this.init_Obj = null;
-      this.init_Vec3 = null;
+      this.target = null;
+      this.position = null;
       this.init_cP_DataUtil = null;
       this.load = this.read = 0L;
       this.init_ArrayDeque.clear();
    }
 
    public boolean hasRecentTrail(Object target, long now) {
-      return this.init_Obj == target && this.init_cP_DataUtil != null && now - this.read < 450000000L;
+      return this.target == target && this.init_cP_DataUtil != null && now - this.read < 450000000L;
    }
 
    public void init(Object target, AABB drawn, AABB received, Vec3 position, long now) {
       if (target != null && init(position) && init(drawn.getCenter()) && init(received.getCenter())) {
-         if (this.init_Obj != target || this.init_Vec3 == null || this.init_Vec3.distanceToSqr(position) > 16.0) {
+         if (this.target != target || this.position == null || this.position.distanceToSqr(position) > 16.0) {
             this.init();
-            this.init_Obj = target;
-            this.init_Vec3 = position;
+            this.target = target;
+            this.position = position;
             this.load = now;
          }
 
@@ -70,19 +70,19 @@ public final class BacktrackTrailHistory {
             this.init(target, drawn, received, position, now);
          }
 
-         if (this.init_Obj == target && this.init_cP_DataUtil != null && !(this.init_Vec3.distanceToSqr(position) > 16.0)) {
+         if (this.target == target && this.init_cP_DataUtil != null && !(this.position.distanceToSqr(position) > 16.0)) {
             double fade = holding ? 1.0 : Math.max(0.0, 1.0 - Math.max(0L, now - this.read) / 4.5E8);
             if (fade <= 0.0) {
                this.init();
                return List.of();
             }
 
-            drawn = this.init_cP_DataUtil.init_AABB();
+            drawn = this.init_cP_DataUtil.drawn();
             received = this.init_cP_DataUtil.load();
             position = this.init_cP_DataUtil.init_Vec3();
             long elapsed = Math.max(0L, Math.min(250000000L, now - this.load));
             this.load = now;
-            this.init_Vec3 = this.init_Vec3.lerp(position, init_D_J_I(elapsed, smoothingMs));
+            this.position = this.position.lerp(position, init_D_J_I(elapsed, smoothingMs));
 
             while (!this.init_ArrayDeque.isEmpty() && now - this.init_ArrayDeque.peekFirst().init_J() > 650000000L) {
                this.init_ArrayDeque.removeFirst();
@@ -91,7 +91,7 @@ public final class BacktrackTrailHistory {
             ArrayList<autismclient.modules.EspHighlightBox> boxes = new ArrayList<>();
             int outline = init_I_I_D(receivedColor, fade);
             if (!"Box".equals(style)) {
-               AABB ghost = received.move(this.init_Vec3.subtract(position));
+               AABB ghost = received.move(this.position.subtract(position));
                double x = ghost.minX;
                double y = ghost.minY;
                double z = ghost.minZ;
@@ -181,7 +181,7 @@ public final class BacktrackTrailHistory {
       return Double.isFinite(p.x) && Double.isFinite(p.y) && Double.isFinite(p.z);
    }
 
-   private record Inner_DataUtil(AABB init_AABB, AABB load, Vec3 init_Vec3) {
+   private record Inner_DataUtil(AABB drawn, AABB load, Vec3 init_Vec3) {
    }
 
    private record Inner_StreamUtil(Vec3 init_Vec3, long init_J) {

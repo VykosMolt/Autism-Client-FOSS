@@ -82,11 +82,11 @@ final class ProfileServerIconCache {
       byte[] bytes = server.getIconBytes();
       ProfileServerIconCache.Inner_DataUtil cached = this.load.get(server);
       if (cached != null && cached.init_BArr() == bytes) {
-         return cached.init_Identifier();
+         return cached.texture();
       }
 
-      if (cached != null && cached.init_Identifier() != null) {
-         Minecraft.getInstance().getTextureManager().release(cached.init_Identifier());
+      if (cached != null && cached.texture() != null) {
+         Minecraft.getInstance().getTextureManager().release(cached.texture());
       }
 
       Identifier texture = bytes == null ? null : init_Identifier_BArr(bytes);
@@ -120,8 +120,8 @@ final class ProfileServerIconCache {
       TextureManager manager = Minecraft.getInstance().getTextureManager();
 
       for (ProfileServerIconCache.Inner_DataUtil cached : this.load.values()) {
-         if (cached.init_Identifier() != null) {
-            manager.release(cached.init_Identifier());
+         if (cached.texture() != null) {
+            manager.release(cached.texture());
          }
       }
 
@@ -130,6 +130,6 @@ final class ProfileServerIconCache {
       this.init_ServerList = null;
    }
 
-   private record Inner_DataUtil(byte[] init_BArr, Identifier init_Identifier) {
+   private record Inner_DataUtil(byte[] init_BArr, Identifier texture) {
    }
 }

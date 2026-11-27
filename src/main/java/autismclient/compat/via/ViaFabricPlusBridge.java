@@ -56,15 +56,15 @@ public final class ViaFabricPlusBridge {
       ViaFabricPlusBridge.StreamUtil scoped = init_ThreadLocal.get();
       if (scoped != null) {
          return init(
-            scoped.init_InetSocketAddress().getAddress().getHostAddress(),
-            scoped.init_InetSocketAddress().getPort(),
-            scoped.init_DataUtil_ConfigSto(),
+            scoped.getAddress().getAddress().getHostAddress(),
+            scoped.getAddress().getPort(),
+            scoped.getProxy(),
             (ignoredHost, ignoredPort) -> {
                Socket socket = init();
 
                try {
                   socket.setSoTimeout(3000);
-                  socket.connect(scoped.init_InetSocketAddress(), 3000);
+                  socket.connect(scoped.getAddress(), 3000);
                   return socket;
                } catch (Throwable failure) {
                   socket.close();
@@ -323,23 +323,23 @@ public final class ViaFabricPlusBridge {
    }
 
    private static final class StreamUtil {
-      private final ViaFabricPlusBridge.ConfigStore init_DataUtil_ConfigSto;
-      private final InetSocketAddress init_InetSocketAddress;
+      private final ViaFabricPlusBridge.ConfigStore proxy;
+      private final InetSocketAddress address;
       private ScheduledFuture<?> init_ScheduledFuture;
       private Socket init_Socket;
       private boolean init_Z;
 
       private StreamUtil(ViaFabricPlusBridge.ConfigStore proxy, InetSocketAddress address) {
-         this.init_DataUtil_ConfigSto = proxy;
-         this.init_InetSocketAddress = address;
+         this.proxy = proxy;
+         this.address = address;
       }
 
-      private ViaFabricPlusBridge.ConfigStore init_DataUtil_ConfigSto() {
-         return this.init_DataUtil_ConfigSto;
+      private ViaFabricPlusBridge.ConfigStore getProxy() {
+         return this.proxy;
       }
 
-      private InetSocketAddress init_InetSocketAddress() {
-         return this.init_InetSocketAddress;
+      private InetSocketAddress getAddress() {
+         return this.address;
       }
 
       private synchronized void init(Socket value) throws IOException {

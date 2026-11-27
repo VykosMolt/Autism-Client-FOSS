@@ -2,19 +2,19 @@ package autismclient.gui.ui.layout;
 
 public class LabeledControlRow extends LayoutContainer {
    private final LayoutNode init_TableIndex;
-   private final LayoutNode load_TableIndex;
+   private final LayoutNode control;
    private EdgeInsets init_IoWorker;
    private int init_I;
    private float sync;
-   private boolean write_Z;
+   private boolean alignControlEnd;
 
    public LabeledControlRow(LayoutNode labelNode, LayoutNode controlNode) {
       this.init_IoWorker = EdgeInsets.ZERO;
       this.init_I = 0;
       this.sync = -1.0F;
-      this.write_Z = false;
+      this.alignControlEnd = false;
       this.init_TableIndex = this.addChild(labelNode);
-      this.load_TableIndex = this.addChild(controlNode);
+      this.control = this.addChild(controlNode);
    }
 
    public LabeledControlRow setPadding(EdgeInsets padding) {
@@ -48,8 +48,8 @@ public class LabeledControlRow extends LayoutContainer {
    }
 
    public LabeledControlRow setAlignControlEnd(boolean alignControlEnd) {
-      if (this.write_Z != alignControlEnd) {
-         this.write_Z = alignControlEnd;
+      if (this.alignControlEnd != alignControlEnd) {
+         this.alignControlEnd = alignControlEnd;
          this.markLayoutDirty();
       }
 
@@ -61,7 +61,7 @@ public class LabeledControlRow extends LayoutContainer {
    }
 
    public LayoutNode getControl() {
-      return this.load_TableIndex;
+      return this.control;
    }
 
    private float load_F(LayoutContext context) {
@@ -78,12 +78,12 @@ public class LabeledControlRow extends LayoutContainer {
       int scaledGap = context.theme().load(this.init_I);
       float total = scaledPadding.init_I();
       total += this.load_F(context);
-      if (this.init_TableIndex != null && this.init_TableIndex.isVisible() && this.load_TableIndex != null && this.load_TableIndex.isVisible()) {
+      if (this.init_TableIndex != null && this.init_TableIndex.isVisible() && this.control != null && this.control.isVisible()) {
          total += scaledGap;
       }
 
-      if (this.load_TableIndex != null && this.load_TableIndex.isVisible()) {
-         total += this.load_TableIndex.measurePreferredWidth(context);
+      if (this.control != null && this.control.isVisible()) {
+         total += this.control.measurePreferredWidth(context);
       }
 
       return total;
@@ -95,8 +95,8 @@ public class LabeledControlRow extends LayoutContainer {
       float labelHeight = this.init_TableIndex != null && this.init_TableIndex.isVisible()
          ? this.init_TableIndex.measureHeight(context, availableWidth)
          : 0.0F;
-      float controlHeight = this.load_TableIndex != null && this.load_TableIndex.isVisible()
-         ? this.load_TableIndex.measureHeight(context, availableWidth)
+      float controlHeight = this.control != null && this.control.isVisible()
+         ? this.control.measureHeight(context, availableWidth)
          : 0.0F;
       return scaledPadding.write() + Math.max(labelHeight, controlHeight) + scaledPadding.bottom();
    }
@@ -115,22 +115,22 @@ public class LabeledControlRow extends LayoutContainer {
          float labelHeight = Math.min(innerHeight, this.init_TableIndex.measureHeight(context, resolvedLabelWidth));
          float labelY = innerY + Math.max(0.0F, (innerHeight - labelHeight) / 2.0F);
          this.init_TableIndex.setBounds(innerX, labelY, resolvedLabelWidth, labelHeight);
-         controlX = innerX + resolvedLabelWidth + (this.load_TableIndex != null && this.load_TableIndex.isVisible() ? scaledGap : 0);
+         controlX = innerX + resolvedLabelWidth + (this.control != null && this.control.isVisible() ? scaledGap : 0);
       }
 
-      if (this.load_TableIndex != null && this.load_TableIndex.isVisible()) {
+      if (this.control != null && this.control.isVisible()) {
          float controlWidth = Math.max(0.0F, innerX + innerWidth - controlX);
-         if (!this.load_TableIndex.isGrowX()) {
-            controlWidth = Math.min(controlWidth, this.load_TableIndex.measurePreferredWidth(context));
+         if (!this.control.isGrowX()) {
+            controlWidth = Math.min(controlWidth, this.control.measurePreferredWidth(context));
          }
 
-         if (this.write_Z && !this.load_TableIndex.isGrowX()) {
+         if (this.alignControlEnd && !this.control.isGrowX()) {
             controlX = Math.max(controlX, innerX + innerWidth - controlWidth);
          }
 
-         float controlHeight = Math.min(innerHeight, this.load_TableIndex.measureHeight(context, controlWidth));
+         float controlHeight = Math.min(innerHeight, this.control.measureHeight(context, controlWidth));
          float controlY = innerY + Math.max(0.0F, (innerHeight - controlHeight) / 2.0F);
-         this.load_TableIndex.setBounds(controlX, controlY, controlWidth, controlHeight);
+         this.control.setBounds(controlX, controlY, controlWidth, controlHeight);
       }
    }
 }

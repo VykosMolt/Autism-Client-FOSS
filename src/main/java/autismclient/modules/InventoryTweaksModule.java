@@ -659,11 +659,11 @@ public final class InventoryTweaksModule extends Module {
    }
 
    private final class Inner_ConfigStore {
-      private final int init_I;
-      private final List<InventoryTweaksModule.Inner_BufferHelper> init_List;
-      private final boolean init_Z;
-      private final boolean load_Z;
-      private final int load_I;
+      private final int containerId;
+      private final List<InventoryTweaksModule.Inner_BufferHelper> clicks;
+      private final boolean steal;
+      private final boolean dropBackwards;
+      private final int delayMs;
       private final int read;
       private int write;
       private long init_J;
@@ -671,11 +671,11 @@ public final class InventoryTweaksModule extends Module {
       private Inner_ConfigStore(
          int containerId, List<InventoryTweaksModule.Inner_BufferHelper> clicks, boolean steal, boolean dropBackwards, int delayMs, int initialDelayMs, int randomMs
       ) {
-         this.init_I = containerId;
-         this.init_List = clicks;
-         this.init_Z = steal;
-         this.load_Z = dropBackwards;
-         this.load_I = delayMs;
+         this.containerId = containerId;
+         this.clicks = clicks;
+         this.steal = steal;
+         this.dropBackwards = dropBackwards;
+         this.delayMs = delayMs;
          this.read = randomMs;
          this.init_J = System.currentTimeMillis() + initialDelayMs;
       }
@@ -685,7 +685,7 @@ public final class InventoryTweaksModule extends Module {
             return false;
          }
 
-         if (InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.init_I) {
+         if (InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.containerId) {
             return false;
          }
 
@@ -693,24 +693,24 @@ public final class InventoryTweaksModule extends Module {
             return true;
          }
 
-         while (this.write < this.init_List.size()) {
-            InventoryTweaksModule.Inner_BufferHelper click = this.init_List.get(this.write++);
+         while (this.write < this.clicks.size()) {
+            InventoryTweaksModule.Inner_BufferHelper click = this.clicks.get(this.write++);
             if (click.init_I() >= 0 && click.init_I() < InventoryTweaksModule.init_Minecraft.player.containerMenu.slots.size()) {
                Slot slot = InventoryTweaksModule.init_Minecraft.player.containerMenu.slots.get(click.init_I());
                if (slot != null
                   && !slot.getItem().isEmpty()
-                  && (!this.init_Z || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "steal-filter", "steal-items"))
-                  && (this.init_Z || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "dump-filter", "dump-items"))) {
+                  && (!this.steal || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "steal-filter", "steal-items"))
+                  && (this.steal || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "dump-filter", "dump-items"))) {
                   if (click.init_Z()) {
                      float oldYaw = InventoryTweaksModule.init_Minecraft.player.getYRot();
-                     if (this.load_Z) {
+                     if (this.dropBackwards) {
                         InventoryTweaksModule.init_Minecraft.player.setYRot(oldYaw + 180.0F);
                      }
 
                      try {
                         autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 1, ContainerInput.THROW);
                      } finally {
-                        if (this.load_Z) {
+                        if (this.dropBackwards) {
                            InventoryTweaksModule.init_Minecraft.player.setYRot(oldYaw);
                         }
                      }
@@ -718,8 +718,8 @@ public final class InventoryTweaksModule extends Module {
                      autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 0, ContainerInput.QUICK_MOVE);
                   }
 
-                  if (this.load_I > 0 || this.read > 0) {
-                     this.init_J = System.currentTimeMillis() + this.load_I + ThreadLocalRandom.current().nextInt(this.read + 1);
+                  if (this.delayMs > 0 || this.read > 0) {
+                     this.init_J = System.currentTimeMillis() + this.delayMs + ThreadLocalRandom.current().nextInt(this.read + 1);
                      return true;
                   }
                }
@@ -734,22 +734,22 @@ public final class InventoryTweaksModule extends Module {
    }
 
    private final class Inner_StreamUtil {
-      private final int init_I;
-      private final List<InventoryTweaksModule.Inner_CachePool> init_List;
+      private final int containerId;
+      private final List<InventoryTweaksModule.Inner_CachePool> actions;
       private final int load;
       private int read;
       private int write;
 
       private Inner_StreamUtil(int containerId, List<InventoryTweaksModule.Inner_CachePool> actions, int delayTicks) {
-         this.init_I = containerId;
-         this.init_List = actions;
+         this.containerId = containerId;
+         this.actions = actions;
          this.load = delayTicks;
       }
 
       private boolean init() {
          if (InventoryTweaksModule.init_Minecraft.player == null
             || InventoryTweaksModule.init_Minecraft.player.containerMenu == null
-            || InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.init_I) {
+            || InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.containerId) {
             return false;
          }
 
@@ -758,14 +758,14 @@ public final class InventoryTweaksModule extends Module {
             return true;
          }
 
-         if (this.read >= this.init_List.size()) {
+         if (this.read >= this.actions.size()) {
             return false;
          }
 
-         InventoryTweaksModule.Inner_CachePool action = this.init_List.get(this.read++);
+         InventoryTweaksModule.Inner_CachePool action = this.actions.get(this.read++);
          autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
          this.write = this.load;
-         return this.read < this.init_List.size() || this.write > 0;
+         return this.read < this.actions.size() || this.write > 0;
       }
    }
 }

@@ -15,7 +15,7 @@ public final class WaypointsModule extends Module {
    private final ColorSetting init_ColorSetting;
    private final ColorSetting load_ColorSetting;
    private final IntSetting load_IntSetting;
-   private boolean init_Z = true;
+   private boolean alive = true;
 
    public WaypointsModule() {
       super("waypoints", "Waypoints", ae.update, "Save and render named destinations.");
@@ -66,13 +66,13 @@ public final class WaypointsModule extends Module {
    public void tick() {
       if (MC != null && MC.player != null) {
          boolean alive = MC.player.getHealth() > 0.0F;
-         if (this.init_Z && !alive) {
+         if (this.alive && !alive) {
             this.init_V_33();
          }
 
-         this.init_Z = alive;
+         this.alive = alive;
       } else {
-         this.init_Z = true;
+         this.alive = true;
       }
    }
 

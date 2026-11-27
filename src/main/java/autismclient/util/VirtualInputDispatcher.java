@@ -22,7 +22,7 @@ public final class VirtualInputDispatcher {
    private static VirtualInputDispatcher.Inner_DataUtil read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
    private static long load_J;
    private static long read_J;
-   private static KeyMapping init_KeyMapping;
+   private static KeyMapping mapping;
    private static boolean update;
    private static boolean sync;
 
@@ -316,8 +316,8 @@ public final class VirtualInputDispatcher {
             && init_Minecraft.options.keyHotbarSlots != null
             && init_I < init_Minecraft.options.keyHotbarSlots.length
             && (load_I < 0 || init_Minecraft.player.getInventory().getSelectedSlot() == load_I)) {
-            init_KeyMapping = init_Minecraft.options.keyHotbarSlots[init_I];
-            init(init_KeyMapping, true);
+            mapping = init_Minecraft.options.keyHotbarSlots[init_I];
+            init(mapping, true);
          }
 
          if (!combatOwnsUse) {
@@ -356,9 +356,9 @@ public final class VirtualInputDispatcher {
          read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
          load_J = 0L;
          read_J = 0L;
-         if (init_KeyMapping != null) {
-            init(init_KeyMapping, false);
-            init_KeyMapping = null;
+         if (mapping != null) {
+            init(mapping, false);
+            mapping = null;
          }
       } else {
          read_Z = false;

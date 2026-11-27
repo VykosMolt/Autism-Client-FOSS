@@ -58,11 +58,11 @@ public final class ResourcePackPushValidator {
 
    public static final class Inner_StreamUtil {
       private static final ResourcePackPushValidator.Inner_StreamUtil init_RefQueue_StreamUti = new ResourcePackPushValidator.Inner_StreamUtil(ResourcePackPushValidator.Inner_DataUtil.PASS, "");
-      private final ResourcePackPushValidator.Inner_DataUtil init_RefQueue_DataUtil;
+      private final ResourcePackPushValidator.Inner_DataUtil kind;
       private final String init_Str;
 
       private Inner_StreamUtil(ResourcePackPushValidator.Inner_DataUtil kind, String reason) {
-         this.init_RefQueue_DataUtil = kind;
+         this.kind = kind;
          this.init_Str = reason == null ? "" : reason;
       }
 
@@ -75,7 +75,7 @@ public final class ResourcePackPushValidator {
       }
 
       public ResourcePackPushValidator.Inner_DataUtil verdict() {
-         return this.init_RefQueue_DataUtil;
+         return this.kind;
       }
 
       public String init_Str() {
@@ -83,7 +83,7 @@ public final class ResourcePackPushValidator {
       }
 
       public boolean init_Z() {
-         return this.init_RefQueue_DataUtil != ResourcePackPushValidator.Inner_DataUtil.PASS;
+         return this.kind != ResourcePackPushValidator.Inner_DataUtil.PASS;
       }
    }
 }

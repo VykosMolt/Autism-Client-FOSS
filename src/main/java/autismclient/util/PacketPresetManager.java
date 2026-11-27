@@ -26,7 +26,7 @@ public class PacketPresetManager {
    private final Gson init_Gson = new GsonBuilder().setPrettyPrinting().create();
    private List<PacketPresetManager.Inner_DataUtil> init_List = null;
    private List<PacketPresetManager.Inner_DataUtil> load_List = null;
-   private String load_Str = "";
+   private String signature = "";
 
    private PacketPresetManager() {
       if (!init_File.exists()) {
@@ -101,7 +101,7 @@ public class PacketPresetManager {
          AutismClientMessaging.sendPrefixed("§cPreset not found: " + name);
          return false;
       } else {
-         this.init(entry.init_AutismPacketPreset());
+         this.init(entry.preset());
          AutismClientMessaging.sendPrefixed("§aLoaded preset: " + entry.name());
          return true;
       }
@@ -315,14 +315,14 @@ public class PacketPresetManager {
 
    public List<PacketPresetManager.Inner_DataUtil> userPresets() {
       String signature = this.read_Str();
-      if (this.load_List != null && this.load_Str.equals(signature)) {
+      if (this.load_List != null && this.signature.equals(signature)) {
          return this.load_List;
       }
 
       List<PacketPresetManager.Inner_DataUtil> entries = new ArrayList<>();
       File[] files = init_File.listFiles((dir, fileName) -> fileName.endsWith(".json"));
       if (files == null) {
-         this.load_Str = signature;
+         this.signature = signature;
          this.load_List = List.of();
          return this.load_List;
       }
@@ -355,7 +355,7 @@ public class PacketPresetManager {
       }
 
       entries.sort(Comparator.comparing(entry -> entry.name().toLowerCase(Locale.ROOT)));
-      this.load_Str = signature;
+      this.signature = signature;
       this.load_List = List.copyOf(entries);
       return this.load_List;
    }
@@ -512,7 +512,7 @@ public class PacketPresetManager {
 
    private void init_V() {
       this.load_List = null;
-      this.load_Str = "";
+      this.signature = "";
    }
 
    private String read_Str() {
@@ -576,17 +576,17 @@ public class PacketPresetManager {
       );
    }
 
-   public record Inner_DataUtil(AutismPacketPreset init_AutismPacketPreset, boolean init_Z) {
+   public record Inner_DataUtil(AutismPacketPreset preset, boolean init_Z) {
       public String name() {
-         return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.name != null ? this.init_AutismPacketPreset.name : "";
+         return this.preset != null && this.preset.name != null ? this.preset.name : "";
       }
 
       public int c2sCount() {
-         return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.c2sPackets != null ? this.init_AutismPacketPreset.c2sPackets.size() : 0;
+         return this.preset != null && this.preset.c2sPackets != null ? this.preset.c2sPackets.size() : 0;
       }
 
       public int s2cCount() {
-         return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.s2cPackets != null ? this.init_AutismPacketPreset.s2cPackets.size() : 0;
+         return this.preset != null && this.preset.s2cPackets != null ? this.preset.s2cPackets.size() : 0;
       }
 
       public boolean init_Z() {

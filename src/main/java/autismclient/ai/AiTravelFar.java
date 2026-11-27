@@ -42,19 +42,19 @@ final class AiTravelFar {
             CompletableFuture<List<AiRegions.Region>> init_CompletableFuture;
             AiOperation init_AiOperation;
             boolean init_Z;
-            boolean load;
-            boolean read;
-            boolean write;
+            boolean regionPlanStarted;
+            boolean targetQueued;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.write && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
+               if (!this.cancelled && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
                   if (System.nanoTime() > deadline) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Travel deadline reached");
                   }
 
-                  if (!this.load) {
-                     this.load = true;
+                  if (!this.regionPlanStarted) {
+                     this.regionPlanStarted = true;
                      if (this.init_Minecraft.player.blockPosition().distSqr(target) > 4096.0) {
                         AiService service = AiService.getExistingInstance();
                         if (service != null) {
@@ -85,8 +85,8 @@ final class AiTravelFar {
                      this.init_CompletableFuture = null;
                   }
 
-                  if (!this.read) {
-                     this.read = true;
+                  if (!this.targetQueued) {
+                     this.targetQueued = true;
                      this.init_Deque.addLast(target);
                   }
 
@@ -171,8 +171,8 @@ final class AiTravelFar {
 
             @Override
             public void cancel() {
-               if (!this.write) {
-                  this.write = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;

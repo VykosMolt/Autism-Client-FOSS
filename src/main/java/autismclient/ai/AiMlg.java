@@ -176,7 +176,7 @@ final class AiMlg {
             BlockPos init_BlockPos;
             BlockPos load_BlockPos;
             BlockPos read_BlockPos;
-            AiMlg.Inner_DataUtil init_au_DataUtil;
+            AiMlg.Inner_DataUtil forecast;
             int close;
 
             @Override
@@ -251,7 +251,7 @@ final class AiMlg {
                }
 
                AiMlg.Inner_DataUtil forecast = AiMlg.init(player, level);
-               this.init_au_DataUtil = forecast;
+               this.forecast = forecast;
                if (forecast.ticksToLand() >= 0) {
                   if (AiMlg.init_Z_F(forecast.multiplier())) {
                      this.read_F = this.write_F = forecast.damage();
@@ -390,7 +390,7 @@ final class AiMlg {
                }
 
                this.write_F = Math.max(0.0F, this.init_F - this.load_F);
-               this.read_F = this.init_au_DataUtil == null ? 0.0F : this.init_au_DataUtil.damage();
+               this.read_F = this.forecast == null ? 0.0F : this.forecast.damage();
                boolean softActual = player.isInWater()
                   || "cobweb".equals(AiMlg.init(level, player.blockPosition()))
                   || AiMlg.init(AiMlg.init(level, player.blockPosition().below()), player.isSuppressingBounce()) <= 0.2F;

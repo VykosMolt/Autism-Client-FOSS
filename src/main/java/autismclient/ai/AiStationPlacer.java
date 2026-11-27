@@ -18,8 +18,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class AiStationPlacer {
    static final int init_I = 60;
-   private final Item init_Item;
-   private final String init_Str;
+   private final Item item;
+   private final String name;
    private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
    private List<BlockPos> init_List;
    private int load_I;
@@ -30,24 +30,24 @@ final class AiStationPlacer {
    private AiOperation load_AiOperation;
    private boolean read_Z;
    private BlockPos init_BlockPos;
-   private BlockPos load_BlockPos;
-   private String load_Str = "";
+   private BlockPos placed;
+   private String failureReason = "";
    private String read_Str = "";
 
    AiStationPlacer(Item item, String name) {
-      this.init_Item = item;
-      this.init_Str = name;
+      this.item = item;
+      this.name = name;
    }
 
    AiStationPlacer.Inner_DataUtil tick() {
-      if (this.load_BlockPos != null) {
+      if (this.placed != null) {
          return AiStationPlacer.Inner_DataUtil.PLACED;
       }
 
       if (this.load_AiOperation != null) {
          AiOperation.Result r = this.load_AiOperation.tick();
          if (!r.terminal()) {
-            this.read_Str = "Making room for the " + this.init_Str + ": " + r.message();
+            this.read_Str = "Making room for the " + this.name + ": " + r.message();
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
@@ -60,7 +60,7 @@ final class AiStationPlacer {
       if (this.init_AiOperation != null) {
          AiOperation.Result r = this.init_AiOperation.tick();
          if (!r.terminal()) {
-            this.read_Str = "Moving to open ground for the " + this.init_Str + ": " + r.message();
+            this.read_Str = "Moving to open ground for the " + this.name + ": " + r.message();
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
@@ -77,7 +77,7 @@ final class AiStationPlacer {
          if (this.init_List == null) {
             this.init_List = new ArrayList<>(AiCraft.candidatePlacementSpots());
             this.load_I = 0;
-            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(spotx, this.init_Item));
+            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(spotx, this.item));
             if (this.init_BlockPos != null && this.init_List.remove(this.init_BlockPos)) {
                this.init_List = new ArrayList<>(this.init_List);
                this.init_List.add(0, this.init_BlockPos);
@@ -115,14 +115,14 @@ final class AiStationPlacer {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
-            if (this.load_Str.isEmpty()) {
-               this.load_Str = "no free supported spot within two blocks";
+            if (this.failureReason.isEmpty()) {
+               this.failureReason = "no free supported spot within two blocks";
             }
 
             return AiStationPlacer.Inner_DataUtil.FAILED;
          }
 
-         this.init_DataPipe.start(this.init_List.get(this.load_I), this.init_Item);
+         this.init_DataPipe.start(this.init_List.get(this.load_I), this.item);
          this.init_Z = true;
          this.read_I = 0;
       }
@@ -130,21 +130,21 @@ final class AiStationPlacer {
       autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
       if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
          this.init_Z = false;
-         this.load_BlockPos = this.init_DataPipe.targetPos();
+         this.placed = this.init_DataPipe.targetPos();
          return AiStationPlacer.Inner_DataUtil.PLACED;
       } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.read_I <= 60) {
-         this.read_Str = "Placing a " + this.init_Str;
+         this.read_Str = "Placing a " + this.name;
          return AiStationPlacer.Inner_DataUtil.WORKING;
       } else {
          this.init_Z = false;
-         this.load_Str = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
+         this.failureReason = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
             ? this.init_DataPipe.failureReason()
             : "not placed within 60 ticks: " + this.init_DataPipe.statusSummary();
          this.init_DataPipe.reset();
          AutismClientAddon.LOG
-            .info("[AI] {} spot {} unusable after {} ticks: {}", this.init_Str, this.init_List.get(this.load_I).toShortString(), this.read_I, this.load_Str);
+            .info("[AI] {} spot {} unusable after {} ticks: {}", this.name, this.init_List.get(this.load_I).toShortString(), this.read_I, this.failureReason);
          this.load_I++;
-         this.read_Str = this.init_Str + " spot unusable (" + this.load_Str + "); trying the next spot";
+         this.read_Str = this.name + " spot unusable (" + this.failureReason + "); trying the next spot";
          return AiStationPlacer.Inner_DataUtil.WORKING;
       }
    }
@@ -175,10 +175,10 @@ final class AiStationPlacer {
          return false;
       }
 
-      AutismClientAddon.LOG.info("[AI] no spot for a {} here, moving to {}", this.init_Str, open.toShortString());
+      AutismClientAddon.LOG.info("[AI] no spot for a {} here, moving to {}", this.name, open.toShortString());
       this.init(open);
       this.init_AiOperation = AiGoto.travelToCompat(open, 0.6, true, false, false, 30);
-      this.read_Str = "No room for a " + this.init_Str + " here; moving to " + open.toShortString();
+      this.read_Str = "No room for a " + this.name + " here; moving to " + open.toShortString();
       return true;
    }
 
@@ -215,7 +215,7 @@ final class AiStationPlacer {
                }
 
                if (landing) {
-                  AutismClientAddon.LOG.info("[AI] clearing a leaf exit for the {} at {}", this.init_Str, cell.toShortString());
+                  AutismClientAddon.LOG.info("[AI] clearing a leaf exit for the {} at {}", this.name, cell.toShortString());
                   this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(upperLeaf ? above : cell, 10);
                   return;
                }
@@ -241,10 +241,10 @@ final class AiStationPlacer {
                BlockPos above = cell.above();
                boolean clearHead = !mc.level.getBlockState(above).getCollisionShape(mc.level, above).isEmpty();
                if (!clearHead || init(mc, above)) {
-                  AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.init_Str, cell.toShortString());
+                  AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.name, cell.toShortString());
                   this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
                   this.init_BlockPos = cell.immutable();
-                  this.read_Str = "Digging out a spot for the " + this.init_Str;
+                  this.read_Str = "Digging out a spot for the " + this.name;
                   return true;
                }
             }
@@ -315,7 +315,7 @@ final class AiStationPlacer {
    }
 
    BlockPos getPlaced() {
-      return this.load_BlockPos;
+      return this.placed;
    }
 
    String getStatus() {
@@ -323,7 +323,7 @@ final class AiStationPlacer {
    }
 
    String getFailureReason() {
-      return this.load_Str;
+      return this.failureReason;
    }
 
    boolean canInterrupt() {

@@ -225,12 +225,12 @@ final class AiHttp {
 
    private static final class Inner_DataUtil implements BodySubscriber<byte[]> {
       private final BodySubscriber<byte[]> init_HttpResponse_BodyS = BodySubscribers.ofByteArray();
-      private final int init_I;
+      private final int limit;
       private long init_J;
-      private Subscription init_Flow_Subscription;
+      private Subscription subscription;
 
       Inner_DataUtil(int limit) {
-         this.init_I = limit;
+         this.limit = limit;
       }
 
       @Override
@@ -240,7 +240,7 @@ final class AiHttp {
 
       @Override
       public void onSubscribe(Subscription subscription) {
-         this.init_Flow_Subscription = subscription;
+         this.subscription = subscription;
          this.init_HttpResponse_BodyS.onSubscribe(subscription);
       }
 
@@ -253,9 +253,9 @@ final class AiHttp {
             this.init_J = this.init_J + b.remaining();
          }
 
-         if (this.init_J > this.init_I) {
-            this.init_Flow_Subscription.cancel();
-            this.init_HttpResponse_BodyS.onError(new IOException("HTTP body exceeds " + this.init_I + " bytes"));
+         if (this.init_J > this.limit) {
+            this.subscription.cancel();
+            this.init_HttpResponse_BodyS.onError(new IOException("HTTP body exceeds " + this.limit + " bytes"));
          } else {
             this.init_HttpResponse_BodyS.onNext(buffers);
          }

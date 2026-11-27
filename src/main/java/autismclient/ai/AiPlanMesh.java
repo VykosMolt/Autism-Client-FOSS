@@ -40,9 +40,9 @@ final class AiPlanMesh implements AutoCloseable {
    int sizeY;
    int sizeZ;
    private boolean init_Z;
-   final List<AiBuilder.CellSpec> init_List;
-   private final boolean load_Z;
-   private final Predicate<BlockPos> init_Predicate;
+   final List<AiBuilder.CellSpec> cells;
+   private final boolean preview;
+   private final Predicate<BlockPos> hiddenSolid;
    private final BlockState[] init_BlockStateArr;
    private final boolean[] init_ZArr;
    private final int[] init_IArr;
@@ -72,9 +72,9 @@ final class AiPlanMesh implements AutoCloseable {
 
    AiPlanMesh(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview, Predicate<BlockPos> hiddenSolid) {
       this.init_BlockPos = origin.immutable();
-      this.init_List = cells;
-      this.load_Z = preview;
-      this.init_Predicate = hiddenSolid;
+      this.cells = cells;
+      this.preview = preview;
+      this.hiddenSolid = hiddenSolid;
       int n = cells.size();
       this.init_BlockStateArr = new BlockState[n];
       this.init_ZArr = new boolean[n];
@@ -90,7 +90,7 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    int preparedCount() {
-      return this.init_aT_CachePool == null ? this.init_List.size() : this.init_aT_CachePool.init_I;
+      return this.init_aT_CachePool == null ? this.cells.size() : this.init_aT_CachePool.init_I;
    }
 
    int init_I_I_J(int budget, long deadline) {
@@ -110,14 +110,14 @@ final class AiPlanMesh implements AutoCloseable {
       int count = 0;
 
       for (AiPlanMesh.Inner_BufferHelper section : this.load_List) {
-         count += section.init_IntArrayList.size();
+         count += section.members.size();
       }
 
       return count;
    }
 
    boolean init(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview) {
-      return !this.read_Z && this.init_List == cells && (preview || this.init_BlockPos.equals(origin)) && this.load_Z == preview;
+      return !this.read_Z && this.cells == cells && (preview || this.init_BlockPos.equals(origin)) && this.preview == preview;
    }
 
    void setOrigin(BlockPos origin) {
@@ -141,7 +141,7 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    int read() {
-      return this.init_List.size();
+      return this.cells.size();
    }
 
    BlockState stateAt(int i) {
@@ -149,7 +149,7 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    BlockPos posAt(int i) {
-      AiBuilder.CellSpec cell = this.init_List.get(i);
+      AiBuilder.CellSpec cell = this.cells.get(i);
       return this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
    }
 
@@ -191,7 +191,7 @@ final class AiPlanMesh implements AutoCloseable {
 
    List<Integer> init(Vec3 eye, int limit, int budget, long deadline) {
       if (this.isReady() && limit > 0) {
-         if (this.init_aT_StreamUtil != null && (this.init_aT_StreamUtil.init_J != this.read_J || this.init_aT_StreamUtil.init_I != limit)) {
+         if (this.init_aT_StreamUtil != null && (this.init_aT_StreamUtil.init_J != this.read_J || this.init_aT_StreamUtil.limit != limit)) {
             this.init_aT_StreamUtil = null;
          }
 
@@ -206,7 +206,7 @@ final class AiPlanMesh implements AutoCloseable {
          this.init_aT_StreamUtil.init_V_I_J(budget, deadline);
          if (this.init_aT_StreamUtil.init_Z) {
             this.read_List = List.copyOf(this.init_aT_StreamUtil.load_PriorityQueue);
-            this.init_Vec3 = this.init_aT_StreamUtil.init_Vec3;
+            this.init_Vec3 = this.init_aT_StreamUtil.eye;
             this.write_J = this.init_aT_StreamUtil.init_J;
             this.tick = limit;
             this.init_aT_StreamUtil = null;
@@ -233,7 +233,7 @@ final class AiPlanMesh implements AutoCloseable {
             for (int k = 0; k < budget; k++) {
                int i = this.push;
                this.push = (this.push + 1) % n;
-               AiBuilder.CellSpec cell = this.init_List.get(i);
+               AiBuilder.CellSpec cell = this.cells.get(i);
                BlockPos at = this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
                boolean loaded = AiTerrain.isLoaded(world, at);
                BlockState live = loaded ? world.getBlockState(at) : Blocks.AIR.defaultBlockState();
@@ -261,7 +261,7 @@ final class AiPlanMesh implements AutoCloseable {
             if (!dirtySections.isEmpty()) {
                for (AiPlanMesh.Inner_BufferHelper section : this.load_List) {
                   if (dirtySections.contains(
-                     BlockPos.asLong(section.init_BlockPos.getX() >> 4, section.init_BlockPos.getY() >> 4, section.init_BlockPos.getZ() >> 4)
+                     BlockPos.asLong(section.anchor.getX() >> 4, section.anchor.getY() >> 4, section.anchor.getZ() >> 4)
                   )) {
                      section.init_Z = true;
                   }
@@ -287,18 +287,18 @@ final class AiPlanMesh implements AutoCloseable {
             ArrayList<AiPlanMesh.Inner_BufferHelper> visible = new ArrayList<>();
 
             for (AiPlanMesh.Inner_BufferHelper section : this.load_List) {
-               double dx = this.init_BlockPos.getX() + section.init_BlockPos.getX() + 8 - camera.x;
-               double dy = this.init_BlockPos.getY() + section.init_BlockPos.getY() + 8 - camera.y;
-               double dz = this.init_BlockPos.getZ() + section.init_BlockPos.getZ() + 8 - camera.z;
+               double dx = this.init_BlockPos.getX() + section.anchor.getX() + 8 - camera.x;
+               double dy = this.init_BlockPos.getY() + section.anchor.getY() + 8 - camera.y;
+               double dz = this.init_BlockPos.getZ() + section.anchor.getZ() + 8 - camera.z;
                if (dx * dx + dy * dy + dz * dz <= reach * reach) {
                   visible.add(section);
                }
             }
 
             visible.sort(Comparator.comparingDouble(s -> {
-               double dx = this.init_BlockPos.getX() + s.init_BlockPos.getX() + 8 - camera.x;
-               double dyx = this.init_BlockPos.getY() + s.init_BlockPos.getY() + 8 - camera.y;
-               double dzx = this.init_BlockPos.getZ() + s.init_BlockPos.getZ() + 8 - camera.z;
+               double dx = this.init_BlockPos.getX() + s.anchor.getX() + 8 - camera.x;
+               double dyx = this.init_BlockPos.getY() + s.anchor.getY() + 8 - camera.y;
+               double dzx = this.init_BlockPos.getZ() + s.anchor.getZ() + 8 - camera.z;
                return dx * dx + dyx * dyx + dzx * dzx;
             }));
             this.flush = this.close = 0;
@@ -318,9 +318,9 @@ final class AiPlanMesh implements AutoCloseable {
                      .init(
                         type,
                         pose.pose(),
-                        this.init_BlockPos.getX() + section.init_BlockPos.getX() - camera.x,
-                        this.init_BlockPos.getY() + section.init_BlockPos.getY() - camera.y,
-                        this.init_BlockPos.getZ() + section.init_BlockPos.getZ() - camera.z
+                        this.init_BlockPos.getX() + section.anchor.getX() - camera.x,
+                        this.init_BlockPos.getY() + section.anchor.getY() - camera.y,
+                        this.init_BlockPos.getZ() + section.anchor.getZ() - camera.z
                      );
                   this.flush = this.flush + section.load_I;
                   this.close = this.close + section.init_I;
@@ -342,7 +342,7 @@ final class AiPlanMesh implements AutoCloseable {
             autismclient.render.AutismRenderTypes.aiPlanGhost(),
             buffer -> {
                label91:
-               for (int i : section.init_IntArrayList) {
+               for (int i : section.members) {
                   int classification = this.colorAt(i);
                   if (classification != -12067963) {
                      BlockState state = this.init_BlockStateArr[i];
@@ -350,9 +350,9 @@ final class AiPlanMesh implements AutoCloseable {
                         autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = init_DataUtil_StreamUti_BlockState(state);
                         if (!model.faces().isEmpty()) {
                            BlockPos at = this.posAt(i);
-                           float ox = at.getX() - this.init_BlockPos.getX() - section.init_BlockPos.getX();
-                           float oy = at.getY() - this.init_BlockPos.getY() - section.init_BlockPos.getY();
-                           float oz = at.getZ() - this.init_BlockPos.getZ() - section.init_BlockPos.getZ();
+                           float ox = at.getX() - this.init_BlockPos.getX() - section.anchor.getX();
+                           float oy = at.getY() - this.init_BlockPos.getY() - section.anchor.getY();
+                           float oz = at.getZ() - this.init_BlockPos.getZ() - section.anchor.getZ();
                            boolean proud = classification == -20923 || classification == -885830;
                            drawn[0]++;
                            Iterator i$ = model.faces().iterator();
@@ -375,7 +375,7 @@ final class AiPlanMesh implements AutoCloseable {
                                  next = this.load_Map.get(at.relative(cull).subtract(this.init_BlockPos).asLong());
                               } while (
                                  next != null && this.init_ZArr[next]
-                                    || next == null && this.init_Predicate != null && this.init_Predicate.test(at.relative(cull).subtract(this.init_BlockPos))
+                                    || next == null && this.hiddenSolid != null && this.hiddenSolid.test(at.relative(cull).subtract(this.init_BlockPos))
                               );
 
                               BlockTintSource tintSource = face.tintIndex() < 0 ? null : mc.getBlockColors().getTintSource(state, face.tintIndex());
@@ -513,8 +513,8 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    private static final class Inner_BufferHelper {
-      final BlockPos init_BlockPos;
-      final IntArrayList init_IntArrayList;
+      final BlockPos anchor;
+      final IntArrayList members;
       final autismclient.util.CachedGpuMeshBuffer init_P = new autismclient.util.CachedGpuMeshBuffer("autism_ai_plan_section");
       boolean init_Z = true;
       boolean load_Z;
@@ -523,8 +523,8 @@ final class AiPlanMesh implements AutoCloseable {
       long init_J;
 
       Inner_BufferHelper(BlockPos anchor, IntArrayList members) {
-         this.init_BlockPos = anchor;
-         this.init_IntArrayList = members;
+         this.anchor = anchor;
+         this.members = members;
       }
    }
 
@@ -535,9 +535,9 @@ final class AiPlanMesh implements AutoCloseable {
       int init_I;
 
       void init() {
-         if (this.init_I < AiPlanMesh.this.init_List.size()) {
+         if (this.init_I < AiPlanMesh.this.cells.size()) {
             int i = this.init_I++;
-            AiBuilder.CellSpec cell = AiPlanMesh.this.init_List.get(i);
+            AiBuilder.CellSpec cell = AiPlanMesh.this.cells.get(i);
             AiBuilder.CellSpec key = new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties());
             AiPlanMesh.this.init_BlockStateArr[i] = this.init_Map.computeIfAbsent(key, AiBuilder::toBlockState);
             AiPlanMesh.this.init_ZArr[i] = AiPlanMesh.this.init_BlockStateArr[i].isSolidRender();
@@ -568,8 +568,8 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    private final class Inner_StreamUtil {
-      final Vec3 init_Vec3;
-      final int init_I;
+      final Vec3 eye;
+      final int limit;
       final long init_J = AiPlanMesh.this.read_J;
       final PriorityQueue<AiPlanMesh.Inner_DataUtil> init_PriorityQueue = new PriorityQueue<>(Comparator.comparingDouble(AiPlanMesh.Inner_DataUtil::distance));
       final PriorityQueue<Integer> load_PriorityQueue;
@@ -579,23 +579,23 @@ final class AiPlanMesh implements AutoCloseable {
       boolean init_Z;
 
       Inner_StreamUtil(Vec3 eye, int limit) {
-         this.init_Vec3 = eye;
-         this.init_I = limit;
+         this.eye = eye;
+         this.limit = limit;
          this.load_PriorityQueue = new PriorityQueue<>(Comparator.<Integer>comparingDouble(i -> this.init(i)).thenComparingInt(Integer::intValue).reversed());
       }
 
       double init(int i) {
-         AiBuilder.CellSpec cell = AiPlanMesh.this.init_List.get(i);
-         double dx = AiPlanMesh.this.init_BlockPos.getX() + cell.dx() + 0.5 - this.init_Vec3.x;
-         double dy = AiPlanMesh.this.init_BlockPos.getY() + cell.dy() + 0.5 - this.init_Vec3.y;
-         double dz = AiPlanMesh.this.init_BlockPos.getZ() + cell.dz() + 0.5 - this.init_Vec3.z;
+         AiBuilder.CellSpec cell = AiPlanMesh.this.cells.get(i);
+         double dx = AiPlanMesh.this.init_BlockPos.getX() + cell.dx() + 0.5 - this.eye.x;
+         double dy = AiPlanMesh.this.init_BlockPos.getY() + cell.dy() + 0.5 - this.eye.y;
+         double dz = AiPlanMesh.this.init_BlockPos.getZ() + cell.dz() + 0.5 - this.eye.z;
          return dx * dx + dy * dy + dz * dz;
       }
 
       double init(AiPlanMesh.Inner_BufferHelper section) {
-         double dx = this.init_D_D_D(this.init_Vec3.x, AiPlanMesh.this.init_BlockPos.getX() + section.init_BlockPos.getX() + 0.5);
-         double dy = this.init_D_D_D(this.init_Vec3.y, AiPlanMesh.this.init_BlockPos.getY() + section.init_BlockPos.getY() + 0.5);
-         double dz = this.init_D_D_D(this.init_Vec3.z, AiPlanMesh.this.init_BlockPos.getZ() + section.init_BlockPos.getZ() + 0.5);
+         double dx = this.init_D_D_D(this.eye.x, AiPlanMesh.this.init_BlockPos.getX() + section.anchor.getX() + 0.5);
+         double dy = this.init_D_D_D(this.eye.y, AiPlanMesh.this.init_BlockPos.getY() + section.anchor.getY() + 0.5);
+         double dz = this.init_D_D_D(this.eye.z, AiPlanMesh.this.init_BlockPos.getZ() + section.anchor.getZ() + 0.5);
          return dx * dx + dy * dy + dz * dz;
       }
 
@@ -612,16 +612,16 @@ final class AiPlanMesh implements AutoCloseable {
             if (this.load_I < AiPlanMesh.this.load_List.size()) {
                AiPlanMesh.Inner_BufferHelper section = AiPlanMesh.this.load_List.get(this.load_I++);
                this.init_PriorityQueue.add(new AiPlanMesh.Inner_DataUtil(section, this.init(section)));
-            } else if (this.init_aT_BufferHelper != null && this.read < this.init_aT_BufferHelper.init_IntArrayList.size()) {
-               int i = this.init_aT_BufferHelper.init_IntArrayList.getInt(this.read++);
+            } else if (this.init_aT_BufferHelper != null && this.read < this.init_aT_BufferHelper.members.size()) {
+               int i = this.init_aT_BufferHelper.members.getInt(this.read++);
                if (AiPlanMesh.this.colorAt(i) != -12067963) {
                   this.load_PriorityQueue.add(i);
-                  if (this.load_PriorityQueue.size() > this.init_I) {
+                  if (this.load_PriorityQueue.size() > this.limit) {
                      this.load_PriorityQueue.poll();
                   }
                }
             } else if (this.init_PriorityQueue.isEmpty()
-               || this.load_PriorityQueue.size() == this.init_I && this.init_PriorityQueue.peek().distance() > this.init(this.load_PriorityQueue.peek())) {
+               || this.load_PriorityQueue.size() == this.limit && this.init_PriorityQueue.peek().distance() > this.init(this.load_PriorityQueue.peek())) {
                this.init_Z = true;
             } else {
                this.init_aT_BufferHelper = this.init_PriorityQueue.remove().section();

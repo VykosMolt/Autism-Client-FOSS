@@ -7,20 +7,20 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
-   private final Font init_Font;
+   private final Font textRenderer;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil;
    private final List<AutismCustomFilterPresetOverlay.Inner_DataUtil> init_List = new ArrayList<>();
    private final AutismCustomFilterPresetOverlay.Inner_StreamUtil init_AutismCustomFilter = new AutismCustomFilterPresetOverlay.Inner_StreamUtil();
-   private List<PacketPresetManager.Inner_DataUtil> load_List = List.of();
-   private List<PacketPresetManager.Inner_DataUtil> read_List = List.of();
+   private List<PacketPresetManager.Inner_DataUtil> builtInEntries = List.of();
+   private List<PacketPresetManager.Inner_DataUtil> userEntries = List.of();
    private List<AutismCustomFilterPresetOverlay.Inner_CachePool> write_List = List.of();
    private int flush_I = 570;
    private int close_I = 48;
    private int open;
    private int poll;
-   private boolean write_Z = false;
-   private boolean update_Z = false;
+   private boolean visible = false;
+   private boolean collapsed = false;
    private boolean sync_Z = false;
    private double init_D = 0.0;
    private double load_D = 0.0;
@@ -29,7 +29,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    private String init_Str_2;
 
    public AutismCustomFilterPresetOverlay(Font textRenderer) {
-      this.init_Font = textRenderer;
+      this.textRenderer = textRenderer;
       this.open = this.pop_I_6();
       this.poll = this.tick_I_4();
       this.init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget()
@@ -58,7 +58,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
+      return new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.visible, this.collapsed);
    }
 
    @Override
@@ -69,14 +69,14 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          this.close_I = clamped.y;
          this.open = clamped.width;
          this.poll = clamped.height;
-         this.write_Z = clamped.visible;
-         this.update_Z = clamped.collapsed;
+         this.visible = clamped.visible;
+         this.collapsed = clamped.collapsed;
       }
    }
 
    @Override
    public void setVisible(boolean visible) {
-      this.write_Z = visible;
+      this.visible = visible;
       if (visible) {
          OverlayManager.getInstance().bringToFront(this);
       } else {
@@ -87,23 +87,23 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    public void toggleVisible() {
-      this.setVisible(!this.write_Z);
+      this.setVisible(!this.visible);
    }
 
    @Override
    public boolean isVisible() {
-      return this.write_Z;
+      return this.visible;
    }
 
    @Override
    public boolean isCollapsed() {
-      return this.update_Z;
+      return this.collapsed;
    }
 
    @Override
    public void setCollapsed(boolean collapsed) {
-      if (this.update_Z != collapsed) {
-         this.update_Z = collapsed;
+      if (this.collapsed != collapsed) {
+         this.collapsed = collapsed;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
          }
@@ -119,7 +119,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isOverHeader(double mouseX, double mouseY) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
@@ -143,28 +143,28 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.isClosing()) {
+      if (this.visible || this.isClosing()) {
          this.init_List.clear();
          this.poll = this.push_I_6() + this.load(this.init(this.init_List_3().size()));
-         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z));
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.visible, this.collapsed));
          this.flush_I = clamped.x;
          this.close_I = clamped.y;
          this.open = clamped.width;
          this.poll = clamped.height;
-         OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Preset Manager", this.update_Z, this.sync_Z);
-         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.visible, this.collapsed);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Preset Manager", this.collapsed, this.sync_Z);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.collapsed);
          if (!clipBody) {
-            this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
+            this.renderInactiveDim(context, bounds, this.collapsed, this.sync_Z);
          } else {
             try {
                int x = this.flush_I + this.get_I_4();
                int y = this.close_I + 14 + this.set_I_4();
                int width = this.open - this.get_I_4() * 2;
                autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
-               autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.init_Font, "Preset Name", x, y);
+               autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.textRenderer, "Preset Name", x, y);
                String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
-               ThemedTextHelper.init(context, this.init_Font, counts, ThemedTextHelper.TextTone.MUTED, x + width - ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.MUTED), y, false);
+               ThemedTextHelper.init(context, this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED, x + width - ThemedTextHelper.init(this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED), y, false);
                y += this.put();
                this.init_BitSetUtil.setBounds(x, y, width, this.start_I_4());
                this.init_BitSetUtil.render(this.init_SyncManager_GuiGraphicsExtract_2(context, mouseX, mouseY, delta));
@@ -181,14 +181,14 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                   new boolean[]{this.poll_Z_4(), this.push_Z_3(), this.pop_Z_2(), this.tick_Z_2()}
                );
                String resetLabel = "Reset To Default";
-               int resetW = Math.min(width, autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ThemedTextHelper.init(this.init_Font, resetLabel, ThemedTextHelper.TextTone.BODY)));
+               int resetW = Math.min(width, autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ThemedTextHelper.init(this.textRenderer, resetLabel, ThemedTextHelper.TextTone.BODY)));
                y = this.init(context, mouseX, mouseY, x, y, resetW, resetLabel, this::close_V_4, true);
                y += this.reset() - this.clear();
                int listHeight = Math.max(this.load(1), this.poll - (y - this.close_I) - this.put() - this.get_I_4());
                this.init_I_GuiGraphicsExtract_6(context, mouseX, mouseY, delta, x, y, width, listHeight);
             } finally {
                this.endBodyClip(context, clipBody);
-               this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
+               this.renderInactiveDim(context, bounds, this.collapsed, this.sync_Z);
             }
          }
       }
@@ -196,11 +196,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private int init_I_GuiGraphicsExtract_6(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, int x, int y, int width, int listHeight) {
       String headerLabel = "Saved Presets";
-      autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.init_Font, headerLabel, x, y);
+      autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.textRenderer, headerLabel, x, y);
       int headerY = y;
       y += this.put();
       List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = this.init_List_3();
-      this.init_AutismCustomFilter.init_List = rows;
+      this.init_AutismCustomFilter.rows = rows;
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout baseLayout = this.init(x, y, width, listHeight, rows.size(), 0);
       int visualScroll = this.init_AutismCustomFilter.init_CacheEntry.tickAndClamp(delta, baseLayout.maxScroll());
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init(x, y, width, listHeight, rows.size(), visualScroll);
@@ -209,7 +209,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       boolean focused = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
       listLayout.drawFrame(context, focused);
       if (rows.isEmpty()) {
-         autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(context, this.init_Font, "No presets", x, y, contentWidth);
+         autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(context, this.textRenderer, "No presets", x, y, contentWidth);
       } else {
          listLayout.pushContentClip(context);
 
@@ -219,11 +219,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                (index, rowY) -> {
                   AutismCustomFilterPresetOverlay.Inner_CachePool row = rows.get(index);
                   int rowTextY = UiLayoutMath.centerTextY(rowY, this.stop(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
-                  if (row.init_Z) {
+                  if (row.header) {
                      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                         context,
-                        this.init_Font,
-                        row.init_Str,
+                        this.textRenderer,
+                        row.label,
                         x + 2,
                         rowY,
                         contentWidth,
@@ -235,8 +235,8 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                   } else if (row.load) {
                      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                         context,
-                        this.init_Font,
-                        row.init_Str,
+                        this.textRenderer,
+                        row.label,
                         x + 2,
                         rowY,
                         contentWidth,
@@ -245,12 +245,12 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                         false,
                         autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                      );
-                  } else if (row.init_bT_DataUtil != null) {
-                     boolean selected = row.init_bT_DataUtil.name().equals(this.init_Str_2);
+                  } else if (row.entry != null) {
+                     boolean selected = row.entry.name().equals(this.init_Str_2);
                      boolean hovered = mouseX >= x + 2 && mouseX < x + 2 + contentWidth && mouseY >= rowY && mouseY < rowY + this.stop();
                      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                         context,
-                        this.init_Font,
+                        this.textRenderer,
                         "",
                         x + 2,
                         rowY,
@@ -258,15 +258,15 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                         this.stop(),
                         hovered,
                         selected,
-                        row.init_bT_DataUtil.isBuiltIn() ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
+                        row.entry.isBuiltIn() ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                      );
-                     int textColor = selected ? UiColorPalette.selectedText() : (row.init_bT_DataUtil.isBuiltIn() ? -4729601 : UiColorPalette.menuItemText());
-                     String prefix = row.init_bT_DataUtil.isBuiltIn() ? "[DEV] " : "[USR] ";
-                     String name = ThemedTextHelper.init(this.init_Font, prefix + row.init_bT_DataUtil.name(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
-                     ThemedTextHelper.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
-                     String counts = row.init_bT_DataUtil.c2sCount() + " / " + row.init_bT_DataUtil.s2cCount();
-                     int countsWidth = ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.BODY);
-                     ThemedTextHelper.init(context, this.init_Font, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
+                     int textColor = selected ? UiColorPalette.selectedText() : (row.entry.isBuiltIn() ? -4729601 : UiColorPalette.menuItemText());
+                     String prefix = row.entry.isBuiltIn() ? "[DEV] " : "[USR] ";
+                     String name = ThemedTextHelper.init(this.textRenderer, prefix + row.entry.name(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
+                     ThemedTextHelper.init(context, this.textRenderer, name, textColor, x + 5, rowTextY, false);
+                     String counts = row.entry.c2sCount() + " / " + row.entry.s2cCount();
+                     int countsWidth = ThemedTextHelper.init(this.textRenderer, counts, ThemedTextHelper.TextTone.BODY);
+                     ThemedTextHelper.init(context, this.textRenderer, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
                   }
 
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, x + 2, rowY + this.stop(), contentWidth);
@@ -284,10 +284,10 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
             + "/"
             + Math.max(1, Math.round((float)listLayout.maxScroll() / this.next()) + 1)
          : (this.init_Str_2 == null ? "Select a preset row" : "Selected: " + this.init_Str_2);
-      int footerMaxW = Math.max(1, width - ThemedTextHelper.init(this.init_Font, headerLabel, ThemedTextHelper.TextTone.BODY) - 8);
-      footer = ThemedTextHelper.init(this.init_Font, footer, footerMaxW, ThemedTextHelper.TextTone.MUTED);
-      int footerW = ThemedTextHelper.init(this.init_Font, footer, ThemedTextHelper.TextTone.MUTED);
-      ThemedTextHelper.init(context, this.init_Font, footer, ThemedTextHelper.TextTone.MUTED, x + width - footerW, headerY, false);
+      int footerMaxW = Math.max(1, width - ThemedTextHelper.init(this.textRenderer, headerLabel, ThemedTextHelper.TextTone.BODY) - 8);
+      footer = ThemedTextHelper.init(this.textRenderer, footer, footerMaxW, ThemedTextHelper.TextTone.MUTED);
+      int footerW = ThemedTextHelper.init(this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED);
+      ThemedTextHelper.init(context, this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED, x + width - footerW, headerY, false);
       return y + listHeight;
    }
 
@@ -316,7 +316,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       PacketPresetManager manager = PacketPresetManager.getInstance();
       List<PacketPresetManager.Inner_DataUtil> builtInEntries = manager.builtInPresets();
       List<PacketPresetManager.Inner_DataUtil> userEntries = manager.userPresets();
-      if (builtInEntries == this.load_List && userEntries == this.read_List) {
+      if (builtInEntries == this.builtInEntries && userEntries == this.userEntries) {
          return this.write_List;
       }
 
@@ -336,8 +336,8 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          }
       }
 
-      this.load_List = builtInEntries;
-      this.read_List = userEntries;
+      this.builtInEntries = builtInEntries;
+      this.userEntries = userEntries;
       this.write_List = List.copyOf(rows);
       return this.write_List;
    }
@@ -479,7 +479,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_8(GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, boolean enabled) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(
          context,
-         this.init_Font,
+         this.textRenderer,
          x,
          y,
          width,
@@ -494,7 +494,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
@@ -511,12 +511,12 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
             return true;
          }
       } else {
-         if (this.update_Z) {
+         if (this.collapsed) {
             return false;
          }
 
          if (button == 0) {
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_AutismCustomFilter.init_PoolEntry_DataUtil;
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_AutismCustomFilter.scrollbarMetrics;
             if (scrollbar != null && scrollbar.isScrollable() && scrollbar.containsTrack(mouseX, mouseY)) {
                this.flush_Z = true;
                this.push = Math.max(0, (int)mouseY - scrollbar.thumbY());
@@ -531,8 +531,8 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
          if (button == 0 && this.init_AutismCustomFilter.init(mouseX, mouseY)) {
             AutismCustomFilterPresetOverlay.Inner_CachePool row = this.init_AutismCustomFilter.init(mouseY);
-            if (row != null && row.init_bT_DataUtil != null) {
-               this.init_Str_2 = row.init_bT_DataUtil.name();
+            if (row != null && row.entry != null) {
+               this.init_Str_2 = row.entry.name();
                this.init_BitSetUtil.setValue(this.init_Str_2);
                this.open_V_4();
                return true;
@@ -595,11 +595,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          .mouseDragged(this.init_SyncManager_D_D_2(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
          return true;
       } else if (this.flush_Z) {
-         this.init_AutismCustomFilter.init_CacheEntry.dragToMouseYStepped(this.init_AutismCustomFilter.init_PoolEntry_DataUtil, mouseY, this.push, this.next());
+         this.init_AutismCustomFilter.init_CacheEntry.dragToMouseYStepped(this.init_AutismCustomFilter.scrollbarMetrics, mouseY, this.push, this.next());
          return true;
       } else if (this.sync_Z && button == 0) {
          OverlayBounds nextBounds = this.clampToScreen(
-            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open, this.poll, this.write_Z, this.update_Z)
+            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open, this.poll, this.visible, this.collapsed)
          );
          this.flush_I = nextBounds.x;
          this.close_I = nextBounds.y;
@@ -617,7 +617,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                this.init_AutismCustomFilter.load,
                this.init_AutismCustomFilter.read,
                this.init_AutismCustomFilter.write,
-               this.init_AutismCustomFilter.init_List.size(),
+               this.init_AutismCustomFilter.rows.size(),
                0
             )
             .maxScroll();
@@ -634,7 +634,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
@@ -658,19 +658,19 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean charTyped(char chr, int modifiers) {
-      return this.write_Z && this.init_BitSetUtil.isFocused()
+      return this.visible && this.init_BitSetUtil.isFocused()
          ? this.init_BitSetUtil.charTyped(this.init_SyncManager_D_D_2(0.0, 0.0), chr, modifiers)
          : false;
    }
 
    @Override
    public boolean containsPoint(double mouseX, double mouseY) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
       OverlayBounds bounds = this.getBounds();
-      int frameHeight = this.update_Z ? 14 : this.poll;
+      int frameHeight = this.collapsed ? 14 : this.poll;
       return mouseX >= bounds.x && mouseX <= bounds.x + bounds.width && mouseY >= bounds.y && mouseY <= bounds.y + frameHeight
          ? true
          : mouseX >= this.init_BitSetUtil.x()
@@ -686,13 +686,13 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    private autismclient.gui.ui.layout.LayoutContext init_SyncManager_GuiGraphicsExtract_2(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
       return new autismclient.gui.ui.layout.LayoutContext(
-         context, this.init_Font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), delta
+         context, this.textRenderer, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), delta
       );
    }
 
    private autismclient.gui.ui.layout.LayoutContext init_SyncManager_D_D_2(double mouseX, double mouseY) {
       autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
-      return new autismclient.gui.ui.layout.LayoutContext(null, this.init_Font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
+      return new autismclient.gui.ui.layout.LayoutContext(null, this.textRenderer, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
    }
 
    private int pop_I_6() {
@@ -752,16 +752,16 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    private static final class Inner_CachePool {
-      private final boolean init_Z;
+      private final boolean header;
       private final boolean load;
-      private final String init_Str;
-      private final PacketPresetManager.Inner_DataUtil init_bT_DataUtil;
+      private final String label;
+      private final PacketPresetManager.Inner_DataUtil entry;
 
       private Inner_CachePool(boolean header, boolean note, String label, PacketPresetManager.Inner_DataUtil entry) {
-         this.init_Z = header;
+         this.header = header;
          this.load = note;
-         this.init_Str = label;
-         this.init_bT_DataUtil = entry;
+         this.label = label;
+         this.entry = entry;
       }
 
       private static AutismCustomFilterPresetOverlay.Inner_CachePool init(String label) {
@@ -789,15 +789,15 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       private int read;
       private int write;
       private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-      private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil = null;
-      private List<AutismCustomFilterPresetOverlay.Inner_CachePool> init_List = List.of();
+      private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = null;
+      private List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = List.of();
 
       private void init(int x, int y, int width, int height, autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics) {
          this.init_I = x;
          this.load = y;
          this.read = width;
          this.write = height;
-         this.init_PoolEntry_DataUtil = scrollbarMetrics;
+         this.scrollbarMetrics = scrollbarMetrics;
       }
 
       private boolean init(double mouseX, double mouseY) {
@@ -806,7 +806,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
       private AutismCustomFilterPresetOverlay.Inner_CachePool init(double mouseY) {
          int idx = (int)((mouseY - this.load - 2.0 + this.init_CacheEntry.getTargetOffset()) / AutismCustomFilterPresetOverlay.this.next());
-         return idx >= 0 && idx < this.init_List.size() ? this.init_List.get(idx) : null;
+         return idx >= 0 && idx < this.rows.size() ? this.rows.get(idx) : null;
       }
    }
 }

@@ -13,9 +13,9 @@ final class AiMemoryView {
    private static final long init_J = 3000L;
    private static final long load_J = 1000L;
    private static final int init_I = 2;
-   private final AiService init_cc;
-   private final AiViewState init_cF;
-   private final AiAssistantOverlay init_AiAssistantOverlay;
+   private final AiService service;
+   private final AiViewState view;
+   private final AiAssistantOverlay host;
    final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
    final autismclient.gui.ui.widgets.TextInputWidget editInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
@@ -23,24 +23,24 @@ final class AiMemoryView {
    private final Map<String, AiMemoryView.Inner_StreamUtil> init_Map = new HashMap<>();
    private List<AiMemoryView.Inner_DataUtil> init_List = List.of();
    private Object init_Obj;
-   private String init_Str;
+   private String query;
    private long read_J;
    private String load_Str;
-   private String read_Str;
+   private String id;
    private String write_Str;
    private long write_J;
    private long update;
 
    AiMemoryView(AiService service, AiViewState view, AiAssistantOverlay host) {
-      this.init_cc = service;
-      this.init_cF = view;
-      this.init_AiAssistantOverlay = host;
+      this.service = service;
+      this.view = view;
+      this.host = host;
       this.editInput.setOnSubmit(text -> this.load());
    }
 
    void reset() {
       this.searchInput.setValue("");
-      this.load_Str = this.read_Str = this.write_Str = null;
+      this.load_Str = this.id = this.write_Str = null;
       this.init_Set.clear();
       this.init_Map.clear();
       this.init_Obj = null;
@@ -58,15 +58,15 @@ final class AiMemoryView {
    }
 
    private void init_V_J(long now) {
-      Object source = this.init_cc.getMemoryStore().memories();
+      Object source = this.service.getMemoryStore().memories();
       String query = this.searchInput.getValue().trim();
-      if (source != this.init_Obj || !query.equals(this.init_Str) || now >= this.read_J) {
+      if (source != this.init_Obj || !query.equals(this.query) || now >= this.read_J) {
          this.init_Obj = source;
-         this.init_Str = query;
+         this.query = query;
          this.read_J = now + 1000L;
          List<AiMemoryView.Inner_DataUtil> rows = new ArrayList<>();
 
-         for (AiMemoryStore.Memory memory : this.init_cc.searchMemories(query)) {
+         for (AiMemoryStore.Memory memory : this.service.searchMemories(query)) {
             rows.add(new AiMemoryView.Inner_DataUtil(memory, AiUiKit.flattenSingleLine(memory.text())));
          }
 
@@ -80,8 +80,8 @@ final class AiMemoryView {
          this.load_Str = null;
       }
 
-      if (this.read_Str != null && now - this.write_J > 3000L) {
-         this.read_Str = null;
+      if (this.id != null && now - this.write_J > 3000L) {
+         this.id = null;
       }
 
       if (this.write_Str != null && now - this.update > 3000L) {
@@ -183,7 +183,7 @@ final class AiMemoryView {
       int icon = rowH - 2;
       autismclient.gui.f.NetHelper head = autismclient.gui.f.NetHelper.init(row.read(), row.write(), row.update(), rowH);
       boolean hovered = kit.isHovered(row);
-      boolean armed = id.equals(this.read_Str);
+      boolean armed = id.equals(this.id);
       if (hovered || this.init_Set.contains(id)) {
          PacketUtil.load(kit.graphics, row, 3, colors.cardSurfaceElevated);
       }
@@ -322,7 +322,7 @@ final class AiMemoryView {
          this.update = System.currentTimeMillis();
       } else {
          this.write_Str = null;
-         this.init_cc.clearWorldMemory(which.equals("world"));
+         this.service.clearWorldMemory(which.equals("world"));
          this.init_List = List.of();
          this.init_Obj = null;
          this.init_Set.clear();
@@ -332,10 +332,10 @@ final class AiMemoryView {
 
    private void init_V_AiMemoryStore_Memo(AiMemoryStore.Memory memory) {
       this.load_Str = memory.id();
-      this.read_Str = null;
+      this.id = null;
       this.editInput.setValue(memory.text());
       this.editInput.moveCursorToEnd();
-      this.init_AiAssistantOverlay.init(this.editInput);
+      this.host.init(this.editInput);
    }
 
    private void load() {
@@ -344,19 +344,19 @@ final class AiMemoryView {
       this.load_Str = null;
       this.editInput.setFocused(false);
       if (id != null && !text.isEmpty()) {
-         this.init_cc.correctMemory(id, text);
+         this.service.correctMemory(id, text);
          this.init_Obj = null;
          autismclient.util.bi.load("Memory updated");
       }
    }
 
    private void load(String id) {
-      if (!id.equals(this.read_Str)) {
-         this.read_Str = id;
+      if (!id.equals(this.id)) {
+         this.id = id;
          this.write_J = System.currentTimeMillis();
       } else {
-         this.read_Str = null;
-         this.init_cc.forgetMemory(id);
+         this.id = null;
+         this.service.forgetMemory(id);
          List<AiMemoryView.Inner_DataUtil> next = new ArrayList<>(this.init_List);
          next.removeIf(r -> r.memory().id().equals(id));
          this.init_List = next;

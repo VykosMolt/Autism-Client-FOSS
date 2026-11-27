@@ -279,9 +279,9 @@ public final class IncomingProjectileScanner {
       HitResult init(Vec3 var1, Vec3 var2, int var3);
    }
 
-   public record Inner_DataUtil(List<Vec3> points, HitResult init_HitResult, Vec3 init_Vec3, double init_D) {
+   public record Inner_DataUtil(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double init_D) {
       public Vec3 init_Vec3() {
-         return this.init_HitResult == null ? null : this.init_HitResult.getLocation();
+         return this.hit == null ? null : this.hit.getLocation();
       }
 
       public Vec3 load() {

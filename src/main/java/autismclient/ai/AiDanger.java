@@ -60,10 +60,10 @@ final class AiDanger {
    static final double write_D = 0.98;
    private static final List<BlockPos> init_List = init_List_F(10.0F);
    static final String flush = "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively";
-   private static final AiDanger.Inner_DataUtil init_i_DataUtil = new AiDanger.Inner_DataUtil(
+   private static final AiDanger.Inner_DataUtil assess = new AiDanger.Inner_DataUtil(
       List.of(), 0.0F, 0.0F, 0.0F, 0, 0, 0, 0.0, -1, false, 0.0F, "", 0.0F, 0.0F, false, false, false
    );
-   private static final AiDanger.Inner_BufferHelper init_i_BufferHelper = new AiDanger.Inner_BufferHelper(init_i_DataUtil, -1, null);
+   private static final AiDanger.Inner_BufferHelper init_i_BufferHelper = new AiDanger.Inner_BufferHelper(assess, -1, null);
    private static AiDanger.Inner_BufferHelper load_i_BufferHelper;
    private static int update_I = -2;
 
@@ -196,7 +196,7 @@ final class AiDanger {
       try {
          return init_i_BufferHelper_Minecraft(mc).assessment();
       } catch (Throwable t) {
-         return init_i_DataUtil;
+         return assess;
       }
    }
 

@@ -107,7 +107,7 @@ public final class NoRenderModule extends Module {
    private final BoolSetting scan = this.add(new BoolSetting("spawner-entities", "Spawner Entities", false).group("Entity").description("Hide spawner mobs"));
    private final BoolSetting parse = this.add(new BoolSetting("dead-entities", "Dead Entities", false).group("Entity").description("Hide dead entities"));
    private final BoolSetting bind = this.add(new BoolSetting("nametags", "Nametags", false).group("Entity").description("Hide entity nametags"));
-   private boolean init_Z;
+   private boolean tr;
 
    public NoRenderModule() {
       super("no-render", "NoRender", ae.update, "Disables rendering of selected overlays, HUD elements, world features and entities.");
@@ -115,7 +115,7 @@ public final class NoRenderModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_Z = this.count.get();
+      this.tr = this.count.get();
       this.init();
       load();
    }
@@ -130,8 +130,8 @@ public final class NoRenderModule extends Module {
    public void tick() {
       this.init();
       boolean tr = this.count.get();
-      if (tr != this.init_Z) {
-         this.init_Z = tr;
+      if (tr != this.tr) {
+         this.tr = tr;
          load();
       }
    }

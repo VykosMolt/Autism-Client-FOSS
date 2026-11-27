@@ -12,18 +12,18 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class SelectableListBox<T> {
    private final ScrollableListView init_EventBus;
-   private final Function<T, String> init_Function;
-   private final BiConsumer<T, Boolean> init_BiConsumer;
+   private final Function<T, String> labelExtractor;
+   private final BiConsumer<T, Boolean> selectionHandler;
    private final List<T> init_List = new ArrayList<>();
    private int init_I = -1;
-   private boolean init_Z = true;
-   private int load_I = UiColorPalette.inputSurface();
-   private int read_I = UiColorPalette.listBoxSurface();
-   private int write_I = UiColorPalette.selectedText();
+   private boolean enabled = true;
+   private int border = UiColorPalette.inputSurface();
+   private int background = UiColorPalette.listBoxSurface();
+   private int selectedText = UiColorPalette.selectedText();
    private int update = -1;
    private int sync = UiColorPalette.textSecondary();
    private Function<T, String> load_Function;
-   private Function<T, Integer> read_Function;
+   private Function<T, Integer> colorExtractor;
    private Function<T, String> write_Function;
    private int flush = UiColorPalette.textSecondary();
 
@@ -31,8 +31,8 @@ public final class SelectableListBox<T> {
       int x, int y, int width, int height, int rowHeight, int scrollbarWidth, Function<T, String> labelExtractor, BiConsumer<T, Boolean> selectionHandler
    ) {
       this.init_EventBus = new ScrollableListView(x, y, width, height, rowHeight, scrollbarWidth);
-      this.init_Function = labelExtractor;
-      this.init_BiConsumer = selectionHandler;
+      this.labelExtractor = labelExtractor;
+      this.selectionHandler = selectionHandler;
    }
 
    public void init(List<T> items) {
@@ -74,8 +74,8 @@ public final class SelectableListBox<T> {
    public void select(int index) {
       if (index >= -1 && index < this.init_List.size()) {
          this.init_I = index;
-         if (index >= 0 && this.init_BiConsumer != null) {
-            this.init_BiConsumer.accept(this.init_List.get(index), true);
+         if (index >= 0 && this.selectionHandler != null) {
+            this.selectionHandler.accept(this.init_List.get(index), true);
          }
       }
    }
@@ -89,16 +89,16 @@ public final class SelectableListBox<T> {
    }
 
    public void init(boolean enabled) {
-      this.init_Z = enabled;
+      this.enabled = enabled;
    }
 
-   public boolean init_Z() {
-      return this.init_Z;
+   public boolean isEnabled() {
+      return this.enabled;
    }
 
    public void init(Function<T, String> extractor, Function<T, Integer> colorExtractor) {
       this.load_Function = extractor;
-      this.read_Function = colorExtractor;
+      this.colorExtractor = colorExtractor;
    }
 
    public void init(Function<T, String> extractor) {
@@ -106,15 +106,15 @@ public final class SelectableListBox<T> {
    }
 
    public void init_V_I(int border, int background, int selectedText, int normalText, int disabledText) {
-      this.load_I = border;
-      this.read_I = background;
-      this.write_I = selectedText;
+      this.border = border;
+      this.background = background;
+      this.selectedText = selectedText;
       this.update = normalText;
       this.sync = disabledText;
    }
 
    public void init(GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY) {
-      this.init_EventBus.beginFrame(ctx, this.load_I, this.read_I);
+      this.init_EventBus.beginFrame(ctx, this.border, this.background);
 
       try {
          this.load(ctx, textRenderer, mouseX, mouseY);
@@ -128,13 +128,13 @@ public final class SelectableListBox<T> {
    public void init_V_GuiGraphicsExtract(
       GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY, SelectableListBox.Inner_DataUtil<T> customRenderer
    ) {
-      this.init_EventBus.beginFrame(ctx, this.load_I, this.read_I);
+      this.init_EventBus.beginFrame(ctx, this.border, this.background);
 
       try {
          this.init_EventBus.forEachVisibleRow(ctx, this.init_List.size(), (index, bounds) -> {
             T item = this.init_List.get(index);
             boolean isSelected = index == this.init_I;
-            boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
+            boolean isHovered = this.enabled && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
             int originalY = this.init_EventBus.getRowY(index);
             customRenderer.init(ctx, textRenderer, item, index, isSelected, isHovered, bounds.x, bounds.y, bounds.width, bounds.height, originalY);
          });
@@ -149,13 +149,13 @@ public final class SelectableListBox<T> {
       this.init_EventBus.forEachVisibleRow(ctx, this.init_List.size(), (index, bounds) -> {
          T item = this.init_List.get(index);
          boolean isSelected = index == this.init_I;
-         boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
+         boolean isHovered = this.enabled && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
          autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, bounds.x, bounds.y, bounds.width, bounds.height, isHovered, isSelected);
          int textColor;
-         if (!this.init_Z) {
+         if (!this.enabled) {
             textColor = this.sync;
          } else if (isSelected) {
-            textColor = this.write_I;
+            textColor = this.selectedText;
          } else {
             textColor = this.update;
          }
@@ -163,7 +163,7 @@ public final class SelectableListBox<T> {
          int availableWidth = bounds.width - 12;
          int textX = bounds.x + 6;
          int textY = UiLayoutMath.centerTextY(bounds.y, bounds.height, 9, 0);
-         String label = this.init_Function.apply(item);
+         String label = this.labelExtractor.apply(item);
          if (label != null && !label.isEmpty()) {
             int reservedWidth = 0;
             String badge = this.load_Function != null ? this.load_Function.apply(item) : null;
@@ -182,7 +182,7 @@ public final class SelectableListBox<T> {
             if (badge != null && !badge.isEmpty()) {
                int labelWidth = ThemedTextHelper.init(textRenderer, trimmedLabel, ThemedTextHelper.TextTone.BODY);
                int badgeX = textX + labelWidth + 4;
-               int badgeColor = this.read_Function != null ? this.read_Function.apply(item) : -22016;
+               int badgeColor = this.colorExtractor != null ? this.colorExtractor.apply(item) : -22016;
                ThemedTextHelper.init(ctx, textRenderer, badge, badgeColor, badgeX, textY, false);
             }
 
@@ -196,7 +196,7 @@ public final class SelectableListBox<T> {
    }
 
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-      if (!this.init_Z) {
+      if (!this.enabled) {
          return false;
       }
 

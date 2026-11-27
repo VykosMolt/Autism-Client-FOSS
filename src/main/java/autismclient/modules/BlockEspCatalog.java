@@ -96,19 +96,19 @@ final class BlockEspCatalog {
    static void init(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
          BlockEspCatalog.Inner_DataUtil selection = init_ad_DataUtil(module.value("blocks"));
-         if (!selection.init_Set().isEmpty()) {
+         if (!selection.targets().isEmpty()) {
             int maxTargets = init_I_Str(module.value("max-targets"), 1024, 64, 8192);
             Map<Block, Integer> colors = new IdentityHashMap<>();
             StringBuilder stamp = new StringBuilder(selection.init_Str());
 
-            for (Block block : selection.init_Set()) {
+            for (Block block : selection.targets()) {
                Identifier id = BuiltInRegistries.BLOCK.getKey(block);
                int color = init_I(module, id.toString());
                colors.put(block, color);
                stamp.append('|').append(Integer.toHexString(color));
             }
 
-            Set<Block> targets = selection.init_Set();
+            Set<Block> targets = selection.targets();
             if (!AutismLiteVariant.enabled() && BedEspModule.isActive()) {
                targets = new LinkedHashSet<>(targets);
                targets.removeIf(blockx -> blockx instanceof BedBlock);
@@ -360,6 +360,6 @@ final class BlockEspCatalog {
       }
    }
 
-   private record Inner_DataUtil(String init_Str, Set<Block> init_Set) {
+   private record Inner_DataUtil(String init_Str, Set<Block> targets) {
    }
 }

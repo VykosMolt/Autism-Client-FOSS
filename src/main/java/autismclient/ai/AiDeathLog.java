@@ -11,14 +11,14 @@ import net.minecraft.world.item.ItemStack;
 
 final class AiDeathLog {
    static final long init_J = 300000L;
-   private static volatile AiDeathLog.Inner_DataUtil init_j_DataUtil;
+   private static volatile AiDeathLog.Inner_DataUtil lastDeath;
    private static volatile boolean init_Z;
 
    private AiDeathLog() {
    }
 
    static void init(Minecraft mc) {
-      if (mc.player != null && mc.level != null && (init_j_DataUtil == null || init_j_DataUtil.ageMillis() >= 2000L)) {
+      if (mc.player != null && mc.level != null && (lastDeath == null || lastDeath.ageMillis() >= 2000L)) {
          Map<String, Integer> carried = new LinkedHashMap<>();
 
          for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
@@ -28,7 +28,7 @@ final class AiDeathLog {
             }
          }
 
-         init_j_DataUtil = new AiDeathLog.Inner_DataUtil(
+         lastDeath = new AiDeathLog.Inner_DataUtil(
             System.currentTimeMillis(), mc.level.dimension().identifier().toString(), mc.player.blockPosition().immutable(), mc.player.experienceLevel, carried
          );
          init_Z = false;
@@ -36,7 +36,7 @@ final class AiDeathLog {
    }
 
    static AiDeathLog.Inner_DataUtil lastDeath() {
-      return init_j_DataUtil;
+      return lastDeath;
    }
 
    static boolean init_Z() {
@@ -48,12 +48,12 @@ final class AiDeathLog {
    }
 
    static void load() {
-      init_j_DataUtil = null;
+      lastDeath = null;
       init_Z = false;
    }
 
    static JsonObject statusJson() {
-      AiDeathLog.Inner_DataUtil death = init_j_DataUtil;
+      AiDeathLog.Inner_DataUtil death = lastDeath;
       if (death == null) {
          return AiJson.objectOf("recorded", false);
       }

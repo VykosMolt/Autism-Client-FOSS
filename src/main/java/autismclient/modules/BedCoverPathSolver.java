@@ -50,7 +50,7 @@ final class BedCoverPathSolver {
          seed = own;
       } else {
          for (int i = 0; i < g.write; i++) {
-            if (g.init(i, false) && (g.init_I(i) == 0 || g.init_I(i) == g.init_I - 1 || g.read_I(i) == 0 || g.read_I(i) == g.read - 1)) {
+            if (g.init(i, false) && (g.init_I(i) == 0 || g.init_I(i) == g.sx - 1 || g.read_I(i) == 0 || g.read_I(i) == g.read - 1)) {
                double d = g.posAt(i).distToCenterSqr(observer);
                if (d < nearest) {
                   nearest = d;
@@ -290,7 +290,7 @@ final class BedCoverPathSolver {
       ArrayList<Integer> result = new ArrayList<>();
 
       for (int step = 0; step < 80; step++) {
-         int i = g.init(x - g.init_BlockPos.getX(), y - g.init_BlockPos.getY(), z - g.init_BlockPos.getZ());
+         int i = g.init(x - g.origin.getX(), y - g.origin.getY(), z - g.origin.getZ());
          BedCoverPathSolver.Inner_StreamUtil cell = g.init_RefQueue_StreamUti(i);
          if (cell.init_I == 1) {
             return null;
@@ -321,9 +321,9 @@ final class BedCoverPathSolver {
             for (int subset = 1; subset < 8; subset++) {
                if ((subset & mask) == subset && subset != mask) {
                   int side = g.init(
-                     x + ((subset & 1) != 0 ? dx : 0) - g.init_BlockPos.getX(),
-                     y + ((subset & 2) != 0 ? dy : 0) - g.init_BlockPos.getY(),
-                     z + ((subset & 4) != 0 ? dz : 0) - g.init_BlockPos.getZ()
+                     x + ((subset & 1) != 0 ? dx : 0) - g.origin.getX(),
+                     y + ((subset & 2) != 0 ? dy : 0) - g.origin.getY(),
+                     z + ((subset & 4) != 0 ? dz : 0) - g.origin.getZ()
                   );
                   BedCoverPathSolver.Inner_StreamUtil edge = g.init_RefQueue_StreamUti(side);
                   if (edge.init_I == 1) {
@@ -540,8 +540,8 @@ final class BedCoverPathSolver {
    }
 
    static final class Inner_ConfigStore {
-      final BlockPos init_BlockPos;
-      final int init_I;
+      final BlockPos origin;
+      final int sx;
       final int load;
       final int read;
       final int write;
@@ -549,8 +549,8 @@ final class BedCoverPathSolver {
       final List<Integer> init_List = new ArrayList<>();
 
       Inner_ConfigStore(BlockPos origin, int sx, int sy, int sz) {
-         this.init_BlockPos = origin;
-         this.init_I = sx;
+         this.origin = origin;
+         this.sx = sx;
          this.load = sy;
          this.read = sz;
          this.write = sx * sy * sz;
@@ -559,27 +559,27 @@ final class BedCoverPathSolver {
       }
 
       int init(int x, int y, int z) {
-         return x >= 0 && y >= 0 && z >= 0 && x < this.init_I && y < this.load && z < this.read ? (y * this.read + z) * this.init_I + x : -1;
+         return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.load && z < this.read ? (y * this.read + z) * this.sx + x : -1;
       }
 
       int init(BlockPos p) {
-         return this.init(p.getX() - this.init_BlockPos.getX(), p.getY() - this.init_BlockPos.getY(), p.getZ() - this.init_BlockPos.getZ());
+         return this.init(p.getX() - this.origin.getX(), p.getY() - this.origin.getY(), p.getZ() - this.origin.getZ());
       }
 
       int init_I(int i) {
-         return i % this.init_I;
+         return i % this.sx;
       }
 
       int load_I(int i) {
-         return i / (this.init_I * this.read);
+         return i / (this.sx * this.read);
       }
 
       int read_I(int i) {
-         return i / this.init_I % this.read;
+         return i / this.sx % this.read;
       }
 
       BlockPos posAt(int i) {
-         return this.init_BlockPos.offset(this.init_I(i), this.load_I(i), this.read_I(i));
+         return this.origin.offset(this.init_I(i), this.load_I(i), this.read_I(i));
       }
 
       int init(int i, Direction d) {
@@ -588,7 +588,7 @@ final class BedCoverPathSolver {
 
       boolean init_Z(int i) {
          return this.init_I(i) == 0
-            || this.init_I(i) == this.init_I - 1
+            || this.init_I(i) == this.sx - 1
             || this.read_I(i) == 0
             || this.read_I(i) == this.read - 1
             || this.load_I(i) == 0

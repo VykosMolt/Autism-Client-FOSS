@@ -27,7 +27,7 @@ final class AiFireControl {
    private int init_I;
    private int load;
    private AiOperation init_AiOperation;
-   private final boolean init_Z;
+   private final boolean bodyOnly;
    private String init_Str = "";
 
    AiFireControl() {
@@ -35,7 +35,7 @@ final class AiFireControl {
    }
 
    AiFireControl(boolean bodyOnly) {
-      this.init_Z = bodyOnly;
+      this.bodyOnly = bodyOnly;
       this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
    }
 
@@ -96,7 +96,7 @@ final class AiFireControl {
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-6, -1, -6), feet.offset(6, 2, 6))) {
                if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() instanceof BaseFireBlock) {
                   boolean body = new AABB(p).inflate(0.2).intersects(this.init_Minecraft.player.getBoundingBox());
-                  if (!this.init_Z || body) {
+                  if (!this.bodyOnly || body) {
                      boolean loot = protectDrops
                         && !this.init_Minecraft
                            .level

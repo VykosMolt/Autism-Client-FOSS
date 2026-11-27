@@ -90,9 +90,9 @@ public final class AiChunkMemory {
    });
    private volatile Path init_Path;
    private Object load_Obj;
-   private volatile long read_J;
+   private volatile long generation;
    private long write_J;
-   private static final AiChunkMemory init_StateCache = new AiChunkMemory();
+   private static final AiChunkMemory instance = new AiChunkMemory();
    private static volatile Path load_Path;
 
    private static long[] init_JArr(int height) {
@@ -102,7 +102,7 @@ public final class AiChunkMemory {
    }
 
    public static AiChunkMemory getInstance() {
-      return init_StateCache;
+      return instance;
    }
 
    public static void init(Path baseDir) {
@@ -110,7 +110,7 @@ public final class AiChunkMemory {
    }
 
    public static void init(Minecraft mc) {
-      init_StateCache.load_V_Minecraft(mc);
+      instance.load_V_Minecraft(mc);
    }
 
    public static int init_I(int flags) {
@@ -189,8 +189,8 @@ public final class AiChunkMemory {
    private static AiChunkMemory.Inner_DataUtil init_StateCache_DataUti_StateCache_DataUti(
       AiChunkMemory.Inner_DataUtil old, int freshYLo, int freshHeight, byte[] fresh, Map<Integer, String> freshNotables
    ) {
-      int newLo = Math.min(old.init_I, freshYLo);
-      int newHi = Math.max(old.init_I + old.load, freshYLo + freshHeight);
+      int newLo = Math.min(old.yLo, freshYLo);
+      int newHi = Math.max(old.yLo + old.load, freshYLo + freshHeight);
       if (newHi - newLo > 128) {
          newLo = freshYLo;
          newHi = freshYLo + freshHeight;
@@ -200,11 +200,11 @@ public final class AiChunkMemory {
       byte[] merged = new byte[newHeight * 64];
       long[] observed = new long[newHeight];
 
-      for (int y = Math.max(old.init_I, newLo); y < Math.min(old.init_I + old.load, newHi); y++) {
-         observed[y - newLo] = old.init_JArr[y - old.init_I];
+      for (int y = Math.max(old.yLo, newLo); y < Math.min(old.yLo + old.load, newHi); y++) {
+         observed[y - newLo] = old.observed[y - old.yLo];
 
          for (int i = 0; i < 256; i++) {
-            int cls = init_I_BArr_I(old.init_BArr, (y - old.init_I) * 256 + i);
+            int cls = init_I_BArr_I(old.packed, (y - old.yLo) * 256 + i);
             if (cls != 0) {
                init_V_BArr(merged, (y - newLo) * 256 + i, cls);
             }
@@ -218,10 +218,10 @@ public final class AiChunkMemory {
 
       Map<Integer, String> notables = new HashMap<>();
 
-      for (Entry<Integer, String> entry : old.init_Map.entrySet()) {
-         int y = old.init_I + entry.getKey() / 256;
+      for (Entry<Integer, String> entry : old.notables.entrySet()) {
+         int y = old.yLo + entry.getKey() / 256;
          if (y >= newLo && y < newHi && (y < freshYLo || y >= freshYLo + freshHeight)) {
-            notables.put(entry.getKey() + (old.init_I - newLo) * 256, entry.getValue());
+            notables.put(entry.getKey() + (old.yLo - newLo) * 256, entry.getValue());
          }
       }
 
@@ -241,10 +241,10 @@ public final class AiChunkMemory {
          return AiPathfinder.CellInfo.UNLOADED;
       }
 
-      int ry = y - mem.init_I;
-      if (ry >= 0 && ry < mem.load && mem.init_JArr[ry] != 0L) {
+      int ry = y - mem.yLo;
+      if (ry >= 0 && ry < mem.load && mem.observed[ry] != 0L) {
          AiPathfinder.CellInfo var10000;
-         switch (init_I_BArr_I(mem.init_BArr, ry * 256 + (z & 15) * 16 + (x & 15))) {
+         switch (init_I_BArr_I(mem.packed, ry * 256 + (z & 15) * 16 + (x & 15))) {
             case 1:
                var10000 = AiPathfinder.CellInfo.CACHED_SOLID;
                break;
@@ -276,14 +276,14 @@ public final class AiChunkMemory {
       byte[] mult10 = new byte[256 * height];
       Arrays.fill(digX4, (short)-1);
       Arrays.fill(mult10, (byte)10);
-      int lo = Math.max(yLo, mem.init_I);
-      int hi = Math.min(yLo + height, mem.init_I + mem.load);
+      int lo = Math.max(yLo, mem.yLo);
+      int hi = Math.min(yLo + height, mem.yLo + mem.load);
 
       for (int y = lo; y < hi; y++) {
-         if (mem.init_JArr[y - mem.init_I] != 0L) {
+         if (mem.observed[y - mem.yLo] != 0L) {
             for (int x = 0; x < 16; x++) {
                for (int z = 0; z < 16; z++) {
-                  int cls = init_I_BArr_I(mem.init_BArr, (y - mem.init_I) * 256 + z * 16 + x);
+                  int cls = init_I_BArr_I(mem.packed, (y - mem.yLo) * 256 + z * 16 + x);
                   int i = (x * 16 + z) * height + (y - yLo);
                   int f = 2049;
                   switch (cls) {
@@ -335,7 +335,7 @@ public final class AiChunkMemory {
 
       for (Entry<Long, AiChunkMemory.Inner_DataUtil> entry : snapshot) {
          AiChunkMemory.Inner_DataUtil mem = entry.getValue();
-         if (!mem.init_Map.isEmpty()) {
+         if (!mem.notables.isEmpty()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
             int nearestX = Math.clamp(origin.getX(), cx << 4, (cx << 4) + 15);
@@ -343,13 +343,13 @@ public final class AiChunkMemory {
             double dx = nearestX - origin.getX();
             double dz = nearestZ - origin.getZ();
             if (!(dx * dx + dz * dz > radiusSqr)) {
-               for (Entry<Integer, String> notable : mem.init_Map.entrySet()) {
+               for (Entry<Integer, String> notable : mem.notables.entrySet()) {
                   if (idMatch.test(notable.getValue())) {
                      int index = notable.getKey();
-                     BlockPos pos = new BlockPos((cx << 4) + (index & 15), mem.init_I + (index >> 8), (cz << 4) + (index >> 4 & 15));
+                     BlockPos pos = new BlockPos((cx << 4) + (index & 15), mem.yLo + (index >> 8), (cz << 4) + (index >> 4 & 15));
                      double distanceSqr = pos.distSqr(origin);
                      if (distanceSqr <= radiusSqr) {
-                        out.add(new AiChunkMemory.Inner_CachePool(pos, Math.sqrt(distanceSqr), true, mem.init_JArr[index >> 8]));
+                        out.add(new AiChunkMemory.Inner_CachePool(pos, Math.sqrt(distanceSqr), true, mem.observed[index >> 8]));
                      }
                   }
                }
@@ -380,7 +380,7 @@ public final class AiChunkMemory {
       Object level = mc.level;
       if (level != this.load_Obj) {
          this.init_V();
-         this.read_J++;
+         this.generation++;
          synchronized (this.init_Obj) {
             this.init_LinkedHashMap.clear();
             this.load_Set.clear();
@@ -402,7 +402,7 @@ public final class AiChunkMemory {
 
    private void init_V() {
       Path dir = this.init_Path;
-      long generation = this.read_J;
+      long generation = this.generation;
       Map<Long, AiChunkMemory.Inner_DataUtil> saving;
       synchronized (this.init_Obj) {
          if (this.load_Set.isEmpty()) {
@@ -460,7 +460,7 @@ public final class AiChunkMemory {
          load_V_Path(dir);
       } catch (Exception failure) {
          synchronized (this.init_Obj) {
-            if (generation == this.read_J) {
+            if (generation == this.generation) {
                this.load_Set.addAll(saving.keySet());
             }
          }
@@ -471,7 +471,7 @@ public final class AiChunkMemory {
 
    private void init_V_I_I(int cx, int cz) {
       Path dir = this.init_Path;
-      long generation = this.read_J;
+      long generation = this.generation;
       if (dir != null) {
          long regionKey = AiGridRevisions.chunkKey(cx >> 5, cz >> 5);
          Long failedAt = this.auditReadFailedAt.get(regionKey);
@@ -496,7 +496,7 @@ public final class AiChunkMemory {
 
                      if (region != null) {
                         synchronized (this.init_Obj) {
-                           if (generation == this.read_J && dir.equals(this.init_Path)) {
+                           if (generation == this.generation && dir.equals(this.init_Path)) {
                               region.chunks().forEach(this.init_LinkedHashMap::putIfAbsent);
                            }
                         }
@@ -506,7 +506,7 @@ public final class AiChunkMemory {
                   loaded = true;
                } catch (Exception var17) {
                } finally {
-                  if (generation == this.read_J && dir.equals(this.init_Path)) {
+                  if (generation == this.generation && dir.equals(this.init_Path)) {
                      this.write_Set.remove(regionKey);
                      if (loaded) {
                         this.read_Set.add(regionKey);
@@ -544,7 +544,7 @@ public final class AiChunkMemory {
       Map<String, Integer> palette = new LinkedHashMap<>();
 
       for (AiChunkMemory.Inner_DataUtil mem : chunks.values()) {
-         for (String id : mem.init_Map.values()) {
+         for (String id : mem.notables.values()) {
             palette.putIfAbsent(id, palette.size());
          }
       }
@@ -570,17 +570,17 @@ public final class AiChunkMemory {
             AiChunkMemory.Inner_DataUtil mem = entry.getValue();
             out.writeByte(cx - regionX * 32);
             out.writeByte(cz - regionZ * 32);
-            out.writeShort(mem.init_I);
+            out.writeShort(mem.yLo);
             out.writeShort(mem.load);
-            out.write(mem.init_BArr);
+            out.write(mem.packed);
 
-            for (long observed : mem.init_JArr) {
+            for (long observed : mem.observed) {
                out.writeLong(observed);
             }
 
-            out.writeShort(mem.init_Map.size());
+            out.writeShort(mem.notables.size());
 
-            for (Entry<Integer, String> notable : mem.init_Map.entrySet()) {
+            for (Entry<Integer, String> notable : mem.notables.entrySet()) {
                out.writeShort(notable.getKey());
                out.writeShort(palette.get(notable.getValue()));
             }
@@ -667,22 +667,22 @@ public final class AiChunkMemory {
    }
 
    static final class Inner_DataUtil {
-      final int init_I;
+      final int yLo;
       final int load;
-      final byte[] init_BArr;
-      final Map<Integer, String> init_Map;
-      final long[] init_JArr;
+      final byte[] packed;
+      final Map<Integer, String> notables;
+      final long[] observed;
 
       Inner_DataUtil(int yLo, int height, byte[] packed, Map<Integer, String> notables) {
          this(yLo, height, packed, notables, AiChunkMemory.init_JArr(height));
       }
 
       Inner_DataUtil(int yLo, int height, byte[] packed, Map<Integer, String> notables, long[] observed) {
-         this.init_I = yLo;
+         this.yLo = yLo;
          this.load = height;
-         this.init_BArr = packed;
-         this.init_Map = notables;
-         this.init_JArr = observed;
+         this.packed = packed;
+         this.notables = notables;
+         this.observed = observed;
       }
    }
 
