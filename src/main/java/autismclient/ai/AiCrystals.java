@@ -46,27 +46,27 @@ final class AiCrystals {
    private AiCrystals() {
    }
 
-   static boolean init(AiCrystals.Inner_StreamUtil phase, boolean towerRoute) {
+   static boolean isTowerPhase(AiCrystals.Inner_StreamUtil phase, boolean towerRoute) {
       return phase == AiCrystals.Inner_StreamUtil.PILLAR
          || phase == AiCrystals.Inner_StreamUtil.OPEN_CAGE
          || phase == AiCrystals.Inner_StreamUtil.DESCEND
          || towerRoute && (phase == AiCrystals.Inner_StreamUtil.MELEE || phase == AiCrystals.Inner_StreamUtil.SHOOT);
    }
 
-   static boolean init(double damage, double health, boolean lethal, boolean voidFall) {
+   static boolean isTolerableBlastDamage(double damage, double health, boolean lethal, boolean voidFall) {
       return !lethal && !voidFall && Double.isFinite(damage) && damage >= 0.0 && damage <= 4.0 && damage < health;
    }
 
-   static boolean init(boolean fullCollision, AABB cover, Vec3 blast, Vec3 body) {
+   static boolean blocksBlast(boolean fullCollision, AABB cover, Vec3 blast, Vec3 body) {
       return fullCollision && cover.clip(blast, body).isPresent();
    }
 
-   static boolean init_Z_I(int feetY, int groundY, boolean supported) {
+   static boolean isBackOnGround(int feetY, int groundY, boolean supported) {
       return supported && feetY <= groundY + 1;
    }
 
    static boolean init_Z_h_StreamUtil(AiCrystals.Inner_StreamUtil phase, boolean towerRoute, boolean settling, boolean legSafe, boolean guardSafe) {
-      return !init(phase, towerRoute) && !settling && legSafe && guardSafe;
+      return !isTowerPhase(phase, towerRoute) && !settling && legSafe && guardSafe;
    }
 
    static boolean init_Z_Z(boolean settling, boolean legPending, boolean guardPending) {
@@ -86,10 +86,10 @@ final class AiCrystals {
          }
       }
 
-      return init_Z(nearby);
+      return hasIronBars(nearby);
    }
 
-   static boolean init_Z(List<String> nearbyBlockPaths) {
+   static boolean hasIronBars(List<String> nearbyBlockPaths) {
       for (String path : nearbyBlockPaths) {
          if ("iron_bars".equals(path)) {
             return true;
@@ -99,7 +99,7 @@ final class AiCrystals {
       return false;
    }
 
-   static List<AiCrystals.Inner_DataUtil> init_List(List<AiCrystals.Inner_DataUtil> targets) {
+   static List<AiCrystals.Inner_DataUtil> orderTargets(List<AiCrystals.Inner_DataUtil> targets) {
       List<AiCrystals.Inner_DataUtil> ordered = new ArrayList<>(targets);
       ordered.sort(
          Comparator.comparing(AiCrystals.Inner_DataUtil::caged).thenComparingDouble(AiCrystals.Inner_DataUtil::distanceSqr).thenComparingInt(AiCrystals.Inner_DataUtil::entityId)
@@ -107,11 +107,11 @@ final class AiCrystals {
       return ordered;
    }
 
-   static boolean init_Z_I(int bows, int crossbows, int arrows, int tridents, int throwables) {
+   static boolean hasRangedOption(int bows, int crossbows, int arrows, int tridents, int throwables) {
       return bows + crossbows > 0 && arrows > 0 || tridents > 0 || throwables > 0;
    }
 
-   static String init(boolean caged, boolean meleeAdjacent, boolean blastSafe, boolean ranged) {
+   static String clearMethod(boolean caged, boolean meleeAdjacent, boolean blastSafe, boolean ranged) {
       if (caged) {
          return "cage";
       } else if (meleeAdjacent && blastSafe) {
@@ -123,7 +123,7 @@ final class AiCrystals {
       }
    }
 
-   static boolean init_Z_D(double horizontal, double dy, double distance) {
+   static boolean needsApproach(double horizontal, double dy, double distance) {
       return distance > 64.0 || horizontal < Math.max(6.0, dy * 0.7);
    }
 
@@ -135,22 +135,22 @@ final class AiCrystals {
       return new int[]{(int)Math.round(cx + ux * d), (int)Math.round(cz + uz * d)};
    }
 
-   static int[] init(double dx, double dz) {
+   static int[] dominantAxisStep(double dx, double dz) {
       return Math.abs(dx) >= Math.abs(dz) ? new int[]{dx >= 0.0 ? 1 : -1, 0} : new int[]{0, dz >= 0.0 ? 1 : -1};
    }
 
-   static String init_Str(List<String> hotbarItemPaths) {
+   static String fallRecoveryMode(List<String> hotbarItemPaths) {
       return hotbarItemPaths.contains("water_bucket") ? "mlg" : "dig";
    }
 
-   static JsonObject init() {
+   static JsonObject rangedKitMissing() {
       JsonObject missing = new JsonObject();
       missing.addProperty("minecraft:bow", 1);
       missing.addProperty("minecraft:arrow", 8);
       return missing;
    }
 
-   private static List<String> init(LocalPlayer player) {
+   private static List<String> hotbarItemPaths(LocalPlayer player) {
       List<String> out = new ArrayList<>(9);
 
       for (int i = 0; i < 9; i++) {
@@ -168,115 +168,115 @@ final class AiCrystals {
          AiService service = AiService.getExistingInstance();
          final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
-            final JsonArray init_JsonArray = new JsonArray();
-            final Set<Integer> init_Set = new LinkedHashSet<>();
-            final AiCrystals.Inner_CachePool init_h_CachePool = new AiCrystals.Inner_CachePool();
-            AiOperation init_AiOperation;
-            AiOperation load_AiOperation;
-            AiCrystals.Inner_DataUtil init_h_DataUtil;
-            AiCrystals.Inner_StreamUtil init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-            String init_Str = "";
-            String load_Str = "";
-            String read_Str;
-            JsonObject init_JsonObject;
+            final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
+            final JsonArray outcomes = new JsonArray();
+            final Set<Integer> handledCrystalIds = new LinkedHashSet<>();
+            final AiCrystals.Inner_CachePool skipReasons = new AiCrystals.Inner_CachePool();
+            AiOperation stepOp;
+            AiOperation survivalOp;
+            AiCrystals.Inner_DataUtil currentTarget;
+            AiCrystals.Inner_StreamUtil clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+            String plannedMethod = "";
+            String survivalReason = "";
+            String failureCode;
+            JsonObject missingItems;
             BlockPos init_BlockPos;
             BlockPos load_BlockPos;
             BlockPos read_BlockPos;
             boolean init_Z;
-            int init_I;
-            int load_I;
-            int read_I;
+            int clearedCount;
+            int survivalInterruptions;
+            int missedShots;
             int write_I;
-            int update_I;
-            int sync;
-            int flush;
+            int shotWaitTicks;
+            int aimSettleTicks;
+            int groundY;
             int close;
-            int open;
+            int scaffoldShortage;
             int poll;
             int push;
-            int pop;
+            int remainingCrystals;
             int tick;
-            boolean load_Z;
+            boolean towerRoute;
             boolean read_Z;
-            boolean write_Z;
+            boolean cancelled;
             boolean update_Z;
 
             {
-               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.setSilent(silentAim);
+               this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.aim.setSilent(silentAim);
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.write_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadlineNanos) {
+                     return this.finish(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
                         AiFailure.TIMEOUT,
-                        "Crystal clearing deadline reached with " + this.init_I + " cleared"
+                        "Crystal clearing deadline reached with " + this.clearedCount + " cleared"
                      );
                   }
 
                   if (!AiThreats.isLegacyCombatEnabled()
-                     && this.init_Z_26()
-                     && this.init_h_StreamUtil != AiCrystals.Inner_StreamUtil.DESCEND
-                     && this.init_h_DataUtil != null
+                     && this.inTowerPhase()
+                     && this.clearPhase != AiCrystals.Inner_StreamUtil.DESCEND
+                     && this.currentTarget != null
                      && mc.player.getHealth() < 10.0F) {
-                     this.init_V_30();
-                     return this.init(this.init_h_DataUtil, "heal_first");
+                     this.stopStep();
+                     return this.init(this.currentTarget, "heal_first");
                   }
 
-                  if (!this.init_Z_26()) {
+                  if (!this.inTowerPhase()) {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                        return this.init(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
+                        return this.fail(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
                      }
 
-                     AiOperation.Result guarded = this.init_AiOperation_Result_40();
+                     AiOperation.Result guarded = this.tickSurvivalGuard();
                      if (guarded != null) {
                         return guarded;
                      }
                   }
 
                   if (!AiThreats.isLegacyCombatEnabled()
-                     && this.load_Z
-                     && this.init_h_DataUtil != null
-                     && mc.player.getY() > this.flush + 4
+                     && this.towerRoute
+                     && this.currentTarget != null
+                     && mc.player.getY() > this.groundY + 4
                      && (
-                        this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.PILLAR
-                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.OPEN_CAGE
-                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.MELEE
+                        this.clearPhase == AiCrystals.Inner_StreamUtil.PILLAR
+                           || this.clearPhase == AiCrystals.Inner_StreamUtil.OPEN_CAGE
+                           || this.clearPhase == AiCrystals.Inner_StreamUtil.MELEE
                      )
                      && this.init(14.0, 40)) {
-                     this.init_V_30();
+                     this.stopStep();
                      AiSpeedrun.log("[AI] crystals: the dragon is near; off the tower at {}", mc.player.blockPosition().toShortString());
-                     return this.init(this.init_h_DataUtil, "dragon_near");
+                     return this.init(this.currentTarget, "dragon_near");
                   }
 
                   AiOperation.Result var10000;
-                  switch (this.init_h_StreamUtil) {
+                  switch (this.clearPhase) {
                      case SELECT:
-                        var10000 = this.load_AiOperation_Result_17();
+                        var10000 = this.tickSelectPhase();
                         break;
                      case APPROACH:
-                        var10000 = this.read_AiOperation_Result_12();
+                        var10000 = this.tickApproachPhase();
                         break;
                      case SHOOT:
-                        var10000 = this.write_AiOperation_Result_7();
+                        var10000 = this.tickShootPhase();
                         break;
                      case MELEE:
-                        var10000 = this.update();
+                        var10000 = this.tickMeleePhase();
                         break;
                      case PILLAR:
-                        var10000 = this.sync();
+                        var10000 = this.tickPillarPhase();
                         break;
                      case OPEN_CAGE:
-                        var10000 = this.flush();
+                        var10000 = this.tickOpenCagePhase();
                         break;
                      case DESCEND:
-                        var10000 = this.close();
+                        var10000 = this.tickDescendPhase();
                         break;
                      default:
                         throw new MatchException(null, null);
@@ -284,46 +284,46 @@ final class AiCrystals {
 
                   return var10000;
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
                }
             }
 
-            boolean init_Z_26() {
-               return AiCrystals.init(this.init_h_StreamUtil, this.load_Z && this.init_h_DataUtil != null);
+            boolean inTowerPhase() {
+               return AiCrystals.isTowerPhase(this.clearPhase, this.towerRoute && this.currentTarget != null);
             }
 
-            AiOperation.Result init_AiOperation_Result_40() {
-               if (this.load_AiOperation != null) {
-                  AiOperation.Result result = this.load_AiOperation.tick();
+            AiOperation.Result tickSurvivalGuard() {
+               if (this.survivalOp != null) {
+                  AiOperation.Result result = this.survivalOp.tick();
                   if (!result.terminal()) {
-                     return this.load("Interrupted: " + this.load_Str + " - " + result.message());
+                     return this.running("Interrupted: " + this.survivalReason + " - " + result.message());
                   }
 
-                  this.load_AiOperation.cancel();
-                  this.load_AiOperation = null;
-                  return this.load("Resuming after " + this.load_Str);
+                  this.survivalOp.cancel();
+                  this.survivalOp = null;
+                  return this.running("Resuming after " + this.survivalReason);
                } else {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.load_I_14());
+                  AiOperation action = AiGuard.createResponseOperation(this.guardPolicy, vitals, this.secondsLeft());
                   if (action == null) {
                      return null;
                   }
 
-                  this.load_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
-                  this.load_I++;
-                  this.init_V_30();
-                  this.load_AiOperation = action;
-                  return this.load("Interrupted: " + this.load_Str);
+                  this.survivalReason = AiGuard.decisionReason(this.guardPolicy, vitals);
+                  this.survivalInterruptions++;
+                  this.stopStep();
+                  this.survivalOp = action;
+                  return this.running("Interrupted: " + this.survivalReason);
                }
             }
 
-            AiOperation.Result load_AiOperation_Result_17() {
-               List<AiCrystals.Inner_DataUtil> targets = AiCrystals.init_List(this.init_List_9());
-               this.pop = targets.size();
+            AiOperation.Result tickSelectPhase() {
+               List<AiCrystals.Inner_DataUtil> targets = AiCrystals.orderTargets(this.scanCrystals());
+               this.remainingCrystals = targets.size();
                AiCrystals.Inner_DataUtil next = null;
 
                for (AiCrystals.Inner_DataUtil t : targets) {
-                  if (!this.init_Set.contains(t.entityId())) {
+                  if (!this.handledCrystalIds.contains(t.entityId())) {
                      next = t;
                      break;
                   }
@@ -331,25 +331,25 @@ final class AiCrystals {
 
                if (next == null) {
                   if (targets.isEmpty()) {
-                     if (this.init_I > 0) {
-                        AiRunTrace.recordGlobalSplit("clear_crystals", this.init_I + " cleared");
+                     if (this.clearedCount > 0) {
+                        AiRunTrace.recordGlobalSplit("clear_crystals", this.clearedCount + " cleared");
                      }
 
-                     return this.init(
-                        AiOperation.Status.SUCCEEDED, null, this.init_I == 0 ? "No End crystals observed" : "All End crystals cleared (" + this.init_I + ")"
+                     return this.finish(
+                        AiOperation.Status.SUCCEEDED, null, this.clearedCount == 0 ? "No End crystals observed" : "All End crystals cleared (" + this.clearedCount + ")"
                      );
                   } else {
-                     return this.push();
+                     return this.finishNoneReachable();
                   }
                } else {
-                  this.init_h_DataUtil = next;
-                  this.init_Str = "";
-                  this.load_Z = false;
+                  this.currentTarget = next;
+                  this.plannedMethod = "";
+                  this.towerRoute = false;
                   this.read_Z = false;
-                  this.read_I = 0;
+                  this.missedShots = 0;
                   this.write_I = 0;
-                  this.update_I = 0;
-                  this.sync = 0;
+                  this.shotWaitTicks = 0;
+                  this.aimSettleTicks = 0;
                   this.poll = 0;
                   this.push = 0;
                   this.init_BlockPos = null;
@@ -357,13 +357,13 @@ final class AiCrystals {
                   this.read_BlockPos = null;
                   this.init_Z = false;
                   this.tick = -1;
-                  Entity entity = this.init_Entity_h_DataUtil(next);
+                  Entity entity = this.liveEntityFor(next);
                   if (entity == null) {
-                     this.init_Set.add(next.entityId());
-                     return this.load("Crystal vanished; re-selecting");
+                     this.handledCrystalIds.add(next.entityId());
+                     return this.running("Crystal vanished; re-selecting");
                   }
 
-                  String chosen = AiCrystals.init(next.caged(), this.init_Z_Entity_3(entity), this.read_Z_11(), this.write_Z_8());
+                  String chosen = AiCrystals.clearMethod(next.caged(), this.isInMeleeReach(entity), this.isBlastSafe(), this.hasRanged());
                   AiSpeedrun.log(
                      "[AI] crystals: target #{} at {} {} {} caged={} invulnerable={} method={} arrows={}",
                      next.entityId(),
@@ -392,230 +392,230 @@ final class AiCrystals {
                   }
 
                   if ("cage".equals(chosen)) {
-                     this.load_Z = true;
-                     this.flush = mc.player.blockPosition().getY();
-                     int shortage = next.y() + 2 - this.flush - this.init_I_36();
+                     this.towerRoute = true;
+                     this.groundY = mc.player.blockPosition().getY();
+                     int shortage = next.y() + 2 - this.groundY - this.scaffoldBlockCount();
                      if (shortage > 0) {
-                        this.open = Math.max(this.open, shortage);
+                        this.scaffoldShortage = Math.max(this.scaffoldShortage, shortage);
                         return this.init(next, "cage", "no_blocks");
                      } else {
-                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.PILLAR;
-                        return this.load("Pillaring up beside the cage at " + next.x() + " " + next.y() + " " + next.z());
+                        this.clearPhase = AiCrystals.Inner_StreamUtil.PILLAR;
+                        return this.running("Pillaring up beside the cage at " + next.x() + " " + next.y() + " " + next.z());
                      }
                   } else {
-                     this.init_Str = chosen;
+                     this.plannedMethod = chosen;
                      if ("melee".equals(chosen)) {
-                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
-                        return this.load("Punching the adjacent crystal");
+                        this.clearPhase = AiCrystals.Inner_StreamUtil.MELEE;
+                        return this.running("Punching the adjacent crystal");
                      } else {
-                        this.init_h_StreamUtil = this.read(entity) ? AiCrystals.Inner_StreamUtil.APPROACH : AiCrystals.Inner_StreamUtil.SHOOT;
-                        return this.load("Shooting crystal #" + next.entityId());
+                        this.clearPhase = this.needsApproachTo(entity) ? AiCrystals.Inner_StreamUtil.APPROACH : AiCrystals.Inner_StreamUtil.SHOOT;
+                        return this.running("Shooting crystal #" + next.entityId());
                      }
                   }
                }
             }
 
-            AiOperation.Result read_AiOperation_Result_12() {
-               if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Re-selecting");
+            AiOperation.Result tickApproachPhase() {
+               if (this.currentTarget == null) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Re-selecting");
                }
 
-               Entity entity = this.init_Entity_h_DataUtil(this.init_h_DataUtil);
+               Entity entity = this.liveEntityFor(this.currentTarget);
                if (entity == null) {
-                  return this.poll();
+                  return this.recordClearedTarget();
                }
 
-               if (this.init_AiOperation == null) {
-                  BlockPos stand = this.init_BlockPos_Entity_2(entity);
+               if (this.stepOp == null) {
+                  BlockPos stand = this.approachStandFor(entity);
                   if (stand == null) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
-                     return this.load("No firing cell in loaded terrain; shooting from here");
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.SHOOT;
+                     return this.running("No firing cell in loaded terrain; shooting from here");
                   }
 
                   this.init_BlockPos = stand;
-                  this.init_AiOperation = AiGoto.travelToCompat(
-                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
+                  this.stepOp = AiGoto.travelToCompat(
+                     stand, 1.5, false, true, true, this.legSeconds(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
-               AiOperation.Result r = this.init_AiOperation.tick();
+               AiOperation.Result r = this.stepOp.tick();
                if (!r.terminal()) {
-                  return this.load("Moving to a firing position");
+                  return this.running("Moving to a firing position");
                } else {
-                  this.init_V_30();
+                  this.stopStep();
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
-                     return this.load("In position; solving the arc");
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.SHOOT;
+                     return this.running("In position; solving the arc");
                   } else {
-                     return this.load(this.init_h_DataUtil, "shoot", "unreachable");
+                     return this.load(this.currentTarget, "shoot", "unreachable");
                   }
                }
             }
 
-            AiOperation.Result write_AiOperation_Result_7() {
-               if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Re-selecting");
+            AiOperation.Result tickShootPhase() {
+               if (this.currentTarget == null) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Re-selecting");
                }
 
-               if (this.init_Entity_h_DataUtil(this.init_h_DataUtil) == null) {
-                  return this.poll();
+               if (this.liveEntityFor(this.currentTarget) == null) {
+                  return this.recordClearedTarget();
                }
 
                if (this.read_Z) {
-                  if (++this.update_I > 40) {
+                  if (++this.shotWaitTicks > 40) {
                      this.read_Z = false;
-                     return ++this.read_I >= 3
-                        ? this.load(this.init_h_DataUtil, this.init_Str, "shots_missed")
-                        : this.load("Shot did not land; firing again (" + this.read_I + "/3)");
+                     return ++this.missedShots >= 3
+                        ? this.load(this.currentTarget, this.plannedMethod, "shots_missed")
+                        : this.running("Shot did not land; firing again (" + this.missedShots + "/3)");
                   } else {
-                     return this.load("Waiting for the shot to land");
+                     return this.running("Waiting for the shot to land");
                   }
                } else {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiRanged.init(
-                        AiJson.objectOf("entityId", this.init_h_DataUtil.entityId(), "count", 1, "timeoutSeconds", Math.min(8, this.init_I_I_4(45)))
+                  if (this.stepOp == null) {
+                     this.stepOp = AiRanged.init(
+                        AiJson.objectOf("entityId", this.currentTarget.entityId(), "count", 1, "timeoutSeconds", Math.min(8, this.legSeconds(45)))
                      );
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.stepOp.tick();
                   if (!r.terminal()) {
-                     return this.load("Shooting crystal #" + this.init_h_DataUtil.entityId() + ": " + r.message());
+                     return this.running("Shooting crystal #" + this.currentTarget.entityId() + ": " + r.message());
                   } else {
-                     AiSpeedrun.log("[AI] crystals: shot #{} {} - {}", this.init_h_DataUtil.entityId(), r.status(), r.message());
-                     this.init_V_30();
-                     if (this.init_Entity_h_DataUtil(this.init_h_DataUtil) == null) {
-                        return this.poll();
+                     AiSpeedrun.log("[AI] crystals: shot #{} {} - {}", this.currentTarget.entityId(), r.status(), r.message());
+                     this.stopStep();
+                     if (this.liveEntityFor(this.currentTarget) == null) {
+                        return this.recordClearedTarget();
                      } else if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
+                        return this.finish(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
                      } else if (r.status() == AiOperation.Status.SUCCEEDED || r.status() == AiOperation.Status.UNCERTAIN) {
                         this.read_Z = true;
-                        this.update_I = 0;
-                        return this.load("Shot away");
+                        this.shotWaitTicks = 0;
+                        return this.running("Shot away");
                      } else if (r.dataJson() != null && r.dataJson().contains("\"missing\"")) {
-                        return this.load_Z ? this.init(this.init_h_DataUtil, "no_ranged") : this.init(this.init_h_DataUtil, "shoot", "no_ranged");
+                        return this.towerRoute ? this.init(this.currentTarget, "no_ranged") : this.init(this.currentTarget, "shoot", "no_ranged");
                      } else {
-                        return ++this.read_I >= 3
-                           ? this.load(this.init_h_DataUtil, this.init_Str, "shots_missed")
-                           : this.load("Shot failed (" + r.message() + "); retrying");
+                        return ++this.missedShots >= 3
+                           ? this.load(this.currentTarget, this.plannedMethod, "shots_missed")
+                           : this.running("Shot failed (" + r.message() + "); retrying");
                      }
                   }
                }
             }
 
-            AiOperation.Result update() {
-               if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Re-selecting");
+            AiOperation.Result tickMeleePhase() {
+               if (this.currentTarget == null) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Re-selecting");
                }
 
-               Entity entity = this.init_Entity_h_DataUtil(this.init_h_DataUtil);
+               Entity entity = this.liveEntityFor(this.currentTarget);
                if (entity == null) {
-                  return this.poll();
+                  return this.recordClearedTarget();
                }
 
                if (this.read_Z) {
-                  if (++this.update_I > 40) {
+                  if (++this.shotWaitTicks > 40) {
                      this.read_Z = false;
                      return ++this.write_I >= 3
-                        ? this.load(this.init_h_DataUtil, this.init_Str, "melee_failed")
-                        : this.load("The swing did not register; re-swinging");
+                        ? this.load(this.currentTarget, this.plannedMethod, "melee_failed")
+                        : this.running("The swing did not register; re-swinging");
                   } else {
-                     return this.load("Waiting for the pop");
+                     return this.running("Waiting for the pop");
                   }
-               } else if (!this.init_Z_Entity_3(entity)) {
-                  if (this.load_Z) {
-                     return this.load(this.init_h_DataUtil, this.init_Str, "unreachable");
-                  } else if (this.write_Z_8()) {
-                     this.init_Str = "shoot";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.APPROACH;
-                     return this.load("No longer adjacent; switching to the bow");
+               } else if (!this.isInMeleeReach(entity)) {
+                  if (this.towerRoute) {
+                     return this.load(this.currentTarget, this.plannedMethod, "unreachable");
+                  } else if (this.hasRanged()) {
+                     this.plannedMethod = "shoot";
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.APPROACH;
+                     return this.running("No longer adjacent; switching to the bow");
                   } else {
-                     return this.init(this.init_h_DataUtil, "melee", "no_ranged");
+                     return this.init(this.currentTarget, "melee", "no_ranged");
                   }
-               } else if (!this.read_Z_11() || !AiThreats.isLegacyCombatEnabled() && this.load_Z && !this.load(entity)) {
-                  if (!this.write_Z_8() || this.load_Z && !AiThreats.isLegacyCombatEnabled()) {
-                     return this.load_Z ? this.init(this.init_h_DataUtil, "lethal_blast") : this.init(this.init_h_DataUtil, "melee", "lethal_blast");
+               } else if (!this.isBlastSafe() || !AiThreats.isLegacyCombatEnabled() && this.towerRoute && !this.load(entity)) {
+                  if (!this.hasRanged() || this.towerRoute && !AiThreats.isLegacyCombatEnabled()) {
+                     return this.towerRoute ? this.init(this.currentTarget, "lethal_blast") : this.init(this.currentTarget, "melee", "lethal_blast");
                   }
 
-                  this.init_Str = this.load_Z ? "cage_shoot" : "shoot";
-                  this.init_h_StreamUtil = this.load_Z ? AiCrystals.Inner_StreamUtil.SHOOT : AiCrystals.Inner_StreamUtil.APPROACH;
-                  return this.load("Blast would be lethal point-blank; switching to the bow");
+                  this.plannedMethod = this.towerRoute ? "cage_shoot" : "shoot";
+                  this.clearPhase = this.towerRoute ? AiCrystals.Inner_StreamUtil.SHOOT : AiCrystals.Inner_StreamUtil.APPROACH;
+                  return this.running("Blast would be lethal point-blank; switching to the bow");
                } else {
-                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity));
-                  this.init_DataUtil.tick();
-                  if (!this.init_DataUtil.isSettled() && ++this.sync < 25) {
-                     return this.load("Aiming at the crystal");
+                  this.aim.aimAt(autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity));
+                  this.aim.tick();
+                  if (!this.aim.isSettled() && ++this.aimSettleTicks < 25) {
+                     return this.running("Aiming at the crystal");
                   }
 
                   mc.gameMode.attack(mc.player, entity);
                   Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                   mc.player.resetAttackStrengthTicker();
                   this.read_Z = true;
-                  this.update_I = 0;
-                  return this.load("Struck the crystal");
+                  this.shotWaitTicks = 0;
+                  return this.running("Struck the crystal");
                }
             }
 
-            AiOperation.Result sync() {
-               if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Re-selecting");
+            AiOperation.Result tickPillarPhase() {
+               if (this.currentTarget == null) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Re-selecting");
                }
 
-               Entity entity = this.init_Entity_h_DataUtil(this.init_h_DataUtil);
+               Entity entity = this.liveEntityFor(this.currentTarget);
                if (entity == null) {
-                  return this.init_AiOperation_Result_Str_12("cage");
+                  return this.recordClearedAs("cage");
                }
 
-               if (this.init_AiOperation == null) {
-                  int[] side = AiCrystals.init(mc.player.getX() - (this.init_h_DataUtil.x() + 0.5), mc.player.getZ() - (this.init_h_DataUtil.z() + 0.5));
-                  this.init_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 3, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 3);
-                  this.load_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 2, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 2);
-                  this.init_AiOperation = AiGoto.travelToCompat(
-                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
+               if (this.stepOp == null) {
+                  int[] side = AiCrystals.dominantAxisStep(mc.player.getX() - (this.currentTarget.x() + 0.5), mc.player.getZ() - (this.currentTarget.z() + 0.5));
+                  this.init_BlockPos = new BlockPos(this.currentTarget.x() + side[0] * 3, this.currentTarget.y(), this.currentTarget.z() + side[1] * 3);
+                  this.load_BlockPos = new BlockPos(this.currentTarget.x() + side[0] * 2, this.currentTarget.y(), this.currentTarget.z() + side[1] * 2);
+                  this.stepOp = AiGoto.travelToCompat(
+                     this.init_BlockPos, 0.7, false, true, true, this.legSeconds(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
-               AiOperation.Result r = this.init_AiOperation.tick();
+               AiOperation.Result r = this.stepOp.tick();
                if (!r.terminal()) {
-                  return this.load("Pillaring up beside the cage");
+                  return this.running("Pillaring up beside the cage");
                } else {
-                  this.init_V_30();
+                  this.stopStep();
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.OPEN_CAGE;
-                     return this.load("Beside the cage; opening the bars");
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.OPEN_CAGE;
+                     return this.running("Beside the cage; opening the bars");
                   } else {
                      return ++this.poll >= 2
-                        ? this.load(this.init_h_DataUtil, "cage", "unreachable")
-                        : this.load("Pillar leg failed (" + r.message() + "); retrying");
+                        ? this.load(this.currentTarget, "cage", "unreachable")
+                        : this.running("Pillar leg failed (" + r.message() + "); retrying");
                   }
                }
             }
 
-            AiOperation.Result flush() {
-               if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Re-selecting");
+            AiOperation.Result tickOpenCagePhase() {
+               if (this.currentTarget == null) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Re-selecting");
                }
 
-               Entity entity = this.init_Entity_h_DataUtil(this.init_h_DataUtil);
+               Entity entity = this.liveEntityFor(this.currentTarget);
                if (entity == null) {
-                  return this.init_AiOperation_Result_Str_12("cage");
+                  return this.recordClearedAs("cage");
                }
 
                if (this.load_BlockPos != null && this.read_BlockPos == null) {
                   this.read_BlockPos = this.load_BlockPos;
                }
 
-               if (this.load_BlockPos != null && !this.read(this.load_BlockPos)) {
+               if (this.load_BlockPos != null && !this.isIronBarsAt(this.load_BlockPos)) {
                   this.load_BlockPos = null;
                }
 
                if (this.load_BlockPos != null) {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGameOperations.blockAction(
+                  if (this.stepOp == null) {
+                     this.stepOp = AiGameOperations.blockAction(
                         "break",
                         AiJson.objectOf(
                            "x",
@@ -625,46 +625,46 @@ final class AiCrystals {
                            "z",
                            this.load_BlockPos.getZ(),
                            "timeoutSeconds",
-                           this.init_I_I_4(30)
+                           this.legSeconds(30)
                         )
                      );
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.stepOp.tick();
                   if (!r.terminal()) {
-                     return this.load("Breaking the iron bars");
+                     return this.running("Breaking the iron bars");
                   }
 
-                  this.init_V_30();
+                  this.stopStep();
                   this.load_BlockPos = null;
                }
 
                if (!AiThreats.isLegacyCombatEnabled() && this.read_BlockPos != null) {
                   BlockPos eyeBar = this.read_BlockPos.above();
-                  if (this.read(eyeBar)) {
-                     if (this.init_AiOperation == null) {
-                        this.init_AiOperation = AiGameOperations.blockAction(
+                  if (this.isIronBarsAt(eyeBar)) {
+                     if (this.stepOp == null) {
+                        this.stepOp = AiGameOperations.blockAction(
                            "break",
-                           AiJson.objectOf("x", eyeBar.getX(), "y", eyeBar.getY(), "z", eyeBar.getZ(), "timeoutSeconds", this.init_I_I_4(30))
+                           AiJson.objectOf("x", eyeBar.getX(), "y", eyeBar.getY(), "z", eyeBar.getZ(), "timeoutSeconds", this.legSeconds(30))
                         );
                      }
 
-                     AiOperation.Result r = this.init_AiOperation.tick();
+                     AiOperation.Result r = this.stepOp.tick();
                      if (!r.terminal()) {
-                        return this.load("Breaking the bars at eye level");
+                        return this.running("Breaking the bars at eye level");
                      }
 
-                     this.init_V_30();
-                     if (this.read(eyeBar)) {
+                     this.stopStep();
+                     if (this.isIronBarsAt(eyeBar)) {
                         this.read_BlockPos = null;
                      }
                   }
 
                   if (this.read_BlockPos != null && !this.init_Z && mc.level.getBlockState(this.read_BlockPos).canBeReplaced()) {
-                     if (this.init_AiOperation == null) {
+                     if (this.stepOp == null) {
                         String block = this.init_Str_18();
                         if (block != null && AiItems.equipHotbar(AiItems.resolveItem(block)) >= 0) {
-                           this.init_AiOperation = AiGameOperations.blockAction(
+                           this.stepOp = AiGameOperations.blockAction(
                               "place",
                               AiJson.objectOf(
                                  "x", this.read_BlockPos.getX(), "y", this.read_BlockPos.getY() - 1, "z", this.read_BlockPos.getZ(), "timeoutSeconds", 6
@@ -676,229 +676,229 @@ final class AiCrystals {
                         }
                      }
 
-                     if (this.init_AiOperation != null) {
-                        AiOperation.Result r = this.init_AiOperation.tick();
+                     if (this.stepOp != null) {
+                        AiOperation.Result r = this.stepOp.tick();
                         if (!r.terminal()) {
-                           return this.load("Setting a block in the opening");
+                           return this.running("Setting a block in the opening");
                         }
 
-                        this.init_V_30();
+                        this.stopStep();
                         this.init_Z = true;
                         this.tick = mc.player.tickCount;
                      }
                   }
 
                   if (this.init_Z && mc.player.tickCount - this.tick < 2) {
-                     return this.load("Verifying crystal cover and blast damage");
+                     return this.running("Verifying crystal cover and blast damage");
                   }
 
-                  if (this.load(entity) && this.read_Z_11()) {
-                     this.init_Str = "cage_melee";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
-                     return this.load("Cover set; striking the crystal over it");
+                  if (this.load(entity) && this.isBlastSafe()) {
+                     this.plannedMethod = "cage_melee";
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.MELEE;
+                     return this.running("Cover set; striking the crystal over it");
                   }
                }
 
-               if (!this.read_Z_11() || !AiThreats.isLegacyCombatEnabled() && this.load_Z && !this.load(entity)) {
-                  if (AiThreats.isLegacyCombatEnabled() && this.write_Z_8()) {
-                     this.init_Str = "cage_shoot";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
-                     return this.load("Blast lethal point-blank; shooting through the opening");
+               if (!this.isBlastSafe() || !AiThreats.isLegacyCombatEnabled() && this.towerRoute && !this.load(entity)) {
+                  if (AiThreats.isLegacyCombatEnabled() && this.hasRanged()) {
+                     this.plannedMethod = "cage_shoot";
+                     this.clearPhase = AiCrystals.Inner_StreamUtil.SHOOT;
+                     return this.running("Blast lethal point-blank; shooting through the opening");
                   } else {
-                     return this.init(this.init_h_DataUtil, "lethal_blast");
+                     return this.init(this.currentTarget, "lethal_blast");
                   }
                } else {
-                  this.init_Str = "cage_melee";
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
-                  return this.load("Bars open; punching the crystal");
+                  this.plannedMethod = "cage_melee";
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.MELEE;
+                  return this.running("Bars open; punching the crystal");
                }
             }
 
-            AiOperation.Result close() {
+            AiOperation.Result tickDescendPhase() {
                BlockPos feet = mc.player.blockPosition();
                if (this.update_Z) {
                   return this.init_AiOperation_Result_BlockPos(feet);
-               } else if (this.load_Z_15()) {
-                  return this.open();
+               } else if (this.isBackOnGroundNow()) {
+                  return this.finishDescent();
                } else {
-                  return this.push < 2 && ("mlg".equals(AiCrystals.init_Str(AiCrystals.init(mc.player))) || !AiThreats.isLegacyCombatEnabled() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0)
+                  return this.push < 2 && ("mlg".equals(AiCrystals.fallRecoveryMode(AiCrystals.hotbarItemPaths(mc.player))) || !AiThreats.isLegacyCombatEnabled() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0)
                      ? this.init_AiOperation_Result_BlockPos(feet)
                      : this.load_AiOperation_Result_3(feet);
                }
             }
 
             AiOperation.Result init_AiOperation_Result_BlockPos(BlockPos feet) {
-               if (this.init_AiOperation == null) {
-                  if (mc.player.onGround() && feet.getY() > this.flush + 1) {
+               if (this.stepOp == null) {
+                  if (mc.player.onGround() && feet.getY() > this.groundY + 1) {
                      if (++this.close > 40) {
                         this.push++;
-                        this.init_V_30();
-                        return this.load("Could not step off cleanly; digging down instead");
+                        this.stopStep();
+                        return this.running("Could not step off cleanly; digging down instead");
                      }
 
-                     this.init_DataUtil.aimAt(this.init_Vec3_8());
-                     this.init_DataUtil.tick();
+                     this.aim.aimAt(this.init_Vec3_8());
+                     this.aim.tick();
                      AiFallGuard.load();
                      mc.options.keyUp.setDown(true);
-                     return this.load("Stepping off for the water clutch");
+                     return this.running("Stepping off for the water clutch");
                   }
 
                   mc.options.keyUp.setDown(false);
-                  this.init_AiOperation = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
+                  this.stepOp = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
                   this.update_Z = true;
                }
 
-               AiOperation.Result r = this.init_AiOperation.tick();
+               AiOperation.Result r = this.stepOp.tick();
                if (!r.terminal()) {
-                  return this.load("Falling with the water clutch");
+                  return this.running("Falling with the water clutch");
                }
 
                mc.options.keyUp.setDown(false);
-               this.init_V_30();
+               this.stopStep();
                if (r.status() == AiOperation.Status.SUCCEEDED) {
-                  return this.load_Z_15() ? this.open() : this.load("Landed short; continuing down");
+                  return this.isBackOnGroundNow() ? this.finishDescent() : this.running("Landed short; continuing down");
                }
 
                this.push++;
-               return this.load("Clutch unavailable (" + r.message() + "); digging down instead");
+               return this.running("Clutch unavailable (" + r.message() + "); digging down instead");
             }
 
             AiOperation.Result load_AiOperation_Result_3(BlockPos feet) {
                if (!mc.player.onGround()) {
-                  return this.load("Stepping down the tower");
+                  return this.running("Stepping down the tower");
                }
 
                BlockPos below = feet.below();
                if (mc.level.getBlockState(below).isAir()) {
-                  return this.load("Stepping down the tower");
+                  return this.running("Stepping down the tower");
                }
 
                String path = BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(below).getBlock()).getPath();
                if (!"obsidian".equals(path) && !"bedrock".equals(path)) {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(below, 20);
+                  if (this.stepOp == null) {
+                     this.stepOp = autismclient.ai.engine.AiBreakBlock.breakBlock(below, 20);
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.stepOp.tick();
                   if (!r.terminal()) {
-                     return this.load("Digging down the tower");
+                     return this.running("Digging down the tower");
                   }
 
-                  this.init_V_30();
+                  this.stopStep();
                   return r.status() == AiOperation.Status.SUCCEEDED
-                     ? this.load("Digging down the tower")
-                     : this.init(AiOperation.Status.UNCERTAIN, r.failure(), "Tower descent failed before safe ground: " + r.message());
+                     ? this.running("Digging down the tower")
+                     : this.finish(AiOperation.Status.UNCERTAIN, r.failure(), "Tower descent failed before safe ground: " + r.message());
                } else {
-                  return this.init(
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN, AiFailure.ENVIRONMENTAL_HAZARD, "Clutch unavailable and the remaining tower cannot be dug down; safe ground is not reached"
                   );
                }
             }
 
-            boolean load_Z_15() {
-               return AiCrystals.init_Z_I(mc.player.blockPosition().getY(), this.flush, mc.player.onGround() || mc.player.isInWater() || mc.player.onClimbable());
+            boolean isBackOnGroundNow() {
+               return AiCrystals.isBackOnGround(mc.player.blockPosition().getY(), this.groundY, mc.player.onGround() || mc.player.isInWater() || mc.player.onClimbable());
             }
 
-            AiOperation.Result open() {
-               this.init_V_30();
-               this.init_h_DataUtil = null;
+            AiOperation.Result finishDescent() {
+               this.stopStep();
+               this.currentTarget = null;
                this.read_Z = false;
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-               return this.load("Back on the ground");
+               this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+               return this.running("Back on the ground");
             }
 
-            AiOperation.Result poll() {
-               AiCrystals.Inner_DataUtil t = this.init_h_DataUtil;
+            AiOperation.Result recordClearedTarget() {
+               AiCrystals.Inner_DataUtil t = this.currentTarget;
                this.read_Z = false;
-               this.init_JsonArray
+               this.outcomes
                   .add(
                      AiJson.objectOf(
-                        "id", t.entityId(), "caged", t.caged(), "method", this.init_Str.isEmpty() ? "shoot" : this.init_Str, "result", "cleared"
+                        "id", t.entityId(), "caged", t.caged(), "method", this.plannedMethod.isEmpty() ? "shoot" : this.plannedMethod, "result", "cleared"
                      )
                   );
-               this.init_I++;
-               AiRunTrace.recordGlobalSplit("crystal", (this.init_Str.isEmpty() ? "shoot" : this.init_Str) + " #" + t.entityId());
-               if (this.load_Z && !this.load_Z_15()) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
+               this.clearedCount++;
+               AiRunTrace.recordGlobalSplit("crystal", (this.plannedMethod.isEmpty() ? "shoot" : this.plannedMethod) + " #" + t.entityId());
+               if (this.towerRoute && !this.isBackOnGroundNow()) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
-                  return this.load("Crystal cleared; getting down");
+                  return this.running("Crystal cleared; getting down");
                } else {
-                  this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Crystal cleared (" + this.init_I + ")");
+                  this.currentTarget = null;
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Crystal cleared (" + this.clearedCount + ")");
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_Str_12(String planned) {
-               AiCrystals.Inner_DataUtil t = this.init_h_DataUtil;
+            AiOperation.Result recordClearedAs(String planned) {
+               AiCrystals.Inner_DataUtil t = this.currentTarget;
                this.read_Z = false;
-               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "cleared"));
-               this.init_I++;
-               if (!this.load_Z_15()) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
+               this.outcomes.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "cleared"));
+               this.clearedCount++;
+               if (!this.isBackOnGroundNow()) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
-                  return this.load("Crystal gone; getting down");
+                  return this.running("Crystal gone; getting down");
                } else {
-                  this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Crystal gone; re-selecting");
+                  this.currentTarget = null;
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Crystal gone; re-selecting");
                }
             }
 
             AiOperation.Result init(AiCrystals.Inner_DataUtil t, String planned, String reason) {
-               this.init_V_30();
-               this.init_Set.add(t.entityId());
-               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "skipped:" + reason));
-               this.init_h_CachePool.init(reason);
-               this.init_h_DataUtil = null;
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-               return this.load("Crystal #" + t.entityId() + " skipped: " + reason);
+               this.stopStep();
+               this.handledCrystalIds.add(t.entityId());
+               this.outcomes.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "skipped:" + reason));
+               this.skipReasons.countSkip(reason);
+               this.currentTarget = null;
+               this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+               return this.running("Crystal #" + t.entityId() + " skipped: " + reason);
             }
 
             AiOperation.Result init(AiCrystals.Inner_DataUtil t, String reason) {
-               this.init_Set.add(t.entityId());
-               this.init_JsonArray
+               this.handledCrystalIds.add(t.entityId());
+               this.outcomes
                   .add(
                      AiJson.objectOf(
-                        "id", t.entityId(), "caged", t.caged(), "method", this.init_Str.isEmpty() ? "cage" : this.init_Str, "result", "skipped:" + reason
+                        "id", t.entityId(), "caged", t.caged(), "method", this.plannedMethod.isEmpty() ? "cage" : this.plannedMethod, "result", "skipped:" + reason
                      )
                   );
-               this.init_h_CachePool.init(reason);
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
+               this.skipReasons.countSkip(reason);
+               this.clearPhase = AiCrystals.Inner_StreamUtil.DESCEND;
                this.close = 0;
-               return this.load("Crystal #" + t.entityId() + " skipped: " + reason + "; getting down");
+               return this.running("Crystal #" + t.entityId() + " skipped: " + reason + "; getting down");
             }
 
             AiOperation.Result load(AiCrystals.Inner_DataUtil t, String planned, String reason) {
-               this.init_V_30();
-               this.init_Set.add(t.entityId());
-               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "failed:" + reason));
-               if (this.load_Z && mc.player.blockPosition().getY() > this.flush + 1) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
+               this.stopStep();
+               this.handledCrystalIds.add(t.entityId());
+               this.outcomes.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "failed:" + reason));
+               if (this.towerRoute && mc.player.blockPosition().getY() > this.groundY + 1) {
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
-                  return this.load("Crystal #" + t.entityId() + " failed: " + reason + "; getting down");
+                  return this.running("Crystal #" + t.entityId() + " failed: " + reason + "; getting down");
                } else {
-                  this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
-                  return this.load("Crystal #" + t.entityId() + " failed: " + reason);
+                  this.currentTarget = null;
+                  this.clearPhase = AiCrystals.Inner_StreamUtil.SELECT;
+                  return this.running("Crystal #" + t.entityId() + " failed: " + reason);
                }
             }
 
-            AiOperation.Result push() {
-               String suffix = this.init_I > 0 ? " after clearing " + this.init_I : "";
-               if (this.init_h_CachePool.init > 0) {
-                  this.read_Str = "NO_RANGED";
-                  this.init_JsonObject = AiCrystals.init();
-                  return this.init(AiFailure.NO_RANGED, "No ranged weapon or arrows for the remaining uncaged crystals" + suffix);
-               } else if (this.init_h_CachePool.load > 0) {
-                  this.init_JsonObject = AiJson.objectOf("minecraft:dirt", Math.max(1, this.open));
-                  return this.init(AiFailure.MISSING_MATERIALS, "No throwaway construction blocks for pillaring to the caged crystals" + suffix);
+            AiOperation.Result finishNoneReachable() {
+               String suffix = this.clearedCount > 0 ? " after clearing " + this.clearedCount : "";
+               if (this.skipReasons.noRangedSkips > 0) {
+                  this.failureCode = "NO_RANGED";
+                  this.missingItems = AiCrystals.rangedKitMissing();
+                  return this.fail(AiFailure.NO_RANGED, "No ranged weapon or arrows for the remaining uncaged crystals" + suffix);
+               } else if (this.skipReasons.noBlocksSkips > 0) {
+                  this.missingItems = AiJson.objectOf("minecraft:dirt", Math.max(1, this.scaffoldShortage));
+                  return this.fail(AiFailure.MISSING_MATERIALS, "No throwaway construction blocks for pillaring to the caged crystals" + suffix);
                } else {
-                  return this.init(AiFailure.EXECUTION_FAILED, this.init_h_CachePool.init(this.init_I));
+                  return this.fail(AiFailure.EXECUTION_FAILED, this.skipReasons.unreachableSummary(this.clearedCount));
                }
             }
 
-            List<AiCrystals.Inner_DataUtil> init_List_9() {
+            List<AiCrystals.Inner_DataUtil> scanCrystals() {
                List<AiCrystals.Inner_DataUtil> out = new ArrayList<>();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -932,19 +932,19 @@ final class AiCrystals {
                   }
                }
 
-               return AiCrystals.init_Z(nearby);
+               return AiCrystals.hasIronBars(nearby);
             }
 
-            boolean read(BlockPos pos) {
+            boolean isIronBarsAt(BlockPos pos) {
                return "iron_bars".equals(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(pos).getBlock()).getPath());
             }
 
-            Entity init_Entity_h_DataUtil(AiCrystals.Inner_DataUtil target) {
+            Entity liveEntityFor(AiCrystals.Inner_DataUtil target) {
                Entity entity = mc.level.getEntity(target.entityId());
                return entity != null && !entity.isRemoved() ? entity : null;
             }
 
-            boolean init_Z_Entity_3(Entity entity) {
+            boolean isInMeleeReach(Entity entity) {
                double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) - 0.1;
                return entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= reach * reach;
             }
@@ -996,13 +996,13 @@ final class AiCrystals {
                return false;
             }
 
-            boolean read_Z_11() {
+            boolean isBlastSafe() {
                if (AiThreats.isLegacyCombatEnabled()) {
                   return !AiDanger.assess(mc).lethal();
                }
 
                AiDanger.Inner_DataUtil danger = AiDanger.assess(mc);
-               Entity crystal = this.init_h_DataUtil == null ? null : this.init_Entity_h_DataUtil(this.init_h_DataUtil);
+               Entity crystal = this.currentTarget == null ? null : this.liveEntityFor(this.currentTarget);
                if (crystal == null) {
                   return false;
                }
@@ -1013,7 +1013,7 @@ final class AiCrystals {
                   6.0F,
                   autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withDamageSource(Explosion.getDefaultDamageSource(mc.level, crystal))
                );
-               return AiCrystals.init(damage, mc.player.getHealth() + mc.player.getAbsorptionAmount(), danger.lethal(), danger.voidFall())
+               return AiCrystals.isTolerableBlastDamage(damage, mc.player.getHealth() + mc.player.getAbsorptionAmount(), danger.lethal(), danger.voidFall())
                   && danger.worstSource() <= 4.0F;
             }
 
@@ -1025,14 +1025,14 @@ final class AiCrystals {
                   return state.getCollisionShape(mc.level, this.read_BlockPos)
                      .toAabbs()
                      .stream()
-                     .anyMatch(box -> AiCrystals.init(solid, box.move(this.read_BlockPos), crystal.position(), body));
+                     .anyMatch(box -> AiCrystals.blocksBlast(solid, box.move(this.read_BlockPos), crystal.position(), body));
                } else {
                   return false;
                }
             }
 
-            boolean write_Z_8() {
-               return AiCrystals.init_Z_I(
+            boolean hasRanged() {
+               return AiCrystals.hasRangedOption(
                   AiGameState.countInventoryItem("minecraft:bow"),
                   AiGameState.countInventoryItem("minecraft:crossbow"),
                   AiRunResources.totalArrowCount(),
@@ -1041,21 +1041,21 @@ final class AiCrystals {
                );
             }
 
-            boolean read(Entity entity) {
+            boolean needsApproachTo(Entity entity) {
                double dx = entity.getX() - mc.player.getX();
                double dz = entity.getZ() - mc.player.getZ();
                double horizontal = Math.hypot(dx, dz);
                double dy = entity.getY() - mc.player.getEyePosition().y;
-               return AiCrystals.init_Z_D(horizontal, dy, Math.sqrt(horizontal * horizontal + dy * dy));
+               return AiCrystals.needsApproach(horizontal, dy, Math.sqrt(horizontal * horizontal + dy * dy));
             }
 
-            BlockPos init_BlockPos_Entity_2(Entity entity) {
+            BlockPos approachStandFor(Entity entity) {
                double dx = mc.player.getX() - entity.getX();
                double dz = mc.player.getZ() - entity.getZ();
                double dy = Math.max(0.0, entity.getY() - mc.player.getEyePosition().y);
-               int[] xz = AiCrystals.init_IArr_I(this.init_h_DataUtil.x(), this.init_h_DataUtil.z(), dx, dz, dy);
+               int[] xz = AiCrystals.init_IArr_I(this.currentTarget.x(), this.currentTarget.z(), dx, dz, dy);
 
-               for (int y = this.init_h_DataUtil.y(); y > mc.level.getMinY(); y--) {
+               for (int y = this.currentTarget.y(); y > mc.level.getMinY(); y--) {
                   BlockPos p = new BlockPos(xz[0], y, xz[1]);
                   if (!mc.level.getBlockState(p).isAir()) {
                      return p.above();
@@ -1084,7 +1084,7 @@ final class AiCrystals {
                return best;
             }
 
-            int init_I_36() {
+            int scaffoldBlockCount() {
                int total = 0;
 
                for (int slot = 0; slot < 36; slot++) {
@@ -1098,8 +1098,8 @@ final class AiCrystals {
             }
 
             Vec3 init_Vec3_8() {
-               double cx = this.init_h_DataUtil == null ? mc.player.getX() : this.init_h_DataUtil.x() + 0.5;
-               double cz = this.init_h_DataUtil == null ? mc.player.getZ() : this.init_h_DataUtil.z() + 0.5;
+               double cx = this.currentTarget == null ? mc.player.getX() : this.currentTarget.x() + 0.5;
+               double cz = this.currentTarget == null ? mc.player.getZ() : this.currentTarget.z() + 0.5;
                double dx = mc.player.getX() - cx;
                double dz = mc.player.getZ() - cz;
                double len = Math.hypot(dx, dz);
@@ -1112,92 +1112,92 @@ final class AiCrystals {
                return new Vec3(mc.player.getX() + dx / len * 2.0, mc.player.getEyePosition().y, mc.player.getZ() + dz / len * 2.0);
             }
 
-            int init_I_I_4(int cap) {
-               return Math.max(10, Math.min(cap, this.load_I_14()));
+            int legSeconds(int cap) {
+               return Math.max(10, Math.min(cap, this.secondsLeft()));
             }
 
-            int load_I_14() {
-               return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+            int secondsLeft() {
+               return (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
             }
 
-            void init_V_30() {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+            void stopStep() {
+               if (this.stepOp != null) {
+                  this.stepOp.cancel();
+                  this.stepOp = null;
                }
 
                this.update_Z = false;
                mc.options.keyUp.setDown(false);
             }
 
-            JsonObject init_JsonObject_58() {
+            JsonObject statusData() {
                JsonObject out = AiJson.objectOf(
                   "cleared",
-                  this.init_I,
+                  this.clearedCount,
                   "remaining",
-                  this.pop,
+                  this.remainingCrystals,
                   "skipped",
-                  this.init_Set.size(),
+                  this.handledCrystalIds.size(),
                   "phase",
-                  this.init_h_StreamUtil.name().toLowerCase(Locale.ROOT),
+                  this.clearPhase.name().toLowerCase(Locale.ROOT),
                   "towerCommitted",
-                  this.init_Z_26()
+                  this.inTowerPhase()
                );
-               out.add("outcomes", this.init_JsonArray);
-               if (this.init_h_DataUtil != null) {
+               out.add("outcomes", this.outcomes);
+               if (this.currentTarget != null) {
                   out.add(
                      "current",
                      AiJson.objectOf(
                         "id",
-                        this.init_h_DataUtil.entityId(),
+                        this.currentTarget.entityId(),
                         "caged",
-                        this.init_h_DataUtil.caged(),
+                        this.currentTarget.caged(),
                         "method",
-                        this.init_Str,
+                        this.plannedMethod,
                         "x",
-                        this.init_h_DataUtil.x(),
+                        this.currentTarget.x(),
                         "y",
-                        this.init_h_DataUtil.y(),
+                        this.currentTarget.y(),
                         "z",
-                        this.init_h_DataUtil.z()
+                        this.currentTarget.z()
                      )
                   );
                }
 
-               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.load_I, this.load_Str));
-               if (this.init_JsonObject != null) {
-                  out.add("missing", this.init_JsonObject);
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.survivalInterruptions, this.survivalReason));
+               if (this.missingItems != null) {
+                  out.add("missing", this.missingItems);
                }
 
-               if (this.read_Str != null) {
-                  out.addProperty("code", this.read_Str);
+               if (this.failureCode != null) {
+                  out.addProperty("code", this.failureCode);
                }
 
                return out;
             }
 
-            AiOperation.Result load(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_58());
+            AiOperation.Result running(String message) {
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.statusData());
             }
 
-            AiOperation.Result init(AiOperation.Status status, AiFailure failure, String message) {
-               JsonObject data = this.init_JsonObject_58();
+            AiOperation.Result finish(AiOperation.Status status, AiFailure failure, String message) {
+               JsonObject data = this.statusData();
                this.cancel();
                return new AiOperation.Result(status, message, data.toString(), List.of(), failure);
             }
 
-            AiOperation.Result init(AiFailure failure, String message) {
-               return this.init(AiOperation.Status.FAILED, failure, message);
+            AiOperation.Result fail(AiFailure failure, String message) {
+               return this.finish(AiOperation.Status.FAILED, failure, message);
             }
 
             @Override
             public boolean canInterruptNow() {
                return AiCrystals.init_Z_h_StreamUtil(
-                  this.init_h_StreamUtil,
-                  this.load_Z && this.init_h_DataUtil != null,
+                  this.clearPhase,
+                  this.towerRoute && this.currentTarget != null,
                   this.read_Z,
-                  this.init_AiOperation == null || this.init_AiOperation.canInterruptNow(),
-                  this.load_AiOperation == null || this.load_AiOperation.canInterruptNow()
+                  this.stepOp == null || this.stepOp.canInterruptNow(),
+                  this.survivalOp == null || this.survivalOp.canInterruptNow()
                );
             }
 
@@ -1205,22 +1205,22 @@ final class AiCrystals {
             public boolean requiresReconciliationAfterEmergency() {
                return AiCrystals.init_Z_Z(
                   this.read_Z,
-                  this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency(),
-                  this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
+                  this.stepOp != null && this.stepOp.requiresReconciliationAfterEmergency(),
+                  this.survivalOp != null && this.survivalOp.requiresReconciliationAfterEmergency()
                );
             }
 
             @Override
             public void cancel() {
-               if (!this.write_Z) {
-                  this.write_Z = true;
-                  this.init_V_30();
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.stopStep();
+                  if (this.survivalOp != null) {
+                     this.survivalOp.cancel();
+                     this.survivalOp = null;
                   }
 
-                  this.init_DataUtil.clear();
+                  this.aim.clear();
                }
             }
          };
@@ -1230,28 +1230,28 @@ final class AiCrystals {
    }
 
    static final class Inner_CachePool {
-      int init;
-      int load;
-      int read;
+      int noRangedSkips;
+      int noBlocksSkips;
+      int dragonNearSkips;
 
-      void init(String reason) {
+      void countSkip(String reason) {
          if ("no_ranged".equals(reason)) {
-            this.init++;
+            this.noRangedSkips++;
          }
 
          if ("no_blocks".equals(reason)) {
-            this.load++;
+            this.noBlocksSkips++;
          }
 
          if ("dragon_near".equals(reason)) {
-            this.read++;
+            this.dragonNearSkips++;
          }
       }
 
-      String init(int cleared) {
+      String unreachableSummary(int cleared) {
          return "Every remaining crystal is unreachable; see outcomes"
             + (cleared > 0 ? " after clearing " + cleared : "")
-            + (this.read > 0 ? " (dragon near the towers)" : "");
+            + (this.dragonNearSkips > 0 ? " (dragon near the towers)" : "");
       }
    }
 

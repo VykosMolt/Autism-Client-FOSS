@@ -143,7 +143,7 @@ final class AiPortalCast {
                BlockPos origin = source.above().relative(axis, offset);
                if (tried.add(origin.asLong())) {
                   Set<BlockPos> reserved = reservedCells(origin, axis);
-                  AiPortalCast.Inner_StreamUtil plan = init(frameCellsSorted(origin, axis), axis, reserved, lookup);
+                  AiPortalCast.Inner_StreamUtil plan = planCast(frameCellsSorted(origin, axis), axis, reserved, lookup);
                   if (plan.blocked() == null) {
                      if (plan.blocked() != null) {
                         Set<BlockPos> need = new HashSet<>(AiDimension.write(origin, axis));
@@ -172,7 +172,7 @@ final class AiPortalCast {
                         }
 
                         AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : classify(level, pos);
-                        plan = init(frameCellsSorted(origin, axis), axis, reserved, after);
+                        plan = planCast(frameCellsSorted(origin, axis), axis, reserved, after);
                         if (plan.blocked() != null) {
                            continue;
                         }
@@ -238,7 +238,7 @@ final class AiPortalCast {
       return reserved;
    }
 
-   static AiPortalCast.Inner_StreamUtil init(List<BlockPos> cells, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
+   static AiPortalCast.Inner_StreamUtil planCast(List<BlockPos> cells, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
       List<AiPortalCast.Inner_BufferHelper> steps = new ArrayList<>(cells.size());
       int lavaNeeded = 0;
       int moldBlocks = 0;
@@ -263,8 +263,8 @@ final class AiPortalCast {
                return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "no room to pour above frame cell " + cell.toShortString(), lavaNeeded, moldBlocks);
             }
 
-            List<BlockPos> dams = init(waterCell, reserved, lookup);
-            AiPortalCast.Inner_SyncManager face = init(waterCell, axis, reserved, lookup, dams);
+            List<BlockPos> dams = damCells(waterCell, reserved, lookup);
+            AiPortalCast.Inner_SyncManager face = pourFace(waterCell, axis, reserved, lookup, dams);
             if (face == null) {
                return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "no face to pour water against above " + cell.toShortString(), lavaNeeded, moldBlocks);
             }
@@ -277,7 +277,7 @@ final class AiPortalCast {
       return new AiPortalCast.Inner_StreamUtil(steps, null, "", lavaNeeded, moldBlocks);
    }
 
-   static List<BlockPos> init(BlockPos waterCell, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
+   static List<BlockPos> damCells(BlockPos waterCell, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
       List<BlockPos> dams = new ArrayList<>(4);
 
       for (Direction side : Plane.HORIZONTAL) {
@@ -293,7 +293,7 @@ final class AiPortalCast {
       return dams;
    }
 
-   static AiPortalCast.Inner_SyncManager init(BlockPos pourCell, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup, List<BlockPos> dams) {
+   static AiPortalCast.Inner_SyncManager pourFace(BlockPos pourCell, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup, List<BlockPos> dams) {
       AiPortalCast.Inner_ConfigStore below = lookup.at(pourCell.below());
       if (below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
          for (BlockPos dam : dams) {
@@ -304,7 +304,7 @@ final class AiPortalCast {
             }
          }
 
-         for (Direction side : init(axis)) {
+         for (Direction side : sideOrder(axis)) {
             BlockPos n = pourCell.relative(side);
             if (!reserved.contains(n) && lookup.at(n) == AiPortalCast.Inner_ConfigStore.AIR && lookup.at(n.below()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                return new AiPortalCast.Inner_SyncManager(n.immutable(), side.getOpposite(), n.immutable());
@@ -317,17 +317,17 @@ final class AiPortalCast {
       }
    }
 
-   static List<Direction> init(Direction axis) {
+   static List<Direction> sideOrder(Direction axis) {
       return List.of(axis.getCounterClockWise(), axis.getClockWise(), axis.getOpposite(), axis);
    }
 
-   static autismclient.ai.engine.AiPathfinder.PathGoal init(
+   static autismclient.ai.engine.AiPathfinder.PathGoal faceApproachGoal(
       AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight
    ) {
-      return init(face, reserved, molds, supports, reach, eyeHeight, false);
+      return faceApproachGoalWith(face, reserved, molds, supports, reach, eyeHeight, false);
    }
 
-   static autismclient.ai.engine.AiPathfinder.PathGoal init(
+   static autismclient.ai.engine.AiPathfinder.PathGoal faceApproachGoalWith(
       AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight, boolean lava
    ) {
       Set<Long> keep = new HashSet<>();
@@ -354,7 +354,7 @@ final class AiPortalCast {
       return lava ? AiGoto.excludingStandCellsCompat(goal, lavaForbiddenStances(face.support().relative(face.face()))) : goal;
    }
 
-   static boolean init(BlockPos feet, BlockPos pourCell) {
+   static boolean isClearOfPour(BlockPos feet, BlockPos pourCell) {
       return feet.distManhattan(pourCell) > 1 && feet.above().distManhattan(pourCell) > 1;
    }
 
@@ -362,7 +362,7 @@ final class AiPortalCast {
       Set<Long> forbidden = new HashSet<>();
 
       for (BlockPos feet : BlockPos.betweenClosed(pourCell.offset(-1, -2, -1), pourCell.offset(1, 1, 1))) {
-         if (!init(feet, pourCell)) {
+         if (!isClearOfPour(feet, pourCell)) {
             forbidden.add(feet.asLong());
          }
       }
@@ -370,15 +370,15 @@ final class AiPortalCast {
       return Set.copyOf(forbidden);
    }
 
-   static boolean init(boolean onGround, Vec3 motion) {
+   static boolean isSettled(boolean onGround, Vec3 motion) {
       return onGround && motion.x * motion.x + motion.z * motion.z <= 1.0E-4;
    }
 
-   static int init(long deadline, long now) {
+   static int secondsUntil(long deadline, long now) {
       return (int)Math.max(0L, Math.min(30L, (deadline - now) / 1000000000L));
    }
 
-   static Vec3 init(Vec3 eye, BlockHitResult hit) {
+   static Vec3 nudgedHitPoint(Vec3 eye, BlockHitResult hit) {
       return hit.getLocation().add(hit.getLocation().subtract(eye).normalize().scale(0.01));
    }
 
@@ -393,7 +393,7 @@ final class AiPortalCast {
       return zone;
    }
 
-   static BlockPos init(List<BlockPos> poolSources, Set<BlockPos> reserved, BlockPos player) {
+   static BlockPos nearestFreeSource(List<BlockPos> poolSources, Set<BlockPos> reserved, BlockPos player) {
       BlockPos best = null;
       double bestDistance = 1.7976931348623157E308;
 
@@ -410,7 +410,7 @@ final class AiPortalCast {
       return best;
    }
 
-   static String init(int flintAndSteel, int fireCharge, boolean lavaCapable, int flammable) {
+   static String chooseLighter(int flintAndSteel, int fireCharge, boolean lavaCapable, int flammable) {
       if (flintAndSteel > 0) {
          return "flint_and_steel";
       } else if (fireCharge > 0) {
@@ -420,7 +420,7 @@ final class AiPortalCast {
       }
    }
 
-   static JsonObject init(
+   static JsonObject missingMaterials(
       int waterBuckets, int lavaBuckets, int buckets, int throwaway, int flintAndSteel, int fireCharge, int flammable, int lavaNeeded, int minThrowaway
    ) {
       JsonObject missing = new JsonObject();
@@ -436,7 +436,7 @@ final class AiPortalCast {
          missing.addProperty("minecraft:dirt", minThrowaway - throwaway);
       }
 
-      if (init(flintAndSteel, fireCharge, lavaNeeded > 0 || lavaBuckets > 0 || buckets > 0, flammable) == null) {
+      if (chooseLighter(flintAndSteel, fireCharge, lavaNeeded > 0 || lavaBuckets > 0 || buckets > 0, flammable) == null) {
          missing.addProperty("minecraft:flint_and_steel", 1);
       }
 
@@ -478,18 +478,18 @@ final class AiPortalCast {
                int waterBuckets;
                int lavaBuckets;
                int emptyBuckets;
-               int flush;
-               int close;
-               int open;
-               int poll;
-               int push;
+               int throwawayCount;
+               int flintAndSteelCount;
+               int fireChargeCount;
+               int doorwayWoodCount;
+               int stepIndex;
                int pop;
                int tick;
-               int run;
-               int get;
+               int castCellCount;
+               int lavaPouredCount;
                int set;
                int put;
-               int add;
+               int lightWaitTicks;
                int clear;
                long stepCellRevision;
                AiPortalCast.Inner_SyncManager lavaFace;
@@ -525,11 +525,11 @@ final class AiPortalCast {
                         && this.mc.player.isAlive()) {
                         if (this.pourAck.isPending()) {
                            this.pourAck
-                              .init(AiGameState.countInventoryItem(this.pourAck.pendingBucket()), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(this.pourAck.pendingCell()));
+                              .acknowledge(AiGameState.countInventoryItem(this.pourAck.pendingBucket()), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(this.pourAck.pendingCell()));
                         }
 
                         if (this.mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-                           return this.init(AiOperation.Status.FAILED, "Water casting prohibited by the current dimension attributes");
+                           return this.finish(AiOperation.Status.FAILED, "Water casting prohibited by the current dimension attributes");
                         }
 
                         if (this.mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
@@ -542,18 +542,18 @@ final class AiPortalCast {
                         }
 
                         if (System.nanoTime() > this.deadline) {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.TIMED_OUT, "Portal cast deadline reached in " + this.phase.name().toLowerCase(Locale.ROOT)
                            );
                         }
 
-                        AiOperation.Result guarded = this.push();
+                        AiOperation.Result guarded = this.tickSurvivalGuard();
                         if (guarded != null) {
                            return guarded;
                         }
 
                         if (this.approaching) {
-                           return this.open();
+                           return this.tickFaceApproach();
                         }
 
                         AiOperation.Result var10000;
@@ -565,19 +565,19 @@ final class AiPortalCast {
                               var10000 = this.locatePool();
                               break;
                            case SITE:
-                              var10000 = this.read();
+                              var10000 = this.tickSitePhase();
                               break;
                            case EXCAVATE:
-                              var10000 = this.pop();
+                              var10000 = this.tickExcavatePhase();
                               break;
                            case WATER:
-                              var10000 = this.write();
+                              var10000 = this.tickWaterPhase();
                               break;
                            case CAST:
-                              var10000 = this.update();
+                              var10000 = this.tickCastPhase();
                               break;
                            case LIGHT:
-                              var10000 = this.sync();
+                              var10000 = this.tickLightPhase();
                               break;
                            default:
                               throw new MatchException(null, null);
@@ -585,40 +585,40 @@ final class AiPortalCast {
 
                         return var10000;
                      } else {
-                        return this.init(AiOperation.Status.CANCELLED, "Portal casting player, world or connection changed");
+                        return this.finish(AiOperation.Status.CANCELLED, "Portal casting player, world or connection changed");
                      }
                   } else {
-                     return this.init(AiOperation.Status.CANCELLED, "Portal cast cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Portal cast cancelled");
                   }
                }
 
                AiOperation.Result preflight() {
                   if (this.mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-                     return this.init(AiOperation.Status.FAILED, "Water evaporates in this dimension; a cast portal is an overworld technique");
+                     return this.finish(AiOperation.Status.FAILED, "Water evaporates in this dimension; a cast portal is an overworld technique");
                   }
 
                   this.countMaterials();
                   this.waterHeld = this.waterBuckets > 0;
-                  JsonObject missing = AiPortalCast.init(this.waterBuckets, this.lavaBuckets, this.emptyBuckets, this.flush, this.close, this.open, this.poll, 1, 16);
+                  JsonObject missing = AiPortalCast.missingMaterials(this.waterBuckets, this.lavaBuckets, this.emptyBuckets, this.throwawayCount, this.flintAndSteelCount, this.fireChargeCount, this.doorwayWoodCount, 1, 16);
                   if (!missing.keySet().isEmpty()) {
-                     return this.init(AiFailure.MISSING_MATERIALS, "Portal cast is missing materials: " + missing, missing);
+                     return this.failWith(AiFailure.MISSING_MATERIALS, "Portal cast is missing materials: " + missing, missing);
                   }
 
                   this.phase = AiPortalCast.Inner_NetHelper.LOCATE;
-                  return this.load("Materials ready; locating the lava pool");
+                  return this.running("Materials ready; locating the lava pool");
                }
 
                AiOperation.Result locatePool() {
                   if (this.pool == null) {
                      BlockPos around = explicit != null ? explicit : this.mc.player.blockPosition();
                      int radius = explicit != null ? 6 : 24;
-                     this.pool = this.init(around, radius, 8, true, true);
+                     this.pool = this.nearestSourceWith(around, radius, 8, true, true);
                      if (this.pool == null) {
-                        this.pool = this.init(around, radius, 8, true);
+                        this.pool = this.nearestSource(around, radius, 8, true);
                      }
 
                      if (this.pool == null) {
-                        return this.init(
+                        return this.failWith(
                            AiFailure.TARGET_NOT_FOUND,
                            explicit != null
                               ? "No lava source near " + explicit.toShortString()
@@ -629,17 +629,17 @@ final class AiPortalCast {
                   }
 
                   if (this.mc.player.blockPosition().distSqr(this.pool) > 16.0) {
-                     AiOperation.Result moved = this.init(() -> this.init(this.pool, 3.0, 60), "Travelling to the lava pool");
+                     AiOperation.Result moved = this.tickMove(() -> this.init(this.pool, 3.0, 60), "Travelling to the lava pool");
                      if (moved != null) {
                         return moved;
                      }
                   }
 
                   this.phase = AiPortalCast.Inner_NetHelper.SITE;
-                  return this.load("At the pool; planning the cast");
+                  return this.running("At the pool; planning the cast");
                }
 
-               AiOperation.Result read() {
+               AiOperation.Result tickSitePhase() {
                   this.poolSources = this.lavaSourcesAround(this.pool);
                   Set<Long> tried = new HashSet<>();
                   AiPortalCast.Inner_StreamUtil bestPlan = null;
@@ -658,7 +658,7 @@ final class AiPortalCast {
                            BlockPos origin = source.above().relative(axis, offset);
                            if (tried.add(origin.asLong())) {
                               Set<BlockPos> siteReserved = AiPortalCast.reservedCells(origin, axis);
-                              AiPortalCast.Inner_StreamUtil candidate = AiPortalCast.init(AiPortalCast.frameCellsSorted(origin, axis), axis, siteReserved, this.cellLookup);
+                              AiPortalCast.Inner_StreamUtil candidate = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, siteReserved, this.cellLookup);
                               if (candidate.blocked() == null) {
                                  long usable = this.poolSources.stream().filter(p -> !siteReserved.contains(p)).count();
                                  if (candidate.lavaNeeded() <= usable) {
@@ -685,12 +685,12 @@ final class AiPortalCast {
                         AutismClientAddon.LOG
                            .info("[AI] portal cast: clearing {} blocks over the pool at {} for the frame", digs.size(), this.pool.toShortString());
                         this.phase = AiPortalCast.Inner_NetHelper.EXCAVATE;
-                        return this.load("Clearing " + digs.size() + " blocks for the frame");
+                        return this.running("Clearing " + digs.size() + " blocks for the frame");
                      }
                   }
 
                   if (bestPlan == null) {
-                     return this.init(
+                     return this.failWith(
                         AiFailure.NO_REACHABLE_TARGET,
                         "No castable 4x5 frame site at this lava pool (frame cells blocked, or too few lava sources); try another pool or game:dimension build:true",
                         null
@@ -702,46 +702,46 @@ final class AiPortalCast {
                   this.plan = bestPlan;
                   this.reservedCells = AiPortalCast.reservedCells(this.frameOrigin, this.frameAxis);
                   this.frameCells = new HashSet<>(AiDimension.frameBlocks(this.frameOrigin, this.frameAxis));
-                  JsonObject missing = AiPortalCast.init(
+                  JsonObject missing = AiPortalCast.missingMaterials(
                      this.waterBuckets,
                      this.lavaBuckets,
                      this.emptyBuckets,
-                     this.flush,
-                     this.close,
-                     this.open,
-                     this.poll,
+                     this.throwawayCount,
+                     this.flintAndSteelCount,
+                     this.fireChargeCount,
+                     this.doorwayWoodCount,
                      this.plan.lavaNeeded(),
                      Math.max(16, this.plan.moldBlocks() + 2)
                   );
                   if (!missing.keySet().isEmpty()) {
-                     return this.init(AiFailure.MISSING_MATERIALS, "Portal cast at " + this.frameOrigin.toShortString() + " is missing materials: " + missing, missing);
+                     return this.failWith(AiFailure.MISSING_MATERIALS, "Portal cast at " + this.frameOrigin.toShortString() + " is missing materials: " + missing, missing);
                   }
 
                   this.phase = this.waterHeld ? AiPortalCast.Inner_NetHelper.CAST : AiPortalCast.Inner_NetHelper.WATER;
-                  return this.load("Cast site at " + this.frameOrigin.toShortString() + " along " + this.frameAxis.name().toLowerCase(Locale.ROOT));
+                  return this.running("Cast site at " + this.frameOrigin.toShortString() + " along " + this.frameAxis.name().toLowerCase(Locale.ROOT));
                }
 
-               AiOperation.Result write() {
+               AiOperation.Result tickWaterPhase() {
                   if (AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
                      this.phase = AiPortalCast.Inner_NetHelper.CAST;
-                     return this.load("Water ready");
+                     return this.running("Water ready");
                   }
 
                   if (this.bucketOp == null) {
-                     BlockPos open = this.init(this.mc.player.blockPosition(), 32, 8, false, true);
-                     BlockPos source = open != null ? open : this.init(this.mc.player.blockPosition(), 32, 8, false);
+                     BlockPos open = this.nearestSourceWith(this.mc.player.blockPosition(), 32, 8, false, true);
+                     BlockPos source = open != null ? open : this.nearestSource(this.mc.player.blockPosition(), 32, 8, false);
                      if (source == null) {
-                        return this.init(AiFailure.MISSING_MATERIALS, "No water source within 32 blocks to fill the bucket", this.missingOne("minecraft:water_bucket"));
+                        return this.failWith(AiFailure.MISSING_MATERIALS, "No water source within 32 blocks to fill the bucket", this.missingOne("minecraft:water_bucket"));
                      }
 
                      if (this.mc.player.blockPosition().distSqr(source) > 9.0) {
-                        AiOperation.Result moved = this.init(() -> this.init(source, 2.0, 45), "Travelling to water");
+                        AiOperation.Result moved = this.tickMove(() -> this.init(source, 2.0, 45), "Travelling to water");
                         if (moved != null) {
                            return moved;
                         }
                      }
 
-                     this.bucketOp = this.init("water", source, 20);
+                     this.bucketOp = this.fillBucketOp("water", source, 20);
                   }
 
                   AiOperation.Result filled = this.awaitBucket("Filling the water bucket");
@@ -750,27 +750,27 @@ final class AiPortalCast {
                   }
 
                   this.phase = AiPortalCast.Inner_NetHelper.CAST;
-                  return this.load("Water bucket filled");
+                  return this.running("Water bucket filled");
                }
 
-               AiOperation.Result update() {
-                  if (this.push >= this.plan.steps().size()) {
+               AiOperation.Result tickCastPhase() {
+                  if (this.stepIndex >= this.plan.steps().size()) {
                      for (BlockPos cell : this.frameCells) {
                         if (!this.mc.level.getBlockState(cell).is(Blocks.OBSIDIAN)) {
-                           return this.init(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + cell.toShortString() + " is not obsidian after the cast", null);
+                           return this.failWith(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + cell.toShortString() + " is not obsidian after the cast", null);
                         }
                      }
 
                      this.phase = AiPortalCast.Inner_NetHelper.LIGHT;
-                     return this.load("Frame complete; lighting the portal");
+                     return this.running("Frame complete; lighting the portal");
                   } else {
-                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.push);
-                     if (this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && !this.waterRecovery.init()) {
+                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.stepIndex);
+                     if (this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && !this.waterRecovery.isRecoveryPending()) {
                         this.nextCell();
-                        return this.load("Frame cell " + step.cell().toShortString() + " is obsidian");
+                        return this.running("Frame cell " + step.cell().toShortString() + " is obsidian");
                      }
 
-                     if (this.waterRecovery.init()
+                     if (this.waterRecovery.isRecoveryPending()
                         && this.stage != AiPortalCast.Inner_CachePool.SCOOP
                         && this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN)
                         && AiServerEvidence.blockRevision(step.cell()) > this.stepCellRevision) {
@@ -781,22 +781,22 @@ final class AiPortalCast {
                      AiOperation.Result var10000;
                      switch (this.stage) {
                         case STANCE:
-                           var10000 = this.init(step);
+                           var10000 = this.tickStanceStage(step);
                            break;
                         case MOLDS:
-                           var10000 = this.load(step);
+                           var10000 = this.tickMoldsStage(step);
                            break;
                         case LAVA_REFILL:
-                           var10000 = this.read(step);
+                           var10000 = this.tickLavaRefillStage(step);
                            break;
                         case LAVA_POUR:
-                           var10000 = this.write(step);
+                           var10000 = this.tickLavaPourStage(step);
                            break;
                         case WATER_POUR:
-                           var10000 = this.update(step);
+                           var10000 = this.tickWaterPourStage(step);
                            break;
                         case SCOOP:
-                           var10000 = this.sync(step);
+                           var10000 = this.tickScoopStage(step);
                            break;
                         default:
                            throw new MatchException(null, null);
@@ -806,18 +806,18 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result init(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickStanceStage(AiPortalCast.Inner_BufferHelper step) {
                   this.stepCellRevision = AiServerEvidence.blockRevision(step.cell());
                   if (step.action() == AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA && this.classify(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                      return ++this.pop > 140
-                        ? this.init(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
-                        : this.load("Waiting for the lava at " + step.cell().toShortString() + " to settle");
+                        ? this.failWith(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
+                        : this.running("Waiting for the lava at " + step.cell().toShortString() + " to settle");
                   }
 
                   this.pop = 0;
                   double reach = Math.max(4.5, this.mc.player.blockInteractionRange()) - 0.6;
                   if (this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(step.cell())) > reach * reach) {
-                     AiOperation.Result moved = this.init(() -> this.init(step.cell(), 2.2, 45), "Moving to frame cell " + step.cell().toShortString());
+                     AiOperation.Result moved = this.tickMove(() -> this.init(step.cell(), 2.2, 45), "Moving to frame cell " + step.cell().toShortString());
                      if (moved != null) {
                         return moved;
                      }
@@ -832,7 +832,7 @@ final class AiPortalCast {
                   if (step.action() == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER && this.classify(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                      this.lavaFace = this.pourFaceFor(step.cell());
                      if (this.lavaFace == null) {
-                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava against at " + step.cell().toShortString(), null);
+                        return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava against at " + step.cell().toShortString(), null);
                      }
 
                      if (this.lavaFace.mold() != null && !queue.contains(this.lavaFace.mold())) {
@@ -851,7 +851,7 @@ final class AiPortalCast {
                   }
 
                   this.stage = AiPortalCast.Inner_CachePool.MOLDS;
-                  return this.load("Casting frame cell " + step.cell().toShortString() + " (" + step.action().name().toLowerCase(Locale.ROOT) + ")");
+                  return this.running("Casting frame cell " + step.cell().toShortString() + " (" + step.action().name().toLowerCase(Locale.ROOT) + ")");
                }
 
                boolean hasSolidNeighbour(BlockPos cell) {
@@ -891,11 +891,11 @@ final class AiPortalCast {
                   return best;
                }
 
-               AiOperation.Result load(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickMoldsStage(AiPortalCast.Inner_BufferHelper step) {
                   if (this.approachingMold && this.moveOp != null) {
                      AiOperation.Result r = this.moveOp.tick();
                      if (!r.terminal()) {
-                        return this.load("Moving to reach a mold block");
+                        return this.running("Moving to reach a mold block");
                      }
 
                      this.moveOp.cancel();
@@ -909,7 +909,7 @@ final class AiPortalCast {
                      if (there != AiPortalCast.Inner_ConfigStore.SOLID && there != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
                         Item item = this.firstPlaceable(AiPortalCast.THROWAWAY_BLOCKS);
                         if (item == null) {
-                           return this.init(AiFailure.MISSING_MATERIALS, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.missingOne("minecraft:dirt"));
+                           return this.failWith(AiFailure.MISSING_MATERIALS, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.missingOne("minecraft:dirt"));
                         }
 
                         if (!mold.equals(this.placer.targetPos()) && !this.hasSolidNeighbour(mold)) {
@@ -935,15 +935,15 @@ final class AiPortalCast {
                                  this.placer.reset();
                                  this.moveOp = AiGoto.approachToPlaceCompat(mold, item, 30, null, false);
                                  this.approachingMold = true;
-                                 return this.load("Moving to reach the mold block at " + mold.toShortString());
+                                 return this.running("Moving to reach the mold block at " + mold.toShortString());
                               }
 
-                              return this.init(
+                              return this.failWith(
                                  AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the mold block at " + mold.toShortString() + ": " + this.placer.failureReason(), null
                               );
                            }
 
-                           return this.load("Placing the mold at " + mold.toShortString());
+                           return this.running("Placing the mold at " + mold.toShortString());
                         }
 
                         this.set++;
@@ -957,15 +957,15 @@ final class AiPortalCast {
                      : AiPortalCast.Inner_CachePool.WATER_POUR;
                   this.pop = 0;
                   this.pourClicked = false;
-                  return this.load("Molds placed");
+                  return this.running("Molds placed");
                }
 
-               AiOperation.Result read(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickLavaRefillStage(AiPortalCast.Inner_BufferHelper step) {
                   if (AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
                      this.stage = AiPortalCast.Inner_CachePool.LAVA_POUR;
                      this.pop = 0;
                      this.pourClicked = false;
-                     return this.load("Lava ready");
+                     return this.running("Lava ready");
                   }
 
                   if (this.bucketOp == null) {
@@ -977,19 +977,19 @@ final class AiPortalCast {
                         }
                      }
 
-                     BlockPos refill = AiPortalCast.init(sources, this.reservedCells, this.mc.player.blockPosition());
+                     BlockPos refill = AiPortalCast.nearestFreeSource(sources, this.reservedCells, this.mc.player.blockPosition());
                      if (refill == null) {
-                        return this.init(AiFailure.MISSING_MATERIALS, "The lava pool ran out of usable source cells", this.missingOne("minecraft:lava_bucket"));
+                        return this.failWith(AiFailure.MISSING_MATERIALS, "The lava pool ran out of usable source cells", this.missingOne("minecraft:lava_bucket"));
                      }
 
                      if (this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(refill)) > 12.0) {
-                        AiOperation.Result moved = this.init(() -> this.init(refill, 2.0, 45), "Moving to the pool for a lava refill");
+                        AiOperation.Result moved = this.tickMove(() -> this.init(refill, 2.0, 45), "Moving to the pool for a lava refill");
                         if (moved != null) {
                            return moved;
                         }
                      }
 
-                     this.bucketOp = this.init("lava", refill, 20);
+                     this.bucketOp = this.fillBucketOp("lava", refill, 20);
                   }
 
                   AiOperation.Result filled = this.awaitBucket("Scooping lava from the pool");
@@ -1000,57 +1000,57 @@ final class AiPortalCast {
                   this.stage = AiPortalCast.Inner_CachePool.LAVA_POUR;
                   this.pop = 0;
                   this.pourClicked = false;
-                  return this.load("Lava bucket filled");
+                  return this.running("Lava bucket filled");
                }
 
-               AiOperation.Result write(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickLavaPourStage(AiPortalCast.Inner_BufferHelper step) {
                   if (this.classify(step.cell()) == AiPortalCast.Inner_ConfigStore.LAVA) {
                      this.stage = AiPortalCast.Inner_CachePool.WATER_POUR;
                      this.pop = 0;
                      this.pourClicked = false;
-                     this.get++;
-                     return this.load("Lava in place at " + step.cell().toShortString());
+                     this.lavaPouredCount++;
+                     return this.running("Lava in place at " + step.cell().toShortString());
                   }
 
                   if (AiGameState.countInventoryItem("minecraft:lava_bucket") <= 0) {
                      if (++this.pop > 40) {
                         if (++this.tick >= 2) {
-                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Lava did not stay in frame cell " + step.cell().toShortString(), null);
+                           return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Lava did not stay in frame cell " + step.cell().toShortString(), null);
                         }
 
                         this.pop = 0;
                         this.stage = AiPortalCast.Inner_CachePool.LAVA_REFILL;
                      }
 
-                     return this.load("Confirming the lava pour at " + step.cell().toShortString());
+                     return this.running("Confirming the lava pour at " + step.cell().toShortString());
                   } else {
                      if (!this.pourClicked && !this.pourAck.isPending()) {
-                        AiOperation.Result approached = this.init(this.lavaFace, true);
+                        AiOperation.Result approached = this.pourOnFace(this.lavaFace, true);
                         if (approached != null) {
                            return approached;
                         }
                      }
 
                      if (++this.pop > 60 * (this.tick + 1)) {
-                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
+                        return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
                      } else if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:lava_bucket")) < 0) {
                         this.stage = AiPortalCast.Inner_CachePool.LAVA_REFILL;
-                        return this.load("Refilling the lava bucket");
+                        return this.running("Refilling the lava bucket");
                      } else if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
                         this.mc.player.closeContainer();
-                        return this.load("Closing a screen before pouring");
+                        return this.running("Closing a screen before pouring");
                      } else {
                         AiOperation.Result poured = this.init(this.lavaFace);
-                        return poured != null ? poured : this.load("Pouring lava into " + step.cell().toShortString());
+                        return poured != null ? poured : this.running("Pouring lava into " + step.cell().toShortString());
                      }
                   }
                }
 
-               AiOperation.Result update(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickWaterPourStage(AiPortalCast.Inner_BufferHelper step) {
                   if (this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && AiServerEvidence.blockRevision(step.cell()) > this.stepCellRevision) {
                      this.stage = AiPortalCast.Inner_CachePool.SCOOP;
                      this.pop = 0;
-                     return this.load("Obsidian confirmed at " + step.cell().toShortString());
+                     return this.running("Obsidian confirmed at " + step.cell().toShortString());
                   }
 
                   AiOperation.Result stray = this.flush(step);
@@ -1058,9 +1058,9 @@ final class AiPortalCast {
                      return stray;
                   }
 
-                  if (!this.waterRecovery.init() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
+                  if (!this.waterRecovery.isRecoveryPending() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
                      if (!this.pourClicked && !this.pourAck.isPending()) {
-                        AiOperation.Result approached = this.init(step.face(), false);
+                        AiOperation.Result approached = this.pourOnFace(step.face(), false);
                         if (approached != null) {
                            return approached;
                         }
@@ -1068,7 +1068,7 @@ final class AiPortalCast {
 
                      if (++this.pop > 60) {
                         if (++this.tick >= 2) {
-                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the pour face above " + step.cell().toShortString(), null);
+                           return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the pour face above " + step.cell().toShortString(), null);
                         }
 
                         this.pop = 0;
@@ -1076,25 +1076,25 @@ final class AiPortalCast {
                      }
 
                      if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:water_bucket")) < 0) {
-                        return this.init(AiFailure.MISSING_MATERIALS, "Lost the water bucket mid-cast", this.missingOne("minecraft:water_bucket"));
+                        return this.failWith(AiFailure.MISSING_MATERIALS, "Lost the water bucket mid-cast", this.missingOne("minecraft:water_bucket"));
                      }
 
                      if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
                         this.mc.player.closeContainer();
-                        return this.load("Closing a screen before pouring");
+                        return this.running("Closing a screen before pouring");
                      }
 
                      int filledBefore = AiGameState.countInventoryItem("minecraft:water_bucket");
                      boolean alreadyClicked = this.pourClicked;
                      AiOperation.Result poured = this.init(step.face());
                      if (!alreadyClicked && this.pourClicked) {
-                        this.waterRecovery.init(step.waterCell(), filledBefore);
+                        this.waterRecovery.beginWaterRecovery(step.waterCell(), filledBefore);
                      }
 
-                     return poured != null ? poured : this.load("Pouring water above " + step.cell().toShortString());
+                     return poured != null ? poured : this.running("Pouring water above " + step.cell().toShortString());
                   } else {
                      return ++this.pop > 140
-                        ? this.init(
+                        ? this.failWith(
                            AiFailure.PLACEMENT_IMPOSSIBLE,
                            "Water did not convert frame cell "
                               + step.cell().toShortString()
@@ -1103,32 +1103,32 @@ final class AiPortalCast {
                               + ")",
                            null
                         )
-                        : this.load("Waiting for obsidian at " + step.cell().toShortString());
+                        : this.running("Waiting for obsidian at " + step.cell().toShortString());
                   }
                }
 
-               AiOperation.Result sync(AiPortalCast.Inner_BufferHelper step) {
-                  if (!this.waterRecovery.init()) {
+               AiOperation.Result tickScoopStage(AiPortalCast.Inner_BufferHelper step) {
+                  if (!this.waterRecovery.isRecoveryPending()) {
                      this.nextCell();
-                     return this.load("Water recovered; next cell");
+                     return this.running("Water recovered; next cell");
                   }
 
                   if (this.bucketOp == null) {
-                     this.bucketOp = this.init("water", step.waterCell(), 20);
+                     this.bucketOp = this.fillBucketOp("water", step.waterCell(), 20);
                   }
 
-                  AiOperation.Result scooped = this.poll();
+                  AiOperation.Result scooped = this.tickBucketOp();
                   if (scooped == null) {
-                     return this.load("Re-scooping the pour water");
+                     return this.running("Re-scooping the pour water");
                   } else if (this.waterRecovery
-                     .init(step.waterCell(), AiGameState.countInventoryItem("minecraft:water_bucket"), scooped.status() == AiOperation.Status.SUCCEEDED)) {
-                     this.pourAck.init(step.waterCell());
+                     .isRecoveryConfirmed(step.waterCell(), AiGameState.countInventoryItem("minecraft:water_bucket"), scooped.status() == AiOperation.Status.SUCCEEDED)) {
+                     this.pourAck.clearPour(step.waterCell());
                      this.nextCell();
-                     return this.load("Water recovered; next cell");
+                     return this.running("Water recovered; next cell");
                   } else {
                      return scooped.status() == AiOperation.Status.UNCERTAIN
-                        ? this.init(AiOperation.Status.UNCERTAIN, "The poured water refill is unconfirmed: " + scooped.message())
-                        : this.init(
+                        ? this.finish(AiOperation.Status.UNCERTAIN, "The poured water refill is unconfirmed: " + scooped.message())
+                        : this.failWith(
                            AiFailure.MISSING_MATERIALS,
                            "The pour's water was lost at "
                               + step.waterCell().toShortString()
@@ -1138,12 +1138,12 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result sync() {
+               AiOperation.Result tickLightPhase() {
                   BlockPos portalCell = this.litPortalCell();
                   if (portalCell != null) {
                      this.lit = true;
-                     AiRunTrace.recordGlobalSplit("portal_lit", this.frameOrigin.toShortString() + " cast:" + this.run + " litWith:" + this.lighter);
-                     return this.init(AiOperation.Status.SUCCEEDED, "Portal cast and lit at " + this.frameOrigin.toShortString());
+                     AiRunTrace.recordGlobalSplit("portal_lit", this.frameOrigin.toShortString() + " cast:" + this.castCellCount + " litWith:" + this.lighter);
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Portal cast and lit at " + this.frameOrigin.toShortString());
                   }
 
                   for (BlockPos interior : AiDimension.write(this.frameOrigin, this.frameAxis)) {
@@ -1151,7 +1151,7 @@ final class AiPortalCast {
                      if (!state.isAir() && !state.is(Blocks.FIRE)) {
                         if (state.getFluidState().is(FluidTags.WATER) && AiGameState.countInventoryItem("minecraft:bucket") > 0) {
                            if (this.bucketOp == null) {
-                              this.bucketOp = this.init("water", interior, 15);
+                              this.bucketOp = this.fillBucketOp("water", interior, 15);
                            }
 
                            AiOperation.Result cleared = this.awaitBucket("Clearing water from the doorway");
@@ -1159,10 +1159,10 @@ final class AiPortalCast {
                               return cleared;
                            }
 
-                           return this.load("Doorway cleared");
+                           return this.running("Doorway cleared");
                         }
 
-                        return this.init(
+                        return this.failWith(
                            AiFailure.IMPOSSIBLE_STATE,
                            "The portal interior at " + interior.toShortString() + " is blocked by " + BuiltInRegistries.BLOCK.getKey(state.getBlock()),
                            null
@@ -1172,56 +1172,56 @@ final class AiPortalCast {
 
                   if (this.lighter.isEmpty()) {
                      this.countMaterials();
-                     String picked = AiPortalCast.init(this.close, this.open, this.lavaBuckets > 0 || this.emptyBuckets > 0, this.poll);
+                     String picked = AiPortalCast.chooseLighter(this.flintAndSteelCount, this.fireChargeCount, this.lavaBuckets > 0 || this.emptyBuckets > 0, this.doorwayWoodCount);
                      if (picked == null) {
-                        return this.init(AiFailure.MISSING_MATERIALS, "Nothing to light the portal with", this.missingOne("minecraft:flint_and_steel"));
+                        return this.failWith(AiFailure.MISSING_MATERIALS, "Nothing to light the portal with", this.missingOne("minecraft:flint_and_steel"));
                      }
 
                      this.lighter = picked;
                   }
 
-                  if (++this.add > ("fire_spread".equals(this.lighter) ? 600 : 120)) {
-                     return this.init(
+                  if (++this.lightWaitTicks > ("fire_spread".equals(this.lighter) ? 600 : 120)) {
+                     return this.finish(
                         AiOperation.Status.FAILED,
                         "fire_spread".equals(this.lighter)
                            ? "The doorway wood did not spread fire into the frame in time"
                            : "The frame is complete but the portal did not light"
                      );
                   } else {
-                     return "fire_spread".equals(this.lighter) ? this.close() : this.flush();
+                     return "fire_spread".equals(this.lighter) ? this.lightWithFireSpread() : this.lightWithItem();
                   }
                }
 
-               AiOperation.Result flush() {
+               AiOperation.Result lightWithItem() {
                   if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:" + this.lighter)) < 0) {
                      this.lighter = "";
-                     return this.load("Re-selecting the lighter");
+                     return this.running("Re-selecting the lighter");
                   }
 
                   BlockPos floor = this.frameOrigin.below();
                   this.aim.aimAt(autismclient.ai.engine.AiAim.aimPointForBlockFace(floor, Direction.UP));
                   this.aim.tick();
                   if (!autismclient.ai.engine.AiAim.isLookingAtBlock(floor)) {
-                     return this.load("Turning to light the portal");
+                     return this.running("Turning to light the portal");
                   }
 
                   BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hit == null) {
-                     return this.load("Turning to light the portal");
+                     return this.running("Turning to light the portal");
                   }
 
                   this.mc.gameMode.useItemOn(this.mc.player, InteractionHand.MAIN_HAND, hit);
                   Compat263.swing(this.mc.player, InteractionHand.MAIN_HAND);
-                  return this.load("Lighting the portal");
+                  return this.running("Lighting the portal");
                }
 
-               AiOperation.Result close() {
+               AiOperation.Result lightWithFireSpread() {
                   BlockPos side = this.frameOrigin.relative(this.frameAxis.getCounterClockWise());
                   if (this.clear == 0) {
                      Item wood = this.firstPlaceable(AiPortalCast.DOORWAY_WOOD);
                      if (wood == null) {
                         this.lighter = "";
-                        return this.load("Lost the doorway wood");
+                        return this.running("Lost the doorway wood");
                      }
 
                      if (!this.frameOrigin.equals(this.placer.targetPos())) {
@@ -1231,21 +1231,21 @@ final class AiPortalCast {
                      autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.placer.tick();
                      if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                         this.clear = 1;
-                        return this.load("Doorway wood placed");
+                        return this.running("Doorway wood placed");
                      } else {
                         return placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-                           ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the doorway wood: " + this.placer.failureReason(), null)
-                           : this.load("Placing the doorway wood");
+                           ? this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the doorway wood: " + this.placer.failureReason(), null)
+                           : this.running("Placing the doorway wood");
                      }
                   } else if (this.clear == 1) {
                      if (this.classify(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
                         this.clear = 3;
-                        return this.load("Lava already beside the doorway");
+                        return this.running("Lava already beside the doorway");
                      }
 
                      this.fireSpreadFace = this.pourFaceFor(side);
                      if (this.fireSpreadFace == null) {
-                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava beside the doorway", null);
+                        return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava beside the doorway", null);
                      }
 
                      BlockPos mold = this.fireSpreadFace.mold();
@@ -1254,7 +1254,7 @@ final class AiPortalCast {
                         && this.classify(mold) != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
                         Item moldItem = this.firstPlaceable(AiPortalCast.THROWAWAY_BLOCKS);
                         if (moldItem == null) {
-                           return this.init(AiFailure.MISSING_MATERIALS, "No throwaway block for the fire-spread mold", this.missingOne("minecraft:dirt"));
+                           return this.failWith(AiFailure.MISSING_MATERIALS, "No throwaway block for the fire-spread mold", this.missingOne("minecraft:dirt"));
                         }
 
                         if (!mold.equals(this.placer.targetPos())) {
@@ -1266,49 +1266,49 @@ final class AiPortalCast {
                            this.clear = 2;
                            this.pop = 0;
                            this.pourClicked = false;
-                           return this.load("Fire-spread mold placed");
+                           return this.running("Fire-spread mold placed");
                         } else {
                            return placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-                              ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the fire-spread mold: " + this.placer.failureReason(), null)
-                              : this.load("Placing the fire-spread mold");
+                              ? this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the fire-spread mold: " + this.placer.failureReason(), null)
+                              : this.running("Placing the fire-spread mold");
                         }
                      } else {
                         this.clear = 2;
                         this.pop = 0;
                         this.pourClicked = false;
-                        return this.load("Fire-spread pour face ready");
+                        return this.running("Fire-spread pour face ready");
                      }
                   } else {
                      if (this.clear != 2) {
-                        return this.load("Waiting for the doorway wood to catch fire");
+                        return this.running("Waiting for the doorway wood to catch fire");
                      }
 
                      if (this.classify(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
                         this.pourClicked = false;
                         this.clear = 3;
-                        return this.load("Lava beside the doorway; waiting for the wood to catch");
+                        return this.running("Lava beside the doorway; waiting for the wood to catch");
                      }
 
                      if (!this.pourClicked && !this.pourAck.isPending() && AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
-                        AiOperation.Result approached = this.init(this.fireSpreadFace, true);
+                        AiOperation.Result approached = this.pourOnFace(this.fireSpreadFace, true);
                         if (approached != null) {
                            return approached;
                         }
                      }
 
                      if (++this.pop > 120) {
-                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not pour lava beside the doorway", null);
+                        return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not pour lava beside the doorway", null);
                      }
 
                      if (AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
                         if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:lava_bucket")) < 0) {
-                           return this.init(AiFailure.MISSING_MATERIALS, "Lost the lava bucket for the fire spread", this.missingOne("minecraft:lava_bucket"));
+                           return this.failWith(AiFailure.MISSING_MATERIALS, "Lost the lava bucket for the fire spread", this.missingOne("minecraft:lava_bucket"));
                         } else if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
                            this.mc.player.closeContainer();
-                           return this.load("Closing a screen before pouring");
+                           return this.running("Closing a screen before pouring");
                         } else {
                            AiOperation.Result poured = this.init(this.fireSpreadFace);
-                           return poured != null ? poured : this.load("Pouring lava beside the doorway");
+                           return poured != null ? poured : this.running("Pouring lava beside the doorway");
                         }
                      } else {
                         if (this.bucketOp == null) {
@@ -1320,12 +1320,12 @@ final class AiPortalCast {
                               }
                            }
 
-                           BlockPos refill = AiPortalCast.init(sources, this.reservedCells, this.mc.player.blockPosition());
+                           BlockPos refill = AiPortalCast.nearestFreeSource(sources, this.reservedCells, this.mc.player.blockPosition());
                            if (refill == null) {
-                              return this.init(AiFailure.MISSING_MATERIALS, "No lava left for the fire spread", this.missingOne("minecraft:lava_bucket"));
+                              return this.failWith(AiFailure.MISSING_MATERIALS, "No lava left for the fire spread", this.missingOne("minecraft:lava_bucket"));
                            }
 
-                           this.bucketOp = this.init("lava", refill, 20);
+                           this.bucketOp = this.fillBucketOp("lava", refill, 20);
                         }
 
                         AiOperation.Result filled = this.awaitBucket("Scooping lava for the fire spread");
@@ -1335,24 +1335,24 @@ final class AiPortalCast {
 
                         this.pop = 0;
                         this.pourClicked = false;
-                        return this.load("Lava ready for the fire spread");
+                        return this.running("Lava ready for the fire spread");
                      }
                   }
                }
 
-               AiOperation.Result init(AiPortalCast.Inner_SyncManager face, boolean lava) {
+               AiOperation.Result pourOnFace(AiPortalCast.Inner_SyncManager face, boolean lava) {
                   if (face == null) {
-                     return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The planned pour face is unavailable", null);
+                     return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The planned pour face is unavailable", null);
                   }
 
                   if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
-                     && (!lava || AiPortalCast.init(this.mc.player.blockPosition(), face.support().relative(face.face())))
+                     && (!lava || AiPortalCast.isClearOfPour(this.mc.player.blockPosition(), face.support().relative(face.face())))
                      && autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.mc, face.support(), face.face()) != null) {
                      return null;
                   }
 
                   if (this.approachedFaces.contains(face)) {
-                     return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The required pour face is still hidden after approaching " + face.support().toShortString(), null);
+                     return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The required pour face is still hidden after approaching " + face.support().toShortString(), null);
                   }
 
                   long now = System.nanoTime();
@@ -1361,9 +1361,9 @@ final class AiPortalCast {
                      this.approachDeadline = Math.min(this.deadline, now + 30000000000L);
                   }
 
-                  int seconds = AiPortalCast.init(this.approachDeadline, now);
+                  int seconds = AiPortalCast.secondsUntil(this.approachDeadline, now);
                   if (seconds <= 0) {
-                     return this.init(AiFailure.TIMEOUT, "No time remains to reach the required pour face", null);
+                     return this.failWith(AiFailure.TIMEOUT, "No time remains to reach the required pour face", null);
                   }
 
                   AiOperation child = AiGoto.travelToCompat(
@@ -1376,7 +1376,7 @@ final class AiPortalCast {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                      true,
                      2.0,
-                     AiPortalCast.init(
+                     AiPortalCast.faceApproachGoalWith(
                         face,
                         this.reservedCells,
                         this.molds,
@@ -1388,22 +1388,22 @@ final class AiPortalCast {
                   );
                   this.faceApproach = new AiPortalCast.Inner_StateCache(child, this.approachDeadline, System::nanoTime);
                   this.approaching = true;
-                  return this.open();
+                  return this.tickFaceApproach();
                }
 
-               AiOperation.Result open() {
+               AiOperation.Result tickFaceApproach() {
                   AiOperation.Result result = this.faceApproach.tick();
                   if (!result.terminal()) {
-                     return this.load("Moving to see the required pour face");
+                     return this.running("Moving to see the required pour face");
                   } else {
                      this.approaching = false;
                      this.approachedFaces.add(this.approachFace);
                      if (result.status() == AiOperation.Status.UNCERTAIN) {
-                        return this.init(AiOperation.Status.UNCERTAIN, result.message());
+                        return this.finish(AiOperation.Status.UNCERTAIN, result.message());
                      } else {
                         return result.status() != AiOperation.Status.SUCCEEDED
-                           ? this.init(result.failure(), result.message(), null)
-                           : this.load("Required pour face reached");
+                           ? this.failWith(result.failure(), result.message(), null)
+                           : this.running("Required pour face reached");
                      }
                   }
                }
@@ -1419,12 +1419,12 @@ final class AiPortalCast {
                         this.mc.options.keyRight.setDown(false);
                         this.mc.options.keyJump.setDown(false);
                         this.mc.options.keySprint.setDown(false);
-                        if (!AiPortalCast.init(this.mc.player.onGround(), this.mc.player.getDeltaMovement())) {
-                           return this.load("Settling before the lava pour");
+                        if (!AiPortalCast.isSettled(this.mc.player.onGround(), this.mc.player.getDeltaMovement())) {
+                           return this.running("Settling before the lava pour");
                         }
 
-                        if (!AiPortalCast.init(this.mc.player.blockPosition(), pourCell)) {
-                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Refusing a lava pour into or beside the player's own cells at " + pourCell.toShortString(), null);
+                        if (!AiPortalCast.isClearOfPour(this.mc.player.blockPosition(), pourCell)) {
+                           return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Refusing a lava pour into or beside the player's own cells at " + pourCell.toShortString(), null);
                         }
                      }
 
@@ -1432,11 +1432,11 @@ final class AiPortalCast {
                      if (visible == null) {
                         return null;
                      } else {
-                        this.aim.aimAt(AiPortalCast.init(this.mc.player.getEyePosition(), visible));
+                        this.aim.aimAt(AiPortalCast.nudgedHitPoint(this.mc.player.getEyePosition(), visible));
                         this.aim.tick();
                         BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                         if (hit != null && hit.getBlockPos().equals(face.support()) && hit.getDirection() == face.face()) {
-                           this.pourAck.init(pourCell, bucket, AiGameState.countInventoryItem(bucket), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(pourCell));
+                           this.pourAck.beginPour(pourCell, bucket, AiGameState.countInventoryItem(bucket), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(pourCell));
                            this.mc.gameMode.useItem(this.mc.player, InteractionHand.MAIN_HAND);
                            Compat263.swing(this.mc.player, InteractionHand.MAIN_HAND);
                            this.pourClicked = true;
@@ -1453,7 +1453,7 @@ final class AiPortalCast {
                AiOperation.Result flush(AiPortalCast.Inner_BufferHelper step) {
                   for (BlockPos zone : AiPortalCast.spreadZone(step.waterCell())) {
                      if (!this.frameCells.contains(zone) && !this.preexistingObsidian.contains(zone) && this.mc.level.getBlockState(zone).is(Blocks.OBSIDIAN)) {
-                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
+                        return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
                      }
                   }
 
@@ -1463,11 +1463,11 @@ final class AiPortalCast {
                AiPortalCast.Inner_SyncManager pourFaceFor(BlockPos cell) {
                   AiPortalCast.Inner_ConfigStore below = this.classify(cell.below());
                   return below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN
-                     ? AiPortalCast.init(cell, this.frameAxis, this.reservedCells, this.cellLookup, List.of())
+                     ? AiPortalCast.pourFace(cell, this.frameAxis, this.reservedCells, this.cellLookup, List.of())
                      : new AiPortalCast.Inner_SyncManager(cell.below().immutable(), Direction.UP, null);
                }
 
-               AiOperation.Result init(Supplier<AiOperation> factory, String what) {
+               AiOperation.Result tickMove(Supplier<AiOperation> factory, String what) {
                   if (this.moveOp == null) {
                      this.moveOp = factory.get();
                   }
@@ -1475,7 +1475,7 @@ final class AiPortalCast {
                   boolean pending = this.moveOp.requiresReconciliationAfterEmergency();
                   AiOperation.Result r = this.moveOp.tick();
                   if (!r.terminal()) {
-                     return this.load(what);
+                     return this.running(what);
                   } else {
                      r = AiGuardLayer.wrapPendingTermination(
                         r.status() != AiOperation.Status.SUCCEEDED && (pending || this.moveOp.requiresReconciliationAfterEmergency()), r
@@ -1483,25 +1483,25 @@ final class AiPortalCast {
                      this.moveOp.cancel();
                      this.moveOp = null;
                      if (r.status() == AiOperation.Status.UNCERTAIN) {
-                        return this.init(AiOperation.Status.UNCERTAIN, what + ": " + r.message());
+                        return this.finish(AiOperation.Status.UNCERTAIN, what + ": " + r.message());
                      } else {
-                        return r.status() != AiOperation.Status.SUCCEEDED ? this.init(r.failure(), what + ": " + r.message(), null) : null;
+                        return r.status() != AiOperation.Status.SUCCEEDED ? this.failWith(r.failure(), what + ": " + r.message(), null) : null;
                      }
                   }
                }
 
                AiOperation.Result awaitBucket(String what) {
-                  AiOperation.Result r = this.poll();
+                  AiOperation.Result r = this.tickBucketOp();
                   if (r == null) {
-                     return this.load(what);
+                     return this.running(what);
                   } else if (r.status() == AiOperation.Status.UNCERTAIN) {
-                     return this.init(AiOperation.Status.UNCERTAIN, what + ": " + r.message());
+                     return this.finish(AiOperation.Status.UNCERTAIN, what + ": " + r.message());
                   } else {
-                     return r.status() != AiOperation.Status.SUCCEEDED ? this.init(r.failure(), what + ": " + r.message(), null) : null;
+                     return r.status() != AiOperation.Status.SUCCEEDED ? this.failWith(r.failure(), what + ": " + r.message(), null) : null;
                   }
                }
 
-               AiOperation.Result poll() {
+               AiOperation.Result tickBucketOp() {
                   boolean pending = this.bucketOp.requiresReconciliationAfterEmergency();
                   AiOperation.Result r = this.bucketOp.tick();
                   if (!r.terminal()) {
@@ -1516,7 +1516,7 @@ final class AiPortalCast {
                   return r;
                }
 
-               AiOperation init(String fluid, BlockPos source, int seconds) {
+               AiOperation fillBucketOp(String fluid, BlockPos source, int seconds) {
                   return AiBucket.init(
                      AiJson.objectOf(
                         "action", "fill", "fluid", fluid, "x", source.getX(), "y", source.getY(), "z", source.getZ(), "timeoutSeconds", seconds
@@ -1524,16 +1524,16 @@ final class AiPortalCast {
                   );
                }
 
-               AiOperation.Result push() {
+               AiOperation.Result tickSurvivalGuard() {
                   if (this.guardOp != null) {
                      AiOperation.Result result = this.guardOp.tick();
                      if (!result.terminal()) {
-                        return this.load("Interrupted: " + this.guardReason + " - " + result.message());
+                        return this.running("Interrupted: " + this.guardReason + " - " + result.message());
                      }
 
                      this.guardOp.cancel();
                      this.guardOp = null;
-                     return this.load("Resuming after " + this.guardReason);
+                     return this.running("Resuming after " + this.guardReason);
                   } else {
                      if (!this.canInterruptNow()) {
                         return null;
@@ -1563,13 +1563,13 @@ final class AiPortalCast {
                      }
 
                      this.guardOp = action;
-                     return this.load("Interrupted: " + this.guardReason);
+                     return this.running("Interrupted: " + this.guardReason);
                   }
                }
 
                void nextCell() {
-                  this.run++;
-                  this.push++;
+                  this.castCellCount++;
+                  this.stepIndex++;
                   this.stage = AiPortalCast.Inner_CachePool.STANCE;
                   this.pop = 0;
                   this.tick = 0;
@@ -1583,10 +1583,10 @@ final class AiPortalCast {
                   this.waterBuckets = AiGameState.countInventoryItem("minecraft:water_bucket");
                   this.lavaBuckets = AiGameState.countInventoryItem("minecraft:lava_bucket");
                   this.emptyBuckets = AiGameState.countInventoryItem("minecraft:bucket");
-                  this.flush = this.countAll(AiPortalCast.THROWAWAY_BLOCKS);
-                  this.close = AiGameState.countInventoryItem("minecraft:flint_and_steel");
-                  this.open = AiGameState.countInventoryItem("minecraft:fire_charge");
-                  this.poll = this.countAll(AiPortalCast.DOORWAY_WOOD);
+                  this.throwawayCount = this.countAll(AiPortalCast.THROWAWAY_BLOCKS);
+                  this.flintAndSteelCount = AiGameState.countInventoryItem("minecraft:flint_and_steel");
+                  this.fireChargeCount = AiGameState.countInventoryItem("minecraft:fire_charge");
+                  this.doorwayWoodCount = this.countAll(AiPortalCast.DOORWAY_WOOD);
                }
 
                int countAll(List<String> ids) {
@@ -1623,11 +1623,11 @@ final class AiPortalCast {
                   return null;
                }
 
-               BlockPos init(BlockPos center, int radius, int vertical, boolean lava) {
-                  return this.init(center, radius, vertical, lava, false);
+               BlockPos nearestSource(BlockPos center, int radius, int vertical, boolean lava) {
+                  return this.nearestSourceWith(center, radius, vertical, lava, false);
                }
 
-               BlockPos init(BlockPos center, int radius, int vertical, boolean lava, boolean open) {
+               BlockPos nearestSourceWith(BlockPos center, int radius, int vertical, boolean lava, boolean open) {
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
 
@@ -1709,7 +1709,7 @@ final class AiPortalCast {
                                  Set<BlockPos> dug = new HashSet<>(digs);
                                  AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : this.classify(pos);
                                  Set<BlockPos> reserved = AiPortalCast.reservedCells(origin, axis);
-                                 AiPortalCast.Inner_StreamUtil plan = AiPortalCast.init(AiPortalCast.frameCellsSorted(origin, axis), axis, reserved, after);
+                                 AiPortalCast.Inner_StreamUtil plan = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, reserved, after);
                                  if (plan.blocked() == null) {
                                     long usable = sources.stream().filter(q -> !reserved.contains(q)).count();
                                     if (plan.lavaNeeded() <= usable) {
@@ -1819,17 +1819,17 @@ final class AiPortalCast {
                   );
                }
 
-               AiOperation.Result pop() {
+               AiOperation.Result tickExcavatePhase() {
                   if (this.moveOp != null) {
                      AiOperation.Result r = this.moveOp.tick();
                      if (!r.terminal()) {
-                        return this.load("Clearing the frame site (" + (this.siteDigs.size() + 1) + " left)");
+                        return this.running("Clearing the frame site (" + (this.siteDigs.size() + 1) + " left)");
                      }
 
                      this.moveOp.cancel();
                      this.moveOp = null;
                      if (r.status() != AiOperation.Status.SUCCEEDED && ++this.siteDigFailures > 3) {
-                        return this.init(AiFailure.NO_REACHABLE_TARGET, "Could not clear the frame site: " + r.message(), null);
+                        return this.failWith(AiFailure.NO_REACHABLE_TARGET, "Could not clear the frame site: " + r.message(), null);
                      }
                   }
 
@@ -1839,11 +1839,11 @@ final class AiPortalCast {
 
                   if (this.siteDigs.isEmpty()) {
                      this.phase = AiPortalCast.Inner_NetHelper.SITE;
-                     return this.load("Frame site cleared; planning the cast");
+                     return this.running("Frame site cleared; planning the cast");
                   } else {
                      BlockPos cell = this.siteDigs.poll();
                      this.moveOp = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 20, false);
-                     return this.load("Clearing the frame site at " + cell.toShortString());
+                     return this.running("Clearing the frame site at " + cell.toShortString());
                   }
                }
 
@@ -1886,15 +1886,15 @@ final class AiPortalCast {
                      "phase",
                      this.phase.name().toLowerCase(Locale.ROOT),
                      "castCells",
-                     this.run,
+                     this.castCellCount,
                      "frameCells",
                      this.frameCells.size(),
                      "lavaNeeded",
                      this.plan == null ? 0 : this.plan.lavaNeeded(),
                      "lavaPoured",
-                     this.get,
+                     this.lavaPouredCount,
                      "waterRecoveryPending",
-                     this.waterRecovery.init(),
+                     this.waterRecovery.isRecoveryPending(),
                      "pourAcknowledgementPending",
                      this.pourAck.isPending(),
                      "lit",
@@ -1920,12 +1920,12 @@ final class AiPortalCast {
                      );
                   }
 
-                  if (this.plan != null && this.push < this.plan.steps().size()) {
-                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.push);
+                  if (this.plan != null && this.stepIndex < this.plan.steps().size()) {
+                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.stepIndex);
                      out.add(
                         "step",
                         AiJson.objectOf(
-                           "index", this.push, "action", step.action().name().toLowerCase(Locale.ROOT), "cell", step.cell().toShortString()
+                           "index", this.stepIndex, "action", step.action().name().toLowerCase(Locale.ROOT), "cell", step.cell().toShortString()
                         )
                      );
                   }
@@ -1934,8 +1934,8 @@ final class AiPortalCast {
                      out.add("guard", AiGuard.statusToJson(this.vitals, this.put, this.guardReason));
                   }
 
-                  if (this.faceApproach != null && this.faceApproach.init() != null) {
-                     AiOperation.Result receipt = this.faceApproach.init();
+                  if (this.faceApproach != null && this.faceApproach.lastResult() != null) {
+                     AiOperation.Result receipt = this.faceApproach.lastResult();
                      out.add(
                         "pourApproach",
                         AiJson.objectOf(
@@ -1954,24 +1954,24 @@ final class AiPortalCast {
                   return out;
                }
 
-               AiOperation.Result load(String message) {
+               AiOperation.Result running(String message) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message) {
+               AiOperation.Result finish(AiOperation.Status status, String message) {
                   AiOperation.Result result = this.terminalGuard
-                     .init(this.unconfirmed(), new AiOperation.Result(status, message, this.progressJson().toString(), List.of()));
+                     .recordTerminal(this.unconfirmed(), new AiOperation.Result(status, message, this.progressJson().toString(), List.of()));
                   this.cancel();
                   return result;
                }
 
-               AiOperation.Result init(AiFailure code, String message, JsonObject missing) {
+               AiOperation.Result failWith(AiFailure code, String message, JsonObject missing) {
                   JsonObject data = this.progressJson();
                   if (missing != null) {
                      data.add("missing", missing);
                   }
 
-                  AiOperation.Result result = this.terminalGuard.init(this.unconfirmed(), AiOperation.Result.failed(code, message, data.toString()));
+                  AiOperation.Result result = this.terminalGuard.recordTerminal(this.unconfirmed(), AiOperation.Result.failed(code, message, data.toString()));
                   this.cancel();
                   return result;
                }
@@ -1988,7 +1988,7 @@ final class AiPortalCast {
                @Override
                public boolean canInterruptNow() {
                   return !this.pourClicked
-                     && !this.waterRecovery.init()
+                     && !this.waterRecovery.isRecoveryPending()
                      && !this.pourAck.isPending()
                      && !this.placer.needsReconciliation()
                      && (this.moveOp == null || this.moveOp.canInterruptNow())
@@ -2000,9 +2000,9 @@ final class AiPortalCast {
                @Override
                public boolean requiresReconciliationAfterEmergency() {
                   return this.terminalGuard
-                     .init(
+                     .isUnconfirmed(
                         this.pourClicked
-                           || this.waterRecovery.init()
+                           || this.waterRecovery.isRecoveryPending()
                            || this.pourAck.isPending()
                            || this.placer.needsReconciliation()
                            || this.faceApproach != null && this.faceApproach.requiresReconciliationAfterEmergency()
@@ -2082,15 +2082,15 @@ final class AiPortalCast {
       private String bucketId;
       private int filledBefore;
       private long inventoryRevision;
-      private long load;
+      private long cellRevisionAtPour;
 
-      void init(BlockPos at, String bucketId, int filledBuckets, long inventoryRevision, long cellRevision) {
+      void beginPour(BlockPos at, String bucketId, int filledBuckets, long inventoryRevision, long cellRevision) {
          if (!this.isPending() && filledBuckets > 0) {
             this.pourCell = at.immutable();
             this.bucketId = bucketId;
             this.filledBefore = filledBuckets;
             this.inventoryRevision = inventoryRevision;
-            this.load = cellRevision;
+            this.cellRevisionAtPour = cellRevision;
          } else {
             throw new IllegalStateException("Unacknowledged fluid pour");
          }
@@ -2108,13 +2108,13 @@ final class AiPortalCast {
          return this.bucketId;
       }
 
-      void init(int filledBuckets, long inventoryRevision, long cellRevision) {
-         if (this.isPending() && filledBuckets < this.filledBefore && inventoryRevision > this.inventoryRevision && cellRevision > this.load) {
+      void acknowledge(int filledBuckets, long inventoryRevision, long cellRevision) {
+         if (this.isPending() && filledBuckets < this.filledBefore && inventoryRevision > this.inventoryRevision && cellRevision > this.cellRevisionAtPour) {
             this.pourCell = null;
          }
       }
 
-      void init(BlockPos at) {
+      void clearPour(BlockPos at) {
          if (this.isPending() && this.pourCell.equals(at)) {
             this.pourCell = null;
          }
@@ -2135,7 +2135,7 @@ final class AiPortalCast {
       private BlockPos pourCell;
       private int filledBefore;
 
-      void init(BlockPos at, int filledBuckets) {
+      void beginWaterRecovery(BlockPos at, int filledBuckets) {
          if (this.pourCell == null && filledBuckets > 0) {
             this.pourCell = at.immutable();
             this.filledBefore = filledBuckets;
@@ -2144,11 +2144,11 @@ final class AiPortalCast {
          }
       }
 
-      boolean init() {
+      boolean isRecoveryPending() {
          return this.pourCell != null;
       }
 
-      boolean init(BlockPos at, int filledBuckets, boolean fillAcknowledged) {
+      boolean isRecoveryConfirmed(BlockPos at, int filledBuckets, boolean fillAcknowledged) {
          if (fillAcknowledged && this.pourCell != null && this.pourCell.equals(at) && filledBuckets >= this.filledBefore) {
             this.pourCell = null;
             return true;
@@ -2179,24 +2179,24 @@ final class AiPortalCast {
          }
 
          if (this.cancelled) {
-            return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Pour face approach cancelled", "{}", List.of()));
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.CANCELLED, "Pour face approach cancelled", "{}", List.of()));
          }
 
          if (this.clock.getAsLong() >= this.deadline) {
-            return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Pour face approach exceeded its bounded deadline", "{}"));
+            return this.finishWith(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Pour face approach exceeded its bounded deadline", "{}"));
          }
 
          AiOperation.Result result = this.receipt.tickChild(this.child);
-         return result.terminal() ? this.init(this.receipt.lastChildResult()) : result;
+         return result.terminal() ? this.finishWith(this.receipt.lastChildResult()) : result;
       }
 
-      private AiOperation.Result init(AiOperation.Result result) {
+      private AiOperation.Result finishWith(AiOperation.Result result) {
          this.finalResult = this.receipt.finalizeResult(result, this.receipt.requiresReconciliation(this.child));
          this.receipt.cancelChild(this.child);
          return this.finalResult;
       }
 
-      AiOperation.Result init() {
+      AiOperation.Result lastResult() {
          return this.finalResult == null ? this.receipt.lastChildResult() : this.finalResult;
       }
 
@@ -2228,17 +2228,17 @@ final class AiPortalCast {
    }
 
    static final class Inner_UiHelper {
-      private boolean init;
-      private boolean load;
+      private boolean terminated;
+      private boolean terminalUnconfirmed;
 
-      AiOperation.Result init(boolean unconfirmed, AiOperation.Result result) {
-         this.load = unconfirmed || result.status() == AiOperation.Status.UNCERTAIN;
-         this.init = true;
+      AiOperation.Result recordTerminal(boolean unconfirmed, AiOperation.Result result) {
+         this.terminalUnconfirmed = unconfirmed || result.status() == AiOperation.Status.UNCERTAIN;
+         this.terminated = true;
          return AiGuardLayer.wrapPendingTermination(unconfirmed, result);
       }
 
-      boolean init(boolean activePending) {
-         return this.init ? this.load : activePending;
+      boolean isUnconfirmed(boolean activePending) {
+         return this.terminated ? this.terminalUnconfirmed : activePending;
       }
    }
 }
