@@ -19,7 +19,7 @@ public final class MacroFpsOverrideManager {
 
    public static synchronized void init(long ownerRunId, int fpsLimit, long durationNanos) {
       if (durationNanos <= 0L) {
-         init_V_J(ownerRunId);
+         clearOverride(ownerRunId);
       } else {
          init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.Inner_DataUtil(Math.max(0, fpsLimit), System.nanoTime() + durationNanos, false));
          load(System.nanoTime());
@@ -27,10 +27,10 @@ public final class MacroFpsOverrideManager {
    }
 
    public static void init_V_I(int fpsLimit) {
-      init_V_J_I(0L, fpsLimit);
+      setOverride(0L, fpsLimit);
    }
 
-   public static synchronized void init_V_J_I(long ownerRunId, int fpsLimit) {
+   public static synchronized void setOverride(long ownerRunId, int fpsLimit) {
       int limit = Math.max(0, fpsLimit);
       long expiry = limit == 0 ? System.nanoTime() + 600000000000L : 0L;
       init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.Inner_DataUtil(limit, expiry, true));
@@ -38,30 +38,30 @@ public final class MacroFpsOverrideManager {
    }
 
    public static void init_V() {
-      init_V_J(0L);
+      clearOverride(0L);
    }
 
-   public static synchronized void init_V_J(long ownerRunId) {
+   public static synchronized void clearOverride(long ownerRunId) {
       init_ConcurrentHashMap.remove(ownerRunId);
       load(System.nanoTime());
    }
 
-   public static synchronized void load_V() {
+   public static synchronized void clearAll() {
       init_ConcurrentHashMap.clear();
       init_I = -1;
       read = 9223372036854775807L;
    }
 
-   public static boolean init_Z() {
-      return load_I() >= 0;
+   public static boolean isActive() {
+      return getEffectiveLimit() >= 0;
    }
 
    public static int init_I() {
-      int active = load_I();
+      int active = getEffectiveLimit();
       return Math.max(0, active);
    }
 
-   public static int load_I() {
+   public static int getEffectiveLimit() {
       int limit = init_I;
       if (limit < 0) {
          return -1;
@@ -71,12 +71,12 @@ public final class MacroFpsOverrideManager {
       return expiry != 9223372036854775807L && System.nanoTime() - expiry >= 0L ? read() : limit;
    }
 
-   public static boolean load_Z() {
-      return load_I() == 0;
+   public static boolean isRenderFrozen() {
+      return getEffectiveLimit() == 0;
    }
 
    public static long init_J() {
-      if (load_I() < 0) {
+      if (getEffectiveLimit() < 0) {
          return 0L;
       }
 

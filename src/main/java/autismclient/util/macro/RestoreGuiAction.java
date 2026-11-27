@@ -26,7 +26,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -36,7 +36,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -46,12 +46,12 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return "";
    }
 
    @Override
-   public void init_V_Str(String n) {
+   public void setGuiName(String n) {
    }
 
    @Override
@@ -71,8 +71,8 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
@@ -80,7 +80,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
 
    @Override
    public String getDisplayName() {
-      return "Restore GUI" + GuiWaitAware.init_Str_aP(this);
+      return "Restore GUI" + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

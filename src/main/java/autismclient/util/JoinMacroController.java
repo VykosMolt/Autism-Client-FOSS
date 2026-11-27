@@ -240,11 +240,11 @@ public final class JoinMacroController {
                      LockSupport.parkNanos(20000000L);
                   } else {
                      prepared = autismclient.util.macro.CustomMenuActionPlanner.init(action, snapshot, JoinMacroController::load_Str);
-                     if (prepared.init_Z() || prepared.init_Str() == null || !prepared.init_Str().contains("unavailable")) {
+                     if (prepared.isReady() || prepared.error() == null || !prepared.error().contains("unavailable")) {
                         break;
                      }
 
-                     lastError = prepared.init_Str();
+                     lastError = prepared.error();
                      prepared = null;
                      LockSupport.parkNanos(20000000L);
                   }
@@ -255,11 +255,11 @@ public final class JoinMacroController {
                }
 
                if (snapshot != null && prepared != null) {
-                  if (!prepared.init_Z()) {
-                     load_V(prepared.init_Str());
+                  if (!prepared.isReady()) {
+                     load_V(prepared.error());
                   } else {
                      Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
-                     CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.init_CustomMenuSubmissi());
+                     CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
                      if (!result.success()) {
                         load_V(result.error());
                      } else {

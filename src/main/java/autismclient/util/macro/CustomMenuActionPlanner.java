@@ -286,9 +286,9 @@ public final class CustomMenuActionPlanner {
       return value == null ? "" : value;
    }
 
-   public record Inner_DataUtil(CustomMenuSubmission init_CustomMenuSubmissi, String init_Str) {
-      public boolean init_Z() {
-         return this.init_CustomMenuSubmissi != null && this.init_Str.isEmpty();
+   public record Inner_DataUtil(CustomMenuSubmission submission, String error) {
+      public boolean isReady() {
+         return this.submission != null && this.error.isEmpty();
       }
 
       static CustomMenuActionPlanner.Inner_DataUtil init(CustomMenuSubmission submission) {

@@ -21,11 +21,11 @@ public class StoreItemAction implements MacroAction {
    public int delayTicks = 0;
    private boolean init = true;
 
-   public void init_V_Minecraft_6(Minecraft mc) {
+   public void storeItems(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
          AbstractContainerMenu h = mc.player.containerMenu;
          if (h != mc.player.inventoryMenu) {
-            for (int slotId : this.init_List_Minecraft_3(mc)) {
+            for (int slotId : this.slotsToStore(mc)) {
                autismclient.util.ContainerClickExecutor.init(mc, slotId, 0, ContainerInput.QUICK_MOVE);
             }
 
@@ -38,7 +38,7 @@ public class StoreItemAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      this.init_V_Minecraft_6(mc);
+      this.storeItems(mc);
    }
 
    public boolean init_Z_ItemStack(ItemStack stack) {
@@ -68,7 +68,7 @@ public class StoreItemAction implements MacroAction {
       return false;
    }
 
-   public List<Integer> init_List_Minecraft_3(Minecraft mc) {
+   public List<Integer> slotsToStore(Minecraft mc) {
       List<Integer> slotsToMove = new ArrayList<>();
       if (mc != null && mc.player != null && mc.gameMode != null) {
          AbstractContainerMenu h = mc.player.containerMenu;
@@ -149,7 +149,7 @@ public class StoreItemAction implements MacroAction {
       }
 
       if (tag.contains("delayTicks")) {
-         this.delayTicks = init_I_I_7(tag.getIntOr("delayTicks", 0));
+         this.delayTicks = clampDelayTicks(tag.getIntOr("delayTicks", 0));
       }
 
       this.itemTargets.clear();
@@ -177,11 +177,11 @@ public class StoreItemAction implements MacroAction {
          return modeStr + " (nothing)";
       }
 
-      String what = targets.size() == 1 ? load_Str_Str_3(targets.get(0).toSpecString()) : targets.size() + " items";
+      String what = targets.size() == 1 ? formatTarget(targets.get(0).toSpecString()) : targets.size() + " items";
       return modeStr + " " + what + (this.persistent ? " [Inf]" : "");
    }
 
-   public static String init_Str_Str_8(String raw) {
+   public static String normalizeTarget(String raw) {
       if (raw == null) {
          return null;
       }
@@ -227,7 +227,7 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   public static String load_Str_Str_3(String entry) {
+   public static String formatTarget(String entry) {
       if (entry != null && !entry.isBlank()) {
          MacroItemTarget target = MacroItemTarget.parse(entry);
          String label = target.resolvedDisplayName();
@@ -327,7 +327,7 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   public static int init_I_I_7(int value) {
+   public static int clampDelayTicks(int value) {
       return Math.max(0, Math.min(200, value));
    }
 

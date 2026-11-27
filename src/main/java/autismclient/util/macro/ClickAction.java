@@ -40,7 +40,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -50,7 +50,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -60,17 +60,17 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -88,7 +88,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -110,13 +110,13 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
          this.clickCount = tag.getIntOr("clickCount", 1);
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
 
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override
@@ -126,7 +126,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
          base = base + " x" + this.clickCount;
       }
 
-      return base + GuiWaitAware.init_Str_aP(this);
+      return base + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

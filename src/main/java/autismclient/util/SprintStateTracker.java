@@ -34,7 +34,7 @@ public final class SprintStateTracker {
    }
 
    public static void load(boolean sprinting) {
-      long roundTrip = (Math.max(0, autismclient.util.macro.ServerTickPhaseTracker.init_I()) + 100L) * 1000000L;
+      long roundTrip = (Math.max(0, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs()) + 100L) * 1000000L;
       if (System.nanoTime() - init_J > roundTrip) {
          load = sprinting;
       }

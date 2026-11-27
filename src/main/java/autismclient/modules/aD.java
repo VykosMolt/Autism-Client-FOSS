@@ -169,11 +169,11 @@ public final class aD {
       }
 
       autismclient.util.ContainerCloseGuard.init_V();
-      autismclient.util.macro.PacketGateManager.load_V();
+      autismclient.util.macro.PacketGateManager.clearAll();
       BlinkPacketManager.disableAndFlush();
       autismclient.util.SilentRotationManager.resetAll();
-      autismclient.util.macro.PingSpoofScheduler.load_V();
-      autismclient.util.macro.PingSpoofScheduler.read_V();
+      autismclient.util.macro.PingSpoofScheduler.clearRunOverrides();
+      autismclient.util.macro.PingSpoofScheduler.disable();
       if (!AutismLiteVariant.enabled()) {
          PkgCls_a.init_V_Str("panic mode");
       }

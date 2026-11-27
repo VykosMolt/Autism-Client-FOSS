@@ -50,7 +50,7 @@ public class InventoryAuditAction implements MacroAction {
    public int spamDelayMs = 50;
    private boolean init_Z = true;
 
-   public boolean init_Z_2() {
+   public boolean isConfigured() {
       return this.load_Z_2();
    }
 
@@ -70,7 +70,7 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   public void init_V_Minecraft_2(Minecraft mc) throws InterruptedException {
+   public void runAudit(Minecraft mc) throws InterruptedException {
       if (mc != null && mc.player != null) {
          MacroTemplateResolver.ResolveResult commandResolution = MacroVariableContext.resolveTemplate(this.init_Str_2(), mc);
          if (commandResolution.success()) {
@@ -566,7 +566,7 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private boolean init_Z_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
-      CompletableFuture<Void> future = MacroWaitRegistry.init_CompletableFuture("");
+      CompletableFuture<Void> future = MacroWaitRegistry.awaitGuiTitle("");
 
       try {
          return this.init_Z_CompletableFuture_J(future, timeoutMs);

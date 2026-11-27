@@ -12,8 +12,8 @@ public class ServerTickPhaseTracker {
    private static final long init_J = 50000000L;
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final long load_J = 2000L;
-   private static final int init_I = 40;
-   private static final int load_I = 60;
+   private static final int MIN_SAMPLES = 40;
+   private static final int SAMPLE_WINDOW = 60;
    private static final long[] init_JArr = new long[60];
    private static int read_I = 0;
    private static int write_I = 0;
@@ -46,7 +46,7 @@ public class ServerTickPhaseTracker {
          }
       }
 
-      int pingMs = init_I();
+      int pingMs = getLatencyMs();
       long halfPingNanos = pingMs * 1000000L / 2L;
       long serverSendTime = now - halfPingNanos;
       init_JArr[read_I] = serverSendTime;
@@ -98,7 +98,7 @@ public class ServerTickPhaseTracker {
       }
    }
 
-   public static int init_I() {
+   public static int getLatencyMs() {
       if (init_Minecraft.getConnection() != null && init_Minecraft.player != null) {
          PlayerInfo entry = init_Minecraft.getConnection().getPlayerInfo(init_Minecraft.player.getUUID());
          return entry == null ? 0 : entry.getLatency();
@@ -107,7 +107,7 @@ public class ServerTickPhaseTracker {
       }
    }
 
-   public static long init_J() {
+   public static long nextTickNanos() {
       if (flush == 0L) {
          return System.nanoTime() + 50000000L;
       }
@@ -119,8 +119,8 @@ public class ServerTickPhaseTracker {
    }
 
    public static long init(int bufferMs, boolean ignorePing) {
-      long nextTick = init_J();
-      int pingMs = ignorePing ? 0 : init_I();
+      long nextTick = nextTickNanos();
+      int pingMs = ignorePing ? 0 : getLatencyMs();
       long halfPingNanos = pingMs * 1000000L / 2L;
       long bufferNanos = bufferMs * 1000000L;
       long optimalTime = nextTick - bufferNanos - halfPingNanos;
@@ -133,7 +133,7 @@ public class ServerTickPhaseTracker {
       return optimalTime;
    }
 
-   public static boolean init_Z() {
+   public static boolean isWarmedUp() {
       if (read_J != 0L && write_I >= 40) {
          long elapsedMs = (System.nanoTime() - read_J) / 1000000L;
          return elapsedMs >= 2000L && flush > 0L;
@@ -142,7 +142,7 @@ public class ServerTickPhaseTracker {
       }
    }
 
-   public static float init_F() {
+   public static float getWarmupProgress() {
       if (read_J == 0L) {
          return 0.0F;
       }
@@ -154,7 +154,7 @@ public class ServerTickPhaseTracker {
    }
 
    public static float load_F() {
-      if (!init_Z()) {
+      if (!isWarmedUp()) {
          return 0.0F;
       }
 
@@ -170,7 +170,7 @@ public class ServerTickPhaseTracker {
    }
 
    public static long load_J() {
-      long nextTick = init_J();
+      long nextTick = nextTickNanos();
       return Math.max(0L, (nextTick - System.nanoTime()) / 1000000L);
    }
 
@@ -178,11 +178,11 @@ public class ServerTickPhaseTracker {
       return write_J == 0L ? 0L : Math.max(0L, (System.nanoTime() - write_J) / 1000000L);
    }
 
-   public static double init_D() {
+   public static double getTps() {
       return Math.max(0.0, Math.min(20.0, init_D));
    }
 
-   public static int load_I() {
+   public static int getSampleCount() {
       return write_I;
    }
 
@@ -194,7 +194,7 @@ public class ServerTickPhaseTracker {
       return sync / 1000000L;
    }
 
-   public static void load_V() {
+   public static void reset() {
       write_I = 0;
       read_I = 0;
       read_J = 0L;
@@ -208,6 +208,6 @@ public class ServerTickPhaseTracker {
    }
 
    public static String init_Str() {
-      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", init_I(), write_I, 40, update(), load_F() * 100.0F);
+      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", getLatencyMs(), write_I, 40, update(), load_F() * 100.0F);
    }
 }

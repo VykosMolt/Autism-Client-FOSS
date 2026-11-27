@@ -38,7 +38,7 @@ public class BranchAction implements MacroAction {
             var10000 = GuiScreenMatcher.init(mc.gui.screen(), resolved);
             break;
          case INVENTORY_ITEM:
-            var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(resolved));
+            var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse(resolved));
             break;
          case ENTITY_TARGET:
             var10000 = mc.crosshairPickEntity != null;

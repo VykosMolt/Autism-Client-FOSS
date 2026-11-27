@@ -18,13 +18,13 @@ public final class MacroToolBridge {
       init_k_DataUtil = value;
    }
 
-   public static boolean init_Z() {
+   public static boolean isAvailable() {
       return init_k_DataUtil != null;
    }
 
-   public static List<MacroToolBridge.Inner_TaskQueue> init_List() {
+   public static List<MacroToolBridge.Inner_TaskQueue> listTools() {
       MacroToolBridge.Inner_DataUtil b = init_k_DataUtil;
-      return b == null ? List.of() : List.copyOf(b.init_List());
+      return b == null ? List.of() : List.copyOf(b.tools());
    }
 
    public static List<String> load() {
@@ -32,16 +32,16 @@ public final class MacroToolBridge {
       return b == null ? List.of() : List.copyOf(b.load());
    }
 
-   public static MacroToolBridge.Inner_TaskQueue init_k_TaskQueue(String id) {
-      return init_List().stream().filter(t -> t.init().equals(id)).findFirst().orElse(null);
+   public static MacroToolBridge.Inner_TaskQueue findTool(String id) {
+      return listTools().stream().filter(t -> t.init().equals(id)).findFirst().orElse(null);
    }
 
-   public static String init_Str(String id) {
-      MacroToolBridge.Inner_TaskQueue t = init_k_TaskQueue(id);
+   public static String toolLabel(String id) {
+      MacroToolBridge.Inner_TaskQueue t = findTool(id);
       return t == null ? id : t.load();
    }
 
-   public static MacroToolBridge.Inner_StreamUtil init_k_StreamUtil(long owner, String tool, String argumentsJson) {
+   public static MacroToolBridge.Inner_StreamUtil startTool(long owner, String tool, String argumentsJson) {
       MacroToolBridge.Inner_DataUtil b = init_k_DataUtil;
       if (b == null) {
          throw new IllegalStateException("Tools requires the full client");
@@ -62,11 +62,11 @@ public final class MacroToolBridge {
       }
 
       MacroToolBridge.Inner_BufferHelper session = init_Map.get(owner);
-      MacroToolBridge.Inner_StreamUtil job = "ANY_TOOL".equals(scope) ? b.init_k_StreamUtil() : (session == null ? null : session.init_k_StreamUtil);
-      return job != null && (filter == null || filter.isBlank() || filter.equals(job.init_Str())) ? job : null;
+      MacroToolBridge.Inner_StreamUtil job = "ANY_TOOL".equals(scope) ? b.currentJob() : (session == null ? null : session.init_k_StreamUtil);
+      return job != null && (filter == null || filter.isBlank() || filter.equals(job.toolId())) ? job : null;
    }
 
-   public static CompletableFuture<MacroToolBridge.Inner_CachePool> init_CompletableFuture(long owner, String scope, String operation) {
+   public static CompletableFuture<MacroToolBridge.Inner_CachePool> runOperation(long owner, String scope, String operation) {
       return init(load(owner, scope, ""), operation);
    }
 
@@ -82,7 +82,7 @@ public final class MacroToolBridge {
    }
 
    public static boolean init(long owner, String scope, String filter, String state) {
-      if (!init_Z()) {
+      if (!isAvailable()) {
          return false;
       }
 
@@ -91,7 +91,7 @@ public final class MacroToolBridge {
          return "IDLE".equals(state);
       }
 
-      MacroToolBridge.Inner_ConfigStore actual = job.init_k_CachePool().init_k_ConfigStore();
+      MacroToolBridge.Inner_ConfigStore actual = job.snapshot().state();
       boolean var10000;
       switch (state == null ? "" : state) {
          case "FINISHED":
@@ -117,7 +117,7 @@ public final class MacroToolBridge {
       MacroToolBridge.Inner_BufferHelper session = init_Map.remove(owner);
       if (session != null && cancelled) {
          for (MacroToolBridge.Inner_StreamUtil job : session.init_Map.values()) {
-            job.init_V();
+            job.cancel();
          }
       }
    }
@@ -127,9 +127,9 @@ public final class MacroToolBridge {
       final Map<Long, MacroToolBridge.Inner_StreamUtil> init_Map = new ConcurrentHashMap<>();
    }
 
-   public record Inner_CachePool(MacroToolBridge.Inner_ConfigStore init_k_ConfigStore, String init_Str, String load) {
-      public boolean init_Z() {
-         return this.init_k_ConfigStore == MacroToolBridge.Inner_ConfigStore.SUCCEEDED;
+   public record Inner_CachePool(MacroToolBridge.Inner_ConfigStore state, String message, String load) {
+      public boolean isSucceeded() {
+         return this.state == MacroToolBridge.Inner_ConfigStore.SUCCEEDED;
       }
    }
 
@@ -150,13 +150,13 @@ public final class MacroToolBridge {
    }
 
    public interface Inner_DataUtil {
-      List<MacroToolBridge.Inner_TaskQueue> init_List();
+      List<MacroToolBridge.Inner_TaskQueue> tools();
 
       List<String> load();
 
       MacroToolBridge.Inner_StreamUtil init(String var1, String var2);
 
-      MacroToolBridge.Inner_StreamUtil init_k_StreamUtil();
+      MacroToolBridge.Inner_StreamUtil currentJob();
 
       CompletableFuture<MacroToolBridge.Inner_CachePool> init(MacroToolBridge.Inner_StreamUtil var1, String var2);
    }
@@ -181,15 +181,15 @@ public final class MacroToolBridge {
          return this.init_J;
       }
 
-      public String init_Str() {
+      public String toolId() {
          return this.init_Str;
       }
 
-      public MacroToolBridge.Inner_CachePool init_k_CachePool() {
+      public MacroToolBridge.Inner_CachePool snapshot() {
          return this.init_AtomicReference.get();
       }
 
-      public CompletableFuture<Void> init_CompletableFuture() {
+      public CompletableFuture<Void> startedFuture() {
          return this.init_CompletableFuture;
       }
 
@@ -197,7 +197,7 @@ public final class MacroToolBridge {
          return this.load;
       }
 
-      public synchronized boolean init_Z() {
+      public synchronized boolean isCancelRequested() {
          return this.init_Z;
       }
 
@@ -213,7 +213,7 @@ public final class MacroToolBridge {
          }
       }
 
-      public void init_V() {
+      public void cancel() {
          Runnable action;
          synchronized (this) {
             if (this.load.isDone() || this.init_Z) {

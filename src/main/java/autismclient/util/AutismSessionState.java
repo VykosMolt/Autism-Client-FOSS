@@ -1452,7 +1452,7 @@ public final class AutismSessionState {
 
       for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.fabricatorCraftEntries) {
          if (entry != null) {
-            copies.add(entry.init_SyncManager_DataUt());
+            copies.add(entry.copy());
          }
       }
 
@@ -1464,7 +1464,7 @@ public final class AutismSessionState {
       if (entries != null) {
          for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
             if (entry != null) {
-               this.fabricatorCraftEntries.add(entry.init_SyncManager_DataUt());
+               this.fabricatorCraftEntries.add(entry.copy());
             }
          }
       }

@@ -28,13 +28,13 @@ public class HClipCommand extends Command {
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("forward").executes(ctx -> {
          autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(0.0);
-         options.init_TokenStore_CachePo = autismclient.util.macro.HClipAction.Inner_CachePool.FORWARD;
+         options.mode = autismclient.util.macro.HClipAction.Inner_CachePool.FORWARD;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("back").executes(ctx -> {
          autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(0.0);
-         options.init_TokenStore_CachePo = autismclient.util.macro.HClipAction.Inner_CachePool.BACK;
+         options.mode = autismclient.util.macro.HClipAction.Inner_CachePool.BACK;
          init(options);
          return 1;
       }));
@@ -56,7 +56,7 @@ public class HClipCommand extends Command {
                                  autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
                                     DoubleArgumentType.getDouble(ctx, "blocks")
                                  );
-                                 options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
+                                 options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
                                  init(options);
                                  return 1;
                               }
@@ -69,8 +69,8 @@ public class HClipCommand extends Command {
                                        autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
                                           DoubleArgumentType.getDouble(ctx, "blocks")
                                        );
-                                       options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
-                                       options.load_I = IntegerArgumentType.getInteger(ctx, "maxPackets");
+                                       options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
+                                       options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
                                        init(options);
                                        return 1;
                                     }
@@ -80,7 +80,7 @@ public class HClipCommand extends Command {
                                        .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
                                           autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
-                                          options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
+                                          options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                           init(options);
                                           return 1;
                                        }))
@@ -89,8 +89,8 @@ public class HClipCommand extends Command {
                                              .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
                                                 autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
-                                                options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
-                                                options.read_Z = BoolArgumentType.getBool(ctx, "vehicle");
+                                                options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
+                                                options.tryVehicleFirst = BoolArgumentType.getBool(ctx, "vehicle");
                                                 init(options);
                                                 return 1;
                                              }))
@@ -99,9 +99,9 @@ public class HClipCommand extends Command {
                                                 .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
                                                    autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
-                                                   options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
-                                                   options.read_Z = BoolArgumentType.getBool(ctx, "vehicle");
-                                                   options.write_Z = BoolArgumentType.getBool(ctx, "forceGround");
+                                                   options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
+                                                   options.tryVehicleFirst = BoolArgumentType.getBool(ctx, "vehicle");
+                                                   options.forceGrounded = BoolArgumentType.getBool(ctx, "forceGround");
                                                    init(options);
                                                    return 1;
                                                 })
@@ -132,9 +132,9 @@ public class HClipCommand extends Command {
       autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
          DoubleArgumentType.getDouble(ctx, "blocks")
       );
-      options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
-      options.load_I = IntegerArgumentType.getInteger(ctx, "maxPackets");
-      options.update_I = options.load_I;
+      options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
+      options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
+      options.maxRoutePackets = options.maxPackets;
       return options;
    }
 
@@ -143,7 +143,7 @@ public class HClipCommand extends Command {
    }
 
    private static void init(autismclient.util.macro.HClipAction.Inner_BufferHelper options) {
-      options.update_Z = true;
+      options.chatFeedback = true;
       autismclient.util.macro.HClipAction.init(Minecraft.getInstance(), options);
    }
 

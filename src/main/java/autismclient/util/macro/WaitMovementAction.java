@@ -25,7 +25,7 @@ public class WaitMovementAction implements MacroAction {
    public void execute(Minecraft mc) {
    }
 
-   public MacroAction init_MacroAction_3() {
+   public MacroAction toWaitAction() {
       MacroAction var10000;
       switch (this.mode) {
          case POSITION:

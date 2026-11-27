@@ -25,23 +25,23 @@ public final class OnlinePlayerCollector {
          List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
          CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.Inner_DataUtil() {
             @Override
-            public boolean init_Z() {
+            public boolean isCancelled() {
                Minecraft m = Minecraft.getInstance();
                return cancelled != null && cancelled.getAsBoolean() || m == null || m.getConnection() != connection;
             }
 
             @Override
-            public boolean load_Z() {
+            public boolean isPaused() {
                return false;
             }
 
             @Override
-            public int init_I() {
+            public int maxNames() {
                return 2147483647;
             }
 
             @Override
-            public int load_I() {
+            public int maxQueries() {
                return 5000;
             }
          });

@@ -27,22 +27,22 @@ public final class NameScrapeController {
    private static volatile ClientPacketListener init_ClientPacketListen;
    private static final CommandTabNameProber.Inner_DataUtil init_be_DataUtil = new CommandTabNameProber.Inner_DataUtil() {
       @Override
-      public boolean init_Z() {
+      public boolean isCancelled() {
          return NameScrapeController.read_Z();
       }
 
       @Override
-      public boolean load_Z() {
+      public boolean isPaused() {
          return NameScrapeController.load_Z && NameScrapeController.init_Z;
       }
 
       @Override
-      public int init_I() {
+      public int maxNames() {
          return NameScrapeController.update_I;
       }
 
       @Override
-      public int load_I() {
+      public int maxQueries() {
          return 150000;
       }
 

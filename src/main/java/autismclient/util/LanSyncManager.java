@@ -767,12 +767,12 @@ public class LanSyncManager {
          long currentTick = this.resolveCurrentGameTick();
          if (currentTick >= 0L && currentTick < targetTick) {
             LanSyncManager.Inner_ConfigStore sched = new LanSyncManager.Inner_ConfigStore(executionId, targetTick);
-            if (autismclient.util.macro.ServerTickPhaseTracker.init_Z()) {
+            if (autismclient.util.macro.ServerTickPhaseTracker.isWarmedUp()) {
                long ticksOut = targetTick - currentTick;
                long now = System.nanoTime();
-               long nextTickNano = autismclient.util.macro.ServerTickPhaseTracker.init_J();
+               long nextTickNano = autismclient.util.macro.ServerTickPhaseTracker.nextTickNanos();
                long targetBoundaryNano = nextTickNano + Math.max(0L, ticksOut - 1L) * 50000000L;
-               int pingMs = autismclient.util.macro.ServerTickPhaseTracker.init_I();
+               int pingMs = autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs();
                long halfPingNano = pingMs * 1000000L / 2L;
                long fireAt = targetBoundaryNano - halfPingNano;
                if (fireAt <= now) {

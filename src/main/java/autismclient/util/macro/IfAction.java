@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class IfAction implements MacroAction {
-   public MacroCondition condition = MacroCondition.init_a();
+   public MacroCondition condition = MacroCondition.createDefault();
    public int thenSteps = 1;
    public int elseSteps = 0;
    private boolean init = true;
@@ -20,7 +20,7 @@ public class IfAction implements MacroAction {
    }
 
    public boolean init(Minecraft mc) {
-      return this.condition == null || this.condition.init_Z_Minecraft(mc);
+      return this.condition == null || this.condition.evaluate(mc);
    }
 
    public int init(List<MacroAction> actions, int headerIndex) {
@@ -48,9 +48,9 @@ public class IfAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "IF");
-      MacroCondition c = this.condition == null ? MacroCondition.init_a() : this.condition;
-      tag.put("condition", c.init_CompoundTag());
-      c.init_V_CompoundTag_Str(tag, "cond_");
+      MacroCondition c = this.condition == null ? MacroCondition.createDefault() : this.condition;
+      tag.put("condition", c.toTag());
+      c.writeFlat(tag, "cond_");
       tag.putInt("thenSteps", this.thenSteps);
       tag.putInt("elseSteps", this.elseSteps);
       tag.putBoolean("enabled", this.init);
@@ -69,7 +69,7 @@ public class IfAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String cond = this.condition == null ? "always" : this.condition.init_Str();
+      String cond = this.condition == null ? "always" : this.condition.describe();
       return "If " + cond + " → " + this.thenSteps + (this.elseSteps > 0 ? " / else " + this.elseSteps : "");
    }
 

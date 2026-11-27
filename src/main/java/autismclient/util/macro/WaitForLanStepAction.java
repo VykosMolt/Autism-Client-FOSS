@@ -31,7 +31,7 @@ public class WaitForLanStepAction implements MacroAction {
          return "Wait LAN: any @ step " + this.defaultStep;
       } else if (this.entries.size() == 1) {
          WaitForLanStepAction.Inner_DataUtil e = this.entries.get(0);
-         return "Wait LAN: " + (e.init_Str.isEmpty() ? "any" : e.init_Str) + " @ " + e.init_I;
+         return "Wait LAN: " + (e.username.isEmpty() ? "any" : e.username) + " @ " + e.step;
       } else {
          return "Wait LAN: " + this.entries.size() + " peers";
       }
@@ -62,7 +62,7 @@ public class WaitForLanStepAction implements MacroAction {
       ListTag list = new ListTag();
 
       for (WaitForLanStepAction.Inner_DataUtil entry : this.entries) {
-         list.add(entry.init_CompoundTag());
+         list.add(entry.toTag());
       }
 
       tag.put("entries", list);
@@ -90,33 +90,33 @@ public class WaitForLanStepAction implements MacroAction {
    }
 
    public static class Inner_DataUtil {
-      public String init_Str = "";
-      public int init_I = 1;
+      public String username = "";
+      public int step = 1;
 
       public Inner_DataUtil() {
       }
 
       public Inner_DataUtil(String username, int step) {
-         this.init_Str = username != null ? username : "";
-         this.init_I = Math.max(1, step);
+         this.username = username != null ? username : "";
+         this.step = Math.max(1, step);
       }
 
-      public CompoundTag init_CompoundTag() {
+      public CompoundTag toTag() {
          CompoundTag tag = new CompoundTag();
-         tag.putString("username", this.init_Str);
-         tag.putInt("step", this.init_I);
+         tag.putString("username", this.username);
+         tag.putInt("step", this.step);
          return tag;
       }
 
       public static WaitForLanStepAction.Inner_DataUtil init(CompoundTag tag) {
          WaitForLanStepAction.Inner_DataUtil e = new WaitForLanStepAction.Inner_DataUtil();
-         e.init_Str = tag.getStringOr("username", "");
-         e.init_I = tag.getIntOr("step", 1);
+         e.username = tag.getStringOr("username", "");
+         e.step = tag.getIntOr("step", 1);
          return e;
       }
 
       public String init_Str() {
-         return (this.init_Str.isEmpty() ? "Any" : this.init_Str) + " @ step " + this.init_I;
+         return (this.username.isEmpty() ? "Any" : this.username) + " @ step " + this.step;
       }
    }
 }

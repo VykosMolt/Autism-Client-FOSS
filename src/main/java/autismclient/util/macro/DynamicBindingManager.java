@@ -61,7 +61,7 @@ public final class DynamicBindingManager {
       }
    }
 
-   public static void init_V(MacroAction action, String key, String template) {
+   public static void setBinding(MacroAction action, String key, String template) {
       if (action != null && key != null && !key.isBlank()) {
          String value = template == null ? "" : template.trim();
          synchronized (init_Map) {
@@ -100,7 +100,7 @@ public final class DynamicBindingManager {
          try {
             String value = resolution.value().trim();
             if (action instanceof ToolsAction tools && binding.getKey().startsWith("toolArg.")) {
-               if (!tools.init_Z_Str_Str_2(binding.getKey(), value)) {
+               if (!tools.applyToolArgBinding(binding.getKey(), value)) {
                   return false;
                }
             } else {
@@ -264,7 +264,7 @@ public final class DynamicBindingManager {
       try {
          return Integer.parseInt(resolution.value().trim());
       } catch (NumberFormatException ignored) {
-         long compact = PayAction.init_J_Str(resolution.value());
+         long compact = PayAction.parseAmount(resolution.value());
          if (compact <= 2147483647L && compact >= -2147483648L) {
             return (int)compact;
          } else {

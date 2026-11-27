@@ -46,23 +46,23 @@ public class PacketBurstAction implements MacroAction {
             AutismSessionState.getInstance().flushDelayedPackets(mc.getConnection());
          }
 
-         int times = this.init_I_7();
+         int times = this.getClampedCount();
 
          for (int i = 0; i < times; i++) {
             if (autismclient.modules.aD.read_Z()) {
                return;
             }
 
-            this.init_Z_6(mc);
+            this.sendOnce(mc);
          }
       }
    }
 
-   int init_I_7() {
+   int getClampedCount() {
       return Math.max(1, Math.min(10000, this.count));
    }
 
-   boolean init_Z_6(Minecraft mc) {
+   boolean sendOnce(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          Packet<?> packet = this.init_Packet(mc);
          if (packet == null) {

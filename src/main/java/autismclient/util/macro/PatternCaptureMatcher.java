@@ -20,7 +20,7 @@ public final class PatternCaptureMatcher {
    private static final char load_C = '\ue001';
    private static final ConcurrentHashMap<String, Pattern> init_ConcurrentHashMap = new ConcurrentHashMap<>();
 
-   public static Pattern init_Pattern(String regex) {
+   public static Pattern compileCached(String regex) {
       Pattern cached = init_ConcurrentHashMap.get(regex);
       if (cached != null) {
          return cached;
@@ -114,7 +114,7 @@ public final class PatternCaptureMatcher {
       init(regex, capturePattern.substring(cursor));
 
       try {
-         Matcher matcher = init_Pattern(regex.toString()).matcher(candidate);
+         Matcher matcher = compileCached(regex.toString()).matcher(candidate);
          if (!matcher.find()) {
             return Optional.empty();
          }
@@ -146,7 +146,7 @@ public final class PatternCaptureMatcher {
       List<String> names = new ArrayList<>(init(PatternCaptureMatcher.MatchMode.REGEX, regex));
 
       try {
-         Matcher matcher = init_Pattern(regex).matcher(sourceCandidate);
+         Matcher matcher = compileCached(regex).matcher(sourceCandidate);
          if (!matcher.find()) {
             return Optional.empty();
          }
@@ -204,10 +204,10 @@ public final class PatternCaptureMatcher {
       REGEX;
    }
 
-   public record CaptureResult(String init_Str, Map<String, MacroVarValue> init_Map) {
+   public record CaptureResult(String init_Str, Map<String, MacroVarValue> variables) {
       public CaptureResult {
          init_Str = init_Str == null ? "" : init_Str;
-         init_Map = init_Map == null ? Map.of() : Map.copyOf(init_Map);
+         variables = variables == null ? Map.of() : Map.copyOf(variables);
       }
    }
 }

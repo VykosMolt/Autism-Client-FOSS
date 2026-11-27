@@ -101,14 +101,14 @@ public class WaitForGuiAction implements MacroAction {
          }
       } else {
          Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
-         return matched.isEmpty() ? Optional.empty() : Optional.of(this.init(screen, title, matched.get().init_Map()));
+         return matched.isEmpty() ? Optional.empty() : Optional.of(this.init(screen, title, matched.get().variables()));
       }
    }
 
    private Optional<Map<String, MacroVarValue>> init() {
       CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
       boolean anyType = this.guiType == null || this.guiType.isBlank() || "ANY".equalsIgnoreCase(this.guiType);
-      if (snapshot != null && (anyType || GuiScreenMatcher.init_Z(this.guiType))) {
+      if (snapshot != null && (anyType || GuiScreenMatcher.isCustomMenuType(this.guiType))) {
          String title = snapshot.title();
          Map<String, MacroVarValue> captures = Map.of();
          if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
@@ -122,7 +122,7 @@ public class WaitForGuiAction implements MacroAction {
                return Optional.empty();
             }
 
-            captures = matched.get().init_Map();
+            captures = matched.get().variables();
          }
 
          Map<String, MacroVarValue> values = new LinkedHashMap<>(captures);
@@ -141,7 +141,7 @@ public class WaitForGuiAction implements MacroAction {
       if (this.saveAs != null && !this.saveAs.isBlank()) {
          Map<String, MacroVarValue> properties = new LinkedHashMap<>();
          properties.put("title", MacroVarValue.ofText(title));
-         properties.put("type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen)));
+         properties.put("type", MacroVarValue.ofText(GuiScreenMatcher.screenTypeName(screen)));
          values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, properties));
       }
 

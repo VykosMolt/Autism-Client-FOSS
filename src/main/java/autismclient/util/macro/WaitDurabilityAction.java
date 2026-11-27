@@ -30,13 +30,13 @@ public class WaitDurabilityAction implements MacroAction {
          boolean var10000;
          switch (this.targetMode) {
             case HELD:
-               var10000 = this.init_Z(mc.player.getMainHandItem()) || this.init_Z(mc.player.getOffhandItem());
+               var10000 = this.matches(mc.player.getMainHandItem()) || this.matches(mc.player.getOffhandItem());
                break;
             case ITEM:
                var10000 = this.load(mc);
                break;
             case SLOT:
-               var10000 = this.init_Z(this.init(mc, this.slot));
+               var10000 = this.matches(this.init(mc, this.slot));
                break;
             default:
                throw new MatchException(null, null);
@@ -55,7 +55,7 @@ public class WaitDurabilityAction implements MacroAction {
       }
 
       if (!target.hasItemFilter() && !target.hasSlot()) {
-         return this.init_Z(mc.player.getMainHandItem()) || this.init_Z(mc.player.getOffhandItem());
+         return this.matches(mc.player.getMainHandItem()) || this.matches(mc.player.getOffhandItem());
       }
 
       MacroItemTarget itemOnly = target.copy();
@@ -67,12 +67,12 @@ public class WaitDurabilityAction implements MacroAction {
 
       for (int i = 0; i < size; i++) {
          ItemStack stack = mc.player.getInventory().getItem(i);
-         if (itemOnly.matchScore(stack, i) >= 0 && this.init_Z(stack)) {
+         if (itemOnly.matchScore(stack, i) >= 0 && this.matches(stack)) {
             return true;
          }
       }
 
-      return itemOnly.matchScore(mc.player.getOffhandItem(), 40) >= 0 && this.init_Z(mc.player.getOffhandItem());
+      return itemOnly.matchScore(mc.player.getOffhandItem(), 40) >= 0 && this.matches(mc.player.getOffhandItem());
    }
 
    private ItemStack init(Minecraft mc, int visibleSlot) {
@@ -89,7 +89,7 @@ public class WaitDurabilityAction implements MacroAction {
       return mc.player.getInventory().getItem(index);
    }
 
-   public boolean init_Z(ItemStack stack) {
+   public boolean matches(ItemStack stack) {
       if (stack != null && !stack.isEmpty() && stack.isDamageableItem()) {
          int metric = this.init_I(stack);
          int target = this.load(stack);

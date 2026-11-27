@@ -24,7 +24,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
 
-   public int init_I_I_4(int index) {
+   public int getItemCount(int index) {
       if (index >= 0 && index < this.itemCounts.size()) {
          return Math.max(0, this.itemCounts.get(index));
       } else {
@@ -80,7 +80,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
             for (int ei = 0; ei < targets.size(); ei++) {
                MacroItemTarget entryTarget = this.init_ArrayUtil_I_2(ei).resolveTemplates(mc);
                if (entryTarget != null) {
-                  int count = this.init_I_I_4(ei);
+                  int count = this.getItemCount(ei);
                   String entryName = init_Str_Str_3(entryTarget.toSpecString());
                   int configuredSlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                   if (configuredSlot >= 0 && !entryName.isEmpty()) {
@@ -193,7 +193,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -203,7 +203,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -213,17 +213,17 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -251,7 +251,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       tag.putString("guiName", this.guiName);
       tag.putBoolean("useHandlerSlots", this.useHandlerSlots);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -289,11 +289,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
 
       while (this.itemCounts.size() < this.itemNames.size()) {
-         this.itemCounts.add(this.init_I_I_4(this.itemCounts.size()));
+         this.itemCounts.add(this.getItemCount(this.itemCounts.size()));
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -303,7 +303,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override
@@ -311,7 +311,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       List<MacroItemTarget> targets = this.load();
       if (targets.isEmpty()) {
          String untargeted = this.mode == DropAction.Inner_DataUtil.ALL ? "Drop Entire Inventory" : "Drop Held Item x" + Math.max(1, this.dropCount);
-         return untargeted + GuiWaitAware.init_Str_aP(this);
+         return untargeted + GuiWaitAware.waitSuffix(this);
       }
 
       String e0 = targets.get(0).toSpecString();
@@ -331,7 +331,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
 
       String base = this.mode == DropAction.Inner_DataUtil.ALL ? "Drop All [" + first + "]" : "Drop [" + first + "]";
-      return base + GuiWaitAware.init_Str_aP(this);
+      return base + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

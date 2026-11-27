@@ -16,13 +16,13 @@ public class AutismKillAuraRotationMixin {
    @ModifyExpressionValue(method = "sendChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getYRot()F"))
    private float autism$killAuraSilentYaw(float original) {
       LocalPlayer self = (LocalPlayer)(Object)this;
-      return MacroAimController.init_Z() ? MacroAimController.init(self, original) : SilentMovementCoordinator.getPlayerYaw(self, original);
+      return MacroAimController.isActive() ? MacroAimController.init(self, original) : SilentMovementCoordinator.getPlayerYaw(self, original);
    }
 
    @ModifyExpressionValue(method = "sendChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getXRot()F"))
    private float autism$killAuraSilentPitch(float original) {
       LocalPlayer self = (LocalPlayer)(Object)this;
-      return MacroAimController.init_Z() ? MacroAimController.load(self, original) : SilentMovementCoordinator.getPlayerPitch(self, original);
+      return MacroAimController.isActive() ? MacroAimController.load(self, original) : SilentMovementCoordinator.getPlayerPitch(self, original);
    }
 
    @ModifyExpressionValue(
@@ -36,7 +36,7 @@ public class AutismKillAuraRotationMixin {
          return original;
       }
 
-      if (MacroAimController.init_Z()) {
+      if (MacroAimController.isActive()) {
          return MacroAimController.init((LocalPlayer)camera, original);
       }
 

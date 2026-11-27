@@ -18,7 +18,7 @@ public final class PingSpoofModule extends Module {
 
    @Override
    public void onDisable() {
-      autismclient.util.macro.PingSpoofScheduler.read_V();
+      autismclient.util.macro.PingSpoofScheduler.disable();
    }
 
    @Override

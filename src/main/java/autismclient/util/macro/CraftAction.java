@@ -16,16 +16,16 @@ public class CraftAction implements MacroAction {
       this.entries.clear();
    }
 
-   public boolean init_Z_5() {
-      return this.entries.stream().anyMatch(CraftAction.Inner_DataUtil::init_Z);
+   public boolean hasValidEntry() {
+      return this.entries.stream().anyMatch(CraftAction.Inner_DataUtil::isValid);
    }
 
-   public List<CraftAction.Inner_DataUtil> init_List_6() {
+   public List<CraftAction.Inner_DataUtil> copyEntries() {
       List<CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.entries.size());
 
       for (CraftAction.Inner_DataUtil entry : this.entries) {
          if (entry != null) {
-            copies.add(entry.init_SyncManager_DataUt());
+            copies.add(entry.copy());
          }
       }
 
@@ -37,7 +37,7 @@ public class CraftAction implements MacroAction {
       if (values != null) {
          for (CraftAction.Inner_DataUtil entry : values) {
             if (entry != null) {
-               this.entries.add(entry.init_SyncManager_DataUt());
+               this.entries.add(entry.copy());
             }
          }
       }
@@ -47,28 +47,28 @@ public class CraftAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (mc.player == null || mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("No network connection!");
-      } else if (!this.init_Z_5()) {
+      } else if (!this.hasValidEntry()) {
          AutismClientMessaging.sendPrefixed("No craft recipe selected!");
       } else {
          for (CraftAction.Inner_DataUtil entry : this.entries) {
-            if (entry != null && entry.init_Z()) {
-               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.findOptionByKey(mc, entry.init_Str);
+            if (entry != null && entry.isValid()) {
+               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.findOptionByKey(mc, entry.recipeKey);
                if (option == null) {
-                  option = autismclient.util.AutoCraftingEngine.findOptionById(mc, entry.init_I);
+                  option = autismclient.util.AutoCraftingEngine.findOptionById(mc, entry.recipeId);
                }
 
                if (option == null) {
-                  AutismClientMessaging.sendPrefixed("§cRecipe not found: " + entry.load_Str);
+                  AutismClientMessaging.sendPrefixed("§cRecipe not found: " + entry.resultName);
                   return;
                }
 
-               int desiredAmount = autismclient.util.AutoCraftingEngine.resolveTargetAmount(option, entry.read_I, entry.init_Z);
+               int desiredAmount = autismclient.util.AutoCraftingEngine.resolveTargetAmount(option, entry.amount, entry.useMaxAmount);
                if (desiredAmount <= 0) {
-                  AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.load_Str + ".");
+                  AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.resultName + ".");
                   return;
                }
 
-               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.craft(mc, entry.init_Str, entry.init_I, desiredAmount);
+               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.craft(mc, entry.recipeKey, entry.recipeId, desiredAmount);
                if (!result.success) {
                   AutismClientMessaging.sendPrefixed("§c" + result.message);
                   return;
@@ -85,8 +85,8 @@ public class CraftAction implements MacroAction {
       ListTag entryTags = new ListTag();
 
       for (CraftAction.Inner_DataUtil entry : this.entries) {
-         if (entry != null && entry.init_Z()) {
-            entryTags.add(entry.init_CompoundTag());
+         if (entry != null && entry.isValid()) {
+            entryTags.add(entry.toTag());
          }
       }
 
@@ -102,7 +102,7 @@ public class CraftAction implements MacroAction {
             for (Tag element : tag.getList("entries").orElse(new ListTag())) {
                if (element instanceof CompoundTag entryTag) {
                   CraftAction.Inner_DataUtil entry = CraftAction.Inner_DataUtil.init(entryTag);
-                  if (entry.init_Z()) {
+                  if (entry.isValid()) {
                      this.entries.add(entry);
                   }
                }
@@ -111,7 +111,7 @@ public class CraftAction implements MacroAction {
 
          if (this.entries.isEmpty()) {
             CraftAction.Inner_DataUtil legacyEntry = CraftAction.Inner_DataUtil.init(tag);
-            if (legacyEntry.init_Z()) {
+            if (legacyEntry.isValid()) {
                this.entries.add(legacyEntry);
             }
          }
@@ -125,7 +125,7 @@ public class CraftAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      if (!this.init_Z_5()) {
+      if (!this.hasValidEntry()) {
          return "Craft (empty)";
       }
 
@@ -134,7 +134,7 @@ public class CraftAction implements MacroAction {
          return "Craft " + first.init_Str();
       }
 
-      String firstName = first.load_Str != null && !first.load_Str.isBlank() ? first.load_Str : "item";
+      String firstName = first.resultName != null && !first.resultName.isBlank() ? first.resultName : "item";
       return "Craft " + firstName + " (+" + (this.entries.size() - 1) + ")";
    }
 
@@ -144,55 +144,55 @@ public class CraftAction implements MacroAction {
    }
 
    public static final class Inner_DataUtil {
-      public int init_I = -1;
-      public String init_Str = "";
-      public String load_Str = "";
+      public int recipeId = -1;
+      public String recipeKey = "";
+      public String resultName = "";
       public String read_Str = "";
       public int load_I = 1;
-      public int read_I = 1;
-      public boolean init_Z = false;
+      public int amount = 1;
+      public boolean useMaxAmount = false;
 
-      public CraftAction.Inner_DataUtil init_SyncManager_DataUt() {
+      public CraftAction.Inner_DataUtil copy() {
          CraftAction.Inner_DataUtil copy = new CraftAction.Inner_DataUtil();
-         copy.init_I = this.init_I;
-         copy.init_Str = this.init_Str;
-         copy.load_Str = this.load_Str;
+         copy.recipeId = this.recipeId;
+         copy.recipeKey = this.recipeKey;
+         copy.resultName = this.resultName;
          copy.read_Str = this.read_Str;
          copy.load_I = this.load_I;
-         copy.read_I = this.read_I;
-         copy.init_Z = this.init_Z;
+         copy.amount = this.amount;
+         copy.useMaxAmount = this.useMaxAmount;
          return copy;
       }
 
-      public boolean init_Z() {
-         return (this.init_I >= 0 || !this.init_Str.isBlank()) && !this.load_Str.isBlank();
+      public boolean isValid() {
+         return (this.recipeId >= 0 || !this.recipeKey.isBlank()) && !this.resultName.isBlank();
       }
 
       public String init_Str() {
-         if (!this.init_Z()) {
+         if (!this.isValid()) {
             return "unset";
          } else {
-            return this.init_Z ? this.load_Str + " [Max]" : this.load_Str + " x" + Math.max(1, this.read_I);
+            return this.useMaxAmount ? this.resultName + " [Max]" : this.resultName + " x" + Math.max(1, this.amount);
          }
       }
 
-      public Component init_Component() {
+      public Component displayName() {
          Component rich = MacroExecutor.deserializeComponentJson(this.read_Str);
-         return rich != null && !rich.getString().isBlank() ? rich.copy() : Component.literal(this.load_Str == null ? "" : this.load_Str);
+         return rich != null && !rich.getString().isBlank() ? rich.copy() : Component.literal(this.resultName == null ? "" : this.resultName);
       }
 
-      public CompoundTag init_CompoundTag() {
+      public CompoundTag toTag() {
          CompoundTag tag = new CompoundTag();
-         tag.putInt("recipeId", this.init_I);
-         tag.putString("recipeKey", this.init_Str == null ? "" : this.init_Str);
-         tag.putString("resultName", this.load_Str == null ? "" : this.load_Str);
+         tag.putInt("recipeId", this.recipeId);
+         tag.putString("recipeKey", this.recipeKey == null ? "" : this.recipeKey);
+         tag.putString("resultName", this.resultName == null ? "" : this.resultName);
          if (this.read_Str != null && !this.read_Str.isBlank()) {
             tag.putString("resultNameJson", this.read_Str);
          }
 
          tag.putInt("resultCount", Math.max(1, this.load_I));
-         tag.putInt("amount", Math.max(1, this.read_I));
-         tag.putBoolean("useMaxAmount", this.init_Z);
+         tag.putInt("amount", Math.max(1, this.amount));
+         tag.putBoolean("useMaxAmount", this.useMaxAmount);
          return tag;
       }
 
@@ -202,13 +202,13 @@ public class CraftAction implements MacroAction {
             return entry;
          }
 
-         entry.init_I = tag.getIntOr("recipeId", -1);
-         entry.init_Str = tag.getStringOr("recipeKey", "");
-         entry.load_Str = tag.getStringOr("resultName", "");
+         entry.recipeId = tag.getIntOr("recipeId", -1);
+         entry.recipeKey = tag.getStringOr("recipeKey", "");
+         entry.resultName = tag.getStringOr("resultName", "");
          entry.read_Str = tag.getStringOr("resultNameJson", "");
          entry.load_I = Math.max(1, tag.getIntOr("resultCount", 1));
-         entry.read_I = Math.max(1, tag.getIntOr("amount", 1));
-         entry.init_Z = tag.getBooleanOr("useMaxAmount", false);
+         entry.amount = Math.max(1, tag.getIntOr("amount", 1));
+         entry.useMaxAmount = tag.getBooleanOr("useMaxAmount", false);
          return entry;
       }
 
@@ -218,13 +218,13 @@ public class CraftAction implements MacroAction {
             return entry;
          }
 
-         entry.init_I = option.recipeKeyHash;
-         entry.init_Str = option.recipeKey;
-         entry.load_Str = option.outputName;
+         entry.recipeId = option.recipeKeyHash;
+         entry.recipeKey = option.recipeKey;
+         entry.resultName = option.outputName;
          entry.read_Str = MacroExecutor.serializeComponentJson(option.outputHoverName);
          entry.load_I = Math.max(1, option.outputStack.getCount());
-         entry.read_I = Math.max(1, amount);
-         entry.init_Z = useMaxAmount;
+         entry.amount = Math.max(1, amount);
+         entry.useMaxAmount = useMaxAmount;
          return entry;
       }
    }

@@ -111,10 +111,10 @@ public final class PingSpoofScheduler {
    }
 
    public static void init(int delayMs, boolean realIncoming, boolean realOutgoing) {
-      init_V_J(0L, delayMs, realIncoming, realOutgoing);
+      setRunOverride(0L, delayMs, realIncoming, realOutgoing);
    }
 
-   public static void init_V_J(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing) {
+   public static void setRunOverride(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing) {
       init_ConcurrentHashMap.put(ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, 0L, true));
       write_Z = true;
    }
@@ -128,7 +128,7 @@ public final class PingSpoofScheduler {
       flush();
    }
 
-   public static void load_V() {
+   public static void clearRunOverrides() {
       init_ConcurrentHashMap.clear();
       flush();
    }
@@ -141,7 +141,7 @@ public final class PingSpoofScheduler {
       write_Z = true;
    }
 
-   public static void read_V() {
+   public static void disable() {
       init_Z = false;
       flush();
    }
@@ -184,7 +184,7 @@ public final class PingSpoofScheduler {
       }
    }
 
-   public static boolean load_Z() {
+   public static boolean isRealOutgoing() {
       if (!write_Z) {
          return false;
       }
@@ -203,7 +203,7 @@ public final class PingSpoofScheduler {
       }
    }
 
-   public static boolean read_Z() {
+   public static boolean isActive() {
       return init_I() >= 0;
    }
 
@@ -251,7 +251,7 @@ public final class PingSpoofScheduler {
       load_AtomicInteger.set(0);
    }
 
-   public static boolean init_Z(Packet<?> packet) {
+   public static boolean interceptIncoming(Packet<?> packet) {
       if (auditIsDisconnect(packet)) {
          write();
          return false;
@@ -280,7 +280,7 @@ public final class PingSpoofScheduler {
       }
    }
 
-   public static boolean load_Z(Packet<?> packet) {
+   public static boolean interceptOutgoing(Packet<?> packet) {
       if (read_Z(packet)) {
          return false;
       }
@@ -303,7 +303,7 @@ public final class PingSpoofScheduler {
          return true;
       }
 
-      if (delay <= 0 || !load_Z()) {
+      if (delay <= 0 || !isRealOutgoing()) {
          return false;
       }
 
@@ -345,7 +345,7 @@ public final class PingSpoofScheduler {
 
          if (!load_Queue.isEmpty()) {
             int delay = init_I();
-            boolean flushAll = delay < 0 || !load_Z() || outgoingQueued.get() >= 8192;
+            boolean flushAll = delay < 0 || !isRealOutgoing() || outgoingQueued.get() >= 8192;
             long threshold = flushAll ? 0L : delay;
             int budget = flushAll ? 2147483647 : 1024;
 

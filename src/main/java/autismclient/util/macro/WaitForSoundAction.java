@@ -36,12 +36,12 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    @Override
    public String getDisplayName() {
       if (this.soundIds.isEmpty()) {
-         return "Wait Sound: Any" + GuiWaitAware.init_Str_aP(this);
+         return "Wait Sound: Any" + GuiWaitAware.waitSuffix(this);
       }
 
       String first = RegistryDisplayNameCache.write(this.soundIds.get(0));
       String s = this.soundIds.size() == 1 ? first : first + " (+" + (this.soundIds.size() - 1) + ")";
-      return "Wait Sound: " + s + GuiWaitAware.init_Str_aP(this);
+      return "Wait Sound: " + s + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
@@ -60,7 +60,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -70,7 +70,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -80,12 +80,12 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.waitGuiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.waitGuiName = name;
    }
 
@@ -123,8 +123,8 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
          }
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.waitGuiName = tag.getStringOr("waitGuiName", "");
       this.checkDistance = tag.getBooleanOr("checkDistance", false);
       this.maxDistance = tag.getDoubleOr("maxDistance", 16.0);

@@ -56,7 +56,7 @@ final class AiWorldReaders {
       JsonArray rows = new JsonArray();
 
       try {
-         for (autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line : autismclient.util.macro.CaptureValueAction.init_List_Minecraft_2(mc)) {
+         for (autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line : autismclient.util.macro.CaptureValueAction.sidebarLines(mc)) {
             if (rows.size() >= 15) {
                break;
             }
@@ -65,7 +65,7 @@ final class AiWorldReaders {
                rows.add(
                   AiJson.objectOf(
                      "row",
-                     line.init_I(),
+                     line.row(),
                      "objective",
                      init(line.load(), 128),
                      "objectiveTitle",

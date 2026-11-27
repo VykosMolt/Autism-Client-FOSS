@@ -313,7 +313,7 @@ public final class ModuleRuntimeManager {
             bK.load("join.lanSync.tick", perf);
          }
 
-         if (!hidden && autismclient.util.macro.MacroWaitRegistry.init_Z()) {
+         if (!hidden && autismclient.util.macro.MacroWaitRegistry.hasPendingWaits()) {
             long perf = bK.read_J();
             autismclient.util.macro.MacroWaitRegistry.load(MC);
             bK.load("join.macroConditions.tick", perf);
@@ -495,7 +495,7 @@ public final class ModuleRuntimeManager {
             || this.needsServerInfoObservation()
             || al.load_Z()
             || AddonEvents.hasPacketListeners()
-            || autismclient.util.macro.PacketGateManager.init_Z()
+            || autismclient.util.macro.PacketGateManager.hasActiveGates()
             || MacroExecutor.needsPacketEvents();
       } else {
          return false;
@@ -525,7 +525,7 @@ public final class ModuleRuntimeManager {
                || serverInfoObservation
                || al.load_Z()
                || AddonEvents.hasPacketListeners()
-               || autismclient.util.macro.PacketGateManager.init_Z()
+               || autismclient.util.macro.PacketGateManager.hasActiveGates()
                || MacroExecutor.needsPacketEvents()
          );
       return !normalPath && !passivePayloadCapture && !loggerCapture && !serverInfoObservation
@@ -1746,7 +1746,7 @@ public final class ModuleRuntimeManager {
          } else {
             boolean active = false;
             if (this.isXCarryEnabled() && MC.player != null && MC.player.inventoryMenu != null) {
-               active = autismclient.util.macro.XCarryAction.init_Z_InventoryMenu_Z(MC.player.inventoryMenu, true);
+               active = autismclient.util.macro.XCarryAction.hasCarriedItems(MC.player.inventoryMenu, true);
             }
 
             shared.setXCarryActive(active);

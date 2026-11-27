@@ -41,7 +41,7 @@ public class LookAtBlockAction implements MacroAction {
       this.targetMode = LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
    }
 
-   public static String init_Str_Entity(Entity entity) {
+   public static String entityRef(Entity entity) {
       if (entity == null) {
          return "";
       }
@@ -51,11 +51,11 @@ public class LookAtBlockAction implements MacroAction {
       return "~" + entity.getStringUUID() + "~" + typeId + "~" + displayName;
    }
 
-   public double init_D_2() {
-      return RotateAction.init_D(this.smoothness);
+   public double getRotationStep() {
+      return RotateAction.stepForSmoothness(this.smoothness);
    }
 
-   public LookAtBlockAction.Inner_DataUtil init_ValueSink_DataUtil_Minecraft(Minecraft mc) {
+   public LookAtBlockAction.Inner_DataUtil resolveTarget(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          LookAtBlockAction.Inner_DataUtil var10000;
          switch (this.targetMode) {
@@ -81,7 +81,7 @@ public class LookAtBlockAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         LookAtBlockAction.Inner_DataUtil target = this.init_ValueSink_DataUtil_Minecraft(mc);
+         LookAtBlockAction.Inner_DataUtil target = this.resolveTarget(mc);
          if (target != null && !this.smooth) {
             mc.player.setYRot(target.init());
             mc.player.setXRot(target.load());
@@ -113,7 +113,7 @@ public class LookAtBlockAction implements MacroAction {
       tag.put("entityIds", entities);
       tag.putDouble("searchRadius", this.searchRadius);
       tag.putBoolean("smooth", this.smooth);
-      tag.putInt("smoothness", RotateAction.init_I(this.smoothness));
+      tag.putInt("smoothness", RotateAction.clampSmoothness(this.smoothness));
       tag.putBoolean("waitForCompletion", this.waitForCompletion);
       tag.putBoolean("enabled", this.init);
       return tag;
@@ -165,7 +165,7 @@ public class LookAtBlockAction implements MacroAction {
 
       this.searchRadius = Math.max(1.0, tag.getDoubleOr("searchRadius", 16.0));
       this.smooth = tag.getBooleanOr("smooth", false);
-      this.smoothness = RotateAction.init_I(tag.getIntOr("smoothness", 6));
+      this.smoothness = RotateAction.clampSmoothness(tag.getIntOr("smoothness", 6));
       this.waitForCompletion = tag.getBooleanOr("waitForCompletion", true);
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);

@@ -1959,10 +1959,10 @@ public final class AutismHudManager {
       line.init(Integer.toString(init_Minecraft.getFps()), valueColor);
       line.init(" ", muted);
       line.init("TPS: ", labelColor);
-      line.init(String.format(Locale.ROOT, "%.1f", autismclient.util.macro.ServerTickPhaseTracker.init_D()), valueColor);
+      line.init(String.format(Locale.ROOT, "%.1f", autismclient.util.macro.ServerTickPhaseTracker.getTps()), valueColor);
       line.init(" ", muted);
       line.init("Ping: ", labelColor);
-      line.init(autismclient.util.macro.ServerTickPhaseTracker.init_I() + " ms", valueColor);
+      line.init(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs() + " ms", valueColor);
       return line;
    }
 
@@ -2166,7 +2166,7 @@ public final class AutismHudManager {
    }
 
    private static AutismHudManager.ColoredTextLine sync_al_NetHelper() {
-      double tps = autismclient.util.macro.ServerTickPhaseTracker.init_D();
+      double tps = autismclient.util.macro.ServerTickPhaseTracker.getTps();
       if (tps < flush_D || System.currentTimeMillis() - set_J > 5000L) {
          flush_D = tps;
          set_J = System.currentTimeMillis();
@@ -2189,7 +2189,7 @@ public final class AutismHudManager {
    }
 
    private static AutismHudManager.ColoredTextLine flush_al_NetHelper() {
-      int ping = autismclient.util.macro.ServerTickPhaseTracker.init_I();
+      int ping = autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs();
       int valueColor = load_I_Str_2("ping", "value-color", -791321);
       if (init_Z_Str_Str("ping", "ping-color-threshold")) {
          valueColor = ping <= 50 ? -12588930 : (ping <= 150 ? -10752 : -50373);

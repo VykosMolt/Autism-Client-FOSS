@@ -17,22 +17,22 @@ public class RotateAction implements MacroAction {
       this.yaw = yaw;
       this.pitch = pitch;
       this.smooth = smooth;
-      this.smoothness = init_I(smoothness);
+      this.smoothness = clampSmoothness(smoothness);
    }
 
-   public static int init_I(int value) {
+   public static int clampSmoothness(int value) {
       return Math.max(1, Math.min(10, value));
    }
 
-   public static double init_D(int smoothness) {
+   public static double stepForSmoothness(int smoothness) {
       double minStep = 0.5;
       double maxStep = 9.05;
-      double normalized = (10.0 - init_I(smoothness)) / 9.0;
+      double normalized = (10.0 - clampSmoothness(smoothness)) / 9.0;
       return minStep * Math.pow(maxStep / minStep, normalized);
    }
 
    public double init() {
-      return init_D(this.smoothness);
+      return stepForSmoothness(this.smoothness);
    }
 
    @Override
@@ -55,7 +55,7 @@ public class RotateAction implements MacroAction {
       tag.putFloat("yaw", this.yaw);
       tag.putFloat("pitch", this.pitch);
       tag.putBoolean("smooth", this.smooth);
-      tag.putInt("smoothness", init_I(this.smoothness));
+      tag.putInt("smoothness", clampSmoothness(this.smoothness));
       tag.putBoolean("waitForCompletion", this.waitForCompletion);
       return tag;
    }
@@ -75,7 +75,7 @@ public class RotateAction implements MacroAction {
       }
 
       if (tag.contains("smoothness")) {
-         this.smoothness = init_I(tag.getIntOr("smoothness", 6));
+         this.smoothness = clampSmoothness(tag.getIntOr("smoothness", 6));
       } else {
          this.smoothness = 6;
       }

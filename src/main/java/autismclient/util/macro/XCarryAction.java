@@ -53,11 +53,11 @@ public class XCarryAction implements MacroAction {
    public final List<Integer> entryAmounts = new ArrayList<>();
    private boolean init_Z = true;
 
-   public static int[] init_IArr() {
+   public static int[] destinationValues() {
       return (int[])init_IArr.clone();
    }
 
-   public static List<String> init_List_10() {
+   public static List<String> destinationLabels() {
       ArrayList<String> labels = new ArrayList<>(init_IArr.length);
 
       for (int value : init_IArr) {
@@ -67,7 +67,7 @@ public class XCarryAction implements MacroAction {
       return labels;
    }
 
-   public static int init_I_I_6(int destination) {
+   public static int destinationIndex(int destination) {
       for (int i = 0; i < init_IArr.length; i++) {
          if (init_IArr[i] == destination) {
             return i;
@@ -132,7 +132,7 @@ public class XCarryAction implements MacroAction {
       this.useOffhand = true;
    }
 
-   public int load_I_I(int entryIndex) {
+   public int getEntryDestination(int entryIndex) {
       if (entryIndex >= 0 && entryIndex < this.entryDestinations.size()) {
          Integer v = this.entryDestinations.get(entryIndex);
          return v == null ? -2147483648 : v;
@@ -149,7 +149,7 @@ public class XCarryAction implements MacroAction {
       this.entryDestinations.set(entryIndex, destSlotId);
    }
 
-   public void init_V_I_2(int targetSize) {
+   public void resizeEntryDestinations(int targetSize) {
       while (this.entryDestinations.size() < targetSize) {
          this.entryDestinations.add(-2147483648);
       }
@@ -159,7 +159,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public XCarryAction.Inner_DataUtil init_aQ_DataUtil_I(int entryIndex) {
+   public XCarryAction.Inner_DataUtil getEntryAmountMode(int entryIndex) {
       if (entryIndex >= 0 && entryIndex < this.entryAmountModes.size()) {
          XCarryAction.Inner_DataUtil mode = this.entryAmountModes.get(entryIndex);
          return mode == null ? XCarryAction.Inner_DataUtil.FULL_STK : mode;
@@ -169,11 +169,11 @@ public class XCarryAction implements MacroAction {
    }
 
    public void init_V_I_aQ_DataUtil(int entryIndex, XCarryAction.Inner_DataUtil mode) {
-      this.load_V_I(entryIndex + 1);
+      this.resizeEntryAmounts(entryIndex + 1);
       this.entryAmountModes.set(entryIndex, mode == null ? XCarryAction.Inner_DataUtil.FULL_STK : mode);
    }
 
-   public int read_I_I(int entryIndex) {
+   public int getEntryAmount(int entryIndex) {
       if (entryIndex >= 0 && entryIndex < this.entryAmounts.size()) {
          Integer amount = this.entryAmounts.get(entryIndex);
          return Math.max(1, amount == null ? 1 : amount);
@@ -183,11 +183,11 @@ public class XCarryAction implements MacroAction {
    }
 
    public void load(int entryIndex, int amount) {
-      this.load_V_I(entryIndex + 1);
+      this.resizeEntryAmounts(entryIndex + 1);
       this.entryAmounts.set(entryIndex, Math.max(1, amount));
    }
 
-   public void load_V_I(int targetSize) {
+   public void resizeEntryAmounts(int targetSize) {
       while (this.entryAmountModes.size() < targetSize) {
          this.entryAmountModes.add(XCarryAction.Inner_DataUtil.FULL_STK);
       }
@@ -209,7 +209,7 @@ public class XCarryAction implements MacroAction {
       return Math.max(0, Math.min(10, ticks));
    }
 
-   public Set<Integer> init_Set() {
+   public Set<Integer> carrySlotIds() {
       LinkedHashSet<Integer> s = new LinkedHashSet<>();
       s.add(1);
       s.add(2);
@@ -225,12 +225,12 @@ public class XCarryAction implements MacroAction {
    }
 
    private List<Integer> load_List_4() {
-      return new ArrayList<>(this.init_Set());
+      return new ArrayList<>(this.carrySlotIds());
    }
 
    private Set<Integer> load_Set() {
       LinkedHashSet<Integer> s = new LinkedHashSet<>();
-      s.addAll(this.init_Set());
+      s.addAll(this.carrySlotIds());
       return s;
    }
 
@@ -238,7 +238,7 @@ public class XCarryAction implements MacroAction {
       return slotId == 0;
    }
 
-   public void init_V_12() {
+   public void enableCarry() {
       this.init_V_Z_2(this.carryCursor);
    }
 
@@ -293,7 +293,7 @@ public class XCarryAction implements MacroAction {
             } else {
                AbstractContainerMenu containerHandler = mc.player.containerMenu;
                if (this.mode == XCarryAction.Inner_StreamUtil.PUT_IN) {
-                  for (int slotId : this.init_List_AbstractContainerM_InventoryMenu(containerHandler, playerHandler)) {
+                  for (int slotId : this.containerSlotIds(containerHandler, playerHandler)) {
                      mc.gameMode.handleContainerInput(containerHandler.containerId, slotId, 0, ContainerInput.QUICK_MOVE, mc.player);
                   }
                }
@@ -322,7 +322,7 @@ public class XCarryAction implements MacroAction {
       this.load_V_4();
       List<MacroItemTarget> targets = this.write();
       if (targets.isEmpty()) {
-         if (init_Z_InventoryMenu_Z(handler, true)) {
+         if (hasCarriedItems(handler, true)) {
             this.init_V_InventoryMenu_Z(handler, true);
          }
       } else {
@@ -331,7 +331,7 @@ public class XCarryAction implements MacroAction {
          boolean cursorClaimed = false;
 
          for (int i = 0; i < targets.size(); i++) {
-            if (this.load_I_I(i) == -1 && !cursorClaimed && handler.getCarried().isEmpty() && this.load(handler, mc, i, i + 1)) {
+            if (this.getEntryDestination(i) == -1 && !cursorClaimed && handler.getCarried().isEmpty() && this.load(handler, mc, i, i + 1)) {
                moved = true;
                cursorClaimed = true;
             }
@@ -340,7 +340,7 @@ public class XCarryAction implements MacroAction {
          int safety = 0;
 
          while (safety++ < 512) {
-            XCarryAction.Inner_CachePool move = this.init_aQ_CachePool_InventoryMenu(handler);
+            XCarryAction.Inner_CachePool move = this.nextMove(handler);
             if (move == null || !init(handler, mc, move.init, move.load, move.read)) {
                break;
             }
@@ -353,7 +353,7 @@ public class XCarryAction implements MacroAction {
             boolean anyExplicit = false;
 
             for (int i = 0; i < targets.size(); i++) {
-               int dest = this.load_I_I(i);
+               int dest = this.getEntryDestination(i);
                if (dest != -2147483648 && dest != -1) {
                   anyExplicit = true;
                   break;
@@ -415,30 +415,30 @@ public class XCarryAction implements MacroAction {
       return false;
    }
 
-   public XCarryAction.Inner_CachePool init_aQ_CachePool_InventoryMenu(InventoryMenu handler) {
-      List<XCarryAction.Inner_CachePool> moves = this.init_List_InventoryMenu(handler);
+   public XCarryAction.Inner_CachePool nextMove(InventoryMenu handler) {
+      List<XCarryAction.Inner_CachePool> moves = this.planMoves(handler);
       return moves.isEmpty() ? null : moves.get(0);
    }
 
-   public List<XCarryAction.Inner_CachePool> init_List_InventoryMenu(InventoryMenu handler) {
+   public List<XCarryAction.Inner_CachePool> planMoves(InventoryMenu handler) {
       ArrayList<XCarryAction.Inner_CachePool> moves = new ArrayList<>();
       if (handler == null) {
          return moves;
       }
 
       this.load_V_4();
-      Set<Integer> storageSlotSet = this.init_Set();
+      Set<Integer> storageSlotSet = this.carrySlotIds();
       List<Integer> storageSlots = this.load_List_4();
       List<MacroItemTarget> targets = this.write();
       int limit = Math.min(this.init_I_5(), targets.size());
-      this.init_V_I_2(limit);
-      this.load_V_I(limit);
+      this.resizeEntryDestinations(limit);
+      this.resizeEntryAmounts(limit);
       int nextTargetIdx = 0;
       Set<Integer> claimedDestinations = new HashSet<>();
       List<XCarryAction.Inner_BufferHelper> rows = new ArrayList<>();
 
       for (int i = 0; i < limit; i++) {
-         int dest = this.load_I_I(i);
+         int dest = this.getEntryDestination(i);
          if (dest != -1) {
             int targetSlotId = -1;
             if (dest != -2147483648) {
@@ -480,7 +480,7 @@ public class XCarryAction implements MacroAction {
                int currentCount = destStack.isEmpty() ? 0 : destStack.getCount();
                if (maxCount > currentCount) {
                   claimedDestinations.add(targetSlotId);
-                  rows.add(new XCarryAction.Inner_BufferHelper(i, target, targetSlotId, this.init_aQ_DataUtil_I(i), this.read_I_I(i), currentCount, maxCount));
+                  rows.add(new XCarryAction.Inner_BufferHelper(i, target, targetSlotId, this.getEntryAmountMode(i), this.getEntryAmount(i), currentCount, maxCount));
                }
             }
          }
@@ -618,7 +618,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public boolean init_Z_7() {
+   public boolean usesCursor() {
       this.load_V_4();
       List<MacroItemTarget> targets = this.write();
       int limit = Math.min(this.init_I_5(), targets.size());
@@ -626,7 +626,7 @@ public class XCarryAction implements MacroAction {
       int autoCount = 0;
 
       for (int i = 0; i < limit; i++) {
-         int dest = this.load_I_I(i);
+         int dest = this.getEntryDestination(i);
          if (dest == -1) {
             return true;
          }
@@ -642,10 +642,10 @@ public class XCarryAction implements MacroAction {
    }
 
    public List<Integer> init_List_AbstractContainerM(AbstractContainerMenu containerHandler) {
-      return this.init_List_AbstractContainerM_InventoryMenu(containerHandler, null);
+      return this.containerSlotIds(containerHandler, null);
    }
 
-   public List<Integer> init_List_AbstractContainerM_InventoryMenu(AbstractContainerMenu containerHandler, InventoryMenu playerHandler) {
+   public List<Integer> containerSlotIds(AbstractContainerMenu containerHandler, InventoryMenu playerHandler) {
       List<Integer> slotIds = new ArrayList<>();
       if (containerHandler == null) {
          return slotIds;
@@ -656,7 +656,7 @@ public class XCarryAction implements MacroAction {
       Map<String, Integer> neededByKey = new LinkedHashMap<>();
       if (playerHandler != null) {
          List<XCarryAction.Inner_BufferHelper> rows = this.load_List_InventoryMenu(playerHandler);
-         init_V_InventoryMenu(playerHandler, rows, this.init_Set());
+         init_V_InventoryMenu(playerHandler, rows, this.carrySlotIds());
 
          for (XCarryAction.Inner_BufferHelper row : rows) {
             if (row.sync > 0 && row.init_ArrayUtil != null && row.init_ArrayUtil.hasItemFilter()) {
@@ -710,16 +710,16 @@ public class XCarryAction implements MacroAction {
       List<MacroItemTarget> targets = this.read_List();
       int savedCount = Math.min(this.init_I_5(), targets.size());
       tag.put("entries", MacroItemTarget.toListTag(targets.subList(0, savedCount)));
-      this.init_V_I_2(savedCount);
-      this.load_V_I(savedCount);
+      this.resizeEntryDestinations(savedCount);
+      this.resizeEntryAmounts(savedCount);
       ListTag destinations = new ListTag();
       ListTag amountModes = new ListTag();
       ListTag amounts = new ListTag();
 
       for (int i = 0; i < savedCount; i++) {
-         destinations.add(StringTag.valueOf(String.valueOf(this.load_I_I(i))));
-         amountModes.add(StringTag.valueOf(this.init_aQ_DataUtil_I(i).name()));
-         amounts.add(StringTag.valueOf(String.valueOf(this.read_I_I(i))));
+         destinations.add(StringTag.valueOf(String.valueOf(this.getEntryDestination(i))));
+         amountModes.add(StringTag.valueOf(this.getEntryAmountMode(i).name()));
+         amounts.add(StringTag.valueOf(String.valueOf(this.getEntryAmount(i))));
       }
 
       tag.put("entryDestinations", destinations);
@@ -808,8 +808,8 @@ public class XCarryAction implements MacroAction {
          }
       }
 
-      this.init_V_I_2(this.entryTargets.size());
-      this.load_V_I(this.entryTargets.size());
+      this.resizeEntryDestinations(this.entryTargets.size());
+      this.resizeEntryAmounts(this.entryTargets.size());
       this.read_V_2();
       this.init_Z = tag.getBooleanOr("enabled", true);
    }
@@ -854,7 +854,7 @@ public class XCarryAction implements MacroAction {
          return prefix;
       }
 
-      String first = load_Str_Str_2(this.entries.get(0));
+      String first = formatEntry(this.entries.get(0));
       if (this.entries.size() > 1) {
          first = first + " (+" + (this.entries.size() - 1) + ")";
       }
@@ -877,7 +877,7 @@ public class XCarryAction implements MacroAction {
       this.init_Z = enabled;
    }
 
-   public static String init_Str_Str_7(String raw) {
+   public static String normalizeEntry(String raw) {
       if (raw == null) {
          return null;
       }
@@ -907,8 +907,8 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public static String load_Str_Str_2(String entry) {
-      String normalized = init_Str_Str_7(entry);
+   public static String formatEntry(String entry) {
+      String normalized = normalizeEntry(entry);
       if (normalized == null) {
          return "";
       } else {
@@ -1099,7 +1099,7 @@ public class XCarryAction implements MacroAction {
          }
 
          List<MacroItemTarget> targets = this.write();
-         Set<Integer> storageSlotSet = this.init_Set();
+         Set<Integer> storageSlotSet = this.carrySlotIds();
          int limit = Math.min(maxTargets, targets.size());
 
          for (int i = Math.max(0, startTargetIndex); i < limit; i++) {
@@ -1212,17 +1212,17 @@ public class XCarryAction implements MacroAction {
          return rows;
       }
 
-      Set<Integer> storageSlotSet = this.init_Set();
+      Set<Integer> storageSlotSet = this.carrySlotIds();
       List<Integer> storageSlots = this.load_List_4();
       List<MacroItemTarget> targets = this.write();
       int limit = Math.min(this.init_I_5(), targets.size());
-      this.init_V_I_2(limit);
-      this.load_V_I(limit);
+      this.resizeEntryDestinations(limit);
+      this.resizeEntryAmounts(limit);
       int nextTargetIdx = 0;
       Set<Integer> claimedDestinations = new HashSet<>();
 
       for (int i = 0; i < limit; i++) {
-         int dest = this.load_I_I(i);
+         int dest = this.getEntryDestination(i);
          if (dest != -1) {
             int targetSlotId;
             if (dest == -2147483648) {
@@ -1255,7 +1255,7 @@ public class XCarryAction implements MacroAction {
                int currentCount = destStack.isEmpty() ? 0 : destStack.getCount();
                if (maxCount > currentCount) {
                   claimedDestinations.add(targetSlotId);
-                  rows.add(new XCarryAction.Inner_BufferHelper(i, target, targetSlotId, this.init_aQ_DataUtil_I(i), this.read_I_I(i), currentCount, maxCount));
+                  rows.add(new XCarryAction.Inner_BufferHelper(i, target, targetSlotId, this.getEntryAmountMode(i), this.getEntryAmount(i), currentCount, maxCount));
                }
             }
          }
@@ -1386,11 +1386,11 @@ public class XCarryAction implements MacroAction {
       return handler != null && !handler.getCarried().isEmpty();
    }
 
-   public static boolean init_Z_InventoryMenu_Z(InventoryMenu handler, boolean includeCursor) {
+   public static boolean hasCarriedItems(InventoryMenu handler, boolean includeCursor) {
       return init_Z_InventoryMenu(handler) || includeCursor && load_Z_InventoryMenu(handler);
    }
 
-   public static boolean init_Z_InventoryMenu_3(InventoryMenu handler, boolean includeCursor, Set<Integer> slotIds) {
+   public static boolean hasCarriedItemsIn(InventoryMenu handler, boolean includeCursor, Set<Integer> slotIds) {
       if (handler == null) {
          return false;
       }
@@ -1407,15 +1407,15 @@ public class XCarryAction implements MacroAction {
    }
 
    private void init_V_InventoryMenu_Z(InventoryMenu handler, boolean includeCursor) {
-      boolean active = init_Z_InventoryMenu_3(handler, includeCursor, this.init_Set());
+      boolean active = hasCarriedItemsIn(handler, includeCursor, this.carrySlotIds());
       AutismSessionState shared = AutismSessionState.getInstance();
       if (active) {
-         shared.mergeXCarrySlotMask(this.init_Set(), includeCursor);
+         shared.mergeXCarrySlotMask(this.carrySlotIds(), includeCursor);
          shared.setXCarryForced(true);
          shared.setXCarryActive(true);
       } else {
          if (shared.isXCarryForced()) {
-            boolean stillHeld = init_Z_InventoryMenu_3(handler, shared.isXCarryCarryCursor(), shared.getXCarrySlotMask());
+            boolean stillHeld = hasCarriedItemsIn(handler, shared.isXCarryCarryCursor(), shared.getXCarrySlotMask());
             if (stillHeld) {
                shared.setXCarryActive(true);
                return;
@@ -1430,7 +1430,7 @@ public class XCarryAction implements MacroAction {
 
    private void init_V_Z_2(boolean includeCursor) {
       AutismSessionState shared = AutismSessionState.getInstance();
-      shared.mergeXCarrySlotMask(this.init_Set(), includeCursor);
+      shared.mergeXCarrySlotMask(this.carrySlotIds(), includeCursor);
       shared.setXCarryForced(true);
       shared.setXCarryActive(true);
    }
@@ -1443,7 +1443,7 @@ public class XCarryAction implements MacroAction {
       return 10 + (carryCursor ? 1 : 0);
    }
 
-   static void init_V_Minecraft_E(Minecraft mc, autismclient.util.InteractionTargetRef target) {
+   static void interactTarget(Minecraft mc, autismclient.util.InteractionTargetRef target) {
       if (target != null) {
          target.init_Z_Minecraft(mc);
       }
@@ -1510,7 +1510,7 @@ public class XCarryAction implements MacroAction {
       if (target == null) {
          return "";
       } else {
-         String legacy = init_Str_Str_7(target.toSpecString());
+         String legacy = normalizeEntry(target.toSpecString());
          if (legacy != null && !legacy.isBlank()) {
             return legacy.toLowerCase(Locale.ROOT);
          } else if (target.hasSlot()) {
@@ -1564,7 +1564,7 @@ public class XCarryAction implements MacroAction {
       }
 
       for (String entry : this.entries) {
-         String normalized = init_Str_Str_7(entry);
+         String normalized = normalizeEntry(entry);
          if (normalized != null) {
             MacroItemTarget target = MacroItemTarget.parse(normalized);
             if (target.hasSlot() || target.hasItemFilter()) {
@@ -1601,7 +1601,7 @@ public class XCarryAction implements MacroAction {
 
       for (MacroItemTarget target : this.entryTargets) {
          if (target != null) {
-            String entry = init_Str_Str_7(target.toSpecString());
+            String entry = normalizeEntry(target.toSpecString());
             if (entry != null) {
                this.entries.add(entry);
                if (this.entries.size() >= this.init_I_5()) {

@@ -60,7 +60,7 @@ public class AssertAction implements MacroAction {
                      >= 0;
                break;
             case INVENTORY_ITEM:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(itemResolution.value()));
+               var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse(itemResolution.value()));
                break;
             case GUI_TYPE:
                var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.value(), "");
@@ -75,13 +75,13 @@ public class AssertAction implements MacroAction {
                var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.value());
                break;
             case HAS_BUNDLE:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse("minecraft:bundle"));
+               var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse("minecraft:bundle"));
                break;
             case BUNDLE_V2_READY:
                var10000 = this.load(mc);
                break;
             case HAS_WRITABLE_BOOK:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse("minecraft:writable_book"));
+               var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse("minecraft:writable_book"));
                break;
             case CONNECTION:
                var10000 = mc.getConnection() != null;

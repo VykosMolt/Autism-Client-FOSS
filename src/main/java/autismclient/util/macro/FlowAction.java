@@ -9,7 +9,7 @@ public class FlowAction implements MacroAction {
    public String labelName = "";
    public FlowAction.Inner_DataUtil onMissingLabel = FlowAction.Inner_DataUtil.CONTINUE;
    public boolean conditional = false;
-   public MacroCondition condition = MacroCondition.init_a();
+   public MacroCondition condition = MacroCondition.createDefault();
    private boolean init = true;
 
    @Override
@@ -22,7 +22,7 @@ public class FlowAction implements MacroAction {
    }
 
    public boolean init(Minecraft mc) {
-      return !this.conditional || this.condition == null || this.condition.init_Z_Minecraft(mc);
+      return !this.conditional || this.condition == null || this.condition.evaluate(mc);
    }
 
    @Override
@@ -34,9 +34,9 @@ public class FlowAction implements MacroAction {
       tag.putString("labelName", this.labelName == null ? "" : this.labelName);
       tag.putString("onMissingLabel", this.onMissingLabel.name());
       tag.putBoolean("conditional", this.conditional);
-      MacroCondition c = this.condition == null ? MacroCondition.init_a() : this.condition;
-      tag.put("condition", c.init_CompoundTag());
-      c.init_V_CompoundTag_Str(tag, "cond_");
+      MacroCondition c = this.condition == null ? MacroCondition.createDefault() : this.condition;
+      tag.put("condition", c.toTag());
+      c.writeFlat(tag, "cond_");
       tag.putBoolean("enabled", this.init);
       return tag;
    }
@@ -84,7 +84,7 @@ public class FlowAction implements MacroAction {
       }
 
       String where = var10000;
-      return "Goto " + where + (this.conditional ? " if " + (this.condition == null ? "" : this.condition.init_Str()) : "");
+      return "Goto " + where + (this.conditional ? " if " + (this.condition == null ? "" : this.condition.describe()) : "");
    }
 
    @Override

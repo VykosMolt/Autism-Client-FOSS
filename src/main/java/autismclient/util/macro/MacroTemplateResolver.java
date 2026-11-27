@@ -150,7 +150,7 @@ public final class MacroTemplateResolver {
    private static MacroTemplateResolver.TokenResult resolveNamedExpression(String expression, MacroVariableStore context, Minecraft mc) {
       String[] parts = expression.split("\\|", -1);
       String name = parts.length == 0 ? "" : parts[0].trim();
-      Optional<MacroVarValue> found = context == null ? Optional.empty() : context.init_Optional_Str(name);
+      Optional<MacroVarValue> found = context == null ? Optional.empty() : context.lookup(name);
       if (found.isEmpty() && "random".equalsIgnoreCase(name)) {
          return resolveRandomExpression(parts);
       }

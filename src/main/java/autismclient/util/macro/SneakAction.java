@@ -30,7 +30,7 @@ public class SneakAction implements PacketOrderAware, MacroAction {
       tag.putBoolean("sneak", this.sneak);
       tag.putBoolean("persistent", this.persistent);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -48,7 +48,7 @@ public class SneakAction implements PacketOrderAware, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override
@@ -57,7 +57,7 @@ public class SneakAction implements PacketOrderAware, MacroAction {
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 

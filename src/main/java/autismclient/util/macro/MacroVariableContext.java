@@ -13,7 +13,7 @@ public final class MacroVariableContext {
    }
 
    public static void clear() {
-      activeOrFallbackStore().init_V();
+      activeOrFallbackStore().clear();
    }
 
    public static void set(String name, Object value) {
@@ -25,11 +25,11 @@ public final class MacroVariableContext {
    }
 
    public static void setAll(Map<String, MacroVarValue> values) {
-      activeOrFallbackStore().init_V_Map(values);
+      activeOrFallbackStore().putAll(values);
    }
 
    public static void remove(String name) {
-      activeOrFallbackStore().init_V_Str(name);
+      activeOrFallbackStore().remove(name);
    }
 
    public static String resolveVariable(String name, Minecraft mc) {
@@ -38,7 +38,7 @@ public final class MacroVariableContext {
    }
 
    public static Optional<MacroVarValue> get(String name) {
-      return activeOrFallbackStore().init_Optional_Str(name);
+      return activeOrFallbackStore().lookup(name);
    }
 
    public static String resolveString(String text, Minecraft mc) {

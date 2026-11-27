@@ -262,7 +262,7 @@ public final class CommandTabNameProber {
          int[] conc = new int[]{10};
          int[] stall = new int[]{0};
          int stallLimit = control.write() ? 2147483647 : 20;
-         control.init(names.size(), queries[0], control.load_I(), "Probing " + vectors.size() + " commands");
+         control.init(names.size(), queries[0], control.maxQueries(), "Probing " + vectors.size() + " commands");
          List<String> baseTexts = new ArrayList<>(vectors.size());
 
          for (CommandTabNameProber.Inner_StreamUtil vector : vectors) {
@@ -283,7 +283,7 @@ public final class CommandTabNameProber {
          int dry = 0;
 
          for (CommandTabNameProber.Inner_StreamUtil vector : productive) {
-            if (control.init_Z() || names.size() >= control.init_I() || queries[0] >= control.load_I() || stall[0] >= stallLimit) {
+            if (control.isCancelled() || names.size() >= control.maxNames() || queries[0] >= control.maxQueries() || stall[0] >= stallLimit) {
                break;
             }
 
@@ -298,7 +298,7 @@ public final class CommandTabNameProber {
             }
          }
 
-         control.init(names.size(), queries[0], control.load_I(), "Done");
+         control.init(names.size(), queries[0], control.maxQueries(), "Done");
       }
    }
 
@@ -330,7 +330,7 @@ public final class CommandTabNameProber {
       boolean firstLevel = true;
       int depth = 0;
 
-      while (!frontier.isEmpty() && !control.init_Z() && names.size() < control.init_I() && queries[0] < control.load_I() && stall[0] < stallLimit) {
+      while (!frontier.isEmpty() && !control.isCancelled() && names.size() < control.maxNames() && queries[0] < control.maxQueries() && stall[0] < stallLimit) {
          depth++;
          int before = names.size();
          List<String> childPrefixes = new ArrayList<>(frontier.size() * "abcdefghijklmnopqrstuvwxyz0123456789_.".length());
@@ -414,7 +414,7 @@ public final class CommandTabNameProber {
          label153:
          while (true) {
             if (start < pending.size()) {
-               if (!control.init_Z() && names.size() < control.init_I() && queries[0] < control.load_I() && stall[0] < stallLimit) {
+               if (!control.isCancelled() && names.size() < control.maxNames() && queries[0] < control.maxQueries() && stall[0] < stallLimit) {
                   init_V_be_DataUtil(control);
                   int batch = Math.max(4, conc[0]);
                   int end = Math.min(pending.size(), start + batch);
@@ -444,7 +444,7 @@ public final class CommandTabNameProber {
 
                   while (true) {
                      if (remaining > 0) {
-                        if (!control.init_Z() && stall[0] < stallLimit) {
+                        if (!control.isCancelled() && stall[0] < stallLimit) {
                            boolean progressed = false;
 
                            for (int k = start; k < end; k++) {
@@ -456,9 +456,9 @@ public final class CommandTabNameProber {
                                  List<String> reply = init_List_MacroExecutor_Even(listeners.get(li));
                                  results.set(pending.get(k), reply);
                                  int prev = names.size();
-                                 init(names, reply, self, control.init_I(), control.read());
+                                 init(names, reply, self, control.maxNames(), control.read());
                                  stall[0] = names.size() > prev ? 0 : stall[0] + 1;
-                                 control.init(names.size(), queries[0], control.load_I(), status);
+                                 control.init(names.size(), queries[0], control.maxQueries(), status);
                                  progressed = true;
                               }
                            }
@@ -487,7 +487,7 @@ public final class CommandTabNameProber {
                                  }
                               }
 
-                              control.init(names.size(), queries[0], control.load_I(), status);
+                              control.init(names.size(), queries[0], control.maxQueries(), status);
                            }
                         } else {
                            for (int li = 0; li < listeners.size(); li++) {
@@ -506,7 +506,7 @@ public final class CommandTabNameProber {
                         gap[0] = Math.max(8L, gap[0] - 10L);
                      }
 
-                     if (!control.init_Z()) {
+                     if (!control.isCancelled()) {
                         init_V_J(gap[0]);
                      }
 
@@ -613,7 +613,7 @@ public final class CommandTabNameProber {
    }
 
    private static void init_V_be_DataUtil(CommandTabNameProber.Inner_DataUtil control) {
-      while (control.load_Z() && !control.init_Z()) {
+      while (control.isPaused() && !control.isCancelled()) {
          init_V_J(120L);
       }
    }
@@ -627,13 +627,13 @@ public final class CommandTabNameProber {
    }
 
    public interface Inner_DataUtil {
-      boolean init_Z();
+      boolean isCancelled();
 
-      boolean load_Z();
+      boolean isPaused();
 
-      int init_I();
+      int maxNames();
 
-      int load_I();
+      int maxQueries();
 
       default boolean read() {
          return true;

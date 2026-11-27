@@ -35,7 +35,7 @@ public final class RollbackAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (mc != null && !mc.isSameThread()) {
          try {
-            this.init_V_Minecraft_4(mc);
+            this.rollback(mc);
          } catch (InterruptedException e) {
             AutismClientMessaging.sendPrefixed("§eRollback canceled safely.");
          } catch (Throwable t) {
@@ -46,7 +46,7 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   public void init_V_Minecraft_4(Minecraft mc) throws InterruptedException, ExecutionException, TimeoutException {
+   public void rollback(Minecraft mc) throws InterruptedException, ExecutionException, TimeoutException {
       if (mc != null && !mc.isSameThread()) {
          if (!autismclient.modules.aD.read_Z()) {
             IntegratedServer server = mc.getSingleplayerServer();

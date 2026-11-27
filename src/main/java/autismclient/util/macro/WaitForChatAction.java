@@ -37,7 +37,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       tag.putString("pattern", this.patternJson != null && !this.patternJson.isBlank() ? this.pattern : MacroExecutor.cleanVisibleChatText(this.pattern));
       tag.putString("patternJson", this.patternJson == null ? "" : this.patternJson);
       tag.putBoolean("useRegex", this.useRegex);
-      tag.putString("matchMode", this.init_UtilCore_DataUtil().name());
+      tag.putString("matchMode", this.effectiveMatchMode().name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("fuzzyPercent", this.fuzzyPercent);
       tag.putBoolean("serverMessageOnly", false);
@@ -75,7 +75,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       this.useRegex = this.matchMode == PatternCaptureMatcher.MatchMode.REGEX;
       this.saveAs = tag.getStringOr("saveAs", "");
       if (tag.contains("fuzzyPercent")) {
-         this.fuzzyPercent = init_I_I_8(tag.getIntOr("fuzzyPercent", 100));
+         this.fuzzyPercent = snapFuzzyPercent(tag.getIntOr("fuzzyPercent", 100));
       } else {
          this.fuzzyPercent = 100;
       }
@@ -89,8 +89,8 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       if (tag.contains("waitGuiName")) {
          this.waitGuiName = tag.getStringOr("waitGuiName", "");
       }
@@ -106,17 +106,17 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    @Override
    public String getDisplayName() {
       String desc = this.pattern.isEmpty() ? "Any Chat" : this.pattern;
-      if (this.init_UtilCore_DataUtil() == PatternCaptureMatcher.MatchMode.MATCH) {
-         desc = desc + " (~" + init_I_I_8(this.fuzzyPercent) + "%)";
+      if (this.effectiveMatchMode() == PatternCaptureMatcher.MatchMode.MATCH) {
+         desc = desc + " (~" + snapFuzzyPercent(this.fuzzyPercent) + "%)";
       } else {
-         desc = desc + " [" + this.init_UtilCore_DataUtil().name().toLowerCase(Locale.ROOT) + "]";
+         desc = desc + " [" + this.effectiveMatchMode().name().toLowerCase(Locale.ROOT) + "]";
       }
 
       if (this.timeoutMs > 0) {
          desc = desc + " (" + this.timeoutMs + "ms)";
       }
 
-      return "Wait Chat: " + desc + GuiWaitAware.init_Str_aP(this);
+      return "Wait Chat: " + desc + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
@@ -135,7 +135,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -145,7 +145,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -155,22 +155,22 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.waitGuiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.waitGuiName = name;
    }
 
-   public static int init_I_I_8(int percent) {
+   public static int snapFuzzyPercent(int percent) {
       int clamped = Math.max(40, Math.min(100, percent));
       int snapped = Math.round(clamped / 10.0F) * 10;
       return Math.max(40, Math.min(100, snapped));
    }
 
-   public PatternCaptureMatcher.MatchMode init_UtilCore_DataUtil() {
+   public PatternCaptureMatcher.MatchMode effectiveMatchMode() {
       if (this.matchMode == null) {
          return this.useRegex ? PatternCaptureMatcher.MatchMode.REGEX : PatternCaptureMatcher.MatchMode.MATCH;
       } else {

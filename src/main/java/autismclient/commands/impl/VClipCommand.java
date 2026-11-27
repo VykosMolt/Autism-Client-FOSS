@@ -29,13 +29,13 @@ public class VClipCommand extends Command {
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("top").executes(ctx -> {
          VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(0.0);
-         options.init_ap_StreamUtil = VClipAction.Inner_StreamUtil.TOP;
+         options.mode = VClipAction.Inner_StreamUtil.TOP;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("bottom").executes(ctx -> {
          VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(0.0);
-         options.init_ap_StreamUtil = VClipAction.Inner_StreamUtil.BOTTOM;
+         options.mode = VClipAction.Inner_StreamUtil.BOTTOM;
          init(options);
          return 1;
       }));
@@ -53,7 +53,7 @@ public class VClipCommand extends Command {
                            .suggests(autismclient.commands.CommandSuggestions::read)
                            .executes(ctx -> {
                               VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
-                              options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
+                              options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
                               init(options);
                               return 1;
                            }))
@@ -62,8 +62,8 @@ public class VClipCommand extends Command {
                                  .suggests(autismclient.commands.CommandSuggestions::write)
                                  .executes(ctx -> {
                                     VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
-                                    options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
-                                    options.load_I = IntegerArgumentType.getInteger(ctx, "maxPackets");
+                                    options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
+                                    options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
                                     init(options);
                                     return 1;
                                  }))
@@ -72,7 +72,7 @@ public class VClipCommand extends Command {
                                        .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
                                           VClipAction.Inner_CachePool options = init(ctx);
-                                          options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
+                                          options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                           init(options);
                                           return 1;
                                        }))
@@ -81,7 +81,7 @@ public class VClipCommand extends Command {
                                              .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
                                                 VClipAction.Inner_CachePool options = init(ctx);
-                                                options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
+                                                options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                 options.read = BoolArgumentType.getBool(ctx, "vehicle");
                                                 init(options);
                                                 return 1;
@@ -91,7 +91,7 @@ public class VClipCommand extends Command {
                                                 .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
                                                    VClipAction.Inner_CachePool options = init(ctx);
-                                                   options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
+                                                   options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                    options.read = BoolArgumentType.getBool(ctx, "vehicle");
                                                    options.write = BoolArgumentType.getBool(ctx, "forceGround");
                                                    init(options);
@@ -118,8 +118,8 @@ public class VClipCommand extends Command {
 
    private static VClipAction.Inner_CachePool init(CommandContext<AutismCommandSource> ctx) {
       VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
-      options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
-      options.load_I = IntegerArgumentType.getInteger(ctx, "maxPackets");
+      options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
+      options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
       return options;
    }
 

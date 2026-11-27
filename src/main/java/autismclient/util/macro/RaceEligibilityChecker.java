@@ -5,7 +5,7 @@ public final class RaceEligibilityChecker {
    }
 
    public static boolean init(MacroAction action) {
-      return action != null && !(action instanceof DelayAction) && RaceAction.init_Z(action);
+      return action != null && !(action instanceof DelayAction) && RaceAction.isRaceCondition(action);
    }
 
    public static boolean init(autismclient.util.AutismMacro macro) {

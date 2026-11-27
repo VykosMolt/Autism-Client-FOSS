@@ -211,7 +211,7 @@ final class WTapController {
             && !BedNukerModule.init_Z_23()
             && !AutoTotemModule.init_Z_6()
             && !AutoArmorModule.init_Z_20()
-            && !autismclient.util.macro.MacroAimController.init_Z()
+            && !autismclient.util.macro.MacroAimController.isActive()
             && !SilentMovementCoordinator.isSafeWalkActive();
       } else {
          return false;

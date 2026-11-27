@@ -85,9 +85,9 @@ public class RaceAction implements MacroAction {
             this.raceSteps.add("ACTION:" + write(type));
          }
       } else {
-         this.raceSteps.replaceAll(RaceAction::load_Str);
+         this.raceSteps.replaceAll(RaceAction::canonicalStep);
          this.raceSteps.removeIf(s -> s == null || s.isBlank());
-         this.load_V();
+         this.syncTypesFromSteps();
          if (this.actionTypes.isEmpty()) {
             this.actionTypes.add(MacroActionType.PACKET_CLICK.name());
          }
@@ -96,7 +96,7 @@ public class RaceAction implements MacroAction {
       this.conditionType = this.conditionTypes.isEmpty() ? "" : this.conditionTypes.get(0);
       this.actionType = this.actionTypes.get(0);
       MacroAction nested = tag.getCompound("triggerAction").map(autismclient.util.AutismMacro::deserializeAction).orElse(null);
-      if (init_Z(nested)) {
+      if (isRaceCondition(nested)) {
          this.triggerAction = nested;
       }
 
@@ -110,20 +110,20 @@ public class RaceAction implements MacroAction {
          this.init_bo_StreamUtil = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
       }
 
-      if (!init_Z(this.triggerAction)) {
+      if (!isRaceCondition(this.triggerAction)) {
          this.triggerAction = new DelayAction(0);
       }
    }
 
-   public boolean init_Z() {
+   public boolean needsLegacyMigration() {
       return this.init_Z;
    }
 
-   public boolean load_Z() {
+   public boolean legacyUsesNextAction() {
       return this.load;
    }
 
-   public PacketClickAction init_z() {
+   public PacketClickAction takeLegacyPacketClick() {
       if (this.init_bo_StreamUtil == null) {
          return null;
       }
@@ -133,13 +133,13 @@ public class RaceAction implements MacroAction {
       return action;
    }
 
-   public void init_V_3() {
+   public void clearLegacyState() {
       this.init_Z = false;
       this.load = false;
       this.init_bo_StreamUtil = null;
    }
 
-   public static boolean init_Z(MacroAction action) {
+   public static boolean isRaceCondition(MacroAction action) {
       return action instanceof DelayAction
          || action instanceof WaitForPacketAction
          || action instanceof WaitForHealthAction
@@ -171,7 +171,7 @@ public class RaceAction implements MacroAction {
       if (action == null) {
          return false;
       } else {
-         return init_Z(action)
+         return isRaceCondition(action)
             ? false
             : !(action instanceof RaceAction)
                && !(action instanceof ReportAction)
@@ -184,7 +184,7 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   public MacroAction init_MacroAction() {
+   public MacroAction createConditionAction() {
       return init(init_L_DataUtil(this.conditionType));
    }
 
@@ -206,21 +206,21 @@ public class RaceAction implements MacroAction {
       ArrayList<MacroAction> out = new ArrayList<>();
 
       for (String typeName : this.init_List_2()) {
-         out.add(read_MacroAction(typeName));
+         out.add(createCondition(typeName));
       }
 
       return out;
    }
 
    public MacroAction load_MacroAction() {
-      return load_MacroAction(this.actionType);
+      return createAction(this.actionType);
    }
 
    public List<String> read() {
       ArrayList<String> out = new ArrayList<>();
       if (this.raceSteps != null) {
          for (String step : this.raceSteps) {
-            String canonical = load_Str(step);
+            String canonical = canonicalStep(step);
             if (!canonical.isBlank()) {
                out.add(canonical);
             }
@@ -261,21 +261,21 @@ public class RaceAction implements MacroAction {
       ArrayList<MacroAction> out = new ArrayList<>();
 
       for (String typeName : this.write()) {
-         out.add(load_MacroAction(typeName));
+         out.add(createAction(typeName));
       }
 
       return out;
    }
 
-   public static boolean init_Z_2(String step) {
+   public static boolean isConditionStep(String step) {
       return step != null && step.trim().toUpperCase(Locale.ROOT).startsWith("CONDITION:");
    }
 
-   public static boolean load_Z(String step) {
+   public static boolean isActionStep(String step) {
       return step != null && step.trim().toUpperCase(Locale.ROOT).startsWith("ACTION:");
    }
 
-   public static String init_Str_2(String step) {
+   public static String stepType(String step) {
       if (step == null) {
          return "";
       }
@@ -284,11 +284,11 @@ public class RaceAction implements MacroAction {
       return (idx >= 0 ? step.substring(idx + 1) : step).trim().toUpperCase(Locale.ROOT);
    }
 
-   public static MacroAction init_MacroAction(String step) {
-      return init_Z_2(step) ? read_MacroAction(init_Str_2(step)) : load_MacroAction(init_Str_2(step));
+   public static MacroAction createStepAction(String step) {
+      return isConditionStep(step) ? createCondition(stepType(step)) : createAction(stepType(step));
    }
 
-   public static MacroAction load_MacroAction(String typeName) {
+   public static MacroAction createAction(String typeName) {
       MacroActionType type;
       try {
          type = MacroActionType.valueOf(typeName == null ? "" : typeName.trim().toUpperCase(Locale.ROOT));
@@ -435,7 +435,7 @@ public class RaceAction implements MacroAction {
       return load(action) ? action : new PacketClickAction();
    }
 
-   public static RaceAction.Inner_DataUtil init_L_DataUtil(MacroAction action) {
+   public static RaceAction.Inner_DataUtil conditionTypeOf(MacroAction action) {
       if (action instanceof WaitForGuiAction) {
          return RaceAction.Inner_DataUtil.WAIT_GUI;
       } else if (action instanceof WaitForChatAction) {
@@ -481,7 +481,7 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   public static MacroAction read_MacroAction(String typeName) {
+   public static MacroAction createCondition(String typeName) {
       return init(init_L_DataUtil(typeName));
    }
 
@@ -731,7 +731,7 @@ public class RaceAction implements MacroAction {
    }
 
    private static void init_V_CompoundTag_MacroAction(CompoundTag tag, MacroAction action) {
-      RaceAction.Inner_DataUtil type = init_L_DataUtil(action);
+      RaceAction.Inner_DataUtil type = conditionTypeOf(action);
       tag.putString("triggerType", type.name());
       CompoundTag src = autismclient.util.AutismMacro.serializeAction(action);
 
@@ -784,7 +784,7 @@ public class RaceAction implements MacroAction {
       return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
    }
 
-   public static String load_Str(String raw) {
+   public static String canonicalStep(String raw) {
       if (raw == null) {
          return "";
       }
@@ -815,15 +815,15 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   public void load_V() {
+   public void syncTypesFromSteps() {
       this.conditionTypes = new ArrayList<>();
       this.actionTypes = new ArrayList<>();
 
       for (String step : this.read()) {
-         String type = init_Str_2(step);
-         if (init_Z_2(step)) {
+         String type = stepType(step);
+         if (isConditionStep(step)) {
             this.conditionTypes.add(read_Str(type));
-         } else if (load_Z(step)) {
+         } else if (isActionStep(step)) {
             this.actionTypes.add(write(type));
          }
       }
@@ -847,7 +847,7 @@ public class RaceAction implements MacroAction {
       to.put(toKey, out);
    }
 
-   public int init_I_List_I(List<MacroAction> actions, int headerIndex) {
+   public int countBodyActions(List<MacroAction> actions, int headerIndex) {
       if (actions != null && headerIndex >= 0 && headerIndex < actions.size()) {
          int max = Math.max(0, Math.min(this.bodyCount, actions.size() - headerIndex - 1));
          int count = 0;
@@ -868,11 +868,11 @@ public class RaceAction implements MacroAction {
    }
 
    public int load(List<MacroAction> actions, int headerIndex) {
-      int body = this.init_I_List_I(actions, headerIndex);
+      int body = this.countBodyActions(actions, headerIndex);
       int count = 0;
 
       for (int offset = 1; offset <= body && headerIndex + offset < actions.size(); offset++) {
-         if (init_Z(actions.get(headerIndex + offset))) {
+         if (isRaceCondition(actions.get(headerIndex + offset))) {
             count++;
          }
       }

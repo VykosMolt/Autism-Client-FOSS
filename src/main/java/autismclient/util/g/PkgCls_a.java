@@ -368,7 +368,7 @@ public final class PkgCls_a {
                   if (destination != null) {
                      if (job.load_Vec3.distanceTo(destination) <= 0.5) {
                         TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
-                        if (view != null && view.init_Z(job.load_Vec3) && !view.load(job.load_Vec3)) {
+                        if (view != null && view.isLoaded(job.load_Vec3) && !view.load(job.load_Vec3)) {
                            Vec3 clearSpot = TpRoutePlanner.init(view, job.load_Vec3, 3.0);
                            if (clearSpot != null && view.update(clearSpot)) {
                               job.update_Vec3 = clearSpot;
@@ -505,7 +505,7 @@ public final class PkgCls_a {
    private static Vec3 init_Vec3_a_ConfigStore(PkgCls_a.Inner_ConfigStore job) {
       TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
       if (job.write_Vec3 != null) {
-         if (view == null || !view.init_Z(job.write_Vec3)) {
+         if (view == null || !view.isLoaded(job.write_Vec3)) {
             return null;
          }
 
@@ -517,7 +517,7 @@ public final class PkgCls_a {
          job.load_Z = false;
       }
 
-      if (view != null && view.init_Z(job.init_Vec3)) {
+      if (view != null && view.isLoaded(job.init_Vec3)) {
          boolean targetLavaSafe = view.update(job.init_Vec3);
          if (!targetLavaSafe && System.currentTimeMillis() < job.pop) {
             return null;
@@ -542,7 +542,7 @@ public final class PkgCls_a {
    }
 
    static Vec3 init_Vec3_F_StreamUtil_2(TpRoutePlanner.Inner_StreamUtil view, Vec3 requested, double lavaSearchRadius) {
-      if (view == null || requested == null || !view.init_Z(requested)) {
+      if (view == null || requested == null || !view.isLoaded(requested)) {
          return null;
       }
 
@@ -566,7 +566,7 @@ public final class PkgCls_a {
 
          job.write_J = job.read_J;
          TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
-         if (job.close == 0L && init_Z_I(job.read_I) && view != null && view.init_Z(job.load_Vec3)) {
+         if (job.close == 0L && init_Z_I(job.read_I) && view != null && view.isLoaded(job.load_Vec3)) {
             Vec3 localAnchor = TpRoutePlanner.write(view, job.load_Vec3, 32.0);
             if (localAnchor != null && localAnchor.distanceTo(job.load_Vec3) > 0.5) {
                job.update_Vec3 = localAnchor;
@@ -620,8 +620,8 @@ public final class PkgCls_a {
          }
 
          if (job.update_Vec3 == null) {
-            if (init_Z_F_BufferHelper(route, job.load_Vec3, destination) && init_Z_F_StreamUtil(view, job.load_Vec3, route.init_List())) {
-               job.init_Deque.addAll(route.init_List());
+            if (init_Z_F_BufferHelper(route, job.load_Vec3, destination) && init_Z_F_StreamUtil(view, job.load_Vec3, route.waypoints())) {
+               job.init_Deque.addAll(route.waypoints());
                job.update_Vec3 = job.init_Deque.pollFirst();
                job.sync_Vec3 = job.update_Vec3;
             } else {
@@ -661,10 +661,10 @@ public final class PkgCls_a {
 
       boolean rerouting = false;
       TpRoutePlanner.Inner_StreamUtil sweepView = init_F_StreamUtil_a_ConfigStore(job);
-      Entity sweepEntity = sweepView == null ? null : sweepView.init_Entity();
+      Entity sweepEntity = sweepView == null ? null : sweepView.getEntity();
       if (sweepEntity != null && Math.hypot(next.x - from.x, next.z - from.z) > 0.5) {
          Vec3 requested = next.subtract(from);
-         Vec3 allowed = ClipCollisionHelper.init_Vec3(sweepEntity, from, next);
+         Vec3 allowed = ClipCollisionHelper.clipMovement(sweepEntity, from, next);
          if (!allowed.equals(requested)) {
             double wanted = Math.hypot(requested.x, requested.z);
             double contact = Math.hypot(allowed.x, allowed.z);
@@ -727,12 +727,12 @@ public final class PkgCls_a {
    static boolean init_Z_F_BufferHelper(TpRoutePlanner.Inner_BufferHelper route, Vec3 from, Vec3 destination) {
       return route != null
          && route.load()
-         && (route.init_F_ConfigStore() == TpRoutePlanner.Inner_ConfigStore.ESCAPE || init_Z_Vec3(from, route.init_List().getLast(), destination));
+         && (route.status() == TpRoutePlanner.Inner_ConfigStore.ESCAPE || init_Z_Vec3(from, route.waypoints().getLast(), destination));
    }
 
    private static boolean init_Z_a_ConfigStore_J(PkgCls_a.Inner_ConfigStore job, long now) {
       TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
-      if (view == null || !view.init_Z(job.load_Vec3)) {
+      if (view == null || !view.isLoaded(job.load_Vec3)) {
          return false;
       }
 
@@ -757,7 +757,7 @@ public final class PkgCls_a {
    private static boolean init_Z_a_ConfigStore_a_TaskQueue(PkgCls_a.Inner_ConfigStore job, PkgCls_a.Inner_TaskQueue frame) {
       TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
       if (view != null && frame != null) {
-         return frame.init_Z() ? init_Z_F_StreamUtil_List(view, frame.init_List()) : view.init_Z(job.load_Vec3) && view.update(job.load_Vec3);
+         return frame.init_Z() ? init_Z_F_StreamUtil_List(view, frame.init_List()) : view.isLoaded(job.load_Vec3) && view.update(job.load_Vec3);
       } else {
          return false;
       }
@@ -766,7 +766,7 @@ public final class PkgCls_a {
    static boolean init_Z_F_StreamUtil_List(TpRoutePlanner.Inner_StreamUtil view, List<ClipCollisionHelper.Inner_DataUtil> steps) {
       if (view != null && steps != null && !steps.isEmpty()) {
          for (ClipCollisionHelper.Inner_DataUtil step : steps) {
-            if (step == null || step.init_Vec3() == null || !view.init_Z(step.init_Vec3()) || !view.update(step.init_Vec3())) {
+            if (step == null || step.position() == null || !view.isLoaded(step.position()) || !view.update(step.position())) {
                return false;
             }
          }
@@ -780,7 +780,7 @@ public final class PkgCls_a {
    private static boolean init_Z_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, List<Vec3> route) {
       if (view != null && start != null && route != null && !route.isEmpty()) {
          for (Vec3 waypoint : route) {
-            if (waypoint == null || !view.init_Z(waypoint) || !view.update(waypoint)) {
+            if (waypoint == null || !view.isLoaded(waypoint) || !view.update(waypoint)) {
                return false;
             }
          }
@@ -797,7 +797,7 @@ public final class PkgCls_a {
 
          for (int i = 1; i <= samples; i++) {
             Vec3 sample = from.lerp(to, (double)i / samples);
-            if (!view.init_Z(sample) || !view.update(sample)) {
+            if (!view.isLoaded(sample) || !view.update(sample)) {
                return false;
             }
          }
@@ -812,7 +812,7 @@ public final class PkgCls_a {
       if (view != null && from != null && destination != null) {
          if (from.distanceTo(destination) <= 0.5) {
             return null;
-         } else if (view.init_Z(destination) && view.load(destination) && view.update(destination) && view.sync(destination)) {
+         } else if (view.isLoaded(destination) && view.load(destination) && view.update(destination) && view.sync(destination)) {
             return read_Z(view, from, destination) && init_Z_F_StreamUtil_2(view, from, destination) ? destination : null;
          } else {
             return null;
@@ -845,10 +845,10 @@ public final class PkgCls_a {
             return null;
          }
 
-         if (view.init_Z(destination) && view.load(destination) && view.update(destination) && view.sync(destination)) {
+         if (view.isLoaded(destination) && view.load(destination) && view.update(destination) && view.sync(destination)) {
             for (int lift = 1; lift <= 4; lift++) {
                Vec3 mid = from.add(destination).scale(0.5).add(0.0, lift, 0.0);
-               if (view.init_Z(mid)
+               if (view.isLoaded(mid)
                   && view.load(mid)
                   && view.update(mid)
                   && !load(view, mid)
@@ -912,8 +912,8 @@ public final class PkgCls_a {
    }
 
    private static boolean load_Z(TpRoutePlanner.Inner_StreamUtil view, Vec3 from, Vec3 to) {
-      if (view.init_Z(to) && view.load(to) && view.update(to)) {
-         Entity entity = view.init_Entity();
+      if (view.isLoaded(to) && view.load(to) && view.update(to)) {
+         Entity entity = view.getEntity();
          if (entity != null) {
             double distance = from.distanceTo(to);
             int segments = Math.max(1, (int)Math.ceil(distance / 8.0));
@@ -921,7 +921,7 @@ public final class PkgCls_a {
 
             for (int i = 1; i <= segments; i++) {
                Vec3 next = from.lerp(to, (double)i / segments);
-               if (!ClipCollisionHelper.init_Z(entity, prev, next)) {
+               if (!ClipCollisionHelper.isPathClear(entity, prev, next)) {
                   return false;
                }
 
@@ -938,7 +938,7 @@ public final class PkgCls_a {
    }
 
    private static boolean load(TpRoutePlanner.Inner_StreamUtil view, Vec3 pos) {
-      Entity entity = view == null ? null : view.init_Entity();
+      Entity entity = view == null ? null : view.getEntity();
       if (entity != null && entity.level() != null && pos != null) {
          double eyeY = pos.y + entity.getEyeHeight();
          BlockPos eyeBlock = BlockPos.containing(pos.x, eyeY, pos.z);
@@ -1065,7 +1065,7 @@ public final class PkgCls_a {
 
       for (int i = 1; i <= samples; i++) {
          Vec3 sample = from.lerp(to, (double)i / samples);
-         if (!view.init_Z(sample) || !view.load(sample)) {
+         if (!view.isLoaded(sample) || !view.load(sample)) {
             return false;
          }
       }
@@ -1078,7 +1078,7 @@ public final class PkgCls_a {
    }
 
    static List<Vec3> init_List_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 destination, int rescueLevel) {
-      return TpRoutePlanner.init_List_F_StreamUtil(view, start, destination, 32 + Math.max(0, rescueLevel) * 16);
+      return TpRoutePlanner.frontierWaypoints(view, start, destination, 32 + Math.max(0, rescueLevel) * 16);
    }
 
    static List<Vec3> init_List_Vec3_Vec3(Vec3 start, Vec3 destination) {
@@ -1119,7 +1119,7 @@ public final class PkgCls_a {
             if (job.init_Entity != null) {
                if (frame.init_Z()) {
                   for (ClipCollisionHelper.Inner_DataUtil step : frame.init_List()) {
-                     job.init_Entity.setPos(step.init_Vec3());
+                     job.init_Entity.setPos(step.position());
                      mc.getConnection().send(ServerboundMoveVehiclePacket.fromEntity(job.init_Entity));
                   }
 
@@ -1131,7 +1131,7 @@ public final class PkgCls_a {
                mc.getConnection().send(new StatusOnly(noFall || frame.load(), false));
             } else {
                for (ClipCollisionHelper.Inner_DataUtil step : frame.init_List()) {
-                  mc.getConnection().send(new Pos(init_Vec3_a_ConfigStore_Vec3(job, step.init_Vec3()), step.init_Z(), false));
+                  mc.getConnection().send(new Pos(init_Vec3_a_ConfigStore_Vec3(job, step.position()), step.onGround(), false));
                }
             }
 
@@ -1196,7 +1196,7 @@ public final class PkgCls_a {
 
    private static TpRoutePlanner.Inner_StreamUtil init_F_StreamUtil_a_ConfigStore(PkgCls_a.Inner_ConfigStore job) {
       Entity entity = job.init_Entity != null ? job.init_Entity : job.init_LocalPlayer;
-      return TpRoutePlanner.init_F_StreamUtil_Entity(entity);
+      return TpRoutePlanner.entityView(entity);
    }
 
    private static boolean load(PkgCls_a.Inner_ConfigStore job, Vec3 position) {
@@ -1206,11 +1206,11 @@ public final class PkgCls_a {
 
    private static boolean read(PkgCls_a.Inner_ConfigStore job, Vec3 position) {
       TpRoutePlanner.Inner_StreamUtil view = init_F_StreamUtil_a_ConfigStore(job);
-      return view != null && position != null && view.init_Z(position) && view.load(position) && view.update(position) && view.sync(position);
+      return view != null && position != null && view.isLoaded(position) && view.load(position) && view.update(position) && view.sync(position);
    }
 
    static boolean init_Z_F_StreamUtil_Vec3(TpRoutePlanner.Inner_StreamUtil view, Vec3 position) {
-      return view != null && position != null && view.init_Z(position) && view.load(position) && view.update(position) && view.read(position);
+      return view != null && position != null && view.isLoaded(position) && view.load(position) && view.update(position) && view.read(position);
    }
 
    public static long init_J() {
@@ -1474,8 +1474,8 @@ public final class PkgCls_a {
          player.setSprinting(false);
          player.stopFallFlying();
          player.getAbilities().flying = false;
-         TpRoutePlanner.Inner_StreamUtil view = TpRoutePlanner.init_F_StreamUtil_Entity(player);
-         player.setOnGround(view != null && view.init_Z(player.position()) && view.update(player.position()) && view.read(player.position()));
+         TpRoutePlanner.Inner_StreamUtil view = TpRoutePlanner.entityView(player);
+         player.setOnGround(view != null && view.isLoaded(player.position()) && view.update(player.position()) && view.read(player.position()));
          player.setDeltaMovement(Vec3.ZERO);
          boolean previousOwnedSend = write();
 

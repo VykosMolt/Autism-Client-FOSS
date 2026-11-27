@@ -326,7 +326,7 @@ public abstract class AutismClientConnectionMixin {
                   }
                }
 
-               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !BlinkPacketManager.interceptOutgoing(packet)) {
+               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.interceptOutgoing(packet) && !BlinkPacketManager.interceptOutgoing(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
                      autismclient.util.SprintStateTracker.load(pong.getId());
                   }
@@ -554,7 +554,7 @@ public abstract class AutismClientConnectionMixin {
                CustomMenuTracker.load(packet, protocolHint);
             }
 
-            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !BlinkPacketManager.interceptIncoming(packet)) {
+            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.interceptIncoming(packet) && !BlinkPacketManager.interceptIncoming(packet)) {
                this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
                boolean payloadLoggedEarly = false;
                if (module != null && hooks.loggerCapture()) {
@@ -723,7 +723,7 @@ public abstract class AutismClientConnectionMixin {
    private void autism$clearRuntimeConnectionStateOnDisconnect(Packet<?> packet) {
       if (autism$isDisconnectPacket(packet)) {
          ContainerCloseGuard.init_V();
-         autismclient.util.macro.PacketGateManager.load_V();
+         autismclient.util.macro.PacketGateManager.clearAll();
          PingSpoofScheduler.write();
          BlinkPacketManager.auditDisconnect();
          AutismSessionState s = AutismSessionState.getInstance();
@@ -801,7 +801,7 @@ public abstract class AutismClientConnectionMixin {
             carryCursor = module == null || module.isXCarryCarryCursor();
          }
 
-         boolean hasItems = XCarryAction.init_Z_InventoryMenu_3(client.player.inventoryMenu, carryCursor, mask);
+         boolean hasItems = XCarryAction.hasCarriedItemsIn(client.player.inventoryMenu, carryCursor, mask);
          shared.setXCarryActive(hasItems);
          return true;
       } else {

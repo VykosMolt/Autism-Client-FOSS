@@ -66,7 +66,7 @@ public class ServerCommand extends Command {
    }
 
    private static void read() {
-      double tps = ServerTickPhaseTracker.init_D();
+      double tps = ServerTickPhaseTracker.getTps();
       AutismClientMessaging.sendPrefixed(String.format("§eTPS: §f%.2f §7(estimated)", tps));
    }
 }

@@ -139,7 +139,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private String read_Str;
 
    private static int init_I() {
-      return autismclient.util.LatencyTickWindow.init_I_I(autismclient.util.macro.ServerTickPhaseTracker.init_I());
+      return autismclient.util.LatencyTickWindow.init_I_I(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
    }
 
    public AnchorAuraModule() {
@@ -1094,7 +1094,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private int load_I() {
       return autismclient.util.ActionCooldownScheduler.init_I_I(
-         this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ServerTickPhaseTracker.init_I()
+         this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs()
       );
    }
 
@@ -1104,7 +1104,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.CHARGE),
          this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.DETONATE),
          this.integer("switch-delay"),
-         autismclient.util.macro.ServerTickPhaseTracker.init_I(),
+         autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs(),
          shielded
       );
    }
@@ -1499,7 +1499,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.valid = tick;
       }
 
-      this.init_StateCache.load(this.init_Obj(), tick, autismclient.util.macro.ServerTickPhaseTracker.init_I());
+      this.init_StateCache.load(this.init_Obj(), tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
    }
 
    private Object init_Obj() {
@@ -2346,7 +2346,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy) {
-      int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.init_I() / 50.0));
+      int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs() / 50.0));
       return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.getInstance().getClientTick(), horizon, 2.0);
    }
 

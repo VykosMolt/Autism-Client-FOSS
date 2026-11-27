@@ -25,11 +25,11 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       return MacroActionType.WAIT_GUI_TYPE;
    }
 
-   public boolean init_Z_3(Minecraft mc) {
-      return this.init_Optional(mc).isPresent();
+   public boolean matches(Minecraft mc) {
+      return this.capture(mc).isPresent();
    }
 
-   public Optional<Map<String, MacroVarValue>> init_Optional(Minecraft mc) {
+   public Optional<Map<String, MacroVarValue>> capture(Minecraft mc) {
       if (mc != null && GuiScreenMatcher.init(mc.gui.screen(), this.guiType, "")) {
          Screen screen = mc.gui.screen();
          String actual = screen.getTitle() == null ? "" : screen.getTitle().getString();
@@ -49,11 +49,11 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
                return Optional.empty();
             }
 
-            values.putAll(result.get().init_Map());
+            values.putAll(result.get().variables());
          }
 
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, actual, Map.of("title", MacroVarValue.ofText(actual), "type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen)))));
+            values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, actual, Map.of("title", MacroVarValue.ofText(actual), "type", MacroVarValue.ofText(GuiScreenMatcher.screenTypeName(screen)))));
          }
 
          return Optional.of(values);

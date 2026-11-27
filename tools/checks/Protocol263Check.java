@@ -82,32 +82,32 @@ public final class Protocol263Check {
       dataCtor.setAccessible(true);
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBare = PingSpoofScheduler.init_Z(new ClientboundDisconnectPacket(Component.literal("kicked")));
+      boolean heldBare = PingSpoofScheduler.interceptIncoming(new ClientboundDisconnectPacket(Component.literal("kicked")));
       check("PingSpoof bare disconnect passes through", !heldBare);
       check("PingSpoof bare disconnect clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBundled = PingSpoofScheduler.init_Z(new ClientboundBundlePacket(List.of(alive, new ClientboundDisconnectPacket(Component.literal("kicked")))));
+      boolean heldBundled = PingSpoofScheduler.interceptIncoming(new ClientboundBundlePacket(List.of(alive, new ClientboundDisconnectPacket(Component.literal("kicked")))));
       check("PingSpoof bundled disconnect passes through", !heldBundled);
       check("PingSpoof bundled disconnect clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       // 3b. Bare and bundled StartConfiguration drop queues and pass through; bundled keepalive exempt
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldStartCfg = PingSpoofScheduler.init_Z(ClientboundStartConfigurationPacket.INSTANCE);
+      boolean heldStartCfg = PingSpoofScheduler.interceptIncoming(ClientboundStartConfigurationPacket.INSTANCE);
       check("PingSpoof bare StartConfiguration passes through", !heldStartCfg);
       check("PingSpoof bare StartConfiguration clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBundledStartCfg = PingSpoofScheduler.init_Z(new ClientboundBundlePacket(List.of(alive, ClientboundStartConfigurationPacket.INSTANCE)));
+      boolean heldBundledStartCfg = PingSpoofScheduler.interceptIncoming(new ClientboundBundlePacket(List.of(alive, ClientboundStartConfigurationPacket.INSTANCE)));
       check("PingSpoof bundled StartConfiguration passes through", !heldBundledStartCfg);
       check("PingSpoof bundled StartConfiguration clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       check("PingSpoof write() exempts bundled keepalive",
          (Boolean) writePred.invoke(null, new ClientboundBundlePacket(List.of(alive, new ClientboundKeepAlivePacket(42L)))));
-      PingSpoofScheduler.read_V();
+      PingSpoofScheduler.disable();
       PingSpoofScheduler.write();
 
       // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility

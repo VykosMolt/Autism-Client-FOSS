@@ -36,7 +36,7 @@ public class PayAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("commandTemplate", this.commandTemplate);
       tag.putString("amountInput", this.amountInput);
-      tag.putInt("delayMs", init_I_I(this.delayMs));
+      tag.putInt("delayMs", clampDelay(this.delayMs));
       tag.putBoolean("delayEnabled", this.delayEnabled);
       tag.putBoolean("divideEnabled", this.divideEnabled);
       tag.putBoolean("probeHidden", this.probeHidden);
@@ -65,7 +65,7 @@ public class PayAction implements MacroAction {
       }
 
       if (tag.contains("delayMs")) {
-         this.delayMs = init_I_I(tag.getIntOr("delayMs", 1000));
+         this.delayMs = clampDelay(tag.getIntOr("delayMs", 1000));
       }
 
       if (tag.contains("delayEnabled")) {
@@ -124,7 +124,7 @@ public class PayAction implements MacroAction {
    }
 
    public long init() {
-      return init_J_Str(this.amountInput);
+      return parseAmount(this.amountInput);
    }
 
    public long load() {
@@ -148,11 +148,11 @@ public class PayAction implements MacroAction {
       return amounts;
    }
 
-   public static int init_I_I(int delayMs) {
+   public static int clampDelay(int delayMs) {
       return Math.max(0, delayMs);
    }
 
-   public static long init_J_Str(String input) {
+   public static long parseAmount(String input) {
       if (input == null) {
          return 0L;
       }
@@ -243,7 +243,7 @@ public class PayAction implements MacroAction {
       return true;
    }
 
-   public static String init_Str_J(long amount) {
+   public static String formatAmount(long amount) {
       DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
       DecimalFormat format = new DecimalFormat("#,##0", symbols);
       return format.format(amount);

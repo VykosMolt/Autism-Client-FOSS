@@ -70,7 +70,7 @@ public final class PayAllModule extends Module {
                }
             }
 
-            long amount = Math.max(0L, autismclient.util.macro.PayAction.init_J_Str(this.text("amount")));
+            long amount = Math.max(0L, autismclient.util.macro.PayAction.parseAmount(this.text("amount")));
             long[] divided = this.bool("divide") ? autismclient.util.macro.PayAction.init(amount, targets.size()) : null;
             int sent = 0;
 
@@ -94,7 +94,7 @@ public final class PayAllModule extends Module {
                   if (!command.isEmpty()) {
                      int index = ++sent;
                      int total = targets.size();
-                     String label = autismclient.util.macro.PayAction.init_Str_J(perAmount);
+                     String label = autismclient.util.macro.PayAction.formatAmount(perAmount);
                      String targetName = player;
                      CountDownLatch sendLatch = new CountDownLatch(1);
                      MC.execute(() -> {

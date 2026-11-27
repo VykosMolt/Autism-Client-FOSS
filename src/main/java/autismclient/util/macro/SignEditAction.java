@@ -176,17 +176,17 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
@@ -201,7 +201,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void init_V_Str(String value) {
+   public void setGuiName(String value) {
       this.guiName = value;
    }
 

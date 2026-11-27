@@ -38,7 +38,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       }
    }
 
-   public void init_V_Minecraft_7(Minecraft mc) {
+   public void releaseUseItem(Minecraft mc) {
       if (mc.player != null && mc.getConnection() != null) {
          mc.getConnection().send(new ServerboundPlayerActionPacket(Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
       }
@@ -70,7 +70,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       tag.putBoolean("waitForGui", this.waitForGui);
       tag.putString("guiName", this.guiName == null ? "" : this.guiName);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -115,11 +115,11 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return false;
    }
 
@@ -128,7 +128,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGui;
    }
 
@@ -138,17 +138,17 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName == null ? "" : this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name == null ? "" : name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -162,7 +162,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       String base = this.useMode == UseItemAction.Inner_DataUtil.CUSTOM_HOLD
          ? "Use Item (" + item + ", hold " + this.holdTicks + "t" + wait + sneakLabel + ")"
          : "Use Item (" + item + count + wait + sneakLabel + ")";
-      return base + GuiWaitAware.init_Str_aP(this);
+      return base + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

@@ -34,12 +34,12 @@ public class UseItemPhaseAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      int times = this.init_I_6();
+      int times = this.getRepeatCount();
       boolean stopped = false;
 
       for (int i = 0; i < times && !stopped; i++) {
-         this.init_V_2(mc);
-         boolean gateInstalled = this.init_Z_4(mc);
+         this.usePhase(mc);
+         boolean gateInstalled = this.installHoldGate(mc);
 
          try {
             for (int t = 0; t < this.holdTicks; t++) {
@@ -49,7 +49,7 @@ public class UseItemPhaseAction implements MacroAction {
                }
 
                try {
-                  MacroWaitRegistry.load_CompletableFuture().get(100L, TimeUnit.MILLISECONDS);
+                  MacroWaitRegistry.awaitTickSync().get(100L, TimeUnit.MILLISECONDS);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                   stopped = true;
@@ -59,7 +59,7 @@ public class UseItemPhaseAction implements MacroAction {
             }
          } finally {
             if (gateInstalled) {
-               this.init_V_14();
+               this.removeHoldGate();
             }
          }
 
@@ -69,11 +69,11 @@ public class UseItemPhaseAction implements MacroAction {
       }
    }
 
-   public int init_I_6() {
+   public int getRepeatCount() {
       return Math.max(1, Math.min(1000, this.repeat));
    }
 
-   public boolean init_Z_8() {
+   public boolean gatesDuringHold() {
       return this.gateDuringHold && this.holdTicks > 0;
    }
 
@@ -81,7 +81,7 @@ public class UseItemPhaseAction implements MacroAction {
       return "OFF_HAND".equalsIgnoreCase(this.hand) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
    }
 
-   public void init_V_2(Minecraft mc) {
+   public void usePhase(Minecraft mc) {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          MacroItemTarget target = MacroItemTarget.parse(this.itemName);
          if (target.hasItemFilter()) {
@@ -124,8 +124,8 @@ public class UseItemPhaseAction implements MacroAction {
       mc.getConnection().send(new ServerboundUseItemPacket(hand, 0, mc.player.getYRot(), mc.player.getXRot()));
    }
 
-   public boolean init_Z_4(Minecraft mc) {
-      if (!this.init_Z_8()) {
+   public boolean installHoldGate(Minecraft mc) {
+      if (!this.gatesDuringHold()) {
          return false;
       }
 
@@ -144,8 +144,8 @@ public class UseItemPhaseAction implements MacroAction {
       return true;
    }
 
-   public void init_V_14() {
-      PacketGateManager.init_V(this.gateId);
+   public void removeHoldGate() {
+      PacketGateManager.removeGate(this.gateId);
    }
 
    public void load(Minecraft mc) {

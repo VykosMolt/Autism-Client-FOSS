@@ -46,7 +46,7 @@ public class NbtBookAction implements MacroAction {
    private static final int load = 14;
    private static final float init_F = 114.0F;
 
-   public boolean init_Z_Minecraft_2(Minecraft mc, int bookIndex, int totalBooks) {
+   public boolean signBook(Minecraft mc, int bookIndex, int totalBooks) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -128,7 +128,7 @@ public class NbtBookAction implements MacroAction {
    }
 
    private List<String> load(Font font, String text, int numPages) {
-      return this.wordWrap ? init_List_Font(font, text, numPages) : init_List_Str(text, numPages, this.characters);
+      return this.wordWrap ? wrapToPages(font, text, numPages) : splitToPages(text, numPages, this.characters);
    }
 
    private List<String> init_List_I_3(int numPages) {
@@ -163,8 +163,8 @@ public class NbtBookAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      if (!autismclient.modules.aD.read_Z() && this.init_Z_Minecraft_2(mc, 0, 1)) {
-         this.init_V_Minecraft_8(mc);
+      if (!autismclient.modules.aD.read_Z() && this.signBook(mc, 0, 1)) {
+         this.disconnectIfRequested(mc);
       }
    }
 
@@ -195,7 +195,7 @@ public class NbtBookAction implements MacroAction {
       return true;
    }
 
-   public void init_V_Minecraft_8(Minecraft mc) {
+   public void disconnectIfRequested(Minecraft mc) {
       if (this.disconnectAfter && mc.level != null && mc.getConnection() != null) {
          mc.getConnection().getConnection().disconnect(Component.literal("Disconnected by Macro"));
       }
@@ -218,7 +218,7 @@ public class NbtBookAction implements MacroAction {
       return -1;
    }
 
-   public static List<String> init_List_Font(Font tr, String text, int maxPages) {
+   public static List<String> wrapToPages(Font tr, String text, int maxPages) {
       if (text != null && !text.isEmpty()) {
          String normalized = BookBotFileReader.init(text);
          String[] paragraphs = normalized.split("\n", -1);
@@ -325,10 +325,10 @@ public class NbtBookAction implements MacroAction {
    }
 
    public static int init_I_Font_Str(Font tr, String text) {
-      return text != null && !text.isEmpty() ? init_List_Font(tr, text, 100).size() : 0;
+      return text != null && !text.isEmpty() ? wrapToPages(tr, text, 100).size() : 0;
    }
 
-   public static List<String> init_List_Str(String text, int maxPages, int charsPerPage) {
+   public static List<String> splitToPages(String text, int maxPages, int charsPerPage) {
       if (text != null && !text.isEmpty()) {
          int max = Math.max(1, Math.min(1024, charsPerPage));
          List<String> pages = new ArrayList<>();

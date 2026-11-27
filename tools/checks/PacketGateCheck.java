@@ -20,11 +20,11 @@ public class PacketGateCheck {
       // Panic-hide off without reading the real config from disk.
       autismclient.modules.aD.init((autismclient.util.AutismConfig)null);
 
-      PacketGateManager.load_V();
+      PacketGateManager.clearAll();
       PacketGateManager.load(gate("g", PacketGateAction.Inner_CachePool.CANCEL), 0L);
-      check(PacketGateManager.init_Z(), "owner-0 gate installed");
+      check(PacketGateManager.hasActiveGates(), "owner-0 gate installed");
       PacketGateManager.load(gate("g", PacketGateAction.Inner_CachePool.DISABLE_GATE), 7L);
-      check(!PacketGateManager.init_Z(), "UNBLOCK from a run removes the owner-0 gate with the same id");
+      check(!PacketGateManager.hasActiveGates(), "UNBLOCK from a run removes the owner-0 gate with the same id");
 
       PacketGateManager.load(gate("g", PacketGateAction.Inner_CachePool.CANCEL), 0L);
       PacketGateManager.load(gate("run", PacketGateAction.Inner_CachePool.CANCEL), 7L);

@@ -26,17 +26,17 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    private boolean init = true;
 
    @Override
-   public boolean init_Z_3() {
+   public boolean isRaycast() {
       return this.raycast;
    }
 
    @Override
-   public void init_V_Z(boolean value) {
+   public void setRaycast(boolean value) {
       this.raycast = value;
    }
 
    @Override
-   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
          return AimTargetAction.AimTarget.init(this.blockPos);
       } else {
@@ -64,10 +64,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
    @Override
    public void execute(Minecraft mc) {
-      this.init_Z_Minecraft_4(mc);
+      this.openTarget(mc);
    }
 
-   public boolean init_Z_Minecraft_4(Minecraft mc) {
+   public boolean openTarget(Minecraft mc) {
       if (mc != null && mc.player != null) {
          if (this.targetMode == OpenContainerAction.Inner_DataUtil.ENTITY) {
             List<String> refs = this.init_List_13();
@@ -123,7 +123,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   public void init_V_Minecraft_9(Minecraft mc) {
+   public void captureCrosshairTarget(Minecraft mc) {
       if (mc != null) {
          if (mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
             this.targetMode = OpenContainerAction.Inner_DataUtil.ENTITY;
@@ -158,7 +158,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -168,7 +168,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -178,12 +178,12 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
@@ -227,7 +227,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
       String targetLabel = var10000;
       String base = "Open Container " + targetLabel;
-      return base + GuiWaitAware.init_Str_aP(this);
+      return base + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
@@ -289,8 +289,8 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
 
       this.waitForTarget = tag.getBooleanOr("waitForTarget", true);
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
       this.init = tag.getBooleanOr("enabled", true);

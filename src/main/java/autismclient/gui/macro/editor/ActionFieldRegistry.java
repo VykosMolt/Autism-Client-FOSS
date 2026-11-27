@@ -59,7 +59,7 @@ public final class ActionFieldRegistry {
          if (type == MacroActionType.IF || type == MacroActionType.FLOW) {
             ArrayList<String> ids = new ArrayList<>();
             ids.add("");
-            ids.addAll(MacroToolBridge.init_List().stream().map(MacroToolBridge.Inner_TaskQueue::init).toList());
+            ids.addAll(MacroToolBridge.listTools().stream().map(MacroToolBridge.Inner_TaskQueue::init).toList());
             String saved = action.toTag().getStringOr("cond_toolFilter", "");
             if (!ids.contains(saved)) {
                ids.add(saved);

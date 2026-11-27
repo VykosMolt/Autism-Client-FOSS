@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MacroVariableStore {
    private final ConcurrentHashMap<String, MacroVarValue> init = new ConcurrentHashMap<>();
 
-   public void init_V() {
+   public void clear() {
       this.init.clear();
    }
 
@@ -20,13 +20,13 @@ public final class MacroVariableStore {
       }
    }
 
-   public void init_V_Map(Map<String, MacroVarValue> additions) {
+   public void putAll(Map<String, MacroVarValue> additions) {
       if (additions != null) {
          additions.forEach(this::init);
       }
    }
 
-   public Optional<MacroVarValue> init_Optional_Str(String name) {
+   public Optional<MacroVarValue> lookup(String name) {
       String key = init_Str_Str(name);
       if (key.isEmpty()) {
          return Optional.empty();
@@ -42,13 +42,13 @@ public final class MacroVariableStore {
       }
    }
 
-   public void init_V_Str(String name) {
+   public void remove(String name) {
       String key = init_Str_Str(name);
       int dot = key.indexOf(46);
       this.init.remove(dot < 0 ? key : key.substring(0, dot));
    }
 
-   public Map<String, MacroVarValue> init_Map() {
+   public Map<String, MacroVarValue> snapshot() {
       return Map.copyOf(new LinkedHashMap<>(this.init));
    }
 

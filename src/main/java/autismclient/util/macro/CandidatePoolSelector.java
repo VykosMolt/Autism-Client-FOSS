@@ -245,6 +245,6 @@ public final class CandidatePoolSelector {
       REGEX;
    }
 
-   public record Inner_StreamUtil(String init_Str, int init_I, List<String> init_List) {
+   public record Inner_StreamUtil(String value, int index, List<String> init_List) {
    }
 }

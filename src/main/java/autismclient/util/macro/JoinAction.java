@@ -86,7 +86,7 @@ public class JoinAction implements MacroAction {
       return autismclient.util.JoinMacroController.Inner_StreamUtil.init(this.when);
    }
 
-   public boolean init_Z_Minecraft_Consumer(Minecraft mc, Consumer<String> status) throws InterruptedException {
+   public boolean join(Minecraft mc, Consumer<String> status) throws InterruptedException {
       String address = this.init_Str();
       if (address.isEmpty()) {
          return init_Z("Join: no server - set one or join a server first");
@@ -110,7 +110,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   public static void init_V_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
+   public static void awaitDisconnect(Minecraft mc, long timeoutMs) throws InterruptedException {
       long deadline = System.currentTimeMillis() + timeoutMs;
 
       while (init(mc) && System.currentTimeMillis() < deadline) {
@@ -141,7 +141,7 @@ public class JoinAction implements MacroAction {
       }
 
       try {
-         MacroWaitRegistry.load_CompletableFuture().get(250L, TimeUnit.MILLISECONDS);
+         MacroWaitRegistry.awaitTickSync().get(250L, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          throw e;
       } catch (Exception var2) {

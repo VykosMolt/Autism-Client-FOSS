@@ -30,7 +30,7 @@ public final class ToolsAction implements MacroAction {
    private boolean init = true;
 
    public boolean init() {
-      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.init_k_TaskQueue(this.toolId);
+      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.findTool(this.toolId);
       if (tool == null) {
          return false;
       }
@@ -149,11 +149,11 @@ public final class ToolsAction implements MacroAction {
       }
    }
 
-   public MacroToolBridge.Inner_StreamUtil init_k_StreamUtil_Minecraft_J(Minecraft mc, long owner) {
+   public MacroToolBridge.Inner_StreamUtil startJob(Minecraft mc, long owner) {
       if (!"RUN".equals(this.operation)) {
          return MacroToolBridge.load(owner, this.scope, "");
       } else if (this.toolId != null && !this.toolId.isBlank()) {
-         return MacroToolBridge.init_k_StreamUtil(owner, this.toolId, this.init_JsonObject_Minecraft(mc).toString());
+         return MacroToolBridge.startTool(owner, this.toolId, this.init_JsonObject_Minecraft(mc).toString());
       } else {
          throw new IllegalArgumentException("Choose a tool");
       }
@@ -162,9 +162,9 @@ public final class ToolsAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if ("RUN".equals(this.operation)) {
-         this.init_k_StreamUtil_Minecraft_J(mc, MacroExecutor.getCurrentRunId());
+         this.startJob(mc, MacroExecutor.getCurrentRunId());
       } else {
-         MacroToolBridge.init_CompletableFuture(MacroExecutor.getCurrentRunId(), this.scope, this.operation);
+         MacroToolBridge.runOperation(MacroExecutor.getCurrentRunId(), this.scope, this.operation);
       }
    }
 
@@ -177,13 +177,13 @@ public final class ToolsAction implements MacroAction {
       }
    }
 
-   public boolean init_Z_Str_Str_2(String key, String value) {
+   public boolean applyToolArgBinding(String key, String value) {
       if (!key.startsWith("toolArg.")) {
          return false;
       }
 
       try {
-         MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.init_k_TaskQueue(this.toolId);
+         MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.findTool(this.toolId);
          if (definition == null) {
             return false;
          }
@@ -278,7 +278,7 @@ public final class ToolsAction implements MacroAction {
       this.saveAs = tag.getStringOr("saveAs", "");
       this.init = tag.getBooleanOr("enabled", true);
       JsonObject args = init_JsonObject_Str(tag.getStringOr("argumentsJson", "{}"));
-      MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.init_k_TaskQueue(this.toolId);
+      MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.findTool(this.toolId);
       JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.read()).getAsJsonObject();
       JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : new JsonObject();
 
@@ -328,7 +328,7 @@ public final class ToolsAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Tools: " + ("RUN".equals(this.operation) ? MacroToolBridge.init_Str(this.toolId) : this.operation.toLowerCase());
+      return "Tools: " + ("RUN".equals(this.operation) ? MacroToolBridge.toolLabel(this.toolId) : this.operation.toLowerCase());
    }
 
    @Override

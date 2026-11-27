@@ -39,19 +39,19 @@ public class MacroWaitRegistry {
    private static volatile long init_J = 0L;
    private static volatile long load = 0L;
 
-   public static long init_J() {
+   public static long getInventoryRevision() {
       return init_AtomicLong.get();
    }
 
-   public static int init_I() {
+   public static int pendingCount() {
       return init_List.size();
    }
 
-   public static void init_V() {
+   public static void bumpInventoryRevision() {
       init_AtomicLong.incrementAndGet();
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture(String guiTitle) {
+   public static CompletableFuture<Void> awaitGuiTitle(String guiTitle) {
       Minecraft mc = Minecraft.getInstance();
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitGuiTitleEntry condition = new MacroWaitRegistry.WaitGuiTitleEntry(guiTitle, mc.gui.screen(), future);
@@ -65,7 +65,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture(Screen prevScreen) {
+   public static CompletableFuture<Void> awaitScreenChange(Screen prevScreen) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       init_List.add(new MacroWaitRegistry.WaitScreenChangeEntry(prevScreen, future));
       return future;
@@ -88,7 +88,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture_F_Z(float threshold, boolean below) {
+   public static CompletableFuture<Void> awaitHealth(float threshold, boolean below) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitHealthEntry condition = new MacroWaitRegistry.WaitHealthEntry(threshold, below, future);
       init_List.add(condition);
@@ -115,10 +115,10 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> init_CompletableFuture_Str_Z(String itemName, boolean checkMainHand) {
-      return init_CompletableFuture_ArrayUtil_Z(MacroItemTarget.parse(itemName), checkMainHand);
+      return awaitCooldown(MacroItemTarget.parse(itemName), checkMainHand);
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture_ArrayUtil_Z(MacroItemTarget target, boolean checkMainHand) {
+   public static CompletableFuture<Void> awaitCooldown(MacroItemTarget target, boolean checkMainHand) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitCooldownEntry condition = new MacroWaitRegistry.WaitCooldownEntry(target, checkMainHand, future);
       init_List.add(condition);
@@ -169,27 +169,27 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture_D_Z(double distance, boolean horizontalOnly) {
+   public static CompletableFuture<Void> awaitPositionDelta(double distance, boolean horizontalOnly) {
       Minecraft mc = Minecraft.getInstance();
       Vec3 origin = mc.player == null ? Vec3.ZERO : mc.player.position();
-      return init_CompletableFuture_Vec3(origin, distance, horizontalOnly);
+      return awaitPositionDeltaFrom(origin, distance, horizontalOnly);
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture_Vec3(Vec3 origin, double distance, boolean horizontalOnly) {
+   public static CompletableFuture<Void> awaitPositionDeltaFrom(Vec3 origin, double distance, boolean horizontalOnly) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitPositionDeltaEntry condition = new MacroWaitRegistry.WaitPositionDeltaEntry(origin, distance, horizontalOnly, future);
       init_List.add(condition);
       return future;
    }
 
-   public static CompletableFuture<Void> load_CompletableFuture() {
+   public static CompletableFuture<Void> awaitTickSync() {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitTickSyncEntry condition = new MacroWaitRegistry.WaitTickSyncEntry(future);
       init_List.add(condition);
       return future;
    }
 
-   public static void init_V(Minecraft mc) {
+   public static void onInventoryUpdate(Minecraft mc) {
       if (!init_List.isEmpty()) {
          Screen current = mc.gui.screen();
          List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
@@ -223,7 +223,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static void init_V(int slot) {
+   public static void onSlotUpdate(int slot) {
       if (!init_List.isEmpty()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null) {
@@ -355,7 +355,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static void load_V() {
+   public static void cancelAll() {
       synchronized (init_List) {
          for (MacroWaitRegistry.WaitEntry cond : init_List) {
             cond.load_V();
@@ -365,11 +365,11 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean hasPendingWaits() {
       return !init_List.isEmpty();
    }
 
-   public static boolean load_Z() {
+   public static boolean hasInventoryWaits() {
       if (init_List.isEmpty()) {
          return false;
       }
@@ -388,7 +388,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static boolean read_Z() {
+   public static boolean hasSoundWaits() {
       if (init_List.isEmpty()) {
          return false;
       }
@@ -422,7 +422,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static void read_V() {
+   public static void markWorldChange() {
       init_J = System.nanoTime();
    }
 
@@ -461,7 +461,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static CompletableFuture<Void> init_CompletableFuture_I(int bufferMs, int maxWaitMs, boolean ignorePing) {
+   public static CompletableFuture<Void> awaitServerTickSync(int bufferMs, int maxWaitMs, boolean ignorePing) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitServerTickSyncEntry condition = new MacroWaitRegistry.WaitServerTickSyncEntry(future, bufferMs, maxWaitMs, ignorePing);
       init_List.add(condition);
@@ -538,8 +538,8 @@ public class MacroWaitRegistry {
 
             for (int i = 0; i < action.entries.size(); i++) {
                WaitForSlotChangeAction.Inner_DataUtil e = action.entries.get(i);
-               MacroItemTarget entryTarget = e.init_ArrayUtil();
-               if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.hasSlot()) {
+               MacroItemTarget entryTarget = e.resolveItemTarget();
+               if (e.mode == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.hasSlot()) {
                   int slotNum = entryTarget.slot;
                   int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
@@ -554,7 +554,7 @@ public class MacroWaitRegistry {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitSlotChangeEntry condition = new MacroWaitRegistry.WaitSlotChangeEntry(action, initialNames, initialCounts, future);
       init_List.add(condition);
-      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE);
+      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.mode == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE);
       if (!hasAnyChange && init_Z_Minecraft_b_EventBus(mc, condition)) {
          condition.init_V();
          init_List.remove(condition);
@@ -833,7 +833,7 @@ public class MacroWaitRegistry {
       }
 
       private boolean init(Minecraft mc, AbstractContainerMenu handler, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
-         MacroItemTarget entryTarget = e.init_ArrayUtil();
+         MacroItemTarget entryTarget = e.resolveItemTarget();
          if (entryTarget == null) {
             entryTarget = new MacroItemTarget();
          }
@@ -841,17 +841,17 @@ public class MacroWaitRegistry {
          if (entryTarget.hasSlot()) {
             int slotNum = entryTarget.slot;
             if (handler == null) {
-               return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
+               return e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
             } else {
                int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.init(stack, entryTarget, slotNum, e, entryIdx);
                } else {
-                  return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
+                  return e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
                }
             }
-         } else if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY) {
+         } else if (e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY) {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
@@ -899,7 +899,7 @@ public class MacroWaitRegistry {
       private boolean init(ItemStack stack, MacroItemTarget target, int visibleSlot, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
          boolean nameMatches = target == null || !target.hasItemFilter() || !stack.isEmpty() && target.matches(stack, visibleSlot);
          boolean var10000;
-         switch (e.init_aD_StreamUtil) {
+         switch (e.mode) {
             case NOT_EMPTY:
                var10000 = !stack.isEmpty() && nameMatches;
                break;
@@ -907,10 +907,10 @@ public class MacroWaitRegistry {
                var10000 = stack.isEmpty();
                break;
             case COUNT_AT_LEAST:
-               var10000 = !stack.isEmpty() && nameMatches && stack.getCount() >= e.init_I;
+               var10000 = !stack.isEmpty() && nameMatches && stack.getCount() >= e.count;
                break;
             case COUNT_BELOW:
-               var10000 = stack.isEmpty() || nameMatches && stack.getCount() < e.init_I;
+               var10000 = stack.isEmpty() || nameMatches && stack.getCount() < e.count;
                break;
             case ANY_CHANGE:
                String initName = this.init_Map.getOrDefault(entryIdx, "");
@@ -1253,7 +1253,7 @@ public class MacroWaitRegistry {
             return false;
          }
 
-         if (GuiScreenMatcher.init_Z(screen)) {
+         if (GuiScreenMatcher.isClientScreen(screen)) {
             return false;
          }
 
@@ -1489,7 +1489,7 @@ public class MacroWaitRegistry {
          int peerCount = sync.getConnectedClientCount();
 
          for (WaitForLanStepAction.Inner_DataUtil req : this.init_az.entries) {
-            String targetUser = req.init_Str;
+            String targetUser = req.username;
             if (peerCount <= 2 && !targetUser.isEmpty()) {
                boolean nameExists = false;
 
@@ -1509,7 +1509,7 @@ public class MacroWaitRegistry {
                boolean anyReached = false;
 
                for (Entry<String, Integer> entry : steps.entrySet()) {
-                  if (!entry.getKey().equals(myUsername) && entry.getValue() >= req.init_I) {
+                  if (!entry.getKey().equals(myUsername) && entry.getValue() >= req.step) {
                      anyReached = true;
                      break;
                   }
@@ -1522,7 +1522,7 @@ public class MacroWaitRegistry {
                Map<String, ?> clients = sync.getConnectedClients();
                if (clients.containsKey(targetUser)) {
                   int peerStep = steps.getOrDefault(targetUser, 0);
-                  if (peerStep < req.init_I) {
+                  if (peerStep < req.step) {
                      return false;
                   }
                }
@@ -1853,7 +1853,7 @@ public class MacroWaitRegistry {
             return true;
          }
 
-         if (!ServerTickPhaseTracker.init_Z()) {
+         if (!ServerTickPhaseTracker.isWarmedUp()) {
             return false;
          }
 

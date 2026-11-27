@@ -39,7 +39,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
          BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
-            MacroItemTarget target = this.init_ArrayUtil().resolveTemplates(mc);
+            MacroItemTarget target = this.resolveItemTarget().resolveTemplates(mc);
             if (target != null) {
                init(mc, target);
                boolean sneaking = this.sneak;
@@ -127,7 +127,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -137,7 +137,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -147,17 +147,17 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -183,25 +183,25 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public String getDisplayName() {
-      MacroItemTarget target = this.init_ArrayUtil();
+      MacroItemTarget target = this.resolveItemTarget();
       String item = !target.hasSlot() && !target.hasItemFilter() ? "current" : target.formatSummary();
       String pos = this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
       String face = this.manualDirection ? this.direction.name().toLowerCase() : "auto";
-      return "Place " + item + " at " + pos + " " + face + GuiWaitAware.init_Str_aP(this);
+      return "Place " + item + " at " + pos + " " + face + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
-   public boolean init_Z_3() {
+   public boolean isRaycast() {
       return this.raycast;
    }
 
    @Override
-   public void init_V_Z(boolean value) {
+   public void setRaycast(boolean value) {
       this.raycast = value;
    }
 
    @Override
-   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
       return AimTargetAction.AimTarget.init(this.blockPos);
    }
 
@@ -209,7 +209,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "PLACE");
-      MacroItemTarget target = this.init_ArrayUtil();
+      MacroItemTarget target = this.resolveItemTarget();
       if (target.hasSlot() || target.hasItemFilter()) {
          tag.put("itemName", target.toTag());
       }
@@ -234,7 +234,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       tag.putInt("interactCustomMs", this.interactCustomMs);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -256,8 +256,8 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.blockPos = new BlockPos(x, y, z);
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.direction = this.manualDirection ? init_Direction_CompoundTag(tag) : Direction.UP;
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.waitForItem = tag.getBooleanOr("waitForItem", true);
       this.silentSwitch = tag.getBooleanOr("silentSwitch", false);
       this.sneak = tag.getBooleanOr("sneak", false);
@@ -268,7 +268,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.guiName = tag.getStringOr("guiName", "");
       this.init = tag.getBooleanOr("enabled", true);
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    private static Direction init_Direction_CompoundTag(CompoundTag tag) {
@@ -289,7 +289,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       return values[Math.max(0, Math.min(values.length - 1, dirOrd))];
    }
 
-   public MacroItemTarget init_ArrayUtil() {
+   public MacroItemTarget resolveItemTarget() {
       if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }

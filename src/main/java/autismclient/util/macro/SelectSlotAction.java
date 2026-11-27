@@ -62,7 +62,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -83,7 +83,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          tag.put("itemName", target.toTag());
       }
 
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -96,7 +96,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          .map(MacroItemTarget::fromTag)
          .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("itemName", "")));
       this.itemName = this.itemTarget.toSpecString();
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override

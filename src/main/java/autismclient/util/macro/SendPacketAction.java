@@ -24,11 +24,11 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    public boolean waitForGuiAfter = false;
    public String guiName = "";
 
-   public List<AutismSessionState.DelayedPacket> init_List_8() {
+   public List<AutismSessionState.DelayedPacket> getPackets() {
       return this.packets;
    }
 
-   public static Packet<?> init_Packet_ck_CachePool(AutismSessionState.DelayedPacket qp) {
+   public static Packet<?> resolvePacket(AutismSessionState.DelayedPacket qp) {
       if (qp != null && qp.packet != null) {
          return qp.isExactReplay() ? qp.packet : PacketRegenerator.init(qp.packet);
       } else {
@@ -36,11 +36,11 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   public static int init_I_I_5(int value) {
+   public static int clampSendCount(int value) {
       return Math.min(10000, Math.max(1, value));
    }
 
-   public void init_V_10() {
+   public void regeneratePackets() {
    }
 
    @Override
@@ -49,13 +49,13 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
          if (mc.player != null && mc.getConnection() != null) {
             int successCount = 0;
             int failCount = 0;
-            int repeats = init_I_I_5(this.sendCount);
+            int repeats = clampSendCount(this.sendCount);
 
             for (AutismSessionState.DelayedPacket qp : this.packets) {
                if (qp != null && qp.packet != null) {
                   for (int k = 0; k < repeats; k++) {
                      try {
-                        Packet<?> toSend = init_Packet_ck_CachePool(qp);
+                        Packet<?> toSend = resolvePacket(qp);
                         if (toSend == null) {
                            failCount++;
                            break;
@@ -84,7 +84,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -94,7 +94,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -104,12 +104,12 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name != null ? name : "";
    }
 
@@ -123,7 +123,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "SEND_PACKET");
       tag.putString("customName", this.customName);
-      tag.putInt("sendCount", init_I_I_5(this.sendCount));
+      tag.putInt("sendCount", clampSendCount(this.sendCount));
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
@@ -144,9 +144,9 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    public void fromTag(CompoundTag tag) {
       this.packets.clear();
       this.customName = tag.getStringOr("customName", "");
-      this.sendCount = tag.contains("sendCount") ? init_I_I_5(tag.getIntOr("sendCount", 1)) : 1;
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.sendCount = tag.contains("sendCount") ? clampSendCount(tag.getIntOr("sendCount", 1)) : 1;
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -200,7 +200,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
          base = base + " x" + this.sendCount;
       }
 
-      return base + GuiWaitAware.init_Str_aP(this);
+      return base + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

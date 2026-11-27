@@ -57,19 +57,19 @@ public final class CustomMenuAction implements MacroAction {
                   }
                }
             });
-            if (!prepared.init_Z()) {
-               lastError = prepared.init_Str() == null ? "" : prepared.init_Str();
-               if (prepared.init_Str() != null && prepared.init_Str().contains("unavailable")) {
+            if (!prepared.isReady()) {
+               lastError = prepared.error() == null ? "" : prepared.error();
+               if (prepared.error() != null && prepared.error().contains("unavailable")) {
                   LockSupport.parkNanos(20000000L);
                   continue;
                }
 
-               this.init(prepared.init_Str());
+               this.init(prepared.error());
                return;
             }
 
             Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
-            CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.init_CustomMenuSubmissi());
+            CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
             if (!result.success()) {
                this.init(result.error());
                return;

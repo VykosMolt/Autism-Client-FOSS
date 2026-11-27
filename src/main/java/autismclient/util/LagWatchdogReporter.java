@@ -67,7 +67,7 @@ public final class LagWatchdogReporter {
          init();
       } else if (client.getWindow() == null || !client.getWindow().isFocused()) {
          read_J = 0L;
-      } else if (autismclient.util.macro.MacroFpsOverrideManager.init_Z()) {
+      } else if (autismclient.util.macro.MacroFpsOverrideManager.isActive()) {
          read_J = 0L;
       } else {
          int fps = client.getFps();
@@ -169,7 +169,7 @@ public final class LagWatchdogReporter {
          AutismPacketLoggerOverlay logger = module == null ? null : module.getPacketLoggerOverlay();
          return logger == null ? "not created" : logger.load_Str_9();
       });
-      init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.init_I());
+      init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.pendingCount());
       init(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);
       init(sb, "hud", () -> {
          return "enabledElements=" + AutismHudManager.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();

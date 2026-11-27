@@ -90,7 +90,7 @@ public class AutismMacro {
       if (this.actions != null) {
          for (MacroAction action : this.actions) {
             if (action instanceof autismclient.util.macro.SendPacketAction) {
-               ((autismclient.util.macro.SendPacketAction)action).init_V_10();
+               ((autismclient.util.macro.SendPacketAction)action).regeneratePackets();
             }
          }
       }
@@ -585,15 +585,15 @@ public class AutismMacro {
    private void migrateLegacyRaceActions() {
       if (this.actions != null && !this.actions.isEmpty()) {
          for (int i = 0; i < this.actions.size(); i++) {
-            if (this.actions.get(i) instanceof autismclient.util.macro.RaceAction race && race.init_Z()) {
+            if (this.actions.get(i) instanceof autismclient.util.macro.RaceAction race && race.needsLegacyMigration()) {
                int inserted = 0;
-               autismclient.util.macro.PacketClickAction packetClick = race.init_z();
+               autismclient.util.macro.PacketClickAction packetClick = race.takeLegacyPacketClick();
                if (packetClick != null) {
                   this.actions.add(i + 1, packetClick);
                   inserted++;
                }
 
-               if (race.load_Z()) {
+               if (race.legacyUsesNextAction()) {
                   for (int j = i + 1 + inserted; j < this.actions.size(); j++) {
                      MacroAction candidate = this.actions.get(j);
                      if (!autismclient.util.macro.RaceAction.load(candidate)) {
@@ -605,7 +605,7 @@ public class AutismMacro {
                }
 
                race.bodyCount = inserted;
-               race.init_V_3();
+               race.clearLegacyState();
                i += inserted;
             }
          }

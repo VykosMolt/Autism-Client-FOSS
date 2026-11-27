@@ -630,7 +630,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && !MacroExecutor.isRunning()
          && !BlinkPacketManager.isBlinking()
          && !PkgCls_a.init_Z()
-         && !autismclient.util.macro.MacroAimController.init_Z()
+         && !autismclient.util.macro.MacroAimController.isActive()
          && !f.load();
    }
 

@@ -23,17 +23,17 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    private boolean init = true;
 
    @Override
-   public boolean init_Z_3() {
+   public boolean isRaycast() {
       return this.raycast;
    }
 
    @Override
-   public void init_V_Z(boolean value) {
+   public void setRaycast(boolean value) {
       this.raycast = value;
    }
 
    @Override
-   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
       autismclient.util.InteractionTargetRef target = this.init_E();
       if (target == null) {
          return null;
@@ -61,10 +61,10 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    @Override
    public void execute(Minecraft mc) {
-      this.init_Z_Minecraft(mc);
+      this.interact(mc);
    }
 
-   public boolean init_Z_Minecraft(Minecraft mc) {
+   public boolean interact(Minecraft mc) {
       if (mc != null && mc.player != null) {
          if (this.targetMode != InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
             boolean sentAny = false;
@@ -118,7 +118,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       return hasTarget;
    }
 
-   public void init_V_Minecraft_3(Minecraft mc) {
+   public void captureCrosshairTarget(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
          this.targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
          String ref = autismclient.util.InteractionTargetRef.init_Str_Entity(entityHit.getEntity());
@@ -142,7 +142,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -152,7 +152,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -162,17 +162,17 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 
@@ -209,7 +209,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
          targetLabel = this.entityTargets.size() + " entities";
       }
 
-      return "Interact Entity " + targetLabel + GuiWaitAware.init_Str_aP(this);
+      return "Interact Entity " + targetLabel + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
@@ -233,7 +233,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       tag.putString("guiName", this.guiName);
       tag.putBoolean("raycast", this.raycast);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -268,12 +268,12 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
 
       this.waitForTarget = tag.getBooleanOr("waitForTarget", true);
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
       this.init = tag.getBooleanOr("enabled", true);
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    public enum Inner_DataUtil {

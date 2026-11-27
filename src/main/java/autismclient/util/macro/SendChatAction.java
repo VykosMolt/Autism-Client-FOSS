@@ -35,8 +35,8 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
          this.message = tag.getStringOr("message", "");
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -67,7 +67,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -77,7 +77,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -87,19 +87,19 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name != null ? name : "";
    }
 
    @Override
    public String getDisplayName() {
       String preview = this.message.length() > 20 ? this.message.substring(0, 20) + "..." : this.message;
-      return "Chat: " + preview + GuiWaitAware.init_Str_aP(this);
+      return "Chat: " + preview + GuiWaitAware.waitSuffix(this);
    }
 
    @Override

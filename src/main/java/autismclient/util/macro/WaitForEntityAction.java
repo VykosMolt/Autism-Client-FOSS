@@ -140,7 +140,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
-   public boolean init_Z_5(Minecraft mc) {
+   public boolean isSatisfied(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          boolean var10000;
          switch (this.checkMode) {
@@ -227,7 +227,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       return false;
    }
 
-   public Entity init_Entity(Minecraft mc) {
+   public Entity findEntity(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          if (this.checkMode == WaitForEntityAction.Inner_DataUtil.LOOKING_AT) {
             return this.init(mc.crosshairPickEntity) ? mc.crosshairPickEntity : null;

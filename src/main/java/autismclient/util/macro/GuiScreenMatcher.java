@@ -19,7 +19,7 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean init(Screen screen, String query) {
-      if (screen != null && !init_Z(screen)) {
+      if (screen != null && !isClientScreen(screen)) {
          String trimmed = query == null ? "" : query.trim();
          if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("any")) {
             GuiScreenMatcher.Inner_DataUtil type = init_f_DataUtil(trimmed);
@@ -28,7 +28,7 @@ public final class GuiScreenMatcher {
             }
 
             String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
-            String semantic = init_Str(screen);
+            String semantic = screenTypeName(screen);
             String lower = trimmed.toLowerCase(Locale.ROOT);
             return title.toLowerCase(Locale.ROOT).contains(lower) || semantic.toLowerCase(Locale.ROOT).contains(lower);
          } else {
@@ -49,7 +49,7 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean init(Screen screen, GuiScreenMatcher.Inner_DataUtil type) {
-      if (screen != null && !init_Z(screen)) {
+      if (screen != null && !isClientScreen(screen)) {
          boolean var10000;
          switch (type == null ? GuiScreenMatcher.Inner_DataUtil.ANY : type) {
             case ANY:
@@ -95,7 +95,7 @@ public final class GuiScreenMatcher {
       }
    }
 
-   public static String init_Str(Screen screen) {
+   public static String screenTypeName(Screen screen) {
       if (screen == null) {
          return "";
       } else if (screen instanceof DialogScreen) {
@@ -119,7 +119,7 @@ public final class GuiScreenMatcher {
       }
    }
 
-   public static boolean init_Z(Screen screen) {
+   public static boolean isClientScreen(Screen screen) {
       return screen != null && screen.getClass().getName().startsWith("autismclient.");
    }
 
@@ -187,7 +187,7 @@ public final class GuiScreenMatcher {
       }
    }
 
-   public static boolean init_Z(String raw) {
+   public static boolean isCustomMenuType(String raw) {
       return init_f_DataUtil(raw) == GuiScreenMatcher.Inner_DataUtil.CUSTOM_MENU;
    }
 

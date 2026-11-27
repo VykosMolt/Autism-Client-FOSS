@@ -6,13 +6,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public interface AimTargetAction {
-   boolean init_Z_3();
+   boolean isRaycast();
 
-   void init_V_Z(boolean var1);
+   void setRaycast(boolean var1);
 
-   AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft var1);
+   AimTargetAction.AimTarget getAimTarget(Minecraft var1);
 
-   record AimTarget(BlockPos init_BlockPos, Entity init_Entity, Vec3 init_Vec3) {
+   record AimTarget(BlockPos blockPos, Entity entity, Vec3 point) {
       public static AimTargetAction.AimTarget init(BlockPos pos) {
          return pos == null ? null : new AimTargetAction.AimTarget(pos, null, null);
       }

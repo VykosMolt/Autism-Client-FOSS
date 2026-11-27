@@ -46,19 +46,19 @@ public final class PacketGateManager {
       }
    }
 
-   public static void init_V(String id) {
+   public static void removeGate(String id) {
       if (id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
          String target = id.trim();
          init_ConcurrentHashMap.entrySet().removeIf(entry -> entry.getValue().init_Str.equalsIgnoreCase(target));
          read();
       } else {
-         load_V();
+         clearAll();
       }
    }
 
    public static void init(String id, long ownerRunId) {
       if (ownerRunId <= 0L) {
-         init_V(id);
+         removeGate(id);
       } else {
          if (id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
             init_ConcurrentHashMap.remove(init(ownerRunId, id));
@@ -118,7 +118,7 @@ public final class PacketGateManager {
 
    public static void init_V() {
       if (autismclient.modules.aD.read_Z()) {
-         load_V();
+         clearAll();
       } else {
          String key = init_Str;
          if (key != null) {
@@ -130,17 +130,17 @@ public final class PacketGateManager {
       }
    }
 
-   public static void load_V() {
+   public static void clearAll() {
       init_ConcurrentHashMap.clear();
       init_Str = null;
    }
 
    public static void init(ClientPacketListener connection) {
       if (autismclient.modules.aD.read_Z()) {
-         load_V();
+         clearAll();
       } else {
          boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == PacketGateAction.Inner_CachePool.DELAY && g.init_Z);
-         load_V();
+         clearAll();
          if (flush) {
             AutismSessionState.getInstance().flushDelayedPackets(connection);
          }
@@ -257,7 +257,7 @@ public final class PacketGateManager {
       return false;
    }
 
-   public static boolean init_Z() {
+   public static boolean hasActiveGates() {
       return autismclient.modules.aD.read_Z() ? false : !init_ConcurrentHashMap.isEmpty();
    }
 

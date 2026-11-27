@@ -43,17 +43,17 @@ public class HClipAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       HClipAction.Inner_BufferHelper options = new HClipAction.Inner_BufferHelper();
-      options.init_TokenStore_CachePo = this.mode;
+      options.mode = this.mode;
       options.init_D = this.blocks;
       options.init_Z = this.useSegmented;
-      options.init_I = this.segmentBlocks;
-      options.load_I = this.maxPackets;
-      options.load_Z = this.updateLocalPosition;
-      options.read_Z = this.tryVehicleFirst;
-      options.write_Z = this.forceGrounded;
+      options.segmentBlocks = this.segmentBlocks;
+      options.maxPackets = this.maxPackets;
+      options.updateLocalPosition = this.updateLocalPosition;
+      options.tryVehicleFirst = this.tryVehicleFirst;
+      options.forceGrounded = this.forceGrounded;
       options.read_I = this.searchRadius;
       options.write_I = this.verticalRange;
-      options.update_I = this.maxRoutePackets;
+      options.maxRoutePackets = this.maxRoutePackets;
       init(mc, options);
    }
 
@@ -65,10 +65,10 @@ public class HClipAction implements MacroAction {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
          double blocks = options.init_D;
-         if (options.init_TokenStore_CachePo != HClipAction.Inner_CachePool.MANUAL) {
+         if (options.mode != HClipAction.Inner_CachePool.MANUAL) {
             HClipAction.Inner_DataUtil target = init(player, options);
             if (!target.init_Z()) {
-               if (options.update_Z) {
+               if (options.chatFeedback) {
                   AutismClientMessaging.sendPrefixed("§cHClip: " + target.init_Str());
                }
 
@@ -78,8 +78,8 @@ public class HClipAction implements MacroAction {
             blocks = target.init_D();
          }
 
-         int segment = Math.max(1, options.init_I);
-         int maxPaddingPackets = Math.max(1, options.load_I);
+         int segment = Math.max(1, options.segmentBlocks);
+         int maxPaddingPackets = Math.max(1, options.maxPackets);
          int paddingPackets = options.init_Z ? Math.max(0, (int)Math.ceil(Math.abs(blocks) / segment) - 1) : 0;
          if (paddingPackets + 1 > maxPaddingPackets) {
             paddingPackets = 0;
@@ -90,18 +90,18 @@ public class HClipAction implements MacroAction {
          double deltaZ = Math.cos(yawRad) * blocks;
          HClipAction.Inner_StreamUtil plan = init_TokenStore_StreamU_LocalPlayer(player, deltaX, deltaZ, blocks, options);
          if (!plan.init_Z()) {
-            if (options.update_Z) {
+            if (options.chatFeedback) {
                AutismClientMessaging.sendPrefixed("§cHClip: " + plan.init_Str());
             }
 
             return new HClipAction.Inner_ConfigStore(false, 0, plan.init_Str());
          } else {
-            Entity vehicle = options.read_Z ? player.getVehicle() : null;
+            Entity vehicle = options.tryVehicleFirst ? player.getVehicle() : null;
             int packetCount;
             if (vehicle != null) {
                if (plan.init_Z_D(player.getY())) {
                   String message = "planned route requires vertical clipping; vehicle hclip refused";
-                  if (options.update_Z) {
+                  if (options.chatFeedback) {
                      AutismClientMessaging.sendPrefixed("§cHClip: " + message);
                   }
 
@@ -119,7 +119,7 @@ public class HClipAction implements MacroAction {
                   }
                } catch (Throwable t) {
                   String message = "Vehicle hclip failed: " + t.getMessage();
-                  if (options.update_Z) {
+                  if (options.chatFeedback) {
                      AutismClientMessaging.sendPrefixed("§c" + message);
                   }
 
@@ -128,7 +128,7 @@ public class HClipAction implements MacroAction {
 
                packetCount = paddingPackets + plan.init_List().size();
             } else {
-               boolean grounded = options.write_Z;
+               boolean grounded = options.forceGrounded;
                int sent = 0;
                Vec3 current = player.position();
                init(player);
@@ -153,7 +153,7 @@ public class HClipAction implements MacroAction {
                }
 
                Vec3 finalPos = plan.init_List().getLast();
-               if (options.load_Z) {
+               if (options.updateLocalPosition) {
                   player.setPos(finalPos.x, finalPos.y, finalPos.z);
                   init(player);
                }
@@ -161,22 +161,22 @@ public class HClipAction implements MacroAction {
                packetCount = sent;
             }
 
-            String prefix = options.init_TokenStore_CachePo == HClipAction.Inner_CachePool.MANUAL
+            String prefix = options.mode == HClipAction.Inner_CachePool.MANUAL
                ? "hclip " + blocks
-               : "hclip " + options.init_TokenStore_CachePo.name().toLowerCase(Locale.ROOT) + " -> " + String.format(Locale.ROOT, "%.2f", blocks);
+               : "hclip " + options.mode.name().toLowerCase(Locale.ROOT) + " -> " + String.format(Locale.ROOT, "%.2f", blocks);
             String message = prefix + " (" + packetCount + " packet" + (packetCount == 1 ? "" : "s") + ")";
             if (init_Z && plan.init_Z()) {
                message = message + ", " + plan.init_Str();
             }
 
-            if (options.update_Z) {
+            if (options.chatFeedback) {
                AutismClientMessaging.sendPrefixed("§a" + message);
             }
 
             return new HClipAction.Inner_ConfigStore(true, packetCount, message);
          }
       } else {
-         if (options.update_Z) {
+         if (options.chatFeedback) {
             AutismClientMessaging.sendPrefixed("§cHClip: no world / connection.");
          }
 
@@ -188,7 +188,7 @@ public class HClipAction implements MacroAction {
       List<ClipCollisionHelper.Inner_DataUtil> steps = ClipCollisionHelper.init(from, to, grounded);
 
       for (ClipCollisionHelper.Inner_DataUtil step : steps) {
-         init(mc, new Pos(step.init_Vec3(), step.init_Z(), false));
+         init(mc, new Pos(step.position(), step.onGround(), false));
       }
 
       return steps.size();
@@ -218,19 +218,19 @@ public class HClipAction implements MacroAction {
       int radius = Math.max(1, options.read_I);
       int verticalRange = Math.max(0, options.write_I);
       int escapeRange = Math.max(verticalRange, 128);
-      int routeCap = Math.max(1, Math.min(200, options.update_I));
+      int routeCap = Math.max(1, Math.min(200, options.maxRoutePackets));
       HClipAction.Inner_TaskQueue cacheKey = HClipAction.Inner_TaskQueue.init(player, start, requestedTarget, radius, verticalRange, routeCap);
       long tick = player.level() == null ? -9223372036854775808L : player.level().getGameTime();
       if (init_TokenStore_TaskQue != null && init_TokenStore_TaskQue.equals(cacheKey) && init_TokenStore_StreamU != null && tick - init_J <= 2L) {
          return init_TokenStore_StreamU;
       }
 
-      TpRoutePlanner.Inner_BufferHelper route = TpRoutePlanner.init_F_BufferHelper_F_StreamUtil(
-         TpRoutePlanner.init_F_StreamUtil_Entity(player), start, requestedTarget, radius, escapeRange, routeCap, false
+      TpRoutePlanner.Inner_BufferHelper route = TpRoutePlanner.planRoute(
+         TpRoutePlanner.entityView(player), start, requestedTarget, radius, escapeRange, routeCap, false
       );
-      return !route.init_Z()
-         ? HClipAction.Inner_StreamUtil.init_TokenStore_StreamU_Str(route.init_Str())
-         : init(cacheKey, tick, HClipAction.Inner_StreamUtil.init(start.y, route.init_List(), route.init_Str()));
+      return !route.isComplete()
+         ? HClipAction.Inner_StreamUtil.init_TokenStore_StreamU_Str(route.detail())
+         : init(cacheKey, tick, HClipAction.Inner_StreamUtil.init(start.y, route.waypoints(), route.detail()));
    }
 
    private static HClipAction.Inner_StreamUtil init(HClipAction.Inner_TaskQueue key, long tick, HClipAction.Inner_StreamUtil plan) {
@@ -374,7 +374,7 @@ public class HClipAction implements MacroAction {
    }
 
    private static HClipAction.Inner_DataUtil init(LocalPlayer player, HClipAction.Inner_BufferHelper options) {
-      int direction = options.init_TokenStore_CachePo == HClipAction.Inner_CachePool.BACK ? -1 : 1;
+      int direction = options.mode == HClipAction.Inner_CachePool.BACK ? -1 : 1;
       int radius = Math.max(1, Math.min(128, options.read_I));
       double yawRad = Math.toRadians(player.getYRot());
       double dirX = -Math.sin(yawRad) * direction;
@@ -404,7 +404,7 @@ public class HClipAction implements MacroAction {
          return new HClipAction.Inner_DataUtil(true, direction * requested, "route around obstruction");
       } else {
          return new HClipAction.Inner_DataUtil(
-            false, 0.0, options.init_TokenStore_CachePo == HClipAction.Inner_CachePool.BACK ? "no blocking run behind you" : "no blocking run in front of you"
+            false, 0.0, options.mode == HClipAction.Inner_CachePool.BACK ? "no blocking run behind you" : "no blocking run in front of you"
          );
       }
    }
@@ -550,18 +550,18 @@ public class HClipAction implements MacroAction {
    }
 
    public static final class Inner_BufferHelper {
-      public HClipAction.Inner_CachePool init_TokenStore_CachePo = HClipAction.Inner_CachePool.MANUAL;
+      public HClipAction.Inner_CachePool mode = HClipAction.Inner_CachePool.MANUAL;
       public double init_D = 0.0;
       public boolean init_Z = true;
-      public int init_I = 10;
-      public int load_I = 20;
-      public boolean load_Z = true;
-      public boolean read_Z = true;
-      public boolean write_Z = false;
+      public int segmentBlocks = 10;
+      public int maxPackets = 20;
+      public boolean updateLocalPosition = true;
+      public boolean tryVehicleFirst = true;
+      public boolean forceGrounded = false;
       public int read_I = 32;
       public int write_I = 8;
-      public int update_I = 80;
-      public boolean update_Z = false;
+      public int maxRoutePackets = 80;
+      public boolean chatFeedback = false;
 
       public static HClipAction.Inner_BufferHelper init(double blocks) {
          HClipAction.Inner_BufferHelper options = new HClipAction.Inner_BufferHelper();

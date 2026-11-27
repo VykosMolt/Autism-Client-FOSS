@@ -52,7 +52,7 @@ public class MoveAction implements MacroAction {
       }
    }
 
-   public void init_V_3(Minecraft mc) {
+   public void releaseKey(Minecraft mc) {
       KeyMapping key = this.init_KeyMapping(mc);
       if (key != null) {
          key.setDown(false);

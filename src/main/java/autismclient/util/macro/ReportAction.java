@@ -334,15 +334,15 @@ public class ReportAction implements MacroAction {
    }
 
    public MacroAction init_MacroAction_2() {
-      return RaceAction.read_MacroAction(this.startConditionType);
+      return RaceAction.createCondition(this.startConditionType);
    }
 
-   public MacroAction load_MacroAction_2() {
-      return RaceAction.load_MacroAction(this.startActionType);
+   public MacroAction createStartAction() {
+      return RaceAction.createAction(this.startActionType);
    }
 
-   public MacroAction read_MacroAction() {
-      return RaceAction.read_MacroAction(this.endConditionType);
+   public MacroAction createEndCondition() {
+      return RaceAction.createCondition(this.endConditionType);
    }
 
    public int init(List<MacroAction> actions, int headerIndex) {

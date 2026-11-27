@@ -37,19 +37,19 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
          boolean var10000;
          switch (this.condition) {
             case ITEM_EXISTS:
-               var10000 = init_Z_Minecraft_ArrayUtil(mc, target);
+               var10000 = hasItem(mc, target);
                break;
             case COUNT_AT_LEAST:
-               var10000 = init_I_Minecraft_ArrayUtil(mc, target) >= Math.max(1, this.count);
+               var10000 = countItem(mc, target) >= Math.max(1, this.count);
                break;
             case COUNT_CHANGED:
-               var10000 = init_I_Minecraft_ArrayUtil(mc, target) != this.init_I;
+               var10000 = countItem(mc, target) != this.init_I;
                break;
             case COUNT_INCREASED:
-               var10000 = init_I_Minecraft_ArrayUtil(mc, target) > this.init_I;
+               var10000 = countItem(mc, target) > this.init_I;
                break;
             case COUNT_DECREASED:
-               var10000 = init_I_Minecraft_ArrayUtil(mc, target) < this.init_I;
+               var10000 = countItem(mc, target) < this.init_I;
                break;
             case SLOT_EMPTY:
                var10000 = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
@@ -94,17 +94,17 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
 
    private void init_V_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
       if (!this.init_Z) {
-         this.init_I = init_I_Minecraft_ArrayUtil(mc, target);
+         this.init_I = countItem(mc, target);
          this.load = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
          this.init_Z = true;
       }
    }
 
-   static boolean init_Z_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
-      return init_I_Minecraft_ArrayUtil(mc, target) > 0;
+   static boolean hasItem(Minecraft mc, MacroItemTarget target) {
+      return countItem(mc, target) > 0;
    }
 
-   static int init_I_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
+   static int countItem(Minecraft mc, MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.hasItemFilter()) {
          int total = 0;
 

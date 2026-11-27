@@ -24,22 +24,22 @@ public class SPingAction implements MacroAction {
       this.durationMs = Math.max(0, durationMs);
    }
 
-   public SPingAction.Inner_DataUtil init_T_DataUtil() {
+   public SPingAction.Inner_DataUtil getEndMode() {
       return SPingAction.Inner_DataUtil.init(this.endMode);
    }
 
-   public int init_I_4() {
+   public int getStepCount() {
       return Math.max(1, this.stepCount);
    }
 
-   public long init_J_3() {
+   public long getDurationMs() {
       return this.useTicks ? Math.max(0, this.durationTicks) * 50L : Math.max(0, this.durationMs);
    }
 
    @Override
    public void execute(Minecraft mc) {
       long owner = MacroExecutor.getCurrentRunId();
-      PingSpoofScheduler.init(owner < 0L ? 0L : owner, Math.max(0, this.pingDelayMs), this.realIncoming, this.realOutgoing, this.init_J_3() * 1000000L);
+      PingSpoofScheduler.init(owner < 0L ? 0L : owner, Math.max(0, this.pingDelayMs), this.realIncoming, this.realOutgoing, this.getDurationMs() * 1000000L);
    }
 
    @Override
@@ -49,7 +49,7 @@ public class SPingAction implements MacroAction {
       tag.putInt("pingDelayMs", this.pingDelayMs);
       tag.putBoolean("realIncoming", this.realIncoming);
       tag.putBoolean("realOutgoing", this.realOutgoing);
-      tag.putString("endMode", this.init_T_DataUtil().name());
+      tag.putString("endMode", this.getEndMode().name());
       tag.putInt("stepCount", Math.max(1, this.stepCount));
       tag.putBoolean("useTicks", this.useTicks);
       tag.putInt("durationMs", this.durationMs);
@@ -110,12 +110,12 @@ public class SPingAction implements MacroAction {
    @Override
    public String getDisplayName() {
       String var10000;
-      switch (this.init_T_DataUtil()) {
+      switch (this.getEndMode()) {
          case TIMEOUT:
             var10000 = this.useTicks ? Math.max(0, this.durationTicks) + " ticks" : Math.max(0, this.durationMs) + " ms";
             break;
          case STEPS:
-            var10000 = this.init_I_4() + (this.init_I_4() == 1 ? " step" : " steps");
+            var10000 = this.getStepCount() + (this.getStepCount() == 1 ? " step" : " steps");
             break;
          case END:
             var10000 = "until end";
@@ -126,7 +126,7 @@ public class SPingAction implements MacroAction {
 
       String window = var10000;
       String real = this.realIncoming && this.realOutgoing ? " [real]" : (this.realIncoming ? " [real in]" : (this.realOutgoing ? " [real out]" : ""));
-      String suffix = this.init_T_DataUtil() == SPingAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
+      String suffix = this.getEndMode() == SPingAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
       return "Ping: +" + Math.max(0, this.pingDelayMs) + " ms (" + window + ")" + real + suffix;
    }
 

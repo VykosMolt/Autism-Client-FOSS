@@ -38,19 +38,19 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       return MacroActionType.WAIT_PACKET_MATCH;
    }
 
-   public List<WaitPacketMatchAction.Inner_CachePool> init_List_9() {
+   public List<WaitPacketMatchAction.Inner_CachePool> effectiveRules() {
       if (!this.rules.isEmpty()) {
          return this.rules;
       }
 
       WaitPacketMatchAction.Inner_CachePool legacy = this.init_aM_CachePool();
-      return legacy.init_Str.isBlank() && legacy.load.isBlank() ? List.of() : List.of(legacy);
+      return legacy.packetName.isBlank() && legacy.load.isBlank() ? List.of() : List.of(legacy);
    }
 
    public WaitPacketMatchAction.Inner_CachePool init_aM_CachePool_aM_DataUtil_Str(WaitPacketMatchAction.Inner_DataUtil direction, String packetName) {
       WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
-      rule.init_aM_DataUtil = direction == null ? WaitPacketMatchAction.Inner_DataUtil.ANY : direction;
-      rule.init_Str = packetName == null ? "" : packetName;
+      rule.direction = direction == null ? WaitPacketMatchAction.Inner_DataUtil.ANY : direction;
+      rule.packetName = packetName == null ? "" : packetName;
       this.rules.add(rule);
       this.init_V_11();
       return rule;
@@ -59,16 +59,16 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
    public void init_V_11() {
       WaitPacketMatchAction.Inner_CachePool first = this.rules.isEmpty() ? null : this.rules.get(0);
       if (first != null) {
-         this.direction = first.init_aM_DataUtil;
-         this.packetName = first.init_Str == null ? "" : first.init_Str;
+         this.direction = first.direction;
+         this.packetName = first.packetName == null ? "" : first.packetName;
          this.fieldName = first.load == null ? "" : first.load;
-         this.operator = first.init_aM_StreamUtil == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : first.init_aM_StreamUtil;
+         this.operator = first.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : first.operator;
          this.value = first.read == null ? "" : first.read;
       }
    }
 
-   public boolean init_Z_Packet_Str(Packet<?> packet, String packetDirection) {
-      List<WaitPacketMatchAction.Inner_CachePool> activeRules = this.init_List_9();
+   public boolean matches(Packet<?> packet, String packetDirection) {
+      List<WaitPacketMatchAction.Inner_CachePool> activeRules = this.effectiveRules();
       if (activeRules.isEmpty()) {
          return true;
       }
@@ -83,17 +83,17 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
    }
 
    private boolean init(WaitPacketMatchAction.Inner_CachePool rule, Packet<?> packet, String packetDirection) {
-      if (rule.init_aM_DataUtil != WaitPacketMatchAction.Inner_DataUtil.ANY && !rule.init_aM_DataUtil.name().equalsIgnoreCase(packetDirection)) {
+      if (rule.direction != WaitPacketMatchAction.Inner_DataUtil.ANY && !rule.direction.name().equalsIgnoreCase(packetDirection)) {
          return false;
       }
 
-      if (!PacketGateManager.init(rule.init_Str, packet, packetDirection)) {
+      if (!PacketGateManager.init(rule.packetName, packet, packetDirection)) {
          return false;
       }
 
       if (rule.load != null && !rule.load.isBlank()) {
          Object field = this.init_Obj_Packet_Str(packet, rule.load);
-         WaitPacketMatchAction.Inner_StreamUtil op = rule.init_aM_StreamUtil == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.init_aM_StreamUtil;
+         WaitPacketMatchAction.Inner_StreamUtil op = rule.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.operator;
          if (op == WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
             return field != null;
          }
@@ -126,10 +126,10 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
    private WaitPacketMatchAction.Inner_CachePool init_aM_CachePool() {
       WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
-      rule.init_aM_DataUtil = this.direction == null ? WaitPacketMatchAction.Inner_DataUtil.C2S : this.direction;
-      rule.init_Str = this.packetName == null ? "" : this.packetName;
+      rule.direction = this.direction == null ? WaitPacketMatchAction.Inner_DataUtil.C2S : this.direction;
+      rule.packetName = this.packetName == null ? "" : this.packetName;
       rule.load = this.fieldName == null ? "" : this.fieldName;
-      rule.init_aM_StreamUtil = this.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : this.operator;
+      rule.operator = this.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : this.operator;
       rule.read = this.value == null ? "" : this.value;
       return rule;
    }
@@ -171,7 +171,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static List<String> init_List(Class<? extends Packet<?>> packetClass) {
+   public static List<String> fieldNames(Class<? extends Packet<?>> packetClass) {
       if (packetClass == null) {
          return List.of();
       }
@@ -180,7 +180,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       return fields.keySet().stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
    }
 
-   public static List<String> init_List_Class_Str(Class<? extends Packet<?>> packetClass, String fieldName) {
+   public static List<String> valueOptions(Class<? extends Packet<?>> packetClass, String fieldName) {
       Class<?> type = init_Map(packetClass).get(fieldName);
       if (type == null) {
          return List.of();
@@ -258,8 +258,8 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       tag.putString("type", "WAIT_PACKET_MATCH");
       ListTag list = new ListTag();
 
-      for (WaitPacketMatchAction.Inner_CachePool rule : this.init_List_9()) {
-         list.add(rule.init_CompoundTag());
+      for (WaitPacketMatchAction.Inner_CachePool rule : this.effectiveRules()) {
+         list.add(rule.toTag());
       }
 
       tag.put("rules", list);
@@ -297,15 +297,15 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public String getDisplayName() {
-      List<WaitPacketMatchAction.Inner_CachePool> activeRules = this.init_List_9();
+      List<WaitPacketMatchAction.Inner_CachePool> activeRules = this.effectiveRules();
       if (activeRules.isEmpty()) {
          return "Wait Packet Match: Any";
       }
 
       WaitPacketMatchAction.Inner_CachePool first = activeRules.get(0);
-      String label = "Wait " + first.init_aM_DataUtil + " " + first.init_Str;
+      String label = "Wait " + first.direction + " " + first.packetName;
       if (first.load != null && !first.load.isBlank()) {
-         label = label + " " + first.load + " " + first.init_aM_StreamUtil + " " + first.read;
+         label = label + " " + first.load + " " + first.operator + " " + first.read;
       }
 
       return activeRules.size() == 1 ? label : label + " (+" + (activeRules.size() - 1) + ")";
@@ -327,38 +327,38 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
    }
 
    public static class Inner_CachePool {
-      public WaitPacketMatchAction.Inner_DataUtil init_aM_DataUtil = WaitPacketMatchAction.Inner_DataUtil.C2S;
-      public String init_Str = "";
+      public WaitPacketMatchAction.Inner_DataUtil direction = WaitPacketMatchAction.Inner_DataUtil.C2S;
+      public String packetName = "";
       public String load = "";
-      public WaitPacketMatchAction.Inner_StreamUtil init_aM_StreamUtil = WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
+      public WaitPacketMatchAction.Inner_StreamUtil operator = WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
       public String read = "";
 
-      public WaitPacketMatchAction.Inner_CachePool init_aM_CachePool() {
+      public WaitPacketMatchAction.Inner_CachePool copy() {
          WaitPacketMatchAction.Inner_CachePool copy = new WaitPacketMatchAction.Inner_CachePool();
-         copy.init_aM_DataUtil = this.init_aM_DataUtil;
-         copy.init_Str = this.init_Str == null ? "" : this.init_Str;
+         copy.direction = this.direction;
+         copy.packetName = this.packetName == null ? "" : this.packetName;
          copy.load = this.load == null ? "" : this.load;
-         copy.init_aM_StreamUtil = this.init_aM_StreamUtil;
+         copy.operator = this.operator;
          copy.read = this.read == null ? "" : this.read;
          return copy;
       }
 
-      public CompoundTag init_CompoundTag() {
+      public CompoundTag toTag() {
          CompoundTag tag = new CompoundTag();
-         tag.putString("direction", this.init_aM_DataUtil.name());
-         tag.putString("packetName", this.init_Str == null ? "" : this.init_Str);
+         tag.putString("direction", this.direction.name());
+         tag.putString("packetName", this.packetName == null ? "" : this.packetName);
          tag.putString("fieldName", this.load == null ? "" : this.load);
-         tag.putString("operator", this.init_aM_StreamUtil.name());
+         tag.putString("operator", this.operator.name());
          tag.putString("value", this.read == null ? "" : this.read);
          return tag;
       }
 
       static WaitPacketMatchAction.Inner_CachePool init(CompoundTag tag) {
          WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
-         rule.init_aM_DataUtil = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
-         rule.init_Str = tag.getStringOr("packetName", "");
+         rule.direction = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
+         rule.packetName = tag.getStringOr("packetName", "");
          rule.load = tag.getStringOr("fieldName", "");
-         rule.init_aM_StreamUtil = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+         rule.operator = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
          rule.read = tag.getStringOr("value", "");
          return rule;
       }

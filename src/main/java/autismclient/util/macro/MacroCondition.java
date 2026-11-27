@@ -42,17 +42,17 @@ public final class MacroCondition {
       return m;
    }
 
-   public static MacroCondition init_a() {
+   public static MacroCondition createDefault() {
       MacroCondition root = init_a_a_StreamUtil(MacroCondition.Inner_StreamUtil.ALL);
       root.init_List.add(init_a_a_CachePool(MacroCondition.Inner_CachePool.ALWAYS));
       return root;
    }
 
    public MacroCondition load_a() {
-      return init_a_CompoundTag(this.init_CompoundTag());
+      return fromTag(this.toTag());
    }
 
-   public MacroCondition read_a() {
+   public MacroCondition asLeaf() {
       if (this.init_a_BufferHelper == MacroCondition.Inner_BufferHelper.LEAF) {
          return this;
       } else {
@@ -65,8 +65,8 @@ public final class MacroCondition {
       }
    }
 
-   public void init_V_CompoundTag_Str(CompoundTag t, String p) {
-      MacroCondition leaf = this.read_a();
+   public void writeFlat(CompoundTag t, String p) {
+      MacroCondition leaf = this.asLeaf();
       if (leaf != null) {
          t.putString(p + "kind", leaf.init_a_CachePool.name());
          t.putBoolean(p + "negate", leaf.init_Z);
@@ -83,16 +83,16 @@ public final class MacroCondition {
    }
 
    public static MacroCondition init(CompoundTag tag, String nestedKey, String flatPrefix) {
-      MacroCondition nested = tag.get(nestedKey) instanceof CompoundTag c ? init_a_CompoundTag(c) : null;
-      boolean nestedSimple = nested == null || nested.read_a() != null;
+      MacroCondition nested = tag.get(nestedKey) instanceof CompoundTag c ? fromTag(c) : null;
+      boolean nestedSimple = nested == null || nested.asLeaf() != null;
       if (nestedSimple && tag.contains(flatPrefix + "kind")) {
-         return init_a_CompoundTag_Str(tag, flatPrefix);
+         return readFlat(tag, flatPrefix);
       } else {
-         return nested != null ? nested : init_a();
+         return nested != null ? nested : createDefault();
       }
    }
 
-   public static MacroCondition init_a_CompoundTag_Str(CompoundTag t, String p) {
+   public static MacroCondition readFlat(CompoundTag t, String p) {
       MacroCondition leaf = init_a_a_CachePool(MacroCondition.Inner_CachePool.ALWAYS);
       leaf.init_a_CachePool = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_CachePool.class, t.getStringOr(p + "kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
       leaf.init_Z = t.getBooleanOr(p + "negate", false);
@@ -132,7 +132,7 @@ public final class MacroCondition {
       return true;
    }
 
-   public boolean init_Z_Minecraft(Minecraft mc) {
+   public boolean evaluate(Minecraft mc) {
       boolean result = this.init_a_BufferHelper == MacroCondition.Inner_BufferHelper.GROUP ? this.load(mc) : this.read(mc);
       return this.init_Z != result;
    }
@@ -144,7 +144,7 @@ public final class MacroCondition {
 
       if (this.init_a_StreamUtil == MacroCondition.Inner_StreamUtil.ANY) {
          for (MacroCondition c : this.init_List) {
-            if (c.init_Z_Minecraft(mc)) {
+            if (c.evaluate(mc)) {
                return true;
             }
          }
@@ -152,7 +152,7 @@ public final class MacroCondition {
          return false;
       } else {
          for (MacroCondition c : this.init_List) {
-            if (!c.init_Z_Minecraft(mc)) {
+            if (!c.evaluate(mc)) {
                return false;
             }
          }
@@ -292,7 +292,7 @@ public final class MacroCondition {
 
    private int init_I_Minecraft(Minecraft mc) {
       MacroTemplateResolver.ResolveResult r = MacroVariableContext.resolveTemplate(this.init_Str == null ? "" : this.init_Str, mc);
-      return !r.success() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(r.value()));
+      return !r.success() ? 0 : WaitInventoryPredicateAction.countItem(mc, MacroItemTarget.parse(r.value()));
    }
 
    private boolean write(Minecraft mc) {
@@ -517,7 +517,7 @@ public final class MacroCondition {
       return t.equals("true") || t.equals("1") || t.equals("yes") || t.equals("on");
    }
 
-   public String init_Str() {
+   public String describe() {
       String s = this.init_a_BufferHelper == MacroCondition.Inner_BufferHelper.GROUP ? this.load_Str() : this.read_Str();
       return this.init_Z ? "NOT(" + s + ")" : s;
    }
@@ -535,7 +535,7 @@ public final class MacroCondition {
             sb.append(join);
          }
 
-         sb.append(this.init_List.get(i).init_Str());
+         sb.append(this.init_List.get(i).describe());
       }
 
       return this.init_List.size() > 1 ? "(" + sb + ")" : sb.toString();
@@ -698,7 +698,7 @@ public final class MacroCondition {
       return var10000;
    }
 
-   public CompoundTag init_CompoundTag() {
+   public CompoundTag toTag() {
       CompoundTag t = new CompoundTag();
       t.putString("node", this.init_a_BufferHelper.name());
       t.putBoolean("negate", this.init_Z);
@@ -708,7 +708,7 @@ public final class MacroCondition {
 
          for (MacroCondition c : this.init_List) {
             if (c != null) {
-               list.add(c.init_CompoundTag());
+               list.add(c.toTag());
             }
          }
 
@@ -733,10 +733,10 @@ public final class MacroCondition {
       return t;
    }
 
-   public static MacroCondition init_a_CompoundTag(CompoundTag t) {
+   public static MacroCondition fromTag(CompoundTag t) {
       MacroCondition m = new MacroCondition();
       if (t == null) {
-         return init_a();
+         return createDefault();
       }
 
       m.init_a_BufferHelper = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_BufferHelper.class, t.getStringOr("node", "GROUP"), MacroCondition.Inner_BufferHelper.GROUP);
@@ -748,7 +748,7 @@ public final class MacroCondition {
          if (var3 instanceof ListTag) {
             for (Tag el : (ListTag)var3) {
                if (el instanceof CompoundTag ct) {
-                  m.init_List.add(init_a_CompoundTag(ct));
+                  m.init_List.add(fromTag(ct));
                }
             }
          }

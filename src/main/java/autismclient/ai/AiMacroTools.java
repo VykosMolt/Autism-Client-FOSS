@@ -29,7 +29,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
    }
 
    @Override
-   public List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> init_List() {
+   public List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> tools() {
       return this.init_List;
    }
 
@@ -39,7 +39,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
    }
 
    @Override
-   public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil() {
+   public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil currentJob() {
       return AiDirectOps.currentHandle();
    }
 
@@ -148,9 +148,9 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       } else if ("STOP".equals(operation)) {
          AiClientTick.execute(() -> {
             if (this.init_am_DataUtil != null && this.init_am_DataUtil.load == job) {
-               this.init_am_DataUtil.init_k_StreamUtil.init_V();
+               this.init_am_DataUtil.init_k_StreamUtil.cancel();
             } else {
-               job.init_V();
+               job.cancel();
             }
          });
          return job.load();
@@ -166,7 +166,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                         queued.init_Z ? "Paused before starting" : "Waiting for tool runner",
                         "{}"
                      );
-                  return queued.init_k_StreamUtil.init_k_CachePool();
+                  return queued.init_k_StreamUtil.snapshot();
                }
 
                autismclient.util.macro.MacroToolBridge.Inner_StreamUtil inner = this.init_am_DataUtil != null && this.init_am_DataUtil.init_k_StreamUtil == job
@@ -187,7 +187,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                      load_V_am_DataUtil(this.init_am_DataUtil);
                   }
 
-                  return inner.init_k_CachePool();
+                  return inner.snapshot();
                } else {
                   throw new IllegalStateException("That tool invocation is no longer active");
                }
@@ -197,8 +197,8 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
    }
 
    private static void load_V_am_DataUtil(AiMacroTools.Inner_DataUtil request) {
-      autismclient.util.macro.MacroToolBridge.Inner_CachePool result = request.load.init_k_CachePool();
-      request.init_k_StreamUtil.init(result.init_k_ConfigStore(), result.init_Str(), result.load());
+      autismclient.util.macro.MacroToolBridge.Inner_CachePool result = request.load.snapshot();
+      request.init_k_StreamUtil.init(result.state(), result.message(), result.load());
    }
 
    public static void tick(Minecraft mc) {
@@ -224,13 +224,13 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
             init_am.init_ArrayDeque.remove();
 
             try {
-               request.load = AiDirectOps.start(request.init_k_StreamUtil.init_Str(), JsonParser.parseString(request.init_Str).getAsJsonObject());
+               request.load = AiDirectOps.start(request.init_k_StreamUtil.toolId(), JsonParser.parseString(request.init_Str).getAsJsonObject());
                init_am.init_am_DataUtil = request;
                request.load.load().whenComplete((outcome, error) -> {
                   if (error != null) {
                      request.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.FAILED, "Tool completion failed", "{}");
                   } else {
-                     request.init_k_StreamUtil.init(outcome.init_k_ConfigStore(), outcome.init_Str(), outcome.load());
+                     request.init_k_StreamUtil.init(outcome.state(), outcome.message(), outcome.load());
                   }
                });
                load_V_am_DataUtil(request);

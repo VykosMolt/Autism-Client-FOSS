@@ -58,7 +58,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    public CaptureValueAction.Inner_BufferHelper numberMode = CaptureValueAction.Inner_BufferHelper.OFF;
    public CaptureValueAction.Inner_TaskQueue numberModifier = CaptureValueAction.Inner_TaskQueue.NONE;
    public double numberModifierAmount = 1.0;
-   public boolean waitForTrigger = init_Z_TaskQueue_StateCac(CaptureValueAction.Inner_StateCache.GUI_TITLE);
+   public boolean waitForTrigger = isRecentChatSource(CaptureValueAction.Inner_StateCache.GUI_TITLE);
    public String autofillCommand = "";
    public int autofillTimeoutMs = 5000;
    public boolean autofillCacheList = true;
@@ -73,45 +73,45 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      this.init_TaskQueue_NetHelpe_Minecraft(mc);
+      this.capture(mc);
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_Minecraft(Minecraft mc) {
+   public CaptureValueAction.Inner_NetHelper capture(Minecraft mc) {
       if (mc == null) {
-         return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Game unavailable");
+         return CaptureValueAction.Inner_NetHelper.failure("Game unavailable");
       }
 
       this.init_V_9();
-      CaptureValueAction.Inner_NetHelper preview = this.load_TaskQueue_NetHelpe_Minecraft(mc);
-      if (preview.init_Z()) {
-         MacroVariableContext.setAll(preview.init_Map());
+      CaptureValueAction.Inner_NetHelper preview = this.preview(mc);
+      if (preview.success()) {
+         MacroVariableContext.setAll(preview.variables());
       }
 
       return preview;
    }
 
-   public CaptureValueAction.Inner_NetHelper load_TaskQueue_NetHelpe_Minecraft(Minecraft mc) {
+   public CaptureValueAction.Inner_NetHelper preview(Minecraft mc) {
       if (mc == null) {
-         return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Game unavailable");
+         return CaptureValueAction.Inner_NetHelper.failure("Game unavailable");
       }
 
       if (this.source == CaptureValueAction.Inner_StateCache.RECENT_CHAT) {
          List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.getRecentChatMessages();
          if (messages.isEmpty()) {
-            return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent chat");
+            return CaptureValueAction.Inner_NetHelper.failure("No recent chat");
          }
 
          for (MacroExecutor.LoggedChatMessage chat : messages) {
             CaptureValueAction.Inner_NetHelper candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Pack(chat));
-            if (candidate.init_Z()) {
+            if (candidate.success()) {
                return candidate;
             }
          }
 
-         return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent message matches");
+         return CaptureValueAction.Inner_NetHelper.failure("No recent message matches");
       } else if (this.source == CaptureValueAction.Inner_StateCache.GUI_TITLE) {
-         CaptureValueAction.Inner_NetHelper current = this.read_TaskQueue_NetHelpe(mc);
-         if (current.init_Z()) {
+         CaptureValueAction.Inner_NetHelper current = this.previewCurrent(mc);
+         if (current.success()) {
             return current;
          }
 
@@ -119,30 +119,30 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
          for (MacroExecutor.ChatHistoryEntry title : titles) {
             CaptureValueAction.Inner_NetHelper candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Hash(title));
-            if (candidate.init_Z()) {
+            if (candidate.success()) {
                return candidate;
             }
          }
 
-         return titles.isEmpty() ? current : CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent GUI matches");
+         return titles.isEmpty() ? current : CaptureValueAction.Inner_NetHelper.failure("No recent GUI matches");
       } else {
-         return this.read_TaskQueue_NetHelpe(mc);
+         return this.previewCurrent(mc);
       }
    }
 
-   public CaptureValueAction.Inner_NetHelper read_TaskQueue_NetHelpe(Minecraft mc) {
+   public CaptureValueAction.Inner_NetHelper previewCurrent(Minecraft mc) {
       if (mc == null) {
-         return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Game unavailable");
+         return CaptureValueAction.Inner_NetHelper.failure("Game unavailable");
       }
 
       if (this.init_Z_6()) {
          String filterError = CandidatePoolSelector.init(this.listFilter, this.listFilterText);
          if (!filterError.isBlank()) {
-            return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str(filterError);
+            return CaptureValueAction.Inner_NetHelper.failure(filterError);
          }
 
          if (this.source == CaptureValueAction.Inner_StateCache.COMMAND_AUTOFILL || this.source == CaptureValueAction.Inner_StateCache.NAMESCRAPE) {
-            return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Fetched when macro runs");
+            return CaptureValueAction.Inner_NetHelper.failure("Fetched when macro runs");
          }
       }
 
@@ -150,7 +150,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(captured);
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_List_Str(List<String> suggestions, String query) {
+   public CaptureValueAction.Inner_NetHelper previewSuggestions(List<String> suggestions, String query) {
       CaptureValueAction.Inner_DataUtil captured = this.init_TaskQueue_DataUtil_List_Map(suggestions, Map.of());
       if (captured != null && query != null && !query.isBlank()) {
          Map<String, MacroVarValue> props = new LinkedHashMap<>(captured.init_l().getProperties());
@@ -167,11 +167,11 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          || this.source == CaptureValueAction.Inner_StateCache.NAMESCRAPE;
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage chat) {
+   public CaptureValueAction.Inner_NetHelper previewChat(MacroExecutor.LoggedChatMessage chat) {
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Pack(chat));
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_TaskQueue_JsonUtil(CaptureValueAction.Inner_JsonUtil line) {
+   public CaptureValueAction.Inner_NetHelper previewSidebarLine(CaptureValueAction.Inner_JsonUtil line) {
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_TaskQueue_JsonUtil(line));
    }
 
@@ -180,7 +180,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    public CaptureValueAction.Inner_JsonUtil init(Minecraft mc, String preferredKey, int preferredRow, String preferredObjective) {
-      List<CaptureValueAction.Inner_JsonUtil> lines = init_List_Minecraft_2(mc);
+      List<CaptureValueAction.Inner_JsonUtil> lines = sidebarLines(mc);
       if (lines.isEmpty()) {
          return null;
       }
@@ -188,7 +188,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       String key = preferredKey == null ? "" : preferredKey;
 
       for (CaptureValueAction.Inner_JsonUtil line : lines) {
-         if (!key.isBlank() && key.equals(line.init_Str())) {
+         if (!key.isBlank() && key.equals(line.key())) {
             return line;
          }
       }
@@ -196,13 +196,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       CaptureValueAction.Inner_JsonUtil rowCandidate = null;
 
       for (CaptureValueAction.Inner_JsonUtil line : lines) {
-         if (init_Z_TaskQueue_JsonUtil_Str(line, preferredObjective) && line.init_I() == preferredRow) {
+         if (init_Z_TaskQueue_JsonUtil_Str(line, preferredObjective) && line.row() == preferredRow) {
             rowCandidate = line;
             break;
          }
       }
 
-      if (rowCandidate != null && this.init_TaskQueue_NetHelpe_TaskQueue_JsonUtil(rowCandidate).init_Z()) {
+      if (rowCandidate != null && this.previewSidebarLine(rowCandidate).success()) {
          return rowCandidate;
       }
 
@@ -215,8 +215,8 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       int bestDistance = 2147483647;
 
       for (CaptureValueAction.Inner_JsonUtil line : lines) {
-         if ((!requireObjective || init_Z_TaskQueue_JsonUtil_Str(line, preferredObjective)) && this.init_TaskQueue_NetHelpe_TaskQueue_JsonUtil(line).init_Z()) {
-            int distance = preferredRow < 0 ? line.init_I() : Math.abs(line.init_I() - preferredRow);
+         if ((!requireObjective || init_Z_TaskQueue_JsonUtil_Str(line, preferredObjective)) && this.previewSidebarLine(line).success()) {
+            int distance = preferredRow < 0 ? line.row() : Math.abs(line.row() - preferredRow);
             if (best == null || distance < bestDistance) {
                best = line;
                bestDistance = distance;
@@ -231,7 +231,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return line != null && (objective == null || objective.isBlank() || objective.equals(line.load()));
    }
 
-   public static List<CaptureValueAction.Inner_JsonUtil> init_List_Minecraft_2(Minecraft mc) {
+   public static List<CaptureValueAction.Inner_JsonUtil> sidebarLines(Minecraft mc) {
       if (mc != null && mc.level != null && mc.player != null) {
          Scoreboard scoreboard = mc.level.getScoreboard();
          Objective objective = init_Objective_Scoreboard_Minecraft(scoreboard, mc);
@@ -284,10 +284,10 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe() {
+   public CaptureValueAction.Inner_NetHelper previewExample() {
       return this.exampleText != null && !this.exampleText.isBlank()
          ? this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(new CaptureValueAction.Inner_DataUtil(this.exampleText, MacroVarValue.ofText(this.exampleText)))
-         : CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Enter an example message");
+         : CaptureValueAction.Inner_NetHelper.failure("Enter an example message");
    }
 
    private CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_TaskQueue_DataUtil(CaptureValueAction.Inner_DataUtil captured) {
@@ -296,21 +296,21 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          if (this.init_Z_6()) {
             additions = new LinkedHashMap<>(init(additions, this.saveAs, captured.init_l));
             return additions.isEmpty()
-               ? CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Enter a variable name")
+               ? CaptureValueAction.Inner_NetHelper.failure("Enter a variable name")
                : new CaptureValueAction.Inner_NetHelper(true, captured.init_Str, additions, "Ready");
          }
 
          if (this.matchMode != PatternCaptureMatcher.MatchMode.MATCH && this.pattern != null && !this.pattern.isBlank()) {
             Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.init(this.matchMode, this.pattern, captured.init_Str);
             if (result.isEmpty()) {
-               return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Pattern does not match");
+               return CaptureValueAction.Inner_NetHelper.failure("Pattern does not match");
             }
 
-            additions.putAll(result.get().init_Map());
+            additions.putAll(result.get().variables());
          } else if (this.pattern != null
             && !this.pattern.isBlank()
             && !captured.init_Str.toLowerCase(Locale.ROOT).contains(this.pattern.toLowerCase(Locale.ROOT))) {
-            return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Text does not match");
+            return CaptureValueAction.Inner_NetHelper.failure("Text does not match");
          }
 
          additions = new LinkedHashMap<>(init(additions, this.saveAs, captured.init_l));
@@ -320,23 +320,23 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
          CaptureValueAction.Inner_ConfigStore modification = this.init_TaskQueue_ConfigSt_Map(additions);
          if (!modification.init_Z()) {
-            return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str(modification.init_Str());
+            return CaptureValueAction.Inner_NetHelper.failure(modification.init_Str());
          }
 
          additions = new LinkedHashMap<>(modification.init_Map());
          return additions.isEmpty()
-            ? CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Enter a variable name")
+            ? CaptureValueAction.Inner_NetHelper.failure("Enter a variable name")
             : new CaptureValueAction.Inner_NetHelper(true, captured.init_Str, additions, "Ready");
       } else {
-         return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Nothing available now");
+         return CaptureValueAction.Inner_NetHelper.failure("Nothing available now");
       }
    }
 
-   public static boolean init_Z_TaskQueue_StateCac(CaptureValueAction.Inner_StateCache source) {
+   public static boolean isRecentChatSource(CaptureValueAction.Inner_StateCache source) {
       return source == CaptureValueAction.Inner_StateCache.RECENT_CHAT;
    }
 
-   public String init_Str_4() {
+   public String numberModifierError() {
       if (this.init_Z_6()) {
          return "";
       } else {
@@ -360,7 +360,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private CaptureValueAction.Inner_ConfigStore init_TaskQueue_ConfigSt_Map(Map<String, MacroVarValue> values) {
-      String error = this.init_Str_4();
+      String error = this.numberModifierError();
       if (!error.isBlank()) {
          return CaptureValueAction.Inner_ConfigStore.init(error);
       }
@@ -513,10 +513,10 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       switch (this.source == null ? CaptureValueAction.Inner_StateCache.GUI_TITLE : this.source) {
          case GUI_TITLE:
             Screen screen = mc.gui.screen();
-            if (screen != null && !GuiScreenMatcher.init_Z(screen)) {
+            if (screen != null && !GuiScreenMatcher.isClientScreen(screen)) {
                String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
                var10000 = new CaptureValueAction.Inner_DataUtil(
-                  title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen))))
+                  title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText(GuiScreenMatcher.screenTypeName(screen))))
                );
             } else {
                CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
@@ -587,7 +587,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return this.init_TaskQueue_DataUtil_List_Map(names, prefixes);
    }
 
-   public List<String> init_List_List(List<String> candidates) {
+   public List<String> filterCandidates(List<String> candidates) {
       if (candidates == null) {
          return List.of();
       }
@@ -601,7 +601,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          return null;
       }
 
-      List<String> pool = this.init_List_List(candidates);
+      List<String> pool = this.filterCandidates(candidates);
       CandidatePoolSelector.Inner_BufferHelper state = MacroExecutor.getCandidatePoolState(this);
       Optional<CandidatePoolSelector.Inner_StreamUtil> pick = CandidatePoolSelector.init(pool, this.listSelection, this.listPickPosition, state);
       if (pick.isEmpty()) {
@@ -609,13 +609,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       CandidatePoolSelector.Inner_StreamUtil picked = pick.get();
-      String value = this.listStripPrefix ? CandidatePoolSelector.init(picked.init_Str(), this.listFilter, this.listFilterText) : picked.init_Str();
+      String value = this.listStripPrefix ? CandidatePoolSelector.init(picked.value(), this.listFilter, this.listFilterText) : picked.value();
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
-      props.put("index", MacroVarValue.ofNumber(picked.init_I() + 1));
+      props.put("index", MacroVarValue.ofNumber(picked.index() + 1));
       props.put("count", MacroVarValue.ofNumber(pool.size()));
       props.put("total", MacroVarValue.ofNumber(candidates.size()));
       props.put("list", MacroVarValue.ofText(String.join(", ", pool)));
-      String prefix = prefixByValue == null ? null : prefixByValue.get(picked.init_Str());
+      String prefix = prefixByValue == null ? null : prefixByValue.get(picked.value());
       if (prefix != null && !prefix.isBlank()) {
          props.put("prefix", MacroVarValue.ofText(prefix));
       }
@@ -657,7 +657,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       props.put("line", MacroVarValue.ofText(line.flush()));
       props.put("name", MacroVarValue.ofText(line.update()));
       props.put("score", MacroVarValue.ofText(line.sync()));
-      props.put("row", MacroVarValue.ofNumber(BigDecimal.valueOf(line.init_I() + 1L)));
+      props.put("row", MacroVarValue.ofNumber(BigDecimal.valueOf(line.row() + 1L)));
       props.put("title", MacroVarValue.ofText(line.read()));
       props.put("objective", MacroVarValue.ofText(line.load()));
       return new CaptureValueAction.Inner_DataUtil(line.flush(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, line.flush(), props));
@@ -776,7 +776,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String init_Str_Str_5(String example) {
+   public static String extractNumber(String example) {
       if (example != null && !example.isBlank()) {
          Matcher matcher = init_Pattern.matcher(example);
          return matcher.find() ? matcher.group().trim() : "";
@@ -905,7 +905,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          : (tag.getBooleanOr("normalizeNumbers", false) ? CaptureValueAction.Inner_BufferHelper.SUFFIX_KMB : CaptureValueAction.Inner_BufferHelper.OFF);
       this.numberModifier = MacroNbtCodecHelper.parseEnum(CaptureValueAction.Inner_TaskQueue.class, tag.getStringOr("numberModifier", "NONE"), CaptureValueAction.Inner_TaskQueue.NONE);
       this.numberModifierAmount = tag.getDoubleOr("numberModifierAmount", 1.0);
-      this.waitForTrigger = tag.getBooleanOr("waitForTrigger", init_Z_TaskQueue_StateCac(this.source));
+      this.waitForTrigger = tag.getBooleanOr("waitForTrigger", isRecentChatSource(this.source));
       this.autofillCommand = tag.getStringOr("autofillCommand", "");
       this.autofillTimeoutMs = tag.getIntOr("autofillTimeoutMs", 5000);
       this.autofillCacheList = tag.getBooleanOr("autofillCacheList", true);
@@ -944,23 +944,23 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    private record Inner_DataUtil(String init_Str, MacroVarValue init_l) {
    }
 
-   public record Inner_JsonUtil(String init_Str, int init_I, String load, String read, String write, String update, String sync, String flush) {
+   public record Inner_JsonUtil(String key, int row, String load, String read, String write, String update, String sync, String flush) {
    }
 
-   public record Inner_NetHelper(boolean init_Z, String init_Str, Map<String, MacroVarValue> init_Map, String load) {
+   public record Inner_NetHelper(boolean success, String text, Map<String, MacroVarValue> variables, String load) {
       public Inner_NetHelper {
-         init_Str = init_Str == null ? "" : init_Str;
-         init_Map = init_Map == null ? Map.of() : Map.copyOf(init_Map);
+         text = text == null ? "" : text;
+         variables = variables == null ? Map.of() : Map.copyOf(variables);
          load = load == null ? "" : load;
       }
 
-      public static CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_Str(String message) {
+      public static CaptureValueAction.Inner_NetHelper failure(String message) {
          return new CaptureValueAction.Inner_NetHelper(false, "", Map.of(), message);
       }
 
-      public String init_Str_Str(String variableName) {
+      public String textOf(String variableName) {
          String clean = MacroVariableStore.load(variableName);
-         MacroVarValue value = clean.isBlank() ? null : this.init_Map.get(clean);
+         MacroVarValue value = clean.isBlank() ? null : this.variables.get(clean);
          return value == null ? "" : value.asString();
       }
    }

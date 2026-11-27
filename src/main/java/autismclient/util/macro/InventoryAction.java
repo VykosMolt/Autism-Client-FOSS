@@ -23,7 +23,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.mode == InventoryAction.Inner_DataUtil.OPEN && this.waitForGuiBefore;
    }
 
@@ -33,7 +33,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.mode == InventoryAction.Inner_DataUtil.OPEN && this.waitForGuiAfter;
    }
 
@@ -43,12 +43,12 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return "";
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = "";
    }
 
@@ -79,8 +79,8 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
          }
       }
 
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -93,7 +93,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    @Override
    public String getDisplayName() {
       if (this.mode == InventoryAction.Inner_DataUtil.OPEN) {
-         return "Inv Open" + GuiWaitAware.init_Str_aP(this);
+         return "Inv Open" + GuiWaitAware.waitSuffix(this);
       } else {
          return this.sendPacket ? "Inv Close" : "Inv Close (no pkt)";
       }

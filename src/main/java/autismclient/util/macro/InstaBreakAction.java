@@ -29,17 +29,17 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
    }
 
    @Override
-   public boolean init_Z_3() {
+   public boolean isRaycast() {
       return this.raycast;
    }
 
    @Override
-   public void init_V_Z(boolean value) {
+   public void setRaycast(boolean value) {
       this.raycast = value;
    }
 
    @Override
-   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
       return AimTargetAction.AimTarget.init(this.blockPos);
    }
 
@@ -65,7 +65,7 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("enabled", this.init);
-      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
 
@@ -93,14 +93,14 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);
       this.sneakMode = tag.getStringOr("sneakMode", "Packet");
-      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
    @Override
@@ -117,11 +117,11 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
          + ","
          + this.blockPos.getZ()
          + (this.times == 0 ? " ∞" : " x" + this.times)
-         + GuiWaitAware.init_Str_aP(this);
+         + GuiWaitAware.waitSuffix(this);
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean waitsForGuiBefore() {
       return this.waitForGuiBefore;
    }
 
@@ -131,7 +131,7 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
    }
 
    @Override
-   public boolean write_Z() {
+   public boolean waitsForGuiAfter() {
       return this.waitForGuiAfter;
    }
 
@@ -141,17 +141,17 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
    }
 
    @Override
-   public String init_Str_7() {
+   public String getGuiName() {
       return this.guiName;
    }
 
    @Override
-   public void init_V_Str(String name) {
+   public void setGuiName(String name) {
       this.guiName = name;
    }
 
    @Override
-   public PacketOrderMode init_D() {
+   public PacketOrderMode getPacketOrder() {
       return this.packetOrder;
    }
 

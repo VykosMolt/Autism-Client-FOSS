@@ -28,7 +28,7 @@ public final class MacroAimController {
       return init_ce_DataUtil;
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return init_ce_DataUtil != null;
    }
 
@@ -36,19 +36,19 @@ public final class MacroAimController {
       init_ce_DataUtil = rotation;
    }
 
-   public static void init_V() {
+   public static void clear() {
       init_ce_DataUtil = null;
    }
 
    public static RotationMath.Rotation init(Minecraft mc, AimTargetAction.AimTarget target) {
       if (mc != null && mc.player != null && mc.level != null && target != null) {
          Vec3 eyes = mc.player.getEyePosition();
-         if (target.init_Entity() != null) {
-            return init(mc, eyes, target.init_Entity());
-         } else if (target.init_BlockPos() != null) {
-            return init(mc, eyes, target.init_BlockPos());
+         if (target.entity() != null) {
+            return init(mc, eyes, target.entity());
+         } else if (target.blockPos() != null) {
+            return init(mc, eyes, target.blockPos());
          } else {
-            return target.init_Vec3() == null ? null : RotationMath.lookAt(target.init_Vec3(), eyes);
+            return target.point() == null ? null : RotationMath.lookAt(target.point(), eyes);
          }
       } else {
          return null;

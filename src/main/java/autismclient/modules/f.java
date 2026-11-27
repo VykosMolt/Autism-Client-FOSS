@@ -5467,7 +5467,7 @@ public final class f {
       @Override
       public void onEnable() {
          autismclient.util.AutismHudManager.init_V();
-         autismclient.util.macro.ServerTickPhaseTracker.load_V();
+         autismclient.util.macro.ServerTickPhaseTracker.reset();
       }
 
       @Override
@@ -7021,10 +7021,10 @@ public final class f {
          } else {
             int chars = this.integer("characters");
             if (!custom.isBlank() && this.bool("word-wrap")) {
-               pages.addAll(autismclient.util.macro.NbtBookAction.init_List_Font(MC.font, custom, pageCount));
+               pages.addAll(autismclient.util.macro.NbtBookAction.wrapToPages(MC.font, custom, pageCount));
                return pages.isEmpty() ? List.of("Autism") : pages;
             } else {
-               pages.addAll(autismclient.util.macro.NbtBookAction.init_List_Str(custom, pageCount, chars));
+               pages.addAll(autismclient.util.macro.NbtBookAction.splitToPages(custom, pageCount, chars));
                return pages.isEmpty() ? List.of("Autism") : pages;
             }
          }

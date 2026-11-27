@@ -1025,7 +1025,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          }
 
          for (int i = startIndex; i < endExclusive; i++) {
-            if (this.init_aM.actions.get(i) instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.init_Z_2()) {
+            if (this.init_aM.actions.get(i) instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.isConfigured()) {
                AutismClientMessaging.sendPrefixed("Inventory Audit needs at least one target.");
                return;
             }
@@ -1825,7 +1825,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
          int moveCount = 1;
          if (source instanceof autismclient.util.macro.RaceAction race) {
-            moveCount = race.init_I_List_I(this.init_aM.actions, fromIndex) + 1;
+            moveCount = race.countBodyActions(this.init_aM.actions, fromIndex) + 1;
          } else if (source instanceof autismclient.util.macro.ReportAction report) {
             moveCount = report.init(this.init_aM.actions, fromIndex) + 1;
          } else if (source instanceof autismclient.util.macro.MultiAction multi) {
@@ -2198,7 +2198,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       autismclient.util.macro.LookAtBlockAction action = new autismclient.util.macro.LookAtBlockAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.ENTITY && init_Minecraft.crosshairPickEntity != null) {
          action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.ENTITY;
-         action.entityIds.add(autismclient.util.macro.LookAtBlockAction.init_Str_Entity(init_Minecraft.crosshairPickEntity));
+         action.entityIds.add(autismclient.util.macro.LookAtBlockAction.entityRef(init_Minecraft.crosshairPickEntity));
       } else if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
          action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
@@ -2239,7 +2239,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.init_aM.actions.get(i);
             if (action instanceof autismclient.util.macro.RaceAction race) {
-               int end = i + race.init_I_List_I(this.init_aM.actions, i);
+               int end = i + race.countBodyActions(this.init_aM.actions, i);
                return bodyIndex <= end ? i : -1;
             }
 
@@ -2467,7 +2467,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (this.init_aM == null || action == null || index < 0 || index >= this.init_aM.actions.size()) {
          return AutismMacroEditorOverlay.BlockGroupLayout.init_AutismMacroEditorO;
       } else if (action instanceof autismclient.util.macro.RaceAction race) {
-         return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, false, index, race.init_I_List_I(this.init_aM.actions, index), 0, "RACE");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, false, index, race.countBodyActions(this.init_aM.actions, index), 0, "RACE");
       } else if (action instanceof autismclient.util.macro.ReportAction report) {
          return new AutismMacroEditorOverlay.BlockGroupLayout(true, true, false, index, report.init(this.init_aM.actions, index), 0, "REPORT");
       } else if (action instanceof autismclient.util.macro.PacketGateAction) {
@@ -2477,7 +2477,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       } else {
          int raceHeader = this.read_I_2(index);
          if (raceHeader >= 0 && this.init_aM.actions.get(raceHeader) instanceof autismclient.util.macro.RaceAction race) {
-            int childCount = race.init_I_List_I(this.init_aM.actions, raceHeader);
+            int childCount = race.countBodyActions(this.init_aM.actions, raceHeader);
             int conditionCount = race.load(this.init_aM.actions, raceHeader);
             int offset = index - raceHeader;
             return new AutismMacroEditorOverlay.BlockGroupLayout(
@@ -2515,9 +2515,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (action == null || !action.isEnabled()) {
          return false;
       } else if (action instanceof autismclient.util.macro.FpsAction fps) {
-         return fps.init_RingBuffer_DataUti() != autismclient.util.macro.FpsAction.Inner_DataUtil.TIMEOUT;
+         return fps.getEndMode() != autismclient.util.macro.FpsAction.Inner_DataUtil.TIMEOUT;
       } else {
-         return action instanceof autismclient.util.macro.SPingAction sping ? sping.init_T_DataUtil() != autismclient.util.macro.SPingAction.Inner_DataUtil.TIMEOUT : false;
+         return action instanceof autismclient.util.macro.SPingAction sping ? sping.getEndMode() != autismclient.util.macro.SPingAction.Inner_DataUtil.TIMEOUT : false;
       }
    }
 
@@ -2527,13 +2527,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int last = this.init_aM.actions.size() - 1;
          int covered;
          if (action instanceof autismclient.util.macro.FpsAction fps) {
-            covered = fps.init_RingBuffer_DataUti() == autismclient.util.macro.FpsAction.Inner_DataUtil.END ? last - headerIndex : fps.init_I_3();
+            covered = fps.getEndMode() == autismclient.util.macro.FpsAction.Inner_DataUtil.END ? last - headerIndex : fps.getStepCount();
          } else {
             if (!(action instanceof autismclient.util.macro.SPingAction sping)) {
                return headerIndex;
             }
 
-            covered = sping.init_T_DataUtil() == autismclient.util.macro.SPingAction.Inner_DataUtil.END ? last - headerIndex : sping.init_I_4();
+            covered = sping.getEndMode() == autismclient.util.macro.SPingAction.Inner_DataUtil.END ? last - headerIndex : sping.getStepCount();
          }
 
          long end = (long)headerIndex + Math.max(0, covered);
@@ -2574,7 +2574,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void data_V() {
       autismclient.util.macro.OpenContainerAction action = new autismclient.util.macro.OpenContainerAction();
       if (init_Minecraft.hitResult instanceof EntityHitResult) {
-         action.init_V_Minecraft_9(init_Minecraft);
+         action.captureCrosshairTarget(init_Minecraft);
       } else if (init_Minecraft.hitResult instanceof BlockHitResult hit) {
          action.blockPos = hit.getBlockPos();
       }
@@ -2584,7 +2584,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void value_V() {
       autismclient.util.macro.InteractEntityAction action = new autismclient.util.macro.InteractEntityAction();
-      action.init_V_Minecraft_3(init_Minecraft);
+      action.captureCrosshairTarget(init_Minecraft);
       this.init_V_MacroAction_2(action);
    }
 
@@ -4588,7 +4588,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (MacroAction action : this.init_aM.actions) {
-         if (action instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.init_Z_2()) {
+         if (action instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.isConfigured()) {
             return "Inventory Audit needs at least one target.";
          }
       }
@@ -4669,13 +4669,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (index < 0) {
             this.fill_V();
          } else {
-            int oldCount = race.init_I_List_I(this.init_aM.actions, index);
+            int oldCount = race.countBodyActions(this.init_aM.actions, index);
             List<MacroAction> replacement = new ArrayList<>();
             boolean[] reused = new boolean[Math.max(0, oldCount)];
 
             for (String step : race.read()) {
-               boolean conditionStep = autismclient.util.macro.RaceAction.init_Z_2(step);
-               String typeName = autismclient.util.macro.RaceAction.init_Str_2(step);
+               boolean conditionStep = autismclient.util.macro.RaceAction.isConditionStep(step);
+               String typeName = autismclient.util.macro.RaceAction.stepType(step);
                MacroAction kept = null;
 
                for (int offset = 1; offset <= oldCount && index + offset < this.init_aM.actions.size(); offset++) {
@@ -4684,8 +4684,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                      MacroAction oldAction = this.init_aM.actions.get(index + offset);
                      if (oldAction != null) {
                         boolean sameType = conditionStep
-                           ? autismclient.util.macro.RaceAction.init_Z(oldAction)
-                              && autismclient.util.macro.RaceAction.init_L_DataUtil(oldAction).name().equalsIgnoreCase(typeName)
+                           ? autismclient.util.macro.RaceAction.isRaceCondition(oldAction)
+                              && autismclient.util.macro.RaceAction.conditionTypeOf(oldAction).name().equalsIgnoreCase(typeName)
                            : autismclient.util.macro.RaceAction.load(oldAction) && oldAction.getTypeId().equalsIgnoreCase(typeName);
                         if (sameType) {
                            kept = oldAction;
@@ -4696,7 +4696,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               replacement.add(kept != null ? kept : autismclient.util.macro.RaceAction.init_MacroAction(step));
+               replacement.add(kept != null ? kept : autismclient.util.macro.RaceAction.createStepAction(step));
             }
 
             if (oldCount > 0) {
@@ -4705,9 +4705,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             this.init_aM.actions.addAll(index + 1, replacement);
             race.raceSteps = new ArrayList<>(race.read());
-            race.load_V();
+            race.syncTypesFromSteps();
             race.conditionType = race.conditionTypes.isEmpty() ? "" : race.conditionTypes.get(0);
-            race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.DelayAction(0) : race.init_MacroAction();
+            race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.DelayAction(0) : race.createConditionAction();
             race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.MacroActionType.PACKET_CLICK.name() : race.actionTypes.get(0);
             race.bodyCount = replacement.size();
             this.fill_V();
@@ -4724,15 +4724,15 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             int oldCount = report.init(this.init_aM.actions, index);
             MacroAction oldStart = oldCount >= 1 && index + 1 < this.init_aM.actions.size() ? this.init_aM.actions.get(index + 1) : null;
             MacroAction oldEnd = oldCount >= 2 && index + 2 < this.init_aM.actions.size() ? this.init_aM.actions.get(index + 2) : null;
-            MacroAction newStart = report.load_MacroAction_2();
+            MacroAction newStart = report.createStartAction();
             if (oldStart != null && autismclient.util.macro.RaceAction.load(oldStart) && oldStart.getTypeId().equalsIgnoreCase(report.startActionType)) {
                newStart = oldStart;
             }
 
-            MacroAction newEnd = report.read_MacroAction();
+            MacroAction newEnd = report.createEndCondition();
             if (oldEnd != null
-               && autismclient.util.macro.RaceAction.init_Z(oldEnd)
-               && autismclient.util.macro.RaceAction.init_L_DataUtil(oldEnd).name().equalsIgnoreCase(report.endConditionType)) {
+               && autismclient.util.macro.RaceAction.isRaceCondition(oldEnd)
+               && autismclient.util.macro.RaceAction.conditionTypeOf(oldEnd).name().equalsIgnoreCase(report.endConditionType)) {
                newEnd = oldEnd;
             }
 
@@ -5848,7 +5848,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                         this.count_V();
                         int target = index + 1;
                         if (action instanceof autismclient.util.macro.RaceAction race) {
-                           target = Math.min(this.init_aM.actions.size() - 1, index + race.init_I_List_I(this.init_aM.actions, index) + 1);
+                           target = Math.min(this.init_aM.actions.size() - 1, index + race.countBodyActions(this.init_aM.actions, index) + 1);
                         } else if (action instanceof autismclient.util.macro.ReportAction report) {
                            target = Math.min(this.init_aM.actions.size() - 1, index + report.init(this.init_aM.actions, index) + 1);
                         } else if (action instanceof autismclient.util.macro.MultiAction multi) {
@@ -5975,7 +5975,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          MacroAction action = this.init_aM.actions.get(index);
          ActionEditorOverlay editor = ActionEditorOverlay.getExisting();
          if (action instanceof autismclient.util.macro.RaceAction race) {
-            int count = race.init_I_List_I(this.init_aM.actions, index);
+            int count = race.countBodyActions(this.init_aM.actions, index);
             int end = Math.min(this.init_aM.actions.size(), index + count + 1);
             if (editor != null) {
                for (int i = index; i < end; i++) {

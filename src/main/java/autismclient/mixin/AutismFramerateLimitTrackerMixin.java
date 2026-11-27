@@ -18,7 +18,7 @@ public abstract class AutismFramerateLimitTrackerMixin {
    private void autism$applyFpsAction(CallbackInfoReturnable<Integer> cir) {
       Minecraft minecraft = Minecraft.getInstance();
       if (minecraft != null && minecraft.level != null) {
-         int override = MacroFpsOverrideManager.load_I();
+         int override = MacroFpsOverrideManager.getEffectiveLimit();
          if (override >= 0) {
             cir.setReturnValue(Math.min(override, cir.getReturnValueI()));
             return;

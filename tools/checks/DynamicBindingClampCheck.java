@@ -16,11 +16,11 @@ public class DynamicBindingClampCheck {
 
       // Through the binding call site (literal templates need no game).
       UseItemPhaseAction bound = new UseItemPhaseAction();
-      DynamicBindingManager.init_V(bound, "holdTicks", "5000");
+      DynamicBindingManager.setBinding(bound, "holdTicks", "5000");
       DisconnectAction reader = new DisconnectAction();
-      DynamicBindingManager.init_V(reader, "tolerance", "250.5");
+      DynamicBindingManager.setBinding(reader, "tolerance", "250.5");
       WaitForHealthAction health = new WaitForHealthAction();
-      DynamicBindingManager.init_V(health, "healthThreshold", "-4");
+      DynamicBindingManager.setBinding(health, "healthThreshold", "-4");
       Minecraft noGame = null;
       check(DynamicBindingManager.init(bound, noGame) && bound.holdTicks == 2000, "bound int field is clamped, got " + bound.holdTicks);
       check(DynamicBindingManager.init(reader, noGame) && reader.tolerance == 100.0, "bound double field is clamped, got " + reader.tolerance);

@@ -22,22 +22,22 @@ public class FpsAction implements MacroAction {
       this.durationMs = Math.max(0, durationMs);
    }
 
-   public FpsAction.Inner_DataUtil init_RingBuffer_DataUti() {
+   public FpsAction.Inner_DataUtil getEndMode() {
       return FpsAction.Inner_DataUtil.init(this.endMode);
    }
 
-   public int init_I_3() {
+   public int getStepCount() {
       return Math.max(1, this.stepCount);
    }
 
-   public long init_J_2() {
+   public long getDurationMs() {
       return this.useTicks ? Math.max(0, this.durationTicks) * 50L : Math.max(0, this.durationMs);
    }
 
    @Override
    public void execute(Minecraft mc) {
       long owner = MacroExecutor.getCurrentRunId();
-      MacroFpsOverrideManager.init(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.init_J_2() * 1000000L);
+      MacroFpsOverrideManager.init(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.getDurationMs() * 1000000L);
    }
 
    @Override
@@ -45,7 +45,7 @@ public class FpsAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putInt("maxFps", this.maxFps);
-      tag.putString("endMode", this.init_RingBuffer_DataUti().name());
+      tag.putString("endMode", this.getEndMode().name());
       tag.putInt("stepCount", Math.max(1, this.stepCount));
       tag.putBoolean("useTicks", this.useTicks);
       tag.putInt("durationMs", this.durationMs);
@@ -99,12 +99,12 @@ public class FpsAction implements MacroAction {
    public String getDisplayName() {
       String cap = this.maxFps <= 0 ? "Freeze" : this.maxFps + " fps";
       String var10000;
-      switch (this.init_RingBuffer_DataUti()) {
+      switch (this.getEndMode()) {
          case TIMEOUT:
             var10000 = this.useTicks ? Math.max(0, this.durationTicks) + " ticks" : Math.max(0, this.durationMs) + " ms";
             break;
          case STEPS:
-            var10000 = this.init_I_3() + (this.init_I_3() == 1 ? " step" : " steps");
+            var10000 = this.getStepCount() + (this.getStepCount() == 1 ? " step" : " steps");
             break;
          case END:
             var10000 = "until end";
@@ -114,7 +114,7 @@ public class FpsAction implements MacroAction {
       }
 
       String window = var10000;
-      String suffix = this.init_RingBuffer_DataUti() == FpsAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
+      String suffix = this.getEndMode() == FpsAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
       return "FPS: " + cap + " (" + window + ")" + suffix;
    }
 

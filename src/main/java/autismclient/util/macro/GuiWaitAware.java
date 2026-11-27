@@ -3,20 +3,20 @@ package autismclient.util.macro;
 import net.minecraft.nbt.CompoundTag;
 
 public interface GuiWaitAware {
-   boolean read_Z();
+   boolean waitsForGuiBefore();
 
    void load(boolean var1);
 
-   boolean write_Z();
+   boolean waitsForGuiAfter();
 
    void read(boolean var1);
 
-   String init_Str_7();
+   String getGuiName();
 
-   void init_V_Str(String var1);
+   void setGuiName(String var1);
 
    default boolean update_Z() {
-      return this.read_Z() || this.write_Z();
+      return this.waitsForGuiBefore() || this.waitsForGuiAfter();
    }
 
    default void write(boolean v) {
@@ -28,7 +28,7 @@ public interface GuiWaitAware {
       return false;
    }
 
-   static boolean init_Z_CompoundTag_Z(CompoundTag tag, boolean defaultBefore) {
+   static boolean readWaitForGuiBefore(CompoundTag tag, boolean defaultBefore) {
       if (tag == null) {
          return defaultBefore;
       } else {
@@ -36,7 +36,7 @@ public interface GuiWaitAware {
       }
    }
 
-   static boolean load_Z_CompoundTag_Z(CompoundTag tag, boolean defaultAfter) {
+   static boolean readWaitForGuiAfter(CompoundTag tag, boolean defaultAfter) {
       if (tag == null) {
          return defaultAfter;
       } else {
@@ -46,12 +46,12 @@ public interface GuiWaitAware {
       }
    }
 
-   static String init_Str_aP(GuiWaitAware wait) {
+   static String waitSuffix(GuiWaitAware wait) {
       if (wait == null) {
          return "";
       } else {
-         boolean before = wait.read_Z();
-         boolean after = wait.write_Z();
+         boolean before = wait.waitsForGuiBefore();
+         boolean after = wait.waitsForGuiAfter();
          if (before && after) {
             return " [before+after]";
          } else if (before) {
