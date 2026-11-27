@@ -127,7 +127,7 @@ final class AiSchematicReadiness {
 
       ArrayList<AiBuilder.CellSpec> kept;
       do {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          omitted.clear();
          AiSchematicReadiness.Inner_TaskQueue audit = init(blueprint, exampleLimit - examples.size(), observed, omitted);
          issueCount += audit.issueCount();
@@ -147,7 +147,7 @@ final class AiSchematicReadiness {
          kept = new ArrayList<>(blueprint.cells().size() - omitted.size());
 
          for (AiBuilder.CellSpec cell : blueprint.cells()) {
-            AiBuilder.init();
+            AiBuilder.checkNotCancelled();
             if (omitted.contains(init(cell.dx(), cell.dy(), cell.dz()))) {
                observed.putIfAbsent(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong(), Blocks.AIR.defaultBlockState());
             } else {
@@ -173,7 +173,7 @@ final class AiSchematicReadiness {
       long issueCount = 0L;
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          List<AiSchematicReadiness.Inner_ConfigStore> problems = states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> init_List(cell));
          issueCount += problems.size();
          if (omitted != null && !problems.isEmpty()) {
@@ -191,10 +191,10 @@ final class AiSchematicReadiness {
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, pairPlans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
-            AiBuilder.CellSpec partner = partners.get(AiBuilder.init_J_I(at.getX(), at.getY(), at.getZ()));
+            AiBuilder.CellSpec partner = partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()));
             BlockState actual = partner == null
                ? (context == null ? null : context.get(blueprint.origin().offset(at).asLong()))
-               : AiBuilder.init_BlockState(partner);
+               : AiBuilder.toBlockState(partner);
             if ((partner != null || pair.needsExisting() && context != null) && (actual == null || !init(pair.wanted(), actual))) {
                issueCount++;
                if (omitted != null) {
@@ -250,8 +250,8 @@ final class AiSchematicReadiness {
       ArrayList<AiBuilder.CellSpec> checked = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : cells) {
-         AiBuilder.init();
-         BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.init_BlockState(cell));
+         AiBuilder.checkNotCancelled();
+         BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell));
          placed.put(init(cell.dx(), cell.dy(), cell.dz()), state);
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
@@ -310,7 +310,7 @@ final class AiSchematicReadiness {
       long count = 0L;
 
       for (AiBuilder.CellSpec cell : checked) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          AiSchematicReadiness.Inner_BufferHelper plan = init(cell, pairPlans);
          if (plan == null || !plan.needsExisting()) {
             BlockState state = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()));
@@ -374,7 +374,7 @@ final class AiSchematicReadiness {
       long count = 0L;
 
       for (AiBuilder.CellSpec cell : cells) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          FluidState fluid = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties())).getFluidState();
          long start = init(cell.dx(), cell.dy(), cell.dz());
          if (!fluid.isEmpty() && !seen.contains(start)) {
@@ -465,7 +465,7 @@ final class AiSchematicReadiness {
       int maxZ = -2147483648;
 
       for (AiBuilder.CellSpec cell : cells) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
          minY = Math.min(minY, cell.dy());
@@ -475,7 +475,7 @@ final class AiSchematicReadiness {
          if (cell.block().equals("minecraft:water") || cell.block().equals("minecraft:lava")) {
             placed.put(
                init(cell.dx(), cell.dy(), cell.dz()),
-               states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.init_BlockState(cell))
+               states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell))
             );
          }
       }
@@ -636,18 +636,18 @@ final class AiSchematicReadiness {
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> required = new Long2ObjectOpenHashMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
-            required.put(AiBuilder.init_J_I(at.getX(), at.getY(), at.getZ()), null);
+            required.put(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()), null);
          }
       }
 
       if (!required.isEmpty()) {
          for (AiBuilder.CellSpec cell : blueprint.cells()) {
-            AiBuilder.init();
-            long key = AiBuilder.init_J_I(cell.dx(), cell.dy(), cell.dz());
+            AiBuilder.checkNotCancelled();
+            long key = AiBuilder.packOffsetKey(cell.dx(), cell.dy(), cell.dz());
             if (required.containsKey(key)) {
                required.put(key, cell);
             }
@@ -663,11 +663,11 @@ final class AiSchematicReadiness {
       LinkedHashSet<BlockPos> positions = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
          if (pair != null && pair.needsExisting()) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
-            if (partners.get(AiBuilder.init_J_I(at.getX(), at.getY(), at.getZ())) == null) {
+            if (partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ())) == null) {
                positions.add(blueprint.origin().offset(at));
             }
          }
@@ -680,7 +680,7 @@ final class AiSchematicReadiness {
       return plans.computeIfAbsent(
             new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()),
             ignored -> {
-               BlockState state = AiBuilder.init_BlockState(cell);
+               BlockState state = AiBuilder.toBlockState(cell);
                if (state.getBlock() instanceof BedBlock) {
                   boolean head = state.getValue(BedBlock.PART) == BedPart.HEAD;
                   return Optional.of(
@@ -720,7 +720,7 @@ final class AiSchematicReadiness {
    private static List<AiSchematicReadiness.Inner_ConfigStore> init_List(AiBuilder.CellSpec cell) {
       ArrayList<AiSchematicReadiness.Inner_ConfigStore> problems = new ArrayList<>();
 
-      for (String gap : AiBuilder.init_List(cell)) {
+      for (String gap : AiBuilder.unsupportedProperties(cell)) {
          problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE, gap));
       }
 
@@ -732,8 +732,8 @@ final class AiSchematicReadiness {
    }
 
    private static boolean init_Z(AiBuilder.CellSpec cell) {
-      return AiBuilder.read_Z(cell)
-         || AiBuilder.load_Z(cell)
+      return AiBuilder.isTransientPistonCell(cell)
+         || AiBuilder.isFlowingFluidCell(cell)
          || "upper".equals(cell.properties().get("half"))
          || "head".equals(cell.properties().get("part"));
    }

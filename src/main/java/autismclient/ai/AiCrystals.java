@@ -776,7 +776,7 @@ final class AiCrystals {
                String path = BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(below).getBlock()).getPath();
                if (!"obsidian".equals(path) && !"bedrock".equals(path)) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(below, 20);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(below, 20);
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();

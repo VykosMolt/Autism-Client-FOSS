@@ -703,7 +703,7 @@ public final class AiStaircase {
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.MoveCosts.init_D_I(this.init - x, this.write - y, this.load - z);
+         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.init - x, this.write - y, this.load - z);
       }
 
       private boolean update(BlockPos cell) {
@@ -758,7 +758,7 @@ public final class AiStaircase {
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.MoveCosts.init_D_I(this.init_BlockPos.getX() - x, this.init_BlockPos.getY() - y, this.init_BlockPos.getZ() - z);
+         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.init_BlockPos.getX() - x, this.init_BlockPos.getY() - y, this.init_BlockPos.getZ() - z);
       }
 
       @Override

@@ -240,7 +240,7 @@ final class AiParkourRoute implements AiOperation {
                         this.putAt_TextPool_JsonCache = var10x;
                      }
                   } catch (Throwable var15x) {
-                     autismclient.ai.engine.AiNavDebug.init("parkourwr planning failed: " + var15x);
+                     autismclient.ai.engine.AiNavDebug.log("parkourwr planning failed: " + var15x);
                      AutismClientAddon.LOG.warn("[AI] parkourwr planning failed", var15x);
                   } finally {
                      this.fill_Z = true;
@@ -379,7 +379,7 @@ final class AiParkourRoute implements AiOperation {
 
                            this.putAt_TextPool_JsonCache = var10x;
                         } catch (Throwable var15x) {
-                           autismclient.ai.engine.AiNavDebug.init("parkourwr speed replan failed: " + var15x);
+                           autismclient.ai.engine.AiNavDebug.log("parkourwr speed replan failed: " + var15x);
                         } finally {
                            this.fill_Z = true;
                         }
@@ -424,7 +424,7 @@ final class AiParkourRoute implements AiOperation {
                this.fill_Vec3 = var1.position();
             }
 
-            autismclient.ai.engine.AiNavDebug.init(
+            autismclient.ai.engine.AiNavDebug.log(
                String.format(
                   Locale.ROOT,
                   "parkourwr script %d: %d ticks ready, searched from %.1f blocks",
@@ -517,7 +517,7 @@ final class AiParkourRoute implements AiOperation {
                      this.readEx_D,
                      var30.putAt_Str()
                   );
-                  autismclient.ai.engine.AiNavDebug.init(var50);
+                  autismclient.ai.engine.AiNavDebug.log(var50);
                   AutismClientAddon.LOG.info("[AI] " + var50);
                   return new AiOperation.Result(
                      AiOperation.Status.RUNNING, "Checkpoint " + (this.pollAt_I + 1) + "/" + this.putAt_List.size() + " · record route", "{}", List.of()
@@ -593,7 +593,7 @@ final class AiParkourRoute implements AiOperation {
                      var3.putAt_TextPool_IoHelper
                   );
                } catch (Throwable var7x) {
-                  autismclient.ai.engine.AiNavDebug.init("parkourwr search failed: " + var7x);
+                  autismclient.ai.engine.AiNavDebug.log("parkourwr search failed: " + var7x);
                   var3.putAt_TextPool_IoHelper.putAt(false, null);
                }
             }
@@ -659,7 +659,7 @@ final class AiParkourRoute implements AiOperation {
          this.putAt_TextPool_CacheHelp.target().toShortString(),
          this.putAt_TextPool_CacheHelp.checkpoint() ? " (checkpoint)" : ""
       );
-      autismclient.ai.engine.AiNavDebug.init(var8);
+      autismclient.ai.engine.AiNavDebug.log(var8);
       AutismClientAddon.LOG.info("[AI] " + var8);
       JsonObject var9 = this.putAt_JsonObject.deepCopy();
       if (this.pollAt_Z && this.pollAt_I == 0) {
@@ -746,7 +746,7 @@ final class AiParkourRoute implements AiOperation {
       }
 
       String var3 = "parkourwr hands the course back at checkpoint " + this.pollAt_I + ": " + var2;
-      autismclient.ai.engine.AiNavDebug.init(var3);
+      autismclient.ai.engine.AiNavDebug.log(var3);
       AutismClientAddon.LOG.info("[AI] " + var3);
       autismclient.ai.engine.AiPacePlayback.fill_V_LocalPlayer(var1);
       AiParkourRoute.Inner_CacheHelper var4 = this.putAt_RenderCodec_CacheH;

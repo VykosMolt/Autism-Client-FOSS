@@ -262,7 +262,7 @@ final class AiDimension {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         true,
                         2.0,
-                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(targetCell, radius), keep)
+                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(targetCell, radius), keep)
                      )
                   );
                }
@@ -1258,7 +1258,7 @@ final class AiDimension {
                   }
 
                   BlockPos cell = this.init_ArrayDeque.poll();
-                  this.load_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 20, false);
+                  this.load_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 20, false);
                   return this.init("Clearing a site for the portal at " + cell.toShortString());
                }
 

@@ -49,7 +49,7 @@ final class AiHopperClockPlan {
       HashSet<BlockPos> used = new HashSet<>();
 
       for (AiSchematicMachinePlan.ContainerPlan entry : contents) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          BlockPos a = entry.position();
          BlockState source = states.get(a);
          if (!used.contains(a) && source != null && source.is(Blocks.HOPPER) && !source.getValue(BlockStateProperties.ENABLED)) {

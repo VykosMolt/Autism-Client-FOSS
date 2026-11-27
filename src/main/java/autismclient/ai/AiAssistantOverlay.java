@@ -105,7 +105,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.init_V_Z(false);
       }
 
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
    }
 
    @Override
@@ -215,7 +215,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.init_ce.load();
       }
 
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
    }
 
    private void init(AiAssistantOverlay.Inner_DataUtil next) {
@@ -241,7 +241,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          }
 
          this.init_AiAssistantOverlay = next;
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
       }
    }
 
@@ -265,15 +265,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.update_Z = false;
       this.init_BitSetUtil.setFocused(false);
       if (!text.isEmpty()) {
-         this.init_cc.renameSession(this.init_cF.read_Str, text);
+         this.init_cc.renameSession(this.init_cF.activeSessionId, text);
       }
 
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
    }
 
    private String load_Str() {
-      String title = this.init_cF.load_Str == null ? "" : this.init_cF.load_Str.trim();
-      return !title.isEmpty() && !title.equals("New session") ? title : (this.init_cF.init_AiSettings.builtIn ? "Local tasks" : "New chat");
+      String title = this.init_cF.activeSessionTitle == null ? "" : this.init_cF.activeSessionTitle.trim();
+      return !title.isEmpty() && !title.equals("New session") ? title : (this.init_cF.settings.builtIn ? "Local tasks" : "New chat");
    }
 
    @Override
@@ -296,7 +296,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.renderWindowFrame(graphics, mx, my, this.init_cH(), "AI Assistant", this.load_Z, this.sync_Z);
          if (!this.isVisuallyCollapsed(this.load_Z)) {
             long now = System.currentTimeMillis();
-            this.init_cF.init(now, this.init_ce.init_Z);
+            this.init_cF.refresh(now, this.init_ce.init_Z);
             this.load_V_I_I(mx, my);
             boolean blocked = this.init_F_2.init(mx, my)
                || this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(mx, my);
@@ -372,7 +372,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this::set_V
          );
       right -= 4;
-      List<String> levels = this.init_cF.write_List;
+      List<String> levels = this.init_cF.availableEffortLevels;
       int chipsW = 0;
 
       for (String level : levels) {
@@ -386,7 +386,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             String label = init_Map.getOrDefault(level, level);
             autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(cx, bar.write(), this.init_cE.measureTextWidth(label) + 10, h);
             autismclient.gui.ui.widgets.PillBadgeRenderer.init(
-               this.init_cE.renderContext, chip, label, colors.accent, level.equals(this.init_cF.sync_Str), this.init_cE.isHovered(chip)
+               this.init_cE.renderContext, chip, label, colors.accent, level.equals(this.init_cF.effectiveEffortLevel), this.init_cE.isHovered(chip)
             );
             this.init_cE.addInteractiveRegion(chip, () -> this.read(level), null, "Reasoning effort");
             cx += chip.update() + 2;
@@ -426,8 +426,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    private void read(String level) {
       this.init_cc.setEffortLevel(level);
-      this.init_cF.sync_Str = level;
-      this.init_cF.init_V();
+      this.init_cF.effectiveEffortLevel = level;
+      this.init_cF.invalidate();
    }
 
    @Override
@@ -549,7 +549,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          && (mods & 1) != 0
          && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
          && !this.init_F_2.init_Z()
-         && !this.init_cF.init_AiSettings.builtIn) {
+         && !this.init_cF.settings.builtIn) {
          this.init_TaskTimer.init_V();
          return true;
       }

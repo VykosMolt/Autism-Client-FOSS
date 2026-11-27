@@ -586,13 +586,13 @@ public final class AiSchematicApproach implements AiOperation {
          }
 
          BlockState floor = this.init_ClientLevel.getBlockState(feet.below());
-         if (AiPathfinder.LiveGridView.read(floor)) {
+         if (AiPathfinder.LiveGridView.isFloorHazardCompat(floor)) {
             return null;
          }
 
          for (BlockPos occupied : List.of(feet, feet.above())) {
             BlockState state = this.init_ClientLevel.getBlockState(occupied);
-            if (AiPathfinder.LiveGridView.load(state) || AiPathfinder.LiveGridView.read(state) || state.getFluidState().is(FluidTags.LAVA)) {
+            if (AiPathfinder.LiveGridView.isFeetHazardCompat(state) || AiPathfinder.LiveGridView.isFloorHazardCompat(state) || state.getFluidState().is(FluidTags.LAVA)) {
                return null;
             }
          }
@@ -608,7 +608,7 @@ public final class AiSchematicApproach implements AiOperation {
                   && source.requested() != null
                   && this.init_Z_u_CachePool(source)
                   && !(source.requested().getBlock() instanceof FallingBlock)
-                  && !AiPathfinder.LiveGridView.read(source.requested())
+                  && !AiPathfinder.LiveGridView.isFloorHazardCompat(source.requested())
                   && Block.isShapeFullBlock(source.requested().getCollisionShape(this.init_ClientLevel, source.pos()))) {
                   foundationJob = i;
                   futureFloor = source.requested();
@@ -652,8 +652,8 @@ public final class AiSchematicApproach implements AiOperation {
                         || state.hasBlockEntity()
                         || !state.getFluidState().isEmpty()
                         || state.getDestroySpeed(this.init_ClientLevel, cell) < 0.0F
-                        || AiPathfinder.LiveGridView.load(state)
-                        || AiPathfinder.LiveGridView.read(state)) {
+                        || AiPathfinder.LiveGridView.isFeetHazardCompat(state)
+                        || AiPathfinder.LiveGridView.isFloorHazardCompat(state)) {
                         return null;
                      }
 
@@ -853,7 +853,7 @@ public final class AiSchematicApproach implements AiOperation {
          )) {
             if (!station.probe.init_Set.contains(cell)) {
                BlockState state = this.init_ClientLevel.getBlockState(cell);
-               if (AiPathfinder.LiveGridView.load(state) || AiPathfinder.LiveGridView.read(state)) {
+               if (AiPathfinder.LiveGridView.isFeetHazardCompat(state) || AiPathfinder.LiveGridView.isFloorHazardCompat(state)) {
                   return false;
                }
 

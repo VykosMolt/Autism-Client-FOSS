@@ -555,8 +555,8 @@ public final class AiBlockMine {
                   this.init_DataUtil::tick,
                   () -> !this.init_DataUtil.isSilent()
                )
-               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.setTargetRotation(rotation))
-               .init_RefQueue_DataUtil_BiPredicate((state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops));
+               .withRotationConsumerCompat(rotation -> this.init_DataUtil.setTargetRotation(rotation))
+               .withAcceptedToolCompat((state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops));
             final AiBlockDigger load_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
@@ -566,7 +566,7 @@ public final class AiBlockMine {
                   this.init_DataUtil::tick,
                   () -> !this.init_DataUtil.isSilent()
                )
-               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.setTargetRotation(rotation));
+               .withRotationConsumerCompat(rotation -> this.init_DataUtil.setTargetRotation(rotation));
             AiBlockDigger read_RefQueue_DataUtil = this.init_RefQueue_DataUtil;
             List<BlockPos> init_List = new ArrayList<>();
             final Set<Long> write_Set = new HashSet<>();
@@ -699,7 +699,7 @@ public final class AiBlockMine {
 
                BlockState state = mc.level.getBlockState(cell);
                double breakTicks = MiningCost.init_D_Minecraft(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
-               if (AiBlockMine.init_I(cell) >= 2 || breakTicks + AiBlockDigger.init_I_Minecraft(mc) + 40.0 > mc.player.getMaxAirSupply()) {
+               if (AiBlockMine.init_I(cell) >= 2 || breakTicks + AiBlockDigger.airTicksToSurfaceCompat(mc) + 40.0 > mc.player.getMaxAirSupply()) {
                   this.init_Set.add(cell.asLong());
                }
 
@@ -849,7 +849,7 @@ public final class AiBlockMine {
                } else {
                   return this.init_AiOperation != null
                      ? this.init_AiOperation.canInterruptNow()
-                     : (this.read_BlockPos == null || !this.read_RefQueue_DataUtil.init_Z_BlockPos(this.read_BlockPos))
+                     : (this.read_BlockPos == null || !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos))
                         && !this.init_DataPipe.needsReconciliation()
                         && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8());
                }
@@ -859,7 +859,7 @@ public final class AiBlockMine {
             public boolean requiresReconciliationAfterEmergency() {
                return this.sync_Z
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.read_BlockPos != null && this.read_RefQueue_DataUtil.init_Z_BlockPos(this.read_BlockPos)
+                  || this.read_BlockPos != null && this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos)
                   || this.init_DataPipe.needsReconciliation()
                   || this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency();
             }
@@ -883,7 +883,7 @@ public final class AiBlockMine {
                }
 
                if (!result.terminal() && this.init_AiOperation == null && mc.player != null) {
-                  AiBlockDigger.init_V_Minecraft(mc);
+                  AiBlockDigger.tickDestroyDelayCompat(mc);
                }
 
                return result;
@@ -971,10 +971,10 @@ public final class AiBlockMine {
                               );
                         }
 
-                        if (this.read_BlockPos != null && this.flush_I - this.poll_I > 30 && !this.read_RefQueue_DataUtil.init_Z_BlockPos(this.read_BlockPos)) {
+                        if (this.read_BlockPos != null && this.flush_I - this.poll_I > 30 && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos)) {
                            AutismClientAddon.LOG.info("[AI] block mine {}: gave up breaking {} in place", label, this.read_BlockPos.toShortString());
                            this.init_Set.add(this.read_BlockPos.asLong());
-                           this.read_RefQueue_DataUtil.init_V();
+                           this.read_RefQueue_DataUtil.stopCompat();
                            this.read_BlockPos = null;
                         }
 
@@ -1000,15 +1000,15 @@ public final class AiBlockMine {
                                  this.write_V(was);
                               }
                            } else {
-                              if (this.read_RefQueue_DataUtil.init_Str().equals("no tool that gets its drops")) {
+                              if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("no tool that gets its drops")) {
                                  return this.load_AiOperation_Result_2(was);
                               }
 
-                              if (this.read_RefQueue_DataUtil.init_Str().equals("too little air to break it under water")) {
+                              if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("too little air to break it under water")) {
                                  return this.init_AiOperation_Result_2(was);
                               }
 
-                              this.init(was, "could not break it in place (" + this.read_RefQueue_DataUtil.init_Str() + ")");
+                              this.init(was, "could not break it in place (" + this.read_RefQueue_DataUtil.lastFailureReasonCompat() + ")");
                               if (was.equals(this.write_BlockPos)) {
                                  this.init_Set.add(was.asLong());
                                  this.write_BlockPos = null;
@@ -1123,7 +1123,7 @@ public final class AiBlockMine {
                                     this.init_HashUtil_CachePool.load(true);
                                  }
 
-                                 this.read_RefQueue_DataUtil.init_V();
+                                 this.read_RefQueue_DataUtil.stopCompat();
                                  this.update_BlockPos = water;
                                  this.sync_BlockPos = inReach;
                                  this.init_DataPipe.start(water, item);
@@ -1141,7 +1141,7 @@ public final class AiBlockMine {
                                  this.init_Z = this.write_Z_2(inReach);
                                  this.read_BlockPos = inReach;
                                  this.poll_I = this.flush_I;
-                                 this.read_RefQueue_DataUtil.init_V();
+                                 this.read_RefQueue_DataUtil.stopCompat();
                                  this.read_RefQueue_DataUtil = this.init_Z ? this.init_RefQueue_DataUtil : this.load_RefQueue_DataUtil;
                                  if (AiMotionAudit.init_Z()) {
                                     AiMotionAudit.init_V("gather dig " + inReach.toShortString());
@@ -1149,16 +1149,16 @@ public final class AiBlockMine {
 
                                  AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
                                  if (status == AiBlockDigger.Inner_DataUtil_2.read) {
-                                    if (this.read_RefQueue_DataUtil.init_Str().equals("no tool that gets its drops")) {
+                                    if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("no tool that gets its drops")) {
                                        return this.load_AiOperation_Result_2(inReach);
                                     }
 
-                                    if (this.read_RefQueue_DataUtil.init_Str().equals("too little air to break it under water")) {
+                                    if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("too little air to break it under water")) {
                                        this.read_BlockPos = null;
                                        return this.init_AiOperation_Result_2(inReach);
                                     }
 
-                                    this.init(inReach, "could not start breaking it (" + this.read_RefQueue_DataUtil.init_Str() + ")");
+                                    this.init(inReach, "could not start breaking it (" + this.read_RefQueue_DataUtil.lastFailureReasonCompat() + ")");
                                     this.read_BlockPos = null;
                                     if (inReach.equals(this.write_BlockPos)) {
                                        this.init_Set.add(inReach.asLong());
@@ -1968,7 +1968,7 @@ public final class AiBlockMine {
 
             AiBlockDigger.Inner_DataUtil_2 init_RefQueue_DataUtil_(BlockPos cell) {
                Set<UUID> before = null;
-               if (this.init_Z && !this.read_RefQueue_DataUtil.init_Z_BlockPos(cell) && this.write_Z_2(cell)) {
+               if (this.init_Z && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) && this.write_Z_2(cell)) {
                   before = new HashSet<>();
                   Vec3 centre = Vec3.atCenterOf(cell);
 
@@ -1983,8 +1983,8 @@ public final class AiBlockMine {
                }
 
                AiBlockDigger.Inner_DataUtil_2 result = this.read_RefQueue_DataUtil
-                  .init_RefQueue_DataUtil__BlockPos(cell, this.write_Vec3(cell), this.load_Vec3(cell));
-               if (before != null && (this.read_RefQueue_DataUtil.init_Z_BlockPos(cell) || result == AiBlockDigger.Inner_DataUtil_2.load)) {
+                  .digCompat(cell, this.write_Vec3(cell), this.load_Vec3(cell));
+               if (before != null && (this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) || result == AiBlockDigger.Inner_DataUtil_2.load)) {
                   this.init_BufferHelper_Cache.init(cell.asLong(), before);
                }
 
@@ -2539,7 +2539,7 @@ public final class AiBlockMine {
                BlockPos led = this.init_EventBus_DataUtil == null
                   ? null
                   : AiDigLine.init(this.init_EventBus_DataUtil, from, List.of(cell), this.init_EventBus_CachePool(), reach);
-               if (led == null && this.push_Set.contains(cell) && !this.read_RefQueue_DataUtil.init_Z_BlockPos(cell)) {
+               if (led == null && this.push_Set.contains(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
                   Set<BlockPos> rest = new HashSet<>();
 
                   for (BlockPos c : this.push_Set) {
@@ -2585,7 +2585,7 @@ public final class AiBlockMine {
                AiDigLine.Inner_DataUtil here = AiDigLine.init_EventBus_DataUtil_Vec3(
                   eye, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.init_EventBus_CachePool(), reach
                );
-               if (here != null && here.chain().get(0).equals(cell) && !this.read_RefQueue_DataUtil.init_Z_BlockPos(cell)) {
+               if (here != null && here.chain().get(0).equals(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
                   this.init_EventBus_DataUtil = here;
                   if (!this.write_List.isEmpty() && this.write_List.get(0).chain().contains(cell)) {
                      this.write_List.set(0, here);
@@ -3060,7 +3060,7 @@ public final class AiBlockMine {
                   return false;
                }
 
-               if (AiPathfinder.LiveGridView.init_Z_BlockGetter_BlockPos(mc.level, pos)) {
+               if (AiPathfinder.LiveGridView.isLitPortalFrameCompat(mc.level, pos)) {
                   return false;
                }
 
@@ -3317,7 +3317,7 @@ public final class AiBlockMine {
                                  && !AiEditLedger.init_Z(p)
                                  && AiBlockInteraction.findReachableHit(mc, p) != null
                                  && !this.init_Set.contains(p.asLong())
-                                 && AiPathfinder.LiveGridView.init_Z_ClientLevel_BlockPos(mc.level, p)
+                                 && AiPathfinder.LiveGridView.isSafeToDigCompat(mc.level, p)
                                  && (best == null || dx * dz == 0)) {
                                  best = p;
                               }
@@ -3490,8 +3490,8 @@ public final class AiBlockMine {
                   this.load_AiOperation = null;
                }
 
-               this.init_RefQueue_DataUtil.init_V();
-               this.load_RefQueue_DataUtil.init_V();
+               this.init_RefQueue_DataUtil.stopCompat();
+               this.load_RefQueue_DataUtil.stopCompat();
                this.init_DataPipe.reset();
                this.update_BlockPos = null;
                this.init_DataUtil.clear();
@@ -3760,7 +3760,7 @@ public final class AiBlockMine {
                dy = 0;
             }
 
-            best = Math.min(best, AiPathfinder.MoveCosts.init_D_I(p.getX() - x, dy, p.getZ() - z));
+            best = Math.min(best, AiPathfinder.MoveCosts.estimateHeuristicCompat(p.getX() - x, dy, p.getZ() - z));
          }
 
          return best;
@@ -3907,7 +3907,7 @@ public final class AiBlockMine {
          for (BlockPos p : this.init_List) {
             int dy = p.getY() - y;
             dy = dy >= 0 && dy <= this.init_I ? 0 : (dy > this.init_I ? dy - this.init_I : dy);
-            best = Math.min(best, AiPathfinder.MoveCosts.init_D_I(p.getX() - x, dy, p.getZ() - z));
+            best = Math.min(best, AiPathfinder.MoveCosts.estimateHeuristicCompat(p.getX() - x, dy, p.getZ() - z));
          }
 
          for (Vec3 item : this.load_List) {

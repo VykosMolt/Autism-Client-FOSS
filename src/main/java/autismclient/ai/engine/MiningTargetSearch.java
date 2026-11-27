@@ -46,14 +46,14 @@ public final class MiningTargetSearch {
                   );
                   boolean finished = false;
 
-                  while (System.nanoTime() < deadline && !Thread.currentThread().isInterrupted() && !(finished = search.init_Z_I(256))) {
+                  while (System.nanoTime() < deadline && !Thread.currentThread().isInterrupted() && !(finished = search.stepCompat(256))) {
                   }
 
                   if (!finished) {
                      return new MiningTargetSearch.Inner_StreamUtil(best, bestCost, pending, true);
                   }
 
-                  AiPathfinder.PathResult path = search.init_ClassCache_PacketU();
+                  AiPathfinder.PathResult path = search.resultCompat();
                   pending |= path.hitPending();
                   if (path.movements().isEmpty()) {
                      continue label74;

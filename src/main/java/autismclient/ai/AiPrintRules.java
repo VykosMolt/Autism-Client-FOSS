@@ -59,12 +59,12 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    public static List<autismclient.ai.print.PrintTarget> init_List_Path(Path file, BlockPos origin, int rotation, String mirror) {
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(file, origin, rotation, mirror, false, 2097152);
-      return init(AiBuilder.init_TableIndex_DataUti(loaded.blueprint()));
+      return init(AiBuilder.normalizeSchematicBlueprint(loaded.blueprint()));
    }
 
    public static AiPrintRules.Inner_DataUtil init(Path file, BlockPos origin, int rotation, String mirror, Provider registries, boolean fixtureContents) {
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(file, origin, rotation, mirror, false, 2097152);
-      AiBuilder.Blueprint normalized = AiBuilder.init_TableIndex_DataUti(loaded.blueprint());
+      AiBuilder.Blueprint normalized = AiBuilder.normalizeSchematicBlueprint(loaded.blueprint());
       AiSchematicMachinePlan machine = AiSchematicMachinePlan.init_bV_bP_BufferHelper_TableIndex_DataUti(loaded, loaded.blueprint()).init(normalized);
       List<AiSchematicMachinePlan.ContainerPlan> hoppers = machine.load(origin, registries);
       AiSchematicMachinePlan.MachineSpec actions = machine.init_bV_StreamUtil_BlockPos_HolderLookup_Provi(origin, registries);
@@ -149,7 +149,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          );
       }
 
-      return init(AiBuilder.init_TableIndex_DataUti(new AiBuilder.Blueprint(origin, cells)));
+      return init(AiBuilder.normalizeSchematicBlueprint(new AiBuilder.Blueprint(origin, cells)));
    }
 
    private static <T extends Comparable<T>> String init_Str_BlockState_Property(BlockState state, Property<T> property) {
@@ -161,9 +161,9 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       ArrayList<autismclient.ai.print.PrintTarget> targets = new ArrayList<>(cells.size());
 
       for (int i = 0; i < cells.size(); i++) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          AiBuilder.CellSpec cell = cells.get(i);
-         BlockState wanted = AiBuilder.init_BlockState(cell);
+         BlockState wanted = AiBuilder.toBlockState(cell);
          autismclient.ai.print.PrintTarget.Inner_DataUtil kind = init_ListPool_DataUtil(cell);
          Item item = init_Item(cell, kind, wanted);
          targets.add(new autismclient.ai.print.PrintTarget(i, blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()), wanted, kind, item, cell));
@@ -173,8 +173,8 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    private static autismclient.ai.print.PrintTarget.Inner_DataUtil init_ListPool_DataUtil(AiBuilder.CellSpec cell) {
-      if (AiBuilder.init_Fluid(cell) != null) {
-         return AiBuilder.load_Z(cell) ? autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW : autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID;
+      if (AiBuilder.fluidOfCell(cell) != null) {
+         return AiBuilder.isFlowingFluidCell(cell) ? autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW : autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID;
       }
 
       if (!AiSchematicActions.read_Z(cell) && !"upper".equals(cell.properties().get("half"))) {
@@ -235,12 +235,12 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       if (target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
          if ((!cell.block().equals("minecraft:dirt") || !cell.properties().isEmpty()) && !cell.block().equals("minecraft:grass_block")
             || !live.is(Blocks.DIRT) && !live.is(Blocks.GRASS_BLOCK)) {
-            return init_Z_BlockState_BlockState(target.wanted(), live) ? false : AiBuilder.write(cell, live);
+            return init_Z_BlockState_BlockState(target.wanted(), live) ? false : AiBuilder.matchesExactCell(cell, live);
          } else {
             return true;
          }
       } else {
-         Fluid fluid = AiBuilder.init_Fluid(cell);
+         Fluid fluid = AiBuilder.fluidOfCell(cell);
          FluidState liveFluid = live.getFluidState();
          return fluid != null && !liveFluid.isEmpty() && liveFluid.getType().isSame(fluid)
             ? target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW || liveFluid.isSource()
@@ -261,7 +261,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
       switch (target.kind()) {
          case SOIL:
-            return live.is(Blocks.DIRT) || AiBuilder.write(cell, live);
+            return live.is(Blocks.DIRT) || AiBuilder.matchesExactCell(cell, live);
          case POT:
             return live.getBlock() instanceof FlowerPotBlock;
          case CAULDRON:
@@ -278,15 +278,15 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                } else {
                   for (Entry<String, String> entry : cell.properties().entrySet()) {
                      String name = entry.getKey();
-                     if (!AiBuilder.read(block, name)) {
-                        AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, name);
+                     if (!AiBuilder.isAutoComputedProperty(block, name)) {
+                        AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(block, name);
                         if (strategy != AiBuilder.OrientationKind.POST_INTERACT
                            && strategy != AiBuilder.OrientationKind.FLUID_INTERACT
                            && strategy != AiBuilder.OrientationKind.POWER_STATE
-                           && (!name.equals("type") || !AiBuilder.init_Z(cell, live))) {
+                           && (!name.equals("type") || !AiBuilder.isUnpairedDoubleChest(cell, live))) {
                            if (!name.equals("type") || !(block instanceof SlabBlock) || !"double".equals(entry.getValue())) {
                               Property<?> property = block.getStateDefinition().getProperty(name);
-                              if (property == null || !AiBuilder.init(block, name, String.valueOf(live.getValue(property)), entry.getValue())) {
+                              if (property == null || !AiBuilder.propertyValuesMatch(block, name, String.valueOf(live.getValue(property)), entry.getValue())) {
                                  return false;
                               }
                            } else if (live.getValue(SlabBlock.TYPE) == SlabType.TOP) {
@@ -306,7 +306,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    public boolean read_Z_ListPool_BlockState(autismclient.ai.print.PrintTarget target, BlockState live) {
       BlockState wanted = target.wanted();
       BooleanProperty open = BlockStateProperties.OPEN;
-      return AiBuilder.load(wanted.getBlock())
+      return AiBuilder.isPowerOnlyOpenable(wanted.getBlock())
          && live.is(wanted.getBlock())
          && this.init_Z_ListPool_BlockState(target, live.setValue(open, wanted.getValue(open)));
    }
@@ -319,7 +319,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          return new autismclient.ai.print.PrintRules.Inner_CachePool(Items.REDSTONE_BLOCK, "lit");
       }
 
-      if (AiBuilder.write(cell, live)) {
+      if (AiBuilder.matchesExactCell(cell, live)) {
          return null;
       }
 
@@ -363,11 +363,11 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                } else {
                   for (Entry<String, String> entry : cell.properties().entrySet()) {
                      String name = entry.getKey();
-                     if (!AiBuilder.read(block, name) && AiBuilder.init_TableIndex_TaskQue(block, name) == AiBuilder.OrientationKind.POST_INTERACT) {
+                     if (!AiBuilder.isAutoComputedProperty(block, name) && AiBuilder.orientationKindForProperty(block, name) == AiBuilder.OrientationKind.POST_INTERACT) {
                         Property<?> property = block.getStateDefinition().getProperty(name);
-                        if (property != null && !AiBuilder.init(block, name, String.valueOf(live.getValue(property)), entry.getValue())) {
-                           Item item = AiBuilder.init_Item(block, name);
-                           if (item == null && AiBuilder.init_Z(block, name)) {
+                        if (property != null && !AiBuilder.propertyValuesMatch(block, name, String.valueOf(live.getValue(property)), entry.getValue())) {
+                           Item item = AiBuilder.postInteractToolItem(block, name);
+                           if (item == null && AiBuilder.isStackableCountProperty(block, name)) {
                               item = block.asItem();
                            }
 
@@ -484,8 +484,8 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          for (Entry<String, String> entry : cell.properties().entrySet()) {
             String name = entry.getKey();
             String value = entry.getValue();
-            if (!AiBuilder.read(block, name)) {
-               AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, name);
+            if (!AiBuilder.isAutoComputedProperty(block, name)) {
+               AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(block, name);
                boolean var10000;
                switch (strategy) {
                   case PLAYER_FACING:
@@ -521,7 +521,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                      break;
                   default:
                      Property<?> property = block.getStateDefinition().getProperty(name);
-                     var10000 = property != null && AiBuilder.init(block, name, String.valueOf(defaults.getValue(property)), value);
+                     var10000 = property != null && AiBuilder.propertyValuesMatch(block, name, String.valueOf(defaults.getValue(property)), value);
                }
 
                boolean ok = var10000;
@@ -540,7 +540,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    public static autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil_ListPool_BlockGetter(autismclient.ai.print.PrintTarget target, BlockGetter world) {
       if (target.cell() != null && target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
          try {
-            return AiBuilder.init(init_TableIndex_StreamU(target), target.wanted().getBlock(), target.pos(), world);
+            return AiBuilder.buildPlaceConstraint(init_TableIndex_StreamU(target), target.wanted().getBlock(), target.pos(), world);
          } catch (RuntimeException e) {
             return null;
          }

@@ -237,7 +237,7 @@ final class AiPlanMesh implements AutoCloseable {
                BlockPos at = this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
                boolean loaded = AiTerrain.isLoaded(world, at);
                BlockState live = loaded ? world.getBlockState(at) : Blocks.AIR.defaultBlockState();
-               boolean satisfied = loaded && AiBuilder.update(cell, live);
+               boolean satisfied = loaded && AiBuilder.matchesSchematicCell(cell, live);
                int color = AiVisualization.init(satisfied, live.canBeReplaced(), loaded);
                if (loaded
                   && !satisfied
@@ -539,7 +539,7 @@ final class AiPlanMesh implements AutoCloseable {
             int i = this.init_I++;
             AiBuilder.CellSpec cell = AiPlanMesh.this.init_List.get(i);
             AiBuilder.CellSpec key = new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties());
-            AiPlanMesh.this.init_BlockStateArr[i] = this.init_Map.computeIfAbsent(key, AiBuilder::init_BlockState);
+            AiPlanMesh.this.init_BlockStateArr[i] = this.init_Map.computeIfAbsent(key, AiBuilder::toBlockState);
             AiPlanMesh.this.init_ZArr[i] = AiPlanMesh.this.init_BlockStateArr[i].isSolidRender();
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz());
             AiPlanMesh.this.init_I = Math.max(AiPlanMesh.this.init_I, cell.dx() + 1);

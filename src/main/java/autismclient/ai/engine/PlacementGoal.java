@@ -274,7 +274,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
          for (long stance : this.read) {
             if (!this.init_Set.contains(stance)) {
-               best = Math.min(best, AiPathfinder.MoveCosts.load(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
+               best = Math.min(best, AiPathfinder.MoveCosts.estimateDirectionalHeuristicCompat(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
             }
          }
 

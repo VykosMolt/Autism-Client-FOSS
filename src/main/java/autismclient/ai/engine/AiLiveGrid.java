@@ -127,7 +127,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
       if (!var6.climbable() && var4.getBlock() instanceof TrapDoorBlock && var2 - 1 >= this.fill) {
          BlockState var8 = this.putAt_BlockState(var1, var2 - 1, var3);
-         if (AiPathfinder.LiveGridView.putAt_Z_BlockState_BlockState(var4, var8)) {
+         if (AiPathfinder.LiveGridView.isClimbableTrapdoor(var4, var8)) {
             var6 = fill(var6);
          }
       }
@@ -335,7 +335,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       AiLiveGrid.Inner_DataUtil var6 = this.putAt_PoolStore_CacheHel;
       if (var2.requiresTool()
          && !var6.putAt_ByteWorker_CacheHe.creative()
-         && !var6.fill.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.putAt_Z_BlockState_ItemStackArr(var1x, var6.putAt_ItemStackArr))) {
+         && !var6.fill.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.hasCorrectToolInHotbar(var1x, var6.putAt_ItemStackArr))) {
          return 1.0 / 0.0;
       }
 
@@ -343,7 +343,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          if (!this.putAt_Z || !var1.is(Blocks.NETHER_GOLD_ORE) && !var1.is(Blocks.GILDED_BLACKSTONE)) {
             if ((var1.is(Blocks.ICE) || var1.is(Blocks.FROSTED_ICE)) && !this.putAt_Z) {
                BlockState var7 = this.putAt_BlockState(var3, var4 - 1, var5);
-               if (var7 == null || AiPathfinder.LiveGridView.putAt_Z_Z(true, var7.isSolid(), var7.liquid(), false)) {
+               if (var7 == null || AiPathfinder.LiveGridView.isDangerousToBreak(true, var7.isSolid(), var7.liquid(), false)) {
                   return 1.0 / 0.0;
                }
             }
@@ -398,8 +398,8 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          .computeIfAbsent(
             var2,
             var3x -> var1.putAt_BiPredicate == null
-               ? AiPathfinder.LiveGridView.putAt(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
-               : AiPathfinder.LiveGridView.putAt(
+               ? AiPathfinder.LiveGridView.fastestBreakTicks(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
+               : AiPathfinder.LiveGridView.fastestBreakTicks(
                   this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe, var1.putAt_BiPredicate
                )
          );
@@ -543,21 +543,21 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             }
          }
 
-         boolean var9 = AiPathfinder.LiveGridView.putAt_Z_BlockState(var0);
+         boolean var9 = AiPathfinder.LiveGridView.isClimbableBlock(var0);
          if (var9 && !(var4 instanceof ScaffoldingBlock)) {
             var7 = true;
          }
 
          int var10 = var7 ? 0 : (int)Math.round(var6.max(Axis.Y) * 16.0);
-         boolean var11 = AiPathfinder.LiveGridView.fill(var0);
-         boolean var12 = AiPathfinder.LiveGridView.readEx(var0);
-         boolean var13 = AiPathfinder.LiveGridView.value(var0);
+         boolean var11 = AiPathfinder.LiveGridView.isFeetHazard(var0);
+         boolean var12 = AiPathfinder.LiveGridView.isInvisibleLightBlock(var0);
+         boolean var13 = AiPathfinder.LiveGridView.isPressurePlate(var0);
          boolean var14 = var0.is(Blocks.SWEET_BERRY_BUSH);
-         boolean var15 = AiPathfinder.LiveGridView.prevEx(var0);
-         boolean var16 = !var15 && !var7 && !AiPathfinder.LiveGridView.putAt_Z_VoxelShape(var6);
-         boolean var17 = AiPathfinder.LiveGridView.prev(var0);
+         boolean var15 = AiPathfinder.LiveGridView.isFloorHazard(var0);
+         boolean var16 = !var15 && !var7 && !AiPathfinder.LiveGridView.isNarrowFootingShape(var6);
+         boolean var17 = AiPathfinder.LiveGridView.isPortalBlock(var0);
          String var18 = BuiltInRegistries.BLOCK.getKey(var4).getPath();
-         int var19 = Math.round(AiPathfinder.LiveGridView.putAt_F_Str_Z(var18, var2) * 10.0F);
+         int var19 = Math.round(AiPathfinder.LiveGridView.fallDamageMultiplier(var18, var2) * 10.0F);
          boolean var20 = var4 instanceof FallingBlock;
          boolean var21 = var4 instanceof SlabBlock || var4 instanceof StairBlock;
          boolean var22 = var4 instanceof FarmlandBlock;
@@ -582,7 +582,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             var22,
             var23,
             false,
-            AiPathfinder.MoveCosts.putAt_I_Str(var18),
+            AiPathfinder.MoveCosts.destructionPenaltyForBlock(var18),
             var24,
             var14,
             var17,
@@ -608,7 +608,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             var20,
             var26,
             var0.requiresCorrectToolForDrops(),
-            AiPathfinder.LiveGridView.chunkAt(var0),
+            AiPathfinder.LiveGridView.isOreBlock(var0),
             AiChunkMemory.init(var18)
          );
       } catch (RuntimeException var33) {

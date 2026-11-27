@@ -202,7 +202,7 @@ final class AiGameOperations {
    static AiOperation blockAction(final String kind, final JsonObject args, final Set<Long> protectedCells) {
       final BlockPos target = requireBlockPos(args);
       return kind.equals("break")
-         ? autismclient.ai.engine.AiBreakBlock.init(
+         ? autismclient.ai.engine.AiBreakBlock.breakBlock(
             target, AiJson.getInt(args, "timeoutSeconds", 30), AiJson.getBoolean(args, "requireDrops", true), protectedCells
          )
          : new AiActedOperation() {

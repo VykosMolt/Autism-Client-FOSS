@@ -319,7 +319,7 @@ public final class AiSight {
       List<Vec3> eyes = List.copyOf(shooterEyes);
       List<Double> charges = List.copyOf(shooterCharges);
       if (eyes.isEmpty()) {
-         return AiPathfinder.ThreatField.write;
+         return AiPathfinder.ThreatField.NONE_COMPAT;
       }
 
       Map<Long, Double> memo = new ConcurrentHashMap<>();

@@ -94,14 +94,14 @@ final class AiPrintPreparation implements AiOperation {
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(
          this.init_Path, this.load_BlockPos, this.init_TableIndex_ConfigS.rotation(), this.init_TableIndex_ConfigS.mirror(), this.init_Z, 2097152
       );
-      AiBuilder.init();
+      AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint blueprint = this.init_TableIndex_ConfigS.layers()
-         ? AiBuilder.init_TableIndex_DataUti_TableIndex_DataUti(
+         ? AiBuilder.sliceLayerBand(
             loaded.blueprint(), this.init_TableIndex_ConfigS.layerStart(), this.init_TableIndex_ConfigS.layerHeight()
          )
          : loaded.blueprint();
       init_V_TableIndex_DataUti(blueprint);
-      LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.read(blueprint));
+      LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.collectLeafNeighborPositions(blueprint));
       neighbors.addAll(AiSchematicReadiness.read(blueprint));
       neighbors.addAll(AiSchematicReadiness.load(blueprint));
       if (!stamp.equals(AiPrintPreparation.Inner_StateCache.read(this.init_Path))) {
@@ -117,16 +117,16 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    private AiPrintPreparation.Inner_ConfigStore init(AiPrintPreparation.Inner_DataUtil input, Map<Long, BlockState> snapshot) throws IOException {
-      AiBuilder.Blueprint blueprint = AiBuilder.init(input.blueprint(), snapshot);
+      AiBuilder.Blueprint blueprint = AiBuilder.normalizeSchematicBlueprint(input.blueprint(), snapshot);
       init_V_TableIndex_DataUti(blueprint);
-      AiBuilder.init();
+      AiBuilder.checkNotCancelled();
       AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.init_bX_DataUtil(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
-      AiBuilder.init();
+      AiBuilder.checkNotCancelled();
       List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
-      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init);
-      AiBuilder.init();
-      AiBuilder.Blueprint construction = AiBuilder.load_TableIndex_DataUti(blueprint);
+      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::checkNotCancelled);
+      AiBuilder.checkNotCancelled();
+      AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
       AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
       if (!input.stamp().equals(AiPrintPreparation.Inner_StateCache.read(this.init_Path))) {
          throw new IOException("Schematic changed during preparation; start the build again");
@@ -447,7 +447,7 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    private JsonObject init_JsonObject_43() {
-      return AiBuilder.init_JsonObject_Iterable_2(
+      return AiBuilder.missingMaterialsForContainer(
          this.init_bg_CachePool.init_List(), this.init_Minecraft.player.getInventory(), this.init_bg_ConfigStore.power().shulkerStock()
       );
    }
@@ -560,10 +560,10 @@ final class AiPrintPreparation implements AiOperation {
 
          while (this.init_I < end && (this.init_I == first || System.nanoTime() < deadline)) {
             AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.init_I++);
-            if (!AiBuilder.read_Z(cell)) {
+            if (!AiBuilder.isTransientPistonCell(cell)) {
                BlockPos at = this.init_TableIndex_DataUti.origin().offset(cell.dx(), cell.dy(), cell.dz());
                BlockState live = world.getBlockState(at);
-               if (!AiBuilder.update(cell, live)) {
+               if (!AiBuilder.matchesSchematicCell(cell, live)) {
                   for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
                      this.init(requirement);
                   }
@@ -632,7 +632,7 @@ final class AiPrintPreparation implements AiOperation {
          int maxZ = maxX;
 
          for (AiBuilder.CellSpec cell : blueprint.cells()) {
-            AiBuilder.init();
+            AiBuilder.checkNotCancelled();
             BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
             keys.add(at.asLong());
             minX = Math.min(minX, at.getX());
@@ -793,9 +793,9 @@ final class AiPrintPreparation implements AiOperation {
          }
 
          Future<T> next = this.init_ExecutorService.submit(() -> {
-            AiBuilder.init();
+            AiBuilder.checkNotCancelled();
             T result = action.call();
-            AiBuilder.init();
+            AiBuilder.checkNotCancelled();
             return result;
          });
          this.init_Future = next;

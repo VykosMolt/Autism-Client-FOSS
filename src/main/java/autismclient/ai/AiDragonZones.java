@@ -214,7 +214,7 @@ public final class AiDragonZones {
          clouds.add(breath);
       }
 
-      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.ThreatField.write : (x, y, z) -> {
+      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.ThreatField.NONE_COMPAT : (x, y, z) -> {
          if (zones.hits(init_AABB_I(x, y, z), 1.0)) {
             return 400.0;
          }

@@ -280,8 +280,8 @@ public final class AiPacePlayback {
          if (var9 != null) {
             double var10 = Math.sqrt(putAt_D_D(var2.x() - var9.x()) + putAt_D_D(var2.y() - var9.y()) + putAt_D_D(var2.z() - var9.z()));
             this.closeOf_D = Math.max(this.closeOf_D, var10);
-            if (AiNavDebug.init_Z() && var10 > 0.001) {
-               AiNavDebug.init(String.format(Locale.ROOT, "pace tick %d error %.4f live %s want %s", this.store, var10, var2, var9));
+            if (AiNavDebug.isEnabled() && var10 > 0.001) {
+               AiNavDebug.log(String.format(Locale.ROOT, "pace tick %d error %.4f live %s want %s", this.store, var10, var2, var9));
             }
 
             if (var10 > 0.05 || var2.onGround() != var9.onGround() && var10 > 0.01) {
@@ -2062,7 +2062,7 @@ public final class AiPacePlayback {
    public static void putAt_V_LocalPlayer_TokenCore_TableCac(LocalPlayer var0, AiPhysics.MotionState var1) {
       Minecraft var2 = Minecraft.getInstance();
       BlockPos var3 = BlockPos.containing(var1.x(), var1.y() + 1.0E-4, var1.z());
-      AiJumpSolver.ApproachOffset var4 = AiJumpSolver.putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+      AiJumpSolver.ApproachOffset var4 = AiJumpSolver.solveAirControl(
          new AiLiveWorld(var2.level, var0), AiPhysics.MotionState.of(var0), var0.getYRot(), true, var3, var1.y()
       );
       putAt_V_LocalPlayer(

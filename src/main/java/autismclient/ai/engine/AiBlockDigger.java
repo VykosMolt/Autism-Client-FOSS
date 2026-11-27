@@ -41,46 +41,46 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiBlockDigger {
-   private static final boolean putAt_Z = Boolean.getBoolean("autism.navigation.debug");
-   private static final boolean fill_Z = Boolean.getBoolean("autism.navigation.trace");
-   private static final double readEx_D = 9.0;
-   static final int flowState = 10;
-   static final double putAt_D = 0.3;
-   static final double fill_D = 6.0;
-   public static final String putAt_Str = "too little air to break it under water";
-   public static final int flowTemp = 6;
-   public static final int readEx_I = 40;
-   public static final int value_I = 24;
-   private static int prevEx_I = -2147483648;
-   private final Minecraft putAt_Minecraft;
-   private final AiRestock putAt_SyncCore;
-   private final boolean readEx_Z;
-   private final boolean value_Z;
-   private final IntConsumer putAt_IntConsumer;
-   private final Consumer<Vec3> putAt_Consumer;
-   private final Runnable putAt_Runnable;
-   private final BooleanSupplier putAt_BooleanSupplier;
-   private BlockPos putAt_BlockPos;
-   private BlockPos fill_BlockPos;
-   private BlockState putAt_BlockState;
-   private int prev;
-   private int chunkAt;
-   private int state;
-   private float putAt_F;
-   private float fill_F;
-   private boolean prevEx_Z;
-   private String fill_Str = "";
-   private BiPredicate<BlockState, ItemStack> putAt_BiPredicate = (var0, var1x) -> true;
-   private Set<BlockPos> putAt_Set = Set.of();
-   private Consumer<RotationMath.Rotation> fill_Consumer;
-   private Vec3 putAt_Vec3;
-   private float readEx_F;
-   private Vec3 fill_Vec3;
-   private BlockPos readEx_BlockPos;
-   private Vec3 readEx_Vec3;
-   private Vec3 value_Vec3;
-   private BlockPos value_BlockPos;
-   private BlockState fill_BlockState;
+   private static final boolean DEBUG_NAV = Boolean.getBoolean("autism.navigation.debug");
+   private static final boolean TRACE_NAV = Boolean.getBoolean("autism.navigation.trace");
+   private static final double FALLING_BLOCK_WAIT_DIST_SQ = 9.0;
+   static final int MAX_AIM_STALL_TICKS = 10;
+   static final double MIN_PRE_TURN_STEP_DEG = 0.3;
+   static final double MAX_PRE_TURN_STEP_DEG = 6.0;
+   public static final String LOW_AIR_FAILURE_REASON = "too little air to break it under water";
+   public static final int AIR_TICKS_PER_WATER_BLOCK = 6;
+   public static final int AIR_SAFETY_BUFFER_TICKS = 40;
+   public static final int MAX_WATER_SURFACE_SCAN = 24;
+   private static int lastAttackTick = -2147483648;
+   private final Minecraft minecraft;
+   private final AiRestock restock;
+   private final boolean allowBlockEntities;
+   private final boolean requireDrops;
+   private final IntConsumer slotSelector;
+   private final Consumer<Vec3> aimPointConsumer;
+   private final Runnable aimTickCallback;
+   private final BooleanSupplier smoothAimEnabled;
+   private BlockPos activeTarget;
+   private BlockPos aimingTarget;
+   private BlockState activeTargetState;
+   private int breakElapsedTicks;
+   private int breakTimeoutTicks;
+   private int aimStallTicks;
+   private float lastAimYaw;
+   private float lastAimPitch;
+   private boolean activelyDigging;
+   private String lastFailureReason = "";
+   private BiPredicate<BlockState, ItemStack> acceptedTool = (var0, var1x) -> true;
+   private Set<BlockPos> sealedWaterCells = Set.of();
+   private Consumer<RotationMath.Rotation> rotationConsumer;
+   private Vec3 nextLookDirection;
+   private float expectedBreakTicks;
+   private Vec3 cachedAimRayDir;
+   private BlockPos cachedAimTarget;
+   private Vec3 cachedAimPoint;
+   private Vec3 preferredAimPoint;
+   private BlockPos lastStoppedTarget;
+   private BlockState lastStoppedState;
 
    public AiBlockDigger(Minecraft var1, IntConsumer var2) {
       this(var1, var2, var0 -> {});
@@ -103,179 +103,179 @@ public final class AiBlockDigger {
    }
 
    public AiBlockDigger(Minecraft var1, IntConsumer var2, Consumer<Vec3> var3, boolean var4, boolean var5, Runnable var6, BooleanSupplier var7) {
-      this.putAt_BooleanSupplier = var7;
-      this.putAt_Runnable = var6;
-      this.value_Z = var5;
-      this.putAt_Minecraft = var1;
-      this.putAt_SyncCore = new AiRestock(var1);
-      this.readEx_Z = var4;
-      this.putAt_IntConsumer = var2;
-      this.putAt_Consumer = var3;
+      this.smoothAimEnabled = var7;
+      this.aimTickCallback = var6;
+      this.requireDrops = var5;
+      this.minecraft = var1;
+      this.restock = new AiRestock(var1);
+      this.allowBlockEntities = var4;
+      this.slotSelector = var2;
+      this.aimPointConsumer = var3;
    }
 
-   public String putAt_Str() {
-      return this.fill_Str;
+   public String lastFailureReason() {
+      return this.lastFailureReason;
    }
 
-   private AiBlockDigger.Inner_CacheHelper putAt_JsonCache_CacheHel_Str(String var1) {
-      this.fill_Str = var1;
+   private AiBlockDigger.Inner_CacheHelper failWithReason(String var1) {
+      this.lastFailureReason = var1;
       return AiBlockDigger.Inner_CacheHelper.readEx;
    }
 
-   public AiBlockDigger putAt_JsonCache_Consumer(Consumer<RotationMath.Rotation> var1) {
-      this.fill_Consumer = var1;
+   public AiBlockDigger withRotationConsumer(Consumer<RotationMath.Rotation> var1) {
+      this.rotationConsumer = var1;
       return this;
    }
 
-   public AiBlockDigger putAt_JsonCache_BiPredicate(BiPredicate<BlockState, ItemStack> var1) {
-      this.putAt_BiPredicate = var1;
+   public AiBlockDigger withAcceptedTool(BiPredicate<BlockState, ItemStack> var1) {
+      this.acceptedTool = var1;
       return this;
    }
 
-   public AiBlockDigger putAt_JsonCache_Set(Set<BlockPos> var1) {
-      this.putAt_Set = Set.copyOf(var1);
+   public AiBlockDigger withSealedWater(Set<BlockPos> var1) {
+      this.sealedWaterCells = Set.copyOf(var1);
       return this;
    }
 
-   public AiBlockDigger.Inner_CacheHelper putAt_JsonCache_CacheHel_BlockPos(BlockPos var1) {
-      return this.putAt_JsonCache_CacheHel_BlockPos_Vec3(var1, null);
+   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1) {
+      return this.dig(var1, null);
    }
 
-   public AiBlockDigger.Inner_CacheHelper putAt_JsonCache_CacheHel_BlockPos_Vec3(BlockPos var1, Vec3 var2) {
-      return this.putAt_JsonCache_CacheHel_BlockPos(var1, var2, null);
+   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1, Vec3 var2) {
+      return this.dig(var1, var2, null);
    }
 
-   public AiBlockDigger.Inner_CacheHelper putAt_JsonCache_CacheHel_BlockPos(BlockPos var1, Vec3 var2, Vec3 var3) {
-      if (this.prevEx_Z && !var1.equals(this.putAt_BlockPos)) {
-         this.putAt_V();
+   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1, Vec3 var2, Vec3 var3) {
+      if (this.activelyDigging && !var1.equals(this.activeTarget)) {
+         this.stop();
       }
 
       if (!AutismLiteVariant.enabled()) {
          AiVisualization.init(this, var1);
       }
 
-      this.putAt_Vec3 = var3;
-      this.value_Vec3 = var2;
-      if (this.putAt_Minecraft.player != null
-         && this.putAt_Minecraft.level != null
-         && this.putAt_Minecraft.gameMode != null
-         && this.putAt_Minecraft.level.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
-         if (this.putAt_SyncCore.isRunning()) {
-            AiRestock.Inner_BufferHelper var4 = this.putAt_SyncCore.tick();
+      this.nextLookDirection = var3;
+      this.preferredAimPoint = var2;
+      if (this.minecraft.player != null
+         && this.minecraft.level != null
+         && this.minecraft.gameMode != null
+         && this.minecraft.level.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
+         if (this.restock.isRunning()) {
+            AiRestock.Inner_BufferHelper var4 = this.restock.tick();
             if (var4 == AiRestock.Inner_BufferHelper.FAILED) {
-               this.putAt_V();
-               return this.putAt_JsonCache_CacheHel_Str("tool swap failed");
+               this.stop();
+               return this.failWithReason("tool swap failed");
             }
 
             if (var4 != AiRestock.Inner_BufferHelper.SUCCEEDED) {
                return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
             }
 
-            this.putAt_SyncCore.reset();
+            this.restock.reset();
          }
 
-         if (this.prevEx_Z && var1.equals(this.putAt_BlockPos)) {
-            if (++this.prev > this.chunkAt) {
-               this.putAt_V();
-               return this.putAt_JsonCache_CacheHel_Str("took longer than " + this.chunkAt + " ticks");
+         if (this.activelyDigging && var1.equals(this.activeTarget)) {
+            if (++this.breakElapsedTicks > this.breakTimeoutTicks) {
+               this.stop();
+               return this.failWithReason("took longer than " + this.breakTimeoutTicks + " ticks");
             }
 
-            BlockState var14 = this.putAt_Minecraft.level.getBlockState(this.putAt_BlockPos);
-            if (var14.getBlock() != this.putAt_BlockState.getBlock() && putAt_Z_BlockState(var14) && putAt_Z_BlockState(this.putAt_BlockState)) {
-               this.putAt_BlockState = var14;
+            BlockState var14 = this.minecraft.level.getBlockState(this.activeTarget);
+            if (var14.getBlock() != this.activeTargetState.getBlock() && isDirtVariant(var14) && isDirtVariant(this.activeTargetState)) {
+               this.activeTargetState = var14;
             }
 
-            if (var14.getBlock() != this.putAt_BlockState.getBlock()) {
+            if (var14.getBlock() != this.activeTargetState.getBlock()) {
                if (!var14.isAir() && var14.getFluidState().isEmpty()) {
-                  this.putAt_V();
-                  return this.putAt_JsonCache_CacheHel_Str("turned into " + var14.getBlock().getName().getString());
+                  this.stop();
+                  return this.failWithReason("turned into " + var14.getBlock().getName().getString());
                } else {
-                  AiEditLedger.init(this.putAt_BlockPos, this.putAt_BlockState);
-                  this.putAt_V();
+                  AiEditLedger.init(this.activeTarget, this.activeTargetState);
+                  this.stop();
                   return AiBlockDigger.Inner_CacheHelper.fill;
                }
             } else {
-               if (var14.getDestroySpeed(this.putAt_Minecraft.level, this.putAt_BlockPos) < 0.0F
-                  || var14.hasBlockEntity() && !this.readEx_Z
+               if (var14.getDestroySpeed(this.minecraft.level, this.activeTarget) < 0.0F
+                  || var14.hasBlockEntity() && !this.allowBlockEntities
                   || !var14.getFluidState().isEmpty()) {
-                  this.putAt_V();
-                  return this.putAt_JsonCache_CacheHel_Str("became unbreakable or fluid");
+                  this.stop();
+                  return this.failWithReason("became unbreakable or fluid");
                }
 
-               if (!AiPathfinder.LiveGridView.putAt_Z_ClientLevel(this.putAt_Minecraft.level, this.putAt_BlockPos, this.putAt_Set)) {
-                  this.putAt_V();
-                  return this.putAt_JsonCache_CacheHel_Str("fluid appeared next to it");
+               if (!AiPathfinder.LiveGridView.isSafeToDig(this.minecraft.level, this.activeTarget, this.sealedWaterCells)) {
+                  this.stop();
+                  return this.failWithReason("fluid appeared next to it");
                }
 
-               if (!this.fill(this.putAt_BlockPos)) {
-                  this.putAt_V();
-                  return this.putAt_JsonCache_CacheHel_Str("removing this floor would cause an unsafe fall");
+               if (!this.isSafeToBreakSupport(this.activeTarget)) {
+                  this.stop();
+                  return this.failWithReason("removing this floor would cause an unsafe fall");
                }
 
-               if (this.readEx(this.putAt_BlockPos)) {
+               if (this.hasNearbyFallingEntity(this.activeTarget)) {
                   return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                }
 
-               BlockHitResult var15 = AiBlockInteraction.findReachableHit(this.putAt_Minecraft, this.putAt_BlockPos);
+               BlockHitResult var15 = AiBlockInteraction.findReachableHit(this.minecraft, this.activeTarget);
                if (var15 == null) {
-                  if (putAt_Z) {
-                     AiNavDebug.init(
+                  if (DEBUG_NAV) {
+                     AiNavDebug.log(
                         "digger lost "
-                           + this.putAt_BlockPos
+                           + this.activeTarget
                            + " eye="
-                           + this.putAt_Minecraft.player.getEyePosition()
+                           + this.minecraft.player.getEyePosition()
                            + " body="
-                           + this.putAt_Minecraft.player.position()
+                           + this.minecraft.player.position()
                            + " motion="
-                           + this.putAt_Minecraft.player.getDeltaMovement()
+                           + this.minecraft.player.getDeltaMovement()
                            + " pose="
-                           + this.putAt_Minecraft.player.getPose()
+                           + this.minecraft.player.getPose()
                            + " climb="
-                           + this.putAt_Minecraft.player.onClimbable()
+                           + this.minecraft.player.onClimbable()
                            + " shift="
-                           + this.putAt_Minecraft.options.keyShift.isDown()
+                           + this.minecraft.options.keyShift.isDown()
                      );
                   }
 
-                  this.putAt_V();
-                  return this.putAt_JsonCache_CacheHel_Str("lost sight of it while breaking");
+                  this.stop();
+                  return this.failWithReason("lost sight of it while breaking");
                } else {
-                  int var17 = MiningCost.init_I_Minecraft_2(this.putAt_Minecraft, var14, this.value_Z, this.putAt_BiPredicate);
+                  int var17 = MiningCost.init_I_Minecraft_2(this.minecraft, var14, this.requireDrops, this.acceptedTool);
                   if (var17 < 0) {
-                     this.putAt_V();
-                     return this.putAt_JsonCache_CacheHel_Str("no tool left that gets its drops");
+                     this.stop();
+                     return this.failWithReason("no tool left that gets its drops");
                   }
 
                   if (var17 >= 9) {
-                     String var19 = BuiltInRegistries.ITEM.getKey(this.putAt_Minecraft.player.getInventory().getItem(var17).getItem()).toString();
-                     this.putAt_V();
-                     this.putAt_SyncCore.startSwap(var17, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var19);
+                     String var19 = BuiltInRegistries.ITEM.getKey(this.minecraft.player.getInventory().getItem(var17).getItem()).toString();
+                     this.stop();
+                     this.restock.startSwap(var17, this.minecraft.player.getInventory().getSelectedSlot(), var19);
                      return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                   }
 
-                  this.putAt_IntConsumer.accept(var17);
-                  Vec3 var18 = this.putAt_Vec3_BlockPos_BlockHitResult(this.putAt_BlockPos, var15);
-                  RotationMath.Rotation var20 = this.putAt_TaskUtil_CacheHelp();
+                  this.slotSelector.accept(var17);
+                  Vec3 var18 = this.resolveAimPoint(this.activeTarget, var15);
+                  RotationMath.Rotation var20 = this.computePreTurnRotation();
                   if (var20 != null) {
-                     this.fill_Consumer.accept(var20);
+                     this.rotationConsumer.accept(var20);
                   } else {
-                     this.putAt_Consumer.accept(var18);
+                     this.aimPointConsumer.accept(var18);
                   }
 
-                  this.putAt_Runnable.run();
-                  AiMotionAudit.init(this.putAt_Minecraft);
-                  if (!AiAim.isLookingAtBlock(this.putAt_BlockPos)) {
-                     putAt_V_Minecraft(this.putAt_Minecraft);
-                     float var21 = this.putAt_Minecraft.player.getYRot();
-                     float var10 = this.putAt_Minecraft.player.getXRot();
-                     boolean var11 = Math.abs(Mth.wrapDegrees(var21 - this.putAt_F)) + Math.abs(var10 - this.fill_F) > 0.5F;
-                     this.putAt_F = var21;
-                     this.fill_F = var10;
-                     if (fill_Z && !var11) {
+                  this.aimTickCallback.run();
+                  AiMotionAudit.init(this.minecraft);
+                  if (!AiAim.isLookingAtBlock(this.activeTarget)) {
+                     tickDestroyDelay(this.minecraft);
+                     float var21 = this.minecraft.player.getYRot();
+                     float var10 = this.minecraft.player.getXRot();
+                     boolean var11 = Math.abs(Mth.wrapDegrees(var21 - this.lastAimYaw)) + Math.abs(var10 - this.lastAimPitch) > 0.5F;
+                     this.lastAimYaw = var21;
+                     this.lastAimPitch = var10;
+                     if (TRACE_NAV && !var11) {
                         BlockHitResult var12 = AiAim.raycastLookBlock();
-                        AiNavDebug.init(
+                        AiNavDebug.log(
                            "digger off "
-                              + this.putAt_BlockPos
+                              + this.activeTarget
                               + " ray "
                               + (var12 == null ? "-" : var12.getBlockPos() + " " + var12.getDirection())
                               + " yaw="
@@ -283,71 +283,71 @@ public final class AiBlockDigger {
                               + " pitch="
                               + var10
                               + " eye="
-                              + this.putAt_Minecraft.player.getEyePosition()
+                              + this.minecraft.player.getEyePosition()
                         );
                      }
 
-                     if (!var11 && ++this.state > 10) {
-                        this.putAt_V();
-                        return this.putAt_JsonCache_CacheHel_Str("crosshair left it mid-break");
+                     if (!var11 && ++this.aimStallTicks > 10) {
+                        this.stop();
+                        return this.failWithReason("crosshair left it mid-break");
                      } else {
                         return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                      }
                   } else {
-                     this.state = 0;
-                     this.putAt_V_BlockPos_Direction(this.putAt_BlockPos, var15.getDirection());
-                     return this.putAt_JsonCache_CacheHel();
+                     this.aimStallTicks = 0;
+                     this.continueBreakingBlock(this.activeTarget, var15.getDirection());
+                     return this.checkBreakComplete();
                   }
                }
             }
          } else {
-            if (this.prevEx_Z) {
-               this.putAt_V();
+            if (this.activelyDigging) {
+               this.stop();
             }
 
-            if (!var1.equals(this.fill_BlockPos)) {
-               this.fill_BlockPos = var1.immutable();
-               this.state = 0;
+            if (!var1.equals(this.aimingTarget)) {
+               this.aimingTarget = var1.immutable();
+               this.aimStallTicks = 0;
             }
 
-            BlockState var13 = this.putAt_Minecraft.level.getBlockState(var1);
+            BlockState var13 = this.minecraft.level.getBlockState(var1);
             if (var13.isAir()) {
-               if (var1.equals(this.value_BlockPos) && this.fill_BlockState != null) {
-                  AiEditLedger.init(var1, this.fill_BlockState);
+               if (var1.equals(this.lastStoppedTarget) && this.lastStoppedState != null) {
+                  AiEditLedger.init(var1, this.lastStoppedState);
                }
 
-               this.value_BlockPos = null;
+               this.lastStoppedTarget = null;
                return AiBlockDigger.Inner_CacheHelper.fill;
-            } else if (!(var13.getDestroySpeed(this.putAt_Minecraft.level, var1) < 0.0F)
-               && (!var13.hasBlockEntity() || this.readEx_Z)
+            } else if (!(var13.getDestroySpeed(this.minecraft.level, var1) < 0.0F)
+               && (!var13.hasBlockEntity() || this.allowBlockEntities)
                && var13.getFluidState().isEmpty()) {
-               if (!AiPathfinder.LiveGridView.putAt_Z_ClientLevel(this.putAt_Minecraft.level, var1, this.putAt_Set)) {
-                  if (putAt_Z) {
-                     AiNavDebug.init("digger fail digSafe " + var1);
+               if (!AiPathfinder.LiveGridView.isSafeToDig(this.minecraft.level, var1, this.sealedWaterCells)) {
+                  if (DEBUG_NAV) {
+                     AiNavDebug.log("digger fail digSafe " + var1);
                   }
 
-                  return this.putAt_JsonCache_CacheHel_Str("unsafe to dig (fluid next to it)");
+                  return this.failWithReason("unsafe to dig (fluid next to it)");
                } else {
-                  if (AiPathfinder.LiveGridView.putAt_Z_BlockGetter_BlockPos(this.putAt_Minecraft.level, var1)) {
-                     return this.putAt_JsonCache_CacheHel_Str("a lit portal's frame");
+                  if (AiPathfinder.LiveGridView.isLitPortalFrame(this.minecraft.level, var1)) {
+                     return this.failWithReason("a lit portal's frame");
                   }
 
-                  if (!this.fill(var1)) {
-                     return this.putAt_JsonCache_CacheHel_Str("removing this floor would cause an unsafe fall");
+                  if (!this.isSafeToBreakSupport(var1)) {
+                     return this.failWithReason("removing this floor would cause an unsafe fall");
                   }
 
-                  if (var1.equals(this.putAt_Minecraft.player.blockPosition().above(2))
-                     && this.putAt_Minecraft.level.getBlockState(var1.above()).getBlock() instanceof FallingBlock) {
-                     if (putAt_Z) {
-                        AiNavDebug.init("digger fail falling over head " + var1);
+                  if (var1.equals(this.minecraft.player.blockPosition().above(2))
+                     && this.minecraft.level.getBlockState(var1.above()).getBlock() instanceof FallingBlock) {
+                     if (DEBUG_NAV) {
+                        AiNavDebug.log("digger fail falling over head " + var1);
                      }
 
-                     return this.putAt_JsonCache_CacheHel_Str("sand or gravel over it");
+                     return this.failWithReason("sand or gravel over it");
                   } else {
-                     int var5 = MiningCost.init_I_Minecraft_2(this.putAt_Minecraft, var13, this.value_Z, this.putAt_BiPredicate);
+                     int var5 = MiningCost.init_I_Minecraft_2(this.minecraft, var13, this.requireDrops, this.acceptedTool);
                      if (var5 < 0) {
-                        if (putAt_Z) {
-                           AiNavDebug.init("digger fail no-tool " + var1);
+                        if (DEBUG_NAV) {
+                           AiNavDebug.log("digger fail no-tool " + var1);
                         }
 
                         AutismClientAddon.LOG.info(
@@ -355,98 +355,98 @@ public final class AiBlockDigger {
                               BuiltInRegistries.BLOCK.getKey(var13.getBlock()).getPath(),
                               var1.toShortString()
                            );
-                        return this.putAt_JsonCache_CacheHel_Str("no tool that gets its drops");
+                        return this.failWithReason("no tool that gets its drops");
                      } else {
                         if (var5 >= 9) {
-                           String var16 = BuiltInRegistries.ITEM.getKey(this.putAt_Minecraft.player.getInventory().getItem(var5).getItem()).toString();
-                           this.putAt_SyncCore.startSwap(var5, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var16);
+                           String var16 = BuiltInRegistries.ITEM.getKey(this.minecraft.player.getInventory().getItem(var5).getItem()).toString();
+                           this.restock.startSwap(var5, this.minecraft.player.getInventory().getSelectedSlot(), var16);
                            return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                         }
 
-                        if (putAt_Z_Minecraft_D(
-                           this.putAt_Minecraft,
+                        if (hasInsufficientUnderwaterAir(
+                           this.minecraft,
                            MiningCost.init_D_Minecraft(
-                              this.putAt_Minecraft,
-                              this.putAt_Minecraft.player.getInventory().getItem(var5),
+                              this.minecraft,
+                              this.minecraft.player.getInventory().getItem(var5),
                               var13,
-                              var13.getDestroySpeed(this.putAt_Minecraft.level, var1)
+                              var13.getDestroySpeed(this.minecraft.level, var1)
                            )
                         )) {
-                           return this.putAt_JsonCache_CacheHel_Str("too little air to break it under water");
+                           return this.failWithReason("too little air to break it under water");
                         }
 
-                        BlockHitResult var6 = AiBlockInteraction.findReachableHit(this.putAt_Minecraft, var1);
+                        BlockHitResult var6 = AiBlockInteraction.findReachableHit(this.minecraft, var1);
                         if (var6 == null) {
-                           if (putAt_Z) {
-                              AiNavDebug.init("digger fail no-hit " + var1 + " eye=" + this.putAt_Minecraft.player.getEyePosition());
+                           if (DEBUG_NAV) {
+                              AiNavDebug.log("digger fail no-hit " + var1 + " eye=" + this.minecraft.player.getEyePosition());
                            }
 
-                           return this.putAt_JsonCache_CacheHel_Str("no clickable face in reach");
+                           return this.failWithReason("no clickable face in reach");
                         } else {
-                           if (this.putAt_Z()) {
-                              this.putAt_V_BlockPos_BlockHitResult(var1, var6);
-                              putAt_V_Minecraft(this.putAt_Minecraft);
+                           if (this.isWaitingDestroyDelay()) {
+                              this.preAimDuringDelay(var1, var6);
+                              tickDestroyDelay(this.minecraft);
                               return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                            }
 
-                           this.putAt_Consumer.accept(this.putAt_Vec3_BlockPos_BlockHitResult(var1, var6));
-                           this.putAt_Runnable.run();
-                           AiMotionAudit.init(this.putAt_Minecraft);
+                           this.aimPointConsumer.accept(this.resolveAimPoint(var1, var6));
+                           this.aimTickCallback.run();
+                           AiMotionAudit.init(this.minecraft);
                            if (!AiAim.isLookingAtBlock(var1)) {
-                              putAt_V_Minecraft(this.putAt_Minecraft);
-                              float var7 = this.putAt_Minecraft.player.getYRot();
-                              float var8 = this.putAt_Minecraft.player.getXRot();
-                              boolean var9 = Math.abs(Mth.wrapDegrees(var7 - this.putAt_F)) + Math.abs(var8 - this.fill_F) > 0.5F;
-                              this.putAt_F = var7;
-                              this.fill_F = var8;
+                              tickDestroyDelay(this.minecraft);
+                              float var7 = this.minecraft.player.getYRot();
+                              float var8 = this.minecraft.player.getXRot();
+                              boolean var9 = Math.abs(Mth.wrapDegrees(var7 - this.lastAimYaw)) + Math.abs(var8 - this.lastAimPitch) > 0.5F;
+                              this.lastAimYaw = var7;
+                              this.lastAimPitch = var8;
                               if (var9) {
                                  return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                               }
 
-                              if (this.putAt_Minecraft.player.getDeltaMovement().lengthSqr() > 0.008
-                                 && !this.putAt_Minecraft.player.isInWater()
-                                 && !this.putAt_Minecraft.player.onClimbable()) {
+                              if (this.minecraft.player.getDeltaMovement().lengthSqr() > 0.008
+                                 && !this.minecraft.player.isInWater()
+                                 && !this.minecraft.player.onClimbable()) {
                                  return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                               }
 
-                              if (++this.state > 10) {
-                                 this.state = 0;
-                                 if (putAt_Z) {
-                                    AiNavDebug.init("digger fail aim " + var1);
+                              if (++this.aimStallTicks > 10) {
+                                 this.aimStallTicks = 0;
+                                 if (DEBUG_NAV) {
+                                    AiNavDebug.log("digger fail aim " + var1);
                                  }
 
-                                 return this.putAt_JsonCache_CacheHel_Str("crosshair never landed on it");
+                                 return this.failWithReason("crosshair never landed on it");
                               } else {
-                                 if (this.state > 2) {
-                                    this.putAt_Consumer.accept(var6.getLocation());
+                                 if (this.aimStallTicks > 2) {
+                                    this.aimPointConsumer.accept(var6.getLocation());
                                  }
 
                                  return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                               }
                            } else {
-                              this.state = 0;
-                              this.putAt_V_BlockPos(var1, var6, var5);
-                              return this.putAt_JsonCache_CacheHel();
+                              this.aimStallTicks = 0;
+                              this.beginBreaking(var1, var6, var5);
+                              return this.checkBreakComplete();
                            }
                         }
                      }
                   }
                }
             } else {
-               if (putAt_Z) {
-                  AiNavDebug.init("digger fail unbreakable/fluid " + var1);
+               if (DEBUG_NAV) {
+                  AiNavDebug.log("digger fail unbreakable/fluid " + var1);
                }
 
-               return this.putAt_JsonCache_CacheHel_Str("unbreakable or fluid");
+               return this.failWithReason("unbreakable or fluid");
             }
          }
       } else {
-         this.putAt_V();
-         return this.putAt_JsonCache_CacheHel_Str("chunk not loaded");
+         this.stop();
+         return this.failWithReason("chunk not loaded");
       }
    }
 
-   static boolean putAt_Z_BlockState(BlockState var0) {
+   static boolean isDirtVariant(BlockState var0) {
       return var0.is(Blocks.DIRT)
          || var0.is(Blocks.GRASS_BLOCK)
          || var0.is(Blocks.MYCELIUM)
@@ -456,33 +456,33 @@ public final class AiBlockDigger {
          || var0.is(Blocks.ROOTED_DIRT);
    }
 
-   private boolean fill(BlockPos var1) {
+   private boolean isSafeToBreakSupport(BlockPos var1) {
       return AiMotionSafety.isSafeToBreakSupport(var1);
    }
 
-   private AiBlockDigger.Inner_CacheHelper putAt_JsonCache_CacheHel() {
-      BlockState var1 = this.putAt_Minecraft.level.getBlockState(this.putAt_BlockPos);
-      if (var1.getBlock() == this.putAt_BlockState.getBlock() || !var1.isAir() && var1.getFluidState().isEmpty()) {
+   private AiBlockDigger.Inner_CacheHelper checkBreakComplete() {
+      BlockState var1 = this.minecraft.level.getBlockState(this.activeTarget);
+      if (var1.getBlock() == this.activeTargetState.getBlock() || !var1.isAir() && var1.getFluidState().isEmpty()) {
          return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
       }
 
-      AiEditLedger.init(this.putAt_BlockPos, this.putAt_BlockState);
-      this.putAt_V();
+      AiEditLedger.init(this.activeTarget, this.activeTargetState);
+      this.stop();
       return AiBlockDigger.Inner_CacheHelper.fill;
    }
 
-   public static boolean putAt_Z_Minecraft_D(Minecraft var0, double var1) {
+   public static boolean hasInsufficientUnderwaterAir(Minecraft var0, double var1) {
       LocalPlayer var3 = var0.player;
       return var3 != null
             && var0.level != null
             && var3.isEyeInFluid(FluidTags.WATER)
             && !var3.hasEffect(MobEffects.WATER_BREATHING)
             && !var3.hasEffect(MobEffects.CONDUIT_POWER)
-         ? var3.getAirSupply() < var1 + putAt_I_Minecraft(var0) + 40.0
+         ? var3.getAirSupply() < var1 + airTicksToSurface(var0) + 40.0
          : false;
    }
 
-   public static int putAt_I_Minecraft(Minecraft var0) {
+   public static int airTicksToSurface(Minecraft var0) {
       BlockPos var1 = BlockPos.containing(var0.player.getEyePosition());
 
       for (int var2 = 1; var2 <= 24; var2++) {
@@ -496,46 +496,46 @@ public final class AiBlockDigger {
       return 144;
    }
 
-   static boolean putAt_Z_I(int var0, boolean var1, boolean var2) {
+   static boolean shouldPreAimDuringDelay(int var0, boolean var1, boolean var2) {
       return var0 > 0 && var1 && var2;
    }
 
-   boolean putAt_Z() {
-      if (!this.prevEx_Z
-         && this.putAt_Minecraft.player != null
-         && this.putAt_Minecraft.level != null
-         && this.putAt_BooleanSupplier.getAsBoolean()
-         && this.putAt_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var1) {
+   boolean isWaitingDestroyDelay() {
+      if (!this.activelyDigging
+         && this.minecraft.player != null
+         && this.minecraft.level != null
+         && this.smoothAimEnabled.getAsBoolean()
+         && this.minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var1) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
-         return putAt_Z_I(var1.autism$getDestroyDelay(), true, var3 != null && !this.putAt_Minecraft.level.getBlockState(var3.getBlockPos()).isAir());
+         return shouldPreAimDuringDelay(var1.autism$getDestroyDelay(), true, var3 != null && !this.minecraft.level.getBlockState(var3.getBlockPos()).isAir());
       } else {
          return false;
       }
    }
 
-   private static boolean putAt_Z_Minecraft(Minecraft var0) {
-      if (prevEx_I == var0.player.tickCount) {
+   private static boolean consumeAttackTick(Minecraft var0) {
+      if (lastAttackTick == var0.player.tickCount) {
          return true;
       }
 
-      prevEx_I = var0.player.tickCount;
+      lastAttackTick = var0.player.tickCount;
       BlockAttackGraceWindow.init(var0.player);
       return false;
    }
 
-   private void putAt_V_BlockPos_Direction(BlockPos var1, Direction var2) {
-      if (!putAt_Z_Minecraft(this.putAt_Minecraft)) {
+   private void continueBreakingBlock(BlockPos var1, Direction var2) {
+      if (!consumeAttackTick(this.minecraft)) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
          Direction var4 = var3 != null && var3.getBlockPos().equals(var1) ? var3.getDirection() : var2;
-         if (this.putAt_Minecraft.gameMode.continueDestroyBlock(var1, var4)) {
-            Compat263.addBreakingBlockEffect(this.putAt_Minecraft.level, var1, var4);
-            Compat263.swing(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND);
+         if (this.minecraft.gameMode.continueDestroyBlock(var1, var4)) {
+            Compat263.addBreakingBlockEffect(this.minecraft.level, var1, var4);
+            Compat263.swing(this.minecraft.player, InteractionHand.MAIN_HAND);
          }
       }
    }
 
-   public static boolean putAt_Z_Minecraft(Minecraft var0, BlockPos var1, Direction var2) {
-      if (var0.player != null && var0.level != null && var0.gameMode != null && !putAt_Z_Minecraft(var0)) {
+   public static boolean continueBreakingBlock(Minecraft var0, BlockPos var1, Direction var2) {
+      if (var0.player != null && var0.level != null && var0.gameMode != null && !consumeAttackTick(var0)) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
          Direction var4 = var3 != null && var3.getBlockPos().equals(var1) ? var3.getDirection() : var2;
          if (!var0.gameMode.continueDestroyBlock(var1, var4)) {
@@ -550,10 +550,10 @@ public final class AiBlockDigger {
       }
    }
 
-   public static void putAt_V_Minecraft(Minecraft var0) {
+   public static void tickDestroyDelay(Minecraft var0) {
       if (var0.player != null && var0.level != null && var0.gameMode instanceof AutismMultiPlayerGameModeAccessor var1 && var1.autism$getDestroyDelay() > 0) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
-         if (var3 != null && !var0.level.getBlockState(var3.getBlockPos()).isAir() && !putAt_Z_Minecraft(var0)) {
+         if (var3 != null && !var0.level.getBlockState(var3.getBlockPos()).isAir() && !consumeAttackTick(var0)) {
             if (var0.gameMode.continueDestroyBlock(var3.getBlockPos(), var3.getDirection())) {
                Compat263.swing(var0.player, InteractionHand.MAIN_HAND);
             }
@@ -561,7 +561,7 @@ public final class AiBlockDigger {
       }
    }
 
-   static boolean putAt_Z_BlockPos_List(BlockPos var0, List<Vec3> var1) {
+   static boolean hasFallingBlockNear(BlockPos var0, List<Vec3> var1) {
       Vec3 var2 = Vec3.atCenterOf(var0);
 
       for (Vec3 var4 : var1) {
@@ -573,10 +573,10 @@ public final class AiBlockDigger {
       return false;
    }
 
-   private boolean readEx(BlockPos var1) {
+   private boolean hasNearbyFallingEntity(BlockPos var1) {
       ArrayList var2 = null;
 
-      for (Entity var4 : this.putAt_Minecraft.level.entitiesForRendering()) {
+      for (Entity var4 : this.minecraft.level.entitiesForRendering()) {
          if (var4 instanceof FallingBlockEntity) {
             if (var2 == null) {
                var2 = new ArrayList();
@@ -586,90 +586,90 @@ public final class AiBlockDigger {
          }
       }
 
-      return var2 != null && putAt_Z_BlockPos_List(var1, var2);
+      return var2 != null && hasFallingBlockNear(var1, var2);
    }
 
-   private void putAt_V_BlockPos(BlockPos var1, BlockHitResult var2, int var3) {
-      this.putAt_BlockPos = var1.immutable();
-      this.putAt_BlockState = this.putAt_Minecraft.level.getBlockState(var1);
+   private void beginBreaking(BlockPos var1, BlockHitResult var2, int var3) {
+      this.activeTarget = var1.immutable();
+      this.activeTargetState = this.minecraft.level.getBlockState(var1);
       if (var3 >= 0) {
-         this.putAt_IntConsumer.accept(var3);
+         this.slotSelector.accept(var3);
       }
 
-      this.putAt_Consumer.accept(this.putAt_Vec3_BlockPos_BlockHitResult(var1, var2));
-      this.putAt_V_BlockPos_Direction(this.putAt_BlockPos, var2.getDirection());
-      this.prev = 0;
-      this.readEx_F = (float)MiningCost.init_D_Minecraft(
-         this.putAt_Minecraft,
-         this.putAt_Minecraft.player.getMainHandItem(),
-         this.putAt_BlockState,
-         this.putAt_BlockState.getDestroySpeed(this.putAt_Minecraft.level, this.putAt_BlockPos)
+      this.aimPointConsumer.accept(this.resolveAimPoint(var1, var2));
+      this.continueBreakingBlock(this.activeTarget, var2.getDirection());
+      this.breakElapsedTicks = 0;
+      this.expectedBreakTicks = (float)MiningCost.init_D_Minecraft(
+         this.minecraft,
+         this.minecraft.player.getMainHandItem(),
+         this.activeTargetState,
+         this.activeTargetState.getDestroySpeed(this.minecraft.level, this.activeTarget)
       );
-      this.chunkAt = (int)Math.min(72000.0, Math.ceil(this.readEx_F * 4.0F) + 40.0);
-      this.prevEx_Z = true;
+      this.breakTimeoutTicks = (int)Math.min(72000.0, Math.ceil(this.expectedBreakTicks * 4.0F) + 40.0);
+      this.activelyDigging = true;
    }
 
-   private Vec3 putAt_Vec3_BlockPos_BlockHitResult(BlockPos var1, BlockHitResult var2) {
-      Vec3 var3 = this.putAt_Minecraft.player.getEyePosition();
-      if (this.prevEx_Z && var1.equals(this.putAt_BlockPos)) {
+   private Vec3 resolveAimPoint(BlockPos var1, BlockHitResult var2) {
+      Vec3 var3 = this.minecraft.player.getEyePosition();
+      if (this.activelyDigging && var1.equals(this.activeTarget)) {
          BlockHitResult var4 = AiAim.raycastLookBlock();
          if (var4 != null && var4.getBlockPos().equals(var1)) {
-            this.readEx_BlockPos = var1.immutable();
-            this.fill_Vec3 = this.putAt_Minecraft.player.getLookAngle();
-            this.readEx_Vec3 = null;
-            return var4.getLocation().add(this.fill_Vec3.scale(0.02));
+            this.cachedAimTarget = var1.immutable();
+            this.cachedAimRayDir = this.minecraft.player.getLookAngle();
+            this.cachedAimPoint = null;
+            return var4.getLocation().add(this.cachedAimRayDir.scale(0.02));
          }
       }
 
-      if (!this.prevEx_Z && this.fill_Consumer != null && this.value_Vec3 != null && this.putAt_Z_BlockPos_Vec3(var1, this.value_Vec3)) {
-         this.readEx_BlockPos = var1.immutable();
-         this.fill_Vec3 = this.value_Vec3.subtract(var3).normalize();
-         this.readEx_Vec3 = null;
-         return this.value_Vec3;
+      if (!this.activelyDigging && this.rotationConsumer != null && this.preferredAimPoint != null && this.canRaycastAimPoint(var1, this.preferredAimPoint)) {
+         this.cachedAimTarget = var1.immutable();
+         this.cachedAimRayDir = this.preferredAimPoint.subtract(var3).normalize();
+         this.cachedAimPoint = null;
+         return this.preferredAimPoint;
       }
 
-      if (var1.equals(this.readEx_BlockPos) && this.fill_Vec3 != null) {
-         Vec3 var6 = this.putAt_Vec3_BlockPos_Vec3(var1, var3);
+      if (var1.equals(this.cachedAimTarget) && this.cachedAimRayDir != null) {
+         Vec3 var6 = this.reprojectCachedAimRay(var1, var3);
          if (var6 != null) {
             return var6;
          }
       }
 
-      if (var1.equals(this.readEx_BlockPos) && this.readEx_Vec3 != null && this.putAt_Z_BlockPos_Vec3(var1, this.readEx_Vec3)) {
-         return this.readEx_Vec3;
-      } else if (this.value_Vec3 != null && this.putAt_Z_BlockPos_Vec3(var1, this.value_Vec3)) {
-         this.readEx_BlockPos = var1.immutable();
-         this.fill_Vec3 = this.value_Vec3.subtract(var3).normalize();
-         this.readEx_Vec3 = null;
-         return this.value_Vec3;
+      if (var1.equals(this.cachedAimTarget) && this.cachedAimPoint != null && this.canRaycastAimPoint(var1, this.cachedAimPoint)) {
+         return this.cachedAimPoint;
+      } else if (this.preferredAimPoint != null && this.canRaycastAimPoint(var1, this.preferredAimPoint)) {
+         this.cachedAimTarget = var1.immutable();
+         this.cachedAimRayDir = this.preferredAimPoint.subtract(var3).normalize();
+         this.cachedAimPoint = null;
+         return this.preferredAimPoint;
       } else {
-         Vec3 var7 = fill_Vec3_BlockPos_BlockHitResult(var1, var2);
-         Vec3 var5 = AiBlockInteraction.findVisibleEntryPoint(var3, var2.getLocation(), var7, var2x -> this.putAt_Z_BlockPos_Vec3(var1, var2x));
-         this.readEx_BlockPos = var1.immutable();
-         this.fill_Vec3 = null;
-         this.readEx_Vec3 = var5;
+         Vec3 var7 = faceCenterPoint(var1, var2);
+         Vec3 var5 = AiBlockInteraction.findVisibleEntryPoint(var3, var2.getLocation(), var7, var2x -> this.canRaycastAimPoint(var1, var2x));
+         this.cachedAimTarget = var1.immutable();
+         this.cachedAimRayDir = null;
+         this.cachedAimPoint = var5;
          return var5;
       }
    }
 
-   private Vec3 putAt_Vec3_BlockPos_Vec3(BlockPos var1, Vec3 var2) {
-      double var3 = this.putAt_Minecraft.player.blockInteractionRange();
-      BlockHitResult var5 = this.putAt_Minecraft
+   private Vec3 reprojectCachedAimRay(BlockPos var1, Vec3 var2) {
+      double var3 = this.minecraft.player.blockInteractionRange();
+      BlockHitResult var5 = this.minecraft
          .level
-         .clip(new ClipContext(var2, var2.add(this.fill_Vec3.scale(var3)), Block.OUTLINE, Fluid.NONE, this.putAt_Minecraft.player));
-      return var5.getType() == Type.BLOCK && var5.getBlockPos().equals(var1) ? var5.getLocation().add(this.fill_Vec3.scale(0.02)) : null;
+         .clip(new ClipContext(var2, var2.add(this.cachedAimRayDir.scale(var3)), Block.OUTLINE, Fluid.NONE, this.minecraft.player));
+      return var5.getType() == Type.BLOCK && var5.getBlockPos().equals(var1) ? var5.getLocation().add(this.cachedAimRayDir.scale(0.02)) : null;
    }
 
-   private void putAt_V_BlockPos_BlockHitResult(BlockPos var1, BlockHitResult var2) {
-      if (this.fill_Consumer != null
-         && this.putAt_Minecraft.player != null
-         && this.putAt_BooleanSupplier.getAsBoolean()
-         && this.putAt_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var3) {
+   private void preAimDuringDelay(BlockPos var1, BlockHitResult var2) {
+      if (this.rotationConsumer != null
+         && this.minecraft.player != null
+         && this.smoothAimEnabled.getAsBoolean()
+         && this.minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var3) {
          int var15 = var3.autism$getDestroyDelay();
          if (var15 > 0) {
-            Vec3 var5 = this.putAt_Minecraft.player.getEyePosition();
-            Vec3 var6 = this.putAt_Vec3_BlockPos_BlockHitResult(var1, var2);
-            RotationMath.Rotation var7 = RotationMath.ofPlayer(this.putAt_Minecraft.player);
+            Vec3 var5 = this.minecraft.player.getEyePosition();
+            Vec3 var6 = this.resolveAimPoint(var1, var2);
+            RotationMath.Rotation var7 = RotationMath.ofPlayer(this.minecraft.player);
             RotationMath.Rotation var8 = RotationMath.lookAt(var6, var5);
             float var9 = Mth.wrapDegrees(var8.yaw() - var7.yaw());
             float var10 = var8.pitch() - var7.pitch();
@@ -677,63 +677,63 @@ public final class AiBlockDigger {
                float var11 = 1.0F / (var15 + 1);
                RotationMath.Rotation var12 = new RotationMath.Rotation(var7.yaw() + var9 * var11, var7.pitch() + var10 * var11);
                Vec3 var13 = Vec3.directionFromRotation(var12.pitch(), var12.yaw());
-               BlockHitResult var14 = this.putAt_Minecraft
+               BlockHitResult var14 = this.minecraft
                   .level
                   .clip(
                      new ClipContext(
                         var5,
-                        var5.add(var13.scale(this.putAt_Minecraft.player.blockInteractionRange())),
+                        var5.add(var13.scale(this.minecraft.player.blockInteractionRange())),
                         Block.OUTLINE,
                         Fluid.NONE,
-                        this.putAt_Minecraft.player
+                        this.minecraft.player
                      )
                   );
-               if (var14.getType() == Type.BLOCK && !this.putAt_Minecraft.level.getBlockState(var14.getBlockPos()).isAir()) {
-                  this.fill_Consumer.accept(var12);
-                  this.putAt_Runnable.run();
+               if (var14.getType() == Type.BLOCK && !this.minecraft.level.getBlockState(var14.getBlockPos()).isAir()) {
+                  this.rotationConsumer.accept(var12);
+                  this.aimTickCallback.run();
                }
             }
          }
       }
    }
 
-   private RotationMath.Rotation putAt_TaskUtil_CacheHelp() {
-      if (this.fill_Consumer != null
-         && this.putAt_Vec3 != null
-         && this.prevEx_Z
-         && this.putAt_BlockPos != null
-         && this.putAt_Minecraft.player != null
-         && this.putAt_BooleanSupplier.getAsBoolean()) {
+   private RotationMath.Rotation computePreTurnRotation() {
+      if (this.rotationConsumer != null
+         && this.nextLookDirection != null
+         && this.activelyDigging
+         && this.activeTarget != null
+         && this.minecraft.player != null
+         && this.smoothAimEnabled.getAsBoolean()) {
          BlockHitResult var1 = AiAim.raycastLookBlock();
-         if (var1 != null && var1.getBlockPos().equals(this.putAt_BlockPos)) {
-            Vec3 var2 = this.putAt_Minecraft.player.getEyePosition();
-            Vec3 var3 = this.putAt_Minecraft.player.getLookAngle().normalize();
-            Vec3 var4 = this.putAt_Vec3.normalize();
+         if (var1 != null && var1.getBlockPos().equals(this.activeTarget)) {
+            Vec3 var2 = this.minecraft.player.getEyePosition();
+            Vec3 var3 = this.minecraft.player.getLookAngle().normalize();
+            Vec3 var4 = this.nextLookDirection.normalize();
             double var5 = Math.toDegrees(Math.acos(Math.max(-1.0, Math.min(1.0, var3.dot(var4)))));
             if (var5 < 0.5) {
                return null;
             }
 
-            double var7 = Math.max(1.0F, this.readEx_F - this.prev - 1.0F);
+            double var7 = Math.max(1.0F, this.expectedBreakTicks - this.breakElapsedTicks - 1.0F);
             double var9 = Math.min(6.0, Math.max(0.3, var5 / var7));
-            VoxelShape var11 = this.putAt_BlockState == null ? null : this.putAt_BlockState.getShape(this.putAt_Minecraft.level, this.putAt_BlockPos);
+            VoxelShape var11 = this.activeTargetState == null ? null : this.activeTargetState.getShape(this.minecraft.level, this.activeTarget);
             if (var11 != null && !var11.isEmpty()) {
-               AABB var12 = var11.bounds().move(this.putAt_BlockPos);
+               AABB var12 = var11.bounds().move(this.activeTarget);
 
                for (double var13 = Math.min(var9, var5); var13 >= 0.15; var13 /= 2.0) {
-                  Vec3 var15 = putAt_Vec3_Vec3(var3, var4, var13 / var5);
-                  BlockHitResult var16 = this.putAt_Minecraft
+                  Vec3 var15 = slerpDirection(var3, var4, var13 / var5);
+                  BlockHitResult var16 = this.minecraft
                      .level
                      .clip(
                         new ClipContext(
                            var2,
-                           var2.add(var15.scale(this.putAt_Minecraft.player.blockInteractionRange())),
+                           var2.add(var15.scale(this.minecraft.player.blockInteractionRange())),
                            Block.OUTLINE,
                            Fluid.NONE,
-                           this.putAt_Minecraft.player
+                           this.minecraft.player
                         )
                      );
-                  if (var16.getType() == Type.BLOCK && var16.getBlockPos().equals(this.putAt_BlockPos) && AiDigLine.init(var16, var12) >= 0.06) {
+                  if (var16.getType() == Type.BLOCK && var16.getBlockPos().equals(this.activeTarget) && AiDigLine.init(var16, var12) >= 0.06) {
                      return new RotationMath.Rotation(AiDigLine.init(var15), AiDigLine.load(var15));
                   }
                }
@@ -750,7 +750,7 @@ public final class AiBlockDigger {
       }
    }
 
-   static Vec3 putAt_Vec3_Vec3(Vec3 var0, Vec3 var1, double var2) {
+   static Vec3 slerpDirection(Vec3 var0, Vec3 var1, double var2) {
       if (var2 <= 0.0) {
          return var0;
       }
@@ -774,60 +774,60 @@ public final class AiBlockDigger {
       return var0.scale(Math.cos(var6 * var2)).add(var8.normalize().scale(Math.sin(var6 * var2))).normalize();
    }
 
-   private boolean putAt_Z_BlockPos_Vec3(BlockPos var1, Vec3 var2) {
-      Vec3 var3 = this.putAt_Minecraft.player.getEyePosition();
-      BlockHitResult var4 = this.putAt_Minecraft.level.clip(new ClipContext(var3, var2, Block.OUTLINE, Fluid.NONE, this.putAt_Minecraft.player));
-      return AiBlockInteraction.isValidTargetHit(var3, var1, var4, this.putAt_Minecraft.player.blockInteractionRange());
+   private boolean canRaycastAimPoint(BlockPos var1, Vec3 var2) {
+      Vec3 var3 = this.minecraft.player.getEyePosition();
+      BlockHitResult var4 = this.minecraft.level.clip(new ClipContext(var3, var2, Block.OUTLINE, Fluid.NONE, this.minecraft.player));
+      return AiBlockInteraction.isValidTargetHit(var3, var1, var4, this.minecraft.player.blockInteractionRange());
    }
 
-   private static Vec3 fill_Vec3_BlockPos_BlockHitResult(BlockPos var0, BlockHitResult var1) {
+   private static Vec3 faceCenterPoint(BlockPos var0, BlockHitResult var1) {
       Direction var2 = var1.getDirection();
       return Vec3.atCenterOf(var0).add(var2.getStepX() * 0.45, var2.getStepY() * 0.45, var2.getStepZ() * 0.45);
    }
 
-   public void putAt_V() {
+   public void stop() {
       if (!AutismLiteVariant.enabled()) {
          AiVisualization.init_V(this);
       }
 
-      this.state = 0;
-      this.fill_BlockPos = null;
-      this.putAt_SyncCore.reset();
-      if (this.prevEx_Z && this.putAt_BlockPos != null && this.putAt_BlockState != null && this.putAt_Minecraft.level != null) {
-         if (this.putAt_Minecraft.level.getBlockState(this.putAt_BlockPos).isAir()) {
-            AiEditLedger.init(this.putAt_BlockPos, this.putAt_BlockState);
+      this.aimStallTicks = 0;
+      this.aimingTarget = null;
+      this.restock.reset();
+      if (this.activelyDigging && this.activeTarget != null && this.activeTargetState != null && this.minecraft.level != null) {
+         if (this.minecraft.level.getBlockState(this.activeTarget).isAir()) {
+            AiEditLedger.init(this.activeTarget, this.activeTargetState);
          } else {
-            this.value_BlockPos = this.putAt_BlockPos;
-            this.fill_BlockState = this.putAt_BlockState;
+            this.lastStoppedTarget = this.activeTarget;
+            this.lastStoppedState = this.activeTargetState;
          }
       }
 
-      if (this.prevEx_Z && this.putAt_Minecraft.gameMode != null && this.value(this.putAt_BlockPos)) {
-         this.putAt_Minecraft.gameMode.stopDestroyBlock();
+      if (this.activelyDigging && this.minecraft.gameMode != null && this.isGameModeDestroying(this.activeTarget)) {
+         this.minecraft.gameMode.stopDestroyBlock();
          BlockAttackGraceWindow.init();
       }
 
-      this.prevEx_Z = false;
-      this.putAt_BlockPos = null;
-      this.putAt_BlockState = null;
+      this.activelyDigging = false;
+      this.activeTarget = null;
+      this.activeTargetState = null;
    }
 
-   private boolean value(BlockPos var1) {
-      return !(this.putAt_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var2)
+   private boolean isGameModeDestroying(BlockPos var1) {
+      return !(this.minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var2)
          ? true
          : var1 != null && var1.equals(var2.autism$getDestroyBlockPos());
    }
 
-   public boolean fill_Z() {
-      return this.state > 0;
+   public boolean isAimStalled() {
+      return this.aimStallTicks > 0;
    }
 
-   public boolean putAt_Z_BlockPos(BlockPos var1) {
-      return this.prevEx_Z && var1.equals(this.putAt_BlockPos);
+   public boolean isDiggingTarget(BlockPos var1) {
+      return this.activelyDigging && var1.equals(this.activeTarget);
    }
 
-   BlockPos putAt_BlockPos() {
-      return this.putAt_BlockPos;
+   BlockPos activeTarget() {
+      return this.activeTarget;
    }
 
    public enum Inner_CacheHelper {
@@ -851,18 +851,18 @@ public final class AiBlockDigger {
       }
    }
 
-   public String init_Str() { return this.putAt_Str(); }
-   public AiBlockDigger init_RefQueue_DataUtil_Consumer(Consumer<RotationMath.Rotation> aim) { return this.putAt_JsonCache_Consumer(aim); }
-   public AiBlockDigger init_RefQueue_DataUtil_BiPredicate(BiPredicate<BlockState, ItemStack> accept) { return this.putAt_JsonCache_BiPredicate(accept); }
-   public AiBlockDigger init_RefQueue_DataUtil_Set(Set<BlockPos> sealedWater) { return this.putAt_JsonCache_Set(sealedWater); }
-   public Inner_DataUtil_2 init_RefQueue_DataUtil__BlockPos(BlockPos target) { return Inner_DataUtil_2.from(this.putAt_JsonCache_CacheHel_BlockPos(target)); }
-   public Inner_DataUtil_2 init_RefQueue_DataUtil__BlockPos_Vec3(BlockPos target, Vec3 stand) { return Inner_DataUtil_2.from(this.putAt_JsonCache_CacheHel_BlockPos_Vec3(target, stand)); }
-   public Inner_DataUtil_2 init_RefQueue_DataUtil__BlockPos(BlockPos target, Vec3 stand, Vec3 look) { return Inner_DataUtil_2.from(this.putAt_JsonCache_CacheHel_BlockPos(target, stand, look)); }
-   public static boolean init_Z_Minecraft_D(Minecraft mc, double ticks) { return putAt_Z_Minecraft_D(mc, ticks); }
-   public static int init_I_Minecraft(Minecraft mc) { return putAt_I_Minecraft(mc); }
-   public static boolean init_Z_Minecraft(Minecraft mc, BlockPos pos, Direction face) { return putAt_Z_Minecraft(mc, pos, face); }
-   public static void init_V_Minecraft(Minecraft mc) { putAt_V_Minecraft(mc); }
-   public void init_V() { this.putAt_V(); }
-   public boolean load_Z() { return this.fill_Z(); }
-   public boolean init_Z_BlockPos(BlockPos target) { return this.putAt_Z_BlockPos(target); }
+   public String lastFailureReasonCompat() { return this.lastFailureReason(); }
+   public AiBlockDigger withRotationConsumerCompat(Consumer<RotationMath.Rotation> aim) { return this.withRotationConsumer(aim); }
+   public AiBlockDigger withAcceptedToolCompat(BiPredicate<BlockState, ItemStack> accept) { return this.withAcceptedTool(accept); }
+   public AiBlockDigger withSealedWaterCompat(Set<BlockPos> sealedWater) { return this.withSealedWater(sealedWater); }
+   public Inner_DataUtil_2 digCompat(BlockPos target) { return Inner_DataUtil_2.from(this.dig(target)); }
+   public Inner_DataUtil_2 digCompat(BlockPos target, Vec3 stand) { return Inner_DataUtil_2.from(this.dig(target, stand)); }
+   public Inner_DataUtil_2 digCompat(BlockPos target, Vec3 stand, Vec3 look) { return Inner_DataUtil_2.from(this.dig(target, stand, look)); }
+   public static boolean hasInsufficientUnderwaterAirCompat(Minecraft mc, double ticks) { return hasInsufficientUnderwaterAir(mc, ticks); }
+   public static int airTicksToSurfaceCompat(Minecraft mc) { return airTicksToSurface(mc); }
+   public static boolean continueBreakingBlockCompat(Minecraft mc, BlockPos pos, Direction face) { return continueBreakingBlock(mc, pos, face); }
+   public static void tickDestroyDelayCompat(Minecraft mc) { tickDestroyDelay(mc); }
+   public void stopCompat() { this.stop(); }
+   public boolean isAimStalledCompat() { return this.isAimStalled(); }
+   public boolean isDiggingTargetCompat(BlockPos target) { return this.isDiggingTarget(target); }
 }

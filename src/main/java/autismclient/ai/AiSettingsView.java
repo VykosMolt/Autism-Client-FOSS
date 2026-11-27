@@ -206,7 +206,7 @@ final class AiSettingsView {
    }
 
    private boolean flush_Z() {
-      AiSettings live = this.init_cF.init_AiSettings;
+      AiSettings live = this.init_cF.settings;
       return this.read_Z != live.builtIn
          || this.init_AiSettings_Provide != live.provider
          || !this.init_BitSetUtil.getValue().isBlank()
@@ -432,7 +432,7 @@ final class AiSettingsView {
                               }
 
                               this.update_V();
-                              this.init_cF.init_V();
+                              this.init_cF.invalidate();
                            }
                         }
                      );
@@ -474,7 +474,7 @@ final class AiSettingsView {
          int value = this.write_I;
          this.init_cc.editSettingsAsync(s -> s.ghostOpacity = value);
          this.flush_J = System.currentTimeMillis() + 1500L;
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
       }
 
       return autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List) || used;
@@ -520,7 +520,7 @@ final class AiSettingsView {
             this.load_I = keyCode;
             this.update_J = System.currentTimeMillis() + 1500L;
             this.init_cc.editSettingsAsync(s -> s.emergencyKey = keyCode);
-            this.init_cF.init_V();
+            this.init_cF.invalidate();
             return true;
          } else {
             return true;
@@ -561,7 +561,7 @@ final class AiSettingsView {
       labelW = Math.min(labelW + 10, w * 2 / 5);
       int y = list.write() - this.init_cE_StreamUtil.offset;
       int start = y;
-      AiSettings live = this.init_cF.init_AiSettings;
+      AiSettings live = this.init_cF.settings;
       boolean hasKey = this.init_cc.hasProviderKey(this.init_AiSettings_Provide);
       y = this.init(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
@@ -656,7 +656,7 @@ final class AiSettingsView {
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
                this.init_cc.editSettingsAsync(s -> s.visualizationBlocks = s.visualizationBlocks < 1024 ? 1024 : (s.visualizationBlocks < 2048 ? 2048 : 512));
-               this.init_cF.init_V();
+               this.init_cF.invalidate();
             },
             "512 / 1024 / 2048 blocks. Large plans keep their full bounding frame."
          );
@@ -667,7 +667,7 @@ final class AiSettingsView {
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
                this.init_cc.editSettingsAsync(s -> s.visualizationDistance = s.visualizationDistance < 96 ? 96 : (s.visualizationDistance < 160 ? 160 : 64));
-               this.init_cF.init_V();
+               this.init_cF.invalidate();
             }
          );
          y += ctrl + 2;
@@ -793,7 +793,7 @@ final class AiSettingsView {
          boolean next = !value;
          this.init_Map.put(flag.key(), new AiSettingsView.Inner_StreamUtil(next, System.currentTimeMillis() + 1500L));
          this.init_cc.editSettingsAsync(s -> flag.set().accept(s, next));
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
       });
       return y + row.sync() + 2;
    }
@@ -864,18 +864,18 @@ final class AiSettingsView {
          color = live.builtIn ? kit.colors.success : kit.colors.textSecondary;
       } else {
          String var10000;
-         switch (this.init_cF.init_cc_BufferHelper) {
+         switch (this.init_cF.providerTestState) {
             case OK:
                var10000 = "Connected";
                break;
             case FAILED:
-               var10000 = "Failed: " + this.init_cF.flush_Str;
+               var10000 = "Failed: " + this.init_cF.providerTestDetail;
                break;
             case TESTING:
                var10000 = "Testing...";
                break;
             case UNKNOWN:
-               var10000 = this.init_cF.read_Z ? "Not tested" : "No API key";
+               var10000 = this.init_cF.hasProviderKey ? "Not tested" : "No API key";
                break;
             default:
                throw new MatchException(null, null);
@@ -883,7 +883,7 @@ final class AiSettingsView {
 
          text = var10000;
          int var16;
-         switch (this.init_cF.init_cc_BufferHelper) {
+         switch (this.init_cF.providerTestState) {
             case OK:
                var16 = kit.colors.success;
                break;
@@ -894,7 +894,7 @@ final class AiSettingsView {
                var16 = kit.colors.textSecondary;
                break;
             case UNKNOWN:
-               var16 = this.init_cF.read_Z ? kit.colors.textSecondary : -14249;
+               var16 = this.init_cF.hasProviderKey ? kit.colors.textSecondary : -14249;
                break;
             default:
                throw new MatchException(null, null);
@@ -907,7 +907,7 @@ final class AiSettingsView {
          kit.drawStatusDot(x + 3, footer.write() + ctrl / 2, 2.5F, color);
          autismclient.gui.f.NetHelper status = autismclient.gui.f.NetHelper.init(x, footer.write(), limit - x, ctrl);
          kit.drawCenteredRowText(text, status, x + 9, limit - x - 9, color);
-         String detail = this.update_Str.isEmpty() ? this.init_cF.flush_Str : this.update_Str;
+         String detail = this.update_Str.isEmpty() ? this.init_cF.providerTestDetail : this.update_Str;
          if (!detail.isBlank()) {
             kit.addTooltipRegion(status, detail);
          }
@@ -984,7 +984,7 @@ final class AiSettingsView {
             this.init_V_Z(false);
          }
 
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
          autismclient.util.bi.load("AI settings saved");
       }
    }
@@ -1000,12 +1000,12 @@ final class AiSettingsView {
    private void open() {
       if (this.sync_Z() && this.flush_Z()) {
          this.close();
-      } else if (!this.init_cF.read_Z && this.init_BitSetUtil.getValue().isBlank()) {
+      } else if (!this.init_cF.hasProviderKey && this.init_BitSetUtil.getValue().isBlank()) {
          this.update_Str = "Add an API key first";
       } else {
          this.update_Str = "";
          this.init_cc.startConnectionTest();
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
       }
    }
 
@@ -1021,7 +1021,7 @@ final class AiSettingsView {
          this.load_Z = false;
          this.sync_V();
          this.init_cc.removeProviderKey(this.init_AiSettings_Provide.name());
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
          autismclient.util.bi.load("Key removed");
       }
    }

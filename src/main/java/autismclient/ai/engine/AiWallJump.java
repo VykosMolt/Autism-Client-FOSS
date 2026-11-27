@@ -44,7 +44,7 @@ public final class AiWallJump {
          AiPhysics.MotionState var12 = new AiPhysics.MotionState(
             var1.getX() + 0.5 - var8 * var10, var2, var1.getZ() + 0.5 - var9 * var10, var8 * var5, -0.0784, var9 * var5, true, 0, false, false
          );
-         return !AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var12.x(), var2, var12.z())
+         return !AiJumpSolver.canStandAt(var0, var12.x(), var2, var12.z())
             ? null
             : putAt(var0, var12, var1, List.of(var4), true, 0.0F / 0.0F, 180.0F);
       } else {
@@ -263,7 +263,7 @@ public final class AiWallJump {
                }
 
                if (var7) {
-                  double var67 = AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var65, var5, var1, var3.yaw());
+                  double var67 = AiJumpSolver.settledLandingMargin(var0, var65, var5, var1, var3.yaw());
                   if (var67 >= 0.01) {
                      var55.add(new AiWallJump.Inner_TableCache(var65, var63.input(), var63.parent(), -var67));
                      continue;
@@ -543,7 +543,7 @@ public final class AiWallJump {
          && !(var7.y() < var1 - 0.02)
          && (var4.sneak() || var7.pose() == 0)
          && !AiPhysics.hitsStrictHazard(var0, var6, var7)
-         && !AiJumpSolver.putAt(var0, var7)) {
+         && !AiJumpSolver.isInFluid(var0, var7)) {
          return !var5 || !AiPaceScript.value(var0, var7) && !AiPaceScript.readEx(var0, var6, var7) && !AiPaceScript.value(var0, var6, var7)
             ? new AiWallJump.Inner_TableCache(var7, var4, var3, 0.0)
             : null;
@@ -593,7 +593,7 @@ public final class AiWallJump {
       if (var1.onGround() && var1.pose() == 0) {
          double var5 = var2.getX() + 0.5;
          double var7 = var2.getZ() + 0.5;
-         if (!AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var5, var1.y(), var7)) {
+         if (!AiJumpSolver.canStandAt(var0, var5, var1.y(), var7)) {
             return null;
          }
 
@@ -628,7 +628,7 @@ public final class AiWallJump {
                      && !(Math.abs(var28.y() - var1.y()) > 0.02)
                      && !var28.horizontalCollision()
                      && !AiPhysics.hitsStrictHazard(var0, var23, var28)
-                     && !AiJumpSolver.putAt(var0, var28)
+                     && !AiJumpSolver.isInFluid(var0, var28)
                      && (!var4 || !AiPaceScript.value(var0, var28) && !AiPaceScript.readEx(var0, var23, var28) && !AiPaceScript.value(var0, var23, var28))) {
                      double var29 = Math.hypot(var28.x() - var5, var28.z() - var7);
                      double var31 = var28.speed();
@@ -748,7 +748,7 @@ public final class AiWallJump {
                                  && !(var37.y() < var1.y() - 0.02)
                                  && (var65 < var64 || var37.pose() == 0)
                                  && !AiPhysics.hitsStrictHazard(var0, var63, var37)
-                                 && !AiJumpSolver.putAt(var0, var37)) {
+                                 && !AiJumpSolver.isInFluid(var0, var37)) {
                                  if (!var4 || !AiPaceScript.value(var0, var37) && !AiPaceScript.readEx(var0, var63, var37) && !AiPaceScript.value(var0, var63, var37)) {
                                     var63 = var37;
                                     var65++;
@@ -764,7 +764,7 @@ public final class AiWallJump {
                            }
 
                            if (var54 && var63.onGround()) {
-                              double var66 = AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var63, var9, var1.y(), var56.yaw());
+                              double var66 = AiJumpSolver.settledLandingMargin(var0, var63, var9, var1.y(), var56.yaw());
                               if (!(var66 < 0.01)) {
                                  int var68 = 0;
 
@@ -824,7 +824,7 @@ public final class AiWallJump {
       }
 
       AiPhysics.MotionState var8 = var2.body();
-      double var9 = AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var8, var3, var1.y(), var4);
+      double var9 = AiJumpSolver.settledLandingMargin(var0, var8, var3, var1.y(), var4);
       AiJumpManeuver var11 = new AiJumpManeuver(var12, var1, var8, var9, var7);
       return new AiJumpSolver.JumpPlan(
          var4, var7, true, 2147483647, var12.size() - var7, var1.x(), var1.z(), var8.x(), var8.y(), var8.z(), var8.speed(), var9, 0.0, var1.speed(), var11

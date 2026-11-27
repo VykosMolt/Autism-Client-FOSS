@@ -33,8 +33,8 @@ public final class AiLadderJump {
 
             var14 = Math.max(var14, var18.y());
             var11.add(var17);
-            var13 |= !AiJumpSolver.putAt(var0, var18);
-            if (var13 && AiJumpSolver.putAt(var18)) {
+            var13 |= !AiJumpSolver.isInFluid(var0, var18);
+            if (var13 && AiJumpSolver.isGroundedNotRising(var18)) {
                double var19 = putAt_D_TokenCore_TaskStat(var0, var18, var3, var4, var17.yaw());
                if (var19 >= -0.04) {
                   AiJumpManeuver var22 = new AiJumpManeuver(var11, var1, var18, var19, 0);
@@ -102,7 +102,7 @@ public final class AiLadderJump {
    static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, boolean var3
    ) {
-      if (!var1.onGround() && !AiJumpSolver.putAt(var0, var1)) {
+      if (!var1.onGround() && !AiJumpSolver.isInFluid(var0, var1)) {
          return null;
       }
 
@@ -132,7 +132,7 @@ public final class AiLadderJump {
                }
 
                var16.add(var19);
-               boolean var21 = AiJumpSolver.putAt(var0, var20);
+               boolean var21 = AiJumpSolver.isInFluid(var0, var20);
                var17 |= !var21 && !var20.onGround();
                if (var17 && var21) {
                   if (AiSlimeBounce.putAt(var0, BlockPos.containing(var20.x(), var20.y(), var20.z()), var2)
@@ -186,7 +186,7 @@ public final class AiLadderJump {
    static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, BlockPos var3, boolean var4
    ) {
-      boolean var5 = AiJumpSolver.putAt(var0, var1);
+      boolean var5 = AiJumpSolver.isInFluid(var0, var1);
       AiJumpSolver.JumpPlan var6 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, var3, var4 && !var5);
       if (var6 == null && !var0.state(var2.getX(), var2.getY() + 1, var2.getZ())) {
          for (int var10 : putAt_IArr) {
@@ -219,7 +219,7 @@ public final class AiLadderJump {
       boolean var4 = var1.y() >= var2.getY() + 1
          && var1.y() <= var2.getY() + 1.25
          && Math.hypot(var1.x() - var2.getX() - 0.5, var1.z() - var2.getZ() - 0.5) <= 0.65;
-      if (!AiJumpSolver.putAt(var0, var1) && !var4) {
+      if (!AiJumpSolver.isInFluid(var0, var1) && !var4) {
          return null;
       }
 
@@ -228,7 +228,7 @@ public final class AiLadderJump {
       float var7 = putAt(var0, var2, 0.0F);
 
       for (int var8 = 0; var8 < 16; var8++) {
-         AiPhysics.MoveInput var9 = AiJumpSolver.putAt(var0, var6)
+         AiPhysics.MoveInput var9 = AiJumpSolver.isInFluid(var0, var6)
             ? putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var6, var2, var7)
             : AiPhysics.MoveInput.run(var7, false);
          if (var8 == 0 && var3 != 2) {
@@ -254,8 +254,8 @@ public final class AiLadderJump {
    static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiLadderJump.Inner_CacheHelper var2, BlockPos var3, double var4, boolean var6
    ) {
-      AiJumpSolver.JumpPlan var7 = AiJumpSolver.putAt_IoUtil_TextState_TokenCore_TaskStat_2(var0, var2.state(), var3, var4, var6, -0.2);
-      return var7 != null && AiJumpSolver.putAt_Z_D(var7.landX(), var7.landY(), var7.landZ(), var3, var4) ? putAt(var1, var2.inputs(), var7) : null;
+      AiJumpSolver.JumpPlan var7 = AiJumpSolver.solveMomentumJump(var0, var2.state(), var3, var4, var6, -0.2);
+      return var7 != null && AiJumpSolver.isLandedOnCell(var7.landX(), var7.landY(), var7.landZ(), var3, var4) ? putAt(var1, var2.inputs(), var7) : null;
    }
 
    private static AiJumpSolver.JumpPlan putAt(AiPhysics.MotionState var0, List<AiPhysics.MoveInput> var1, AiJumpSolver.JumpPlan var2) {
@@ -373,11 +373,11 @@ public final class AiLadderJump {
                AiPhysics.MotionState var16 = AiPhysics.stepWithClimbable(var14, var13, var0);
                if (!(var16.y() < var6.y() - 0.02) && !AiPhysics.hitsStrictHazard(var0, var14, var16)) {
                   var14 = var16;
-                  if (!AiJumpSolver.putAt(var14)) {
+                  if (!AiJumpSolver.isGroundedNotRising(var14)) {
                      var15++;
                      continue;
                   } else if (Math.abs(var14.y() - var6.y()) <= 0.02
-                     && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var14.x(), var14.y(), var14.z())
+                     && AiJumpSolver.canStandAt(var0, var14.x(), var14.y(), var14.z())
                      && (putAt_Z_TokenCore_TaskStat(var0, var14, var2, 0, var3) || putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var14, var3, var4) != null)) {
                      return var13;
                   }
@@ -486,8 +486,8 @@ public final class AiLadderJump {
    }
 
    private static double putAt_D_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
-      return AiJumpSolver.putAt(var1) && !(Math.abs(var1.y() - var3) > 0.02) && AiJumpSolver.putAt_Z_D(var1.x(), var1.y(), var1.z(), var2, var3)
-         ? AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var1, var2, var3, var5)
+      return AiJumpSolver.isGroundedNotRising(var1) && !(Math.abs(var1.y() - var3) > 0.02) && AiJumpSolver.isLandedOnCell(var1.x(), var1.y(), var1.z(), var2, var3)
+         ? AiJumpSolver.settledLandingMargin(var0, var1, var2, var3, var5)
          : -1.0;
    }
 

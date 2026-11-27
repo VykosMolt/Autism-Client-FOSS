@@ -150,7 +150,7 @@ final class AiClipboard {
                throw new IllegalArgumentException(context + " names an unknown block id: " + block);
             }
 
-            cells.add(new AiBuilder.CellSpec(dx, dy, dz, block, AiBuilder.init_Map_JsonObject(entry, context, blockObj)));
+            cells.add(new AiBuilder.CellSpec(dx, dy, dz, block, AiBuilder.parseBlockProperties(entry, context, blockObj)));
          }
 
          return List.copyOf(cells);

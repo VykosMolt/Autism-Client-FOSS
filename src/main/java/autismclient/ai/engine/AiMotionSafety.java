@@ -341,7 +341,7 @@ public final class AiMotionSafety {
 
          boolean var4 = canCoastToSafeStopWithFall(new AiLiveWorld(var1.level, var1.player, var0), var3, var1.player.onGround() ? 0.0 : var1.player.fallDistance);
          if (DEBUG_NAV && !var4) {
-            AiNavDebug.init("unsafe support removal target=" + var0 + " state=" + var3 + " fallen=" + var1.player.fallDistance);
+            AiNavDebug.log("unsafe support removal target=" + var0 + " state=" + var3 + " fallen=" + var1.player.fallDistance);
          }
 
          return var4;

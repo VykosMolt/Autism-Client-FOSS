@@ -729,7 +729,7 @@ public final class AiVisualization {
                BlockPos at = origin.offset(c.dx(), c.dy(), c.dz());
                boolean loaded = AiTerrain.isLoaded(l.init_ClientLevel, at);
                BlockState live = loaded ? l.init_ClientLevel.getBlockState(at) : Blocks.AIR.defaultBlockState();
-               boolean satisfied = loaded && AiBuilder.update(c, live);
+               boolean satisfied = loaded && AiBuilder.matchesSchematicCell(c, live);
                int color = init(satisfied, live.canBeReplaced(), loaded);
                if (fullPlan
                   && loaded
@@ -739,7 +739,7 @@ public final class AiVisualization {
                   color = -885830;
                }
 
-               out.add(init(at, AiBuilder.init_BlockState(c), color));
+               out.add(init(at, AiBuilder.toBlockState(c), color));
             }
 
             l.init_List = List.copyOf(out);

@@ -1815,7 +1815,7 @@ final class AiPortalCast {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                      true,
                      2.0,
-                     AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
+                     AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(target, radius), keep)
                   );
                }
 
@@ -1842,7 +1842,7 @@ final class AiPortalCast {
                      return this.load("Frame site cleared; planning the cast");
                   } else {
                      BlockPos cell = this.init_ArrayDeque.poll();
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 20, false);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 20, false);
                      return this.load("Clearing the frame site at " + cell.toShortString());
                   }
                }

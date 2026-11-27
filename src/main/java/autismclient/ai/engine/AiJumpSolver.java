@@ -10,32 +10,32 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 
 public final class AiJumpSolver {
-   public static final int flowState = 12;
-   public static final int flowTemp = 40;
-   public static final int readEx_I = 100;
-   static final int value_I = 40;
-   static final double putAt_D = 4.0;
-   public static final double fill_D = -0.12;
-   public static final double readEx_D = -0.04;
-   public static final double value_D = 0.55;
-   public static final int prevEx_I = 2147483647;
-   public static final double prevEx_D = 0.28;
-   public static final double prev_D = 0.14;
-   private static final int[] putAt_IArr = new int[]{2147483647, 1, 3, 5, 7, 9};
-   private static final int[] fill_IArr = new int[]{2147483647, 1, 3, 5, 7, 9};
-   private static final float[] putAt_FArr = new float[]{-4.0F, 4.0F, -8.0F, 8.0F, -12.0F, 12.0F, -16.0F, 16.0F, -20.0F, 20.0F};
-   private static final int[] readEx_IArr = new int[]{0, -18, 18, -36, 36, -60, 60, -84, 84};
-   private static final int[] value_IArr = new int[]{0, -7, 7, -14, 14};
-   private static final int[] prevEx_IArr = new int[]{0, -7, 7, -14, 14, -21, 21};
-   private static final int[] prev_IArr = new int[]{4, 6, 8};
-   private static final float[] fill_FArr = new float[]{0.0F, -8.0F, 8.0F, -16.0F, 16.0F, -24.0F, 24.0F};
-   private static final ConcurrentHashMap<Integer, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
-   private static final ConcurrentHashMap<AiJumpSolver.ArcSpeed, Double> fill_ConcurrentHashMap = new ConcurrentHashMap<>();
+   public static final int MAX_RUN_TICKS = 12;
+   public static final int MAX_FLIGHT_TICKS = 40;
+   public static final int MAX_SIM_TICKS = 100;
+   static final int DEFAULT_APPROACH_TICKS = 40;
+   static final double REACH_QUANT_SCALE = 4.0;
+   public static final double MIN_ACCEPTABLE_MARGIN = -0.12;
+   public static final double SAFE_MARGIN_FLOOR = -0.04;
+   public static final double MAX_LANDING_DROP_TOLERANCE = 0.55;
+   public static final int NO_COAST_LIMIT = 2147483647;
+   public static final double SPRINT_APPROACH_SPEED = 0.28;
+   public static final double COMFORTABLE_MARGIN = 0.14;
+   private static final int[] RELEASE_TICK_CANDIDATES = new int[]{2147483647, 1, 3, 5, 7, 9};
+   private static final int[] ALT_RELEASE_TICK_CANDIDATES = new int[]{2147483647, 1, 3, 5, 7, 9};
+   private static final float[] CLEAR_COLLISION_YAW_OFFSETS = new float[]{-4.0F, 4.0F, -8.0F, 8.0F, -12.0F, 12.0F, -16.0F, 16.0F, -20.0F, 20.0F};
+   private static final int[] CHAIN_TURN_ANGLES = new int[]{0, -18, 18, -36, 36, -60, 60, -84, 84};
+   private static final int[] CURVE_ENTRY_ANGLES = new int[]{0, -7, 7, -14, 14};
+   private static final int[] WIDE_CURVE_ANGLES = new int[]{0, -7, 7, -14, 14, -21, 21};
+   private static final int[] TURN_DELAY_TICKS = new int[]{4, 6, 8};
+   private static final float[] PACE_YAW_OFFSETS = new float[]{0.0F, -8.0F, 8.0F, -16.0F, 16.0F, -24.0F, 24.0F};
+   private static final ConcurrentHashMap<Integer, Double> DEFAULT_REACH_CACHE = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<AiJumpSolver.ArcSpeed, Double> SPEED_REACH_CACHE = new ConcurrentHashMap<>();
 
    private AiJumpSolver() {
    }
 
-   static AiJumpSolver.ExitOption putAt_IoUtil_TableCache_TokenCore_TaskStat(
+   static AiJumpSolver.ExitOption solveChainedExit(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, double var4, AiJumpSolver.LandingTarget var6
    ) {
       AiJumpSolver.NextJump var7 = var6.nextJump();
@@ -58,22 +58,22 @@ public final class AiJumpSolver {
                   if (var23.horizontalCollision()
                      || var23.verticalCollision() && !var23.onGround()
                      || AiPhysics.hitsStrictHazard(var0, var21, var23)
-                     || putAt(var0, var23)
+                     || isInFluid(var0, var23)
                      || var23.y() < var4 - 0.55) {
                      break;
                   }
 
-                  if (putAt(var23)) {
-                     double var24 = putAt_D_TokenCore_TaskStat_2(var0, var23, var3, var4, var17);
+                  if (isGroundedNotRising(var23)) {
+                     double var24 = settledLandingMargin(var0, var23, var3, var4, var17);
                      if (var24 < 0.08) {
-                        var24 = putAt_D_TokenCore_TaskStat_2(var0, var23, var3, var4);
+                        var24 = measureCoastingSupportMargin(var0, var23, var3, var4);
                      }
 
-                     if (var24 < 0.08 || !putAt_Z_TokenCore_TableCac(var23, var3, var4)) {
+                     if (var24 < 0.08 || !isInsideLandingCell(var23, var3, var4)) {
                         break;
                      }
 
-                     AiJumpSolver.UiHelper var26 = readEx(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
+                     AiJumpSolver.UiHelper var26 = solveTakeoffAllowEarlyCoast(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
                      if (var26.margin() < 0.07 || var26.runTicks() > 5) {
                         break;
                      }
@@ -99,7 +99,7 @@ public final class AiJumpSolver {
       }
    }
 
-   static AiJumpSolver.TakeoffCandidate putAt_IoUtil_JsonEntry_TokenCore_TaskStat(
+   static AiJumpSolver.TakeoffCandidate solveLiveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, float var3, BlockPos var4, double var5
    ) {
       if (!(var1.speed() < 0.1) && var1.jumpDelay() == 0 && !var1.horizontalCollision()) {
@@ -114,8 +114,8 @@ public final class AiJumpSolver {
                float var19 = var2 + var18;
                if (!(Math.abs(Mth.wrapDegrees(var19 - var3)) > 32.0F)) {
                   AiPhysics.MoveInput var20 = AiPhysics.MoveInput.run(var19, true);
-                  AiJumpSolver.ArcResult var21 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var20, var20, 2147483647, var13, var4, var5);
-                  double var22 = putAt_D_TokenCore_TaskStat(var0, var21, var4, var5);
+                  AiJumpSolver.ArcResult var21 = simulateJumpArc(var0, var1, var20, var20, 2147483647, var13, var4, var5);
+                  double var22 = evaluateArcMargin(var0, var21, var4, var5);
                   if (var22 >= 0.065) {
                      AiJumpSolver.UiHelper var24 = new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var22, true, var21.ticks() + 1);
                      if (var14 == null || var22 > var14.takeoff().margin()) {
@@ -127,8 +127,8 @@ public final class AiJumpSolver {
                      }
                   } else if (var14 == null && var21 != null && var21.along() > var11 + 0.18 && Math.abs(var18) <= 14.0F) {
                      for (int var27 : new int[]{8, 5, 2}) {
-                        AiJumpSolver.ArcResult var28 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var20, var20, var27, var13, var4, var5);
-                        var22 = putAt_D_TokenCore_TaskStat(var0, var28, var4, var5);
+                        AiJumpSolver.ArcResult var28 = simulateJumpArc(var0, var1, var20, var20, var27, var13, var4, var5);
+                        var22 = evaluateArcMargin(var0, var28, var4, var5);
                         if (!(var22 < 0.08)) {
                            var14 = new AiJumpSolver.TakeoffCandidate(var19, new AiJumpSolver.UiHelper(0, 0.0, var27, var22, true, var28.ticks() + 1));
                            break;
@@ -147,18 +147,18 @@ public final class AiJumpSolver {
       }
    }
 
-   private static double putAt_D_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiJumpSolver.ArcResult var1, BlockPos var2, double var3) {
-      if (var1 != null && !var1.bumped() && var1.settled() && putAt_Z_TokenCore_TableCac(var1.end(), var2, var3)) {
-         return var1.margin() >= 0.065 ? var1.margin() : putAt_D_TokenCore_TaskStat_2(var0, var1.end(), var2, var3);
+   private static double evaluateArcMargin(AiPhysics.PhysicsWorld var0, AiJumpSolver.ArcResult var1, BlockPos var2, double var3) {
+      if (var1 != null && !var1.bumped() && var1.settled() && isInsideLandingCell(var1.end(), var2, var3)) {
+         return var1.margin() >= 0.065 ? var1.margin() : measureCoastingSupportMargin(var0, var1.end(), var2, var3);
       } else {
          return -1.0;
       }
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_3(
+   static AiJumpSolver.JumpPlan solveCurvedLiveJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, double var4
    ) {
-      if (putAt(var1) && var1.jumpDelay() == 0 && !var1.horizontalCollision() && var1.pose() == 0) {
+      if (isGroundedNotRising(var1) && var1.jumpDelay() == 0 && !var1.horizontalCollision() && var1.pose() == 0) {
          double var6 = var3.getX() + 0.5 - var1.x();
          double var8 = var3.getZ() + 0.5 - var1.z();
          double var10 = Math.hypot(var6, var8);
@@ -178,8 +178,8 @@ public final class AiJumpSolver {
                for (int var24 : new int[]{0, -1, 1}) {
                   AiPhysics.MoveInput var25 = AiPhysics.MoveInput.jump(var19, true).withStrafe(var24);
                   AiPhysics.MoveInput var26 = AiPhysics.MoveInput.run(var20, true);
-                  AiJumpSolver.ArcResult var27 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var25, var26, 2147483647, var12, var3, var4);
-                  if (var27 != null && !var27.bumped() && var27.settled() && !(var27.margin() < 0.085) && putAt_Z_TokenCore_TableCac(var27.end(), var3, var4)) {
+                  AiJumpSolver.ArcResult var27 = simulateJumpArc(var0, var1, var25, var26, 2147483647, var12, var3, var4);
+                  if (var27 != null && !var27.bumped() && var27.settled() && !(var27.margin() < 0.085) && isInsideLandingCell(var27.end(), var3, var4)) {
                      ArrayList var28 = new ArrayList(var27.ticks() + 1);
                      var28.add(var25);
 
@@ -219,12 +219,12 @@ public final class AiJumpSolver {
       }
    }
 
-   private static boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var0, BlockPos var1, double var2) {
+   private static boolean isInsideLandingCell(AiPhysics.MotionState var0, BlockPos var1, double var2) {
       return Math.abs(var0.y() - var2) <= 0.02 && (int)Math.floor(var0.x()) == var1.getX() && (int)Math.floor(var0.z()) == var1.getZ();
    }
 
-   static double putAt_D_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3) {
-      if (putAt(var1) && putAt_Z_TokenCore_TableCac(var1, var2, var3) && putAt_Z_TokenCore_TaskStat_2(var0, var2.getX(), var2.getZ(), var3)) {
+   static double measureCoastingSupportMargin(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3) {
+      if (isGroundedNotRising(var1) && isInsideLandingCell(var1, var2, var3) && isFullFlatSupport(var0, var2.getX(), var2.getZ(), var3)) {
          AiPhysics.MotionState var5 = var1;
          double var6 = 1.0 / 0.0;
 
@@ -241,7 +241,7 @@ public final class AiJumpSolver {
                }
             }
 
-            if (var12 < 0.24 || !putAt(var5) || Math.abs(var5.y() - var3) > 0.02) {
+            if (var12 < 0.24 || !isGroundedNotRising(var5) || Math.abs(var5.y() - var3) > 0.02) {
                return -1.0;
             }
 
@@ -264,25 +264,25 @@ public final class AiJumpSolver {
       }
    }
 
-   public static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
+   public static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, double var7, boolean var9
    ) {
-      return putAt_IoUtil_TextState_TokenCore_TaskStat_2(var0, var1, var2, var4, var5, var7, var9, true);
+      return solve(var0, var1, var2, var4, var5, var7, var9, true);
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
+   static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, double var7, boolean var9, boolean var10
    ) {
-      return putAt(var0, var1, var2, var4, var5, var7, var9, var10, true);
+      return solve(var0, var1, var2, var4, var5, var7, var9, var10, true);
    }
 
-   static AiJumpSolver.JumpPlan putAt(
+   static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, double var7, boolean var9, boolean var10, boolean var11
    ) {
-      return putAt(var0, var1, var2, var4, var5, var7, var9, var10, var11, false);
+      return solve(var0, var1, var2, var4, var5, var7, var9, var10, var11, false);
    }
 
-   static AiJumpSolver.JumpPlan putAt(
+   static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0,
       BlockPos var1,
       double var2,
@@ -294,10 +294,10 @@ public final class AiJumpSolver {
       boolean var11,
       boolean var12
    ) {
-      return putAt(var0, var1, var2, var4, var5, var7, var9, var10, var11, var12, false);
+      return solve(var0, var1, var2, var4, var5, var7, var9, var10, var11, var12, false);
    }
 
-   static AiJumpSolver.JumpPlan putAt(
+   static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0,
       BlockPos var1,
       double var2,
@@ -321,8 +321,8 @@ public final class AiJumpSolver {
          return null;
       }
 
-      if (var10 && var11 && !putAt_Z_TokenCore_TaskStat(var0, var14, var2, var16)) {
-         AiJumpSolver.JumpPlan var40 = putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0, var1, var2, var4, var5, var9, var12);
+      if (var10 && var11 && !canStandAt(var0, var14, var2, var16)) {
+         AiJumpSolver.JumpPlan var40 = solveOffCenterJump(var0, var1, var2, var4, var5, var9, var12);
          return var40 != null ? var40 : AiJumpManeuver.solve(var0, var1, var2, var4, var5, var9, true, var12);
       }
 
@@ -330,19 +330,19 @@ public final class AiJumpSolver {
       double var30 = var24 / var26;
       double var32 = var7 > 0.0 ? var14 - var28 * 0.2 : var14;
       double var34 = var7 > 0.0 ? var16 - var30 * 0.2 : var16;
-      AiJumpSolver.JumpPlan var36 = putAt(var0, var32, var34, var2, var4, var5, var28, var30, var7, var9, 0.0, var13);
+      AiJumpSolver.JumpPlan var36 = solveFromPoint(var0, var32, var34, var2, var4, var5, var28, var30, var7, var9, 0.0, var13);
       if (var7 > 0.0 && (var36 == null || var36.margin() < 0.14)) {
-         AiJumpSolver.JumpPlan var37 = putAt(var0, var1, var2, var4, var5, 0.0, var9, false, false, false, var13);
+         AiJumpSolver.JumpPlan var37 = solve(var0, var1, var2, var4, var5, 0.0, var9, false, false, false, var13);
          if (var37 != null && (var36 == null || var36.margin() < -0.04 || var37.margin() > var36.margin() + 0.04)) {
             var36 = var37;
          }
       }
 
       if ((var36 == null || var36.margin() < 0.0) && var7 <= 0.0) {
-         double var41 = putAt_D_TokenCore_TaskStat(var0, var14, var16, var2, var28, var30);
+         double var41 = measureBackupDistance(var0, var14, var16, var2, var28, var30);
          if (var41 >= 0.25) {
-            AiJumpSolver.JumpPlan var39 = putAt(var0, var14 - var28 * var41, var16 - var30 * var41, var2, var4, var5, var28, var30, 0.0, var9, var41, var13);
-            if (var39 != null && (var36 == null || putAt(var39, var36))) {
+            AiJumpSolver.JumpPlan var39 = solveFromPoint(var0, var14 - var28 * var41, var16 - var30 * var41, var2, var4, var5, var28, var30, 0.0, var9, var41, var13);
+            if (var39 != null && (var36 == null || isBetterJumpPlan(var39, var36))) {
                var36 = var39;
             }
          }
@@ -356,7 +356,7 @@ public final class AiJumpSolver {
          && Math.abs(var22 * var24) == 8.0
          && Math.max(Math.abs(var22), Math.abs(var24)) == 4.0
          && (var36 == null || var36.margin() < -0.04)) {
-         AiJumpSolver.JumpPlan var43 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var2, var4, var5, var14, var16, var18, var20);
+         AiJumpSolver.JumpPlan var43 = solveDiagonalOffsetJump(var0, var2, var4, var5, var14, var16, var18, var20);
          if (var43 != null) {
             return var43;
          }
@@ -364,7 +364,7 @@ public final class AiJumpSolver {
 
       if (var10 && (var36 == null || var36.margin() < -0.04)) {
          if (var11) {
-            AiJumpSolver.JumpPlan var44 = putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0, var1, var2, var4, var5, var9, var12);
+            AiJumpSolver.JumpPlan var44 = solveOffCenterJump(var0, var1, var2, var4, var5, var9, var12);
             if (var44 != null) {
                return var44;
             }
@@ -379,7 +379,7 @@ public final class AiJumpSolver {
       return var36;
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   private static AiJumpSolver.JumpPlan solveDiagonalOffsetJump(
       AiPhysics.PhysicsWorld var0, double var1, BlockPos var3, double var4, double var6, double var8, double var10, double var12
    ) {
       double var14 = Math.signum(var10 - var6);
@@ -395,10 +395,10 @@ public final class AiJumpSolver {
             double var36 = Math.hypot(var23 - var32, var25 - var34);
             double var38 = (var23 - var32) / var36;
             double var40 = (var25 - var34) / var36;
-            double var42 = putAt_D_TokenCore_TaskStat(var0, var32, var34, var1, var38, var40);
+            double var42 = measureBackupDistance(var0, var32, var34, var1, var38, var40);
             var32 -= var38 * var42;
             var34 -= var40 * var42;
-            AiJumpSolver.JumpPlan var44 = putAt(
+            AiJumpSolver.JumpPlan var44 = solveFromPoint(
                var0, var32, var34, var1, var3, var4, var23, var25, var38, var40, 0.0, true, Math.hypot(var32 - var6, var34 - var8), false
             );
             if (var44 != null && var44.margin() >= -0.04) {
@@ -410,7 +410,7 @@ public final class AiJumpSolver {
       return null;
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan solveFromPoint(
       AiPhysics.PhysicsWorld var0,
       double var1,
       double var3,
@@ -424,10 +424,10 @@ public final class AiJumpSolver {
       double var17,
       boolean var19
    ) {
-      return putAt(var0, var1, var3, var5, var7, var8, var7.getX() + 0.5, var7.getZ() + 0.5, var10, var12, var14, var16, var17, var19);
+      return solveFromPoint(var0, var1, var3, var5, var7, var8, var7.getX() + 0.5, var7.getZ() + 0.5, var10, var12, var14, var16, var17, var19);
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan solveFromPoint(
       AiPhysics.PhysicsWorld var0,
       double var1,
       double var3,
@@ -443,7 +443,7 @@ public final class AiJumpSolver {
       double var21,
       boolean var23
    ) {
-      if (!putAt_Z_TokenCore_TaskStat(var0, var1, var5, var3)) {
+      if (!canStandAt(var0, var1, var5, var3)) {
          return null;
       }
 
@@ -454,7 +454,7 @@ public final class AiJumpSolver {
       for (boolean var30 : var20 ? new boolean[]{true, false} : new boolean[]{false}) {
          AiPhysics.MotionState var31 = new AiPhysics.MotionState(var1, var5, var3, var14 * var18, -0.0784, var16 * var18, true, 0, false, false);
          AiPhysics.MoveInput var32 = AiPhysics.MoveInput.run(var24, var30);
-         AiJumpSolver.RunArc var33 = putAt(var0, putAt_List_TokenCore_TaskStat_2(var0, var31, var32, 12), var32, var32, var25, var7, var8, false, var23);
+         AiJumpSolver.RunArc var33 = findBestRunArc(var0, simulateRunupStates(var0, var31, var32, 12), var32, var32, var25, var7, var8, false, var23);
          if (var33 != null && !(var33.arc().margin() < -0.12)) {
             AiJumpSolver.ArcResult var34 = var33.arc();
             AiJumpSolver.JumpPlan var35 = new AiJumpSolver.JumpPlan(
@@ -473,7 +473,7 @@ public final class AiJumpSolver {
                var21,
                var18
             );
-            if (var26 == null || putAt(var35, var26)) {
+            if (var26 == null || isBetterJumpPlan(var35, var26)) {
                var26 = var35;
             }
 
@@ -486,10 +486,10 @@ public final class AiJumpSolver {
       return var26;
    }
 
-   static List<AiJumpSolver.Point2D> putAt_List_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2) {
+   static List<AiJumpSolver.Point2D> findStandablePoints(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2) {
       double var4 = var1.getX() + 0.5;
       double var6 = var1.getZ() + 0.5;
-      if (putAt_Z_TokenCore_TaskStat(var0, var4, var2, var6)) {
+      if (canStandAt(var0, var4, var2, var6)) {
          return List.of(new AiJumpSolver.Point2D(var4, var6));
       }
 
@@ -500,7 +500,7 @@ public final class AiJumpSolver {
             for (int var18 : new int[]{-1, 1}) {
                double var19 = var4 + (var14 == 0 ? var12 * var18 : 0.0);
                double var21 = var6 + (var14 == 1 ? var12 * var18 : 0.0);
-               if (putAt_Z_TokenCore_TaskStat(var0, var19, var2, var21)) {
+               if (canStandAt(var0, var19, var2, var21)) {
                   var8.add(new AiJumpSolver.Point2D(var19, var21));
                }
             }
@@ -512,7 +512,7 @@ public final class AiJumpSolver {
             for (int var36 : new int[]{-1, 1}) {
                double var22 = var4 + var33 * var29;
                double var24 = var6 + var36 * var29;
-               if (putAt_Z_TokenCore_TaskStat(var0, var22, var2, var24)) {
+               if (canStandAt(var0, var22, var2, var24)) {
                   var8.add(new AiJumpSolver.Point2D(var22, var24));
                }
             }
@@ -522,11 +522,11 @@ public final class AiJumpSolver {
       return var8;
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2) {
-      return !putAt_List_TokenCore_TaskStat(var0, var1, var2).isEmpty();
+   static boolean hasStandablePoint(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2) {
+      return !findStandablePoints(var0, var1, var2).isEmpty();
    }
 
-   static List<AiJumpSolver.Point2D> putAt(List<AiJumpSolver.Point2D> var0) {
+   static List<AiJumpSolver.Point2D> deduplicatePoints(List<AiJumpSolver.Point2D> var0) {
       if (var0.size() < 2) {
          return var0;
       }
@@ -553,14 +553,14 @@ public final class AiJumpSolver {
       return var1;
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_3(
+   private static AiJumpSolver.JumpPlan solveOffCenterJump(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8
    ) {
-      List var9 = putAt_List_TokenCore_TaskStat(var0, var1, var2);
-      List var10 = putAt_List_TokenCore_TaskStat(var0, var4, var5);
+      List var9 = findStandablePoints(var0, var1, var2);
+      List var10 = findStandablePoints(var0, var4, var5);
       if (var8) {
-         var9 = putAt(var9);
-         var10 = putAt(var10);
+         var9 = deduplicatePoints(var9);
+         var10 = deduplicatePoints(var10);
       }
 
       if (!var9.isEmpty() && !var10.isEmpty()) {
@@ -581,7 +581,7 @@ public final class AiJumpSolver {
                if (!(var20 < 0.05)) {
                   double var22 = var16 / var20;
                   double var24 = var18 / var20;
-                  AiJumpSolver.JumpPlan var26 = putAt(
+                  AiJumpSolver.JumpPlan var26 = solveFromPoint(
                      var0,
                      var13.x(),
                      var13.z(),
@@ -597,16 +597,16 @@ public final class AiJumpSolver {
                      Math.hypot(var13.x() - var1.getX() - 0.5, var13.z() - var1.getZ() - 0.5),
                      false
                   );
-                  if (var26 != null && var26.margin() >= -0.04 && (var11 == null || putAt(var26, var11))) {
+                  if (var26 != null && var26.margin() >= -0.04 && (var11 == null || isBetterJumpPlan(var26, var11))) {
                      var11 = var26;
                   }
 
                   if (var26 == null || var26.margin() < 0.0) {
-                     double var27 = putAt_D_TokenCore_TaskStat(var0, var13.x(), var13.z(), var2, var22, var24);
+                     double var27 = measureBackupDistance(var0, var13.x(), var13.z(), var2, var22, var24);
                      if (var27 >= 0.2) {
                         double var29 = var13.x() - var22 * var27;
                         double var31 = var13.z() - var24 * var27;
-                        AiJumpSolver.JumpPlan var33 = putAt(
+                        AiJumpSolver.JumpPlan var33 = solveFromPoint(
                            var0,
                            var29,
                            var31,
@@ -622,7 +622,7 @@ public final class AiJumpSolver {
                            Math.hypot(var29 - var1.getX() - 0.5, var31 - var1.getZ() - 0.5),
                            false
                         );
-                        if (var33 != null && var33.margin() >= -0.04 && (var11 == null || putAt(var33, var11))) {
+                        if (var33 != null && var33.margin() >= -0.04 && (var11 == null || isBetterJumpPlan(var33, var11))) {
                            var11 = var33;
                         }
                      }
@@ -637,17 +637,17 @@ public final class AiJumpSolver {
       }
    }
 
-   static double putAt_D_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7, double var9) {
+   static double measureBackupDistance(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7, double var9) {
       double var11 = 0.0;
 
-      for (double var13 = 0.05; var13 <= 1.500000001 && putAt_Z_TokenCore_TaskStat(var0, var1 - var7 * var13, var5, var3 - var9 * var13); var13 += 0.05) {
+      for (double var13 = 0.05; var13 <= 1.500000001 && canStandAt(var0, var1 - var7 * var13, var5, var3 - var9 * var13); var13 += 0.05) {
          var11 = var13;
       }
 
       return Math.max(0.0, var11 - 0.15);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5) {
+   static boolean canStandAt(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5) {
       AiPhysics.MotionState var7 = new AiPhysics.MotionState(var1, var3, var5, 0.0, 0.0, 0.0, true, 0, false, false);
       if (AiPhysics.hitsStrictHazard(var0, var7, var7)) {
          return false;
@@ -666,7 +666,7 @@ public final class AiJumpSolver {
       return var10 && !var0.putAt_Z_AABB(new AABB(var1 - var8, var3 + 0.001, var5 - var8, var1 + var8, var3 + 1.8 - 0.01, var5 + var8));
    }
 
-   private static boolean putAt(AiJumpSolver.JumpPlan var0, AiJumpSolver.JumpPlan var1) {
+   private static boolean isBetterJumpPlan(AiJumpSolver.JumpPlan var0, AiJumpSolver.JumpPlan var1) {
       boolean var2 = var0.margin() >= 0.0;
       boolean var3 = var1.margin() >= 0.0;
       if (var2 != var3) {
@@ -694,7 +694,7 @@ public final class AiJumpSolver {
       return var0.margin() > var1.margin();
    }
 
-   private static List<AiPhysics.MotionState> putAt_List_TokenCore_TaskStat_2(
+   private static List<AiPhysics.MotionState> simulateRunupStates(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, int var3
    ) {
       ArrayList var4 = new ArrayList(var3 + 1);
@@ -714,7 +714,7 @@ public final class AiJumpSolver {
       return var4;
    }
 
-   private static AiJumpSolver.RunArc putAt(
+   private static AiJumpSolver.RunArc findBestRunArc(
       AiPhysics.PhysicsWorld var0,
       List<AiPhysics.MotionState> var1,
       AiPhysics.MoveInput var2,
@@ -726,13 +726,13 @@ public final class AiJumpSolver {
       boolean var9
    ) {
       AiJumpSolver.JumpSearchContext var10 = new AiJumpSolver.JumpSearchContext(var0, var1, var2, var3, var4, var5, var6);
-      AiJumpSolver.RunArc var11 = putAt_IoUtil_TaskState(var10);
+      AiJumpSolver.RunArc var11 = binarySearchRunArc(var10);
       if (var11 != null && var11.arc().margin() >= -0.04) {
          return var11;
       }
 
-      if (!var9 && putAt_Z(var10)) {
-         AiJumpSolver.RunArc var12 = putAt(var10, var8);
+      if (!var9 && hitsObstacleOnEndpoints(var10)) {
+         AiJumpSolver.RunArc var12 = scanAllRunTicks(var10, var8);
          if (var12 == null) {
             return var11;
          } else {
@@ -743,7 +743,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static boolean putAt_Z(AiJumpSolver.JumpSearchContext var0) {
+   private static boolean hitsObstacleOnEndpoints(AiJumpSolver.JumpSearchContext var0) {
       int var1 = var0.runs().size() - 1;
       AiJumpSolver.ArcResult var2 = var0.fly(var1, 2147483647);
       if (var2 != null && var2.bumped()) {
@@ -754,7 +754,7 @@ public final class AiJumpSolver {
       return var3 != null && var3.bumped();
    }
 
-   private static AiJumpSolver.RunArc putAt(AiJumpSolver.JumpSearchContext var0, boolean var1) {
+   private static AiJumpSolver.RunArc scanAllRunTicks(AiJumpSolver.JumpSearchContext var0, boolean var1) {
       AiJumpSolver.RunArc var2 = null;
       int var3 = Math.min(var0.runs().size() - 1, 15);
       if (!var1) {
@@ -777,7 +777,7 @@ public final class AiJumpSolver {
             int var12 = var2.runTicks();
 
             for (int var14 = Math.max(0, var12 - 2); var14 <= Math.min(var3, var12 + 2); var14++) {
-               for (int var18 : putAt_IArr) {
+               for (int var18 : RELEASE_TICK_CANDIDATES) {
                   if (var18 != 2147483647) {
                      AiJumpSolver.ArcResult var10 = var0.fly(var14, var18);
                      if (var10 == null) {
@@ -802,7 +802,7 @@ public final class AiJumpSolver {
       }
 
       for (int var11 = 0; var11 <= var3; var11++) {
-         for (int var8 : var1 ? fill_IArr : putAt_IArr) {
+         for (int var8 : var1 ? ALT_RELEASE_TICK_CANDIDATES : RELEASE_TICK_CANDIDATES) {
             AiJumpSolver.ArcResult var9 = var0.fly(var11, var8);
             if (var9 == null) {
                break;
@@ -821,7 +821,7 @@ public final class AiJumpSolver {
       return var2;
    }
 
-   private static AiJumpSolver.RunArc putAt_IoUtil_TaskState(AiJumpSolver.JumpSearchContext var0) {
+   private static AiJumpSolver.RunArc binarySearchRunArc(AiJumpSolver.JumpSearchContext var0) {
       int var1 = var0.runs().size() - 1;
       AiJumpSolver.ArcResult var2 = var0.fly(var1, 2147483647);
       if (var2 == null) {
@@ -834,7 +834,7 @@ public final class AiJumpSolver {
 
       AiJumpSolver.ArcResult var3 = var1 == 0 ? var2 : var0.fly(0, 2147483647);
       if (var3 != null && var3.along() > var0.line().target()) {
-         return var3.settled() && !var3.bumped() && var3.margin() >= 0.14 && putAt_D_D(var3.end().x(), var3.end().z(), var0.to()) >= 0.08
+         return var3.settled() && !var3.bumped() && var3.margin() >= 0.14 && cellEdgeMargin(var3.end().x(), var3.end().z(), var0.to()) >= 0.08
             ? new AiJumpSolver.RunArc(0, var3)
             : new AiJumpSolver.RunArc(0, var0.releaseEarlier(0, var3));
       }
@@ -877,7 +877,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static AiJumpSolver.ArcResult putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(
+   private static AiJumpSolver.ArcResult optimizeCoastRelease(
       AiPhysics.PhysicsWorld var0,
       AiPhysics.MotionState var1,
       AiPhysics.MoveInput var2,
@@ -887,7 +887,7 @@ public final class AiJumpSolver {
       BlockPos var6,
       double var7
    ) {
-      AiJumpSolver.ArcResult var9 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var2, var3, 0, var5, var6, var7);
+      AiJumpSolver.ArcResult var9 = simulateJumpArc(var0, var1, var2, var3, 0, var5, var6, var7);
       if (var9 == null) {
          return var4;
       }
@@ -903,7 +903,7 @@ public final class AiJumpSolver {
 
       for (int var14 = 0; var14 < 6 && var11 - var10 > 1; var14++) {
          int var15 = (var10 + var11) / 2;
-         AiJumpSolver.ArcResult var16 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var2, var3, var15, var5, var6, var7);
+         AiJumpSolver.ArcResult var16 = simulateJumpArc(var0, var1, var2, var3, var15, var5, var6, var7);
          if (var16 == null) {
             break;
          }
@@ -924,7 +924,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static AiJumpSolver.ArcResult putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+   private static AiJumpSolver.ArcResult simulateJumpArc(
       AiPhysics.PhysicsWorld var0,
       AiPhysics.MotionState var1,
       AiPhysics.MoveInput var2,
@@ -934,7 +934,7 @@ public final class AiJumpSolver {
       BlockPos var6,
       double var7
    ) {
-      if (putAt(var0, var1)) {
+      if (isInFluid(var0, var1)) {
          return null;
       }
 
@@ -943,7 +943,7 @@ public final class AiJumpSolver {
          return new AiJumpSolver.ArcResult(var9, 0, false, var4, var5.along(var9), -1.0, true, true);
       }
 
-      if (putAt(var0, var9)) {
+      if (isInFluid(var0, var9)) {
          return null;
       }
 
@@ -964,23 +964,23 @@ public final class AiJumpSolver {
 
          var9 = var16;
          var13 = Math.max(var13, var9.y());
-         if (putAt(var0, var9)) {
+         if (isInFluid(var0, var9)) {
             return null;
          }
 
          var11 |= var9.horizontalCollision();
          var12 |= var11 || var9.verticalCollision() && !var9.onGround();
-         if (putAt(var9)) {
+         if (isGroundedNotRising(var9)) {
             if (var13 - var9.y() > var0.putAt_D() + 1.0E-5) {
                return new AiJumpSolver.ArcResult(var9, var15, true, var4, var5.along(var9), -1.0, var12, var11);
             }
 
-            double var17 = var9.y() <= var7 + 0.02 && var9.y() >= var7 - 0.55 ? putAt_D_TokenCore_TaskStat_2(var0, var9, var6, var7, var3.yaw()) : -1.0;
+            double var17 = var9.y() <= var7 + 0.02 && var9.y() >= var7 - 0.55 ? settledLandingMargin(var0, var9, var6, var7, var3.yaw()) : -1.0;
             if (var17 >= -0.04
                && var12
                && var15 <= 4
-               && !putAt_Z_D(var9.x(), var9.y(), var9.z(), var6, var7)
-               && !putAt_Z_TokenCore_TaskStat_4(var0, var9, var6, var7)) {
+               && !isLandedOnCell(var9.x(), var9.y(), var9.z(), var6, var7)
+               && !canReachCellCenter(var0, var9, var6, var7)) {
                var17 = -1.0;
             }
 
@@ -995,16 +995,16 @@ public final class AiJumpSolver {
       return new AiJumpSolver.ArcResult(var9, 40, false, var4, var5.along(var9), -1.0, var12, var11);
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
+   static boolean isInFluid(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       return var0.state((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
    }
 
-   public static double putAt_D_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
+   public static double settledLandingMargin(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
       if (AiPhysics.hitsStrictHazard(var0, var1, var1)) {
          return -1.0;
       }
 
-      double var6 = putAt_D_TokenCore_TaskStat(var0, var1.x(), var1.z(), var2, var3);
+      double var6 = expandedCellMargin(var0, var1.x(), var1.z(), var2, var3);
       if (var6 >= -0.04) {
          AiPhysics.MotionState var26 = var1;
          AiPhysics.MoveInput var27 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var5);
@@ -1019,20 +1019,20 @@ public final class AiJumpSolver {
          }
 
          if (var26.onGround() && !(var26.speed() > 0.01)) {
-            return putAt_Z_TokenCore_TaskStat_2(var0, (int)Math.floor(var26.x()), (int)Math.floor(var26.z()), var26.y())
+            return isFullFlatSupport(var0, (int)Math.floor(var26.x()), (int)Math.floor(var26.z()), var26.y())
                ? var6
-               : Math.min(var6, putAt_D_TokenCore_TaskStat(var0, var26.x(), var26.z(), var2, var26.y()));
+               : Math.min(var6, expandedCellMargin(var0, var26.x(), var26.z(), var2, var26.y()));
          } else {
             return -1.0;
          }
       } else {
-         BlockPos var8 = putAt_BlockPos_TokenCore_TaskStat(var0, var1.x(), var1.z(), var2, var3);
+         BlockPos var8 = resolveAdjacentLandingCell(var0, var1.x(), var1.z(), var2, var3);
          double var9 = -Math.sin(Math.toRadians(var5));
          double var11 = Math.cos(Math.toRadians(var5));
          boolean var13 = Math.abs(var9) >= Math.abs(var11);
          int var14 = var13 ? (int)Math.signum(var9) : 0;
          int var15 = var13 ? 0 : (int)Math.signum(var11);
-         boolean var16 = putAt_Z_TokenCore_TaskStat_2(var0, var8.getX() + var14, var8.getZ() + var15, var3);
+         boolean var16 = isFullFlatSupport(var0, var8.getX() + var14, var8.getZ() + var15, var3);
          float var17 = AiPhysics.yawBetween(0.0, 0.0, var14, var15);
          AiPhysics.MoveInput var18 = var16
             ? new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var17)
@@ -1051,11 +1051,11 @@ public final class AiJumpSolver {
                return -1.0;
             }
 
-            double var24 = putAt_D_TokenCore_TaskStat(var0, var19.x(), var19.z(), var2, var3);
+            double var24 = expandedCellMargin(var0, var19.x(), var19.z(), var2, var3);
             if (var16) {
                var20 = Math.max(var20, var24);
                if (var20 >= 0.1) {
-                  return putAt_D_TokenCore_TaskStat_2(var0, var19, var2, var3, var5);
+                  return settledLandingMargin(var0, var19, var2, var3, var5);
                }
             } else {
                if (Math.hypot(var19.vx(), var19.vz()) < 0.01) {
@@ -1066,14 +1066,14 @@ public final class AiJumpSolver {
             }
          }
 
-         return putAt_D_TokenCore_TaskStat(var0, var19.x(), var19.z(), var2, var3) >= -0.04
-            ? Math.min(var20, putAt_D_TokenCore_TaskStat_2(var0, var19, var2, var3, var5))
+         return expandedCellMargin(var0, var19.x(), var19.z(), var2, var3) >= -0.04
+            ? Math.min(var20, settledLandingMargin(var0, var19, var2, var3, var5))
             : -1.0;
       }
    }
 
-   static double putAt_D_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5, double var6) {
-      BlockPos var8 = putAt_BlockPos_TokenCore_TaskStat(var0, var1, var3, var5, var6);
+   static double expandedCellMargin(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5, double var6) {
+      BlockPos var8 = resolveAdjacentLandingCell(var0, var1, var3, var5, var6);
       int var9 = var8.getX();
       int var10 = var8.getZ();
       double var11 = 0.3;
@@ -1081,31 +1081,31 @@ public final class AiJumpSolver {
       double var15 = var9 + 1 - (var1 + var11);
       double var17 = var3 - var11 - var10;
       double var19 = var10 + 1 - (var3 + var11);
-      if (var13 < 0.5 && putAt_Z_TokenCore_TaskStat_2(var0, var9 - 1, var10, var6)) {
+      if (var13 < 0.5 && isFullFlatSupport(var0, var9 - 1, var10, var6)) {
          var13++;
       }
 
-      if (var15 < 0.5 && putAt_Z_TokenCore_TaskStat_2(var0, var9 + 1, var10, var6)) {
+      if (var15 < 0.5 && isFullFlatSupport(var0, var9 + 1, var10, var6)) {
          var15++;
       }
 
-      if (var17 < 0.5 && putAt_Z_TokenCore_TaskStat_2(var0, var9, var10 - 1, var6)) {
+      if (var17 < 0.5 && isFullFlatSupport(var0, var9, var10 - 1, var6)) {
          var17++;
       }
 
-      if (var19 < 0.5 && putAt_Z_TokenCore_TaskStat_2(var0, var9, var10 + 1, var6)) {
+      if (var19 < 0.5 && isFullFlatSupport(var0, var9, var10 + 1, var6)) {
          var19++;
       }
 
       double var21 = Math.min(Math.min(var13, var15), Math.min(var17, var19));
       if (!(var21 >= -0.04) && (int)Math.floor(var1) == var5.getX() && (int)Math.floor(var3) == var5.getZ()) {
-         boolean var23 = !putAt_Z_TokenCore_TaskStat(var0, var5.getX() + 0.5, var6, var5.getZ() + 0.5);
+         boolean var23 = !canStandAt(var0, var5.getX() + 0.5, var6, var5.getZ() + 0.5);
          AABB var24 = new AABB(var1 - var11, var6 - 0.02, var3 - var11, var1 + var11, var6 - 0.001, var3 + var11);
 
          for (AABB var26 : var0.collisions(var24)) {
             if (!(Math.abs(var26.maxY - var6) > 0.01)) {
                boolean var27 = var26.getXsize() >= 0.99 && var26.getZsize() >= 0.99;
-               if ((!var27 || var23) && putAt_Z_TokenCore_TaskStat(var0, var1, var6, var3)) {
+               if ((!var27 || var23) && canStandAt(var0, var1, var6, var3)) {
                   if (var27) {
                      var21 = Math.max(var21, Math.min(Math.min(var13, var15), Math.min(var17, var19)) + var11 - 0.08);
                   } else {
@@ -1123,7 +1123,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static BlockPos putAt_BlockPos_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5, double var6) {
+   private static BlockPos resolveAdjacentLandingCell(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5, double var6) {
       int var8 = (int)Math.floor(var1);
       int var9 = (int)Math.floor(var3);
       if (var8 == var5.getX() && var9 == var5.getZ()) {
@@ -1131,24 +1131,24 @@ public final class AiJumpSolver {
       }
 
       boolean var10 = Math.abs(var8 - var5.getX()) <= 1 && Math.abs(var9 - var5.getZ()) <= 1;
-      return var10 && putAt_Z_TokenCore_TaskStat_2(var0, var8, var9, var6) ? new BlockPos(var8, var5.getY(), var9) : var5;
+      return var10 && isFullFlatSupport(var0, var8, var9, var6) ? new BlockPos(var8, var5.getY(), var9) : var5;
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3) {
+   static boolean canReachCellCenter(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3) {
       double var5 = var2.getX() + 0.5;
       double var7 = var2.getZ() + 0.5;
-      return putAt_Z_TokenCore_TaskStat(var0, var1.x(), var1.z(), var5, var7, var3)
+      return isWalkLineStandable(var0, var1.x(), var1.z(), var5, var7, var3)
          ? true
-         : putAt_Z_TokenCore_TaskStat(var0, var1.x(), var1.z(), var5, var1.z(), var3) && putAt_Z_TokenCore_TaskStat(var0, var5, var1.z(), var5, var7, var3)
-            || putAt_Z_TokenCore_TaskStat(var0, var1.x(), var1.z(), var1.x(), var7, var3) && putAt_Z_TokenCore_TaskStat(var0, var1.x(), var7, var5, var7, var3);
+         : isWalkLineStandable(var0, var1.x(), var1.z(), var5, var1.z(), var3) && isWalkLineStandable(var0, var5, var1.z(), var5, var7, var3)
+            || isWalkLineStandable(var0, var1.x(), var1.z(), var1.x(), var7, var3) && isWalkLineStandable(var0, var1.x(), var7, var5, var7, var3);
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7, double var9) {
+   private static boolean isWalkLineStandable(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7, double var9) {
       int var11 = Math.max(1, (int)Math.ceil(Math.hypot(var5 - var1, var7 - var3) / 0.15));
 
       for (int var12 = 1; var12 <= var11; var12++) {
          double var13 = (double)var12 / var11;
-         if (!putAt_Z_TokenCore_TaskStat(var0, var1 + (var5 - var1) * var13, var9, var3 + (var7 - var3) * var13)) {
+         if (!canStandAt(var0, var1 + (var5 - var1) * var13, var9, var3 + (var7 - var3) * var13)) {
             return false;
          }
       }
@@ -1156,11 +1156,11 @@ public final class AiJumpSolver {
       return true;
    }
 
-   public static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {
-      return var0 instanceof AiPlannerWorld var5 ? var5.putAt_Z_I(var1, var2, var3) : fill(var0, var1, var2, var3);
+   public static boolean isFullFlatSupport(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {
+      return var0 instanceof AiPlannerWorld var5 ? var5.putAt_Z_I(var1, var2, var3) : computeFullFlatSupport(var0, var1, var2, var3);
    }
 
-   static boolean fill(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {
+   static boolean computeFullFlatSupport(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {
       AiPhysics.MotionState var5 = new AiPhysics.MotionState(var1 + 0.5, var3, var2 + 0.5, 0.0, 0.0, 0.0, true, 0, false, false);
       if (AiPhysics.hitsStrictHazard(var0, var5, var5)) {
          return false;
@@ -1183,15 +1183,15 @@ public final class AiJumpSolver {
       return var6 && !var0.putAt_Z_AABB(new AABB(var1 + 0.05, var3 + 0.001, var2 + 0.05, var1 + 0.95, var3 + 1.8 - 0.01, var2 + 0.95));
    }
 
-   static boolean putAt(AiPhysics.MotionState var0) {
+   static boolean isGroundedNotRising(AiPhysics.MotionState var0) {
       return var0.onGround() && var0.vy() <= 0.0;
    }
 
-   public static boolean putAt_Z_D(double var0, double var2, double var4, BlockPos var6, double var7) {
-      return !(var2 > var7 + 0.02) && !(var2 < var7 - 0.55) ? putAt_D_D(var0, var4, var6) >= -0.12 : false;
+   public static boolean isLandedOnCell(double var0, double var2, double var4, BlockPos var6, double var7) {
+      return !(var2 > var7 + 0.02) && !(var2 < var7 - 0.55) ? cellEdgeMargin(var0, var4, var6) >= -0.12 : false;
    }
 
-   public static double putAt_D_D(double var0, double var2, BlockPos var4) {
+   public static double cellEdgeMargin(double var0, double var2, BlockPos var4) {
       double var5 = 0.3;
       double var7 = var0 - var5 - var4.getX();
       double var9 = var4.getX() + 1 - (var0 + var5);
@@ -1200,13 +1200,13 @@ public final class AiJumpSolver {
       return Math.min(Math.min(var7, var9), Math.min(var11, var13));
    }
 
-   public static AiJumpSolver.UiHelper putAt_IoUtil_IoPool_TokenCore_TaskStat(
+   public static AiJumpSolver.UiHelper solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5
    ) {
-      return putAt_IoUtil_IoPool_TokenCore_TaskStat(var0, var1, var2, var3, var4, var5, 40);
+      return solveTakeoff(var0, var1, var2, var3, var4, var5, 40);
    }
 
-   static AiJumpSolver.UiHelper fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
+   static AiJumpSolver.UiHelper solveWallBlockedTakeoff(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
       if (var5 - var1.y() <= 0.6) {
          return null;
       }
@@ -1224,11 +1224,11 @@ public final class AiJumpSolver {
       }
 
       AiJumpSolver.JumpAxis var14 = new AiJumpSolver.JumpAxis(var1.x(), var1.z(), var8 / var12, var10 / var12, var12);
-      AiJumpSolver.ArcResult var15 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var7, var7, 2147483647, var14, var4, var5);
+      AiJumpSolver.ArcResult var15 = simulateJumpArc(var0, var1, var7, var7, 2147483647, var14, var4, var5);
       if (var15 != null && var15.settled() && !(var15.margin() < -0.04)) {
          if (!(var15.margin() < 0.14)
-            || var1.horizontalCollision() && var1.speed() < 0.025 && putAt_Z_TokenCore_TaskStat_2(var0, var4.getX(), var4.getZ(), var5)) {
-            return putAt_Z_TokenCore_TaskStat_4(var0, var15.end(), var4, var5)
+            || var1.horizontalCollision() && var1.speed() < 0.025 && isFullFlatSupport(var0, var4.getX(), var4.getZ(), var5)) {
+            return canReachCellCenter(var0, var15.end(), var4, var5)
                ? new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var15.margin(), var3, var15.ticks() + 1)
                : null;
          } else {
@@ -1239,13 +1239,13 @@ public final class AiJumpSolver {
       }
    }
 
-   static double putAt_D_TokenCore_TaskStat_2(
+   static double verifyTakeoffMargin(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5
    ) {
-      return putAt_D_TokenCore_TaskStat_2(var0, var1, var2, var3, var4, var5, false);
+      return verifyTakeoffMargin(var0, var1, var2, var3, var4, var5, false);
    }
 
-   static double putAt_D_TokenCore_TaskStat_2(
+   static double verifyTakeoffMargin(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5, boolean var7
    ) {
       double var8 = var4.getX() + 0.5 - var1.x();
@@ -1256,18 +1256,18 @@ public final class AiJumpSolver {
       } else {
          AiJumpSolver.JumpAxis var14 = new AiJumpSolver.JumpAxis(var1.x(), var1.z(), var8 / var12, var10 / var12, var12);
          AiPhysics.MoveInput var15 = AiPhysics.MoveInput.run(var2, var3.sprint());
-         AiJumpSolver.ArcResult var16 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+         AiJumpSolver.ArcResult var16 = simulateJumpArc(
             var0, var1, var15.withStrafe(var3.strafe()), var15, var3.coastAfter(), var14, var4, var5
          );
          if (var16 != null && var16.settled()) {
-            return var7 && !var16.bumped() && var16.margin() < 0.065 ? putAt_D_TokenCore_TaskStat_2(var0, var16.end(), var4, var5) : var16.margin();
+            return var7 && !var16.bumped() && var16.margin() < 0.065 ? measureCoastingSupportMargin(var0, var16.end(), var4, var5) : var16.margin();
          } else {
             return -1.0;
          }
       }
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_3(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3) {
+   static boolean hitsAirborneWall(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3) {
       AiPhysics.MoveInput var4 = AiPhysics.MoveInput.run(var2, var3.sprint());
       AiPhysics.MoveInput var5 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var2);
       AiPhysics.MotionState var6 = AiPhysics.step(var1, var4.withStrafe(var3.strafe()).withJump(true), var0);
@@ -1277,7 +1277,7 @@ public final class AiJumpSolver {
             return true;
          }
 
-         if (putAt(var6)) {
+         if (isGroundedNotRising(var6)) {
             return false;
          }
 
@@ -1287,16 +1287,16 @@ public final class AiJumpSolver {
       return false;
    }
 
-   static float putAt_F_TokenCore_TaskStat(
+   static float findWallClearingYaw(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5
    ) {
-      if (!putAt_Z_TokenCore_TaskStat_3(var0, var1, var2, var3)) {
+      if (!hitsAirborneWall(var0, var1, var2, var3)) {
          return 0.0F / 0.0F;
       }
 
-      for (float var10 : putAt_FArr) {
+      for (float var10 : CLEAR_COLLISION_YAW_OFFSETS) {
          float var11 = var2 + var10;
-         if (!putAt_Z_TokenCore_TaskStat_3(var0, var1, var11, var3) && putAt_D_TokenCore_TaskStat_2(var0, var1, var11, var3, var4, var5) >= -0.04) {
+         if (!hitsAirborneWall(var0, var1, var11, var3) && verifyTakeoffMargin(var0, var1, var11, var3, var4, var5) >= -0.04) {
             return var11;
          }
       }
@@ -1304,7 +1304,7 @@ public final class AiJumpSolver {
       return 0.0F / 0.0F;
    }
 
-   static double putAt_D_TokenCore_TaskStat(
+   static double verifyDelayedTakeoffMargin(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, int var4, BlockPos var5, double var6
    ) {
       AiPhysics.MotionState var8 = var1;
@@ -1320,10 +1320,10 @@ public final class AiJumpSolver {
       }
 
       AiJumpSolver.UiHelper var11 = new AiJumpSolver.UiHelper(0, var3.strafe(), var3.coastAfter(), 0.0, var3.sprint(), var3.flightTicks());
-      return putAt_D_TokenCore_TaskStat_2(var0, var8, var2, var11, var5, var6);
+      return verifyTakeoffMargin(var0, var8, var2, var11, var5, var6);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1, double var2) {
+   static boolean verifyRunupPath(AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1, double var2) {
       double var4 = Math.toRadians(var1.yaw());
       AiPhysics.MotionState var6 = new AiPhysics.MotionState(
          var1.startX(), var2, var1.startZ(), -Math.sin(var4) * var1.approach(), -0.0784, Math.cos(var4) * var1.approach(), true, 0, false, false
@@ -1335,7 +1335,7 @@ public final class AiJumpSolver {
          if (!var6.onGround()
             || var6.horizontalCollision()
             || Math.abs(var6.y() - var2) > 0.02
-            || !putAt_Z_TokenCore_TaskStat(var0, var6.x(), var6.y(), var6.z())) {
+            || !canStandAt(var0, var6.x(), var6.y(), var6.z())) {
             return false;
          }
       }
@@ -1343,11 +1343,11 @@ public final class AiJumpSolver {
       return true;
    }
 
-   static AiJumpSolver.UiHelper readEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
-      return putAt_IoUtil_IoPool_TokenCore_TaskStat(var0, var1, var2, var3, var4, var5, 40, true);
+   static AiJumpSolver.UiHelper solveTakeoffAllowEarlyCoast(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
+      return solveTakeoff(var0, var1, var2, var3, var4, var5, 40, true);
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   static AiJumpSolver.JumpPlan solveCurvedSprintJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3
    ) {
       if (var1.onGround() && var1.pose() == 0 && !(Math.abs(var1.y() - var3) > 0.55)) {
@@ -1359,13 +1359,13 @@ public final class AiJumpSolver {
          if (!(var13 < 2.0) && !(var13 > 8.0)) {
             float var15 = AiPhysics.yawBetween(var1.x(), var1.z(), var5, var7);
             if (var1.vx() * var9 + var1.vz() * var11 >= -0.035 * var13) {
-               AiJumpSolver.TurnSchedule[] var16 = new AiJumpSolver.TurnSchedule[readEx_IArr.length];
+               AiJumpSolver.TurnSchedule[] var16 = new AiJumpSolver.TurnSchedule[CHAIN_TURN_ANGLES.length];
 
                for (int var17 = 0; var17 < var16.length; var17++) {
-                  var16[var17] = new AiJumpSolver.TurnSchedule(null, 0, AiPhysics.MoveInput.run(var15 + readEx_IArr[var17], true));
+                  var16[var17] = new AiJumpSolver.TurnSchedule(null, 0, AiPhysics.MoveInput.run(var15 + CHAIN_TURN_ANGLES[var17], true));
                }
 
-               AiJumpSolver.JumpPlan var35 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, var2, var3, var16, 17, false);
+               AiJumpSolver.JumpPlan var35 = solveScheduledTurnJump(var0, var1, var2, var3, var16, 17, false);
                if (var35 != null) {
                   return var35;
                }
@@ -1390,7 +1390,7 @@ public final class AiJumpSolver {
                }
             }
 
-            return putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, var2, var3, var19, 33, true);
+            return solveScheduledTurnJump(var0, var1, var2, var3, var19, 33, true);
          } else {
             return null;
          }
@@ -1399,7 +1399,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   private static AiJumpSolver.JumpPlan solveScheduledTurnJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, AiJumpSolver.TurnSchedule[] var5, int var6, boolean var7
    ) {
       double var8 = var2.getX() + 0.5;
@@ -1424,15 +1424,15 @@ public final class AiJumpSolver {
                      double var25 = var18 - 8.0 * var17.vx();
                      double var27 = var20 - 8.0 * var17.vz();
                      if (var25 * var25 + var27 * var27 > 28.09) {
-                        var12[var16] = putAt_TokenCore_TableCac_TokenCore_TaskStat(var0, var17, var5[var16].at(var14), var1.y());
+                        var12[var16] = stepOnFlatSurface(var0, var17, var5[var16].at(var14), var1.y());
                         continue;
                      }
 
                      float var29 = AiPhysics.yawBetween(0.0, 0.0, var25, var27);
 
-                     for (int var33 : var7 ? prevEx_IArr : value_IArr) {
+                     for (int var33 : var7 ? WIDE_CURVE_ANGLES : CURVE_ENTRY_ANGLES) {
                         AiPhysics.MoveInput var34 = AiPhysics.MoveInput.run(var29 + var33, true);
-                        AiJumpSolver.ArcResult var35 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var17, var34, var34, 2147483647, var24, var2, var3);
+                        AiJumpSolver.ArcResult var35 = simulateJumpArc(var0, var17, var34, var34, 2147483647, var24, var2, var3);
                         if (var35 != null && var35.settled() && !(Math.abs(var35.end().y() - var3) > 0.02)) {
                            if (var35.margin() < -0.04) {
                               if (var13 != null) {
@@ -1440,22 +1440,22 @@ public final class AiJumpSolver {
                               }
 
                               if (var35.along() >= var22) {
-                                 var35 = putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(var0, var17, var34, var34, var35, var24, var2, var3);
+                                 var35 = optimizeCoastRelease(var0, var17, var34, var34, var35, var24, var2, var3);
                               }
 
-                              if (var7 && !putAt(var35, var3)) {
-                                 for (int var39 : prev_IArr) {
-                                    AiJumpSolver.ArcResult var40 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+                              if (var7 && !isSettledAtSurface(var35, var3)) {
+                                 for (int var39 : TURN_DELAY_TICKS) {
+                                    AiJumpSolver.ArcResult var40 = simulateJumpArc(
                                        var0, var17, var34, var34, var39, var24, var2, var3
                                     );
-                                    if (putAt(var40, var3)) {
+                                    if (isSettledAtSurface(var40, var3)) {
                                        var35 = var40;
                                        break;
                                     }
                                  }
                               }
 
-                              if (!putAt(var35, var3)) {
+                              if (!isSettledAtSurface(var35, var3)) {
                                  continue;
                               }
                            }
@@ -1503,7 +1503,7 @@ public final class AiJumpSolver {
                   }
                }
 
-               var12[var16] = putAt_TokenCore_TableCac_TokenCore_TaskStat(var0, var17, var5[var16].at(var14), var1.y());
+               var12[var16] = stepOnFlatSurface(var0, var17, var5[var16].at(var14), var1.y());
             }
          }
 
@@ -1515,14 +1515,14 @@ public final class AiJumpSolver {
       return var13;
    }
 
-   private static boolean putAt(AiJumpSolver.ArcResult var0, double var1) {
+   private static boolean isSettledAtSurface(AiJumpSolver.ArcResult var0, double var1) {
       return var0 != null && var0.settled() && Math.abs(var0.end().y() - var1) <= 0.02 && var0.margin() >= -0.04;
    }
 
-   private static AiPhysics.MotionState putAt_TokenCore_TableCac_TokenCore_TaskStat(
+   private static AiPhysics.MotionState stepOnFlatSurface(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, double var3
    ) {
-      if (!putAt_Z_TokenCore_TaskStat(var0, var1.x(), var1.y(), var1.z())) {
+      if (!canStandAt(var0, var1.x(), var1.y(), var1.z())) {
          return null;
       }
 
@@ -1530,7 +1530,7 @@ public final class AiJumpSolver {
       return var5.onGround() && Math.abs(var5.y() - var3) <= 0.02 && !AiPhysics.hitsStrictHazard(var0, var1, var5) ? var5 : null;
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_4(
+   static AiJumpSolver.JumpPlan solveIceRunupJump(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7
    ) {
       if (!var7) {
@@ -1550,7 +1550,7 @@ public final class AiJumpSolver {
       for (double var25 : new double[]{0.0, 0.65, 1.0, 1.3, 1.6}) {
          double var27 = var8 - var17 * var25;
          double var29 = var10 - var19 * var25;
-         if (putAt_Z_TokenCore_TaskStat(var0, var8, var10, var27, var29, var2)) {
+         if (isWalkLineStandable(var0, var8, var10, var27, var29, var2)) {
             AiPhysics.MotionState var31 = AiPhysics.MotionState.standing(var27, var2, var29);
 
             for (float var35 : new float[]{0.0F, -5.0F, 5.0F, -10.0F, 10.0F, -15.0F, 15.0F}) {
@@ -1571,10 +1571,10 @@ public final class AiJumpSolver {
 
                         for (float var49 : new float[]{0.0F, -5.0F, 5.0F, -10.0F, 10.0F, -15.0F, 15.0F}) {
                            AiPhysics.MoveInput var50 = var36.withYaw(var36.yaw() + var49);
-                           AiJumpSolver.ArcResult var51 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var37, var50, var50, 2147483647, var45, var4, var5);
+                           AiJumpSolver.ArcResult var51 = simulateJumpArc(var0, var37, var50, var50, 2147483647, var45, var4, var5);
                            if (var51 != null) {
                               if (var51.along() > var43 && var51.margin() < 0.14) {
-                                 var51 = putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(var0, var37, var50, var50, var51, var45, var4, var5);
+                                 var51 = optimizeCoastRelease(var0, var37, var50, var50, var51, var45, var4, var5);
                               }
 
                               if (var51 != null && var51.settled() && !(var51.margin() < -0.04)) {
@@ -1610,7 +1610,7 @@ public final class AiJumpSolver {
                                        0.0,
                                        var58
                                     );
-                                    if (var21 == null || putAt(var55, var21)) {
+                                    if (var21 == null || isBetterJumpPlan(var55, var21)) {
                                        var21 = var55;
                                     }
 
@@ -1638,7 +1638,7 @@ public final class AiJumpSolver {
       return var21;
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_6(
+   static AiJumpSolver.JumpPlan solveEdgeSetupJump(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5
    ) {
       double var7 = var1.getX() + 0.5;
@@ -1651,7 +1651,7 @@ public final class AiJumpSolver {
          for (double var23 : new double[]{0.2, 0.0, -0.2}) {
             double var25 = var7 - Math.sin(var13) * var23 + Math.cos(var13) * var18;
             double var27 = var9 + Math.cos(var13) * var23 + Math.sin(var13) * var18;
-            if (putAt_Z_TokenCore_TaskStat(var0, var25, var2, var27)) {
+            if (canStandAt(var0, var25, var2, var27)) {
                AiPhysics.MotionState var29 = AiPhysics.MotionState.standing(var25, var2, var27);
 
                for (float var33 : new float[]{0.0F, -8.0F, 8.0F}) {
@@ -1672,10 +1672,10 @@ public final class AiJumpSolver {
 
                         for (float var48 : new float[]{30.0F, 40.0F, 50.0F}) {
                            AiPhysics.MoveInput var49 = var34.withYaw(var34.yaw() + Math.copySign(var48, var44));
-                           AiJumpSolver.ArcResult var50 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var35, var49, var49, 2147483647, var43, var4, var5);
+                           AiJumpSolver.ArcResult var50 = simulateJumpArc(var0, var35, var49, var49, 2147483647, var43, var4, var5);
                            if (var50 != null && var50.settled()) {
                               if (var50.margin() < -0.04 && var50.along() >= var41) {
-                                 var50 = putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(var0, var35, var49, var49, var50, var43, var4, var5);
+                                 var50 = optimizeCoastRelease(var0, var35, var49, var49, var50, var43, var4, var5);
                               }
 
                               if (var50 != null && !(var50.margin() < -0.04)) {
@@ -1729,10 +1729,10 @@ public final class AiJumpSolver {
          }
       }
 
-      return Math.abs(Mth.wrapDegrees(var11 - var12)) < 12.0F ? putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0, var1, var2, var4, var5, var12) : null;
+      return Math.abs(Mth.wrapDegrees(var11 - var12)) < 12.0F ? solveLateralRunupJump(var0, var1, var2, var4, var5, var12) : null;
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_3(
+   private static AiJumpSolver.JumpPlan solveLateralRunupJump(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, float var7
    ) {
       if (var5 > var2 + 1.26) {
@@ -1749,7 +1749,7 @@ public final class AiJumpSolver {
          for (double var26 : new double[]{0.9, 1.3, 1.8}) {
             double var28 = var1.getX() + 0.5 + var12 * var21 - var10 * var26;
             double var30 = var1.getZ() + 0.5 - var10 * var21 - var12 * var26;
-            if (putAt_Z_TokenCore_TaskStat(var0, var28, var2, var30)) {
+            if (canStandAt(var0, var28, var2, var30)) {
                AiPhysics.MotionState var32 = AiPhysics.MotionState.standing(var28, var2, var30);
 
                for (float var36 : new float[]{-8.0F, -4.0F, 0.0F, 4.0F, 8.0F}) {
@@ -1775,7 +1775,7 @@ public final class AiJumpSolver {
 
                                  for (int var51 = 1; var51 <= 4; var51++) {
                                     AiPhysics.MotionState var52 = var50[var51 - 1];
-                                    if (var52 == null || putAt(var52)) {
+                                    if (var52 == null || isGroundedNotRising(var52)) {
                                        break;
                                     }
 
@@ -1790,10 +1790,10 @@ public final class AiJumpSolver {
                                  for (int var54 : new int[]{2, 0, 4}) {
                                     AiPhysics.MotionState var55 = var50[var54];
                                     if (var55 != null) {
-                                       if (putAt(var55)) {
+                                       if (isGroundedNotRising(var55)) {
                                           BlockPos var73 = BlockPos.containing(var55.x(), var4.getY(), var55.z());
                                           if (var73.equals(var4) && Math.abs(var55.y() - var5) <= 0.02) {
-                                             double var74 = putAt_D_TokenCore_TaskStat_2(var0, var55, var4, var5, var49.yaw());
+                                             double var74 = settledLandingMargin(var0, var55, var4, var5, var49.yaw());
                                              if (var74 >= -0.04) {
                                                 var var75 = new ArrayList<>(var39);
                                                 var75.add(var47);
@@ -1836,13 +1836,13 @@ public final class AiJumpSolver {
                                                 }
 
                                                 var61 = var63;
-                                                if (putAt(var61)) {
+                                                if (isGroundedNotRising(var61)) {
                                                    BlockPos var64 = BlockPos.containing(var61.x(), var4.getY(), var61.z());
                                                    if (!var64.equals(var4) || !(Math.abs(var61.y() - var5) <= 0.02)) {
                                                       break;
                                                    }
 
-                                                   double var65 = putAt_D_TokenCore_TaskStat_2(var0, var61, var4, var5, var60.yaw());
+                                                   double var65 = settledLandingMargin(var0, var61, var4, var5, var60.yaw());
                                                    if (!(var65 >= -0.04)) {
                                                       break;
                                                    }
@@ -1902,7 +1902,7 @@ public final class AiJumpSolver {
       return null;
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
+   static AiJumpSolver.JumpPlan solveFollowUpJump(
       AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1, BlockPos var2, double var3, boolean var5
    ) {
       double var6 = Math.toRadians(var1.yaw());
@@ -1911,22 +1911,22 @@ public final class AiJumpSolver {
             var1.landX(), var1.landY(), var1.landZ(), -Math.sin(var6) * var1.landSpeed(), -0.0784, Math.cos(var6) * var1.landSpeed(), true, 0, false, true
          )
          : var1.maneuver().landing();
-      return putAt_IoUtil_TextState_TokenCore_TaskStat_5(var0, var8, var2, var3, var5);
+      return solveMomentumJump(var0, var8, var2, var3, var5);
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_5(
+   static AiJumpSolver.JumpPlan solveMomentumJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, boolean var5
    ) {
-      return putAt_IoUtil_TextState_TokenCore_TaskStat_2(var0, var1, var2, var3, var5, 0.1);
+      return solveMomentumJump(var0, var1, var2, var3, var5, 0.1);
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_4(
+   static AiJumpSolver.JumpPlan solveRunningTurnJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5
    ) {
-      return var1.speed() < 0.075 ? null : putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, var2, var3, var5, 2);
+      return var1.speed() < 0.075 ? null : solveRunningTurnJump(var0, var1, var2, var3, var5, 2);
    }
 
-   static AiJumpSolver.JumpPlan fill_IoUtil_TextState_TokenCore_TaskStat_2(
+   static AiJumpSolver.JumpPlan solveStrideJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5
    ) {
       float var6 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
@@ -1940,12 +1940,12 @@ public final class AiJumpSolver {
          return null;
       }
 
-      AiJumpSolver.JumpPlan var9 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var8.at(), var2, var3, var6, 5);
+      AiJumpSolver.JumpPlan var9 = solveRunningTurnJump(var0, var8.at(), var2, var3, var6, 5);
       if (var9 == null) {
          return null;
       }
 
-      AiJumpSolver.UiHelper var10 = readEx(var0, var1, var6, true, var2, var3);
+      AiJumpSolver.UiHelper var10 = solveTakeoffAllowEarlyCoast(var0, var1, var6, true, var2, var3);
       int var11 = var8.ticks() + var9.ticks();
       if (var10.margin() >= -0.12 && var11 >= var10.runTicks() + var10.flightTicks()) {
          return null;
@@ -1981,7 +1981,7 @@ public final class AiJumpSolver {
          );
    }
 
-   static List<AiJumpSolver.JumpPlan> putAt_List_TokenCore_TaskStat(
+   static List<AiJumpSolver.JumpPlan> solveJumpChain(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, List<AiJumpSolver.SurfaceCell> var3
    ) {
       List var4 = List.of(new AiJumpSolver.ChainNode(0, var2, var1, List.of()));
@@ -1996,7 +1996,7 @@ public final class AiJumpSolver {
          ArrayList<AiJumpSolver.ChainNode> var8 = new ArrayList<>();
 
          for (AiJumpSolver.ChainNode var10 : (Iterable<AiJumpSolver.ChainNode>)(Iterable<?>)(var4)) {
-            for (AiJumpSolver.JumpPlan var12 : putAt_List_TokenCore_TaskStat(var0, var10.state(), var10.yaw(), var6.cell(), var6.surface(), var7)) {
+            for (AiJumpSolver.JumpPlan var12 : solvePaceHopCandidates(var0, var10.state(), var10.yaw(), var6.cell(), var6.surface(), var7)) {
                var var13 = new ArrayList<>(var10.flights());
                var13.add(var12);
                AiJumpManeuver var14 = var12.maneuver();
@@ -2008,7 +2008,7 @@ public final class AiJumpSolver {
             return List.of();
          }
 
-         var8.sort(Comparator.comparingDouble(var1x -> var1x.cost() + putAt_D_TokenCore_TableCac(var1x.state(), var1x.yaw(), var7)));
+         var8.sort(Comparator.comparingDouble(var1x -> var1x.cost() + scoreChainContinuation(var1x.state(), var1x.yaw(), var7)));
          ArrayList var15 = new ArrayList(5);
 
          for (AiJumpSolver.ChainNode var17 : var8) {
@@ -2031,11 +2031,11 @@ public final class AiJumpSolver {
       return ((AiJumpSolver.ChainNode)var4.getFirst()).flights();
    }
 
-   static AiJumpSolver.JumpPlan fill_IoUtil_TextState_TokenCore_TaskStat(
+   static AiJumpSolver.JumpPlan solveFastPaceJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, double var4
    ) {
-      if (putAt(var1) && !(var1.speed() < 0.1) && var1.pose() == 0) {
-         var var6 = putAt_List_TokenCore_TaskStat(var0, var1, var2, var3, var4, null);
+      if (isGroundedNotRising(var1) && !(var1.speed() < 0.1) && var1.pose() == 0) {
+         var var6 = solvePaceHopCandidates(var0, var1, var2, var3, var4, null);
          AiJumpSolver.JumpPlan var7 = null;
 
          for (AiJumpSolver.JumpPlan var9 : var6) {
@@ -2054,7 +2054,7 @@ public final class AiJumpSolver {
       }
    }
 
-   private static double putAt_D_TokenCore_TableCac(AiPhysics.MotionState var0, float var1, AiJumpSolver.SurfaceCell var2) {
+   private static double scoreChainContinuation(AiPhysics.MotionState var0, float var1, AiJumpSolver.SurfaceCell var2) {
       if (var2 == null) {
          return 0.0;
       }
@@ -2067,7 +2067,7 @@ public final class AiJumpSolver {
       return 2.0 * var7 - 8.0 * var9 + 0.025 * Math.abs(var11);
    }
 
-   private static List<AiJumpSolver.JumpPlan> putAt_List_TokenCore_TaskStat(
+   private static List<AiJumpSolver.JumpPlan> solvePaceHopCandidates(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, double var4, AiJumpSolver.SurfaceCell var6
    ) {
       double var7 = var3.getX() + 0.5 - var1.x();
@@ -2078,7 +2078,7 @@ public final class AiJumpSolver {
          float var14 = AiPhysics.yawBetween(0.0, 0.0, var7, var9);
          ArrayList<AiJumpSolver.JumpPlan> var15 = new ArrayList<>();
 
-         for (float var19 : fill_FArr) {
+         for (float var19 : PACE_YAW_OFFSETS) {
             float var20 = var14 + var19;
             AiPhysics.MoveInput var21 = AiPhysics.MoveInput.run(var20, true);
             AiPhysics.MotionState var22 = var1;
@@ -2091,9 +2091,9 @@ public final class AiJumpSolver {
             for (int var28 = 0; var28 <= 8; var28++) {
                if (Math.abs(Mth.wrapDegrees(var20 - var24)) <= 28.0F) {
                   for (AiPhysics.MoveInput var30 : var27) {
-                     AiJumpSolver.ArcResult var31 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var22, var21, var30, 2147483647, var13, var3, var4);
+                     AiJumpSolver.ArcResult var31 = simulateJumpArc(var0, var22, var21, var30, 2147483647, var13, var3, var4);
                      if (var31 != null && var31.along() > var11 && var31.margin() < 0.075) {
-                        var31 = putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(var0, var22, var21, var30, var31, var13, var3, var4);
+                        var31 = optimizeCoastRelease(var0, var22, var21, var30, var31, var13, var3, var4);
                      }
 
                      if (var31 != null
@@ -2153,8 +2153,8 @@ public final class AiJumpSolver {
       }
    }
 
-   static AiJumpSolver.JumpPlan readEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
-      if (putAt(var1) && var1.pose() == 0 && !(var1.speed() < 0.1)) {
+   static AiJumpSolver.JumpPlan solveSharpCornerJump(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
+      if (isGroundedNotRising(var1) && var1.pose() == 0 && !(var1.speed() < 0.1)) {
          float var6 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
          float var7 = AiPhysics.yawBetween(0.0, 0.0, var1.vx(), var1.vz());
          float var8 = Math.abs(Mth.wrapDegrees(var6 - var7));
@@ -2171,14 +2171,14 @@ public final class AiJumpSolver {
                if (!var15.onGround()
                   || var15.horizontalCollision()
                   || Math.abs(var15.y() - var1.y()) > 0.02
-                  || !putAt_Z_TokenCore_TaskStat(var0, var15.x(), var15.y(), var15.z())
+                  || !canStandAt(var0, var15.x(), var15.y(), var15.z())
                   || AiPhysics.hitsStrictHazard(var0, var10, var15)) {
                   break;
                }
 
                var9.add(var14);
                var10 = var15;
-               AiJumpSolver.JumpPlan var16 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var10, var2, var3, var11, 3 - var12);
+               AiJumpSolver.JumpPlan var16 = solveRunningTurnJump(var0, var10, var2, var3, var11, 3 - var12);
                if (var16 != null && !(Math.abs(Mth.wrapDegrees(var16.yaw() - var11)) > 34.0F)) {
                   int var17 = var16.runTicks() + var9.size();
                   var var18 = new ArrayList<>(var9);
@@ -2215,10 +2215,10 @@ public final class AiJumpSolver {
       }
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   static AiJumpSolver.JumpPlan solveRunningTurnJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5, int var6
    ) {
-      if (putAt(var1) && var1.pose() == 0 && !var1.horizontalCollision()) {
+      if (isGroundedNotRising(var1) && var1.pose() == 0 && !var1.horizontalCollision()) {
          double var7 = var2.getX() + 0.5 - var1.x();
          double var9 = var2.getZ() + 0.5 - var1.z();
          double var11 = Math.hypot(var7, var9);
@@ -2238,7 +2238,7 @@ public final class AiJumpSolver {
 
             for (float var27 : var22) {
                AiPhysics.MoveInput var28 = AiPhysics.MoveInput.run(var27, true);
-               var var29 = putAt_List_TokenCore_TaskStat_2(var0, var1, var28, var6);
+               var var29 = simulateRunupStates(var0, var1, var28, var6);
 
                for (int var30 = 0; var30 < var29.size() && (var23 == null || var30 <= var23.runTicks()); var30++) {
                   AiPhysics.MotionState var31 = (AiPhysics.MotionState)var29.get(var30);
@@ -2248,12 +2248,12 @@ public final class AiJumpSolver {
 
                   if (!(var31.vx() * var13 + var31.vz() * var15 < 0.035)) {
                      for (int var35 : new int[]{2147483647, 5, 8}) {
-                        AiJumpSolver.ArcResult var36 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var31, var28, var28, var35, var20, var2, var3);
+                        AiJumpSolver.ArcResult var36 = simulateJumpArc(var0, var31, var28, var28, var35, var20, var2, var3);
                         if (var36 != null
                            && var36.settled()
                            && !var36.bumped()
                            && !(var36.margin() < 0.075)
-                           && putAt_Z_D(var36.end().x(), var36.end().y(), var36.end().z(), var2, var3)
+                           && isLandedOnCell(var36.end().x(), var36.end().y(), var36.end().z(), var2, var3)
                            && (var23 == null || var30 != var23.runTicks() || !(var36.end().speed() <= var23.landSpeed() + 0.015))) {
                            ArrayList var37 = new ArrayList();
 
@@ -2306,25 +2306,25 @@ public final class AiJumpSolver {
       }
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
+   static AiJumpSolver.JumpPlan solveMomentumJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, boolean var5, double var6
    ) {
       double var8 = var2.getX() + 0.5 - var1.x();
       double var10 = var2.getZ() + 0.5 - var1.z();
       double var12 = Math.hypot(var8, var10);
-      if (putAt(var1) && !(var12 < 2.0) && !((var1.vx() * var8 + var1.vz() * var10) / var12 < var6)) {
+      if (isGroundedNotRising(var1) && !(var12 < 2.0) && !((var1.vx() * var8 + var1.vz() * var10) / var12 < var6)) {
          AiJumpSolver.JumpAxis var14 = new AiJumpSolver.JumpAxis(var1.x(), var1.z(), var8 / var12, var10 / var12, var12);
          float var15 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
 
          for (float var19 : new float[]{0.0F, -5.0F, 5.0F, -10.0F, 10.0F, -15.0F, 15.0F}) {
             float var20 = var15 + var19;
-            AiJumpSolver.UiHelper var21 = putAt_IoUtil_IoPool_TokenCore_TaskStat(var0, var1, var20, var5, var2, var3, 3);
+            AiJumpSolver.UiHelper var21 = solveTakeoff(var0, var1, var20, var5, var2, var3, 3);
             if (!(var21.margin() < -0.04)) {
                AiPhysics.MoveInput var22 = AiPhysics.MoveInput.run(var20, var5);
                AiPhysics.MoveInput var23 = var22.withStrafe(var21.strafe());
-               var var24 = putAt_List_TokenCore_TaskStat_2(var0, var1, var23, var21.runTicks());
+               var var24 = simulateRunupStates(var0, var1, var23, var21.runTicks());
                if (var24.size() > var21.runTicks()) {
-                  AiJumpSolver.ArcResult var25 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+                  AiJumpSolver.ArcResult var25 = simulateJumpArc(
                      var0, (AiPhysics.MotionState)var24.getLast(), var23, var22, var21.coastAfter(), var14, var2, var3
                   );
                   if (var25 != null && var25.settled() && !(var25.margin() < -0.04)) {
@@ -2369,13 +2369,13 @@ public final class AiJumpSolver {
       }
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   static AiJumpSolver.JumpPlan solveUncoastedChainedJump(
       AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1, BlockPos var2, double var3, double var5
    ) {
       if (var1.maneuver() == null && var1.sprint() && !var1.running() && var1.coastAfter() != 2147483647) {
          AiPhysics.MoveInput var7 = AiPhysics.MoveInput.run(var1.yaw(), true);
          AiPhysics.MotionState var8 = AiPhysics.MotionState.standing(var1.startX(), var3, var1.startZ());
-         var var9 = putAt_List_TokenCore_TaskStat_2(var0, var8, var7, var1.runTicks());
+         var var9 = simulateRunupStates(var0, var8, var7, var1.runTicks());
          if (var9.size() <= var1.runTicks()) {
             return null;
          }
@@ -2388,15 +2388,15 @@ public final class AiJumpSolver {
          }
 
          AiJumpSolver.JumpAxis var16 = new AiJumpSolver.JumpAxis(var8.x(), var8.z(), var10 / var14, var12 / var14, var14);
-         AiJumpSolver.ArcResult var17 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+         AiJumpSolver.ArcResult var17 = simulateJumpArc(
             var0, (AiPhysics.MotionState)var9.getLast(), var7, var7, 2147483647, var16, var2, var5
          );
          if (var17 != null
             && var17.settled()
             && !(var17.end().speed() < var1.landSpeed() + 0.04)
             && !(Math.abs(var17.end().y() - var5) > 0.02)
-            && putAt_Z_D(var17.end().x(), var17.end().y(), var17.end().z(), var2, var5)
-            && putAt_Z_TokenCore_TaskStat(var0, var17.end().x(), var5, var17.end().z())) {
+            && isLandedOnCell(var17.end().x(), var17.end().y(), var17.end().z(), var2, var5)
+            && canStandAt(var0, var17.end().x(), var5, var17.end().z())) {
             ArrayList var18 = new ArrayList();
 
             for (int var19 = 0; var19 < var1.runTicks(); var19++) {
@@ -2435,13 +2435,13 @@ public final class AiJumpSolver {
       }
    }
 
-   public static AiJumpSolver.UiHelper putAt_IoUtil_IoPool_TokenCore_TaskStat(
+   public static AiJumpSolver.UiHelper solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, int var7
    ) {
-      return putAt_IoUtil_IoPool_TokenCore_TaskStat(var0, var1, var2, var3, var4, var5, var7, false);
+      return solveTakeoff(var0, var1, var2, var3, var4, var5, var7, false);
    }
 
-   private static AiJumpSolver.UiHelper putAt_IoUtil_IoPool_TokenCore_TaskStat(
+   private static AiJumpSolver.UiHelper solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, int var7, boolean var8
    ) {
       double var9 = var4.getX() + 0.5;
@@ -2455,8 +2455,8 @@ public final class AiJumpSolver {
 
       AiJumpSolver.JumpAxis var19 = new AiJumpSolver.JumpAxis(var1.x(), var1.z(), var13 / var17, var15 / var17, var17);
       AiPhysics.MoveInput var20 = AiPhysics.MoveInput.run(var2, var3);
-      AiJumpSolver.ArcResult var21 = putAt_IoUtil_JsonCache_TokenCore_TaskStat(var0, var1, var20, var20, 2147483647, var19, var4, var5);
-      if (var21 != null && var21.settled() && !var21.bumped() && var21.margin() >= 0.08 && putAt_D_D(var21.end().x(), var21.end().z(), var4) >= 0.08) {
+      AiJumpSolver.ArcResult var21 = simulateJumpArc(var0, var1, var20, var20, 2147483647, var19, var4, var5);
+      if (var21 != null && var21.settled() && !var21.bumped() && var21.margin() >= 0.08 && cellEdgeMargin(var21.end().x(), var21.end().z(), var4) >= 0.08) {
          return new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var21.margin(), var3, var21.ticks() + 1);
       }
 
@@ -2465,8 +2465,8 @@ public final class AiJumpSolver {
 
       for (double var28 : var8 ? new double[]{0.0} : new double[]{0.0, 1.0, -1.0}) {
          AiPhysics.MoveInput var30 = var20.withStrafe(var28);
-         AiJumpSolver.RunArc var31 = putAt(
-            var0, putAt_List_TokenCore_TaskStat_2(var0, var1, var30, Math.clamp(var7, 0, 40)), var30, var20, var19, var4, var5, true, false
+         AiJumpSolver.RunArc var31 = findBestRunArc(
+            var0, simulateRunupStates(var0, var1, var30, Math.clamp(var7, 0, 40)), var30, var20, var19, var4, var5, true, false
          );
          double var32 = var31 == null ? -1.0 : var31.arc().margin();
          int var34 = var31 == null ? 0 : var31.runTicks();
@@ -2486,25 +2486,25 @@ public final class AiJumpSolver {
       return var22;
    }
 
-   public static AiJumpSolver.ApproachOffset putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+   public static AiJumpSolver.ApproachOffset solveAirControl(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5
    ) {
-      return putAt_IoUtil_CacheHelper_TokenCore_TaskStat_2(var0, var1, var2, var3, var4, var5, (AiJumpSolver.LandingTarget)null);
+      return solveAirControlForTarget(var0, var1, var2, var3, var4, var5, (AiJumpSolver.LandingTarget)null);
    }
 
-   public static AiJumpSolver.ApproachOffset putAt_IoUtil_CacheHelper_TokenCore_TaskStat_3(
+   public static AiJumpSolver.ApproachOffset solveAirControlToWalkTarget(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, BlockPos var7
    ) {
-      return putAt_IoUtil_CacheHelper_TokenCore_TaskStat_2(var0, var1, var2, var3, var4, var5, var7 == null ? null : AiJumpSolver.LandingTarget.walk(var7, var5));
+      return solveAirControlForTarget(var0, var1, var2, var3, var4, var5, var7 == null ? null : AiJumpSolver.LandingTarget.walk(var7, var5));
    }
 
-   public static AiJumpSolver.ApproachOffset putAt_IoUtil_CacheHelper_TokenCore_TaskStat_2(
+   public static AiJumpSolver.ApproachOffset solveAirControlForTarget(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, AiJumpSolver.LandingTarget var7
    ) {
-      return putAt_IoUtil_CacheHelper_TokenCore_TaskStat(var0, var1, var2, var3, var4, var5, var7, false);
+      return solveAirControlForTarget(var0, var1, var2, var3, var4, var5, var7, false);
    }
 
-   static AiJumpSolver.ApproachOffset putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+   static AiJumpSolver.ApproachOffset solveAirControlForTarget(
       AiPhysics.PhysicsWorld var0,
       AiPhysics.MotionState var1,
       float var2,
@@ -2538,14 +2538,14 @@ public final class AiJumpSolver {
 
                var23 = var29;
                var27 |= var23.horizontalCollision() && !var23.onGround();
-               if (putAt(var0, var23)) {
+               if (isInFluid(var0, var23)) {
                   break;
                }
 
-               if (putAt(var23)) {
-                  var24 = var23.y() <= var5 + 0.02 && var23.y() >= var5 - 0.55 ? putAt_D_TokenCore_TaskStat_2(var0, var23, var4, var5, var2) : -1.0;
+               if (isGroundedNotRising(var23)) {
+                  var24 = var23.y() <= var5 + 0.02 && var23.y() >= var5 - 0.55 ? settledLandingMargin(var0, var23, var4, var5, var2) : -1.0;
                   if (var8 && var24 < 0.065) {
-                     var24 = putAt_D_TokenCore_TaskStat_2(var0, var23, var4, var5);
+                     var24 = measureCoastingSupportMargin(var0, var23, var4, var5);
                   }
                   break;
                }
@@ -2556,7 +2556,7 @@ public final class AiJumpSolver {
             }
 
             if (!var26) {
-               boolean var36 = putAt_Z_D(var23.x(), var23.y(), var23.z(), var4, var5) || var8 && putAt_Z_TokenCore_TableCac(var23, var4, var5);
+               boolean var36 = isLandedOnCell(var23.x(), var23.y(), var23.z(), var4, var5) || var8 && isInsideLandingCell(var23, var4, var5);
                boolean var37 = var7 != null && var24 >= -0.12 && (var7.nextJump() == null || var15 > 0.0 && var20 == 0.0) && var7.proves(var0, var23);
                if (var37) {
                   var24 = Math.max(var24, 0.14);
@@ -2581,7 +2581,7 @@ public final class AiJumpSolver {
       return var9 == null ? new AiJumpSolver.ApproachOffset(0.0, 0.0, -1.0) : var9;
    }
 
-   public static AiJumpSolver.ApproachOffset putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+   public static AiJumpSolver.ApproachOffset solveAirControlWithCoast(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, int var7
    ) {
       if (var7 == 2147483647) {
@@ -2593,13 +2593,13 @@ public final class AiJumpSolver {
       for (int var9 = 1; var9 <= 100; var9++) {
          AiPhysics.MoveInput var10 = new AiPhysics.MoveInput(var9 <= var7 ? 1.0 : 0.0, 0.0, false, var3 && var9 <= var7, false, var2);
          AiPhysics.MotionState var11 = AiPhysics.step(var8, var10, var0);
-         if (AiPhysics.hitsStrictHazard(var0, var8, var11) || putAt(var0, var11)) {
+         if (AiPhysics.hitsStrictHazard(var0, var8, var11) || isInFluid(var0, var11)) {
             return null;
          }
 
          var8 = var11;
-         if (putAt(var8)) {
-            double var12 = var8.y() <= var5 + 0.02 && var8.y() >= var5 - 0.55 ? putAt_D_TokenCore_TaskStat_2(var0, var8, var4, var5, var2) : -1.0;
+         if (isGroundedNotRising(var8)) {
+            double var12 = var8.y() <= var5 + 0.02 && var8.y() >= var5 - 0.55 ? settledLandingMargin(var0, var8, var4, var5, var2) : -1.0;
             return var12 >= -0.12 ? new AiJumpSolver.ApproachOffset(var7 > 0 ? 1.0 : 0.0, 0.0, var12) : null;
          }
 
@@ -2611,52 +2611,52 @@ public final class AiJumpSolver {
       return null;
    }
 
-   public static double putAt_D_D_2(double var0, boolean var2, boolean var3) {
-      return putAt_D_D(var0, var2, var3, 0.1);
+   public static double maxJumpReach(double var0, boolean var2, boolean var3) {
+      return maxJumpReach(var0, var2, var3, 0.1);
    }
 
-   static double putAt_D_D(double var0, boolean var2, boolean var3, double var4) {
+   static double maxJumpReach(double var0, boolean var2, boolean var3, double var4) {
       int var6 = (int)Math.round(var0 * 4.0) * 8 + (var2 ? 4 : 0) + (var3 ? 2 : 0) + 1;
       if (Math.abs(var4 - 0.1) > 1.0E-6) {
-         if (fill_ConcurrentHashMap.size() > 4096) {
-            fill_ConcurrentHashMap.clear();
+         if (SPEED_REACH_CACHE.size() > 4096) {
+            SPEED_REACH_CACHE.clear();
          }
 
          double var11 = Math.ceil(var4 * 10000.0 - 1.0E-6) / 10000.0;
          int var9 = (int)Math.floor(var0 * 16.0);
          AiJumpSolver.ArcSpeed var10 = new AiJumpSolver.ArcSpeed(var9 * 4 + (var2 ? 2 : 0) + (var3 ? 1 : 0), var11);
-         return fill_ConcurrentHashMap.computeIfAbsent(var10, var5 -> putAt_D_D(var9 / 16.0, var2, var3, true, var11));
+         return SPEED_REACH_CACHE.computeIfAbsent(var10, var5 -> simulateMaxReach(var9 / 16.0, var2, var3, true, var11));
       } else {
-         Double var7 = putAt_ConcurrentHashMap.get(var6);
+         Double var7 = DEFAULT_REACH_CACHE.get(var6);
          if (var7 != null) {
             return var7;
          }
 
-         double var8 = putAt_D_D(var0, var2, var3, true, 0.1);
-         putAt_ConcurrentHashMap.put(var6, var8);
+         double var8 = simulateMaxReach(var0, var2, var3, true, 0.1);
+         DEFAULT_REACH_CACHE.put(var6, var8);
          return var8;
       }
    }
 
-   public static double putAt(double var0) {
+   public static double standingJumpReach(double var0) {
       int var2 = (int)Math.round(var0 * 4.0) * 8;
-      Double var3 = putAt_ConcurrentHashMap.get(var2);
+      Double var3 = DEFAULT_REACH_CACHE.get(var2);
       if (var3 != null) {
          return var3;
       }
 
-      double var4 = putAt_D_D(var0, false, false, false, 0.1);
-      putAt_ConcurrentHashMap.put(var2, var4);
+      double var4 = simulateMaxReach(var0, false, false, false, 0.1);
+      DEFAULT_REACH_CACHE.put(var2, var4);
       return var4;
    }
 
-   private static double putAt_D_D(double var0, boolean var2, boolean var3, boolean var4, double var5) {
+   private static double simulateMaxReach(double var0, boolean var2, boolean var3, boolean var4, double var5) {
       AiJumpSolver.FlatBlockWorld var7 = new AiJumpSolver.FlatBlockWorld(var5);
       double var8 = var3 ? 0.3 : 0.5;
       double var10 = var3 ? 0.28 * (var5 / 0.1) : 0.0;
       AiPhysics.MotionState var12 = new AiPhysics.MotionState(var8, 64.0, 0.5, var10, -0.0784, 0.0, true, 0, false, false);
       AiPhysics.MoveInput var13 = AiPhysics.MoveInput.run(-90.0F, var2);
-      var var14 = putAt_List_TokenCore_TaskStat_2(var7, var12, var13, 12);
+      var var14 = simulateRunupStates(var7, var12, var13, 12);
       AiPhysics.MotionState var15 = var4 ? (AiPhysics.MotionState)var14.get(var14.size() - 1) : (AiPhysics.MotionState)var14.get(0);
       AiPhysics.MotionState var16 = AiPhysics.step(var15, var13.withJump(true), var7);
       AiPhysics.MoveInput var17 = var4 ? var13 : new AiPhysics.MoveInput(0.0, 0.0, false, false, false, -90.0F);
@@ -2693,15 +2693,15 @@ public final class AiJumpSolver {
       }
 
       boolean proves(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2) {
-         if (!AiJumpSolver.putAt(var2)) {
+         if (!AiJumpSolver.isGroundedNotRising(var2)) {
             return false;
          } else if (this.nextJump != null) {
             return !atCell(var2, this.nextJump.from(), this.nextJump.fromSurface())
                ? false
-               : AiJumpSolver.putAt_IoUtil_IoPool_TokenCore_TaskStat(var1, var2, this.nextJump.yaw(), this.nextJump.sprint(), this.cell, this.surface, 6).margin()
+               : AiJumpSolver.solveTakeoff(var1, var2, this.nextJump.yaw(), this.nextJump.sprint(), this.cell, this.surface, 6).margin()
                   >= -0.04;
          } else {
-            return atCell(var2, this.cell, this.surface) && AiJumpSolver.putAt_Z_TokenCore_TaskStat_2(var1, this.cell.getX(), this.cell.getZ(), this.surface);
+            return atCell(var2, this.cell, this.surface) && AiJumpSolver.isFullFlatSupport(var1, this.cell.getX(), this.cell.getZ(), this.surface);
          }
       }
 
@@ -2859,7 +2859,7 @@ public final class AiJumpSolver {
 
       AiJumpSolver.ArcResult fly(int var1, int var2) {
          if (var2 != 2147483647) {
-            return AiJumpSolver.putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+            return AiJumpSolver.simulateJumpArc(
                this.world, this.runs.get(var1), this.press, this.air, var2, this.line, this.to, this.surface
             );
          }
@@ -2868,14 +2868,14 @@ public final class AiJumpSolver {
          return var3 != null
             ? var3
             : (
-               this.held[var1] = AiJumpSolver.putAt_IoUtil_JsonCache_TokenCore_TaskStat(
+               this.held[var1] = AiJumpSolver.simulateJumpArc(
                   this.world, this.runs.get(var1), this.press, this.air, 2147483647, this.line, this.to, this.surface
                )
             );
       }
 
       AiJumpSolver.ArcResult releaseEarlier(int var1, AiJumpSolver.ArcResult var2) {
-         return AiJumpSolver.putAt_IoUtil_JsonCache_TokenCore_TaskStat_2(
+         return AiJumpSolver.optimizeCoastRelease(
             this.world, this.runs.get(var1), this.press, this.air, var2, this.line, this.to, this.surface
          );
       }
@@ -2888,15 +2888,15 @@ public final class AiJumpSolver {
    }
 
    // 5.3 external ABI bridges for ai/b/TokenStore.java
-   public static AiJumpSolver.UiHelper init_TableIndex_UiHelpe_NodeWalker_CachePo(
+   public static AiJumpSolver.UiHelper solveTakeoffCompat(
       AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, float yaw, boolean sprint, BlockPos to, double toSurface
    ) {
-      return putAt_IoUtil_IoPool_TokenCore_TaskStat(world, state, yaw, sprint, to, toSurface);
+      return solveTakeoff(world, state, yaw, sprint, to, toSurface);
    }
 
-   public static AiJumpSolver.UiHelper init_TableIndex_UiHelpe_NodeWalker_CachePo(
+   public static AiJumpSolver.UiHelper solveTakeoffCompat(
       AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, float yaw, boolean sprint, BlockPos to, double toSurface, int maxRunTicks
    ) {
-      return putAt_IoUtil_IoPool_TokenCore_TaskStat(world, state, yaw, sprint, to, toSurface, maxRunTicks);
+      return solveTakeoff(world, state, yaw, sprint, to, toSurface, maxRunTicks);
    }
 }

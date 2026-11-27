@@ -216,7 +216,7 @@ final class AiStationPlacer {
 
                if (landing) {
                   AutismClientAddon.LOG.info("[AI] clearing a leaf exit for the {} at {}", this.init_Str, cell.toShortString());
-                  this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.init(upperLeaf ? above : cell, 10);
+                  this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(upperLeaf ? above : cell, 10);
                   return;
                }
             }
@@ -242,7 +242,7 @@ final class AiStationPlacer {
                boolean clearHead = !mc.level.getBlockState(above).getCollisionShape(mc.level, above).isEmpty();
                if (!clearHead || init(mc, above)) {
                   AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.init_Str, cell.toShortString());
-                  this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.init(cell, 10);
+                  this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
                   this.init_BlockPos = cell.immutable();
                   this.read_Str = "Digging out a spot for the " + this.init_Str;
                   return true;
@@ -281,7 +281,7 @@ final class AiStationPlacer {
 
    private static AiOperation init(final BlockPos above, final BlockPos cell) {
       return new AiOperation() {
-         AiOperation init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(above, 10);
+         AiOperation init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10);
          boolean init_Z = true;
 
          @Override
@@ -290,7 +290,7 @@ final class AiStationPlacer {
             if (result.terminal() && result.status() == AiOperation.Status.SUCCEEDED && this.init_Z) {
                this.init_AiOperation.cancel();
                this.init_Z = false;
-               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10);
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
                return this.init_AiOperation.tick();
             } else {
                return result;

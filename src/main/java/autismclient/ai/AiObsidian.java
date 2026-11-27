@@ -623,7 +623,7 @@ final class AiObsidian {
 
                            protect.add(this.load_BlockPos.below().asLong());
                            protect.add(this.load_BlockPos.north().below().asLong());
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10, false, protect, false);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10, false, protect, false);
                         }
                      }
                   case WALL_APPROACH:
@@ -738,7 +738,7 @@ final class AiObsidian {
                      this.init_AiOperation = this.init("fill", "water", this.load_BlockPos.north());
                      break;
                   case BREAK:
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
                         this.load_BlockPos, 30, true, Set.of(), false, Set.of(this.load_BlockPos, this.load_BlockPos.north())
                      );
                      break;
@@ -775,7 +775,7 @@ final class AiObsidian {
                         return AiObsidian.init_AiOperation_Result_Str("Letting the mold's water drain");
                      }
 
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_List.removeFirst(), 10, true, Set.of(), false);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.init_List.removeFirst(), 10, true, Set.of(), false);
                }
 
                if (this.init_AiOperation != null) {

@@ -3418,7 +3418,7 @@ final class AiTools {
             var10000 = AiScaffoldWalk.init(args);
             break;
          case "game:build":
-            var10000 = AiBuilder.init_AiOperation(args);
+            var10000 = AiBuilder.buildFromArgs(args);
             break;
          case "game:fill":
             var10000 = AiFill.init_AiOperation(args);

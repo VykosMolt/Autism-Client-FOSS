@@ -298,7 +298,7 @@ final class AiEndRun {
                            return this.init(this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Out of time in the End");
                         }
 
-                        autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
+                        autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(5000000000L);
                         autismclient.ai.engine.AiMotionSafety.setPitchFloor(25.0F, 5000000000L);
                         if (mc.player.onGround() && mc.player.tickCount % 40 == 0) {
                            AiMlg.init(mc.player, Items.WATER_BUCKET);
@@ -700,7 +700,7 @@ final class AiEndRun {
                this.init_Z = this.init_Z | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
                this.init_V_33();
                this.init_Y.cancel();
-               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
                return result;
             }
 
@@ -719,7 +719,7 @@ final class AiEndRun {
                this.init_Z = this.init_Z | this.requiresReconciliationAfterEmergency();
                this.init_V_33();
                this.init_Y.cancel();
-               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
             }
          };
       } else {

@@ -216,28 +216,28 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class AiBuilder {
-   static final int init_I = 4096;
-   static final int load = 2097152;
-   static final int read = 256;
-   private static final int write = 3;
-   private static final int update = 4;
-   private static final int sync = 64;
-   private static final int flush = 4;
-   private static final int close = 100;
-   private static final int open = 5;
-   private static final int poll = 2;
-   private static final int push = 32;
-   private static final int pop = 6;
-   private static final int tick = 6;
-   private static final int run = 12;
-   private static final int get = 2;
-   private static final int set = 96;
-   private static final int put = 30;
-   private static final Set<String> init_Set = Set.of(
+   static final int MAX_BLUEPRINT_CELLS = 4096;
+   static final int MAX_SCHEMATIC_CELLS = 2097152;
+   static final int MAX_OFFSET_COORD = 256;
+   private static final int MAX_CELL_ATTEMPTS = 3;
+   private static final int MAX_PLACEMENTS_PER_TICK = 4;
+   private static final int MAX_CELLS_EVALUATED_PER_TICK = 64;
+   private static final int SERVER_REFUSAL_TICKS = 4;
+   private static final int VERIFY_TIMEOUT_TICKS = 100;
+   private static final int VERIFY_STABLE_TICKS = 5;
+   private static final int UNVERIFIED_WAIT_TICKS = 2;
+   private static final int MAX_FAILED_REPORTED = 32;
+   private static final int MAX_RECOVERY_ATTEMPTS = 6;
+   private static final int MAX_INTERACT_ATTEMPTS = 6;
+   private static final int MAX_DEFERRAL_PASSES = 12;
+   private static final int MAX_AUDIT_PASSES = 2;
+   private static final int NEARBY_LOOKAHEAD_WINDOW = 96;
+   private static final int SUB_OP_TIMEOUT_SECONDS = 30;
+   private static final Set<String> REPLACEABLE_FOLIAGE_BLOCKS = Set.of(
       "minecraft:short_grass", "minecraft:tall_grass", "minecraft:short_dry_grass", "minecraft:tall_dry_grass", "minecraft:fern", "minecraft:large_fern"
    );
 
-   static Path init_Path(AiBuilder.Blueprint blueprint) {
+   static Path checkpointPath(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       List<AiBuilder.CellSpec> cells = blueprint.cells()
          .stream()
@@ -266,7 +266,7 @@ final class AiBuilder {
       return mc.gameDirectory.toPath().resolve("config/autism/ai/scaffold-jobs").resolve(world).resolve(AiJson.sha256Hex(identity.toString()) + ".json");
    }
 
-   static int init_I_List(List<BlockPos> cells, Vec3 worker, Predicate<BlockPos> reachable) {
+   static int pickNearestScaffoldIndex(List<BlockPos> cells, Vec3 worker, Predicate<BlockPos> reachable) {
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("No scaffold remains");
       }
@@ -295,7 +295,7 @@ final class AiBuilder {
    private AiBuilder() {
    }
 
-   static List<BlockPos> init(
+   static List<BlockPos> filterCommittedOutsideLookahead(
       List<BlockPos> committed, List<AiBuilder.CellSpec> order, int cursor, BlockPos origin, Map<Long, AiBuilder.CellSpec> wantedCells
    ) {
       Set<Long> unprocessed = new HashSet<>();
@@ -316,7 +316,7 @@ final class AiBuilder {
       return ready;
    }
 
-   static boolean init_Z_Map(Map<Long, Integer> attempts, BlockPos pos, int maxAttempts) {
+   static boolean incrementAndCheckAttemptLimit(Map<Long, Integer> attempts, BlockPos pos, int maxAttempts) {
       long key = pos.asLong();
       int next = attempts.getOrDefault(key, 0) + 1;
       if (next >= maxAttempts) {
@@ -328,11 +328,11 @@ final class AiBuilder {
       }
    }
 
-   static void init_V_Map(Map<Long, Integer> attempts, BlockPos pos, int count) {
+   static void raiseAttemptCount(Map<Long, Integer> attempts, BlockPos pos, int count) {
       attempts.computeIfPresent(pos.asLong(), (key, previous) -> Math.max(previous, count));
    }
 
-   static int init(
+   static int deferQueuedCell(
       List<AiBuilder.CellSpec> order,
       List<AiBuilder.CellSpec> deferred,
       List<String> reasons,
@@ -355,15 +355,15 @@ final class AiBuilder {
       return -1;
    }
 
-   static boolean init_Z_Item(Item expected, ItemStack held, boolean serverMatches) {
+   static boolean isExpectedItemSelected(Item expected, ItemStack held, boolean serverMatches) {
       return serverMatches && held.is(expected);
    }
 
-   static boolean init(BlockPos expectedSupport, Direction expectedFace, BlockPos actualSupport, Direction actualFace) {
+   static boolean matchesPlacementFace(BlockPos expectedSupport, Direction expectedFace, BlockPos actualSupport, Direction actualFace) {
       return expectedSupport.equals(actualSupport) && expectedFace == actualFace;
    }
 
-   static AiBuilder.BuildOptions init_TableIndex_ConfigS(JsonObject args) {
+   static AiBuilder.BuildOptions parseBuildOptions(JsonObject args) {
       int rotation = AiJson.getInt(args, "rotation", 0);
       if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
          throw new IllegalArgumentException("rotation must be 0, 90, 180 or 270 (clockwise seen from above), got " + rotation);
@@ -422,14 +422,14 @@ final class AiBuilder {
          repeat = new AiBuilder.RepeatSpec(rdx, rdy, rdz, count);
       }
 
-      Map<String, List<String>> substitutes = init_Map(args);
+      Map<String, List<String>> substitutes = parseSubstitutes(args);
       boolean clearTerrain = AiJson.getBoolean(args, "clearTerrain", false);
       boolean shulkerStock = AiJson.getBoolean(args, "shulkerStock", true);
       return new AiBuilder.BuildOptions(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock)
          .withAssumeFly(AiJson.getBoolean(args, "assumeFly", false));
    }
 
-   static Map<String, List<String>> init_Map(JsonObject args) {
+   static Map<String, List<String>> parseSubstitutes(JsonObject args) {
       if (args.has("substitutes") && !args.get("substitutes").isJsonNull()) {
          if (!args.get("substitutes").isJsonObject()) {
             throw new IllegalArgumentException("substitutes must be an object of {\"<block>\": [\"alt\", ...]}");
@@ -444,7 +444,7 @@ final class AiBuilder {
             }
 
             String key = entry.getKey();
-            init_V(key, "substitutes key");
+            validateBlockId(key, "substitutes key");
             if (entry.getValue().isJsonArray() && !entry.getValue().getAsJsonArray().isEmpty()) {
                List<String> alts = new ArrayList<>();
                Iterator var6 = entry.getValue().getAsJsonArray().iterator();
@@ -458,7 +458,7 @@ final class AiBuilder {
 
                      if (alt.isJsonPrimitive() && alt.getAsJsonPrimitive().isString()) {
                         String altId = alt.getAsString();
-                        init_V(altId, "substitutes." + key);
+                        validateBlockId(altId, "substitutes." + key);
                         if (altId.equals(key)) {
                            throw new IllegalArgumentException("substitutes." + key + " lists the block itself as an alternative");
                         }
@@ -488,7 +488,7 @@ final class AiBuilder {
       }
    }
 
-   private static void init_V(String id, String context) {
+   private static void validateBlockId(String id, String context) {
       Identifier parsed = Identifier.tryParse(id);
       Block block = parsed == null ? null : BuiltInRegistries.BLOCK.getOptional(parsed).orElse(null);
       if (block == null) {
@@ -496,7 +496,7 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.CellSpec> init_List_List_2(List<AiBuilder.CellSpec> cells, int rotation, String mirror) {
+   static List<AiBuilder.CellSpec> transformCells(List<AiBuilder.CellSpec> cells, int rotation, String mirror) {
       if (rotation == 0 && mirror.equals("none")) {
          return cells;
       }
@@ -504,13 +504,13 @@ final class AiBuilder {
       List<AiBuilder.CellSpec> out = new ArrayList<>(cells.size());
 
       for (AiBuilder.CellSpec cell : cells) {
-         out.add(init_TableIndex_StreamU_TableIndex_StreamU(cell, rotation, mirror));
+         out.add(transformCell(cell, rotation, mirror));
       }
 
       return out;
    }
 
-   static AiBuilder.CellSpec init_TableIndex_StreamU_TableIndex_StreamU(AiBuilder.CellSpec cell, int rotation, String mirror) {
+   static AiBuilder.CellSpec transformCell(AiBuilder.CellSpec cell, int rotation, String mirror) {
       int dx = cell.dx();
       int dz = cell.dz();
       if (mirror.equals("x")) {
@@ -531,7 +531,7 @@ final class AiBuilder {
          return new AiBuilder.CellSpec(dx, cell.dy(), dz, cell.block(), cell.properties());
       }
 
-      BlockState var10000 = init_BlockState(cell);
+      BlockState var10000 = toBlockState(cell);
       Mirror var10000x;
       switch (mirror) {
          case "x":
@@ -575,11 +575,11 @@ final class AiBuilder {
          String key = entry.getKey();
          if (key.equals("north") || key.equals("east") || key.equals("south") || key.equals("west")) {
             if (!mirror.equals("none")) {
-               key = init_Str(key, mirror);
+               key = mirrorFacing(key, mirror);
             }
 
             for (int i = 0; i < turns; i++) {
-               key = init(key);
+               key = rotateFacingClockwise(key);
             }
          }
 
@@ -590,7 +590,7 @@ final class AiBuilder {
       return new AiBuilder.CellSpec(dx, cell.dy(), dz, cell.block(), Map.copyOf(props));
    }
 
-   static String init(String facing) {
+   static String rotateFacingClockwise(String facing) {
       String var10000;
       switch (facing.toLowerCase(Locale.ROOT)) {
          case "north":
@@ -612,7 +612,7 @@ final class AiBuilder {
       return var10000;
    }
 
-   static String init_Str(String facing, String axis) {
+   static String mirrorFacing(String facing, String axis) {
       String f = facing.toLowerCase(Locale.ROOT);
       if (axis.equals("x")) {
          String var7;
@@ -645,15 +645,15 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.CellSpec> init(List<AiBuilder.CellSpec> cells, int maxCells) {
-      return init_List_List(cells, maxCells, 256);
+   static List<AiBuilder.CellSpec> normalizeCells(List<AiBuilder.CellSpec> cells, int maxCells) {
+      return normalizeCells(cells, maxCells, 256);
    }
 
-   static List<AiBuilder.CellSpec> init_List_List(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset) {
-      return cells.isEmpty() ? List.of() : init(cells, maxCells, maxOffset, init_BlockPos(cells));
+   static List<AiBuilder.CellSpec> normalizeCells(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset) {
+      return cells.isEmpty() ? List.of() : normalizeCells(cells, maxCells, maxOffset, minCellOffset(cells));
    }
 
-   static BlockPos init_BlockPos(List<AiBuilder.CellSpec> cells) {
+   static BlockPos minCellOffset(List<AiBuilder.CellSpec> cells) {
       int x = 2147483647;
       int y = 2147483647;
       int z = 2147483647;
@@ -667,7 +667,7 @@ final class AiBuilder {
       return new BlockPos(x, y, z);
    }
 
-   static List<AiBuilder.CellSpec> init(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset, BlockPos minimum) {
+   static List<AiBuilder.CellSpec> normalizeCells(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset, BlockPos minimum) {
       int minX = minimum.getX();
       int minY = minimum.getY();
       int minZ = minimum.getZ();
@@ -691,7 +691,7 @@ final class AiBuilder {
             );
          }
 
-         unique.putIfAbsent(init_J_I(dx, dy, dz), cell);
+         unique.putIfAbsent(packOffsetKey(dx, dy, dz), cell);
       }
 
       if (unique.size() > maxCells) {
@@ -707,7 +707,7 @@ final class AiBuilder {
       return List.copyOf(out);
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti_TableIndex_DataUti(AiBuilder.Blueprint blueprint, int start, int height) {
+   static AiBuilder.Blueprint sliceLayerBand(AiBuilder.Blueprint blueprint, int start, int height) {
       List<AiBuilder.CellSpec> kept = new ArrayList<>(blueprint.cells().size());
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
@@ -719,7 +719,7 @@ final class AiBuilder {
       return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(kept));
    }
 
-   static AiBuilder.Blueprint init(JsonObject args, BlockPos fallbackOrigin) {
+   static AiBuilder.Blueprint parseBlueprint(JsonObject args, BlockPos fallbackOrigin) {
       JsonObject source = args;
       if (args.has("blueprint")) {
          String raw = AiJson.getString(args, "blueprint", "");
@@ -748,9 +748,9 @@ final class AiBuilder {
             }
 
             JsonObject entry = blocks.get(i).getAsJsonObject();
-            int dx = init_I_JsonObject(entry, "dx", context);
-            int dy = init_I_JsonObject(entry, "dy", context);
-            int dz = init_I_JsonObject(entry, "dz", context);
+            int dx = requireExactInt(entry, "dx", context);
+            int dy = requireExactInt(entry, "dy", context);
+            int dz = requireExactInt(entry, "dz", context);
             if (Math.abs(dx) <= 256 && Math.abs(dy) <= 256 && Math.abs(dz) <= 256) {
                if (entry.has("block") && entry.get("block").isJsonPrimitive() && entry.getAsJsonPrimitive("block").isString()) {
                   String block = entry.get("block").getAsString();
@@ -760,8 +760,8 @@ final class AiBuilder {
                      throw new IllegalArgumentException(context + " names an unknown block id: " + block);
                   }
 
-                  Map<String, String> properties = init_Map_JsonObject(entry, context, blockObj);
-                  if (!seen.add(init_J_I(dx, dy, dz))) {
+                  Map<String, String> properties = parseBlockProperties(entry, context, blockObj);
+                  if (!seen.add(packOffsetKey(dx, dy, dz))) {
                      throw new IllegalArgumentException(context + " duplicates the cell at " + dx + "," + dy + "," + dz);
                   }
 
@@ -792,10 +792,10 @@ final class AiBuilder {
       }
 
       JsonObject o = args.getAsJsonObject("origin");
-      return new BlockPos(init_I_JsonObject(o, "x", "origin"), init_I_JsonObject(o, "y", "origin"), init_I_JsonObject(o, "z", "origin"));
+      return new BlockPos(requireExactInt(o, "x", "origin"), requireExactInt(o, "y", "origin"), requireExactInt(o, "z", "origin"));
    }
 
-   static int init_I_JsonObject(JsonObject object, String key, String context) {
+   static int requireExactInt(JsonObject object, String key, String context) {
       if (object.has(key) && object.get(key).isJsonPrimitive() && object.getAsJsonPrimitive(key).isNumber()) {
          try {
             return object.get(key).getAsBigDecimal().intValueExact();
@@ -807,7 +807,7 @@ final class AiBuilder {
       }
    }
 
-   static Map<String, String> init_Map_JsonObject(JsonObject entry, String context, Block block) {
+   static Map<String, String> parseBlockProperties(JsonObject entry, String context, Block block) {
       if (!entry.has("properties")) {
          return Map.of();
       }
@@ -833,7 +833,7 @@ final class AiBuilder {
          String value = property.getValue().getAsString();
          Property<?> prop = definition.getProperty(name);
          if (prop == null) {
-            throw new IllegalArgumentException(context + ".properties." + name + " is not a property of " + blockId + "; valid properties: " + init(definition));
+            throw new IllegalArgumentException(context + ".properties." + name + " is not a property of " + blockId + "; valid properties: " + formatPropertyNames(definition));
          }
 
          if (prop.getValue(value).isEmpty()) {
@@ -848,7 +848,7 @@ final class AiBuilder {
       return Map.copyOf(out);
    }
 
-   private static String init(StateDefinition<Block, BlockState> definition) {
+   private static String formatPropertyNames(StateDefinition<Block, BlockState> definition) {
       List<String> names = new ArrayList<>();
 
       for (Property<?> property : definition.getProperties()) {
@@ -858,7 +858,7 @@ final class AiBuilder {
       return names.isEmpty() ? "(none)" : String.join(", ", names);
    }
 
-   static boolean init_Z(Block block, String property) {
+   static boolean isStackableCountProperty(Block block, String property) {
       return block instanceof SnowLayerBlock && property.equals("layers")
          || block instanceof CandleBlock && property.equals("candles")
          || block instanceof SeaPickleBlock && property.equals("pickles")
@@ -866,7 +866,7 @@ final class AiBuilder {
          || block instanceof SegmentableBlock && (property.equals("flower_amount") || property.equals("segment_amount"));
    }
 
-   static Item init_Item(Block block, String property) {
+   static Item postInteractToolItem(Block block, String property) {
       if (block instanceof EndPortalFrameBlock && property.equals("eye")) {
          return Items.ENDER_EYE;
       } else if (block instanceof RespawnAnchorBlock && property.equals("charges")) {
@@ -878,11 +878,11 @@ final class AiBuilder {
       }
    }
 
-   static boolean init(Block block) {
+   static boolean isSixWayFaceDerivedBlock(Block block) {
       return block instanceof ShulkerBoxBlock || block instanceof RodBlock || block instanceof AmethystClusterBlock;
    }
 
-   static Float init(Block block, int rotation) {
+   static Float rotationPropertyYaw(Block block, int rotation) {
       float yaw = rotation * 22.5F;
       if (!(block instanceof StandingSignBlock) && !(block instanceof BannerBlock) && !(block instanceof CeilingHangingSignBlock)) {
          return block instanceof SkullBlock ? Mth.wrapDegrees(yaw) : null;
@@ -891,12 +891,12 @@ final class AiBuilder {
       }
    }
 
-   static AiBuilder.OrientationKind init_TableIndex_TaskQue(Block block, String property) {
+   static AiBuilder.OrientationKind orientationKindForProperty(Block block, String property) {
       if (block instanceof MultifaceBlock && Direction.byName(property) != null) {
          return AiBuilder.OrientationKind.POST_INTERACT;
       }
 
-      if (property.equals("rotation") && init(block, 0) != null) {
+      if (property.equals("rotation") && rotationPropertyYaw(block, 0) != null) {
          return AiBuilder.OrientationKind.PLAYER_ROTATION;
       }
 
@@ -912,7 +912,7 @@ final class AiBuilder {
          return AiBuilder.OrientationKind.POST_INTERACT;
       }
 
-      if (property.equals("facing") && init(block)) {
+      if (property.equals("facing") && isSixWayFaceDerivedBlock(block)) {
          return AiBuilder.OrientationKind.FACE_DERIVED;
       }
 
@@ -937,7 +937,7 @@ final class AiBuilder {
                   return AiBuilder.OrientationKind.FACE_DERIVED;
                }
 
-               if (init_Item(block, property) != null || init_Z(block, property)) {
+               if (postInteractToolItem(block, property) != null || isStackableCountProperty(block, property)) {
                   return AiBuilder.OrientationKind.POST_INTERACT;
                }
 
@@ -986,7 +986,7 @@ final class AiBuilder {
                         return AiBuilder.OrientationKind.FACE_DERIVED;
                      }
 
-                     if (write(block) || block instanceof FaceAttachedHorizontalDirectionalBlock) {
+                     if (isWallMountedBlock(block) || block instanceof FaceAttachedHorizontalDirectionalBlock) {
                         return AiBuilder.OrientationKind.FACE_DERIVED;
                      }
 
@@ -1003,7 +1003,7 @@ final class AiBuilder {
                   }
 
                   if (property.equals("open") && (block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock)) {
-                     return load(block) ? AiBuilder.OrientationKind.POWER_STATE : AiBuilder.OrientationKind.POST_INTERACT;
+                     return isPowerOnlyOpenable(block) ? AiBuilder.OrientationKind.POWER_STATE : AiBuilder.OrientationKind.POST_INTERACT;
                   } else if (property.equals("powered") && block instanceof LeverBlock) {
                      return AiBuilder.OrientationKind.POST_INTERACT;
                   } else {
@@ -1025,16 +1025,16 @@ final class AiBuilder {
       }
    }
 
-   static boolean load(Block block) {
+   static boolean isPowerOnlyOpenable(Block block) {
       return block == Blocks.IRON_TRAPDOOR || block instanceof DoorBlock door && !door.type().canOpenByHand();
    }
 
-   static boolean read(Block block) {
+   static boolean isWallTorchBlock(Block block) {
       return block instanceof WallTorchBlock || block instanceof RedstoneWallTorchBlock;
    }
 
-   static boolean write(Block block) {
-      return read(block)
+   static boolean isWallMountedBlock(Block block) {
+      return isWallTorchBlock(block)
          || block instanceof TripWireHookBlock
          || block instanceof BaseCoralWallFanBlock
          || block instanceof LadderBlock
@@ -1043,8 +1043,8 @@ final class AiBuilder {
          || block instanceof WallSkullBlock;
    }
 
-   static boolean init(Block block, AiBuilder.CellSpec cell) {
-      if (write(block)) {
+   static boolean usesWallClickFace(Block block, AiBuilder.CellSpec cell) {
+      if (isWallMountedBlock(block)) {
          return true;
       }
 
@@ -1056,15 +1056,15 @@ final class AiBuilder {
       return face == null || face.equalsIgnoreCase("wall");
    }
 
-   static AiBuilder.OrientationKind init_TableIndex_TaskQue(AiBuilder.CellSpec cell, Block block) {
-      AiBuilder.OrientationKind strategy = init_TableIndex_TaskQue(block, "facing");
-      return strategy == AiBuilder.OrientationKind.FACE_DERIVED && block instanceof FaceAttachedHorizontalDirectionalBlock && !init(block, cell)
+   static AiBuilder.OrientationKind facingOrientationKind(AiBuilder.CellSpec cell, Block block) {
+      AiBuilder.OrientationKind strategy = orientationKindForProperty(block, "facing");
+      return strategy == AiBuilder.OrientationKind.FACE_DERIVED && block instanceof FaceAttachedHorizontalDirectionalBlock && !usesWallClickFace(block, cell)
          ? AiBuilder.OrientationKind.PLAYER_FACING
          : strategy;
    }
 
-   static List<String> init_List(AiBuilder.CellSpec cell) {
-      if (read_Z(cell)) {
+   static List<String> unsupportedProperties(AiBuilder.CellSpec cell) {
+      if (isTransientPistonCell(cell)) {
          return List.of();
       }
 
@@ -1072,12 +1072,12 @@ final class AiBuilder {
          return AiSchematicActions.init_List(cell);
       }
 
-      Block block = init_Block(cell);
+      Block block = resolveBlock(cell);
       if (block.asItem() == Items.AIR && !cell.block().equals("minecraft:grass_block")) {
          return List.of("no item form");
       }
 
-      if (!sync(block) && !cell.block().equals("minecraft:grass_block")) {
+      if (!isRegisteredBlockItem(block) && !cell.block().equals("minecraft:grass_block")) {
          return List.of("its item places another block");
       }
 
@@ -1085,8 +1085,8 @@ final class AiBuilder {
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String key = entry.getKey();
-         if (!read(block, key)) {
-            AiBuilder.OrientationKind strategy = key.equals("facing") ? init_TableIndex_TaskQue(cell, block) : init_TableIndex_TaskQue(block, key);
+         if (!isAutoComputedProperty(block, key)) {
+            AiBuilder.OrientationKind strategy = key.equals("facing") ? facingOrientationKind(cell, block) : orientationKindForProperty(block, key);
             if (strategy == AiBuilder.OrientationKind.UNSUPPORTED
                && (!(block instanceof LeavesBlock) || !key.equals("persistent") || !entry.getValue().equals("true"))) {
                Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)block.getStateDefinition().getProperty(key);
@@ -1100,12 +1100,12 @@ final class AiBuilder {
       return gaps;
    }
 
-   static boolean init_Z_Level_2(Level level, BlockPos pos, Direction facing) {
+   static boolean hasPistonPowerAt(Level level, BlockPos pos, Direction facing) {
       return autismclient.ai.engine.AiPistonPower.init(level, pos, facing);
    }
 
-   static boolean init_Z_Level(Level level, BlockPos pos, AiBuilder.CellSpec cell) {
-      if (init_Block(cell) instanceof RedstoneWallTorchBlock) {
+   static boolean willRedstoneTorchBeLit(Level level, BlockPos pos, AiBuilder.CellSpec cell) {
+      if (resolveBlock(cell) instanceof RedstoneWallTorchBlock) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          return facing == null ? false : !level.hasSignal(pos.relative(facing.getOpposite()), facing.getOpposite());
       } else {
@@ -1113,7 +1113,7 @@ final class AiBuilder {
       }
    }
 
-   static Direction init_Direction(AiBuilder.CellSpec cell) {
+   static Direction chestPartnerDirection(AiBuilder.CellSpec cell) {
       String type = cell.properties().get("type");
       Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
       if (facing != null && facing.getAxis().isHorizontal() && type != null && !type.equals("single")) {
@@ -1123,30 +1123,30 @@ final class AiBuilder {
       }
    }
 
-   static boolean init_Z_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockPos pos, BlockGetter world) {
-      Direction side = init_Direction(cell);
+   static boolean hasChestPartnerLoaded(AiBuilder.CellSpec cell, BlockPos pos, BlockGetter world) {
+      Direction side = chestPartnerDirection(cell);
       if (side == null) {
          return false;
       }
 
       BlockState partner = world.getBlockState(pos.relative(side));
-      return partner.getBlock() == init_Block(cell)
+      return partner.getBlock() == resolveBlock(cell)
          && partner.getValue(ChestBlock.FACING).getName().equals(cell.properties().get("facing"))
          && partner.getValue(ChestBlock.TYPE) == ChestType.SINGLE;
    }
 
-   static autismclient.ai.engine.PlacementGoal.PlaceConstraint init(AiBuilder.CellSpec cell, Block block, BlockPos pos, BlockGetter world) {
+   static autismclient.ai.engine.PlacementGoal.PlaceConstraint buildPlaceConstraint(AiBuilder.CellSpec cell, Block block, BlockPos pos, BlockGetter world) {
       Direction clickFace = null;
       Direction look = null;
       Float yaw = null;
       double tolerance = 35.0;
       if (block instanceof LanternBlock) {
          clickFace = "true".equals(cell.properties().get("hanging")) ? Direction.DOWN : Direction.UP;
-      } else if (init(block, cell)) {
+      } else if (usesWallClickFace(block, cell)) {
          clickFace = Direction.byName(cell.properties().getOrDefault("facing", "north"));
       } else if (block instanceof FaceAttachedHorizontalDirectionalBlock) {
-         clickFace = load_Direction(cell);
-      } else if (init(block)) {
+         clickFace = faceAttachedClickDirection(cell);
+      } else if (isSixWayFaceDerivedBlock(block)) {
          clickFace = Direction.byName(cell.properties().getOrDefault("facing", "up"));
       } else if (block instanceof HopperBlock) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "down"));
@@ -1155,10 +1155,10 @@ final class AiBuilder {
          }
       }
 
-      AiBuilder.OrientationKind strategy = init_TableIndex_TaskQue(cell, block);
-      boolean pairing = block instanceof ChestBlock && init_Z_TableIndex_StreamU(cell, pos, world);
+      AiBuilder.OrientationKind strategy = facingOrientationKind(cell, block);
+      boolean pairing = block instanceof ChestBlock && hasChestPartnerLoaded(cell, pos, world);
       if (pairing) {
-         clickFace = init_Direction(cell).getOpposite();
+         clickFace = chestPartnerDirection(cell).getOpposite();
          strategy = AiBuilder.OrientationKind.UNSUPPORTED;
       } else if (block instanceof ChestBlock) {
          BlockState below = world.getBlockState(pos.below());
@@ -1182,14 +1182,14 @@ final class AiBuilder {
 
       boolean fullDirection = strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION_OPPOSITE || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION;
       String rotation = cell.properties().get("rotation");
-      if (rotation != null && init_TableIndex_TaskQue(block, "rotation") == AiBuilder.OrientationKind.PLAYER_ROTATION) {
-         yaw = init(block, Integer.parseInt(rotation));
+      if (rotation != null && orientationKindForProperty(block, "rotation") == AiBuilder.OrientationKind.PLAYER_ROTATION) {
+         yaw = rotationPropertyYaw(block, Integer.parseInt(rotation));
          tolerance = 8.0;
          look = Direction.fromYRot(yaw.floatValue());
       }
 
       String orientation = cell.properties().get("orientation");
-      if (orientation != null && init_TableIndex_TaskQue(block, "orientation") == AiBuilder.OrientationKind.PLAYER_ORIENTATION) {
+      if (orientation != null && orientationKindForProperty(block, "orientation") == AiBuilder.OrientationKind.PLAYER_ORIENTATION) {
          String[] parts = orientation.split("_");
          Direction front = Direction.byName(parts[0]);
          Direction top = parts.length > 1 ? Direction.byName(parts[1]) : null;
@@ -1208,7 +1208,7 @@ final class AiBuilder {
          }
       }
 
-      if (update(block)) {
+      if (isStandingFormOfWallItem(block)) {
          look = block.asItem() instanceof HangingSignItem ? Direction.UP : Direction.DOWN;
          fullDirection = true;
       } else if (block.asItem() instanceof StandingAndWallBlockItem) {
@@ -1226,25 +1226,25 @@ final class AiBuilder {
          clickFace,
          look,
          axis,
-         init_Boolean(cell, block),
+         requiresUpperHalfClick(cell, block),
          fullDirection,
          block instanceof TrapDoorBlock ? Direction.byName(cell.properties().getOrDefault("facing", "north")) : null,
-         autismclient.ai.engine.AiShapes.init_S_List(init_BlockState(cell).getCollisionShape(world, pos).toAabbs()),
+         autismclient.ai.engine.AiShapes.init_S_List(toBlockState(cell).getCollisionShape(world, pos).toAabbs()),
          yaw,
          tolerance
       );
    }
 
-   static boolean update(Block block) {
+   static boolean isStandingFormOfWallItem(Block block) {
       return block.asItem() instanceof StandingAndWallBlockItem item && item.getBlock() == block;
    }
 
-   static boolean init(BlockGetter world, BlockPos pos) {
+   static boolean hasSolidSupportShape(BlockGetter world, BlockPos pos) {
       BlockState state = world.getBlockState(pos);
       return !state.isAir() && !state.canBeReplaced() && !state.getShape(world, pos).isEmpty();
    }
 
-   static boolean sync(Block block) {
+   static boolean isRegisteredBlockItem(Block block) {
       if (block.asItem() instanceof BlockItem blockItem) {
          HashMap var3 = new HashMap();
          blockItem.registerBlocks(var3, blockItem);
@@ -1254,7 +1254,7 @@ final class AiBuilder {
       }
    }
 
-   static Direction load_Direction(AiBuilder.CellSpec cell) {
+   static Direction faceAttachedClickDirection(AiBuilder.CellSpec cell) {
       Direction var10000;
       switch ((String)cell.properties().getOrDefault("face", "wall")) {
          case "floor":
@@ -1270,26 +1270,26 @@ final class AiBuilder {
       return var10000;
    }
 
-   static boolean init_Z(AiBuilder.CellSpec cell) {
+   static boolean isDoubleSlabCell(AiBuilder.CellSpec cell) {
       return "double".equalsIgnoreCase(cell.properties().get("type"))
          && BuiltInRegistries.BLOCK.getOptional(Identifier.parse(cell.block())).map(b -> b instanceof SlabBlock).orElse(false);
    }
 
-   static Boolean init_Boolean(AiBuilder.CellSpec cell, Block target) {
-      if (init_Z(cell)) {
+   static Boolean requiresUpperHalfClick(AiBuilder.CellSpec cell, Block target) {
+      if (isDoubleSlabCell(cell)) {
          return false;
       }
 
       String type = cell.properties().get("type");
-      if (type != null && !init_Z(cell) && init_TableIndex_TaskQue(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
+      if (type != null && !isDoubleSlabCell(cell) && orientationKindForProperty(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
          return type.equalsIgnoreCase("top");
       }
 
       String half = cell.properties().get("half");
-      return half != null && init_TableIndex_TaskQue(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT ? half.equalsIgnoreCase("top") : null;
+      return half != null && orientationKindForProperty(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT ? half.equalsIgnoreCase("top") : null;
    }
 
-   static boolean init(Boolean requestedHigh, Direction face) {
+   static boolean clickFaceSatisfiesHalf(Boolean requestedHigh, Direction face) {
       if (requestedHigh != null && face != null) {
          return face.getAxis().isHorizontal() ? true : requestedHigh == (face == Direction.DOWN);
       } else {
@@ -1297,24 +1297,24 @@ final class AiBuilder {
       }
    }
 
-   static int init_I(AiBuilder.CellSpec cell) {
+   static int itemCountForCell(AiBuilder.CellSpec cell) {
       if (!"upper".equals(cell.properties().get("half")) && !"head".equals(cell.properties().get("part"))) {
          Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(cell.block())).orElse(null);
          if (block != null) {
             for (Entry<String, String> entry : cell.properties().entrySet()) {
-               if (init_Z(block, entry.getKey())) {
+               if (isStackableCountProperty(block, entry.getKey())) {
                   return Math.max(1, Integer.parseInt(entry.getValue()));
                }
             }
          }
 
-         return init_Z(cell) ? 2 : 1;
+         return isDoubleSlabCell(cell) ? 2 : 1;
       } else {
          return 0;
       }
    }
 
-   static boolean init(Block block, String property, String actual, String requested) {
+   static boolean propertyValuesMatch(Block block, String property, String actual, String requested) {
       if (actual.equalsIgnoreCase(requested)) {
          return true;
       } else if (block instanceof FenceGateBlock && property.equals("facing")) {
@@ -1326,7 +1326,7 @@ final class AiBuilder {
       }
    }
 
-   static boolean load(Block block, String property) {
+   static boolean isDynamicRedstoneProperty(Block block, String property) {
       if (block instanceof RedstoneTorchBlock) {
          return property.equals("lit");
       } else if (block instanceof RedstoneLampBlock) {
@@ -1366,8 +1366,8 @@ final class AiBuilder {
       }
    }
 
-   static boolean read(Block block, String property) {
-      if (load(block, property)) {
+   static boolean isAutoComputedProperty(Block block, String property) {
+      if (isDynamicRedstoneProperty(block, property)) {
          return true;
       } else if (block instanceof LeavesBlock) {
          return property.equals("distance");
@@ -1398,11 +1398,11 @@ final class AiBuilder {
       } else if (block instanceof BigDripleafBlock) {
          return property.equals("tilt");
       } else {
-         return block instanceof BeehiveBlock ? property.equals("honey_level") : write(block, property);
+         return block instanceof BeehiveBlock ? property.equals("honey_level") : isGrowthAgeProperty(block, property);
       }
    }
 
-   static boolean write(Block block, String property) {
+   static boolean isGrowthAgeProperty(Block block, String property) {
       if (block instanceof SaplingBlock) {
          return property.equals("stage");
       } else if (block instanceof CactusBlock
@@ -1443,14 +1443,14 @@ final class AiBuilder {
       }
    }
 
-   static boolean init_Z(AiBuilder.CellSpec cell, BlockState live) {
+   static boolean isUnpairedDoubleChest(AiBuilder.CellSpec cell, BlockState live) {
       return live.getBlock() instanceof ChestBlock
          && live.getValue(ChestBlock.TYPE) == ChestType.SINGLE
          && cell.properties().containsKey("type")
          && !"single".equals(cell.properties().get("type"));
    }
 
-   static boolean load(AiBuilder.CellSpec cell, BlockState live) {
+   static boolean differsOnlyInAutoProperties(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return false;
       }
@@ -1459,8 +1459,8 @@ final class AiBuilder {
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
-         if (property != null && !init(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
-            if (!read(live.getBlock(), entry.getKey())) {
+         if (property != null && !propertyValuesMatch(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
+            if (!isAutoComputedProperty(live.getBlock(), entry.getKey())) {
                return false;
             }
 
@@ -1471,8 +1471,8 @@ final class AiBuilder {
       return differs;
    }
 
-   static boolean read(AiBuilder.CellSpec cell, BlockState live) {
-      if (close(cell, live)) {
+   static boolean matchesIgnoringUnpairedChest(AiBuilder.CellSpec cell, BlockState live) {
+      if (matchesDirtGrassEquivalence(cell, live)) {
          return true;
       }
 
@@ -1481,9 +1481,9 @@ final class AiBuilder {
       }
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
-         if (!read(live.getBlock(), entry.getKey()) && (!entry.getKey().equals("type") || !init_Z(cell, live))) {
+         if (!isAutoComputedProperty(live.getBlock(), entry.getKey()) && (!entry.getKey().equals("type") || !isUnpairedDoubleChest(cell, live))) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
-            if (property == null || !init(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
+            if (property == null || !propertyValuesMatch(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
                return false;
             }
          }
@@ -1492,31 +1492,31 @@ final class AiBuilder {
       return true;
    }
 
-   static boolean init_Z_TableIndex_StreamU_4(AiBuilder.CellSpec wanted, BlockState live, boolean ownedScaffold) {
-      return !live.isAir() && (!ownedScaffold || wanted == null || read(wanted, live));
+   static boolean isOccupiedOrMatchedScaffold(AiBuilder.CellSpec wanted, BlockState live, boolean ownedScaffold) {
+      return !live.isAir() && (!ownedScaffold || wanted == null || matchesIgnoringUnpairedChest(wanted, live));
    }
 
-   static boolean init(boolean recovery, boolean breach, Integer columnBottom, int y, BlockState live) {
+   static boolean canClearDuringRecovery(boolean recovery, boolean breach, Integer columnBottom, int y, BlockState live) {
       return recovery && !live.hasBlockEntity() && live.getFluidState().isEmpty() && (breach || columnBottom != null && y >= columnBottom);
    }
 
-   static boolean write(AiBuilder.CellSpec cell, BlockState live) {
+   static boolean matchesExactCell(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return false;
       }
 
-      if (live.getBlock() instanceof MultifaceBlock && !autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(init_BlockState(cell), live)) {
+      if (live.getBlock() instanceof MultifaceBlock && !autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(toBlockState(cell), live)) {
          return false;
       }
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
-         if (!read(live.getBlock(), entry.getKey())) {
+         if (!isAutoComputedProperty(live.getBlock(), entry.getKey())) {
             Property<?> property = live.getBlock().getStateDefinition().getProperty(entry.getKey());
             if (property == null) {
                return false;
             }
 
-            if (!init(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
+            if (!propertyValuesMatch(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
                return false;
             }
          }
@@ -1525,8 +1525,8 @@ final class AiBuilder {
       return true;
    }
 
-   static boolean init_Z_TableIndex_StreamU_3(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
-      if (write(cell, live)) {
+   static boolean matchesCellOrSubstitute(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
+      if (matchesExactCell(cell, live)) {
          return true;
       }
 
@@ -1537,9 +1537,9 @@ final class AiBuilder {
          }
 
          for (Entry<String, String> entry : cell.properties().entrySet()) {
-            if (!read(live.getBlock(), entry.getKey())) {
+            if (!isAutoComputedProperty(live.getBlock(), entry.getKey())) {
                Property<?> property = live.getBlock().getStateDefinition().getProperty(entry.getKey());
-               if (property != null && !init(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
+               if (property != null && !propertyValuesMatch(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
                   return false;
                }
             }
@@ -1551,18 +1551,18 @@ final class AiBuilder {
       }
    }
 
-   private static boolean close(AiBuilder.CellSpec cell, BlockState live) {
+   private static boolean matchesDirtGrassEquivalence(AiBuilder.CellSpec cell, BlockState live) {
       return (cell.block().equals("minecraft:dirt") && cell.properties().isEmpty() || cell.block().equals("minecraft:grass_block"))
          && (live.is(Blocks.DIRT) || live.is(Blocks.GRASS_BLOCK));
    }
 
-   static boolean update(AiBuilder.CellSpec cell, BlockState live) {
-      if (close(cell, live)) {
+   static boolean matchesSchematicCell(AiBuilder.CellSpec cell, BlockState live) {
+      if (matchesDirtGrassEquivalence(cell, live)) {
          return true;
       }
 
-      Fluid fluid = init_Fluid(cell);
-      if (load_Z(cell)) {
+      Fluid fluid = fluidOfCell(cell);
+      if (isFlowingFluidCell(cell)) {
          return live.getFluidState().getType().isSame(fluid) && !live.getFluidState().isSource();
       }
 
@@ -1573,11 +1573,11 @@ final class AiBuilder {
          return true;
       }
 
-      if (init_Block(cell) == live.getBlock() && flush(live.getBlock())) {
+      if (resolveBlock(cell) == live.getBlock() && isAgeableCropBlock(live.getBlock())) {
          for (Entry<String, String> entry : cell.properties().entrySet()) {
             if (!entry.getKey().equals("age")) {
                Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
-               if (property == null || !init(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
+               if (property == null || !propertyValuesMatch(live.getBlock(), entry.getKey(), String.valueOf(live.getValue(property)), entry.getValue())) {
                   return false;
                }
             }
@@ -1589,22 +1589,22 @@ final class AiBuilder {
             || cell.block().equals("minecraft:torchflower_crop") && live.is(Blocks.TORCHFLOWER)
             || cell.block().equals("minecraft:melon_stem") && live.is(Blocks.ATTACHED_MELON_STEM)
             || cell.block().equals("minecraft:pumpkin_stem") && live.is(Blocks.ATTACHED_PUMPKIN_STEM)
-            || write(cell, live);
+            || matchesExactCell(cell, live);
       }
    }
 
-   static boolean sync(AiBuilder.CellSpec cell, BlockState live) {
-      return init_TableIndex_CachePo(cell, live).matches();
+   static boolean matchesStrictState(AiBuilder.CellSpec cell, BlockState live) {
+      return compareCellState(cell, live).matches();
    }
 
-   static AiBuilder.MatchResult init_TableIndex_CachePo(AiBuilder.CellSpec cell, BlockState live) {
-      BlockState expected = init_BlockState(cell);
+   static AiBuilder.MatchResult compareCellState(AiBuilder.CellSpec cell, BlockState live) {
+      BlockState expected = toBlockState(cell);
       if (cell.block().equals("minecraft:dirt") && cell.properties().isEmpty() && live.is(Blocks.GRASS_BLOCK)) {
          return AiBuilder.MatchResult.MATCH;
       }
 
-      Fluid fluid = init_Fluid(cell);
-      if (load_Z(cell)) {
+      Fluid fluid = fluidOfCell(cell);
+      if (isFlowingFluidCell(cell)) {
          return live.getFluidState().getType().isSame(fluid) && !live.getFluidState().isSource()
             ? AiBuilder.MatchResult.MATCH
             : new AiBuilder.MatchResult(false, "fluid expected=flowing " + cell.block() + " actual=" + live.getFluidState());
@@ -1626,9 +1626,9 @@ final class AiBuilder {
 
          for (Property<?> property : expected.getBlock().getStateDefinition().getProperties()) {
             String name = property.getName();
-            if (!read(expected.getBlock(), name)
+            if (!isAutoComputedProperty(expected.getBlock(), name)
                && (!(expected.getBlock() instanceof FarmlandBlock) || !name.equals("moisture"))
-               && (!flush(expected.getBlock()) || !name.equals("age"))) {
+               && (!isAgeableCropBlock(expected.getBlock()) || !name.equals("age"))) {
                String wanted = String.valueOf(expected.getValue(property));
                String actual = String.valueOf(live.getValue(property));
                if (!wanted.equals(actual)) {
@@ -1643,11 +1643,11 @@ final class AiBuilder {
       }
    }
 
-   static boolean load_Z(AiBuilder.CellSpec cell) {
-      return init_Fluid(cell) != null && !"0".equals(cell.properties().getOrDefault("level", "0"));
+   static boolean isFlowingFluidCell(AiBuilder.CellSpec cell) {
+      return fluidOfCell(cell) != null && !"0".equals(cell.properties().getOrDefault("level", "0"));
    }
 
-   static Fluid init_Fluid(AiBuilder.CellSpec cell) {
+   static Fluid fluidOfCell(AiBuilder.CellSpec cell) {
       FlowingFluid var10000;
       switch (cell.block()) {
          case "minecraft:water":
@@ -1663,48 +1663,48 @@ final class AiBuilder {
       return var10000;
    }
 
-   static boolean read_Z(AiBuilder.CellSpec cell) {
+   static boolean isTransientPistonCell(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:piston_head") || cell.block().equals("minecraft:moving_piston");
    }
 
-   static boolean flush(AiBuilder.CellSpec cell, BlockState live) {
-      if (init_TableIndex_TaskQue(live.getBlock(), "waterlogged") == AiBuilder.OrientationKind.FLUID_INTERACT
+   static boolean needsWaterlogToggleOnly(AiBuilder.CellSpec cell, BlockState live) {
+      if (orientationKindForProperty(live.getBlock(), "waterlogged") == AiBuilder.OrientationKind.FLUID_INTERACT
          && cell.properties().containsKey("waterlogged")
          && !String.valueOf(live.getValue(BlockStateProperties.WATERLOGGED)).equals(cell.properties().get("waterlogged"))) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
          properties.remove("waterlogged");
-         return read(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties), live);
+         return matchesIgnoringUnpairedChest(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties), live);
       } else {
          return false;
       }
    }
 
-   private static boolean init(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes, boolean schematic) {
-      return schematic && update(cell, live) || init_Z_TableIndex_StreamU_3(cell, live, substitutes);
+   private static boolean isCellSatisfied(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes, boolean schematic) {
+      return schematic && matchesSchematicCell(cell, live) || matchesCellOrSubstitute(cell, live, substitutes);
    }
 
-   static long init_J_I(int dx, int dy, int dz) {
+   static long packOffsetKey(int dx, int dy, int dz) {
       return (long)(dx + 256) << 42 | (long)(dy + 256) << 21 | dz + 256;
    }
 
-   static List<AiBuilder.CellSpec> init_List(AiBuilder.Blueprint blueprint) {
+   static List<AiBuilder.CellSpec> orderBlueprintCells(AiBuilder.Blueprint blueprint) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
       Set<Long> present = new HashSet<>();
 
       for (AiBuilder.CellSpec cell : cells) {
-         present.add(init_J_I(cell.dx(), cell.dy(), cell.dz()));
+         present.add(packOffsetKey(cell.dx(), cell.dy(), cell.dz()));
       }
 
       Map<Long, Integer> depth = new HashMap<>();
 
       for (AiBuilder.CellSpec cell : cells) {
-         init_I_TableIndex_StreamU(cell, present, depth);
+         computeSupportDepth(cell, present, depth);
       }
 
       List<AiBuilder.CellSpec> ordered = new ArrayList<>(cells);
       ordered.sort(
          Comparator.comparingInt(AiBuilder.CellSpec::dy)
-            .thenComparingInt(cellx -> depth.get(init_J_I(cellx.dx(), cellx.dy(), cellx.dz())))
+            .thenComparingInt(cellx -> depth.get(packOffsetKey(cellx.dx(), cellx.dy(), cellx.dz())))
             .thenComparingLong(cellx -> (long)cellx.dx() * cellx.dx() + (long)cellx.dy() * cellx.dy() + (long)cellx.dz() * cellx.dz())
             .thenComparingInt(AiBuilder.CellSpec::dx)
             .thenComparingInt(AiBuilder.CellSpec::dz)
@@ -1713,14 +1713,14 @@ final class AiBuilder {
       return ordered;
    }
 
-   static List<AiBuilder.CellSpec> load_List(AiBuilder.Blueprint blueprint) {
+   static List<AiBuilder.CellSpec> orderSchematicCells(AiBuilder.Blueprint blueprint) {
       ArrayList<AiBuilder.CellSpec> ordered = new ArrayList<>(blueprint.cells());
       ordered.sort(
          Comparator.comparingInt(AiBuilder.CellSpec::dy)
             .thenComparingInt(
                cellx -> {
-                  Block block = init_Block(cellx);
-                  if (init_Fluid(cellx) != null) {
+                  Block block = resolveBlock(cellx);
+                  if (fluidOfCell(cellx) != null) {
                      return 3;
                   } else if (block instanceof BedBlock) {
                      return -1;
@@ -1737,15 +1737,15 @@ final class AiBuilder {
       );
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.level != null) {
-         ordered = new ArrayList<>(init_List_TableIndex_DataUti(blueprint, ordered, neighbor -> AiTerrain.isLoaded(mc.level, neighbor) && init(mc.level, neighbor)));
+         ordered = new ArrayList<>(topologicalSupportOrder(blueprint, ordered, neighbor -> AiTerrain.isLoaded(mc.level, neighbor) && hasSolidSupportShape(mc.level, neighbor)));
       }
 
-      ordered = new ArrayList<>(init_List(ordered));
+      ordered = new ArrayList<>(orderByFacingSupport(ordered));
       HashMap<Long, AiBuilder.CellSpec> crops = new HashMap<>();
 
       for (AiBuilder.CellSpec cell : ordered) {
-         if (init_Block(cell) instanceof CropBlock) {
-            crops.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
+         if (resolveBlock(cell) instanceof CropBlock) {
+            crops.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), cell);
          }
       }
 
@@ -1756,7 +1756,7 @@ final class AiBuilder {
          if (!moved.contains(cell)) {
             seeded.add(cell);
             if (cell.block().equals("minecraft:farmland")) {
-               AiBuilder.CellSpec crop = crops.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
+               AiBuilder.CellSpec crop = crops.get(packOffsetKey(cell.dx(), cell.dy() + 1, cell.dz()));
                if (crop != null) {
                   seeded.add(crop);
                   moved.add(crop);
@@ -1765,10 +1765,10 @@ final class AiBuilder {
          }
       }
 
-      return load(seeded);
+      return orderByAttachmentSupport(seeded);
    }
 
-   static List<AiBuilder.CellSpec> init_List(List<AiBuilder.CellSpec> ordered) {
+   static List<AiBuilder.CellSpec> orderByFacingSupport(List<AiBuilder.CellSpec> ordered) {
       int n = ordered.size();
       if (n < 2) {
          return ordered;
@@ -1779,7 +1779,7 @@ final class AiBuilder {
 
       for (int i = 0; i < n; i++) {
          AiBuilder.CellSpec cell = ordered.get(i);
-         index.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), i);
+         index.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), i);
          bottom = Math.min(bottom, cell.dy());
       }
 
@@ -1788,7 +1788,7 @@ final class AiBuilder {
 
       for (int i = 0; i < n; i++) {
          AiBuilder.CellSpec cell = ordered.get(i);
-         looks[i] = looked.computeIfAbsent(new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties()), AiBuilder::read_Direction);
+         looks[i] = looked.computeIfAbsent(new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties()), AiBuilder::horizontalLookDirection);
       }
 
       double[] key = new double[n];
@@ -1807,16 +1807,16 @@ final class AiBuilder {
             Direction look = looks[i];
             if (look != null) {
                AiBuilder.CellSpec part = ordered.get(i);
-               Integer blocker = index.get(init_J_I(part.dx() - look.getStepX(), part.dy(), part.dz() - look.getStepZ()));
+               Integer blocker = index.get(packOffsetKey(part.dx() - look.getStepX(), part.dy(), part.dz() - look.getStepZ()));
                if (blocker != null
                   && !moved[blocker]
                   && !(key[blocker] > key[i])
-                  && !init_BlockState(ordered.get(blocker)).getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty()) {
+                  && !toBlockState(ordered.get(blocker)).getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty()) {
                   boolean supported = part.dy() == bottom;
 
                   for (Direction side : Direction.values()) {
                      if (!supported && side != Direction.UP && side != look.getOpposite()) {
-                        Integer other = index.get(init_J_I(part.dx() + side.getStepX(), part.dy() + side.getStepY(), part.dz() + side.getStepZ()));
+                        Integer other = index.get(packOffsetKey(part.dx() + side.getStepX(), part.dy() + side.getStepY(), part.dz() + side.getStepZ()));
                         supported = other != null && key[other] < key[i];
                      }
                   }
@@ -1857,11 +1857,11 @@ final class AiBuilder {
       return out;
    }
 
-   static Direction read_Direction(AiBuilder.CellSpec cell) {
-      Block block = init_Block(cell);
-      if (block != Blocks.AIR && init_Fluid(cell) == null) {
+   static Direction horizontalLookDirection(AiBuilder.CellSpec cell) {
+      Block block = resolveBlock(cell);
+      if (block != Blocks.AIR && fluidOfCell(cell) == null) {
          try {
-            autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init(cell, block, BlockPos.ZERO, EmptyBlockGetter.INSTANCE);
+            autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = buildPlaceConstraint(cell, block, BlockPos.ZERO, EmptyBlockGetter.INSTANCE);
             Direction look = constraint.playerFacing();
             return look != null && look.getAxis().isHorizontal() ? look : null;
          } catch (RuntimeException e) {
@@ -1872,12 +1872,12 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.CellSpec> load(List<AiBuilder.CellSpec> ordered) {
+   static List<AiBuilder.CellSpec> orderByAttachmentSupport(List<AiBuilder.CellSpec> ordered) {
       HashMap<Long, Integer> index = new HashMap<>();
 
       for (int i = 0; i < ordered.size(); i++) {
          AiBuilder.CellSpec cell = ordered.get(i);
-         index.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), i);
+         index.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), i);
       }
 
       HashMap<Integer, List<AiBuilder.CellSpec>> after = new HashMap<>();
@@ -1886,12 +1886,12 @@ final class AiBuilder {
 
       for (int i = 0; i < ordered.size(); i++) {
          AiBuilder.CellSpec cell = ordered.get(i);
-         if (init_Fluid(cell) != null) {
+         if (fluidOfCell(cell) != null) {
             int last = -1;
 
             for (int[] side : sides) {
-               Integer at = index.get(init_J_I(cell.dx() + side[0], cell.dy() + side[1], cell.dz() + side[2]));
-               if (at != null && init_Fluid(ordered.get(at)) == null) {
+               Integer at = index.get(packOffsetKey(cell.dx() + side[0], cell.dy() + side[1], cell.dz() + side[2]));
+               if (at != null && fluidOfCell(ordered.get(at)) == null) {
                   last = Math.max(last, at);
                }
             }
@@ -1920,11 +1920,11 @@ final class AiBuilder {
          out.addAll(after.getOrDefault(i, List.of()));
       }
 
-      out.sort(Comparator.comparingInt(cell -> load_Z(cell) ? 1 : 0));
+      out.sort(Comparator.comparingInt(cell -> isFlowingFluidCell(cell) ? 1 : 0));
       return out;
    }
 
-   static List<AiBuilder.CellSpec> init_List_TableIndex_DataUti(
+   static List<AiBuilder.CellSpec> topologicalSupportOrder(
       AiBuilder.Blueprint blueprint, List<AiBuilder.CellSpec> ordered, Predicate<BlockPos> observedSupport
    ) {
       Map<Long, Integer> index = new HashMap<>();
@@ -1936,14 +1936,14 @@ final class AiBuilder {
 
       for (int i = 0; i < ordered.size(); i++) {
          AiBuilder.CellSpec cell = ordered.get(i);
-         Block block = init_Block(cell);
+         Block block = resolveBlock(cell);
          positions[i] = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
          index.put(positions[i].asLong(), i);
-         BlockState placed = init_BlockState(cell);
+         BlockState placed = toBlockState(cell);
          support[i] = !placed.canBeReplaced() && !placed.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
          if (block instanceof LanternBlock) {
             required[i] = "true".equals(cell.properties().get("hanging")) ? Direction.UP : Direction.DOWN;
-         } else if (write(block)) {
+         } else if (isWallMountedBlock(block)) {
             Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
             required[i] = facing == null ? null : facing.getOpposite();
          } else if (block instanceof DoorBlock
@@ -1956,7 +1956,7 @@ final class AiBuilder {
          }
 
          for (Direction direction : Direction.values()) {
-            if ((required[i] == null || required[i] == direction) && init_Z_TableIndex_StreamU_2(cell, block, direction)) {
+            if ((required[i] == null || required[i] == direction) && requiresSupportOnSide(cell, block, direction)) {
                BlockPos neighbor = positions[i].relative(direction);
                if (observedSupport.test(neighbor)) {
                   queued[i] = true;
@@ -1978,7 +1978,7 @@ final class AiBuilder {
                if (next != null
                   && !queued[next]
                   && (required[next] == null || required[next] == direction.getOpposite())
-                  && init_Z_TableIndex_StreamU_2(ordered.get(next), init_Block(ordered.get(next)), direction.getOpposite())) {
+                  && requiresSupportOnSide(ordered.get(next), resolveBlock(ordered.get(next)), direction.getOpposite())) {
                   queued[next] = true;
                   ready.add(next);
                }
@@ -1995,7 +1995,7 @@ final class AiBuilder {
       return frontier;
    }
 
-   static boolean init_Z_TableIndex_StreamU_2(AiBuilder.CellSpec cell, Block block, Direction supportDirection) {
+   static boolean requiresSupportOnSide(AiBuilder.CellSpec cell, Block block, Direction supportDirection) {
       if (block instanceof ShulkerBoxBlock && cell.properties().containsKey("facing")) {
          Direction facing = Direction.byName(cell.properties().get("facing"));
          return facing != null && supportDirection == facing.getOpposite();
@@ -2010,7 +2010,7 @@ final class AiBuilder {
          return supportDirection == ("true".equals(cell.properties().get("hanging")) ? Direction.UP : Direction.DOWN);
       }
 
-      if (init(block, cell)) {
+      if (usesWallClickFace(block, cell)) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          if (facing != null && facing.getAxis().isHorizontal()) {
             return supportDirection == facing.getOpposite();
@@ -2024,7 +2024,7 @@ final class AiBuilder {
          return supportDirection == Direction.DOWN;
       } else {
          Direction click = supportDirection.getOpposite();
-         Boolean high = init_Boolean(cell, block);
+         Boolean high = requiresUpperHalfClick(cell, block);
          if (high != null && click.getAxis() == Axis.Y && high != (click == Direction.DOWN)) {
             return false;
          } else {
@@ -2040,7 +2040,7 @@ final class AiBuilder {
       }
    }
 
-   private static int init_I_TableIndex_StreamU(AiBuilder.CellSpec cell, Set<Long> present, Map<Long, Integer> memo) {
+   private static int computeSupportDepth(AiBuilder.CellSpec cell, Set<Long> present, Map<Long, Integer> memo) {
       List<Long> chain = new ArrayList<>();
       int x = cell.dx();
       int y = cell.dy();
@@ -2048,7 +2048,7 @@ final class AiBuilder {
 
       int depth;
       while (true) {
-         long key = init_J_I(x, y, z);
+         long key = packOffsetKey(x, y, z);
          Integer known = memo.get(key);
          if (known != null) {
             depth = known;
@@ -2056,7 +2056,7 @@ final class AiBuilder {
          }
 
          chain.add(key);
-         if (!present.contains(init_J_I(x, y - 1, z))) {
+         if (!present.contains(packOffsetKey(x, y - 1, z))) {
             depth = 0;
             break;
          }
@@ -2068,18 +2068,18 @@ final class AiBuilder {
          memo.put(chain.get(i), depth++);
       }
 
-      return memo.get(init_J_I(cell.dx(), cell.dy(), cell.dz()));
+      return memo.get(packOffsetKey(cell.dx(), cell.dy(), cell.dz()));
    }
 
-   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory) {
-      return init_JsonObject_TableIndex_DataUti(blueprint, inventory, Map.of());
+   static JsonObject missingMaterials(AiBuilder.Blueprint blueprint, Inventory inventory) {
+      return missingMaterials(blueprint, inventory, Map.of());
    }
 
-   static JsonObject init_JsonObject_TableIndex_DataUti(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
-      return init(blueprint, inventory, substitutes, false);
+   static JsonObject missingMaterials(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
+      return missingMaterials(blueprint, inventory, substitutes, false);
    }
 
-   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, boolean schematic) {
+   static JsonObject missingMaterials(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, boolean schematic) {
       Map<Item, Integer> available = new HashMap<>();
 
       for (int i = 0; i < inventory.getContainerSize(); i++) {
@@ -2103,7 +2103,7 @@ final class AiBuilder {
          Item item = block.asItem();
          if (item != Items.AIR) {
             String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-            required.merge(itemId, init_I(cell), Integer::sum);
+            required.merge(itemId, itemCountForCell(cell), Integer::sum);
             List<Item> candidates = pooled.computeIfAbsent(itemId, k -> new ArrayList<>(List.of(item)));
 
             for (String candidateId : substitutes.getOrDefault(cell.block(), List.of())) {
@@ -2134,18 +2134,18 @@ final class AiBuilder {
          }
       }
 
-      return init_JsonObject_Iterable(
+      return solveMissingMaterialsFlow(
          plans, alternatives, spec -> available.getOrDefault(BuiltInRegistries.ITEM.getOptional(Identifier.parse(spec)).orElse(Items.AIR), 0)
       );
    }
 
-   static AiOperation init_AiOperation(AiBuilder.Blueprint blueprint) {
+   static AiOperation checkSchematicReadiness(AiBuilder.Blueprint blueprint) {
       int reportLimit = 16;
       AiSchematicReadiness.Inner_TaskQueue audit = AiSchematicReadiness.init(blueprint, reportLimit);
-      return init(blueprint, audit);
+      return readinessFailureOp(blueprint, audit);
    }
 
-   static AiOperation init(AiBuilder.Blueprint blueprint, AiSchematicReadiness.Inner_TaskQueue audit) {
+   static AiOperation readinessFailureOp(AiBuilder.Blueprint blueprint, AiSchematicReadiness.Inner_TaskQueue audit) {
       if (audit.ready()) {
          return null;
       }
@@ -2220,47 +2220,47 @@ final class AiBuilder {
       );
    }
 
-   static JsonObject load(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
+   static JsonObject missingSchematicMaterials(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
       ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>();
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          List<AiCellMaterials.Inner_CachePool> cellPlans = AiSchematicActions.load_List(cell);
          plans.addAll(cellPlans);
-         init(cell, cellPlans, substitutes, alternatives);
+         collectSubstituteAlternatives(cell, cellPlans, substitutes, alternatives);
       }
 
-      return init_JsonObject_Iterable_3(plans, inventory, alternatives);
+      return missingMaterialsForInventory(plans, inventory, alternatives);
    }
 
-   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, LevelReader world) {
+   static JsonObject missingSchematicMaterialsInWorld(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, LevelReader world) {
       ArrayList<AiBuilder.CellSpec> auditCells = new ArrayList<>(blueprint.cells().size());
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          BlockPos target = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
          BlockState live = world.getBlockState(target);
-         AiBuilder.CellSpec planned = init_Z_TableIndex_StreamU_3(cell, live, substitutes) && !update(cell, live)
-            ? init_TableIndex_StreamU(cell, live)
+         AiBuilder.CellSpec planned = matchesCellOrSubstitute(cell, live, substitutes) && !matchesSchematicCell(cell, live)
+            ? cellSpecFromLiveState(cell, live)
             : cell;
          auditCells.add(planned);
          if (!substitutes.getOrDefault(cell.block(), List.of()).isEmpty()) {
             boolean waterAbove = world.getFluidState(target.above()).is(FluidTags.WATER);
-            init(cell, AiCellMaterials.init(planned, live, waterAbove), substitutes, alternatives);
+            collectSubstituteAlternatives(cell, AiCellMaterials.init(planned, live, waterAbove), substitutes, alternatives);
          }
       }
 
       List<AiCellMaterials.Inner_CachePool> plans = AiCellMaterials.init(auditCells, blueprint.origin(), world);
-      return init_JsonObject_Iterable_3(plans, inventory, alternatives);
+      return missingMaterialsForInventory(plans, inventory, alternatives);
    }
 
-   private static AiBuilder.CellSpec init_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockState live) {
+   private static AiBuilder.CellSpec cellSpecFromLiveState(AiBuilder.CellSpec cell, BlockState live) {
       Map<String, String> properties = new LinkedHashMap<>();
       live.getValues().forEach(value -> properties.put(value.property().getName(), value.valueName()));
       return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString(), properties);
    }
 
-   private static void init(
+   private static void collectSubstituteAlternatives(
       AiBuilder.CellSpec cell,
       Iterable<AiCellMaterials.Inner_CachePool> plans,
       Map<String, List<String>> substitutes,
@@ -2281,16 +2281,16 @@ final class AiBuilder {
       }
    }
 
-   static JsonObject init_JsonObject_Iterable_3(Iterable<AiCellMaterials.Inner_CachePool> plans, Inventory inventory, Map<String, Set<String>> alternatives) {
-      return init_JsonObject_Iterable(plans, alternatives, spec -> AiSchematicPlacement.init_I_Inventory_Str(inventory, spec));
+   static JsonObject missingMaterialsForInventory(Iterable<AiCellMaterials.Inner_CachePool> plans, Inventory inventory, Map<String, Set<String>> alternatives) {
+      return solveMissingMaterialsFlow(plans, alternatives, spec -> AiSchematicPlacement.init_I_Inventory_Str(inventory, spec));
    }
 
-   static JsonObject init_JsonObject_Iterable_2(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
+   static JsonObject missingMaterialsForContainer(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
       Map<Item, Integer> counts = AiCarriedShulker.init_Map_Container_Z(inventory, carriedStock);
-      return init_JsonObject_Iterable(plans, Map.of(), spec -> AiItems.resolveItem(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
+      return solveMissingMaterialsFlow(plans, Map.of(), spec -> AiItems.resolveItem(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
    }
 
-   private static JsonObject init_JsonObject_Iterable(
+   private static JsonObject solveMissingMaterialsFlow(
       Iterable<AiCellMaterials.Inner_CachePool> plans, Map<String, ? extends Iterable<String>> alternatives, ToIntFunction<String> stockCount
    ) {
       Map<String, Integer> required = new TreeMap<>();
@@ -2336,12 +2336,12 @@ final class AiBuilder {
 
       for (Entry<String, Integer> entry : required.entrySet()) {
          int requirementNode = 1 + requirementIndex;
-         sourceEdges[requirementIndex] = flow.init(0, requirementNode, entry.getValue());
-         flow.init(requirementNode, stockNodes.get(entry.getKey()), entry.getValue());
+         sourceEdges[requirementIndex] = flow.addEdge(0, requirementNode, entry.getValue());
+         flow.addEdge(requirementNode, stockNodes.get(entry.getKey()), entry.getValue());
 
          for (String candidate : pools.get(entry.getKey())) {
             if (!candidate.equals(entry.getKey())) {
-               flow.init(requirementNode, stockNodes.get(candidate), entry.getValue());
+               flow.addEdge(requirementNode, stockNodes.get(candidate), entry.getValue());
             }
          }
 
@@ -2349,14 +2349,14 @@ final class AiBuilder {
       }
 
       for (Entry<String, Integer> entry : stock.entrySet()) {
-         flow.init(stockNodes.get(entry.getKey()), sink, entry.getValue());
+         flow.addEdge(stockNodes.get(entry.getKey()), sink, entry.getValue());
       }
 
-      flow.init_V(0, sink);
+      flow.computeMaxFlow(0, sink);
       requirementIndex = 0;
 
       for (Entry<String, Integer> entry : required.entrySet()) {
-         int have = entry.getValue() - flow.init_I(0, sourceEdges[requirementIndex++]);
+         int have = entry.getValue() - flow.remainingCapacity(0, sourceEdges[requirementIndex++]);
          if (have < entry.getValue()) {
             missing.add(entry.getKey(), AiJson.objectOf("required", entry.getValue(), "available", have, "missing", entry.getValue() - have));
          }
@@ -2365,13 +2365,13 @@ final class AiBuilder {
       return missing;
    }
 
-   private static Block init_Block(AiBuilder.CellSpec cell) {
+   private static Block resolveBlock(AiBuilder.CellSpec cell) {
       return BuiltInRegistries.BLOCK
          .getOptional(Identifier.parse(cell.block()))
          .orElseThrow(() -> new IllegalArgumentException("Unknown block id: " + cell.block()));
    }
 
-   static AiBuilder.CellSpec init_TableIndex_StreamU(AiBuilder.CellSpec cell) {
+   static AiBuilder.CellSpec markLeavesPersistent(AiBuilder.CellSpec cell) {
       if (cell.block().endsWith("_leaves") && "false".equals(cell.properties().get("persistent"))) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
          properties.put("persistent", "true");
@@ -2381,68 +2381,68 @@ final class AiBuilder {
       }
    }
 
-   static BlockState init_BlockState(AiBuilder.CellSpec cell) {
-      BlockState state = init_Block(cell).defaultBlockState();
+   static BlockState toBlockState(AiBuilder.CellSpec cell) {
+      BlockState state = resolveBlock(cell).defaultBlockState();
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)state.getBlock().getStateDefinition().getProperty(entry.getKey());
          if (property != null) {
-            state = init_BlockState_BlockState(state, property, entry.getValue());
+            state = applyPropertyValue(state, property, entry.getValue());
          }
       }
 
       return state;
    }
 
-   private static <T extends Comparable<T>> BlockState init_BlockState_BlockState(BlockState state, Property<T> property, String value) {
+   private static <T extends Comparable<T>> BlockState applyPropertyValue(BlockState state, Property<T> property, String value) {
       return state.setValue(property, property.getValue(value).orElseThrow());
    }
 
-   static boolean init(AiBuilder.CellSpec cell, BlockPos pos, AABB body, BlockGetter world) {
+   static boolean collidesWithEntityBox(AiBuilder.CellSpec cell, BlockPos pos, AABB body, BlockGetter world) {
       return Shapes.joinIsNotEmpty(
-         init_BlockState(cell).getCollisionShape(world, pos).move(pos.getX(), pos.getY(), pos.getZ()), Shapes.create(body), BooleanOp.AND
+         toBlockState(cell).getCollisionShape(world, pos).move(pos.getX(), pos.getY(), pos.getZ()), Shapes.create(body), BooleanOp.AND
       );
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
+   static AiBuilder.Blueprint normalizeSchematicBlueprint(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel world = mc == null ? null : mc.level;
-      return init(blueprint, pos -> world != null && AiTerrain.isLoaded(world, pos) ? world.getBlockState(pos) : Blocks.AIR.defaultBlockState());
+      return normalizeSchematicBlueprintWithWorld(blueprint, pos -> world != null && AiTerrain.isLoaded(world, pos) ? world.getBlockState(pos) : Blocks.AIR.defaultBlockState());
    }
 
-   static AiBuilder.Blueprint init(AiBuilder.Blueprint blueprint, Map<Long, BlockState> leafSnapshot) {
-      return init(blueprint, pos -> leafSnapshot.getOrDefault(pos.asLong(), Blocks.AIR.defaultBlockState()));
+   static AiBuilder.Blueprint normalizeSchematicBlueprint(AiBuilder.Blueprint blueprint, Map<Long, BlockState> leafSnapshot) {
+      return normalizeSchematicBlueprintWithWorld(blueprint, pos -> leafSnapshot.getOrDefault(pos.asLong(), Blocks.AIR.defaultBlockState()));
    }
 
-   private static AiBuilder.Blueprint init(AiBuilder.Blueprint blueprint, Function<BlockPos, BlockState> externalState) {
+   private static AiBuilder.Blueprint normalizeSchematicBlueprintWithWorld(AiBuilder.Blueprint blueprint, Function<BlockPos, BlockState> externalState) {
       HashMap<Long, AiBuilder.CellSpec> source = new HashMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         init();
-         if (!update(cell) && !read_Z(cell)) {
-            source.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
+         checkNotCancelled();
+         if (!isOmittedSchematicCell(cell) && !isTransientPistonCell(cell)) {
+            source.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), cell);
          }
       }
 
-      Map<AiBuilder.CellSpec, Integer> leafDistances = init_Map_List(
+      Map<AiBuilder.CellSpec, Integer> leafDistances = computeLeafDistances(
          blueprint.cells(),
-         cellx -> LeavesBlock.getOptionalDistanceAt(init_BlockState(cellx)).orElse(7) == 0,
-         cellx -> init(source, blueprint.origin(), cellx, externalState)
+         cellx -> LeavesBlock.getOptionalDistanceAt(toBlockState(cellx)).orElse(7) == 0,
+         cellx -> externalLeafDistance(source, blueprint.origin(), cellx, externalState)
       );
       ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>(blueprint.cells().size());
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         init();
-         if (!update(cell) && !read_Z(cell)) {
-            AiBuilder.CellSpec adjusted = init_TableIndex_StreamU(cell);
+         checkNotCancelled();
+         if (!isOmittedSchematicCell(cell) && !isTransientPistonCell(cell)) {
+            AiBuilder.CellSpec adjusted = markLeavesPersistent(cell);
             if (cell.block().equals("minecraft:attached_melon_stem") || cell.block().equals("minecraft:attached_pumpkin_stem")) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
                properties.remove("facing");
                adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block().replace("attached_", ""), properties);
             }
 
-            Block plant = init_Block(adjusted);
-            if (flush(plant)) {
+            Block plant = resolveBlock(adjusted);
+            if (isAgeableCropBlock(plant)) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(adjusted.properties());
                properties.remove("age");
                adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), adjusted.block(), properties);
@@ -2455,7 +2455,7 @@ final class AiBuilder {
                adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
             }
 
-            AiBuilder.CellSpec above = source.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
+            AiBuilder.CellSpec above = source.get(packOffsetKey(cell.dx(), cell.dy() + 1, cell.dz()));
             if (cell.block().equals("minecraft:grass_block")) {
                adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt");
             }
@@ -2465,20 +2465,20 @@ final class AiBuilder {
             }
 
             if (cell.block().equals("minecraft:farmland") || cell.block().equals("minecraft:dirt_path")) {
-               BlockState aboveState = above == null ? Blocks.AIR.defaultBlockState() : init_BlockState(above);
+               BlockState aboveState = above == null ? Blocks.AIR.defaultBlockState() : toBlockState(above);
                boolean water = false;
                if (cell.block().equals("minecraft:farmland")) {
                   for (int dx = -4; dx <= 4 && !water; dx++) {
                      for (int dz = -4; dz <= 4 && !water; dz++) {
                         for (int dy = 0; dy <= 1 && !water; dy++) {
-                           AiBuilder.CellSpec neighbour = source.get(init_J_I(cell.dx() + dx, cell.dy() + dy, cell.dz() + dz));
-                           water = neighbour != null && init_BlockState(neighbour).getFluidState().is(FluidTags.WATER);
+                           AiBuilder.CellSpec neighbour = source.get(packOffsetKey(cell.dx() + dx, cell.dy() + dy, cell.dz() + dz));
+                           water = neighbour != null && toBlockState(neighbour).getFluidState().is(FluidTags.WATER);
                         }
                      }
                   }
                }
 
-               adjusted = init(cell, aboveState.isSolid(), aboveState.is(BlockTags.MAINTAINS_FARMLAND), aboveState.getBlock() instanceof FenceGateBlock, water);
+               adjusted = normalizeSoilCell(cell, aboveState.isSolid(), aboveState.is(BlockTags.MAINTAINS_FARMLAND), aboveState.getBlock() instanceof FenceGateBlock, water);
             }
 
             cells.add(adjusted);
@@ -2488,26 +2488,26 @@ final class AiBuilder {
       return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(cells));
    }
 
-   static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
+   static List<BlockPos> collectLeafNeighborPositions(AiBuilder.Blueprint blueprint) {
       HashSet<Long> source = new HashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         init();
-         if (!update(cell) && !read_Z(cell)) {
-            source.add(init_J_I(cell.dx(), cell.dy(), cell.dz()));
+         checkNotCancelled();
+         if (!isOmittedSchematicCell(cell) && !isTransientPistonCell(cell)) {
+            source.add(packOffsetKey(cell.dx(), cell.dy(), cell.dz()));
          }
       }
 
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         init();
-         if (init_Block(cell) instanceof LeavesBlock) {
+         checkNotCancelled();
+         if (resolveBlock(cell) instanceof LeavesBlock) {
             for (Direction direction : Direction.values()) {
                int x = cell.dx() + direction.getStepX();
                int y = cell.dy() + direction.getStepY();
                int z = cell.dz() + direction.getStepZ();
-               if (!source.contains(init_J_I(x, y, z))) {
+               if (!source.contains(packOffsetKey(x, y, z))) {
                   neighbors.add(blueprint.origin().offset(x, y, z));
                }
             }
@@ -2517,17 +2517,17 @@ final class AiBuilder {
       return List.copyOf(neighbors);
    }
 
-   static void init() {
+   static void checkNotCancelled() {
       if (Thread.currentThread().isInterrupted()) {
          throw new CancellationException("Schematic preparation cancelled");
       }
    }
 
-   static boolean write(AiBuilder.CellSpec cell) {
-      return init_Set.contains(cell.block());
+   static boolean isReplaceableFoliage(AiBuilder.CellSpec cell) {
+      return REPLACEABLE_FOLIAGE_BLOCKS.contains(cell.block());
    }
 
-   private static boolean flush(Block plant) {
+   private static boolean isAgeableCropBlock(Block plant) {
       return plant instanceof CropBlock
          || plant instanceof StemBlock
          || plant instanceof CocoaBlock
@@ -2536,11 +2536,11 @@ final class AiBuilder {
          || plant instanceof SweetBerryBushBlock;
    }
 
-   static boolean update(AiBuilder.CellSpec cell) {
-      return write(cell) || cell.block().equals("minecraft:pitcher_crop") && "upper".equals(cell.properties().get("half"));
+   static boolean isOmittedSchematicCell(AiBuilder.CellSpec cell) {
+      return isReplaceableFoliage(cell) || cell.block().equals("minecraft:pitcher_crop") && "upper".equals(cell.properties().get("half"));
    }
 
-   static Map<AiBuilder.CellSpec, Integer> init_Map_List(
+   static Map<AiBuilder.CellSpec, Integer> computeLeafDistances(
       List<AiBuilder.CellSpec> cells, Predicate<AiBuilder.CellSpec> log, ToIntFunction<AiBuilder.CellSpec> surrounding
    ) {
       HashMap<Long, AiBuilder.CellSpec> source = new HashMap<>();
@@ -2549,20 +2549,20 @@ final class AiBuilder {
       ArrayDeque<AiBuilder.CellSpec> queue = new ArrayDeque<>();
 
       for (AiBuilder.CellSpec cell : cells) {
-         init();
-         source.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
-         if (init_Block(cell) instanceof LeavesBlock) {
-            leaves.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
+         checkNotCancelled();
+         source.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), cell);
+         if (resolveBlock(cell) instanceof LeavesBlock) {
+            leaves.put(packOffsetKey(cell.dx(), cell.dy(), cell.dz()), cell);
          }
       }
 
       for (AiBuilder.CellSpec cell : leaves.values()) {
-         init();
+         checkNotCancelled();
          int distance = Math.clamp(surrounding.applyAsInt(cell), 1, 7);
 
          for (Direction direction : Direction.values()) {
             AiBuilder.CellSpec neighbor = source.get(
-               init_J_I(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
+               packOffsetKey(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
             );
             if (neighbor != null && log.test(neighbor)) {
                distance = 1;
@@ -2577,13 +2577,13 @@ final class AiBuilder {
       }
 
       while (!queue.isEmpty()) {
-         init();
+         checkNotCancelled();
          AiBuilder.CellSpec cell = queue.removeFirst();
          int next = distances.get(cell) + 1;
          if (next < 7) {
             for (Direction direction : Direction.values()) {
                AiBuilder.CellSpec neighbor = leaves.get(
-                  init_J_I(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
+                  packOffsetKey(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
                );
                if (neighbor != null && next < distances.get(neighbor)) {
                   distances.put(neighbor, next);
@@ -2596,7 +2596,7 @@ final class AiBuilder {
       return Map.copyOf(distances);
    }
 
-   private static int init(
+   private static int externalLeafDistance(
       Map<Long, AiBuilder.CellSpec> source, BlockPos origin, AiBuilder.CellSpec cell, Function<BlockPos, BlockState> externalState
    ) {
       int distance = 7;
@@ -2605,7 +2605,7 @@ final class AiBuilder {
          int x = cell.dx() + direction.getStepX();
          int y = cell.dy() + direction.getStepY();
          int z = cell.dz() + direction.getStepZ();
-         if (!source.containsKey(init_J_I(x, y, z))) {
+         if (!source.containsKey(packOffsetKey(x, y, z))) {
             BlockPos pos = origin.offset(x, y, z);
             BlockState state = externalState.apply(pos);
             distance = Math.min(distance, LeavesBlock.getOptionalDistanceAt(state).orElse(7) + 1);
@@ -2615,7 +2615,7 @@ final class AiBuilder {
       return distance;
    }
 
-   static AiBuilder.CellSpec init(
+   static AiBuilder.CellSpec normalizeSoilCell(
       AiBuilder.CellSpec cell, boolean solidAbove, boolean maintainsFarmland, boolean fenceGateAbove, boolean nearWater
    ) {
       if (cell.block().equals("minecraft:dirt_path")) {
@@ -2631,10 +2631,10 @@ final class AiBuilder {
       }
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation buildFromArgs(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.player.isAlive()) {
-         AiBuilder.BuildOptions power = init_TableIndex_ConfigS(args);
+         AiBuilder.BuildOptions power = parseBuildOptions(args);
          if (!AutismLiteVariant.enabled() && args.has("schematic") && !args.get("schematic").isJsonNull()) {
             return new AiPrintPreparation(args, power);
          }
@@ -2666,14 +2666,14 @@ final class AiBuilder {
                   origin.toShortString()
                );
          } else {
-            blueprint = init(args, mc.player.blockPosition());
+            blueprint = parseBlueprint(args, mc.player.blockPosition());
             if (power.rotation() != 0 || !power.mirror().equals("none")) {
-               blueprint = new AiBuilder.Blueprint(blueprint.origin(), init_List_List_2(blueprint.cells(), power.rotation(), power.mirror()));
+               blueprint = new AiBuilder.Blueprint(blueprint.origin(), transformCells(blueprint.cells(), power.rotation(), power.mirror()));
             }
          }
 
          if (power.layers()) {
-            blueprint = init_TableIndex_DataUti_TableIndex_DataUti(blueprint, power.layerStart(), power.layerHeight());
+            blueprint = sliceLayerBand(blueprint, power.layerStart(), power.layerHeight());
          }
 
          if (decodedSchematic != null) {
@@ -2683,9 +2683,9 @@ final class AiBuilder {
          boolean schematic = args.has("schematic");
          int decodedCells = blueprint.cells().size();
          if (schematic) {
-            blueprint = init_TableIndex_DataUti(blueprint);
+            blueprint = normalizeSchematicBlueprint(blueprint);
             power = power.withMachine(power.machine().init(blueprint));
-            AiOperation readinessFailure = init_AiOperation(blueprint);
+            AiOperation readinessFailure = checkSchematicReadiness(blueprint);
             if (readinessFailure != null) {
                return readinessFailure;
             }
@@ -2699,16 +2699,16 @@ final class AiBuilder {
                );
          }
 
-         AiBuilder.Blueprint stockPlan = schematic ? load_TableIndex_DataUti(blueprint) : blueprint;
+         AiBuilder.Blueprint stockPlan = schematic ? stripPoweredLevers(blueprint) : blueprint;
          boolean creativeSupply = schematic && mc.gameMode != null && mc.gameMode.getPlayerMode() == GameType.CREATIVE && mc.player.getAbilities().instabuild;
          JsonObject missing = creativeSupply
             ? new JsonObject()
             : (
                schematic
-                  ? init(stockPlan, mc.player.getInventory(), power.substitutes(), mc.level)
-                  : init_JsonObject_TableIndex_DataUti(stockPlan, mc.player.getInventory(), power.substitutes())
+                  ? missingSchematicMaterialsInWorld(stockPlan, mc.player.getInventory(), power.substitutes(), mc.level)
+                  : missingMaterials(stockPlan, mc.player.getInventory(), power.substitutes())
             );
-         if (schematic && missing.size() > 0 && (!power.shulkerStock() || !init_Z(blueprint))) {
+         if (schematic && missing.size() > 0 && (!power.shulkerStock() || !hasNearbyExternalShulkerStock(blueprint))) {
             return AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.MISSING_MATERIALS,
@@ -2724,7 +2724,7 @@ final class AiBuilder {
 
          if (!schematic && missing.size() > 0) {
             return AiJson.getBoolean(args, "craftMissing", true)
-               ? init(args, missing)
+               ? craftMissingThenBuild(args, missing)
                : AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
                   AiFailure.MISSING_MATERIALS,
@@ -2737,13 +2737,13 @@ final class AiBuilder {
          int timeoutSeconds = AiJson.getInt(args, "timeoutSeconds", 600);
          return power.repeat() != null
             ? new AiBuilder.BuildOp(blueprint, power, verify, timeoutSeconds)
-            : init(blueprint, verify, timeoutSeconds, power, schematic);
+            : buildBlueprint(blueprint, verify, timeoutSeconds, power, schematic);
       } else {
          throw new IllegalArgumentException("Building requires a connected living player");
       }
    }
 
-   private static boolean init_Z(AiBuilder.Blueprint blueprint) {
+   private static boolean hasNearbyExternalShulkerStock(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos center = mc.player.blockPosition();
@@ -2783,15 +2783,15 @@ final class AiBuilder {
       }
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti_TableIndex_DataUti_2(
+   static AiBuilder.Blueprint filterUnsatisfiedCells(
       AiBuilder.Blueprint blueprint, Map<String, List<String>> substitutes, Function<BlockPos, BlockState> state
    ) {
       ArrayList<AiBuilder.CellSpec> remaining = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          BlockState live = state.apply(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()));
-         if (!init(cell, live, substitutes, true) && !flush(cell, live)) {
-            if (init_Z(cell) && live.getBlock() == init_Block(cell)) {
+         if (!isCellSatisfied(cell, live, substitutes, true) && !needsWaterlogToggleOnly(cell, live)) {
+            if (isDoubleSlabCell(cell) && live.getBlock() == resolveBlock(cell)) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
                properties.put("type", "bottom");
                remaining.add(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties));
@@ -2804,11 +2804,11 @@ final class AiBuilder {
       return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(remaining));
    }
 
-   static AiBuilder.Blueprint load_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
+   static AiBuilder.Blueprint stripPoweredLevers(AiBuilder.Blueprint blueprint) {
       ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>(blueprint.cells().size());
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         init();
+         checkNotCancelled();
          if (cell.block().equals("minecraft:lever") && "true".equals(cell.properties().get("powered"))) {
             LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
             properties.remove("powered");
@@ -2821,7 +2821,7 @@ final class AiBuilder {
       return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(cells));
    }
 
-   private static AiOperation init(final JsonObject args, final JsonObject missing) {
+   private static AiOperation craftMissingThenBuild(final JsonObject args, final JsonObject missing) {
       final List<String> items = new ArrayList<>(missing.keySet());
       return new AiOperation() {
          final JsonArray init_JsonArray = new JsonArray();
@@ -2868,7 +2868,7 @@ final class AiBuilder {
                again.addProperty("craftMissing", false);
 
                try {
-                  this.init_AiOperation = AiBuilder.init_AiOperation(again);
+                  this.init_AiOperation = AiBuilder.buildFromArgs(again);
                } catch (IllegalArgumentException e) {
                   return AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, e.getMessage(), "{}");
                }
@@ -2908,33 +2908,33 @@ final class AiBuilder {
       };
    }
 
-   static AiOperation init_AiOperation_TableIndex_DataUti(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds) {
-      return init(blueprint, verify, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT);
+   static AiOperation buildBlueprint(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds) {
+      return buildBlueprint(blueprint, verify, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT);
    }
 
-   static AiOperation init(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power) {
-      return init(blueprint, verify, timeoutSeconds, power, false);
+   static AiOperation buildBlueprint(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power) {
+      return buildBlueprint(blueprint, verify, timeoutSeconds, power, false);
    }
 
-   private static AiOperation init(
+   private static AiOperation buildBlueprint(
       AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power, boolean schematic
    ) {
-      return init(blueprint, verify, timeoutSeconds, power, schematic, Set.of());
+      return buildBlueprint(blueprint, verify, timeoutSeconds, power, schematic, Set.of());
    }
 
-   static List<AiBuilder.CellSpec> read(List<AiBuilder.CellSpec> order) {
+   static List<AiBuilder.CellSpec> deferMechanismsToEnd(List<AiBuilder.CellSpec> order) {
       ArrayList<AiBuilder.CellSpec> plain = new ArrayList<>();
       ArrayList<AiBuilder.CellSpec> mechanisms = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : order) {
-         (load(cell.block()) ? mechanisms : plain).add(cell);
+         (isDeferredMechanismBlock(cell.block()) ? mechanisms : plain).add(cell);
       }
 
       plain.addAll(mechanisms);
       return plain;
    }
 
-   static boolean load(String block) {
+   static boolean isDeferredMechanismBlock(String block) {
       if (block == null) {
          return false;
       }
@@ -2966,25 +2966,25 @@ final class AiBuilder {
       return var10000;
    }
 
-   static AiOperation init(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
-      return init(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false);
+   static AiOperation buildSchematicSubtask(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
+      return buildBlueprint(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false);
    }
 
-   static AiOperation init(AiBuilder.Blueprint blueprint, int timeoutSeconds) {
-      return init(blueprint, true, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT, true);
+   static AiOperation buildSchematic(AiBuilder.Blueprint blueprint, int timeoutSeconds) {
+      return buildBlueprint(blueprint, true, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT, true);
    }
 
-   static AiOperation load(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
-      return init(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false, true);
+   static AiOperation buildSchematicSneaking(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
+      return buildBlueprint(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false, true);
    }
 
-   private static AiOperation init(
+   private static AiOperation buildBlueprint(
       AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power, boolean schematic, Set<Long> protectedCells
    ) {
-      return init(blueprint, verify, timeoutSeconds, power, schematic, protectedCells, schematic);
+      return buildBlueprint(blueprint, verify, timeoutSeconds, power, schematic, protectedCells, schematic);
    }
 
-   private static AiOperation init(
+   private static AiOperation buildBlueprint(
       AiBuilder.Blueprint blueprint,
       boolean verify,
       int timeoutSeconds,
@@ -2993,10 +2993,10 @@ final class AiBuilder {
       Set<Long> protectedCells,
       boolean scaffoldingOwner
    ) {
-      return init(blueprint, verify, timeoutSeconds, power, schematic, protectedCells, scaffoldingOwner, false);
+      return buildBlueprint(blueprint, verify, timeoutSeconds, power, schematic, protectedCells, scaffoldingOwner, false);
    }
 
-   private static AiOperation init(
+   private static AiOperation buildBlueprint(
       final AiBuilder.Blueprint blueprint,
       final boolean verify,
       final int timeoutSeconds,
@@ -3028,8 +3028,8 @@ final class AiBuilder {
                }
 
                long deadline = System.nanoTime() + Math.max(1, timeoutSeconds) * 1000000000L;
-               AiOperation construction = init(
-                  load_TableIndex_DataUti(blueprint), verify, timeoutSeconds, power, schematic, protectedCells, scaffoldingOwner, holdSneak
+               AiOperation construction = buildBlueprint(
+                  stripPoweredLevers(blueprint), verify, timeoutSeconds, power, schematic, protectedCells, scaffoldingOwner, holdSneak
                );
                return new AiDeferredControls(
                   construction,
@@ -3051,7 +3051,7 @@ final class AiBuilder {
          }
 
          return new AiOperation() {
-            final List<AiBuilder.CellSpec> init_List = schematic ? AiBuilder.read(AiBuilder.load_List(blueprint)) : AiBuilder.init_List(blueprint);
+            final List<AiBuilder.CellSpec> init_List = schematic ? AiBuilder.deferMechanismsToEnd(AiBuilder.orderSchematicCells(blueprint)) : AiBuilder.orderBlueprintCells(blueprint);
             final AABB init_AABB = new AABB(
                blueprint.origin().getX() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dx).min().orElse(0),
                blueprint.origin().getY() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0),
@@ -3246,11 +3246,11 @@ final class AiBuilder {
 
                for (AiBuilder.CellSpec cell : blueprint.cells()) {
                   BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-                  Block block = AiBuilder.init_Block(cell);
-                  BlockState requested = AiBuilder.init_BlockState(cell);
+                  Block block = AiBuilder.resolveBlock(cell);
+                  BlockState requested = AiBuilder.toBlockState(cell);
                   if (!Block.isShapeFullBlock(requested.getCollisionShape(mc.level, at)) || block instanceof FallingBlock) {
                      for (Direction direction : Direction.values()) {
-                        if (AiBuilder.init_Z_TableIndex_StreamU_2(cell, block, direction)) {
+                        if (AiBuilder.requiresSupportOnSide(cell, block, direction)) {
                            BlockPos support = at.relative(direction);
                            if (!mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
                               this.open_Set.add(support.asLong());
@@ -3275,7 +3275,7 @@ final class AiBuilder {
                this.frame = blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0) - 1;
                this.open_Z = true;
                this.poll_Z = !this.close_Z || !power.clearTerrain();
-               this.init_a_StreamUtil = this.close_Z ? AiScaffold.init(AiBuilder.init_Path(blueprint), List.of()) : null;
+               this.init_a_StreamUtil = this.close_Z ? AiScaffold.init(AiBuilder.checkpointPath(blueprint), List.of()) : null;
                if (this.init_a_StreamUtil != null) {
                   for (BlockPos step : AiSchematicActions.init(blueprint)) {
                      for (BlockPos support : List.of(step, step.below())) {
@@ -3312,13 +3312,13 @@ final class AiBuilder {
             void init_V_10() {
                autismclient.ai.engine.AiRestock.reserveItemsForJob(Map.of());
                autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
-               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
-               autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(0L);
                if (schematic) {
                   autismclient.ai.engine.AiRoutePolicy.putAt_V();
                }
 
-               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_Set(Set.of());
+               autismclient.ai.engine.AiPathfinder.MoveCosts.setAvoidPlacementCellsCompat(Set.of());
             }
 
             void load_V_4() {
@@ -3328,9 +3328,9 @@ final class AiBuilder {
 
                   for (AiBuilder.CellSpec cell : blueprint.cells()) {
                      BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-                     if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
-                        Item item = schematic && cell.block().equals("minecraft:grass_block") ? Items.DIRT : AiBuilder.init_Block(cell).asItem();
-                        int cost = AiBuilder.init_I(cell);
+                     if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
+                        Item item = schematic && cell.block().equals("minecraft:grass_block") ? Items.DIRT : AiBuilder.resolveBlock(cell).asItem();
+                        int cost = AiBuilder.itemCountForCell(cell);
                         if (item != Items.AIR && cost > 0) {
                            counts.merge(item, cost, Integer::sum);
                         }
@@ -3342,7 +3342,7 @@ final class AiBuilder {
 
                   for (AiBuilder.CellSpec cell : blueprint.cells()) {
                      if ("false".equals(cell.properties().get("open"))
-                        && AiBuilder.init_Block(cell).defaultBlockState().hasProperty(BlockStateProperties.OPEN)) {
+                        && AiBuilder.resolveBlock(cell).defaultBlockState().hasProperty(BlockStateProperties.OPEN)) {
                         closed.add(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong());
                      }
                   }
@@ -3364,9 +3364,9 @@ final class AiBuilder {
 
                autismclient.ai.engine.AiRestock.reserveItemsForJob(this.close_Map);
                autismclient.ai.engine.AiRoutePolicy.putAt(this.clear_Set);
-               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(3000000000L);
                if (schematic) {
-                  autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(3000000000L);
+                  autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(3000000000L);
                }
 
                if (schematic) {
@@ -3374,7 +3374,7 @@ final class AiBuilder {
                }
 
                if (schematic && this.reset_Set != null) {
-                  autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_Set(this.reset_Set);
+                  autismclient.ai.engine.AiPathfinder.MoveCosts.setAvoidPlacementCellsCompat(this.reset_Set);
                }
             }
 
@@ -3389,7 +3389,7 @@ final class AiBuilder {
                   && mc.player.getDeltaMovement().horizontalDistanceSqr() > 4.0E-4) {
                   BlockPos floor = autismclient.ai.engine.AiStance.init(mc).below();
                   AiBuilder.CellSpec source = this.load_Map.get(floor.asLong());
-                  if (source != null && AiBuilder.init(source, mc.level.getBlockState(floor), power.substitutes(), true)) {
+                  if (source != null && AiBuilder.isCellSatisfied(source, mc.level.getBlockState(floor), power.substitutes(), true)) {
                      this.pop_I++;
                   }
                }
@@ -3511,7 +3511,7 @@ final class AiBuilder {
                            this.init_AiOperation = null;
                         }
 
-                        this.pop_AiOperation = autismclient.ai.engine.AiBreakBlock.init(stuck, 5, false, Set.of(), false);
+                        this.pop_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(stuck, 5, false, Set.of(), false);
                         return this.init_AiOperation_Result_5("Freeing the body from a block");
                      }
                   }
@@ -3604,7 +3604,7 @@ final class AiBuilder {
                       {
                         if (r.status() == AiOperation.Status.SUCCEEDED) {
                            AiBuilder.CellSpec finished = this.init_List.get(this.data);
-                           if (AiBuilder.init_Fluid(finished) != null || finished.properties().containsKey("waterlogged")) {
+                           if (AiBuilder.fluidOfCell(finished) != null || finished.properties().containsKey("waterlogged")) {
                               this.load_J = mc.player.tickCount;
                            }
 
@@ -3673,7 +3673,7 @@ final class AiBuilder {
 
                      if (this.init_AiOperation != null) {
                         if (schematic && this.close_Z && this.init_AiOperation instanceof AiSchematicApproach approach) {
-                           approach.init(this::init, this::flush, () -> this.init_TableIndex_StateCa.init_BlockPos() != null);
+                           approach.init(this::init, this::flush, () -> this.init_TableIndex_StateCa.pendingPos() != null);
                         }
 
                         if (this.load_b_DataUtil != null && this.init_AiOperation != this.load_AiOperation) {
@@ -3684,7 +3684,7 @@ final class AiBuilder {
                         }
 
                         AiOperation.Result r = this.init_AiOperation_Result == null ? this.init_AiOperation.tick() : this.init_AiOperation_Result;
-                        if (r.terminal() && this.init_TableIndex_StateCa.init_BlockPos() != null) {
+                        if (r.terminal() && this.init_TableIndex_StateCa.pendingPos() != null) {
                            this.init_AiOperation_Result = r;
                            return this.init_AiOperation_Result_5("Finishing the moving placement acknowledgement");
                         }
@@ -3714,7 +3714,7 @@ final class AiBuilder {
 
                               for (BlockPos at : positions) {
                                  AiBuilder.CellSpec wanted = this.load_Map.get(at.asLong());
-                                 if (wanted != null && !AiBuilder.init(wanted, mc.level.getBlockState(at), power.substitutes(), true)) {
+                                 if (wanted != null && !AiBuilder.isCellSatisfied(wanted, mc.level.getBlockState(at), power.substitutes(), true)) {
                                     scheduled.add(wanted);
                                  }
                               }
@@ -3737,7 +3737,7 @@ final class AiBuilder {
                            this.load_AiOperation = null;
                         }
 
-                        if (r.status() == AiOperation.Status.SUCCEEDED && this.data < this.init_List.size() && AiBuilder.load_Z(this.init_List.get(this.data))
+                        if (r.status() == AiOperation.Status.SUCCEEDED && this.data < this.init_List.size() && AiBuilder.isFlowingFluidCell(this.init_List.get(this.data))
                            )
                          {
                            this.load_J = mc.player.tickCount;
@@ -3859,7 +3859,7 @@ final class AiBuilder {
                               true,
                               2.0,
                               AiGoto.protectingCellsBelowYCompat(
-                                 autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.25),
+                                 autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stance, 0.25),
                                  keep,
                                  blueprint.origin().getY() - 2
                               )
@@ -3869,7 +3869,7 @@ final class AiBuilder {
 
                         int evaluated = 0;
                         int placements = 0;
-                        if (this.init_TableIndex_StateCa.init_BlockPos() != null) {
+                        if (this.init_TableIndex_StateCa.pendingPos() != null) {
                            return this.init_AiOperation_Result_5("Confirming the last moving placement");
                         }
 
@@ -3881,11 +3881,11 @@ final class AiBuilder {
                            BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState live = mc.level.getBlockState(pos);
                            if (!AiTerrain.isLoaded(mc.level, pos)
-                              || !AiBuilder.init(cell, live, power.substitutes(), schematic)
+                              || !AiBuilder.isCellSatisfied(cell, live, power.substitutes(), schematic)
                                  && (
                                     !schematic
-                                       || !AiBuilder.read(cell, live)
-                                       || AiBuilder.init_Z(cell, live) && AiBuilder.init_Z_TableIndex_StreamU(cell, pos, mc.level)
+                                       || !AiBuilder.matchesIgnoringUnpairedChest(cell, live)
+                                       || AiBuilder.isUnpairedDoubleChest(cell, live) && AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level)
                                  )) {
                               if (schematic
                                  && this.close_Z
@@ -3899,7 +3899,7 @@ final class AiBuilder {
                                     AiBuilder.CellSpec next = this.init_List.get(j);
                                     if (next.dy() == cell.dy()) {
                                        BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
-                                       if (!AiBuilder.init(next, mc.level.getBlockState(at), power.substitutes(), schematic)
+                                       if (!AiBuilder.isCellSatisfied(next, mc.level.getBlockState(at), power.substitutes(), schematic)
                                           && this.init_Z_TableIndex_StreamU_BlockPos(next, at)) {
                                           swap = j;
                                           break;
@@ -3927,7 +3927,7 @@ final class AiBuilder {
                                  }
                               }
 
-                              if (schematic && !AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
+                              if (schematic && !AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
                                  BlockPos interior = AiSchematicActions.init(mc.level, pos, this.load_Map);
                                  if (interior != null) {
                                     this.sync_BlockPos = interior;
@@ -3944,12 +3944,12 @@ final class AiBuilder {
                               } else {
                                  if (schematic
                                     && this.close_Z
-                                    && this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)).crouchForLook()
+                                    && this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)).crouchForLook()
                                     && mc.level.getBlockState(pos.above()).getCollisionShape(mc.level, pos.above()).isEmpty()
                                     && mc.level.getBlockState(pos).canBeReplaced()) {
                                     AiBuilder.CellSpec above = this.load_Map.get(pos.above().asLong());
                                     if (above != null
-                                       && Block.isShapeFullBlock(AiBuilder.init_BlockState(above).getCollisionShape(mc.level, pos.above()))
+                                       && Block.isShapeFullBlock(AiBuilder.toBlockState(above).getCollisionShape(mc.level, pos.above()))
                                        && this.poll_Map.getOrDefault(cell, 0) < 4) {
                                        this.sync_BlockPos = pos.above();
                                        if (this.init_Z_TableIndex_StreamU_Str(cell, "an upward-facing part waits for the block above it")) {
@@ -3966,7 +3966,7 @@ final class AiBuilder {
                                     BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, pos, mc.level, this.close_Set);
                                     if (foundation != null) {
                                        this.read_BlockPos = foundation;
-                                       this.init_AiOperation = AiBuilder.init(
+                                       this.init_AiOperation = AiBuilder.buildSchematicSubtask(
                                           new AiBuilder.Blueprint(foundation, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))),
                                           this.init_Set_2()
                                        );
@@ -3974,7 +3974,7 @@ final class AiBuilder {
                                     }
 
                                     BlockPos dependency = AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, pos, mc.level, this.load_Map);
-                                    if (AiTerrain.isLoaded(mc.level, pos) && (dependency != null || !AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos))) {
+                                    if (AiTerrain.isLoaded(mc.level, pos) && (dependency != null || !AiBuilder.toBlockState(cell).canSurvive(mc.level, pos))) {
                                        if (dependency != null && this.poll_Map.getOrDefault(cell, 0) < 4) {
                                           boolean later = false;
 
@@ -3997,8 +3997,8 @@ final class AiBuilder {
                                     }
                                  }
 
-                                 if (schematic && AiBuilder.init_Fluid(cell) != null) {
-                                    if (AiBuilder.load_Z(cell)) {
+                                 if (schematic && AiBuilder.fluidOfCell(cell) != null) {
+                                    if (AiBuilder.isFlowingFluidCell(cell)) {
                                        if (!live.canBeReplaced() && live.getFluidState().isEmpty()) {
                                           if (!live.hasBlockEntity()) {
                                              HashSet<BlockPos> plannedWater = new HashSet<>();
@@ -4007,12 +4007,12 @@ final class AiBuilder {
                                                 BlockPos neighbor = pos.relative(side);
                                                 AiBuilder.CellSpec wanted = this.load_Map.get(neighbor.asLong());
                                                 if (wanted != null
-                                                   && (AiBuilder.init_Fluid(wanted) != null || "true".equals(wanted.properties().get("waterlogged")))) {
+                                                   && (AiBuilder.fluidOfCell(wanted) != null || "true".equals(wanted.properties().get("waterlogged")))) {
                                                    plannedWater.add(neighbor);
                                                 }
                                              }
 
-                                             this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(pos, 30, true, this.init_Set_2(), true, plannedWater);
+                                             this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(pos, 30, true, this.init_Set_2(), true, plannedWater);
                                              return this.init_AiOperation_Result_5("Clearing the requested flowing-water channel");
                                           }
 
@@ -4057,8 +4057,8 @@ final class AiBuilder {
                                     && mc.player.blockPosition().getZ() == pos.getZ()
                                     && mc.player.getY() >= pos.getY()
                                     && mc.player.getY() < pos.getY() + 1
-                                    && AiBuilder.write(cell, AiBuilder.init_Block(cell).defaultBlockState())
-                                    && Block.isShapeFullBlock(AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos))
+                                    && AiBuilder.matchesExactCell(cell, AiBuilder.resolveBlock(cell).defaultBlockState())
+                                    && Block.isShapeFullBlock(AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos))
                                     && !mc.level.getBlockState(pos.below()).getCollisionShape(mc.level, pos.below()).isEmpty()
                                     && mc.level.getBlockState(pos.below()).getCollisionShape(mc.level, pos.below()).max(Axis.Y) >= 1.0
                                     && mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(0.0, 1.42, 0.0))) {
@@ -4077,8 +4077,8 @@ final class AiBuilder {
                                     mc.options.keyJump.setDown(false);
                                  }
 
-                                 if (schematic && live.getBlock() == AiBuilder.init_Block(cell) && !live.canBeReplaced()) {
-                                    if (AiBuilder.flush(cell, live)) {
+                                 if (schematic && live.getBlock() == AiBuilder.resolveBlock(cell) && !live.canBeReplaced()) {
+                                    if (AiBuilder.needsWaterlogToggleOnly(cell, live)) {
                                        this.read_AiOperation = AiSchematicActions.init(cell, pos, this.init_Set_2());
                                        return this.init_AiOperation_Result_5("Restoring the placed block's waterlogging");
                                     }
@@ -4091,8 +4091,8 @@ final class AiBuilder {
                                           .getProperty(entry.getKey());
                                        if (property != null
                                           && !String.valueOf(live.getValue(property)).equals(entry.getValue())
-                                          && !AiBuilder.read(live.getBlock(), entry.getKey())
-                                          && AiBuilder.init_TableIndex_TaskQue(live.getBlock(), entry.getKey()) != AiBuilder.OrientationKind.POST_INTERACT) {
+                                          && !AiBuilder.isAutoComputedProperty(live.getBlock(), entry.getKey())
+                                          && AiBuilder.orientationKindForProperty(live.getBlock(), entry.getKey()) != AiBuilder.OrientationKind.POST_INTERACT) {
                                           toggleOnly = false;
                                        }
                                     }
@@ -4102,24 +4102,24 @@ final class AiBuilder {
                                        return this.init_AiOperation_Result_5("Restoring the placed block's interaction state");
                                     }
 
-                                    if (!AiBuilder.init_Z(cell)) {
-                                       this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(pos, 30, true, this.init_Set_2(), true);
+                                    if (!AiBuilder.isDoubleSlabCell(cell)) {
+                                       this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(pos, 30, true, this.init_Set_2(), true);
                                        return this.init_AiOperation_Result_5("Recovering a block with conflicting placement properties");
                                     }
                                  }
 
                                  if (schematic
-                                    && AiBuilder.init_Block(cell) instanceof VegetationBlock
-                                    && !AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos)) {
+                                    && AiBuilder.resolveBlock(cell) instanceof VegetationBlock
+                                    && !AiBuilder.toBlockState(cell).canSurvive(mc.level, pos)) {
                                     this.read("waiting for the soil under the plant");
                                  } else {
                                     if (schematic) {
-                                       Block targetBlock = AiBuilder.init_Block(cell);
-                                       boolean supportReady = AiBuilder.init_Z(cell) && live.getBlock() == targetBlock;
+                                       Block targetBlock = AiBuilder.resolveBlock(cell);
+                                       boolean supportReady = AiBuilder.isDoubleSlabCell(cell) && live.getBlock() == targetBlock;
 
                                        for (Direction direction : Direction.values()) {
-                                          if (AiBuilder.init_Z_TableIndex_StreamU_2(cell, targetBlock, direction)
-                                             && AiBuilder.init(mc.level, pos.relative(direction))) {
+                                          if (AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)
+                                             && AiBuilder.hasSolidSupportShape(mc.level, pos.relative(direction))) {
                                              supportReady = true;
                                           }
                                        }
@@ -4128,7 +4128,7 @@ final class AiBuilder {
                                           boolean planned = false;
 
                                           for (Direction direction : Direction.values()) {
-                                             planned |= AiBuilder.init_Z_TableIndex_StreamU_2(cell, targetBlock, direction)
+                                             planned |= AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)
                                                 && this.close_Set.contains(pos.relative(direction).asLong());
                                           }
 
@@ -4147,7 +4147,7 @@ final class AiBuilder {
                                              this.load("target occupied by a block entity");
                                           } else {
                                              if (++this.scan <= 3) {
-                                                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(pos, 30, true, this.init_Set_2(), true);
+                                                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(pos, 30, true, this.init_Set_2(), true);
                                                 return this.init_AiOperation_Result_5("Clearing a conflicting block at the schematic cell");
                                              }
 
@@ -4159,7 +4159,7 @@ final class AiBuilder {
                                        BlockPos requiredSupport = null;
                                        if (targetBlock instanceof LanternBlock) {
                                           requiredSupport = "true".equals(cell.properties().get("hanging")) ? pos.above() : pos.below();
-                                       } else if (AiBuilder.write(targetBlock)) {
+                                       } else if (AiBuilder.isWallMountedBlock(targetBlock)) {
                                           Direction facing = this.init_Direction(cell.properties().getOrDefault("facing", "north"));
                                           if (facing != null) {
                                              requiredSupport = pos.relative(facing.getOpposite());
@@ -4200,9 +4200,9 @@ final class AiBuilder {
                                           }
 
                                           boolean candidateUpgrade = live.getBlock() == candidate
-                                             && AiBuilder.init_Z(cell)
+                                             && AiBuilder.isDoubleSlabCell(cell)
                                              && !"double".equals(String.valueOf(live.getValue(SlabBlock.TYPE)));
-                                          if (this.init(candidateItem) < (candidateUpgrade ? 1 : AiBuilder.init_I(cell))) {
+                                          if (this.init(candidateItem) < (candidateUpgrade ? 1 : AiBuilder.itemCountForCell(cell))) {
                                              continue;
                                           }
 
@@ -4221,10 +4221,10 @@ final class AiBuilder {
                                        } else {
                                           if (item != Items.AIR) {
                                              boolean upgrade = live.getBlock() == target
-                                                && AiBuilder.init_Z(cell)
+                                                && AiBuilder.isDoubleSlabCell(cell)
                                                 && !"double".equals(String.valueOf(live.getValue(SlabBlock.TYPE)));
                                              if (upgrade && live.getValue(SlabBlock.TYPE) == SlabType.TOP) {
-                                                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
+                                                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
                                                    pos, 20, true, schematic ? this.init_Set_2() : Set.of(), true
                                                 );
                                                 return this.init_AiOperation_Result_5("Recovering a top slab before the double-slab merge");
@@ -4256,7 +4256,7 @@ final class AiBuilder {
                                              if (AiTerrain.isLoaded(mc.level, pos)
                                                 && (
                                                    schematic
-                                                      ? !AiBuilder.init(cell, pos, mc.player.getBoundingBox(), mc.level)
+                                                      ? !AiBuilder.collidesWithEntityBox(cell, pos, mc.player.getBoundingBox(), mc.level)
                                                       : !mc.player.getBoundingBox().intersects(this.init_AABB)
                                                 )) {
                                                 if (schematic && this.read(cell, pos)) {
@@ -4315,13 +4315,13 @@ final class AiBuilder {
                                                 }
 
                                                 for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                   if (AiBuilder.init_TableIndex_TaskQue(target, entry.getKey()) == AiBuilder.OrientationKind.UNSUPPORTED
+                                                   if (AiBuilder.orientationKindForProperty(target, entry.getKey()) == AiBuilder.OrientationKind.UNSUPPORTED
                                                       && (
                                                          !(target instanceof LeavesBlock)
                                                             || !entry.getKey().equals("persistent")
                                                             || !entry.getValue().equals("true")
                                                       )
-                                                      && (!schematic || !AiBuilder.read(target, entry.getKey()))) {
+                                                      && (!schematic || !AiBuilder.isAutoComputedProperty(target, entry.getKey()))) {
                                                       Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)target.getStateDefinition()
                                                          .getProperty(entry.getKey());
                                                       if (property == null
@@ -4359,7 +4359,7 @@ final class AiBuilder {
                                                       return this.init_AiOperation_Result_5("No reachable support face; re-approaching");
                                                    }
 
-                                                   if (!AiBuilder.init(AiBuilder.init_Boolean(cell, target), candidate.hit().getDirection())) {
+                                                   if (!AiBuilder.clickFaceSatisfiesHalf(AiBuilder.requiresUpperHalfClick(cell, target), candidate.hit().getDirection())) {
                                                       BlockPlacementPlanner.PlacementPlan side = BlockPlacementPlanner.plan(
                                                          new BlockPlacementPlanner.Query(
                                                                pos, eye, reach, BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
@@ -4451,7 +4451,7 @@ final class AiBuilder {
 
                                                       if (!Float.isNaN(this.init_F)) {
                                                          for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                            AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
+                                                            AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(target, entry.getKey());
                                                             if (strategy == AiBuilder.OrientationKind.PLAYER_FACING || strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE) {
                                                                this.init(cell, pos, entry, "player facing could not be aligned with the support ray");
                                                             }
@@ -4468,7 +4468,7 @@ final class AiBuilder {
                                                 }
 
                                                 if (schematic
-                                                   ? !AiBuilder.init(cell, pos, mc.player.getBoundingBox(), mc.level)
+                                                   ? !AiBuilder.collidesWithEntityBox(cell, pos, mc.player.getBoundingBox(), mc.level)
                                                    : !mc.player.getBoundingBox().intersects(new AABB(pos))) {
                                                    this.load_U_CachePool = null;
                                                    this.start_I = 0;
@@ -4489,22 +4489,22 @@ final class AiBuilder {
                                                    boolean stateMatches = predicted != null;
                                                    if (predicted != null) {
                                                       for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                         AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
+                                                         AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(target, entry.getKey());
                                                          if (strategy != AiBuilder.OrientationKind.UNSUPPORTED
                                                             && strategy != AiBuilder.OrientationKind.POST_INTERACT
                                                             && strategy != AiBuilder.OrientationKind.FLUID_INTERACT
-                                                            && !AiBuilder.read(target, entry.getKey())
-                                                            && (!AiBuilder.init_Z(cell) || upgrade || !entry.getKey().equals("type"))
+                                                            && !AiBuilder.isAutoComputedProperty(target, entry.getKey())
+                                                            && (!AiBuilder.isDoubleSlabCell(cell) || upgrade || !entry.getKey().equals("type"))
                                                             && (
                                                                strategy != AiBuilder.OrientationKind.CHEST_PAIR
-                                                                  || !AiBuilder.init_Z(cell, predicted)
-                                                                  || AiBuilder.init_Z_TableIndex_StreamU(cell, pos, mc.level)
+                                                                  || !AiBuilder.isUnpairedDoubleChest(cell, predicted)
+                                                                  || AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level)
                                                             )) {
                                                             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)predicted.getBlock()
                                                                .getStateDefinition()
                                                                .getProperty(entry.getKey());
                                                             if (property == null
-                                                               || !AiBuilder.init(
+                                                               || !AiBuilder.propertyValuesMatch(
                                                                   predicted.getBlock(),
                                                                   entry.getKey(),
                                                                   String.valueOf(predicted.getValue(property)),
@@ -4631,7 +4631,7 @@ final class AiBuilder {
                            AiBuilder.CellSpec audit = this.init_List.get(this.flags++);
                            BlockPos auditPos = blueprint.origin().offset(audit.dx(), audit.dy(), audit.dz());
                            BlockState auditLive = mc.level.getBlockState(auditPos);
-                           if (AiBuilder.init(audit, auditLive, power.substitutes(), schematic)) {
+                           if (AiBuilder.isCellSatisfied(audit, auditLive, power.substitutes(), schematic)) {
                               if (this.start_Set.remove(audit)) {
                                  this.buffer--;
                                  this.load_List
@@ -4644,7 +4644,7 @@ final class AiBuilder {
                                        }
                                     );
                               }
-                           } else if (schematic && this.pool < 2 && !this.update_List.contains(audit) && !AiBuilder.load(audit, auditLive)) {
+                           } else if (schematic && this.pool < 2 && !this.update_List.contains(audit) && !AiBuilder.differsOnlyInAutoProperties(audit, auditLive)) {
                               this.update_List.add(audit);
                            } else {
                               this.init_V_TableIndex_StreamU_Str(audit, "divergent after verify: " + BuiltInRegistries.BLOCK.getKey(auditLive.getBlock()));
@@ -4739,7 +4739,7 @@ final class AiBuilder {
                                     if ("false".equals(cell.properties().get("open")) && !"upper".equals(cell.properties().get("half"))) {
                                        BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                                        BlockState live = mc.level.getBlockState(pos);
-                                       if (live.getBlock() == AiBuilder.init_Block(cell)
+                                       if (live.getBlock() == AiBuilder.resolveBlock(cell)
                                           && live.hasProperty(BlockStateProperties.OPEN)
                                           && live.getValue(BlockStateProperties.OPEN)
                                           && this.flush_Set.add(pos.asLong())) {
@@ -4825,11 +4825,11 @@ final class AiBuilder {
 
                if (schematic) {
                   BlockState live = mc.level.getBlockState(this.load_BlockPos());
-                  if (live.getBlock() != AiBuilder.init_Block(this.init_List.get(this.data))
+                  if (live.getBlock() != AiBuilder.resolveBlock(this.init_List.get(this.data))
                      && !live.canBeReplaced()
                      && live.getFluidState().isEmpty()
                      && !live.hasBlockEntity()) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.load_BlockPos(), 30, true, this.init_Set_2(), true);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.load_BlockPos(), 30, true, this.init_Set_2(), true);
                      return;
                   }
                }
@@ -4847,7 +4847,7 @@ final class AiBuilder {
                      this.init_AiOperation = this.init_AiOperation();
                   } else {
                      this.value = Math.max(this.value, this.init_Map.getOrDefault(this.load_BlockPos().asLong(), 0)) + 1;
-                     AiBuilder.init_V_Map(this.init_Map, this.load_BlockPos(), this.value);
+                     AiBuilder.raiseAttemptCount(this.init_Map, this.load_BlockPos(), this.value);
                      if (this.value >= this.init_I) {
                         this.read(reason);
                      } else {
@@ -4925,7 +4925,7 @@ final class AiBuilder {
                      return null;
                   }
 
-                  this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10, true, this.init_Set_2(), false);
+                  this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10, true, this.init_Set_2(), false);
                }
 
                AiOperation.Result r = this.push_AiOperation.tick();
@@ -5008,7 +5008,7 @@ final class AiBuilder {
                         for (AiBuilder.CellSpec cell : blueprint.cells()) {
                            BlockPos floor = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState state = mc.level.getBlockState(floor);
-                           if (Block.isShapeFullBlock(state.getCollisionShape(mc.level, floor)) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)) {
+                           if (Block.isShapeFullBlock(state.getCollisionShape(mc.level, floor)) && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state)) {
                               BlockPos feet = floor.above();
                               if (!this.get_Set.contains(feet.asLong()) && !(Math.abs(feet.getY() - mc.player.getY()) > 2.0)) {
                                  AABB body = mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(feet).subtract(mc.player.position()));
@@ -5032,7 +5032,7 @@ final class AiBuilder {
                         for (BlockPos floor : this.load_List()) {
                            if (this.load_Z_2(floor) && !this.put_Set.contains(floor.asLong()) && this.read(floor)) {
                               this.put_Set.add(floor.asLong());
-                              this.poll_AiOperation = autismclient.ai.engine.AiBreakBlock.init(floor, 10, true, this.close_Set);
+                              this.poll_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, this.close_Set);
                               return this.init_AiOperation_Result_5("Dismantling the temporary column toward a safe landing");
                            }
                         }
@@ -5089,7 +5089,7 @@ final class AiBuilder {
                      if (this.close_List.isEmpty() || drainNow - this.write_J <= 5000L && drainNow - this.update_J <= 60000L) {
                         if (!this.close_List.isEmpty() && this.store < (schematic ? 2097152 : 30)) {
                            BlockPos candidate = this.close_List
-                              .remove(AiBuilder.init_I_List(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, cell) != null));
+                              .remove(AiBuilder.pickNearestScaffoldIndex(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, cell) != null));
                            long candidateNow = System.currentTimeMillis();
                            int drainAttempts = this.write_Map.getOrDefault(candidate.asLong(), 0);
                            if (candidateNow < this.update_Map.getOrDefault(candidate.asLong(), 0L)) {
@@ -5146,7 +5146,7 @@ final class AiBuilder {
                            keep.remove(candidate.asLong());
                            this.write_BlockPos = candidate;
                            this.activeKeep = keep;
-                           this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.init(candidate, 10, true, keep, false);
+                           this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(candidate, 10, true, keep, false);
                            continue;
                         }
 
@@ -5192,7 +5192,7 @@ final class AiBuilder {
                      && this.detachedSupports != null
                      && this.detachedSupports.remove(this.write_BlockPos.asLong())) {
                      this.retryingDetached = true;
-                     this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.write_BlockPos, 15, true, this.activeKeep, true);
+                     this.push_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.write_BlockPos, 15, true, this.activeKeep, true);
                      return this.init_AiOperation_Result_5("Reaching the detached temporary support");
                   }
 
@@ -5235,7 +5235,7 @@ final class AiBuilder {
                   if (mc.level.getBlockState(feet).getCollisionShape(mc.level, feet).isEmpty()
                      && mc.level.getBlockState(feet.above()).getCollisionShape(mc.level, feet.above()).isEmpty()) {
                      BlockState below = mc.level.getBlockState(feet.below());
-                     if (Block.isShapeFullBlock(below.getCollisionShape(mc.level, feet.below())) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(below)) {
+                     if (Block.isShapeFullBlock(below.getCollisionShape(mc.level, feet.below())) && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(below)) {
                         AABB body = mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(feet).subtract(mc.player.position()));
                         if (mc.level.noCollision(mc.player, body) && !(mc.player.position().distanceToSqr(Vec3.atCenterOf(candidate)) > 20.25)) {
                            return feet;
@@ -5272,8 +5272,8 @@ final class AiBuilder {
                         BlockPos floor = new BlockPos(x, y, z);
                         if (!floor.equals(removed)) {
                            BlockState state = mc.level.getBlockState(floor);
-                           if (!autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)
-                              && !autismclient.ai.engine.AiPathfinder.LiveGridView.load(state)
+                           if (!autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state)
+                              && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFeetHazardCompat(state)
                               && state.getFluidState().isEmpty()) {
                               for (AABB local : state.getCollisionShape(mc.level, floor).toAabbs()) {
                                  AABB box = local.move(x, y, z);
@@ -5362,7 +5362,7 @@ final class AiBuilder {
                            true,
                            2.0,
                            AiGoto.protectingCellsBelowYCompat(
-                              autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(exit, 0.25),
+                              autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(exit, 0.25),
                               this.load_Set(),
                               blueprint.origin().getY()
                            )
@@ -5396,7 +5396,7 @@ final class AiBuilder {
                         true,
                         2.0,
                         AiGoto.protectingCellsBelowYCompat(
-                           autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(doorExit, 0.25),
+                           autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(doorExit, 0.25),
                            this.load_Set(),
                            blueprint.origin().getY()
                         )
@@ -5505,7 +5505,7 @@ final class AiBuilder {
 
                         if (this.init_AiOperation == null) {
                            this.init_I++;
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(below, 15);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(below, 15);
                         }
 
                         AiOperation.Result r = this.init_AiOperation.tick();
@@ -5593,7 +5593,7 @@ final class AiBuilder {
                            keep.addAll(this.close_Set);
                         }
 
-                        this.flush_AiOperation = autismclient.ai.engine.AiBreakBlock.init(p, this.update_Z ? 15 : 20, false, keep, false);
+                        this.flush_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(p, this.update_Z ? 15 : 20, false, keep, false);
                         return this.init_AiOperation_Result_5(
                            "Clearing " + BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath() + " out of the schematic's air at " + p.toShortString()
                         );
@@ -5612,18 +5612,18 @@ final class AiBuilder {
             }
 
             boolean init_Z_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
-               if (!AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell)) {
-                  Block block = AiBuilder.init_Block(cell);
+               if (!AiSchematicActions.init_Z(cell) && !AiBuilder.isDoubleSlabCell(cell)) {
+                  Block block = AiBuilder.resolveBlock(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : block.asItem();
                   if (item != Items.AIR && this.init(item) > 0) {
                      BlockState live = mc.level.getBlockState(pos);
                      if (live.canBeReplaced() && live.getFluidState().isEmpty() && live.getBlock() != block) {
                         if (mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > Math.pow(mc.player.blockInteractionRange() + 0.5, 2.0)) {
                            return false;
-                        } else if (AiBuilder.init(cell, pos, mc.player.getBoundingBox(), mc.level)) {
+                        } else if (AiBuilder.collidesWithEntityBox(cell, pos, mc.player.getBoundingBox(), mc.level)) {
                            return false;
                         } else {
-                           return AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos) && !this.load_Z(cell, pos)
+                           return AiBuilder.toBlockState(cell).canSurvive(mc.level, pos) && !this.load_Z(cell, pos)
                               ? autismclient.ai.engine.PlacementGoal.init(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, block), 72) != null
                               : false;
                         }
@@ -5741,7 +5741,7 @@ final class AiBuilder {
                   for (int i = 0; i < this.data && i < this.init_List.size(); i++) {
                      AiBuilder.CellSpec cell = this.init_List.get(i);
                      BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-                     if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)
+                     if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)
                         && !this.open_List.contains(cell)
                         && !this.init_Z(cell)) {
                         this.open_List.add(cell);
@@ -5786,8 +5786,8 @@ final class AiBuilder {
 
                if (this.init_Map.containsKey(key)
                   || this.write_Set.contains(key)
-                  || pos.equals(this.init_TableIndex_StateCa.init_BlockPos())
-                  || pos.equals(this.init_TableIndex_SyncMan.load())) {
+                  || pos.equals(this.init_TableIndex_StateCa.pendingPos())
+                  || pos.equals(this.init_TableIndex_SyncMan.activePos())) {
                   this.read_Set.add(key);
                }
 
@@ -5805,7 +5805,7 @@ final class AiBuilder {
                if (this.close_Z && this.data < this.init_List.size()) {
                   AiBuilder.CellSpec completed = this.init_List.get(this.data);
                   BlockPos pos = blueprint.origin().offset(completed.dx(), completed.dy(), completed.dz());
-                  if (AiBuilder.init(completed, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
+                  if (AiBuilder.isCellSatisfied(completed, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      AiScaffold.init_V(pos);
                      if (schematic && this.pool > 0) {
                         this.pop_Set.add(pos.asLong());
@@ -5917,10 +5917,10 @@ final class AiBuilder {
                      keep.add(key);
                   } else {
                      Integer opening = this.read_Map.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
-                     if (!AiBuilder.init(recovery, this.push_Set.contains(key), opening, pos.getY(), live)) {
+                     if (!AiBuilder.canClearDuringRecovery(recovery, this.push_Set.contains(key), opening, pos.getY(), live)) {
                         AiBuilder.CellSpec wantedHere = this.load_Map.get(key);
-                        boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.read(wantedHere, live);
-                        if (AiBuilder.init_Z_TableIndex_StreamU_4(this.load_Map.get(key), live, stray || AiScaffold.init(this.init_Block(pos), live.getBlock()))) {
+                        boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.matchesIgnoringUnpairedChest(wantedHere, live);
+                        if (AiBuilder.isOccupiedOrMatchedScaffold(this.load_Map.get(key), live, stray || AiScaffold.init(this.init_Block(pos), live.getBlock()))) {
                            keep.add(key);
                         }
                      }
@@ -5944,7 +5944,7 @@ final class AiBuilder {
 
             String init_Str_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                this.sync_BlockPos = null;
-               Block target = AiBuilder.init_Block(cell);
+               Block target = AiBuilder.resolveBlock(cell);
                ClientLevel level = mc.level;
                String conflict = this.load_Str(cell, pos);
                if (conflict != null) {
@@ -5959,8 +5959,8 @@ final class AiBuilder {
                      BlockPos watched = pos.relative(facing);
                      AiBuilder.CellSpec wanted = this.load_Map.get(watched.asLong());
                      if (wanted != null
-                        && Block.isShapeFullBlock(AiBuilder.init_BlockState(wanted).getCollisionShape(level, watched))
-                        && !AiBuilder.read(wanted, level.getBlockState(watched))) {
+                        && Block.isShapeFullBlock(AiBuilder.toBlockState(wanted).getCollisionShape(level, watched))
+                        && !AiBuilder.matchesIgnoringUnpairedChest(wanted, level.getBlockState(watched))) {
                         this.sync_BlockPos = watched;
                         return "an observer waits for the cell it watches";
                      } else {
@@ -5973,7 +5973,7 @@ final class AiBuilder {
                         BlockPos observer = pos.relative(direction);
                         AiBuilder.CellSpec wanted = this.load_Map.get(observer.asLong());
                         if (wanted != null
-                           && AiBuilder.init_Block(wanted) instanceof ObserverBlock
+                           && AiBuilder.resolveBlock(wanted) instanceof ObserverBlock
                            && Direction.byName(wanted.properties().getOrDefault("facing", "north")) == direction) {
                            BlockPos watched = observer.relative(direction);
 
@@ -5982,7 +5982,7 @@ final class AiBuilder {
                            )) {
                               if (!near.equals(observer) && !near.equals(pos)) {
                                  AiBuilder.CellSpec around = this.load_Map.get(near.asLong());
-                                 if (around != null && !AiBuilder.read(around, level.getBlockState(near))) {
+                                 if (around != null && !AiBuilder.matchesIgnoringUnpairedChest(around, level.getBlockState(near))) {
                                     this.sync_BlockPos = near;
                                     return "a part an observer powers waits until the observer's view is finished";
                                  }
@@ -5997,15 +5997,15 @@ final class AiBuilder {
             }
 
             String load_Str(AiBuilder.CellSpec cell, BlockPos pos) {
-               Block target = AiBuilder.init_Block(cell);
+               Block target = AiBuilder.resolveBlock(cell);
                ClientLevel level = mc.level;
-               if (target instanceof RedstoneTorchBlock && "false".equals(cell.properties().get("lit")) && AiBuilder.init_Z_Level(level, pos, cell)) {
+               if (target instanceof RedstoneTorchBlock && "false".equals(cell.properties().get("lit")) && AiBuilder.willRedstoneTorchBeLit(level, pos, cell)) {
                   return "an unlit redstone torch waits for its block's power";
                }
 
                if (target instanceof PistonBaseBlock && !"true".equals(cell.properties().get("extended"))) {
                   Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
-                  if (facing != null && AiBuilder.init_Z_Level_2(level, pos, facing)) {
+                  if (facing != null && AiBuilder.hasPistonPowerAt(level, pos, facing)) {
                      return "a retracted piston waits until nothing powers it";
                   }
                }
@@ -6066,7 +6066,7 @@ final class AiBuilder {
                HashSet<Long> supports = new HashSet<>();
 
                for (Direction direction : Direction.values()) {
-                  if (AiBuilder.init_Z_TableIndex_StreamU_2(cell, targetBlock, direction)) {
+                  if (AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)) {
                      supports.add(pos.relative(direction).asLong());
                   }
                }
@@ -6105,7 +6105,7 @@ final class AiBuilder {
                      VoxelShape shape = state.getCollisionShape(mc.level, cell);
                      if (!shape.isEmpty() && shape.bounds().move(cell).intersects(body)) {
                         AiBuilder.CellSpec wanted = this.load_Map.get(cell.asLong());
-                        if ((wanted == null || !AiBuilder.read(wanted, state)) && (AiSchematicActions.load(state) || wanted != null)) {
+                        if ((wanted == null || !AiBuilder.matchesIgnoringUnpairedChest(wanted, state)) && (AiSchematicActions.load(state) || wanted != null)) {
                            return cell.immutable();
                         }
                      }
@@ -6145,7 +6145,7 @@ final class AiBuilder {
                   for (long key : room) {
                      AiBuilder.CellSpec cell = this.load_Map.get(key);
                      BlockPos p = BlockPos.of(key);
-                     if (cell != null && AiBuilder.read(cell, mc.level.getBlockState(p))) {
+                     if (cell != null && AiBuilder.matchesIgnoringUnpairedChest(cell, mc.level.getBlockState(p))) {
                         placedInRoom.add(p);
                      }
                   }
@@ -6160,7 +6160,7 @@ final class AiBuilder {
                         AiOperation.Result res = escape.tick();
                         if (res.status() == AiOperation.Status.SUCCEEDED) {
                            for (BlockPos p : placedInRoom) {
-                              if (!AiBuilder.read(load_Map.get(p.asLong()), mc.level.getBlockState(p))) {
+                              if (!AiBuilder.matchesIgnoringUnpairedChest(load_Map.get(p.asLong()), mc.level.getBlockState(p))) {
                                  mergeSyncRoom(p.asLong(), room);
                               }
                            }
@@ -6207,7 +6207,7 @@ final class AiBuilder {
                   return false;
                }
 
-               BlockState placed = AiBuilder.init_BlockState(cell);
+               BlockState placed = AiBuilder.toBlockState(cell);
                if (!placed.getCollisionShape(mc.level, target).isEmpty()
                   && !(placed.getBlock() instanceof DoorBlock)
                   && !(placed.getBlock() instanceof TrapDoorBlock)
@@ -6346,7 +6346,7 @@ final class AiBuilder {
 
             void init_V_BlockPos_Z(BlockPos target, boolean cleanup) {
                AiBuilder.CellSpec wantedTarget = this.load_Map.get(target.asLong());
-               if ((cleanup || wantedTarget != null && !AiBuilder.read(wantedTarget, mc.level.getBlockState(target)))
+               if ((cleanup || wantedTarget != null && !AiBuilder.matchesIgnoringUnpairedChest(wantedTarget, mc.level.getBlockState(target)))
                   && this.load_BlockPos(target.above()) != null) {
                   if (!cleanup) {
                      for (Direction side : Plane.HORIZONTAL) {
@@ -6367,7 +6367,7 @@ final class AiBuilder {
                      if (wanted != null
                         && !live.hasBlockEntity()
                         && live.getFluidState().isEmpty()
-                        && Block.isShapeFullBlock(AiBuilder.init_BlockState(wanted).getCollisionShape(mc.level, candidate))
+                        && Block.isShapeFullBlock(AiBuilder.toBlockState(wanted).getCollisionShape(mc.level, candidate))
                         && AiSchematicActions.init(mc.level, candidate, (int)Math.ceil(mc.player.getY()) + 1)) {
                         double d = mc.player.position().distanceToSqr(Vec3.atCenterOf(candidate));
                         if (d < nearest) {
@@ -6410,13 +6410,13 @@ final class AiBuilder {
             }
 
             boolean write(AiBuilder.CellSpec cell, BlockPos pos) {
-               Block block = AiBuilder.init_Block(cell);
+               Block block = AiBuilder.resolveBlock(cell);
                Set<Long> protectedNow = this.init_Set_2();
                ArrayList<Direction> directions = new ArrayList<>(
                   List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.DOWN, Direction.UP)
                );
                Direction look = this.init_Direction(cell.properties().getOrDefault("facing", ""));
-               AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, "facing");
+               AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(block, "facing");
                if (look != null) {
                   if (strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE) {
                      look = look.getOpposite();
@@ -6431,7 +6431,7 @@ final class AiBuilder {
                }
 
                for (Direction direction : directions) {
-                  if (AiBuilder.init_Z_TableIndex_StreamU_2(cell, block, direction)) {
+                  if (AiBuilder.requiresSupportOnSide(cell, block, direction)) {
                      BlockPos support = pos.relative(direction);
                      BlockState state = mc.level.getBlockState(support);
                      if (!protectedNow.contains(support.asLong())
@@ -6494,8 +6494,8 @@ final class AiBuilder {
 
                this.tick_Z = true;
                Set<Long> protectedNow = this.init_Set_2();
-               autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell));
-               Item item = AiBuilder.init_Block(cell).asItem();
+               autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell));
+               Item item = AiBuilder.resolveBlock(cell).asItem();
                if (item != Items.AIR && this.init(item) != 0) {
                   Direction side = constraint.playerFacing() == null ? constraint.clickFace() : constraint.playerFacing().getOpposite();
                   ArrayList<Direction> directions = new ArrayList<>(List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST));
@@ -6576,7 +6576,7 @@ final class AiBuilder {
                      true,
                      2.0,
                      AiGoto.protectingCellsBelowYCompat(
-                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(best, 0.35), protectedNow, blueprint.origin().getY()
+                        autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(best, 0.35), protectedNow, blueprint.origin().getY()
                      )
                   );
                   return true;
@@ -6611,7 +6611,7 @@ final class AiBuilder {
                            && Math.abs(pos.getZ() - worker.getZ()) <= 2
                            && this.flush(candidate, pos)
                            && this.init_Z_TableIndex_StreamU_BlockPos(candidate, pos)
-                           && !AiBuilder.init(candidate, mc.level.getBlockState(pos), power.substitutes(), true)
+                           && !AiBuilder.isCellSatisfied(candidate, mc.level.getBlockState(pos), power.substitutes(), true)
                            && !this.read(candidate, pos)
                            && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
                            BlockPos above = pos.above();
@@ -6687,13 +6687,13 @@ final class AiBuilder {
                }
 
                String facingProp = cell.properties().get("facing");
-               if (facingProp != null && AiBuilder.init(target)) {
+               if (facingProp != null && AiBuilder.isSixWayFaceDerivedBlock(target)) {
                   wantedFace = Direction.byName(facingProp);
                }
 
-               boolean pairing = target instanceof ChestBlock && AiBuilder.init_Z_TableIndex_StreamU(cell, pos, mc.level);
+               boolean pairing = target instanceof ChestBlock && AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level);
                if (pairing) {
-                  wantedFace = AiBuilder.init_Direction(cell).getOpposite();
+                  wantedFace = AiBuilder.chestPartnerDirection(cell).getOpposite();
                }
 
                if (facingProp != null && target instanceof HopperBlock) {
@@ -6705,7 +6705,7 @@ final class AiBuilder {
                   wantedFace = this.init_Direction(facingProp);
                }
 
-               if (facingProp != null && AiBuilder.init(target, cell)) {
+               if (facingProp != null && AiBuilder.usesWallClickFace(target, cell)) {
                   Direction wanted = this.init_Direction(facingProp);
                   if (wanted == null) {
                      this.init(cell, pos, Map.entry("facing", facingProp), "not a horizontal direction");
@@ -6734,12 +6734,12 @@ final class AiBuilder {
 
                Boolean high = null;
                String type = cell.properties().get("type");
-               if (type != null && AiBuilder.init_TableIndex_TaskQue(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
-                  high = !AiBuilder.init_Z(cell) && type.equalsIgnoreCase("top");
+               if (type != null && AiBuilder.orientationKindForProperty(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
+                  high = !AiBuilder.isDoubleSlabCell(cell) && type.equalsIgnoreCase("top");
                }
 
                String half = cell.properties().get("half");
-               if (half != null && AiBuilder.init_TableIndex_TaskQue(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
+               if (half != null && AiBuilder.orientationKindForProperty(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
                   high = half.equalsIgnoreCase("top");
                }
 
@@ -6757,11 +6757,11 @@ final class AiBuilder {
                }
 
                if (facingProp != null && !pairing) {
-                  AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(cell, target);
+                  AiBuilder.OrientationKind strategy = AiBuilder.facingOrientationKind(cell, target);
                   if (strategy == AiBuilder.OrientationKind.FACE_DERIVED
-                     && !AiBuilder.init(target, cell)
+                     && !AiBuilder.usesWallClickFace(target, cell)
                      && !(target instanceof HopperBlock)
-                     && !AiBuilder.init(target)) {
+                     && !AiBuilder.isSixWayFaceDerivedBlock(target)) {
                      strategy = AiBuilder.OrientationKind.PLAYER_FACING;
                   }
 
@@ -6856,7 +6856,7 @@ final class AiBuilder {
             }
 
             boolean init_Z_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
-               if (AiBuilder.init_Z(cell) && live.getBlock() instanceof SlabBlock && live.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
+               if (AiBuilder.isDoubleSlabCell(cell) && live.getBlock() instanceof SlabBlock && live.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
                   this.load_BlockPos = null;
                   this.load_Vec3 = null;
                   this.read_TableIndex_StreamU = null;
@@ -6864,7 +6864,7 @@ final class AiBuilder {
                   return false;
                }
 
-               if (schematic && AiBuilder.flush(cell, live)) {
+               if (schematic && AiBuilder.needsWaterlogToggleOnly(cell, live)) {
                   this.load_BlockPos = null;
                   this.load_Vec3 = null;
                   this.read_TableIndex_StreamU = null;
@@ -6892,13 +6892,13 @@ final class AiBuilder {
                   }
 
                   Entry<String, String> entry = (Entry<String, String>)mismatch.next();
-                  if (AiBuilder.init_TableIndex_TaskQue(this.init_Block, entry.getKey()) == AiBuilder.OrientationKind.POST_INTERACT) {
+                  if (AiBuilder.orientationKindForProperty(this.init_Block, entry.getKey()) == AiBuilder.OrientationKind.POST_INTERACT) {
                      open = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
                      if (open != null && !String.valueOf(live.getValue(open)).equalsIgnoreCase(entry.getValue())) {
                         cycling = !entry.getKey().equals("open") && !entry.getKey().equals("powered");
-                        if (!AiBuilder.init_Z(live.getBlock(), entry.getKey())
+                        if (!AiBuilder.isStackableCountProperty(live.getBlock(), entry.getKey())
                            || Integer.parseInt(String.valueOf(live.getValue(open))) <= Integer.parseInt(entry.getValue())) {
-                           Item needed = AiBuilder.init_Item(live.getBlock(), entry.getKey());
+                           Item needed = AiBuilder.postInteractToolItem(live.getBlock(), entry.getKey());
                            if (needed != null
                               && !mc.player.getMainHandItem().is(needed)
                               && AiItems.equipHotbar(AiItems.resolveItem(BuiltInRegistries.ITEM.getKey(needed).toString())) < 0) {
@@ -6969,12 +6969,12 @@ final class AiBuilder {
 
             String init_Str_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
                for (Entry<String, String> entry : cell.properties().entrySet()) {
-                  if (!AiBuilder.read(live.getBlock(), entry.getKey())
+                  if (!AiBuilder.isAutoComputedProperty(live.getBlock(), entry.getKey())
                      && (
                         !entry.getKey().equals("type")
-                           || !AiBuilder.init_Z(cell, live)
-                           || AiBuilder.init_Direction(cell) == null
-                           || mc.level.getBlockState(pos.relative(AiBuilder.init_Direction(cell))).getBlock() instanceof ChestBlock
+                           || !AiBuilder.isUnpairedDoubleChest(cell, live)
+                           || AiBuilder.chestPartnerDirection(cell) == null
+                           || mc.level.getBlockState(pos.relative(AiBuilder.chestPartnerDirection(cell))).getBlock() instanceof ChestBlock
                      )) {
                      Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock()
                         .getStateDefinition()
@@ -6984,7 +6984,7 @@ final class AiBuilder {
                      }
 
                      String actual = String.valueOf(live.getValue(property));
-                     if (!AiBuilder.init(live.getBlock(), entry.getKey(), actual, entry.getValue())) {
+                     if (!AiBuilder.propertyValuesMatch(live.getBlock(), entry.getKey(), actual, entry.getValue())) {
                         return "state mismatch for " + entry.getKey() + ": expectedState=" + entry.getValue() + ", actualState=" + actual;
                      }
                   }
@@ -6994,7 +6994,7 @@ final class AiBuilder {
             }
 
             void init(AiBuilder.CellSpec cell, BlockPos pos, Entry<String, String> property, String reason) {
-               if (!AiBuilder.read(AiBuilder.init_Block(cell), property.getKey()) && this.sync_Set.add(property.getKey()) && this.init_JsonArray.size() < 32) {
+               if (!AiBuilder.isAutoComputedProperty(AiBuilder.resolveBlock(cell), property.getKey()) && this.sync_Set.add(property.getKey()) && this.init_JsonArray.size() < 32) {
                   this.init_JsonArray
                      .add(
                         AiJson.objectOf(
@@ -7010,15 +7010,15 @@ final class AiBuilder {
             }
 
             boolean flush(AiBuilder.CellSpec cell, BlockPos pos) {
-               Block target = AiBuilder.init_Block(cell);
+               Block target = AiBuilder.resolveBlock(cell);
                return cell.properties().isEmpty()
                   && target.asItem() != Items.AIR
                   && !(target instanceof FallingBlock)
                   && !this.init(target)
                   && !target.defaultBlockState().hasBlockEntity()
                   && !target.defaultBlockState().isSignalSource()
-                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(target.defaultBlockState())
-                  && Block.isShapeFullBlock(AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos));
+                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(target.defaultBlockState())
+                  && Block.isShapeFullBlock(AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos));
             }
 
             Vec3 init(Predicate<AABB> clear) {
@@ -7028,21 +7028,21 @@ final class AiBuilder {
                Set<Long> excluded = new HashSet<>(this.write_Set);
                excluded.addAll(this.read_Set);
                this.init_TableIndex_SyncMan
-                  .init(
+                  .sync(
                      this,
-                     AiBuilder.init(this.write_List, this.init_List, this.data, blueprint.origin(), this.load_Map),
+                     AiBuilder.filterCommittedOutsideLookahead(this.write_List, this.init_List, this.data, blueprint.origin(), this.load_Map),
                      excluded,
-                     this.init_TableIndex_StateCa.init_BlockPos()
+                     this.init_TableIndex_StateCa.pendingPos()
                   );
                if (this.init_TableIndex_StreamU != null) {
                   BlockPos pos = blueprint.origin()
                      .offset(this.init_TableIndex_StreamU.dx(), this.init_TableIndex_StreamU.dy(), this.init_TableIndex_StreamU.dz());
-                  if (!pos.equals(this.init_TableIndex_SyncMan.load())) {
+                  if (!pos.equals(this.init_TableIndex_SyncMan.activePos())) {
                      this.init_TableIndex_StreamU = null;
                   }
                }
 
-               if (this.init_TableIndex_StateCa.init_BlockPos() == null
+               if (this.init_TableIndex_StateCa.pendingPos() == null
                   && !holdSneak
                   && !this.set_Z
                   && !mc.player.isShiftKeyDown()
@@ -7051,24 +7051,24 @@ final class AiBuilder {
                   Set<Long> tried = new HashSet<>();
 
                   for (int scan = 0; scan < 32; scan++) {
-                     BlockPos pos = this.init_TableIndex_SyncMan.init_BlockPos();
+                     BlockPos pos = this.init_TableIndex_SyncMan.nextPos();
                      if (pos == null) {
                         break;
                      }
 
                      if (!tried.add(pos.asLong())) {
-                        this.init_TableIndex_SyncMan.load(pos);
+                        this.init_TableIndex_SyncMan.complete(pos);
                      } else {
                         AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                         if (cell == null) {
-                           this.init_TableIndex_SyncMan.load(pos);
+                           this.init_TableIndex_SyncMan.complete(pos);
                         } else {
                            this.init_TableIndex_StreamU = cell;
                            if (this.init(cell, pos, job, clear)) {
                               return this.init_U_CachePool.hit().getLocation();
                            }
 
-                           this.init_TableIndex_SyncMan.init(pos);
+                           this.init_TableIndex_SyncMan.requeue(pos);
                         }
                      }
                   }
@@ -7088,13 +7088,13 @@ final class AiBuilder {
                   && clear.test(new AABB(pos))
                   && mc.level.getBlockState(pos).canBeReplaced()
                   && mc.level.getBlockState(pos).getFluidState().isEmpty()
-                  && AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos)
+                  && AiBuilder.toBlockState(cell).canSurvive(mc.level, pos)
                   && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
-                  Item item = AiBuilder.init_Block(cell).asItem();
+                  Item item = AiBuilder.resolveBlock(cell).asItem();
                   if (this.init(item) != 0
-                     && !autismclient.ai.engine.PlacementGoal.init_Z_Minecraft(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)))) {
+                     && !autismclient.ai.engine.PlacementGoal.init_Z_Minecraft(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)))) {
                      BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.init(
-                        mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)), 32
+                        mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)), 32
                      );
                      if (candidate == null || this.read(cell, pos)) {
                         return false;
@@ -7120,7 +7120,7 @@ final class AiBuilder {
             void flush() {
                if (this.init_TableIndex_StreamU != null
                   && this.init_U_CachePool != null
-                  && this.init_TableIndex_StateCa.init_BlockPos() == null
+                  && this.init_TableIndex_StateCa.pendingPos() == null
                   && this.init_Predicate != null
                   && mc.player.onGround()
                   && !(mc.player.getDeltaMovement().horizontalDistanceSqr() < 4.0E-4)) {
@@ -7128,17 +7128,17 @@ final class AiBuilder {
                      .offset(this.init_TableIndex_StreamU.dx(), this.init_TableIndex_StreamU.dy(), this.init_TableIndex_StreamU.dz());
                   AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                   AiSchematicApproach.Inner_DataUtil job = this.load_b_DataUtil != null ? this.load_b_DataUtil : this.read_b_DataUtil;
-                  if (cell != null && job != null && pos.equals(this.init_TableIndex_SyncMan.load()) && this.init(cell, pos, job, this.init_Predicate)) {
+                  if (cell != null && job != null && pos.equals(this.init_TableIndex_SyncMan.activePos()) && this.init(cell, pos, job, this.init_Predicate)) {
                      BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit != null
-                        && AiBuilder.init(
+                        && AiBuilder.matchesPlacementFace(
                            this.init_U_CachePool.hit().getBlockPos(),
                            this.init_U_CachePool.hit().getDirection(),
                            hit.getBlockPos(),
                            hit.getDirection()
                         )) {
-                        Item item = AiBuilder.init_Block(cell).asItem();
-                        if (AiBuilder.init_Z_Item(item, mc.player.getMainHandItem(), init_Z_Minecraft_Item(mc, item))
+                        Item item = AiBuilder.resolveBlock(cell).asItem();
+                        if (AiBuilder.isExpectedItemSelected(item, mc.player.getMainHandItem(), init_Z_Minecraft_Item(mc, item))
                            && BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                            BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
                            int beforeSequence = prediction.currentSequence();
@@ -7149,13 +7149,13 @@ final class AiBuilder {
                            if (sentSequence == beforeSequence) {
                               this.init_V_TableIndex_StreamU_BlockPos(cell, pos);
                            } else {
-                              this.init_TableIndex_StateCa.init(pos, revision, sentSequence, mc.player.tickCount);
+                              this.init_TableIndex_StateCa.track(pos, revision, sentSequence, mc.player.tickCount);
                               this.load_TableIndex_StreamU = cell;
-                              if (AiBuilder.init_Fluid(cell) != null || cell.properties().containsKey("waterlogged")) {
+                              if (AiBuilder.fluidOfCell(cell) != null || cell.properties().containsKey("waterlogged")) {
                                  this.load_J = mc.player.tickCount;
                               }
 
-                              this.init_TableIndex_SyncMan.load(pos);
+                              this.init_TableIndex_SyncMan.complete(pos);
                               this.init_TableIndex_StreamU = null;
                               this.init_U_CachePool = null;
                            }
@@ -7166,14 +7166,14 @@ final class AiBuilder {
             }
 
             void close() {
-               BlockPos pos = this.init_TableIndex_StateCa.init_BlockPos();
+               BlockPos pos = this.init_TableIndex_StateCa.pendingPos();
                if (pos != null) {
                   AiBuilder.CellSpec cell = this.load_TableIndex_StreamU;
                   AiBuilder.PlaceAckTracker.AckState outcome = this.init_TableIndex_StateCa
-                     .init(
+                     .poll(
                         AiServerEvidence.blockRevision(pos),
-                        AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), true),
-                        autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
+                        AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), true),
+                        autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.sentSequence()),
                         mc.player.tickCount
                      );
                   if (outcome == AiBuilder.PlaceAckTracker.AckState.CONFIRMED) {
@@ -7196,12 +7196,12 @@ final class AiBuilder {
             void init_V_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                this.init_TableIndex_StreamU = null;
                this.init_U_CachePool = null;
-               if (!AiBuilder.init_Z_Map(this.init_Map, pos, this.init_I)) {
-                  this.init_TableIndex_SyncMan.init(pos);
+               if (!AiBuilder.incrementAndCheckAttemptLimit(this.init_Map, pos, this.init_I)) {
+                  this.init_TableIndex_SyncMan.requeue(pos);
                } else {
-                  this.init_TableIndex_SyncMan.load(pos);
+                  this.init_TableIndex_SyncMan.complete(pos);
                   this.read_Set.add(pos.asLong());
-                  int removed = AiBuilder.init(
+                  int removed = AiBuilder.deferQueuedCell(
                      this.init_List, this.open_List, this.poll_List, this.data, blueprint.origin(), cell, pos, "the server refused the moving placement"
                   );
                   if (removed == this.data) {
@@ -7223,7 +7223,7 @@ final class AiBuilder {
 
                if (schematic
                   && this.data < this.init_List.size()
-                  && !AiBuilder.init(this.init_List.get(this.data), pos, mc.player.getBoundingBox(), mc.level)
+                  && !AiBuilder.collidesWithEntityBox(this.init_List.get(this.data), pos, mc.player.getBoundingBox(), mc.level)
                   && this.init_Z_TableIndex_StreamU_BlockPos(this.init_List.get(this.data), pos)
                   && this.value < 2) {
                   this.load_U_CachePool = null;
@@ -7251,7 +7251,7 @@ final class AiBuilder {
                               }
 
                               if (blocking != null) {
-                                 this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(blocking, 10);
+                                 this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(blocking, 10);
                                  return;
                               }
                            }
@@ -7267,7 +7267,7 @@ final class AiBuilder {
                               && !this.write_Z
                               && occupied.canBeReplaced()
                               && occupied.getFluidState().is(FluidTags.WATER)
-                              && Block.isShapeFullBlock(AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos))
+                              && Block.isShapeFullBlock(AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos))
                               && Block.isShapeFullBlock(mc.level.getBlockState(pos.below()).getCollisionShape(mc.level, pos.below()))
                               && mc.level
                                  .noCollision(
@@ -7286,7 +7286,7 @@ final class AiBuilder {
                                  true,
                                  2.0,
                                  AiGoto.protectingCellsBelowYCompat(
-                                    autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(pos, 0.45), this.init_Set_2(), pos.getY()
+                                    autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(pos, 0.45), this.init_Set_2(), pos.getY()
                                  )
                               );
                               return;
@@ -7296,7 +7296,7 @@ final class AiBuilder {
                               && occupied.getBlock() == block
                               && !occupied.canBeReplaced()
                               && occupied.getFluidState().isEmpty()
-                              && !AiBuilder.init_Z(this.init_List.get(this.data))) {
+                              && !AiBuilder.isDoubleSlabCell(this.init_List.get(this.data))) {
                               this.init_AiOperation = AiGoto.approachBlockCompat(pos, 30, this.init_Set_2());
                               return;
                            }
@@ -7307,7 +7307,7 @@ final class AiBuilder {
                                  return;
                               }
 
-                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(pos, 30, true, this.init_Set_2(), true);
+                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(pos, 30, true, this.init_Set_2(), true);
                               return;
                            }
 
@@ -7364,7 +7364,7 @@ final class AiBuilder {
             Set<Long> init_Set_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                HashSet<Long> avoid = new HashSet<>(this.sync_Map.getOrDefault(pos.asLong(), Set.of()));
                avoid.addAll(this.load_Set);
-               if (!AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
+               if (!AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
                   avoid.add(pos.asLong());
                   avoid.add(pos.below().asLong());
                }
@@ -7376,27 +7376,27 @@ final class AiBuilder {
                AiBuilder.CellSpec cell, BlockPos pos, Block block, autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint
             ) {
                ArrayList<autismclient.ai.engine.PlacementGoal.PlacementRequest> batch = new ArrayList<>();
-               batch.add(new autismclient.ai.engine.PlacementGoal.PlacementRequest(pos, block.asItem(), constraint, AiBuilder.init_BlockState(cell)));
+               batch.add(new autismclient.ai.engine.PlacementGoal.PlacementRequest(pos, block.asItem(), constraint, AiBuilder.toBlockState(cell)));
 
                for (int j = this.data + 1; j < this.init_List.size() && j < this.data + 192; j++) {
                   AiBuilder.CellSpec next = this.init_List.get(j);
-                  if (next.dy() == cell.dy() && !AiSchematicActions.init_Z(next) && !AiBuilder.init_Z(next)) {
-                     Block nextBlock = AiBuilder.init_Block(next);
+                  if (next.dy() == cell.dy() && !AiSchematicActions.init_Z(next) && !AiBuilder.isDoubleSlabCell(next)) {
+                     Block nextBlock = AiBuilder.resolveBlock(next);
                      Item item = next.block().equals("minecraft:grass_block") ? Items.DIRT : nextBlock.asItem();
                      if (item != Items.AIR && this.init(item) > 0) {
                         BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
                         BlockState live = mc.level.getBlockState(at);
                         if (live.canBeReplaced()
                            && live.getFluidState().isEmpty()
-                           && !AiBuilder.init(next, live, power.substitutes(), schematic)
+                           && !AiBuilder.isCellSatisfied(next, live, power.substitutes(), schematic)
                            && AiTerrain.isLoaded(mc.level, at)
-                           && AiBuilder.init_BlockState(next).canSurvive(mc.level, at)
+                           && AiBuilder.toBlockState(next).canSurvive(mc.level, at)
                            && AiSchematicActions.init_BlockPos_TableIndex_StreamU(next, at, mc.level, this.load_Map) == null
                            && !this.load_Z(next, at)) {
                            boolean supported = false;
 
                            for (Direction direction : Direction.values()) {
-                              if (AiBuilder.init_Z_TableIndex_StreamU_2(next, nextBlock, direction) && AiBuilder.init(mc.level, at.relative(direction))) {
+                              if (AiBuilder.requiresSupportOnSide(next, nextBlock, direction) && AiBuilder.hasSolidSupportShape(mc.level, at.relative(direction))) {
                                  supported = true;
                               }
                            }
@@ -7404,7 +7404,7 @@ final class AiBuilder {
                            if (supported) {
                               batch.add(
                                  new autismclient.ai.engine.PlacementGoal.PlacementRequest(
-                                    at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(next, nextBlock), AiBuilder.init_BlockState(next)
+                                    at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(next, nextBlock), AiBuilder.toBlockState(next)
                                  )
                               );
                            }
@@ -7425,7 +7425,7 @@ final class AiBuilder {
                   AiBuilder.CellSpec next = this.init_List.get(i);
                   if (next.dy() == currentCell.dy()) {
                      BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
-                     if (this.init_b_DataUtil.init_Z_BlockPos(at) && !AiBuilder.init(next, mc.level.getBlockState(at), power.substitutes(), true)) {
+                     if (this.init_b_DataUtil.init_Z_BlockPos(at) && !AiBuilder.isCellSatisfied(next, mc.level.getBlockState(at), power.substitutes(), true)) {
                         return true;
                      }
                   }
@@ -7529,20 +7529,20 @@ final class AiBuilder {
 
             autismclient.ai.engine.PlacementGoal.PlacementRequest init_u_CachePool_TableIndex_StreamU_Set(AiBuilder.CellSpec cell, Set<BlockPos> omit) {
                BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell) && AiTerrain.isLoaded(mc.level, at)) {
+               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.isDoubleSlabCell(cell) && AiTerrain.isLoaded(mc.level, at)) {
                   BlockState live = mc.level.getBlockState(at);
-                  Block target = AiBuilder.init_Block(cell);
+                  Block target = AiBuilder.resolveBlock(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : target.asItem();
                   return item != Items.AIR
                         && this.init(item) != 0
                         && live.canBeReplaced()
                         && live.getFluidState().isEmpty()
-                        && !AiBuilder.init(cell, live, power.substitutes(), true)
-                        && AiBuilder.init_BlockState(cell).canSurvive(mc.level, at)
+                        && !AiBuilder.isCellSatisfied(cell, live, power.substitutes(), true)
+                        && AiBuilder.toBlockState(cell).canSurvive(mc.level, at)
                         && AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, at, mc.level, this.load_Map) == null
                         && !this.load_Z(cell, at)
                      ? new autismclient.ai.engine.PlacementGoal.PlacementRequest(
-                        at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), AiBuilder.init_BlockState(cell)
+                        at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), AiBuilder.toBlockState(cell)
                      )
                      : null;
                } else {
@@ -7552,7 +7552,7 @@ final class AiBuilder {
 
             boolean close(AiBuilder.CellSpec cell, BlockPos pos) {
                if (schematic && !this.get_Z) {
-                  AiOperation lean = AiSchematicActions.init(cell, pos, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)));
+                  AiOperation lean = AiSchematicActions.init(cell, pos, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)));
                   if (lean == null) {
                      return false;
                   }
@@ -7619,7 +7619,7 @@ final class AiBuilder {
                      final AiOperation descent = AiSchematicActions.init_AiOperation_BlockPos_2(plant, stance, protectedCells, digProtected);
                      this.put_Z = this.run_Z = true;
                      if (hasCanopy) {
-                        final AiOperation clear = autismclient.ai.engine.AiBreakBlock.init(plant, 15, false, digProtected, false);
+                        final AiOperation clear = autismclient.ai.engine.AiBreakBlock.breakBlock(plant, 15, false, digProtected, false);
                         this.init_AiOperation = new AiOperation() {
                            boolean init;
 
@@ -7671,7 +7671,7 @@ final class AiBuilder {
             }
 
             autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil_TableIndex_StreamU_Block(AiBuilder.CellSpec cell, Block block) {
-               return AiBuilder.init(cell, block, blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()), mc.level);
+               return AiBuilder.buildPlaceConstraint(cell, block, blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()), mc.level);
             }
 
             int init(Item item) {
@@ -7783,7 +7783,7 @@ final class AiBuilder {
                      }
 
                      if (uses) {
-                        need += AiBuilder.init_I(cell);
+                        need += AiBuilder.itemCountForCell(cell);
                      }
                      break;
                   }
@@ -7805,7 +7805,7 @@ final class AiBuilder {
                for (int i = this.data; i < this.init_List.size() && remaining < 64 && nextMaterials.size() < 20; i++) {
                   AiBuilder.CellSpec cell = this.init_List.get(i);
                   BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-                  if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
+                  if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      remaining++;
 
                      for (Item item : AiSchematicActions.load(cell, pos)) {
@@ -7824,7 +7824,7 @@ final class AiBuilder {
                   }
 
                   BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-                  if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
+                  if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      for (Item item : AiSchematicActions.load(cell, pos)) {
                         if (item != Items.AIR && nextMaterials.size() < 24) {
                            nextMaterials.add(BuiltInRegistries.ITEM.getKey(item).toString());
@@ -7853,7 +7853,7 @@ final class AiBuilder {
                   "walkingRefusals",
                   this.poll_I,
                   "walkingPending",
-                  this.init_TableIndex_StateCa.init_BlockPos() == null ? null : this.init_TableIndex_StateCa.init_BlockPos().toShortString(),
+                  this.init_TableIndex_StateCa.pendingPos() == null ? null : this.init_TableIndex_StateCa.pendingPos().toShortString(),
                   "permanentAccessSteps",
                   this.push_I,
                   "sourceFloorWalkingTicks",
@@ -7921,7 +7921,7 @@ final class AiBuilder {
                JsonObject data = this.init_JsonObject_18();
                data.add(
                   "missing",
-                  AiBuilder.init(
+                  AiBuilder.missingMaterials(
                      new AiBuilder.Blueprint(blueprint.origin(), this.init_List.subList(this.data, this.init_List.size())),
                      mc.player.getInventory(),
                      power.substitutes(),
@@ -7973,7 +7973,7 @@ final class AiBuilder {
                   return false;
                }
 
-               if (this.load_BlockPos == null && this.init_TableIndex_StateCa.init_BlockPos() == null) {
+               if (this.load_BlockPos == null && this.init_TableIndex_StateCa.pendingPos() == null) {
                   for (AiOperation child : new AiOperation[]{
                      this.flush_AiOperation,
                      this.read_AiOperation,
@@ -8004,7 +8004,7 @@ final class AiBuilder {
                   return true;
                }
 
-               if (this.load_BlockPos == null && this.init_TableIndex_StateCa.init_BlockPos() == null) {
+               if (this.load_BlockPos == null && this.init_TableIndex_StateCa.pendingPos() == null) {
                   for (AiOperation child : new AiOperation[]{
                      this.flush_AiOperation,
                      this.read_AiOperation,
@@ -8050,8 +8050,8 @@ final class AiBuilder {
             }
 
             void push() {
-               if (this.init_TableIndex_SyncMan.load() != null) {
-                  this.init_TableIndex_SyncMan.load(this.init_TableIndex_SyncMan.load());
+               if (this.init_TableIndex_SyncMan.activePos() != null) {
+                  this.init_TableIndex_SyncMan.complete(this.init_TableIndex_SyncMan.activePos());
                }
 
                this.init_TableIndex_StreamU = null;
@@ -8183,71 +8183,71 @@ final class AiBuilder {
    }
 
    private static final class FlowGraph {
-      private final List<List<AiBuilder.FlowGraph.FlowEdge>> init_List = new ArrayList<>();
-      private final int[] init_IArr;
-      private final int[] load;
+      private final List<List<AiBuilder.FlowGraph.FlowEdge>> adjacency = new ArrayList<>();
+      private final int[] level;
+      private final int[] edgeCursor;
 
       private FlowGraph(int size) {
-         this.init_IArr = new int[size];
-         this.load = new int[size];
+         this.level = new int[size];
+         this.edgeCursor = new int[size];
 
          for (int i = 0; i < size; i++) {
-            this.init_List.add(new ArrayList<>());
+            this.adjacency.add(new ArrayList<>());
          }
       }
 
-      private int init(int from, int to, int capacity) {
-         int index = this.init_List.get(from).size();
-         this.init_List.get(from).add(new AiBuilder.FlowGraph.FlowEdge(to, this.init_List.get(to).size(), capacity));
-         this.init_List.get(to).add(new AiBuilder.FlowGraph.FlowEdge(from, index, 0));
+      private int addEdge(int from, int to, int capacity) {
+         int index = this.adjacency.get(from).size();
+         this.adjacency.get(from).add(new AiBuilder.FlowGraph.FlowEdge(to, this.adjacency.get(to).size(), capacity));
+         this.adjacency.get(to).add(new AiBuilder.FlowGraph.FlowEdge(from, index, 0));
          return index;
       }
 
-      private int init_I(int from, int index) {
-         return this.init_List.get(from).get(index).read;
+      private int remainingCapacity(int from, int index) {
+         return this.adjacency.get(from).get(index).capacity;
       }
 
-      private void init_V(int source, int sink) {
-         while (this.init_Z(source, sink)) {
-            Arrays.fill(this.load, 0);
+      private void computeMaxFlow(int source, int sink) {
+         while (this.buildLevelGraph(source, sink)) {
+            Arrays.fill(this.edgeCursor, 0);
 
-            while (this.load(source, sink, 2147483647) != 0) {
+            while (this.pushFlow(source, sink, 2147483647) != 0) {
             }
          }
       }
 
-      private boolean init_Z(int source, int sink) {
-         Arrays.fill(this.init_IArr, -1);
+      private boolean buildLevelGraph(int source, int sink) {
+         Arrays.fill(this.level, -1);
          ArrayDeque<Integer> queue = new ArrayDeque<>();
-         this.init_IArr[source] = 0;
+         this.level[source] = 0;
          queue.addLast(source);
 
          while (!queue.isEmpty()) {
             int at = queue.removeFirst();
 
-            for (AiBuilder.FlowGraph.FlowEdge edge : this.init_List.get(at)) {
-               if (edge.read != 0 && this.init_IArr[edge.init] < 0) {
-                  this.init_IArr[edge.init] = this.init_IArr[at] + 1;
-                  queue.addLast(edge.init);
+            for (AiBuilder.FlowGraph.FlowEdge edge : this.adjacency.get(at)) {
+               if (edge.capacity != 0 && this.level[edge.to] < 0) {
+                  this.level[edge.to] = this.level[at] + 1;
+                  queue.addLast(edge.to);
                }
             }
          }
 
-         return this.init_IArr[sink] >= 0;
+         return this.level[sink] >= 0;
       }
 
-      private int load(int at, int sink, int amount) {
+      private int pushFlow(int at, int sink, int amount) {
          if (at == sink) {
             return amount;
          }
 
-         for (List<AiBuilder.FlowGraph.FlowEdge> outgoing = this.init_List.get(at); this.load[at] < outgoing.size(); this.load[at]++) {
-            AiBuilder.FlowGraph.FlowEdge edge = outgoing.get(this.load[at]);
-            if (edge.read > 0 && this.init_IArr[edge.init] == this.init_IArr[at] + 1) {
-               int pushed = this.load(edge.init, sink, Math.min(amount, edge.read));
+         for (List<AiBuilder.FlowGraph.FlowEdge> outgoing = this.adjacency.get(at); this.edgeCursor[at] < outgoing.size(); this.edgeCursor[at]++) {
+            AiBuilder.FlowGraph.FlowEdge edge = outgoing.get(this.edgeCursor[at]);
+            if (edge.capacity > 0 && this.level[edge.to] == this.level[at] + 1) {
+               int pushed = this.pushFlow(edge.to, sink, Math.min(amount, edge.capacity));
                if (pushed > 0) {
-                  edge.read -= pushed;
-                  this.init_List.get(edge.init).get(edge.load).read += pushed;
+                  edge.capacity -= pushed;
+                  this.adjacency.get(edge.to).get(edge.reverseIndex).capacity += pushed;
                   return pushed;
                }
             }
@@ -8257,14 +8257,14 @@ final class AiBuilder {
       }
 
       private static final class FlowEdge {
-         private final int init;
-         private final int load;
-         private int read;
+         private final int to;
+         private final int reverseIndex;
+         private int capacity;
 
          private FlowEdge(int to, int reverse, int remaining) {
-            this.init = to;
-            this.load = reverse;
-            this.read = remaining;
+            this.to = to;
+            this.reverseIndex = reverse;
+            this.capacity = remaining;
          }
       }
    }
@@ -8436,147 +8436,147 @@ final class AiBuilder {
    }
 
    private static final class BuildOp implements AiOperation {
-      final Minecraft init_Minecraft = Minecraft.getInstance();
-      final AiBuilder.Blueprint init_TableIndex_DataUti;
-      final AiBuilder.BuildOptions init_TableIndex_ConfigS;
-      final boolean init_Z;
-      final long init_J;
-      int init_I;
-      int load_I;
-      int read;
-      int write;
-      final JsonArray init_JsonArray = new JsonArray();
-      AiOperation init_AiOperation;
-      boolean load_Z;
+      final Minecraft minecraft = Minecraft.getInstance();
+      final AiBuilder.Blueprint baseBlueprint;
+      final AiBuilder.BuildOptions options;
+      final boolean verify;
+      final long deadlineNanos;
+      int completedCopies;
+      int placedTotal;
+      int skippedTotal;
+      int failedTotal;
+      final JsonArray failedSamples = new JsonArray();
+      AiOperation activeCopyOp;
+      boolean cancelled;
 
       BuildOp(AiBuilder.Blueprint base, AiBuilder.BuildOptions power, boolean verify, int timeoutSeconds) {
-         this.init_TableIndex_DataUti = base;
-         this.init_TableIndex_ConfigS = power;
-         this.init_Z = verify;
-         this.init_J = System.nanoTime() + Math.max(1, Math.min(3600, timeoutSeconds)) * 1000000000L;
+         this.baseBlueprint = base;
+         this.options = power;
+         this.verify = verify;
+         this.deadlineNanos = System.nanoTime() + Math.max(1, Math.min(3600, timeoutSeconds)) * 1000000000L;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (!this.load_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-               return this.init(
-                  AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+         if (!this.cancelled && this.minecraft.player != null && this.minecraft.level != null) {
+            if (this.minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+               return this.finishResult(
+                  AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.minecraft.player.getHealth(), this.minecraft.player.getMaxHealth())
                );
             }
 
-            if (System.nanoTime() > this.init_J) {
-               return this.init(AiOperation.Status.TIMED_OUT, "Build deadline reached");
+            if (System.nanoTime() > this.deadlineNanos) {
+               return this.finishResult(AiOperation.Status.TIMED_OUT, "Build deadline reached");
             }
 
-            if (this.init_AiOperation != null) {
-               AiOperation.Result r = this.init_AiOperation.tick();
+            if (this.activeCopyOp != null) {
+               AiOperation.Result r = this.activeCopyOp.tick();
                if (!r.terminal()) {
-                  return this.init("Building copy " + (this.init_I + 1) + " of " + this.init_Str_7());
+                  return this.runningResult("Building copy " + (this.completedCopies + 1) + " of " + this.formatCopyTotal());
                }
 
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+               this.activeCopyOp.cancel();
+               this.activeCopyOp = null;
                JsonObject legData = r.dataJson().isBlank() ? new JsonObject() : AiJson.parseObject(r.dataJson());
-               this.load_I = this.load_I + AiJson.getInt(legData, "placed", 0);
-               this.read = this.read + AiJson.getInt(legData, "skipped", 0);
-               this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
-               if (legData.has("failed") && this.init_JsonArray.size() < 32) {
+               this.placedTotal = this.placedTotal + AiJson.getInt(legData, "placed", 0);
+               this.skippedTotal = this.skippedTotal + AiJson.getInt(legData, "skipped", 0);
+               this.failedTotal = this.failedTotal + AiJson.getInt(legData, "failedTotal", 0);
+               if (legData.has("failed") && this.failedSamples.size() < 32) {
                   for (JsonElement failure : legData.getAsJsonArray("failed")) {
-                     if (this.init_JsonArray.size() >= 32) {
+                     if (this.failedSamples.size() >= 32) {
                         break;
                      }
 
-                     this.init_JsonArray.add(failure);
+                     this.failedSamples.add(failure);
                   }
                }
 
                if (r.status() != AiOperation.Status.SUCCEEDED) {
-                  return this.init(r.status(), r.message());
+                  return this.finishResult(r.status(), r.message());
                }
 
-               this.init_I++;
+               this.completedCopies++;
             }
 
-            AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
-            if (repeat.count() >= 0 && this.init_I > repeat.count()) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Built " + this.init_I + " copies");
+            AiBuilder.RepeatSpec repeat = this.options.repeat();
+            if (repeat.count() >= 0 && this.completedCopies > repeat.count()) {
+               return this.finishResult(AiOperation.Status.SUCCEEDED, "Built " + this.completedCopies + " copies");
             }
 
             AiBuilder.Blueprint shifted = new AiBuilder.Blueprint(
-               this.init_TableIndex_DataUti.origin().offset(repeat.dx() * this.init_I, repeat.dy() * this.init_I, repeat.dz() * this.init_I),
-               this.init_TableIndex_DataUti.cells()
+               this.baseBlueprint.origin().offset(repeat.dx() * this.completedCopies, repeat.dy() * this.completedCopies, repeat.dz() * this.completedCopies),
+               this.baseBlueprint.cells()
             );
-            JsonObject missing = AiBuilder.init_JsonObject_TableIndex_DataUti(
-               shifted, this.init_Minecraft.player.getInventory(), this.init_TableIndex_ConfigS.substitutes()
+            JsonObject missing = AiBuilder.missingMaterials(
+               shifted, this.minecraft.player.getInventory(), this.options.substitutes()
             );
             if (missing.size() > 0) {
-               JsonObject data = this.init_JsonObject_19();
+               JsonObject data = this.buildStatsJson();
                data.add("missing", missing);
-               return this.init_I > 0 && repeat.count() < 0
-                  ? this.init(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.init_I + " copies", data)
-                  : this.init(AiOperation.Status.FAILED, "Missing materials for copy " + (this.init_I + 1) + ": " + missing, data);
+               return this.completedCopies > 0 && repeat.count() < 0
+                  ? this.finishResult(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.completedCopies + " copies", data)
+                  : this.finishResult(AiOperation.Status.FAILED, "Missing materials for copy " + (this.completedCopies + 1) + ": " + missing, data);
             }
 
-            int remaining = (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+            int remaining = (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
             if (!AutismLiteVariant.enabled()
-               && (this.init_TableIndex_ConfigS.machine().load_Z() || this.init_TableIndex_ConfigS.assumeFly())
+               && (this.options.machine().load_Z() || this.options.assumeFly())
                && !System.getProperty("autism.ai.build.schematic.engine", "printer").equalsIgnoreCase("old")) {
-               this.init_AiOperation = new AiPrintOp(shifted, remaining, this.init_TableIndex_ConfigS);
+               this.activeCopyOp = new AiPrintOp(shifted, remaining, this.options);
             } else {
-               this.init_AiOperation = AiBuilder.init(shifted, this.init_Z, remaining, this.init_TableIndex_ConfigS);
+               this.activeCopyOp = AiBuilder.buildBlueprint(shifted, this.verify, remaining, this.options);
             }
 
-            return this.init("Building copy " + (this.init_I + 1) + " of " + this.init_Str_7());
+            return this.runningResult("Building copy " + (this.completedCopies + 1) + " of " + this.formatCopyTotal());
          } else {
-            return this.init(AiOperation.Status.CANCELLED, "Build cancelled");
+            return this.finishResult(AiOperation.Status.CANCELLED, "Build cancelled");
          }
       }
 
-      String init_Str_7() {
-         return this.init_TableIndex_ConfigS.repeat().count() < 0 ? "many" : String.valueOf(this.init_TableIndex_ConfigS.repeat().count() + 1);
+      String formatCopyTotal() {
+         return this.options.repeat().count() < 0 ? "many" : String.valueOf(this.options.repeat().count() + 1);
       }
 
-      JsonObject init_JsonObject_19() {
-         AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
+      JsonObject buildStatsJson() {
+         AiBuilder.RepeatSpec repeat = this.options.repeat();
          return AiJson.objectOf(
             "copies",
-            this.init_I,
+            this.completedCopies,
             "placed",
-            this.load_I,
+            this.placedTotal,
             "skipped",
-            this.read,
+            this.skippedTotal,
             "failed",
-            this.init_JsonArray,
+            this.failedSamples,
             "failedTotal",
-            this.write,
+            this.failedTotal,
             "cells",
-            this.init_TableIndex_DataUti.cells().size(),
+            this.baseBlueprint.cells().size(),
             "repeat",
             AiJson.objectOf("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
          );
       }
 
-      AiOperation.Result init(String message) {
-         return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_19());
+      AiOperation.Result runningResult(String message) {
+         return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.buildStatsJson());
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message) {
-         return this.init(status, message, this.init_JsonObject_19());
+      AiOperation.Result finishResult(AiOperation.Status status, String message) {
+         return this.finishResult(status, message, this.buildStatsJson());
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
+      AiOperation.Result finishResult(AiOperation.Status status, String message, JsonObject data) {
          this.cancel();
          return AiGameOperations.result(status, message, data);
       }
 
       @Override
       public void cancel() {
-         if (!this.load_Z) {
-            this.load_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+         if (!this.cancelled) {
+            this.cancelled = true;
+            if (this.activeCopyOp != null) {
+               this.activeCopyOp.cancel();
+               this.activeCopyOp = null;
             }
          }
       }
@@ -8586,48 +8586,48 @@ final class AiBuilder {
    }
 
    static final class PlaceAckTracker {
-      private BlockPos init_BlockPos;
-      private long init_J;
-      private int init_I;
-      private int load;
+      private BlockPos pendingPos;
+      private long sentRevision;
+      private int sentSequence;
+      private int sentTick;
 
-      BlockPos init_BlockPos() {
-         return this.init_BlockPos;
+      BlockPos pendingPos() {
+         return this.pendingPos;
       }
 
-      int init_I() {
-         return this.init_I;
+      int sentSequence() {
+         return this.sentSequence;
       }
 
-      void init(BlockPos pos, long revision, int sequence, int sentTick) {
-         if (this.init_BlockPos != null) {
+      void track(BlockPos pos, long revision, int sequence, int sentTick) {
+         if (this.pendingPos != null) {
             throw new IllegalStateException("A moving placement is already awaiting server evidence");
          }
 
-         this.init_BlockPos = pos;
-         this.init_J = revision;
-         this.init_I = sequence;
-         this.load = sentTick;
+         this.pendingPos = pos;
+         this.sentRevision = revision;
+         this.sentSequence = sequence;
+         this.sentTick = sentTick;
       }
 
-      AiBuilder.PlaceAckTracker.AckState init(long currentRevision, boolean satisfied, boolean acknowledged, int nowTick) {
-         if (this.init_BlockPos == null) {
+      AiBuilder.PlaceAckTracker.AckState poll(long currentRevision, boolean satisfied, boolean acknowledged, int nowTick) {
+         if (this.pendingPos == null) {
             return AiBuilder.PlaceAckTracker.AckState.IDLE;
          }
 
          if (satisfied) {
-            if (currentRevision <= this.init_J) {
+            if (currentRevision <= this.sentRevision) {
                return AiBuilder.PlaceAckTracker.AckState.WAITING;
             }
 
-            this.init_BlockPos = null;
+            this.pendingPos = null;
             return AiBuilder.PlaceAckTracker.AckState.CONFIRMED;
          } else {
-            if (nowTick - this.load < 4 || currentRevision <= this.init_J && !acknowledged) {
+            if (nowTick - this.sentTick < 4 || currentRevision <= this.sentRevision && !acknowledged) {
                return AiBuilder.PlaceAckTracker.AckState.WAITING;
             }
 
-            this.init_BlockPos = null;
+            this.pendingPos = null;
             return AiBuilder.PlaceAckTracker.AckState.RETRY;
          }
       }
@@ -8647,20 +8647,20 @@ final class AiBuilder {
    }
 
    static final class ReadyQueue {
-      private final ArrayDeque<BlockPos> init_ArrayDeque = new ArrayDeque<>();
-      private final Set<Long> init_Set = new HashSet<>();
-      private final Set<Long> load_Set = new HashSet<>();
-      private Object init_Obj;
-      private BlockPos init_BlockPos;
-      private BlockPos load_BlockPos;
+      private final ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+      private final Set<Long> queuedKeys = new HashSet<>();
+      private final Set<Long> eligibleKeys = new HashSet<>();
+      private Object owner;
+      private BlockPos activePos;
+      private BlockPos pendingPos;
 
-      void init(Object owner, List<BlockPos> ready, Set<Long> excluded, BlockPos pending) {
-         if (this.init_Obj != owner) {
-            this.init_V();
+      void sync(Object owner, List<BlockPos> ready, Set<Long> excluded, BlockPos pending) {
+         if (this.owner != owner) {
+            this.clear();
          }
 
-         this.init_Obj = owner;
-         this.load_BlockPos = pending;
+         this.owner = owner;
+         this.pendingPos = pending;
          Set<Long> nextEligible = new HashSet<>();
          List<BlockPos> unique = new ArrayList<>(ready.size());
 
@@ -8675,17 +8675,17 @@ final class AiBuilder {
             unique.add(pending);
          }
 
-         this.load_Set.clear();
-         this.load_Set.addAll(nextEligible);
-         if (this.init_BlockPos != null && (!this.load_Set.contains(this.init_BlockPos.asLong()) || this.init_BlockPos.equals(pending))) {
-            this.init_BlockPos = null;
+         this.eligibleKeys.clear();
+         this.eligibleKeys.addAll(nextEligible);
+         if (this.activePos != null && (!this.eligibleKeys.contains(this.activePos.asLong()) || this.activePos.equals(pending))) {
+            this.activePos = null;
          }
 
-         this.init_ArrayDeque.removeIf(posx -> {
+         this.queue.removeIf(posx -> {
             long keyx = posx.asLong();
-            boolean keep = this.load_Set.contains(keyx) && !init(pending, keyx);
+            boolean keep = this.eligibleKeys.contains(keyx) && !matchesKey(pending, keyx);
             if (!keep) {
-               this.init_Set.remove(keyx);
+               this.queuedKeys.remove(keyx);
             }
 
             return !keep;
@@ -8693,66 +8693,66 @@ final class AiBuilder {
 
          for (BlockPos pos : unique) {
             long key = pos.asLong();
-            if (!pos.equals(this.init_BlockPos) && !init(pending, key) && this.init_Set.add(key)) {
-               this.init_ArrayDeque.addLast(pos);
+            if (!pos.equals(this.activePos) && !matchesKey(pending, key) && this.queuedKeys.add(key)) {
+               this.queue.addLast(pos);
             }
          }
       }
 
-      private static boolean init(BlockPos pos, long key) {
+      private static boolean matchesKey(BlockPos pos, long key) {
          return pos != null && pos.asLong() == key;
       }
 
-      BlockPos init_BlockPos() {
-         if (this.load_BlockPos != null) {
+      BlockPos nextPos() {
+         if (this.pendingPos != null) {
             return null;
          }
 
-         if (this.init_BlockPos == null) {
-            this.init_BlockPos = this.init_ArrayDeque.pollFirst();
-            if (this.init_BlockPos != null) {
-               this.init_Set.remove(this.init_BlockPos.asLong());
+         if (this.activePos == null) {
+            this.activePos = this.queue.pollFirst();
+            if (this.activePos != null) {
+               this.queuedKeys.remove(this.activePos.asLong());
             }
          }
 
-         return this.init_BlockPos;
+         return this.activePos;
       }
 
-      BlockPos load() {
-         return this.init_BlockPos;
+      BlockPos activePos() {
+         return this.activePos;
       }
 
-      void init(BlockPos pos) {
-         if (pos.equals(this.init_BlockPos)) {
-            this.init_BlockPos = null;
+      void requeue(BlockPos pos) {
+         if (pos.equals(this.activePos)) {
+            this.activePos = null;
          }
 
-         if (pos.equals(this.load_BlockPos)) {
-            this.load_BlockPos = null;
+         if (pos.equals(this.pendingPos)) {
+            this.pendingPos = null;
          }
 
          long key = pos.asLong();
-         if (this.load_Set.contains(key) && this.init_Set.add(key)) {
-            this.init_ArrayDeque.addLast(pos);
+         if (this.eligibleKeys.contains(key) && this.queuedKeys.add(key)) {
+            this.queue.addLast(pos);
          }
       }
 
-      void load(BlockPos pos) {
-         if (pos.equals(this.init_BlockPos)) {
-            this.init_BlockPos = null;
+      void complete(BlockPos pos) {
+         if (pos.equals(this.activePos)) {
+            this.activePos = null;
          }
       }
 
-      int init_I() {
-         return this.init_ArrayDeque.size();
+      int queuedSize() {
+         return this.queue.size();
       }
 
-      void init_V() {
-         this.init_Obj = null;
-         this.init_BlockPos = this.load_BlockPos = null;
-         this.init_ArrayDeque.clear();
-         this.init_Set.clear();
-         this.load_Set.clear();
+      void clear() {
+         this.owner = null;
+         this.activePos = this.pendingPos = null;
+         this.queue.clear();
+         this.queuedKeys.clear();
+         this.eligibleKeys.clear();
       }
    }
 

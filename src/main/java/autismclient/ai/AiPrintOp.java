@@ -128,7 +128,7 @@ final class AiPrintOp implements AiOperation {
       this.init_List = preparedTargets;
       this.init_DataUtil.setFlightAllowed(power.assumeFly());
       this.init_UiHelper = autismclient.ai.print.PrintCore.init_UiHelper_EventBus(this.init_DataUtil, AiPrintRules.init_bi, this.init_List, geometry);
-      this.load_a_StreamUtil = AiScaffold.init(AiBuilder.init_Path(blueprint), List.of());
+      this.load_a_StreamUtil = AiScaffold.init(AiBuilder.checkpointPath(blueprint), List.of());
       this.init_ArrayDeque.addAll(this.load_a_StreamUtil.init_List());
       this.init_UiHelper.init_V_List(actions.vehicles());
       this.init_UiHelper.load_V_List(actions.frames());
@@ -358,7 +358,7 @@ final class AiPrintOp implements AiOperation {
                }
 
                this.load_Z = false;
-               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), false));
+               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.breakBlock(this.init_BlockPos, 30, false, this.init_Set_7(), false));
                return this.init_AiOperation_Result_Str_9("Clearing terrain from the schematic's air at " + this.init_BlockPos.toShortString());
             }
 
@@ -755,8 +755,8 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result sync_AiOperation_Result_3() {
-      autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
-      autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(3000000000L);
+      autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(3000000000L);
+      autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(3000000000L);
       AiOperation.Result result = this.init_AiOperation.tick();
       this.init_JsonObject = AiJson.parseObject(result.dataJson());
       if (!result.terminal()) {
@@ -788,7 +788,7 @@ final class AiPrintOp implements AiOperation {
          if (this.init_BlockPos != null) {
             if (!this.load_Z && result.status() == AiOperation.Status.FAILED && result.failure() == AiFailure.UNREACHABLE) {
                this.load_Z = true;
-               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), true));
+               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.breakBlock(this.init_BlockPos, 30, false, this.init_Set_7(), true));
                return this.init_AiOperation_Result_Str_9("Finding supported access to terrain at " + this.init_BlockPos.toShortString());
             } else {
                BlockPos p = this.init_BlockPos;
@@ -1038,8 +1038,8 @@ final class AiPrintOp implements AiOperation {
          this.init_Y.cancel();
          this.sync_Z = this.sync_Z | this.init_Y.requiresReconciliation();
          this.read_V_8();
-         autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
-         autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
+         autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
+         autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(0L);
          autismclient.ai.engine.AiRoutePolicy.putAt_V();
          AiServerEvidence.removeBlockObserver(this.init_Consumer);
          AiServerEvidence.removeChunkObserver(this.init_LongConsumer);
@@ -1122,7 +1122,7 @@ final class AiPrintOp implements AiOperation {
             this.init_BlockPos = this.init_List.get(this.init_I++);
             this.read = AiPrintSupply.load(AiPrintOp.this.init_Minecraft.player.getInventory(), Items.DIRT);
             this.write = 0;
-            this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
+            this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
                this.init_BlockPos,
                30,
                false,

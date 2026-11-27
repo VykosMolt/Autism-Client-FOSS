@@ -887,8 +887,8 @@ final class AiBlazeFight {
                                  this.read_V_3();
                               }
 
-                              if (AiBlazeFight.init_Z && autismclient.ai.engine.AiNavDebug.init_Z()) {
-                                 autismclient.ai.engine.AiNavDebug.init(
+                              if (AiBlazeFight.init_Z && autismclient.ai.engine.AiNavDebug.isEnabled()) {
+                                 autismclient.ai.engine.AiNavDebug.log(
                                     String.format(
                                        Locale.ROOT,
                                        "blaze ring t=%d target %d hp %.1f gap %.2f hz %.2f dy %.2f seen %b ground %b charge %.2f keys %d/%d sprint %b jump %b due %b first %b sprintTicks %d knock %b grace %d stuck %d",
@@ -928,8 +928,8 @@ final class AiBlazeFight {
                                     + "m)"
                               );
                            } else {
-                              if (autismclient.ai.engine.AiNavDebug.init_Z() && (this.load_AiOperation == null || this.push % 10 == 0)) {
-                                 autismclient.ai.engine.AiNavDebug.init(
+                              if (autismclient.ai.engine.AiNavDebug.isEnabled() && (this.load_AiOperation == null || this.push % 10 == 0)) {
+                                 autismclient.ai.engine.AiNavDebug.log(
                                     "blaze travel branch t="
                                        + this.push
                                        + " target "
@@ -1027,8 +1027,8 @@ final class AiBlazeFight {
                                  }
 
                                  AiOperation.Result r = this.init_bb.tickChild(this.load_AiOperation);
-                                 if (autismclient.ai.engine.AiNavDebug.init_Z() && this.push % 20 == 0) {
-                                    autismclient.ai.engine.AiNavDebug.init(
+                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.push % 20 == 0) {
+                                    autismclient.ai.engine.AiNavDebug.log(
                                        "blaze approach target "
                                           + this.init_Entity.getId()
                                           + " at "
@@ -1091,8 +1091,8 @@ final class AiBlazeFight {
 
                                  return this.init("Closing on the blaze (" + (int)horizontal + "m)");
                               } else {
-                                 if (autismclient.ai.engine.AiNavDebug.init_Z() && this.push % 20 == 0) {
-                                    autismclient.ai.engine.AiNavDebug.init(
+                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.push % 20 == 0) {
+                                    autismclient.ai.engine.AiNavDebug.log(
                                        "blaze approach shield target "
                                           + this.init_Entity.getId()
                                           + " player "

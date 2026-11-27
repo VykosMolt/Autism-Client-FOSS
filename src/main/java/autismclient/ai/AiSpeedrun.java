@@ -163,7 +163,7 @@ final class AiSpeedrun {
    }
 
    static autismclient.ai.engine.AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
-      return autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(surface, 2.0);
+      return autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(surface, 2.0);
    }
 
    static BlockPos init_BlockPos_BlockPos(BlockPos from, int x, int z, Function<BlockPos, BlockPos> observedSurface) {
@@ -1661,7 +1661,7 @@ final class AiSpeedrun {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         true,
                         2.0,
-                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
+                        autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stand, 1.0),
                         new AiGoto.GotoOptions(true, false, 3, true, false, true)
                      )
                   );

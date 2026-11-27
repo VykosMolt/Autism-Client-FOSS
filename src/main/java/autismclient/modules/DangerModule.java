@@ -218,7 +218,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    public static boolean init_Z_52() {
       DangerModule danger = init_z();
-      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(AutismSessionState.getInstance().getClientTick(), danger.poll, 1);
+      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.isWithinTickWindow(AutismSessionState.getInstance().getClientTick(), danger.poll, 1);
    }
 
    private boolean pop() {

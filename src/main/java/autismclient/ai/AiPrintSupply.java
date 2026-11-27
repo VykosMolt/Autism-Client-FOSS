@@ -508,7 +508,7 @@ final class AiPrintSupply {
                AiBuilder.CellSpec cell = this.init_bj_CachePool.init_TableIndex_DataUti.cells().get(this.init_I++);
                BlockPos p = this.init_bj_CachePool.init_BlockPos_TableIndex_StreamU(cell);
                BlockState live = this.init_bj_CachePool.init_Predicate.test(p) ? this.init_bj_CachePool.init_BlockState_BlockPos(p) : null;
-               if (live == null || !AiBuilder.update(cell, live)) {
+               if (live == null || !AiBuilder.matchesSchematicCell(cell, live)) {
                   for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, false)) {
                      if (requirement.item() == this.init_Item) {
                         if (requirement.use() == AiCellMaterials.Inner_BufferHelper.REUSE) {

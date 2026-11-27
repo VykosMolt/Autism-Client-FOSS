@@ -30,7 +30,7 @@ public final class AiSeek {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
-         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.getString(args, "strategy", "fastest")));
+         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")));
       } else {
          throw new IllegalArgumentException("Surface travel requires a connected living player");
       }
@@ -41,7 +41,7 @@ public final class AiSeek {
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
          Integer maxY = args.has("maxY") ? AiJson.getInt(args, "maxY", 0) : null;
-         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.getString(args, "strategy", "fastest")), maxY);
+         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")), maxY);
       } else {
          throw new IllegalArgumentException("Cave travel requires a connected living player");
       }
@@ -80,11 +80,11 @@ public final class AiSeek {
    }
 
    private static AiPathfinder.CellInfo init_ClassCache_FileCac(Minecraft mc, BlockPos p) {
-      return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(mc, mc.level, p, init_ItemStackArr);
+      return AiPathfinder.LiveGridView.classifyCellCompat(mc, mc.level, p, init_ItemStackArr);
    }
 
    private static boolean init_Z(Minecraft mc, BlockPos feet) {
-      return AiPathfinder.MoveGenerator.init_Z_ClassCache_FileCac(
+      return AiPathfinder.MoveGenerator.isStandableCompat(
          init_ClassCache_FileCac(mc, feet), init_ClassCache_FileCac(mc, feet.above()), init_ClassCache_FileCac(mc, feet.below())
       );
    }

@@ -183,20 +183,20 @@ final class AiSchematic {
          return List.of();
       }
 
-      AiBuilder.CellSpec origin = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+      AiBuilder.CellSpec origin = AiBuilder.transformCell(
          new AiBuilder.CellSpec(0, 0, 0, "minecraft:stone"), rotation, mirror
       );
       ArrayList<AiSchematic.Inner_StreamUtil> out = new ArrayList<>();
 
       for (AiSchematic.Inner_StreamUtil frame : decoded.itemFrames()) {
          BlockPos c = frame.cell();
-         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+         AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), "minecraft:stone"), rotation, mirror
          );
          Direction facing = frame.facing();
          int turned = frame.rotation();
          if (facing.getAxis().isHorizontal()) {
-            AiBuilder.CellSpec step = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+            AiBuilder.CellSpec step = AiBuilder.transformCell(
                new AiBuilder.CellSpec(facing.getStepX(), 0, facing.getStepZ(), "minecraft:stone"), rotation, mirror
             );
             int sx = step.dx() - origin.dx();
@@ -349,14 +349,14 @@ final class AiSchematic {
 
    static AiSchematic.Inner_BufferHelper init_bP_BufferHelper(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
       AiSchematic.Inner_DataUtil decoded = init_bP_DataUtil_Path_Z(file, skipUnknown);
-      List<AiBuilder.CellSpec> cells = AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror);
+      List<AiBuilder.CellSpec> cells = AiBuilder.transformCells(decoded.cells(), rotation, mirror);
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("Schematic contains no blocks to build");
       }
 
-      BlockPos minimum = AiBuilder.init_BlockPos(cells);
+      BlockPos minimum = AiBuilder.minCellOffset(cells);
       return new AiSchematic.Inner_BufferHelper(
-         new AiBuilder.Blueprint(origin, AiBuilder.init(cells, maxCells, maxOffset, minimum)),
+         new AiBuilder.Blueprint(origin, AiBuilder.normalizeCells(cells, maxCells, maxOffset, minimum)),
          init_Map(decoded, rotation, mirror, minimum),
          decoded.entities(),
          load_Map(decoded, rotation, mirror, minimum),
@@ -707,7 +707,7 @@ final class AiSchematic {
          JsonObject props = new JsonObject();
          properties.forEach(props::addProperty);
          entry.add("properties", props);
-         resolved.putAll(AiBuilder.init_Map_JsonObject(entry, context + " (" + blockId + ")", block));
+         resolved.putAll(AiBuilder.parseBlockProperties(entry, context + " (" + blockId + ")", block));
       }
 
       return Map.copyOf(resolved);
@@ -758,7 +758,7 @@ final class AiSchematic {
    static Map<Long, String> init_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.signText().isEmpty()
          ? Map.of()
-         : init_Map(decoded, rotation, mirror, AiBuilder.init_BlockPos(AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror)));
+         : init_Map(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
    private static Map<Long, String> init_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
@@ -773,7 +773,7 @@ final class AiSchematic {
 
       for (Entry<Long, String> entry : decoded.signText().entrySet()) {
          BlockPos at = BlockPos.of(entry.getKey());
-         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+         AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.put(BlockPos.asLong(moved.dx() - minX, moved.dy() - minY, moved.dz() - minZ), entry.getValue());
@@ -785,7 +785,7 @@ final class AiSchematic {
    static Map<Long, ListTag> load(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.containerContents().isEmpty()
          ? Map.of()
-         : load_Map(decoded, rotation, mirror, AiBuilder.init_BlockPos(AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror)));
+         : load_Map(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
    private static Map<Long, ListTag> load_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
@@ -800,7 +800,7 @@ final class AiSchematic {
 
       for (Entry<Long, ListTag> entry : decoded.containerContents().entrySet()) {
          BlockPos at = BlockPos.of(entry.getKey());
-         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+         AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.put(BlockPos.asLong(moved.dx() - minX, moved.dy() - minY, moved.dz() - minZ), entry.getValue().copy());
@@ -815,7 +815,7 @@ final class AiSchematic {
       HashSet<Integer> slots = new HashSet<>();
 
       for (Tag value : source) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          if (!(value instanceof CompoundTag original)) {
             throw new IllegalArgumentException("Saved storage item is not a compound");
          }
@@ -847,7 +847,7 @@ final class AiSchematic {
    static List<AiSchematic.Inner_TaskQueue> init_List(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.railVehicles().isEmpty()
          ? List.of()
-         : load_List(decoded, rotation, mirror, AiBuilder.init_BlockPos(AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror)));
+         : load_List(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
    private static List<AiSchematic.Inner_TaskQueue> load_List(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
@@ -877,7 +877,7 @@ final class AiSchematic {
             dz = oldX;
          }
 
-         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+         AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(rail.getX(), rail.getY(), rail.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.add(new AiSchematic.Inner_TaskQueue(vehicle.id(), new Vec3(moved.dx() - minX + 0.5 + dx, pos.y - minY, moved.dz() - minZ + 0.5 + dz)));

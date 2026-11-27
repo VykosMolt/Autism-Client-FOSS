@@ -688,7 +688,7 @@ final class AiSurvival {
    }
 
    static autismclient.ai.engine.AiPathfinder.PathGoal init(final BlockPos start, BlockPos target) {
-      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(target, 0.6);
       return new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
          public boolean isInGoal(int x, int y, int z) {

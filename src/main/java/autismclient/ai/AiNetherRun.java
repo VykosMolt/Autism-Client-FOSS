@@ -496,7 +496,7 @@ final class AiNetherRun {
                         }
                      } else {
                         if (!AiThreats.isLegacyCombatEnabled()) {
-                           autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
+                           autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(5000000000L);
                         }
 
                         if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.RODS

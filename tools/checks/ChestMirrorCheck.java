@@ -26,7 +26,7 @@ public final class ChestMirrorCheck {
             for (int rotation = 0; rotation < 360; rotation += 90) {
                for (String mirror : new String[]{"none", "x", "z"}) {
                   var preview = SchematicDocument.init_TableIndex_StreamU_BlockState(SchematicDocument.init_BlockState_BlockState(state, rotation, mirror)).properties();
-                  var build = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+                  var build = AiBuilder.transformCell(
                         new AiBuilder.CellSpec(0, 0, 0, id, source.properties()), rotation, mirror
                      )
                      .properties();

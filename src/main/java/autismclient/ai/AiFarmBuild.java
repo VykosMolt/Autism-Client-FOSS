@@ -900,7 +900,7 @@ final class AiFarmBuild {
                BlockPos p = this.init_List.get(this.init_I);
                BlockState state = mc.level.getBlockState(p);
                if (!state.isAir() && (state.getFluidState().isEmpty() || !state.getCollisionShape(mc.level, p).isEmpty())) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(p, 30, false, this.init_Set());
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(p, 30, false, this.init_Set());
                   return this.init_AiOperation_Result_3("Clearing " + BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath() + " at " + p.toShortString());
                }
 
@@ -943,7 +943,7 @@ final class AiFarmBuild {
                this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FIELD : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL);
                return this.init_AiOperation_Result_3("Ground already level");
             } else {
-               this.init_AiOperation = AiBuilder.init(new AiBuilder.Blueprint(BlockPos.ZERO, cells), 900);
+               this.init_AiOperation = AiBuilder.buildSchematic(new AiBuilder.Blueprint(BlockPos.ZERO, cells), 900);
                return this.init_AiOperation_Result_3("Levelling " + cells.size() + " cells with " + AiFarmArea.load(this.init_Str));
             }
          }
@@ -1068,7 +1068,7 @@ final class AiFarmBuild {
             for (List<BlockPos> cells = this.init_D_ConfigStore.poolCells(); this.read_I < cells.size(); this.read_I++) {
                BlockPos p = cells.get(this.read_I);
                if (!this.load(p)) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(p, 30, false, this.init_Set(p));
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(p, 30, false, this.init_Set(p));
                   return this.init_AiOperation_Result_3("Digging the pool at " + p.toShortString());
                }
             }
@@ -1176,7 +1176,7 @@ final class AiFarmBuild {
                this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_POUR;
                return this.init_AiOperation_Result_3("Water hole open");
             } else {
-               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(c, 30, false, this.init_Set(c));
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(c, 30, false, this.init_Set(c));
                return this.init_AiOperation_Result_3("Opening the water hole at " + c.toShortString());
             }
          }
@@ -1217,7 +1217,7 @@ final class AiFarmBuild {
                   this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_FILL;
                   return this.init_AiOperation_Result_3("No slab");
                } else {
-                  this.init_AiOperation = AiBuilder.init(
+                  this.init_AiOperation = AiBuilder.buildSchematic(
                      new AiBuilder.Blueprint(c, List.of(new AiBuilder.CellSpec(0, 0, 0, slab, Map.of("type", "bottom", "waterlogged", "true")))),
                      60
                   );

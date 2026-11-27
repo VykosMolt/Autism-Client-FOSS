@@ -433,7 +433,7 @@ final class AiBurrow {
                } else {
                   switch (this.init_RingBuffer_StreamU(feet.below())) {
                      case DIG:
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(feet.below(), 20);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(feet.below(), 20);
                         return this.init("Digging the shaft");
                      case OPEN:
                         if (++this.load_I > 40) {
@@ -751,7 +751,7 @@ final class AiBurrow {
             AiOperation.Result update_AiOperation_Result(BlockPos feet) {
                if (this.read_BlockPos == null) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.write_BlockPos, 20);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.write_BlockPos, 20);
                   }
 
                   boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
@@ -810,7 +810,7 @@ final class AiBurrow {
 
                      this.write_I = 0;
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(feet.below(), 20);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(feet.below(), 20);
                      }
 
                      boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();

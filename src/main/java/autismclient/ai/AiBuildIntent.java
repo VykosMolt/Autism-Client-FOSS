@@ -43,11 +43,11 @@ final class AiBuildIntent {
    }
 
    static AiBuildSite.Inner_CachePool init_IoWorker_CachePool(AiBuilder.CellSpec cell) {
-      if (AiBuilder.read_Z(cell)) {
+      if (AiBuilder.isTransientPistonCell(cell)) {
          return AiBuildSite.Inner_CachePool.DERIVED;
-      } else if (AiBuilder.update(cell)) {
+      } else if (AiBuilder.isOmittedSchematicCell(cell)) {
          return AiBuildSite.Inner_CachePool.SKIP;
-      } else if (AiBuilder.init_Fluid(cell) != null) {
+      } else if (AiBuilder.fluidOfCell(cell) != null) {
          return AiBuildSite.Inner_CachePool.FLUID;
       } else if (!init_List(cell).isEmpty()) {
          return AiBuildSite.Inner_CachePool.SKIP;
@@ -74,7 +74,7 @@ final class AiBuildIntent {
       }
 
       if (kind == AiBuildSite.Inner_CachePool.FLUID) {
-         if (AiBuilder.load_Z(cell)) {
+         if (AiBuilder.isFlowingFluidCell(cell)) {
             return Items.AIR;
          } else {
             return cell.block().equals("minecraft:lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET;
@@ -89,15 +89,15 @@ final class AiBuildIntent {
          }
 
          if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
-            return AiBuilder.init_I(cell) == 0 ? Items.AIR : AiBuilder.init_BlockState(cell).getBlock().asItem();
+            return AiBuilder.itemCountForCell(cell) == 0 ? Items.AIR : AiBuilder.toBlockState(cell).getBlock().asItem();
          } else {
-            return AiBuilder.init_BlockState(cell).getBlock().asItem();
+            return AiBuilder.toBlockState(cell).getBlock().asItem();
          }
       }
    }
 
    static List<String> init_List(AiBuilder.CellSpec cell) {
-      return List.copyOf(AiBuilder.init_List(cell));
+      return List.copyOf(AiBuilder.unsupportedProperties(cell));
    }
 
    static List<BlockPos> load_List(AiBuilder.CellSpec cell) {
@@ -108,7 +108,7 @@ final class AiBuildIntent {
       if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return List.of();
       } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
-         return AiBuilder.load_Z(cell) ? List.of() : init_List;
+         return AiBuilder.isFlowingFluidCell(cell) ? List.of() : init_List;
       } else if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
          Direction provider = init_Direction(cell);
          return provider == null ? List.of() : List.of(init(provider));
@@ -168,22 +168,22 @@ final class AiBuildIntent {
 
    static Boolean init_Boolean(AiBuilder.CellSpec cell) {
       AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
-      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.init_Boolean(cell, init_Block(cell));
+      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, init_Block(cell));
    }
 
    static boolean init(AiBuilder.CellSpec cell, BlockState live) {
-      return AiBuilder.sync(cell, live);
+      return AiBuilder.matchesStrictState(cell, live);
    }
 
    static boolean load(AiBuilder.CellSpec cell, BlockState live) {
-      return AiBuilder.update(cell, live);
+      return AiBuilder.matchesSchematicCell(cell, live);
    }
 
    static boolean init(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
       if (init(cell, live)) {
          return true;
       } else {
-         return substitutes != null && !substitutes.isEmpty() ? AiBuilder.init_Z_TableIndex_StreamU_3(cell, live, substitutes) : false;
+         return substitutes != null && !substitutes.isEmpty() ? AiBuilder.matchesCellOrSubstitute(cell, live, substitutes) : false;
       }
    }
 
@@ -208,7 +208,7 @@ final class AiBuildIntent {
             return false;
          }
 
-         if (AiBuilder.init_Fluid(cell) != null && !AiBuilder.load_Z(cell)) {
+         if (AiBuilder.fluidOfCell(cell) != null && !AiBuilder.isFlowingFluidCell(cell)) {
             try {
                return AiSchematicActions.init(target, world, wanted) == null;
             } catch (RuntimeException unknown) {
@@ -225,7 +225,7 @@ final class AiBuildIntent {
    static boolean read(AiBuilder.CellSpec cell, BlockState live) {
       if (cell != null && live != null) {
          try {
-            return AiBuilder.load(cell, live);
+            return AiBuilder.differsOnlyInAutoProperties(cell, live);
          } catch (RuntimeException unknown) {
             return false;
          }
@@ -236,7 +236,7 @@ final class AiBuildIntent {
 
    static boolean load_Z(AiBuilder.CellSpec cell) {
       try {
-         return AiBuilder.write(init_Block(cell));
+         return AiBuilder.isWallMountedBlock(init_Block(cell));
       } catch (RuntimeException unknown) {
          return false;
       }
@@ -257,7 +257,7 @@ final class AiBuildIntent {
    }
 
    static AiBuilder.Blueprint init_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
-      return AiBuilder.load_TableIndex_DataUti(blueprint);
+      return AiBuilder.stripPoweredLevers(blueprint);
    }
 
    static List<AiBuilder.CellSpec> init_List(AiBuilder.Blueprint blueprint) {
@@ -274,7 +274,7 @@ final class AiBuildIntent {
 
    static autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil(AiBuilder.CellSpec cell, BlockPos target) {
       try {
-         return AiBuilder.init(cell, init_Block(cell), target, init_BlockGetter(cell));
+         return AiBuilder.buildPlaceConstraint(cell, init_Block(cell), target, init_BlockGetter(cell));
       } catch (RuntimeException e) {
          return null;
       }
@@ -310,7 +310,7 @@ final class AiBuildIntent {
    }
 
    private static Block init_Block(AiBuilder.CellSpec cell) {
-      return AiBuilder.init_BlockState(cell).getBlock();
+      return AiBuilder.toBlockState(cell).getBlock();
    }
 
    private static Direction init_Direction(AiBuilder.CellSpec cell) {
@@ -323,7 +323,7 @@ final class AiBuildIntent {
    }
 
    private static Direction init(AiBuilder.CellSpec cell, Block block) {
-      if (AiBuilder.init(block, cell)) {
+      if (AiBuilder.usesWallClickFace(block, cell)) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          return facing == null ? null : facing.getOpposite();
       }
@@ -360,7 +360,7 @@ final class AiBuildIntent {
 
    private static boolean update(AiBuilder.CellSpec cell) {
       try {
-         return !AiBuilder.init_BlockState(cell).canSurvive(init_LevelReader, BlockPos.ZERO);
+         return !AiBuilder.toBlockState(cell).canSurvive(init_LevelReader, BlockPos.ZERO);
       } catch (RuntimeException e) {
          return true;
       }
@@ -418,10 +418,10 @@ final class AiBuildIntent {
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String name = entry.getKey();
-         if (!AiBuilder.read(block, name)) {
+         if (!AiBuilder.isAutoComputedProperty(block, name)) {
             AiBuilder.OrientationKind strategy = name.equals("facing")
-               ? AiBuilder.init_TableIndex_TaskQue(cell, block)
-               : AiBuilder.init_TableIndex_TaskQue(block, name);
+               ? AiBuilder.facingOrientationKind(cell, block)
+               : AiBuilder.orientationKindForProperty(block, name);
             if ((strategy == AiBuilder.OrientationKind.POST_INTERACT || strategy == AiBuilder.OrientationKind.FLUID_INTERACT) && !init(block, name, entry.getValue())) {
                out.add(name);
             }

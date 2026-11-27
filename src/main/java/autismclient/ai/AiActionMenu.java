@@ -412,7 +412,7 @@ final class AiActionMenu {
          kit.drawButton(
             autismclient.gui.f.NetHelper.init(footer.read(), footer.write(), w, h), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::close
          );
-         String label = this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? (this.init_cF.init_Z() ? "Replace task" : "Start") : "Next";
+         String label = this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? (this.init_cF.isWorking() ? "Replace task" : "Start") : "Next";
          int nextW = kit.measureButtonWidth(label);
          this.init(
             kit,
@@ -557,7 +557,7 @@ final class AiActionMenu {
             kit,
             autismclient.gui.f.NetHelper.init(x, var24, w, h),
             this.init_E == null ? "Choose two corners" : "Change corners",
-            !this.init_cF.init_Z() && !AiDirectOps.load_Z(),
+            !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
             this::flush
          );
          int var25 = var24 + h + 2;
@@ -592,10 +592,10 @@ final class AiActionMenu {
             kit,
             autismclient.gui.f.NetHelper.init(x, y, half, h),
             "Choose in world",
-            this.init_bW.load_Z() && !this.init_cF.init_Z() && !AiDirectOps.load_Z(),
+            this.init_bW.load_Z() && !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
             () -> aP.init_V_bW_Runnable(this.init_bW, () -> {})
          );
-         if (this.init_cF.init_Z() || AiDirectOps.load_Z()) {
+         if (this.init_cF.isWorking() || AiDirectOps.load_Z()) {
             kit.addTooltipRegion(autismclient.gui.f.NetHelper.init(x, y, half, h), "Pause the current action before choosing a placement in world");
          }
 
@@ -737,7 +737,7 @@ final class AiActionMenu {
             "First: " + this.init_Str_BlockPos(farmArea.from()),
             "Second: " + this.init_Str_BlockPos(farmArea.to()),
             this.init_E.write_Str(),
-            this.init_cF.init_Z() ? "Starting replaces the current local task." : "Ready to start."
+            this.init_cF.isWorking() ? "Starting replaces the current local task." : "Ready to start."
          };
       } else if (this.init_bW != null) {
          lines = new String[]{
@@ -760,7 +760,7 @@ final class AiActionMenu {
             this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                ? "Per block type; nearest unfinished target first"
                : (this.read_Z() ? (this.write_Z() ? "Quantity adds to the inventory" : "Quantity is the inventory target") : ""),
-            this.init_cF.init_Z() ? "Starting replaces the current local task." : "Ready to start."
+            this.init_cF.isWorking() ? "Starting replaces the current local task." : "Ready to start."
          };
       }
 
@@ -776,7 +776,7 @@ final class AiActionMenu {
          }
 
          extended.add("Nearest unfinished target first");
-         extended.add(this.init_cF.init_Z() ? "Starting replaces the current local task." : "Ready to start.");
+         extended.add(this.init_cF.isWorking() ? "Starting replaces the current local task." : "Ready to start.");
          lines = extended.toArray(String[]::new);
       }
 
@@ -1144,7 +1144,7 @@ final class AiActionMenu {
    }
 
    private void flush() {
-      if (!this.init_cF.init_Z() && !AiDirectOps.load_Z()) {
+      if (!this.init_cF.isWorking() && !AiDirectOps.load_Z()) {
          try {
             AiIntents.Inner_BufferHelper step = this.init_ad_BufferHelper_Str_Str(
                this.init_StreamUtil_CachePo.request().apply(null), this.init_StreamUtil_DataUti.load_Str
@@ -1323,7 +1323,7 @@ final class AiActionMenu {
 
                this.open();
                this.init_Runnable.run();
-               this.init_cF.init_V();
+               this.init_cF.invalidate();
             } catch (RuntimeException e) {
                this.read_Str = e.getMessage();
             }
@@ -1361,7 +1361,7 @@ final class AiActionMenu {
 
    private void push() {
       this.init_cc.stopTask();
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
    }
 
    private void pop() {

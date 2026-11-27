@@ -279,7 +279,7 @@ public final class AiBridger {
       }
 
       boolean var14 = false;
-      if (var9 < 0 || AiPathfinder.MoveCosts.putAt()) {
+      if (var9 < 0 || AiPathfinder.MoveCosts.isCautiousParkourActive()) {
          AiPhysics.MotionState var15 = AiPhysics.step(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, false, var12.yaw()), var5);
          var14 = !putAt_Z_TokenCore_TableCac_2(var15, var5, this.putAt_TextStore_JsonCach.floorY());
       }

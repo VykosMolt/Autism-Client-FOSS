@@ -71,7 +71,7 @@ final class AiAttachments {
          }
 
          AiSchematic.Inner_DataUtil decoded = AiSchematic.init_bP_DataUtil_Path_Z(temporary, false);
-         AiSchematic.init(AiBuilder.init_List_List(decoded.cells(), 2097152, 1023));
+         AiSchematic.init(AiBuilder.normalizeCells(decoded.cells(), 2097152, 1023));
          Path target = directory.resolve(name);
          if (Files.exists(target) && Files.mismatch(temporary, target) != -1L) {
             String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(temporary))).substring(0, 12);

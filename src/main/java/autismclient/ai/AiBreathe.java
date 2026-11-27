@@ -38,7 +38,7 @@ public final class AiBreathe {
          double floor = player.getMaxAirSupply() * 0.4;
          Minecraft mc = Minecraft.getInstance();
          if (mc.player == player && mc.level != null) {
-            floor = Math.max(floor, autismclient.ai.engine.AiBlockDigger.init_I_Minecraft(mc) + 40);
+            floor = Math.max(floor, autismclient.ai.engine.AiBlockDigger.airTicksToSurfaceCompat(mc) + 40);
          }
 
          return player.getAirSupply() < floor;
@@ -106,7 +106,7 @@ public final class AiBreathe {
                         AiItems.selectOrMoveToHotbar(slot);
                      }
 
-                     autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, roof, Direction.DOWN);
+                     autismclient.ai.engine.AiBlockDigger.continueBreakingBlockCompat(mc, roof, Direction.DOWN);
                      return this.init("Breaking the roof at " + roof.toShortString() + " (air " + player.getAirSupply() + ")");
                   } else {
                      if (this.init_BlockPos == null) {

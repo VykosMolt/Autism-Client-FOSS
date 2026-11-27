@@ -171,7 +171,7 @@ final class AiBuildSite {
          if (placeable) {
             this.write_BitSet.set(i);
             this.put++;
-            if (AiBuilder.load_Z(cell)) {
+            if (AiBuilder.isFlowingFluidCell(cell)) {
                this.flush_BitSet.set(i);
                observedIndices.init(i);
             }
@@ -244,7 +244,7 @@ final class AiBuildSite {
 
       BlockState state;
       try {
-         state = AiBuilder.init_BlockState(cell);
+         state = AiBuilder.toBlockState(cell);
       } catch (RuntimeException unknown) {
          return false;
       }
@@ -253,7 +253,7 @@ final class AiBuildSite {
          return false;
       }
 
-      if (autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)) {
+      if (autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state)) {
          return false;
       }
 
@@ -357,7 +357,7 @@ final class AiBuildSite {
    }
 
    boolean load_Z_I(int index) {
-      return AiBuilder.init_Z(this.init_TableIndex_StreamUArr[index]);
+      return AiBuilder.isDoubleSlabCell(this.init_TableIndex_StreamUArr[index]);
    }
 
    int update_I(int index) {
@@ -677,7 +677,7 @@ final class AiBuildSite {
             if (item != null && item != Items.AIR) {
                int cost;
                try {
-                  cost = AiBuilder.init_I(this.init_TableIndex_StreamUArr[index]);
+                  cost = AiBuilder.itemCountForCell(this.init_TableIndex_StreamUArr[index]);
                } catch (RuntimeException unknown) {
                   cost = 1;
                }
@@ -914,7 +914,7 @@ final class AiBuildSite {
          } else if (state.getCollisionShape(level, floorPos).isEmpty()) {
             return false;
          } else {
-            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state);
+            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state);
          }
       } else {
          return this.update_BitSet.get(index) && this.init_BitSet.get(index);
@@ -928,7 +928,7 @@ final class AiBuildSite {
       } else {
          return !state.getFluidState().isEmpty()
             ? false
-            : !autismclient.ai.engine.AiPathfinder.LiveGridView.load(state) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state);
+            : !autismclient.ai.engine.AiPathfinder.LiveGridView.isFeetHazardCompat(state) && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state);
       }
    }
 
@@ -1247,7 +1247,7 @@ final class AiBuildSite {
       AiBuilder.CellSpec cell = this.init_TableIndex_StreamUArr[index];
       String type = cell.properties().get("type");
       if (type != null && !type.equals("single") && cell.block().endsWith("chest")) {
-         Direction side = AiBuilder.init_Direction(cell);
+         Direction side = AiBuilder.chestPartnerDirection(cell);
          if (side == null) {
             return -1;
          } else {

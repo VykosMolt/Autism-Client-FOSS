@@ -36,7 +36,7 @@ final class AiSessionsDrawer {
    void init_V() {
       this.init_Z = !this.init_Z;
       if (this.init_Z) {
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
          this.init_cE_StreamUtil.scrollToTop();
       } else {
          this.load();
@@ -92,7 +92,7 @@ final class AiSessionsDrawer {
             this::read
          );
          y += ctrl + 2;
-         List<AiSessions.Inner_StreamUtil> sessions = this.init_cF.update_List;
+         List<AiSessions.Inner_StreamUtil> sessions = this.init_cF.sessions;
          if (sessions.size() > 8) {
             kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
@@ -131,7 +131,7 @@ final class AiSessionsDrawer {
    private void init(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       String id = meta.id();
-      boolean active = id.equals(this.init_cF.read_Str);
+      boolean active = id.equals(this.init_cF.activeSessionId);
       boolean hovered = kit.isHovered(row);
       boolean armed = id.equals(this.load_Str);
       if (active) {
@@ -142,7 +142,7 @@ final class AiSessionsDrawer {
 
       kit.addInteractiveRegion(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
       kit.drawStatusDot(
-         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.init_I_cE_Str(kit, active ? this.init_cF.init_cc_FileCache.name() : meta.state())
+         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.init_I_cE_Str(kit, active ? this.init_cF.runState.name() : meta.state())
       );
       int textX = row.read() + 11;
       int icon = row.sync() - 2;
@@ -196,17 +196,17 @@ final class AiSessionsDrawer {
    private void read() {
       this.init_cc.createSession();
       this.load();
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
       this.init_AiAssistantOverlay.write_V();
    }
 
    private void init_V_Str(String id) {
-      if (!id.equals(this.init_cF.read_Str)) {
+      if (!id.equals(this.init_cF.activeSessionId)) {
          this.init_cc.switchSession(id);
       }
 
       this.load();
-      this.init_cF.init_V();
+      this.init_cF.invalidate();
    }
 
    private void load(String id) {
@@ -216,7 +216,7 @@ final class AiSessionsDrawer {
       } else {
          this.load_Str = null;
          this.init_cc.deleteSession(id);
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
          autismclient.util.bi.load("Chat deleted");
       }
    }
@@ -226,7 +226,7 @@ final class AiSessionsDrawer {
          case 0:
             AiSessions.Inner_StreamUtil meta = null;
 
-            for (AiSessions.Inner_StreamUtil m : this.init_cF.update_List) {
+            for (AiSessions.Inner_StreamUtil m : this.init_cF.sessions) {
                if (m.id().equals(id)) {
                   meta = m;
                }
@@ -245,11 +245,11 @@ final class AiSessionsDrawer {
                this.load();
             }
 
-            this.init_cF.init_V();
+            this.init_cF.invalidate();
             break;
          case 2:
             this.init_cc.deleteSession(id);
-            this.init_cF.init_V();
+            this.init_cF.invalidate();
             autismclient.util.bi.load("Chat deleted");
       }
    }
@@ -261,7 +261,7 @@ final class AiSessionsDrawer {
       this.load_BitSetUtil.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.init_cc.renameSession(id, text);
-         this.init_cF.init_V();
+         this.init_cF.invalidate();
       }
    }
 }

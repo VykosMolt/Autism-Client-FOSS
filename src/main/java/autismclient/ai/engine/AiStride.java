@@ -223,7 +223,7 @@ final class AiStride {
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5, boolean var6
    ) {
       double var7 = Math.hypot(var2.getX() + 0.5 - var1.x(), var2.getZ() + 0.5 - var1.z());
-      if (AiJumpSolver.putAt(var1) && var1.pose() == 0 && !(var7 > 2.75) && !(var3 - var1.y() > 1.125) && !(var1.y() > var3 + 0.02)) {
+      if (AiJumpSolver.isGroundedNotRising(var1) && var1.pose() == 0 && !(var7 > 2.75) && !(var3 - var1.y() > 1.125) && !(var1.y() > var3 + 0.02)) {
          float var9 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
          AiPhysics.MoveInput var10 = null;
          int var11 = 10;
@@ -240,12 +240,12 @@ final class AiStride {
                         || var23.y() < var21.y() - 0.02
                         || var23.y() > var3 + 0.02
                         || AiPhysics.hitsStrictHazard(var0, var21, var23)
-                        || AiJumpSolver.putAt(var0, var23)) {
+                        || AiJumpSolver.isInFluid(var0, var23)) {
                         break;
                      }
 
-                     if (AiJumpSolver.putAt_Z_D(var23.x(), var23.y(), var23.z(), var2, var3)
-                        && AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var23, var2, var3, var15) >= 0.04) {
+                     if (AiJumpSolver.isLandedOnCell(var23.x(), var23.y(), var23.z(), var2, var3)
+                        && AiJumpSolver.settledLandingMargin(var0, var23, var2, var3, var15) >= 0.04) {
                         var10 = var20;
                         var11 = var22;
                         break;
@@ -326,7 +326,7 @@ final class AiStride {
                && !var12.horizontalCollision()
                && !(var12.speed() >= var0.speed())
                && !AiPhysics.hitsStrictHazard(var5, var0, var12)
-               && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var5, var12.x(), var12.y(), var12.z())) {
+               && AiJumpSolver.canStandAt(var5, var12.x(), var12.y(), var12.z())) {
                AiStride.Inner_JsonCache var13 = putAt_UiCore_JsonCache_TokenCore_TableCac(var12, var1, var2, var4, var5);
                if (var13 != null) {
                   return new AiStride.Inner_JsonCache(var11, var13.drive(), var13.boost(), var13.coast(), var13.ticks() + 1, var13.exitSpeed(), var13.touching());
@@ -351,7 +351,7 @@ final class AiStride {
    ) {
       for (int var8 = var2; var8 < 14; var8++) {
          AiPhysics.MotionState var9 = AiPhysics.step(var0, var1.input(var8), var6);
-         if (var9.horizontalCollision() && !var7 || AiPhysics.hitsStrictHazard(var6, var0, var9) || AiJumpSolver.putAt(var6, var9)) {
+         if (var9.horizontalCollision() && !var7 || AiPhysics.hitsStrictHazard(var6, var0, var9) || AiJumpSolver.isInFluid(var6, var9)) {
             return null;
          }
 

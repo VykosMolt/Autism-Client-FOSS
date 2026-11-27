@@ -5,44 +5,44 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class AiNavDebug {
-   private static final int init_I = 128;
-   private static final boolean init_Z = Boolean.getBoolean("autism.navigation.debug");
-   private static final ArrayDeque<String> init_ArrayDeque = init_Z ? new ArrayDeque<>(128) : null;
-   private static long init_J;
+   private static final int MAX_HISTORY = 128;
+   private static final boolean ENABLED = Boolean.getBoolean("autism.navigation.debug");
+   private static final ArrayDeque<String> HISTORY = ENABLED ? new ArrayDeque<>(128) : null;
+   private static long sequence;
 
    private AiNavDebug() {
    }
 
-   public static boolean init_Z() {
-      return init_Z;
+   public static boolean isEnabled() {
+      return ENABLED;
    }
 
-   public static void init(String message) {
-      if (init_Z) {
+   public static void log(String message) {
+      if (ENABLED) {
          System.out.println("[Navigation] " + message);
-         synchronized (init_ArrayDeque) {
-            if (init_ArrayDeque.size() == 128) {
-               init_ArrayDeque.pollFirst();
+         synchronized (HISTORY) {
+            if (HISTORY.size() == 128) {
+               HISTORY.pollFirst();
             }
 
-            init_ArrayDeque.addLast(++init_J + " " + message);
+            HISTORY.addLast(++sequence + " " + message);
          }
       }
    }
 
-   public static long init_J() {
-      return init_J;
+   public static long cursor() {
+      return sequence;
    }
 
-   public static List<String> init(long cursor) {
-      if (!init_Z) {
+   public static List<String> readSince(long cursor) {
+      if (!ENABLED) {
          return List.of();
       }
 
-      synchronized (init_ArrayDeque) {
+      synchronized (HISTORY) {
          List<String> out = new ArrayList<>();
 
-         for (String entry : init_ArrayDeque) {
+         for (String entry : HISTORY) {
             int space = entry.indexOf(32);
             if (space > 0 && Long.parseLong(entry.substring(0, space)) > cursor) {
                out.add(entry.substring(space + 1));

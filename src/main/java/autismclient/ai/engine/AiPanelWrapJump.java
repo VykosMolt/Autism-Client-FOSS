@@ -20,8 +20,8 @@ final class AiPanelWrapJump {
    }
 
    static AiJumpSolver.JumpPlan putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5) {
-      var var7 = AiJumpSolver.putAt_List_TokenCore_TaskStat(var0, var4, var5);
-      if (!var7.isEmpty() && !AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var4.getX() + 0.5, var5, var4.getZ() + 0.5)) {
+      var var7 = AiJumpSolver.findStandablePoints(var0, var4, var5);
+      if (!var7.isEmpty() && !AiJumpSolver.canStandAt(var0, var4.getX() + 0.5, var5, var4.getZ() + 0.5)) {
          AiJumpSolver.Point2D var8 = (AiJumpSolver.Point2D)var7.getFirst();
          AABB var9 = new AABB(var1.getX(), var2 - 0.02, var1.getZ(), var1.getX() + 1, var2 - 0.001, var1.getZ() + 1);
 
@@ -138,7 +138,7 @@ final class AiPanelWrapJump {
                                     var39, var38, var52, var52.run(), var8.score(var39, var5) + Math.abs(var65) * 4.0E-4
                                  );
                                  if (var39.onGround() && Math.abs(var39.y() - var5) <= 0.02) {
-                                    double var42 = Math.min(AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var39, var4, var5, var37), putAt(var0, var39, var5));
+                                    double var42 = Math.min(AiJumpSolver.settledLandingMargin(var0, var39, var4, var5, var37), putAt(var0, var39, var5));
                                     if (var42 >= -0.04 && (var47 == null || var42 > var47.margin())) {
                                        AiJumpSolver.JumpPlan var44 = putAt(var1, var41, var42, var8.yaw());
                                        if (var44.maneuver().replay(var0, var44.maneuver().start(), 0, var4, var5) >= -0.04) {
@@ -196,7 +196,7 @@ final class AiPanelWrapJump {
                for (double var26 : new double[]{-0.265, 0.015, 0.44, 0.72, 1.265}) {
                   double var28 = var5 ? var7 + var26 : var21;
                   double var30 = var5 ? var21 : var7 + var26;
-                  if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var28, var3, var30)) {
+                  if (AiJumpSolver.canStandAt(var0, var28, var3, var30)) {
                      var6.add(new AiPanelWrapJump.Inner_StreamUtil(AiPhysics.MotionState.standing(var28, var3, var30), null, null, 0, 0.0));
                   }
                }

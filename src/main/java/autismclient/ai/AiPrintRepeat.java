@@ -149,13 +149,13 @@ final class AiPrintRepeat implements AiOperation {
                         List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
                         return new AiPrintRepeat.Inner_DataUtil(
                            shifted,
-                           AiBuilder.load_TableIndex_DataUti(shifted),
+                           AiBuilder.stripPoweredLevers(shifted),
                            targets,
                            AiPrintPreparation.Inner_JsonUtil.of(shifted),
                            this.init_TableIndex_ConfigS
                               .machine()
                               .init_bV_StreamUtil_BlockPos_HolderLookup_Provi(shifted.origin(), this.init_HolderLookup_Provi),
-                           autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init)
+                           autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::checkNotCancelled)
                         );
                      }
                   );
@@ -193,7 +193,7 @@ final class AiPrintRepeat implements AiOperation {
                return this.init("Checking materials for copy " + (this.init_I + 1));
             }
 
-            JsonObject missing = AiBuilder.init_JsonObject_Iterable_2(
+            JsonObject missing = AiBuilder.missingMaterialsForContainer(
                this.init_bg_CachePool.init_List(), this.init_Minecraft.player.getInventory(), this.init_TableIndex_ConfigS.shulkerStock()
             );
             if (!missing.isEmpty()) {

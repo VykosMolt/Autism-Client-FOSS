@@ -356,7 +356,7 @@ final class AiFieldWork {
                         long ground = best.below().asLong();
                         long revision = AiServerEvidence.blockRevision(best);
                         BlockState before = mc.level.getBlockState(best);
-                        if (autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, best, ray.getDirection())
+                        if (autismclient.ai.engine.AiBlockDigger.continueBreakingBlockCompat(mc, best, ray.getDirection())
                            && AiReplantEvidence.init(before, mc.level.getBlockState(best), crop)) {
                            this.sync++;
                            acted = true;

@@ -196,7 +196,7 @@ final class AiFill {
          }
 
          Block block = init_Block(AiJson.getString(args, "block", ""), "block");
-         Map<String, String> properties = AiBuilder.init_Map_JsonObject(args, "fill", block);
+         Map<String, String> properties = AiBuilder.parseBlockProperties(args, "fill", block);
          String shape = AiJson.getString(args, "shape", AiJson.getBoolean(args, "hollow", false) ? "shell" : "box").trim().toLowerCase(Locale.ROOT);
          if (!init_Set.contains(shape)) {
             throw new IllegalArgumentException("shape must be one of " + String.join(", ", init_Set) + ", got \"" + shape + "\"");
@@ -216,13 +216,13 @@ final class AiFill {
             AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), blockId, properties
             );
-            if (!AiBuilder.write(cell, mc.level.getBlockState(pos))) {
+            if (!AiBuilder.matchesExactCell(cell, mc.level.getBlockState(pos))) {
                cells.add(cell);
             }
          }
 
          AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
-         JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
+         JsonObject missing = AiBuilder.missingMaterials(blueprint, mc.player.getInventory());
          return missing.size() > 0
             ? AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
@@ -230,7 +230,7 @@ final class AiFill {
                "Missing materials: " + missing,
                AiJson.objectOf("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
             )
-            : AiBuilder.init_AiOperation_TableIndex_DataUti(blueprint, true, timeoutSeconds);
+            : AiBuilder.buildBlueprint(blueprint, true, timeoutSeconds);
       } else {
          throw new IllegalArgumentException("Filling requires a connected living player");
       }
@@ -297,7 +297,7 @@ final class AiFill {
       if (client.player != null && client.level != null) {
          String name = AiClipboard.init_Str(AiJson.getString(args, "name", ""));
          List<AiBuilder.CellSpec> stored = AiClipboard.init_List(name);
-         AiBuilder.BuildOptions power = AiBuilder.init_TableIndex_ConfigS(args);
+         AiBuilder.BuildOptions power = AiBuilder.parseBuildOptions(args);
          if (power.repeat() == null && !power.layers() && power.substitutes().isEmpty()) {
             boolean air = AiJson.getBoolean(args, "air", false);
             Minecraft mc = Minecraft.getInstance();
@@ -306,7 +306,7 @@ final class AiFill {
                origin = AiGameOperations.requireBlockPos(args);
             }
 
-            List<AiBuilder.CellSpec> transformed = AiBuilder.init(AiBuilder.init_List_List_2(stored, power.rotation(), power.mirror()), 4096);
+            List<AiBuilder.CellSpec> transformed = AiBuilder.normalizeCells(AiBuilder.transformCells(stored, power.rotation(), power.mirror()), 4096);
             List<AiBuilder.CellSpec> place = new ArrayList<>();
             List<BlockPos> clearCells = new ArrayList<>();
 
@@ -323,7 +323,7 @@ final class AiFill {
             }
 
             AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(origin, List.copyOf(place));
-            JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
+            JsonObject missing = AiBuilder.missingMaterials(blueprint, mc.player.getInventory());
             if (missing.size() > 0) {
                return AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
@@ -337,7 +337,7 @@ final class AiFill {
             boolean verify = AiJson.getBoolean(args, "verify", true);
             return !clearCells.isEmpty()
                ? new AiFill.Inner_BufferHelper(clearCells, blueprint, timeoutSeconds)
-               : AiBuilder.init_AiOperation_TableIndex_DataUti(blueprint, verify, timeoutSeconds);
+               : AiBuilder.buildBlueprint(blueprint, verify, timeoutSeconds);
          } else {
             throw new IllegalArgumentException("game:paste supports rotation and mirror only; repeat/layers/substitutes belong to game:build");
          }
@@ -527,7 +527,7 @@ final class AiFill {
          out.removeIf(cell -> init(cell, step, layers, loX, loY, loZ, hiX, hiY, hiZ));
       }
 
-      return new AiFill.Inner_CachePool(AiBuilder.init(out, maxCells), clamped);
+      return new AiFill.Inner_CachePool(AiBuilder.normalizeCells(out, maxCells), clamped);
    }
 
    private static boolean init(AiBuilder.CellSpec cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
@@ -730,7 +730,7 @@ final class AiFill {
          }
 
          Block to = init_Block(AiJson.getString(args, "to", ""), "to");
-         Map<String, String> properties = AiBuilder.init_Map_JsonObject(args, "replace", to);
+         Map<String, String> properties = AiBuilder.parseBlockProperties(args, "replace", to);
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
          String toId = BuiltInRegistries.BLOCK.getKey(to).toString();
@@ -742,14 +742,14 @@ final class AiFill {
             AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), toId, properties
             );
-            if (!AiBuilder.write(cell, live) && init_Z(from, BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())) {
+            if (!AiBuilder.matchesExactCell(cell, live) && init_Z(from, BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())) {
                cells.add(cell);
                digCells.add(pos);
             }
          }
 
          AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
-         JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
+         JsonObject missing = AiBuilder.missingMaterials(blueprint, mc.player.getInventory());
          return missing.size() > 0
             ? AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
@@ -834,14 +834,14 @@ final class AiFill {
 
                while (this.init_I < this.init_List.size()) {
                   BlockPos cell = this.init_List.get(this.init_I++);
-                  autismclient.ai.engine.AiPathfinder.CellInfo probe = autismclient.ai.engine.AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(
+                  autismclient.ai.engine.AiPathfinder.CellInfo probe = autismclient.ai.engine.AiPathfinder.LiveGridView.classifyCellCompat(
                      this.init_Minecraft, this.init_Minecraft.level, cell, new ItemStack[9]
                   );
                   if (!probe.loaded()) {
                      this.init(cell, "WORLD_UNKNOWN");
                   } else if (!this.init_Minecraft.level.getBlockState(cell).isAir()) {
                      if (!autismclient.ai.engine.AiExcavate.init(
-                        (x, y, z) -> autismclient.ai.engine.AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(
+                        (x, y, z) -> autismclient.ai.engine.AiPathfinder.LiveGridView.classifyCellCompat(
                               this.init_Minecraft, this.init_Minecraft.level, new BlockPos(x, y, z), new ItemStack[9]
                            )
                            .lava(),
@@ -850,7 +850,7 @@ final class AiFill {
                         cell.getZ()
                      )) {
                         this.init_BlockPos = cell;
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, Math.min(60, this.init_I_5()));
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, Math.min(60, this.init_I_5()));
                         return this.init("Approaching replacement cell " + cell.toShortString());
                      }
 
@@ -859,7 +859,7 @@ final class AiFill {
                }
 
                if (this.load_AiOperation == null) {
-                  this.load_AiOperation = AiBuilder.init_AiOperation_TableIndex_DataUti(this.init_TableIndex_DataUti, true, this.init_I_5());
+                  this.load_AiOperation = AiBuilder.buildBlueprint(this.init_TableIndex_DataUti, true, this.init_I_5());
                   return this.init("Placing replacement blocks");
                } else {
                   return this.init("Placing replacement blocks");

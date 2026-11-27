@@ -74,9 +74,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private final AiLatestTransform<AiSchematicPlacement.Inner_StreamUtil, List<AiBuilder.CellSpec>> init_aj = new AiLatestTransform<>(
       ForkJoinPool.commonPool(),
       action -> Minecraft.getInstance().execute(action),
-      request -> AiBuilder.init_TableIndex_DataUti(
+      request -> AiBuilder.normalizeSchematicBlueprint(
             new AiBuilder.Blueprint(
-               BlockPos.ZERO, AiBuilder.init_List_List(AiBuilder.init_List_List_2(request.from(), request.turn(), request.flip()), 2097152, 4096)
+               BlockPos.ZERO, AiBuilder.normalizeCells(AiBuilder.transformCells(request.from(), request.turn(), request.flip()), 2097152, 4096)
             )
          )
          .cells(),
@@ -122,8 +122,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
                      long modified = Files.getLastModifiedTime(path).toMillis();
                      AiSchematic.Inner_BufferHelper schematic = AiSchematic.init_bP_BufferHelper(path, BlockPos.ZERO, 0, "none", false, 2097152);
                      if (Files.size(path) == size && Files.getLastModifiedTime(path).toMillis() == modified) {
-                        AiBuilder.Blueprint survival = AiBuilder.init_TableIndex_DataUti(
-                           new AiBuilder.Blueprint(BlockPos.ZERO, AiBuilder.init_List_List(schematic.blueprint().cells(), 2097152, 4096))
+                        AiBuilder.Blueprint survival = AiBuilder.normalizeSchematicBlueprint(
+                           new AiBuilder.Blueprint(BlockPos.ZERO, AiBuilder.normalizeCells(schematic.blueprint().cells(), 2097152, 4096))
                         );
                         String impossible = AiSchematicReadiness.init(AiSchematicReadiness.init_bX_TaskQueue(survival, 1, null));
                         return new AiSchematicPlacement.Inner_DataUtil(path, size, modified, schematic.blueprint().cells(), schematic.entities(), impossible);
@@ -561,9 +561,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
                      for (int turn = 0; turn < 360; turn += 90) {
                         variants.add(
-                           AiBuilder.init_TableIndex_DataUti(
+                           AiBuilder.normalizeSchematicBlueprint(
                                  new AiBuilder.Blueprint(
-                                    BlockPos.ZERO, AiBuilder.init(AiBuilder.init_List_List_2(this.init_List, turn, selectedMirror), 2097152)
+                                    BlockPos.ZERO, AiBuilder.normalizeCells(AiBuilder.transformCells(this.init_List, turn, selectedMirror), 2097152)
                                  )
                               )
                               .cells()
@@ -654,7 +654,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                && !AiSchematicPlacement.this.init_ClientLevel.isOutsideBuildHeight(p)
                && AiSchematicPlacement.this.init_ClientLevel.getWorldBorder().isWithinBounds(p)) {
                BlockState live = AiSchematicPlacement.this.init_ClientLevel.getBlockState(p);
-               if (cell != null && AiBuilder.update(cell, live)) {
+               if (cell != null && AiBuilder.matchesSchematicCell(cell, live)) {
                   return AiPlacementSearch.Inner_StreamUtil.MATCH;
                } else if (cell == null && !AiSchematicPlacement.this.sync) {
                   return AiPlacementSearch.Inner_StreamUtil.MATCH;
@@ -679,7 +679,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             BlockState below = AiSchematicPlacement.this.init_ClientLevel.getBlockState(p.below());
             return cell.dy() == 0
                && below.getCollisionShape(AiSchematicPlacement.this.init_ClientLevel, p.below()).isEmpty()
-               && !AiBuilder.init_BlockState(cell).getCollisionShape(AiSchematicPlacement.this.init_ClientLevel, p).isEmpty();
+               && !AiBuilder.toBlockState(cell).getCollisionShape(AiSchematicPlacement.this.init_ClientLevel, p).isEmpty();
          }
       };
    }
@@ -757,7 +757,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
       List<AiCellMaterials.Inner_CachePool> needed = AiCellMaterials.init_List(AiCellMaterials.init(this.load_List, this.init_BlockPos, this.init_ClientLevel));
       Inventory inventory = Minecraft.getInstance().player.getInventory();
-      JsonObject missingMaterials = creative ? new JsonObject() : AiBuilder.init_JsonObject_Iterable_2(needed, inventory, true);
+      JsonObject missingMaterials = creative ? new JsonObject() : AiBuilder.missingMaterialsForContainer(needed, inventory, true);
       List<String> out = new ArrayList<>();
 
       for (AiCellMaterials.Inner_CachePool requirement : creative ? List.<AiCellMaterials.Inner_CachePool>of() : needed) {
@@ -781,11 +781,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
       for (AiBuilder.CellSpec cell : this.load_List) {
          AiBuilder.CellSpec key = new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties());
 
-         for (String gap : checked.computeIfAbsent(key, AiBuilder::init_List)) {
+         for (String gap : checked.computeIfAbsent(key, AiBuilder::unsupportedProperties)) {
             gaps.merge(cell.block().replace("minecraft:", "") + " " + gap, 1, Integer::sum);
          }
 
-         BlockState state = AiBuilder.init_BlockState(key);
+         BlockState state = AiBuilder.toBlockState(key);
          if (state.hasBlockEntity() && !(state.getBlock() instanceof SignBlock)) {
             contents++;
          }

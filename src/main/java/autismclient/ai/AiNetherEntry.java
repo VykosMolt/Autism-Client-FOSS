@@ -2257,7 +2257,7 @@ final class AiNetherEntry {
                            true,
                            2.0,
                            AiGoto.protectingCellsCompat(
-                              autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
+                              autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
                            )
                         );
                      }

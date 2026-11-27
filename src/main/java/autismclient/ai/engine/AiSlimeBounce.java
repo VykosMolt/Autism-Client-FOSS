@@ -253,7 +253,7 @@ public final class AiSlimeBounce {
       for (int var11 = 0; var11 < 38; var11++) {
          AiPhysics.MoveInput var12 = var11 == var3 ? var10 : var9;
          AiPhysics.MotionState var13 = AiPhysics.step(var6, var12, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || AiJumpSolver.putAt(var0, var13)) {
+         if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || AiJumpSolver.isInFluid(var0, var13)) {
             return null;
          }
 
@@ -326,7 +326,7 @@ public final class AiSlimeBounce {
             var25 = true;
          }
 
-         boolean var35 = AiJumpSolver.putAt(var0, var33);
+         boolean var35 = AiJumpSolver.isInFluid(var0, var33);
          if (!var35 && (var33.horizontalCollision() || AiPaceScript.value(var0, var33))) {
             var26++;
          }
@@ -354,7 +354,7 @@ public final class AiSlimeBounce {
             var13 = Math.max(var13, var33.y());
          }
 
-         boolean var37 = AiJumpSolver.putAt(var33);
+         boolean var37 = AiJumpSolver.isGroundedNotRising(var33);
          if (!var35 && !var37) {
             var10 = var33;
          } else {
@@ -411,7 +411,7 @@ public final class AiSlimeBounce {
             var20 = true;
          }
 
-         boolean var27 = AiJumpSolver.putAt(var0, var26);
+         boolean var27 = AiJumpSolver.isInFluid(var0, var26);
          if (!var27 && (var26.horizontalCollision() || AiPaceScript.value(var0, var26))) {
             var21++;
          }
@@ -422,7 +422,7 @@ public final class AiSlimeBounce {
          }
 
          var11 = Math.max(var11, var26.y());
-         boolean var28 = AiJumpSolver.putAt(var26);
+         boolean var28 = AiJumpSolver.isGroundedNotRising(var26);
          if (var27 || var28) {
             AiSlimeBounce.Inner_JsonCache var29 = putAt_StreamCore_JsonCac_TokenCore_TaskStat(var0, var1, var2, var19, var26, var9, var15, var4, var27, var28);
             if (var29 == null) {
@@ -471,13 +471,13 @@ public final class AiSlimeBounce {
             var16 = true;
          }
 
-         boolean var22 = AiJumpSolver.putAt(var0, var21);
+         boolean var22 = AiJumpSolver.isInFluid(var0, var21);
          if (!var22 && (var21.horizontalCollision() || AiPaceScript.value(var0, var21))) {
             var17++;
          }
 
          var10 = putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var21) ? var21.y() : Math.max(var10, var21.y());
-         boolean var23 = AiJumpSolver.putAt(var21);
+         boolean var23 = AiJumpSolver.isGroundedNotRising(var21);
          if (var22 || var23) {
             ArrayList var24 = new ArrayList(var3.prefixTail().size() + var15.size());
             var24.addAll(var3.prefixTail());
@@ -514,8 +514,8 @@ public final class AiSlimeBounce {
       }
 
       double var12 = var9 ? 0.1 : -1.0;
-      if (var10 && var4.y() > var5 + 0.5 && var4.y() < var1.y() - 0.05 && AiJumpSolver.putAt_Z_D(var4.x(), var4.y(), var4.z(), var11, var4.y())) {
-         var12 = AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var4, var11, var4.y(), var7);
+      if (var10 && var4.y() > var5 + 0.5 && var4.y() < var1.y() - 0.05 && AiJumpSolver.isLandedOnCell(var4.x(), var4.y(), var4.z(), var11, var4.y())) {
+         var12 = AiJumpSolver.settledLandingMargin(var0, var4, var11, var4.y(), var7);
       }
 
       if (var12 < -0.04) {
@@ -541,7 +541,7 @@ public final class AiSlimeBounce {
             return false;
          }
 
-         if (AiJumpSolver.putAt(var0, var8)) {
+         if (AiJumpSolver.isInFluid(var0, var8)) {
             BlockPos var9 = BlockPos.containing(var8.x(), var8.y(), var8.z());
             return putAt(var0, var9, var4)
                && (
@@ -550,10 +550,10 @@ public final class AiSlimeBounce {
                );
          }
 
-         if (AiJumpSolver.putAt(var8)
+         if (AiJumpSolver.isGroundedNotRising(var8)
             && Math.abs(var8.y() - var2.landing().y()) <= 0.02
-            && AiJumpSolver.putAt_Z_D(var8.x(), var8.y(), var8.z(), var4, var2.landing().y())
-            && AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var8, var4, var2.landing().y(), putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw()) >= -0.04) {
+            && AiJumpSolver.isLandedOnCell(var8.x(), var8.y(), var8.z(), var4, var2.landing().y())
+            && AiJumpSolver.settledLandingMargin(var0, var8, var4, var2.landing().y(), putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw()) >= -0.04) {
             return true;
          }
 

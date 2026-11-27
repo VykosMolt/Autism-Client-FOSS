@@ -163,7 +163,7 @@ public final class AiRoutePolicy {
                && putAt_Z_BlockPos_Function(var0.to(), var1);
             break;
          case SPRINT_JUMP:
-            var10000 = AiPathfinder.MoveGenerator.prevEx(var1, var0.from(), var0.to());
+            var10000 = AiPathfinder.MoveGenerator.canSprintJumpFlat(var1, var0.from(), var0.to());
             break;
          case JUMP_UP_1:
             var10000 = !((AiPathfinder.CellInfo)var1.apply(var0.to().below())).passable()
@@ -176,8 +176,8 @@ public final class AiRoutePolicy {
             var10000 = putAt_Z_BlockPos_Function(var0.to(), var1)
                && !((AiPathfinder.CellInfo)var1.apply(var0.to().below())).farmland()
                && (
-                  AiPathfinder.MoveGenerator.value(var1, var0.from(), var0.to())
-                     || AiPathfinder.MoveGenerator.putAt_Z_Function(
+                  AiPathfinder.MoveGenerator.withinStepUpHeight(var1, var0.from(), var0.to())
+                     || AiPathfinder.MoveGenerator.hasSafeOvershootAhead(
                         var1,
                         var0.to(),
                         Integer.signum(var0.to().getX() - var0.from().getX()),
@@ -265,7 +265,7 @@ public final class AiRoutePolicy {
                && !var8.lava()
                && ((AiPathfinder.CellInfo)var1.apply(var0.to())).passable()
                && ((AiPathfinder.CellInfo)var1.apply(var0.to().above())).passable()
-               && AiPathfinder.MoveGenerator.flowState(var1, var0.cellsToPlace().get(0)) >= 0;
+               && AiPathfinder.MoveGenerator.measureBridgeDepth(var1, var0.cellsToPlace().get(0)) >= 0;
             break;
          case DOOR:
             AiPathfinder.CellInfo var7 = (AiPathfinder.CellInfo)var1.apply(var0.to());
@@ -288,12 +288,12 @@ public final class AiRoutePolicy {
             int var2 = Integer.signum(var0.to().getX() - var0.from().getX());
             int var3 = Integer.signum(var0.to().getZ() - var0.from().getZ());
             int var4 = Math.max(Math.abs(var0.to().getX() - var0.from().getX()), Math.abs(var0.to().getZ() - var0.from().getZ())) - 1;
-            var10000 = AiPathfinder.MoveGenerator.putAt_Z_Function(var1, var0.from(), var2, var3, var4, var0.type() == AiPathfinder.MoveType.PARKOUR_ASCEND);
+            var10000 = AiPathfinder.MoveGenerator.canSprintJumpGap(var1, var0.from(), var2, var3, var4, var0.type() == AiPathfinder.MoveType.PARKOUR_ASCEND);
             break;
          case JUMP:
-            var10000 = (putAt_Z_BlockPos_Function(var0.to(), var1) || AiPathfinder.MoveGenerator.putAt_Z_Function_2(var1, var0.to(), var0.jump()))
+            var10000 = (putAt_Z_BlockPos_Function(var0.to(), var1) || AiPathfinder.MoveGenerator.isTightLandingStandable(var1, var0.to(), var0.jump()))
                && !((AiPathfinder.CellInfo)var1.apply(var0.to().below())).farmland()
-               && AiPathfinder.MoveGenerator.fill((AiPathfinder.CellInfo)var1.apply(var0.from()), (AiPathfinder.CellInfo)var1.apply(var0.from().below()));
+               && AiPathfinder.MoveGenerator.canTakeoffFrom((AiPathfinder.CellInfo)var1.apply(var0.from()), (AiPathfinder.CellInfo)var1.apply(var0.from().below()));
             break;
          case SLIME_BOUNCE:
             var10000 = var0.jump() != null
@@ -301,14 +301,14 @@ public final class AiRoutePolicy {
                   ((AiPathfinder.CellInfo)var1.apply(var0.to())).climbable()
                      || putAt_Z_BlockPos_Function(var0.to(), var1) && !((AiPathfinder.CellInfo)var1.apply(var0.to().below())).farmland()
                )
-               && AiPathfinder.MoveGenerator.fill((AiPathfinder.CellInfo)var1.apply(var0.from()), (AiPathfinder.CellInfo)var1.apply(var0.from().below()));
+               && AiPathfinder.MoveGenerator.canTakeoffFrom((AiPathfinder.CellInfo)var1.apply(var0.from()), (AiPathfinder.CellInfo)var1.apply(var0.from().below()));
             break;
          case LADDER_JUMP:
             var10000 = var0.jump() != null
                && (
                   ((AiPathfinder.CellInfo)var1.apply(var0.to())).climbable()
                      ? ((AiPathfinder.CellInfo)var1.apply(var0.from())).climbable()
-                        || AiPathfinder.MoveGenerator.fill(
+                        || AiPathfinder.MoveGenerator.canTakeoffFrom(
                            (AiPathfinder.CellInfo)var1.apply(var0.from()), (AiPathfinder.CellInfo)var1.apply(var0.from().below())
                         )
                      : ((AiPathfinder.CellInfo)var1.apply(var0.from())).climbable() && putAt_Z_BlockPos_Function(var0.to(), var1)
@@ -404,7 +404,7 @@ public final class AiRoutePolicy {
    private static boolean putAt_Z_BlockPos_Function(BlockPos var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       AiPathfinder.CellInfo var2 = (AiPathfinder.CellInfo)var1.apply(var0);
       AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var1.apply(var0.above());
-      return AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(var2, var3, (AiPathfinder.CellInfo)var1.apply(var0.below()))
+      return AiPathfinder.MoveGenerator.isStandable(var2, var3, (AiPathfinder.CellInfo)var1.apply(var0.below()))
          ? true
          : var2.loaded() && var2.water() && !var2.lava() && !var2.hazardFeet() && var3.loaded() && (var3.water() || var3.passable()) && !var3.lava();
    }
@@ -445,7 +445,7 @@ public final class AiRoutePolicy {
          return -1;
       }
 
-      Function var2 = var1x -> AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, ((BlockPos)var1x), putAt_ItemStackArr);
+      Function var2 = var1x -> AiPathfinder.LiveGridView.classifyCell(var1, var1.level, ((BlockPos)var1x), putAt_ItemStackArr);
       return !var0.isEmpty() && !putAt_Z_FileStore_PacketHe((AiPathfinder.UiHelper)var0.getFirst(), var2, true)
          ? 0
          : putAt_I_List(var0, 0, var0.size(), var2, true);

@@ -20,7 +20,7 @@ public final class AiBreakBlock {
    private AiBreakBlock() {
    }
 
-   static boolean init(BlockGetter level, BlockPos target) {
+   static boolean hasLavaBelow(BlockGetter level, BlockPos target) {
       for (int down = 1; down <= 16; down++) {
          BlockPos p = target.below(down);
          BlockState state = level.getBlockState(p);
@@ -36,29 +36,29 @@ public final class AiBreakBlock {
       return false;
    }
 
-   public static AiOperation init(BlockPos target, int seconds) {
-      return init(target, seconds, false);
+   public static AiOperation breakBlock(BlockPos target, int seconds) {
+      return breakBlock(target, seconds, false);
    }
 
-   public static AiOperation init(BlockPos target, int seconds, boolean requireDrops) {
-      return init(target, seconds, requireDrops, Set.of());
+   public static AiOperation breakBlock(BlockPos target, int seconds, boolean requireDrops) {
+      return breakBlock(target, seconds, requireDrops, Set.of());
    }
 
-   public static AiOperation init(BlockPos target, int seconds, boolean requireDrops, Set<Long> protectedCells) {
-      return init(target, seconds, requireDrops, protectedCells, protectedCells.isEmpty());
+   public static AiOperation breakBlock(BlockPos target, int seconds, boolean requireDrops, Set<Long> protectedCells) {
+      return breakBlock(target, seconds, requireDrops, protectedCells, protectedCells.isEmpty());
    }
 
-   public static AiOperation init(BlockPos target, int seconds, boolean requireDrops, Set<Long> protectedCells, boolean allowScaffold) {
-      return init(target, seconds, requireDrops, protectedCells, allowScaffold, Set.of());
+   public static AiOperation breakBlock(BlockPos target, int seconds, boolean requireDrops, Set<Long> protectedCells, boolean allowScaffold) {
+      return breakBlock(target, seconds, requireDrops, protectedCells, allowScaffold, Set.of());
    }
 
-   public static AiOperation init(
+   public static AiOperation breakBlock(
       BlockPos target, int seconds, boolean requireDrops, Set<Long> protectedCells, boolean allowScaffold, Set<BlockPos> sealedWater
    ) {
-      return init(target, seconds, requireDrops, protectedCells, allowScaffold, sealedWater, (state, stack) -> true);
+      return breakBlock(target, seconds, requireDrops, protectedCells, allowScaffold, sealedWater, (state, stack) -> true);
    }
 
-   public static AiOperation init(
+   public static AiOperation breakBlock(
       final BlockPos target,
       final int seconds,
       final boolean requireDrops,
@@ -82,8 +82,8 @@ public final class AiBreakBlock {
                requireDrops,
                this.init_DataUtil::tick
             )
-            .init_RefQueue_DataUtil_Set(sealedWater)
-            .init_RefQueue_DataUtil_BiPredicate(acceptedTool);
+            .withSealedWaterCompat(sealedWater)
+            .withAcceptedToolCompat(acceptedTool);
          AiOperation init_AiOperation;
          int load_I;
          boolean init_Z;
@@ -104,13 +104,13 @@ public final class AiBreakBlock {
             }
 
             if (this.init_AiOperation != null) {
-               AiOperation.Result result = this.init_ConfigStore_DataUt.init(this.init_AiOperation);
+               AiOperation.Result result = this.init_ConfigStore_DataUt.tickChild(this.init_AiOperation);
                if (!result.terminal()) {
                   return result;
                }
 
                this.init_AiOperation = null;
-               if (result.status() != AiOperation.Status.SUCCEEDED || this.init_ConfigStore_DataUt.init) {
+               if (result.status() != AiOperation.Status.SUCCEEDED || this.init_ConfigStore_DataUt.needsReconciliation) {
                   return this.init(result);
                }
             }
@@ -123,11 +123,11 @@ public final class AiBreakBlock {
                return this.init(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
             }
 
-            if (requireDrops && AiBreakBlock.init(this.init_Minecraft.level, target)) {
+            if (requireDrops && AiBreakBlock.hasLavaBelow(this.init_Minecraft.level, target)) {
                return this.init(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
             }
 
-            if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(target) && AiBlockInteraction.findClimbSafeFaceHit(this.init_Minecraft, target, null) == null) {
+            if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(target) && AiBlockInteraction.findClimbSafeFaceHit(this.init_Minecraft, target, null) == null) {
                if (this.init_Minecraft.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null
                   && this.init_Minecraft.level.getBlockState(target).isAir()) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Block already absent");
@@ -141,7 +141,7 @@ public final class AiBreakBlock {
                   }
 
                   if (Boolean.getBoolean("autism.navigation.debug") && this.init_Minecraft.player.tickCount % 5 == 0) {
-                     AiNavDebug.init(
+                     AiNavDebug.log(
                         "break ladder target="
                            + target
                            + " body="
@@ -156,8 +156,8 @@ public final class AiBreakBlock {
                   }
                }
 
-               boolean wasDigging = this.init_RefQueue_DataUtil.init_Z_BlockPos(target);
-               AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(target);
+               boolean wasDigging = this.init_RefQueue_DataUtil.isDiggingTargetCompat(target);
+               AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.digCompat(target);
                this.init_DataUtil.tick();
                if (status == AiBlockDigger.Inner_DataUtil_2.load) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
@@ -167,15 +167,15 @@ public final class AiBreakBlock {
                   return this.init("Breaking target");
                }
 
-               this.init_ConfigStore_DataUt.init(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.init_Z_BlockPos(target));
-               if (this.init_ConfigStore_DataUt.init) {
+               this.init_ConfigStore_DataUt.recordTransition(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.isDiggingTargetCompat(target));
+               if (this.init_ConfigStore_DataUt.needsReconciliation) {
                   return this.init(
-                     AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.init_Str()
+                     AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat()
                   );
                }
 
                if (++this.load_I >= 2) {
-                  return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Target could not be broken: " + this.init_RefQueue_DataUtil.init_Str());
+                  return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Target could not be broken: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat());
                }
             }
 
@@ -200,8 +200,8 @@ public final class AiBreakBlock {
          }
 
          AiOperation.Result init(AiOperation.Result result) {
-            this.init_ConfigStore_DataUt.init(this.requiresReconciliationAfterEmergency());
-            result = this.init_ConfigStore_DataUt.init(result);
+            this.init_ConfigStore_DataUt.markPending(this.requiresReconciliationAfterEmergency());
+            result = this.init_ConfigStore_DataUt.wrapResult(result);
             this.cancel();
             return result;
          }
@@ -216,27 +216,27 @@ public final class AiBreakBlock {
          @Override
          public boolean canInterruptNow() {
             return this.init_ConfigStore_DataUt
-               .init(this.init_RefQueue_DataUtil.init_Z_BlockPos(target), this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+               .canInterrupt(this.init_RefQueue_DataUtil.isDiggingTargetCompat(target), this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_ConfigStore_DataUt.init
-               || this.init_RefQueue_DataUtil.init_Z_BlockPos(target)
+            return this.init_ConfigStore_DataUt.needsReconciliation
+               || this.init_RefQueue_DataUtil.isDiggingTargetCompat(target)
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
             if (!this.init_Z) {
-               this.init_ConfigStore_DataUt.init(this.requiresReconciliationAfterEmergency());
+               this.init_ConfigStore_DataUt.markPending(this.requiresReconciliationAfterEmergency());
                this.init_Z = true;
                if (this.init_AiOperation != null) {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
                }
 
-               this.init_RefQueue_DataUtil.init_V();
+               this.init_RefQueue_DataUtil.stopCompat();
                this.init_DataUtil.clear();
                this.init();
                if (this.init_Minecraft.player != null && this.init_I >= 0) {
@@ -248,33 +248,33 @@ public final class AiBreakBlock {
    }
 
    static final class Inner_DataUtil {
-      boolean init;
+      boolean needsReconciliation;
 
-      boolean init(boolean digging, boolean approachSafe) {
-         return !this.init && !digging && approachSafe;
+      boolean canInterrupt(boolean digging, boolean approachSafe) {
+         return !this.needsReconciliation && !digging && approachSafe;
       }
 
-      void init(boolean currentPending) {
-         this.init |= currentPending;
+      void markPending(boolean currentPending) {
+         this.needsReconciliation |= currentPending;
       }
 
-      void init(AiOperation.Status status, boolean before, boolean after) {
-         this.init = this.init | (status == AiOperation.Status.UNCERTAIN || after || status != AiOperation.Status.SUCCEEDED && before);
+      void recordTransition(AiOperation.Status status, boolean before, boolean after) {
+         this.needsReconciliation = this.needsReconciliation | (status == AiOperation.Status.UNCERTAIN || after || status != AiOperation.Status.SUCCEEDED && before);
       }
 
-      AiOperation.Result init(AiOperation child) {
+      AiOperation.Result tickChild(AiOperation child) {
          boolean before = child.requiresReconciliationAfterEmergency();
          AiOperation.Result result = child.tick();
          if (result.terminal()) {
-            this.init(result.status(), before, child.requiresReconciliationAfterEmergency());
+            this.recordTransition(result.status(), before, child.requiresReconciliationAfterEmergency());
             child.cancel();
          }
 
          return result;
       }
 
-      AiOperation.Result init(AiOperation.Result result) {
-         if (!this.init) {
+      AiOperation.Result wrapResult(AiOperation.Result result) {
+         if (!this.needsReconciliation) {
             return result;
          }
 

@@ -36,7 +36,7 @@ final class AiCellMaterials {
    }
 
    static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.CellSpec cell, BlockState live, boolean waterAbove) {
-      if (!AiBuilder.read_Z(cell) && (live == null || !AiBuilder.update(cell, live))) {
+      if (!AiBuilder.isTransientPistonCell(cell) && (live == null || !AiBuilder.matchesSchematicCell(cell, live))) {
          if (!"upper".equals(cell.properties().get("half")) && !"head".equals(cell.properties().get("part"))) {
             ArrayList<AiCellMaterials.Inner_CachePool> out = new ArrayList<>();
             String id = cell.block();
@@ -46,8 +46,8 @@ final class AiCellMaterials {
             }
 
             if (!id.equals("minecraft:farmland") && !id.equals("minecraft:dirt_path")) {
-               if (AiBuilder.init_Fluid(cell) != null) {
-                  if (!AiBuilder.load_Z(cell)) {
+               if (AiBuilder.fluidOfCell(cell) != null) {
+                  if (!AiBuilder.isFlowingFluidCell(cell)) {
                      init(
                         out,
                         AiCellMaterials.Inner_DataUtil.POUR,
@@ -84,7 +84,7 @@ final class AiCellMaterials {
                         init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.FLOWER_POT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                      }
 
-                     Item plant = AiSchematicActions.init(AiBuilder.init_BlockState(cell).getBlock());
+                     Item plant = AiSchematicActions.init(AiBuilder.toBlockState(cell).getBlock());
                      init(out, AiCellMaterials.Inner_DataUtil.PLANT, plant, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                      return List.copyOf(out);
                   } else {
@@ -95,7 +95,7 @@ final class AiCellMaterials {
                      String countProperty = null;
 
                      for (String property : cell.properties().keySet()) {
-                        if (AiBuilder.init_Z(block, property)) {
+                        if (AiBuilder.isStackableCountProperty(block, property)) {
                            countProperty = property;
                            break;
                         }
@@ -103,7 +103,7 @@ final class AiCellMaterials {
 
                      boolean replacing = false;
                      if (block instanceof MultifaceBlock) {
-                        BlockState wanted = AiBuilder.init_BlockState(cell);
+                        BlockState wanted = AiBuilder.toBlockState(cell);
                         boolean partial = same && autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(wanted, live);
                         int remaining = 0;
 
@@ -128,7 +128,7 @@ final class AiCellMaterials {
                         }
 
                         init(out, item, same, Math.max(0, wanted - current));
-                     } else if (AiBuilder.init_Z(cell)) {
+                     } else if (AiBuilder.isDoubleSlabCell(cell)) {
                         int remaining = !same ? 2 : (live.getValue(SlabBlock.TYPE) == SlabType.DOUBLE ? 0 : 1);
                         init(out, item, same, remaining);
                      } else {
@@ -191,10 +191,10 @@ final class AiCellMaterials {
       HashSet<BlockPos> foundations = new HashSet<>();
 
       for (AiBuilder.CellSpec cell : cells) {
-         if (!AiBuilder.read_Z(cell)) {
+         if (!AiBuilder.isTransientPistonCell(cell)) {
             BlockPos target = origin.offset(cell.dx(), cell.dy(), cell.dz());
             BlockState live = world.getBlockState(target);
-            if (!AiBuilder.update(cell, live)) {
+            if (!AiBuilder.matchesSchematicCell(cell, live)) {
                out.addAll(init(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
                BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, target, world, sourceCells);
                if (foundation != null && foundations.add(foundation)) {
@@ -276,10 +276,10 @@ final class AiCellMaterials {
    private static boolean init(AiBuilder.CellSpec cell, BlockState live, Block block) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String key = entry.getKey();
-         if (!key.equals("waterlogged") && !AiBuilder.read(block, key)) {
+         if (!key.equals("waterlogged") && !AiBuilder.isAutoComputedProperty(block, key)) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(key);
-            if (property != null && !AiBuilder.init(block, key, String.valueOf(live.getValue(property)), entry.getValue())) {
-               AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, key);
+            if (property != null && !AiBuilder.propertyValuesMatch(block, key, String.valueOf(live.getValue(property)), entry.getValue())) {
+               AiBuilder.OrientationKind strategy = AiBuilder.orientationKindForProperty(block, key);
                if (strategy != AiBuilder.OrientationKind.POST_INTERACT && strategy != AiBuilder.OrientationKind.FLUID_INTERACT) {
                   return true;
                }
@@ -292,14 +292,14 @@ final class AiCellMaterials {
 
    private static void init(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.Inner_CachePool> out) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
-         Item needed = AiBuilder.init_Item(block, entry.getKey());
+         Item needed = AiBuilder.postInteractToolItem(block, entry.getKey());
          if (needed != null) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)block.getStateDefinition().getProperty(entry.getKey());
             if (property != null) {
                BlockState initial = same ? live : block.defaultBlockState();
                String actual = String.valueOf(initial.getValue(property));
                String requested = entry.getValue();
-               if (!AiBuilder.init(block, entry.getKey(), actual, requested)) {
+               if (!AiBuilder.propertyValuesMatch(block, entry.getKey(), actual, requested)) {
                   if (needed == Items.GLOWSTONE) {
                      int remaining = Math.max(0, Integer.parseInt(requested) - Integer.parseInt(actual));
                      init(out, AiCellMaterials.Inner_DataUtil.INTERACT, needed, remaining, AiCellMaterials.Inner_BufferHelper.CONSUME);

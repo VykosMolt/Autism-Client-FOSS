@@ -92,7 +92,7 @@ public final class AiBackfill {
                   double distanceSqr = center.distanceToSqr(pos);
                   if (!init(init(center.subtract(pos), look), distanceSqr, true, true, false)) {
                      if (init_Z) {
-                        AiNavDebug.init(
+                        AiNavDebug.log(
                            "backfill skip-geometry cell="
                               + cell
                               + " dot="
@@ -112,7 +112,7 @@ public final class AiBackfill {
                      }
 
                      if (init_Z) {
-                        AiNavDebug.init("backfill skip-reach cell=" + cell);
+                        AiNavDebug.log("backfill skip-reach cell=" + cell);
                      }
                   }
                } else {
@@ -131,7 +131,7 @@ public final class AiBackfill {
          if (!this.load_Z) {
             if (!this.init_ClassCache_FileCac(this.init_BlockPos).passable()) {
                if (init_Z) {
-                  AiNavDebug.init("backfill fail occupied cell=" + this.init_BlockPos);
+                  AiNavDebug.log("backfill fail occupied cell=" + this.init_BlockPos);
                }
 
                this.init(false);
@@ -141,7 +141,7 @@ public final class AiBackfill {
             int slot = this.read_I();
             if (slot < 0) {
                if (init_Z) {
-                  AiNavDebug.init("backfill fail no-throwaway cell=" + this.init_BlockPos);
+                  AiNavDebug.log("backfill fail no-throwaway cell=" + this.init_BlockPos);
                }
 
                this.init(false);
@@ -159,7 +159,7 @@ public final class AiBackfill {
                break;
             case FAILED:
                if (init_Z) {
-                  AiNavDebug.init("backfill placer-failed cell=" + this.init_BlockPos);
+                  AiNavDebug.log("backfill placer-failed cell=" + this.init_BlockPos);
                }
 
                this.init(false);
@@ -228,6 +228,6 @@ public final class AiBackfill {
    }
 
    private AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos cell) {
-      return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, cell, init_ItemStackArr);
+      return AiPathfinder.LiveGridView.classifyCellCompat(this.init_Minecraft, this.init_Minecraft.level, cell, init_ItemStackArr);
    }
 }

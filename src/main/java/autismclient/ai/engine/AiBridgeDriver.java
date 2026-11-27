@@ -63,7 +63,7 @@ public final class AiBridgeDriver {
    }
 
    public static AiBridger.Inner_ConfigStore init_JsonUtil_ConfigSto_Z(boolean telly, AiBridger.Inner_CachePool lane, LocalPlayer player, int blocks) {
-      if (telly && player.getFoodData().getFoodLevel() > 6 && blocks >= lane.length() && !AiPathfinder.MoveCosts.init()) {
+      if (telly && player.getFoodData().getFoodLevel() > 6 && blocks >= lane.length() && !AiPathfinder.MoveCosts.isCautiousParkourActiveCompat()) {
          ClientLevel level = Minecraft.getInstance().level;
 
          for (int i = 0; i <= lane.length(); i++) {
@@ -158,8 +158,8 @@ public final class AiBridgeDriver {
          this.init_Minecraft.options.keySprint.setDown(false);
       }
 
-      if (AiNavDebug.init_Z()) {
-         AiNavDebug.init(
+      if (AiNavDebug.isEnabled()) {
+         AiNavDebug.log(
             "bridge tick="
                + this.init_I
                + " position="

@@ -444,14 +444,14 @@ final class AiTrade {
 
                      this.init_DataUtil.aimAt(Vec3.atCenterOf(this.init_BlockPos));
                      this.init_DataUtil.tick();
-                     switch (this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.init_BlockPos)) {
+                     switch (this.init_RefQueue_DataUtil.digCompat(this.init_BlockPos)) {
                         case init:
                            return this.init_AiOperation_Result_12("Breaking the job-site block");
                         case read:
-                           this.init_RefQueue_DataUtil.init_V();
+                           this.init_RefQueue_DataUtil.stopCompat();
                            return this.init(AiFailure.UNREACHABLE, "Could not break the job-site block for a reroll");
                         case load:
-                           this.init_RefQueue_DataUtil.init_V();
+                           this.init_RefQueue_DataUtil.stopCompat();
                            this.push = 2;
                            this.pop = 0;
                            return this.init_AiOperation_Result_12("Job-site broken; collecting it");
@@ -663,7 +663,7 @@ final class AiTrade {
                if (!this.init_Z) {
                   this.init_Z = true;
                   this.init_DataUtil.clear();
-                  this.init_RefQueue_DataUtil.init_V();
+                  this.init_RefQueue_DataUtil.stopCompat();
                   this.init_DataPipe.reset();
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();

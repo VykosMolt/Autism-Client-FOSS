@@ -84,7 +84,7 @@ public final class AiSchematicMachinePlan {
       }
 
       for (AiBuilder.CellSpec cell : selected.cells()) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          long key = BlockPos.asLong(cell.dx(), cell.dy(), cell.dz());
          if (cell.block().equals("minecraft:piston_head")
             || (cell.block().equals("minecraft:piston") || cell.block().equals("minecraft:sticky_piston")) && cell.properties().containsKey("extended")
@@ -93,7 +93,7 @@ public final class AiSchematicMachinePlan {
             || cell.block().equals("minecraft:note_block") && "true".equals(cell.properties().get("powered"))
             || vehicleCells.contains(key)
             || plan.load_Set.contains(key)) {
-            outcomes.put(key, AiBuilder.init_BlockState(cell));
+            outcomes.put(key, AiBuilder.toBlockState(cell));
          }
       }
 
@@ -132,19 +132,19 @@ public final class AiSchematicMachinePlan {
       HashSet<Long> supported = new HashSet<>();
 
       for (AiBuilder.CellSpec cell : selected.cells()) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          long key = BlockPos.asLong(cell.dx(), cell.dy(), cell.dz());
          if (frameSupports.contains(key)) {
             supported.add(key);
          }
 
          if (outcomeInputs.contains(key)) {
-            selectedStates.put(key, AiBuilder.init_BlockState(cell));
+            selectedStates.put(key, AiBuilder.toBlockState(cell));
          }
 
          if (vehicleCells.contains(key)) {
             cells.add(key);
-            if (!(AiBuilder.init_BlockState(cell).getBlock() instanceof BaseRailBlock)) {
+            if (!(AiBuilder.toBlockState(cell).getBlock() instanceof BaseRailBlock)) {
                offRail.add(key);
             }
          }
@@ -152,7 +152,7 @@ public final class AiSchematicMachinePlan {
          ListTag saved = this.init_Map.get(key);
          if (saved != null) {
             kept.put(key, saved);
-            BlockState state = AiBuilder.init_BlockState(cell);
+            BlockState state = AiBuilder.toBlockState(cell);
             if (AiSavedContents.init_Z(state)) {
                storage.put(key, state);
             }
@@ -194,9 +194,9 @@ public final class AiSchematicMachinePlan {
       HashMap<Long, BlockState> context = new HashMap<>();
       if (!sections.isEmpty()) {
          for (AiBuilder.CellSpec cell : selected.cells()) {
-            AiBuilder.init();
+            AiBuilder.checkNotCancelled();
             if (sections.contains(SectionPos.asLong(cell.dx() >> 4, cell.dy() >> 4, cell.dz() >> 4))) {
-               context.put(BlockPos.asLong(cell.dx(), cell.dy(), cell.dz()), AiBuilder.init_BlockState(cell));
+               context.put(BlockPos.asLong(cell.dx(), cell.dy(), cell.dz()), AiBuilder.toBlockState(cell));
             }
          }
 
@@ -319,14 +319,14 @@ public final class AiSchematicMachinePlan {
       RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
 
       for (long key : keys) {
-         AiBuilder.init();
+         AiBuilder.checkNotCancelled();
          HashMap<Integer, ItemStack> slots = new HashMap<>();
          Iterator var11 = this.init_Map.get(key).iterator();
 
          while (true) {
             if (var11.hasNext()) {
                Tag tag = (Tag)var11.next();
-               AiBuilder.init();
+               AiBuilder.checkNotCancelled();
                if (!(tag instanceof CompoundTag item)) {
                   throw new IllegalArgumentException("Saved storage item is not a compound");
                }

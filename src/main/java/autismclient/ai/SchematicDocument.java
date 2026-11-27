@@ -385,7 +385,7 @@ final class SchematicDocument {
          lookup.put(palette.get(0), 0);
 
          for (AiBuilder.CellSpec c : decoded.cells()) {
-            BlockState s = AiBuilder.init_BlockState(c);
+            BlockState s = AiBuilder.toBlockState(c);
             int id = lookup.computeIfAbsent(s, k -> {
                palette.add(k);
                return palette.size() - 1;
@@ -432,7 +432,7 @@ final class SchematicDocument {
 
                for (int i = 0; i < palette.length; i++) {
                   AiSchematic.Inner_ConfigStore parsed = AiSchematic.init(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
-                  palette[i] = AiBuilder.init_BlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties()));
+                  palette[i] = AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties()));
                }
 
                regions.add(
@@ -490,7 +490,7 @@ final class SchematicDocument {
 
                AiSchematic.Inner_ConfigStore parsed = AiSchematic.init_bP_ConfigStore_Str_I(state, dataVersion);
                ids.put(id, palette.size());
-               palette.add(AiBuilder.init_BlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties())));
+               palette.add(AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties())));
             }
 
             byte[] raw = blockData.getByteArray("Data")

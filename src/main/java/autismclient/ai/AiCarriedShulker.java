@@ -530,7 +530,7 @@ final class AiCarriedShulker implements AiOperation {
                   && !floor.hasBlockEntity()
                   && !floor.isSignalSource()
                   && !floor.is(BlockTags.LEAVES)
-                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(floor)
+                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(floor)
                   && floor.getBlock().getBounceRestitution() == 0.0F
                   && floor.getBlock().getFriction() > 0.0F
                   && floor.getBlock().getFriction() <= 0.6F
@@ -560,7 +560,7 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    static autismclient.ai.engine.AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
-      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(target, 0.6);
       final Set<autismclient.ai.engine.AiPathfinder.MoveType> walks = Set.copyOf(
          EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.MoveType.WALK, autismclient.ai.engine.AiPathfinder.MoveType.WALK_DIAGONAL))
       );
@@ -710,7 +710,7 @@ final class AiCarriedShulker implements AiOperation {
                this.read_List = init_List_Container(this.init_Minecraft.player.getInventory());
                this.load_J = AiServerEvidence.inventoryRevision();
                this.read_J = AiServerEvidence.blockRevision(this.init_BlockPos);
-               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 25, true, this.init_Set, false);
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.init_BlockPos, 25, true, this.init_Set, false);
                this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.BREAK;
                return this.init_AiOperation_Result_Str("Recovering the owned stock shulker");
             } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.BREAK) {
@@ -893,7 +893,7 @@ final class AiCarriedShulker implements AiOperation {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         false,
                         2.0,
-                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
+                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stance, 0.6), this.init_Set),
                         new AiGoto.GotoOptions(false, false, 0, true, false, false)
                      );
                      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.APPROACH;

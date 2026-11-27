@@ -2523,7 +2523,7 @@ final class AiProgression {
                      }
 
                      if (this.load_AiOperation == null) {
-                        this.load_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
+                        this.load_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
                            pos, (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L - 5L), false, Set.of(), true
                         );
                      }

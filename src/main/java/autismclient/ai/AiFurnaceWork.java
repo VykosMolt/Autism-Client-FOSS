@@ -238,7 +238,7 @@ final class AiFurnaceWork implements AiOperation {
             ? this.init_AiOperation_Result_AiOperation_Status_Str_3(AiOperation.Status.UNCERTAIN, "Furnace preparation needs inventory reconciliation")
             : this.init_AiOperation_Result_Str_3("Furnace-time preparation finished; continue useful work");
       } else if (this.init_Z) {
-         this.init_RefQueue_DataUtil.init_V();
+         this.init_RefQueue_DataUtil.stopCompat();
          this.init_DataUtil.clear();
          if (this.init_AiOperation != null) {
             if (!this.init_AiOperation.canInterruptNow()) {
@@ -303,15 +303,15 @@ final class AiFurnaceWork implements AiOperation {
             if (this.init_Minecraft.level.getBlockState(this.read_BlockPos).isAir()) {
                this.read_I++;
                this.read_BlockPos = null;
-               this.init_RefQueue_DataUtil.init_V();
+               this.init_RefQueue_DataUtil.stopCompat();
             } else if (this.update(this.read_BlockPos) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.read_BlockPos) != null) {
-               autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
+               autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.digCompat(this.read_BlockPos);
                this.init_DataUtil.tick();
                if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.init) {
                   return this.init_AiOperation_Result_Str_3("Mining needed " + this.init_Str_BlockPos(this.read_BlockPos) + " while the furnace cooks");
                }
 
-               this.init_RefQueue_DataUtil.init_V();
+               this.init_RefQueue_DataUtil.stopCompat();
                if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.load) {
                   this.read_I++;
                }
@@ -319,7 +319,7 @@ final class AiFurnaceWork implements AiOperation {
                this.read_BlockPos = null;
             } else {
                this.read_BlockPos = null;
-               this.init_RefQueue_DataUtil.init_V();
+               this.init_RefQueue_DataUtil.stopCompat();
             }
          }
 
@@ -669,7 +669,7 @@ final class AiFurnaceWork implements AiOperation {
    @Override
    public void cancel() {
       this.load_Z = true;
-      this.init_RefQueue_DataUtil.init_V();
+      this.init_RefQueue_DataUtil.stopCompat();
       this.init_DataUtil.clear();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();

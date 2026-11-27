@@ -115,7 +115,7 @@ final class PrintNav {
 
       AiPhysics.MotionState from = AiPhysics.MotionState.standing(x + 0.5, h, z + 0.5);
       float yaw = AiPhysics.yawTowards(x + 0.5, z + 0.5, nx + 0.5, nz + 0.5);
-      autismclient.ai.engine.AiJumpSolver.UiHelper jump = autismclient.ai.engine.AiJumpSolver.init_TableIndex_UiHelpe_NodeWalker_CachePo(
+      autismclient.ai.engine.AiJumpSolver.UiHelper jump = autismclient.ai.engine.AiJumpSolver.solveTakeoffCompat(
          view.asPhysicsWorld(), from, yaw, false, new BlockPos(nx, PrintView.floorInt(h2), nz), h2, 6
       );
       return jump != null && jump.margin() >= -0.04;

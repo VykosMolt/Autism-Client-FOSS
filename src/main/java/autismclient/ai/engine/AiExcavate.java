@@ -407,7 +407,7 @@ public final class AiExcavate {
                }
             } else if (this.load_BlockPos != null) {
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = AiBreakBlock.init(this.load_BlockPos, this.init(60), AiExcavate.init(this.init_BlockState(this.load_BlockPos)));
+                  this.init_AiOperation = AiBreakBlock.breakBlock(this.load_BlockPos, this.init(60), AiExcavate.init(this.init_BlockState(this.load_BlockPos)));
                }
 
                AiOperation.Result result = this.init_AiOperation.tick();
@@ -492,11 +492,11 @@ public final class AiExcavate {
                      } else if (!(this.init_BlockState(cell).getDestroySpeed(this.init_Minecraft.level, cell) < 0.0F)
                         && !this.init_BlockState(cell).hasBlockEntity()
                         && this.init_BlockState(cell).getFluidState().isEmpty()
-                        && AiPathfinder.LiveGridView.init_Z_ClientLevel_BlockPos(this.init_Minecraft.level, cell)) {
+                        && AiPathfinder.LiveGridView.isSafeToDigCompat(this.init_Minecraft.level, cell)) {
                         BlockState cellState = this.init_BlockState(cell);
                         if (!this.init_Minecraft.player.hasInfiniteMaterials()
-                           && AiPathfinder.LiveGridView.init_Z_Z_Z(
-                              cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.init_Z_Minecraft(this.init_Minecraft, cellState, 36)
+                           && AiPathfinder.LiveGridView.lacksRequiredToolCompat(
+                              cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.hasCorrectToolInSlotsCompat(this.init_Minecraft, cellState, 36)
                            )) {
                            if (this.init_ByteReader_ConfigS != null) {
                               return this.init("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
@@ -676,7 +676,7 @@ public final class AiExcavate {
       }
 
       AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos pos) {
-         return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, pos, this.init_ItemStackArr);
+         return AiPathfinder.LiveGridView.classifyCellCompat(this.init_Minecraft, this.init_Minecraft.level, pos, this.init_ItemStackArr);
       }
 
       BlockState init_BlockState(BlockPos pos) {

@@ -327,8 +327,8 @@ public final class AiPaceScript {
    ) {
       return () -> {
          AiPathfinder.MoveGenerator.CachedGrid var4 = new AiPathfinder.MoveGenerator.CachedGrid(var0, 16384, var1);
-         var4.putAt_FileStore_RingUtil = var3;
-         return var4.putAt_RefQueue();
+         var4.fallPolicy = var3;
+         return var4.plannerWorld();
       };
    }
 
@@ -529,7 +529,7 @@ public final class AiPaceScript {
          }
 
          var9 += var38;
-         if (AiNavDebug.init_Z()) {
+         if (AiNavDebug.isEnabled()) {
             AiPhysics.MotionState var95 = var44.putAt_TokenCore_TableCac;
             String var98 = String.format(
                Locale.ROOT,
@@ -557,7 +557,7 @@ public final class AiPaceScript {
                      var95.vz()
                   )
             );
-            AiNavDebug.init(var98);
+            AiNavDebug.log(var98);
          }
 
          if (var36 == null) {
@@ -749,11 +749,11 @@ public final class AiPaceScript {
    ) {
       AiPathfinder.FallPolicy var9 = var7 ? AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE : AiPathfinder.FallPolicy.PARKOUR_SAFE;
       AiPathfinder.PathOptions var10 = new AiPathfinder.PathOptions(
-            false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.value
+            false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.NONE
          )
          .withFallPolicy(var9);
       AiPathfinder.MoveGenerator.CachedGrid var11 = new AiPathfinder.MoveGenerator.CachedGrid(var0, 50000, var5);
-      var11.putAt_FileStore_RingUtil = var9;
+      var11.fallPolicy = var9;
       ArrayList<double[]> var12 = new ArrayList<>();
       ArrayList var13 = new ArrayList();
       ArrayList var14 = new ArrayList();
@@ -787,7 +787,7 @@ public final class AiPaceScript {
                   var1.y(),
                   var1.z()
                );
-               AiNavDebug.init(var25);
+               AiNavDebug.log(var25);
                LogUtils.getLogger().info("[AI] " + var25);
             }
 
@@ -821,7 +821,7 @@ public final class AiPaceScript {
                               var1.y(),
                               var1.z()
                            );
-                           AiNavDebug.init(var14x);
+                           AiNavDebug.log(var14x);
                            LogUtils.getLogger().info("[AI] " + var14x);
                         }
 
@@ -867,10 +867,10 @@ public final class AiPaceScript {
             BlockPos var62 = var59.to();
             int var31 = var12.size();
             AiJumpSolver.JumpPlan var32 = var59.jump();
-            double var33 = var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
+            double var33 = var11.probePos(var62).climbable()
                ? var62.getY()
-               : AiPathfinder.MoveGenerator.putAt(var62.getY(), var11.putAt_FileStore_BitCache_BlockPos(var62.below()));
-            double var35 = var32 != null && !var11.putAt_FileStore_BitCache_BlockPos(var62).climbable() && Math.abs(var32.landY() - var33) > 0.25
+               : AiPathfinder.MoveGenerator.surfaceY(var62.getY(), var11.probePos(var62.below()));
+            double var35 = var32 != null && !var11.probePos(var62).climbable() && Math.abs(var32.landY() - var33) > 0.25
                ? var32.landY()
                : var33;
             AiPaceScript.Inner_JsonCache.add(var12, var62.getX() + 0.5, var35, var62.getZ() + 0.5, putAt_Set.contains(var59.type()));
@@ -882,8 +882,8 @@ public final class AiPaceScript {
 
             var17.add(
                fill_Set.contains(var59.type())
-                  && !var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
-                  && !var11.putAt_FileStore_BitCache_BlockPos(var62.below()).passable()
+                  && !var11.probePos(var62).climbable()
+                  && !var11.probePos(var62.below()).passable()
             );
             boolean var65 = var59.type() == AiPathfinder.MoveType.SLIME_BOUNCE;
             var18.add(
@@ -894,7 +894,7 @@ public final class AiPaceScript {
                         ? new AiPaceScript.Inner_JsonEntry(true, var59.from(), var32.yaw(), var35, var32.sprint(), null)
                         : (
                            var32.maneuver() == null
-                                 || var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
+                                 || var11.probePos(var62).climbable()
                                     && (var59.type() != AiPathfinder.MoveType.LADDER_JUMP || var11.putAt_S_I(var62.getX(), var62.getY(), var62.getZ()) != 0)
                               ? null
                               : new AiPaceScript.Inner_JsonEntry(
@@ -934,7 +934,7 @@ public final class AiPaceScript {
          double[] var63 = (double[])var12.get(var60 - 1);
          double[] var64 = (double[])var12.get(var60);
          var57[var60] = !var45[var60]
-            && var11.putAt_FileStore_BitCache_BlockPos(
+            && var11.probePos(
                   BlockPos.containing((var63[0] + var64[0]) / 2.0, (var63[1] + var64[1]) / 2.0 + 0.01, (var63[2] + var64[2]) / 2.0)
                )
                .climbable();
@@ -967,20 +967,20 @@ public final class AiPaceScript {
       int var4 = (int)Math.floor(var1.z());
       int var5 = (int)Math.ceil(var1.y() - 0.001);
       BlockPos var6 = new BlockPos(var3, var5 - 2, var4);
-      AiPathfinder.CellInfo var7 = var0.putAt_FileStore_BitCache_BlockPos(var6);
-      if (!var7.passable() && var7.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.putAt(var5 - 1, var7) - var1.y()) <= 0.05) {
+      AiPathfinder.CellInfo var7 = var0.probePos(var6);
+      if (!var7.passable() && var7.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.surfaceY(var5 - 1, var7) - var1.y()) <= 0.05) {
          BlockPos var8 = var6.above();
-         AiPathfinder.CellInfo var9 = var0.putAt_FileStore_BitCache_BlockPos(var8);
-         AiPathfinder.CellInfo var10 = var0.putAt_FileStore_BitCache_BlockPos(var8.above());
+         AiPathfinder.CellInfo var9 = var0.probePos(var8);
+         AiPathfinder.CellInfo var10 = var0.probePos(var8.above());
          if ((var9.passable() || var9.climbable()) && !var9.feetTrigger() && var10.passable()) {
             return var8;
          }
       }
 
       BlockPos var28 = new BlockPos(var3, var5, var4);
-      AiPathfinder.CellInfo var29 = var0.putAt_FileStore_BitCache_BlockPos(var28);
-      AiPathfinder.CellInfo var30 = var0.putAt_FileStore_BitCache_BlockPos(var28.above());
-      AiPathfinder.CellInfo var11 = var0.putAt_FileStore_BitCache_BlockPos(var28.below());
+      AiPathfinder.CellInfo var29 = var0.probePos(var28);
+      AiPathfinder.CellInfo var30 = var0.probePos(var28.above());
+      AiPathfinder.CellInfo var11 = var0.probePos(var28.below());
       if (!var29.climbable()
          && (!var29.passable() || !var30.passable() && (var11.passable() || var11.top16() <= 0 || var11.top16() > 3) || var11.passable() || var29.feetTrigger())
          )
@@ -992,13 +992,13 @@ public final class AiPaceScript {
          for (int var17 = (int)Math.floor(var1.x() - var12); var17 <= (int)Math.floor(var1.x() + var12); var17++) {
             for (int var18 = (int)Math.floor(var1.z() - var12); var18 <= (int)Math.floor(var1.z() + var12); var18++) {
                BlockPos var19 = new BlockPos(var17, var5, var18);
-               AiPathfinder.CellInfo var20 = var0.putAt_FileStore_BitCache_BlockPos(var19.below());
+               AiPathfinder.CellInfo var20 = var0.probePos(var19.below());
                if (!var20.passable()) {
-                  boolean var21 = Math.abs(AiPathfinder.MoveGenerator.putAt(var5, var20) - var1.y()) <= 0.05
+                  boolean var21 = Math.abs(AiPathfinder.MoveGenerator.surfaceY(var5, var20) - var1.y()) <= 0.05
                      || var20.slabStair() && var1.y() >= var19.getY() - 1.0 && var1.y() <= var19.getY() + 0.05;
                   if (var21) {
-                     AiPathfinder.CellInfo var22 = var0.putAt_FileStore_BitCache_BlockPos(var19);
-                     AiPathfinder.CellInfo var23 = var0.putAt_FileStore_BitCache_BlockPos(var19.above());
+                     AiPathfinder.CellInfo var22 = var0.probePos(var19);
+                     AiPathfinder.CellInfo var23 = var0.probePos(var19.above());
                      if (var22.passable() && (var23.passable() || var20.top16() > 0 && var20.top16() <= 3) && !var22.feetTrigger()) {
                         double var24 = fill_D_D(var17 + 0.5 - var1.x()) + fill_D_D(var18 + 0.5 - var1.z());
                         if (var24 < var15) {
@@ -1010,11 +1010,11 @@ public final class AiPaceScript {
                }
 
                BlockPos var35 = new BlockPos(var17, var5 - 2, var18);
-               AiPathfinder.CellInfo var36 = var0.putAt_FileStore_BitCache_BlockPos(var35);
-               if (!var36.passable() && var36.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.putAt(var5 - 1, var36) - var1.y()) <= 0.05) {
+               AiPathfinder.CellInfo var36 = var0.probePos(var35);
+               if (!var36.passable() && var36.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.surfaceY(var5 - 1, var36) - var1.y()) <= 0.05) {
                   BlockPos var37 = var35.above();
-                  AiPathfinder.CellInfo var38 = var0.putAt_FileStore_BitCache_BlockPos(var37);
-                  AiPathfinder.CellInfo var25 = var0.putAt_FileStore_BitCache_BlockPos(var37.above());
+                  AiPathfinder.CellInfo var38 = var0.probePos(var37);
+                  AiPathfinder.CellInfo var25 = var0.probePos(var37.above());
                   if (var38.passable() && var25.passable() && !var38.feetTrigger()) {
                      double var26 = fill_D_D(var17 + 0.5 - var1.x()) + fill_D_D(var18 + 0.5 - var1.z());
                      if (var26 < var15) {
@@ -1032,9 +1032,9 @@ public final class AiPaceScript {
 
          if (var5 > (int)Math.floor(var1.y())) {
             BlockPos var31 = var28.below();
-            AiPathfinder.CellInfo var32 = var0.putAt_FileStore_BitCache_BlockPos(var31);
-            AiPathfinder.CellInfo var33 = var0.putAt_FileStore_BitCache_BlockPos(var31.above());
-            AiPathfinder.CellInfo var34 = var0.putAt_FileStore_BitCache_BlockPos(var31.below());
+            AiPathfinder.CellInfo var32 = var0.probePos(var31);
+            AiPathfinder.CellInfo var33 = var0.probePos(var31.above());
+            AiPathfinder.CellInfo var34 = var0.probePos(var31.below());
             if (var32.passable() && var33.passable() && !var34.passable() && !var32.feetTrigger()) {
                return var31;
             }
@@ -1047,17 +1047,17 @@ public final class AiPaceScript {
    }
 
    private static BlockPos putAt(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
-      AiPathfinder.CellInfo var2 = var0.putAt_FileStore_BitCache_BlockPos(var1);
+      AiPathfinder.CellInfo var2 = var0.probePos(var1);
       if (var2.loaded() && !var2.passable() && var2.top16() > 0 && var2.top16() < 16 && !var2.door() && !var2.hazardFloor() && !var2.lava()) {
-         AiPathfinder.CellInfo var3 = var0.putAt_FileStore_BitCache_BlockPos(var1.above());
+         AiPathfinder.CellInfo var3 = var0.probePos(var1.above());
          if (var3.loaded() && var3.passable() && !var3.feetTrigger()) {
             return var1.above();
          }
       }
 
       if (var2.loaded() && var2.passable() && !var2.water() && !var2.climbable()) {
-         AiPathfinder.CellInfo var5 = var0.putAt_FileStore_BitCache_BlockPos(var1.below());
-         AiPathfinder.CellInfo var4 = var0.putAt_FileStore_BitCache_BlockPos(var1.below(2));
+         AiPathfinder.CellInfo var5 = var0.probePos(var1.below());
+         AiPathfinder.CellInfo var4 = var0.probePos(var1.below(2));
          if (var5.loaded()
             && var5.passable()
             && !var5.feetTrigger()
@@ -1065,7 +1065,7 @@ public final class AiPaceScript {
             && !var4.passable()
             && !var4.hazardFloor()
             && !var4.lava()
-            && AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(var5, var2, var4)) {
+            && AiPathfinder.MoveGenerator.isStandable(var5, var2, var4)) {
             return var1.below();
          }
       }
@@ -1083,16 +1083,16 @@ public final class AiPaceScript {
       AiPathfinder.RouteBlacklist var7 = new AiPathfinder.RouteBlacklist(var0, true, var3, false);
 
       try {
-         var7.putAt_V_BlockPos_2(var1, AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos(var2, 0.6, true), var5);
+         var7.startSearch(var1, AiPathfinder.PathGoal.near(var2, 0.6, true), var5);
 
-         while (!var7.fill(50000000L)) {
+         while (!var7.awaitResultBlocking(50000000L)) {
             if (var6.getAsBoolean()) {
                return null;
             }
          }
 
-         if (!var6.getAsBoolean() && var7.putAt_Str() == null) {
-            var7.putAt(new AiPathfinder.SearchTask() {
+         if (!var6.getAsBoolean() && var7.lastError() == null) {
+            var7.tickDriver(new AiPathfinder.SearchTask() {
                @Override
                public boolean putAt_Z() {
                   return false;
@@ -1108,13 +1108,13 @@ public final class AiPaceScript {
                   return var1;
                }
             });
-            AiPathfinder.PathResult var8 = var7.putAt_FileStore_StreamSt();
+            AiPathfinder.PathResult var8 = var7.pollReplacementPath();
             return var8 != null && var8.reachesGoal() ? var8 : null;
          } else {
             return null;
          }
       } finally {
-         var7.putAt_V();
+         var7.close();
       }
    }
 
@@ -1142,17 +1142,17 @@ public final class AiPaceScript {
          if (var9 > 0 && var9 % 4 == 0) {
             ArrayList<BlockPos> var10 = new ArrayList<>();
             BlockPos var11 = var1.offset(var6 * var8, 0, var7 * var8);
-            if (var0.putAt_FileStore_BitCache_BlockPos(var11).passable() && !var0.putAt_FileStore_BitCache_BlockPos(var11.below()).passable()) {
+            if (var0.probePos(var11).passable() && !var0.probePos(var11.below()).passable()) {
                var10.add(var11);
                boolean var12 = true;
                int var13 = 0;
 
                while (var13 < var9 / 4) {
-                  if (!var0.putAt_FileStore_BitCache_BlockPos(var11.offset(var6, 0, var7)).passable()
-                     && !var0.putAt_FileStore_BitCache_BlockPos(var11.offset(2 * var6, 0, 2 * var7)).passable()
-                     && !var0.putAt_FileStore_BitCache_BlockPos(var11.offset(3 * var6, 0, 3 * var7)).passable()) {
+                  if (!var0.probePos(var11.offset(var6, 0, var7)).passable()
+                     && !var0.probePos(var11.offset(2 * var6, 0, 2 * var7)).passable()
+                     && !var0.probePos(var11.offset(3 * var6, 0, 3 * var7)).passable()) {
                      var11 = var11.offset(4 * var6, 0, 4 * var7);
-                     if (var0.putAt_FileStore_BitCache_BlockPos(var11).passable() && !var0.putAt_FileStore_BitCache_BlockPos(var11.below()).passable()) {
+                     if (var0.probePos(var11).passable() && !var0.probePos(var11.below()).passable()) {
                         var10.add(var11);
                         var13++;
                         continue;
@@ -1212,10 +1212,10 @@ public final class AiPaceScript {
             BlockPos var18 = var17.to();
             int var19 = var9.size();
             AiJumpSolver.JumpPlan var20 = var17.jump();
-            double var21 = var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
+            double var21 = var8.probePos(var18).climbable()
                ? var18.getY()
-               : AiPathfinder.MoveGenerator.putAt(var18.getY(), var8.putAt_FileStore_BitCache_BlockPos(var18.below()));
-            double var23 = var20 != null && !var8.putAt_FileStore_BitCache_BlockPos(var18).climbable() && Math.abs(var20.landY() - var21) > 0.25
+               : AiPathfinder.MoveGenerator.surfaceY(var18.getY(), var8.probePos(var18.below()));
+            double var23 = var20 != null && !var8.probePos(var18).climbable() && Math.abs(var20.landY() - var21) > 0.25
                ? var20.landY()
                : var21;
             AiPaceScript.Inner_JsonCache.add(var9, var18.getX() + 0.5, var23, var18.getZ() + 0.5, putAt_Set.contains(var17.type()));
@@ -1227,8 +1227,8 @@ public final class AiPaceScript {
 
             var13.add(
                fill_Set.contains(var17.type())
-                  && !var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
-                  && !var8.putAt_FileStore_BitCache_BlockPos(var18.below()).passable()
+                  && !var8.probePos(var18).climbable()
+                  && !var8.probePos(var18.below()).passable()
             );
             boolean var36 = var17.type() == AiPathfinder.MoveType.SLIME_BOUNCE;
             var14.add(
@@ -1239,7 +1239,7 @@ public final class AiPaceScript {
                         ? new AiPaceScript.Inner_JsonEntry(true, var17.from(), var20.yaw(), var23, var20.sprint(), null)
                         : (
                            var20.maneuver() == null
-                                 || var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
+                                 || var8.probePos(var18).climbable()
                                     && (var17.type() != AiPathfinder.MoveType.LADDER_JUMP || var8.putAt_S_I(var18.getX(), var18.getY(), var18.getZ()) != 0)
                               ? null
                               : new AiPaceScript.Inner_JsonEntry(
@@ -1276,7 +1276,7 @@ public final class AiPaceScript {
             double[] var34 = (double[])var9.get(var32 - 1);
             double[] var35 = (double[])var9.get(var32);
             var31[var32] = !var26[var32]
-               && var8.putAt_FileStore_BitCache_BlockPos(
+               && var8.probePos(
                      BlockPos.containing((var34[0] + var35[0]) / 2.0, (var34[1] + var35[1]) / 2.0 + 0.01, (var34[2] + var35[2]) / 2.0)
                   )
                   .climbable();
@@ -1534,7 +1534,7 @@ public final class AiPaceScript {
             if (var4.putAt_Z_D(var18 + 0.01, var9.y() - 0.02, var19 + 0.01, var18 + 0.99, var9.y() - 1.0E-4, var19 + 0.99)) {
                double var20 = var18 + 0.5;
                double var22 = var19 + 0.5;
-               if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var4, var20, var9.y(), var22)) {
+               if (AiJumpSolver.canStandAt(var4, var20, var9.y(), var22)) {
                   double var24 = fill_D_D(var20 - var9.x()) + fill_D_D(var22 - var9.z());
                   if (var24 < var16) {
                      var16 = var24;
@@ -3031,7 +3031,7 @@ public final class AiPaceScript {
 
          double var6 = var3.getX() + 0.5;
          double var8 = var3.getZ() + 0.5;
-         return Math.hypot(var1.x() - var6, var1.z() - var8) <= 0.28 || !AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var6, var1.y(), var8);
+         return Math.hypot(var1.x() - var6, var1.z() - var8) <= 0.28 || !AiJumpSolver.canStandAt(var0, var6, var1.y(), var8);
       } else {
          return false;
       }

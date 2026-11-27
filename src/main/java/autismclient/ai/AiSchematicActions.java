@@ -94,7 +94,7 @@ final class AiSchematicActions {
    static BlockPos init(LevelReader world, BlockPos ceiling, Map<Long, AiBuilder.CellSpec> source) {
       BlockPos below = ceiling.below();
       AiBuilder.CellSpec cell = source.get(below.asLong());
-      if (cell != null && AiBuilder.init_BlockState(cell).getBlock() instanceof BedBlock && !AiBuilder.read(cell, world.getBlockState(below))) {
+      if (cell != null && AiBuilder.toBlockState(cell).getBlock() instanceof BedBlock && !AiBuilder.matchesIgnoringUnpairedChest(cell, world.getBlockState(below))) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          if (facing != null && facing.getAxis().isHorizontal()) {
             BlockPos foot = read_Z(cell) ? below.relative(facing.getOpposite()) : below;
@@ -136,7 +136,7 @@ final class AiSchematicActions {
    }
 
    static BlockPos init_BlockPos_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Set<Long> sourceCells) {
-      BlockState requested = AiBuilder.init_BlockState(cell);
+      BlockState requested = AiBuilder.toBlockState(cell);
       if (requested.canSurvive(world, target)) {
          return null;
       } else {
@@ -153,13 +153,13 @@ final class AiSchematicActions {
    static BlockPos init_BlockPos_TableIndex_StreamU(
       AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Map<Long, AiBuilder.CellSpec> source
    ) {
-      BlockState requested = AiBuilder.init_BlockState(cell);
+      BlockState requested = AiBuilder.toBlockState(cell);
       if (requested.canSurvive(world, target)) {
          for (Direction direction : Direction.values()) {
             BlockPos neighbour = target.relative(direction);
             AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
             if (wanted != null
-               && !AiBuilder.read(wanted, world.getBlockState(neighbour))
+               && !AiBuilder.matchesIgnoringUnpairedChest(wanted, world.getBlockState(neighbour))
                && !requested.canSurvive(init(world, neighbour, Blocks.AIR.defaultBlockState()), target)) {
                return neighbour;
             }
@@ -170,7 +170,7 @@ final class AiSchematicActions {
          for (Direction direction : Direction.values()) {
             BlockPos neighbour = target.relative(direction);
             AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
-            if (wanted != null && requested.canSurvive(init(world, neighbour, AiBuilder.init_BlockState(wanted)), target)) {
+            if (wanted != null && requested.canSurvive(init(world, neighbour, AiBuilder.toBlockState(wanted)), target)) {
                return neighbour;
             }
          }
@@ -184,8 +184,8 @@ final class AiSchematicActions {
          BlockPos pos = new BlockPos(bottom.getX(), y, bottom.getZ());
          BlockState state = world.getBlockState(pos);
          if (!state.getFluidState().isEmpty()
-            || autismclient.ai.engine.AiPathfinder.LiveGridView.load(state)
-            || autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)
+            || autismclient.ai.engine.AiPathfinder.LiveGridView.isFeetHazardCompat(state)
+            || autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state)
             || y >= bottom.getY() && (state.hasBlockEntity() || state.getDestroySpeed(world, pos) < 0.0F)) {
             return false;
          }
@@ -206,7 +206,7 @@ final class AiSchematicActions {
          if (!dependent.equals(ignore)) {
             AiBuilder.CellSpec cell = source.get(dependent.asLong());
             if (cell != null) {
-               BlockState requested = AiBuilder.init_BlockState(cell);
+               BlockState requested = AiBuilder.toBlockState(cell);
                if (direction == Direction.UP && requested.getBlock() instanceof FallingBlock) {
                   return true;
                }
@@ -283,7 +283,7 @@ final class AiSchematicActions {
                      || protectedCells.contains(floor.asLong())) {
                      return this.init(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
                   } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.isSafeToBreakSupport(floor)) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(floor, 10, true, digProtected, false);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
                      return this.init(AiOperation.Status.FAILED, "The access shaft has no safe landing after its floor is removed");
@@ -334,7 +334,7 @@ final class AiSchematicActions {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player.onGround()
          && !(Math.abs(mc.player.getY() - target.getY() - 1.0) > 1.0E-5)
-         && Block.isShapeFullBlock(AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, target))) {
+         && Block.isShapeFullBlock(AiBuilder.toBlockState(cell).getCollisionShape(mc.level, target))) {
          BlockPos floor = new BlockPos(mc.player.blockPosition().getX(), target.getY(), mc.player.blockPosition().getZ());
          int dx = target.getX() - floor.getX();
          int dz = target.getZ() - floor.getZ();
@@ -364,7 +364,7 @@ final class AiSchematicActions {
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
                      if (mc.player.onGround() && ++this.init_I <= 60) {
-                        if (autismclient.ai.engine.PlacementGoal.init(mc, target, AiBuilder.init_BlockState(cell).getBlock().asItem(), constraint, 72) != null) {
+                        if (autismclient.ai.engine.PlacementGoal.init(mc, target, AiBuilder.toBlockState(cell).getBlock().asItem(), constraint, 72) != null) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Support side exposed");
                         }
 
@@ -658,7 +658,7 @@ final class AiSchematicActions {
                   true,
                   2.0,
                   AiGoto.protectingCellsBelowYCompat(
-                     autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
+                     autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(feet, 0.25), keep, blueprint.origin().getY()
                   )
                );
             }
@@ -666,7 +666,7 @@ final class AiSchematicActions {
             AiOperation load(final BlockPos pos, Set<Long> keep) {
                BlockState state = mc.level.getBlockState(pos);
                if (state.canBeReplaced() && state.getFluidState().isEmpty()) {
-                  final AiOperation build = AiBuilder.load(
+                  final AiOperation build = AiBuilder.buildSchematicSneaking(
                      new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))), keep
                   );
                   return new AiOperation() {
@@ -761,7 +761,7 @@ final class AiSchematicActions {
                   if (cell != null) {
                      BlockState live = world.getBlockState(next);
                      if (!read(live)) {
-                        if (AiBuilder.init_Fluid(cell) == null && !"true".equals(cell.properties().get("waterlogged"))) {
+                        if (AiBuilder.fluidOfCell(cell) == null && !"true".equals(cell.properties().get("waterlogged"))) {
                            return "waiting for " + next.toShortString() + " to hold the fluid in";
                         }
 
@@ -852,7 +852,7 @@ final class AiSchematicActions {
       LinkedHashSet<BlockPos> out = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         Block block = AiBuilder.init_BlockState(cell).getBlock();
+         Block block = AiBuilder.toBlockState(cell).getBlock();
          if (block instanceof WallBlock || block instanceof FenceBlock || block instanceof IronBarsBlock) {
             BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
 
@@ -943,7 +943,7 @@ final class AiSchematicActions {
       String id = cell.block();
       return id.equals("minecraft:farmland")
          || id.equals("minecraft:dirt_path")
-         || AiBuilder.init_Fluid(cell) != null
+         || AiBuilder.fluidOfCell(cell) != null
          || id.startsWith("minecraft:potted_")
          || "upper".equals(cell.properties().get("half"))
          || read_Z(cell)
@@ -1003,7 +1003,7 @@ final class AiSchematicActions {
 
    static List<String> init_List(AiBuilder.CellSpec cell) {
       String id = cell.block();
-      if (AiBuilder.init_Fluid(cell) != null || id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path") || read_Z(cell)) {
+      if (AiBuilder.fluidOfCell(cell) != null || id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path") || read_Z(cell)) {
          return List.of();
       }
 
@@ -1013,7 +1013,7 @@ final class AiSchematicActions {
 
       if (!write(cell)) {
          if (id.startsWith("minecraft:potted_")) {
-            return init(AiBuilder.init_BlockState(cell).getBlock()) != Items.AIR ? List.of() : List.of("no plant item for the pot");
+            return init(AiBuilder.toBlockState(cell).getBlock()) != Items.AIR ? List.of() : List.of("no plant item for the pot");
          } else {
             return "upper".equals(cell.properties().get("half")) ? List.of() : List.of("no survival construction strategy");
          }
@@ -1035,13 +1035,13 @@ final class AiSchematicActions {
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String name = entry.getKey();
-         if (AiBuilder.init_TableIndex_TaskQue(live.getBlock(), name) == AiBuilder.OrientationKind.POST_INTERACT) {
+         if (AiBuilder.orientationKindForProperty(live.getBlock(), name) == AiBuilder.OrientationKind.POST_INTERACT) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(name);
             if (property != null) {
                String actual = String.valueOf(live.getValue(property));
                String requested = entry.getValue();
-               if (!AiBuilder.init(live.getBlock(), name, actual, requested)) {
-                  Item needed = AiBuilder.init_Item(live.getBlock(), name);
+               if (!AiBuilder.propertyValuesMatch(live.getBlock(), name, actual, requested)) {
+                  Item needed = AiBuilder.postInteractToolItem(live.getBlock(), name);
                   if (needed != null) {
                      if (needed == Items.ENDER_EYE && !Boolean.parseBoolean(requested)) {
                         return null;
@@ -1062,7 +1062,7 @@ final class AiSchematicActions {
                      return needed == Items.DIAMOND_SHOVEL ? "shovel" : BuiltInRegistries.ITEM.getKey(needed).toString();
                   }
 
-                  if (AiBuilder.init_Z(live.getBlock(), name) && Integer.parseInt(actual) < Integer.parseInt(requested)) {
+                  if (AiBuilder.isStackableCountProperty(live.getBlock(), name) && Integer.parseInt(actual) < Integer.parseInt(requested)) {
                      return BuiltInRegistries.ITEM.getKey(live.getBlock().asItem()).toString();
                   }
 
@@ -1099,7 +1099,7 @@ final class AiSchematicActions {
                }
 
                BlockState live = mc.level.getBlockState(target);
-               if (AiBuilder.read(cell, live)) {
+               if (AiBuilder.matchesIgnoringUnpairedChest(cell, live)) {
                   return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Interaction state verified", new JsonObject());
                }
 
@@ -1107,7 +1107,7 @@ final class AiSchematicActions {
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Interaction state did not settle", new JsonObject());
                }
 
-               if (AiBuilder.flush(cell, live)) {
+               if (AiBuilder.needsWaterlogToggleOnly(cell, live)) {
                   BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);
                   if (hit != null && !(mc.player.getEyePosition().distanceToSqr(hit.getLocation()) > 16.0)) {
                      this.init_AiOperation = AiBucket.init(
@@ -1246,7 +1246,7 @@ final class AiSchematicActions {
                   return this.init_AiOperation_Result_11("Restoring water above the converted soil");
                }
 
-               if (AiBuilder.update(cell, live)) {
+               if (AiBuilder.matchesSchematicCell(cell, live)) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Special cell verified");
                }
 
@@ -1261,7 +1261,7 @@ final class AiSchematicActions {
                      BlockPos foot = target.relative(facing.getOpposite());
                      if (!live.canBeReplaced()) {
                         if ((!live.hasBlockEntity() || live.getBlock() instanceof BedBlock) && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the bed's head cell");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The bed's head cell is occupied by protected contents");
@@ -1272,12 +1272,12 @@ final class AiSchematicActions {
                            LinkedHashMap<String, String> props = new LinkedHashMap<>(cell.properties());
                            props.put("part", "foot");
                            protectedCells.add(foot.asLong());
-                           this.init_AiOperation = AiBuilder.init(
+                           this.init_AiOperation = AiBuilder.buildSchematicSubtask(
                               new AiBuilder.Blueprint(foot, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
                            return this.init_AiOperation_Result_11("Placing the bed's foot, which makes its head");
                         } else if ((!footState.hasBlockEntity() || footState.getBlock() instanceof BedBlock) && footState.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(foot, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(foot, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the bed's foot cell");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The bed's foot cell is occupied by protected contents");
@@ -1293,7 +1293,7 @@ final class AiSchematicActions {
                      if (level > wanted) {
                         this.init_AiOperation = level == 8
                            ? this.init(target, "minecraft:dirt", false)
-                           : autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                           : autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                         return this.init_AiOperation_Result_11("Emptying the overfilled composter");
                      } else if (level == 7 && wanted == 8) {
                         this.init_I--;
@@ -1306,7 +1306,7 @@ final class AiSchematicActions {
                      this.init_AiOperation = this.init(target, "minecraft:composter");
                      return this.init_AiOperation_Result_11("Placing the composter");
                   } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                      return this.init_AiOperation_Result_11("Clearing the composter cell");
                   } else {
                      return this.init(AiOperation.Status.FAILED, "The composter cell is occupied by protected contents");
@@ -1326,11 +1326,11 @@ final class AiSchematicActions {
                               );
                               return this.init_AiOperation_Result_11("Restoring the paired door's open state");
                            } else {
-                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(root, 30, true, protectedCells);
+                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
                               return this.init_AiOperation_Result_11("Recovering the conflicting paired block");
                            }
                         } else if (!lower.canBeReplaced()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(root, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the missing lower half");
                         } else if (mc.level.getBlockState(root.below()).isAir()) {
                            this.init_AiOperation = this.init(root.below(), "minecraft:dirt");
@@ -1339,18 +1339,18 @@ final class AiSchematicActions {
                            LinkedHashMap<String, String> props = new LinkedHashMap<>(cell.properties());
                            props.put("half", "lower");
                            protectedCells.add(root.asLong());
-                           this.init_AiOperation = AiBuilder.init(
+                           this.init_AiOperation = AiBuilder.buildSchematicSubtask(
                               new AiBuilder.Blueprint(root, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
                            return this.init_AiOperation_Result_11("Placing the lower half to create the requested upper half");
                         }
                      } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                         return this.init_AiOperation_Result_11("Clearing the occupied upper half");
                      } else {
                         return this.init(AiOperation.Status.FAILED, "The upper half is occupied by protected contents");
                      }
-                  } else if (AiBuilder.init_Fluid(cell) != null) {
+                  } else if (AiBuilder.fluidOfCell(cell) != null) {
                      String fluid = id.equals("minecraft:lava") ? "lava" : "water";
                      if (!"0".equals(cell.properties().getOrDefault("level", "0"))) {
                         return this.init(AiOperation.Status.FAILED, "Flowing " + fluid + " must be produced by surrounding source cells");
@@ -1371,7 +1371,7 @@ final class AiSchematicActions {
                            return this.init(AiOperation.Status.FAILED, "The water cell is occupied by protected contents");
                         }
 
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, false, protectedCells);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, false, protectedCells);
                         return this.init_AiOperation_Result_11("Clearing the block where the water goes");
                      }
                   } else if (id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path")) {
@@ -1419,7 +1419,7 @@ final class AiSchematicActions {
                                     true,
                                     2.0,
                                     AiGoto.protectingCellsBelowYCompat(
-                                       autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
+                                       autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(above, 0.45),
                                        protectedCells,
                                        target.getY()
                                     )
@@ -1427,7 +1427,7 @@ final class AiSchematicActions {
                                  return this.init_AiOperation_Result_11("Approaching the water above the soil");
                               }
                            } else if (!cover.hasBlockEntity() && cover.getFluidState().isEmpty() && !protectedCells.contains(above.asLong())) {
-                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(above, 10, true, protectedCells, false);
+                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10, true, protectedCells, false);
                               return this.init_AiOperation_Result_11("Clearing the temporary obstruction above the soil");
                            } else {
                               return this.init(
@@ -1439,7 +1439,7 @@ final class AiSchematicActions {
                               );
                            }
                         } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the non-soil block before planting");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The soil cell is occupied by protected contents");
@@ -1449,7 +1449,7 @@ final class AiSchematicActions {
                         return this.init_AiOperation_Result_11("Placing soil");
                      }
                   } else if (id.startsWith("minecraft:potted_")) {
-                     Item plant = AiSchematicActions.init(AiBuilder.init_BlockState(cell).getBlock());
+                     Item plant = AiSchematicActions.init(AiBuilder.toBlockState(cell).getBlock());
                      if (plant == Items.AIR) {
                         return this.init(AiOperation.Status.FAILED, "No plant item for " + id);
                      } else if (!live.is(Blocks.FLOWER_POT)) {
@@ -1493,7 +1493,7 @@ final class AiSchematicActions {
                   this.init_AiOperation = this.init(target, "minecraft:cauldron");
                   return this.init_AiOperation_Result_11("Placing the cauldron");
                } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
                   return this.init_AiOperation_Result_11("Clearing the cauldron cell");
                } else {
                   return this.init(AiOperation.Status.FAILED, "The cauldron cell is occupied by protected contents");
@@ -1504,7 +1504,7 @@ final class AiSchematicActions {
          }
 
          AiOperation init(BlockPos pos, String id) {
-            return AiBuilder.init(new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, id))), protectedCells);
+            return AiBuilder.buildSchematicSubtask(new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, id))), protectedCells);
          }
 
          AiOperation init_AiOperation(String action) {
@@ -1597,7 +1597,7 @@ final class AiSchematicActions {
    static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
       autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsBelowYCompat(
-         autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
+         autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(support.above(), 0.6), protectedCells, minimumDigY
       );
       final Supplier<AiOperation> climb = () -> AiGoto.travelToCompat(
          support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0, goal
@@ -1673,7 +1673,7 @@ final class AiSchematicActions {
                }
 
                if (mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
-                  this.init_AiOperation = AiBuilder.init(
+                  this.init_AiOperation = AiBuilder.buildSchematicSubtask(
                      new AiBuilder.Blueprint(support, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))), protectedCells
                   );
                   this.write = true;

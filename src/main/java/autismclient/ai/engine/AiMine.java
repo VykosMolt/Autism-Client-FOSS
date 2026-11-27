@@ -146,7 +146,7 @@ public final class AiMine {
                   this.init_V_16();
                }
 
-               this.init_ClassCache_StreamU.init_V_2();
+               this.init_ClassCache_StreamU.scanStepCompat();
                if ((quota == null ? this.close >= count : quota.init_Z())
                   && this.init_AiOperation == null
                   && this.init_TokenStore_1_DataU != Inner_DataUtil.COLLECT) {
@@ -205,7 +205,7 @@ public final class AiMine {
                         return toolFail;
                      }
 
-                     if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(this.load_BlockPos)) {
+                     if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.load_BlockPos)) {
                         if (!this.init_Z_6(this.load_BlockPos)) {
                            this.load_BlockPos = null;
                            this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
@@ -224,23 +224,23 @@ public final class AiMine {
                      }
 
                      this.init_DataUtil.tick();
-                     switch (this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.load_BlockPos)) {
+                     switch (this.init_RefQueue_DataUtil.digCompat(this.load_BlockPos)) {
                         case init:
-                           if (this.init_RefQueue_DataUtil.init_Z_BlockPos(this.load_BlockPos)
+                           if (this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.load_BlockPos)
                               && !this.init_Minecraft.level.getBlockState(this.load_BlockPos).isAir()
                               && (!this.read(this.load_BlockPos) || !this.write(this.load_BlockPos))) {
-                              this.init_RefQueue_DataUtil.init_V();
+                              this.init_RefQueue_DataUtil.stopCompat();
                               this.init_V_3("lost line of sight mid-dig");
                               return this.init_AiOperation_Result_7("Lost line of sight; trying another");
                            }
 
                            return this.init_AiOperation_Result_7("Extracting " + this.load_BlockPos.toShortString());
                         case read:
-                           this.init_RefQueue_DataUtil.init_V();
+                           this.init_RefQueue_DataUtil.stopCompat();
                            this.init_V_3("break failed");
                            return this.init_AiOperation_Result_7("Break failed; trying another");
                         case load:
-                           this.init_RefQueue_DataUtil.init_V();
+                           this.init_RefQueue_DataUtil.stopCompat();
                            if (quota == null || quota.load(this.read_Map.get(this.load_BlockPos.asLong()))) {
                               this.close++;
                            }
@@ -469,7 +469,7 @@ public final class AiMine {
 
             BlockPos init_BlockPos_7() {
                if (this.init_FutureTask == null) {
-                  if (this.load_J == this.init_ClassCache_StreamU.load_J()) {
+                  if (this.load_J == this.init_ClassCache_StreamU.changeVersionCompat()) {
                      if (System.nanoTime() >= this.read_J) {
                         this.init_Z = false;
                         this.load_Z = true;
@@ -546,7 +546,7 @@ public final class AiMine {
                   } else {
                      ArrayList<MiningTargetSearch.Inner_DataUtil> choices = new ArrayList<>();
                      ItemStack[] tools = this.init_ItemStackArr_2();
-                     this.init_ClassCache_StreamU.init_V_ItemStackArr(tools);
+                     this.init_ClassCache_StreamU.updateHotbarCompat(tools);
                      long inventoryRevision = AiServerEvidence.inventoryRevision();
                      if (this.init_J != inventoryRevision) {
                         this.write_Map.clear();
@@ -578,9 +578,9 @@ public final class AiMine {
                      BlockPos from = this.init_Minecraft.player.blockPosition();
                      double reach = this.init_Minecraft.player.blockInteractionRange() - 0.25;
                      double eye = this.init_Minecraft.player.getEyeHeight();
-                     this.init_ClassCache_StreamU.init_V_BlockPos(from);
+                     this.init_ClassCache_StreamU.setFocusCompat(from);
                      this.init_Z = true;
-                     this.load_J = this.init_ClassCache_StreamU.load_J();
+                     this.load_J = this.init_ClassCache_StreamU.changeVersionCompat();
                      boolean sprint = this.init_Minecraft.player.getFoodData().getFoodLevel() > 6;
                      int constructionBlocks = 0;
 
@@ -874,7 +874,7 @@ public final class AiMine {
                      this.init_AiOperation = null;
                   }
 
-                  this.init_RefQueue_DataUtil.init_V();
+                  this.init_RefQueue_DataUtil.stopCompat();
                   if (this.init_FutureTask != null) {
                      this.init_FutureTask.cancel(true);
                   }

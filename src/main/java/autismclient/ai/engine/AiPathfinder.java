@@ -90,13 +90,13 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiPathfinder {
-   private static final ConcurrentHashMap<AiPathfinder.MoveKey, Long> putAt = new ConcurrentHashMap<>();
-   private static final ConcurrentHashMap<AiPathfinder.MoveKey, long[]> fill = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<AiPathfinder.MoveKey, Long> GLOBAL_MOVE_BLACKLIST = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<AiPathfinder.MoveKey, long[]> GLOBAL_MOVE_FAILURE_COUNTS = new ConcurrentHashMap<>();
 
    private AiPathfinder() {
    }
 
-   private static int flowState(AiPathfinder.UiHelper var0) {
+   private static int headingBucket(AiPathfinder.UiHelper var0) {
       if (var0 == null) {
          return 4;
       }
@@ -106,7 +106,7 @@ public final class AiPathfinder {
       return 3 * (var1 + 1) + var2 + 1;
    }
 
-   private static double putAt_D_FileStore_PacketHe_FileStore_PacketHe(AiPathfinder.UiHelper var0, AiPathfinder.UiHelper var1) {
+   private static double transitionPenalty(AiPathfinder.UiHelper var0, AiPathfinder.UiHelper var1) {
       if (var0 == null) {
          return 0.0;
       }
@@ -124,26 +124,26 @@ public final class AiPathfinder {
       return var12 * (var1.jump() != null ? 6 : (var0.jump() != null ? 4 : 2));
    }
 
-   private static double putAt(AiPathfinder.PathResult var0) {
+   private static double scorePathDuration(AiPathfinder.PathResult var0) {
       double var1 = 0.0;
       AiPathfinder.UiHelper var3 = null;
 
       for (AiPathfinder.UiHelper var5 : var0.movements()) {
-         var1 += putAt_D(var5) + putAt_D_FileStore_PacketHe_FileStore_PacketHe(var3, var5);
+         var1 += effectiveMoveTicks(var5) + transitionPenalty(var3, var5);
          var3 = var5;
       }
 
       return var1;
    }
 
-   private static double putAt_D(AiPathfinder.UiHelper var0) {
+   private static double effectiveMoveTicks(AiPathfinder.UiHelper var0) {
       AiJumpSolver.JumpPlan var1 = var0.jump();
       return var0.type() == AiPathfinder.MoveType.JUMP && var1 != null && var1.maneuver() != null
          ? Math.max(var1.ticks() + 4, var0.costTicks() - 12.0)
          : var0.costTicks();
    }
 
-   private static AiPathfinder.PathResult putAt(
+   private static AiPathfinder.PathResult optimizeWithShortcutJumps(
       AiPathfinder.PathResult var0,
       AiPathfinder.GridView var1,
       AiPathfinder.PathOptions var2,
@@ -158,9 +158,9 @@ public final class AiPathfinder {
 
       ArrayList<List<AiPathfinder.TrailNode>> var8 = new ArrayList<>(Collections.nCopies(var7.size(), List.of()));
       AiPathfinder.MoveGenerator.CachedGrid var9 = new AiPathfinder.MoveGenerator.CachedGrid(var1, 50000, var3);
-      var9.value_Z = var9.prevEx_Z = true;
-      var9.prev_Z = true;
-      var9.putAt_FileStore_RingUtil = var2.fallPolicy();
+      var9.ignoreCachedCells = var9.fullPhysicsParkour = true;
+      var9.fastPassMode = true;
+      var9.fallPolicy = var2.fallPolicy();
 
       for (int var10 = var7.size() - 1; var10 >= 0; var10--) {
          if (Thread.currentThread().isInterrupted()) {
@@ -169,40 +169,40 @@ public final class AiPathfinder {
 
          AiPathfinder.UiHelper var11 = (AiPathfinder.UiHelper)var7.get(var10);
          ArrayList var12 = new ArrayList();
-         var12.add(putAt(var11, var10 + 1, var8, 0.0));
+         var12.add(chainTrailNode(var11, var10 + 1, var8, 0.0));
          BlockPos var13 = var11.from();
-         AiPathfinder.CellInfo var14 = var9.putAt_FileStore_BitCache_BlockPos(var13.below());
-         double var15 = AiPathfinder.MoveGenerator.putAt(var13.getY(), var14);
+         AiPathfinder.CellInfo var14 = var9.probePos(var13.below());
+         double var15 = AiPathfinder.MoveGenerator.surfaceY(var13.getY(), var14);
          if (!var14.farmland()
             && !var14.slime()
-            && AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(
-               var9.putAt_FileStore_BitCache_BlockPos(var13), var9.putAt_FileStore_BitCache_BlockPos(var13.above()), var14
+            && AiPathfinder.MoveGenerator.isStandable(
+               var9.probePos(var13), var9.probePos(var13.above()), var14
             )
-            && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var9.putAt_RefQueue(), var13.getX() + 0.5, var15, var13.getZ() + 0.5)) {
-            var9.putAt_FileStore_PacketHe = var10 == 0 ? null : (AiPathfinder.UiHelper)var7.get(var10 - 1);
+            && AiJumpSolver.canStandAt(var9.plannerWorld(), var13.getX() + 0.5, var15, var13.getZ() + 0.5)) {
+            var9.incomingMove = var10 == 0 ? null : (AiPathfinder.UiHelper)var7.get(var10 - 1);
 
             for (int var17 = var10 + 1; var17 < Math.min(var10 + 16, var7.size()); var17++) {
                BlockPos var18 = ((AiPathfinder.UiHelper)var7.get(var17)).to();
                double var19 = Math.hypot(var18.getX() - var13.getX(), var18.getZ() - var13.getZ());
-               AiPathfinder.CellInfo var21 = var9.putAt_FileStore_BitCache_BlockPos(var18.below());
-               double var22 = AiPathfinder.MoveGenerator.putAt(var18.getY(), var21);
+               AiPathfinder.CellInfo var21 = var9.probePos(var18.below());
+               double var22 = AiPathfinder.MoveGenerator.surfaceY(var18.getY(), var21);
                double var24 = var15 - var22;
                if (!(var19 < 1.6)
                   && !(var19 > (var24 > 14.0 ? 10.5 : 8.5))
                   && !(-var24 > 1.25)
-                  && !(var24 > var2.fallPolicy().putAt_D)
+                  && !(var24 > var2.fallPolicy().maxDropBlocks)
                   && !var5.contains(var18.asLong())
                   && !var21.slime()
-                  && AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(
-                     var9.putAt_FileStore_BitCache_BlockPos(var18), var9.putAt_FileStore_BitCache_BlockPos(var18.above()), var21
+                  && AiPathfinder.MoveGenerator.isStandable(
+                     var9.probePos(var18), var9.probePos(var18.above()), var21
                   )) {
-                  AiJumpSolver.JumpPlan var26 = var9.putAt(var13, var15, var18, var22, 0.0, var2.canSprint());
-                  if (var26 != null && !(var26.margin() < 0.08) && !AiPathfinder.MoveGenerator.readEx(var9, var13, var18)) {
+                  AiJumpSolver.JumpPlan var26 = var9.solveJumpCached(var13, var15, var18, var22, 0.0, var2.canSprint());
+                  if (var26 != null && !(var26.margin() < 0.08) && !AiPathfinder.MoveGenerator.hasLavaUnderJump(var9, var13, var18)) {
                      AiPathfinder.UiHelper var27 = AiPathfinder.UiHelper.jump(
-                        var13, var18, AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var26), var26
+                        var13, var18, AiPathfinder.MoveCosts.jumpPlanCost(var26), var26
                      );
                      if (!var6.contains(AiPathfinder.MoveKey.of(var27))) {
-                        var12.add(putAt(var27, var17 + 1, var8, 1.5));
+                        var12.add(chainTrailNode(var27, var17 + 1, var8, 1.5));
                      }
                   }
                }
@@ -222,12 +222,12 @@ public final class AiPathfinder {
       return new AiPathfinder.PathResult(var29, true, var0.expanded(), false, false);
    }
 
-   private static AiPathfinder.TrailNode putAt(AiPathfinder.UiHelper var0, int var1, List<List<AiPathfinder.TrailNode>> var2, double var3) {
+   private static AiPathfinder.TrailNode chainTrailNode(AiPathfinder.UiHelper var0, int var1, List<List<AiPathfinder.TrailNode>> var2, double var3) {
       AiPathfinder.TrailNode var5 = null;
       double var6 = 1.0 / 0.0;
       if (var1 < var2.size()) {
          for (AiPathfinder.TrailNode var9 : (Iterable<AiPathfinder.TrailNode>)(Iterable<?>)var2.get(var1)) {
-            double var10 = var9.ticks() + putAt_D_FileStore_PacketHe_FileStore_PacketHe(var0, var9.first());
+            double var10 = var9.ticks() + transitionPenalty(var0, var9.first());
             if (var10 < var6) {
                var6 = var10;
                var5 = var9;
@@ -235,17 +235,17 @@ public final class AiPathfinder {
          }
       }
 
-      return new AiPathfinder.TrailNode(var0, var5, putAt_D(var0) + var3 + (var5 == null ? 0.0 : var6));
+      return new AiPathfinder.TrailNode(var0, var5, effectiveMoveTicks(var0) + var3 + (var5 == null ? 0.0 : var6));
    }
 
-   private static AiPathfinder.PathResult putAt(
+   private static AiPathfinder.PathResult optimizeWithPaceJumps(
       AiPathfinder.PathResult var0, AiPathfinder.GridView var1, AiPathfinder.PathOptions var2, double var3
    ) {
       var var5 = new ArrayList<>(var0.movements());
       AiPathfinder.MoveGenerator.CachedGrid var6 = new AiPathfinder.MoveGenerator.CachedGrid(var1, 50000, var3);
-      var6.value_Z = true;
-      var6.putAt_FileStore_RingUtil = var2.fallPolicy();
-      AiPlannerWorld var7 = var6.putAt_RefQueue();
+      var6.ignoreCachedCells = true;
+      var6.fallPolicy = var2.fallPolicy();
+      AiPlannerWorld var7 = var6.plannerWorld();
 
       for (int var8 = 0; var8 + 1 < var5.size() && !Thread.currentThread().isInterrupted(); var8++) {
          AiPathfinder.UiHelper var9 = (AiPathfinder.UiHelper)var5.get(var8);
@@ -257,13 +257,13 @@ public final class AiPathfinder {
             if (var13.type() != AiPathfinder.MoveType.JUMP
                || var13.jump() == null
                || !var13.jump().sprint()
-               || var6.putAt_FileStore_BitCache_BlockPos(var13.from().below()).ice()
-               || var6.putAt_FileStore_BitCache_BlockPos(var13.to().below()).ice()) {
+               || var6.probePos(var13.from().below()).ice()
+               || var6.probePos(var13.to().below()).ice()) {
                break;
             }
 
-            AiPathfinder.CellInfo var14 = var6.putAt_FileStore_BitCache_BlockPos(var13.from().below());
-            double var15 = var13.jump().landY() - AiPathfinder.MoveGenerator.putAt(var13.from().getY(), var14);
+            AiPathfinder.CellInfo var14 = var6.probePos(var13.from().below());
+            double var15 = var13.jump().landY() - AiPathfinder.MoveGenerator.surfaceY(var13.from().getY(), var14);
             if (var15 > 1.29 || var15 < -2.25) {
                break;
             }
@@ -274,7 +274,7 @@ public final class AiPathfinder {
 
          if (var10.size() >= 2) {
             AiJumpSolver.JumpPlan var20 = var9.jump();
-            double var21 = AiPathfinder.MoveGenerator.putAt(var9.from().getY(), var6.putAt_FileStore_BitCache_BlockPos(var9.from().below()));
+            double var21 = AiPathfinder.MoveGenerator.surfaceY(var9.from().getY(), var6.probePos(var9.from().below()));
             double var22 = Math.toRadians(var20.yaw());
             AiPhysics.MotionState var17 = var20.maneuver() == null
                ? new AiPhysics.MotionState(
@@ -290,7 +290,7 @@ public final class AiPathfinder {
                   false
                )
                : var20.maneuver().start();
-            var var18 = AiJumpSolver.putAt_List_TokenCore_TaskStat(var7, var17, var20.yaw(), var10);
+            var var18 = AiJumpSolver.solveJumpChain(var7, var17, var20.yaw(), var10);
             if (var18.size() == var10.size() && var18.stream().mapToInt(AiJumpSolver.JumpPlan::ticks).sum() < var11 - 1) {
                for (int var19 = 0; var19 < var18.size(); var19++) {
                   var5.set(var8 + var19, ((AiPathfinder.UiHelper)var5.get(var8 + var19)).withPaceJump((AiJumpSolver.JumpPlan)var18.get(var19)));
@@ -304,7 +304,7 @@ public final class AiPathfinder {
       return new AiPathfinder.PathResult(var5, true, var0.expanded(), false, false);
    }
 
-   public static List<AiPathfinder.UiHelper> putAt_List_List_List(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
+   public static List<AiPathfinder.UiHelper> concatSegments(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
       if (!var0.isEmpty() && !var1.isEmpty()) {
          if (!((AiPathfinder.UiHelper)var1.get(0)).from().equals(((AiPathfinder.UiHelper)var0.get(var0.size() - 1)).to())) {
             return null;
@@ -319,7 +319,7 @@ public final class AiPathfinder {
       }
    }
 
-   static List<AiPathfinder.UiHelper> fill(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
+   static List<AiPathfinder.UiHelper> spliceDetour(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
       if (!var0.isEmpty() && !var1.isEmpty()) {
          HashMap var2 = new HashMap();
 
@@ -343,7 +343,7 @@ public final class AiPathfinder {
       }
    }
 
-   public static AiPathfinder.ReplanAction putAt_FileStore_HashEntr_I_I(int var0, int var1) {
+   public static AiPathfinder.ReplanAction decideReplanAction(int var0, int var1) {
       if (var1 >= 6) {
          return AiPathfinder.ReplanAction.FAILED;
       } else {
@@ -351,44 +351,44 @@ public final class AiPathfinder {
       }
    }
 
-   public static void putAt_V_FileStore_PacketHe_J(AiPathfinder.UiHelper var0, long var1) {
+   public static void blacklistJumpTemporarily(AiPathfinder.UiHelper var0, long var1) {
       if (var0 != null && var0.type() == AiPathfinder.MoveType.JUMP) {
-         fill(var0, var1);
+         blacklistMoveTemporarily(var0, var1);
       }
    }
 
-   public static void fill(AiPathfinder.UiHelper var0, long var1) {
+   public static void blacklistMoveTemporarily(AiPathfinder.UiHelper var0, long var1) {
       if (var0 != null) {
          long var3 = System.nanoTime();
-         putAt.values().removeIf(var2 -> var2 - var3 < 0L);
-         putAt.put(new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong()), var3 + var1);
+         GLOBAL_MOVE_BLACKLIST.values().removeIf(var2 -> var2 - var3 < 0L);
+         GLOBAL_MOVE_BLACKLIST.put(new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong()), var3 + var1);
       }
    }
 
-   public static void putAt_V(AiPathfinder.UiHelper var0) {
+   public static void recordMoveFailure(AiPathfinder.UiHelper var0) {
       if (var0 != null) {
          long var1 = System.nanoTime();
-         fill.values().removeIf(var2 -> var1 - var2[1] > 120000000000L);
+         GLOBAL_MOVE_FAILURE_COUNTS.values().removeIf(var2 -> var1 - var2[1] > 120000000000L);
          AiPathfinder.MoveKey var3 = new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong());
-         long[] var4 = fill.computeIfAbsent(var3, var2 -> new long[]{0L, var1});
+         long[] var4 = GLOBAL_MOVE_FAILURE_COUNTS.computeIfAbsent(var3, var2 -> new long[]{0L, var1});
          var4[0]++;
          var4[1] = var1;
          if (var4[0] >= 2L) {
-            fill(var0, 120000000000L);
+            blacklistMoveTemporarily(var0, 120000000000L);
          }
       }
    }
 
-   static boolean putAt_Z(AiPathfinder.UiHelper var0) {
-      if (putAt.isEmpty()) {
+   static boolean isGloballyBlacklisted(AiPathfinder.UiHelper var0) {
+      if (GLOBAL_MOVE_BLACKLIST.isEmpty()) {
          return false;
       }
 
-      Long var1 = putAt.get(new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong()));
+      Long var1 = GLOBAL_MOVE_BLACKLIST.get(new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong()));
       return var1 != null && var1 - System.nanoTime() > 0L;
    }
 
-   public static Set<AiPathfinder.MoveType> putAt(AiPathfinder.MoveType var0) {
+   public static Set<AiPathfinder.MoveType> relatedMoveTypes(AiPathfinder.MoveType var0) {
       Set var10000;
       switch (var0) {
          case WALK:
@@ -432,7 +432,7 @@ public final class AiPathfinder {
       return var10000;
    }
 
-   static AiPathfinder.GridView putAt_FileStore_TextStor_FileStore_TextStor_List(
+   static AiPathfinder.GridView withSimulatedEdits(
       final AiPathfinder.GridView var0, List<AiPathfinder.UiHelper> var1
    ) {
       HashMap var2 = new HashMap();
@@ -1338,7 +1338,7 @@ public final class AiPathfinder {
       }
 
       public PathOptions(boolean var1, boolean var2, boolean var3, boolean var4, boolean var5) {
-         this(var1, var2, var3, var4, var5, false, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.value);
+         this(var1, var2, var3, var4, var5, false, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.NONE);
       }
 
       public PathOptions(
@@ -1647,11 +1647,11 @@ public final class AiPathfinder {
       SAFEST,
       SAVER;
 
-      public static AiPathfinder.RouteStrategy init(String var0) {
-         return putAt(var0);
+      public static AiPathfinder.RouteStrategy parseCompat(String var0) {
+         return parse(var0);
       }
 
-      public static AiPathfinder.RouteStrategy putAt(String var0) {
+      public static AiPathfinder.RouteStrategy parse(String var0) {
          try {
             return valueOf(var0.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException | NullPointerException var2) {
@@ -1664,33 +1664,33 @@ public final class AiPathfinder {
    }
 
    public static final class MoveGenerator {
-      private static final int[][] putAt_IArr2 = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-      private static final int[][] fill_IArr2 = new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-      static final int flowState = 1;
-      static final int flowTemp = 2;
-      static final int readEx_I = 4;
-      static final int value_I = 5;
-      private static final int[][] readEx_IArr2 = new int[][]{{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
-      private static final AiPathfinder.MoveGenerator.JumpOffset[] putAt_FileStore_IoHelperArr = putAt(5);
-      private static final AiPathfinder.MoveGenerator.JumpOffset[] fill_FileStore_IoHelperArr = putAt(7);
-      private static final AiPathfinder.MoveGenerator.JumpOffset[] readEx_FileStore_IoHelperArr = putAt(11);
-      private static final AiPathfinder.MoveGenerator.JumpOffset[] value_FileStore_IoHelperArr = putAt(8);
-      private static final int state = 14;
-      static final double putAt_D = 0.1;
-      static final double fill_D = 0.1;
-      static final int prevEx = 3;
-      static final int prev = 4;
-      static final int chunkAt = 32;
-      static boolean putAt_Z = true;
+      private static final int[][] CARDINAL_DIRS = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      private static final int[][] DIAGONAL_DIRS = new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+      static final int MAX_JUMP_RISE = 1;
+      static final int MIN_PARKOUR_GAP = 2;
+      static final int MAX_STANDARD_JUMP_DROP = 4;
+      static final int BASE_JUMP_RANGE = 5;
+      private static final int[][] EIGHT_DIRS = new int[][]{{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
+      private static final AiPathfinder.MoveGenerator.JumpOffset[] BASE_JUMP_OFFSETS = buildJumpOffsets(5);
+      private static final AiPathfinder.MoveGenerator.JumpOffset[] SPEED_JUMP_OFFSETS = buildJumpOffsets(7);
+      private static final AiPathfinder.MoveGenerator.JumpOffset[] DROP_JUMP_OFFSETS = buildJumpOffsets(11);
+      private static final AiPathfinder.MoveGenerator.JumpOffset[] BOUNDED_DROP_JUMP_OFFSETS = buildJumpOffsets(8);
+      private static final int MAX_BOUNDED_JUMP_DROP = 14;
+      static final double MIN_JUMP_MARGIN = 0.1;
+      static final double BASE_MOVEMENT_SPEED = 0.1;
+      static final int MAX_SAFE_BRIDGE_DEPTH = 3;
+      static final int MAX_RUNUP_SCAN_BLOCKS = 4;
+      static final int MAX_BRIDGE_DEPTH_SCAN = 32;
+      static boolean allowCantileverBridgeFromSolid = true;
 
       private MoveGenerator() {
       }
 
-      public static boolean init_Z_ClassCache_FileCac(AiPathfinder.CellInfo a, AiPathfinder.CellInfo b, AiPathfinder.CellInfo c) {
-         return putAt_Z_FileStore_BitCache(a, b, c);
+      public static boolean isStandableCompat(AiPathfinder.CellInfo a, AiPathfinder.CellInfo b, AiPathfinder.CellInfo c) {
+         return isStandable(a, b, c);
       }
 
-            public static boolean putAt_Z_FileStore_BitCache(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1, AiPathfinder.CellInfo var2) {
+            public static boolean isStandable(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1, AiPathfinder.CellInfo var2) {
          if (!var0.loaded() || !var1.loaded() || !var2.loaded()) {
             return false;
          }
@@ -1711,7 +1711,7 @@ public final class AiPathfinder {
          return var0.passable() && var3 && (!var2.passable() && !var2.door() || var0.water() || var0.climbable());
       }
 
-      static boolean putAt_Z_Function_2(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, AiJumpSolver.JumpPlan var2) {
+      static boolean isTightLandingStandable(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, AiJumpSolver.JumpPlan var2) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          if (var3.loaded()
             && !var3.passable()
@@ -1740,7 +1740,7 @@ public final class AiPathfinder {
 
                if (!var8.passable()) {
                   if (var0 instanceof AiPathfinder.MoveGenerator.CachedGrid var9
-                     && (!var9.prevEx_Z || var9.putAt_S_I(var7.getX(), var7.getY(), var7.getZ()) == 1)) {
+                     && (!var9.fullPhysicsParkour || var9.putAt_S_I(var7.getX(), var7.getY(), var7.getZ()) == 1)) {
                      return false;
                   }
 
@@ -1753,8 +1753,8 @@ public final class AiPathfinder {
             } else if (var2 != null) {
                return true;
             } else if (var0 instanceof AiPathfinder.MoveGenerator.CachedGrid var10) {
-               double var11 = putAt_D_FileStore_IoHelper(var10, var1, var3);
-               return AiJumpSolver.putAt_Z_TokenCore_TaskStat_2(var10.putAt_RefQueue(), var1, var11);
+               double var11 = effectiveSurfaceY(var10, var1, var3);
+               return AiJumpSolver.hasStandablePoint(var10.plannerWorld(), var1, var11);
             } else {
                return false;
             }
@@ -1763,28 +1763,28 @@ public final class AiPathfinder {
          }
       }
 
-      static double putAt_D_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, AiPathfinder.CellInfo var2) {
-         double var3 = putAt(var1.getY(), var2);
-         return var0.prevEx_Z
+      static double effectiveSurfaceY(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, AiPathfinder.CellInfo var2) {
+         double var3 = surfaceY(var1.getY(), var2);
+         return var0.fullPhysicsParkour
                && var2.slabStair()
                && var2.top16() == 16
-               && !var0.putAt_FileStore_BitCache_BlockPos(var1.above()).passable()
-               && !AiJumpSolver.putAt_Z_TokenCore_TaskStat_2(var0.putAt_RefQueue(), var1, var3)
-               && AiJumpSolver.putAt_Z_TokenCore_TaskStat_2(var0.putAt_RefQueue(), var1, var3 - 0.5)
+               && !var0.probePos(var1.above()).passable()
+               && !AiJumpSolver.hasStandablePoint(var0.plannerWorld(), var1, var3)
+               && AiJumpSolver.hasStandablePoint(var0.plannerWorld(), var1, var3 - 0.5)
             ? var3 - 0.5
             : var3;
       }
 
-      private static boolean putAt_Z_FileStore_IoHelper_3(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, AiPathfinder.CellInfo var2) {
+      private static boolean isLowClearanceCell(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, AiPathfinder.CellInfo var2) {
          if (var2.loaded() && var2.top16() > 0 && var2.top16() <= 8 && !var2.hazardFloor() && !var2.lava() && !var2.water() && !var2.farmland()) {
-            AiPathfinder.CellInfo var3 = var0.putAt_FileStore_BitCache_BlockPos(var1.above());
+            AiPathfinder.CellInfo var3 = var0.probePos(var1.above());
             if (var3.loaded() && !var3.passable() && !var3.hazardFeet()) {
-               double var4 = putAt(var1.getY(), var2);
+               double var4 = surfaceY(var1.getY(), var2);
                double var6 = var1.getX() + 0.5;
                double var8 = var1.getZ() + 0.5;
                double var10 = 0.3;
                AABB var12 = new AABB(var6 - var10, var4 + 1.0E-5, var8 - var10, var6 + var10, var4 + 1.5 - 1.0E-5, var8 + var10);
-               return var0.putAt_RefQueue().collisions(var12).isEmpty() && !AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0.putAt_RefQueue(), var6, var4, var8);
+               return var0.plannerWorld().collisions(var12).isEmpty() && !AiJumpSolver.canStandAt(var0.plannerWorld(), var6, var4, var8);
             } else {
                return false;
             }
@@ -1793,7 +1793,7 @@ public final class AiPathfinder {
          }
       }
 
-      private static void putAt(
+      private static void generateLowClearanceMoves(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
@@ -1810,18 +1810,18 @@ public final class AiPathfinder {
                   for (int var11 = 1; var11 >= -1; var11--) {
                      BlockPos var12 = var3.offset(var9, var11, var10);
                      if (!var2.contains(var12.asLong())) {
-                        AiPathfinder.CellInfo var13 = var0.putAt_FileStore_BitCache_BlockPos(var12.below());
+                        AiPathfinder.CellInfo var13 = var0.probePos(var12.below());
                         if (var13.loaded() && !var13.passable() && !var13.hazardFloor() && !var13.water() && !var13.lava()) {
-                           double var14 = putAt(var12.getY(), var13);
+                           double var14 = surfaceY(var12.getY(), var13);
                            if (!(var14 > var4 + 0.5625) && !(var14 < var4 - 1.25)) {
-                              boolean var16 = putAt_Z_FileStore_IoHelper_3(var0, var12, var13);
+                              boolean var16 = isLowClearanceCell(var0, var12, var13);
                               if (var16
                                  || var6
-                                    && putAt_Z_FileStore_BitCache(
-                                       var0.putAt_FileStore_BitCache_BlockPos(var12), var0.putAt_FileStore_BitCache_BlockPos(var12.above()), var13
+                                    && isStandable(
+                                       var0.probePos(var12), var0.probePos(var12.above()), var13
                                     )) {
                                  AiJumpSolver.JumpPlan var17 = AiJumpManeuver.lowClearance(
-                                    var0.putAt_RefQueue(),
+                                    var0.plannerWorld(),
                                     var3,
                                     var4,
                                     var12,
@@ -1831,7 +1831,7 @@ public final class AiPathfinder {
                                     var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
                                  );
                                  if (var17 != null) {
-                                    var7.add(AiPathfinder.UiHelper.jump(var3, var12, AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var17), var17));
+                                    var7.add(AiPathfinder.UiHelper.jump(var3, var12, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
                                  }
                               }
                            }
@@ -1843,7 +1843,7 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt_Z_FileStore_IoHelper(
+      private static boolean canStepUpStairFace(
          AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, int var2, int var3, double var4, double var6
       ) {
          short var8 = var0.putAt_S_I(var1.getX(), var1.getY(), var1.getZ());
@@ -1865,130 +1865,130 @@ public final class AiPathfinder {
          return Double.isFinite(var9) && var6 > var9 && var1.getY() + var9 - var4 <= 0.5625 && var6 - var9 <= 0.5625;
       }
 
-      static double putAt(int var0, AiPathfinder.CellInfo var1) {
+      static double surfaceY(int var0, AiPathfinder.CellInfo var1) {
          return var0 - 1 + var1.top16() / 16.0;
       }
 
-      static boolean putAt(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1) {
+      static boolean hasTwoBlockHeadroom(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1) {
          return var0.passable() && var1.passable();
       }
 
-      public static int putAt_I_FileStore_TextStor(
+      public static int generateMoves(
          AiPathfinder.GridView var0, AiPathfinder.PathOptions var1, Set<Long> var2, BlockPos var3, List<AiPathfinder.UiHelper> var4
       ) {
-         return putAt_I_FileStore_IoHelper(new AiPathfinder.MoveGenerator.CachedGrid(var0, 256), var1, var2, var3, var4);
+         return generateMovesCached(new AiPathfinder.MoveGenerator.CachedGrid(var0, 256), var1, var2, var3, var4);
       }
 
-      static int putAt_I_FileStore_IoHelper(
+      static int generateMovesCached(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
          BlockPos var3,
          List<AiPathfinder.UiHelper> var4
       ) {
-         var0.flowState = 0;
-         var0.putAt_FileStore_RingUtil = var1.fallPolicy();
-         AiPathfinder.CellInfo var5 = var0.putAt_FileStore_BitCache_BlockPos(var3);
+         var0.queryFlags = 0;
+         var0.fallPolicy = var1.fallPolicy();
+         AiPathfinder.CellInfo var5 = var0.probePos(var3);
          if (!var5.loaded()) {
-            return var0.flowState;
+            return var0.queryFlags;
          }
 
-         AiPathfinder.CellInfo var6 = var0.putAt_FileStore_BitCache_BlockPos(var3.below());
-         AiPathfinder.CellInfo var7 = var0.putAt_FileStore_BitCache_BlockPos(var3.above());
+         AiPathfinder.CellInfo var6 = var0.probePos(var3.below());
+         AiPathfinder.CellInfo var7 = var0.probePos(var3.above());
          boolean var8 = var1.allowParkour()
             && !var1.jumpBoost()
             && !var1.levitation()
-            && !putAt(var1, AiPathfinder.MoveType.JUMP)
-            && fill(var5, var6)
+            && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.JUMP)
+            && canTakeoffFrom(var5, var6)
             && !var7.web();
-         double var9 = var6.passable() ? var3.getY() : putAt_D_FileStore_IoHelper(var0, var3, var6);
-         boolean var11 = !var6.narrowFooting() || AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0.putAt_RefQueue(), var3.getX() + 0.5, var9, var3.getZ() + 0.5);
+         double var9 = var6.passable() ? var3.getY() : effectiveSurfaceY(var0, var3, var6);
+         boolean var11 = !var6.narrowFooting() || AiJumpSolver.canStandAt(var0.plannerWorld(), var3.getX() + 0.5, var9, var3.getZ() + 0.5);
          AABB var12 = null;
          if (var7.loaded()
             && (
                !var5.passable() && var0.putAt_S_I(var3.getX(), var3.getY(), var3.getZ()) > 1
                   || !var7.passable() && var0.putAt_S_I(var3.getX(), var3.getY() + 1, var3.getZ()) > 1
             )
-            && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0.putAt_RefQueue(), var3.getX() + 0.5, var9, var3.getZ() + 0.5)) {
+            && AiJumpSolver.canStandAt(var0.plannerWorld(), var3.getX() + 0.5, var9, var3.getZ() + 0.5)) {
             var12 = AiPhysics.MotionState.standing(var3.getX() + 0.5, var9, var3.getZ() + 0.5).box(false).deflate(1.0E-4);
          }
 
-         if (var0.prevEx_Z && var8 && putAt_Z_FileStore_IoHelper_3(var0, var3, var6)) {
-            putAt(var0, var1, var2, var3, var9, true, var4);
-            return var0.flowState;
+         if (var0.fullPhysicsParkour && var8 && isLowClearanceCell(var0, var3, var6)) {
+            generateLowClearanceMoves(var0, var1, var2, var3, var9, true, var4);
+            return var0.queryFlags;
          }
 
-         if (!putAt_Z_FileStore_BitCache(var5, var7, var6) && !var5.water() && !var5.climbable() && var12 == null) {
-            boolean var13 = var8 && var0.prevEx_Z && putAt_Z_Function_2(var0, var3, null);
+         if (!isStandable(var5, var7, var6) && !var5.water() && !var5.climbable() && var12 == null) {
+            boolean var13 = var8 && var0.fullPhysicsParkour && isTightLandingStandable(var0, var3, null);
             if (!var5.passable() || var7.loaded() && !var7.passable()) {
                if (var13) {
-                  putAt(var0, var1, var2, var3, var6, var9, var4);
-                  return var0.flowState;
+                  generateParkourMoves(var0, var1, var2, var3, var6, var9, var4);
+                  return var0.queryFlags;
                }
 
-               var0.flowState |= 2;
-               if (var1.allowDig() && !putAt(var1, AiPathfinder.MoveType.DIG_TUNNEL)) {
-                  putAt_V_FileStore_IoHelper_2(var0, var1, var2, var3, var5, var4);
+               var0.queryFlags |= 2;
+               if (var1.allowDig() && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_TUNNEL)) {
+                  generateDigOutMoves(var0, var1, var2, var3, var5, var4);
                }
 
-               return var0.flowState;
+               return var0.queryFlags;
             }
 
             if (!var13 && var7.loaded() && var6.loaded()) {
-               var0.flowState |= 4;
+               var0.queryFlags |= 4;
             }
          }
 
          if (var5.water() || var5.climbable()) {
             BlockPos var48 = var3.above();
-            AiPathfinder.CellInfo var14 = var0.putAt_FileStore_BitCache_BlockPos(var48);
+            AiPathfinder.CellInfo var14 = var0.probePos(var48);
             boolean var15 = var14.climbable() || var14.water();
-            if (!putAt(var1, AiPathfinder.MoveType.CLIMB_1)
+            if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.CLIMB_1)
                && var15
                && !var2.contains(var48.asLong())
                && (var14.passable() || var14.climbable())
                && !var14.lava()
-               && (var0.putAt_FileStore_BitCache_BlockPos(var48.above()).passable() || var0.putAt_FileStore_BitCache_BlockPos(var48.above()).climbable())
+               && (var0.probePos(var48.above()).passable() || var0.probePos(var48.above()).climbable())
                && !var14.hazardFeet()) {
                var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.CLIMB_1, var3, var48, 5.5));
             }
 
             BlockPos var16 = var3.below();
-            if (!putAt(var1, AiPathfinder.MoveType.CLIMB_1)
+            if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.CLIMB_1)
                && !var2.contains(var16.asLong())
                && (
-                  var5.climbable() && var0.putAt_FileStore_BitCache_BlockPos(var16).climbable()
-                     || putAt_Z_FileStore_BitCache(
-                        var0.putAt_FileStore_BitCache_BlockPos(var16),
-                        var0.putAt_FileStore_BitCache_BlockPos(var16.above()),
-                        var0.putAt_FileStore_BitCache_BlockPos(var16.below())
+                  var5.climbable() && var0.probePos(var16).climbable()
+                     || isStandable(
+                        var0.probePos(var16),
+                        var0.probePos(var16.above()),
+                        var0.probePos(var16.below())
                      )
                )) {
                var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.CLIMB_1, var3, var16, 5.5));
             }
 
             if (var5.climbable()
-               && var0.prevEx_Z
+               && var0.fullPhysicsParkour
                && var1.allowParkour()
                && !var1.jumpBoost()
                && !var1.levitation()
-               && !putAt(var1, AiPathfinder.MoveType.LADDER_JUMP)) {
+               && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.LADDER_JUMP)) {
                boolean var17 = var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER;
-               putAt_V_FileStore_IoHelper_2(var0, var2, var3, var17, var4);
-               putAt(var0, var2, var3, var3.getY() + 0.7, 255, true, var17, var4);
+               generateLadderSideJumps(var0, var2, var3, var17, var4);
+               generateClimbTargetJumps(var0, var2, var3, var3.getY() + 0.7, 255, true, var17, var4);
             }
          }
 
-         for (int[] var60 : putAt_IArr2) {
+         for (int[] var60 : CARDINAL_DIRS) {
             BlockPos var64 = var3.offset(var60[0], 0, var60[1]);
-            if ((var12 == null || !var0.putAt_RefQueue().putAt_Z_AABB(var12.expandTowards(var60[0], 0.0, var60[1])))
-               && !var0.putAt(var3, var60[0], var60[1])
-               && !var0.putAt(var64, var60[0], var60[1])) {
-               AiPathfinder.CellInfo var18 = var0.putAt_FileStore_BitCache_BlockPos(var64);
-               AiPathfinder.CellInfo var19 = var0.putAt_FileStore_BitCache_BlockPos(var64.above());
-               AiPathfinder.CellInfo var20 = var0.putAt_FileStore_BitCache_BlockPos(var64.below());
+            if ((var12 == null || !var0.plannerWorld().putAt_Z_AABB(var12.expandTowards(var60[0], 0.0, var60[1])))
+               && !var0.isBlockedByOpenDoor(var3, var60[0], var60[1])
+               && !var0.isBlockedByOpenDoor(var64, var60[0], var60[1])) {
+               AiPathfinder.CellInfo var18 = var0.probePos(var64);
+               AiPathfinder.CellInfo var19 = var0.probePos(var64.above());
+               AiPathfinder.CellInfo var20 = var0.probePos(var64.below());
                if (var1.allowDig()
-                  && !putAt(var1, AiPathfinder.MoveType.DIG_TUNNEL)
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_TUNNEL)
                   && var20.loaded()
                   && !var20.passable()
                   && !var20.hazardFloor()
@@ -2027,7 +2027,7 @@ public final class AiPathfinder {
                            var64,
                            var23,
                            List.of(),
-                           AiPathfinder.MoveCosts.value_D_D(var24) + putAt_D_Function(var0, var3, var64, false),
+                           AiPathfinder.MoveCosts.digTunnelCost(var24) + portalAndWebPenalty(var0, var3, var64, false),
                            var26
                         )
                      );
@@ -2035,23 +2035,23 @@ public final class AiPathfinder {
                }
 
                BlockPos var74 = var64.below();
-               if (var1.allowDig() && !putAt(var1, AiPathfinder.MoveType.DIG_DESCEND) && !var2.contains(var74.asLong())) {
-                  AiPathfinder.CellInfo var77 = var0.putAt_FileStore_BitCache_BlockPos(var74);
-                  AiPathfinder.CellInfo var86 = var0.putAt_FileStore_BitCache_BlockPos(var74.below());
+               if (var1.allowDig() && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_DESCEND) && !var2.contains(var74.asLong())) {
+                  AiPathfinder.CellInfo var77 = var0.probePos(var74);
+                  AiPathfinder.CellInfo var86 = var0.probePos(var74.below());
                   if (var86.loaded()
                      && !var86.passable()
                      && !var86.hazardFloor()
                      && !var86.lava()
                      && !var86.farmland()
                      && var86.top16() == 16
-                     && putAt(var19)
-                     && putAt(var18)
-                     && putAt(var77)
+                     && isPassableOrDiggableDry(var19)
+                     && isPassableOrDiggableDry(var18)
+                     && isPassableOrDiggableDry(var77)
                      && !var19.web()
                      && !var18.web()
                      && !var77.web()
                      && (var19.diggable() || var18.diggable() || var77.diggable())
-                     && putAt_Z_Function(var0, var74, var60[0], var60[1])) {
+                     && hasSafeOvershootAhead(var0, var74, var60[0], var60[1])) {
                      ArrayList var93 = new ArrayList(3);
                      double var25 = 0.0;
                      double var27 = 0.0;
@@ -2072,7 +2072,7 @@ public final class AiPathfinder {
                      double var120 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? 1.0 : 0.0;
                      var4.add(
                         new AiPathfinder.UiHelper(
-                           AiPathfinder.MoveType.DIG_DESCEND, var3, var74, var93, List.of(), AiPathfinder.MoveCosts.readEx_D_I(1) + var120 + var25, var27
+                           AiPathfinder.MoveType.DIG_DESCEND, var3, var74, var93, List.of(), AiPathfinder.MoveCosts.descendCost(1) + var120 + var25, var27
                         )
                      );
                   }
@@ -2080,8 +2080,8 @@ public final class AiPathfinder {
 
                if (var1.allowBridge()
                   && var1.hasBlocks()
-                  && !putAt(var1, AiPathfinder.MoveType.BRIDGE_CELL)
-                  && var0.putAt_FileStore_BitCache_BlockPos(var3.below()).top16() == 16
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.BRIDGE_CELL)
+                  && var0.probePos(var3.below()).top16() == 16
                   && var0.putAt_S_I(var3.getX(), var3.getY() - 1, var3.getZ()) == 1
                   && !var2.contains(var64.asLong())
                   && var18.passable()
@@ -2095,17 +2095,17 @@ public final class AiPathfinder {
                   && (var1.supportedBridges() || !var20.water() && !var20.lava())
                   && (
                      var1.supportedBridges()
-                        || !var0.putAt_FileStore_BitCache_BlockPos(var64.below(2)).water() && !var0.putAt_FileStore_BitCache_BlockPos(var64.below(2)).lava()
+                        || !var0.probePos(var64.below(2)).water() && !var0.probePos(var64.below(2)).lava()
                   )
-                  && putAt_Z_Function_3(var0, var3, var64, var0.putAt_FileStore_PacketHe)) {
-                  int var78 = var1.supportedBridges() ? 0 : flowState(var0, var64.below());
-                  if ((var1.strategy() == AiPathfinder.RouteStrategy.SAFEST || AiPathfinder.MoveCosts.fill()) && var78 > 3) {
+                  && hasBridgeSupportAnchor(var0, var3, var64, var0.incomingMove)) {
+                  int var78 = var1.supportedBridges() ? 0 : measureBridgeDepth(var0, var64.below());
+                  if ((var1.strategy() == AiPathfinder.RouteStrategy.SAFEST || AiPathfinder.MoveCosts.isCautiousBridgeActive()) && var78 > 3) {
                      var78 = -1;
                   }
 
                   if (var78 >= 0) {
                      double var87 = var1.strategy() == AiPathfinder.RouteStrategy.SAVER ? 9.0 : 4.5;
-                     AiPathfinder.UiHelper var98 = var0.putAt_FileStore_PacketHe;
+                     AiPathfinder.UiHelper var98 = var0.incomingMove;
                      boolean var105 = var98 != null
                         && var98.type() == AiPathfinder.MoveType.BRIDGE_CELL
                         && var98.to().getX() - var98.from().getX() == var64.getX() - var3.getX()
@@ -2114,7 +2114,7 @@ public final class AiPathfinder {
                         var87 += 10.0;
                      }
 
-                     if (var1.supportedBridges() || !var0.putAt_FileStore_BitCache_BlockPos(var64.above(2)).passable()) {
+                     if (var1.supportedBridges() || !var0.probePos(var64.above(2)).passable()) {
                         var87 += 2.0;
                      }
 
@@ -2126,11 +2126,11 @@ public final class AiPathfinder {
                   }
                }
 
-               if (AiPathfinder.MoveCosts.readEx()
+               if (AiPathfinder.MoveCosts.isDropBridgeActive()
                   && var1.allowBridge()
                   && var1.hasBlocks()
-                  && !putAt(var1, AiPathfinder.MoveType.BRIDGE_CELL)
-                  && var0.putAt_FileStore_BitCache_BlockPos(var3.below()).top16() == 16
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.BRIDGE_CELL)
+                  && var0.probePos(var3.below()).top16() == 16
                   && var0.putAt_S_I(var3.getX(), var3.getY() - 1, var3.getZ()) == 1
                   && var18.passable()
                   && var19.passable()
@@ -2145,80 +2145,80 @@ public final class AiPathfinder {
                   && !var20.hazardFeet()) {
                   BlockPos var79 = var64.below();
                   BlockPos var88 = var79.below();
-                  AiPathfinder.CellInfo var94 = var0.putAt_FileStore_BitCache_BlockPos(var88);
-                  if (!var2.contains(var79.asLong()) && var94.loaded() && var94.passable() && !var94.water() && !var94.lava() && readEx(var0, var88)) {
-                     int var99 = flowState(var0, var88);
-                     if ((var1.strategy() == AiPathfinder.RouteStrategy.SAFEST || AiPathfinder.MoveCosts.fill()) && var99 > 3) {
+                  AiPathfinder.CellInfo var94 = var0.probePos(var88);
+                  if (!var2.contains(var79.asLong()) && var94.loaded() && var94.passable() && !var94.water() && !var94.lava() && hasAdjacentSolidAnchor(var0, var88)) {
+                     int var99 = measureBridgeDepth(var0, var88);
+                     if ((var1.strategy() == AiPathfinder.RouteStrategy.SAFEST || AiPathfinder.MoveCosts.isCautiousBridgeActive()) && var99 > 3) {
                         var99 = -1;
                      }
 
                      if (var99 >= 0) {
                         var4.add(
                            new AiPathfinder.UiHelper(
-                              AiPathfinder.MoveType.BRIDGE_CELL, var3, var79, List.of(), List.of(var88), 14.5 + AiPathfinder.MoveCosts.readEx_D_I(1)
+                              AiPathfinder.MoveType.BRIDGE_CELL, var3, var79, List.of(), List.of(var88), 14.5 + AiPathfinder.MoveCosts.descendCost(1)
                            )
                         );
                      }
                   }
                }
 
-               if (var11 && !var2.contains(var64.asLong()) && putAt_Z_FileStore_BitCache(var18, var19, var20) && (!var1.avoidWater() || !var18.water())) {
-                  double var80 = putAt(var64.getY(), var20) - var9;
+               if (var11 && !var2.contains(var64.asLong()) && isStandable(var18, var19, var20) && (!var1.avoidWater() || !var18.water())) {
+                  double var80 = surfaceY(var64.getY(), var20) - var9;
                   if (var80 <= 0.5625) {
                      boolean var95 = var1.canSprint()
                         && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
                         && !var18.water()
                         && !var18.thorny()
-                        && !putAt(var1, AiPathfinder.MoveType.SPRINT);
+                        && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT);
                      double var100 = var18.water() ? 3.0 + (var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? 8.0 : 0.0) : 0.0;
                      double var110 = var20.crawl();
                      double var121 = var18.thorny() ? 25.0 : 0.0;
                      AiPathfinder.MoveType var131 = var95 ? AiPathfinder.MoveType.SPRINT : AiPathfinder.MoveType.WALK;
-                     if (!putAt(var1, var131)) {
+                     if (!isMoveTypeDisabled(var1, var131)) {
                         var4.add(
                            AiPathfinder.UiHelper.travel(
                               var131,
                               var3,
                               var64,
-                              (var95 ? 3.2 : 4.5 + var100) * var110 + var121 + putAt_D_Function(var0, var3, var64, var95) + var0.putAt_D_BlockPos(var64)
+                              (var95 ? 3.2 : 4.5 + var100) * var110 + var121 + portalAndWebPenalty(var0, var3, var64, var95) + var0.tightWidthPenalty(var64)
                            )
                         );
                      }
 
                      BlockPos var137 = var64.offset(var60[0], 0, var60[1]);
-                     AiPathfinder.CellInfo var141 = var0.putAt_FileStore_BitCache_BlockPos(var137.below());
+                     AiPathfinder.CellInfo var141 = var0.probePos(var137.below());
                      if (var95
                         && !var141.passable()
-                        && !putAt(var1, AiPathfinder.MoveType.SPRINT_JUMP)
-                        && prevEx(var0, var3, var64)
-                        && !var0.fill(var64)
-                        && !var0.fill(var137)) {
+                        && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT_JUMP)
+                        && canSprintJumpFlat(var0, var3, var64)
+                        && !var0.isTightWidthCell(var64)
+                        && !var0.isTightWidthCell(var137)) {
                         var4.add(
-                           AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.SPRINT_JUMP, var3, var64, prev(var0, var3, var64) ? 2.2 : 2.9000000000000004)
+                           AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.SPRINT_JUMP, var3, var64, hasLowCeilingSprintJump(var0, var3, var64) ? 2.2 : 2.9000000000000004)
                         );
                      }
                   } else if (var80 <= 1.250001
                      && !var5.water()
                      && !var6.farmland()
                      && !var6.honey()
-                     && (!var0.prevEx_Z || !var1.allowParkour() || !var5.climbable() || !var6.passable())
-                     && !putAt(var1, AiPathfinder.MoveType.JUMP_UP_1)
+                     && (!var0.fullPhysicsParkour || !var1.allowParkour() || !var5.climbable() || !var6.passable())
+                     && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.JUMP_UP_1)
                      && !var5.web()
                      && !var7.web()
                      && !var18.web()
                      && !var19.web()
-                     && !var0.putAt_FileStore_BitCache_BlockPos(var3.above(2)).web()
-                     && var0.putAt_FileStore_BitCache_BlockPos(var3.above(2)).passable()) {
+                     && !var0.probePos(var3.above(2)).web()
+                     && var0.probePos(var3.above(2)).passable()) {
                      var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var64, 9.0));
                   }
                }
 
                if (var1.allowDig()
-                  && !putAt(var1, AiPathfinder.MoveType.DIG_TUNNEL)
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_TUNNEL)
                   && (var18.web() || var19.web())
                   && !var2.contains(var64.asLong())
-                  && putAt_Z_FileStore_BitCache(var18, var19, var20)
-                  && putAt(var64.getY(), var20) - var9 <= 0.5625) {
+                  && isStandable(var18, var19, var20)
+                  && surfaceY(var64.getY(), var20) - var9 <= 0.5625) {
                   ArrayList var81 = new ArrayList(2);
                   double var89 = 0.0;
                   double var101 = 0.0;
@@ -2245,7 +2245,7 @@ public final class AiPathfinder {
                            var64,
                            var81,
                            List.of(),
-                           AiPathfinder.MoveCosts.value_D_D(var89) + var0.putAt_D_BlockPos(var64),
+                           AiPathfinder.MoveCosts.digTunnelCost(var89) + var0.tightWidthPenalty(var64),
                            var101
                         )
                      );
@@ -2255,7 +2255,7 @@ public final class AiPathfinder {
                if (!var2.contains(var64.asLong())
                   && var18.door()
                   && !var18.passable()
-                  && !putAt(var1, AiPathfinder.MoveType.DOOR)
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DOOR)
                   && !var18.hazardFeet()
                   && !var18.lava()
                   && !var19.hazardFeet()
@@ -2265,56 +2265,56 @@ public final class AiPathfinder {
                   && !var20.passable()
                   && !var20.hazardFloor()
                   && !var20.lava()
-                  && putAt(var64.getY(), var20) - var9 <= 0.5625) {
+                  && surfaceY(var64.getY(), var20) - var9 <= 0.5625) {
                   var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.DOOR, var3, var64, 7.5));
                }
 
                BlockPos var82 = var64.above();
-               AiPathfinder.CellInfo var90 = var0.putAt_FileStore_BitCache_BlockPos(var82);
+               AiPathfinder.CellInfo var90 = var0.probePos(var82);
                int var96 = !var18.passable() && var90.top16() > 0 && var90.top16() <= 4 ? 2 : 1;
                BlockPos var102 = var64.above(var96);
                if (!var2.contains(var102.asLong())) {
-                  AiPathfinder.CellInfo var106 = var0.putAt_FileStore_BitCache_BlockPos(var102);
-                  AiPathfinder.CellInfo var112 = var0.putAt_FileStore_BitCache_BlockPos(var102.above());
-                  AiPathfinder.CellInfo var116 = var0.putAt_FileStore_BitCache_BlockPos(var102.below());
-                  if ((!var116.passable() || var5.water() && var106.water()) && putAt_Z_FileStore_BitCache(var106, var112, var116)) {
-                     double var123 = putAt(var102.getY(), var116) - var9;
+                  AiPathfinder.CellInfo var106 = var0.probePos(var102);
+                  AiPathfinder.CellInfo var112 = var0.probePos(var102.above());
+                  AiPathfinder.CellInfo var116 = var0.probePos(var102.below());
+                  if ((!var116.passable() || var5.water() && var106.water()) && isStandable(var106, var112, var116)) {
+                     double var123 = surfaceY(var102.getY(), var116) - var9;
                      if (var123 <= 0.5625
-                        || var116.slabStair() && putAt_Z_FileStore_IoHelper(var0, var102.below(), var60[0], var60[1], var9, var116.top16() / 16.0)) {
-                        if (!putAt(var1, AiPathfinder.MoveType.STEP_UP_1)) {
+                        || var116.slabStair() && canStepUpStairFace(var0, var102.below(), var60[0], var60[1], var9, var116.top16() / 16.0)) {
+                        if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.STEP_UP_1)) {
                            boolean var133 = var1.canSprint()
                               && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
                               && !var106.water()
-                              && !putAt(var1, AiPathfinder.MoveType.SPRINT);
+                              && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT);
                            double var138 = var123 > 0.0 && var123 <= 0.062501 ? 4.5 : (var133 ? 3.6 : 5.0);
                            var4.add(
                               AiPathfinder.UiHelper.travel(
                                  AiPathfinder.MoveType.STEP_UP_1,
                                  var3,
                                  var102,
-                                 var138 + putAt_D_Function(var0, var3, var102, false) + var0.putAt_D_BlockPos(var102)
+                                 var138 + portalAndWebPenalty(var0, var3, var102, false) + var0.tightWidthPenalty(var102)
                               )
                            );
                         }
                      } else if (var123 <= 1.25
                         && (!var6.farmland() || var5.water())
                         && !var6.honey()
-                        && (!var0.prevEx_Z || !var1.allowParkour() || !var5.climbable() || !var6.passable())
-                        && !putAt(var1, AiPathfinder.MoveType.JUMP_UP_1)
+                        && (!var0.fullPhysicsParkour || !var1.allowParkour() || !var5.climbable() || !var6.passable())
+                        && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.JUMP_UP_1)
                         && !var5.web()
                         && !var7.web()
                         && !var106.web()
                         && !var112.web()
-                        && !var0.putAt_FileStore_BitCache_BlockPos(var3.above(2)).web()
-                        && (!var5.water() || fill(var0, var82, var60[0], var60[1], 1, true))
-                        && var0.putAt_FileStore_BitCache_BlockPos(var3.above(2)).passable()) {
+                        && !var0.probePos(var3.above(2)).web()
+                        && (!var5.water() || checkOvershootColumn(var0, var82, var60[0], var60[1], 1, true))
+                        && var0.probePos(var3.above(2)).passable()) {
                         var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var102, 9.0));
                      }
                   }
                }
 
                if (var1.allowDig()
-                  && !putAt(var1, AiPathfinder.MoveType.DIG_ASCEND)
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_ASCEND)
                   && !var2.contains(var82.asLong())
                   && !var6.farmland()
                   && !var6.honey()
@@ -2328,19 +2328,19 @@ public final class AiPathfinder {
                   && !var18.hazardFloor()
                   && !var18.lava()
                   && !var18.door()
-                  && putAt(var82.getY(), var18) - var9 <= 1.250001) {
+                  && surfaceY(var82.getY(), var18) - var9 <= 1.250001) {
                   BlockPos var107 = var3.above(2);
-                  AiPathfinder.CellInfo var113 = var0.putAt_FileStore_BitCache_BlockPos(var107);
-                  AiPathfinder.CellInfo var117 = var0.putAt_FileStore_BitCache_BlockPos(var82);
-                  AiPathfinder.CellInfo var124 = var0.putAt_FileStore_BitCache_BlockPos(var82.above());
-                  if (putAt(var113)
-                     && putAt(var117)
-                     && putAt(var124)
+                  AiPathfinder.CellInfo var113 = var0.probePos(var107);
+                  AiPathfinder.CellInfo var117 = var0.probePos(var82);
+                  AiPathfinder.CellInfo var124 = var0.probePos(var82.above());
+                  if (isPassableOrDiggableDry(var113)
+                     && isPassableOrDiggableDry(var117)
+                     && isPassableOrDiggableDry(var124)
                      && !var113.web()
                      && !var117.web()
                      && !var124.web()
                      && (var113.diggable() || var117.diggable() || var124.diggable())
-                     && (!var113.diggable() || !var0.putAt_FileStore_BitCache_BlockPos(var107.above()).falling())) {
+                     && (!var113.diggable() || !var0.probePos(var107.above()).falling())) {
                      ArrayList var128 = new ArrayList(3);
                      double var134 = 0.0;
                      double var142 = 0.0;
@@ -2364,37 +2364,37 @@ public final class AiPathfinder {
 
                long var108 = -9223372036854775808L;
                int var118 = (int)Math.floor(var9 + 1.8 - 1.0E-6);
-               int var125 = var1.fallPolicy().putAt_Z() ? (int)var1.fallPolicy().putAt_D : 8;
+               int var125 = var1.fallPolicy().allowsExtendedDrop() ? (int)var1.fallPolicy().maxDropBlocks : 8;
 
                for (int var129 = 1; var129 <= var125; var129++) {
                   BlockPos var135 = var64.below(var129);
-                  AiPathfinder.CellInfo var139 = var0.putAt_FileStore_BitCache_BlockPos(var135);
+                  AiPathfinder.CellInfo var139 = var0.probePos(var135);
                   if (!var139.loaded()) {
                      break;
                   }
 
                   BlockPos var143 = var135.above();
-                  if (var143.getY() <= var118 && !var0.putAt_FileStore_BitCache_BlockPos(var143).passable()
-                     || var129 == 1 && var64.above().getY() <= var118 && !var0.putAt_FileStore_BitCache_BlockPos(var64.above()).passable()
+                  if (var143.getY() <= var118 && !var0.probePos(var143).passable()
+                     || var129 == 1 && var64.above().getY() <= var118 && !var0.probePos(var64.above()).passable()
                      || var139.feetTrigger()
                      || var1.fallPolicy() != AiPathfinder.FallPolicy.STANDARD && (var139.lava() || var139.hazardFeet())) {
                      break;
                   }
 
                   if (!var2.contains(var135.asLong())) {
-                     AiPathfinder.CellInfo var34 = var0.putAt_FileStore_BitCache_BlockPos(var135.below());
-                     double var144 = var139.climbable() ? var135.getY() : putAt(var135.getY(), var34);
+                     AiPathfinder.CellInfo var34 = var0.probePos(var135.below());
+                     double var144 = var139.climbable() ? var135.getY() : surfaceY(var135.getY(), var34);
                      double var145 = var9 - var144;
-                     double var146 = var1.fallPolicy().putAt_Z()
+                     double var146 = var1.fallPolicy().allowsExtendedDrop()
                         ? var125
                         : Math.min(3, var1.maxFall()) + (var1.fallPolicy() == AiPathfinder.FallPolicy.STANDARD ? 0.5625 : 0.0);
                      if (var145 <= var146
                         && !var34.farmland()
-                        && putAt_Z_FileStore_BitCache(var139, var0.putAt_FileStore_BitCache_BlockPos(var135.above()), var34)
+                        && isStandable(var139, var0.probePos(var135.above()), var34)
                         && (
                            var145 <= 0.562501
                               || var129 == 1 && var139.climbable()
-                              || putAt_Z_Function(var0, var135, var60[0], var60[1], (int)Math.ceil(var145 - 1.0E-6))
+                              || hasSafeOvershootAhead(var0, var135, var60[0], var60[1], (int)Math.ceil(var145 - 1.0E-6))
                         )) {
                         AiPathfinder.MoveType var41 = var129 == 1
                            ? AiPathfinder.MoveType.DESCEND_1
@@ -2404,13 +2404,13 @@ public final class AiPathfinder {
                         }
 
                         double var42 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? var129 * 1.0 : 0.0;
-                        if (!putAt(var1, var41)) {
+                        if (!isMoveTypeDisabled(var1, var41)) {
                            double var44 = var145 > 0.0 && var145 <= 0.062501
                               ? 4.5
                               : (
                                  var129 <= 3
-                                    ? AiPathfinder.MoveCosts.readEx_D_I(var129)
-                                    : AiPathfinder.MoveCosts.readEx_D_I(3) + Math.ceil(Math.sqrt(var145) * 5.0 - 8.0)
+                                    ? AiPathfinder.MoveCosts.descendCost(var129)
+                                    : AiPathfinder.MoveCosts.descendCost(3) + Math.ceil(Math.sqrt(var145) * 5.0 - 8.0)
                               );
                            var4.add(
                               AiPathfinder.UiHelper.travel(
@@ -2419,9 +2419,9 @@ public final class AiPathfinder {
                                  var135,
                                  var44
                                     + var42
-                                    + putAt_D(var0, var135)
-                                    + putAt_D_Function(var0, var3, var64, false)
-                                    + 255.0 * putAt_D_Function(var0, var64.getX(), var64.getZ(), var9, putAt(var135.getY(), var34))
+                                    + portalPenalty(var0, var135)
+                                    + portalAndWebPenalty(var0, var3, var64, false)
+                                    + 255.0 * fallingWebOverlap(var0, var64.getX(), var64.getZ(), var9, surfaceY(var135.getY(), var34))
                               )
                            );
                         }
@@ -2444,35 +2444,35 @@ public final class AiPathfinder {
                            } else {
                               var148 = var135;
                            }
-                        } else if (!var0.putAt_FileStore_BitCache_BlockPos(var135.above()).water()) {
+                        } else if (!var0.probePos(var135.above()).water()) {
                            BlockPos var43 = var135;
 
-                           while (var0.putAt_FileStore_BitCache_BlockPos(var43.below()).water()) {
+                           while (var0.probePos(var43.below()).water()) {
                               var43 = var43.below();
                            }
 
-                           if (var3.getY() - var43.getY() <= 8 && fill(var0.putAt_FileStore_BitCache_BlockPos(var43.below()))) {
+                           if (var3.getY() - var43.getY() <= 8 && isSolidSafeFloor(var0.probePos(var43.below()))) {
                               var148 = var135;
                            }
                         }
 
                         if (var148 != null && var148.asLong() != var108) {
                            var108 = var148.asLong();
-                           if (!var0.putAt_FileStore_BitCache_BlockPos(var148.below()).farmland()) {
+                           if (!var0.probePos(var148.below()).farmland()) {
                               int var149 = Math.max(var129, var3.getY() - var148.getY());
                               double var150 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? var149 * 2.0 : 0.0;
-                              double var46 = 255.0 * putAt_D_Function(var0, var64.getX(), var64.getZ(), var9, var148.getY());
-                              if (!putAt(var1, AiPathfinder.MoveType.DESCEND_SOFT)) {
+                              double var46 = 255.0 * fallingWebOverlap(var0, var64.getX(), var64.getZ(), var9, var148.getY());
+                              if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.DESCEND_SOFT)) {
                                  var4.add(
                                     AiPathfinder.UiHelper.travel(
                                        AiPathfinder.MoveType.DESCEND_SOFT,
                                        var3,
                                        var148,
-                                       AiPathfinder.MoveCosts.value_D_I(var149)
+                                       AiPathfinder.MoveCosts.softDescendCost(var149)
                                           + var150
-                                          + putAt_D_Function(var0, var3, var64, false)
+                                          + portalAndWebPenalty(var0, var3, var64, false)
                                           + var46
-                                          + putAt_D(var0, var148)
+                                          + portalPenalty(var0, var148)
                                     )
                                  );
                               }
@@ -2484,53 +2484,53 @@ public final class AiPathfinder {
 
                if (var108 == -9223372036854775808L
                   && !var1.avoidWater()
-                  && !putAt(var1, AiPathfinder.MoveType.DESCEND_SOFT)
-                  && var0.putAt_FileStore_BitCache_BlockPos(var64).passable()
-                  && var0.putAt_FileStore_BitCache_BlockPos(var64.above()).passable()
-                  && var0.putAt_FileStore_BitCache_BlockPos(var64.below()).passable()
-                  && var0.putAt_FileStore_BitCache_BlockPos(var64.below(2)).passable()) {
-                  BlockPos var130 = var0.putAt_BlockPos_BlockPos(var3, var9, var60[0], var60[1]);
-                  if (var130 != null && !var2.contains(var130.asLong()) && !var0.putAt_FileStore_BitCache_BlockPos(var130.below()).farmland()) {
+                  && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.DESCEND_SOFT)
+                  && var0.probePos(var64).passable()
+                  && var0.probePos(var64.above()).passable()
+                  && var0.probePos(var64.below()).passable()
+                  && var0.probePos(var64.below(2)).passable()) {
+                  BlockPos var130 = var0.simulateStepOffLanding(var3, var9, var60[0], var60[1]);
+                  if (var130 != null && !var2.contains(var130.asLong()) && !var0.probePos(var130.below()).farmland()) {
                      int var136 = Math.max(1, var3.getY() - var130.getY());
                      double var140 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? var136 * 2.0 : 0.0;
                      var4.add(
-                        AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.DESCEND_SOFT, var3, var130, AiPathfinder.MoveCosts.value_D_I(var136) + var140)
+                        AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.DESCEND_SOFT, var3, var130, AiPathfinder.MoveCosts.softDescendCost(var136) + var140)
                      );
                   }
                }
             }
          }
 
-         for (int[] var61 : fill_IArr2) {
+         for (int[] var61 : DIAGONAL_DIRS) {
             if (!var11) {
                break;
             }
 
-            if (var12 == null || !var0.putAt_RefQueue().putAt_Z_AABB(var12.expandTowards(var61[0], 0.0, var61[1]))) {
+            if (var12 == null || !var0.plannerWorld().putAt_Z_AABB(var12.expandTowards(var61[0], 0.0, var61[1]))) {
                BlockPos var65 = var3.offset(var61[0], 0, var61[1]);
                if (!var2.contains(var65.asLong())) {
-                  AiPathfinder.CellInfo var67 = var0.putAt_FileStore_BitCache_BlockPos(var65);
-                  AiPathfinder.CellInfo var70 = var0.putAt_FileStore_BitCache_BlockPos(var65.below());
-                  if (putAt_Z_FileStore_BitCache(var67, var0.putAt_FileStore_BitCache_BlockPos(var65.above()), var70)
+                  AiPathfinder.CellInfo var67 = var0.probePos(var65);
+                  AiPathfinder.CellInfo var70 = var0.probePos(var65.below());
+                  if (isStandable(var67, var0.probePos(var65.above()), var70)
                      && (!var1.avoidWater() || !var67.water())
-                     && !(putAt(var65.getY(), var70) - var9 > 0.5625)) {
+                     && !(surfaceY(var65.getY(), var70) - var9 > 0.5625)) {
                      BlockPos var71 = var3.offset(var61[0], 0, 0);
                      BlockPos var75 = var3.offset(0, 0, var61[1]);
-                     if (putAt_Z(var0, var71)
-                        && putAt_Z(var0, var75)
-                        && !var0.putAt_Z_BlockPos(var3)
-                        && !var0.putAt_Z_BlockPos(var65)
-                        && !var0.putAt_Z_BlockPos(var71)
-                        && !var0.putAt_Z_BlockPos(var75)) {
+                     if (isDiagonalCornerClear(var0, var71)
+                        && isDiagonalCornerClear(var0, var75)
+                        && !var0.hasOpenDoorObstacle(var3)
+                        && !var0.hasOpenDoorObstacle(var65)
+                        && !var0.hasOpenDoorObstacle(var71)
+                        && !var0.hasOpenDoorObstacle(var75)) {
                         boolean var83 = var1.canSprint()
                            && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
                            && !var67.water()
                            && !var67.thorny()
-                           && !putAt(var1, AiPathfinder.MoveType.SPRINT_DIAGONAL);
+                           && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT_DIAGONAL);
                         double var91 = var67.water() ? 3.0 + (var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? 8.0 : 0.0) : 0.0;
                         double var103 = var70.crawl();
                         AiPathfinder.MoveType var114 = var83 ? AiPathfinder.MoveType.SPRINT_DIAGONAL : AiPathfinder.MoveType.WALK_DIAGONAL;
-                        if (!putAt(var1, var114)) {
+                        if (!isMoveTypeDisabled(var1, var114)) {
                            var4.add(
                               AiPathfinder.UiHelper.travel(
                                  var114,
@@ -2538,8 +2538,8 @@ public final class AiPathfinder {
                                  var65,
                                  (var83 ? 4.5 : 6.4 + var91) * var103
                                     + (var67.thorny() ? 25.0 : 0.0)
-                                    + putAt_D_Function(var0, var3, var65, var83)
-                                    + var0.putAt_D_BlockPos(var65)
+                                    + portalAndWebPenalty(var0, var3, var65, var83)
+                                    + var0.tightWidthPenalty(var65)
                               )
                            );
                         }
@@ -2550,27 +2550,27 @@ public final class AiPathfinder {
          }
 
          if (var8) {
-            putAt(var0, var1, var2, var3, var6, var9, var4);
-            if (var0.prevEx_Z
+            generateParkourMoves(var0, var1, var2, var3, var6, var9, var4);
+            if (var0.fullPhysicsParkour
                && var1.canSprint()
                && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
-               && var0.putAt_FileStore_RingUtil != AiPathfinder.FallPolicy.STANDARD
+               && var0.fallPolicy != AiPathfinder.FallPolicy.STANDARD
                && var9 == var3.getY()) {
-               putAt_V_FileStore_IoHelper(var0, var2, var3, var9, var4);
+               generateWallJumpMoves(var0, var2, var3, var9, var4);
             }
 
-            if (var0.prevEx_Z) {
-               putAt(var0, var1, var2, var3, var9, false, var4);
+            if (var0.fullPhysicsParkour) {
+               generateLowClearanceMoves(var0, var1, var2, var3, var9, false, var4);
             }
 
-            if (var0.prevEx_Z && !putAt(var1, AiPathfinder.MoveType.SLIME_BOUNCE)) {
-               putAt_V_FileStore_IoHelper(var0, var1, var2, var3, var9, var4);
+            if (var0.fullPhysicsParkour && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SLIME_BOUNCE)) {
+               generateSlimeBounceMoves(var0, var1, var2, var3, var9, var4);
             }
          }
 
          if (var1.allowPillar()
             && var1.hasBlocks()
-            && !putAt(var1, AiPathfinder.MoveType.PILLAR)
+            && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.PILLAR)
             && !var5.lava()
             && !var5.water()
             && !var6.honey()
@@ -2579,15 +2579,15 @@ public final class AiPathfinder {
             && !var5.web()
             && !var7.web()
             && !var2.contains(var3.above().asLong())
-            && !var0.putAt_FileStore_BitCache_BlockPos(var3.above()).hazardFeet()) {
-            var var51 = putAt_List_Function(var0, var1, var3);
+            && !var0.probePos(var3.above()).hazardFeet()) {
+            var var51 = collectPillarBreakCells(var0, var1, var3);
             if (var51 != null) {
                double var55 = var1.strategy() == AiPathfinder.RouteStrategy.SAVER ? 24.0 : 12.0;
                double var62 = 0.0;
                double var68 = 0.0;
 
                for (BlockPos var76 : var51) {
-                  AiPathfinder.CellInfo var84 = var0.putAt_FileStore_BitCache_BlockPos(var76);
+                  AiPathfinder.CellInfo var84 = var0.probePos(var76);
                   var62 += var84.breakTicks() + var1.breakReluctance() + var84.destructionPenalty();
                   var68 += var84.breakTicks();
                }
@@ -2613,15 +2613,15 @@ public final class AiPathfinder {
          }
 
          BlockPos var52 = var3.below();
-         AiPathfinder.CellInfo var56 = var0.putAt_FileStore_BitCache_BlockPos(var52);
+         AiPathfinder.CellInfo var56 = var0.probePos(var52);
          boolean var59 = var56.passable() && !var56.water() && !var56.lava() && !var56.hazardFeet();
-         if (!putAt(var1, AiPathfinder.MoveType.DIG_DOWN_1)
+         if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.DIG_DOWN_1)
             && (var59 || var1.allowDig() && var56.diggable())
             && !var2.contains(var52.asLong())
             && !var5.lava()
-            && (!var5.water() || !var0.putAt_FileStore_BitCache_BlockPos(var3.above()).water())
-            && !var0.putAt_FileStore_BitCache_BlockPos(var3.above(2)).falling()) {
-            AiPathfinder.CellInfo var63 = var0.putAt_FileStore_BitCache_BlockPos(var52.below());
+            && (!var5.water() || !var0.probePos(var3.above()).water())
+            && !var0.probePos(var3.above(2)).falling()) {
+            AiPathfinder.CellInfo var63 = var0.probePos(var52.below());
             boolean var66 = var63.loaded()
                && !var63.passable()
                && !var63.hazardFloor()
@@ -2637,11 +2637,11 @@ public final class AiPathfinder {
                boolean var92 = true;
 
                for (BlockPos var115 : new BlockPos[]{var3.above(), var3}) {
-                  AiPathfinder.CellInfo var119 = var0.putAt_FileStore_BitCache_BlockPos(var115);
+                  AiPathfinder.CellInfo var119 = var0.probePos(var115);
                   if (var119.passable() && !var119.water() && !var119.lava()) {
                      short var126 = var0.fill_S(var115.getX(), var115.getY(), var115.getZ());
                      if (var126 == -1) {
-                        var0.flowState |= 1;
+                        var0.queryFlags |= 1;
                         var92 = false;
                         break;
                      }
@@ -2671,7 +2671,7 @@ public final class AiPathfinder {
                         var52,
                         var85,
                         List.of(),
-                        var59 && var85.size() == 1 ? AiPathfinder.MoveCosts.readEx_D_I(1) : AiPathfinder.MoveCosts.readEx_D_D(var69),
+                        var59 && var85.size() == 1 ? AiPathfinder.MoveCosts.descendCost(1) : AiPathfinder.MoveCosts.digDownCost(var69),
                         var73
                      )
                   );
@@ -2679,10 +2679,10 @@ public final class AiPathfinder {
             }
          }
 
-         return var0.flowState;
+         return var0.queryFlags;
       }
 
-      static List<BlockPos> putAt_List_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, AiPathfinder.PathOptions var1, BlockPos var2) {
+      static List<BlockPos> collectPillarBreakCells(Function<BlockPos, AiPathfinder.CellInfo> var0, AiPathfinder.PathOptions var1, BlockPos var2) {
          BlockPos var3 = var2.above(2);
          BlockPos var4 = var2.above(3);
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var3);
@@ -2714,7 +2714,7 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean putAt(AiPathfinder.CellInfo var0) {
+      static boolean isPassableOrDiggableDry(AiPathfinder.CellInfo var0) {
          if (var0.loaded() && !var0.lava() && !var0.hazardFeet()) {
             return var0.passable() ? !var0.water() : var0.diggable();
          } else {
@@ -2722,12 +2722,12 @@ public final class AiPathfinder {
          }
       }
 
-      private static void putAt_V_FileStore_IoHelper_2(
+      private static void generateLadderSideJumps(
          AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, boolean var3, List<AiPathfinder.UiHelper> var4
       ) {
-         boolean var5 = var0.putAt_FileStore_BitCache_BlockPos(var2.above()).climbable();
+         boolean var5 = var0.probePos(var2.above()).climbable();
 
-         for (int[] var9 : readEx_IArr2) {
+         for (int[] var9 : EIGHT_DIRS) {
             for (int var10 = 1; var10 <= 2; var10++) {
                int var11 = var9[0] * var10;
                int var12 = var9[1] * var10;
@@ -2736,17 +2736,17 @@ public final class AiPathfinder {
                for (int var14 = var5 ? 0 : 2; var14 >= -2; var14--) {
                   BlockPos var15 = var2.offset(var11, var14, var12);
                   if (!var1.contains(var15.asLong())) {
-                     AiPathfinder.CellInfo var16 = var0.putAt_FileStore_BitCache_BlockPos(var15.below());
-                     if (putAt_Z_FileStore_BitCache(var0.putAt_FileStore_BitCache_BlockPos(var15), var0.putAt_FileStore_BitCache_BlockPos(var15.above()), var16)
+                     AiPathfinder.CellInfo var16 = var0.probePos(var15.below());
+                     if (isStandable(var0.probePos(var15), var0.probePos(var15.above()), var16)
                         && !var16.farmland()
                         && !var16.slime()) {
-                        double var17 = putAt(var15.getY(), var16);
+                        double var17 = surfaceY(var15.getY(), var16);
 
                         for (double var22 : new double[]{0.35, 0.65, 0.85}) {
                            AiPhysics.MotionState var24 = new AiPhysics.MotionState(
                               var2.getX() + 0.5, var2.getY() + var22, var2.getZ() + 0.5, 0.0, 0.1176, 0.0, false, 0, false, false
                            );
-                           AiJumpSolver.JumpPlan var25 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var0.putAt_RefQueue(), var24, var13, var15, var17);
+                           AiJumpSolver.JumpPlan var25 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var0.plannerWorld(), var24, var13, var15, var17);
                            if (var25 != null) {
                               var4.add(
                                  new AiPathfinder.UiHelper(
@@ -2763,25 +2763,25 @@ public final class AiPathfinder {
          }
 
          if (!var5 && var0.putAt_S_I(var2.getX(), var2.getY(), var2.getZ()) != 0) {
-            AiPlannerWorld var26 = var0.putAt_RefQueue();
+            AiPlannerWorld var26 = var0.plannerWorld();
             AiPhysics.MotionState var27 = new AiPhysics.MotionState(
                var2.getX() + 0.5, var2.getY() + 0.7, var2.getZ() + 0.5, 0.0, 0.1176, 0.0, false, 0, false, false
             );
             AiLadderJump.Inner_CacheHelper var28 = AiLadderJump.putAt_TableCore_CacheHel(var26, var27, var2);
             if (var28 != null) {
-               for (AiPathfinder.MoveGenerator.JumpOffset var32 : putAt_FileStore_IoHelperArr) {
+               for (AiPathfinder.MoveGenerator.JumpOffset var32 : BASE_JUMP_OFFSETS) {
                   if (var32.distance() > 2 && !(var32.length() > 5.2)) {
                      for (int var33 = 2; var33 >= -2; var33--) {
                         BlockPos var34 = var2.offset(var32.x(), var33, var32.z());
-                        AiPathfinder.CellInfo var35 = var0.putAt_FileStore_BitCache_BlockPos(var34.below());
-                        AiPathfinder.CellInfo var36 = var0.putAt_FileStore_BitCache_BlockPos(var34);
+                        AiPathfinder.CellInfo var35 = var0.probePos(var34.below());
+                        AiPathfinder.CellInfo var36 = var0.probePos(var34);
                         if (!var36.climbable()
                            && !var35.slime()
                            && !var35.farmland()
                            && !var1.contains(var34.asLong())
-                           && putAt_Z_FileStore_BitCache(var36, var0.putAt_FileStore_BitCache_BlockPos(var34.above()), var35)) {
+                           && isStandable(var36, var0.probePos(var34.above()), var35)) {
                            AiJumpSolver.JumpPlan var37 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(
-                              var26, var27, var28, var34, putAt(var34.getY(), var35), var3
+                              var26, var27, var28, var34, surfaceY(var34.getY(), var35), var3
                            );
                            if (var37 != null) {
                               var4.add(
@@ -2799,7 +2799,7 @@ public final class AiPathfinder {
          }
       }
 
-      private static void putAt(
+      private static void generateClimbTargetJumps(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          Set<Long> var1,
          BlockPos var2,
@@ -2809,22 +2809,22 @@ public final class AiPathfinder {
          boolean var7,
          List<AiPathfinder.UiHelper> var8
       ) {
-         AiPlannerWorld var9 = var0.putAt_RefQueue();
+         AiPlannerWorld var9 = var0.plannerWorld();
          AiPhysics.MotionState var10 = var6
             ? new AiPhysics.MotionState(var2.getX() + 0.5, var3, var2.getZ() + 0.5, 0.0, 0.1176, 0.0, false, 0, false, false)
             : AiPhysics.MotionState.standing(var2.getX() + 0.5, var3, var2.getZ() + 0.5);
-         if (var6 || AiJumpSolver.putAt_Z_TokenCore_TaskStat(var9, var10.x(), var3, var10.z())) {
-            boolean var11 = !var6 && var0.putAt_FileStore_RingUtil.putAt_Z();
-            AiPathfinder.MoveGenerator.JumpOffset[] var12 = var11 ? value_FileStore_IoHelperArr : putAt_FileStore_IoHelperArr;
-            double var13 = var6 ? (var0.putAt_FileStore_BitCache_BlockPos(var2.above()).climbable() ? 3.8 : 5.2) : (var11 ? 7.3 : 6.1);
+         if (var6 || AiJumpSolver.canStandAt(var9, var10.x(), var3, var10.z())) {
+            boolean var11 = !var6 && var0.fallPolicy.allowsExtendedDrop();
+            AiPathfinder.MoveGenerator.JumpOffset[] var12 = var11 ? BOUNDED_DROP_JUMP_OFFSETS : BASE_JUMP_OFFSETS;
+            double var13 = var6 ? (var0.probePos(var2.above()).climbable() ? 3.8 : 5.2) : (var11 ? 7.3 : 6.1);
 
             for (AiPathfinder.MoveGenerator.JumpOffset var18 : var12) {
                if ((var5 & var18.exits()) != 0 && !(var18.length() > var13)) {
                   for (int var19 = 1; var19 >= -4; var19--) {
                      BlockPos var20 = var2.offset(var18.x(), var19, var18.z());
-                     AiPathfinder.CellInfo var21 = var0.putAt_FileStore_BitCache_BlockPos(var20);
+                     AiPathfinder.CellInfo var21 = var0.probePos(var20);
                      if (var21.climbable() && !var21.hazardFeet() && !var21.water() && !var1.contains(var20.asLong())) {
-                        if (var18.distance() <= 2 && putAt_Z_FileStore_IoHelper_2(var0, var20, var3)) {
+                        if (var18.distance() <= 2 && hasClimbBaseSupport(var0, var20, var3)) {
                            break;
                         }
 
@@ -2845,7 +2845,7 @@ public final class AiPathfinder {
 
                         int var23 = Math.max(-4, var19 - 4);
 
-                        while (var19 > var23 && var0.putAt_FileStore_BitCache_BlockPos(var2.offset(var18.x(), var19 - 1, var18.z())).climbable()) {
+                        while (var19 > var23 && var0.probePos(var2.offset(var18.x(), var19 - 1, var18.z())).climbable()) {
                            var19--;
                         }
                      }
@@ -2855,10 +2855,10 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt_Z_FileStore_IoHelper_2(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, double var2) {
+      private static boolean hasClimbBaseSupport(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, double var2) {
          for (BlockPos var4 = var1; var4.getY() >= Math.floor(var2) - 1.0; var4 = var4.below()) {
-            if (!var0.putAt_FileStore_BitCache_BlockPos(var4.below()).climbable()) {
-               AiPathfinder.CellInfo var5 = var0.putAt_FileStore_BitCache_BlockPos(var4.below());
+            if (!var0.probePos(var4.below()).climbable()) {
+               AiPathfinder.CellInfo var5 = var0.probePos(var4.below());
                return var4.getY() - var2 <= 1.25 && var5.loaded() && var5.top16() >= 8 && !var5.passable() && !var5.hazardFloor();
             }
          }
@@ -2866,7 +2866,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      private static void putAt_V_FileStore_IoHelper(
+      private static void generateSlimeBounceMoves(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
@@ -2874,14 +2874,14 @@ public final class AiPathfinder {
          double var4,
          List<AiPathfinder.UiHelper> var6
       ) {
-         boolean var7 = !var0.readEx();
-         List var8 = var7 ? var0.fill_Map.get(var3) : null;
+         boolean var7 = !var0.hasActiveEdits();
+         List var8 = var7 ? var0.slimeBounceCache.get(var3) : null;
          if (var8 == null) {
-            AiPlannerWorld var9 = var0.putAt_RefQueue();
+            AiPlannerWorld var9 = var0.plannerWorld();
             long var10 = var9.putAt_J;
-            var8 = putAt_List_FileStore_IoHelper(var0, var1, var3, var4);
-            if (var7 && var9.putAt_J == var10 && (var0.flowState & 1) == 0) {
-               var0.fill_Map.put(var3, var8);
+            var8 = solveSlimeBounces(var0, var1, var3, var4);
+            if (var7 && var9.putAt_J == var10 && (var0.queryFlags & 1) == 0) {
+               var0.slimeBounceCache.put(var3, var8);
             }
          }
 
@@ -2892,19 +2892,19 @@ public final class AiPathfinder {
          }
       }
 
-      private static List<AiPathfinder.UiHelper> putAt_List_FileStore_IoHelper(
+      private static List<AiPathfinder.UiHelper> solveSlimeBounces(
          AiPathfinder.MoveGenerator.CachedGrid var0, AiPathfinder.PathOptions var1, BlockPos var2, double var3
       ) {
          ArrayList<AiPathfinder.UiHelper> var5 = new ArrayList<>();
          boolean var6 = var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER;
 
-         for (int[] var10 : readEx_IArr2) {
+         for (int[] var10 : EIGHT_DIRS) {
             int var11 = var10[0];
             int var12 = var10[1];
-            if (var0.putAt_FileStore_BitCache_BlockPos(var2.offset(var11, -1, var12)).passable()
-               && var0.putAt_FileStore_BitCache_BlockPos(var2.offset(var11, 0, var12)).passable()
-               && putAt_Z_FileStore_IoHelper(var0, var2, var11, var12)) {
-               AiPlannerWorld var13 = var0.putAt_RefQueue();
+            if (var0.probePos(var2.offset(var11, -1, var12)).passable()
+               && var0.probePos(var2.offset(var11, 0, var12)).passable()
+               && hasSlimeLandingAhead(var0, var2, var11, var12)) {
+               AiPlannerWorld var13 = var0.plannerWorld();
                float var14 = AiPhysics.yawBetween(0.0, 0.0, var11, var12);
                double[][] var15 = new double[][]{{0.0, 0.0}, {0.0, var12 * 0.35}, {var11 * 0.35, 0.0}, {var11 * 0.35, var12 * 0.35}};
 
@@ -2912,11 +2912,11 @@ public final class AiPathfinder {
                   double[] var17 = var15[var16];
                   if (var16 <= 0 || var17[0] != 0.0 || var17[1] != 0.0) {
                      AiPhysics.MotionState var18 = AiPhysics.MotionState.standing(var2.getX() + 0.5 + var17[0], var3, var2.getZ() + 0.5 + var17[1]);
-                     if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var13, var18.x(), var18.y(), var18.z())) {
+                     if (AiJumpSolver.canStandAt(var13, var18.x(), var18.y(), var18.z())) {
                         var var19 = AiSlimeBounce.putAt_List_TokenCore_TaskStat(var13, var18, var14, null, var6);
 
                         for (AiSlimeBounce.Inner_JsonCache var21 : var19) {
-                           if (!var0.putAt_FileStore_BitCache_BlockPos(var21.cell().below()).farmland()) {
+                           if (!var0.probePos(var21.cell().below()).farmland()) {
                               AiJumpSolver.JumpPlan var22 = var21.plan();
                               var5.add(
                                  new AiPathfinder.UiHelper(
@@ -2945,8 +2945,8 @@ public final class AiPathfinder {
          return var5;
       }
 
-      private static boolean putAt_Z_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, int var2, int var3) {
-         boolean var4 = var0.putAt_FileStore_TextStor instanceof AiLiveGrid && !var0.readEx();
+      private static boolean hasSlimeLandingAhead(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, int var2, int var3) {
+         boolean var4 = var0.delegate instanceof AiLiveGrid && !var0.hasActiveEdits();
          int var5 = var1.getY() - 24 - 1;
 
          for (int var6 = 2; var6 <= 8; var6++) {
@@ -2955,7 +2955,7 @@ public final class AiPathfinder {
 
             for (int var9 = var1.getY() - 4; var9 >= var5; var9--) {
                if (var4) {
-                  var9 = var0.putAt_I_I(var7, var9, var8, var5);
+                  var9 = var0.findHighestSolidBelow(var7, var9, var8, var5);
                   if (var9 < var5) {
                      break;
                   }
@@ -2979,7 +2979,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      private static AiPathfinder.MoveGenerator.JumpOffset[] putAt(int var0) {
+      private static AiPathfinder.MoveGenerator.JumpOffset[] buildJumpOffsets(int var0) {
          ArrayList<AiPathfinder.MoveGenerator.JumpOffset> var1 = new ArrayList<>();
 
          for (int var2 = -var0; var2 <= var0; var2++) {
@@ -2989,10 +2989,10 @@ public final class AiPathfinder {
                   double var5 = Math.hypot(var2, var3);
                   int var7 = (int)Math.round((double)var2 / var4);
                   int var8 = (int)Math.round((double)var3 / var4);
-                  int var9 = 1 << putAt(var7, var8);
+                  int var9 = 1 << eightDirIndex(var7, var8);
 
-                  for (int var10 = 0; var10 < readEx_IArr2.length; var10++) {
-                     int[] var11 = readEx_IArr2[var10];
+                  for (int var10 = 0; var10 < EIGHT_DIRS.length; var10++) {
+                     int[] var11 = EIGHT_DIRS[var10];
                      if ((var11[0] * var2 + var11[1] * var3) / (Math.hypot(var11[0], var11[1]) * var5) >= 0.5) {
                         var9 |= 1 << var10;
                      }
@@ -3012,13 +3012,13 @@ public final class AiPathfinder {
          return var1.toArray(AiPathfinder.MoveGenerator.JumpOffset[]::new);
       }
 
-      static boolean fill(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1) {
+      static boolean canTakeoffFrom(AiPathfinder.CellInfo var0, AiPathfinder.CellInfo var1) {
          return var0.loaded() && !var0.water() && !var0.lava() && !var0.climbable() && !var0.hazardFeet() && !var0.web()
             ? var1.loaded() && !var1.passable() && !var1.floorContactHazard() && !var1.lava() && !var1.water()
             : false;
       }
 
-      private static void putAt(
+      private static void generateParkourMoves(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
@@ -3027,22 +3027,22 @@ public final class AiPathfinder {
          double var5,
          List<AiPathfinder.UiHelper> var7
       ) {
-         boolean var8 = var0.fill_Z();
-         if (!var8 || !var0.value(var3)) {
+         boolean var8 = var0.isJumpBudgetExhausted();
+         if (!var8 || !var0.isJumpBudgetExceededAt(var3)) {
             boolean var9 = var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER;
-            boolean var10 = var0.prevEx_Z
+            boolean var10 = var0.fullPhysicsParkour
                && (
                   var4.narrowFooting()
                      || var4.top16() > 16
-                     || var5 != putAt(var3.getY(), var4)
-                     || !putAt_Z_FileStore_BitCache(var0.putAt_FileStore_BitCache_BlockPos(var3), var0.putAt_FileStore_BitCache_BlockPos(var3.above()), var4)
+                     || var5 != surfaceY(var3.getY(), var4)
+                     || !isStandable(var0.probePos(var3), var0.probePos(var3.above()), var4)
                );
-            double var11 = var4.ice() ? 0.0 : putAt_D_FileStore_IoHelper(var0, var3, var5, var9);
+            double var11 = var4.ice() ? 0.0 : incomingApproachSpeed(var0, var3, var5, var9);
             double var13 = 0.0;
             double var15 = 0.0;
             if (var11 > 0.0) {
-               var13 = var0.putAt_FileStore_PacketHe.to().getX() - var0.putAt_FileStore_PacketHe.from().getX();
-               var15 = var0.putAt_FileStore_PacketHe.to().getZ() - var0.putAt_FileStore_PacketHe.from().getZ();
+               var13 = var0.incomingMove.to().getX() - var0.incomingMove.from().getX();
+               var15 = var0.incomingMove.to().getZ() - var0.incomingMove.from().getZ();
                double var17 = Math.hypot(var13, var15);
                if (var17 < 1.0E-9) {
                   var11 = 0.0;
@@ -3054,32 +3054,32 @@ public final class AiPathfinder {
 
             int var72 = 0;
 
-            for (int var18 = 0; var18 < readEx_IArr2.length; var18++) {
-               BlockPos var19 = var3.offset(readEx_IArr2[var18][0], 0, readEx_IArr2[var18][1]);
-               if (!putAt_Z_Function(var0, var19, var5) && fill(var0, var19) && fill(var0, var19.above())) {
+            for (int var18 = 0; var18 < EIGHT_DIRS.length; var18++) {
+               BlockPos var19 = var3.offset(EIGHT_DIRS[var18][0], 0, EIGHT_DIRS[var18][1]);
+               if (!isFlatRunupCell(var0, var19, var5) && isJumpClearCell(var0, var19) && isJumpClearCell(var0, var19.above())) {
                   var72 |= 1 << var18;
                }
             }
 
-            if (var72 != 0 && (var8 || !var0.value(var3))) {
-               if (var0.prevEx_Z && !putAt(var1, AiPathfinder.MoveType.LADDER_JUMP)) {
-                  putAt(var0, var2, var3, var5, var72, false, var9, var7);
+            if (var72 != 0 && (var8 || !var0.isJumpBudgetExceededAt(var3))) {
+               if (var0.fullPhysicsParkour && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.LADDER_JUMP)) {
+                  generateClimbTargetJumps(var0, var2, var3, var5, var72, false, var9, var7);
                }
 
-               boolean var73 = var0.putAt_FileStore_RingUtil.putAt_Z();
-               boolean var74 = var73 && var0.putAt_FileStore_TextStor instanceof AiLiveGrid && !var0.readEx();
-               double var20 = 2.0 * Math.max(0.0, var0.putAt_D / 0.1 - 1.0);
+               boolean var73 = var0.fallPolicy.allowsExtendedDrop();
+               boolean var74 = var73 && var0.delegate instanceof AiLiveGrid && !var0.hasActiveEdits();
+               double var20 = 2.0 * Math.max(0.0, var0.movementSpeed / 0.1 - 1.0);
                int var22 = 5 + Math.min(2, (int)Math.ceil(var20 - 1.0E-5));
                AiPathfinder.MoveGenerator.JumpOffset[] var23 = var73
-                  ? readEx_FileStore_IoHelperArr
-                  : (var22 > 5 ? fill_FileStore_IoHelperArr : putAt_FileStore_IoHelperArr);
-               int var24 = var73 ? -((int)var0.putAt_FileStore_RingUtil.putAt_D) : -4;
-               if (var73 && var0.closeOf_Z) {
+                  ? DROP_JUMP_OFFSETS
+                  : (var22 > 5 ? SPEED_JUMP_OFFSETS : BASE_JUMP_OFFSETS);
+               int var24 = var73 ? -((int)var0.fallPolicy.maxDropBlocks) : -4;
+               if (var73 && var0.useDropJumpOffsets) {
                   var24 = -8;
                }
 
-               if (var73 && var0.chunkAt_Z) {
-                  var23 = value_FileStore_IoHelperArr;
+               if (var73 && var0.quickJumpMode) {
+                  var23 = BOUNDED_DROP_JUMP_OFFSETS;
                   var24 = Math.max(var24, -14);
                }
 
@@ -3091,27 +3091,27 @@ public final class AiPathfinder {
                   int var32 = var29.distance();
                   if ((var73 || var32 <= var22) && ((var72 & var29.exits()) != 0 || var32 < 2)) {
                      double var33 = var29.length();
-                     double var35 = var0.prevEx_Z ? var29.cornerReach() : var29.reach();
+                     double var35 = var0.fullPhysicsParkour ? var29.cornerReach() : var29.reach();
                      int var37 = var32 <= var22 ? var25 : -Math.max(3, (int)Math.floor((var35 - 5.2 - var20) / 0.35));
 
                      for (int var38 = var37; var38 >= var24; var38--) {
                         if (var74 || var73 && var38 < -3) {
                            int var39 = var3.getY() - 1;
-                           var38 = var0.putAt_I_I(var3.getX() + var30, var39 + var38, var3.getZ() + var31, var39 + var24) - var39;
+                           var38 = var0.findHighestSolidBelow(var3.getX() + var30, var39 + var38, var3.getZ() + var31, var39 + var24) - var39;
                            if (var38 < var24) {
                               break;
                            }
                         }
 
                         BlockPos var75 = var3.offset(var30, var38, var31);
-                        AiPathfinder.CellInfo var40 = var0.putAt_FileStore_BitCache_BlockPos(var75.below());
+                        AiPathfinder.CellInfo var40 = var0.probePos(var75.below());
                         if (var40.loaded() && !var40.passable()) {
-                           boolean var41 = (var40.top16() > 16 || var0.prevEx_Z) && putAt_Z_Function_2(var0, var75, null);
-                           if (var32 == 1 && !var41 && !var10 && (var30 == 0 || var31 == 0 || !putAt_Z_Function_2(var0, var3, var75, var5))) {
+                           boolean var41 = (var40.top16() > 16 || var0.fullPhysicsParkour) && isTightLandingStandable(var0, var75, null);
+                           if (var32 == 1 && !var41 && !var10 && (var30 == 0 || var31 == 0 || !isFlatRunupPath(var0, var3, var75, var5))) {
                               break;
                            }
 
-                           AiPathfinder.CellInfo var42 = var0.putAt_FileStore_BitCache_BlockPos(var75);
+                           AiPathfinder.CellInfo var42 = var0.probePos(var75);
                            if (!var2.contains(var75.asLong())
                               && !var40.farmland()
                               && !var40.floorContactHazard()
@@ -3120,29 +3120,29 @@ public final class AiPathfinder {
                               && !var42.climbable()
                               && !var42.web()
                               && !var42.portal()
-                              && (var41 || putAt_Z_FileStore_BitCache(var42, var0.putAt_FileStore_BitCache_BlockPos(var75.above()), var40))
-                              && !var0.putAt_FileStore_BitCache_BlockPos(var75.above()).web()) {
-                              double var43 = putAt_D_FileStore_IoHelper(var0, var75, var40);
+                              && (var41 || isStandable(var42, var0.probePos(var75.above()), var40))
+                              && !var0.probePos(var75.above()).web()) {
+                              double var43 = effectiveSurfaceY(var0, var75, var40);
                               double var45 = var43 - var5;
                               if (var45 > 1.25) {
                                  if (var0.putAt_S_I(var75.getX(), var75.getY() - 1, var75.getZ()) == 1) {
                                     break;
                                  }
                               } else {
-                                 if (var45 < (var0.putAt_FileStore_RingUtil.putAt_Z() ? -var0.putAt_FileStore_RingUtil.putAt_D : -3.6)) {
+                                 if (var45 < (var0.fallPolicy.allowsExtendedDrop() ? -var0.fallPolicy.maxDropBlocks : -3.6)) {
                                     break;
                                  }
 
-                                 double var47 = var0.prevEx_Z && var9 ? 4.2 : 4.1;
-                                 double var49 = var0.prevEx_Z && var45 <= -3.5 ? 0.45 : 0.35;
+                                 double var47 = var0.fullPhysicsParkour && var9 ? 4.2 : 4.1;
+                                 double var49 = var0.fullPhysicsParkour && var45 <= -3.5 ? 0.45 : 0.35;
                                  if (var35 > (var45 > 0.6 ? var47 : (var45 > 0.0 ? 4.6 : 5.2)) + var20 + var49 * Math.max(0.0, -var45) + 1.0E-6) {
                                     break;
                                  }
 
                                  BlockPos var51 = var75.offset(-var29.stepX(), 0, -var29.stepZ());
                                  if (Math.max(Math.abs(var51.getX() - var3.getX()), Math.abs(var51.getZ() - var3.getZ())) >= 2
-                                    && putAt_Z_Function(var0, var51, var43)
-                                    && (!var0.putAt_Z || putAt_Z_Function(var0, var51.offset(-var29.stepX(), 0, -var29.stepZ()), var43))) {
+                                    && isFlatRunupCell(var0, var51, var43)
+                                    && (!var0.requireJumpRunup || isFlatRunupCell(var0, var51.offset(-var29.stepX(), 0, -var29.stepZ()), var43))) {
                                     break;
                                  }
 
@@ -3152,18 +3152,18 @@ public final class AiPathfinder {
                                     var54 = 0.0;
                                  }
 
-                                 boolean var56 = var54 > 0.0 && var0.putAt_FileStore_PacketHe != null && var0.putAt_FileStore_PacketHe.jump() != null;
+                                 boolean var56 = var54 > 0.0 && var0.incomingMove != null && var0.incomingMove.jump() != null;
                                  double var57 = var35 + (var54 > 0.0 ? 0.2 : 0.0);
                                  double var59 = var57 - 0.5 + 0.3 + -0.12;
                                  double var61 = var57 + 0.5 - 0.3 - -0.12;
-                                 double var63 = AiJumpSolver.putAt_D_D(var45, var9, var54 > 0.0, var0.putAt_D);
-                                 double var65 = var54 > 0.0 ? AiJumpSolver.putAt_D_D(var45, var9, false, var0.putAt_D) : var63;
+                                 double var63 = AiJumpSolver.maxJumpReach(var45, var9, var54 > 0.0, var0.movementSpeed);
+                                 double var65 = var54 > 0.0 ? AiJumpSolver.maxJumpReach(var45, var9, false, var0.movementSpeed) : var63;
                                  double var67 = Math.max(var63 < 0.0 ? -1.0 : var63 + (var54 > 0.0 ? 0.25 : 1.0), var65 < 0.0 ? -1.0 : var65 + 1.0);
-                                 if (var4.ice() && var0.prevEx_Z && var32 >= 4 && var9) {
+                                 if (var4.ice() && var0.fullPhysicsParkour && var32 >= 4 && var9) {
                                     var67 = Math.max(var67, var63 + 1.5);
                                  }
 
-                                 if (var67 < 0.0 || var59 > var67 || var32 >= 2 && var61 < AiJumpSolver.putAt(var45) - 0.25) {
+                                 if (var67 < 0.0 || var59 > var67 || var32 >= 2 && var61 < AiJumpSolver.standingJumpReach(var45) - 0.25) {
                                     break;
                                  }
 
@@ -3171,30 +3171,30 @@ public final class AiPathfinder {
                                     var3, var75, var5, var43, var54, var9, var29.stepX(), var29.stepZ(), var56
                                  );
                                  if (Boolean.getBoolean("autism.ai.parkour.traceCandidates")) {
-                                    AiNavDebug.init("jump candidate from=" + var3 + " to=" + var75 + " approach=" + var54);
+                                    AiNavDebug.log("jump candidate from=" + var3 + " to=" + var75 + " approach=" + var54);
                                  }
 
-                                 if (var0.putAt_Consumer != null) {
-                                    var0.putAt_Consumer.accept(var69);
+                                 if (var0.deferredJumpSink != null) {
+                                    var0.deferredJumpSink.accept(var69);
                                  } else {
-                                    AiPathfinder.UiHelper var70 = putAt_FileStore_PacketHe_FileStore_IoHelper_2(var0, var2, var69);
+                                    AiPathfinder.UiHelper var70 = solveJumpCandidate(var0, var2, var69);
                                     if (var70 != null) {
                                        var7.add(var70);
-                                       AiPathfinder.UiHelper var71 = putAt_FileStore_PacketHe_FileStore_IoHelper(var0, var70, var2);
+                                       AiPathfinder.UiHelper var71 = tryDoubleJumpChain(var0, var70, var2);
                                        if (var71 != null) {
                                           var7.add(var71);
                                        }
                                     }
                                  }
 
-                                 if (!var0.prevEx_Z
+                                 if (!var0.fullPhysicsParkour
                                     || var40.slabStair()
                                     || var0.putAt_S_I(var75.getX(), var75.getY() - 1, var75.getZ()) == 1
-                                    || var0.putAt_FileStore_BitCache_BlockPos(var75.below(2)).passable()) {
+                                    || var0.probePos(var75.below(2)).passable()) {
                                     break;
                                  }
                               }
-                           } else if (!var0.prevEx_Z) {
+                           } else if (!var0.fullPhysicsParkour) {
                               break;
                            }
                         }
@@ -3205,28 +3205,28 @@ public final class AiPathfinder {
          }
       }
 
-      private static void putAt_V_FileStore_IoHelper(
+      private static void generateWallJumpMoves(
          AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, double var3, List<AiPathfinder.UiHelper> var5
       ) {
-         for (int[] var9 : putAt_IArr2) {
+         for (int[] var9 : CARDINAL_DIRS) {
             int var10 = var9[0];
             int var11 = var9[1];
 
             for (int var12 = 2; var12 <= 4; var12++) {
                BlockPos var13 = var2.offset(var10 * var12, 0, var11 * var12);
-               if (!var0.putAt_FileStore_BitCache_BlockPos(var13.offset(var10, 0, var11)).passable() && putAt_Z_FileStore_IoHelper(var0, var1, var13)) {
+               if (!var0.probePos(var13.offset(var10, 0, var11)).passable() && isWallJumpLandingCell(var0, var1, var13)) {
                   ArrayList<BlockPos> var14 = new ArrayList<>();
                   var14.add(var13);
 
                   for (int var15 = 0;
                      var15 < 2
-                        && putAt(var0, var13.offset(var10, 0, var11))
-                        && putAt(var0, var13.offset(2 * var10, 0, 2 * var11))
-                        && putAt(var0, var13.offset(3 * var10, 0, 3 * var11));
+                        && isTwoHighFullWall(var0, var13.offset(var10, 0, var11))
+                        && isTwoHighFullWall(var0, var13.offset(2 * var10, 0, 2 * var11))
+                        && isTwoHighFullWall(var0, var13.offset(3 * var10, 0, 3 * var11));
                      var15++
                   ) {
                      BlockPos var16 = var13.offset(4 * var10, 0, 4 * var11);
-                     if (!putAt_Z_FileStore_IoHelper(var0, var1, var16)) {
+                     if (!isWallJumpLandingCell(var0, var1, var16)) {
                         break;
                      }
 
@@ -3235,9 +3235,9 @@ public final class AiPathfinder {
                   }
 
                   if (var14.size() != 1) {
-                     AiJumpSolver.JumpPlan var17 = AiWallJump.putAt(var0.putAt_RefQueue(), var2, var3, var14);
-                     if (var17 != null && !(var17.maneuver().replay(var0.putAt_RefQueue(), var17.maneuver().start(), 0, var13, var3) < -0.04)) {
-                        var5.add(AiPathfinder.UiHelper.jump(var2, var13, AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var17), var17));
+                     AiJumpSolver.JumpPlan var17 = AiWallJump.putAt(var0.plannerWorld(), var2, var3, var14);
+                     if (var17 != null && !(var17.maneuver().replay(var0.plannerWorld(), var17.maneuver().start(), 0, var13, var3) < -0.04)) {
+                        var5.add(AiPathfinder.UiHelper.jump(var2, var13, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
                      }
                   }
                }
@@ -3245,28 +3245,28 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt_Z_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2) {
-         if (!var1.contains(var2.asLong()) && var0.putAt_FileStore_BitCache_BlockPos(var2).passable()) {
-            AiPathfinder.CellInfo var3 = var0.putAt_FileStore_BitCache_BlockPos(var2.below());
+      private static boolean isWallJumpLandingCell(AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2) {
+         if (!var1.contains(var2.asLong()) && var0.probePos(var2).passable()) {
+            AiPathfinder.CellInfo var3 = var0.probePos(var2.below());
             return var3.top16() == 16
                && !var3.farmland()
                && !var3.slime()
                && !var3.ice()
-               && putAt_Z_FileStore_BitCache(var0.putAt_FileStore_BitCache_BlockPos(var2), var0.putAt_FileStore_BitCache_BlockPos(var2.above()), var3);
+               && isStandable(var0.probePos(var2), var0.probePos(var2.above()), var3);
          } else {
             return false;
          }
       }
 
-      private static boolean putAt(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
+      private static boolean isTwoHighFullWall(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
          return var0.putAt_S_I(var1.getX(), var1.getY(), var1.getZ()) == 1 && var0.putAt_S_I(var1.getX(), var1.getY() + 1, var1.getZ()) == 1;
       }
 
-      private static boolean fill(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
-         AiPathfinder.CellInfo var2 = var0.putAt_FileStore_BitCache_BlockPos(var1);
+      private static boolean isJumpClearCell(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
+         AiPathfinder.CellInfo var2 = var0.probePos(var1);
          return var2.passable()
             ? true
-            : var0.prevEx_Z
+            : var0.fullPhysicsParkour
                && var2.loaded()
                && !var2.hazardFeet()
                && !var2.lava()
@@ -3274,87 +3274,87 @@ public final class AiPathfinder {
                && var0.putAt_S_I(var1.getX(), var1.getY(), var1.getZ()) != 1;
       }
 
-      private static AiPathfinder.UiHelper putAt_FileStore_PacketHe_FileStore_IoHelper_2(
+      private static AiPathfinder.UiHelper solveJumpCandidate(
          AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, AiPathfinder.MoveGenerator.JumpCandidate var2
       ) {
          BlockPos var3 = var2.from();
          BlockPos var4 = var2.to();
          double var5 = var2.targetY();
-         if (var0.prevEx_Z
+         if (var0.fullPhysicsParkour
             && var2.sprint()
-            && var0.putAt_FileStore_BitCache_BlockPos(var3.below()).ice()
+            && var0.probePos(var3.below()).ice()
             && var3.distToCenterSqr(var4.getX() + 0.5, var3.getY() + 0.5, var4.getZ() + 0.5) >= 16.0) {
-            AiJumpSolver.JumpPlan var7 = AiJumpSolver.putAt_IoUtil_TextState_TokenCore_TaskStat_4(var0.putAt_RefQueue(), var3, var2.sourceY(), var4, var5, true);
-            if (var7 != null && !readEx(var0, var3, var4) && (!AiPathfinder.MoveCosts.putAt() || !fill(var0, var3, var4))) {
-               return AiPathfinder.UiHelper.jump(var3, var4, AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var7), var7);
+            AiJumpSolver.JumpPlan var7 = AiJumpSolver.solveIceRunupJump(var0.plannerWorld(), var3, var2.sourceY(), var4, var5, true);
+            if (var7 != null && !hasLavaUnderJump(var0, var3, var4) && (!AiPathfinder.MoveCosts.isCautiousParkourActive() || !hasDeepDropUnderJump(var0, var3, var4))) {
+               return AiPathfinder.UiHelper.jump(var3, var4, AiPathfinder.MoveCosts.jumpPlanCost(var7), var7);
             }
          }
 
-         AiJumpSolver.JumpPlan var25 = var0.putAt(var3, var2.sourceY(), var4, var5, var2.approach(), var2.sprint());
+         AiJumpSolver.JumpPlan var25 = var0.solveJumpCached(var3, var2.sourceY(), var4, var5, var2.approach(), var2.sprint());
          BlockPos var8 = var4;
          if (var25 == null
-            && var0.prevEx_Z
+            && var0.fullPhysicsParkour
             && var2.sprint()
             && var3.distSqr(var8) >= 9.0
             && var3.distSqr(var8) <= 29.0
-            && var0.putAt_FileStore_BitCache_BlockPos(var3.below()).top16() <= 3) {
-            var25 = var0.putAt_IoUtil_TextState_BlockPos(
+            && var0.probePos(var3.below()).top16() <= 3) {
+            var25 = var0.cachedJumpSolve(
                var3,
                var8,
                -9223372036854775807L,
                true,
-               () -> AiJumpSolver.putAt_IoUtil_TextState_TokenCore_TaskStat_6(var0.putAt_RefQueue(), var3, var2.sourceY(), var8, var5)
+               () -> AiJumpSolver.solveEdgeSetupJump(var0.plannerWorld(), var3, var2.sourceY(), var8, var5)
             );
          }
 
          if (var25 == null
-            && var0.prevEx_Z
+            && var0.fullPhysicsParkour
             && var3.distSqr(var8) <= 18.0
             && (
-               !var0.putAt_FileStore_BitCache_BlockPos(var8.above()).passable()
-                  || var0.putAt_FileStore_BitCache_BlockPos(var8.below()).slabStair() && !var0.putAt_FileStore_BitCache_BlockPos(var8.above(2)).passable()
+               !var0.probePos(var8.above()).passable()
+                  || var0.probePos(var8.below()).slabStair() && !var0.probePos(var8.above(2)).passable()
             )) {
-            var25 = var0.putAt_IoUtil_TextState_BlockPos(
+            var25 = var0.cachedJumpSolve(
                var3,
                var8,
                -9223372036854775806L,
                var2.sprint(),
                () -> AiJumpManeuver.roofedLanding(
-                  var0.putAt_RefQueue(), var3, var2.sourceY(), var8, var5, var2.sprint(), var0.putAt_FileStore_BitCache_BlockPos(var3.below()).slabStair()
+                  var0.plannerWorld(), var3, var2.sourceY(), var8, var5, var2.sprint(), var0.probePos(var3.below()).slabStair()
                )
             );
          }
 
          if (var25 == null
-            && var0.prevEx_Z
+            && var0.fullPhysicsParkour
             && var3.distSqr(var8) <= 18.0
-            && var0.putAt_FileStore_BitCache_BlockPos(var3.below()).slabStair()
+            && var0.probePos(var3.below()).slabStair()
             && (
-               !var0.putAt_FileStore_BitCache_BlockPos(var3.offset(var2.dx(), 0, var2.dz())).passable()
-                     && (!var0.putAt_FileStore_BitCache_BlockPos(var8).passable() || !var0.putAt_FileStore_BitCache_BlockPos(var8.above()).passable())
-                  || !var0.putAt_FileStore_BitCache_BlockPos(var3.above()).passable() && var5 > var2.sourceY() + 0.4
+               !var0.probePos(var3.offset(var2.dx(), 0, var2.dz())).passable()
+                     && (!var0.probePos(var8).passable() || !var0.probePos(var8.above()).passable())
+                  || !var0.probePos(var3.above()).passable() && var5 > var2.sourceY() + 0.4
             )) {
-            var25 = var0.putAt_IoUtil_TextState_BlockPos(
+            var25 = var0.cachedJumpSolve(
                var3,
                var8,
                -9223372036854775805L,
                var2.sprint(),
-               () -> AiJumpManeuver.cornerDeparture(var0.putAt_RefQueue(), var3, var2.sourceY(), var8, var5, var2.sprint())
+               () -> AiJumpManeuver.cornerDeparture(var0.plannerWorld(), var3, var2.sourceY(), var8, var5, var2.sprint())
             );
          }
 
          boolean var9 = var25 != null;
          boolean var10 = false;
-         if (var0.prevEx_Z && !var0.prev_Z && var2.sprint() && Math.abs(var2.sourceY() - var5) <= 1.0E-6 && putAt_Z_Function_3(var0, var3, var4)) {
-            AiJumpSolver.JumpPlan var11 = AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.putAt_RefQueue(), var3, var5, var4, var2.approach());
+         if (var0.fullPhysicsParkour && !var0.fastPassMode && var2.sprint() && Math.abs(var2.sourceY() - var5) <= 1.0E-6 && isNeoWallCandidate(var0, var3, var4)) {
+            AiJumpSolver.JumpPlan var11 = AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.plannerWorld(), var3, var5, var4, var2.approach());
             if (var11 != null
                && (var25 == null || var11.ticks() <= var25.ticks() + 4)
-               && var11.maneuver().replay(var0.putAt_RefQueue(), var11.maneuver().start(), 0, var4, var5) >= -0.04) {
+               && var11.maneuver().replay(var0.plannerWorld(), var11.maneuver().start(), 0, var4, var5) >= -0.04) {
                var25 = var11;
                var9 = false;
                var10 = true;
-               if (AiNavDebug.init_Z()) {
-                  AiNavDebug.init("proved sprint shoulder from=" + var3.toShortString() + " to=" + var4.toShortString() + " ticks=" + var11.ticks());
+               if (AiNavDebug.isEnabled()) {
+                  AiNavDebug.log("proved sprint shoulder from=" + var3.toShortString() + " to=" + var4.toShortString() + " ticks=" + var11.ticks());
                }
             }
          }
@@ -3363,9 +3363,9 @@ public final class AiPathfinder {
          if (var2.landedAhead()
             && var25 != null
             && var25.maneuver() == null
-            && var0.putAt_FileStore_PacketHe != null
-            && var0.putAt_FileStore_PacketHe.jump() != null) {
-            AiJumpSolver.JumpPlan var13 = var0.putAt_FileStore_PacketHe.jump();
+            && var0.incomingMove != null
+            && var0.incomingMove.jump() != null) {
+            AiJumpSolver.JumpPlan var13 = var0.incomingMove.jump();
             double var14 = Math.toRadians(var13.yaw());
             AiPhysics.MotionState var16 = new AiPhysics.MotionState(
                var13.landX(),
@@ -3379,13 +3379,13 @@ public final class AiPathfinder {
                false,
                false
             );
-            if (AiJumpSolver.putAt_IoUtil_IoPool_TokenCore_TaskStat(var0.putAt_RefQueue(), var16, var25.yaw(), var2.sprint(), var4, var5, 6).margin() < -0.04) {
+            if (AiJumpSolver.solveTakeoff(var0.plannerWorld(), var16, var25.yaw(), var2.sprint(), var4, var5, 6).margin() < -0.04) {
                var25 = null;
             }
          }
 
          if (var9 && var2.approach() > 0.0 && (var25 == null || var25.maneuver() == null && var25.margin() < 0.14)) {
-            AiJumpSolver.JumpPlan var27 = var0.putAt(var3, var2.sourceY(), var4, var5, 0.0, var2.sprint());
+            AiJumpSolver.JumpPlan var27 = var0.solveJumpCached(var3, var2.sourceY(), var4, var5, 0.0, var2.sprint());
             if (var27 != null && var27.margin() >= -0.04) {
                boolean var30 = var25 == null
                   || var25.margin() < -0.04
@@ -3403,7 +3403,7 @@ public final class AiPathfinder {
          }
 
          if (Boolean.getBoolean("autism.ai.parkour.traceCandidates")) {
-            AiNavDebug.init("jump proof from=" + var3 + " to=" + var4 + " plan=" + var25);
+            AiNavDebug.log("jump proof from=" + var3 + " to=" + var4 + " plan=" + var25);
          }
 
          if (var25 == null) {
@@ -3412,18 +3412,18 @@ public final class AiPathfinder {
 
          if (var25.margin() < 0.1) {
             BlockPos var28 = var2.deeper();
-            AiPathfinder.CellInfo var31 = var0.putAt_FileStore_BitCache_BlockPos(var28.below());
+            AiPathfinder.CellInfo var31 = var0.probePos(var28.below());
             boolean var15 = var25.margin() < -0.04
                || var2.dx() == 0
                || var2.dz() == 0
-               || putAt_Z_Function(var0, var4.offset(var2.dx(), 0, 0), var5)
-                  && Math.abs(putAt(var4.getY(), var0.putAt_FileStore_BitCache_BlockPos(var4.offset(var2.dx(), -1, 0))) - var5) < 1.0E-6
-               || putAt_Z_Function(var0, var4.offset(0, 0, var2.dz()), var5)
-                  && Math.abs(putAt(var4.getY(), var0.putAt_FileStore_BitCache_BlockPos(var4.offset(0, -1, var2.dz()))) - var5) < 1.0E-6;
-            if (var15 && !var1.contains(var28.asLong()) && putAt_Z_Function(var0, var28, var5) && Math.abs(putAt(var28.getY(), var31) - var5) < 1.0E-6) {
+               || isFlatRunupCell(var0, var4.offset(var2.dx(), 0, 0), var5)
+                  && Math.abs(surfaceY(var4.getY(), var0.probePos(var4.offset(var2.dx(), -1, 0))) - var5) < 1.0E-6
+               || isFlatRunupCell(var0, var4.offset(0, 0, var2.dz()), var5)
+                  && Math.abs(surfaceY(var4.getY(), var0.probePos(var4.offset(0, -1, var2.dz()))) - var5) < 1.0E-6;
+            if (var15 && !var1.contains(var28.asLong()) && isFlatRunupCell(var0, var28, var5) && Math.abs(surfaceY(var28.getY(), var31) - var5) < 1.0E-6) {
                AiJumpSolver.JumpPlan var34 = var10
-                  ? AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.putAt_RefQueue(), var3, var5, var28, var2.approach())
-                  : var0.putAt(var3, var2.sourceY(), var28, var5, var25.approach(), var2.sprint());
+                  ? AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.plannerWorld(), var3, var5, var28, var2.approach())
+                  : var0.solveJumpCached(var3, var2.sourceY(), var28, var5, var25.approach(), var2.sprint());
                if (var34 != null && var34.margin() > var25.margin()) {
                   var25 = var34;
                   var4 = var28;
@@ -3431,10 +3431,10 @@ public final class AiPathfinder {
             }
          }
 
-         boolean var29 = fill(var0, var3, var4);
-         boolean var32 = readEx(var0, var3, var4);
+         boolean var29 = hasDeepDropUnderJump(var0, var3, var4);
+         boolean var32 = hasLavaUnderJump(var0, var3, var4);
          if (Boolean.getBoolean("autism.ai.parkour.traceCandidates")) {
-            AiNavDebug.init(
+            AiNavDebug.log(
                "jump decision from="
                   + var3
                   + " to="
@@ -3444,63 +3444,63 @@ public final class AiPathfinder {
                   + " hard="
                   + var29
                   + " cautious="
-                  + AiPathfinder.MoveCosts.putAt()
+                  + AiPathfinder.MoveCosts.isCautiousParkourActive()
                   + " lava="
                   + var32
             );
          }
 
-         if (!(var25.margin() < -0.04) && (!var29 || !AiPathfinder.MoveCosts.putAt()) && !var32) {
+         if (!(var25.margin() < -0.04) && (!var29 || !AiPathfinder.MoveCosts.isCautiousParkourActive()) && !var32) {
             double var33 = var3.distToCenterSqr(var4.getX() + 0.5, var3.getY() + 0.5, var4.getZ() + 0.5);
-            boolean var17 = var0.putAt_D > 0.125;
-            if (var17 && var0.prev_Z && var25.maneuver() == null && var25.running() && var5 - var2.sourceY() > 0.6 && var33 >= 23.04 && var25.margin() < 0.16) {
-               AiJumpSolver.JumpPlan var18 = var0.putAt(var3, var2.sourceY(), var4, var5, 0.0, var2.sprint());
+            boolean var17 = var0.movementSpeed > 0.125;
+            if (var17 && var0.fastPassMode && var25.maneuver() == null && var25.running() && var5 - var2.sourceY() > 0.6 && var33 >= 23.04 && var25.margin() < 0.16) {
+               AiJumpSolver.JumpPlan var18 = var0.solveJumpCached(var3, var2.sourceY(), var4, var5, 0.0, var2.sprint());
                if (var18 == null || var18.margin() < -0.04) {
                   return null;
                }
             }
 
             boolean var35 = var17 ? var33 > 29.160000000000004 : var33 >= 20.25 && var5 - var2.sourceY() > 0.6;
-            AiPathfinder.CellInfo var19 = var0.putAt_FileStore_BitCache_BlockPos(var3.below());
+            AiPathfinder.CellInfo var19 = var0.probePos(var3.below());
             boolean var20 = var25.runTicks() >= 3 && var33 >= 16.0 && var5 - var2.sourceY() >= 0.75 && (var19.narrowFooting() || var19.top16() > 16);
-            if (var0.putAt_D > 0.100001
+            if (var0.movementSpeed > 0.100001
                && var25.maneuver() == null
-               && (var20 || var25.runTicks() >= 6 || var0.prev_Z && var35)
-               && !AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0.putAt_RefQueue(), var25, var2.sourceY())) {
+               && (var20 || var25.runTicks() >= 6 || var0.fastPassMode && var35)
+               && !AiJumpSolver.verifyRunupPath(var0.plannerWorld(), var25, var2.sourceY())) {
                return null;
             }
 
             double var21 = var29 ? 20.0 : 0.0;
-            if (var29 && (var0.prev_Z || var0.putAt_FileStore_RingUtil != AiPathfinder.FallPolicy.STANDARD)) {
+            if (var29 && (var0.fastPassMode || var0.fallPolicy != AiPathfinder.FallPolicy.STANDARD)) {
                double var23 = 0.12;
                var21 *= Math.clamp((var23 - var25.margin()) / (var23 - -0.04), 0.0, 1.0);
             }
 
-            if (var0.putAt_FileStore_RingUtil != AiPathfinder.FallPolicy.STANDARD) {
-               AiPathfinder.CellInfo var36 = var0.putAt_FileStore_BitCache_BlockPos(var4.below());
+            if (var0.fallPolicy != AiPathfinder.FallPolicy.STANDARD) {
+               AiPathfinder.CellInfo var36 = var0.probePos(var4.below());
                if (var36.narrowFooting() || var36.top16() > 16) {
                   var26 += 3.0;
                }
 
-               if (putAt(var25)) {
+               if (usesSneakManeuver(var25)) {
                   var26 += 3.0;
                }
             }
 
-            double var37 = AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var25);
-            if (var25.maneuver() != null && var25.backup() == 0.0 && var33 <= 2.5 && !putAt(var25)) {
+            double var37 = AiPathfinder.MoveCosts.jumpPlanCost(var25);
+            if (var25.maneuver() != null && var25.backup() == 0.0 && var33 <= 2.5 && !usesSneakManeuver(var25)) {
                var37 -= 10.0;
             }
 
             return AiPathfinder.UiHelper.jump(
-               var3, var4, var37 + var26 + (var0.putAt_FileStore_BitCache_BlockPos(var4).thorny() ? 25.0 : 0.0) + var21, var25
+               var3, var4, var37 + var26 + (var0.probePos(var4).thorny() ? 25.0 : 0.0) + var21, var25
             );
          } else {
             return null;
          }
       }
 
-      static boolean putAt_Z_Function_3(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      static boolean isNeoWallCandidate(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          int var3 = var2.getX() - var1.getX();
          int var4 = var2.getZ() - var1.getZ();
          int var5 = Math.abs(var3) + Math.abs(var4);
@@ -3519,14 +3519,14 @@ public final class AiPathfinder {
          }
       }
 
-      private static AiPathfinder.UiHelper putAt_FileStore_PacketHe_FileStore_IoHelper(
+      private static AiPathfinder.UiHelper tryDoubleJumpChain(
          AiPathfinder.MoveGenerator.CachedGrid var0, AiPathfinder.UiHelper var1, Set<Long> var2
       ) {
          AiJumpSolver.JumpPlan var3 = var1.jump();
-         if (var0.prevEx_Z && !var3.running() && var3.maneuver() == null && var3.sprint() && var3.coastAfter() != 2147483647) {
+         if (var0.fullPhysicsParkour && !var3.running() && var3.maneuver() == null && var3.sprint() && var3.coastAfter() != 2147483647) {
             BlockPos var4 = var1.from();
             BlockPos var5 = var1.to();
-            AiPathfinder.CellInfo var6 = var0.putAt_FileStore_BitCache_BlockPos(var5.below());
+            AiPathfinder.CellInfo var6 = var0.probePos(var5.below());
             if (var6.top16() == 16 && var0.putAt_S_I(var5.getX(), var5.getY() - 1, var5.getZ()) != 1) {
                int var7 = var5.getX() - var4.getX();
                int var8 = var5.getZ() - var4.getZ();
@@ -3536,13 +3536,13 @@ public final class AiPathfinder {
 
                int var9 = Math.abs(var7) > Math.abs(var8) ? Integer.signum(var7) : 0;
                int var10 = var9 == 0 ? Integer.signum(var8) : 0;
-               if (putAt_Z_Function(var0, var5.offset(var9, 0, var10), var3.landY())) {
+               if (isFlatRunupCell(var0, var5.offset(var9, 0, var10), var3.landY())) {
                   return null;
                }
 
-               double var11 = putAt(var4.getY(), var0.putAt_FileStore_BitCache_BlockPos(var4.below()));
-               AiPlannerWorld var13 = var0.putAt_RefQueue();
-               AiJumpSolver.JumpPlan var14 = AiJumpSolver.putAt_IoUtil_TextState_TokenCore_TaskStat(var13, var3, var5, var11, var3.landY());
+               double var11 = surfaceY(var4.getY(), var0.probePos(var4.below()));
+               AiPlannerWorld var13 = var0.plannerWorld();
+               AiJumpSolver.JumpPlan var14 = AiJumpSolver.solveUncoastedChainedJump(var13, var3, var5, var11, var3.landY());
                if (var14 == null) {
                   return null;
                }
@@ -3555,22 +3555,22 @@ public final class AiPathfinder {
                      for (int var19 = var17; var19 <= var18; var19++) {
                         BlockPos var20 = var5.offset(var9 * var15 + var10 * var16, var19, var10 * var15 + var9 * var16);
                         if (!var2.contains(var20.asLong())) {
-                           AiPathfinder.CellInfo var21 = var0.putAt_FileStore_BitCache_BlockPos(var20.below());
+                           AiPathfinder.CellInfo var21 = var0.probePos(var20.below());
                            if ((
-                                 putAt_Z_FileStore_BitCache(
-                                       var0.putAt_FileStore_BitCache_BlockPos(var20), var0.putAt_FileStore_BitCache_BlockPos(var20.above()), var21
+                                 isStandable(
+                                       var0.probePos(var20), var0.probePos(var20.above()), var21
                                     )
-                                    || putAt_Z_Function_2(var0, var20, null)
+                                    || isTightLandingStandable(var0, var20, null)
                               )
                               && !var21.farmland()
                               && !var21.slime()
                               && var0.putAt_S_I(var20.getX(), var20.getY() - 1, var20.getZ()) != 1) {
-                              double var22 = putAt(var20.getY(), var21);
-                              AiJumpSolver.JumpPlan var24 = AiJumpSolver.putAt_IoUtil_TextState_TokenCore_TaskStat_2(var13, var14, var20, var22, var14.sprint());
+                              double var22 = surfaceY(var20.getY(), var21);
+                              AiJumpSolver.JumpPlan var24 = AiJumpSolver.solveFollowUpJump(var13, var14, var20, var22, var14.sprint());
                               if (var24 != null
                                  && !(var24.margin() < 0.03)
-                                 && !readEx(var0, var5, var20)
-                                 && (!AiPathfinder.MoveCosts.putAt() || !fill(var0, var5, var20))) {
+                                 && !hasLavaUnderJump(var0, var5, var20)
+                                 && (!AiPathfinder.MoveCosts.isCautiousParkourActive() || !hasDeepDropUnderJump(var0, var5, var20))) {
                                  var var25 = new ArrayList<>(var14.maneuver().inputs());
                                  var25.addAll(var24.maneuver().inputs());
                                  AiJumpManeuver var26 = new AiJumpManeuver(
@@ -3595,7 +3595,7 @@ public final class AiPathfinder {
                                        var26
                                     );
                                     return AiPathfinder.UiHelper.jump(
-                                       var4, var20, var1.costTicks() + AiPathfinder.MoveCosts.putAt_D_IoUtil_TextState(var24), var27
+                                       var4, var20, var1.costTicks() + AiPathfinder.MoveCosts.jumpPlanCost(var24), var27
                                     );
                                  }
                               }
@@ -3614,11 +3614,11 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt(AiJumpSolver.JumpPlan var0) {
+      private static boolean usesSneakManeuver(AiJumpSolver.JumpPlan var0) {
          return var0.maneuver() != null && var0.maneuver().inputs().stream().anyMatch(AiPhysics.MoveInput::sneak);
       }
 
-      static boolean fill(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      static boolean hasDeepDropUnderJump(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          int var3 = var2.getX() - var1.getX();
          int var4 = var2.getZ() - var1.getZ();
          int var5 = Math.max(Math.abs(var3), Math.abs(var4));
@@ -3628,13 +3628,13 @@ public final class AiPathfinder {
             BlockPos var8 = new BlockPos(
                var1.getX() + (int)Math.round((double)var3 * var7 / var5), var6, var1.getZ() + (int)Math.round((double)var4 * var7 / var5)
             );
-            if (prevEx(var0, var8)) {
+            if (hasDeepAirDrop(var0, var8)) {
                return true;
             }
          }
 
-         for (int[] var10 : readEx_IArr2) {
-            if (prevEx(var0, var2.offset(var10[0], 0, var10[1]))) {
+         for (int[] var10 : EIGHT_DIRS) {
+            if (hasDeepAirDrop(var0, var2.offset(var10[0], 0, var10[1]))) {
                return true;
             }
          }
@@ -3642,7 +3642,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean readEx(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      static boolean hasLavaUnderJump(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          int var3 = var2.getX() - var1.getX();
          int var4 = var2.getZ() - var1.getZ();
          int var5 = Math.max(Math.abs(var3), Math.abs(var4));
@@ -3652,13 +3652,13 @@ public final class AiPathfinder {
             BlockPos var8 = new BlockPos(
                var1.getX() + (int)Math.round((double)var3 * var7 / var5), var6, var1.getZ() + (int)Math.round((double)var4 * var7 / var5)
             );
-            if (value(var0, var8)) {
+            if (hasLavaInColumn(var0, var8)) {
                return true;
             }
          }
 
-         for (int[] var10 : readEx_IArr2) {
-            if (value(var0, var2.offset(var10[0], 0, var10[1]))) {
+         for (int[] var10 : EIGHT_DIRS) {
+            if (hasLavaInColumn(var0, var2.offset(var10[0], 0, var10[1]))) {
                return true;
             }
          }
@@ -3666,7 +3666,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      private static boolean value(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      private static boolean hasLavaInColumn(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          for (int var2 = 0; var2 <= 12; var2++) {
             AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below(var2));
             if (!var3.loaded()) {
@@ -3685,7 +3685,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      private static boolean prevEx(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      private static boolean hasDeepAirDrop(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          for (int var2 = 0; var2 <= 4; var2++) {
             AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below(var2));
             if (!var3.loaded() || !var3.passable() || var3.water()) {
@@ -3696,9 +3696,9 @@ public final class AiPathfinder {
          return true;
       }
 
-      private static int putAt(int var0, int var1) {
-         for (int var2 = 0; var2 < readEx_IArr2.length; var2++) {
-            if (readEx_IArr2[var2][0] == var0 && readEx_IArr2[var2][1] == var1) {
+      private static int eightDirIndex(int var0, int var1) {
+         for (int var2 = 0; var2 < EIGHT_DIRS.length; var2++) {
+            if (EIGHT_DIRS[var2][0] == var0 && EIGHT_DIRS[var2][1] == var1) {
                return var2;
             }
          }
@@ -3706,15 +3706,15 @@ public final class AiPathfinder {
          throw new IllegalArgumentException("not a neighbour: " + var0 + "," + var1);
       }
 
-      static boolean putAt_Z_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, double var2) {
+      static boolean isFlatRunupCell(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, double var2) {
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var1);
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var1.below());
-         return putAt_Z_FileStore_BitCache(var4, (AiPathfinder.CellInfo)var0.apply(var1.above()), var5) && !var4.water()
-            ? Math.abs(putAt(var1.getY(), var5) - var2) <= 0.562500001
+         return isStandable(var4, (AiPathfinder.CellInfo)var0.apply(var1.above()), var5) && !var4.water()
+            ? Math.abs(surfaceY(var1.getY(), var5) - var2) <= 0.562500001
             : false;
       }
 
-      static boolean putAt_Z_Function_2(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, double var3) {
+      static boolean isFlatRunupPath(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, double var3) {
          int var5 = var2.getX() - var1.getX();
          int var6 = var2.getZ() - var1.getZ();
          int var7 = Math.max(Math.abs(var5), Math.abs(var6));
@@ -3722,7 +3722,7 @@ public final class AiPathfinder {
             for (int var8 = 1; var8 < var7; var8++) {
                int var9 = var1.getX() + (int)Math.round((double)var5 * var8 / var7);
                int var10 = var1.getZ() + (int)Math.round((double)var6 * var8 / var7);
-               if (!putAt_Z_Function(var0, new BlockPos(var9, var1.getY(), var10), var3)) {
+               if (!isFlatRunupCell(var0, new BlockPos(var9, var1.getY(), var10), var3)) {
                   return true;
                }
             }
@@ -3730,44 +3730,44 @@ public final class AiPathfinder {
             return false;
          } else {
             return var5 != 0 && var6 != 0
-               ? !putAt_Z_Function(var0, var1.offset(var5, 0, 0), var3) || !putAt_Z_Function(var0, var1.offset(0, 0, var6), var3)
+               ? !isFlatRunupCell(var0, var1.offset(var5, 0, 0), var3) || !isFlatRunupCell(var0, var1.offset(0, 0, var6), var3)
                : false;
          }
       }
 
-      private static double putAt_D_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, double var2, boolean var4) {
-         if (var0.putAt_FileStore_PacketHe == null) {
+      private static double incomingApproachSpeed(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, double var2, boolean var4) {
+         if (var0.incomingMove == null) {
             return 0.0;
          }
 
          double var10000;
-         switch (var0.putAt_FileStore_PacketHe.type()) {
+         switch (var0.incomingMove.type()) {
             case WALK:
             case WALK_DIAGONAL:
             case SPRINT:
             case SPRINT_DIAGONAL:
-               AiPlannerWorld var5 = var0.putAt_RefQueue();
+               AiPlannerWorld var5 = var0.plannerWorld();
                int var6 = (int)Math.floor(var2 - 0.5000001);
                double var7 = var5.putAt_D_I(var1.getX(), var6, var1.getZ());
                double var9 = 0.91 * var7 * var5.fill_D(var1.getX(), var6, var1.getZ());
-               boolean var11 = var0.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.SPRINT
-                  || var0.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.SPRINT_DIAGONAL;
+               boolean var11 = var0.incomingMove.type() == AiPathfinder.MoveType.SPRINT
+                  || var0.incomingMove.type() == AiPathfinder.MoveType.SPRINT_DIAGONAL;
                double var12 = var5.movementSpeed() * (var11 ? 1.3 : 1.0) * (0.21600002 / (var7 * var7 * var7)) * 0.98;
                double var14 = var12 * var9 / (1.0 - var9);
-               var10000 = var7 >= 0.9 ? var14 * (1.0 - Math.pow(var9, Math.max(1.0, var0.putAt_FileStore_PacketHe.costTicks()))) : var14;
+               var10000 = var7 >= 0.9 ? var14 * (1.0 - Math.pow(var9, Math.max(1.0, var0.incomingMove.costTicks()))) : var14;
                break;
             default:
-               var10000 = putAt(var0.putAt_FileStore_PacketHe, var4);
+               var10000 = exitSpeedOfMove(var0.incomingMove, var4);
          }
 
          return var10000;
       }
 
-      static double putAt(AiPathfinder.UiHelper var0) {
-         return putAt(var0, false);
+      static double exitSpeedOfMove(AiPathfinder.UiHelper var0) {
+         return exitSpeedOfMove(var0, false);
       }
 
-      static double putAt(AiPathfinder.UiHelper var0, boolean var1) {
+      static double exitSpeedOfMove(AiPathfinder.UiHelper var0, boolean var1) {
          if (var0 == null) {
             return 0.0;
          }
@@ -3810,7 +3810,7 @@ public final class AiPathfinder {
          return var10000;
       }
 
-      private static void putAt_V_FileStore_IoHelper_2(
+      private static void generateDigOutMoves(
          AiPathfinder.MoveGenerator.CachedGrid var0,
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
@@ -3818,12 +3818,12 @@ public final class AiPathfinder {
          AiPathfinder.CellInfo var4,
          List<AiPathfinder.UiHelper> var5
       ) {
-         for (int[] var9 : putAt_IArr2) {
+         for (int[] var9 : CARDINAL_DIRS) {
             BlockPos var10 = var3.offset(var9[0], 0, var9[1]);
             if (!var2.contains(var10.asLong())) {
-               AiPathfinder.CellInfo var11 = var0.putAt_FileStore_BitCache_BlockPos(var10);
-               AiPathfinder.CellInfo var12 = var0.putAt_FileStore_BitCache_BlockPos(var10.above());
-               AiPathfinder.CellInfo var13 = var0.putAt_FileStore_BitCache_BlockPos(var10.below());
+               AiPathfinder.CellInfo var11 = var0.probePos(var10);
+               AiPathfinder.CellInfo var12 = var0.probePos(var10.above());
+               AiPathfinder.CellInfo var13 = var0.probePos(var10.below());
                if (var13.loaded()
                   && !var13.passable()
                   && !var13.hazardFloor()
@@ -3862,7 +3862,7 @@ public final class AiPathfinder {
 
                      var5.add(
                         new AiPathfinder.UiHelper(
-                           AiPathfinder.MoveType.DIG_TUNNEL, var3, var10, var16, List.of(), AiPathfinder.MoveCosts.value_D_D(var17), var19
+                           AiPathfinder.MoveType.DIG_TUNNEL, var3, var10, var16, List.of(), AiPathfinder.MoveCosts.digTunnelCost(var17), var19
                         )
                      );
                   }
@@ -3871,7 +3871,7 @@ public final class AiPathfinder {
          }
       }
 
-      static double putAt_D_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, boolean var3) {
+      static double portalAndWebPenalty(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, boolean var3) {
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var2);
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var2.above());
          double var6 = !var4.portal() && !var5.portal() ? 0.0 : 400.0;
@@ -3886,11 +3886,11 @@ public final class AiPathfinder {
          return var6 + var10 * var12 * (var3 ? 32.0 : 41.0);
       }
 
-      static double putAt_D(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      static double portalPenalty(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          return !((AiPathfinder.CellInfo)var0.apply(var1)).portal() && !((AiPathfinder.CellInfo)var0.apply(var1.above())).portal() ? 0.0 : 400.0;
       }
 
-      static double putAt_D_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, int var1, int var2, double var3, double var5) {
+      static double fallingWebOverlap(Function<BlockPos, AiPathfinder.CellInfo> var0, int var1, int var2, double var3, double var5) {
          double var7 = 0.0;
          double var9 = var5;
 
@@ -3908,7 +3908,7 @@ public final class AiPathfinder {
          return var7;
       }
 
-      static boolean putAt_Z(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      static boolean isDiagonalCornerClear(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          AiPathfinder.CellInfo var2 = (AiPathfinder.CellInfo)var0.apply(var1);
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.above());
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var1.below());
@@ -3944,11 +3944,11 @@ public final class AiPathfinder {
          return var5.loaded() && !var5.passable() && !var5.lava() && !var5.hazardFloor();
       }
 
-      static boolean putAt_Z_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3) {
-         return putAt_Z_Function(var0, var1, var2, var3, 1);
+      static boolean hasSafeOvershootAhead(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3) {
+         return hasSafeOvershootAhead(var0, var1, var2, var3, 1);
       }
 
-      public static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5) {
+      public static boolean hasDropLandingClearance(AiPhysics.PhysicsWorld var0, double var1, double var3, BlockPos var5) {
          double var6 = 0.4;
          AABB var8 = new AABB(var1 - var6, var5.getY(), var3 - var6, var1 + var6, var5.getY() + 2, var3 + var6);
 
@@ -3961,7 +3961,7 @@ public final class AiPathfinder {
          return true;
       }
 
-      public static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, List<AiPhysics.MotionState> var1, int var2) {
+      public static boolean isFallTrajectoryClear(AiPhysics.PhysicsWorld var0, List<AiPhysics.MotionState> var1, int var2) {
          double var3 = 0.4;
 
          for (AiPhysics.MotionState var6 : var1) {
@@ -3979,17 +3979,17 @@ public final class AiPathfinder {
          return true;
       }
 
-      public static boolean value(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      public static boolean withinStepUpHeight(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var2.below());
-         return !var3.passable() && !var4.passable() ? putAt(var1.getY(), var3) - putAt(var2.getY(), var4) <= 0.562501 : false;
+         return !var3.passable() && !var4.passable() ? surfaceY(var1.getY(), var3) - surfaceY(var2.getY(), var4) <= 0.562501 : false;
       }
 
-      static boolean putAt_Z_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4) {
-         return fill(var0, var1, var2, var3, var4, false);
+      static boolean hasSafeOvershootAhead(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4) {
+         return checkOvershootColumn(var0, var1, var2, var3, var4, false);
       }
 
-      private static boolean fill(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4, boolean var5) {
+      private static boolean checkOvershootColumn(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4, boolean var5) {
          BlockPos var6 = var1.offset(var2, 0, var3);
          AiPathfinder.CellInfo var7 = (AiPathfinder.CellInfo)var0.apply(var6);
          if (var7.loaded() && !var7.lava() && !var7.hazardFeet()) {
@@ -4019,7 +4019,7 @@ public final class AiPathfinder {
                            continue;
                         }
 
-                        return putAt_Z_FileStore_BitCache(var10, (AiPathfinder.CellInfo)var0.apply(var9.above()), var11);
+                        return isStandable(var10, (AiPathfinder.CellInfo)var0.apply(var9.above()), var11);
                      }
 
                      return false;
@@ -4037,15 +4037,15 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt(AiPathfinder.PathOptions var0, AiPathfinder.MoveType var1) {
+      private static boolean isMoveTypeDisabled(AiPathfinder.PathOptions var0, AiPathfinder.MoveType var1) {
          return var0.disabledTypes().contains(var1);
       }
 
-      private static boolean fill(AiPathfinder.CellInfo var0) {
+      private static boolean isSolidSafeFloor(AiPathfinder.CellInfo var0) {
          return var0.loaded() && !var0.passable() && !var0.water() && !var0.lava() && !var0.hazardFloor();
       }
 
-      static boolean prevEx(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      static boolean canSprintJumpFlat(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1);
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          if (var3.water() || var3.lava() || var3.climbable() || var3.hazardFeet() || var3.web() || ((AiPathfinder.CellInfo)var0.apply(var1.above())).web()) {
@@ -4091,13 +4091,13 @@ public final class AiPathfinder {
                      return false;
                   }
 
-                  if (putAt(var1.getY(), var4) != putAt(var2.getY(), var6)) {
+                  if (surfaceY(var1.getY(), var4) != surfaceY(var2.getY(), var6)) {
                      return false;
                   } else {
-                     return !putAt_Z_FileStore_BitCache(var5, (AiPathfinder.CellInfo)var0.apply(var2.above()), var6)
+                     return !isStandable(var5, (AiPathfinder.CellInfo)var0.apply(var2.above()), var6)
                         ? false
-                        : putAt((AiPathfinder.CellInfo)var0.apply(var1.above(2)), (AiPathfinder.CellInfo)var0.apply(var1.above(3)))
-                           || prev(var0, var1, var2);
+                        : hasTwoBlockHeadroom((AiPathfinder.CellInfo)var0.apply(var1.above(2)), (AiPathfinder.CellInfo)var0.apply(var1.above(3)))
+                           || hasLowCeilingSprintJump(var0, var1, var2);
                   }
                } else {
                   return false;
@@ -4110,13 +4110,13 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean prev(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      static boolean hasLowCeilingSprintJump(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.above(2));
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var2.above(2));
          return var3.loaded() && var4.loaded() && !var3.passable() && !var4.passable() && !var3.hazardFeet() && !var4.hazardFeet();
       }
 
-      static boolean putAt_Z_Function(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4, boolean var5) {
+      static boolean canSprintJumpGap(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, int var2, int var3, int var4, boolean var5) {
          AiPathfinder.CellInfo var6 = (AiPathfinder.CellInfo)var0.apply(var1);
          AiPathfinder.CellInfo var7 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          if (!var6.loaded() || var6.water() || var6.lava() || var6.climbable() || var6.hazardFeet() || var6.feetTrigger() || var6.web()) {
@@ -4167,7 +4167,7 @@ public final class AiPathfinder {
             } else {
                BlockPos var15 = new BlockPos(var1.getX() + var2 * (var4 + 1), var1.getY() + (var5 ? 1 : 0), var1.getZ() + var3 * (var4 + 1));
                AiPathfinder.CellInfo var17 = (AiPathfinder.CellInfo)var0.apply(var15.below());
-               if (!putAt_Z_FileStore_BitCache((AiPathfinder.CellInfo)var0.apply(var15), (AiPathfinder.CellInfo)var0.apply(var15.above()), var17)
+               if (!isStandable((AiPathfinder.CellInfo)var0.apply(var15), (AiPathfinder.CellInfo)var0.apply(var15.above()), var17)
                   || var17.farmland()
                   || var17.ice()
                   || var17.slime()) {
@@ -4175,7 +4175,7 @@ public final class AiPathfinder {
                } else {
                   return ((AiPathfinder.CellInfo)var0.apply(var15)).web()
                      ? false
-                     : fill(var0, var15.offset(var2, 0, var3)) && fill(var0, var15.offset(2 * var2, 0, 2 * var3));
+                     : hasNearbySafeFloor(var0, var15.offset(var2, 0, var3)) && hasNearbySafeFloor(var0, var15.offset(2 * var2, 0, 2 * var3));
                }
             }
          } else {
@@ -4183,7 +4183,7 @@ public final class AiPathfinder {
          }
       }
 
-      static int flowState(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      static int measureBridgeDepth(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          AiPathfinder.CellInfo var2 = (AiPathfinder.CellInfo)var0.apply(var1);
          if (var2.loaded() && !var2.lava() && !var2.hazardFeet()) {
             if (!var2.passable()) {
@@ -4216,7 +4216,7 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean fill(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      static boolean hasNearbySafeFloor(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          AiPathfinder.CellInfo var2 = (AiPathfinder.CellInfo)var0.apply(var1);
          if (!var2.loaded() || var2.lava() || var2.hazardFeet()) {
             return false;
@@ -4228,7 +4228,7 @@ public final class AiPathfinder {
 
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          if (var3.loaded() && !var3.lava() && !var3.hazardFloor()) {
-            if (putAt_Z_FileStore_BitCache(var2, (AiPathfinder.CellInfo)var0.apply(var1.above()), var3)) {
+            if (isStandable(var2, (AiPathfinder.CellInfo)var0.apply(var1.above()), var3)) {
                return true;
             }
 
@@ -4253,13 +4253,13 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean readEx(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
+      static boolean hasAdjacentSolidAnchor(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1) {
          AiPathfinder.CellInfo var2 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          if (var2.loaded() && !var2.passable()) {
             return true;
          }
 
-         for (int[] var6 : putAt_IArr2) {
+         for (int[] var6 : CARDINAL_DIRS) {
             AiPathfinder.CellInfo var7 = (AiPathfinder.CellInfo)var0.apply(var1.offset(var6[0], 0, var6[1]));
             if (var7.loaded() && !var7.passable()) {
                return true;
@@ -4269,7 +4269,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean putAt_Z_Function_3(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, AiPathfinder.UiHelper var3) {
+      static boolean hasBridgeSupportAnchor(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, AiPathfinder.UiHelper var3) {
          BlockPos var4 = var2.below();
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var4.below());
          if (var5.loaded() && !var5.passable()) {
@@ -4280,14 +4280,14 @@ public final class AiPathfinder {
             return true;
          }
 
-         if (putAt_Z) {
+         if (allowCantileverBridgeFromSolid) {
             AiPathfinder.CellInfo var6 = (AiPathfinder.CellInfo)var0.apply(var1.below());
             if (var6.loaded() && !var6.passable() && var6.top16() >= 16 && !var6.hazardFloor()) {
                return true;
             }
          }
 
-         for (int[] var9 : putAt_IArr2) {
+         for (int[] var9 : CARDINAL_DIRS) {
             BlockPos var10 = var4.offset(var9[0], 0, var9[1]);
             if (!var10.equals(var1.below())
                && ((AiPathfinder.CellInfo)var0.apply(var10)).loaded()
@@ -4310,74 +4310,74 @@ public final class AiPathfinder {
       static final class CachedGrid implements AiPathfinder.GridView, Function<BlockPos, AiPathfinder.CellInfo> {
          @Override
          public AiPathfinder.CellInfo apply(BlockPos var1) {
-            return this.putAt_FileStore_BitCache_BlockPos(var1);
+            return this.probePos(var1);
          }
-         final AiPathfinder.GridView putAt_FileStore_TextStor;
-         private long[] putAt_JArr;
-         private AiPathfinder.CellInfo[] putAt_FileStore_BitCacheArr;
-         private final int closeOf_I;
-         int flowState;
-         AiPathfinder.UiHelper putAt_FileStore_PacketHe;
-         boolean putAt_Z;
-         NavigationOpenSet.Inner_DataUtil putAt_DataCodec_CacheHel;
-         static final int flowTemp = 6;
-         long putAt_J;
-         private AiPlannerWorld putAt_RefQueue;
-         private Long2LongOpenHashMap putAt_Long2LongOpenHashM;
-         Map<AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey, Object> putAt_Map = new HashMap<>();
-         private final Map<BlockPos, List<AiPathfinder.UiHelper>> fill_Map = new HashMap<>();
-         int readEx_I;
-         int value_I;
-         long fill_J;
-         private long prevEx_J;
-         private long prev_J;
-         private boolean readEx_Z;
-         private boolean value_Z;
-         private boolean prevEx_Z;
-         private boolean prev_Z;
-         private boolean chunkAt_Z;
-         private boolean state_Z;
-         boolean fill_Z;
-         private boolean closeOf_Z;
-         AiPathfinder.FallPolicy putAt_FileStore_RingUtil;
-         private Consumer<AiPathfinder.MoveGenerator.JumpCandidate> putAt_Consumer;
-         static final long readEx_J = 65000000L;
-         static final long value_J = 200000000L;
-         private boolean pollAt_Z;
-         private static final Object putAt_Obj = new Object();
-         private static final Long2ObjectOpenHashMap<Object> putAt_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-         private static final int pollAt_I = 65536;
-         final double putAt_D;
-         static final int prevEx_I = 0;
-         static final int prev_I = 1;
-         static final int chunkAt_I = 2;
-         private final Long2ByteOpenHashMap putAt_Long2ByteOpenHashM;
-         private final Map<Long, Object> readEx_Map;
-         static final int state_I = 120;
-         private static final AiPathfinder.CellInfo putAt_FileStore_BitCache = AiPathfinder.CellInfo.fullBlock(1.0 / 0.0);
-         private long[] fill_JArr;
-         private AiPathfinder.CellInfo[] fill_FileStore_BitCacheArr;
-         private int pollOf_I;
-         private AiPathfinder.UiHelper fill_FileStore_PacketHe;
-         private NavigationOpenSet.Inner_DataUtil fill_DataCodec_CacheHel;
-         private boolean pollOf_Z;
-         private long chunkAt_J;
+         final AiPathfinder.GridView delegate;
+         private long[] cacheKeys;
+         private AiPathfinder.CellInfo[] cacheValues;
+         private final int maxCacheCapacity;
+         int queryFlags;
+         AiPathfinder.UiHelper incomingMove;
+         boolean requireJumpRunup;
+         NavigationOpenSet.Inner_DataUtil activeNode;
+         static final int EDIT_TRAIL_DEPTH = 6;
+         long blockQueries;
+         private AiPlannerWorld plannerWorld;
+         private Long2LongOpenHashMap columnOccupancyCache;
+         Map<AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey, Object> localJumpCache = new HashMap<>();
+         private final Map<BlockPos, List<AiPathfinder.UiHelper>> slimeBounceCache = new HashMap<>();
+         int jumpSolves;
+         int jumpCacheHits;
+         long jumpSolveNanos;
+         private long normalJumpBudgetSpentNanos;
+         private long tightJumpBudgetSpentNanos;
+         private boolean jumpBudgetExhausted;
+         private boolean ignoreCachedCells;
+         private boolean fullPhysicsParkour;
+         private boolean fastPassMode;
+         private boolean quickJumpMode;
+         private boolean reducedJumpMode;
+         boolean allowManeuverShortcuts;
+         private boolean useDropJumpOffsets;
+         AiPathfinder.FallPolicy fallPolicy;
+         private Consumer<AiPathfinder.MoveGenerator.JumpCandidate> deferredJumpSink;
+         static final long NORMAL_JUMP_BUDGET_NANOS = 65000000L;
+         static final long TIGHT_JUMP_BUDGET_NANOS = 200000000L;
+         private boolean loggedBudgetExhausted;
+         private static final Object NULL_SENTINEL = new Object();
+         private static final Long2ObjectOpenHashMap<Object> GLOBAL_JUMP_CACHE = new Long2ObjectOpenHashMap<>();
+         private static final int GLOBAL_JUMP_CACHE_LIMIT = 65536;
+         final double movementSpeed;
+         static final int DOOR_NONE = 0;
+         static final int DOOR_X_AXIS = 1;
+         static final int DOOR_Z_AXIS = 2;
+         private final Long2ByteOpenHashMap narrowClearanceCache;
+         private final Map<Long, Object> fallLandingCache;
+         static final int MAX_FALL_SIM_TICKS = 120;
+         private static final AiPathfinder.CellInfo PLACED_SOLID_CELL = AiPathfinder.CellInfo.fullBlock(1.0 / 0.0);
+         private long[] overlayKeys;
+         private AiPathfinder.CellInfo[] overlayValues;
+         private int overlayCount;
+         private AiPathfinder.UiHelper overlayIncomingMove;
+         private NavigationOpenSet.Inner_DataUtil overlayNode;
+         private boolean overlayValid;
+         private long overlayBloomMask;
 
-         int putAt_I_I(int var1, int var2, int var3, int var4) {
-            if (this.putAt_Long2LongOpenHashM == null) {
-               this.putAt_Long2LongOpenHashM = new Long2LongOpenHashMap();
+         int findHighestSolidBelow(int var1, int var2, int var3, int var4) {
+            if (this.columnOccupancyCache == null) {
+               this.columnOccupancyCache = new Long2LongOpenHashMap();
             }
 
             for (int var5 = var2 & -64; var5 >= (var4 & -64); var5 -= 64) {
                long var6 = BlockPos.asLong(var1, var5, var3);
-               long var8 = this.putAt_Long2LongOpenHashM.getOrDefault(var6, -9223372036854775808L);
-               if (var8 == -9223372036854775808L && !this.putAt_Long2LongOpenHashM.containsKey(var6)) {
-                  AiPathfinder.CellOccupancy var10 = this.putAt_FileStore_TextStor.putAt_FileStore_IoCodec_I(var1, var5, var3, this.value_Z);
+               long var8 = this.columnOccupancyCache.getOrDefault(var6, -9223372036854775808L);
+               if (var8 == -9223372036854775808L && !this.columnOccupancyCache.containsKey(var6)) {
+                  AiPathfinder.CellOccupancy var10 = this.delegate.putAt_FileStore_IoCodec_I(var1, var5, var3, this.ignoreCachedCells);
                   var8 = var10.occupied();
                   if (var10.pending()) {
-                     this.flowState |= 1;
+                     this.queryFlags |= 1;
                   } else {
-                     this.putAt_Long2LongOpenHashM.put(var6, var8);
+                     this.columnOccupancyCache.put(var6, var8);
                   }
                }
 
@@ -4398,48 +4398,48 @@ public final class AiPathfinder {
          }
 
          CachedGrid(AiPathfinder.GridView var1, int var2, double var3) {
-            this.putAt_FileStore_RingUtil = AiPathfinder.FallPolicy.STANDARD;
-            this.putAt_Long2ByteOpenHashM = new Long2ByteOpenHashMap();
-            this.readEx_Map = new HashMap<>();
-            this.fill_JArr = new long[16];
-            this.fill_FileStore_BitCacheArr = new AiPathfinder.CellInfo[16];
-            this.putAt_FileStore_TextStor = var1;
-            this.closeOf_I = var2;
-            this.putAt_D = var3;
-            this.putAt_JArr = new long[256];
-            this.putAt_FileStore_BitCacheArr = new AiPathfinder.CellInfo[256];
+            this.fallPolicy = AiPathfinder.FallPolicy.STANDARD;
+            this.narrowClearanceCache = new Long2ByteOpenHashMap();
+            this.fallLandingCache = new HashMap<>();
+            this.overlayKeys = new long[16];
+            this.overlayValues = new AiPathfinder.CellInfo[16];
+            this.delegate = var1;
+            this.maxCacheCapacity = var2;
+            this.movementSpeed = var3;
+            this.cacheKeys = new long[256];
+            this.cacheValues = new AiPathfinder.CellInfo[256];
          }
 
-         boolean fill_Z() {
-            return this.readEx_Z;
+         boolean isJumpBudgetExhausted() {
+            return this.jumpBudgetExhausted;
          }
 
-         private boolean readEx(BlockPos var1) {
-            return !this.putAt_FileStore_BitCache_BlockPos(var1.above(2)).passable()
+         private boolean isTightHeadroomCell(BlockPos var1) {
+            return !this.probePos(var1.above(2)).passable()
                ? true
-               : !this.putAt_FileStore_BitCache_BlockPos(var1.west().above()).passable()
-                     && !this.putAt_FileStore_BitCache_BlockPos(var1.east().above()).passable()
-                  || !this.putAt_FileStore_BitCache_BlockPos(var1.north().above()).passable()
-                     && !this.putAt_FileStore_BitCache_BlockPos(var1.south().above()).passable();
+               : !this.probePos(var1.west().above()).passable()
+                     && !this.probePos(var1.east().above()).passable()
+                  || !this.probePos(var1.north().above()).passable()
+                     && !this.probePos(var1.south().above()).passable();
          }
 
-         private boolean value(BlockPos var1) {
-            if (this.prevEx_Z) {
+         private boolean isJumpBudgetExceededAt(BlockPos var1) {
+            if (this.fullPhysicsParkour) {
                return false;
             }
 
-            boolean var2 = this.prevEx_J >= 65000000L && (!this.readEx(var1) || this.prev_J >= 200000000L);
+            boolean var2 = this.normalJumpBudgetSpentNanos >= 65000000L && (!this.isTightHeadroomCell(var1) || this.tightJumpBudgetSpentNanos >= 200000000L);
             if (var2) {
-               this.readEx_Z = true;
+               this.jumpBudgetExhausted = true;
             }
 
             return var2;
          }
 
-         int putAt_I_BlockPos(BlockPos var1) {
-            AiPathfinder.CellInfo var2 = this.putAt_FileStore_BitCache_BlockPos(var1);
+         int openDoorAxis(BlockPos var1) {
+            AiPathfinder.CellInfo var2 = this.probePos(var1);
             if (var2.door() && var2.passable()) {
-               short var3 = this.putAt_FileStore_TextStor.putAt_S_I(var1.getX(), var1.getY(), var1.getZ());
+               short var3 = this.delegate.putAt_S_I(var1.getX(), var1.getY(), var1.getZ());
                if (var3 != 0 && var3 != 1 && var3 != -1) {
                   List var4 = AiShapes.init_List_S(var3);
                   if (var4.isEmpty()) {
@@ -4456,14 +4456,14 @@ public final class AiPathfinder {
             }
          }
 
-         boolean putAt_Z_BlockPos(BlockPos var1) {
-            return this.putAt_I_BlockPos(var1) != 0 || this.putAt_I_BlockPos(var1.above()) != 0;
+         boolean hasOpenDoorObstacle(BlockPos var1) {
+            return this.openDoorAxis(var1) != 0 || this.openDoorAxis(var1.above()) != 0;
          }
 
-         boolean putAt(BlockPos var1, int var2, int var3) {
-            int var4 = this.putAt_I_BlockPos(var1);
+         boolean isBlockedByOpenDoor(BlockPos var1, int var2, int var3) {
+            int var4 = this.openDoorAxis(var1);
             if (var4 == 0) {
-               var4 = this.putAt_I_BlockPos(var1.above());
+               var4 = this.openDoorAxis(var1.above());
             }
 
             if (var4 == 0) {
@@ -4475,90 +4475,90 @@ public final class AiPathfinder {
             }
          }
 
-         AiPlannerWorld putAt_RefQueue() {
-            if (this.putAt_RefQueue == null) {
-               this.putAt_RefQueue = new AiPlannerWorld(this.putAt_FileStore_TextStor, this);
+         AiPlannerWorld plannerWorld() {
+            if (this.plannerWorld == null) {
+               this.plannerWorld = new AiPlannerWorld(this.delegate, this);
             }
 
-            return this.putAt_RefQueue;
+            return this.plannerWorld;
          }
 
-         boolean fill(BlockPos var1) {
+         boolean isTightWidthCell(BlockPos var1) {
             long var2 = var1.asLong();
-            byte var4 = this.putAt_Long2ByteOpenHashM.get(var2);
+            byte var4 = this.narrowClearanceCache.get(var2);
             if (var4 != 0) {
                return var4 == 2;
             }
 
             boolean var5 = false;
 
-            for (int[] var9 : AiPathfinder.MoveGenerator.readEx_IArr2) {
+            for (int[] var9 : AiPathfinder.MoveGenerator.EIGHT_DIRS) {
                BlockPos var10 = var1.offset(var9[0], 0, var9[1]);
-               if (this.putAt_FileStore_BitCache_BlockPos(var10).contactHazard() || this.putAt_FileStore_BitCache_BlockPos(var10.above()).contactHazard()) {
+               if (this.probePos(var10).contactHazard() || this.probePos(var10.above()).contactHazard()) {
                   var5 = true;
                   break;
                }
             }
 
-            this.putAt_Long2ByteOpenHashM.put(var2, (byte)(var5 ? 2 : 1));
+            this.narrowClearanceCache.put(var2, (byte)(var5 ? 2 : 1));
             return var5;
          }
 
-         double putAt_D_BlockPos(BlockPos var1) {
-            return this.fill(var1) ? 2.0 : 0.0;
+         double tightWidthPenalty(BlockPos var1) {
+            return this.isTightWidthCell(var1) ? 2.0 : 0.0;
          }
 
-         BlockPos putAt_BlockPos_BlockPos(BlockPos var1, double var2, int var4, int var5) {
+         BlockPos simulateStepOffLanding(BlockPos var1, double var2, int var4, int var5) {
             long var6 = var1.asLong() * 31L + (var4 + 1) * 3 + (var5 + 1);
-            Object var8 = this.readEx_Map.get(var6);
+            Object var8 = this.fallLandingCache.get(var6);
             if (var8 != null) {
-               return var8 == putAt_Obj ? null : (BlockPos)var8;
+               return var8 == NULL_SENTINEL ? null : (BlockPos)var8;
             }
 
-            if (!this.fill(var1, var4, var5)) {
-               this.readEx_Map.put(var6, putAt_Obj);
+            if (!this.hasDeepDropAhead(var1, var4, var5)) {
+               this.fallLandingCache.put(var6, NULL_SENTINEL);
                return null;
             }
 
-            AiPlannerWorld var9 = this.putAt_RefQueue();
+            AiPlannerWorld var9 = this.plannerWorld();
             long var10 = var9.putAt_J;
-            BlockPos var12 = this.putAt_BlockPos_RefQueue(var9, var1, var2, (float)Math.toDegrees(Math.atan2(-var4, var5)), null);
+            BlockPos var12 = this.traceStepOffLanding(var9, var1, var2, (float)Math.toDegrees(Math.atan2(-var4, var5)), null);
             BlockPos var13 = null;
             if (var12 != null) {
-               BlockPos var14 = this.putAt_BlockPos_RefQueue(var9, var1, var2, 0.0F / 0.0F, var12);
+               BlockPos var14 = this.traceStepOffLanding(var9, var1, var2, 0.0F / 0.0F, var12);
                if (var14 != null) {
                   BlockPos var15 = var14;
 
-                  while (this.putAt_FileStore_BitCache_BlockPos(var15.below()).water() && var1.getY() - var15.getY() < 40) {
+                  while (this.probePos(var15.below()).water() && var1.getY() - var15.getY() < 40) {
                      var15 = var15.below();
                   }
 
                   BlockPos var16 = var14;
 
-                  while (this.putAt_FileStore_BitCache_BlockPos(var16.above()).water() && var16.getY() < var1.getY()) {
+                  while (this.probePos(var16.above()).water() && var16.getY() < var1.getY()) {
                      var16 = var16.above();
                   }
 
-                  if (AiPathfinder.MoveGenerator.fill(this.putAt_FileStore_BitCache_BlockPos(var15.below())) && var16.getY() < var1.getY()) {
+                  if (AiPathfinder.MoveGenerator.isSolidSafeFloor(this.probePos(var15.below())) && var16.getY() < var1.getY()) {
                      var13 = var16;
                   }
                }
             }
 
             if (var9.putAt_J == var10) {
-               this.readEx_Map.put(var6, var13 == null ? putAt_Obj : var13);
+               this.fallLandingCache.put(var6, var13 == null ? NULL_SENTINEL : var13);
             }
 
             return var13;
          }
 
-         private boolean fill(BlockPos var1, int var2, int var3) {
+         private boolean hasDeepDropAhead(BlockPos var1, int var2, int var3) {
             for (int var4 = 1; var4 <= 3; var4++) {
                int var5 = var1.getX() + var2 * var4;
                int var6 = var1.getZ() + var3 * var4;
 
                for (int var7 = var1.getY() - 1; var7 >= var1.getY() - 40; var7--) {
-                  AiPathfinder.CellInfo var8 = this.putAt_FileStore_BitCache_BlockPos(new BlockPos(var5, var7, var6));
+                  AiPathfinder.CellInfo var8 = this.probePos(new BlockPos(var5, var7, var6));
                   if (!var8.loaded()) {
                      break;
                   }
@@ -4576,7 +4576,7 @@ public final class AiPathfinder {
             return false;
          }
 
-         private BlockPos putAt_BlockPos_RefQueue(AiPlannerWorld var1, BlockPos var2, double var3, float var5, BlockPos var6) {
+         private BlockPos traceStepOffLanding(AiPlannerWorld var1, BlockPos var2, double var3, float var5, BlockPos var6) {
             AiPhysics.MotionState var7 = AiPhysics.MotionState.standing(var2.getX() + 0.5, var3, var2.getZ() + 0.5);
             boolean var8 = false;
             ArrayList<AiPhysics.MotionState> var9 = new ArrayList<>();
@@ -4603,14 +4603,14 @@ public final class AiPathfinder {
                }
 
                BlockPos var12 = BlockPos.containing(var7.x(), var7.y() + 0.01, var7.z());
-               if (var8 && this.putAt_FileStore_BitCache_BlockPos(var12).water()) {
-                  return AiPathfinder.MoveGenerator.putAt_Z_TokenCore_TaskStat(var1, var7.x(), var7.z(), var12)
-                        && AiPathfinder.MoveGenerator.putAt_Z_TokenCore_TaskStat(var1, var9, var12.getY())
+               if (var8 && this.probePos(var12).water()) {
+                  return AiPathfinder.MoveGenerator.hasDropLandingClearance(var1, var7.x(), var7.z(), var12)
+                        && AiPathfinder.MoveGenerator.isFallTrajectoryClear(var1, var9, var12.getY())
                      ? var12
                      : null;
                }
 
-               if (this.putAt_FileStore_BitCache_BlockPos(var12).lava() || var2.getY() - var7.y() > 40.0) {
+               if (this.probePos(var12).lava() || var2.getY() - var7.y() > 40.0) {
                   return null;
                }
             }
@@ -4618,94 +4618,94 @@ public final class AiPathfinder {
             return null;
          }
 
-         AiJumpSolver.JumpPlan putAt_IoUtil_TextState_BlockPos(BlockPos var1, BlockPos var2, long var3, boolean var5, Supplier<AiJumpSolver.JumpPlan> var6) {
+         AiJumpSolver.JumpPlan cachedJumpSolve(BlockPos var1, BlockPos var2, long var3, boolean var5, Supplier<AiJumpSolver.JumpPlan> var6) {
             AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey var7 = new AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey(
                var1.asLong(), var2.asLong(), var3, var5
             );
-            Object var8 = this.putAt_Map.get(var7);
+            Object var8 = this.localJumpCache.get(var7);
             if (var8 != null) {
-               return var8 == putAt_Obj ? null : (AiJumpSolver.JumpPlan)var8;
+               return var8 == NULL_SENTINEL ? null : (AiJumpSolver.JumpPlan)var8;
             }
 
-            AiPlannerWorld var9 = this.putAt_RefQueue();
+            AiPlannerWorld var9 = this.plannerWorld();
             long var10 = var9.putAt_J;
             AiJumpSolver.JumpPlan var12 = (AiJumpSolver.JumpPlan)var6.get();
-            if (var9.putAt_J == var10 && !this.readEx()) {
-               this.putAt_Map.put(var7, var12 == null ? putAt_Obj : var12);
+            if (var9.putAt_J == var10 && !this.hasActiveEdits()) {
+               this.localJumpCache.put(var7, var12 == null ? NULL_SENTINEL : var12);
             }
 
             return var12;
          }
 
-         AiJumpSolver.JumpPlan putAt(BlockPos var1, double var2, BlockPos var4, double var5, double var7, boolean var9) {
+         AiJumpSolver.JumpPlan solveJumpCached(BlockPos var1, double var2, BlockPos var4, double var5, double var7, boolean var9) {
             long var10 = Double.doubleToLongBits(var7);
             AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey var12 = new AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey(
                var1.asLong(), var4.asLong(), var10, var9
             );
-            Object var13 = this.putAt_Map.get(var12);
+            Object var13 = this.localJumpCache.get(var12);
             if (var13 != null) {
-               return var13 == putAt_Obj ? null : (AiJumpSolver.JumpPlan)var13;
+               return var13 == NULL_SENTINEL ? null : (AiJumpSolver.JumpPlan)var13;
             }
 
-            boolean var14 = !this.prevEx_Z && (this.readEx(var1) || this.readEx(var4));
-            if (this.prevEx_Z || (var14 ? this.prev_J < 200000000L : this.prevEx_J < 65000000L)) {
+            boolean var14 = !this.fullPhysicsParkour && (this.isTightHeadroomCell(var1) || this.isTightHeadroomCell(var4));
+            if (this.fullPhysicsParkour || (var14 ? this.tightJumpBudgetSpentNanos < 200000000L : this.normalJumpBudgetSpentNanos < 65000000L)) {
                long var15 = System.nanoTime();
-               AiPlannerWorld var17 = this.putAt_RefQueue();
+               AiPlannerWorld var17 = this.plannerWorld();
                long var18 = var17.putAt_J;
-               boolean var20 = this.prevEx_Z && this.putAt_FileStore_RingUtil == AiPathfinder.FallPolicy.PARKOUR_SAFE && this.putAt_Z_BlockPos(var1, var2, var4, var5);
-               boolean var21 = this.prevEx_Z
+               boolean var20 = this.fullPhysicsParkour && this.fallPolicy == AiPathfinder.FallPolicy.PARKOUR_SAFE && this.hasDropGapBetween(var1, var2, var4, var5);
+               boolean var21 = this.fullPhysicsParkour
                   && Math.abs(var4.getX() - var1.getX()) == 1
                   && Math.abs(var4.getZ() - var1.getZ()) == 1
                   && Math.abs(var5 - var2) <= 0.25
                   && (
-                     !this.putAt_FileStore_BitCache_BlockPos(new BlockPos(var4.getX(), var1.getY(), var1.getZ())).passable()
-                        || !this.putAt_FileStore_BitCache_BlockPos(new BlockPos(var1.getX(), var1.getY(), var4.getZ())).passable()
+                     !this.probePos(new BlockPos(var4.getX(), var1.getY(), var1.getZ())).passable()
+                        || !this.probePos(new BlockPos(var1.getX(), var1.getY(), var4.getZ())).passable()
                   );
                boolean var22 = var20 || var21;
-               if (!this.prev_Z) {
-                  var22 |= !this.putAt_FileStore_BitCache_BlockPos(var1.above(2)).passable()
-                     || !this.putAt_FileStore_BitCache_BlockPos(var4.above(2)).passable();
-                  if (this.prevEx_Z) {
-                     var22 |= this.putAt_FileStore_BitCache_BlockPos(var1.below()).narrowFooting()
-                        || this.putAt_FileStore_BitCache_BlockPos(var4.below()).narrowFooting()
-                        || !this.putAt_FileStore_BitCache_BlockPos(var1).passable()
-                        || !this.putAt_FileStore_BitCache_BlockPos(var4).passable();
+               if (!this.fastPassMode) {
+                  var22 |= !this.probePos(var1.above(2)).passable()
+                     || !this.probePos(var4.above(2)).passable();
+                  if (this.fullPhysicsParkour) {
+                     var22 |= this.probePos(var1.below()).narrowFooting()
+                        || this.probePos(var4.below()).narrowFooting()
+                        || !this.probePos(var1).passable()
+                        || !this.probePos(var4).passable();
                   }
 
-                  for (int[] var26 : AiPathfinder.MoveGenerator.putAt_IArr2) {
+                  for (int[] var26 : AiPathfinder.MoveGenerator.CARDINAL_DIRS) {
                      if (var22) {
                         break;
                      }
 
                      BlockPos var27 = var1.offset(var26[0], 0, var26[1]);
                      BlockPos var28 = var4.offset(var26[0], 0, var26[1]);
-                     var22 = !this.putAt_FileStore_BitCache_BlockPos(var27.above()).passable()
-                        || !this.putAt_FileStore_BitCache_BlockPos(var28.above()).passable()
-                        || this.prevEx_Z
-                           && (!this.putAt_FileStore_BitCache_BlockPos(var27).passable() || !this.putAt_FileStore_BitCache_BlockPos(var28).passable());
+                     var22 = !this.probePos(var27.above()).passable()
+                        || !this.probePos(var28.above()).passable()
+                        || this.fullPhysicsParkour
+                           && (!this.probePos(var27).passable() || !this.probePos(var28).passable());
                   }
                }
 
                if (var7 > 0.0 && var22) {
-                  AiJumpSolver.JumpPlan var36 = this.putAt(var17, var1, var2, var4, var5, var7, var10, var9, var18);
+                  AiJumpSolver.JumpPlan var36 = this.solveManeuverCached(var17, var1, var2, var4, var5, var7, var10, var9, var18);
                   AiJumpSolver.JumpPlan var37 = var36;
                   if (var37 == null || var37.margin() < -0.04) {
-                     AiJumpSolver.JumpPlan var39 = this.putAt(var1, var2, var4, var5, 0.0, var9);
+                     AiJumpSolver.JumpPlan var39 = this.solveJumpCached(var1, var2, var4, var5, 0.0, var9);
                      if (var39 != null && (var37 == null || var39.margin() > var37.margin())) {
                         var37 = var39;
                      }
                   }
 
                   if (var17.putAt_J == var18) {
-                     this.putAt_Map.put(var12, var37 == null ? putAt_Obj : var37);
+                     this.localJumpCache.put(var12, var37 == null ? NULL_SENTINEL : var37);
                   }
 
                   long var40 = System.nanoTime() - var15;
-                  this.fill_J += var40;
+                  this.jumpSolveNanos += var40;
                   if (var14) {
-                     this.prev_J += var40;
+                     this.tightJumpBudgetSpentNanos += var40;
                   } else {
-                     this.prevEx_J += var40;
+                     this.normalJumpBudgetSpentNanos += var40;
                   }
 
                   return var37;
@@ -4715,42 +4715,42 @@ public final class AiPathfinder {
                      + (var4.getY() - var1.getY()) * 10007L
                      + (var4.getZ() - var1.getZ()) * 7L
                      + (var9 ? 3 : 0);
-                  if (this.putAt_FileStore_RingUtil != AiPathfinder.FallPolicy.STANDARD) {
-                     var33 ^= 6384245875588680899L * this.putAt_FileStore_RingUtil.ordinal();
+                  if (this.fallPolicy != AiPathfinder.FallPolicy.STANDARD) {
+                     var33 ^= 6384245875588680899L * this.fallPolicy.ordinal();
                   }
 
-                  if (var22 && this.prevEx_Z) {
+                  if (var22 && this.fullPhysicsParkour) {
                      var33 ^= -3263064605168079213L;
                   }
 
-                  if (this.prevEx_Z && !var22 && var5 - var2 > 0.6 && Math.abs((var4.getX() - var1.getX()) * (var4.getZ() - var1.getZ())) == 8) {
+                  if (this.fullPhysicsParkour && !var22 && var5 - var2 > 0.6 && Math.abs((var4.getX() - var1.getX()) * (var4.getZ() - var1.getZ())) == 8) {
                      var33 ^= -3263064605168079213L;
                   }
 
-                  boolean var38 = this.state_Z && !var20;
+                  boolean var38 = this.reducedJumpMode && !var20;
                   if (var22 && var38) {
                      var33 ^= -7046029254386353131L;
                   }
 
-                  if (var22 && this.fill_Z) {
+                  if (var22 && this.allowManeuverShortcuts) {
                      var33 ^= -1065810590584100411L;
                   }
 
-                  if (this.chunkAt_Z) {
+                  if (this.quickJumpMode) {
                      var33 ^= -6752110988234923001L;
                   }
 
                   var33 = var33 * 31L + HashCommon.mix(var10);
-                  var33 = var33 * 31L + HashCommon.mix(Double.doubleToLongBits(this.putAt_D));
+                  var33 = var33 * 31L + HashCommon.mix(Double.doubleToLongBits(this.movementSpeed));
                   Object var42;
-                  synchronized (putAt_Long2ObjectOpenHas) {
-                     var42 = putAt_Long2ObjectOpenHas.get(var33);
+                  synchronized (GLOBAL_JUMP_CACHE) {
+                     var42 = GLOBAL_JUMP_CACHE.get(var33);
                   }
 
                   AiJumpSolver.JumpPlan var41;
                   if (var42 != null && var17.putAt_J == var18) {
-                     this.value_I++;
-                     var41 = var42 == putAt_Obj
+                     this.jumpCacheHits++;
+                     var41 = var42 == NULL_SENTINEL
                         ? null
                         : ((AiPathfinder.MoveGenerator.CachedGrid.CachedJump)var42)
                            .plan()
@@ -4767,18 +4767,18 @@ public final class AiPathfinder {
                   }
 
                   if (var42 == null) {
-                     this.readEx_I++;
-                     var41 = AiJumpSolver.putAt(var17, var1, var2, var4, var5, var7, var9, var22, this.prevEx_Z, var38, this.chunkAt_Z);
+                     this.jumpSolves++;
+                     var41 = AiJumpSolver.solve(var17, var1, var2, var4, var5, var7, var9, var22, this.fullPhysicsParkour, var38, this.quickJumpMode);
                      if ((var41 != null || !var22) && var17.putAt_J == var18) {
-                        synchronized (putAt_Long2ObjectOpenHas) {
-                           if (putAt_Long2ObjectOpenHas.size() >= 65536) {
-                              putAt_Long2ObjectOpenHas.clear();
+                        synchronized (GLOBAL_JUMP_CACHE) {
+                           if (GLOBAL_JUMP_CACHE.size() >= 65536) {
+                              GLOBAL_JUMP_CACHE.clear();
                            }
 
-                           putAt_Long2ObjectOpenHas.put(
+                           GLOBAL_JUMP_CACHE.put(
                               var33,
                               var41 == null
-                                 ? putAt_Obj
+                                 ? NULL_SENTINEL
                                  : new AiPathfinder.MoveGenerator.CachedGrid.CachedJump(var41, var1.getX(), var1.getY(), var1.getZ())
                            );
                         }
@@ -4786,31 +4786,31 @@ public final class AiPathfinder {
                   }
 
                   if (var17.putAt_J == var18) {
-                     this.putAt_Map.put(var12, var41 == null ? putAt_Obj : var41);
+                     this.localJumpCache.put(var12, var41 == null ? NULL_SENTINEL : var41);
                   }
 
                   long var45 = System.nanoTime() - var15;
-                  this.fill_J += var45;
+                  this.jumpSolveNanos += var45;
                   if (var14) {
-                     this.prev_J += var45;
+                     this.tightJumpBudgetSpentNanos += var45;
                   } else {
-                     this.prevEx_J += var45;
+                     this.normalJumpBudgetSpentNanos += var45;
                   }
 
                   return var41;
                }
             } else {
-               this.readEx_Z = true;
-               if (!this.pollAt_Z) {
-                  this.pollAt_Z = true;
-                  AiNavDebug.init("jump solver budget spent: solves=" + this.readEx_I + " hits=" + this.value_I);
+               this.jumpBudgetExhausted = true;
+               if (!this.loggedBudgetExhausted) {
+                  this.loggedBudgetExhausted = true;
+                  AiNavDebug.log("jump solver budget spent: solves=" + this.jumpSolves + " hits=" + this.jumpCacheHits);
                }
 
                return null;
             }
          }
 
-         private AiJumpSolver.JumpPlan putAt(
+         private AiJumpSolver.JumpPlan solveManeuverCached(
             AiPlannerWorld var1, BlockPos var2, double var3, BlockPos var5, double var6, double var8, long var10, boolean var12, long var13
          ) {
             long var15 = var1.putAt_J_BlockPos(var2, var5, false) * 31L
@@ -4818,24 +4818,24 @@ public final class AiPathfinder {
                + (var5.getY() - var2.getY()) * 10007L
                + (var5.getZ() - var2.getZ()) * 7L
                + (var12 ? 3 : 0);
-            if (this.putAt_FileStore_RingUtil != AiPathfinder.FallPolicy.STANDARD) {
-               var15 ^= 6384245875588680899L * this.putAt_FileStore_RingUtil.ordinal();
+            if (this.fallPolicy != AiPathfinder.FallPolicy.STANDARD) {
+               var15 ^= 6384245875588680899L * this.fallPolicy.ordinal();
             }
 
-            if (this.chunkAt_Z) {
+            if (this.quickJumpMode) {
                var15 ^= -6752110988234923001L;
             }
 
             var15 = var15 * 31L + HashCommon.mix(var10);
-            var15 = var15 * 31L + HashCommon.mix(Double.doubleToLongBits(this.putAt_D));
+            var15 = var15 * 31L + HashCommon.mix(Double.doubleToLongBits(this.movementSpeed));
             Object var17;
-            synchronized (putAt_Long2ObjectOpenHas) {
-               var17 = putAt_Long2ObjectOpenHas.get(var15);
+            synchronized (GLOBAL_JUMP_CACHE) {
+               var17 = GLOBAL_JUMP_CACHE.get(var15);
             }
 
             if (var17 != null && var1.putAt_J == var13) {
-               this.value_I++;
-               return var17 == putAt_Obj
+               this.jumpCacheHits++;
+               return var17 == NULL_SENTINEL
                   ? null
                   : ((AiPathfinder.MoveGenerator.CachedGrid.CachedJump)var17)
                      .plan()
@@ -4846,17 +4846,17 @@ public final class AiPathfinder {
                      );
             }
 
-            this.readEx_I++;
-            AiJumpSolver.JumpPlan var25 = AiJumpSolver.putAt(var1, var2, var3, var5, var6, var8, var12, false, false, false, this.chunkAt_Z);
+            this.jumpSolves++;
+            AiJumpSolver.JumpPlan var25 = AiJumpSolver.solve(var1, var2, var3, var5, var6, var8, var12, false, false, false, this.quickJumpMode);
             if (var1.putAt_J == var13) {
-               synchronized (putAt_Long2ObjectOpenHas) {
-                  if (putAt_Long2ObjectOpenHas.size() >= 65536) {
-                     putAt_Long2ObjectOpenHas.clear();
+               synchronized (GLOBAL_JUMP_CACHE) {
+                  if (GLOBAL_JUMP_CACHE.size() >= 65536) {
+                     GLOBAL_JUMP_CACHE.clear();
                   }
 
-                  putAt_Long2ObjectOpenHas.put(
+                  GLOBAL_JUMP_CACHE.put(
                      var15,
-                     var25 == null ? putAt_Obj : new AiPathfinder.MoveGenerator.CachedGrid.CachedJump(var25, var2.getX(), var2.getY(), var2.getZ())
+                     var25 == null ? NULL_SENTINEL : new AiPathfinder.MoveGenerator.CachedGrid.CachedJump(var25, var2.getX(), var2.getY(), var2.getZ())
                   );
                }
             }
@@ -4864,7 +4864,7 @@ public final class AiPathfinder {
             return var25;
          }
 
-         private boolean putAt_Z_BlockPos(BlockPos var1, double var2, BlockPos var4, double var5) {
+         private boolean hasDropGapBetween(BlockPos var1, double var2, BlockPos var4, double var5) {
             int var7 = var4.getX() - var1.getX();
             int var8 = var4.getZ() - var1.getZ();
             int var9 = Math.max(Math.abs(var7), Math.abs(var8));
@@ -4885,57 +4885,57 @@ public final class AiPathfinder {
             }
          }
 
-         private void putAt_V() {
-            long[] var1 = this.putAt_JArr;
-            AiPathfinder.CellInfo[] var2 = this.putAt_FileStore_BitCacheArr;
-            this.putAt_JArr = new long[this.putAt_JArr.length * 2];
-            this.putAt_FileStore_BitCacheArr = new AiPathfinder.CellInfo[this.putAt_JArr.length];
+         private void growCellCache() {
+            long[] var1 = this.cacheKeys;
+            AiPathfinder.CellInfo[] var2 = this.cacheValues;
+            this.cacheKeys = new long[this.cacheKeys.length * 2];
+            this.cacheValues = new AiPathfinder.CellInfo[this.cacheKeys.length];
 
             for (int var3 = 0; var3 < var1.length; var3++) {
                if (var2[var3] != null) {
-                  int var4 = (int)HashCommon.mix(var1[var3]) & this.putAt_JArr.length - 1;
-                  this.putAt_JArr[var4] = var1[var3];
-                  this.putAt_FileStore_BitCacheArr[var4] = var2[var3];
+                  int var4 = (int)HashCommon.mix(var1[var3]) & this.cacheKeys.length - 1;
+                  this.cacheKeys[var4] = var1[var3];
+                  this.cacheValues[var4] = var2[var3];
                }
             }
          }
 
-         private void fill_V() {
-            this.pollOf_Z = true;
-            this.fill_FileStore_PacketHe = this.putAt_FileStore_PacketHe;
-            this.fill_DataCodec_CacheHel = this.putAt_DataCodec_CacheHel;
-            this.pollOf_I = 0;
-            this.chunkAt_J = 0L;
-            if (this.putAt_FileStore_PacketHe != null) {
-               for (BlockPos var2 : this.putAt_FileStore_PacketHe.cellsToBreak()) {
-                  this.putAt(var2.asLong(), AiPathfinder.CellInfo.air());
+         private void rebuildEditOverlay() {
+            this.overlayValid = true;
+            this.overlayIncomingMove = this.incomingMove;
+            this.overlayNode = this.activeNode;
+            this.overlayCount = 0;
+            this.overlayBloomMask = 0L;
+            if (this.incomingMove != null) {
+               for (BlockPos var2 : this.incomingMove.cellsToBreak()) {
+                  this.putOverlayCell(var2.asLong(), AiPathfinder.CellInfo.air());
                }
 
-               for (BlockPos var8 : this.putAt_FileStore_PacketHe.cellsToPlace()) {
-                  this.putAt(var8.asLong(), putAt_FileStore_BitCache);
+               for (BlockPos var8 : this.incomingMove.cellsToPlace()) {
+                  this.putOverlayCell(var8.asLong(), PLACED_SOLID_CELL);
                }
 
-               if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.DOOR) {
-                  this.putAt(this.putAt_FileStore_PacketHe.to().asLong(), AiPathfinder.CellInfo.air());
-                  this.putAt(this.putAt_FileStore_PacketHe.to().above().asLong(), AiPathfinder.CellInfo.air());
+               if (this.incomingMove.type() == AiPathfinder.MoveType.DOOR) {
+                  this.putOverlayCell(this.incomingMove.to().asLong(), AiPathfinder.CellInfo.air());
+                  this.putOverlayCell(this.incomingMove.to().above().asLong(), AiPathfinder.CellInfo.air());
                }
             }
 
-            if (this.putAt_DataCodec_CacheHel != null) {
+            if (this.activeNode != null) {
                int var7 = 0;
 
-               for (NavigationOpenSet.Inner_DataUtil var9 = this.putAt_DataCodec_CacheHel.init_t_DataUtil;
+               for (NavigationOpenSet.Inner_DataUtil var9 = this.activeNode.init_t_DataUtil;
                   var9 != null && var9.init_ClassCache_UiHelpe != null && var7 < 6;
                   var7++
                ) {
                   AiPathfinder.UiHelper var3 = var9.init_ClassCache_UiHelpe;
 
                   for (BlockPos var5 : var3.cellsToPlace()) {
-                     this.putAt(var5.asLong(), putAt_FileStore_BitCache);
+                     this.putOverlayCell(var5.asLong(), PLACED_SOLID_CELL);
                   }
 
                   for (BlockPos var11 : var3.cellsToBreak()) {
-                     this.putAt(var11.asLong(), AiPathfinder.CellInfo.air());
+                     this.putOverlayCell(var11.asLong(), AiPathfinder.CellInfo.air());
                   }
 
                   var9 = var9.init_t_DataUtil;
@@ -4943,115 +4943,115 @@ public final class AiPathfinder {
             }
          }
 
-         private static long putAt_J_J(long var0) {
+         private static long overlayBloomBit(long var0) {
             return 1L << (int)(var0 * -7046029254386353131L >>> 58);
          }
 
-         private void putAt(long var1, AiPathfinder.CellInfo var3) {
-            this.chunkAt_J = this.chunkAt_J | putAt_J_J(var1);
-            if (this.pollOf_I == this.fill_JArr.length) {
-               this.fill_JArr = Arrays.copyOf(this.fill_JArr, this.pollOf_I * 2);
-               this.fill_FileStore_BitCacheArr = Arrays.copyOf(this.fill_FileStore_BitCacheArr, this.pollOf_I * 2);
+         private void putOverlayCell(long var1, AiPathfinder.CellInfo var3) {
+            this.overlayBloomMask = this.overlayBloomMask | overlayBloomBit(var1);
+            if (this.overlayCount == this.overlayKeys.length) {
+               this.overlayKeys = Arrays.copyOf(this.overlayKeys, this.overlayCount * 2);
+               this.overlayValues = Arrays.copyOf(this.overlayValues, this.overlayCount * 2);
             }
 
-            this.fill_JArr[this.pollOf_I] = var1;
-            this.fill_FileStore_BitCacheArr[this.pollOf_I++] = var3;
+            this.overlayKeys[this.overlayCount] = var1;
+            this.overlayValues[this.overlayCount++] = var3;
          }
 
-         public AiPathfinder.CellInfo putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
+         public AiPathfinder.CellInfo probePos(BlockPos var1) {
             return this.probe(var1.getX(), var1.getY(), var1.getZ());
          }
 
          @Override
          public AiPathfinder.CellInfo probe(int var1, int var2, int var3) {
-            if (!this.pollOf_Z
-               || this.putAt_FileStore_PacketHe != this.fill_FileStore_PacketHe
-               || this.putAt_DataCodec_CacheHel != this.fill_DataCodec_CacheHel) {
-               this.fill_V();
+            if (!this.overlayValid
+               || this.incomingMove != this.overlayIncomingMove
+               || this.activeNode != this.overlayNode) {
+               this.rebuildEditOverlay();
             }
 
             long var4 = BlockPos.asLong(var1, var2, var3);
-            if ((this.chunkAt_J & putAt_J_J(var4)) != 0L) {
-               for (int var6 = 0; var6 < this.pollOf_I; var6++) {
-                  if (this.fill_JArr[var6] == var4) {
-                     return this.fill_FileStore_BitCacheArr[var6];
+            if ((this.overlayBloomMask & overlayBloomBit(var4)) != 0L) {
+               for (int var6 = 0; var6 < this.overlayCount; var6++) {
+                  if (this.overlayKeys[var6] == var4) {
+                     return this.overlayValues[var6];
                   }
                }
             }
 
-            if (this.putAt_J >= this.putAt_JArr.length && this.putAt_JArr.length < this.closeOf_I) {
-               this.putAt_V();
+            if (this.blockQueries >= this.cacheKeys.length && this.cacheKeys.length < this.maxCacheCapacity) {
+               this.growCellCache();
             }
 
-            int var8 = (int)HashCommon.mix(var4) & this.putAt_JArr.length - 1;
-            if (this.putAt_FileStore_BitCacheArr[var8] != null && this.putAt_JArr[var8] == var4) {
-               return this.putAt_FileStore_BitCacheArr[var8];
+            int var8 = (int)HashCommon.mix(var4) & this.cacheKeys.length - 1;
+            if (this.cacheValues[var8] != null && this.cacheKeys[var8] == var4) {
+               return this.cacheValues[var8];
             }
 
-            this.putAt_J++;
-            AiPathfinder.CellInfo var7 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+            this.blockQueries++;
+            AiPathfinder.CellInfo var7 = this.delegate.probe(var1, var2, var3);
             if (var7 == null) {
-               this.flowState |= 1;
+               this.queryFlags |= 1;
                return AiPathfinder.CellInfo.UNLOADED;
             }
 
-            if (this.value_Z && var7.cached()) {
+            if (this.ignoreCachedCells && var7.cached()) {
                var7 = AiPathfinder.CellInfo.UNLOADED;
             }
 
-            this.putAt_JArr[var8] = var4;
-            this.putAt_FileStore_BitCacheArr[var8] = var7;
+            this.cacheKeys[var8] = var4;
+            this.cacheValues[var8] = var7;
             return var7;
          }
 
-         boolean readEx() {
-            if (!this.pollOf_Z
-               || this.putAt_FileStore_PacketHe != this.fill_FileStore_PacketHe
-               || this.putAt_DataCodec_CacheHel != this.fill_DataCodec_CacheHel) {
-               this.fill_V();
+         boolean hasActiveEdits() {
+            if (!this.overlayValid
+               || this.incomingMove != this.overlayIncomingMove
+               || this.activeNode != this.overlayNode) {
+               this.rebuildEditOverlay();
             }
 
-            return this.pollOf_I != 0;
+            return this.overlayCount != 0;
          }
 
          @Override
          public short putAt_S_I(int var1, int var2, int var3) {
-            if (!this.pollOf_Z
-               || this.putAt_FileStore_PacketHe != this.fill_FileStore_PacketHe
-               || this.putAt_DataCodec_CacheHel != this.fill_DataCodec_CacheHel) {
-               this.fill_V();
+            if (!this.overlayValid
+               || this.incomingMove != this.overlayIncomingMove
+               || this.activeNode != this.overlayNode) {
+               this.rebuildEditOverlay();
             }
 
             long var4 = BlockPos.asLong(var1, var2, var3);
-            if ((this.chunkAt_J & putAt_J_J(var4)) != 0L) {
-               for (int var6 = 0; var6 < this.pollOf_I; var6++) {
-                  if (this.fill_JArr[var6] == var4) {
-                     return AiShapes.init_S_ClassCache_FileCac(this.fill_FileStore_BitCacheArr[var6]);
+            if ((this.overlayBloomMask & overlayBloomBit(var4)) != 0L) {
+               for (int var6 = 0; var6 < this.overlayCount; var6++) {
+                  if (this.overlayKeys[var6] == var4) {
+                     return AiShapes.init_S_ClassCache_FileCac(this.overlayValues[var6]);
                   }
                }
             }
 
-            return this.value_Z && !this.probe(var1, var2, var3).loaded() ? 1 : this.putAt_FileStore_TextStor.putAt_S_I(var1, var2, var3);
+            return this.ignoreCachedCells && !this.probe(var1, var2, var3).loaded() ? 1 : this.delegate.putAt_S_I(var1, var2, var3);
          }
 
          @Override
          public short fill_S(int var1, int var2, int var3) {
-            if (!this.pollOf_Z
-               || this.putAt_FileStore_PacketHe != this.fill_FileStore_PacketHe
-               || this.putAt_DataCodec_CacheHel != this.fill_DataCodec_CacheHel) {
-               this.fill_V();
+            if (!this.overlayValid
+               || this.incomingMove != this.overlayIncomingMove
+               || this.activeNode != this.overlayNode) {
+               this.rebuildEditOverlay();
             }
 
             long var4 = BlockPos.asLong(var1, var2, var3);
-            if ((this.chunkAt_J & putAt_J_J(var4)) != 0L) {
-               for (int var6 = 0; var6 < this.pollOf_I; var6++) {
-                  if (this.fill_JArr[var6] == var4) {
-                     return AiShapes.init_S_ClassCache_FileCac(this.fill_FileStore_BitCacheArr[var6]);
+            if ((this.overlayBloomMask & overlayBloomBit(var4)) != 0L) {
+               for (int var6 = 0; var6 < this.overlayCount; var6++) {
+                  if (this.overlayKeys[var6] == var4) {
+                     return AiShapes.init_S_ClassCache_FileCac(this.overlayValues[var6]);
                   }
                }
             }
 
-            return this.putAt_FileStore_TextStor.fill_S(var1, var2, var3);
+            return this.delegate.fill_S(var1, var2, var3);
          }
 
          private record JumpCacheKey(long from, long to, long approach, boolean sprint) {
@@ -5066,78 +5066,78 @@ public final class AiPathfinder {
    }
 
    public static final class SearchSession {
-      public static final int flowState = 64;
-      public static final int flowTemp = 40;
-      public static final int readEx_I = 2000000;
-      private static final int prevEx_I = 3000000;
-      static final double[] putAt_DArr = new double[]{1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0};
-      static final int value_I = 5;
-      private final NavigationOpenSet.Inner_DataUtil[] putAt_DataCodec_CacheHelArr = new NavigationOpenSet.Inner_DataUtil[putAt_DArr.length];
-      private final double[] fill_DArr = new double[putAt_DArr.length];
-      private final AiPathfinder.GridView putAt_FileStore_TextStor;
-      private final BlockPos putAt_BlockPos;
-      private final AiPathfinder.PathGoal putAt_FileStore_TokenCod;
-      private final AiPathfinder.PathOptions putAt_FileStore_CacheHel;
-      private final Set<Long> fill_Set;
-      private final NavigationOpenSet putAt_DataCodec = new NavigationOpenSet();
-      private final Long2ObjectOpenHashMap<NavigationOpenSet.Inner_DataUtil> putAt_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>(256);
-      private final AiPathfinder.MoveGenerator.CachedGrid putAt_FileStore_IoHelper;
-      private final List<AiPathfinder.UiHelper> putAt_List = new ArrayList<>(16);
-      private NavigationOpenSet.Inner_DataUtil putAt_DataCodec_CacheHel;
-      private final long putAt_J;
-      private int prev_I;
-      private int chunkAt_I;
-      private int state_I;
-      private int closeOf_I = 1;
-      private boolean putAt_Z;
-      private boolean fill_Z;
-      private boolean readEx_Z;
-      private boolean value_Z;
-      private boolean prevEx_Z;
-      private int pollAt_I = 64;
-      private int pollOf_I = 40;
-      private BlockPos fill_BlockPos;
-      private boolean prev_Z;
-      private static final int tick_I = 24;
-      private static final int flushOf_I = 14;
-      private boolean chunkAt_Z;
-      private boolean state_Z;
-      private boolean closeOf_Z;
-      private boolean pollAt_Z;
-      private boolean pollOf_Z;
-      private AiPathfinder.PathBounds putAt_FileStore_HashPool;
-      private NavigationOpenSet.Inner_DataUtil fill_DataCodec_CacheHel;
-      private PriorityQueue<AiPathfinder.SearchSession.QueuedJump> putAt_PriorityQueue;
-      private final Map<AiPathfinder.SearchSession.QueuedJump, Future<AiPathfinder.SearchSession.JumpSolveStats>> putAt_Map = new HashMap<>();
-      private final ConcurrentLinkedQueue<AiPathfinder.MoveGenerator.CachedGrid> putAt_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
-      private static final int stateOf = Runtime.getRuntime().availableProcessors();
-      private static final int store = Math.clamp(stateOf >= 10 ? stateOf - 2 : stateOf / 2, 1, 10);
-      private static final ExecutorService putAt_ExecutorService = Executors.newFixedThreadPool(store, var0 -> {
+      public static final int DEFAULT_HORIZ_RADIUS = 64;
+      public static final int DEFAULT_VERT_RADIUS = 40;
+      public static final int MAX_EXPANSIONS = 2000000;
+      private static final int MAX_OPEN_NODES = 3000000;
+      static final double[] PROGRESS_WEIGHTS = new double[]{1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0};
+      static final int MIN_PROGRESS_DIST = 5;
+      private final NavigationOpenSet.Inner_DataUtil[] bestWeightedNodes = new NavigationOpenSet.Inner_DataUtil[PROGRESS_WEIGHTS.length];
+      private final double[] bestWeightedScores = new double[PROGRESS_WEIGHTS.length];
+      private final AiPathfinder.GridView grid;
+      private final BlockPos startPos;
+      private final AiPathfinder.PathGoal goal;
+      private final AiPathfinder.PathOptions options;
+      private final Set<Long> blacklistedCells;
+      private final NavigationOpenSet openSet = new NavigationOpenSet();
+      private final Long2ObjectOpenHashMap<NavigationOpenSet.Inner_DataUtil> nodeTable = new Long2ObjectOpenHashMap<>(256);
+      private final AiPathfinder.MoveGenerator.CachedGrid cachedGrid;
+      private final List<AiPathfinder.UiHelper> scratchMoves = new ArrayList<>(16);
+      private NavigationOpenSet.Inner_DataUtil bestNode;
+      private final long gridRevision;
+      private int expandedCount;
+      private int generatedCount;
+      private int peakOpenSize;
+      private int allocatedNodeCount = 1;
+      private boolean finished;
+      private boolean reachedGoal;
+      private boolean hitPendingChunk;
+      private boolean wedgedStart;
+      private boolean confinedStart;
+      private int horizRadius = 64;
+      private int vertRadius = 40;
+      private BlockPos corridorTarget;
+      private boolean slopedCorridorFloor;
+      private static final int CORRIDOR_MARGIN = 24;
+      private static final int CORRIDOR_FLOOR_PAD = 14;
+      private boolean routeProofMode;
+      private boolean destinationUnknown;
+      private boolean skippedBlacklistedMove;
+      private boolean worldRecordMode;
+      private boolean trackHeadingState;
+      private AiPathfinder.PathBounds searchBounds;
+      private NavigationOpenSet.Inner_DataUtil bestUnknownEdgeNode;
+      private PriorityQueue<AiPathfinder.SearchSession.QueuedJump> deferredJumpQueue;
+      private final Map<AiPathfinder.SearchSession.QueuedJump, Future<AiPathfinder.SearchSession.JumpSolveStats>> pendingJumpFutures = new HashMap<>();
+      private final ConcurrentLinkedQueue<AiPathfinder.MoveGenerator.CachedGrid> workerGridPool = new ConcurrentLinkedQueue<>();
+      private static final int CPU_CORES = Runtime.getRuntime().availableProcessors();
+      private static final int JUMP_WORKER_THREADS = Math.clamp(CPU_CORES >= 10 ? CPU_CORES - 2 : CPU_CORES / 2, 1, 10);
+      private static final ExecutorService JUMP_PROOF_EXECUTOR = Executors.newFixedThreadPool(JUMP_WORKER_THREADS, var0 -> {
          Thread var1 = new Thread(var0, "Autism jump proof");
          var1.setDaemon(true);
          var1.setPriority(4);
          return var1;
       });
-      private int nextBy;
-      Set<AiPathfinder.MoveKey> putAt_Set = Set.of();
-      private boolean tick_Z;
-      private long fill_J;
-      private static final double putAt_D = 18.0;
-      private boolean flushOf_Z;
+      private int asyncWorkerLimit;
+      Set<AiPathfinder.MoveKey> blacklistedMoves = Set.of();
+      private boolean ignoreGlobalBlacklist;
+      private long queuedJumpSeq;
+      private static final double MAX_ESTIMATED_JUMP_TICKS = 18.0;
+      private boolean exhaustedSearch;
 
-      static AiPathfinder.SearchSession putAt(
+      static AiPathfinder.SearchSession createProofSession(
          AiPathfinder.GridView var0, BlockPos var1, AiPathfinder.PathGoal var2, AiPathfinder.PathOptions var3, Set<Long> var4
       ) {
-         return putAt(var0, var1, var2, var3, var4, false);
+         return createProofSession(var0, var1, var2, var3, var4, false);
       }
 
-      static AiPathfinder.SearchSession putAt(
+      static AiPathfinder.SearchSession createProofSession(
          AiPathfinder.GridView var0, BlockPos var1, AiPathfinder.PathGoal var2, AiPathfinder.PathOptions var3, Set<Long> var4, boolean var5
       ) {
-         return putAt(var0, var1, var2, var3, var4, var5, true, var0.movementSpeed());
+         return createProofSession(var0, var1, var2, var3, var4, var5, true, var0.movementSpeed());
       }
 
-      private static AiPathfinder.SearchSession putAt(
+      private static AiPathfinder.SearchSession createProofSession(
          AiPathfinder.GridView var0,
          BlockPos var1,
          AiPathfinder.PathGoal var2,
@@ -5148,72 +5148,72 @@ public final class AiPathfinder {
          double var7
       ) {
          AiPathfinder.SearchSession var9 = new AiPathfinder.SearchSession(var0, var1, var2, var3, var4, var7);
-         var9.chunkAt_Z = true;
-         var9.putAt_FileStore_IoHelper.value_Z = true;
-         var9.putAt_FileStore_IoHelper.prevEx_Z = var6;
-         var9.putAt_FileStore_IoHelper.prev_Z = var5;
+         var9.routeProofMode = true;
+         var9.cachedGrid.ignoreCachedCells = true;
+         var9.cachedGrid.fullPhysicsParkour = var6;
+         var9.cachedGrid.fastPassMode = var5;
          if (var6
             && !var5
             && !var3.allowDig()
             && !var3.allowBridge()
             && !var3.allowPillar()
             && (var0 instanceof AiLiveGrid || var0 instanceof AiPathfinder.LiveGridView || var0.putAt_Z())) {
-            var9.nextBy = store;
-            var9.putAt_FileStore_IoHelper.putAt_Map = new ConcurrentHashMap<>();
+            var9.asyncWorkerLimit = JUMP_WORKER_THREADS;
+            var9.cachedGrid.localJumpCache = new ConcurrentHashMap<>();
          }
 
          if (var5) {
-            var9.putAt_DataCodec.init(2.0);
+            var9.openSet.init(2.0);
          }
 
          BlockPos var10 = var2.putAt_BlockPos();
          AiPathfinder.CellInfo var11 = var10 == null ? null : var0.probe(var10.getX(), var10.getY(), var10.getZ());
-         var9.state_Z = var10 != null && var11 != null && (!var11.loaded() || var11.cached());
+         var9.destinationUnknown = var10 != null && var11 != null && (!var11.loaded() || var11.cached());
          if (var10 != null && var11 == null) {
-            var9.readEx_Z = true;
+            var9.hitPendingChunk = true;
          }
 
-         if (AiNavDebug.init_Z()) {
-            AiNavDebug.init("route proof target=" + var10 + " unknown=" + var9.state_Z + " grid=" + var0.getClass().getSimpleName() + " destination=" + var11);
+         if (AiNavDebug.isEnabled()) {
+            AiNavDebug.log("route proof target=" + var10 + " unknown=" + var9.destinationUnknown + " grid=" + var0.getClass().getSimpleName() + " destination=" + var11);
          }
 
-         var9.pollAt_I = var10 == null
+         var9.horizRadius = var10 == null
             ? 512
             : (
-               var9.state_Z
+               var9.destinationUnknown
                   ? 2048
                   : (int)Math.min(2048L, Math.max(128L, Math.max(Math.abs((long)var10.getX() - var1.getX()), Math.abs((long)var10.getZ() - var1.getZ())) + 64L))
             );
-         var9.pollOf_I = var10 == null ? 512 : (int)Math.min(512L, Math.max(96L, Math.abs((long)var10.getY() - var1.getY()) + 32L));
+         var9.vertRadius = var10 == null ? 512 : (int)Math.min(512L, Math.max(96L, Math.abs((long)var10.getY() - var1.getY()) + 32L));
          return var9;
       }
 
-      private boolean putAt_Z_BlockPos(BlockPos var1) {
-         AiPathfinder.CellInfo var2 = this.putAt_FileStore_IoHelper.putAt_FileStore_BitCache_BlockPos(var1);
-         AiPathfinder.CellInfo var3 = this.putAt_FileStore_IoHelper.putAt_FileStore_BitCache_BlockPos(var1.below());
-         if (AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(var2, this.putAt_FileStore_IoHelper.putAt_FileStore_BitCache_BlockPos(var1.above()), var3)
+      private boolean isAtUnknownTerrainEdge(BlockPos var1) {
+         AiPathfinder.CellInfo var2 = this.cachedGrid.probePos(var1);
+         AiPathfinder.CellInfo var3 = this.cachedGrid.probePos(var1.below());
+         if (AiPathfinder.MoveGenerator.isStandable(var2, this.cachedGrid.probePos(var1.above()), var3)
             && !var2.water()
             && !var2.climbable()
             && var3.top16() <= 16) {
-            BlockPos var4 = this.putAt_FileStore_TokenCod.putAt_BlockPos();
+            BlockPos var4 = this.goal.putAt_BlockPos();
             int var5 = Integer.compare(var4.getX(), var1.getX());
             int var6 = Integer.compare(var4.getZ(), var1.getZ());
 
-            for (int[] var10 : AiPathfinder.MoveGenerator.putAt_IArr2) {
+            for (int[] var10 : AiPathfinder.MoveGenerator.CARDINAL_DIRS) {
                if (var10[0] * var5 + var10[1] * var6 > 0) {
-                  AiPathfinder.CellInfo var11 = this.putAt_FileStore_TextStor.probe(var1.getX() + var10[0], var1.getY(), var1.getZ() + var10[1]);
+                  AiPathfinder.CellInfo var11 = this.grid.probe(var1.getX() + var10[0], var1.getY(), var1.getZ() + var10[1]);
                   if (var11 == null) {
-                     this.readEx_Z = true;
+                     this.hitPendingChunk = true;
                   } else {
                      if (!var11.loaded() || var11.cached()) {
                         return true;
                      }
 
                      if (var11.passable() && var11.hazardFeet()) {
-                        AiPathfinder.CellInfo var12 = this.putAt_FileStore_TextStor
+                        AiPathfinder.CellInfo var12 = this.grid
                            .probe(var1.getX() + 2 * var10[0], var1.getY(), var1.getZ() + 2 * var10[1]);
                         if (var12 == null) {
-                           this.readEx_Z = true;
+                           this.hitPendingChunk = true;
                         } else if (!var12.loaded() || var12.cached()) {
                            return true;
                         }
@@ -5235,95 +5235,95 @@ public final class AiPathfinder {
       private SearchSession(
          AiPathfinder.GridView var1, BlockPos var2, AiPathfinder.PathGoal var3, AiPathfinder.PathOptions var4, Set<Long> var5, double var6
       ) {
-         this.putAt_FileStore_TextStor = var1;
-         this.putAt_BlockPos = var2.immutable();
-         this.putAt_FileStore_TokenCod = var3.putAt_FileStore_TokenCod_FileStore_TextStor(var1);
-         this.putAt_FileStore_CacheHel = var4;
-         this.fill_Set = var5;
-         this.putAt_J = var1.putAt_J();
-         this.putAt_FileStore_IoHelper = new AiPathfinder.MoveGenerator.CachedGrid(var1, 16384, var6);
-         this.putAt_FileStore_IoHelper.putAt_FileStore_RingUtil = var4.fallPolicy();
+         this.grid = var1;
+         this.startPos = var2.immutable();
+         this.goal = var3.putAt_FileStore_TokenCod_FileStore_TextStor(var1);
+         this.options = var4;
+         this.blacklistedCells = var5;
+         this.gridRevision = var1.putAt_J();
+         this.cachedGrid = new AiPathfinder.MoveGenerator.CachedGrid(var1, 16384, var6);
+         this.cachedGrid.fallPolicy = var4.fallPolicy();
          BlockPos var8 = var3.putAt_BlockPos();
          if (var8 != null && var4.allowPillar() && var4.strategy() == AiPathfinder.RouteStrategy.FASTEST) {
             int var9 = var8.getY() - var2.getY();
             double var10 = Math.hypot(var8.getX() - var2.getX(), var8.getZ() - var2.getZ());
             if (var9 >= 8 && var10 * 2.0 < var9 && var4.constructionBlocks() >= var9) {
-               this.putAt_DataCodec.init(1.3);
+               this.openSet.init(1.3);
             }
          }
 
          if (var4.allowParkour()) {
-            this.putAt_PriorityQueue = new PriorityQueue<>(
+            this.deferredJumpQueue = new PriorityQueue<>(
                Comparator.comparingDouble(AiPathfinder.SearchSession.QueuedJump::priority).thenComparingLong(AiPathfinder.SearchSession.QueuedJump::order)
             );
-            this.putAt_FileStore_IoHelper.putAt_Consumer = this::putAt_V_FileStore_IoHelper;
+            this.cachedGrid.deferredJumpSink = this::enqueueDeferredJump;
          }
 
-         this.putAt_DataCodec_CacheHel = new NavigationOpenSet.Inner_DataUtil(this.putAt_BlockPos, var3.heuristic(var2.getX(), var2.getY(), var2.getZ()));
-         this.putAt_DataCodec_CacheHel.load_D = 0.0;
-         this.putAt_Long2ObjectOpenHas.put(this.putAt_BlockPos.asLong(), this.putAt_DataCodec_CacheHel);
-         this.putAt_DataCodec.init(this.putAt_DataCodec_CacheHel);
-         this.state_I = 1;
-         Arrays.fill(this.fill_DArr, 1.7976931348623157E308);
+         this.bestNode = new NavigationOpenSet.Inner_DataUtil(this.startPos, var3.heuristic(var2.getX(), var2.getY(), var2.getZ()));
+         this.bestNode.load_D = 0.0;
+         this.nodeTable.put(this.startPos.asLong(), this.bestNode);
+         this.openSet.init(this.bestNode);
+         this.peakOpenSize = 1;
+         Arrays.fill(this.bestWeightedScores, 1.7976931348623157E308);
       }
 
-      public boolean putAt_Z() {
-         return this.putAt_DataCodec_CacheHel() != null;
+      public boolean hasProgressNode() {
+         return this.selectProgressNode() != null;
       }
 
-      private NavigationOpenSet.Inner_DataUtil putAt_DataCodec_CacheHel() {
-         for (NavigationOpenSet.Inner_DataUtil var4 : this.putAt_DataCodec_CacheHelArr) {
-            if (var4 != null && var4.init_BlockPos.distSqr(this.putAt_BlockPos) > 25.0) {
+      private NavigationOpenSet.Inner_DataUtil selectProgressNode() {
+         for (NavigationOpenSet.Inner_DataUtil var4 : this.bestWeightedNodes) {
+            if (var4 != null && var4.init_BlockPos.distSqr(this.startPos) > 25.0) {
                return var4;
             }
          }
 
-         return this.putAt_DataCodec_CacheHel != null
-               && this.putAt_DataCodec_CacheHel.init_t_DataUtil != null
-               && this.putAt_DataCodec_CacheHel.init_BlockPos.distSqr(this.putAt_BlockPos) > 25.0
-            ? this.putAt_DataCodec_CacheHel
+         return this.bestNode != null
+               && this.bestNode.init_t_DataUtil != null
+               && this.bestNode.init_BlockPos.distSqr(this.startPos) > 25.0
+            ? this.bestNode
             : null;
       }
 
-      private static double putAt_D_FileStore_IoHelper(AiPathfinder.MoveGenerator.JumpCandidate var0) {
+      private static double estimateJumpTicks(AiPathfinder.MoveGenerator.JumpCandidate var0) {
          double var1 = Math.hypot(var0.to().getX() - var0.from().getX(), var0.to().getZ() - var0.from().getZ());
          double var3 = Math.max(0.0, var0.targetY() - var0.sourceY());
          return Math.min(18.0, 2.0 + Math.max(8.0, var1 * 2.7 + var3 * 2.0));
       }
 
-      private void putAt_V_FileStore_IoHelper(AiPathfinder.MoveGenerator.JumpCandidate var1) {
-         NavigationOpenSet.Inner_DataUtil var2 = this.putAt_FileStore_IoHelper.putAt_DataCodec_CacheHel;
+      private void enqueueDeferredJump(AiPathfinder.MoveGenerator.JumpCandidate var1) {
+         NavigationOpenSet.Inner_DataUtil var2 = this.cachedGrid.activeNode;
          BlockPos var3 = var1.to();
          BlockPos var4 = var1.deeper();
-         if (this.fill_BlockPos == null && this.putAt_FileStore_HashPool == null || this.fill(var3) || this.fill(var4)) {
-            if (this.fill_Set.contains(var4.asLong())
-               || !AiPathfinder.MoveGenerator.putAt_Z_Function(this.putAt_FileStore_IoHelper, var4, var1.targetY())
+         if (this.corridorTarget == null && this.searchBounds == null || this.isWithinSearchBox(var3) || this.isWithinSearchBox(var4)) {
+            if (this.blacklistedCells.contains(var4.asLong())
+               || !AiPathfinder.MoveGenerator.isFlatRunupCell(this.cachedGrid, var4, var1.targetY())
                || Math.abs(
-                     AiPathfinder.MoveGenerator.putAt(var4.getY(), this.putAt_FileStore_IoHelper.putAt_FileStore_BitCache_BlockPos(var4.below()))
+                     AiPathfinder.MoveGenerator.surfaceY(var4.getY(), this.cachedGrid.probePos(var4.below()))
                         - var1.targetY()
                   )
                   >= 1.0E-6) {
                var4 = null;
             }
 
-            double var5 = this.fill(var1);
-            if (!this.putAt_FileStore_IoHelper.chunkAt_Z
-               || !this.putAt_Z_DataCodec_CacheHel(var2, var3, var2.load_D + var5)
-               || var4 != null && !this.putAt_Z_DataCodec_CacheHel(var2, var4, var2.load_D + var5)) {
-               double var7 = this.putAt_D_I(var3.getX(), var3.getY(), var3.getZ());
+            double var5 = this.optimisticJumpCost(var1);
+            if (!this.cachedGrid.quickJumpMode
+               || !this.isJumpDominated(var2, var3, var2.load_D + var5)
+               || var4 != null && !this.isJumpDominated(var2, var4, var2.load_D + var5)) {
+               double var7 = this.adjustedHeuristic(var3.getX(), var3.getY(), var3.getZ());
                if (var4 != null) {
-                  var7 = Math.min(var7, this.putAt_D_I(var4.getX(), var4.getY(), var4.getZ()));
+                  var7 = Math.min(var7, this.adjustedHeuristic(var4.getX(), var4.getY(), var4.getZ()));
                }
 
-               double var9 = this.putAt_DataCodec.init(var2.load_D + var5, var7);
-               this.putAt_PriorityQueue.add(new AiPathfinder.SearchSession.QueuedJump(var1, var4, var2, var2.load_D, var9, this.fill_J++));
+               double var9 = this.openSet.init(var2.load_D + var5, var7);
+               this.deferredJumpQueue.add(new AiPathfinder.SearchSession.QueuedJump(var1, var4, var2, var2.load_D, var9, this.queuedJumpSeq++));
             }
          }
       }
 
-      private double fill(AiPathfinder.MoveGenerator.JumpCandidate var1) {
-         double var2 = putAt_D_FileStore_IoHelper(var1);
-         if (this.putAt_FileStore_IoHelper.chunkAt_Z) {
+      private double optimisticJumpCost(AiPathfinder.MoveGenerator.JumpCandidate var1) {
+         double var2 = estimateJumpTicks(var1);
+         if (this.cachedGrid.quickJumpMode) {
             double var4 = var1.targetY() - var1.sourceY();
             var2 = Math.max(var2, 7.0 + Math.sqrt(Math.max(0.0, 1.25 - var4) * 22.0));
          }
@@ -5331,10 +5331,10 @@ public final class AiPathfinder {
          return var2;
       }
 
-      private double putAt_D_I(int var1, int var2, int var3) {
-         double var4 = this.putAt_FileStore_TokenCod.heuristic(var1, var2, var3);
-         BlockPos var6 = this.putAt_FileStore_TokenCod.putAt_BlockPos();
-         if ((this.putAt_FileStore_IoHelper.chunkAt_Z || this.fill_BlockPos != null || this.putAt_FileStore_HashPool != null)
+      private double adjustedHeuristic(int var1, int var2, int var3) {
+         double var4 = this.goal.heuristic(var1, var2, var3);
+         BlockPos var6 = this.goal.putAt_BlockPos();
+         if ((this.cachedGrid.quickJumpMode || this.corridorTarget != null || this.searchBounds != null)
             && var6 != null
             && var2 > var6.getY() + 1) {
             double var7 = var2 - var6.getY() - 1.0;
@@ -5345,42 +5345,42 @@ public final class AiPathfinder {
          }
       }
 
-      private boolean fill(BlockPos var1) {
+      private boolean isWithinSearchBox(BlockPos var1) {
          int var2 = var1.getX();
          int var3 = var1.getY();
          int var4 = var1.getZ();
-         return Math.abs((long)var2 - this.putAt_BlockPos.getX()) <= this.pollAt_I
-            && Math.abs((long)var4 - this.putAt_BlockPos.getZ()) <= this.pollAt_I
-            && Math.abs((long)var3 - this.putAt_BlockPos.getY()) <= this.pollOf_I
-            && (this.putAt_FileStore_HashPool == null || this.putAt_FileStore_HashPool.contains(var2, var3, var4))
+         return Math.abs((long)var2 - this.startPos.getX()) <= this.horizRadius
+            && Math.abs((long)var4 - this.startPos.getZ()) <= this.horizRadius
+            && Math.abs((long)var3 - this.startPos.getY()) <= this.vertRadius
+            && (this.searchBounds == null || this.searchBounds.contains(var2, var3, var4))
             && (
-               this.fill_BlockPos == null
-                  || putAt(var2, this.putAt_BlockPos.getX(), this.fill_BlockPos.getX(), 24)
-                     && putAt(var4, this.putAt_BlockPos.getZ(), this.fill_BlockPos.getZ(), 24)
-                     && var3 <= Math.max(this.putAt_BlockPos.getY(), this.fill_BlockPos.getY()) + 14
-                     && var3 >= this.putAt_D_I_I(var2, var4)
+               this.corridorTarget == null
+                  || withinRangeMargin(var2, this.startPos.getX(), this.corridorTarget.getX(), 24)
+                     && withinRangeMargin(var4, this.startPos.getZ(), this.corridorTarget.getZ(), 24)
+                     && var3 <= Math.max(this.startPos.getY(), this.corridorTarget.getY()) + 14
+                     && var3 >= this.corridorMinY(var2, var4)
             );
       }
 
-      private double putAt_D_I_I(int var1, int var2) {
-         if (!this.prev_Z) {
-            return Math.min(this.putAt_BlockPos.getY(), this.fill_BlockPos.getY()) - 14;
+      private double corridorMinY(int var1, int var2) {
+         if (!this.slopedCorridorFloor) {
+            return Math.min(this.startPos.getY(), this.corridorTarget.getY()) - 14;
          }
 
-         double var3 = (double)this.fill_BlockPos.getX() - this.putAt_BlockPos.getX();
-         double var5 = (double)this.fill_BlockPos.getZ() - this.putAt_BlockPos.getZ();
+         double var3 = (double)this.corridorTarget.getX() - this.startPos.getX();
+         double var5 = (double)this.corridorTarget.getZ() - this.startPos.getZ();
          double var7 = Math.clamp(
-            ((var1 - this.putAt_BlockPos.getX()) * var3 + (var2 - this.putAt_BlockPos.getZ()) * var5) / (var3 * var3 + var5 * var5), 0.0, 1.0
+            ((var1 - this.startPos.getX()) * var3 + (var2 - this.startPos.getZ()) * var5) / (var3 * var3 + var5 * var5), 0.0, 1.0
          );
-         return this.putAt_BlockPos.getY() + var7 * (this.fill_BlockPos.getY() - this.putAt_BlockPos.getY()) - 8.0;
+         return this.startPos.getY() + var7 * (this.corridorTarget.getY() - this.startPos.getY()) - 8.0;
       }
 
-      private static boolean putAt(int var0, int var1, int var2, int var3) {
+      private static boolean withinRangeMargin(int var0, int var1, int var2, int var3) {
          return var0 >= Math.min(var1, var2) - var3 && var0 <= Math.max(var1, var2) + var3;
       }
 
-      private boolean putAt_Z_BlockPos(BlockPos var1, double var2, int var4) {
-         for (NavigationOpenSet.Inner_DataUtil var5 = this.putAt_Long2ObjectOpenHas.get(var1.asLong()); var5 != null; var5 = var5.load_t_DataUtil) {
+      private boolean isDominatedAt(BlockPos var1, double var2, int var4) {
+         for (NavigationOpenSet.Inner_DataUtil var5 = this.nodeTable.get(var1.asLong()); var5 != null; var5 = var5.load_t_DataUtil) {
             if (!var5.init_Z && var5.load_D <= var2 && var5.load_I <= var4) {
                return true;
             }
@@ -5389,56 +5389,56 @@ public final class AiPathfinder {
          return false;
       }
 
-      private boolean putAt_Z_DataCodec_CacheHel(NavigationOpenSet.Inner_DataUtil var1, BlockPos var2, double var3) {
-         return this.putAt_Z_BlockPos(var2, var3, var1.load_I)
+      private boolean isJumpDominated(NavigationOpenSet.Inner_DataUtil var1, BlockPos var2, double var3) {
+         return this.isDominatedAt(var2, var3, var1.load_I)
             ? true
-            : this.putAt_FileStore_IoHelper.putAt_FileStore_RingUtil == AiPathfinder.FallPolicy.STANDARD
-               && !this.putAt_FileStore_IoHelper.prev_Z
-               && this.putAt_Z_BlockPos(var2, var3 + 20.0, var1.load_I)
-               && AiPathfinder.MoveGenerator.fill(this.putAt_FileStore_IoHelper, var1.init_BlockPos, var2);
+            : this.cachedGrid.fallPolicy == AiPathfinder.FallPolicy.STANDARD
+               && !this.cachedGrid.fastPassMode
+               && this.isDominatedAt(var2, var3 + 20.0, var1.load_I)
+               && AiPathfinder.MoveGenerator.hasDeepDropUnderJump(this.cachedGrid, var1.init_BlockPos, var2);
       }
 
-      private boolean fill_Z() {
-         if (this.putAt_PriorityQueue != null
-            && !this.putAt_PriorityQueue.isEmpty()
-            && !(this.putAt_PriorityQueue.peek().priority() > this.putAt_DataCodec.init_D())) {
-            AiPathfinder.SearchSession.QueuedJump var1 = this.putAt_PriorityQueue.remove();
+      private boolean stepDeferredJump() {
+         if (this.deferredJumpQueue != null
+            && !this.deferredJumpQueue.isEmpty()
+            && !(this.deferredJumpQueue.peek().priority() > this.openSet.init_D())) {
+            AiPathfinder.SearchSession.QueuedJump var1 = this.deferredJumpQueue.remove();
             NavigationOpenSet.Inner_DataUtil var2 = var1.source();
             if (!var2.init_Z && var2.load_D == var1.sourceCost()) {
-               double var3 = this.putAt_D_FileStore_IoPool_T(var1);
-               this.putAt_FileStore_IoHelper.flowState = 0;
-               this.putAt_FileStore_IoHelper.putAt_FileStore_PacketHe = var2.init_ClassCache_UiHelpe;
-               this.putAt_FileStore_IoHelper.putAt_DataCodec_CacheHel = var2;
-               if (!this.putAt_Z_DataCodec_CacheHel(var2, var1.candidate().to(), var3)
-                  || var1.continuation() != null && !this.putAt_Z_DataCodec_CacheHel(var2, var1.continuation(), var3)) {
-                  AiPathfinder.UiHelper var5 = this.putAt_FileStore_PacketHe_FileStore_IoPool_T(var1);
+               double var3 = this.deferredJumpLowerBound(var1);
+               this.cachedGrid.queryFlags = 0;
+               this.cachedGrid.incomingMove = var2.init_ClassCache_UiHelpe;
+               this.cachedGrid.activeNode = var2;
+               if (!this.isJumpDominated(var2, var1.candidate().to(), var3)
+                  || var1.continuation() != null && !this.isJumpDominated(var2, var1.continuation(), var3)) {
+                  AiPathfinder.UiHelper var5 = this.resolveQueuedJump(var1);
                   if (var5 != null) {
-                     this.chunkAt_I++;
-                     this.putAt_V_DataCodec_CacheHel_FileStore_PacketHe(var2, var5);
-                     AiPathfinder.UiHelper var6 = AiPathfinder.MoveGenerator.putAt_FileStore_PacketHe_FileStore_IoHelper(
-                        this.putAt_FileStore_IoHelper, var5, this.fill_Set
+                     this.generatedCount++;
+                     this.relaxEdge(var2, var5);
+                     AiPathfinder.UiHelper var6 = AiPathfinder.MoveGenerator.tryDoubleJumpChain(
+                        this.cachedGrid, var5, this.blacklistedCells
                      );
                      if (var6 != null) {
-                        this.chunkAt_I++;
-                        this.putAt_V_DataCodec_CacheHel_FileStore_PacketHe(var2, var6);
+                        this.generatedCount++;
+                        this.relaxEdge(var2, var6);
                      }
                   }
 
-                  if ((this.putAt_FileStore_IoHelper.flowState & 1) != 0) {
-                     this.readEx_Z = true;
+                  if ((this.cachedGrid.queryFlags & 1) != 0) {
+                     this.hitPendingChunk = true;
                   }
 
                   return true;
                } else {
-                  this.putAt_V_FileStore_IoPool_T(var1);
-                  if ((this.putAt_FileStore_IoHelper.flowState & 1) != 0) {
-                     this.readEx_Z = true;
+                  this.cancelQueuedJumpFuture(var1);
+                  if ((this.cachedGrid.queryFlags & 1) != 0) {
+                     this.hitPendingChunk = true;
                   }
 
                   return true;
                }
             } else {
-               this.putAt_V_FileStore_IoPool_T(var1);
+               this.cancelQueuedJumpFuture(var1);
                return true;
             }
          } else {
@@ -5446,31 +5446,31 @@ public final class AiPathfinder {
          }
       }
 
-      private double putAt_D_FileStore_IoPool_T(AiPathfinder.SearchSession.QueuedJump var1) {
+      private double deferredJumpLowerBound(AiPathfinder.SearchSession.QueuedJump var1) {
          return var1.sourceCost()
-            + (this.pollAt_Z || !this.putAt_FileStore_IoHelper.prev_Z && !this.putAt_FileStore_IoHelper.state_Z ? 3.0 : this.fill(var1.candidate()));
+            + (this.worldRecordMode || !this.cachedGrid.fastPassMode && !this.cachedGrid.reducedJumpMode ? 3.0 : this.optimisticJumpCost(var1.candidate()));
       }
 
-      private AiPathfinder.UiHelper putAt_FileStore_PacketHe_FileStore_IoPool_T(AiPathfinder.SearchSession.QueuedJump var1) {
-         if (this.nextBy >= 2 && !this.state_Z && !this.putAt_FileStore_IoHelper.readEx()) {
-            var var2 = this.putAt_Map.computeIfAbsent(var1, this::putAt_Future_FileStore_IoPool_T);
-            if (this.putAt_Map.size() < this.nextBy * 2) {
+      private AiPathfinder.UiHelper resolveQueuedJump(AiPathfinder.SearchSession.QueuedJump var1) {
+         if (this.asyncWorkerLimit >= 2 && !this.destinationUnknown && !this.cachedGrid.hasActiveEdits()) {
+            var var2 = this.pendingJumpFutures.computeIfAbsent(var1, this::submitAsyncJumpSolve);
+            if (this.pendingJumpFutures.size() < this.asyncWorkerLimit * 2) {
                int var3 = 0;
 
-               for (AiPathfinder.SearchSession.QueuedJump var5 : this.putAt_PriorityQueue) {
-                  if (++var3 > this.nextBy * 8 || this.putAt_Map.size() >= this.nextBy * 2) {
+               for (AiPathfinder.SearchSession.QueuedJump var5 : this.deferredJumpQueue) {
+                  if (++var3 > this.asyncWorkerLimit * 8 || this.pendingJumpFutures.size() >= this.asyncWorkerLimit * 2) {
                      break;
                   }
 
                   NavigationOpenSet.Inner_DataUtil var6 = var5.source();
-                  if (!var6.init_Z && var6.load_D == var5.sourceCost() && !this.putAt_Map.containsKey(var5)) {
-                     double var7 = this.putAt_D_FileStore_IoPool_T(var5);
+                  if (!var6.init_Z && var6.load_D == var5.sourceCost() && !this.pendingJumpFutures.containsKey(var5)) {
+                     double var7 = this.deferredJumpLowerBound(var5);
                      if ((
-                           !this.putAt_Z_BlockPos(var5.candidate().to(), var7, var6.load_I)
-                              || var5.continuation() != null && !this.putAt_Z_BlockPos(var5.continuation(), var7, var6.load_I)
+                           !this.isDominatedAt(var5.candidate().to(), var7, var6.load_I)
+                              || var5.continuation() != null && !this.isDominatedAt(var5.continuation(), var7, var6.load_I)
                         )
                         && (var6.init_ClassCache_UiHelpe == null || var6.init_ClassCache_UiHelpe.type() != AiPathfinder.MoveType.DOOR)) {
-                        this.putAt_Map.computeIfAbsent(var5, this::putAt_Future_FileStore_IoPool_T);
+                        this.pendingJumpFutures.computeIfAbsent(var5, this::submitAsyncJumpSolve);
                      }
                   }
                }
@@ -5478,203 +5478,203 @@ public final class AiPathfinder {
 
             try {
                AiPathfinder.SearchSession.JumpSolveStats var16 = (AiPathfinder.SearchSession.JumpSolveStats)var2.get();
-               this.putAt_FileStore_IoHelper.flowState = this.putAt_FileStore_IoHelper.flowState | var16.flags();
-               this.putAt_FileStore_IoHelper.readEx_I = this.putAt_FileStore_IoHelper.readEx_I + var16.solves();
-               this.putAt_FileStore_IoHelper.value_I = this.putAt_FileStore_IoHelper.value_I + var16.hits();
-               this.putAt_FileStore_IoHelper.fill_J = this.putAt_FileStore_IoHelper.fill_J + var16.nanos();
-               this.putAt_FileStore_IoHelper.putAt_J = this.putAt_FileStore_IoHelper.putAt_J + var16.queries();
+               this.cachedGrid.queryFlags = this.cachedGrid.queryFlags | var16.flags();
+               this.cachedGrid.jumpSolves = this.cachedGrid.jumpSolves + var16.solves();
+               this.cachedGrid.jumpCacheHits = this.cachedGrid.jumpCacheHits + var16.hits();
+               this.cachedGrid.jumpSolveNanos = this.cachedGrid.jumpSolveNanos + var16.nanos();
+               this.cachedGrid.blockQueries = this.cachedGrid.blockQueries + var16.queries();
                return var16.movement();
             } catch (InterruptedException var13) {
                var2.cancel(true);
                Thread.currentThread().interrupt();
-               this.putAt_Z = true;
+               this.finished = true;
                return null;
             } catch (ExecutionException var14) {
-               return AiPathfinder.MoveGenerator.putAt_FileStore_PacketHe_FileStore_IoHelper_2(this.putAt_FileStore_IoHelper, this.fill_Set, var1.candidate());
+               return AiPathfinder.MoveGenerator.solveJumpCandidate(this.cachedGrid, this.blacklistedCells, var1.candidate());
             } finally {
-               this.putAt_Map.remove(var1);
+               this.pendingJumpFutures.remove(var1);
             }
          } else {
-            return AiPathfinder.MoveGenerator.putAt_FileStore_PacketHe_FileStore_IoHelper_2(this.putAt_FileStore_IoHelper, this.fill_Set, var1.candidate());
+            return AiPathfinder.MoveGenerator.solveJumpCandidate(this.cachedGrid, this.blacklistedCells, var1.candidate());
          }
       }
 
-      private Future<AiPathfinder.SearchSession.JumpSolveStats> putAt_Future_FileStore_IoPool_T(AiPathfinder.SearchSession.QueuedJump var1) {
+      private Future<AiPathfinder.SearchSession.JumpSolveStats> submitAsyncJumpSolve(AiPathfinder.SearchSession.QueuedJump var1) {
          AiPathfinder.UiHelper var2 = var1.source().init_ClassCache_UiHelpe;
-         return putAt_ExecutorService.submit(
+         return JUMP_PROOF_EXECUTOR.submit(
             () -> {
-               AiPathfinder.MoveGenerator.CachedGrid var3 = this.putAt_ConcurrentLinkedQu.poll();
+               AiPathfinder.MoveGenerator.CachedGrid var3 = this.workerGridPool.poll();
                if (var3 == null) {
-                  var3 = new AiPathfinder.MoveGenerator.CachedGrid(this.putAt_FileStore_TextStor, 16384, this.putAt_FileStore_IoHelper.putAt_D);
-                  var3.value_Z = true;
-                  var3.prevEx_Z = true;
-                  var3.state_Z = this.putAt_FileStore_IoHelper.state_Z;
-                  var3.fill_Z = this.putAt_FileStore_IoHelper.fill_Z;
-                  var3.chunkAt_Z = this.putAt_FileStore_IoHelper.chunkAt_Z;
-                  var3.putAt_FileStore_RingUtil = this.putAt_FileStore_IoHelper.putAt_FileStore_RingUtil;
-                  var3.prev_Z = this.putAt_FileStore_IoHelper.prev_Z;
-                  var3.closeOf_Z = this.putAt_FileStore_IoHelper.closeOf_Z;
-                  var3.putAt_Map = this.putAt_FileStore_IoHelper.putAt_Map;
+                  var3 = new AiPathfinder.MoveGenerator.CachedGrid(this.grid, 16384, this.cachedGrid.movementSpeed);
+                  var3.ignoreCachedCells = true;
+                  var3.fullPhysicsParkour = true;
+                  var3.reducedJumpMode = this.cachedGrid.reducedJumpMode;
+                  var3.allowManeuverShortcuts = this.cachedGrid.allowManeuverShortcuts;
+                  var3.quickJumpMode = this.cachedGrid.quickJumpMode;
+                  var3.fallPolicy = this.cachedGrid.fallPolicy;
+                  var3.fastPassMode = this.cachedGrid.fastPassMode;
+                  var3.useDropJumpOffsets = this.cachedGrid.useDropJumpOffsets;
+                  var3.localJumpCache = this.cachedGrid.localJumpCache;
                }
 
-               var3.putAt_FileStore_PacketHe = var2;
-               var3.flowState = var3.readEx_I = var3.value_I = 0;
-               var3.fill_J = var3.putAt_J = 0L;
+               var3.incomingMove = var2;
+               var3.queryFlags = var3.jumpSolves = var3.jumpCacheHits = 0;
+               var3.jumpSolveNanos = var3.blockQueries = 0L;
 
                try {
-                  AiPathfinder.UiHelper var4 = AiPathfinder.MoveGenerator.putAt_FileStore_PacketHe_FileStore_IoHelper_2(
-                     var3, this.fill_Set, var1.candidate()
+                  AiPathfinder.UiHelper var4 = AiPathfinder.MoveGenerator.solveJumpCandidate(
+                     var3, this.blacklistedCells, var1.candidate()
                   );
-                  return new AiPathfinder.SearchSession.JumpSolveStats(var4, var3.flowState, var3.readEx_I, var3.value_I, var3.fill_J, var3.putAt_J);
+                  return new AiPathfinder.SearchSession.JumpSolveStats(var4, var3.queryFlags, var3.jumpSolves, var3.jumpCacheHits, var3.jumpSolveNanos, var3.blockQueries);
                } finally {
                   if (!Thread.currentThread().isInterrupted()) {
-                     this.putAt_ConcurrentLinkedQu.offer(var3);
+                     this.workerGridPool.offer(var3);
                   }
                }
             }
          );
       }
 
-      private void putAt_V_FileStore_IoPool_T(AiPathfinder.SearchSession.QueuedJump var1) {
-         Future var2 = this.putAt_Map.remove(var1);
+      private void cancelQueuedJumpFuture(AiPathfinder.SearchSession.QueuedJump var1) {
+         Future var2 = this.pendingJumpFutures.remove(var1);
          if (var2 != null) {
             var2.cancel(true);
          }
       }
 
-      private void fill_V() {
-         for (Future var2 : this.putAt_Map.values()) {
+      private void cancelAllJumpFutures() {
+         for (Future var2 : this.pendingJumpFutures.values()) {
             var2.cancel(true);
          }
 
-         this.putAt_Map.clear();
+         this.pendingJumpFutures.clear();
       }
 
-      public boolean putAt_Z_I(int var1) {
+      public boolean step(int var1) {
          if (var1 <= 0) {
             throw new IllegalArgumentException("Expansion budget must be positive");
          }
 
-         for (int var2 = 0; var2 < var1 && !this.putAt_Z; var2++) {
+         for (int var2 = 0; var2 < var1 && !this.finished; var2++) {
             if ((var2 & 63) == 0) {
                if (Thread.currentThread().isInterrupted()) {
-                  this.putAt_Z = true;
+                  this.finished = true;
                   break;
                }
 
-               if (this.putAt_FileStore_TextStor.putAt_J() != this.putAt_J) {
-                  this.readEx_Z = true;
-                  this.putAt_Z = true;
+               if (this.grid.putAt_J() != this.gridRevision) {
+                  this.hitPendingChunk = true;
+                  this.finished = true;
                   break;
                }
             }
 
-            boolean var3 = this.putAt_PriorityQueue != null && !this.putAt_PriorityQueue.isEmpty();
-            if (!var3 && this.putAt_DataCodec.init_Z() || this.prev_I >= 2000000 || this.closeOf_I + (var3 ? this.putAt_PriorityQueue.size() : 0) >= 3000000) {
-               this.flushOf_Z = this.flushOf_Z | (var3 || !this.putAt_DataCodec.init_Z());
-               this.putAt_Z = true;
+            boolean var3 = this.deferredJumpQueue != null && !this.deferredJumpQueue.isEmpty();
+            if (!var3 && this.openSet.init_Z() || this.expandedCount >= 2000000 || this.allocatedNodeCount + (var3 ? this.deferredJumpQueue.size() : 0) >= 3000000) {
+               this.exhaustedSearch = this.exhaustedSearch | (var3 || !this.openSet.init_Z());
+               this.finished = true;
                break;
             }
 
-            if (!this.fill_Z()) {
-               NavigationOpenSet.Inner_DataUtil var4 = this.putAt_DataCodec.init_t_DataUtil();
+            if (!this.stepDeferredJump()) {
+               NavigationOpenSet.Inner_DataUtil var4 = this.openSet.init_t_DataUtil();
                if (!var4.init_Z) {
-                  this.prev_I++;
+                  this.expandedCount++;
                   BlockPos var5 = var4.init_BlockPos;
-                  if (var4.init_D < this.putAt_DataCodec_CacheHel.init_D) {
-                     this.putAt_DataCodec_CacheHel = var4;
+                  if (var4.init_D < this.bestNode.init_D) {
+                     this.bestNode = var4;
                   }
 
-                  this.putAt_FileStore_IoHelper.putAt_FileStore_PacketHe = var4.init_ClassCache_UiHelpe;
-                  this.putAt_FileStore_IoHelper.putAt_DataCodec_CacheHel = var4;
-                  if (this.putAt_FileStore_TokenCod.putAt_Z_I(var5.getX(), var5.getY(), var5.getZ(), this.putAt_FileStore_IoHelper)) {
-                     this.putAt_DataCodec_CacheHel = var4;
-                     this.fill_Z = true;
-                     this.putAt_Z = true;
+                  this.cachedGrid.incomingMove = var4.init_ClassCache_UiHelpe;
+                  this.cachedGrid.activeNode = var4;
+                  if (this.goal.putAt_Z_I(var5.getX(), var5.getY(), var5.getZ(), this.cachedGrid)) {
+                     this.bestNode = var4;
+                     this.reachedGoal = true;
+                     this.finished = true;
                      break;
                   }
 
-                  if (this.chunkAt_Z && this.state_Z && this.putAt_Z_BlockPos_D(var5, var4.init_D) && this.putAt_Z_BlockPos(var5)) {
-                     this.fill_DataCodec_CacheHel = var4;
-                     this.putAt_Z = true;
+                  if (this.routeProofMode && this.destinationUnknown && this.canStandOnStartOrTarget(var5, var4.init_D) && this.isAtUnknownTerrainEdge(var5)) {
+                     this.bestUnknownEdgeNode = var4;
+                     this.finished = true;
                      break;
                   }
 
-                  if (!this.chunkAt_Z
-                     && this.putAt_FileStore_TokenCod.outsideSearchBox(this.putAt_BlockPos, 64, 40)
+                  if (!this.routeProofMode
+                     && this.goal.outsideSearchBox(this.startPos, 64, 40)
                      && var4.init_D
-                        < this.putAt_FileStore_TokenCod.heuristic(this.putAt_BlockPos.getX(), this.putAt_BlockPos.getY(), this.putAt_BlockPos.getZ())
+                        < this.goal.heuristic(this.startPos.getX(), this.startPos.getY(), this.startPos.getZ())
                      && (
-                        Math.abs(var5.getX() - this.putAt_BlockPos.getX()) == 64
-                           || Math.abs(var5.getZ() - this.putAt_BlockPos.getZ()) == 64
-                           || Math.abs(var5.getY() - this.putAt_BlockPos.getY()) == 40
+                        Math.abs(var5.getX() - this.startPos.getX()) == 64
+                           || Math.abs(var5.getZ() - this.startPos.getZ()) == 64
+                           || Math.abs(var5.getY() - this.startPos.getY()) == 40
                      )) {
-                     this.putAt_DataCodec_CacheHel = var4;
-                     this.putAt_Z = true;
+                     this.bestNode = var4;
+                     this.finished = true;
                      break;
                   }
 
-                  this.putAt_List.clear();
-                  int var6 = AiPathfinder.MoveGenerator.putAt_I_FileStore_IoHelper(
-                     this.putAt_FileStore_IoHelper, this.putAt_FileStore_CacheHel, this.fill_Set, var5, this.putAt_List
+                  this.scratchMoves.clear();
+                  int var6 = AiPathfinder.MoveGenerator.generateMovesCached(
+                     this.cachedGrid, this.options, this.blacklistedCells, var5, this.scratchMoves
                   );
                   if ((var6 & 1) != 0) {
-                     this.readEx_Z = true;
+                     this.hitPendingChunk = true;
                   }
 
-                  if ((var6 & 2) != 0 && var5.equals(this.putAt_BlockPos)) {
-                     this.value_Z = true;
+                  if ((var6 & 2) != 0 && var5.equals(this.startPos)) {
+                     this.wedgedStart = true;
                   }
 
-                  if ((var6 & 4) != 0 && var5.equals(this.putAt_BlockPos)) {
-                     this.prevEx_Z = true;
+                  if ((var6 & 4) != 0 && var5.equals(this.startPos)) {
+                     this.confinedStart = true;
                   }
 
-                  this.chunkAt_I = this.chunkAt_I + this.putAt_List.size();
+                  this.generatedCount = this.generatedCount + this.scratchMoves.size();
 
-                  for (AiPathfinder.UiHelper var8 : this.putAt_List) {
-                     this.putAt_V_DataCodec_CacheHel_FileStore_PacketHe(var4, var8);
+                  for (AiPathfinder.UiHelper var8 : this.scratchMoves) {
+                     this.relaxEdge(var4, var8);
                   }
                }
             }
          }
 
-         if (this.putAt_Z) {
-            this.fill_V();
+         if (this.finished) {
+            this.cancelAllJumpFutures();
          }
 
-         return this.putAt_Z;
+         return this.finished;
       }
 
-      private boolean putAt_Z_BlockPos_D(BlockPos var1, double var2) {
-         if (var1.equals(this.putAt_BlockPos)) {
+      private boolean canStandOnStartOrTarget(BlockPos var1, double var2) {
+         if (var1.equals(this.startPos)) {
             return true;
          }
 
-         double var4 = this.putAt_FileStore_TokenCod.heuristic(this.putAt_BlockPos.getX(), this.putAt_BlockPos.getY(), this.putAt_BlockPos.getZ());
+         double var4 = this.goal.heuristic(this.startPos.getX(), this.startPos.getY(), this.startPos.getZ());
          if (var2 < var4) {
             return true;
          }
 
-         BlockPos var6 = this.putAt_FileStore_TokenCod.putAt_BlockPos();
+         BlockPos var6 = this.goal.putAt_BlockPos();
          return var2 == var4
             && var1.distToCenterSqr(var6.getX() + 0.5, var6.getY() + 0.5, var6.getZ() + 0.5)
-               < this.putAt_BlockPos.distToCenterSqr(var6.getX() + 0.5, var6.getY() + 0.5, var6.getZ() + 0.5);
+               < this.startPos.distToCenterSqr(var6.getX() + 0.5, var6.getY() + 0.5, var6.getZ() + 0.5);
       }
 
-      private void putAt_V_DataCodec_CacheHel_FileStore_PacketHe(NavigationOpenSet.Inner_DataUtil var1, AiPathfinder.UiHelper var2) {
-         if ((this.putAt_Set.isEmpty() || !this.putAt_Set.contains(AiPathfinder.MoveKey.of(var2))) && (this.tick_Z || !AiPathfinder.putAt_Z(var2))) {
+      private void relaxEdge(NavigationOpenSet.Inner_DataUtil var1, AiPathfinder.UiHelper var2) {
+         if ((this.blacklistedMoves.isEmpty() || !this.blacklistedMoves.contains(AiPathfinder.MoveKey.of(var2))) && (this.ignoreGlobalBlacklist || !AiPathfinder.isGloballyBlacklisted(var2))) {
             boolean var3 = false;
 
             for (BlockPos var5 : var2.cellsToBreak()) {
-               if (!this.putAt_FileStore_TokenCod.fill_Z_BlockPos(var5)) {
+               if (!this.goal.fill_Z_BlockPos(var5)) {
                   var3 = true;
                   break;
                }
             }
 
             for (BlockPos var21 : var2.cellsToPlace()) {
-               if (!this.putAt_FileStore_TokenCod.readEx_Z_BlockPos(var21)) {
+               if (!this.goal.readEx_Z_BlockPos(var21)) {
                   var3 = true;
                   break;
                }
@@ -5682,31 +5682,31 @@ public final class AiPathfinder {
 
             if (!var3) {
                BlockPos var20 = var2.to();
-               if (this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var20)) {
-                  if (!this.fill(var20)) {
-                     if (this.chunkAt_Z) {
-                        this.closeOf_Z = true;
-                        this.flushOf_Z = true;
+               if (this.goal.putAt_Z_BlockPos(var20)) {
+                  if (!this.isWithinSearchBox(var20)) {
+                     if (this.routeProofMode) {
+                        this.skippedBlacklistedMove = true;
+                        this.exhaustedSearch = true;
                      }
                   } else {
                      double var22 = (
-                           this.putAt_FileStore_CacheHel.strategy() == AiPathfinder.RouteStrategy.SAFEST
-                              ? this.putAt_FileStore_CacheHel.threats().surcharge(var20.getX(), var20.getY(), var20.getZ())
-                                 + this.putAt_FileStore_CacheHel
+                           this.options.strategy() == AiPathfinder.RouteStrategy.SAFEST
+                              ? this.options.threats().surcharge(var20.getX(), var20.getY(), var20.getZ())
+                                 + this.options
                                     .threats()
                                     .putAt(var2.from().getX(), var2.from().getY(), var2.from().getZ(), var20.getX(), var20.getY(), var20.getZ())
                               : 0.0
                         )
-                        + this.putAt_FileStore_CacheHel.threats().putAt(var20.getX(), var20.getY(), var20.getZ());
+                        + this.options.threats().putAt(var20.getX(), var20.getY(), var20.getZ());
                      double var10000;
-                     if (this.chunkAt_Z && this.putAt_FileStore_CacheHel.allowParkour()) {
+                     if (this.routeProofMode && this.options.allowParkour()) {
                         switch (var2.type()) {
                            case WALK:
                            case WALK_DIAGONAL:
                            case SPRINT:
                            case SPRINT_DIAGONAL:
                            case STEP_UP_1:
-                              var10000 = var2.costTicks() * Math.min(1.0, 0.1 / this.putAt_FileStore_IoHelper.putAt_D);
+                              var10000 = var2.costTicks() * Math.min(1.0, 0.1 / this.cachedGrid.movementSpeed);
                               break;
                            case JUMP_UP_1:
                            case DESCEND_1:
@@ -5726,24 +5726,24 @@ public final class AiPathfinder {
                               var10000 = var2.costTicks();
                               break;
                            case SPRINT_JUMP:
-                              var10000 = var2.costTicks() * AiPathfinder.MoveCosts.putAt_D_D(this.putAt_FileStore_IoHelper.putAt_D);
+                              var10000 = var2.costTicks() * AiPathfinder.MoveCosts.speedTickMultiplier(this.cachedGrid.movementSpeed);
                         }
                      } else {
                         var10000 = var2.costTicks();
                      }
 
                      double var7 = var10000;
-                     if (this.pollAt_Z) {
-                        var7 += AiPathfinder.putAt_D(var2) - var2.costTicks();
+                     if (this.worldRecordMode) {
+                        var7 += AiPathfinder.effectiveMoveTicks(var2) - var2.costTicks();
                      }
 
                      double var9 = var1.load_D
                         + var7
                         + var22
-                        + var2.cellsToPlace().size() * this.putAt_FileStore_TokenCod.putAt_D()
-                        + AiPathfinder.MoveCosts.putAt_D_List(var2.cellsToPlace());
-                     if (this.pollAt_Z) {
-                        var9 += AiPathfinder.putAt_D_FileStore_PacketHe_FileStore_PacketHe(var1.init_ClassCache_UiHelpe, var2);
+                        + var2.cellsToPlace().size() * this.goal.putAt_D()
+                        + AiPathfinder.MoveCosts.avoidPlacementPenalty(var2.cellsToPlace());
+                     if (this.worldRecordMode) {
+                        var9 += AiPathfinder.transitionPenalty(var1.init_ClassCache_UiHelpe, var2);
                      }
 
                      for (BlockPos var12 : var2.cellsToPlace()) {
@@ -5757,8 +5757,8 @@ public final class AiPathfinder {
                            var9 += 60.0;
                         }
 
-                        if (this.putAt_FileStore_TokenCod.value(var25)) {
-                           double var13 = this.putAt_FileStore_IoHelper.putAt_FileStore_BitCache_BlockPos(var25).breakTicks();
+                        if (this.goal.value(var25)) {
+                           double var13 = this.cachedGrid.probePos(var25).breakTicks();
                            if (Double.isFinite(var13)) {
                               var9 -= var13;
                            }
@@ -5771,14 +5771,14 @@ public final class AiPathfinder {
 
                      if (Double.isFinite(var9) && !(var2.costTicks() <= 0.0) && !(var22 < 0.0)) {
                         int var24 = var1.load_I + var2.cellsToPlace().size();
-                        if (var24 <= this.putAt_FileStore_CacheHel.constructionBlocks()) {
-                           NavigationOpenSet.Inner_DataUtil var26 = this.putAt_Long2ObjectOpenHas.get(var20.asLong());
+                        if (var24 <= this.options.constructionBlocks()) {
+                           NavigationOpenSet.Inner_DataUtil var26 = this.nodeTable.get(var20.asLong());
                            NavigationOpenSet.Inner_DataUtil var27 = null;
                            boolean var14 = false;
-                           int var15 = this.pollOf_Z ? AiPathfinder.flowState(var2) : 0;
+                           int var15 = this.trackHeadingState ? AiPathfinder.headingBucket(var2) : 0;
 
                            for (NavigationOpenSet.Inner_DataUtil var16 = var26; var16 != null; var16 = var16.load_t_DataUtil) {
-                              if (!var16.init_Z && (!this.pollOf_Z || AiPathfinder.flowState(var16.init_ClassCache_UiHelpe) == var15)) {
+                              if (!var16.init_Z && (!this.trackHeadingState || AiPathfinder.headingBucket(var16.init_ClassCache_UiHelpe) == var15)) {
                                  if (var16.load_I <= var24 && var16.load_D <= var9) {
                                     var14 = true;
                                     break;
@@ -5792,18 +5792,18 @@ public final class AiPathfinder {
 
                            if (!var14) {
                               if (var27 == null) {
-                                 var27 = new NavigationOpenSet.Inner_DataUtil(var20, this.putAt_D_I(var20.getX(), var20.getY(), var20.getZ()));
+                                 var27 = new NavigationOpenSet.Inner_DataUtil(var20, this.adjustedHeuristic(var20.getX(), var20.getY(), var20.getZ()));
                                  var27.load_I = var24;
                                  var27.load_t_DataUtil = var26;
-                                 this.putAt_Long2ObjectOpenHas.put(var20.asLong(), var27);
-                                 this.closeOf_I++;
+                                 this.nodeTable.put(var20.asLong(), var27);
+                                 this.allocatedNodeCount++;
                               }
 
                               for (NavigationOpenSet.Inner_DataUtil var28 = var26; var28 != null; var28 = var28.load_t_DataUtil) {
                                  if (var28 != var27
                                     && var28.load_I >= var24
                                     && var28.load_D >= var9
-                                    && (!this.pollOf_Z || AiPathfinder.flowState(var28.init_ClassCache_UiHelpe) == var15)) {
+                                    && (!this.trackHeadingState || AiPathfinder.headingBucket(var28.init_ClassCache_UiHelpe) == var15)) {
                                     var28.init_Z = true;
                                  }
                               }
@@ -5812,14 +5812,14 @@ public final class AiPathfinder {
                                  var27.load_D = var9;
                                  var27.init_t_DataUtil = var1;
                                  var27.init_ClassCache_UiHelpe = var2;
-                                 this.putAt_DataCodec.init(var27);
-                                 this.state_I = Math.max(this.state_I, this.putAt_DataCodec.init_I());
+                                 this.openSet.init(var27);
+                                 this.peakOpenSize = Math.max(this.peakOpenSize, this.openSet.init_I());
 
-                                 for (int var29 = 0; var29 < putAt_DArr.length; var29++) {
-                                    double var17 = var27.init_D + var9 / putAt_DArr[var29];
-                                    if (var17 < this.fill_DArr[var29]) {
-                                       this.fill_DArr[var29] = var17;
-                                       this.putAt_DataCodec_CacheHelArr[var29] = var27;
+                                 for (int var29 = 0; var29 < PROGRESS_WEIGHTS.length; var29++) {
+                                    double var17 = var27.init_D + var9 / PROGRESS_WEIGHTS[var29];
+                                    if (var17 < this.bestWeightedScores[var29]) {
+                                       this.bestWeightedScores[var29] = var17;
+                                       this.bestWeightedNodes[var29] = var27;
                                     }
                                  }
                               }
@@ -5832,38 +5832,38 @@ public final class AiPathfinder {
          }
       }
 
-      public AiPathfinder.PathResult init_ClassCache_PacketU() { return this.putAt_FileStore_StreamSt(); }
-      public boolean init_Z() { return this.putAt_Z(); }
-      public boolean init_Z_I(int budget) { return this.putAt_Z_I(budget); }
-      public void init_V() { this.putAt_V(); }
+      public AiPathfinder.PathResult resultCompat() { return this.result(); }
+      public boolean hasProgressNodeCompat() { return this.hasProgressNode(); }
+      public boolean stepCompat(int budget) { return this.step(budget); }
+      public void finishCompat() { this.finish(); }
 
-            public AiPathfinder.PathResult putAt_FileStore_StreamSt() {
-         if (!this.putAt_Z) {
+            public AiPathfinder.PathResult result() {
+         if (!this.finished) {
             throw new IllegalStateException("Search still running");
          }
 
-         if (this.chunkAt_Z && !this.fill_Z && this.fill_DataCodec_CacheHel == null) {
-            if (AiNavDebug.init_Z()) {
-               AiNavDebug.init(
-                  "unproved route nearest=" + this.putAt_DataCodec_CacheHel.init_BlockPos + " unknown=" + this.state_Z + " pending=" + this.readEx_Z
+         if (this.routeProofMode && !this.reachedGoal && this.bestUnknownEdgeNode == null) {
+            if (AiNavDebug.isEnabled()) {
+               AiNavDebug.log(
+                  "unproved route nearest=" + this.bestNode.init_BlockPos + " unknown=" + this.destinationUnknown + " pending=" + this.hitPendingChunk
                );
             }
 
             return new AiPathfinder.PathResult(
-               List.of(), false, this.prev_I, this.readEx_Z, this.flushOf_Z || this.putAt_FileStore_IoHelper.fill_Z(), this.value_Z, this.prevEx_Z
+               List.of(), false, this.expandedCount, this.hitPendingChunk, this.exhaustedSearch || this.cachedGrid.isJumpBudgetExhausted(), this.wedgedStart, this.confinedStart
             );
          } else {
             ArrayDeque var1 = new ArrayDeque();
-            NavigationOpenSet.Inner_DataUtil var2 = this.chunkAt_Z && !this.fill_Z ? this.fill_DataCodec_CacheHel : this.putAt_DataCodec_CacheHel;
-            if (!this.chunkAt_Z && !this.fill_Z && var2.init_BlockPos.distSqr(this.putAt_BlockPos) <= 25.0) {
-               NavigationOpenSet.Inner_DataUtil var3 = this.putAt_DataCodec_CacheHel();
+            NavigationOpenSet.Inner_DataUtil var2 = this.routeProofMode && !this.reachedGoal ? this.bestUnknownEdgeNode : this.bestNode;
+            if (!this.routeProofMode && !this.reachedGoal && var2.init_BlockPos.distSqr(this.startPos) <= 25.0) {
+               NavigationOpenSet.Inner_DataUtil var3 = this.selectProgressNode();
                if (var3 != null) {
                   var2 = var3;
                }
             }
 
             while (var2.init_t_DataUtil != null) {
-               if (var1.size() >= this.closeOf_I) {
+               if (var1.size() >= this.allocatedNodeCount) {
                   throw new IllegalStateException("Cyclic path parent chain");
                }
 
@@ -5873,24 +5873,24 @@ public final class AiPathfinder {
 
             return new AiPathfinder.PathResult(
                new ArrayList<>(var1),
-               this.fill_Z,
-               this.prev_I,
-               this.readEx_Z,
-               this.flushOf_Z || !this.fill_Z && this.putAt_FileStore_IoHelper.fill_Z(),
-               this.value_Z,
-               this.prevEx_Z,
-               this.chunkAt_Z
-                  && !this.fill_Z
-                  && this.fill_DataCodec_CacheHel != null
-                  && this.fill_DataCodec_CacheHel.init_BlockPos.equals(this.putAt_BlockPos)
+               this.reachedGoal,
+               this.expandedCount,
+               this.hitPendingChunk,
+               this.exhaustedSearch || !this.reachedGoal && this.cachedGrid.isJumpBudgetExhausted(),
+               this.wedgedStart,
+               this.confinedStart,
+               this.routeProofMode
+                  && !this.reachedGoal
+                  && this.bestUnknownEdgeNode != null
+                  && this.bestUnknownEdgeNode.init_BlockPos.equals(this.startPos)
             );
          }
       }
 
-      List<AiPathfinder.UiHelper> putAt_List() {
+      List<AiPathfinder.UiHelper> currentBestTrail() {
          ArrayDeque var1 = new ArrayDeque();
 
-         for (NavigationOpenSet.Inner_DataUtil var2 = this.putAt_DataCodec_CacheHel;
+         for (NavigationOpenSet.Inner_DataUtil var2 = this.bestNode;
             var2.init_t_DataUtil != null && var1.size() < 64;
             var2 = var2.init_t_DataUtil
          ) {
@@ -5900,34 +5900,34 @@ public final class AiPathfinder {
          return List.copyOf(var1);
       }
 
-      public void putAt_V() {
-         this.flushOf_Z = !this.putAt_Z;
-         this.putAt_Z = true;
-         this.fill_V();
+      public void finish() {
+         this.exhaustedSearch = !this.finished;
+         this.finished = true;
+         this.cancelAllJumpFutures();
       }
 
-      public int flowState() {
-         return this.prev_I;
+      public int expandedCount() {
+         return this.expandedCount;
       }
 
-      public long putAt_J() {
-         return this.putAt_FileStore_IoHelper.fill_J;
+      public long jumpSolveNanos() {
+         return this.cachedGrid.jumpSolveNanos;
       }
 
-      public int flowTemp() {
-         return this.putAt_FileStore_IoHelper.readEx_I;
+      public int jumpSolveCount() {
+         return this.cachedGrid.jumpSolves;
       }
 
-      public int readEx() {
-         return this.chunkAt_I;
+      public int generatedCount() {
+         return this.generatedCount;
       }
 
-      public int value() {
-         return this.state_I;
+      public int peakOpenSize() {
+         return this.peakOpenSize;
       }
 
-      public long fill_J() {
-         return this.putAt_FileStore_IoHelper.putAt_J;
+      public long blockQueryCount() {
+         return this.cachedGrid.blockQueries;
       }
 
       private record JumpSolveStats(AiPathfinder.UiHelper movement, int flags, int solves, int hits, long nanos, long queries) {
@@ -5945,96 +5945,96 @@ public final class AiPathfinder {
    }
 
    public static final class MoveCosts {
-      public static final double putAt_D = 4.5;
-      public static final double fill_D = 6.4;
-      public static final double readEx_D = 3.2;
-      public static final double value_D = 4.5;
-      public static final double prevEx = 2.9000000000000004;
-      public static final double prev = 2.2;
-      private static final ConcurrentHashMap<Long, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
-      public static final double chunkAt = 2.5;
-      public static final double state = 3.6;
-      public static final double closeOf = 25.0;
-      public static final double pollAt = 32.0;
-      public static final double pollOf = 41.0;
-      public static final double tick = 255.0;
-      public static final double flushOf = 400.0;
-      public static final double stateOf = 2.0;
-      public static final double store = 14.0;
-      public static final double nextBy = 5.0;
-      public static final double dataEx = 3.6;
-      public static final double frameOf = 9.0;
-      public static final double syncAt = 3.0;
-      public static final double stopBy = 4.0;
-      public static final double dataTo = 40.0;
-      public static final double initAt = 200.0;
-      public static final double setOf = 60.0;
-      public static final double count = 12.0;
-      public static final double getTo = 4.5;
-      public static final double tableEx = 10.0;
-      public static final double levelOf = 2.0;
-      public static final double addTo = 5.5;
-      public static final double task = 3.0;
-      public static final double initEx = 5.0;
-      public static final double poolEx = 0.5625;
-      public static final double writeAt = 0.0625;
-      public static final double reset = 1.0E-6;
-      public static final double readBy = 1.25;
-      public static final int flowState = 3;
-      public static final int flowTemp = 8;
-      public static final double entryAt = 0.25;
-      public static final int readEx_I = 40;
-      public static final int value_I = 2;
-      public static final double prevTo = 60.0;
-      public static final double init = 12.0;
-      public static final double putBy = 8.0;
-      public static final double table = 40.0;
-      public static final double poolBy = 12.0;
-      public static final double stateEx = 10.0;
-      public static final double syncEx = 40.0;
-      public static final double entryEx = 60.0;
-      public static final double queue = 2.0;
-      public static final double flagsEx = 1.0;
-      public static final double flushBy = 8.0;
-      public static final double cacheEx = 2.0;
-      public static final double sync = 2.0;
-      public static final double levelAt = 2.0;
-      public static final double queueOf = 2.0;
-      public static final double flushTo = 7.0;
-      public static final double poolAt = 2.0;
-      public static final double poolOf = 20.0;
-      private static volatile long putAt_J;
-      public static final double storeBy = 60.0;
-      private static volatile Set<Long> putAt_Set = Set.of();
-      private static volatile long fill_J;
-      private static volatile long readEx_J;
-      private static volatile long value_J;
-      static final double writeOf = Math.min(2.9000000000000004, Math.min(3.2, 4.5 / Math.sqrt(2.0)));
-      static final double blockBy = Math.min(9.0 + writeOf, 12.0);
+      public static final double WALK_COST = 4.5;
+      public static final double WALK_DIAGONAL_COST = 6.4;
+      public static final double SPRINT_COST = 3.2;
+      public static final double SPRINT_DIAGONAL_COST = 4.5;
+      public static final double SPRINT_JUMP_COST = 2.9000000000000004;
+      public static final double ICE_SPRINT_JUMP_COST = 2.2;
+      private static final ConcurrentHashMap<Long, Double> SPEED_SCALE_CACHE = new ConcurrentHashMap<>();
+      public static final double ICE_SPRINT_COST = 2.5;
+      public static final double ICE_SPRINT_DIAGONAL_COST = 3.6;
+      public static final double THORNY_PENALTY = 25.0;
+      public static final double SPRINT_WEB_COST = 32.0;
+      public static final double WALK_WEB_COST = 41.0;
+      public static final double FALL_WEB_COST = 255.0;
+      public static final double PORTAL_PENALTY = 400.0;
+      public static final double DOOR_STEP_PENALTY = 2.0;
+      public static final double DEEP_DROP_THRESHOLD = 14.0;
+      public static final double STEP_UP_COST = 5.0;
+      public static final double SPRINT_STEP_UP_COST = 3.6;
+      public static final double JUMP_UP_COST = 9.0;
+      public static final double WATER_COST_PENALTY = 3.0;
+      public static final double FALL_HEURISTIC_PER_BLOCK = 4.0;
+      public static final double DEFAULT_PLACE_COST = 40.0;
+      public static final double RECENT_PLACE_CONFLICT_PENALTY = 200.0;
+      public static final double RECENT_BREAK_CONFLICT_PENALTY = 60.0;
+      public static final double PILLAR_COST = 12.0;
+      public static final double BRIDGE_CELL_COST = 4.5;
+      public static final double BRIDGE_START_PENALTY = 10.0;
+      public static final double SUPPORTED_BRIDGE_PENALTY = 2.0;
+      public static final double CLIMB_COST = 5.5;
+      public static final double DESCEND_PER_BLOCK_COST = 3.0;
+      public static final double DESCEND_BASE_COST = 5.0;
+      public static final double MAX_STEP_UP_HEIGHT = 0.5625;
+      public static final double TINY_STEP_HEIGHT = 0.0625;
+      public static final double HEIGHT_EPSILON = 1.0E-6;
+      public static final double MAX_JUMP_UP_HEIGHT = 1.25;
+      public static final int SAFE_FALL_BLOCKS = 3;
+      public static final int MAX_DESCEND_SCAN_BLOCKS = 8;
+      public static final double LANDING_SURFACE_TOLERANCE = 0.25;
+      public static final int MAX_FALL_HEIGHT = 40;
+      public static final int MIN_PARKOUR_GAP = 2;
+      public static final double THREAT_MAX_SURCHARGE = 60.0;
+      public static final double THREAT_RADIUS = 12.0;
+      public static final double SAFEST_WATER_EXTRA_PENALTY = 8.0;
+      public static final double GOAL_PLACE_COST_CAP = 40.0;
+      public static final double UNEDITED_PLACE_PENALTY = 12.0;
+      public static final double SIGHT_LINE_SURCHARGE = 10.0;
+      public static final double SHOOTER_SIGHT_SURCHARGE = 40.0;
+      public static final double CLOSE_THREAT_SURCHARGE = 60.0;
+      public static final double SOFT_DESCEND_BASE_COST = 2.0;
+      public static final double SAFEST_DESCEND_PENALTY = 1.0;
+      public static final double WATER_SAFEST_SURCHARGE = 8.0;
+      public static final double SAVER_DIG_MULTIPLIER = 2.0;
+      public static final double SAVER_PLACE_MULTIPLIER = 2.0;
+      public static final double JUMP_OVERHEAD_TICKS = 2.0;
+      public static final double PARKOUR_GAP_OVERHEAD = 2.0;
+      public static final double PARKOUR_BASE_TICKS = 7.0;
+      public static final double PARKOUR_UP_OVERHEAD = 2.0;
+      public static final double HARD_JUMP_PENALTY = 20.0;
+      private static volatile long cautiousParkourUntilNanos;
+      public static final double RECENT_PLACEMENT_PENALTY = 60.0;
+      private static volatile Set<Long> avoidPlacementCells = Set.of();
+      private static volatile long avoidPlacementUntilNanos;
+      private static volatile long cautiousBridgeUntilNanos;
+      private static volatile long allowDropBridgeUntilNanos;
+      static final double MIN_HORIZONTAL_TICK_RATE = Math.min(2.9000000000000004, Math.min(3.2, 4.5 / Math.sqrt(2.0)));
+      static final double MIN_ASCEND_TICK_RATE = Math.min(9.0 + MIN_HORIZONTAL_TICK_RATE, 12.0);
 
       private MoveCosts() {
       }
 
-      static double putAt_D_D(double var0) {
+      static double speedTickMultiplier(double var0) {
          if (!(var0 > 0.100001)) {
             return 1.0;
          }
 
          long var2 = Math.round(var0 * 100000.0);
-         Double var4 = putAt_ConcurrentHashMap.get(var2);
+         Double var4 = SPEED_SCALE_CACHE.get(var2);
          if (var4 != null) {
             return var4;
          }
 
-         double var5 = fill_D_D(var0) / fill_D_D(0.1);
-         if (putAt_ConcurrentHashMap.size() < 64) {
-            putAt_ConcurrentHashMap.put(var2, var5);
+         double var5 = simulateSprintJumpTicksPerBlock(var0) / simulateSprintJumpTicksPerBlock(0.1);
+         if (SPEED_SCALE_CACHE.size() < 64) {
+            SPEED_SCALE_CACHE.put(var2, var5);
          }
 
          return var5;
       }
 
-      static double fill_D_D(final double var0) {
+      static double simulateSprintJumpTicksPerBlock(final double var0) {
          AiPhysics.PhysicsWorld var2 = new AiPhysics.PhysicsWorld() {
             @Override
             public double movementSpeed() {
@@ -6072,35 +6072,35 @@ public final class AiPathfinder {
       }
 
       // 5.3 external ABI bridges
-      public static double init_D_I(int gap) { return putAt_D_I(gap); }
-      public static double load_D_I(int gap) { return fill_D_I(gap); }
-      public static void init_V_Set(Set<Long> cells) { putAt_V_Set(cells); }
-      public static void init_V_J(long nanos) { putAt_V_J(nanos); }
-      static boolean init() { return putAt(); }
-      public static void load_V_J(long nanos) { fill_V_J(nanos); }
-      static boolean load() { return fill(); }
-      public static void read_V_J(long nanos) { readEx_V_J(nanos); }
-      static boolean read() { return readEx(); }
-      public static double init_D_F(float hardness, double speed, boolean correctTool) { return putAt_D_F(hardness, speed, correctTool); }
-      public static double init_D_I(int dx, int dy, int dz) { return putAt_D_I(dx, dy, dz); }
-      public static double load(int dx, int rise, int dz) { return fill(dx, rise, dz); }
+      public static double parkourGapCostCompat(int gap) { return parkourGapCost(gap); }
+      public static double parkourUpGapCostCompat(int gap) { return parkourUpGapCost(gap); }
+      public static void setAvoidPlacementCellsCompat(Set<Long> cells) { setAvoidPlacementCells(cells); }
+      public static void enableCautiousParkourCompat(long nanos) { enableCautiousParkour(nanos); }
+      static boolean isCautiousParkourActiveCompat() { return isCautiousParkourActive(); }
+      public static void enableCautiousBridgeCompat(long nanos) { enableCautiousBridge(nanos); }
+      static boolean isCautiousBridgeActiveCompat() { return isCautiousBridgeActive(); }
+      public static void enableDropBridgeCompat(long nanos) { enableDropBridge(nanos); }
+      static boolean isDropBridgeActiveCompat() { return isDropBridgeActive(); }
+      public static double breakBlockTicksCompat(float hardness, double speed, boolean correctTool) { return breakBlockTicks(hardness, speed, correctTool); }
+      public static double estimateHeuristicCompat(int dx, int dy, int dz) { return estimateHeuristic(dx, dy, dz); }
+      public static double estimateDirectionalHeuristicCompat(int dx, int rise, int dz) { return estimateDirectionalHeuristic(dx, rise, dz); }
 
-      public static double putAt_D_I(int var0) {
+      public static double parkourGapCost(int var0) {
          return 7.0 + (var0 + 1) * 3.2 + 2.0 + (var0 - 2);
       }
 
-      public static double fill_D_I(int var0) {
-         return putAt_D_I(var0) + 2.0;
+      public static double parkourUpGapCost(int var0) {
+         return parkourGapCost(var0) + 2.0;
       }
 
-      public static void putAt_V_Set(Set<Long> var0) {
-         putAt_Set = Set.copyOf(var0);
-         fill_J = var0.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
+      public static void setAvoidPlacementCells(Set<Long> var0) {
+         avoidPlacementCells = Set.copyOf(var0);
+         avoidPlacementUntilNanos = var0.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
       }
 
-      static double putAt_D_List(List<BlockPos> var0) {
-         if (!var0.isEmpty() && System.nanoTime() < fill_J) {
-            var var1 = putAt_Set;
+      static double avoidPlacementPenalty(List<BlockPos> var0) {
+         if (!var0.isEmpty() && System.nanoTime() < avoidPlacementUntilNanos) {
+            var var1 = avoidPlacementCells;
             double var2 = 0.0;
 
             for (BlockPos var5 : var0) {
@@ -6115,43 +6115,43 @@ public final class AiPathfinder {
          }
       }
 
-      public static void putAt_V_J(long var0) {
-         putAt_J = var0 <= 0L ? 0L : System.nanoTime() + var0;
+      public static void enableCautiousParkour(long var0) {
+         cautiousParkourUntilNanos = var0 <= 0L ? 0L : System.nanoTime() + var0;
       }
 
-      static boolean putAt() {
-         return System.nanoTime() < putAt_J;
+      static boolean isCautiousParkourActive() {
+         return System.nanoTime() < cautiousParkourUntilNanos;
       }
 
-      public static void fill_V_J(long var0) {
-         readEx_J = var0 <= 0L ? 0L : System.nanoTime() + var0;
+      public static void enableCautiousBridge(long var0) {
+         cautiousBridgeUntilNanos = var0 <= 0L ? 0L : System.nanoTime() + var0;
       }
 
-      static boolean fill() {
-         return System.nanoTime() < readEx_J;
+      static boolean isCautiousBridgeActive() {
+         return System.nanoTime() < cautiousBridgeUntilNanos;
       }
 
-      public static void readEx_V_J(long var0) {
-         value_J = var0 <= 0L ? 0L : System.nanoTime() + var0;
+      public static void enableDropBridge(long var0) {
+         allowDropBridgeUntilNanos = var0 <= 0L ? 0L : System.nanoTime() + var0;
       }
 
-      static boolean readEx() {
-         return System.nanoTime() < value_J;
+      static boolean isDropBridgeActive() {
+         return System.nanoTime() < allowDropBridgeUntilNanos;
       }
 
-      public static double putAt_D_IoUtil_TextState(AiJumpSolver.JumpPlan var0) {
+      public static double jumpPlanCost(AiJumpSolver.JumpPlan var0) {
          return 2.0 + var0.ticks() + Math.max(0.0, 0.2 - var0.margin()) * 10.0 + (var0.maneuver() == null ? 0 : 16);
       }
 
-      public static double readEx_D_I(int var0) {
+      public static double descendCost(int var0) {
          return 5.0 + 3.0 * var0;
       }
 
-      public static double value_D_I(int var0) {
+      public static double softDescendCost(int var0) {
          return 2.0 + var0;
       }
 
-      public static double putAt_D_F(float var0, double var1, boolean var3) {
+      public static double breakBlockTicks(float var0, double var1, boolean var3) {
          if (var0 < 0.0F) {
             return 1.0 / 0.0;
          }
@@ -6168,7 +6168,7 @@ public final class AiPathfinder {
          return var4 >= 1.0 ? 6.0 : Math.ceil(1.0 / var4) + 5.0;
       }
 
-      public static int putAt_I_Str(String var0) {
+      public static int destructionPenaltyForBlock(String var0) {
          short var10000;
          switch (var0) {
             case "diamond_block":
@@ -6210,25 +6210,25 @@ public final class AiPathfinder {
          return var10000;
       }
 
-      public static double readEx_D_D(double var0) {
+      public static double digDownCost(double var0) {
          return var0 + 2.0;
       }
 
-      public static double value_D_D(double var0) {
+      public static double digTunnelCost(double var0) {
          return var0 + 4.5;
       }
 
-      public static int putAt_I_D(double var0) {
+      public static int moveTimeoutTicks(double var0) {
          return (int)Math.ceil(var0 * 3.0) + 20;
       }
 
-      public static double putAt_D_I(int var0, int var1, int var2) {
+      public static double estimateHeuristic(int var0, int var1, int var2) {
          return Math.hypot(var0, var2) * Math.min(2.9000000000000004, Math.min(3.2, 4.5 / Math.sqrt(2.0))) + Math.abs(var1) * Math.min(5.5, 4.0);
       }
 
-      public static double fill(int var0, int var1, int var2) {
-         double var3 = Math.sqrt((double)var0 * var0 + (double)var2 * var2) * writeOf;
-         return var1 <= 0 ? var3 - var1 * Math.min(5.5, 4.0) : var3 + var1 * blockBy;
+      public static double estimateDirectionalHeuristic(int var0, int var1, int var2) {
+         double var3 = Math.sqrt((double)var0 * var0 + (double)var2 * var2) * MIN_HORIZONTAL_TICK_RATE;
+         return var1 <= 0 ? var3 - var1 * Math.min(5.5, 4.0) : var3 + var1 * MIN_ASCEND_TICK_RATE;
       }
    }
 
@@ -6344,13 +6344,13 @@ public final class AiPathfinder {
       PARKOUR_SAFE(3.999),
       PARKOUR_NO_DAMAGE(32.0);
 
-      final double putAt_D;
+      final double maxDropBlocks;
 
       FallPolicy(double var3) {
-         this.putAt_D = var3;
+         this.maxDropBlocks = var3;
       }
 
-      boolean putAt_Z() {
+      boolean allowsExtendedDrop() {
          return this == PARKOUR_NO_DAMAGE;
       }
    }
@@ -6443,81 +6443,81 @@ public final class AiPathfinder {
 
    public static final class LiveGridView implements AiPathfinder.GridView {
       // 5.3 external ABI bridges
-      public long load_J() { return this.fill_J(); }
-      public void init_V_2() { this.putAt_V_2(); }
-      public void init_V_BlockPos(BlockPos focus) { this.putAt_V_BlockPos(focus); }
-      public void init_V_ItemStackArr(ItemStack[] snapshot) { this.putAt_V_ItemStackArr(snapshot); }
-      public void init_V_BiPredicate(BiPredicate<BlockState, ItemStack> accepted) { this.putAt_V_BiPredicate(accepted); }
-      public void init_V_J(long budgetNanos) { this.putAt_V_J(budgetNanos); }
-      public static AiPathfinder.CellInfo init_ClassCache_FileCac_Minecraft(Minecraft mc, ClientLevel level, BlockPos p, ItemStack[] hotbar) {
-         return putAt_FileStore_BitCache_Minecraft(mc, level, p, hotbar);
+      public long changeVersionCompat() { return this.changeVersion(); }
+      public void scanStepCompat() { this.scanStep(); }
+      public void setFocusCompat(BlockPos focus) { this.setFocus(focus); }
+      public void updateHotbarCompat(ItemStack[] snapshot) { this.updateHotbar(snapshot); }
+      public void setAcceptedToolCompat(BiPredicate<BlockState, ItemStack> accepted) { this.setAcceptedTool(accepted); }
+      public void scanBudgetCompat(long budgetNanos) { this.scanBudget(budgetNanos); }
+      public static AiPathfinder.CellInfo classifyCellCompat(Minecraft mc, ClientLevel level, BlockPos p, ItemStack[] hotbar) {
+         return classifyCell(mc, level, p, hotbar);
       }
-      public static boolean load(BlockState state) { return fill(state); }
-      public static boolean read(BlockState state) { return prevEx(state); }
-      public static boolean update(BlockState state) { return chunkAt(state); }
-      public static boolean init_Z_BlockGetter_BlockPos(BlockGetter level, BlockPos target) { return putAt_Z_BlockGetter_BlockPos(level, target); }
-      static boolean init_Z_ClientLevel_BlockPos(ClientLevel level, BlockPos target) { return putAt_Z_ClientLevel_BlockPos(level, target); }
-      static boolean init_Z_Z_Z(boolean requiresCorrectTool, boolean correctToolAvailable) { return putAt_Z_Z_Z(requiresCorrectTool, correctToolAvailable); }
-      public static boolean init_Z_Minecraft(Minecraft mc, BlockState state, int slots) { return putAt_Z_Minecraft(mc, state, slots); }
-      private static final long putAt_J = 750000L;
-      private final Object putAt_Obj = new Object();
-      private volatile long fill_J;
-      private volatile long readEx_J;
-      private BiPredicate<BlockState, ItemStack> putAt_BiPredicate;
-      private final Minecraft putAt_Minecraft;
-      private final ClientLevel putAt_ClientLevel;
-      private final int flowState;
-      private final int flowTemp;
-      private final LongSupplier putAt_LongSupplier;
-      private volatile ItemStack[] putAt_ItemStackArr;
-      private final AiPathfinder.LiveGridView.CellSource putAt_FileStore_TableCac_2;
-      private final AiChunkMemory putAt_PacketHelper;
-      private final ConcurrentHashMap<Long, AiPathfinder.LiveGridView.SectionSlice> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
-      private final Set<Long> putAt_Set = ConcurrentHashMap.newKeySet();
-      private final Set<Long> fill_Set = ConcurrentHashMap.newKeySet();
-      private final Map<Long, AiPathfinder.LiveGridView.SectionSlice> putAt_Map = new HashMap<>();
-      private volatile BlockPos putAt_BlockPos = BlockPos.ZERO;
-      private long value_J = -9223372036854775808L;
-      private AiPathfinder.LiveGridView.SectionSlice putAt_FileStore_TableCac;
-      private int readEx_I;
-      private int[] putAt_IArr;
-      private long prevEx_J = -9223372036854775808L;
-      private int value_I;
-      private int prevEx_I;
-      private int prev_I;
-      private int chunkAt_I;
-      private int state;
-      private short[] putAt_SArr;
-      private Map<Integer, String> fill_Map;
-      private static final long prev_J = 1000000000L;
-      private long chunkAt_J;
+      public static boolean isFeetHazardCompat(BlockState state) { return isFeetHazard(state); }
+      public static boolean isFloorHazardCompat(BlockState state) { return isFloorHazard(state); }
+      public static boolean isOreBlockCompat(BlockState state) { return isOreBlock(state); }
+      public static boolean isLitPortalFrameCompat(BlockGetter level, BlockPos target) { return isLitPortalFrame(level, target); }
+      static boolean isSafeToDigCompat(ClientLevel level, BlockPos target) { return isSafeToDig(level, target); }
+      static boolean lacksRequiredToolCompat(boolean requiresCorrectTool, boolean correctToolAvailable) { return lacksRequiredTool(requiresCorrectTool, correctToolAvailable); }
+      public static boolean hasCorrectToolInSlotsCompat(Minecraft mc, BlockState state, int slots) { return hasCorrectToolInSlots(mc, state, slots); }
+      private static final long DEFAULT_SCAN_BUDGET_NANOS = 750000L;
+      private final Object updateMonitor = new Object();
+      private volatile long sliceUpdateVersion;
+      private volatile long invalidationRevision;
+      private BiPredicate<BlockState, ItemStack> acceptedTool;
+      private final Minecraft minecraft;
+      private final ClientLevel level;
+      private final int minY;
+      private final int maxY;
+      private final LongSupplier nanoClock;
+      private volatile ItemStack[] hotbarSnapshot;
+      private final AiPathfinder.LiveGridView.CellSource cellSource;
+      private final AiChunkMemory chunkMemory;
+      private final ConcurrentHashMap<Long, AiPathfinder.LiveGridView.SectionSlice> loadedSlices = new ConcurrentHashMap<>();
+      private final Set<Long> pendingChunkKeys = ConcurrentHashMap.newKeySet();
+      private final Set<Long> priorityColumnKeys = ConcurrentHashMap.newKeySet();
+      private final Map<Long, AiPathfinder.LiveGridView.SectionSlice> memoryFallbackSlices = new HashMap<>();
+      private volatile BlockPos focusPos = BlockPos.ZERO;
+      private long activeChunkKey = -9223372036854775808L;
+      private AiPathfinder.LiveGridView.SectionSlice activeSlice;
+      private int activeColumnCursor;
+      private int[] activeColumnOrder;
+      private long savingChunkKey = -9223372036854775808L;
+      private int savingChunkX;
+      private int savingChunkZ;
+      private int savingColumnCursor;
+      private int savingYOffset;
+      private int savingChunkRevision;
+      private short[] savingFlags;
+      private Map<Integer, String> savingBlockNames;
+      private static final long TOOL_RESCAN_INTERVAL_NANOS = 1000000000L;
+      private long lastHotbarRescanNanos;
 
       @Override
       public long putAt_J() {
-         return this.readEx_J;
+         return this.invalidationRevision;
       }
 
-      public long fill_J() {
-         return this.fill_J + this.putAt_J();
+      public long changeVersion() {
+         return this.sliceUpdateVersion + this.putAt_J();
       }
 
-      void putAt_V_J_J(long var1, long var3) throws java.lang.InterruptedException {
-         synchronized (this.putAt_Obj) {
-            while (this.fill_J() == var1) {
+      void awaitChangeVersion(long var1, long var3) throws java.lang.InterruptedException {
+         synchronized (this.updateMonitor) {
+            while (this.changeVersion() == var1) {
                long var6 = var3 - System.nanoTime();
                if (var6 <= 0L) {
                   return;
                }
 
-               TimeUnit.NANOSECONDS.timedWait(this.putAt_Obj, var6);
+               TimeUnit.NANOSECONDS.timedWait(this.updateMonitor, var6);
             }
          }
       }
 
-      private void fill_V_2() {
-         synchronized (this.putAt_Obj) {
-            this.fill_J++;
-            this.putAt_Obj.notifyAll();
+      private void notifySliceUpdated() {
+         synchronized (this.updateMonitor) {
+            this.sliceUpdateVersion++;
+            this.updateMonitor.notifyAll();
          }
       }
 
@@ -6526,36 +6526,36 @@ public final class AiPathfinder {
       }
 
       public LiveGridView(final Minecraft var1, BlockPos var2, BlockPos var3, ItemStack[] var4, AiChunkMemory var5) {
-         this.putAt_Minecraft = var1;
-         this.putAt_LongSupplier = System::nanoTime;
-         this.putAt_ClientLevel = var1.level;
-         int var6 = this.putAt_ClientLevel.getMinY();
-         int var7 = this.putAt_ClientLevel.getMaxY() - 1;
-         this.flowState = Math.max(var6, Math.min(var2.getY(), var3.getY()) - 28);
-         this.flowTemp = Math.min(var7, Math.max(var2.getY(), var3.getY()) + 28);
-         this.putAt_ItemStackArr = var4;
-         this.putAt_PacketHelper = var5;
-         this.putAt_FileStore_TableCac_2 = new AiPathfinder.LiveGridView.CellSource() {
+         this.minecraft = var1;
+         this.nanoClock = System::nanoTime;
+         this.level = var1.level;
+         int var6 = this.level.getMinY();
+         int var7 = this.level.getMaxY() - 1;
+         this.minY = Math.max(var6, Math.min(var2.getY(), var3.getY()) - 28);
+         this.maxY = Math.min(var7, Math.max(var2.getY(), var3.getY()) + 28);
+         this.hotbarSnapshot = var4;
+         this.chunkMemory = var5;
+         this.cellSource = new AiPathfinder.LiveGridView.CellSource() {
             @Override
             public AiPathfinder.CellInfo putAt_FileStore_BitCache(BlockPos var1x) {
-               return AiPathfinder.LiveGridView.putAt(
-                  var1, LiveGridView.this.putAt_ClientLevel, var1x, LiveGridView.this.putAt_ItemStackArr, LiveGridView.this.putAt_BiPredicate
+               return AiPathfinder.LiveGridView.classifyCell(
+                  var1, LiveGridView.this.level, var1x, LiveGridView.this.hotbarSnapshot, LiveGridView.this.acceptedTool
                );
             }
 
             @Override
             public boolean putAt(int var1x, int var2x) {
-               return LiveGridView.this.putAt_ClientLevel.getChunkSource().getChunk(var1x, var2x, ChunkStatus.FULL, false) != null;
+               return LiveGridView.this.level.getChunkSource().getChunk(var1x, var2x, ChunkStatus.FULL, false) != null;
             }
 
             @Override
             public short putAt_S(BlockPos var1x) {
-               return AiPathfinder.LiveGridView.putAt_S_ClientLevel_BlockPos(LiveGridView.this.putAt_ClientLevel, var1x);
+               return AiPathfinder.LiveGridView.encodeCollisionShape(LiveGridView.this.level, var1x);
             }
 
             @Override
             public byte putAt_B(BlockPos var1x) {
-               return AiPathfinder.LiveGridView.putAt_B_ClientLevel_BlockPos(LiveGridView.this.putAt_ClientLevel, var1x);
+               return AiPathfinder.LiveGridView.encodeSurfaceByte(LiveGridView.this.level, var1x);
             }
          };
       }
@@ -6570,70 +6570,70 @@ public final class AiPathfinder {
 
       @Override
       public double movementSpeed() {
-         return this.putAt_Minecraft != null && this.putAt_Minecraft.player != null ? AiLiveWorld.putAt_D_LivingEntity(this.putAt_Minecraft.player) : 0.1;
+         return this.minecraft != null && this.minecraft.player != null ? AiLiveWorld.putAt_D_LivingEntity(this.minecraft.player) : 0.1;
       }
 
       LiveGridView(int var1, int var2, AiPathfinder.LiveGridView.CellSource var3, AiChunkMemory var4, LongSupplier var5) {
-         this.putAt_LongSupplier = var5;
-         this.putAt_Minecraft = null;
-         this.putAt_ClientLevel = null;
-         this.flowState = var1;
-         this.flowTemp = var2;
-         this.putAt_ItemStackArr = null;
-         this.putAt_FileStore_TableCac_2 = var3;
-         this.putAt_PacketHelper = var4;
+         this.nanoClock = var5;
+         this.minecraft = null;
+         this.level = null;
+         this.minY = var1;
+         this.maxY = var2;
+         this.hotbarSnapshot = null;
+         this.cellSource = var3;
+         this.chunkMemory = var4;
       }
 
-      public void putAt_V_BlockPos(BlockPos var1) {
-         this.putAt_BlockPos = var1.immutable();
+      public void setFocus(BlockPos var1) {
+         this.focusPos = var1.immutable();
       }
 
-      public void putAt_V_BiPredicate(BiPredicate<BlockState, ItemStack> var1) {
-         if (this.putAt_BiPredicate != var1) {
-            this.putAt_BiPredicate = var1;
-            this.putAt_Set.addAll(this.putAt_ConcurrentHashMap.keySet());
-            this.putAt_ConcurrentHashMap.clear();
-            this.putAt_Map.clear();
-            this.readEx_J++;
-            this.putAt_FileStore_TableCac = null;
-            this.value_J = -9223372036854775808L;
-            this.fill_V_2();
+      public void setAcceptedTool(BiPredicate<BlockState, ItemStack> var1) {
+         if (this.acceptedTool != var1) {
+            this.acceptedTool = var1;
+            this.pendingChunkKeys.addAll(this.loadedSlices.keySet());
+            this.loadedSlices.clear();
+            this.memoryFallbackSlices.clear();
+            this.invalidationRevision++;
+            this.activeSlice = null;
+            this.activeChunkKey = -9223372036854775808L;
+            this.notifySliceUpdated();
          }
       }
 
-      public void putAt_V_ItemStackArr(ItemStack[] var1) {
-         ItemStack[] var2 = this.putAt_ItemStackArr;
+      public void updateHotbar(ItemStack[] var1) {
+         ItemStack[] var2 = this.hotbarSnapshot;
          boolean var3 = var2 != null && var2.length == var1.length;
          if (var3) {
             for (int var4 = 0; var4 < var1.length; var4++) {
-               if (!putAt_Z_ItemStack_ItemStack(var2[var4], var1[var4])) {
+               if (!sameToolStack(var2[var4], var1[var4])) {
                   var3 = false;
                   break;
                }
             }
          }
 
-         if (!var3 && putAt_Z_ItemStackArr_ItemStackArr(var2, var1) && System.nanoTime() - this.chunkAt_J < 1000000000L) {
-            this.putAt_ItemStackArr = var1;
+         if (!var3 && sameItemTypes(var2, var1) && System.nanoTime() - this.lastHotbarRescanNanos < 1000000000L) {
+            this.hotbarSnapshot = var1;
          } else {
-            this.putAt_ItemStackArr = var1;
+            this.hotbarSnapshot = var1;
             if (!var3) {
-               if (putAt_Z_ItemStackArr_ItemStackArr(var2, var1)) {
-                  this.chunkAt_J = System.nanoTime();
+               if (sameItemTypes(var2, var1)) {
+                  this.lastHotbarRescanNanos = System.nanoTime();
                }
 
-               this.putAt_Set.addAll(this.putAt_ConcurrentHashMap.keySet());
-               this.putAt_ConcurrentHashMap.clear();
-               this.putAt_Map.clear();
-               this.readEx_J++;
-               this.putAt_FileStore_TableCac = null;
-               this.value_J = -9223372036854775808L;
-               this.fill_V_2();
+               this.pendingChunkKeys.addAll(this.loadedSlices.keySet());
+               this.loadedSlices.clear();
+               this.memoryFallbackSlices.clear();
+               this.invalidationRevision++;
+               this.activeSlice = null;
+               this.activeChunkKey = -9223372036854775808L;
+               this.notifySliceUpdated();
             }
          }
       }
 
-      private static boolean putAt_Z_ItemStackArr_ItemStackArr(ItemStack[] var0, ItemStack[] var1) {
+      private static boolean sameItemTypes(ItemStack[] var0, ItemStack[] var1) {
          if (var0 != null && var1 != null && var0.length == var1.length) {
             for (int var2 = 0; var2 < var0.length; var2++) {
                ItemStack var3 = var0[var2];
@@ -6669,7 +6669,7 @@ public final class AiPathfinder {
          }
       }
 
-      private static boolean putAt_Z_ItemStack_ItemStack(ItemStack var0, ItemStack var1) {
+      private static boolean sameToolStack(ItemStack var0, ItemStack var1) {
          if (var0 == var1) {
             return true;
          } else if (var0 != null && var1 != null) {
@@ -6688,18 +6688,18 @@ public final class AiPathfinder {
 
       @Override
       public AiPathfinder.CellInfo probe(int var1, int var2, int var3) {
-         if (var2 >= this.flowState && var2 <= this.flowTemp) {
-            long var4 = putAt_J_I_I(var1 >> 4, var3 >> 4);
-            AiPathfinder.LiveGridView.SectionSlice var6 = this.putAt_ConcurrentHashMap.get(var4);
+         if (var2 >= this.minY && var2 <= this.maxY) {
+            long var4 = packChunkKey(var1 >> 4, var3 >> 4);
+            AiPathfinder.LiveGridView.SectionSlice var6 = this.loadedSlices.get(var4);
             if (var6 != null && var6.revision() == AiGridRevisions.init(var4)) {
                if (var6.ready().get((var1 & 15) * 16 + (var3 & 15)) == 0) {
-                  this.putAt_Set.add(var4);
-                  this.fill_Set.add(putAt_J_I_I(var1, var3));
+                  this.pendingChunkKeys.add(var4);
+                  this.priorityColumnKeys.add(packChunkKey(var1, var3));
                   return null;
                }
 
-               int var7 = this.flowTemp - this.flowState + 1;
-               int var8 = var6.index(var1, var2, var3, this.flowState, var7);
+               int var7 = this.maxY - this.minY + 1;
+               int var8 = var6.index(var1, var2, var3, this.minY, var7);
                int var9 = var6.flags()[var8] & '\uffff';
                if ((var9 & 1) == 0) {
                   return AiPathfinder.CellInfo.UNLOADED;
@@ -6735,11 +6735,11 @@ public final class AiPathfinder {
                   );
             } else {
                if (var6 != null) {
-                  this.putAt_ConcurrentHashMap.remove(var4, var6);
+                  this.loadedSlices.remove(var4, var6);
                }
 
-               this.putAt_Set.add(var4);
-               this.fill_Set.add(putAt_J_I_I(var1, var3));
+               this.pendingChunkKeys.add(var4);
+               this.priorityColumnKeys.add(packChunkKey(var1, var3));
                return null;
             }
          } else {
@@ -6747,34 +6747,34 @@ public final class AiPathfinder {
          }
       }
 
-      private AiPathfinder.LiveGridView.SectionSlice putAt_FileStore_TableCac_I_I(int var1, int var2) {
-         long var3 = putAt_J_I_I(var1 >> 4, var2 >> 4);
-         AiPathfinder.LiveGridView.SectionSlice var5 = this.putAt_ConcurrentHashMap.get(var3);
+      private AiPathfinder.LiveGridView.SectionSlice getReadySlice(int var1, int var2) {
+         long var3 = packChunkKey(var1 >> 4, var2 >> 4);
+         AiPathfinder.LiveGridView.SectionSlice var5 = this.loadedSlices.get(var3);
          if (var5 != null && var5.revision() == AiGridRevisions.init(var3) && var5.ready().get((var1 & 15) * 16 + (var2 & 15)) != 0) {
             return var5;
          }
 
          if (var5 != null && var5.revision() != AiGridRevisions.init(var3)) {
-            this.putAt_ConcurrentHashMap.remove(var3, var5);
+            this.loadedSlices.remove(var3, var5);
          }
 
-         this.putAt_Set.add(var3);
-         this.fill_Set.add(putAt_J_I_I(var1, var2));
+         this.pendingChunkKeys.add(var3);
+         this.priorityColumnKeys.add(packChunkKey(var1, var2));
          return null;
       }
 
       @Override
       public short putAt_S_I(int var1, int var2, int var3) {
-         if (var2 < this.flowState) {
+         if (var2 < this.minY) {
             return 1;
-         } else if (var2 > this.flowTemp) {
+         } else if (var2 > this.maxY) {
             return 0;
          } else {
-            AiPathfinder.LiveGridView.SectionSlice var4 = this.putAt_FileStore_TableCac_I_I(var1, var3);
+            AiPathfinder.LiveGridView.SectionSlice var4 = this.getReadySlice(var1, var3);
             if (var4 == null) {
                return -1;
             } else {
-               int var5 = var4.index(var1, var2, var3, this.flowState, this.flowTemp - this.flowState + 1);
+               int var5 = var4.index(var1, var2, var3, this.minY, this.maxY - this.minY + 1);
                short var6 = var4.flags()[var5];
                if ((var6 & 1) == 0) {
                   return 1;
@@ -6787,12 +6787,12 @@ public final class AiPathfinder {
 
       @Override
       public byte putAt_B_I(int var1, int var2, int var3) {
-         if (var2 >= this.flowState && var2 <= this.flowTemp) {
-            AiPathfinder.LiveGridView.SectionSlice var4 = this.putAt_FileStore_TableCac_I_I(var1, var3);
+         if (var2 >= this.minY && var2 <= this.maxY) {
+            AiPathfinder.LiveGridView.SectionSlice var4 = this.getReadySlice(var1, var3);
             if (var4 == null) {
                return AiSurface.NORMAL.init();
             } else {
-               int var5 = var4.index(var1, var2, var3, this.flowState, this.flowTemp - this.flowState + 1);
+               int var5 = var4.index(var1, var2, var3, this.minY, this.maxY - this.minY + 1);
                if (var4.surface() != null) {
                   return var4.surface()[var5];
                } else {
@@ -6809,210 +6809,210 @@ public final class AiPathfinder {
          }
       }
 
-      public void putAt_V_2() {
-         this.putAt_V_J(750000L);
+      public void scanStep() {
+         this.scanBudget(750000L);
       }
 
-      public void putAt_V_J(long var1) {
-         if (!this.putAt_Map.isEmpty()) {
-            this.readEx();
+      public void scanBudget(long var1) {
+         if (!this.memoryFallbackSlices.isEmpty()) {
+            this.promoteLoadedFallbackChunks();
          }
 
-         long var3 = this.putAt_LongSupplier.getAsLong() + var1;
-         int var5 = this.flowTemp - this.flowState + 1;
+         long var3 = this.nanoClock.getAsLong() + var1;
+         int var5 = this.maxY - this.minY + 1;
 
-         while (this.putAt_LongSupplier.getAsLong() < var3) {
-            Long var6 = this.putAt_Long();
+         while (this.nanoClock.getAsLong() < var3) {
+            Long var6 = this.pollNearestPriorityColumn();
             if (var6 != null) {
-               this.fill_Set.remove(var6);
+               this.priorityColumnKeys.remove(var6);
                int var7 = (int)(var6 >> 32);
                int var8 = var6.intValue();
-               long var9 = putAt_J_I_I(var7 >> 4, var8 >> 4);
-               if (this.putAt_FileStore_TableCac_2.putAt(var7 >> 4, var8 >> 4)) {
-                  AiPathfinder.LiveGridView.SectionSlice var20 = this.putAt_ConcurrentHashMap.get(var9);
+               long var9 = packChunkKey(var7 >> 4, var8 >> 4);
+               if (this.cellSource.putAt(var7 >> 4, var8 >> 4)) {
+                  AiPathfinder.LiveGridView.SectionSlice var20 = this.loadedSlices.get(var9);
                   if (var20 == null || var20.revision() != AiGridRevisions.init(var9)) {
-                     var20 = this.putAt_FileStore_TableCac_I_J(var5, var9);
-                     this.putAt_ConcurrentHashMap.put(var9, var20);
+                     var20 = this.allocateSlice(var5, var9);
+                     this.loadedSlices.put(var9, var20);
                   }
 
                   int var12 = (var7 & 15) * 16 + (var8 & 15);
                   if (var20.ready().get(var12) == 0) {
-                     this.putAt_V_FileStore_TableCac(var20, var7, var8, var5);
+                     this.scanColumnIntoSlice(var20, var7, var8, var5);
                      var20.ready().set(var12, 1);
-                     this.fill_V_2();
+                     this.notifySliceUpdated();
                   }
                   continue;
                }
             }
 
-            if (this.putAt_FileStore_TableCac != null && this.putAt_ConcurrentHashMap.get(this.value_J) != this.putAt_FileStore_TableCac) {
-               this.putAt_FileStore_TableCac = null;
-               this.value_J = -9223372036854775808L;
+            if (this.activeSlice != null && this.loadedSlices.get(this.activeChunkKey) != this.activeSlice) {
+               this.activeSlice = null;
+               this.activeChunkKey = -9223372036854775808L;
             }
 
-            if (this.putAt_FileStore_TableCac == null) {
-               Long var13 = this.fill_Long();
+            if (this.activeSlice == null) {
+               Long var13 = this.pollNearestPendingChunk();
                if (var13 == null) {
-                  if (this.prevEx_J != -9223372036854775808L) {
-                     this.putAt_Z_J(var3);
+                  if (this.savingChunkKey != -9223372036854775808L) {
+                     this.stepMemorySave(var3);
                   }
 
                   return;
                }
 
-               this.value_J = var13;
-               this.readEx_I = 0;
-               this.putAt_IArr = putAt_IArr_I_I(
-                  Math.max(0, Math.min(15, this.putAt_BlockPos.getX() - ((int)(var13 >> 32) << 4))),
-                  Math.max(0, Math.min(15, this.putAt_BlockPos.getZ() - (var13.intValue() << 4)))
+               this.activeChunkKey = var13;
+               this.activeColumnCursor = 0;
+               this.activeColumnOrder = spiralColumnOrder(
+                  Math.max(0, Math.min(15, this.focusPos.getX() - ((int)(var13 >> 32) << 4))),
+                  Math.max(0, Math.min(15, this.focusPos.getZ() - (var13.intValue() << 4)))
                );
-               this.putAt_FileStore_TableCac = this.putAt_ConcurrentHashMap.get(var13);
-               if (this.putAt_FileStore_TableCac == null || this.putAt_FileStore_TableCac.revision() != AiGridRevisions.init(var13)) {
-                  this.putAt_FileStore_TableCac = this.putAt_FileStore_TableCac_I_J(var5, var13);
+               this.activeSlice = this.loadedSlices.get(var13);
+               if (this.activeSlice == null || this.activeSlice.revision() != AiGridRevisions.init(var13)) {
+                  this.activeSlice = this.allocateSlice(var5, var13);
                }
 
                int var15 = (int)(var13 >> 32);
                int var17 = var13.intValue();
-               if (!this.putAt_FileStore_TableCac_2.putAt(var15, var17)) {
-                  AiPathfinder.LiveGridView.SectionSlice var19 = this.putAt_PacketHelper == null
+               if (!this.cellSource.putAt(var15, var17)) {
+                  AiPathfinder.LiveGridView.SectionSlice var19 = this.chunkMemory == null
                      ? null
-                     : this.putAt_PacketHelper.init_ClassCache_StreamU_I(var15, var17, this.flowState, var5, AiGridRevisions.init(var13));
+                     : this.chunkMemory.init_ClassCache_StreamU_I(var15, var17, this.minY, var5, AiGridRevisions.init(var13));
                   if (var19 != null) {
-                     this.putAt_ConcurrentHashMap.put(var13, var19);
-                     this.putAt_Map.put(var13, var19);
+                     this.loadedSlices.put(var13, var19);
+                     this.memoryFallbackSlices.put(var13, var19);
                   } else {
                      for (int var11 = 0; var11 < 256; var11++) {
-                        this.putAt_FileStore_TableCac.ready().set(var11, 1);
+                        this.activeSlice.ready().set(var11, 1);
                      }
 
-                     this.putAt_ConcurrentHashMap.put(var13, this.putAt_FileStore_TableCac);
-                     this.putAt_Map.put(var13, this.putAt_FileStore_TableCac);
+                     this.loadedSlices.put(var13, this.activeSlice);
+                     this.memoryFallbackSlices.put(var13, this.activeSlice);
                   }
 
-                  this.putAt_Set.remove(var13);
-                  this.fill_V_2();
-                  this.putAt_FileStore_TableCac = null;
-                  this.value_J = -9223372036854775808L;
+                  this.pendingChunkKeys.remove(var13);
+                  this.notifySliceUpdated();
+                  this.activeSlice = null;
+                  this.activeChunkKey = -9223372036854775808L;
                   continue;
                }
 
-               this.putAt_ConcurrentHashMap.put(var13, this.putAt_FileStore_TableCac);
+               this.loadedSlices.put(var13, this.activeSlice);
             }
 
-            AiPathfinder.LiveGridView.SectionSlice var14 = this.putAt_FileStore_TableCac;
-            int var16 = (int)(this.value_J >> 32);
-            int var18 = (int)this.value_J;
+            AiPathfinder.LiveGridView.SectionSlice var14 = this.activeSlice;
+            int var16 = (int)(this.activeChunkKey >> 32);
+            int var18 = (int)this.activeChunkKey;
 
-            while (this.readEx_I < 256 && this.putAt_LongSupplier.getAsLong() < var3) {
-               int var10 = this.putAt_IArr[this.readEx_I];
+            while (this.activeColumnCursor < 256 && this.nanoClock.getAsLong() < var3) {
+               int var10 = this.activeColumnOrder[this.activeColumnCursor];
                if (var14.ready().get(var10) == 0) {
-                  this.putAt_V_FileStore_TableCac(var14, (var16 << 4) + var10 / 16, (var18 << 4) + var10 % 16, var5);
+                  this.scanColumnIntoSlice(var14, (var16 << 4) + var10 / 16, (var18 << 4) + var10 % 16, var5);
                   var14.ready().set(var10, 1);
-                  this.fill_V_2();
+                  this.notifySliceUpdated();
                }
 
-               this.readEx_I++;
+               this.activeColumnCursor++;
             }
 
-            if (this.readEx_I < 256) {
+            if (this.activeColumnCursor < 256) {
                return;
             }
 
-            this.putAt_ConcurrentHashMap.put(this.value_J, var14);
-            this.putAt_Set.remove(this.value_J);
-            this.fill_V_2();
-            if (this.putAt_PacketHelper != null && this.putAt_ClientLevel != null && var5 <= 128 && this.prevEx_J == -9223372036854775808L) {
-               this.prevEx_J = this.value_J;
-               this.value_I = var16;
-               this.prevEx_I = var18;
-               this.putAt_SArr = var14.flags();
-               this.state = var14.revision();
-               this.prev_I = 0;
-               this.chunkAt_I = 0;
-               this.fill_Map = null;
+            this.loadedSlices.put(this.activeChunkKey, var14);
+            this.pendingChunkKeys.remove(this.activeChunkKey);
+            this.notifySliceUpdated();
+            if (this.chunkMemory != null && this.level != null && var5 <= 128 && this.savingChunkKey == -9223372036854775808L) {
+               this.savingChunkKey = this.activeChunkKey;
+               this.savingChunkX = var16;
+               this.savingChunkZ = var18;
+               this.savingFlags = var14.flags();
+               this.savingChunkRevision = var14.revision();
+               this.savingColumnCursor = 0;
+               this.savingYOffset = 0;
+               this.savingBlockNames = null;
             }
 
-            this.putAt_FileStore_TableCac = null;
-            this.value_J = -9223372036854775808L;
+            this.activeSlice = null;
+            this.activeChunkKey = -9223372036854775808L;
          }
       }
 
-      private void readEx() {
-         Iterator var1 = this.putAt_Map.entrySet().iterator();
+      private void promoteLoadedFallbackChunks() {
+         Iterator var1 = this.memoryFallbackSlices.entrySet().iterator();
 
          while (var1.hasNext()) {
             Entry var2 = (Entry)var1.next();
             long var3 = (Long)var2.getKey();
-            if (this.putAt_FileStore_TableCac_2.putAt((int)(var3 >> 32), (int)var3)) {
-               this.putAt_ConcurrentHashMap.remove(var3, var2.getValue());
-               this.putAt_Set.add(var3);
+            if (this.cellSource.putAt((int)(var3 >> 32), (int)var3)) {
+               this.loadedSlices.remove(var3, var2.getValue());
+               this.pendingChunkKeys.add(var3);
                var1.remove();
             }
          }
       }
 
-      private boolean putAt_Z_J(long var1) {
-         int var3 = this.flowTemp - this.flowState + 1;
+      private boolean stepMemorySave(long var1) {
+         int var3 = this.maxY - this.minY + 1;
          MutableBlockPos var4 = new MutableBlockPos();
 
-         while (this.prev_I < 256) {
-            if (this.putAt_LongSupplier.getAsLong() >= var1) {
+         while (this.savingColumnCursor < 256) {
+            if (this.nanoClock.getAsLong() >= var1) {
                return false;
             }
 
-            int var5 = this.prev_I >> 4;
-            int var6 = this.prev_I & 15;
+            int var5 = this.savingColumnCursor >> 4;
+            int var6 = this.savingColumnCursor & 15;
 
-            while (this.chunkAt_I < var3) {
-               int var7 = (var5 * 16 + var6) * var3 + this.chunkAt_I;
-               short var8 = this.putAt_SArr[var7];
+            while (this.savingYOffset < var3) {
+               int var7 = (var5 * 16 + var6) * var3 + this.savingYOffset;
+               short var8 = this.savingFlags[var7];
                if ((var8 & 1) != 0 && AiChunkMemory.init_I(var8) == 1) {
-                  var4.set((this.value_I << 4) + var5, this.flowState + this.chunkAt_I, (this.prevEx_I << 4) + var6);
-                  String var9 = BuiltInRegistries.BLOCK.getKey(this.putAt_ClientLevel.getBlockState(var4).getBlock()).getPath();
+                  var4.set((this.savingChunkX << 4) + var5, this.minY + this.savingYOffset, (this.savingChunkZ << 4) + var6);
+                  String var9 = BuiltInRegistries.BLOCK.getKey(this.level.getBlockState(var4).getBlock()).getPath();
                   if (AiChunkMemory.init(var9)) {
-                     if (this.fill_Map == null) {
-                        this.fill_Map = new HashMap<>();
+                     if (this.savingBlockNames == null) {
+                        this.savingBlockNames = new HashMap<>();
                      }
 
-                     this.fill_Map.put(this.chunkAt_I * 256 + var6 * 16 + var5, "minecraft:" + var9);
+                     this.savingBlockNames.put(this.savingYOffset * 256 + var6 * 16 + var5, "minecraft:" + var9);
                   }
                }
 
-               this.chunkAt_I++;
+               this.savingYOffset++;
             }
 
-            this.chunkAt_I = 0;
-            this.prev_I++;
+            this.savingYOffset = 0;
+            this.savingColumnCursor++;
          }
 
-         long var12 = this.prevEx_J;
-         int var13 = this.value_I;
-         int var14 = this.prevEx_I;
-         int var15 = this.state;
-         short[] var10 = this.putAt_SArr;
-         Map var11 = this.fill_Map;
-         this.prevEx_J = -9223372036854775808L;
-         this.putAt_SArr = null;
-         this.fill_Map = null;
+         long var12 = this.savingChunkKey;
+         int var13 = this.savingChunkX;
+         int var14 = this.savingChunkZ;
+         int var15 = this.savingChunkRevision;
+         short[] var10 = this.savingFlags;
+         Map var11 = this.savingBlockNames;
+         this.savingChunkKey = -9223372036854775808L;
+         this.savingFlags = null;
+         this.savingBlockNames = null;
          if (var15 == AiGridRevisions.init(var12)) {
-            this.putAt_PacketHelper.init(var13, var14, this.flowState, var3, var10, var11);
+            this.chunkMemory.init(var13, var14, this.minY, var3, var10, var11);
          }
 
          return true;
       }
 
-      private void putAt_V_FileStore_TableCac(AiPathfinder.LiveGridView.SectionSlice var1, int var2, int var3, int var4) {
+      private void scanColumnIntoSlice(AiPathfinder.LiveGridView.SectionSlice var1, int var2, int var3, int var4) {
          MutableBlockPos var5 = new MutableBlockPos();
 
-         for (int var6 = this.flowState; var6 <= this.flowTemp; var6++) {
+         for (int var6 = this.minY; var6 <= this.maxY; var6++) {
             var5.set(var2, var6, var3);
-            AiPathfinder.CellInfo var7 = this.putAt_FileStore_TableCac_2.putAt_FileStore_BitCache(var5);
-            int var8 = var1.index(var2, var6, var3, this.flowState, var4);
+            AiPathfinder.CellInfo var7 = this.cellSource.putAt_FileStore_BitCache(var5);
+            int var8 = var1.index(var2, var6, var3, this.minY, var4);
             if (!var7.loaded()) {
                var1.shape()[var8] = 1;
             } else {
-               var1.shape()[var8] = this.putAt_FileStore_TableCac_2.putAt_S(var5);
-               var1.surface()[var8] = this.putAt_FileStore_TableCac_2.putAt_B(var5);
+               var1.shape()[var8] = this.cellSource.putAt_S(var5);
+               var1.surface()[var8] = this.cellSource.putAt_B(var5);
                char var9 = 1;
                if (var7.passable()) {
                   var9 |= 2;
@@ -7079,7 +7079,7 @@ public final class AiPathfinder {
          }
       }
 
-      private static int[] putAt_IArr_I_I(int var0, int var1) {
+      private static int[] spiralColumnOrder(int var0, int var1) {
          int[] var2 = new int[256];
          int var3 = 0;
 
@@ -7100,7 +7100,7 @@ public final class AiPathfinder {
          return var2;
       }
 
-      private AiPathfinder.LiveGridView.SectionSlice putAt_FileStore_TableCac_I_J(int var1, long var2) {
+      private AiPathfinder.LiveGridView.SectionSlice allocateSlice(int var1, long var2) {
          return new AiPathfinder.LiveGridView.SectionSlice(
             new short[256 * var1],
             new byte[256 * var1],
@@ -7114,13 +7114,13 @@ public final class AiPathfinder {
          );
       }
 
-      private Long putAt_Long() {
+      private Long pollNearestPriorityColumn() {
          Long var1 = null;
          long var2 = 9223372036854775807L;
 
-         for (Long var5 : this.fill_Set) {
-            long var6 = (int)(var5 >> 32) - this.putAt_BlockPos.getX();
-            long var8 = var5.intValue() - this.putAt_BlockPos.getZ();
+         for (Long var5 : this.priorityColumnKeys) {
+            long var6 = (int)(var5 >> 32) - this.focusPos.getX();
+            long var8 = var5.intValue() - this.focusPos.getZ();
             long var10 = var6 * var6 + var8 * var8;
             if (var10 < var2 || var10 == var2 && (var1 == null || var5 < var1)) {
                var1 = var5;
@@ -7131,15 +7131,15 @@ public final class AiPathfinder {
          return var1;
       }
 
-      private Long fill_Long() {
+      private Long pollNearestPendingChunk() {
          Long var1 = null;
          double var2 = 1.7976931348623157E308;
 
-         for (Long var5 : this.putAt_Set) {
+         for (Long var5 : this.pendingChunkKeys) {
             int var6 = (int)(var5 >> 32);
             int var7 = (int)var5.longValue();
-            double var8 = (var6 << 4) + 8 - this.putAt_BlockPos.getX();
-            double var10 = (var7 << 4) + 8 - this.putAt_BlockPos.getZ();
+            double var8 = (var6 << 4) + 8 - this.focusPos.getX();
+            double var10 = (var7 << 4) + 8 - this.focusPos.getZ();
             double var12 = var8 * var8 + var10 * var10;
             if (var12 < var2) {
                var2 = var12;
@@ -7150,15 +7150,15 @@ public final class AiPathfinder {
          return var1;
       }
 
-      private static long putAt_J_I_I(int var0, int var1) {
+      private static long packChunkKey(int var0, int var1) {
          return AiGridRevisions.init_J(var0, var1);
       }
 
-      public static AiPathfinder.CellInfo putAt_FileStore_BitCache_Minecraft(Minecraft var0, ClientLevel var1, BlockPos var2, ItemStack[] var3) {
-         return putAt(var0, var1, var2, var3, null);
+      public static AiPathfinder.CellInfo classifyCell(Minecraft var0, ClientLevel var1, BlockPos var2, ItemStack[] var3) {
+         return classifyCell(var0, var1, var2, var3, null);
       }
 
-      private static AiPathfinder.CellInfo putAt(Minecraft var0, ClientLevel var1, BlockPos var2, ItemStack[] var3, BiPredicate<BlockState, ItemStack> var4) {
+      private static AiPathfinder.CellInfo classifyCell(Minecraft var0, ClientLevel var1, BlockPos var2, ItemStack[] var3, BiPredicate<BlockState, ItemStack> var4) {
          if (var1 != null
             && var1.isInsideBuildHeight(var2)
             && var1.getChunkSource().getChunk(var2.getX() >> 4, var2.getZ() >> 4, ChunkStatus.FULL, false) != null) {
@@ -7187,21 +7187,21 @@ public final class AiPathfinder {
                }
             }
 
-            boolean var14 = putAt_Z_BlockState(var5) || var2.getY() > var1.getMinY() && putAt_Z_BlockState_BlockState(var5, var1.getBlockState(var2.below()));
+            boolean var14 = isClimbableBlock(var5) || var2.getY() > var1.getMinY() && isClimbableTrapdoor(var5, var1.getBlockState(var2.below()));
             if (var14 && !(var12 instanceof ScaffoldingBlock)) {
                var11 = true;
             }
 
             int var15 = var11 ? 0 : (int)Math.round(var10.max(Axis.Y) * 16.0);
-            boolean var16 = fill(var5) || var6;
-            boolean var17 = readEx(var5);
-            boolean var18 = value(var5);
+            boolean var16 = isFeetHazard(var5) || var6;
+            boolean var17 = isInvisibleLightBlock(var5);
+            boolean var18 = isPressurePlate(var5);
             boolean var19 = var5.is(Blocks.SWEET_BERRY_BUSH);
-            boolean var20 = prevEx(var5);
-            boolean var21 = !var20 && !var11 && !putAt_Z_VoxelShape(var10);
-            boolean var22 = prev(var5);
+            boolean var20 = isFloorHazard(var5);
+            boolean var21 = !var20 && !var11 && !isNarrowFootingShape(var10);
+            boolean var22 = isPortalBlock(var5);
             String var23 = BuiltInRegistries.BLOCK.getKey(var12).getPath();
-            int var24 = Math.round(putAt_F_Str_Z(var23, var8) * 10.0F);
+            int var24 = Math.round(fallDamageMultiplier(var23, var8) * 10.0F);
             boolean var25 = var12 instanceof FallingBlock;
             boolean var26 = var12 instanceof SlabBlock || var12 instanceof StairBlock;
             boolean var27 = var12 instanceof FarmlandBlock;
@@ -7211,7 +7211,7 @@ public final class AiPathfinder {
             if ((!var11 || var12 instanceof WebBlock) && var7.isEmpty()) {
                float var32 = var5.getDestroySpeed(var1, var2);
                BlockState var33 = var1.getBlockState(var2.below());
-               boolean var34 = putAt_Z_Z(
+               boolean var34 = isDangerousToBreak(
                   var5.is(Blocks.ICE) || var5.is(Blocks.FROSTED_ICE),
                   var33.isSolid(),
                   var33.liquid(),
@@ -7220,10 +7220,10 @@ public final class AiPathfinder {
                if (var32 >= 0.0F
                   && !var5.hasBlockEntity()
                   && !var34
-                  && putAt_Z_Function_BlockPos(var1x -> putAt_FileStore_TableCac_ClientLevel_BlockPos(var1, var1x), var2)
-                  && (var0.player.hasInfiniteMaterials() || !putAt_Z_Z_Z(var5.requiresCorrectToolForDrops(), putAt_Z_BlockState_ItemStackArr(var5, var3)))) {
+                  && isSafeToDigFromHazards(var1x -> probeHazardFlags(var1, var1x), var2)
+                  && (var0.player.hasInfiniteMaterials() || !lacksRequiredTool(var5.requiresCorrectToolForDrops(), hasCorrectToolInHotbar(var5, var3)))) {
                   MiningCost.Inner_DataUtil var35 = MiningCost.Inner_DataUtil.of(var0);
-                  var30 = var4 == null ? putAt(var0, var5, var32, var3, var35) : putAt(var0, var5, var32, var3, var35, var4);
+                  var30 = var4 == null ? fastestBreakTicks(var0, var5, var32, var3, var35) : fastestBreakTicks(var0, var5, var32, var3, var35, var4);
 
                   for (BlockPos var36 = var2.above(); var1.isInsideBuildHeight(var36); var36 = var36.above()) {
                      BlockState var37 = var1.getBlockState(var36);
@@ -7232,8 +7232,8 @@ public final class AiPathfinder {
                      }
 
                      var30 += var4 == null
-                        ? putAt(var0, var37, var37.getDestroySpeed(var1, var36), var3, var35)
-                        : putAt(var0, var37, var37.getDestroySpeed(var1, var36), var3, var35, var4);
+                        ? fastestBreakTicks(var0, var37, var37.getDestroySpeed(var1, var36), var3, var35)
+                        : fastestBreakTicks(var0, var37, var37.getDestroySpeed(var1, var36), var3, var35, var4);
                   }
                }
             }
@@ -7255,7 +7255,7 @@ public final class AiPathfinder {
                var27,
                var28,
                false,
-               AiPathfinder.MoveCosts.putAt_I_Str(var23),
+               AiPathfinder.MoveCosts.destructionPenaltyForBlock(var23),
                var29,
                var19,
                var22,
@@ -7268,7 +7268,7 @@ public final class AiPathfinder {
          }
       }
 
-      public static boolean putAt_Z_VoxelShape(VoxelShape var0) {
+      public static boolean isNarrowFootingShape(VoxelShape var0) {
          if (var0.isEmpty()) {
             return false;
          }
@@ -7284,7 +7284,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean putAt_Z_BlockState(BlockState var0) {
+      static boolean isClimbableBlock(BlockState var0) {
          Block var1 = var0.getBlock();
          return var1 instanceof LadderBlock
             || var1 instanceof VineBlock
@@ -7298,7 +7298,7 @@ public final class AiPathfinder {
             || var0.is(BlockTags.CLIMBABLE);
       }
 
-      static boolean putAt_Z_BlockState_BlockState(BlockState var0, BlockState var1) {
+      static boolean isClimbableTrapdoor(BlockState var0, BlockState var1) {
          return var0.getBlock() instanceof TrapDoorBlock
             && var0.getValue(TrapDoorBlock.OPEN)
             && var1 != null
@@ -7306,7 +7306,7 @@ public final class AiPathfinder {
             && var1.getValue(LadderBlock.FACING) == var0.getValue(TrapDoorBlock.FACING);
       }
 
-      public static boolean fill(BlockState var0) {
+      public static boolean isFeetHazard(BlockState var0) {
          Block var1 = var0.getBlock();
          return var1 instanceof BaseFireBlock
             || var0.is(Blocks.POWDER_SNOW)
@@ -7315,15 +7315,15 @@ public final class AiPathfinder {
             || var1 instanceof BubbleColumnBlock && var0.getValue(BubbleColumnBlock.DRAG_DOWN);
       }
 
-      public static boolean readEx(BlockState var0) {
+      public static boolean isInvisibleLightBlock(BlockState var0) {
          return var0.is(Blocks.LIGHT) && var0.getValue(LightBlock.LEVEL) == 0;
       }
 
-      public static boolean value(BlockState var0) {
+      public static boolean isPressurePlate(BlockState var0) {
          return var0.getBlock() instanceof BasePressurePlateBlock;
       }
 
-      public static boolean prevEx(BlockState var0) {
+      public static boolean isFloorHazard(BlockState var0) {
          Block var1 = var0.getBlock();
          return var0.is(Blocks.MAGMA_BLOCK)
             || var0.is(Blocks.LAVA_CAULDRON)
@@ -7335,12 +7335,12 @@ public final class AiPathfinder {
             || var1 instanceof SculkShriekerBlock && var0.getValue(SculkShriekerBlock.CAN_SUMMON);
       }
 
-      static boolean prev(BlockState var0) {
+      static boolean isPortalBlock(BlockState var0) {
          Block var1 = var0.getBlock();
          return var1 instanceof NetherPortalBlock || var1 instanceof EndPortalBlock || var1 instanceof EndGatewayBlock;
       }
 
-      public static short putAt_S_ClientLevel_BlockPos(ClientLevel var0, BlockPos var1) {
+      public static short encodeCollisionShape(ClientLevel var0, BlockPos var1) {
          if (var0 != null
             && var0.isInsideBuildHeight(var1)
             && var0.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
@@ -7360,7 +7360,7 @@ public final class AiPathfinder {
          }
       }
 
-      public static byte putAt_B_ClientLevel_BlockPos(ClientLevel var0, BlockPos var1) {
+      public static byte encodeSurfaceByte(ClientLevel var0, BlockPos var1) {
          if (var0 != null && var0.isInsideBuildHeight(var1)) {
             Block var2 = var0.getBlockState(var1).getBlock();
             double var3 = var2 instanceof SlimeBlock ? 1.0 : (var2 instanceof BedBlock ? 0.75 : 0.0);
@@ -7370,11 +7370,11 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean putAt_Z_Function_BlockPos(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
-         return !value(var0, var1) && !readEx(var0, var1) && putAt_I_Function_BlockPos(var0, var1) <= 6 && !fill(var0, var1);
+      static boolean isSafeToDigFromHazards(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
+         return !hasAdjacentLava(var0, var1) && !hasAdjacentWater(var0, var1) && countFallingAbove(var0, var1) <= 6 && !hasFallingColumnWater(var0, var1);
       }
 
-      static boolean fill(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
+      static boolean hasFallingColumnWater(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
          BlockPos var2 = var1.above();
 
          for (int var3 = 0; var3 < 384; var3++) {
@@ -7383,7 +7383,7 @@ public final class AiPathfinder {
                return false;
             }
 
-            if (readEx(var0, var2)) {
+            if (hasAdjacentWater(var0, var2)) {
                return true;
             }
 
@@ -7393,7 +7393,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean readEx(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
+      static boolean hasAdjacentWater(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
          for (int[] var5 : new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {0, 0, -1}}) {
             AiPathfinder.LiveGridView.HazardFlags var6 = (AiPathfinder.LiveGridView.HazardFlags)var0.apply(var1.offset(var5[0], var5[1], var5[2]));
             if (var6 != null && var6.water()) {
@@ -7404,7 +7404,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean value(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
+      static boolean hasAdjacentLava(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
          for (int[] var5 : new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) {
             AiPathfinder.LiveGridView.HazardFlags var6 = (AiPathfinder.LiveGridView.HazardFlags)var0.apply(var1.offset(var5[0], var5[1], var5[2]));
             if (var6 != null && var6.lava()) {
@@ -7415,7 +7415,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static int putAt_I_Function_BlockPos(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
+      static int countFallingAbove(Function<BlockPos, AiPathfinder.LiveGridView.HazardFlags> var0, BlockPos var1) {
          int var2 = 0;
          BlockPos var3 = var1.above();
 
@@ -7432,15 +7432,15 @@ public final class AiPathfinder {
          return var2;
       }
 
-      static boolean putAt_Z_ClientLevel_BlockPos(ClientLevel var0, BlockPos var1) {
-         return putAt_Z_Function_BlockPos(var1x -> putAt_FileStore_TableCac_ClientLevel_BlockPos(var0, var1x), var1);
+      static boolean isSafeToDig(ClientLevel var0, BlockPos var1) {
+         return isSafeToDigFromHazards(var1x -> probeHazardFlags(var0, var1x), var1);
       }
 
-      public static boolean putAt_Z_Z(boolean var0, boolean var1, boolean var2, boolean var3) {
+      public static boolean isDangerousToBreak(boolean var0, boolean var1, boolean var2, boolean var3) {
          return var0 && !var3 && (var1 || var2);
       }
 
-      public static boolean putAt_Z_BlockGetter_BlockPos(BlockGetter var0, BlockPos var1) {
+      public static boolean isLitPortalFrame(BlockGetter var0, BlockPos var1) {
          try {
             for (Direction var5 : Direction.values()) {
                if (var0.getBlockState(var1.relative(var5)).is(Blocks.NETHER_PORTAL)) {
@@ -7454,12 +7454,12 @@ public final class AiPathfinder {
          }
       }
 
-      static boolean putAt_Z_ClientLevel(ClientLevel var0, BlockPos var1, Set<BlockPos> var2) {
+      static boolean isSafeToDig(ClientLevel var0, BlockPos var1, Set<BlockPos> var2) {
          return var2.isEmpty()
-            ? putAt_Z_ClientLevel_BlockPos(var0, var1)
-            : putAt_Z_Function_BlockPos(
+            ? isSafeToDig(var0, var1)
+            : isSafeToDigFromHazards(
                var2x -> {
-                  AiPathfinder.LiveGridView.HazardFlags var3 = putAt_FileStore_TableCac_ClientLevel_BlockPos(var0, var2x);
+                  AiPathfinder.LiveGridView.HazardFlags var3 = probeHazardFlags(var0, var2x);
                   return var3 != null && var3.water() && var2.contains(var2x)
                      ? new AiPathfinder.LiveGridView.HazardFlags(var3.falling(), var3.open(), var3.lava(), false)
                      : var3;
@@ -7468,7 +7468,7 @@ public final class AiPathfinder {
             );
       }
 
-      private static AiPathfinder.LiveGridView.HazardFlags putAt_FileStore_TableCac_ClientLevel_BlockPos(ClientLevel var0, BlockPos var1) {
+      private static AiPathfinder.LiveGridView.HazardFlags probeHazardFlags(ClientLevel var0, BlockPos var1) {
          if (!var0.isInsideBuildHeight(var1)) {
             return null;
          }
@@ -7486,24 +7486,24 @@ public final class AiPathfinder {
          );
       }
 
-      public static boolean chunkAt(BlockState var0) {
+      public static boolean isOreBlock(BlockState var0) {
          return var0.is(BlockTags.IRON_ORES)
             || var0.is(BlockTags.GOLD_ORES)
             || var0.is(BlockTags.COPPER_ORES)
             || BuiltInRegistries.BLOCK.getKey(var0.getBlock()).getPath().endsWith("_ore");
       }
 
-      static boolean putAt_Z_Z_Z(boolean var0, boolean var1) {
+      static boolean lacksRequiredTool(boolean var0, boolean var1) {
          return var0 && !var1;
       }
 
-      private static boolean putAt_Z_ItemStack_BlockState(ItemStack var0, BlockState var1) {
+      private static boolean isUsableCorrectTool(ItemStack var0, BlockState var1) {
          return var0 != null && !var0.isEmpty() && var0.isCorrectToolForDrops(var1) && AiItems.hasEnoughDurability(var0, 2);
       }
 
-      static boolean putAt_Z_BlockState_ItemStackArr(BlockState var0, ItemStack[] var1) {
+      static boolean hasCorrectToolInHotbar(BlockState var0, ItemStack[] var1) {
          for (ItemStack var5 : var1) {
-            if (putAt_Z_ItemStack_BlockState(var5, var0)) {
+            if (isUsableCorrectTool(var5, var0)) {
                return true;
             }
          }
@@ -7511,9 +7511,9 @@ public final class AiPathfinder {
          return false;
       }
 
-      public static boolean putAt_Z_Minecraft(Minecraft var0, BlockState var1, int var2) {
+      public static boolean hasCorrectToolInSlots(Minecraft var0, BlockState var1, int var2) {
          for (int var3 = 0; var3 < var2; var3++) {
-            if (putAt_Z_ItemStack_BlockState(var0.player.getInventory().getItem(var3), var1)) {
+            if (isUsableCorrectTool(var0.player.getInventory().getItem(var3), var1)) {
                return true;
             }
          }
@@ -7521,7 +7521,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static float putAt_F_Str_Z(String var0, boolean var1) {
+      static float fallDamageMultiplier(String var0, boolean var1) {
          if (var1) {
             return 0.0F;
          }
@@ -7546,11 +7546,11 @@ public final class AiPathfinder {
          return var10000;
       }
 
-      private static double putAt_D_Minecraft(Minecraft var0, BlockState var1, float var2, ItemStack[] var3) {
-         return putAt(var0, var1, var2, var3, MiningCost.Inner_DataUtil.of(var0));
+      private static double fastestBreakTicks(Minecraft var0, BlockState var1, float var2, ItemStack[] var3) {
+         return fastestBreakTicks(var0, var1, var2, var3, MiningCost.Inner_DataUtil.of(var0));
       }
 
-      static double putAt(Minecraft var0, BlockState var1, float var2, ItemStack[] var3, MiningCost.Inner_DataUtil var4) {
+      static double fastestBreakTicks(Minecraft var0, BlockState var1, float var2, ItemStack[] var3, MiningCost.Inner_DataUtil var4) {
          double var5 = MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4);
 
          for (ItemStack var10 : var3) {
@@ -7562,10 +7562,10 @@ public final class AiPathfinder {
          return var5;
       }
 
-      static double putAt(
+      static double fastestBreakTicks(
          Minecraft var0, BlockState var1, float var2, ItemStack[] var3, MiningCost.Inner_DataUtil var4, BiPredicate<BlockState, ItemStack> var5
       ) {
-         var4 = putAt_ByteWorker_CacheHe_ByteWorker_CacheHe(var4, var3, var1, var5);
+         var4 = adjustMiningEnvForAcceptedTool(var4, var3, var1, var5);
          boolean var6 = var1.requiresCorrectToolForDrops() && !var4.creative();
          double var7 = !var6 && var5.test(var1, ItemStack.EMPTY) ? MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4) : 1.0 / 0.0;
 
@@ -7578,7 +7578,7 @@ public final class AiPathfinder {
          return var7;
       }
 
-      static MiningCost.Inner_DataUtil putAt_ByteWorker_CacheHe_ByteWorker_CacheHe(
+      static MiningCost.Inner_DataUtil adjustMiningEnvForAcceptedTool(
          MiningCost.Inner_DataUtil var0, ItemStack[] var1, BlockState var2, BiPredicate<BlockState, ItemStack> var3
       ) {
          if (!var0.stonePick()) {
@@ -7655,48 +7655,48 @@ public final class AiPathfinder {
    }
 
    public static final class RouteBlacklist {
-      static final long putAt_J = 4000000000L;
-      static final long fill_J = 10000000000L;
-      private static final int flowState = 32;
-      private long readEx_J;
-      private static final long value_J = 30000000000L;
-      private static final double putAt_D = 64.0;
-      private final AiPathfinder.GridView putAt_FileStore_TextStor;
-      private final LongSupplier putAt_LongSupplier;
-      private final Map<Long, AiPathfinder.RouteBlacklist.BlacklistEntry> putAt_Map = new ConcurrentHashMap<>();
-      private final Set<Long> putAt_Set = this.putAt_Map.keySet();
-      private final Map<AiPathfinder.MoveKey, AiPathfinder.RouteBlacklist.BlacklistEntry> fill_Map = new HashMap<>();
-      private final AtomicInteger putAt_AtomicInteger = new AtomicInteger();
-      private volatile boolean putAt_Z;
-      private volatile AiPathfinder.RouteBlacklist.CachedSegment putAt_FileStore_TaskStat;
-      private volatile String putAt_Str;
-      private volatile AiPathfinder.SearchStats putAt_FileStore_RingBuff;
-      private volatile AiPathfinder.SearchProgress putAt_FileStore_EventBus;
-      private final boolean fill_Z;
-      private final double fill_D;
-      private final boolean readEx_Z;
-      private AiPathfinder.PathGoal putAt_FileStore_TokenCod = AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos_D(BlockPos.ZERO, 1.0);
-      private AiPathfinder.PathOptions putAt_FileStore_CacheHel = AiPathfinder.PathOptions.WALK_ONLY;
-      private Thread putAt_Thread;
-      private BlockPos putAt_BlockPos = BlockPos.ZERO;
-      private AiPathfinder.PathResult putAt_FileStore_StreamSt;
-      private AiPathfinder.PathResult fill_FileStore_StreamSt;
-      private AiPathfinder.PathResult readEx_FileStore_StreamSt;
-      private boolean value_Z;
-      private long prevEx_J;
-      private volatile long prev;
-      private volatile boolean prevEx_Z;
+      static final long INITIAL_BUDGET_NANOS = 4000000000L;
+      static final long EXTENDED_BUDGET_NANOS = 10000000000L;
+      private static final int SEGMENT_REPLAN_LOOKAHEAD = 32;
+      private long awaitTerrainRetryNanos;
+      private static final long BLACKLIST_TTL_NANOS = 30000000000L;
+      private static final double BLACKLIST_CLEAR_DIST_SQ = 64.0;
+      private final AiPathfinder.GridView grid;
+      private final LongSupplier nanoClock;
+      private final Map<Long, AiPathfinder.RouteBlacklist.BlacklistEntry> blacklistedCells = new ConcurrentHashMap<>();
+      private final Set<Long> blacklistedCellKeys = this.blacklistedCells.keySet();
+      private final Map<AiPathfinder.MoveKey, AiPathfinder.RouteBlacklist.BlacklistEntry> blacklistedMoves = new HashMap<>();
+      private final AtomicInteger generation = new AtomicInteger();
+      private volatile boolean closed;
+      private volatile AiPathfinder.RouteBlacklist.CachedSegment completedSegment;
+      private volatile String lastError;
+      private volatile AiPathfinder.SearchStats lastStats;
+      private volatile AiPathfinder.SearchProgress liveProgress;
+      private final boolean unlimitedBudget;
+      private final double overrideSpeed;
+      private final boolean worldRecordOptimize;
+      private AiPathfinder.PathGoal goal = AiPathfinder.PathGoal.near(BlockPos.ZERO, 1.0);
+      private AiPathfinder.PathOptions options = AiPathfinder.PathOptions.WALK_ONLY;
+      private Thread plannerThread;
+      private BlockPos activeOrigin = BlockPos.ZERO;
+      private AiPathfinder.PathResult currentPath;
+      private AiPathfinder.PathResult queuedNextPath;
+      private AiPathfinder.PathResult readyReplacementPath;
+      private boolean precomputingNext;
+      private long replanCooldownUntilNanos;
+      private volatile long searchStartedNanos;
+      private volatile boolean trimExtendedBudget;
 
-      public AiPathfinder.SearchProgress putAt_FileStore_EventBus() {
-         return this.putAt_FileStore_EventBus;
+      public AiPathfinder.SearchProgress liveProgress() {
+         return this.liveProgress;
       }
 
-      public AiPathfinder.SearchStats putAt_FileStore_RingBuff() {
-         return this.putAt_FileStore_RingBuff;
+      public AiPathfinder.SearchStats lastStats() {
+         return this.lastStats;
       }
 
-      String putAt_Str() {
-         return this.putAt_Str;
+      String lastError() {
+         return this.lastError;
       }
 
       public RouteBlacklist(AiPathfinder.GridView var1) {
@@ -7724,118 +7724,118 @@ public final class AiPathfinder {
       }
 
       private RouteBlacklist(AiPathfinder.GridView var1, LongSupplier var2, boolean var3, double var4, boolean var6) {
-         this.fill_Z = var3;
-         this.putAt_FileStore_TextStor = var1;
-         this.putAt_LongSupplier = var2;
-         this.fill_D = var4;
-         this.readEx_Z = var6;
+         this.unlimitedBudget = var3;
+         this.grid = var1;
+         this.nanoClock = var2;
+         this.overrideSpeed = var4;
+         this.worldRecordOptimize = var6;
       }
 
-      double putAt_D() {
-         return Double.isNaN(this.fill_D) ? this.putAt_FileStore_TextStor.movementSpeed() : this.fill_D;
+      double effectiveSpeed() {
+         return Double.isNaN(this.overrideSpeed) ? this.grid.movementSpeed() : this.overrideSpeed;
       }
 
-      public void putAt_V_BlockPos_2(BlockPos var1, AiPathfinder.PathGoal var2, AiPathfinder.PathOptions var3) {
-         this.putAt_Z = false;
-         this.putAt_FileStore_TokenCod = var2;
-         this.putAt_FileStore_CacheHel = var3;
-         this.putAt_FileStore_StreamSt = null;
-         this.fill_FileStore_StreamSt = null;
-         this.readEx_FileStore_StreamSt = null;
-         this.value_Z = false;
-         this.readEx(var1);
+      public void startSearch(BlockPos var1, AiPathfinder.PathGoal var2, AiPathfinder.PathOptions var3) {
+         this.closed = false;
+         this.goal = var2;
+         this.options = var3;
+         this.currentPath = null;
+         this.queuedNextPath = null;
+         this.readyReplacementPath = null;
+         this.precomputingNext = false;
+         this.launchSearch(var1);
       }
 
-      public void putAt(AiPathfinder.PathOptions var1) {
-         this.putAt_FileStore_CacheHel = var1;
+      public void updateOptions(AiPathfinder.PathOptions var1) {
+         this.options = var1;
       }
 
-      public synchronized void putAt(AiPathfinder.PathGoal var1) {
-         if (this.putAt_FileStore_TokenCod != var1) {
-            this.putAt_FileStore_TokenCod = var1;
-            if (this.putAt_FileStore_StreamSt == null) {
-               this.putAt_AtomicInteger.incrementAndGet();
-               this.putAt_FileStore_TaskStat = null;
-               this.readEx_FileStore_StreamSt = this.fill_FileStore_StreamSt = null;
-               this.value_Z = false;
-               if (this.putAt_Thread != null) {
-                  this.putAt_Thread.interrupt();
+      public synchronized void updateGoal(AiPathfinder.PathGoal var1) {
+         if (this.goal != var1) {
+            this.goal = var1;
+            if (this.currentPath == null) {
+               this.generation.incrementAndGet();
+               this.completedSegment = null;
+               this.readyReplacementPath = this.queuedNextPath = null;
+               this.precomputingNext = false;
+               if (this.plannerThread != null) {
+                  this.plannerThread.interrupt();
                }
             } else {
-               if (this.fill_FileStore_StreamSt != null) {
-                  BlockPos var2 = this.fill_FileStore_StreamSt.destination();
+               if (this.queuedNextPath != null) {
+                  BlockPos var2 = this.queuedNextPath.destination();
                   if (var2 == null || !var1.isInGoal(var2.getX(), var2.getY(), var2.getZ())) {
-                     this.fill_FileStore_StreamSt = null;
+                     this.queuedNextPath = null;
                   }
                }
 
-               if (this.value_Z) {
-                  this.putAt_AtomicInteger.incrementAndGet();
-                  this.putAt_FileStore_TaskStat = null;
-                  if (this.putAt_Thread != null) {
-                     this.putAt_Thread.interrupt();
+               if (this.precomputingNext) {
+                  this.generation.incrementAndGet();
+                  this.completedSegment = null;
+                  if (this.plannerThread != null) {
+                     this.plannerThread.interrupt();
                   }
 
-                  this.value_Z = false;
+                  this.precomputingNext = false;
                }
             }
          }
       }
 
-      public void putAt(BlockPos var1) {
-         this.fill_FileStore_StreamSt = null;
-         this.putAt_FileStore_StreamSt = null;
-         this.readEx_FileStore_StreamSt = null;
-         this.value_Z = false;
-         this.prevEx_J = System.nanoTime() + 200000000L;
-         this.readEx(var1);
+      public void replanFrom(BlockPos var1) {
+         this.queuedNextPath = null;
+         this.currentPath = null;
+         this.readyReplacementPath = null;
+         this.precomputingNext = false;
+         this.replanCooldownUntilNanos = System.nanoTime() + 200000000L;
+         this.launchSearch(var1);
       }
 
-      public void putAt_V_BlockPos_BlockPos(BlockPos var1, BlockPos var2) {
-         this.putAt_Map
+      public void blacklistCell(BlockPos var1, BlockPos var2) {
+         this.blacklistedCells
             .put(
                var1.asLong(),
-               new AiPathfinder.RouteBlacklist.BlacklistEntry(this.putAt_LongSupplier.getAsLong() + 30000000000L, var2.getX(), var2.getY(), var2.getZ())
+               new AiPathfinder.RouteBlacklist.BlacklistEntry(this.nanoClock.getAsLong() + 30000000000L, var2.getX(), var2.getY(), var2.getZ())
             );
       }
 
-      void putAt_V_FileStore_PacketHe_BlockPos(AiPathfinder.UiHelper var1, BlockPos var2) {
-         this.fill_Map
+      void blacklistMove(AiPathfinder.UiHelper var1, BlockPos var2) {
+         this.blacklistedMoves
             .put(
                AiPathfinder.MoveKey.of(var1),
-               new AiPathfinder.RouteBlacklist.BlacklistEntry(this.putAt_LongSupplier.getAsLong() + 30000000000L, var2.getX(), var2.getY(), var2.getZ())
+               new AiPathfinder.RouteBlacklist.BlacklistEntry(this.nanoClock.getAsLong() + 30000000000L, var2.getX(), var2.getY(), var2.getZ())
             );
       }
 
-      public int flowState() {
-         return this.putAt_Map.size();
+      public int blacklistedCellCount() {
+         return this.blacklistedCells.size();
       }
 
-      Set<Long> putAt_Set() {
-         return this.putAt_Set;
+      Set<Long> blacklistedCellKeys() {
+         return this.blacklistedCellKeys;
       }
 
-      public boolean putAt_Z() {
-         return this.readEx_FileStore_StreamSt == null && this.putAt_Thread != null && this.putAt_Thread.isAlive() || this.putAt_FileStore_TaskStat != null;
+      public boolean isPlanning() {
+         return this.readyReplacementPath == null && this.plannerThread != null && this.plannerThread.isAlive() || this.completedSegment != null;
       }
 
-      public boolean fill_Z() {
-         return this.value_Z && this.fill_FileStore_StreamSt == null;
+      public boolean isPrecomputingNext() {
+         return this.precomputingNext && this.queuedNextPath == null;
       }
 
-      public boolean putAt(long var1) {
-         if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView) {
-            return this.putAt_FileStore_TaskStat != null;
+      public boolean awaitInitialResult(long var1) {
+         if (this.grid instanceof AiPathfinder.LiveGridView) {
+            return this.completedSegment != null;
          }
 
-         if (System.nanoTime() - this.prev > var1) {
-            return this.putAt_FileStore_TaskStat != null;
+         if (System.nanoTime() - this.searchStartedNanos > var1) {
+            return this.completedSegment != null;
          }
 
          long var3 = System.nanoTime() + var1;
          synchronized (this) {
-            while (this.putAt_FileStore_TaskStat == null && this.putAt_Str == null && !this.putAt_Z) {
-               Thread var6 = this.putAt_Thread;
+            while (this.completedSegment == null && this.lastError == null && !this.closed) {
+               Thread var6 = this.plannerThread;
                if (var6 == null || !var6.isAlive()) {
                   break;
                }
@@ -7853,15 +7853,15 @@ public final class AiPathfinder {
                }
             }
 
-            return this.putAt_FileStore_TaskStat != null;
+            return this.completedSegment != null;
          }
       }
 
-      public boolean fill(long var1) {
+      public boolean awaitResultBlocking(long var1) {
          long var3 = System.nanoTime() + var1;
          synchronized (this) {
-            while (this.putAt_FileStore_TaskStat == null && this.putAt_Str == null && !this.putAt_Z) {
-               Thread var6 = this.putAt_Thread;
+            while (this.completedSegment == null && this.lastError == null && !this.closed) {
+               Thread var6 = this.plannerThread;
                if (var6 == null || !var6.isAlive()) {
                   break;
                }
@@ -7879,65 +7879,65 @@ public final class AiPathfinder {
                }
             }
 
-            return this.putAt_FileStore_TaskStat != null || this.putAt_Str != null || this.putAt_Z || this.putAt_Thread == null || !this.putAt_Thread.isAlive();
+            return this.completedSegment != null || this.lastError != null || this.closed || this.plannerThread == null || !this.plannerThread.isAlive();
          }
       }
 
-      public AiPathfinder.PathResult putAt_FileStore_StreamSt() {
-         AiPathfinder.PathResult var1 = this.readEx_FileStore_StreamSt;
-         this.readEx_FileStore_StreamSt = null;
+      public AiPathfinder.PathResult pollReplacementPath() {
+         AiPathfinder.PathResult var1 = this.readyReplacementPath;
+         this.readyReplacementPath = null;
          return var1;
       }
 
-      public void putAt(AiPathfinder.PathResult var1) {
-         this.putAt_FileStore_StreamSt = var1;
-         if (this.fill_FileStore_StreamSt == var1) {
-            this.fill_FileStore_StreamSt = null;
+      public void setCurrentPath(AiPathfinder.PathResult var1) {
+         this.currentPath = var1;
+         if (this.queuedNextPath == var1) {
+            this.queuedNextPath = null;
          }
       }
 
-      void fill(AiPathfinder.PathResult var1) {
-         this.putAt_V();
-         this.putAt_Z = false;
-         this.value_Z = false;
-         this.putAt(var1);
+      void installPathAndStop(AiPathfinder.PathResult var1) {
+         this.close();
+         this.closed = false;
+         this.precomputingNext = false;
+         this.setCurrentPath(var1);
       }
 
-      public AiPathfinder.PathResult fill_FileStore_StreamSt() {
-         return this.fill_FileStore_StreamSt;
+      public AiPathfinder.PathResult peekQueuedNextPath() {
+         return this.queuedNextPath;
       }
 
-      public AiPathfinder.PathResult readEx() {
-         AiPathfinder.PathResult var1 = this.fill_FileStore_StreamSt;
-         this.fill_FileStore_StreamSt = null;
+      public AiPathfinder.PathResult pollQueuedNextPath() {
+         AiPathfinder.PathResult var1 = this.queuedNextPath;
+         this.queuedNextPath = null;
          return var1;
       }
 
-      public void putAt(AiPathfinder.SearchTask var1) {
-         this.fill(var1.putAt_BlockPos());
-         AiPathfinder.RouteBlacklist.CachedSegment var2 = this.putAt_FileStore_TaskStat;
+      public void tickDriver(AiPathfinder.SearchTask var1) {
+         this.pruneExpiredBlacklists(var1.putAt_BlockPos());
+         AiPathfinder.RouteBlacklist.CachedSegment var2 = this.completedSegment;
          if (var2 != null) {
             if (Boolean.getBoolean("autism.ai.parkour.traceCandidates")) {
-               AiNavDebug.init(
+               AiNavDebug.log(
                   "driver result gen="
                      + var2.generation()
                      + " currentGen="
-                     + this.putAt_AtomicInteger.get()
+                     + this.generation.get()
                      + " from="
                      + var2.from()
                      + " current="
-                     + (this.putAt_FileStore_StreamSt == null ? null : this.putAt_FileStore_StreamSt.destination())
+                     + (this.currentPath == null ? null : this.currentPath.destination())
                );
             }
 
-            if (var2.generation() == this.putAt_AtomicInteger.get()) {
-               this.putAt_FileStore_TaskStat = null;
+            if (var2.generation() == this.generation.get()) {
+               this.completedSegment = null;
                if (Boolean.getBoolean("autism.ai.parkour.traceCandidates")) {
-                  AiNavDebug.init(
+                  AiNavDebug.log(
                      "driver plan done from="
                         + var2.from()
                         + " current="
-                        + (this.putAt_FileStore_StreamSt == null ? null : this.putAt_FileStore_StreamSt.destination())
+                        + (this.currentPath == null ? null : this.currentPath.destination())
                         + " moves="
                         + var2.segment().movements().size()
                         + " segment="
@@ -7945,133 +7945,133 @@ public final class AiPathfinder {
                   );
                }
 
-               if (this.putAt_FileStore_StreamSt == null) {
-                  this.readEx_FileStore_StreamSt = var2.segment();
+               if (this.currentPath == null) {
+                  this.readyReplacementPath = var2.segment();
                } else {
-                  this.value_Z = false;
+                  this.precomputingNext = false;
                   var var3 = var2.segment().movements();
-                  if (var2.from().equals(this.putAt_FileStore_StreamSt.destination())
-                     && (var3.isEmpty() || ((AiPathfinder.UiHelper)var3.get(0)).from().equals(this.putAt_FileStore_StreamSt.destination()))) {
-                     this.fill_FileStore_StreamSt = var2.segment();
-                     if (this.fill_FileStore_StreamSt.awaitingTerrain()) {
-                        this.readEx_J = System.nanoTime() + 250000000L;
+                  if (var2.from().equals(this.currentPath.destination())
+                     && (var3.isEmpty() || ((AiPathfinder.UiHelper)var3.get(0)).from().equals(this.currentPath.destination()))) {
+                     this.queuedNextPath = var2.segment();
+                     if (this.queuedNextPath.awaitingTerrain()) {
+                        this.awaitTerrainRetryNanos = System.nanoTime() + 250000000L;
                      }
                   }
                }
             } else {
-               this.putAt_FileStore_TaskStat = null;
+               this.completedSegment = null;
             }
          }
 
-         if (this.fill_FileStore_StreamSt != null && this.fill_FileStore_StreamSt.awaitingTerrain() && System.nanoTime() >= this.readEx_J) {
-            this.fill_FileStore_StreamSt = null;
+         if (this.queuedNextPath != null && this.queuedNextPath.awaitingTerrain() && System.nanoTime() >= this.awaitTerrainRetryNanos) {
+            this.queuedNextPath = null;
          }
 
-         if (this.putAt_FileStore_StreamSt != null && this.fill_FileStore_StreamSt == null && !this.value_Z && var1.putAt_Z()) {
-            if (System.nanoTime() >= this.prevEx_J) {
-               BlockPos var4 = this.putAt_FileStore_StreamSt.destination();
-               if (var4 != null && !this.putAt_FileStore_TokenCod.putAt_Z_I(var4.getX(), var4.getY(), var4.getZ(), this.putAt_FileStore_TextStor)) {
-                  this.value_Z = true;
-                  this.putAt(
-                     var4, var1.flowTemp(), true, AiPathfinder.putAt_FileStore_TextStor_FileStore_TextStor_List(this.putAt_FileStore_TextStor, var1.putAt_List())
+         if (this.currentPath != null && this.queuedNextPath == null && !this.precomputingNext && var1.putAt_Z()) {
+            if (System.nanoTime() >= this.replanCooldownUntilNanos) {
+               BlockPos var4 = this.currentPath.destination();
+               if (var4 != null && !this.goal.putAt_Z_I(var4.getX(), var4.getY(), var4.getZ(), this.grid)) {
+                  this.precomputingNext = true;
+                  this.launchSearchOnGrid(
+                     var4, var1.flowTemp(), true, AiPathfinder.withSimulatedEdits(this.grid, var1.putAt_List())
                   );
                }
             }
          }
       }
 
-      private void fill(BlockPos var1) {
-         if (!this.putAt_Map.isEmpty() || !this.fill_Map.isEmpty()) {
-            long var2 = this.putAt_LongSupplier.getAsLong();
-            this.putAt_Map.values().removeIf(var3 -> putAt_Z_FileStore_TaskStat(var3, var1, var2));
-            this.fill_Map.values().removeIf(var3 -> putAt_Z_FileStore_TaskStat(var3, var1, var2));
+      private void pruneExpiredBlacklists(BlockPos var1) {
+         if (!this.blacklistedCells.isEmpty() || !this.blacklistedMoves.isEmpty()) {
+            long var2 = this.nanoClock.getAsLong();
+            this.blacklistedCells.values().removeIf(var3 -> isBlacklistEntryExpired(var3, var1, var2));
+            this.blacklistedMoves.values().removeIf(var3 -> isBlacklistEntryExpired(var3, var1, var2));
          }
       }
 
-      private static boolean putAt_Z_FileStore_TaskStat(AiPathfinder.RouteBlacklist.BlacklistEntry var0, BlockPos var1, long var2) {
+      private static boolean isBlacklistEntryExpired(AiPathfinder.RouteBlacklist.BlacklistEntry var0, BlockPos var1, long var2) {
          double var4 = var1.getX() - var0.x();
          double var6 = var1.getY() - var0.y();
          double var8 = var1.getZ() - var0.z();
          return var2 >= var0.expiresAt() || var4 * var4 + var6 * var6 + var8 * var8 >= 64.0;
       }
 
-      public BlockPos putAt_BlockPos() {
-         return this.putAt_BlockPos;
+      public BlockPos activeOrigin() {
+         return this.activeOrigin;
       }
 
-      public synchronized void putAt_V() {
-         this.putAt_Z = true;
-         this.putAt_FileStore_EventBus = null;
-         this.putAt_AtomicInteger.incrementAndGet();
-         this.putAt_FileStore_TaskStat = null;
-         this.putAt_Str = null;
-         this.readEx_FileStore_StreamSt = this.fill_FileStore_StreamSt = this.putAt_FileStore_StreamSt = null;
-         Thread var1 = this.putAt_Thread;
+      public synchronized void close() {
+         this.closed = true;
+         this.liveProgress = null;
+         this.generation.incrementAndGet();
+         this.completedSegment = null;
+         this.lastError = null;
+         this.readyReplacementPath = this.queuedNextPath = this.currentPath = null;
+         Thread var1 = this.plannerThread;
          if (var1 != null) {
             var1.interrupt();
          }
       }
 
-      private void readEx(BlockPos var1) {
-         this.putAt_V_BlockPos(var1, 0, false);
+      private void launchSearch(BlockPos var1) {
+         this.launchSearch(var1, 0, false);
       }
 
-      private synchronized void putAt_V_BlockPos(BlockPos var1, int var2, boolean var3) {
-         this.putAt(var1, var2, var3, this.putAt_FileStore_TextStor);
+      private synchronized void launchSearch(BlockPos var1, int var2, boolean var3) {
+         this.launchSearchOnGrid(var1, var2, var3, this.grid);
       }
 
-      public void fill_V() {
-         this.prevEx_Z = true;
+      public void requestBudgetTrim() {
+         this.trimExtendedBudget = true;
       }
 
-      private synchronized void putAt(BlockPos var1, int var2, boolean var3, AiPathfinder.GridView var4) {
-         this.prevEx_Z = false;
-         if (this.putAt_Thread != null) {
-            this.putAt_Thread.interrupt();
+      private synchronized void launchSearchOnGrid(BlockPos var1, int var2, boolean var3, AiPathfinder.GridView var4) {
+         this.trimExtendedBudget = false;
+         if (this.plannerThread != null) {
+            this.plannerThread.interrupt();
          }
 
-         this.prev = System.nanoTime();
-         int var5 = this.putAt_AtomicInteger.incrementAndGet();
-         this.putAt_FileStore_TaskStat = null;
-         this.putAt_Str = null;
-         this.putAt_BlockPos = var1.immutable();
-         AiPathfinder.PathGoal var6 = this.putAt_FileStore_TokenCod;
-         AiPathfinder.PathOptions var7 = this.putAt_FileStore_CacheHel
-            .withConstructionBlocks(Math.max(0, this.putAt_FileStore_CacheHel.constructionBlocks() - var2));
-         var var8 = Set.copyOf(this.putAt_Set);
+         this.searchStartedNanos = System.nanoTime();
+         int var5 = this.generation.incrementAndGet();
+         this.completedSegment = null;
+         this.lastError = null;
+         this.activeOrigin = var1.immutable();
+         AiPathfinder.PathGoal var6 = this.goal;
+         AiPathfinder.PathOptions var7 = this.options
+            .withConstructionBlocks(Math.max(0, this.options.constructionBlocks() - var2));
+         var var8 = Set.copyOf(this.blacklistedCellKeys);
          Set var9;
-         if (var3 && this.putAt_FileStore_StreamSt != null && !this.putAt_FileStore_StreamSt.movements().isEmpty()) {
-            var9 = new HashSet<>(this.fill_Map.keySet());
-            AiPathfinder.UiHelper var10 = this.putAt_FileStore_StreamSt.movements().getLast();
+         if (var3 && this.currentPath != null && !this.currentPath.movements().isEmpty()) {
+            var9 = new HashSet<>(this.blacklistedMoves.keySet());
+            AiPathfinder.UiHelper var10 = this.currentPath.movements().getLast();
             var9.add(new AiPathfinder.MoveKey(var10.type(), var10.to().asLong(), var10.from().asLong()));
          } else {
-            var9 = Set.copyOf(this.fill_Map.keySet());
+            var9 = Set.copyOf(this.blacklistedMoves.keySet());
          }
 
-         double var13 = this.putAt_D();
+         double var13 = this.effectiveSpeed();
          Thread var12 = Thread.ofVirtual().unstarted(() -> {
             try {
-               this.putAt(var5, var1.immutable(), var6, var7, var8, var9, var3, var4, var13);
+               this.runSearchLoop(var5, var1.immutable(), var6, var7, var8, var9, var3, var4, var13);
             } catch (RuntimeException var15) {
                RuntimeException var11 = var15;
                synchronized (this) {
-                  if (this.putAt_Z || this.putAt_AtomicInteger.get() != var5) {
+                  if (this.closed || this.generation.get() != var5) {
                      return;
                   }
 
-                  this.putAt_Str = "Route planner failed (" + var11.getClass().getSimpleName() + ")";
-                  this.putAt_FileStore_EventBus = null;
+                  this.lastError = "Route planner failed (" + var11.getClass().getSimpleName() + ")";
+                  this.liveProgress = null;
                   this.notifyAll();
                }
 
                AutismClientAddon.LOG.error("[AI] Route planner failed from {}", var1.toShortString(), var15);
             }
          });
-         this.putAt_Thread = var12;
+         this.plannerThread = var12;
          var12.start();
       }
 
-      private void putAt(
+      private void runSearchLoop(
          int var1,
          BlockPos var2,
          AiPathfinder.PathGoal var3,
@@ -8085,25 +8085,25 @@ public final class AiPathfinder {
          long var11 = System.nanoTime();
          long var13 = 0L;
          long var15 = 0L;
-         long var17 = this.fill_Z ? 9223372036854775807L : var11 + (var7 ? 10000000000L : 4000000000L);
-         boolean var19 = this.fill_Z && var4.allowParkour() && var4.strategy() == AiPathfinder.RouteStrategy.FASTEST;
+         long var17 = this.unlimitedBudget ? 9223372036854775807L : var11 + (var7 ? 10000000000L : 4000000000L);
+         boolean var19 = this.unlimitedBudget && var4.allowParkour() && var4.strategy() == AiPathfinder.RouteStrategy.FASTEST;
          boolean var20 = var19 && !var4.allowDig() && !var4.allowBridge() && !var4.allowPillar();
          BlockPos var21 = var3.putAt_BlockPos();
          int var22 = var21 == null ? 0 : var21.getY() - var2.getY();
          boolean var23 = var20
             && var21 != null
-            && (var22 >= 16 || var22 <= -16 && !var4.fallPolicy().putAt_Z())
+            && (var22 >= 16 || var22 <= -16 && !var4.fallPolicy().allowsExtendedDrop())
             && Math.hypot(var2.getX() - var21.getX(), var2.getZ() - var21.getZ()) <= 32.0;
          if (var23) {
             var20 = false;
          }
 
          boolean var24 = var23;
-         boolean var25 = var20 && var4.fallPolicy().putAt_Z() && var21 != null && var2.distSqr(var21) >= 1024.0;
+         boolean var25 = var20 && var4.fallPolicy().allowsExtendedDrop() && var21 != null && var2.distSqr(var21) >= 1024.0;
          boolean var26 = var25 && var9 <= 0.100001;
          boolean var27 = var26;
-         boolean var28 = var20 && var22 <= -16 && var4.fallPolicy().putAt_Z() && Math.hypot(var2.getX() - var21.getX(), var2.getZ() - var21.getZ()) <= 32.0;
-         boolean var29 = var25 && putAt_Z_BlockPos_BlockPos(var2, var21);
+         boolean var28 = var20 && var22 <= -16 && var4.fallPolicy().allowsExtendedDrop() && Math.hypot(var2.getX() - var21.getX(), var2.getZ() - var21.getZ()) <= 32.0;
+         boolean var29 = var25 && isHighDropLongRoute(var2, var21);
          boolean var30 = var29;
          long var31 = var11;
          AiPathfinder.PathResult var33 = null;
@@ -8115,59 +8115,59 @@ public final class AiPathfinder {
          boolean var39 = false;
          boolean var40 = false;
 
-         while (!this.putAt_Z && this.putAt_AtomicInteger.get() == var1) {
+         while (!this.closed && this.generation.get() == var1) {
             long var41 = System.nanoTime();
-            long var43 = this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var45 ? var45.fill_J() : this.putAt_FileStore_TextStor.putAt_J();
-            AiPathfinder.SearchSession var60 = AiPathfinder.SearchSession.putAt(
-               var8, var2, var3, var19 ? var4.withoutConstruction() : var4, var5, var19, this.fill_Z, var9
+            long var43 = this.grid instanceof AiPathfinder.LiveGridView var45 ? var45.changeVersion() : this.grid.putAt_J();
+            AiPathfinder.SearchSession var60 = AiPathfinder.SearchSession.createProofSession(
+               var8, var2, var3, var19 ? var4.withoutConstruction() : var4, var5, var19, this.unlimitedBudget, var9
             );
-            var60.tick_Z = this.fill_Z;
-            var60.putAt_Set = var6;
-            if ((var29 || var28) && !var60.state_Z) {
-               var60.fill_BlockPos = var21;
-               var60.prev_Z = var30;
+            var60.ignoreGlobalBlacklist = this.unlimitedBudget;
+            var60.blacklistedMoves = var6;
+            if ((var29 || var28) && !var60.destinationUnknown) {
+               var60.corridorTarget = var21;
+               var60.slopedCorridorFloor = var30;
             }
 
-            var60.putAt_FileStore_IoHelper.chunkAt_Z = var27 && !var60.state_Z;
-            var60.putAt_FileStore_IoHelper.state_Z = var20 && !var19 && !var60.state_Z;
-            var60.putAt_FileStore_IoHelper.fill_Z = var24 && !var19 && !var60.state_Z;
-            var60.putAt_FileStore_IoHelper.closeOf_Z = var28 || var60.prev_Z || var25 && var60.putAt_FileStore_IoHelper.state_Z;
+            var60.cachedGrid.quickJumpMode = var27 && !var60.destinationUnknown;
+            var60.cachedGrid.reducedJumpMode = var20 && !var19 && !var60.destinationUnknown;
+            var60.cachedGrid.allowManeuverShortcuts = var24 && !var19 && !var60.destinationUnknown;
+            var60.cachedGrid.useDropJumpOffsets = var28 || var60.slopedCorridorFloor || var25 && var60.cachedGrid.reducedJumpMode;
             if (var19 && var23 && var22 >= 16) {
-               var60.putAt_DataCodec.init(1.45);
+               var60.openSet.init(1.45);
             }
 
             if (var19
-               && !var60.state_Z
+               && !var60.destinationUnknown
                && !var23
                && !var28
                && var21 != null
-               && var4.fallPolicy().putAt_Z()
+               && var4.fallPolicy().allowsExtendedDrop()
                && Math.abs(var22) <= 12
                && var2.distSqr(var21) <= 4096.0
                && var9 > 0.100001) {
-               var60.putAt_DataCodec.init(1.0);
+               var60.openSet.init(1.0);
             }
 
-            if (var60.putAt_FileStore_IoHelper.fill_Z) {
-               var60.putAt_DataCodec.init(1.55);
+            if (var60.cachedGrid.allowManeuverShortcuts) {
+               var60.openSet.init(1.55);
             }
 
             if (var35 > 0) {
-               var60.pollAt_Z = true;
-               var60.pollOf_Z = var35 == 1;
+               var60.worldRecordMode = true;
+               var60.trackHeadingState = var35 == 1;
                if (var35 == 1) {
-                  var60.putAt_FileStore_HashPool = AiPathfinder.PathBounds.around(var34);
+                  var60.searchBounds = AiPathfinder.PathBounds.around(var34);
                }
 
-               var60.putAt_FileStore_IoHelper.putAt_Z = var35 == 2;
-               var60.putAt_DataCodec.init(var35 == 1 ? 1.55 : 2.05);
-               var60.putAt_FileStore_IoHelper.closeOf_Z = false;
-               var60.putAt_FileStore_IoHelper.chunkAt_Z = false;
-               var60.putAt_FileStore_IoHelper.fill_Z = false;
+               var60.cachedGrid.requireJumpRunup = var35 == 2;
+               var60.openSet.init(var35 == 1 ? 1.55 : 2.05);
+               var60.cachedGrid.useDropJumpOffsets = false;
+               var60.cachedGrid.quickJumpMode = false;
+               var60.cachedGrid.allowManeuverShortcuts = false;
             }
 
-            if (this.fill_Z && (!var19 || var40) && var60.fill_BlockPos == null) {
-               var60.pollAt_I = var60.pollOf_I = 2147483647;
+            if (this.unlimitedBudget && (!var19 || var40) && var60.corridorTarget == null) {
+               var60.horizRadius = var60.vertRadius = 2147483647;
             }
 
             boolean var61 = false;
@@ -8175,15 +8175,15 @@ public final class AiPathfinder {
             long var48 = var11;
 
             while (
-               !this.putAt_Z
-                  && this.putAt_AtomicInteger.get() == var1
+               !this.closed
+                  && this.generation.get() == var1
                   && (var35 == 0 || System.nanoTime() - var41 < 8000000000L)
-                  && System.nanoTime() < (!this.fill_Z && var7 && this.prevEx_Z ? Math.min(var17, var11 + 4000000000L) : var17)
-                  && !(var61 = var60.putAt_Z_I(16))
+                  && System.nanoTime() < (!this.unlimitedBudget && var7 && this.trimExtendedBudget ? Math.min(var17, var11 + 4000000000L) : var17)
+                  && !(var61 = var60.step(16))
             ) {
                long var50 = System.nanoTime();
-               if (this.fill_Z && var60.state_Z && !var39 && var50 >= var48) {
-                  var47 = putAt_Z_FileStore_TextStor_BlockPos(var8, var21);
+               if (this.unlimitedBudget && var60.destinationUnknown && !var39 && var50 >= var48) {
+                  var47 = isCellLoadedLive(var8, var21);
                   if (var47) {
                      break;
                   }
@@ -8191,10 +8191,10 @@ public final class AiPathfinder {
                   var48 = var50 + 250000000L;
                }
 
-               if (this.fill_Z && !var7 && var50 >= var31) {
+               if (this.unlimitedBudget && !var7 && var50 >= var31) {
                   synchronized (this) {
-                     if (this.putAt_AtomicInteger.get() == var1) {
-                        this.putAt_FileStore_EventBus = new AiPathfinder.SearchProgress(var37 + var60.flowState(), var60.putAt_List());
+                     if (this.generation.get() == var1) {
+                        this.liveProgress = new AiPathfinder.SearchProgress(var37 + var60.expandedCount(), var60.currentBestTrail());
                      }
                   }
 
@@ -8203,12 +8203,12 @@ public final class AiPathfinder {
             }
 
             if (!var61) {
-               var60.putAt_V();
+               var60.finish();
             }
 
-            var33 = var60.putAt_FileStore_StreamSt();
-            if (AiNavDebug.init_Z() && this.fill_Z) {
-               AiNavDebug.init(
+            var33 = var60.result();
+            if (AiNavDebug.isEnabled() && this.unlimitedBudget) {
+               AiNavDebug.log(
                   "route round "
                      + (var36 + 1)
                      + ": "
@@ -8216,46 +8216,46 @@ public final class AiPathfinder {
                      + " ms, ordinary="
                      + var19
                      + ", quick="
-                     + var60.putAt_FileStore_IoHelper.chunkAt_Z
+                     + var60.cachedGrid.quickJumpMode
                      + ", reduced="
-                     + var60.putAt_FileStore_IoHelper.state_Z
+                     + var60.cachedGrid.reducedJumpMode
                      + ", expanded="
-                     + var60.flowState()
+                     + var60.expandedCount()
                      + ", jump solves="
-                     + var60.flowTemp()
+                     + var60.jumpSolveCount()
                      + ", cache hits="
-                     + var60.putAt_FileStore_IoHelper.value_I
+                     + var60.cachedGrid.jumpCacheHits
                      + ", reached="
                      + var33.reachesGoal()
                );
             }
 
             var36++;
-            var13 += var60.fill_J();
-            var15 += var60.readEx();
-            var37 += var60.flowState();
-            var38 = Math.max(var38, var60.value());
-            if (this.putAt_Z || this.putAt_AtomicInteger.get() != var1) {
+            var13 += var60.blockQueryCount();
+            var15 += var60.generatedCount();
+            var37 += var60.expandedCount();
+            var38 = Math.max(var38, var60.peakOpenSize());
+            if (this.closed || this.generation.get() != var1) {
                return;
             }
 
-            if (this.fill_Z && var60.state_Z && !var39 && (var47 || putAt_Z_FileStore_TextStor_BlockPos(var8, var21))) {
+            if (this.unlimitedBudget && var60.destinationUnknown && !var39 && (var47 || isCellLoadedLive(var8, var21))) {
                var39 = true;
                continue;
             }
 
-            if (!this.readEx_Z || var7 || var60.state_Z || !var33.reachesGoal() && var34 == null) {
-               if ((var60.fill_BlockPos != null || var19 || var60.putAt_FileStore_IoHelper.state_Z || var60.putAt_FileStore_IoHelper.fill_Z)
+            if (!this.worldRecordOptimize || var7 || var60.destinationUnknown || !var33.reachesGoal() && var34 == null) {
+               if ((var60.corridorTarget != null || var19 || var60.cachedGrid.reducedJumpMode || var60.cachedGrid.allowManeuverShortcuts)
                   && !var33.reachesGoal()
                   && !var33.awaitingTerrain()
                   && var33.movements().isEmpty()
                   && !var33.hitPending()) {
-                  if (var60.fill_BlockPos != null) {
+                  if (var60.corridorTarget != null) {
                      if (var28) {
                         var28 = false;
-                     } else if (var60.prev_Z) {
+                     } else if (var60.slopedCorridorFloor) {
                         var30 = false;
-                     } else if (var60.putAt_FileStore_IoHelper.chunkAt_Z) {
+                     } else if (var60.cachedGrid.quickJumpMode) {
                         var27 = false;
                      } else if (var19) {
                         var19 = false;
@@ -8267,18 +8267,18 @@ public final class AiPathfinder {
                      continue;
                   }
 
-                  if (var19 && var60.closeOf_Z && !var40) {
+                  if (var19 && var60.skippedBlacklistedMove && !var40) {
                      var40 = true;
                      continue;
                   }
 
-                  if (var60.putAt_FileStore_IoHelper.chunkAt_Z) {
+                  if (var60.cachedGrid.quickJumpMode) {
                      var27 = false;
                   } else if (var19) {
                      var19 = false;
-                  } else if (var60.putAt_FileStore_IoHelper.closeOf_Z) {
+                  } else if (var60.cachedGrid.useDropJumpOffsets) {
                      var25 = false;
-                  } else if (var60.putAt_FileStore_IoHelper.state_Z) {
+                  } else if (var60.cachedGrid.reducedJumpMode) {
                      var20 = false;
                   } else {
                      var24 = false;
@@ -8286,14 +8286,14 @@ public final class AiPathfinder {
                   continue;
                }
 
-               if (!this.fill_Z && var33.exhausted() && !var33.hitPending() && !var33.reachesGoal() && System.nanoTime() < var17) {
+               if (!this.unlimitedBudget && var33.exhausted() && !var33.hitPending() && !var33.reachesGoal() && System.nanoTime() < var17) {
                   continue;
                }
 
                if (var33.hitPending() && !var33.reachesGoal() && !var33.awaitingTerrain() && var33.movements().isEmpty() && System.nanoTime() < var17) {
                   try {
-                     if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var62) {
-                        var62.putAt_V_J_J(var43, var17);
+                     if (this.grid instanceof AiPathfinder.LiveGridView var62) {
+                        var62.awaitChangeVersion(var43, var17);
                         continue;
                      }
                   } catch (InterruptedException var56) {
@@ -8304,20 +8304,20 @@ public final class AiPathfinder {
             }
 
             if (var33.reachesGoal()) {
-               var33 = AiPathfinder.putAt(var33, var8, var4, var9, var5, var6);
+               var33 = AiPathfinder.optimizeWithShortcutJumps(var33, var8, var4, var9, var5, var6);
             }
 
-            if (var33.reachesGoal() && (var34 == null || AiPathfinder.putAt(var33) < AiPathfinder.putAt(var34) - 0.5)) {
+            if (var33.reachesGoal() && (var34 == null || AiPathfinder.scorePathDuration(var33) < AiPathfinder.scorePathDuration(var34) - 0.5)) {
                var34 = var33;
             }
 
-            AiNavDebug.init(
+            AiNavDebug.log(
                "Parkour WR pass "
                   + (var35 + 1)
                   + " from "
                   + var2.toShortString()
                   + ": "
-                  + (var33.reachesGoal() ? String.format(Locale.ROOT, "%.1f ticks", AiPathfinder.putAt(var33)) : "no faster proof")
+                  + (var33.reachesGoal() ? String.format(Locale.ROOT, "%.1f ticks", AiPathfinder.scorePathDuration(var33)) : "no faster proof")
             );
             if (var35 < 2 && var34.movements().size() > 2) {
                var35++;
@@ -8329,22 +8329,22 @@ public final class AiPathfinder {
                continue;
             }
 
-            var33 = AiPathfinder.putAt(var34, var8, var4, var9);
+            var33 = AiPathfinder.optimizeWithPaceJumps(var34, var8, var4, var9);
             break;
          }
 
          synchronized (this) {
-            if (!this.putAt_Z && this.putAt_AtomicInteger.get() == var1 && var33 != null) {
-               this.putAt_FileStore_RingBuff = new AiPathfinder.SearchStats(System.nanoTime() - var11, var36, var37, var15, var13, var38);
-               this.putAt_FileStore_EventBus = null;
-               this.putAt_FileStore_TaskStat = new AiPathfinder.RouteBlacklist.CachedSegment(var1, var2, var33);
+            if (!this.closed && this.generation.get() == var1 && var33 != null) {
+               this.lastStats = new AiPathfinder.SearchStats(System.nanoTime() - var11, var36, var37, var15, var13, var38);
+               this.liveProgress = null;
+               this.completedSegment = new AiPathfinder.RouteBlacklist.CachedSegment(var1, var2, var33);
             }
 
             this.notifyAll();
          }
 
          long var58 = (System.nanoTime() - var11) / 1000000L;
-         if (var33 != null && (var58 >= 400L && !var7 || AiNavDebug.init_Z())) {
+         if (var33 != null && (var58 >= 400L && !var7 || AiNavDebug.isEnabled())) {
             String var59 = String.format(
                Locale.ROOT,
                "plan%s from %s: %d ms, %d expanded, %d rounds, %s, %d moves%s",
@@ -8360,16 +8360,16 @@ public final class AiPathfinder {
             if (var58 >= 400L && !var7) {
                AutismClientAddon.LOG.info("[AI] slow " + var59);
             } else {
-               AiNavDebug.init(var59);
+               AiNavDebug.log(var59);
             }
          }
       }
 
-      private static boolean putAt_Z_BlockPos_BlockPos(BlockPos var0, BlockPos var1) {
+      private static boolean isHighDropLongRoute(BlockPos var0, BlockPos var1) {
          return var0.getY() - var1.getY() >= 12 && Math.hypot(var0.getX() - var1.getX(), var0.getZ() - var1.getZ()) >= 32.0;
       }
 
-      private static boolean putAt_Z_FileStore_TextStor_BlockPos(AiPathfinder.GridView var0, BlockPos var1) {
+      private static boolean isCellLoadedLive(AiPathfinder.GridView var0, BlockPos var1) {
          AiPathfinder.CellInfo var2 = var0.probe(var1.getX(), var1.getY(), var1.getZ());
          return var2 != null && var2.loaded() && !var2.cached();
       }
@@ -8382,9 +8382,9 @@ public final class AiPathfinder {
    }
 
    public interface ThreatField {
-      AiPathfinder.ThreatField value = (var0, var1, var2) -> 0.0;
-      AiPathfinder.ThreatField write = value;
-      static AiPathfinder.ThreatField init(List<BlockPos> mobs) { return putAt(mobs); }
+      AiPathfinder.ThreatField NONE = (var0, var1, var2) -> 0.0;
+      AiPathfinder.ThreatField NONE_COMPAT = NONE;
+      static AiPathfinder.ThreatField fromMobsCompat(List<BlockPos> mobs) { return fromMobs(mobs); }
       default double init(int x, int y, int z) { return this.putAt(x, y, z); }
       default double init(int fx, int fy, int fz, int tx, int ty, int tz) { return this.putAt(fx, fy, fz, tx, ty, tz); }
 
@@ -8398,9 +8398,9 @@ public final class AiPathfinder {
          return 0.0;
       }
 
-      static AiPathfinder.ThreatField putAt(List<BlockPos> var0) {
+      static AiPathfinder.ThreatField fromMobs(List<BlockPos> var0) {
          var var1 = List.copyOf(var0);
-         return var1.isEmpty() ? value : (var1x, var2, var3) -> {
+         return var1.isEmpty() ? NONE : (var1x, var2, var3) -> {
             double var4 = 1.7976931348623157E308;
 
             for (BlockPos var7 : var1) {
@@ -8485,8 +8485,8 @@ public final class AiPathfinder {
       default boolean write(BlockPos cell) { return false; }
       default Set<AiPathfinder.MoveType> init_Set() { return Set.of(); }
       default BlockPos init_BlockPos() { return null; }
-      static AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos_D(BlockPos target, double radius) {
-         return putAt_FileStore_TokenCod_BlockPos_D(target, radius);
+      static AiPathfinder.PathGoal nearCompat(BlockPos target, double radius) {
+         return near(target, radius);
       }
       boolean isInGoal(int var1, int var2, int var3);
 
@@ -8540,13 +8540,13 @@ public final class AiPathfinder {
          return this.init_BlockPos();
       }
 
-      static AiPathfinder.PathGoal putAt_FileStore_TokenCod_BlockPos_D(BlockPos var0, double var1) {
-         return putAt_FileStore_TokenCod_BlockPos(var0, var1, false);
+      static AiPathfinder.PathGoal near(BlockPos var0, double var1) {
+         return near(var0, var1, false);
       }
 
-      static AiPathfinder.PathGoal putAt_FileStore_TokenCod_BlockPos(final BlockPos var0, final double var1, final boolean var3) {
+      static AiPathfinder.PathGoal near(final BlockPos var0, final double var1, final boolean var3) {
          final double var4 = var1 * var1;
-         final double var6 = var1 * Math.hypot(AiPathfinder.MoveCosts.writeOf, AiPathfinder.MoveCosts.blockBy);
+         final double var6 = var1 * Math.hypot(AiPathfinder.MoveCosts.MIN_HORIZONTAL_TICK_RATE, AiPathfinder.MoveCosts.MIN_ASCEND_TICK_RATE);
          return new AiPathfinder.PathGoal() {
             @Override
             public BlockPos putAt_BlockPos() {
@@ -8602,7 +8602,7 @@ public final class AiPathfinder {
                      && !var12.cached()
                      && !var13.water()
                      && !var13.climbable()
-                     && AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(var11, var13, var12);
+                     && AiPathfinder.MoveGenerator.isStandable(var11, var13, var12);
                }
 
                if (var2 != var0.getY() + 1) {
@@ -8630,9 +8630,9 @@ public final class AiPathfinder {
                   var4x--;
                }
 
-               double var5 = AiPathfinder.MoveCosts.fill(var1x - var0.getX(), var4x, var3x - var0.getZ());
+               double var5 = AiPathfinder.MoveCosts.estimateDirectionalHeuristic(var1x - var0.getX(), var4x, var3x - var0.getZ());
                if (var3 && var4x > 0) {
-                  double var7 = var4x * AiPathfinder.MoveCosts.blockBy;
+                  double var7 = var4x * AiPathfinder.MoveCosts.MIN_ASCEND_TICK_RATE;
                   var5 = Math.max(var5 - var7, var7);
                }
 
@@ -8653,7 +8653,7 @@ public final class AiPathfinder {
          };
       }
 
-      static AiPathfinder.PathGoal putAt_FileStore_TokenCod_I_BlockPos(final int var0, final BlockPos var1) {
+      static AiPathfinder.PathGoal reachYLevel(final int var0, final BlockPos var1) {
          return new AiPathfinder.PathGoal() {
             @Override
             public boolean isInGoal(int var1x, int var2, int var3) {

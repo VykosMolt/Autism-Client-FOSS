@@ -159,10 +159,10 @@ public final class AiGoto {
       Minecraft var1 = Minecraft.getInstance();
       return var1.level == null
          ? false
-         : AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0, EMPTY_HOTBAR),
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.above(), EMPTY_HOTBAR),
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.below(), EMPTY_HOTBAR)
+         : AiPathfinder.MoveGenerator.isStandable(
+            AiPathfinder.LiveGridView.classifyCell(var1, var1.level, var0, EMPTY_HOTBAR),
+            AiPathfinder.LiveGridView.classifyCell(var1, var1.level, var0.above(), EMPTY_HOTBAR),
+            AiPathfinder.LiveGridView.classifyCell(var1, var1.level, var0.below(), EMPTY_HOTBAR)
          );
    }
 
@@ -234,7 +234,7 @@ public final class AiGoto {
          boolean var13 = AiJson.getBoolean(var0, "interactOnArrival", false);
          int var14 = var0.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.getInt(var0, "timeoutSeconds", 300))) : 0;
          int var15 = Math.max(0, Math.min(60, AiJson.getInt(var0, "digReluctance", 2)));
-         AiPathfinder.RouteStrategy var16 = AiPathfinder.RouteStrategy.putAt(AiJson.getString(var0, "strategy", "fastest"));
+         AiPathfinder.RouteStrategy var16 = AiPathfinder.RouteStrategy.parse(AiJson.getString(var0, "strategy", "fastest"));
          AiGoto.GotoOptions var17 = new AiGoto.GotoOptions(
             AiJson.getBoolean(var0, "sprint", true),
             AiJson.getBoolean(var0, "bunnyhop", true),
@@ -255,7 +255,7 @@ public final class AiGoto {
                var16,
                var11,
                var15,
-               var12 ? AiPathfinder.PathGoal.putAt_FileStore_TokenCod_I_BlockPos(var4.getY(), var4) : null,
+               var12 ? AiPathfinder.PathGoal.reachYLevel(var4.getY(), var4) : null,
                var17,
                false,
                true,
@@ -543,7 +543,7 @@ public final class AiGoto {
          AiPathfinder.RouteStrategy.SAFEST,
          true,
          2.0,
-         withoutParkourMoves(excludingStandCells(protectingCells(AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos_D(var0, var1), var4), var5))
+         withoutParkourMoves(excludingStandCells(protectingCells(AiPathfinder.PathGoal.near(var0, var1), var4), var5))
       );
    }
 
@@ -1170,7 +1170,7 @@ public final class AiGoto {
                : new AiLiveGrid(this.putAt_Minecraft, this.fill_ItemStackArr(), AiChunkMemory.init_StateCache());
             AiPathfinder.PathGoal putAt_FileStore_TokenCod = var11 != null
                ? var11.putAt_FileStore_TokenCod_FileStore_TextStor(this.putAt_FileStore_TextStor)
-               : AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos(var0, var24, var15);
+               : AiPathfinder.PathGoal.near(var0, var24, var15);
             boolean fill_Z;
             boolean readEx_Z;
             boolean value_Z;
@@ -1335,13 +1335,13 @@ public final class AiGoto {
                            var14x == AiPlacer.PlaceStatus.PLACED ? "replanning" : this.putAt_FilePool.failureReason()
                         );
                      this.state_BlockPos = null;
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                      this.putAt_RingCache.closeOf_V();
                      return this.fill("Replanning after blocking the water");
                   } else {
                      if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var1x) {
-                        var1x.putAt_V_BlockPos(this.stateOf_Z ? this.putAt_FileStore_TaskStat.putAt_BlockPos() : this.putAt_Minecraft.player.blockPosition());
-                        var1x.putAt_V_J(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill ? 750000L : 4000000L);
+                        var1x.setFocus(this.stateOf_Z ? this.putAt_FileStore_TaskStat.activeOrigin() : this.putAt_Minecraft.player.blockPosition());
+                        var1x.scanBudget(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill ? 750000L : 4000000L);
                      } else {
                         AiLiveGrid.putAt(this.putAt_Minecraft, AiChunkMemory.init_StateCache());
                      }
@@ -1349,7 +1349,7 @@ public final class AiGoto {
                      long var13x = System.nanoTime();
                      if (this.readEx_Z
                         || !this.stateOf_Z
-                        || var14 && this.putAt_FileStore_TaskStat.putAt_Z() && !this.putAt_RingCache.putAt_Z()
+                        || var14 && this.putAt_FileStore_TaskStat.isPlanning() && !this.putAt_RingCache.putAt_Z()
                         || this.prevEx_J != 0L && var13x - this.prevEx_J > 1000000000L) {
                         this.value_J = var13x;
                      }
@@ -1380,7 +1380,7 @@ public final class AiGoto {
                         if (this.fill_Z && this.stateOf_Z && this.putAt_RingCache.pollAt_Z()) {
                            this.fill_Z = false;
                            this.putAt_FileStore_TaskStat
-                              .putAt_V_BlockPos_2(this.putAt_RingCache.putAt_BlockPos(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                              .startSearch(this.putAt_RingCache.putAt_BlockPos(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
                         }
 
                         Vec3 var3x = this.putAt_Minecraft.player.position();
@@ -1426,7 +1426,7 @@ public final class AiGoto {
                            }
 
                            this.fill_J = 0L;
-                           this.putAt_FileStore_TaskStat.putAt(this.readEx_BlockPos_5());
+                           this.putAt_FileStore_TaskStat.replanFrom(this.readEx_BlockPos_5());
                         }
 
                         if (!this.stateOf_Z) {
@@ -1463,8 +1463,8 @@ public final class AiGoto {
                               }
                            } else {
                               this.putAt_FileStore_TaskStat
-                                 .putAt_V_BlockPos_2(this.readEx_BlockPos_5(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
-                              if (!this.putAt_FileStore_TaskStat.putAt(20000000L)) {
+                                 .startSearch(this.readEx_BlockPos_5(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                              if (!this.putAt_FileStore_TaskStat.awaitInitialResult(20000000L)) {
                                  this.stateOf_Z = true;
                                  return this.state_AiOperation_Result_4();
                               }
@@ -1473,19 +1473,19 @@ public final class AiGoto {
                            this.stateOf_Z = true;
                         }
 
-                        this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
-                        this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
+                        this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
+                        this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
                         if (var15) {
                            this.chunkAt_V_4();
                         }
 
                         if (this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill) {
-                           AiPathfinder.PathResult var17x = this.putAt_FileStore_TaskStat.fill_FileStore_StreamSt();
+                           AiPathfinder.PathResult var17x = this.putAt_FileStore_TaskStat.peekQueuedNextPath();
                            if (var17x != null && !var17x.movements().isEmpty() && this.putAt_RingCache.putAt_Z_List_Z(var17x.movements(), var17x.reachesGoal())
                               )
                             {
-                              this.putAt_FileStore_TaskStat.readEx();
-                              this.putAt_FileStore_TaskStat.putAt(var17x);
+                              this.putAt_FileStore_TaskStat.pollQueuedNextPath();
+                              this.putAt_FileStore_TaskStat.setCurrentPath(var17x);
                               this.value_BlockPos = var17x.reachesGoal() ? var17x.destination() : null;
                            }
                         }
@@ -1509,8 +1509,8 @@ public final class AiGoto {
                               return this.putAt(AiOperation.Status.CANCELLED, "Goto cancelled");
                            }
 
-                           if (this.putAt_FileStore_TaskStat.putAt_Str() != null) {
-                              return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.putAt_FileStore_TaskStat.putAt_Str());
+                           if (this.putAt_FileStore_TaskStat.lastError() != null) {
+                              return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.putAt_FileStore_TaskStat.lastError());
                            }
 
                            if (var10 == AiWrExecutor.Inner_TableCache.putAt_RingCache_TableCac) {
@@ -1518,15 +1518,15 @@ public final class AiGoto {
                                  return this.fill("Landing before accepting the route");
                               }
 
-                              AiPathfinder.PathResult var11x = this.putAt_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                              AiPathfinder.PathResult var11x = this.putAt_FileStore_TaskStat.pollReplacementPath();
                               if (var11x == null) {
-                                 if (!this.putAt_FileStore_TaskStat.putAt_Z() && !this.putAt_FileStore_TaskStat.fill_Z()) {
-                                    this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                                 if (!this.putAt_FileStore_TaskStat.isPlanning() && !this.putAt_FileStore_TaskStat.isPrecomputingNext()) {
+                                    this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                                  }
 
-                                 if (this.putAt_FileStore_TaskStat.putAt(20000000L)) {
-                                    this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
-                                    var11x = this.putAt_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                                 if (this.putAt_FileStore_TaskStat.awaitInitialResult(20000000L)) {
+                                    this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
+                                    var11x = this.putAt_FileStore_TaskStat.pollReplacementPath();
                                  }
 
                                  if (var11x == null) {
@@ -1577,12 +1577,12 @@ public final class AiGoto {
 
                               BlockPos var12x = this.readEx_BlockPos_5();
                               if (!var11x.movements().get(0).from().equals(var12x)) {
-                                 this.putAt_FileStore_TaskStat.putAt(var12x);
-                                 if (!this.putAt_FileStore_TaskStat.putAt(20000000L)) {
+                                 this.putAt_FileStore_TaskStat.replanFrom(var12x);
+                                 if (!this.putAt_FileStore_TaskStat.awaitInitialResult(20000000L)) {
                                     return this.fill("Updating the route from the live stance");
                                  }
 
-                                 this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
+                                 this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
                               } else {
                                  if (!AutismLiteVariant.enabled() && this.pollOf_Z) {
                                     if (!var11x.reachesGoal()) {
@@ -1595,7 +1595,7 @@ public final class AiGoto {
                                  }
 
                                  this.putAt_V_FileStore_StreamSt(var11x);
-                                 this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
+                                 this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
                               }
                            } else {
                               BlockPos var19x = this.putAt_RingCache.putAt_BlockPos();
@@ -1604,7 +1604,7 @@ public final class AiGoto {
                                  && this.fill_FileStore_TokenCod.isInGoal(var19x.getX(), var19x.getY(), var19x.getZ())) {
                                  this.syncAt = false;
                                  this.fill_FileStore_TokenCod = null;
-                                 this.putAt_FileStore_TaskStat.putAt_V_BlockPos_2(var19x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                                 this.putAt_FileStore_TaskStat.startSearch(var19x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
                                  return this.fill("Escape complete; resuming the placement route");
                               }
 
@@ -1623,15 +1623,15 @@ public final class AiGoto {
 
                               if (this.prevEx_Z) {
                                  this.prevEx_Z = false;
-                                 this.putAt_FileStore_TaskStat.putAt(var19x);
-                                 if (this.putAt_FileStore_TaskStat.putAt(20000000L)) {
-                                    this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
+                                 this.putAt_FileStore_TaskStat.replanFrom(var19x);
+                                 if (this.putAt_FileStore_TaskStat.awaitInitialResult(20000000L)) {
+                                    this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
                                  }
                               }
 
-                              AiPathfinder.PathResult var20x = this.putAt_FileStore_TaskStat.readEx();
+                              AiPathfinder.PathResult var20x = this.putAt_FileStore_TaskStat.pollQueuedNextPath();
                               if (var20x == null) {
-                                 var20x = this.putAt_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                                 var20x = this.putAt_FileStore_TaskStat.pollReplacementPath();
                               }
 
                               if (var20x != null
@@ -1667,23 +1667,23 @@ public final class AiGoto {
                               }
 
                               if (var20x == null) {
-                                 if (!this.putAt_FileStore_TaskStat.fill_Z() && !this.putAt_FileStore_TaskStat.putAt_Z()) {
-                                    this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
-                                    this.putAt_FileStore_TaskStat.putAt(var19x);
+                                 if (!this.putAt_FileStore_TaskStat.isPrecomputingNext() && !this.putAt_FileStore_TaskStat.isPlanning()) {
+                                    this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
+                                    this.putAt_FileStore_TaskStat.replanFrom(var19x);
                                     return this.fill("Planning next segment");
                                  }
 
-                                 this.putAt_FileStore_TaskStat.fill_V();
+                                 this.putAt_FileStore_TaskStat.requestBudgetTrim();
                                  return this.fill("Planning next segment");
                               }
 
                               if (!var20x.movements().getFirst().from().equals(var19x)) {
-                                 this.putAt_FileStore_TaskStat.putAt(var19x);
+                                 this.putAt_FileStore_TaskStat.replanFrom(var19x);
                                  return this.fill("Updating the next segment from the live stance");
                               }
 
                               this.putAt_V_FileStore_StreamSt(var20x);
-                              this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache);
+                              this.putAt_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
                            }
                         }
 
@@ -1729,7 +1729,7 @@ public final class AiGoto {
                      this.chunkAt_Z = var18.fill;
                      this.fill_BlockPos = this.readEx_I == var17 ? this.readEx_BlockPos : null;
                   } else {
-                     var5x.putAt_V();
+                     var5x.close();
                   }
                }
 
@@ -1756,8 +1756,8 @@ public final class AiGoto {
                      }
                   }
 
-                  this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_TokenCod);
-                  this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
+                  this.putAt_FileStore_TaskStat.updateGoal(this.putAt_FileStore_TokenCod);
+                  this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
                   this.readEx_D = var18x.planningMs();
                   this.stateOf_Z = true;
                   if (var18x.segment().movements().isEmpty()) {
@@ -1770,7 +1770,7 @@ public final class AiGoto {
                         return this.putAt_AiOperation_Result_44();
                      }
 
-                     this.putAt_FileStore_TaskStat.putAt_V_BlockPos_2(var1x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                     this.putAt_FileStore_TaskStat.startSearch(var1x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
                      return this.state_AiOperation_Result_4();
                   } else {
                      this.putAt_V_FileStore_StreamSt(var18x.segment());
@@ -1798,19 +1798,19 @@ public final class AiGoto {
                      this.fill_V_4(var1x);
                   }
 
-                  this.readEx_FileStore_TaskStat.putAt(this.putAt_RingCache);
-                  if (this.readEx_FileStore_TaskStat.putAt_Str() != null) {
-                     return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.readEx_FileStore_TaskStat.putAt_Str());
+                  this.readEx_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
+                  if (this.readEx_FileStore_TaskStat.lastError() != null) {
+                     return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.readEx_FileStore_TaskStat.lastError());
                   }
 
-                  AiPathfinder.PathResult var10 = this.readEx_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                  AiPathfinder.PathResult var10 = this.readEx_FileStore_TaskStat.pollReplacementPath();
                   if (var10 == null) {
                      return this.pollAt_AiOperation_Result_4();
                   }
 
                   boolean var11x = var10.awaitingTerrain() || !var10.reachesGoal() && !var10.movements().isEmpty();
                   if (var10.reachesGoal() || var11x) {
-                     AiPathfinder.SearchStats var21x = this.readEx_FileStore_TaskStat.putAt_FileStore_RingBuff();
+                     AiPathfinder.SearchStats var21x = this.readEx_FileStore_TaskStat.lastStats();
                      var18.putAt(
                         this.readEx_I,
                         this.readEx_BlockPos,
@@ -1833,7 +1833,7 @@ public final class AiGoto {
                            AiGoto.WaypointPlan.PlannedLeg var16x = var18.putAt(this.readEx_I, var13x, this.fill_FileStore_RingUtil, var14x, var4x);
                            if (var16x == null || !var16x.segment().reachesGoal()) {
                               if (Math.abs(this.putAt_D - var14x) >= 1.0E-6) {
-                                 this.readEx_FileStore_TaskStat.putAt_V();
+                                 this.readEx_FileStore_TaskStat.close();
                                  this.readEx_FileStore_TaskStat = new AiPathfinder.RouteBlacklist(
                                     this.putAt_FileStore_TextStor, true, this.putAt_D_I(this.readEx_I), var20
                                  );
@@ -1916,12 +1916,12 @@ public final class AiGoto {
                         this.fill_V_4(var3x);
                      }
 
-                     this.readEx_FileStore_TaskStat.putAt(this.putAt_RingCache);
-                     if (this.readEx_FileStore_TaskStat.putAt_Str() != null) {
+                     this.readEx_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
+                     if (this.readEx_FileStore_TaskStat.lastError() != null) {
                         break;
                      }
 
-                     AiPathfinder.PathResult var8x = this.readEx_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                     AiPathfinder.PathResult var8x = this.readEx_FileStore_TaskStat.pollReplacementPath();
                      if (var8x == null) {
                         return this.pollAt_AiOperation_Result_4();
                      }
@@ -1930,7 +1930,7 @@ public final class AiGoto {
                         break;
                      }
 
-                     AiPathfinder.SearchStats var9x = this.readEx_FileStore_TaskStat.putAt_FileStore_RingBuff();
+                     AiPathfinder.SearchStats var9x = this.readEx_FileStore_TaskStat.lastStats();
                      var18.putAt(var4x, var3x, var8x, var9x == null ? 0.0 : var9x.elapsedNanos() / 1000000.0, this.fill_FileStore_RingUtil, var5x, var2);
                      if (!var8x.reachesGoal()) {
                         break;
@@ -1951,8 +1951,8 @@ public final class AiGoto {
                if (this.value_BlockPos != null && var17 + 1 < this.flowState) {
                   boolean var4x = this.putAt_FileStore_RingUtil != null && this.putAt_FileStore_RingUtil != this.fill_FileStore_RingUtil;
                   if (!this.value_BlockPos.equals(this.prevEx_BlockPos) || !(Math.abs(this.fill_D - var1) < 1.0E-6) || this.state_Z != var3x || var4x) {
-                     if (this.prevEx_BlockPos != null && AiNavDebug.init_Z()) {
-                        AiNavDebug.init(
+                     if (this.prevEx_BlockPos != null && AiNavDebug.isEnabled()) {
+                        AiNavDebug.log(
                            "Refresh checkpoint suffix after leg "
                               + (var17 + 1)
                               + "/"
@@ -2024,14 +2024,14 @@ public final class AiGoto {
                   boolean var3x = this.tick_Z_2();
                   this.putAt(var1x, var3x);
                   if (this.readEx_FileStore_TaskStat != null && this.readEx_I > var17) {
-                     this.readEx_FileStore_TaskStat.putAt(this.putAt_RingCache);
-                     if (this.readEx_FileStore_TaskStat.putAt_Str() != null) {
+                     this.readEx_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
+                     if (this.readEx_FileStore_TaskStat.lastError() != null) {
                         this.value_V_9();
                      } else {
-                        AiPathfinder.PathResult var4x = this.readEx_FileStore_TaskStat.putAt_FileStore_StreamSt();
+                        AiPathfinder.PathResult var4x = this.readEx_FileStore_TaskStat.pollReplacementPath();
                         if (var4x != null) {
                            if (var4x.reachesGoal() && this.chunkAt_Z == var3x && !(Math.abs(this.putAt_D - var1x) >= 1.0E-6)) {
-                              AiPathfinder.SearchStats var5x = this.readEx_FileStore_TaskStat.putAt_FileStore_RingBuff();
+                              AiPathfinder.SearchStats var5x = this.readEx_FileStore_TaskStat.lastStats();
                               var18.putAt(
                                  this.readEx_I,
                                  this.readEx_BlockPos,
@@ -2072,8 +2072,8 @@ public final class AiGoto {
                BlockPos var2 = var18.putAt_List.get(this.readEx_I);
                AiPathfinder.PathGoal var3x = this.readEx_I == var17
                   ? this.putAt_FileStore_TokenCod
-                  : AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos(var2, this.readEx_I == this.flowState - 1 ? var24 : 0.6, true);
-               this.readEx_FileStore_TaskStat.putAt_V_BlockPos_2(var1, var3x, this.putAt_FileStore_CacheHel());
+                  : AiPathfinder.PathGoal.near(var2, this.readEx_I == this.flowState - 1 ? var24 : 0.6, true);
+               this.readEx_FileStore_TaskStat.startSearch(var1, var3x, this.putAt_FileStore_CacheHel());
             }
 
             private boolean tick_Z_2() {
@@ -2084,7 +2084,7 @@ public final class AiGoto {
 
             private void value_V_9() {
                if (this.readEx_FileStore_TaskStat != null) {
-                  this.readEx_FileStore_TaskStat.putAt_V();
+                  this.readEx_FileStore_TaskStat.close();
                   this.readEx_FileStore_TaskStat = null;
                }
 
@@ -2096,7 +2096,7 @@ public final class AiGoto {
             private AiOperation.Result pollAt_AiOperation_Result_4() {
                this.putAt_RingCache.chunkAt_V();
                if (!AutismLiteVariant.enabled()) {
-                  AiPathfinder.SearchProgress var1x = this.readEx_FileStore_TaskStat.putAt_FileStore_EventBus();
+                  AiPathfinder.SearchProgress var1x = this.readEx_FileStore_TaskStat.liveProgress();
                   if (var1x != null) {
                      AiVisualization.putAt_V_Obj_3(this.fill_Obj, var1x.trail(), 0, () -> null);
                   }
@@ -2136,7 +2136,7 @@ public final class AiGoto {
             public void putAt_V_FileStore_TokenCod(AiPathfinder.PathGoal var1) {
                AiPathfinder.PathGoal var2 = var1.putAt_FileStore_TokenCod_FileStore_TextStor(this.putAt_FileStore_TextStor);
                this.putAt_FileStore_TokenCod = var2;
-               this.putAt_FileStore_TaskStat.putAt(var2);
+               this.putAt_FileStore_TaskStat.updateGoal(var2);
                this.prevEx_D = 1.7976931348623157E308;
                this.value_J = System.nanoTime();
                this.prevEx_I = 0;
@@ -2222,7 +2222,7 @@ public final class AiGoto {
             public void putAt_V_BiPredicate(BiPredicate<BlockState, ItemStack> var1) {
                this.putAt_RingCache.putAt_V_BiPredicate(var1);
                if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var2) {
-                  var2.putAt_V_BiPredicate(var1);
+                  var2.setAcceptedTool(var1);
                } else if (this.putAt_FileStore_TextStor instanceof AiLiveGrid var3x) {
                   var3x.putAt_V_BiPredicate_2(var1);
                }
@@ -2235,7 +2235,7 @@ public final class AiGoto {
 
             @Override
             public void putAt_V_BlockPos_6(BlockPos var1) {
-               this.putAt_FileStore_TaskStat.putAt_V_BlockPos_BlockPos(var1, this.putAt_RingCache.putAt_BlockPos());
+               this.putAt_FileStore_TaskStat.blacklistCell(var1, this.putAt_RingCache.putAt_BlockPos());
             }
 
             @Override
@@ -2352,13 +2352,13 @@ public final class AiGoto {
                         new BlockPos((int)Math.floor(var9x.minX) - 2, this.putAt_Minecraft.player.blockPosition().getY(), (int)Math.floor(var9x.getCenter().z)),
                         12
                      );
-                     this.fill_FileStore_TokenCod = AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos_D(var10, 2.0);
+                     this.fill_FileStore_TokenCod = AiPathfinder.PathGoal.near(var10, 2.0);
                      this.syncAt = true;
                      this.putAt_FileStore_TaskStat
-                        .putAt_V_BlockPos_2(this.putAt_RingCache.putAt_BlockPos(), this.fill_FileStore_TokenCod, this.putAt_FileStore_CacheHel().withDig());
+                        .startSearch(this.putAt_RingCache.putAt_BlockPos(), this.fill_FileStore_TokenCod, this.putAt_FileStore_CacheHel().withDig());
                   } else {
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel().withDig());
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel().withDig());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                   }
 
                   this.putAt_RingCache.closeOf_V();
@@ -2375,36 +2375,36 @@ public final class AiGoto {
                         return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; went round in circles " + this.pollOf_I + " times");
                      }
 
-                     this.putAt_FileStore_TaskStat.putAt_V_BlockPos_BlockPos(var4x.to(), this.putAt_RingCache.putAt_BlockPos());
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.blacklistCell(var4x.to(), this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                      this.putAt_RingCache.closeOf_V();
                      return this.fill("Going round in circles; replanning without " + var4x.to().toShortString());
                   } else {
                      boolean var5x = var2.contains("past its target") || var2.contains("slid below a flat step");
                      if (var4x != null && !var5x) {
-                        AiPathfinder.putAt_V_FileStore_PacketHe_J(var4x, 120000000000L);
+                        AiPathfinder.blacklistJumpTemporarily(var4x, 120000000000L);
                      }
 
                      if (var4x != null && !var5x) {
-                        AiPathfinder.putAt_V(var4x);
+                        AiPathfinder.recordMoveFailure(var4x);
                      }
 
                      if (var4x != null && !var5x) {
                         if (var4x.type() == this.putAt_FileStore_SyncPool && var4x.to().equals(this.prev_BlockPos)) {
                            this.chunkAt_BlockPos = var4x.to();
-                           AiPathfinder.fill(var4x, 120000000000L);
+                           AiPathfinder.blacklistMoveTemporarily(var4x, 120000000000L);
                            return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; " + var4x.type() + " stalled again with its type excluded");
                         }
 
                         this.putAt_FileStore_SyncPool = var4x.type();
                         this.prev_BlockPos = var4x.to();
-                        this.fill_Set.addAll(AiPathfinder.putAt(var4x.type()));
+                        this.fill_Set.addAll(AiPathfinder.relatedMoveTypes(var4x.type()));
                      }
 
                      this.prevEx_I++;
                      this.prev_I++;
-                     AiPathfinder.ReplanAction var6x = AiPathfinder.putAt_FileStore_HashEntr_I_I(this.prevEx_I, this.prev_I);
+                     AiPathfinder.ReplanAction var6x = AiPathfinder.decideReplanAction(this.prevEx_I, this.prev_I);
                      if (var13 && var2.startsWith("No route toward the target") && this.prev_I >= 2) {
                         var6x = AiPathfinder.ReplanAction.FAILED;
                      }
@@ -2414,11 +2414,11 @@ public final class AiGoto {
                      }
 
                      if (var6x == AiPathfinder.ReplanAction.BLACKLIST_AND_REPLAN && var1 != null) {
-                        this.putAt_FileStore_TaskStat.putAt_V_BlockPos_BlockPos(var1, this.putAt_RingCache.putAt_BlockPos());
+                        this.putAt_FileStore_TaskStat.blacklistCell(var1, this.putAt_RingCache.putAt_BlockPos());
                      }
 
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                      this.putAt_RingCache.closeOf_V();
                      return this.fill(var2 + "; replanning (attempt " + this.prev_I + ")");
                   }
@@ -2437,11 +2437,11 @@ public final class AiGoto {
                this.prev_I++;
                if (++this.prevEx_I < 6 && (!var6x || ++this.pollOf_I < 3)) {
                   if (!var5x || var6x || var1.jump() != null && var4x.contains("below the takeoff")) {
-                     this.putAt_FileStore_TaskStat.putAt_V_FileStore_PacketHe_BlockPos(var1, var3x);
+                     this.putAt_FileStore_TaskStat.blacklistMove(var1, var3x);
                   }
 
-                  this.putAt_FileStore_TaskStat.putAt(this.putAt_FileStore_CacheHel());
-                  this.putAt_FileStore_TaskStat.putAt(var3x);
+                  this.putAt_FileStore_TaskStat.updateOptions(this.putAt_FileStore_CacheHel());
+                  this.putAt_FileStore_TaskStat.replanFrom(var3x);
                   this.putAt_RingCache.closeOf_V();
                   return this.fill(var2 + "; replanning from " + var3x.toShortString());
                } else {
@@ -2454,8 +2454,8 @@ public final class AiGoto {
                BlockPos var1x = this.putAt_RingCache.putAt_BlockPos();
                AiPathfinder.PathOptions var2 = this.putAt_FileStore_CacheHel();
                ArrayList var3x = new ArrayList();
-               int var4x = AiPathfinder.MoveGenerator.putAt_I_FileStore_TextStor(
-                  this.putAt_FileStore_TextStor, var2, this.putAt_FileStore_TaskStat.putAt_Set(), var1x, var3x
+               int var4x = AiPathfinder.MoveGenerator.generateMoves(
+                  this.putAt_FileStore_TextStor, var2, this.putAt_FileStore_TaskStat.blacklistedCellKeys(), var1x, var3x
                );
                AutismClientAddon.LOG.info(
                      "[AI] no-route detail: {} goal {} flags {} disabled {} blacklist {} floor {}",
@@ -2463,7 +2463,7 @@ public final class AiGoto {
                      this.putAt_FileStore_TokenCod,
                      var4x,
                      var2.disabledTypes(),
-                     this.putAt_FileStore_TaskStat.flowState(),
+                     this.putAt_FileStore_TaskStat.blacklistedCellCount(),
                      this.putAt_FileStore_TextStor.probe(var1x.getX(), var1x.getY() - 1, var1x.getZ())
                   );
 
@@ -2473,7 +2473,7 @@ public final class AiGoto {
                         "[AI] no-route neighbor: {} enter {} banned {} feet {} head {} floor {}",
                         var7x.toShortString(),
                         this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var7x),
-                        this.putAt_FileStore_TaskStat.putAt_Set().contains(var7x.asLong()),
+                        this.putAt_FileStore_TaskStat.blacklistedCellKeys().contains(var7x.asLong()),
                         this.putAt_FileStore_TextStor.probe(var7x.getX(), var7x.getY(), var7x.getZ()),
                         this.putAt_FileStore_TextStor.probe(var7x.getX(), var7x.getY() + 1, var7x.getZ()),
                         this.putAt_FileStore_TextStor.probe(var7x.getX(), var7x.getY() - 1, var7x.getZ())
@@ -2482,7 +2482,7 @@ public final class AiGoto {
 
                for (int var10 = 0; var10 < Math.min(16, var3x.size()); var10++) {
                   AiPathfinder.UiHelper var12x = (AiPathfinder.UiHelper)var3x.get(var10);
-                  boolean var14x = this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var12x.to()) && !AiPathfinder.putAt_Z(var12x);
+                  boolean var14x = this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var12x.to()) && !AiPathfinder.isGloballyBlacklisted(var12x);
 
                   for (BlockPos var9x : var12x.cellsToBreak()) {
                      var14x &= this.putAt_FileStore_TokenCod.fill_Z_BlockPos(var9x);
@@ -2493,18 +2493,18 @@ public final class AiGoto {
                   }
 
                   AutismClientAddon.LOG.info(
-                        "[AI] no-route move: {} to {} allowed {} globalBan {}", var12x.type(), var12x.to().toShortString(), var14x, AiPathfinder.putAt_Z(var12x)
+                        "[AI] no-route move: {} to {} allowed {} globalBan {}", var12x.type(), var12x.to().toShortString(), var14x, AiPathfinder.isGloballyBlacklisted(var12x)
                      );
                }
 
                AiPathfinder.SearchSession var11x = new AiPathfinder.SearchSession(
-                  this.putAt_FileStore_TextStor, var1x, this.putAt_FileStore_TokenCod, var2, this.putAt_FileStore_TaskStat.putAt_Set()
+                  this.putAt_FileStore_TextStor, var1x, this.putAt_FileStore_TokenCod, var2, this.putAt_FileStore_TaskStat.blacklistedCellKeys()
                );
-               if (!var11x.putAt_Z_I(512)) {
-                  var11x.putAt_V();
+               if (!var11x.step(512)) {
+                  var11x.finish();
                }
 
-               AiPathfinder.PathResult var13x = var11x.putAt_FileStore_StreamSt();
+               AiPathfinder.PathResult var13x = var11x.result();
                AutismClientAddon.LOG.info(
                      "[AI] no-route live check: reaches {} moves {} expanded {} exhausted {} pending {}",
                      var13x.reachesGoal(),
@@ -2702,7 +2702,7 @@ public final class AiGoto {
                this.prev_Z = var15 && !var1.reachesGoal();
                this.putAt_RingCache.putAt_V_FileStore_RingUtil(this.fill_FileStore_RingUtil);
                this.putAt_RingCache.putAt_V_List_Z(var1.movements(), var1.reachesGoal());
-               this.putAt_FileStore_TaskStat.putAt(var1);
+               this.putAt_FileStore_TaskStat.setCurrentPath(var1);
                if (var18 != null) {
                   this.value_BlockPos = var1.reachesGoal() ? var1.destination() : null;
                   if (!this.closeOf_Z && var17 + 1 < this.flowState) {
@@ -2741,20 +2741,20 @@ public final class AiGoto {
 
                      BlockPos var3x = ((AiPathfinder.UiHelper)var2.getFirst()).to();
                      this.fill_FileStore_TaskStat = new AiPathfinder.RouteBlacklist(this.putAt_FileStore_TextStor, true, this.putAt_D_I(var17), var20);
-                     this.fill_FileStore_TaskStat.putAt_V_BlockPos_2(var3x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
-                     AiNavDebug.init("Finish loaded while moving; proving a route from " + var3x.toShortString());
+                     this.fill_FileStore_TaskStat.startSearch(var3x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                     AiNavDebug.log("Finish loaded while moving; proving a route from " + var3x.toShortString());
                   }
 
                   if (this.fill_FileStore_TaskStat != null) {
-                     this.fill_FileStore_TaskStat.putAt(this.putAt_RingCache);
-                     AiPathfinder.PathResult var4x = this.fill_FileStore_TaskStat.putAt_FileStore_StreamSt();
-                     if (var4x != null || this.fill_FileStore_TaskStat.putAt_Str() != null) {
+                     this.fill_FileStore_TaskStat.tickDriver(this.putAt_RingCache);
+                     AiPathfinder.PathResult var4x = this.fill_FileStore_TaskStat.pollReplacementPath();
+                     if (var4x != null || this.fill_FileStore_TaskStat.lastError() != null) {
                         this.state_V_3();
                         if (var4x != null && var4x.reachesGoal() && this.putAt_RingCache.putAt_Z_List(var4x.movements())) {
-                           this.putAt_FileStore_TaskStat.fill(var4x);
+                           this.putAt_FileStore_TaskStat.installPathAndStop(var4x);
                            this.value_BlockPos = var4x.destination();
                            this.prev_V_6();
-                           AiNavDebug.init("Joined loaded route before the terrain frontier");
+                           AiNavDebug.log("Joined loaded route before the terrain frontier");
                         }
                      }
                   }
@@ -2763,7 +2763,7 @@ public final class AiGoto {
 
             private void state_V_3() {
                if (this.fill_FileStore_TaskStat != null) {
-                  this.fill_FileStore_TaskStat.putAt_V();
+                  this.fill_FileStore_TaskStat.close();
                   this.fill_FileStore_TaskStat = null;
                }
             }
@@ -2820,7 +2820,7 @@ public final class AiGoto {
                   if (this.closeOf_Z_4() && this.readEx_BlockPos_5().equals(var3x.movements().getFirst().from())) {
                      this.putAt_V_FileStore_StreamSt(var3x);
                   } else {
-                     this.putAt_FileStore_TaskStat.putAt(this.readEx_BlockPos_5());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.readEx_BlockPos_5());
                   }
                }
             }
@@ -2838,7 +2838,7 @@ public final class AiGoto {
                      this.putAt_RingCache.pollAt_Z();
                   }
 
-                  this.putAt_FileStore_TaskStat.putAt_V_BlockPos_2(this.readEx_BlockPos_5(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
+                  this.putAt_FileStore_TaskStat.startSearch(this.readEx_BlockPos_5(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
                   return this.fill("Checking whether a route requires a damaging fall");
                } else {
                   String var1x = "No route toward the target in loaded terrain";
@@ -2877,8 +2877,8 @@ public final class AiGoto {
                         var5x = var5x.withDisabledTypes(var3x);
                      }
 
-                     this.putAt_FileStore_TaskStat.putAt(var5x);
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.updateOptions(var5x);
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                      this.putAt_RingCache.closeOf_V();
                      return this.fill(var1x + "; sealed pocket: dig-enabled escape replan");
                   } else {
@@ -2906,14 +2906,14 @@ public final class AiGoto {
                   this.putAt_V_Obj(this.putAt_RingCache, "Moving", var3x, var4x);
                }
 
-               String var5x = this.putAt_FileStore_TaskStat.fill_Z() ? ", planning ahead" : "";
+               String var5x = this.putAt_FileStore_TaskStat.isPrecomputingNext() ? ", planning ahead" : "";
                return "Travelling to " + var2.toShortString() + " (" + var3x + "m" + var5x + ")";
             }
 
             AiPathfinder.PathOptions putAt_FileStore_CacheHel() {
                boolean var1x = var12.sprint() && this.putAt_Minecraft.player.getFoodData().getFoodLevel() > 6;
                if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var2) {
-                  var2.putAt_V_ItemStackArr(this.putAt_ItemStackArr_2());
+                  var2.updateHotbar(this.putAt_ItemStackArr_2());
                } else if (this.putAt_FileStore_TextStor instanceof AiLiveGrid var3x) {
                   var3x.putAt_V_ItemStackArr_2(this.putAt_ItemStackArr_2());
                }
@@ -3034,18 +3034,18 @@ public final class AiGoto {
 
             AiPathfinder.ThreatField putAt_FileStore_TaskStor() {
                if (this.putAt_Minecraft.level == null) {
-                  return AiPathfinder.ThreatField.value;
+                  return AiPathfinder.ThreatField.NONE;
                }
 
                final AiPathfinder.ThreatField $outerCost;
                if (AutismLiteVariant.enabled()) {
-                  $outerCost = AiPathfinder.ThreatField.value;
+                  $outerCost = AiPathfinder.ThreatField.NONE;
                } else {
                   $outerCost = autismclient.ai.AiDragonZones.init_ClassCache_PoolEnt(this.putAt_Minecraft);
                }
 
                if (var7 != AiPathfinder.RouteStrategy.SAFEST) {
-                  return $outerCost == AiPathfinder.ThreatField.value ? AiPathfinder.ThreatField.value : new AiPathfinder.ThreatField() {
+                  return $outerCost == AiPathfinder.ThreatField.NONE ? AiPathfinder.ThreatField.NONE : new AiPathfinder.ThreatField() {
                      @Override
                      public double surcharge(int var1x, int var2, int var3x) {
                         return 0.0;
@@ -3077,7 +3077,7 @@ public final class AiGoto {
                   }
                }
 
-               final AiPathfinder.ThreatField var10 = AiPathfinder.ThreatField.putAt(var2);
+               final AiPathfinder.ThreatField var10 = AiPathfinder.ThreatField.fromMobs(var2);
                final ClientLevel var11x = this.putAt_Minecraft.level;
                final AiPathfinder.ThreatField var8x = AiSight.init(var11x, var4x, var5x);
                final boolean var9x = var11x.dimension() == Level.NETHER;
@@ -3270,7 +3270,7 @@ public final class AiGoto {
                      }
 
                      if (this.putAt_FileStore_TokenCod.isInGoal(var5x.getX(), var5x.getY(), var5x.getZ()) && var7x.prevEx(var5x)) {
-                        this.putAt_FileStore_TaskStat.putAt(var5x);
+                        this.putAt_FileStore_TaskStat.replanFrom(var5x);
                      }
 
                      return false;
@@ -3292,7 +3292,7 @@ public final class AiGoto {
                      return var24 <= 0.65
                            && var5x.equals(var0)
                            && this.putAt_Minecraft.level != null
-                           && AiPathfinder.LiveGridView.value(this.putAt_Minecraft.level.getBlockState(var0))
+                           && AiPathfinder.LiveGridView.isPressurePlate(this.putAt_Minecraft.level.getBlockState(var0))
                         ? AiPaceScript.putAt(AiPhysics.MotionState.of(this.putAt_Minecraft.player), var0)
                         : true;
                   }
@@ -3377,7 +3377,7 @@ public final class AiGoto {
                               && !var15x.hazardFeet()
                               && var8x.state(var13x.getX(), var13x.getY(), var13x.getZ());
                            if (var16x
-                              || AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(
+                              || AiPathfinder.MoveGenerator.isStandable(
                                  var14x,
                                  this.putAt_FileStore_TextStor.probe(var13x.getX(), var13x.getY() + 1, var13x.getZ()),
                                  this.putAt_FileStore_TextStor.probe(var13x.getX(), var13x.getY() - 1, var13x.getZ())
@@ -3400,11 +3400,11 @@ public final class AiGoto {
                                        && !(var22x.y > 1.25)
                                        && this.putAt_Minecraft.level.noCollision(var1x, var1x.getBoundingBox().move(var22x).deflate(0.001))) {
                                        boolean var23 = var22x.y > 0.6;
-                                       if ((!var23 || !AiPathfinder.MoveCosts.putAt() || !this.fill_Z_8(var1x.blockPosition()))
+                                       if ((!var23 || !AiPathfinder.MoveCosts.isCautiousParkourActive() || !this.fill_Z_8(var1x.blockPosition()))
                                           && (var23 || AiMotionSafety.isSegmentHazardFree(var1x.position(), var21x))) {
                                           if (var23) {
                                              float var24x = (float)(Math.toDegrees(Math.atan2(var22x.z, var22x.x)) - 90.0);
-                                             AiJumpSolver.UiHelper var25 = AiJumpSolver.putAt_IoUtil_IoPool_TokenCore_TaskStat(
+                                             AiJumpSolver.UiHelper var25 = AiJumpSolver.solveTakeoff(
                                                 var8x, AiPhysics.MotionState.of(var1x), var24x, false, var13x, var21x.y
                                              );
                                              if (var25.runTicks() != 0 || var25.margin() < 0.08) {
@@ -3508,13 +3508,13 @@ public final class AiGoto {
                      AiPhysics.MotionState var10 = AiPhysics.MotionState.of(var1x);
                      BlockPos var11x = BlockPos.containing(this.putAt_Vec3.x, Math.ceil(this.putAt_Vec3.y - 0.001), this.putAt_Vec3.z);
                      if (var1x.onGround() && this.putAt_Vec3.y - var1x.getY() > 0.6) {
-                        AiJumpSolver.UiHelper var15x = AiJumpSolver.putAt_IoUtil_IoPool_TokenCore_TaskStat(
+                        AiJumpSolver.UiHelper var15x = AiJumpSolver.solveTakeoff(
                            var9x, var10, var1x.getYRot(), false, var11x, this.putAt_Vec3.y
                         );
                         this.putAt_Minecraft.options.keyUp.setDown(var15x.runTicks() == 0 && var15x.margin() >= 0.08);
                         this.putAt_Minecraft.options.keyJump.setDown(var15x.runTicks() == 0 && var15x.margin() >= 0.08);
                      } else if (!var1x.onGround()) {
-                        AiJumpSolver.ApproachOffset var12x = AiJumpSolver.putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+                        AiJumpSolver.ApproachOffset var12x = AiJumpSolver.solveAirControl(
                            var9x, var10, var1x.getYRot(), false, var11x, this.putAt_Vec3.y
                         );
                         this.putAt_Minecraft.options.keyUp.setDown(var12x.forward() > 0.0);
@@ -3528,7 +3528,7 @@ public final class AiGoto {
                   if (!AiMotionSafety.isPlayerMoveSafe(var13x, var14x, this.putAt_Minecraft.options.keyJump.isDown(), false)) {
                      AiMotionSafety.applyEmergencyBrake();
                      this.putAt_Vec3 = null;
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                      return this.fill("Partial-block exit became unsafe; replanning");
                   } else {
                      return this.fill("Stepping clear of the partial block");
@@ -3542,7 +3542,7 @@ public final class AiGoto {
 
                   this.dataEx_Z = false;
                   if (this.stateOf_Z) {
-                     this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
+                     this.putAt_FileStore_TaskStat.replanFrom(this.putAt_RingCache.putAt_BlockPos());
                   }
 
                   return this.fill("Replanning from the clear stance");
@@ -3602,7 +3602,7 @@ public final class AiGoto {
 
                   var3x.update(var6x);
                   AutismClientAddon.LOG.info("[AI] stance {} cannot place at {}; picking another", var6x.toShortString(), var0.toShortString());
-                  this.putAt_FileStore_TaskStat.putAt(var6x);
+                  this.putAt_FileStore_TaskStat.replanFrom(var6x);
                   return true;
                } else if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof InteractionGoal var1x && this.chunkAt_Z_6() && var1x.init_I() < 16) {
                   BlockPos var5x = this.putAt_RingCache.putAt_BlockPos();
@@ -3616,7 +3616,7 @@ public final class AiGoto {
 
                   var1x.init_V(var5x);
                   AutismClientAddon.LOG.info("[AI] stance {} has no clear line to {}; picking another", var5x.toShortString(), var1x.load_BlockPos().toShortString());
-                  this.putAt_FileStore_TaskStat.putAt(var5x);
+                  this.putAt_FileStore_TaskStat.replanFrom(var5x);
                   return true;
                } else {
                   return false;
@@ -3652,7 +3652,7 @@ public final class AiGoto {
                   "protectedWaterPlugVetoes",
                   this.stateOf_I,
                   "blacklisted",
-                  this.putAt_FileStore_TaskStat.flowState()
+                  this.putAt_FileStore_TaskStat.blacklistedCellCount()
                );
                if (this.readEx_D >= 0.0) {
                   var1x.addProperty("checkpointSearchMs", this.readEx_D);
@@ -3667,7 +3667,7 @@ public final class AiGoto {
                   var1x.addProperty("parkourRecordPace", true);
                }
 
-               AiPathfinder.SearchStats var2 = this.putAt_FileStore_TaskStat.putAt_FileStore_RingBuff();
+               AiPathfinder.SearchStats var2 = this.putAt_FileStore_TaskStat.lastStats();
                if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof AiGoto.MultiTargetGoal var3x && var3x.fill_BlockPos != null) {
                   var1x.addProperty("fluidSourceX", var3x.fill_BlockPos.getX());
                   var1x.addProperty("fluidSourceY", var3x.fill_BlockPos.getY());
@@ -3744,7 +3744,7 @@ public final class AiGoto {
                   return this.fill("Planning route");
                }
 
-               AiPathfinder.SearchProgress var1x = this.putAt_FileStore_TaskStat.putAt_FileStore_EventBus();
+               AiPathfinder.SearchProgress var1x = this.putAt_FileStore_TaskStat.liveProgress();
                String var2 = var1x == null ? "Checking terrain" : String.format(Locale.ROOT, "%,d positions checked", var1x.expanded());
                if (!AutismLiteVariant.enabled()) {
                   if (var1x != null) {
@@ -3810,11 +3810,11 @@ public final class AiGoto {
                   }
 
                   if (this.readEx_FileStore_TaskStat != null) {
-                     this.readEx_FileStore_TaskStat.putAt_V();
+                     this.readEx_FileStore_TaskStat.close();
                   }
 
                   this.state_V_3();
-                  this.putAt_FileStore_TaskStat.putAt_V();
+                  this.putAt_FileStore_TaskStat.close();
                   this.putAt_RingCache.state_V();
                   if (var14 && !AutismLiteVariant.enabled()) {
                      AiVisualization.init_V(this.fill_Obj);
@@ -3951,10 +3951,10 @@ public final class AiGoto {
          double var4 = 1.0 / 0.0;
 
          for (BlockPos var7 : this.putAt_List) {
-            var4 = Math.min(var4, AiPathfinder.MoveCosts.fill(var1 - var7.getX(), var7.getY() - var2, var3 - var7.getZ()));
+            var4 = Math.min(var4, AiPathfinder.MoveCosts.estimateDirectionalHeuristic(var1 - var7.getX(), var7.getY() - var2, var3 - var7.getZ()));
          }
 
-         return Math.max(0.0, var4 - this.putAt_D * AiPathfinder.MoveCosts.writeOf);
+         return Math.max(0.0, var4 - this.putAt_D * AiPathfinder.MoveCosts.MIN_HORIZONTAL_TICK_RATE);
       }
 
       @Override
@@ -4124,7 +4124,7 @@ public final class AiGoto {
          }
 
          if (this.putAt_FileStore_TaskStat != null) {
-            this.putAt_FileStore_TaskStat.putAt_V();
+            this.putAt_FileStore_TaskStat.close();
             this.putAt_FileStore_TaskStat = null;
          }
       }

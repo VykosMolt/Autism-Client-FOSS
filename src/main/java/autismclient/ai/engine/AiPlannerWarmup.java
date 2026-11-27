@@ -33,7 +33,7 @@ public final class AiPlannerWarmup {
          long var0 = System.nanoTime();
          AiPathfinder.GridView var2 = putAt_FileStore_TextStor();
          AiPathfinder.PathOptions var3 = new AiPathfinder.PathOptions(
-               false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.value
+               false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.NONE
             )
             .withFallPolicy(AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE);
          BlockPos var4 = putAt_BlockPos;
@@ -41,27 +41,27 @@ public final class AiPlannerWarmup {
 
          for (int var6 = 0; var6 < 3 && System.nanoTime() - var0 < 12000000000L; var6++) {
             double var7 = 0.1 * (1.0 + 0.2 * var6);
-            AiPathfinder.SearchSession var9 = AiPathfinder.SearchSession.putAt(
+            AiPathfinder.SearchSession var9 = AiPathfinder.SearchSession.createProofSession(
                new AiPlannerWarmup.Inner_CacheHelper(var2, var7),
                var4,
-               AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos(var5, 0.6, true),
+               AiPathfinder.PathGoal.near(var5, 0.6, true),
                var3,
                Set.of(),
                true
             );
 
-            for (int var10 = 0; var10 < 4000 && !var9.putAt_Z_I(256); var10++) {
+            for (int var10 = 0; var10 < 4000 && !var9.step(256); var10++) {
                if (System.nanoTime() - var0 > 12000000000L) {
-                  var9.putAt_V();
+                  var9.finish();
                   break;
                }
             }
          }
 
          int var12 = putAt(var2, var0 + 12000000000L);
-         AiNavDebug.init("planner warm-up " + (System.nanoTime() - var0) / 1000000L + " ms, " + var12 + " jumps");
+         AiNavDebug.log("planner warm-up " + (System.nanoTime() - var0) / 1000000L + " ms, " + var12 + " jumps");
       } catch (Throwable var11) {
-         AiNavDebug.init("planner warm-up skipped: " + var11);
+         AiNavDebug.log("planner warm-up skipped: " + var11);
       }
    }
 
@@ -84,7 +84,7 @@ public final class AiPlannerWarmup {
                      }
 
                      BlockPos var15 = putAt(var0, var13, var14);
-                     AiJumpSolver.putAt(var5, var8, var8.getY(), var15, var15.getY(), (var3 & 1) == 0 ? 0.0 : 0.2, (var3 & 2) == 0, false, true, false, false);
+                     AiJumpSolver.solve(var5, var8, var8.getY(), var15, var15.getY(), (var3 & 1) == 0 ? 0.0 : 0.2, (var3 & 2) == 0, false, true, false, false);
                      var3++;
                   }
                }

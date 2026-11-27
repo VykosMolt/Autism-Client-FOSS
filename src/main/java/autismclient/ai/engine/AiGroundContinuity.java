@@ -14,7 +14,7 @@ final class AiGroundContinuity {
       } else {
          double var3 = var2.y() - var1.y();
          if (!(var3 > 0.600001) && !(var3 < -1.062501)) {
-            return Math.abs(var3) <= 0.01 ? true : var2.verticalCollision() && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var2.x(), var2.y(), var2.z());
+            return Math.abs(var3) <= 0.01 ? true : var2.verticalCollision() && AiJumpSolver.canStandAt(var0, var2.x(), var2.y(), var2.z());
          } else {
             return false;
          }
