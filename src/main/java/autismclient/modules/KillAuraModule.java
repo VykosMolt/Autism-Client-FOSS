@@ -1485,7 +1485,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       if (!AutismLiteVariant.enabled() && autismclient.util.CombatInteractionController.update()) {
          return !SilentMovementCoordinator.isSafeWalkActive();
       }

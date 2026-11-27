@@ -242,7 +242,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || this.isEnabled() && this.init_I == this.init_I_14());
    }
 

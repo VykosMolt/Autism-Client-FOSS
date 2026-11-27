@@ -608,7 +608,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.hasQueued() || this.update_I == AutismSessionState.getInstance().getClientTick() || autismclient.util.SilentRotationManager.isReturningToPlayer());
    }
 

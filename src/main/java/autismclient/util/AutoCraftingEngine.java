@@ -1505,12 +1505,12 @@ public final class AutoCraftingEngine {
 
       for (RecipeCatalogLoader.Inner_DataUtil recipe : source) {
          AutoCraftingEngine.SmeltRecipe plan = new AutoCraftingEngine.SmeltRecipe(
-            recipe.init_Str(),
-            recipe.init_List(),
-            recipe.init_ItemStack().getItem(),
-            Math.max(1, recipe.init_ItemStack().getCount()),
+            recipe.recipeKey(),
+            recipe.inputs(),
+            recipe.result().getItem(),
+            Math.max(1, recipe.result().getCount()),
             recipe.load(),
-            recipe.init_I()
+            recipe.cookTimeTicks()
          );
          plans.add(plan);
          byOutput.computeIfAbsent(plan.outputItem(), item -> new ArrayList<>()).add(plan);

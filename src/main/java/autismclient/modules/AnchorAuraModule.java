@@ -469,7 +469,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       boolean enabled = this.isEnabled();
       return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.flush());
    }

@@ -188,7 +188,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       boolean enabled = this.isEnabled();
       return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.read_Z_13());
    }

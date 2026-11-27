@@ -346,7 +346,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       return (this.init_Z || autismclient.util.SilentRotationManager.isReturningToPlayer()) && !aD.init_Z() && !FreecamController.isActive();
    }
 

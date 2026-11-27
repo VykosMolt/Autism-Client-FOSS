@@ -275,7 +275,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       return (close_Z_8() || this.tick_Z_6()) && !aD.init_Z() && !FreecamController.isActive();
    }
 

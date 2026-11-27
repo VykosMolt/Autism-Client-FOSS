@@ -674,7 +674,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       if (autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.crystal)) {
          return false;
       }

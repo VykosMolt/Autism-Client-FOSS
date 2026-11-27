@@ -40,9 +40,9 @@ public final class SilentMovementCoordinator {
          if (rotation == null) {
             return null;
          } else if (!AutismLiteVariant.enabled() && "ai-assistant".equals(SilentRotationManager.getActiveOwnerId())) {
-            return autismclient.ai.AiAssistant.getInstance().load_Z_23() ? rotation : null;
+            return autismclient.ai.AiAssistant.getInstance().isSilentMovementActive() ? rotation : null;
          } else {
-            return autismclient.modules.al.init_Module_Str(SilentRotationManager.getActiveOwnerId()) instanceof SilentMovementCoordinator.Participant owner && owner.load_Z_23() ? rotation : null;
+            return autismclient.modules.al.init_Module_Str(SilentRotationManager.getActiveOwnerId()) instanceof SilentMovementCoordinator.Participant owner && owner.isSilentMovementActive() ? rotation : null;
          }
       } else {
          return null;
@@ -228,7 +228,7 @@ public final class SilentMovementCoordinator {
    }
 
    public interface Participant {
-      boolean load_Z_23();
+      boolean isSilentMovementActive();
 
       default boolean usesMoveFix() {
          return true;

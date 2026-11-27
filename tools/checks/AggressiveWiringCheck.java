@@ -171,7 +171,7 @@ public final class AggressiveWiringCheck {
             check(name + ": shouldCancelUse false while Aggressive running", !module.shouldCancelUse(null, InteractionHand.MAIN_HAND));
             check(name + ": shouldCancelAttack false while Aggressive running", !module.shouldCancelAttack(null));
             if (isCrystal) {
-                check("crystal-aura: load_Z_23 false while Aggressive running", !crystalModule.load_Z_23());
+                check("crystal-aura: load_Z_23 false while Aggressive running", !crystalModule.isSilentMovementActive());
                 check("crystal-aura: info() safe while Aggressive running", crystalModule.info() != null);
             }
             lifecycle(module::onDisable);

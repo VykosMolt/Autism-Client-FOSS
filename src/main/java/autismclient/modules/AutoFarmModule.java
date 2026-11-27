@@ -355,7 +355,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean load_Z_23() {
+   public boolean isSilentMovementActive() {
       return SilentMovementCoordinator.isSafeWalkActive() ? false : autismclient.util.SilentRotationManager.isReturningToPlayer() || this.isEnabled() && this.read_Z_8();
    }
 

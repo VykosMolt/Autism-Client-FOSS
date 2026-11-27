@@ -271,7 +271,7 @@ final class RecipeCatalogLoader {
 
       List<RecipeCatalogLoader.Inner_StreamUtil> craftingList = new ArrayList<>(crafting.values());
       craftingList.sort(Comparator.comparing(recipex -> recipex.recipeKey, String.CASE_INSENSITIVE_ORDER));
-      cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::init_Str, String.CASE_INSENSITIVE_ORDER));
+      cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::recipeKey, String.CASE_INSENSITIVE_ORDER));
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(craftingList), List.copyOf(cooking), source, files.size(), failed);
    }
 
@@ -348,7 +348,7 @@ final class RecipeCatalogLoader {
 
       List<RecipeCatalogLoader.Inner_StreamUtil> crafting = new ArrayList<>(craftingByKey.values());
       crafting.sort(Comparator.comparing(recipex -> recipex.recipeKey, String.CASE_INSENSITIVE_ORDER));
-      cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::init_Str, String.CASE_INSENSITIVE_ORDER));
+      cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::recipeKey, String.CASE_INSENSITIVE_ORDER));
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(crafting), List.copyOf(cooking));
    }
 
@@ -678,10 +678,10 @@ final class RecipeCatalogLoader {
       }
    }
 
-   record Inner_DataUtil(String init_Str, List<Item> init_List, ItemStack init_ItemStack, String load, float init_F, int init_I) {
+   record Inner_DataUtil(String recipeKey, List<Item> inputs, ItemStack result, String load, float init_F, int cookTimeTicks) {
       Inner_DataUtil {
-         init_List = List.copyOf(init_List);
-         init_ItemStack = init_ItemStack.copy();
+         inputs = List.copyOf(inputs);
+         result = result.copy();
       }
    }
 

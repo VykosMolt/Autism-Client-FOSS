@@ -17703,10 +17703,10 @@ F	autismclient/util/aK$CachePool	init	Ljava/util/List;	autismclient/util/RecipeC
 F	autismclient/util/aK$CachePool	load	I	autismclient/util/RecipeCatalogLoader$Inner_CachePool	filesSkipped	I
 F	autismclient/util/aK$CachePool	load	Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_CachePool	cookingRecipes	Ljava/util/List;
 F	autismclient/util/aK$DataUtil	init	F	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_F	F
-F	autismclient/util/aK$DataUtil	init	I	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_I	I
-F	autismclient/util/aK$DataUtil	init	Ljava/lang/String;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/aK$DataUtil	init	Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_List	Ljava/util/List;
-F	autismclient/util/aK$DataUtil	init	Lnet/minecraft/world/item/ItemStack;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_ItemStack	Lnet/minecraft/world/item/ItemStack;
+F	autismclient/util/aK$DataUtil	init	I	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	cookTimeTicks	I
+F	autismclient/util/aK$DataUtil	init	Ljava/lang/String;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	recipeKey	Ljava/lang/String;
+F	autismclient/util/aK$DataUtil	init	Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	inputs	Ljava/util/List;
+F	autismclient/util/aK$DataUtil	init	Lnet/minecraft/world/item/ItemStack;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	result	Lnet/minecraft/world/item/ItemStack;
 F	autismclient/util/aK$StreamUtil	init	I	autismclient/util/RecipeCatalogLoader$Inner_StreamUtil	width	I
 F	autismclient/util/aK$StreamUtil	init	Ljava/lang/String;	autismclient/util/RecipeCatalogLoader$Inner_StreamUtil	recipeKey	Ljava/lang/String;
 F	autismclient/util/aK$StreamUtil	init	Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_StreamUtil	gridIngredients	Ljava/util/List;
@@ -22260,7 +22260,7 @@ M	autismclient/ai/ConfigStore	init	()V	autismclient/ai/AiAssistant	initialize	()
 M	autismclient/ai/ConfigStore	init	()Z	autismclient/ai/AiAssistant	isShown	()Z
 M	autismclient/ai/ConfigStore	load	()Lcom/google/gson/JsonObject;	autismclient/ai/AiAssistant	load_JsonObject	()Lcom/google/gson/JsonObject;
 M	autismclient/ai/ConfigStore	load	()V	autismclient/ai/AiAssistant	restoreOverlay	()V
-M	autismclient/ai/ConfigStore	load	()Z	autismclient/ai/AiAssistant	load_Z_23	()Z
+M	autismclient/ai/ConfigStore	load	()Z	autismclient/ai/AiAssistant	isSilentMovementActive	()Z
 M	autismclient/ai/ConfigStore	update	()V	autismclient/ai/AiAssistant	update_V	()V
 M	autismclient/ai/ConfigStore	write	()V	autismclient/ai/AiAssistant	openOverlay	()V
 M	autismclient/ai/D$1	init	()I	autismclient/ai/AiFarmBuild$1	init_I_2	()I
@@ -30666,7 +30666,7 @@ M	autismclient/modules/BufferHelper	load	()I	autismclient/modules/AnchorAuraModu
 M	autismclient/modules/BufferHelper	load	()Lautismclient/util/ce$DataUtil;	autismclient/modules/AnchorAuraModule	load_ce_DataUtil	()Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/BufferHelper	load	()Lnet/minecraft/world/entity/LivingEntity;	autismclient/modules/AnchorAuraModule	currentTarget	()Lnet/minecraft/world/entity/LivingEntity;
 M	autismclient/modules/BufferHelper	load	()V	autismclient/modules/AnchorAuraModule	load_V_2	()V
-M	autismclient/modules/BufferHelper	load	()Z	autismclient/modules/AnchorAuraModule	load_Z_23	()Z
+M	autismclient/modules/BufferHelper	load	()Z	autismclient/modules/AnchorAuraModule	isSilentMovementActive	()Z
 M	autismclient/modules/BufferHelper	load	(I)V	autismclient/modules/AnchorAuraModule	load_V_I	(I)V
 M	autismclient/modules/BufferHelper	load	(Lautismclient/modules/BufferHelper$CachePool;)Z	autismclient/modules/AnchorAuraModule	load_Z_BufferHelper_Cache	(Lautismclient/modules/AnchorAuraModule$Inner_CachePool;)Z
 M	autismclient/modules/BufferHelper	load	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/S$CachePool;	autismclient/modules/AnchorAuraModule	load_S_CachePool_BlockPos	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/ExplosionDamageCalculator$SimOptions;
@@ -31001,7 +31001,7 @@ M	autismclient/modules/ListPool	init	(Lnet/minecraft/world/phys/Vec3;DZ)Lnet/min
 M	autismclient/modules/ListPool	init	(ZFLautismclient/modules/ListPool$StreamUtil;F)Z	autismclient/modules/BedDefenderModule	init_Z_Z	(ZFLautismclient/modules/BedDefenderModule$Inner_StreamUtil;F)Z
 M	autismclient/modules/ListPool	load	()I	autismclient/modules/BedDefenderModule	load_I_5	()I
 M	autismclient/modules/ListPool	load	()V	autismclient/modules/BedDefenderModule	load_V_7	()V
-M	autismclient/modules/ListPool	load	()Z	autismclient/modules/BedDefenderModule	load_Z_23	()Z
+M	autismclient/modules/ListPool	load	()Z	autismclient/modules/BedDefenderModule	isSilentMovementActive	()Z
 M	autismclient/modules/ListPool	open	()V	autismclient/modules/BedDefenderModule	open_V	()V
 M	autismclient/modules/ListPool	open	()Z	autismclient/modules/BedDefenderModule	open_Z	()Z
 M	autismclient/modules/ListPool	poll	()V	autismclient/modules/BedDefenderModule	poll_V	()V
@@ -31116,7 +31116,7 @@ M	autismclient/modules/PathHelper	init	(Z)Ljava/util/Set;	autismclient/modules/A
 M	autismclient/modules/PathHelper	init	(ZLnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/level/block/state/BlockState;	autismclient/modules/AutoTrapModule	init_BlockState_Z_ItemStack	(ZLnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/level/block/state/BlockState;
 M	autismclient/modules/PathHelper	load	()Lautismclient/modules/PathHelper$BufferHelper;	autismclient/modules/AutoTrapModule	load_PathHelper_BufferH	()Lautismclient/modules/AutoTrapModule$Inner_BufferHelper;
 M	autismclient/modules/PathHelper	load	()V	autismclient/modules/AutoTrapModule	load_V_10	()V
-M	autismclient/modules/PathHelper	load	()Z	autismclient/modules/AutoTrapModule	load_Z_23	()Z
+M	autismclient/modules/PathHelper	load	()Z	autismclient/modules/AutoTrapModule	isSilentMovementActive	()Z
 M	autismclient/modules/PathHelper	read	()V	autismclient/modules/AutoTrapModule	read_V_6	()V
 M	autismclient/modules/PathHelper	read	()Z	autismclient/modules/AutoTrapModule	read_Z_6	()Z
 M	autismclient/modules/PathHelper	update	()V	autismclient/modules/AutoTrapModule	update_V_5	()V
@@ -31398,7 +31398,7 @@ M	autismclient/modules/RingBuffer	init	([Lnet/minecraft/core/Direction;Lnet/mine
 M	autismclient/modules/RingBuffer	load	()I	autismclient/modules/AutoFarmModule	load_I_6	()I
 M	autismclient/modules/RingBuffer	load	()Lautismclient/util/ce$DataUtil;	autismclient/modules/AutoFarmModule	load_ce_DataUtil_2	()Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/RingBuffer	load	()V	autismclient/modules/AutoFarmModule	load_V_12	()V
-M	autismclient/modules/RingBuffer	load	()Z	autismclient/modules/AutoFarmModule	load_Z_23	()Z
+M	autismclient/modules/RingBuffer	load	()Z	autismclient/modules/AutoFarmModule	isSilentMovementActive	()Z
 M	autismclient/modules/RingBuffer	load	(Lnet/minecraft/core/BlockPos;)Lautismclient/modules/RingBuffer$BufferHelper;	autismclient/modules/AutoFarmModule	load_RingBuffer_BufferH	(Lnet/minecraft/core/BlockPos;)Lautismclient/modules/AutoFarmModule$Inner_BufferHelper;
 M	autismclient/modules/RingBuffer	load	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/ce$DataUtil;	autismclient/modules/AutoFarmModule	load_ce_DataUtil	(Lnet/minecraft/core/BlockPos;)Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/RingBuffer	load	(Lnet/minecraft/core/BlockPos;)Z	autismclient/modules/AutoFarmModule	load_Z	(Lnet/minecraft/core/BlockPos;)Z
@@ -31636,7 +31636,7 @@ M	autismclient/modules/UtilCore	init	(Lnet/minecraft/world/level/block/BedBlock;
 M	autismclient/modules/UtilCore	init	(Lnet/minecraft/world/phys/BlockHitResult;)Z	autismclient/modules/BedNukerModule	init_Z_BlockHitResult_2	(Lnet/minecraft/world/phys/BlockHitResult;)Z
 M	autismclient/modules/UtilCore	load	()I	autismclient/modules/BedNukerModule	load_I_7	()I
 M	autismclient/modules/UtilCore	load	()V	autismclient/modules/BedNukerModule	load_V_16	()V
-M	autismclient/modules/UtilCore	load	()Z	autismclient/modules/BedNukerModule	load_Z_23	()Z
+M	autismclient/modules/UtilCore	load	()Z	autismclient/modules/BedNukerModule	isSilentMovementActive	()Z
 M	autismclient/modules/UtilCore	read	()V	autismclient/modules/BedNukerModule	read_V_10	()V
 M	autismclient/modules/UtilCore	read	()Z	autismclient/modules/BedNukerModule	read_Z_10	()Z
 M	autismclient/modules/UtilCore	write	()V	autismclient/modules/BedNukerModule	write_V_10	()V
@@ -31739,7 +31739,7 @@ M	autismclient/modules/X	init	(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/wor
 M	autismclient/modules/X	init	(Z)V	autismclient/modules/KBDisplacementModule	init_V_Z_5	(Z)V
 M	autismclient/modules/X	load	()Ljava/lang/String;	autismclient/modules/KBDisplacementModule	load_Str_2	()Ljava/lang/String;
 M	autismclient/modules/X	load	()V	autismclient/modules/KBDisplacementModule	onTickHead	()V
-M	autismclient/modules/X	load	()Z	autismclient/modules/KBDisplacementModule	load_Z_23	()Z
+M	autismclient/modules/X	load	()Z	autismclient/modules/KBDisplacementModule	isSilentMovementActive	()Z
 M	autismclient/modules/X	read	()V	autismclient/modules/KBDisplacementModule	read_V_11	()V
 M	autismclient/modules/X	read	()Z	autismclient/modules/KBDisplacementModule	read_Z_11	()Z
 M	autismclient/modules/X	sync	()V	autismclient/modules/KBDisplacementModule	sync_V_5	()V
@@ -32859,7 +32859,7 @@ M	autismclient/modules/aK	init	(Lnet/minecraft/core/BlockPos;)V	autismclient/mod
 M	autismclient/modules/aK	init	(Lnet/minecraft/core/BlockPos;)Z	autismclient/modules/SurroundModule	init_Z_BlockPos_5	(Lnet/minecraft/core/BlockPos;)Z
 M	autismclient/modules/aK	init	(Lnet/minecraft/world/item/ItemStack;)Z	autismclient/modules/SurroundModule	init_Z_ItemStack_5	(Lnet/minecraft/world/item/ItemStack;)Z
 M	autismclient/modules/aK	load	()V	autismclient/modules/SurroundModule	load_V_19	()V
-M	autismclient/modules/aK	load	()Z	autismclient/modules/SurroundModule	load_Z_23	()Z
+M	autismclient/modules/aK	load	()Z	autismclient/modules/SurroundModule	isSilentMovementActive	()Z
 M	autismclient/modules/aK	read	()V	autismclient/modules/SurroundModule	read_V_13	()V
 M	autismclient/modules/aK	read	()Z	autismclient/modules/SurroundModule	read_Z_13	()Z
 M	autismclient/modules/aK	sync	()V	autismclient/modules/SurroundModule	sync_V_7	()V
@@ -33129,7 +33129,7 @@ M	autismclient/modules/aa	load	()F	autismclient/modules/KillAuraModule	load_F_3	
 M	autismclient/modules/aa	load	()I	autismclient/modules/KillAuraModule	load_I_10	()I
 M	autismclient/modules/aa	load	()Lnet/minecraft/world/entity/LivingEntity;	autismclient/modules/KillAuraModule	activeTarget	()Lnet/minecraft/world/entity/LivingEntity;
 M	autismclient/modules/aa	load	()V	autismclient/modules/KillAuraModule	load_V_20	()V
-M	autismclient/modules/aa	load	()Z	autismclient/modules/KillAuraModule	load_Z_23	()Z
+M	autismclient/modules/aa	load	()Z	autismclient/modules/KillAuraModule	isSilentMovementActive	()Z
 M	autismclient/modules/aa	load	(DDD)D	autismclient/modules/KillAuraModule	load_D_D	(DDD)D
 M	autismclient/modules/aa	load	(I)Z	autismclient/modules/KillAuraModule	load_Z_I_3	(I)Z
 M	autismclient/modules/aa	load	(Lnet/minecraft/world/entity/Entity;)D	autismclient/modules/KillAuraModule	load_D_Entity	(Lnet/minecraft/world/entity/Entity;)D
@@ -34217,7 +34217,7 @@ M	autismclient/modules/j	load	()I	autismclient/modules/ClutchModule	load_I_15	()
 M	autismclient/modules/j	load	()Lautismclient/modules/i$ConfigStore;	autismclient/modules/ClutchModule	load_i_ConfigStore	()Lautismclient/modules/ClutchFallPhysics$Inner_ConfigStore;
 M	autismclient/modules/j	load	()Ljava/util/function/DoubleUnaryOperator;	autismclient/modules/ClutchModule	load_DoubleUnaryOperato	()Ljava/util/function/DoubleUnaryOperator;
 M	autismclient/modules/j	load	()V	autismclient/modules/ClutchModule	load_V_32	()V
-M	autismclient/modules/j	load	()Z	autismclient/modules/ClutchModule	load_Z_23	()Z
+M	autismclient/modules/j	load	()Z	autismclient/modules/ClutchModule	isSilentMovementActive	()Z
 M	autismclient/modules/j	load	(DD)Z	autismclient/modules/ClutchModule	load_Z_D_D_2	(DD)Z
 M	autismclient/modules/j	load	(I)V	autismclient/modules/ClutchModule	load_V_I_3	(I)V
 M	autismclient/modules/j	load	(I)Z	autismclient/modules/ClutchModule	load_Z_I_5	(I)Z
@@ -34477,7 +34477,7 @@ M	autismclient/modules/t	load	()I	autismclient/modules/CrystalAuraModule	load_I_
 M	autismclient/modules/t	load	()Lautismclient/util/ce$DataUtil;	autismclient/modules/CrystalAuraModule	load_ce_DataUtil_5	()Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/t	load	()Lnet/minecraft/world/entity/LivingEntity;	autismclient/modules/CrystalAuraModule	currentTarget	()Lnet/minecraft/world/entity/LivingEntity;
 M	autismclient/modules/t	load	()V	autismclient/modules/CrystalAuraModule	load_V_34	()V
-M	autismclient/modules/t	load	()Z	autismclient/modules/CrystalAuraModule	load_Z_23	()Z
+M	autismclient/modules/t	load	()Z	autismclient/modules/CrystalAuraModule	isSilentMovementActive	()Z
 M	autismclient/modules/t	load	(I)Z	autismclient/modules/CrystalAuraModule	load_Z_I_6	(I)Z
 M	autismclient/modules/t	load	(Lnet/minecraft/core/BlockPos;)V	autismclient/modules/CrystalAuraModule	load_V_BlockPos_2	(Lnet/minecraft/core/BlockPos;)V
 M	autismclient/modules/t	load	(Lnet/minecraft/core/BlockPos;)Z	autismclient/modules/CrystalAuraModule	load_Z_BlockPos_3	(Lnet/minecraft/core/BlockPos;)Z
@@ -34597,7 +34597,7 @@ M	autismclient/modules/z	init	(Lnet/minecraft/world/entity/player/Player;)Z	auti
 M	autismclient/modules/z	load	()Ljava/lang/String;	autismclient/modules/DangerModule	load_Str_7	()Ljava/lang/String;
 M	autismclient/modules/z	load	()Ljava/util/List;	autismclient/modules/DangerModule	load_List_4	()Ljava/util/List;
 M	autismclient/modules/z	load	()V	autismclient/modules/DangerModule	load_V_35	()V
-M	autismclient/modules/z	load	()Z	autismclient/modules/DangerModule	load_Z_23	()Z
+M	autismclient/modules/z	load	()Z	autismclient/modules/DangerModule	isSilentMovementActive	()Z
 M	autismclient/modules/z	open	()V	autismclient/modules/DangerModule	open_V_6	()V
 M	autismclient/modules/z	open	()Z	autismclient/modules/DangerModule	open_Z_6	()Z
 M	autismclient/modules/z	poll	()V	autismclient/modules/DangerModule	poll_V_6	()V
@@ -37538,10 +37538,10 @@ M	autismclient/util/aK$CachePool	init	()Ljava/util/List;	autismclient/util/Recip
 M	autismclient/util/aK$CachePool	load	()I	autismclient/util/RecipeCatalogLoader$Inner_CachePool	filesSkipped	()I
 M	autismclient/util/aK$CachePool	load	()Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_CachePool	cookingRecipes	()Ljava/util/List;
 M	autismclient/util/aK$DataUtil	init	()F	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_F	()F
-M	autismclient/util/aK$DataUtil	init	()I	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_I	()I
-M	autismclient/util/aK$DataUtil	init	()Ljava/lang/String;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_Str	()Ljava/lang/String;
-M	autismclient/util/aK$DataUtil	init	()Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_List	()Ljava/util/List;
-M	autismclient/util/aK$DataUtil	init	()Lnet/minecraft/world/item/ItemStack;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	init_ItemStack	()Lnet/minecraft/world/item/ItemStack;
+M	autismclient/util/aK$DataUtil	init	()I	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	cookTimeTicks	()I
+M	autismclient/util/aK$DataUtil	init	()Ljava/lang/String;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	recipeKey	()Ljava/lang/String;
+M	autismclient/util/aK$DataUtil	init	()Ljava/util/List;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	inputs	()Ljava/util/List;
+M	autismclient/util/aK$DataUtil	init	()Lnet/minecraft/world/item/ItemStack;	autismclient/util/RecipeCatalogLoader$Inner_DataUtil	result	()Lnet/minecraft/world/item/ItemStack;
 M	autismclient/util/aM	init	()J	autismclient/util/AutismMacro	executeWithRunId	()J
 M	autismclient/util/aM	init	()Lautismclient/util/aM;	autismclient/util/AutismMacro	copy	()Lautismclient/util/AutismMacro;
 M	autismclient/util/aM	init	()Lnet/minecraft/nbt/CompoundTag;	autismclient/util/AutismMacro	toSharedTag	()Lnet/minecraft/nbt/CompoundTag;
@@ -39724,7 +39724,7 @@ M	autismclient/util/cn	init	(Lnet/minecraft/world/entity/Entity;F)F	autismclient
 M	autismclient/util/cn	init	(Lnet/minecraft/world/entity/Entity;F)V	autismclient/util/SilentMovementCoordinator	recordMovementYaw	(Lnet/minecraft/world/entity/Entity;F)V
 M	autismclient/util/cn	load	()F	autismclient/util/SilentMovementCoordinator	getCameraPitch	()F
 M	autismclient/util/cn	load	()Z	autismclient/util/SilentMovementCoordinator	isClutchMoveFixActive	()Z
-M	autismclient/util/cn$DataUtil	load	()Z	autismclient/util/SilentMovementCoordinator$Participant	load_Z_23	()Z
+M	autismclient/util/cn$DataUtil	load	()Z	autismclient/util/SilentMovementCoordinator$Participant	isSilentMovementActive	()Z
 M	autismclient/util/cn$DataUtil	update	()Z	autismclient/util/SilentMovementCoordinator$Participant	rotatesVisibly	()Z
 M	autismclient/util/cn$DataUtil	write	()Z	autismclient/util/SilentMovementCoordinator$Participant	usesMoveFix	()Z
 M	autismclient/util/co	init	()V	autismclient/util/SkeletonEspRenderer	register	()V
