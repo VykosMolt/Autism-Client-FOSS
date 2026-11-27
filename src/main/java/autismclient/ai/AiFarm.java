@@ -62,7 +62,7 @@ final class AiFarm {
    private static final double init_D = 16.0;
    private static final Map<String, String> init_Map = new LinkedHashMap<>();
    private static final Map<String, String> load_Map = new LinkedHashMap<>();
-   private static final Map<String, String> read_Map = Map.ofEntries(
+   private static final Map<String, String> SEED_FOR_CROP = Map.ofEntries(
       Map.entry("minecraft:wheat", "minecraft:wheat_seeds"),
       Map.entry("minecraft:carrots", "minecraft:carrot"),
       Map.entry("minecraft:potatoes", "minecraft:potato"),
@@ -70,7 +70,7 @@ final class AiFarm {
       Map.entry("minecraft:nether_wart", "minecraft:nether_wart"),
       Map.entry("minecraft:cocoa", "minecraft:cocoa_beans")
    );
-   private static final Map<String, List<String>> write_Map = Map.ofEntries(
+   private static final Map<String, List<String>> BREEDING_FOOD = Map.ofEntries(
       Map.entry("minecraft:cow", List.of("minecraft:wheat")),
       Map.entry("minecraft:mooshroom", List.of("minecraft:wheat")),
       Map.entry("minecraft:sheep", List.of("minecraft:wheat")),
@@ -103,8 +103,8 @@ final class AiFarm {
    private static final int push = 40;
    private static final double load_D = 64.0;
    private static final double read_D = 2.25;
-   private static final String init_Str = "minecraft:bone_meal";
-   private static final int[][] init_IArr2 = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+   private static final String BONE_MEAL = "minecraft:bone_meal";
+   private static final int[][] COLUMN_OFFSETS = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
    static final Set<String> init_Set = Set.of("minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart");
 
    private AiFarm() {
@@ -155,10 +155,10 @@ final class AiFarm {
    }
 
    static String load(String cropBlockId) {
-      return read_Map.get(cropBlockId);
+      return SEED_FOR_CROP.get(cropBlockId);
    }
 
-   static int init_I(BlockState state) {
+   static int cropAge(BlockState state) {
       for (Property<?> property : state.getProperties()) {
          if (property instanceof IntegerProperty age && "age".equals(age.getName())) {
             return state.getValue(age);
@@ -168,7 +168,7 @@ final class AiFarm {
       return -1;
    }
 
-   static int load_I(BlockState state) {
+   static int maxCropAge(BlockState state) {
       for (Property<?> property : state.getProperties()) {
          if (property instanceof IntegerProperty age && "age".equals(age.getName())) {
             return Collections.max(age.getPossibleValues());
@@ -179,13 +179,13 @@ final class AiFarm {
    }
 
    static boolean isRipe(BlockState state) {
-      int max = load_I(state);
-      return max < 0 || init_I(state) >= max;
+      int max = maxCropAge(state);
+      return max < 0 || cropAge(state) >= max;
    }
 
-   static boolean load_Z(BlockState state) {
-      int max = load_I(state);
-      return state.getBlock() instanceof BonemealableBlock && max >= 0 && init_I(state) < max;
+   static boolean canBonemeal(BlockState state) {
+      int max = maxCropAge(state);
+      return state.getBlock() instanceof BonemealableBlock && max >= 0 && cropAge(state) < max;
    }
 
    static BlockPos init(Function<BlockPos, BlockState> at, BlockPos pos) {
@@ -204,7 +204,7 @@ final class AiFarm {
       }
    }
 
-   static Direction init_Direction(BlockState state) {
+   static Direction facingOf(BlockState state) {
       return state.hasProperty(BlockStateProperties.HORIZONTAL_FACING) ? state.getValue(BlockStateProperties.HORIZONTAL_FACING) : Direction.NORTH;
    }
 
@@ -512,7 +512,7 @@ final class AiFarm {
                                     }
                                  } else if (AiFarm.isRipe(state)) {
                                     this.init_List.add(AiFarm.Inner_CachePool.harvest(cell, this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(cell))));
-                                 } else if (this.load_Z && AiFarm.load_Z(state)) {
+                                 } else if (this.load_Z && AiFarm.canBonemeal(state)) {
                                     this.load_List.add(AiFarm.Inner_CachePool.bonemeal(cell, this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(cell))));
                                  }
                               }
@@ -579,7 +579,7 @@ final class AiFarm {
                      return seed != null && this.init_Minecraft.level.getBlockState(w.cell()).isAir();
                   case BONEMEAL:
                      return AiTerrain.isLoaded(this.init_Minecraft.level, w.cell())
-                        && AiFarm.load_Z(this.init_Minecraft.level.getBlockState(w.cell()))
+                        && AiFarm.canBonemeal(this.init_Minecraft.level.getBlockState(w.cell()))
                         && AiGameState.countInventoryItem("minecraft:bone_meal") > 0;
                   case DROP:
                      return this.init_Minecraft.level.getEntity(w.entityId()) instanceof ItemEntity drop && drop.isAlive();
@@ -720,7 +720,7 @@ final class AiFarm {
                         if (this.read_Z && kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null) {
                            BlockState before = this.init_Minecraft.level.getBlockState(w.cell());
                            if (crop == Blocks.COCOA) {
-                              Direction facing = AiFarm.init_Direction(before);
+                              Direction facing = AiFarm.facingOf(before);
                               this.read_BlockPos = w.cell().relative(facing);
                               this.init_Direction = facing.getOpposite();
                            } else {
@@ -794,7 +794,7 @@ final class AiFarm {
                      return this.init(AiGoto.findStandableNearCompat(w.cell(), 24), 0.45, 30, "Lining up the replant face");
                   }
 
-                  int[] column = AiFarm.init_IArr2[this.run++ % AiFarm.init_IArr2.length];
+                  int[] column = AiFarm.COLUMN_OFFSETS[this.run++ % AiFarm.COLUMN_OFFSETS.length];
                   BlockPos stance = AiGoto.findStandableNearCompat(new BlockPos(cell.getX() + column[0], cell.getY() - 1, cell.getZ() + column[1]), 24);
                   return this.init(stance, 2.0, 60, "Moving into reach of " + cell.toShortString());
                }
@@ -1157,8 +1157,8 @@ final class AiFarm {
       }
    }
 
-   static List<String> init_List(String entityTypeId) {
-      return write_Map.getOrDefault(entityTypeId, List.of());
+   static List<String> breedingFoodFor(String entityTypeId) {
+      return BREEDING_FOOD.getOrDefault(entityTypeId, List.of());
    }
 
    private static AiOperation load(JsonObject args) {
@@ -1169,9 +1169,9 @@ final class AiFarm {
       }
 
       final String typeId = species.contains(":") ? species : "minecraft:" + species;
-      final List<String> foods = init_List(typeId);
+      final List<String> foods = breedingFoodFor(typeId);
       if (foods.isEmpty()) {
-         throw new IllegalArgumentException("No known breeding food for '" + species + "'; breedable species: " + String.join(", ", write_Map.keySet()));
+         throw new IllegalArgumentException("No known breeding food for '" + species + "'; breedable species: " + String.join(", ", BREEDING_FOOD.keySet()));
       }
 
       final int feeds = Math.max(2, Math.min(64, AiJson.getInt(args, "count", 2)));

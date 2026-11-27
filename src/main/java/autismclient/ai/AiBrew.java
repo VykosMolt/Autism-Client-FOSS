@@ -76,7 +76,7 @@ final class AiBrew {
             int update_I;
             int sync_I;
             int flush;
-            long load_J = -1L;
+            long revision = -1L;
             long read_J = -1L;
             boolean init_Z;
             boolean load_Z;
@@ -136,7 +136,7 @@ final class AiBrew {
                            if (!menu.getSlot(3).getItem().isEmpty()) {
                               this.update_Z = true;
                               this.sync_I = 0;
-                              this.load_J = AiServerEvidence.containerRevision(menu.containerId);
+                              this.revision = AiServerEvidence.containerRevision(menu.containerId);
                               this.write_I = 0;
                               return this.init("Brewing (400 ticks)");
                            } else if (this.init(menu, ingredient.items().iterator().next())) {
@@ -147,8 +147,8 @@ final class AiBrew {
                            }
                         } else if (!this.sync_Z) {
                            long revision = AiServerEvidence.containerRevision(menu.containerId);
-                           if (revision > this.load_J) {
-                              this.load_J = revision;
+                           if (revision > this.revision) {
+                              this.revision = revision;
                               this.write_I = 0;
                            } else if (++this.write_I > 120) {
                               return this.init(
@@ -438,7 +438,7 @@ final class AiBrew {
                return best;
             }
 
-            JsonObject init_JsonObject_7() {
+            JsonObject resultData() {
                return AiJson.objectOf(
                   "ingredient",
                   ingredientId,
@@ -458,7 +458,7 @@ final class AiBrew {
             }
 
             AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_7().toString(), List.of());
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.resultData().toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -470,7 +470,7 @@ final class AiBrew {
             }
 
             AiOperation.Result init(AiFailure code, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_7();
+               JsonObject data = this.resultData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -482,7 +482,7 @@ final class AiBrew {
             }
 
             AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_7();
+               JsonObject data = this.resultData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());

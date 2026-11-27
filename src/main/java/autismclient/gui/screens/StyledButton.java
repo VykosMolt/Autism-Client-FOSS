@@ -12,8 +12,8 @@ import net.minecraft.network.chat.Component;
 public class StyledButton extends Button {
    private static final int init_I = -15594737;
    private final autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil;
-   private final Supplier<String> init_Supplier;
-   private boolean init_Z;
+   private final Supplier<String> dynamicLabel;
+   private boolean toggled;
 
    public StyledButton(int x, int y, int width, int height, Component label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress onPress) {
       this(x, y, width, height, label, tone, null, onPress);
@@ -24,11 +24,11 @@ public class StyledButton extends Button {
    ) {
       super(x, y, width, height, label, onPress, DEFAULT_NARRATION);
       this.init_CachePool_DataUtil = tone == null ? autismclient.gui.f.b.CachePool.Inner_DataUtil.init : tone;
-      this.init_Supplier = dynamicLabel;
+      this.dynamicLabel = dynamicLabel;
    }
 
    public StyledButton init(boolean toggled) {
-      this.init_Z = toggled;
+      this.toggled = toggled;
       return this;
    }
 
@@ -42,14 +42,14 @@ public class StyledButton extends Button {
          && mouseX < this.getX() + this.getWidth()
          && mouseY >= this.getY()
          && mouseY < this.getY() + this.getHeight();
-      String text = this.init_Supplier != null ? this.init_Supplier.get() : this.getMessage().getString();
+      String text = this.dynamicLabel != null ? this.dynamicLabel.get() : this.getMessage().getString();
       autismclient.gui.f.b.CachePool.init(
          autismclient.gui.f.UiHelper.init(graphics, font, mouseX, mouseY),
          bounds,
          text,
-         this.init_Z ? this.init_CachePool_DataUtil : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
+         this.toggled ? this.init_CachePool_DataUtil : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
          hovered,
-         this.init_Z
+         this.toggled
       );
    }
 }

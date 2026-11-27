@@ -10,9 +10,9 @@ public final class BookBotPageGenerator {
    public static final int init_I = 100;
    public static final int load_I = 100;
    public static final int read_I = 1024;
-   public static final String init_Str = "Ascii";
-   public static final String load_Str = "Utf8";
-   public static final String read_Str = "PaperMC";
+   public static final String ASCII = "Ascii";
+   public static final String UTF8 = "Utf8";
+   public static final String PAPER_MC = "PaperMC";
 
    private BookBotPageGenerator() {
    }

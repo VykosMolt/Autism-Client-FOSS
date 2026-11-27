@@ -18,9 +18,9 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 public final class WindowIconManager {
-   public static final String init_Str = "AUTISM Client";
-   private static final String load_Str = "assets/autismclient/icons/window/";
-   private static final int[] init_IArr = new int[]{16, 32, 48, 128, 256};
+   public static final String WINDOW_TITLE = "AUTISM Client";
+   private static final String ICON_PATH = "assets/autismclient/icons/window/";
+   private static final int[] ICON_SIZES = new int[]{16, 32, 48, 128, 256};
    private static final int init_I = 60;
    private static boolean init_Z = false;
    private static int load_I;
@@ -54,7 +54,7 @@ public final class WindowIconManager {
             boolean ok;
             if (hidden) {
                client.updateTitle();
-               ok = init_Z(client);
+               ok = applyIcons(client);
             } else {
                client.getWindow().setTitle("AUTISM Client");
                ok = init(client.getWindow().handle());
@@ -67,7 +67,7 @@ public final class WindowIconManager {
       }
    }
 
-   private static boolean init_Z(Minecraft client) {
+   private static boolean applyIcons(Minecraft client) {
       try {
          IconSet iconSet = SharedConstants.getCurrentVersion().stable() ? IconSet.RELEASE : IconSet.SNAPSHOT;
          client.getWindow().setIcon((PackMetadataResources)client.getVanillaPackResources(), iconSet);
@@ -82,13 +82,13 @@ public final class WindowIconManager {
          return false;
       }
 
-      List<ByteBuffer> allocatedBuffers = new ArrayList<>(init_IArr.length);
+      List<ByteBuffer> allocatedBuffers = new ArrayList<>(ICON_SIZES.length);
 
       try (MemoryStack stack = MemoryStack.stackPush()) {
-         CompatGLFWImage.Buffer icons = CompatGLFWImage.malloc(init_IArr.length, stack);
+         CompatGLFWImage.Buffer icons = CompatGLFWImage.malloc(ICON_SIZES.length, stack);
 
-         for (int i = 0; i < init_IArr.length; i++) {
-            int size = init_IArr[i];
+         for (int i = 0; i < ICON_SIZES.length; i++) {
+            int size = ICON_SIZES[i];
 
             try (
                InputStream stream = init("icon_" + size + "x" + size + ".png");

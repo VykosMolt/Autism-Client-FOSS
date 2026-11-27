@@ -45,9 +45,9 @@ public final class EndPortalModule extends Module {
    private final EndPortalSessionTracker init_cU = new EndPortalSessionTracker(this.init_cR);
    private final Map<Integer, EndPortalModule.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
    private EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil;
-   private List<int[]> init_List = List.of();
+   private List<int[]> offsets = List.of();
    private int load_I = -1;
-   private int read_I;
+   private int cx;
    private int write;
    private int update;
    private int sync;
@@ -58,7 +58,7 @@ public final class EndPortalModule extends Module {
    private List<Vec3> load_List = List.of();
    private volatile List<BlockPos> read_List = List.of();
 
-   private static long init_J_2() {
+   private static long nowMillis() {
       return System.nanoTime() / 1000000L;
    }
 
@@ -97,14 +97,14 @@ public final class EndPortalModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_cR.read(init_J_2());
+      this.init_cR.read(nowMillis());
       this.init_V_4();
       this.init_J = -1L;
    }
 
    @Override
    public void onDisable() {
-      this.init_cR.init(init_J_2());
+      this.init_cR.init(nowMillis());
       this.init_V_4();
       EspChunkWorker.reset();
    }
@@ -132,7 +132,7 @@ public final class EndPortalModule extends Module {
       this.load_Vec3 = null;
       this.load_List = List.of();
       this.load_Map = Map.of();
-      this.init_List = List.of();
+      this.offsets = List.of();
       this.load_I = -1;
       this.update = this.sync = 0;
    }
@@ -152,7 +152,7 @@ public final class EndPortalModule extends Module {
             this.load_V_3();
             this.init_cR_DataUtil = this.init_cU.getMemory();
             this.init_cR_DataUtil.triangulator.configure(true, false);
-            this.init_J = init_J_2() + 2000L;
+            this.init_J = nowMillis() + 2000L;
          }
 
          return true;
@@ -172,7 +172,7 @@ public final class EndPortalModule extends Module {
    @Override
    public void tick() {
       if (!this.isEnabled()) {
-         this.init_cR.load(init_J_2());
+         this.init_cR.load(nowMillis());
       } else if (!this.push()) {
          this.init_V_4();
       } else {
@@ -189,8 +189,8 @@ public final class EndPortalModule extends Module {
             && this.init_Map.isEmpty()
             && load_Z()
             && MC.gui.screen() == null
-            && (this.init_J < 0L || init_J_2() >= this.init_J)) {
-            this.init_J = init_J_2() + 60000L;
+            && (this.init_J < 0L || nowMillis() >= this.init_J)) {
+            this.init_J = nowMillis() + 60000L;
             autismclient.util.bi.read("EndPortal: throw an Eye of Ender to record a direction.");
          }
       }
@@ -253,9 +253,9 @@ public final class EndPortalModule extends Module {
       int r = Math.min(am.init_I(), 16);
       int cx = MC.player.chunkPosition().x();
       int cz = MC.player.chunkPosition().z();
-      if (r != this.load_I || cx != this.read_I || cz != this.write) {
+      if (r != this.load_I || cx != this.cx || cz != this.write) {
          this.load_I = r;
-         this.read_I = cx;
+         this.cx = cx;
          this.write = cz;
          this.update = 0;
          List<int[]> offsets = new ArrayList<>();
@@ -270,14 +270,14 @@ public final class EndPortalModule extends Module {
             }
          }
 
-         this.init_List = offsets;
+         this.offsets = offsets;
       }
 
       int checked = 0;
       int scanned = 0;
 
-      while (!this.init_List.isEmpty() && checked++ < Math.min(this.init_List.size(), 32) && scanned < 2) {
-         int[] offset = this.init_List.get(Math.floorMod(this.update++, this.init_List.size()));
+      while (!this.offsets.isEmpty() && checked++ < Math.min(this.offsets.size(), 32) && scanned < 2) {
+         int[] offset = this.offsets.get(Math.floorMod(this.update++, this.offsets.size()));
          LevelChunk chunk = MC.level.getChunkSource().getChunk(cx + offset[0], cz + offset[1], ChunkStatus.FULL, false);
          if (chunk != null) {
             scanned++;
@@ -429,7 +429,7 @@ public final class EndPortalModule extends Module {
       return this.open() ? this.init_cR_DataUtil.triangulator.estimate().uncertainty() : 0.0;
    }
 
-   String init_Str() {
+   String statusText() {
       return this.close()
          ? (this.init_Vec3 != null ? "Portal ring observed" : "Portal frame observed")
          : (
@@ -445,7 +445,7 @@ public final class EndPortalModule extends Module {
 
    @Override
    public String info() {
-      return this.init_Str();
+      return this.statusText();
    }
 
    private enum Inner_DataUtil {

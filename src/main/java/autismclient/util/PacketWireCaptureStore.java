@@ -124,7 +124,7 @@ public final class PacketWireCaptureStore {
          String phase = init(protocolPhase);
          String flow = load(direction);
          if (!phase.isBlank() && !flow.isBlank()) {
-            Map<String, Integer> ids = read.computeIfAbsent(phase + "|" + flow, key -> init_Map(phase, flow));
+            Map<String, Integer> ids = read.computeIfAbsent(phase + "|" + flow, key -> packetIds(phase, flow));
             Integer id = ids.get(packetType.toString());
             return id == null ? -1 : id;
          } else {
@@ -133,8 +133,8 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   private static Map<String, Integer> init_Map(String phase, String flow) {
-      DetailsProvider provider = init_ProtocolInfo_Detai(phase, flow);
+   private static Map<String, Integer> packetIds(String phase, String flow) {
+      DetailsProvider provider = detailsProvider(phase, flow);
       if (provider == null) {
          return Map.of();
       }
@@ -154,7 +154,7 @@ public final class PacketWireCaptureStore {
       return ids.isEmpty() ? Map.of() : Map.copyOf(ids);
    }
 
-   private static DetailsProvider init_ProtocolInfo_Detai(String phase, String flow) {
+   private static DetailsProvider detailsProvider(String phase, String flow) {
       boolean c2s = "C2S".equals(flow);
       if ("CONFIGURATION".equals(phase)) {
          return c2s ? ConfigurationProtocols.SERVERBOUND_TEMPLATE : ConfigurationProtocols.CLIENTBOUND_TEMPLATE;

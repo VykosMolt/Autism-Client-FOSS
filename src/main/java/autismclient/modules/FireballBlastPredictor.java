@@ -21,30 +21,30 @@ import net.minecraft.world.phys.Vec3;
 
 public final class FireballBlastPredictor {
    private static final int init_I = 1;
-   private static final double[][] init_DArr2 = init_DArr2();
-   private final Map<UUID, FireballBlastPredictor.Inner_StreamUtil> init_Map = new HashMap<>();
+   private static final double[][] RAYS = buildRays();
+   private final Map<UUID, FireballBlastPredictor.Inner_StreamUtil> savedById = new HashMap<>();
    private FireballBlastPredictor.Inner_StreamUtil init_x_StreamUtil;
-   private Level init_Level;
-   private long init_J = -9223372036854775808L;
+   private Level level;
+   private long tick = -9223372036854775808L;
 
    void reset() {
-      this.init_Map.clear();
+      this.savedById.clear();
       this.init_x_StreamUtil = null;
-      this.init_Level = null;
-      this.init_J = -9223372036854775808L;
+      this.level = null;
+      this.tick = -9223372036854775808L;
    }
 
    List<FireballBlastPredictor.Inner_DataUtil> predictAt(Level level, Vec3 center) {
       if (level != null && center != null) {
          long tick = level.getGameTime();
-         boolean same = this.init_Level == level && this.init_x_StreamUtil != null && this.init_x_StreamUtil.init_Vec3.equals(center);
-         if (!same || tick != this.init_J && !init(this.init_x_StreamUtil, level, center)) {
+         boolean same = this.level == level && this.init_x_StreamUtil != null && this.init_x_StreamUtil.center.equals(center);
+         if (!same || tick != this.tick && !init(this.init_x_StreamUtil, level, center)) {
             this.init_x_StreamUtil = init_x_StreamUtil_Level_Vec3(level, center);
          }
 
-         this.init_Level = level;
-         this.init_J = tick;
-         return this.init_x_StreamUtil.init_List;
+         this.level = level;
+         this.tick = tick;
+         return this.init_x_StreamUtil.blocks;
       } else {
          this.reset();
          return List.of();
@@ -61,7 +61,7 @@ public final class FireballBlastPredictor {
          FireballBlastPredictor.Inner_StreamUtil saved;
          while (true) {
             if (!var6.hasNext()) {
-               this.init_Map.keySet().retainAll(live);
+               this.savedById.keySet().retainAll(live);
                return init(combined);
             }
 
@@ -73,21 +73,21 @@ public final class FireballBlastPredictor {
                UUID id = warning.entity().getUUID();
                live.add(id);
                Vec3 center = warning.init_A_DataUtil().init_Vec3();
-               saved = this.init_Map.get(id);
+               saved = this.savedById.get(id);
                if (init(saved, level, center)) {
                   break;
                }
 
-               this.init_Map.remove(id);
+               this.savedById.remove(id);
                if (calculations++ < 2) {
                   saved = init_x_StreamUtil_Level_Vec3(level, center);
-                  this.init_Map.put(id, saved);
+                  this.savedById.put(id, saved);
                   break;
                }
             }
          }
 
-         for (FireballBlastPredictor.Inner_DataUtil block : saved.init_List) {
+         for (FireballBlastPredictor.Inner_DataUtil block : saved.blocks) {
             combined.merge(block.pos, block.init_D, Math::max);
          }
       }
@@ -95,19 +95,19 @@ public final class FireballBlastPredictor {
 
    private static boolean init(FireballBlastPredictor.Inner_StreamUtil saved, Level level, Vec3 center) {
       return saved != null
-         && saved.init_Vec3.equals(center)
-         && saved.init_Set.stream().noneMatch(pos -> init_Z_Level_BlockPos(level, pos))
-         && saved.init_Map
+         && saved.center.equals(center)
+         && saved.positions.stream().noneMatch(pos -> isLoadedPos(level, pos))
+         && saved.states
             .entrySet()
             .stream()
-            .allMatch(entry -> init_Z_Level_BlockPos(level, entry.getKey()) && level.getBlockState(entry.getKey()) == entry.getValue());
+            .allMatch(entry -> isLoadedPos(level, entry.getKey()) && level.getBlockState(entry.getKey()) == entry.getValue());
    }
 
    private static FireballBlastPredictor.Inner_StreamUtil init_x_StreamUtil_Level_Vec3(Level level, Vec3 center) {
       Map<BlockPos, BlockState> states = new HashMap<>();
       HashSet<BlockPos> unavailable = new HashSet<>();
       List<FireballBlastPredictor.Inner_DataUtil> blocks = init(pos -> {
-         if (!init_Z_Level_BlockPos(level, pos)) {
+         if (!isLoadedPos(level, pos)) {
             unavailable.add(pos);
             return null;
          } else {
@@ -121,7 +121,7 @@ public final class FireballBlastPredictor {
       return new FireballBlastPredictor.Inner_StreamUtil(center, states, unavailable, blocks);
    }
 
-   private static boolean init_Z_Level_BlockPos(Level level, BlockPos pos) {
+   private static boolean isLoadedPos(Level level, BlockPos pos) {
       return level.isInWorldBounds(pos) && level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
@@ -137,7 +137,7 @@ public final class FireballBlastPredictor {
          Map<BlockPos, Double> risks = new HashMap<>();
          MutableBlockPos pos = new MutableBlockPos();
 
-         for (double[] ray : init_DArr2) {
+         for (double[] ray : RAYS) {
             double x = center.x;
             double y = center.y;
             double z = center.z;
@@ -190,7 +190,7 @@ public final class FireballBlastPredictor {
       return List.copyOf(blocks);
    }
 
-   private static double[][] init_DArr2() {
+   private static double[][] buildRays() {
       List<double[]> rays = new ArrayList<>(1352);
 
       for (int x = 0; x < 16; x++) {
@@ -220,6 +220,6 @@ public final class FireballBlastPredictor {
    public record Inner_DataUtil(BlockPos pos, double init_D) {
    }
 
-   private record Inner_StreamUtil(Vec3 init_Vec3, Map<BlockPos, BlockState> init_Map, Set<BlockPos> init_Set, List<FireballBlastPredictor.Inner_DataUtil> init_List) {
+   private record Inner_StreamUtil(Vec3 center, Map<BlockPos, BlockState> states, Set<BlockPos> positions, List<FireballBlastPredictor.Inner_DataUtil> blocks) {
    }
 }

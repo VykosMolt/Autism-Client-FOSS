@@ -60,7 +60,7 @@ final class AiProjectiles {
          || entity instanceof FireworkRocketEntity;
    }
 
-   static double init_D(Entity entity) {
+   static double gravityOf(Entity entity) {
       if (entity instanceof FireworkRocketEntity) {
          return 0.0;
       } else if (entity instanceof AbstractArrow) {
@@ -93,7 +93,7 @@ final class AiProjectiles {
                   && !(entity instanceof Projectile projectile && projectile.getOwner() == mc.player)) {
                   Vec3 velocity = entity.getDeltaMovement();
                   if (!(velocity.lengthSqr() < 1.0E-6)) {
-                     double gravity = init_D(entity);
+                     double gravity = gravityOf(entity);
                      AiProjectiles.ApproachMetrics prediction = init(mc, entity, mc.player.getBoundingBox(), 0);
                      out.add(
                         new AiProjectiles.IncomingProjectile(
@@ -129,7 +129,7 @@ final class AiProjectiles {
    }
 
    static AiProjectiles.ApproachMetrics init(Minecraft mc, Entity projectile, AABB destination, int travelTicks) {
-      double gravity = init_D(projectile);
+      double gravity = gravityOf(projectile);
       Vec3 position = projectile.position();
       Vec3 velocity = projectile.getDeltaMovement();
       Vec3 bodyVelocity = mc.player.getDeltaMovement();
@@ -238,7 +238,7 @@ final class AiProjectiles {
       return var10000;
    }
 
-   static AiProjectiles.ApproachMetrics init_by_DataUtil(Vec3 pos, Vec3 vel, double gravity, Vec3 target, double maxSeconds) {
+   static AiProjectiles.ApproachMetrics approachMetrics(Vec3 pos, Vec3 vel, double gravity, Vec3 target, double maxSeconds) {
       return init(pos, vel, gravity, 0.0, target, maxSeconds);
    }
 
@@ -333,8 +333,8 @@ final class AiProjectiles {
 
    static int init_I(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
       double shift = Math.min(2.0, 5.6 * Math.max(0.0, secondsAvailable));
-      AiProjectiles.ApproachMetrics left = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, 1).scale(shift)), 2.5);
-      AiProjectiles.ApproachMetrics right = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, -1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics left = approachMetrics(projPos, projVel, gravity, playerEye.add(init(projVel, 1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics right = approachMetrics(projPos, projVel, gravity, playerEye.add(init(projVel, -1).scale(shift)), 2.5);
       double l = left == null ? 1.7976931348623157E308 : left.closestApproach();
       double r = right == null ? 1.7976931348623157E308 : right.closestApproach();
       if (l != r) {

@@ -104,7 +104,7 @@ final class AiRecover {
                         this.init_Z = true;
                         return this.init("Already at the grave; sweeping drops");
                      } else {
-                        this.init_AiOperation = AiTravelFar.init(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.init_I_24()));
+                        this.init_AiOperation = AiTravelFar.init(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.secondsLeft()));
                         return this.init(
                            "Travelling to the grave at "
                               + death.position().toShortString()
@@ -119,7 +119,7 @@ final class AiRecover {
                      ItemEntity nearest = this.init_ItemEntity();
                      if (nearest != null && mc.player.distanceToSqr(nearest) > 2.25) {
                         this.init_AiOperation = AiGoto.travelToCompat(
-                           nearest.blockPosition(), 1.0, false, false, true, Math.min(30, this.init_I_24())
+                           nearest.blockPosition(), 1.0, false, false, true, Math.min(30, this.secondsLeft())
                         );
                         return this.init("Collecting a straggler drop");
                      }
@@ -159,7 +159,7 @@ final class AiRecover {
                   return this.init("Resuming recovery after " + this.init_Str);
                } else {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_24());
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.secondsLeft());
                   if (action == null) {
                      return null;
                   }
@@ -232,7 +232,7 @@ final class AiRecover {
                return gained.size() + " type(s) back, about " + missing + " item(s) still missing";
             }
 
-            int init_I_24() {
+            int secondsLeft() {
                return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
             }
 

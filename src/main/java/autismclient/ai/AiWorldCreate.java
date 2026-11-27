@@ -79,10 +79,10 @@ final class AiWorldCreate {
       final Minecraft mc = Minecraft.getInstance();
       final Object initialLevel = mc.level;
       return new AiOperation() {
-         final long init_J = System.nanoTime() + Math.max(10, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 120))) * 1000000000L;
+         final long deadline = System.nanoTime() + Math.max(10, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 120))) * 1000000000L;
          boolean init_Z;
          boolean load;
-         String init_Str = "";
+         String error = "";
 
          void init() {
             this.init_Z = true;
@@ -104,17 +104,17 @@ final class AiWorldCreate {
                   .createFreshLevel(levelId, settings, options, registry -> WorldPresets.createNormalWorldDimensions(registry), null);
             } catch (IllegalArgumentException e) {
                this.load = true;
-               this.init_Str = e.getMessage();
+               this.error = e.getMessage();
             } catch (Throwable e) {
                this.load = true;
-               this.init_Str = "World creation failed: " + e;
+               this.error = "World creation failed: " + e;
             }
          }
 
          @Override
          public AiOperation.Result tick() {
             if (this.load) {
-               return AiGameOperations.result(AiOperation.Status.FAILED, this.init_Str, AiJson.objectOf("name", name));
+               return AiGameOperations.result(AiOperation.Status.FAILED, this.error, AiJson.objectOf("name", name));
             } else if (!this.init_Z) {
                this.init();
                return AiGameOperations.result(AiOperation.Status.RUNNING, "Creating world " + name, new JsonObject());
@@ -127,7 +127,7 @@ final class AiWorldCreate {
                   )
                );
             } else {
-               return System.nanoTime() - this.init_J >= 0L
+               return System.nanoTime() - this.deadline >= 0L
                   ? AiGameOperations.result(
                      AiOperation.Status.TIMED_OUT,
                      "World did not load within the deadline; inspect the current screen",

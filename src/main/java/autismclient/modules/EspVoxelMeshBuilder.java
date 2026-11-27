@@ -24,7 +24,7 @@ final class EspVoxelMeshBuilder {
 
          for (EspVoxelMeshBuilder.Inner_DataUtil target : input) {
             if (target != null && target.box() != null) {
-               int[] voxel = init_IArr(target.box());
+               int[] voxel = voxelOf(target.box());
                if (voxel == null) {
                   partial.add(target);
                } else {
@@ -50,11 +50,11 @@ final class EspVoxelMeshBuilder {
       }
    }
 
-   static boolean init_Z(AABB box) {
-      return init_IArr(box) != null;
+   static boolean isVoxelAligned(AABB box) {
+      return voxelOf(box) != null;
    }
 
-   private static int[] init_IArr(AABB box) {
+   private static int[] voxelOf(AABB box) {
       if (box == null) {
          return null;
       }
@@ -62,12 +62,12 @@ final class EspVoxelMeshBuilder {
       int x = (int)Math.rint(box.minX);
       int y = (int)Math.rint(box.minY);
       int z = (int)Math.rint(box.minZ);
-      return init_Z_D_D(box.minX, x)
-            && init_Z_D_D(box.minY, y)
-            && init_Z_D_D(box.minZ, z)
-            && init_Z_D_D(box.maxX, x + 1.0)
-            && init_Z_D_D(box.maxY, y + 1.0)
-            && init_Z_D_D(box.maxZ, z + 1.0)
+      return nearlyEqual(box.minX, x)
+            && nearlyEqual(box.minY, y)
+            && nearlyEqual(box.minZ, z)
+            && nearlyEqual(box.maxX, x + 1.0)
+            && nearlyEqual(box.maxY, y + 1.0)
+            && nearlyEqual(box.maxZ, z + 1.0)
          ? new int[]{x, y, z}
          : null;
    }
@@ -270,7 +270,7 @@ final class EspVoxelMeshBuilder {
 
       for (int i = 1; i < sorted.size(); i++) {
          EspVoxelMeshBuilder.Inner_DataUtil next = sorted.get(i);
-         if (init(current, next, axis) && init_D_AABB_I(next.box(), axis) <= load(current.box(), axis) + 1.0E-7) {
+         if (init(current, next, axis) && minOnAxis(next.box(), axis) <= load(current.box(), axis) + 1.0E-7) {
             current = new EspVoxelMeshBuilder.Inner_DataUtil(init(current.box(), next.box(), axis), current.color());
          } else {
             output.add(current);
@@ -294,7 +294,7 @@ final class EspVoxelMeshBuilder {
 
          for (int candidate = 0; candidate < 3; candidate++) {
             if (candidate != axis) {
-               compared = Double.compare(init_D_AABB_I(a, candidate), init_D_AABB_I(b, candidate));
+               compared = Double.compare(minOnAxis(a, candidate), minOnAxis(b, candidate));
                if (compared != 0) {
                   return compared;
                }
@@ -306,7 +306,7 @@ final class EspVoxelMeshBuilder {
             }
          }
 
-         compared = Double.compare(init_D_AABB_I(a, axis), init_D_AABB_I(b, axis));
+         compared = Double.compare(minOnAxis(a, axis), minOnAxis(b, axis));
          return compared != 0 ? compared : Double.compare(load(a, axis), load(b, axis));
       };
    }
@@ -319,8 +319,8 @@ final class EspVoxelMeshBuilder {
       for (int candidate = 0; candidate < 3; candidate++) {
          if (candidate != axis
             && (
-               !init_Z_D_D(init_D_AABB_I(left.box(), candidate), init_D_AABB_I(right.box(), candidate))
-                  || !init_Z_D_D(load(left.box(), candidate), load(right.box(), candidate))
+               !nearlyEqual(minOnAxis(left.box(), candidate), minOnAxis(right.box(), candidate))
+                  || !nearlyEqual(load(left.box(), candidate), load(right.box(), candidate))
             )) {
             return false;
          }
@@ -345,7 +345,7 @@ final class EspVoxelMeshBuilder {
       return var10000;
    }
 
-   private static double init_D_AABB_I(AABB box, int axis) {
+   private static double minOnAxis(AABB box, int axis) {
       return axis == 0 ? box.minX : (axis == 1 ? box.minY : box.minZ);
    }
 
@@ -353,7 +353,7 @@ final class EspVoxelMeshBuilder {
       return axis == 0 ? box.maxX : (axis == 1 ? box.maxY : box.maxZ);
    }
 
-   private static boolean init_Z_D_D(double left, double right) {
+   private static boolean nearlyEqual(double left, double right) {
       return Math.abs(left - right) <= 1.0E-7;
    }
 

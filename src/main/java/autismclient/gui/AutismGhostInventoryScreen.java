@@ -14,7 +14,7 @@ public class AutismGhostInventoryScreen extends InventoryScreen {
       super(player);
    }
 
-   public static boolean init_Z() {
+   public static boolean isOpen() {
       return Minecraft.getInstance().gui.screen() instanceof AutismGhostInventoryScreen;
    }
 

@@ -193,7 +193,7 @@ final class CrosshairVectorPipeline {
       );
    }
 
-   private record Inner_DataUtil(int init_I, float init_F, float load_F, float read_F, float write, int load_I, int read_I, float update) {
+   private record Inner_DataUtil(int init_I, float stroke, float gap, float outline, float write, int fill, int read_I, float update) {
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {
@@ -201,8 +201,8 @@ final class CrosshairVectorPipeline {
          ByteBuffer data = MemoryUtil.memAlloc(64).order(ByteOrder.nativeOrder());
 
          try {
-            data.putFloat(key.init_F()).putFloat(key.load_F()).putFloat(key.read_F()).putFloat(key.init_I());
-            init(data, key.load_I(), key.update());
+            data.putFloat(key.stroke()).putFloat(key.gap()).putFloat(key.outline()).putFloat(key.init_I());
+            init(data, key.fill(), key.update());
             init(data, key.read_I(), key.update());
             data.putFloat(key.write()).putFloat(0.0F).putFloat(0.0F).putFloat(0.0F);
             data.flip();

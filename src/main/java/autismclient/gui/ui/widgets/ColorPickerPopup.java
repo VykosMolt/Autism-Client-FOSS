@@ -14,8 +14,8 @@ import net.minecraft.resources.Identifier;
 import autismclient.gui.f.b.CachePool;
 
 public final class ColorPickerPopup {
-   private static final int init_I = 224;
-   private static final int load_I = 171;
+   private static final int WIDTH = 224;
+   private static final int HEIGHT = 171;
    private static final int read_I = 14;
    private static final int write = 13;
    private static final int update = 2;
@@ -29,21 +29,21 @@ public final class ColorPickerPopup {
    private static final int tick = 82;
    private static final int run = 360;
    private static final int get = -1728053248;
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
    private static ColorPickerPopup.Inner_StreamUtil init_NetHelper_StreamUt;
    private static ColorPickerPopup.Inner_StreamUtil load_NetHelper_StreamUt;
    private static int set = -2147483648;
-   private final Consumer<Integer> init_Consumer;
+   private final Consumer<Integer> onSave;
    private final int put;
    private final int add;
    private final int clear;
-   private autismclient.gui.f.NetHelper init_NetHelper;
-   private boolean init_Z = true;
-   private float init_F;
-   private float load_F;
-   private float read_F;
-   private boolean load_Z;
-   private String init_Str;
+   private autismclient.gui.f.NetHelper bounds;
+   private boolean shown = true;
+   private float hue;
+   private float saturation;
+   private float brightness;
+   private boolean hexFocused;
+   private String hexText;
    private int reset;
    private int start = -1;
    private int stop;
@@ -51,42 +51,42 @@ public final class ColorPickerPopup {
    private int prev;
    private int valid;
    private int size;
-   private ColorPickerPopup.Inner_DataUtil init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.NONE;
+   private ColorPickerPopup.Inner_DataUtil dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
 
    public ColorPickerPopup(autismclient.gui.f.NetHelper anchor, int initialArgb, int defaultArgb, int screenWidth, int screenHeight, Consumer<Integer> onSave) {
-      this.init_Consumer = onSave;
+      this.onSave = onSave;
       this.put = initialArgb;
       this.add = defaultArgb;
       this.clear = initialArgb >>> 24 & 0xFF;
-      this.load_V_I(initialArgb & 16777215);
+      this.setFromRgb(initialArgb & 16777215);
       int x = anchor == null ? 8 : anchor.init() - 224;
       int y = anchor == null ? 8 : anchor.load() + 4;
       if (anchor != null && y + 171 > screenHeight - 4) {
          y = anchor.write() - 171 - 4;
       }
 
-      this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, 224, 171).init_NetHelper(Math.max(1, screenWidth - 4), Math.max(1, screenHeight - 4));
+      this.bounds = autismclient.gui.f.NetHelper.init(x, y, 224, 171).init_NetHelper(Math.max(1, screenWidth - 4), Math.max(1, screenHeight - 4));
    }
 
    public boolean isOpen() {
-      return this.init_Z;
+      return this.shown;
    }
 
    public void dismiss() {
-      this.init_Z = false;
+      this.shown = false;
    }
 
-   public boolean init_Z_I_I(int mouseX, int mouseY) {
-      return this.init_Z && this.init_NetHelper.init_Z(mouseX, mouseY);
+   public boolean contains(int mouseX, int mouseY) {
+      return this.shown && this.bounds.init_Z(mouseX, mouseY);
    }
 
    public void render(autismclient.gui.f.SyncManager context) {
-      if (this.init_Z) {
+      if (this.shown) {
          autismclient.gui.f.PacketUtil.init(
             context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(0, 0, context.init_I(), context.load_I()), -1728053248
          );
          WindowFrameRenderer.init(
-            context, this.init_NetHelper, "Color", false, false, true, this.init_NetHelper().init_Z(context.read(), context.write()), true, 5, 5, 14
+            context, this.bounds, "Color", false, false, true, this.init_NetHelper().init_Z(context.read(), context.write()), true, 5, 5, 14
          );
          autismclient.gui.f.NetHelper close = TitleBarRenderer.load(this.init_NetHelper());
          boolean closeHover = close.init_Z(context.read(), context.write());
@@ -95,19 +95,19 @@ public final class ColorPickerPopup {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), close.init(1), 3, Math.round(34.0F * closeFade) << 24 | 16777215);
          }
 
-         autismclient.gui.f.NetHelper sv = this.load_NetHelper();
-         this.init_V_SyncManager_NetHelper(context, sv);
+         autismclient.gui.f.NetHelper sv = this.saturationValueArea();
+         this.renderSaturationValue(context, sv);
          this.write(context, sv);
-         autismclient.gui.f.NetHelper hueStrip = this.read_NetHelper();
+         autismclient.gui.f.NetHelper hueStrip = this.hueStrip();
          this.load(context, hueStrip);
-         int hueY = hueStrip.write() + Math.round((1.0F - this.init_F) * (hueStrip.sync() - 1));
+         int hueY = hueStrip.write() + Math.round((1.0F - this.hue) * (hueStrip.sync() - 1));
          autismclient.gui.f.NetHelper hueMarker = autismclient.gui.f.NetHelper.init(hueStrip.read() - 1, hueY - 1, hueStrip.update() + 2, 3);
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), hueMarker, 1, -16777216);
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), hueMarker.init(1), 0, context.init_TableIndex().colors().textPrimary);
-         autismclient.gui.f.NetHelper current = autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 135, this.init_NetHelper.write() + 19, 38, 20);
-         autismclient.gui.f.NetHelper draft = autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 135 + 44, this.init_NetHelper.write() + 19, 38, 20);
-         this.init_V_SyncManager(context, current, this.put);
-         this.init_V_SyncManager(context, draft, this.read_I());
+         autismclient.gui.f.NetHelper current = autismclient.gui.f.NetHelper.init(this.bounds.read() + 135, this.bounds.write() + 19, 38, 20);
+         autismclient.gui.f.NetHelper draft = autismclient.gui.f.NetHelper.init(this.bounds.read() + 135 + 44, this.bounds.write() + 19, 38, 20);
+         this.renderSwatch(context, current, this.put);
+         this.renderSwatch(context, draft, this.read_I());
          context.init_PoolEntry()
             .drawCentered(
                context.init_GuiGraphicsExtract(),
@@ -122,11 +122,11 @@ public final class ColorPickerPopup {
                autismclient.gui.f.NetHelper.init(draft.read(), draft.load() + 2, draft.update(), 10),
                context.init_TableIndex().colors().textSecondary
             );
-         this.init_V_SyncManager(context, this.write_NetHelper(), "R", this.write_I(), -43691);
-         this.init_V_SyncManager(context, this.update_NetHelper(), "G", this.update_I(), -11149961);
-         this.init_V_SyncManager(context, this.sync_NetHelper(), "B", this.sync_I(), -10053121);
-         autismclient.gui.f.NetHelper hex = this.flush_NetHelper();
-         TextFieldRenderer.init(context, hex, this.init_Str, "RRGGBB", this.load_Z, this.reset, this.init_I(), this.load_I());
+         this.renderChannelSlider(context, this.redSlider(), "R", this.red(), -43691);
+         this.renderChannelSlider(context, this.greenSlider(), "G", this.green(), -11149961);
+         this.renderChannelSlider(context, this.blueSlider(), "B", this.blue(), -10053121);
+         autismclient.gui.f.NetHelper hex = this.hexBounds();
+         TextFieldRenderer.init(context, hex, this.hexText, "RRGGBB", this.hexFocused, this.reset, this.selectionStart(), this.selectionEnd());
          context.init_PoolEntry()
             .drawFitted(
                context.init_GuiGraphicsExtract(), "#", hex.read() - 9, context.init_PoolEntry().centerTextY(hex), 8, context.init_TableIndex().colors().textSecondary
@@ -138,7 +138,7 @@ public final class ColorPickerPopup {
    }
 
    public boolean mouseClicked(int mouseX, int mouseY, int button) {
-      if (!this.init_Z) {
+      if (!this.shown) {
          return false;
       }
 
@@ -146,7 +146,7 @@ public final class ColorPickerPopup {
          return true;
       }
 
-      if (!this.init_NetHelper.init_Z(mouseX, mouseY)) {
+      if (!this.bounds.init_Z(mouseX, mouseY)) {
          this.dismiss();
          return true;
       }
@@ -157,44 +157,44 @@ public final class ColorPickerPopup {
       }
 
       if (this.close().init_Z(mouseX, mouseY)) {
-         if (this.init_Consumer != null) {
-            this.init_Consumer.accept(this.read_I());
+         if (this.onSave != null) {
+            this.onSave.accept(this.read_I());
          }
 
-         this.init_Z = false;
+         this.shown = false;
          return true;
       } else {
          if (this.open().init_Z(mouseX, mouseY)) {
-            this.load_V_I(this.add & 16777215);
+            this.setFromRgb(this.add & 16777215);
             return true;
          }
 
-         autismclient.gui.f.NetHelper hex = this.flush_NetHelper();
-         this.load_Z = hex.init_Z(mouseX, mouseY);
-         if (this.load_Z) {
-            this.reset = this.init_I_I_NetHelper(mouseX, hex);
+         autismclient.gui.f.NetHelper hex = this.hexBounds();
+         this.hexFocused = hex.init_Z(mouseX, mouseY);
+         if (this.hexFocused) {
+            this.reset = this.cursorIndexAt(mouseX, hex);
             this.start = this.reset;
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.HEX;
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.HEX;
             return true;
          }
 
-         if (this.load_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.SV;
-            this.init_V_I_I(mouseX, mouseY);
-         } else if (this.read_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.HUE;
-            this.init_V_I(mouseY);
-         } else if (this.write_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.RED;
-            this.init_V_I(mouseX, this.write_NetHelper(), 0);
-         } else if (this.update_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.GREEN;
-            this.init_V_I(mouseX, this.update_NetHelper(), 1);
-         } else if (this.sync_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.BLUE;
-            this.init_V_I(mouseX, this.sync_NetHelper(), 2);
+         if (this.saturationValueArea().init_Z(mouseX, mouseY)) {
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.SV;
+            this.dragSaturationValue(mouseX, mouseY);
+         } else if (this.hueStrip().init_Z(mouseX, mouseY)) {
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.HUE;
+            this.dragHue(mouseY);
+         } else if (this.redSlider().init_Z(mouseX, mouseY)) {
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.RED;
+            this.dragChannel(mouseX, this.redSlider(), 0);
+         } else if (this.greenSlider().init_Z(mouseX, mouseY)) {
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.GREEN;
+            this.dragChannel(mouseX, this.greenSlider(), 1);
+         } else if (this.blueSlider().init_Z(mouseX, mouseY)) {
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.BLUE;
+            this.dragChannel(mouseX, this.blueSlider(), 2);
          } else {
-            this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.NONE;
+            this.dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
          }
 
          return true;
@@ -203,32 +203,32 @@ public final class ColorPickerPopup {
 
    public boolean load(int mouseX, int mouseY, int button) {
       if (button == 0) {
-         this.init_NetHelper_DataUtil = ColorPickerPopup.Inner_DataUtil.NONE;
+         this.dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
       }
 
-      return this.init_Z;
+      return this.shown;
    }
 
    public boolean mouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      if (this.init_Z && button == 0) {
-         switch (this.init_NetHelper_DataUtil) {
+      if (this.shown && button == 0) {
+         switch (this.dragTarget) {
             case SV:
-               this.init_V_I_I(mouseX, mouseY);
+               this.dragSaturationValue(mouseX, mouseY);
                break;
             case HUE:
-               this.init_V_I(mouseY);
+               this.dragHue(mouseY);
                break;
             case RED:
-               this.init_V_I(mouseX, this.write_NetHelper(), 0);
+               this.dragChannel(mouseX, this.redSlider(), 0);
                break;
             case GREEN:
-               this.init_V_I(mouseX, this.update_NetHelper(), 1);
+               this.dragChannel(mouseX, this.greenSlider(), 1);
                break;
             case BLUE:
-               this.init_V_I(mouseX, this.sync_NetHelper(), 2);
+               this.dragChannel(mouseX, this.blueSlider(), 2);
                break;
             case HEX:
-               this.reset = this.init_I_I_NetHelper(mouseX, this.flush_NetHelper());
+               this.reset = this.cursorIndexAt(mouseX, this.hexBounds());
          }
 
          return true;
@@ -238,11 +238,11 @@ public final class ColorPickerPopup {
    }
 
    public boolean mouseScrolled(int mouseX, int mouseY, double amount) {
-      return this.init_Z;
+      return this.shown;
    }
 
    public boolean read(int key, int scanCode, int modifiers) {
-      if (!this.init_Z) {
+      if (!this.shown) {
          return false;
       }
 
@@ -252,73 +252,73 @@ public final class ColorPickerPopup {
       }
 
       if (key != 257 && key != 335) {
-         if (!this.load_Z) {
+         if (!this.hexFocused) {
             return true;
          }
 
          boolean ctrl = (modifiers & 2) != 0;
          if (ctrl && key == 67) {
-            Minecraft.getInstance().keyboardHandler.setClipboard(this.init_Str());
+            Minecraft.getInstance().keyboardHandler.setClipboard(this.selectedText());
             return true;
          }
 
          if (ctrl && key == 86) {
-            this.init_V_Str_Z(Minecraft.getInstance().keyboardHandler.getClipboard(), this.load_Z());
+            this.paste(Minecraft.getInstance().keyboardHandler.getClipboard(), this.hasSelection());
             return true;
          }
 
          if (ctrl && key == 65) {
-            this.load_V();
+            this.selectAll();
             return true;
          }
 
-         if (key == 259 && !this.init_Str.isEmpty()) {
-            if (this.load_Z()) {
-               this.init_V_Str("");
+         if (key == 259 && !this.hexText.isEmpty()) {
+            if (this.hasSelection()) {
+               this.insertText("");
             } else if (this.reset > 0) {
-               this.init_Str = this.init_Str.substring(0, this.reset - 1) + this.init_Str.substring(this.reset);
+               this.hexText = this.hexText.substring(0, this.reset - 1) + this.hexText.substring(this.reset);
                this.reset--;
-               this.update_V();
+               this.applyHex();
             }
          } else if (key == 261) {
-            if (this.load_Z()) {
-               this.init_V_Str("");
-            } else if (this.reset < this.init_Str.length()) {
-               this.init_Str = this.init_Str.substring(0, this.reset) + this.init_Str.substring(this.reset + 1);
-               this.update_V();
+            if (this.hasSelection()) {
+               this.insertText("");
+            } else if (this.reset < this.hexText.length()) {
+               this.hexText = this.hexText.substring(0, this.reset) + this.hexText.substring(this.reset + 1);
+               this.applyHex();
             }
          } else if (key == 268 || key == 269 || key == 263 || key == 262) {
             boolean shift = (modifiers & 1) != 0;
-            this.init_V_I_Z(key, shift);
+            this.moveCursor(key, shift);
             return true;
          }
 
          return true;
       } else {
-         if (this.load_Z) {
-            this.update_V();
+         if (this.hexFocused) {
+            this.applyHex();
          }
 
-         if (this.init_Consumer != null) {
-            this.init_Consumer.accept(this.read_I());
+         if (this.onSave != null) {
+            this.onSave.accept(this.read_I());
          }
 
-         this.init_Z = false;
+         this.shown = false;
          return true;
       }
    }
 
    public boolean charTyped(char chr) {
-      if (this.init_Z && this.load_Z) {
-         if (load_Z_C(chr)) {
-            if (this.load_Z()) {
-               this.init_V_Str(Character.toString(Character.toUpperCase(chr)));
-            } else if (this.init_Str.length() < 6) {
-               this.init_Str = (this.init_Str.substring(0, this.reset) + Character.toUpperCase(chr) + this.init_Str.substring(this.reset))
+      if (this.shown && this.hexFocused) {
+         if (isHexDigit(chr)) {
+            if (this.hasSelection()) {
+               this.insertText(Character.toString(Character.toUpperCase(chr)));
+            } else if (this.hexText.length() < 6) {
+               this.hexText = (this.hexText.substring(0, this.reset) + Character.toUpperCase(chr) + this.hexText.substring(this.reset))
                   .toUpperCase(Locale.ROOT);
                this.reset++;
-               this.read_V();
-               this.update_V();
+               this.clearSelection();
+               this.applyHex();
             }
          }
 
@@ -328,13 +328,13 @@ public final class ColorPickerPopup {
       }
    }
 
-   private int init_I_I_NetHelper(int mouseX, autismclient.gui.f.NetHelper hex) {
+   private int cursorIndexAt(int mouseX, autismclient.gui.f.NetHelper hex) {
       int local = Math.max(0, mouseX - hex.read() - 4);
-      autismclient.gui.ui.UiTextRenderer text = autismclient.gui.f.UiHelper.init(init_Minecraft.font);
+      autismclient.gui.ui.UiTextRenderer text = autismclient.gui.f.UiHelper.init(MINECRAFT.font);
       int previousWidth = 0;
 
-      for (int i = 1; i <= this.init_Str.length(); i++) {
-         int width = text.measureFragmentWidth(this.init_Str, this.init_Str.substring(0, i));
+      for (int i = 1; i <= this.hexText.length(); i++) {
+         int width = text.measureFragmentWidth(this.hexText, this.hexText.substring(0, i));
          if (local < (previousWidth + width) / 2.0F) {
             return i - 1;
          }
@@ -342,21 +342,21 @@ public final class ColorPickerPopup {
          previousWidth = width;
       }
 
-      return this.init_Str.length();
+      return this.hexText.length();
    }
 
-   private void init_V_I_Z(int key, boolean shift) {
+   private void moveCursor(int key, boolean shift) {
       if (shift && this.start < 0) {
          this.start = this.reset;
       }
 
       if (!shift) {
-         this.read_V();
+         this.clearSelection();
       }
 
       switch (key) {
          case 262:
-            this.reset = Math.min(this.init_Str.length(), this.reset + 1);
+            this.reset = Math.min(this.hexText.length(), this.reset + 1);
             break;
          case 263:
             this.reset = Math.max(0, this.reset - 1);
@@ -370,50 +370,50 @@ public final class ColorPickerPopup {
             this.reset = 0;
             break;
          case 269:
-            this.reset = this.init_Str.length();
+            this.reset = this.hexText.length();
       }
 
       if (shift && this.start == this.reset) {
-         this.read_V();
+         this.clearSelection();
       }
    }
 
-   private void load_V() {
+   private void selectAll() {
       this.start = 0;
-      this.reset = this.init_Str.length();
+      this.reset = this.hexText.length();
    }
 
-   private void read_V() {
+   private void clearSelection() {
       this.start = -1;
    }
 
-   private boolean load_Z() {
+   private boolean hasSelection() {
       return this.start >= 0 && this.start != this.reset;
    }
 
-   private int init_I() {
-      return this.load_Z() ? Math.min(this.start, this.reset) : -1;
+   private int selectionStart() {
+      return this.hasSelection() ? Math.min(this.start, this.reset) : -1;
    }
 
-   private int load_I() {
-      return this.load_Z() ? Math.max(this.start, this.reset) : -1;
+   private int selectionEnd() {
+      return this.hasSelection() ? Math.max(this.start, this.reset) : -1;
    }
 
-   private String init_Str() {
-      return !this.load_Z() ? this.init_Str : this.init_Str.substring(this.init_I(), this.load_I());
+   private String selectedText() {
+      return !this.hasSelection() ? this.hexText : this.hexText.substring(this.selectionStart(), this.selectionEnd());
    }
 
-   private void init_V_Str(String value) {
-      int start = this.load_Z() ? this.init_I() : this.reset;
-      int end = this.load_Z() ? this.load_I() : this.reset;
-      String cleaned = init_Str_Str_I(value, 6 - (this.init_Str.length() - (end - start)));
-      this.init_Str = (this.init_Str.substring(0, start) + cleaned + this.init_Str.substring(end)).toUpperCase(Locale.ROOT);
+   private void insertText(String value) {
+      int start = this.hasSelection() ? this.selectionStart() : this.reset;
+      int end = this.hasSelection() ? this.selectionEnd() : this.reset;
+      String cleaned = sanitizeHex(value, 6 - (this.hexText.length() - (end - start)));
+      this.hexText = (this.hexText.substring(0, start) + cleaned + this.hexText.substring(end)).toUpperCase(Locale.ROOT);
       this.reset = start + cleaned.length();
-      this.read_V();
-      this.update_V();
+      this.clearSelection();
+      this.applyHex();
    }
 
-   private static String init_Str_Str_I(String value, int maxLength) {
+   private static String sanitizeHex(String value, int maxLength) {
       if (value != null && maxLength > 0) {
          String text = value.trim();
          if (text.startsWith("#")) {
@@ -428,7 +428,7 @@ public final class ColorPickerPopup {
 
          for (int i = 0; i < text.length() && cleaned.length() < maxLength; i++) {
             char chr = text.charAt(i);
-            if (load_Z_C(chr)) {
+            if (isHexDigit(chr)) {
                cleaned.append(Character.toUpperCase(chr));
             }
          }
@@ -439,20 +439,20 @@ public final class ColorPickerPopup {
       }
    }
 
-   private void write_V() {
-      this.reset = Math.max(0, Math.min(this.reset, this.init_Str == null ? 0 : this.init_Str.length()));
-      if (this.start > (this.init_Str == null ? 0 : this.init_Str.length())) {
-         this.start = this.init_Str.length();
+   private void clampCursor() {
+      this.reset = Math.max(0, Math.min(this.reset, this.hexText == null ? 0 : this.hexText.length()));
+      if (this.start > (this.hexText == null ? 0 : this.hexText.length())) {
+         this.start = this.hexText.length();
       }
    }
 
-   private void update_V() {
-      this.write_V();
-      if (this.init_Str.length() == 6) {
+   private void applyHex() {
+      this.clampCursor();
+      if (this.hexText.length() == 6) {
          try {
             int cursor = this.reset;
             int anchor = this.start;
-            this.load_V_I(Integer.parseInt(this.init_Str, 16) & 16777215);
+            this.setFromRgb(Integer.parseInt(this.hexText, 16) & 16777215);
             this.reset = cursor;
             this.start = anchor;
          } catch (Exception var3) {
@@ -460,23 +460,23 @@ public final class ColorPickerPopup {
       }
    }
 
-   private void init_V_Str_Z(String clipboard, boolean replaceSelectionOnly) {
-      String cleaned = init_Str_Str_I(clipboard, 6);
+   private void paste(String clipboard, boolean replaceSelectionOnly) {
+      String cleaned = sanitizeHex(clipboard, 6);
       if (cleaned.length() == 6) {
-         if (replaceSelectionOnly && this.load_Z()) {
-            this.init_V_Str(cleaned);
+         if (replaceSelectionOnly && this.hasSelection()) {
+            this.insertText(cleaned);
          } else {
-            this.init_Str = cleaned.toUpperCase(Locale.ROOT);
-            this.reset = this.init_Str.length();
-            this.read_V();
-            this.update_V();
+            this.hexText = cleaned.toUpperCase(Locale.ROOT);
+            this.reset = this.hexText.length();
+            this.clearSelection();
+            this.applyHex();
          }
       }
    }
 
-   private void init_V_SyncManager_NetHelper(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
+   private void renderSaturationValue(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
       this.read(context, area);
-      init_NetHelper_StreamUt_F(this.init_F).init(context, area);
+      init_NetHelper_StreamUt_F(this.hue).init(context, area);
    }
 
    private void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
@@ -493,7 +493,7 @@ public final class ColorPickerPopup {
       );
    }
 
-   private void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int value, int accent) {
+   private void renderChannelSlider(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int value, int accent) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       context.init_PoolEntry()
          .drawCentered(context.init_GuiGraphicsExtract(), label, autismclient.gui.f.NetHelper.init(bounds.read() - 15, bounds.write(), 12, bounds.sync()), colors.textSecondary);
@@ -517,35 +517,35 @@ public final class ColorPickerPopup {
          .drawFitted(context.init_GuiGraphicsExtract(), Integer.toString(value), bounds.init() + 5, context.init_PoolEntry().centerTextY(bounds), 24, colors.textPrimary);
    }
 
-   private void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int color) {
+   private void renderSwatch(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int color) {
       autismclient.gui.f.PacketUtil.load(
          context.init_GuiGraphicsExtract(), bounds, 3, 0xFF000000 | color & 16777215, context.init_TableIndex().colors().borderSubtle
       );
    }
 
    private void write(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
-      int x = area.read() + Math.round(this.load_F * (area.update() - 1));
-      int y = area.write() + Math.round((1.0F - this.read_F) * (area.sync() - 1));
+      int x = area.read() + Math.round(this.saturation * (area.update() - 1));
+      int y = area.write() + Math.round((1.0F - this.brightness) * (area.sync() - 1));
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(context.init_GuiGraphicsExtract(), x, y, 4.0F, -16777216);
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(context.init_GuiGraphicsExtract(), x, y, 3.0F, -1);
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(context.init_GuiGraphicsExtract(), x, y, 2.0F, 0xFF000000 | this.stop);
    }
 
-   private void init_V_I_I(int mouseX, int mouseY) {
-      autismclient.gui.f.NetHelper area = this.load_NetHelper();
-      this.load_F = init_F_F((float)(mouseX - area.read()) / Math.max(1, area.update() - 1));
-      this.read_F = init_F_F(1.0F - (float)(mouseY - area.write()) / Math.max(1, area.sync() - 1));
-      this.sync_V();
+   private void dragSaturationValue(int mouseX, int mouseY) {
+      autismclient.gui.f.NetHelper area = this.saturationValueArea();
+      this.saturation = clamp01((float)(mouseX - area.read()) / Math.max(1, area.update() - 1));
+      this.brightness = clamp01(1.0F - (float)(mouseY - area.write()) / Math.max(1, area.sync() - 1));
+      this.syncFromHsb();
    }
 
-   private void init_V_I(int mouseY) {
-      autismclient.gui.f.NetHelper area = this.read_NetHelper();
-      this.init_F = init_F_F(1.0F - (float)(mouseY - area.write()) / Math.max(1, area.sync() - 1));
-      this.sync_V();
+   private void dragHue(int mouseY) {
+      autismclient.gui.f.NetHelper area = this.hueStrip();
+      this.hue = clamp01(1.0F - (float)(mouseY - area.write()) / Math.max(1, area.sync() - 1));
+      this.syncFromHsb();
    }
 
-   private void init_V_I(int mouseX, autismclient.gui.f.NetHelper bounds, int channel) {
-      int value = Math.round(init_F_F((float)(mouseX - bounds.read()) / Math.max(1, bounds.update())) * 255.0F);
+   private void dragChannel(int mouseX, autismclient.gui.f.NetHelper bounds, int channel) {
+      int value = Math.round(clamp01((float)(mouseX - bounds.read()) / Math.max(1, bounds.update())) * 255.0F);
       int r = this.prev;
       int g = this.valid;
       int b = this.size;
@@ -557,19 +557,19 @@ public final class ColorPickerPopup {
          b = value;
       }
 
-      this.load_V_I(r << 16 | g << 8 | b);
+      this.setFromRgb(r << 16 | g << 8 | b);
    }
 
-   private void load_V_I(int rgb) {
+   private void setFromRgb(int rgb) {
       float[] hsb = Color.RGBtoHSB(rgb >>> 16 & 0xFF, rgb >>> 8 & 0xFF, rgb & 0xFF, null);
-      this.init_F = hsb[0];
-      this.load_F = hsb[1];
-      this.read_F = hsb[2];
+      this.hue = hsb[0];
+      this.saturation = hsb[1];
+      this.brightness = hsb[2];
       this.read(rgb);
    }
 
-   private void sync_V() {
-      this.read(Color.HSBtoRGB(this.init_F, this.load_F, this.read_F) & 16777215);
+   private void syncFromHsb() {
+      this.read(Color.HSBtoRGB(this.hue, this.saturation, this.brightness) & 16777215);
    }
 
    private void read(int rgb) {
@@ -578,69 +578,69 @@ public final class ColorPickerPopup {
       this.valid = this.stop >>> 8 & 0xFF;
       this.size = this.stop & 0xFF;
       this.next = (this.clear & 0xFF) << 24 | this.stop;
-      this.flush_V();
+      this.syncHexText();
    }
 
-   private void flush_V() {
-      this.init_Str = String.format(Locale.ROOT, "%06X", this.stop);
-      this.reset = this.init_Str.length();
-      this.read_V();
+   private void syncHexText() {
+      this.hexText = String.format(Locale.ROOT, "%06X", this.stop);
+      this.reset = this.hexText.length();
+      this.clearSelection();
    }
 
    private int read_I() {
       return this.next;
    }
 
-   private int write_I() {
+   private int red() {
       return this.prev;
    }
 
-   private int update_I() {
+   private int green() {
       return this.valid;
    }
 
-   private int sync_I() {
+   private int blue() {
       return this.size;
    }
 
    private autismclient.gui.f.NetHelper init_NetHelper() {
-      return autismclient.gui.f.NetHelper.init(this.init_NetHelper.read(), this.init_NetHelper.write(), this.init_NetHelper.update(), 14);
+      return autismclient.gui.f.NetHelper.init(this.bounds.read(), this.bounds.write(), this.bounds.update(), 14);
    }
 
-   private autismclient.gui.f.NetHelper load_NetHelper() {
-      return autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 6, this.init_NetHelper.write() + 19, 102, 82);
+   private autismclient.gui.f.NetHelper saturationValueArea() {
+      return autismclient.gui.f.NetHelper.init(this.bounds.read() + 6, this.bounds.write() + 19, 102, 82);
    }
 
-   private autismclient.gui.f.NetHelper read_NetHelper() {
-      return autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 6 + 102 + 6, this.init_NetHelper.write() + 19, 13, 82);
+   private autismclient.gui.f.NetHelper hueStrip() {
+      return autismclient.gui.f.NetHelper.init(this.bounds.read() + 6 + 102 + 6, this.bounds.write() + 19, 13, 82);
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_I(int index) {
-      return autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 21, this.init_NetHelper.write() + 107 + index * 15, 168, 13);
+   private autismclient.gui.f.NetHelper channelBounds(int index) {
+      return autismclient.gui.f.NetHelper.init(this.bounds.read() + 21, this.bounds.write() + 107 + index * 15, 168, 13);
    }
 
-   private autismclient.gui.f.NetHelper write_NetHelper() {
-      return this.init_NetHelper_I(0);
+   private autismclient.gui.f.NetHelper redSlider() {
+      return this.channelBounds(0);
    }
 
-   private autismclient.gui.f.NetHelper update_NetHelper() {
-      return this.init_NetHelper_I(1);
+   private autismclient.gui.f.NetHelper greenSlider() {
+      return this.channelBounds(1);
    }
 
-   private autismclient.gui.f.NetHelper sync_NetHelper() {
-      return this.init_NetHelper_I(2);
+   private autismclient.gui.f.NetHelper blueSlider() {
+      return this.channelBounds(2);
    }
 
-   private autismclient.gui.f.NetHelper flush_NetHelper() {
-      return autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 135 + 12, this.init_NetHelper.write() + 19 + 36, 70, 13);
+   private autismclient.gui.f.NetHelper hexBounds() {
+      return autismclient.gui.f.NetHelper.init(this.bounds.read() + 135 + 12, this.bounds.write() + 19 + 36, 70, 13);
    }
 
    private autismclient.gui.f.NetHelper load_NetHelper_I(int index) {
-      int inner = this.init_NetHelper.update() - 12;
+      int inner = this.bounds.update() - 12;
       int w = (inner - 4) / 3;
-      int x = this.init_NetHelper.read() + 6 + index * (w + 2);
-      int width = index == 2 ? this.init_NetHelper.read() + 6 + inner - x : w;
-      return autismclient.gui.f.NetHelper.init(x, this.init_NetHelper.load() - 4 - 13, width, 13);
+      int x = this.bounds.read() + 6 + index * (w + 2);
+      int width = index == 2 ? this.bounds.read() + 6 + inner - x : w;
+      return autismclient.gui.f.NetHelper.init(x, this.bounds.load() - 4 - 13, width, 13);
    }
 
    private autismclient.gui.f.NetHelper close() {
@@ -655,11 +655,11 @@ public final class ColorPickerPopup {
       return this.load_NetHelper_I(2);
    }
 
-   private static boolean load_Z_C(char chr) {
+   private static boolean isHexDigit(char chr) {
       return chr >= '0' && chr <= '9' || chr >= 'a' && chr <= 'f' || chr >= 'A' && chr <= 'F';
    }
 
-   private static float init_F_F(float value) {
+   private static float clamp01(float value) {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
@@ -673,7 +673,7 @@ public final class ColorPickerPopup {
    }
 
    private static ColorPickerPopup.Inner_StreamUtil init_NetHelper_StreamUt_F(float hue) {
-      int bucket = Math.round(init_F_F(hue) * 360.0F);
+      int bucket = Math.round(clamp01(hue) * 360.0F);
       if (load_NetHelper_StreamUt == null) {
          load_NetHelper_StreamUt = ColorPickerPopup.Inner_StreamUtil.init("color_picker_sv", 102, 82);
          set = -2147483648;
@@ -698,23 +698,23 @@ public final class ColorPickerPopup {
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {
-      private final Identifier init_Identifier;
-      private final NativeImage init_NativeImage;
-      private final int init_I;
+      private final Identifier id;
+      private final NativeImage image;
+      private final int width;
       private final int load;
 
       private static ColorPickerPopup.Inner_StreamUtil init(String name, int width, int height) {
          Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/ui/" + name);
          ColorPickerPopup.Inner_StreamUtil texture = new ColorPickerPopup.Inner_StreamUtil(id, name, width, height);
-         ColorPickerPopup.init_Minecraft.getTextureManager().register(id, texture);
+         ColorPickerPopup.MINECRAFT.getTextureManager().register(id, texture);
          return texture;
       }
 
       private Inner_StreamUtil(Identifier id, String name, int width, int height) {
-         this.init_Identifier = id;
-         this.init_I = width;
+         this.id = id;
+         this.width = width;
          this.load = height;
-         this.init_NativeImage = new NativeImage(width, height, true);
+         this.image = new NativeImage(width, height, true);
          this.texture = RenderSystem.getDevice().createTexture("AUTISM " + name, 5, GpuFormat.RGBA8_UNORM, width, height, 1, 1);
          this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
          this.textureView = RenderSystem.getDevice().createTextureView(this.texture);
@@ -725,8 +725,8 @@ public final class ColorPickerPopup {
             float h = this.load <= 1 ? 0.0F : 1.0F - (float)y / (this.load - 1);
             int color = 0xFF000000 | Color.HSBtoRGB(h, 1.0F, 1.0F) & 16777215;
 
-            for (int x = 0; x < this.init_I; x++) {
-               this.init_NativeImage.setPixel(x, y, color);
+            for (int x = 0; x < this.width; x++) {
+               this.image.setPixel(x, y, color);
             }
          }
 
@@ -734,12 +734,12 @@ public final class ColorPickerPopup {
       }
 
       private void init(float hue) {
-         for (int x = 0; x < this.init_I; x++) {
-            float s = this.init_I <= 1 ? 0.0F : (float)x / (this.init_I - 1);
+         for (int x = 0; x < this.width; x++) {
+            float s = this.width <= 1 ? 0.0F : (float)x / (this.width - 1);
 
             for (int y = 0; y < this.load; y++) {
                float v = this.load <= 1 ? 0.0F : 1.0F - (float)y / (this.load - 1);
-               this.init_NativeImage.setPixel(x, y, 0xFF000000 | Color.HSBtoRGB(hue, s, v) & 16777215);
+               this.image.setPixel(x, y, 0xFF000000 | Color.HSBtoRGB(hue, s, v) & 16777215);
             }
          }
 
@@ -747,23 +747,23 @@ public final class ColorPickerPopup {
       }
 
       private void load() {
-         RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.init_NativeImage);
+         RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.image);
       }
 
       private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
          context.init_GuiGraphicsExtract()
             .blit(
                RenderPipelines.GUI_TEXTURED,
-               this.init_Identifier,
+               this.id,
                area.read(),
                area.write(),
                0.0F,
                0.0F,
                area.update(),
                area.sync(),
-               this.init_I,
+               this.width,
                this.load,
-               this.init_I,
+               this.width,
                this.load,
                -1
             );
@@ -771,7 +771,7 @@ public final class ColorPickerPopup {
 
       @Override
       public void close() {
-         this.init_NativeImage.close();
+         this.image.close();
          super.close();
       }
    }

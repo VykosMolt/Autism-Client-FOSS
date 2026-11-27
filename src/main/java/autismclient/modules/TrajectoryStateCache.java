@@ -8,8 +8,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 final class TrajectoryStateCache {
-   private static final FireballBlastPredictor init_x = new FireballBlastPredictor();
-   private static final ThrownPearlTracker init_aV = new ThrownPearlTracker();
+   private static final FireballBlastPredictor BLAST_PREDICTOR = new FireballBlastPredictor();
+   private static final ThrownPearlTracker PEARL_TRACKER = new ThrownPearlTracker();
    private static List<TrajectoriesModule.Inner_CachePool> init_List = List.of();
    private static List<FireballBlastPredictor.Inner_DataUtil> load = List.of();
    private static Level init_Level;
@@ -32,7 +32,7 @@ final class TrajectoryStateCache {
             }
          }
 
-         load = init_x.predictAt(init_Level, explosion);
+         load = BLAST_PREDICTOR.predictAt(init_Level, explosion);
          Module module = al.init_Module_Str("trajectories");
          double threshold = module == null ? 50.0 : module.integer("pearl-warning-damage");
          if (init_I != mc.player.tickCount || init_D != threshold) {
@@ -45,7 +45,7 @@ final class TrajectoryStateCache {
             init_Map.clear();
          }
 
-         ThrownPearlTracker.Inner_DataUtil remembered = init_aV.remembered();
+         ThrownPearlTracker.Inner_DataUtil remembered = PEARL_TRACKER.remembered();
          if (remembered != null) {
             init(mc, remembered.position(), threshold);
          }
@@ -56,7 +56,7 @@ final class TrajectoryStateCache {
             }
          }
 
-         if (paths.isEmpty() && init_aV.remembered() == null) {
+         if (paths.isEmpty() && PEARL_TRACKER.remembered() == null) {
             TrajectoryWorldRenderer.resetCounters();
          }
       }
@@ -75,17 +75,17 @@ final class TrajectoryStateCache {
    }
 
    static double init_D() {
-      return init_aV.init_D();
+      return PEARL_TRACKER.init_D();
    }
 
    static ThrownPearlTracker.Inner_DataUtil rememberedPearl() {
       Minecraft mc = Minecraft.getInstance();
-      return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? init_aV.remembered() : null;
+      return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? PEARL_TRACKER.remembered() : null;
    }
 
    static void init(Minecraft mc, boolean enabled) {
       if (init(mc)) {
-         init_aV.tick(mc, enabled);
+         PEARL_TRACKER.tick(mc, enabled);
       }
    }
 
@@ -105,8 +105,8 @@ final class TrajectoryStateCache {
    }
 
    static void reset() {
-      init_x.reset();
-      init_aV.reset();
+      BLAST_PREDICTOR.reset();
+      PEARL_TRACKER.reset();
       init_List = List.of();
       load = List.of();
       init_Level = null;

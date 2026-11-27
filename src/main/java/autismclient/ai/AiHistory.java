@@ -15,7 +15,7 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 final class AiHistory {
-   static final String init_Str = "{\"status\":\"INTERRUPTED\",\"message\":\"The run stopped before this call's result was recorded; re-observe before assuming its effect\"}";
+   static final String INTERRUPTED_RESULT = "{\"status\":\"INTERRUPTED\",\"message\":\"The run stopped before this call's result was recorded; re-observe before assuming its effect\"}";
    static final String load = "CONTEXT COMPACTED by the host";
    static final String read = "EARLIER WORK (host digest): ";
    static final int init_I = 3000;
@@ -23,17 +23,17 @@ final class AiHistory {
    private AiHistory() {
    }
 
-   static String init_Str(JsonObject m) {
+   static String role(JsonObject m) {
       return AiJson.getString(m, "role", "");
    }
 
    static boolean isAssistant(JsonObject m) {
-      String r = init_Str(m);
+      String r = role(m);
       return r.equals("assistant") || r.equals("model");
    }
 
-   static boolean load_Z(JsonObject m) {
-      return init_Str(m).equals("user");
+   static boolean isUser(JsonObject m) {
+      return role(m).equals("user");
    }
 
    private static JsonArray init(JsonObject m, String key) {
@@ -46,7 +46,7 @@ final class AiHistory {
 
    static JsonObject init_JsonObject(JsonObject message) {
       JsonArray content = init(message, "content");
-      if (init_Str(message).equals("assistant") && content != null) {
+      if (role(message).equals("assistant") && content != null) {
          JsonArray kept = new JsonArray();
          boolean removed = false;
 
@@ -92,7 +92,7 @@ final class AiHistory {
          out.add(m.deepCopy());
       }
 
-      while (!out.isEmpty() && !load_Z(out.getFirst())) {
+      while (!out.isEmpty() && !isUser(out.getFirst())) {
          out.removeFirst();
       }
 
@@ -201,7 +201,7 @@ final class AiHistory {
             }
          }
 
-         if (!load_Z(m)) {
+         if (!isUser(m)) {
             if (!expected.isEmpty()) {
                out.add(init(expected));
             }
@@ -336,7 +336,7 @@ final class AiHistory {
       Set<String> open = new LinkedHashSet<>();
 
       for (JsonObject m : history) {
-         boolean tool = init_Str(m).equals("tool");
+         boolean tool = role(m).equals("tool");
          if (tool) {
             String id = AiJson.getString(m, "tool_call_id", "");
             if (open.remove(id)) {
@@ -388,7 +388,7 @@ final class AiHistory {
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
          List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && isAssistant(out.getLast()) ? init(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
-         if (!load_Z(m)) {
+         if (!isUser(m)) {
             if (!expected.isEmpty()) {
                out.add(init_JsonObject(expected));
             }
@@ -541,8 +541,8 @@ final class AiHistory {
    static String init_Str(List<JsonObject> dropped) {
       for (int i = dropped.size() - 1; i >= 0; i--) {
          JsonObject m = dropped.get(i);
-         if (load_Z(m)) {
-            String text = load_Str(m);
+         if (isUser(m)) {
+            String text = contentText(m);
             int at = text.indexOf("EARLIER WORK (host digest): ");
             if (text.startsWith("CONTEXT COMPACTED by the host") && at >= 0) {
                String digest = text.substring(at + "EARLIER WORK (host digest): ".length());
@@ -555,7 +555,7 @@ final class AiHistory {
       return "";
    }
 
-   private static String load_Str(JsonObject m) {
+   private static String contentText(JsonObject m) {
       if (m.has("content") && m.get("content").isJsonPrimitive()) {
          return m.get("content").getAsString();
       }
@@ -631,7 +631,7 @@ final class AiHistory {
                   }
                }
             }
-         } else if (init_Str(m).equals("tool")) {
+         } else if (role(m).equals("tool")) {
             init(byTool, labels.get(AiJson.getString(m, "tool_call_id", "")), load(m.get("content")));
          }
       }

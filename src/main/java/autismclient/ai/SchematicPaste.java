@@ -44,33 +44,33 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.storage.TagValueInput;
 
 final class SchematicPaste {
-   private static volatile SchematicPaste init_cT;
+   private static volatile SchematicPaste active;
    private static boolean read_Z;
-   private final IntegratedServer init_IntegratedServer;
-   private final ServerLevel init_ServerLevel;
-   private final SchematicDocument init_cQ;
-   private final BlockPos init_BlockPos;
-   private final int init_I;
-   private final String init_Str;
-   private final String load_Str;
-   private final boolean write_Z;
-   private final boolean update_Z;
+   private final IntegratedServer server;
+   private final ServerLevel level;
+   private final SchematicDocument document;
+   private final BlockPos origin;
+   private final int rotation;
+   private final String mirror;
+   private final String operationId;
+   private final boolean includeAir;
+   private final boolean includeEntities;
    private final Future<SchematicPaste.Inner_TableCache> init_Future;
-   private List<SchematicPaste.Inner_DataUtil> init_List;
+   private List<SchematicPaste.Inner_DataUtil> columns;
    private BitSet[][] occupiedMasks;
-   private long init_J;
-   private final Map<BlockState, BlockState> init_Map = new IdentityHashMap<>();
+   private long total;
+   private final Map<BlockState, BlockState> transformedStates = new IdentityHashMap<>();
    private final Map<Long, BitSet> load_Map = new HashMap<>();
-   private final boolean sync_Z;
+   private final boolean resumed;
    private final MutableBlockPos init_BlockPos_MutableBl = new MutableBlockPos();
    private final MutableBlockPos load_BlockPos_MutableBl = new MutableBlockPos();
-   private int load_I;
-   private int read_I;
-   private int write_I;
-   private int update_I;
-   private int sync_I;
-   private int flush_I;
-   private long load_J;
+   private int phase;
+   private int column;
+   private int range;
+   private int cell;
+   private int blockEntityIndex;
+   private int entityIndex;
+   private long done;
    private ChunkPos init_ChunkPos;
    private CompletableFuture<?> init_CompletableFuture;
    private int close;
@@ -91,40 +91,40 @@ final class SchematicPaste {
       boolean includeEntities,
       JsonObject checkpoint
    ) {
-      this.init_IntegratedServer = server;
-      this.init_ServerLevel = level;
-      this.init_cQ = document;
-      this.init_BlockPos = origin.immutable();
-      this.init_I = rotation;
-      this.init_Str = mirror;
-      this.write_Z = includeAir;
-      this.update_Z = includeEntities;
+      this.server = server;
+      this.level = level;
+      this.document = document;
+      this.origin = origin.immutable();
+      this.rotation = rotation;
+      this.mirror = mirror;
+      this.includeAir = includeAir;
+      this.includeEntities = includeEntities;
       long top = (long)origin.getY() + document.sizeY - 1L;
       if (origin.getY() >= level.getMinY() && top <= level.getMaxY()) {
          int endX = Math.addExact(origin.getX(), document.rotatedSizeX(rotation, mirror) - 1);
          int endZ = Math.addExact(origin.getZ(), document.rotatedSizeZ(rotation) - 1);
          if (level.getWorldBorder().isWithinBounds(origin) && level.getWorldBorder().isWithinBounds(new BlockPos(endX, origin.getY(), endZ))) {
-            this.sync_Z = !checkpoint.isEmpty();
-            this.load_Str = SchematicLibrary.getString(checkpoint, "operation", UUID.randomUUID().toString());
-            this.load_I = (int)SchematicLibrary.getLong(checkpoint, "phase", 0L);
-            this.read_I = (int)SchematicLibrary.getLong(checkpoint, "column", 0L);
-            this.write_I = (int)SchematicLibrary.getLong(checkpoint, "range", 0L);
-            this.update_I = (int)SchematicLibrary.getLong(checkpoint, "cell", 0L);
-            this.sync_I = (int)SchematicLibrary.getLong(checkpoint, "blockEntity", 0L);
-            this.flush_I = (int)SchematicLibrary.getLong(checkpoint, "entity", 0L);
-            this.load_J = SchematicLibrary.getLong(checkpoint, "done", 0L);
-            this.init_J = Math.max(0L, SchematicLibrary.getLong(checkpoint, "total", 0L));
-            if (this.load_I >= 0
-               && this.load_I <= 4
-               && this.read_I >= 0
-               && this.write_I >= 0
-               && this.update_I >= 0
-               && this.sync_I >= 0
-               && this.sync_I <= document.blockEntities.size()
-               && this.flush_I >= 0
-               && this.flush_I <= document.entities.size()
-               && this.load_J >= 0L) {
-               this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> prepare(document, this.init_BlockPos, rotation, mirror, includeAir));
+            this.resumed = !checkpoint.isEmpty();
+            this.operationId = SchematicLibrary.getString(checkpoint, "operation", UUID.randomUUID().toString());
+            this.phase = (int)SchematicLibrary.getLong(checkpoint, "phase", 0L);
+            this.column = (int)SchematicLibrary.getLong(checkpoint, "column", 0L);
+            this.range = (int)SchematicLibrary.getLong(checkpoint, "range", 0L);
+            this.cell = (int)SchematicLibrary.getLong(checkpoint, "cell", 0L);
+            this.blockEntityIndex = (int)SchematicLibrary.getLong(checkpoint, "blockEntity", 0L);
+            this.entityIndex = (int)SchematicLibrary.getLong(checkpoint, "entity", 0L);
+            this.done = SchematicLibrary.getLong(checkpoint, "done", 0L);
+            this.total = Math.max(0L, SchematicLibrary.getLong(checkpoint, "total", 0L));
+            if (this.phase >= 0
+               && this.phase <= 4
+               && this.column >= 0
+               && this.range >= 0
+               && this.cell >= 0
+               && this.blockEntityIndex >= 0
+               && this.blockEntityIndex <= document.blockEntities.size()
+               && this.entityIndex >= 0
+               && this.entityIndex <= document.entities.size()
+               && this.done >= 0L) {
+               this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> prepare(document, this.origin, rotation, mirror, includeAir));
                this.load("");
             } else {
                throw new IllegalArgumentException("Invalid paste checkpoint");
@@ -140,18 +140,18 @@ final class SchematicPaste {
    }
 
    private void applyPrepared(SchematicPaste.Inner_TableCache prepared) {
-      this.init_List = prepared.columns();
+      this.columns = prepared.columns();
       this.occupiedMasks = prepared.occupied();
-      this.init_J = 2L * prepared.work() + this.init_cQ.blockEntities.size() + (this.update_Z ? this.init_cQ.entities.size() : 0);
-      if (this.read_I <= this.init_List.size() && this.load_J <= this.init_J) {
-         if (this.read_I < this.init_List.size()
+      this.total = 2L * prepared.work() + this.document.blockEntities.size() + (this.includeEntities ? this.document.entities.size() : 0);
+      if (this.column <= this.columns.size() && this.done <= this.total) {
+         if (this.column < this.columns.size()
             && (
-               this.write_I >= this.init_List.get(this.read_I).ranges.size()
-                  || this.update_I
+               this.range >= this.columns.get(this.column).ranges.size()
+                  || this.cell
                      > 256
                         * (
-                           this.init_List.get(this.read_I).ranges.get(this.write_I).max
-                              - this.init_List.get(this.read_I).ranges.get(this.write_I).min
+                           this.columns.get(this.column).ranges.get(this.range).max
+                              - this.columns.get(this.column).ranges.get(this.range).min
                               + 1
                         )
             )) {
@@ -170,7 +170,7 @@ final class SchematicPaste {
             throw new IllegalStateException("World is unavailable");
          }
 
-         if (init_cT != null && !init_cT.finished) {
+         if (active != null && !active.finished) {
             throw new IllegalStateException("Another paste is still running");
          }
 
@@ -178,20 +178,20 @@ final class SchematicPaste {
          if (!read_Z) {
             read_Z = true;
             ServerTickEvents.END_SERVER_TICK.register(s -> {
-               SchematicPaste current = init_cT;
-               if (current != null && current.init_IntegratedServer == s) {
+               SchematicPaste current = active;
+               if (current != null && current.server == s) {
                   current.load();
                }
             });
             ServerLifecycleEvents.SERVER_STOPPING.register(s -> {
-               SchematicPaste current = init_cT;
-               if (current != null && current.init_IntegratedServer == s) {
+               SchematicPaste current = active;
+               if (current != null && current.server == s) {
                   current.init("");
                }
             });
          }
 
-         init_cT = job;
+         active = job;
          return job;
       } else {
          throw new IllegalStateException("Paste is available only in your single-player world");
@@ -203,12 +203,12 @@ final class SchematicPaste {
    }
 
    private void load() {
-      if (!this.init_Z && !this.progress.complete && !this.init_IntegratedServer.isPublished()) {
-         long deadline = System.nanoTime() + Math.clamp(37000000L - this.init_IntegratedServer.getAverageTickTimeNanos(), 4000000L, 14000000L);
+      if (!this.init_Z && !this.progress.complete && !this.server.isPublished()) {
+         long deadline = System.nanoTime() + Math.clamp(37000000L - this.server.getAverageTickTimeNanos(), 4000000L, 14000000L);
          this.cachedChunk = null;
 
          try {
-            if (this.init_List == null) {
+            if (this.columns == null) {
                if (!this.init_Future.isDone()) {
                   return;
                }
@@ -217,145 +217,145 @@ final class SchematicPaste {
             }
 
             for (int n = 0; n < 32768 && ((n & 31) != 0 || System.nanoTime() < deadline) && !this.init_Z; n++) {
-               if (this.load_I == 0 || this.load_I == 3) {
-                  if (this.read_I >= this.init_List.size()) {
-                     this.load_I = this.load_I == 0 ? 1 : 4;
-                     this.read_I = this.write_I = this.update_I = 0;
+               if (this.phase == 0 || this.phase == 3) {
+                  if (this.column >= this.columns.size()) {
+                     this.phase = this.phase == 0 ? 1 : 4;
+                     this.column = this.range = this.cell = 0;
                   } else {
-                     SchematicPaste.Inner_DataUtil column = this.init_List.get(this.read_I);
-                     SchematicPaste.Inner_CachePool range = column.ranges.get(this.write_I);
+                     SchematicPaste.Inner_DataUtil column = this.columns.get(this.column);
+                     SchematicPaste.Inner_CachePool range = column.ranges.get(this.range);
                      int rangeSize = (range.max - range.min + 1) * 256;
-                     long maskKey = (long)this.read_I << 32 | this.write_I;
-                     if (this.update_I < rangeSize) {
-                        BitSet mask = this.load_I == 3 && !this.sync_Z ? this.load_Map.get(maskKey) : this.occupiedMasks[this.read_I][this.write_I];
-                        int next = mask == null ? -1 : mask.nextSetBit(this.update_I);
+                     long maskKey = (long)this.column << 32 | this.range;
+                     if (this.cell < rangeSize) {
+                        BitSet mask = this.phase == 3 && !this.resumed ? this.load_Map.get(maskKey) : this.occupiedMasks[this.column][this.range];
+                        int next = mask == null ? -1 : mask.nextSetBit(this.cell);
                         if (next < 0) {
                            next = rangeSize;
                         }
 
-                        this.load_J = this.load_J + (next - this.update_I);
-                        this.update_I = next;
+                        this.done = this.done + (next - this.cell);
+                        this.cell = next;
                      }
 
-                     if (this.update_I >= rangeSize) {
-                        if (this.load_I == 3) {
+                     if (this.cell >= rangeSize) {
+                        if (this.phase == 3) {
                            this.load_Map.remove(maskKey);
                         }
 
-                        this.update_I = 0;
-                        if (++this.write_I >= column.ranges.size()) {
-                           this.read_I++;
-                           this.write_I = 0;
+                        this.cell = 0;
+                        if (++this.range >= column.ranges.size()) {
+                           this.column++;
+                           this.range = 0;
                         }
                      } else {
                         if (!this.init(column.x, column.z)) {
                            break;
                         }
 
-                        int index = this.update_I;
+                        int index = this.cell;
                         int y = range.min + index / 256;
                         int x = (column.x << 4) + (index & 15);
                         int z = (column.z << 4) + (index % 256 >> 4);
-                        int tx = x - this.init_BlockPos.getX();
-                        int tz = z - this.init_BlockPos.getZ();
-                        this.init_V_I(tx, y - this.init_BlockPos.getY(), tz);
-                        SchematicDocument.Inner_CachePool region = this.init_cQ
+                        int tx = x - this.origin.getX();
+                        int tz = z - this.origin.getZ();
+                        this.init_V_I(tx, y - this.origin.getY(), tz);
+                        SchematicDocument.Inner_CachePool region = this.document
                            .regionAt(this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ());
                         if (region != null) {
                            BlockState saved = region.stateAt(
                               this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ()
                            );
-                           if (this.write_Z || !saved.isAir()) {
+                           if (this.includeAir || !saved.isAir()) {
                               this.load_BlockPos_MutableBl.set(x, y, z);
-                              if (this.load_I == 0) {
-                                 BlockState state = this.init_Map.computeIfAbsent(saved, s -> SchematicDocument.transformState(s, this.init_I, this.init_Str));
+                              if (this.phase == 0) {
+                                 BlockState state = this.transformedStates.computeIfAbsent(saved, s -> SchematicDocument.transformState(s, this.rotation, this.mirror));
                                  if (this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
-                                    boolean written = this.init_ServerLevel.setBlock(this.load_BlockPos_MutableBl, state, 818);
+                                    boolean written = this.level.setBlock(this.load_BlockPos_MutableBl, state, 818);
                                     if (!written && this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
                                        throw new IllegalStateException("Could not paste at " + this.load_BlockPos_MutableBl.toShortString());
                                     }
 
-                                    if (!this.sync_Z) {
+                                    if (!this.resumed) {
                                        this.load_Map.computeIfAbsent(maskKey, key -> new BitSet()).set(index);
                                     }
                                  }
                               } else {
                                  BlockState live = this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl);
-                                 this.init_ServerLevel.updateNeighborsAt(this.load_BlockPos_MutableBl, live.getBlock());
+                                 this.level.updateNeighborsAt(this.load_BlockPos_MutableBl, live.getBlock());
                                  if (!live.getFluidState().isEmpty()) {
-                                    this.init_ServerLevel.scheduleTick(this.load_BlockPos_MutableBl, live.getFluidState().getType(), 1);
+                                    this.level.scheduleTick(this.load_BlockPos_MutableBl, live.getFluidState().getType(), 1);
                                  }
                               }
                            }
                         }
 
-                        this.update_I++;
-                        this.load_J++;
+                        this.cell++;
+                        this.done++;
                      }
                   }
-               } else if (this.load_I == 1) {
-                  if (this.sync_I >= this.init_cQ.blockEntities.size()) {
-                     this.load_I = 2;
+               } else if (this.phase == 1) {
+                  if (this.blockEntityIndex >= this.document.blockEntities.size()) {
+                     this.phase = 2;
                   } else {
-                     SchematicDocument.Inner_DataUtil saved = this.init_cQ.blockEntities.get(this.sync_I);
-                     BlockPos local = this.init_cQ.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.init_I, this.init_Str);
-                     BlockPos at = this.init_BlockPos.offset(local);
+                     SchematicDocument.Inner_DataUtil saved = this.document.blockEntities.get(this.blockEntityIndex);
+                     BlockPos local = this.document.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.rotation, this.mirror);
+                     BlockPos at = this.origin.offset(local);
                      if (!this.init(at.getX() >> 4, at.getZ() >> 4)) {
                         break;
                      }
 
-                     BlockEntity be = this.init_ServerLevel.getBlockEntity(at);
+                     BlockEntity be = this.level.getBlockEntity(at);
                      if (be != null) {
                         CompoundTag tag = saved.data().copy();
                         tag.putInt("x", at.getX());
                         tag.putInt("y", at.getY());
                         tag.putInt("z", at.getZ());
-                        be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, this.init_ServerLevel.registryAccess(), tag));
+                        be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, this.level.registryAccess(), tag));
                         be.setChanged();
-                        this.init_ServerLevel.sendBlockUpdated(at, this.init_ServerLevel.getBlockState(at), this.init_ServerLevel.getBlockState(at), 2);
+                        this.level.sendBlockUpdated(at, this.level.getBlockState(at), this.level.getBlockState(at), 2);
                      }
 
-                     this.sync_I++;
-                     this.load_J++;
+                     this.blockEntityIndex++;
+                     this.done++;
                   }
                } else {
-                  if (this.load_I != 2) {
+                  if (this.phase != 2) {
                      this.init("");
                      return;
                   }
 
-                  if (this.update_Z && this.flush_I < this.init_cQ.entities.size()) {
-                     SchematicDocument.Inner_BufferHelper saved = this.init_cQ.entities.get(this.flush_I);
-                     double[] at = this.init_DArr_D(saved.x(), saved.y(), saved.z());
+                  if (this.includeEntities && this.entityIndex < this.document.entities.size()) {
+                     SchematicDocument.Inner_BufferHelper saved = this.document.entities.get(this.entityIndex);
+                     double[] at = this.transformPoint(saved.x(), saved.y(), saved.z());
                      if (!this.init((int)Math.floor(at[0]) >> 4, (int)Math.floor(at[2]) >> 4)) {
                         break;
                      }
 
-                     UUID uuid = init_UUID_Str(this.load_Str, this.flush_I, 0);
-                     if (this.init_ServerLevel.getEntity(uuid) == null) {
+                     UUID uuid = entityUuid(this.operationId, this.entityIndex, 0);
+                     if (this.level.getEntity(uuid) == null) {
                         CompoundTag tag = saved.data().copy();
                         ListTag raw = tag.getListOrEmpty("Pos");
                         double ox = saved.x() - (raw.size() == 3 ? raw.getDoubleOr(0, 0.0) : 0.0);
                         double oy = saved.y() - (raw.size() == 3 ? raw.getDoubleOr(1, 0.0) : 0.0);
                         double oz = saved.z() - (raw.size() == 3 ? raw.getDoubleOr(2, 0.0) : 0.0);
-                        int ordinal = this.flush_I;
+                        int ordinal = this.entityIndex;
                         int[] child = new int[]{0};
                         Entity entity = EntityType.loadEntityRecursive(
-                           TagValueInput.create(ProblemReporter.DISCARDING, this.init_ServerLevel.registryAccess(), tag),
-                           this.init_ServerLevel,
+                           TagValueInput.create(ProblemReporter.DISCARDING, this.level.registryAccess(), tag),
+                           this.level,
                            EntitySpawnReason.LOAD,
                            ex -> {
-                              ex.setUUID(init_UUID_Str(this.load_Str, ordinal, (int)(child[0]++)));
-                              double[] p = this.init_DArr_D(ex.getX() + ox, ex.getY() + oy, ex.getZ() + oz);
+                              ex.setUUID(entityUuid(this.operationId, ordinal, (int)(child[0]++)));
+                              double[] p = this.transformPoint(ex.getX() + ox, ex.getY() + oy, ex.getZ() + oz);
                               ex.setPos(p[0], p[1], p[2]);
-                              if (this.init_Str.equals("x")) {
+                              if (this.mirror.equals("x")) {
                                  ex.setYRot(ex.mirror(Mirror.FRONT_BACK));
-                              } else if (this.init_Str.equals("z")) {
+                              } else if (this.mirror.equals("z")) {
                                  ex.setYRot(ex.mirror(Mirror.LEFT_RIGHT));
                               }
 
                               Rotation var10000;
-                              switch (this.init_I) {
+                              switch (this.rotation) {
                                  case 90:
                                     var10000 = Rotation.CLOCKWISE_90;
                                     break;
@@ -375,17 +375,17 @@ final class SchematicPaste {
                            }
                         );
                         if (entity == null) {
-                           throw new IllegalArgumentException("Could not load saved entity " + this.flush_I);
+                           throw new IllegalArgumentException("Could not load saved entity " + this.entityIndex);
                         }
 
-                        this.init_ServerLevel.addFreshEntityWithPassengers(entity);
+                        this.level.addFreshEntityWithPassengers(entity);
                      }
 
-                     this.flush_I++;
-                     this.load_J++;
+                     this.entityIndex++;
+                     this.done++;
                   } else {
-                     this.load_I = 3;
-                     this.read_I = this.write_I = this.update_I = 0;
+                     this.phase = 3;
+                     this.column = this.range = this.cell = 0;
                   }
                }
             }
@@ -406,8 +406,8 @@ final class SchematicPaste {
 
       this.load(error);
       this.finished = true;
-      if (init_cT == this) {
-         init_cT = null;
+      if (active == this) {
+         active = null;
       }
    }
 
@@ -418,7 +418,7 @@ final class SchematicPaste {
       }
 
       ChunkPos pos = new ChunkPos(x, z);
-      ServerChunkCache source = this.init_ServerLevel.getChunkSource();
+      ServerChunkCache source = this.level.getChunkSource();
       source.addTicketWithRadius(TicketType.UNKNOWN, pos, 0);
       this.cachedChunk = source.getChunkNow(x, z);
       if (this.cachedChunk != null) {
@@ -433,10 +433,10 @@ final class SchematicPaste {
                () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), SchematicLibrary.EXECUTOR
             )
             .thenCompose(future -> (CompletionStage<ChunkResult<ChunkAccess>>)future);
-         this.close = this.init_IntegratedServer.getTickCount();
+         this.close = this.server.getTickCount();
       }
 
-      if (this.init_IntegratedServer.getTickCount() - this.close > 1200) {
+      if (this.server.getTickCount() - this.close > 1200) {
          throw new IllegalStateException("Target chunk is still unavailable; paste can be resumed");
       }
 
@@ -450,17 +450,17 @@ final class SchematicPaste {
    private void init_V_I(int x, int y, int z) {
       int sx;
       int sz;
-      switch (this.init_I) {
+      switch (this.rotation) {
          case 90:
             sx = z;
-            sz = this.init_cQ.sizeZ - 1 - x;
+            sz = this.document.sizeZ - 1 - x;
             break;
          case 180:
-            sx = this.init_cQ.sizeX - 1 - x;
-            sz = this.init_cQ.sizeZ - 1 - z;
+            sx = this.document.sizeX - 1 - x;
+            sz = this.document.sizeZ - 1 - z;
             break;
          case 270:
-            sx = this.init_cQ.sizeX - 1 - z;
+            sx = this.document.sizeX - 1 - z;
             sz = x;
             break;
          default:
@@ -468,75 +468,75 @@ final class SchematicPaste {
             sz = z;
       }
 
-      if (this.init_Str.equals("x")) {
-         sx = this.init_cQ.sizeX - 1 - sx;
-      } else if (this.init_Str.equals("z")) {
-         sz = this.init_cQ.sizeZ - 1 - sz;
+      if (this.mirror.equals("x")) {
+         sx = this.document.sizeX - 1 - sx;
+      } else if (this.mirror.equals("z")) {
+         sz = this.document.sizeZ - 1 - sz;
       }
 
       this.init_BlockPos_MutableBl.set(sx, y, sz);
    }
 
-   private double[] init_DArr_D(double x, double y, double z) {
-      if (this.init_Str.equals("x")) {
-         x = this.init_cQ.sizeX - x;
-      } else if (this.init_Str.equals("z")) {
-         z = this.init_cQ.sizeZ - z;
+   private double[] transformPoint(double x, double y, double z) {
+      if (this.mirror.equals("x")) {
+         x = this.document.sizeX - x;
+      } else if (this.mirror.equals("z")) {
+         z = this.document.sizeZ - z;
       }
 
       double tx;
       double tz;
-      switch (this.init_I) {
+      switch (this.rotation) {
          case 90:
-            tx = this.init_cQ.sizeZ - z;
+            tx = this.document.sizeZ - z;
             tz = x;
             break;
          case 180:
-            tx = this.init_cQ.sizeX - x;
-            tz = this.init_cQ.sizeZ - z;
+            tx = this.document.sizeX - x;
+            tz = this.document.sizeZ - z;
             break;
          case 270:
             tx = z;
-            tz = this.init_cQ.sizeX - x;
+            tz = this.document.sizeX - x;
             break;
          default:
             tx = x;
             tz = z;
       }
 
-      return new double[]{this.init_BlockPos.getX() + tx, this.init_BlockPos.getY() + y, this.init_BlockPos.getZ() + tz};
+      return new double[]{this.origin.getX() + tx, this.origin.getY() + y, this.origin.getZ() + tz};
    }
 
    private void load(String error) {
       JsonObject cursor = AiJson.objectOf(
          "operation",
-         this.load_Str,
+         this.operationId,
          "phase",
-         this.load_I,
+         this.phase,
          "column",
-         this.read_I,
+         this.column,
          "range",
-         this.write_I,
+         this.range,
          "cell",
-         this.update_I,
+         this.cell,
          "blockEntity",
-         this.sync_I,
+         this.blockEntityIndex,
          "entity",
-         this.flush_I,
+         this.entityIndex,
          "done",
-         this.load_J,
+         this.done,
          "total",
-         this.init_J,
+         this.total,
          "includeAir",
-         this.write_Z,
+         this.includeAir,
          "includeEntities",
-         this.update_Z
+         this.includeEntities
       );
       String var10000;
-      if (this.init_List == null) {
+      if (this.columns == null) {
          var10000 = "Preparing paste";
       } else {
-         switch (this.load_I) {
+         switch (this.phase) {
             case 0:
                var10000 = "Pasting blocks";
                break;
@@ -557,16 +557,16 @@ final class SchematicPaste {
       String status = var10000;
       this.progress = new SchematicPaste.Inner_StreamUtil(
          status,
-         this.load_I == 4 ? 100 : (this.init_J == 0L ? 0 : (int)Math.min(99L, 100L * this.load_J / this.init_J)),
-         this.load_J,
-         this.init_J,
+         this.phase == 4 ? 100 : (this.total == 0L ? 0 : (int)Math.min(99L, 100L * this.done / this.total)),
+         this.done,
+         this.total,
          cursor,
-         this.load_I == 4,
+         this.phase == 4,
          error
       );
    }
 
-   static UUID init_UUID_Str(String operation, int index, int child) {
+   static UUID entityUuid(String operation, int index, int child) {
       return UUID.nameUUIDFromBytes((operation + ":" + index + ":" + child).getBytes(StandardCharsets.UTF_8));
    }
 

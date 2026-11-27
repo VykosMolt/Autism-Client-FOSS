@@ -21,80 +21,80 @@ import net.minecraft.world.item.Item;
 final class WTapController {
    static final ValueRange init_ValueRange = new ValueRange(20, 60);
    static final ValueRange load_ValueRange = new ValueRange(45, 85);
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final WTapTimingMachine init_be = new WTapTimingMachine();
-   private final Random init_Random = new Random();
-   private final WTapController.Inner_DataUtil init_bf_DataUtil;
-   private ClientLevel init_ClientLevel;
-   private ClientPacketListener init_ClientPacketListen;
-   private Player init_Player;
-   private UUID init_UUID;
-   private int init_I;
-   private int load_I;
-   private Item init_Item;
-   private double init_D;
+   private static final Minecraft MC = Minecraft.getInstance();
+   private final WTapTimingMachine timing = new WTapTimingMachine();
+   private final Random random = new Random();
+   private final WTapController.Inner_DataUtil settings;
+   private ClientLevel level;
+   private ClientPacketListener connection;
+   private Player attacker;
+   private UUID targetUuid;
+   private int targetId;
+   private int slot;
+   private Item weapon;
+   private double drift;
 
    WTapController(WTapController.Inner_DataUtil settings) {
-      this.init_bf_DataUtil = settings;
+      this.settings = settings;
    }
 
-   private static int init_I() {
+   private static int clientTick() {
       return AutismSessionState.getInstance().getClientTick();
    }
 
    void init(Player attacker, Entity entity) {
-      if (attacker == init_Minecraft.player
+      if (attacker == MC.player
          && entity instanceof LivingEntity target
          && SprintStateTracker.sync()
          && this.update()
-         && init_Minecraft.player.input.keyPresses.forward()
-         && !init_Minecraft.player.input.keyPresses.backward()
+         && MC.player.input.keyPresses.forward()
+         && !MC.player.input.keyPresses.backward()
          && target.isAlive()
-         && target.level() == init_Minecraft.level
+         && target.level() == MC.level
          && !target.isSpectator()
-         && (!this.init_bf_DataUtil.init_Z() || target instanceof Player)
+         && (!this.settings.init_Z() || target instanceof Player)
          && !TeamsModule.isFriend(target)
          && !AntiBotTracker.isBot(target)) {
          long now = System.nanoTime();
-         int chance = this.init_bf_DataUtil.init_I();
-         boolean selected = chance > 0 && this.init_Random.nextInt(100) < chance;
-         if (this.init_be
-            .init(now, init_I(), this.init(this.init_bf_DataUtil.init_ValueRange(), 0), this.init(this.init_bf_DataUtil.load_ValueRange(), 1), selected)) {
-            this.init_ClientLevel = init_Minecraft.level;
-            this.init_ClientPacketListen = init_Minecraft.getConnection();
-            this.init_Player = attacker;
-            this.init_UUID = target.getUUID();
-            this.init_I = target.getId();
-            this.load_I = init_Minecraft.player.getInventory().getSelectedSlot();
-            this.init_Item = init_Minecraft.player.getMainHandItem().getItem();
+         int chance = this.settings.init_I();
+         boolean selected = chance > 0 && this.random.nextInt(100) < chance;
+         if (this.timing
+            .init(now, clientTick(), this.init(this.settings.init_ValueRange(), 0), this.init(this.settings.load_ValueRange(), 1), selected)) {
+            this.level = MC.level;
+            this.connection = MC.getConnection();
+            this.attacker = attacker;
+            this.targetUuid = target.getUUID();
+            this.targetId = target.getId();
+            this.slot = MC.player.getInventory().getSelectedSlot();
+            this.weapon = MC.player.getMainHandItem().getItem();
          }
       }
    }
 
    void onDamageEvent(ClientboundDamageEventPacket packet) {
-      if (this.init_be.isActive() && packet.entityId() == this.init_I && this.read_Z()) {
-         Entity target = init_Minecraft.level.getEntity(this.init_I);
-         if (target != null && target.getUUID().equals(this.init_UUID) && packet.getSource(init_Minecraft.level).getEntity() == init_Minecraft.player) {
-            this.init_be.init_Z(System.nanoTime());
+      if (this.timing.isActive() && packet.entityId() == this.targetId && this.isSameSession()) {
+         Entity target = MC.level.getEntity(this.targetId);
+         if (target != null && target.getUUID().equals(this.targetUuid) && packet.getSource(MC.level).getEntity() == MC.player) {
+            this.timing.init_Z(System.nanoTime());
          }
       }
    }
 
    Input filterInput(Input original) {
-      if (!this.init_be.isActive()) {
+      if (!this.timing.isActive()) {
          return original;
       }
 
-      boolean valid = this.read_Z()
+      boolean valid = this.isSameSession()
          && this.update()
-         && this.init_bf_DataUtil.init_I() > 0
+         && this.settings.init_I() > 0
          && original.forward()
          && !original.backward()
          && !original.shift()
-         && this.write_Z();
-      boolean release = this.init_be.init(System.nanoTime(), init_I(), valid);
-      if (!this.init_be.isActive()) {
-         this.write_V();
+         && this.isHoldingWeapon();
+      boolean release = this.timing.init(System.nanoTime(), clientTick(), valid);
+      if (!this.timing.isActive()) {
+         this.clearTarget();
       }
 
       if (!release) {
@@ -106,12 +106,12 @@ final class WTapController {
    }
 
    private static boolean init_Z_Input(Input original) {
-      autismclient.util.MovementInputFixer.Inner_DataUtil footing = LedgeFootingPredictor.init(init_Minecraft.player);
+      autismclient.util.MovementInputFixer.Inner_DataUtil footing = LedgeFootingPredictor.init(MC.player);
       if (footing == null) {
          return false;
       }
 
-      float camera = init_Minecraft.player.getYRot();
+      float camera = MC.player.getYRot();
       float side = original.left() ? 90.0F : -90.0F;
       float whole = (float)Math.toDegrees(Math.atan2(original.left() ? 1.0 : -1.0, original.forward() ? 1.0 : 0.0));
       int full = 3;
@@ -119,88 +119,88 @@ final class WTapController {
    }
 
    boolean isTapping() {
-      return this.init_be.isReleasing() && this.read_Z() && this.update();
+      return this.timing.isReleasing() && this.isSameSession() && this.update();
    }
 
    boolean load_Z() {
       this.tick();
-      return this.init_be.isActive();
+      return this.timing.isActive();
    }
 
    void tick() {
-      if (!this.init_be.load(System.nanoTime())) {
-         this.write_V();
-      } else if (this.read_Z()
+      if (!this.timing.load(System.nanoTime())) {
+         this.clearTarget();
+      } else if (this.isSameSession()
          && this.update()
-         && this.init_bf_DataUtil.init_I() > 0
-         && this.write_Z()
-         && init_Minecraft.options.keyUp.isDown()
-         && !init_Minecraft.options.keyDown.isDown()
-         && !init_Minecraft.options.keyShift.isDown()) {
-         Entity target = init_Minecraft.level.getEntity(this.init_I);
+         && this.settings.init_I() > 0
+         && this.isHoldingWeapon()
+         && MC.options.keyUp.isDown()
+         && !MC.options.keyDown.isDown()
+         && !MC.options.keyShift.isDown()) {
+         Entity target = MC.level.getEntity(this.targetId);
          if (!(
             target instanceof LivingEntity living
                && living.isAlive()
-               && target.getUUID().equals(this.init_UUID)
+               && target.getUUID().equals(this.targetUuid)
                && !TeamsModule.isFriend(living)
                && !AntiBotTracker.isBot(living)
          )) {
-            this.init_be.reset();
-            this.write_V();
+            this.timing.reset();
+            this.clearTarget();
          }
       } else {
-         this.init_be.reset();
-         this.write_V();
+         this.timing.reset();
+         this.clearTarget();
       }
    }
 
    void load_V() {
-      if (this.init_be.isActive()) {
-         this.init_be.reset();
-         this.write_V();
+      if (this.timing.isActive()) {
+         this.timing.reset();
+         this.clearTarget();
       }
    }
 
    long tapCount() {
-      return this.init_be.init_J();
+      return this.timing.init_J();
    }
 
    void read_V() {
-      this.init_be.resetAll();
-      this.write_V();
+      this.timing.resetAll();
+      this.clearTarget();
    }
 
-   private boolean read_Z() {
-      return init_Minecraft.level != null
-         && init_Minecraft.level == this.init_ClientLevel
-         && init_Minecraft.player == this.init_Player
-         && init_Minecraft.getConnection() == this.init_ClientPacketListen;
+   private boolean isSameSession() {
+      return MC.level != null
+         && MC.level == this.level
+         && MC.player == this.attacker
+         && MC.getConnection() == this.connection;
    }
 
-   private boolean write_Z() {
-      return init_Minecraft.player.getInventory().getSelectedSlot() == this.load_I && init_Minecraft.player.getMainHandItem().is(this.init_Item);
+   private boolean isHoldingWeapon() {
+      return MC.player.getInventory().getSelectedSlot() == this.slot && MC.player.getMainHandItem().is(this.weapon);
    }
 
    private boolean update() {
-      if (init_Minecraft.isSameThread()
-         && init_Minecraft.player != null
-         && init_Minecraft.level != null
-         && init_Minecraft.getConnection() != null
-         && init_Minecraft.gameMode != null
-         && init_Minecraft.gui.screen() == null
-         && init_Minecraft.gui.overlay() == null
-         && init_Minecraft.player.isAlive()
-         && !init_Minecraft.player.isSpectator()
-         && !init_Minecraft.player.isUsingItem()
+      if (MC.isSameThread()
+         && MC.player != null
+         && MC.level != null
+         && MC.getConnection() != null
+         && MC.gameMode != null
+         && MC.gui.screen() == null
+         && MC.gui.overlay() == null
+         && MC.player.isAlive()
+         && !MC.player.isSpectator()
+         && !MC.player.isUsingItem()
          && !autismclient.util.ManualInteractionYield.init()
-         && !(init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
-         && !init_Minecraft.player.isPassenger()
-         && !init_Minecraft.player.getAbilities().flying
-         && !init_Minecraft.player.isFallFlying()
-         && !init_Minecraft.player.isInWater()
-         && !init_Minecraft.player.isInLava()
-         && !init_Minecraft.player.onClimbable()
-         && (!this.init_bf_DataUtil.load_Z() || init_Minecraft.player.onGround())
+         && !(MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
+         && !MC.player.isPassenger()
+         && !MC.player.getAbilities().flying
+         && !MC.player.isFallFlying()
+         && !MC.player.isInWater()
+         && !MC.player.isInLava()
+         && !MC.player.onClimbable()
+         && (!this.settings.load_Z() || MC.player.onGround())
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !FreecamController.isAiControllingBody()) {
@@ -220,18 +220,18 @@ final class WTapController {
 
    private long init(ValueRange range, int minimum) {
       ValueRange band = (range == null ? (minimum > 0 ? load_ValueRange : init_ValueRange) : range).clamp(minimum, 200.0);
-      this.init_D = this.init_D * 0.92 + this.init_Random.nextGaussian() * 0.035;
+      this.drift = this.drift * 0.92 + this.random.nextGaussian() * 0.035;
       double style = (autismclient.util.HumanHandProfile.shared().close() - 0.9) * 0.5;
-      double sample = Math.max(0.0, Math.min(1.0, (this.init_Random.nextDouble() + this.init_Random.nextDouble()) * 0.5 + style + this.init_D));
+      double sample = Math.max(0.0, Math.min(1.0, (this.random.nextDouble() + this.random.nextDouble()) * 0.5 + style + this.drift));
       return Math.round((band.min() + (band.max() - band.min()) * sample) * 1000000.0);
    }
 
-   private void write_V() {
-      this.init_ClientLevel = null;
-      this.init_ClientPacketListen = null;
-      this.init_Player = null;
-      this.init_UUID = null;
-      this.init_Item = null;
+   private void clearTarget() {
+      this.level = null;
+      this.connection = null;
+      this.attacker = null;
+      this.targetUuid = null;
+      this.weapon = null;
    }
 
    interface Inner_DataUtil {

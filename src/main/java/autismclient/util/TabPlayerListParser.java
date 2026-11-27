@@ -35,8 +35,8 @@ public final class TabPlayerListParser {
          for (PlayerInfo info : connection.getOnlinePlayers()) {
             if (info != null) {
                TabPlayerListParser.RawEntry parsed = init_bO_DataUtil(info.getTabListDisplayName());
-               if (parsed != null && init_Z(parsed.init_Str(), self)) {
-                  init(byName, parsed.init_Str(), parsed.load(), parsed.init_Component());
+               if (parsed != null && isOtherPlayerName(parsed.init_Str(), self)) {
+                  init(byName, parsed.init_Str(), parsed.load(), parsed.prefixComponent());
                }
             }
          }
@@ -44,7 +44,7 @@ public final class TabPlayerListParser {
          for (PlayerInfo info : connection.getOnlinePlayers()) {
             if (info != null && init(info.getProfile())) {
                String name = info.getProfile().name();
-               if (init_Z(name, self)) {
+               if (isOtherPlayerName(name, self)) {
                   init(byName, name, init(scoreboard, name, info), null);
                }
             }
@@ -55,7 +55,7 @@ public final class TabPlayerListParser {
          for (AbstractClientPlayer player : mc.level.players()) {
             if (player != null && init(player.getGameProfile())) {
                String name = player.getGameProfile().name();
-               if (init_Z(name, self)) {
+               if (isOtherPlayerName(name, self)) {
                   PlayerInfo info = connection == null ? null : connection.getPlayerInfoIgnoreCase(name);
                   init(byName, name, init(scoreboard, name, info), null);
                }
@@ -102,7 +102,7 @@ public final class TabPlayerListParser {
       }
    }
 
-   private static boolean init_Z(String name, String self) {
+   private static boolean isOtherPlayerName(String name, String self) {
       return name != null && !name.isBlank() && (self == null || !name.equalsIgnoreCase(self));
    }
 
@@ -258,7 +258,7 @@ public final class TabPlayerListParser {
          }
 
          String ascii = write(text);
-         int idx = init_I(ascii, name);
+         int idx = indexOfName(ascii, name);
          if (idx > 0) {
             String prefix = ascii.substring(0, idx).trim();
             if (!prefix.isBlank()) {
@@ -272,7 +272,7 @@ public final class TabPlayerListParser {
       }
    }
 
-   private static int init_I(String text, String name) {
+   private static int indexOfName(String text, String name) {
       if (text != null && name != null && !name.isBlank()) {
          String lower = text.toLowerCase(Locale.ROOT);
          int idx = lower.indexOf(name.toLowerCase(Locale.ROOT));
@@ -330,7 +330,7 @@ public final class TabPlayerListParser {
       return out.toString().trim();
    }
 
-   private record RawEntry(String init_Str, String load, Component init_Component) {
+   private record RawEntry(String init_Str, String load, Component prefixComponent) {
    }
 
    public record ParsedPlayer(String name, String load, Component prefixComponent) {

@@ -94,8 +94,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class PacketCommandBuilder {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final List<String> init_List = List.of("raw", "rawHex", "body", "bodyHex", "hex", "bytes");
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final List<String> RAW_BODY_ARG_NAMES = List.of("raw", "rawHex", "body", "bodyHex", "hex", "bytes");
    private static final List<String> load = List.of("packet", "packetHex", "full", "fullHex", "plaintext", "packetBytes");
    private static final List<String> read = List.of("base64", "b64", "bodyBase64");
    private static final List<String> write;
@@ -104,7 +104,7 @@ public final class PacketCommandBuilder {
    }
 
    public static PacketCommandBuilder.Inner_DataUtil prepareArgs(String rawArgs) {
-      List<String> tokens = init_List_Str(rawArgs == null ? "" : rawArgs);
+      List<String> tokens = tokenize(rawArgs == null ? "" : rawArgs);
       boolean dryRun = false;
       List<String> kept = new ArrayList<>();
 
@@ -115,11 +115,11 @@ public final class PacketCommandBuilder {
          if (!key.equals("dry") && !key.equals("dryrun") && !key.equals("preview") && !key.equals("nosend")) {
             kept.add(token);
          } else {
-            dryRun = eq < 0 || init_Z_Str_Str(key, token.substring(eq + 1));
+            dryRun = eq < 0 || parseBoolean(key, token.substring(eq + 1));
          }
       }
 
-      return new PacketCommandBuilder.Inner_DataUtil(init_Str_List(kept), dryRun);
+      return new PacketCommandBuilder.Inner_DataUtil(joinQuoted(kept), dryRun);
    }
 
    public static PacketCommandBuilder.Inner_StreamUtil build(Class<? extends Packet<?>> packetClass, String rawArgs) {
@@ -129,7 +129,7 @@ public final class PacketCommandBuilder {
 
       Map<String, String> args;
       try {
-         args = init_Map_Str(rawArgs);
+         args = parseArgs(rawArgs);
       } catch (IllegalArgumentException e) {
          return PacketCommandBuilder.Inner_StreamUtil.init(e.getMessage());
       }
@@ -160,7 +160,7 @@ public final class PacketCommandBuilder {
          }
 
          PacketCommandBuilder.Inner_StreamUtil schema = write(packetClass, args);
-         return schema != null ? schema : PacketCommandBuilder.Inner_StreamUtil.init("Could not build " + read_Str(packetClass) + ". " + usage(packetClass));
+         return schema != null ? schema : PacketCommandBuilder.Inner_StreamUtil.init("Could not build " + packetName(packetClass) + ". " + usage(packetClass));
       } else {
          return PacketCommandBuilder.Inner_StreamUtil.load(usage(packetClass));
       }
@@ -187,7 +187,7 @@ public final class PacketCommandBuilder {
          }
       }
 
-      String usage = fields.isEmpty() ? ".send " + read_Str(packetClass) : ".send " + read_Str(packetClass) + " " + String.join(" ", read(fields));
+      String usage = fields.isEmpty() ? ".send " + packetName(packetClass) : ".send " + packetName(packetClass) + " " + String.join(" ", read(fields));
       StringBuilder out = new StringBuilder("Usage: ").append(usage);
       if (!fields.isEmpty()) {
          out.append("\nFields: ");
@@ -213,7 +213,7 @@ public final class PacketCommandBuilder {
       }
 
       String remaining = builder.getRemaining();
-      int tokenStart = init_I_Str(remaining);
+      int tokenStart = currentTokenStart(remaining);
       String current = remaining.substring(tokenStart);
       SuggestionsBuilder tokenBuilder = builder.createOffset(builder.getStart() + tokenStart);
       int eq = current.indexOf(61);
@@ -221,7 +221,7 @@ public final class PacketCommandBuilder {
          String field = current.substring(0, eq);
          String valuePrefix = current.substring(eq + 1);
 
-         for (String value : init_List_Class_Str(packetClass, field)) {
+         for (String value : valueSuggestions(packetClass, field)) {
             if (value.toLowerCase(Locale.ROOT).startsWith(valuePrefix.toLowerCase(Locale.ROOT))) {
                tokenBuilder.suggest(field + "=" + read(value));
             }
@@ -270,9 +270,9 @@ public final class PacketCommandBuilder {
    }
 
    private static PacketCommandBuilder.Inner_StreamUtil init_bm_StreamUtil_Class_Map(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
-      String bodyHex = init_Str_Map_StrArr(args, init_List.toArray(new String[0]));
-      String fullPacketHex = init_Str_Map_StrArr(args, load.toArray(new String[0]));
-      String bodyBase64 = init_Str_Map_StrArr(args, read.toArray(new String[0]));
+      String bodyHex = firstArg(args, RAW_BODY_ARG_NAMES.toArray(new String[0]));
+      String fullPacketHex = firstArg(args, load.toArray(new String[0]));
+      String bodyBase64 = firstArg(args, read.toArray(new String[0]));
       int provided = (bodyHex == null ? 0 : 1) + (fullPacketHex == null ? 0 : 1) + (bodyBase64 == null ? 0 : 1);
       if (provided == 0) {
          return null;
@@ -283,13 +283,13 @@ public final class PacketCommandBuilder {
       }
 
       try {
-         init_V_Map_StrArr(args, write.toArray(new String[0]));
+         rejectUnknownArgs(args, write.toArray(new String[0]));
          boolean fullPacket = fullPacketHex != null;
          byte[] sourceBytes;
          if (bodyBase64 != null) {
             sourceBytes = Base64.getDecoder().decode(bodyBase64.trim());
          } else {
-            sourceBytes = init_BArr_Str(fullPacket ? fullPacketHex : bodyHex);
+            sourceBytes = parseBytes(fullPacket ? fullPacketHex : bodyHex);
          }
 
          Packet<?> packet = fullPacket ? PacketStreamCodecDecoder.decodeFrame(packetClass, sourceBytes, null).packet() : PacketStreamCodecDecoder.decodeBody(packetClass, sourceBytes, null);
@@ -297,7 +297,7 @@ public final class PacketCommandBuilder {
       } catch (IllegalArgumentException e) {
          return PacketCommandBuilder.Inner_StreamUtil.init(e.getMessage());
       } catch (Throwable t) {
-         return PacketCommandBuilder.Inner_StreamUtil.init("Minecraft codec decode failed: " + init_Str_Throwable(t));
+         return PacketCommandBuilder.Inner_StreamUtil.init("Minecraft codec decode failed: " + errorMessage(t));
       }
    }
 
@@ -306,94 +306,94 @@ public final class PacketCommandBuilder {
 
       try {
          if (packetClass == ServerboundContainerClosePacket.class) {
-            init_V_Map_StrArr(args, "containerId", "id");
-            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundContainerClosePacket(init_I_Map_2(args, PacketCommandBuilder::load_I, "containerId", "id")), "typed constructor");
+            rejectUnknownArgs(args, "containerId", "id");
+            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundContainerClosePacket(intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id")), "typed constructor");
          }
 
          if (packetClass == ServerboundSetCarriedItemPacket.class) {
-            init_V_Map_StrArr(args, "slot");
-            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundSetCarriedItemPacket(init_I_Map_2(args, PacketCommandBuilder::init_I, "slot")), "typed constructor");
+            rejectUnknownArgs(args, "slot");
+            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundSetCarriedItemPacket(intArgOr(args, PacketCommandBuilder::selectedSlot, "slot")), "typed constructor");
          }
 
          if (packetClass == ServerboundSelectBundleItemPacket.class) {
-            init_V_Map_StrArr(args, "slot", "selectedItemIndex", "index");
+            rejectUnknownArgs(args, "slot", "selectedItemIndex", "index");
             return PacketCommandBuilder.Inner_StreamUtil.init(
-               new ServerboundSelectBundleItemPacket(init_I_Map_StrArr(args, "slot"), init_I_Map_StrArr(args, "selectedItemIndex", "index")),
+               new ServerboundSelectBundleItemPacket(requireInt(args, "slot"), requireInt(args, "selectedItemIndex", "index")),
                "typed constructor"
             );
          }
 
          if (packetClass == CompatSwingPacket.class) {
-            init_V_Map_StrArr(args, "hand");
+            rejectUnknownArgs(args, "hand");
             return PacketCommandBuilder.Inner_StreamUtil.init(
-               new CompatSwingPacket(init_Enum_Class(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand")), "typed constructor"
+               new CompatSwingPacket(enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand")), "typed constructor"
             );
          }
 
          if (packetClass == ServerboundPunchPacket.class) {
-            init_V_Map_StrArr(args);
+            rejectUnknownArgs(args);
             return PacketCommandBuilder.Inner_StreamUtil.init(ServerboundPunchPacket.INSTANCE, "typed constructor");
          }
 
          if (packetClass == ServerboundAttackPacket.class) {
-            init_V_Map_StrArr(args, "entityId", "id", "entity");
-            int entityId = init_I_Map_2(args, PacketCommandBuilder::write, "entityId", "id", "entity");
+            rejectUnknownArgs(args, "entityId", "id", "entity");
+            int entityId = intArgOr(args, PacketCommandBuilder::write, "entityId", "id", "entity");
             return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundAttackPacket(entityId), "typed constructor");
          }
 
          if (packetClass == ServerboundUseItemPacket.class) {
-            init_V_Map_StrArr(args, "hand", "sequence", "yRot", "xRot");
-            InteractionHand hand = init_Enum_Class(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
-            int sequence = init_I_Map(args, 0, "sequence");
-            float yRot = init_F_Map(args, init_F(), "yRot", "yaw");
-            float xRot = init_F_Map(args, load_F(), "xRot", "pitch");
+            rejectUnknownArgs(args, "hand", "sequence", "yRot", "xRot");
+            InteractionHand hand = enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
+            int sequence = intArg(args, 0, "sequence");
+            float yRot = floatArg(args, playerYaw(), "yRot", "yaw");
+            float xRot = floatArg(args, playerPitch(), "xRot", "pitch");
             return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundUseItemPacket(hand, sequence, yRot, xRot), "typed constructor");
          }
 
          if (packetClass == ServerboundUseItemOnPacket.class) {
-            init_V_Map_StrArr(args, "hand", "sequence", "pos", "blockPos", "x", "y", "z", "direction", "dir", "face", "hit", "hitX", "hitY", "hitZ", "inside");
-            InteractionHand hand = init_Enum_Class(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
-            BlockHitResult hitResult = init_BlockHitResult_Map(args);
-            int sequence = init_I_Map(args, 0, "sequence");
+            rejectUnknownArgs(args, "hand", "sequence", "pos", "blockPos", "x", "y", "z", "direction", "dir", "face", "hit", "hitX", "hitY", "hitZ", "inside");
+            InteractionHand hand = enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
+            BlockHitResult hitResult = hitResultArg(args);
+            int sequence = intArg(args, 0, "sequence");
             return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundUseItemOnPacket(hand, hitResult, sequence), "typed constructor");
          }
 
          if (packetClass == ServerboundClientCommandPacket.class) {
-            init_V_Map_StrArr(args, "action");
-            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundClientCommandPacket(init_Enum_Class(Action.class, args, "action")), "typed constructor");
+            rejectUnknownArgs(args, "action");
+            return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundClientCommandPacket(requireEnum(Action.class, args, "action")), "typed constructor");
          }
 
          if (packetClass == ServerboundChatCommandPacket.class) {
-            init_V_Map_StrArr(args, "command", "cmd");
+            rejectUnknownArgs(args, "command", "cmd");
             return PacketCommandBuilder.Inner_StreamUtil.init(
-               new ServerboundChatCommandPacket(update(init_Str_Map_Str(args, init_Str_Map_StrArr(args, "command") != null ? "command" : "cmd"))),
+               new ServerboundChatCommandPacket(update(requireString(args, firstArg(args, "command") != null ? "command" : "cmd"))),
                "typed constructor"
             );
          }
 
          if (packetClass == ServerboundChatPacket.class) {
-            init_V_Map_StrArr(args, "message", "timeStamp", "timestamp", "time", "salt", "signature", "lastSeenMessages", "lastSeen");
-            String message = init_Str_Map_Str(args, "message");
-            Instant time = init_Instant_Map(args, Instant.now(), "timeStamp", "timestamp", "time");
-            long salt = init_J_Map(args, 0L, "salt");
-            MessageSignature signature = init_MessageSignature_Str(init_Str_Map_StrArr(args, "signature"));
-            Update lastSeen = init_LastSeenMessages_U_Str(init_Str_Map_StrArr(args, "lastSeenMessages", "lastSeen"));
+            rejectUnknownArgs(args, "message", "timeStamp", "timestamp", "time", "salt", "signature", "lastSeenMessages", "lastSeen");
+            String message = requireString(args, "message");
+            Instant time = instantArg(args, Instant.now(), "timeStamp", "timestamp", "time");
+            long salt = longArg(args, 0L, "salt");
+            MessageSignature signature = parseMessageSignature(firstArg(args, "signature"));
+            Update lastSeen = parseLastSeenUpdate(firstArg(args, "lastSeenMessages", "lastSeen"));
             return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundChatPacket(message, time, salt, Optional.ofNullable(signature), lastSeen), "typed constructor");
          }
 
          if (packetClass == ServerboundChatCommandSignedPacket.class) {
-            init_V_Map_StrArr(args, "command", "timeStamp", "timestamp", "time", "salt", "argumentSignatures", "signatures", "lastSeenMessages", "lastSeen");
-            String command = init_Str_Map_Str(args, "command");
-            Instant time = init_Instant_Map(args, Instant.now(), "timeStamp", "timestamp", "time");
-            long salt = init_J_Map(args, 0L, "salt");
-            ArgumentSignatures signatures = init_ArgumentSignatures_Str(init_Str_Map_StrArr(args, "argumentSignatures", "signatures"));
-            Update lastSeen = init_LastSeenMessages_U_Str(init_Str_Map_StrArr(args, "lastSeenMessages", "lastSeen"));
+            rejectUnknownArgs(args, "command", "timeStamp", "timestamp", "time", "salt", "argumentSignatures", "signatures", "lastSeenMessages", "lastSeen");
+            String command = requireString(args, "command");
+            Instant time = instantArg(args, Instant.now(), "timeStamp", "timestamp", "time");
+            long salt = longArg(args, 0L, "salt");
+            ArgumentSignatures signatures = parseArgumentSignatures(firstArg(args, "argumentSignatures", "signatures"));
+            Update lastSeen = parseLastSeenUpdate(firstArg(args, "lastSeenMessages", "lastSeen"));
             return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundChatCommandSignedPacket(command, time, salt, signatures, lastSeen), "typed constructor");
          }
 
          if (packetClass == ServerboundChatSessionUpdatePacket.class) {
-            init_V_Map_StrArr(args, "current", "default");
-            Data data = init_RemoteChatSession_();
+            rejectUnknownArgs(args, "current", "default");
+            Data data = currentChatSession();
             if (data == null) {
                throw new IllegalArgumentException("No current local chat session is available.");
             } else {
@@ -401,15 +401,15 @@ public final class PacketCommandBuilder {
             }
          } else {
             if (packetClass == ServerboundClientInformationPacket.class) {
-               init_V_Map_StrArr(args, "default", "information");
+               rejectUnknownArgs(args, "default", "information");
                return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundClientInformationPacket(ClientInformation.createDefault()), "current client information");
             }
 
             if (packetClass != ServerboundCustomPayloadPacket.class) {
                if (packetClass == ServerboundCustomQueryAnswerPacket.class) {
-                  init_V_Map_StrArr(args, "transactionId", "id", "payload");
-                  int id = init_I_Map_StrArr(args, "transactionId", "id");
-                  String payload = init_Str_Map_StrArr(args, "payload");
+                  rejectUnknownArgs(args, "transactionId", "id", "payload");
+                  int id = requireInt(args, "transactionId", "id");
+                  String payload = firstArg(args, "payload");
                   if (payload != null && !init_Z_Str(payload)) {
                      return sync(payload).equals("discarded")
                         ? PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundCustomQueryAnswerPacket(id, DiscardedQueryAnswerPayload.INSTANCE), "typed constructor")
@@ -418,39 +418,39 @@ public final class PacketCommandBuilder {
                      return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundCustomQueryAnswerPacket(id, null), "typed constructor");
                   }
                } else if (packetClass == ServerboundEditBookPacket.class) {
-                  init_V_Map_StrArr(args, "slot", "pages", "page", "title");
-                  int slot = init_I_Map_StrArr(args, "slot");
-                  String pagesValue = init_Str_Map_StrArr(args, "pages", "page");
+                  rejectUnknownArgs(args, "slot", "pages", "page", "title");
+                  int slot = requireInt(args, "slot");
+                  String pagesValue = firstArg(args, "pages", "page");
                   if (pagesValue == null) {
                      throw new IllegalArgumentException("Missing required argument: pages");
                   }
 
-                  Optional<String> title = init_Optional_Str(init_Str_Map_StrArr(args, "title"));
-                  return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundEditBookPacket(slot, init_List_Str(pagesValue, "\\|", 100), title), "typed constructor");
+                  Optional<String> title = optionalString(firstArg(args, "title"));
+                  return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundEditBookPacket(slot, splitList(pagesValue, "\\|", 100), title), "typed constructor");
                } else {
                   if (packetClass == ServerboundSignUpdatePacket.class) {
-                     init_V_Map_StrArr(
+                     rejectUnknownArgs(
                         args, "pos", "blockPos", "x", "y", "z", "front", "isFrontText", "line0", "line1", "line2", "line3", "l0", "l1", "l2", "l3", "lines"
                      );
-                     BlockPos pos = init_BlockPos_Map(args);
-                     boolean front = init_Z_Map(args, true, "front", "isFrontText");
-                     String[] lines = init_StrArr_Map(args);
+                     BlockPos pos = posArg(args);
+                     boolean front = boolArg(args, true, "front", "isFrontText");
+                     String[] lines = signLines(args);
                      return PacketCommandBuilder.Inner_StreamUtil.init(Compat263.newSignUpdatePacket(pos, front, lines[0], lines[1], lines[2], lines[3]), "typed constructor");
                   }
 
                   if (packetClass == ServerboundInteractPacket.class) {
-                     init_V_Map_StrArr(args, "entityId", "id", "entity", "hand", "location", "pos", "x", "y", "z", "secondary", "usingSecondaryAction");
-                     int entityId = init_I_Map_2(args, PacketCommandBuilder::write, "entityId", "id", "entity");
-                     InteractionHand hand = init_Enum_Class(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
-                     Vec3 location = init_Str_Map_StrArr(args, "location", "pos") != null
-                        ? init_Vec3_Str(init_Str_Map_StrArr(args, "location", "pos"))
-                        : init_Vec3_Vec3(new Vec3(init_D_Map(args, 0.0, "x"), init_D_Map(args, 0.0, "y"), init_D_Map(args, 0.0, "z")));
-                     boolean secondary = init_Z_Map(args, false, "secondary", "usingSecondaryAction");
+                     rejectUnknownArgs(args, "entityId", "id", "entity", "hand", "location", "pos", "x", "y", "z", "secondary", "usingSecondaryAction");
+                     int entityId = intArgOr(args, PacketCommandBuilder::write, "entityId", "id", "entity");
+                     InteractionHand hand = enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
+                     Vec3 location = firstArg(args, "location", "pos") != null
+                        ? parseVec3(firstArg(args, "location", "pos"))
+                        : entityHitLocation(new Vec3(doubleArg(args, 0.0, "x"), doubleArg(args, 0.0, "y"), doubleArg(args, 0.0, "z")));
+                     boolean secondary = boolArg(args, false, "secondary", "usingSecondaryAction");
                      return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundInteractPacket(entityId, hand, location, secondary), "typed constructor");
                   }
 
                   if (packetClass == ServerboundContainerClickPacket.class) {
-                     init_V_Map_StrArr(
+                     rejectUnknownArgs(
                         args,
                         "containerId",
                         "id",
@@ -467,73 +467,73 @@ public final class PacketCommandBuilder {
                         "carriedItem",
                         "carried"
                      );
-                     int containerId = init_I_Map_2(args, PacketCommandBuilder::load_I, "containerId", "id");
-                     int stateId = init_I_Map_2(args, PacketCommandBuilder::read_I, "stateId");
-                     short slot = (short)init_I_Map_StrArr(args, "slotNum", "slot");
-                     byte button = (byte)init_I_Map(args, 0, "buttonNum", "button");
-                     ContainerInput input = init_Enum_Class(ContainerInput.class, args, "containerInput", "input", "click");
-                     Int2ObjectMap<HashedStack> changed = init_Int2ObjectMap_Str(init_Str_Map_StrArr(args, "changedSlots", "changed"));
-                     HashedStack carried = init_HashedStack_Str(init_Str_Map_StrArr(args, "carriedItem", "carried"));
+                     int containerId = intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id");
+                     int stateId = intArgOr(args, PacketCommandBuilder::read_I, "stateId");
+                     short slot = (short)requireInt(args, "slotNum", "slot");
+                     byte button = (byte)intArg(args, 0, "buttonNum", "button");
+                     ContainerInput input = requireEnum(ContainerInput.class, args, "containerInput", "input", "click");
+                     Int2ObjectMap<HashedStack> changed = init_Int2ObjectMap_Str(firstArg(args, "changedSlots", "changed"));
+                     HashedStack carried = parseHashedStack(firstArg(args, "carriedItem", "carried"));
                      return PacketCommandBuilder.Inner_StreamUtil.init(
                         new ServerboundContainerClickPacket(containerId, stateId, slot, button, input, changed, carried), "typed constructor"
                      );
                   }
 
                   if (packetClass == ServerboundContainerButtonClickPacket.class) {
-                     init_V_Map_StrArr(args, "containerId", "id", "buttonId", "button");
+                     rejectUnknownArgs(args, "containerId", "id", "buttonId", "button");
                      return PacketCommandBuilder.Inner_StreamUtil.init(
                         new ServerboundContainerButtonClickPacket(
-                           init_I_Map_2(args, PacketCommandBuilder::load_I, "containerId", "id"), init_I_Map_StrArr(args, "buttonId", "button")
+                           intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id"), requireInt(args, "buttonId", "button")
                         ),
                         "typed constructor"
                      );
                   }
 
                   if (packetClass == ServerboundContainerSlotStateChangedPacket.class) {
-                     init_V_Map_StrArr(args, "slotId", "slot", "containerId", "id", "newState", "state", "enabled");
+                     rejectUnknownArgs(args, "slotId", "slot", "containerId", "id", "newState", "state", "enabled");
                      return PacketCommandBuilder.Inner_StreamUtil.init(
                         new ServerboundContainerSlotStateChangedPacket(
-                           init_I_Map_StrArr(args, "slotId", "slot"),
-                           init_I_Map_2(args, PacketCommandBuilder::load_I, "containerId", "id"),
-                           init_Z_Map(args, false, "newState", "state", "enabled")
+                           requireInt(args, "slotId", "slot"),
+                           intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id"),
+                           boolArg(args, false, "newState", "state", "enabled")
                         ),
                         "typed constructor"
                      );
                   }
 
                   if (packetClass == ServerboundSetCreativeModeSlotPacket.class) {
-                     init_V_Map_StrArr(args, "slotNum", "slot", "itemStack", "item");
-                     int slot = init_I_Map_StrArr(args, "slotNum", "slot");
-                     ItemStack stack = init_ItemStack_Str(init_Str_Map_StrArr(args, "itemStack", "item"));
+                     rejectUnknownArgs(args, "slotNum", "slot", "itemStack", "item");
+                     int slot = requireInt(args, "slotNum", "slot");
+                     ItemStack stack = parseItemStack(firstArg(args, "itemStack", "item"));
                      return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundSetCreativeModeSlotPacket(slot, stack), "typed constructor");
                   }
 
                   if (packetClass == ServerboundPlayerCommandPacket.class) {
-                     init_V_Map_StrArr(args, "action", "data");
-                     if (init_Minecraft.player == null) {
+                     rejectUnknownArgs(args, "action", "data");
+                     if (MC.player == null) {
                         throw new IllegalArgumentException("Player is required for this packet.");
                      }
 
-                     net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action action = init_Enum_Class(
+                     net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action action = requireEnum(
                         net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.class, args, "action"
                      );
-                     int data = init_I_Map(args, 0, "data");
-                     return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundPlayerCommandPacket(init_Minecraft.player, action, data), "current player constructor");
+                     int data = intArg(args, 0, "data");
+                     return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundPlayerCommandPacket(MC.player, action, data), "current player constructor");
                   } else {
                      if (packetClass == ServerboundPlayerInputPacket.class) {
-                        init_V_Map_StrArr(args, "forward", "backward", "left", "right", "jump", "shift", "sneak", "sprint", "empty");
-                        return init_Z_Map(args, false, "empty")
+                        rejectUnknownArgs(args, "forward", "backward", "left", "right", "jump", "shift", "sneak", "sprint", "empty");
+                        return boolArg(args, false, "empty")
                            ? PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundPlayerInputPacket(Input.EMPTY), "typed constructor")
                            : PacketCommandBuilder.Inner_StreamUtil.init(
                               new ServerboundPlayerInputPacket(
                                  new Input(
-                                    init_Z_Map(args, false, "forward"),
-                                    init_Z_Map(args, false, "backward"),
-                                    init_Z_Map(args, false, "left"),
-                                    init_Z_Map(args, false, "right"),
-                                    init_Z_Map(args, false, "jump"),
-                                    init_Z_Map(args, false, "shift", "sneak"),
-                                    init_Z_Map(args, false, "sprint")
+                                    boolArg(args, false, "forward"),
+                                    boolArg(args, false, "backward"),
+                                    boolArg(args, false, "left"),
+                                    boolArg(args, false, "right"),
+                                    boolArg(args, false, "jump"),
+                                    boolArg(args, false, "shift", "sneak"),
+                                    boolArg(args, false, "sprint")
                                  )
                               ),
                               "typed constructor"
@@ -541,135 +541,135 @@ public final class PacketCommandBuilder {
                      }
 
                      if (packetClass == ServerboundPaddleBoatPacket.class) {
-                        init_V_Map_StrArr(args, "left", "right");
+                        rejectUnknownArgs(args, "left", "right");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
-                           new ServerboundPaddleBoatPacket(init_Z_Map(args, false, "left"), init_Z_Map(args, false, "right")), "typed constructor"
+                           new ServerboundPaddleBoatPacket(boolArg(args, false, "left"), boolArg(args, false, "right")), "typed constructor"
                         );
                      }
 
                      if (packetClass == ServerboundSetCommandBlockPacket.class) {
-                        init_V_Map_StrArr(args, "pos", "blockPos", "x", "y", "z", "command", "mode", "trackOutput", "conditional", "automatic");
+                        rejectUnknownArgs(args, "pos", "blockPos", "x", "y", "z", "command", "mode", "trackOutput", "conditional", "automatic");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            new ServerboundSetCommandBlockPacket(
-                              init_BlockPos_Map(args),
-                              init_Str_Map_Str(args, "command"),
-                              init_Enum_Class(Mode.class, args, "mode"),
-                              init_Z_Map(args, false, "trackOutput"),
-                              init_Z_Map(args, false, "conditional"),
-                              init_Z_Map(args, false, "automatic")
+                              posArg(args),
+                              requireString(args, "command"),
+                              requireEnum(Mode.class, args, "mode"),
+                              boolArg(args, false, "trackOutput"),
+                              boolArg(args, false, "conditional"),
+                              boolArg(args, false, "automatic")
                            ),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == ServerboundSetGameRulePacket.class) {
-                        init_V_Map_StrArr(args, "entries", "rules", "rule", "value");
+                        rejectUnknownArgs(args, "entries", "rules", "rule", "value");
                         return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundSetGameRulePacket(init_List_Map(args)), "typed constructor");
                      }
 
                      if (packetClass == ServerboundSeenAdvancementsPacket.class) {
-                        init_V_Map_StrArr(args, "action", "tab");
-                        net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket.Action action = init_Enum_Class(
+                        rejectUnknownArgs(args, "action", "tab");
+                        net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket.Action action = requireEnum(
                            net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket.Action.class, args, "action"
                         );
                         Identifier tab = action == net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket.Action.OPENED_TAB
-                           ? Identifier.parse(init_Str_Map_Str(args, "tab"))
+                           ? Identifier.parse(requireString(args, "tab"))
                            : null;
                         return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundSeenAdvancementsPacket(action, tab), "typed constructor");
                      }
 
                      if (packetClass == ServerboundTestInstanceBlockActionPacket.class) {
-                        init_V_Map_StrArr(args, "pos", "blockPos", "x", "y", "z", "action", "size", "rotation", "ignoreEntities", "ignore");
+                        rejectUnknownArgs(args, "pos", "blockPos", "x", "y", "z", "action", "size", "rotation", "ignoreEntities", "ignore");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            new ServerboundTestInstanceBlockActionPacket(
-                              init_BlockPos_Map(args),
-                              init_Enum_Class(net.minecraft.network.protocol.game.ServerboundTestInstanceBlockActionPacket.Action.class, args, "action"),
+                              posArg(args),
+                              requireEnum(net.minecraft.network.protocol.game.ServerboundTestInstanceBlockActionPacket.Action.class, args, "action"),
                               Optional.empty(),
-                              init_Vec3i_Map(args, Vec3i.ZERO, "size"),
-                              init_Enum_Class(Rotation.class, args, Rotation.NONE, "rotation"),
-                              init_Z_Map(args, false, "ignoreEntities", "ignore")
+                              vec3iArg(args, Vec3i.ZERO, "size"),
+                              enumArg(Rotation.class, args, Rotation.NONE, "rotation"),
+                              boolArg(args, false, "ignoreEntities", "ignore")
                            ),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == ServerboundPlayerActionPacket.class) {
-                        init_V_Map_StrArr(args, "action", "pos", "x", "y", "z", "direction", "sequence");
-                        net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action action = init_Enum_Class(
+                        rejectUnknownArgs(args, "action", "pos", "x", "y", "z", "direction", "sequence");
+                        net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action action = requireEnum(
                            net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.class, args, "action"
                         );
-                        BlockPos pos = init_BlockPos_Map(args);
-                        Direction direction = init_Enum_Class(Direction.class, args, "direction", "dir", "face");
-                        int sequence = init_I_Map(args, 0, "sequence");
+                        BlockPos pos = posArg(args);
+                        Direction direction = requireEnum(Direction.class, args, "direction", "dir", "face");
+                        int sequence = intArg(args, 0, "sequence");
                         return PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundPlayerActionPacket(action, pos, direction, sequence), "typed constructor");
                      }
 
                      if (packetClass == Pos.class || name.endsWith("ServerboundMovePlayerPacket$Pos")) {
-                        init_V_Map_StrArr(args, "x", "y", "z", "onGround", "ground", "horizontalCollision", "collision");
+                        rejectUnknownArgs(args, "x", "y", "z", "onGround", "ground", "horizontalCollision", "collision");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            new Pos(
-                              init_D_Map(args, init_D(), "x"),
-                              init_D_Map(args, load_D(), "y"),
-                              init_D_Map(args, read_D(), "z"),
-                              init_Z_Map(args, init_Z(), "onGround", "ground"),
-                              init_Z_Map(args, load_Z(), "horizontalCollision", "collision")
+                              doubleArg(args, playerX(), "x"),
+                              doubleArg(args, playerY(), "y"),
+                              doubleArg(args, playerZ(), "z"),
+                              boolArg(args, playerOnGround(), "onGround", "ground"),
+                              boolArg(args, playerHorizontalCollision(), "horizontalCollision", "collision")
                            ),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == PosRot.class || name.endsWith("ServerboundMovePlayerPacket$PosRot")) {
-                        init_V_Map_StrArr(args, "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
+                        rejectUnknownArgs(args, "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            new PosRot(
-                              init_D_Map(args, init_D(), "x"),
-                              init_D_Map(args, load_D(), "y"),
-                              init_D_Map(args, read_D(), "z"),
-                              init_F_Map(args, init_F(), "yRot", "yaw"),
-                              init_F_Map(args, load_F(), "xRot", "pitch"),
-                              init_Z_Map(args, init_Z(), "onGround", "ground"),
-                              init_Z_Map(args, load_Z(), "horizontalCollision", "collision")
+                              doubleArg(args, playerX(), "x"),
+                              doubleArg(args, playerY(), "y"),
+                              doubleArg(args, playerZ(), "z"),
+                              floatArg(args, playerYaw(), "yRot", "yaw"),
+                              floatArg(args, playerPitch(), "xRot", "pitch"),
+                              boolArg(args, playerOnGround(), "onGround", "ground"),
+                              boolArg(args, playerHorizontalCollision(), "horizontalCollision", "collision")
                            ),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == Rot.class || name.endsWith("ServerboundMovePlayerPacket$Rot")) {
-                        init_V_Map_StrArr(args, "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
+                        rejectUnknownArgs(args, "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            new Rot(
-                              init_F_Map(args, init_F(), "yRot", "yaw"),
-                              init_F_Map(args, load_F(), "xRot", "pitch"),
-                              init_Z_Map(args, init_Z(), "onGround", "ground"),
-                              init_Z_Map(args, load_Z(), "horizontalCollision", "collision")
+                              floatArg(args, playerYaw(), "yRot", "yaw"),
+                              floatArg(args, playerPitch(), "xRot", "pitch"),
+                              boolArg(args, playerOnGround(), "onGround", "ground"),
+                              boolArg(args, playerHorizontalCollision(), "horizontalCollision", "collision")
                            ),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == StatusOnly.class || name.endsWith("ServerboundMovePlayerPacket$StatusOnly")) {
-                        init_V_Map_StrArr(args, "onGround", "ground", "horizontalCollision", "collision");
+                        rejectUnknownArgs(args, "onGround", "ground", "horizontalCollision", "collision");
                         return PacketCommandBuilder.Inner_StreamUtil.init(
-                           new StatusOnly(init_Z_Map(args, init_Z(), "onGround", "ground"), init_Z_Map(args, load_Z(), "horizontalCollision", "collision")),
+                           new StatusOnly(boolArg(args, playerOnGround(), "onGround", "ground"), boolArg(args, playerHorizontalCollision(), "horizontalCollision", "collision")),
                            "typed constructor"
                         );
                      }
 
                      if (packetClass == ServerboundMoveVehiclePacket.class) {
-                        init_V_Map_StrArr(args, "position", "pos", "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground");
-                        if (args.isEmpty() && init_Minecraft.player != null && init_Minecraft.player.getVehicle() != null) {
-                           return PacketCommandBuilder.Inner_StreamUtil.init(ServerboundMoveVehiclePacket.fromEntity(init_Minecraft.player.getVehicle()), "current vehicle");
+                        rejectUnknownArgs(args, "position", "pos", "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground");
+                        if (args.isEmpty() && MC.player != null && MC.player.getVehicle() != null) {
+                           return PacketCommandBuilder.Inner_StreamUtil.init(ServerboundMoveVehiclePacket.fromEntity(MC.player.getVehicle()), "current vehicle");
                         }
 
-                        Vec3 position = init_Str_Map_StrArr(args, "position", "pos") != null
-                           ? init_Vec3_Str(init_Str_Map_StrArr(args, "position", "pos"))
-                           : new Vec3(init_D_Map(args, init_D(), "x"), init_D_Map(args, load_D(), "y"), init_D_Map(args, read_D(), "z"));
+                        Vec3 position = firstArg(args, "position", "pos") != null
+                           ? parseVec3(firstArg(args, "position", "pos"))
+                           : new Vec3(doubleArg(args, playerX(), "x"), doubleArg(args, playerY(), "y"), doubleArg(args, playerZ(), "z"));
                         return PacketCommandBuilder.Inner_StreamUtil.init(
                            Compat263.newServerboundMoveVehiclePacket(
                               position,
-                              init_F_Map(args, init_F(), "yRot", "yaw"),
-                              init_F_Map(args, load_F(), "xRot", "pitch"),
-                              init_Z_Map(args, init_Z(), "onGround", "ground")
+                              floatArg(args, playerYaw(), "yRot", "yaw"),
+                              floatArg(args, playerPitch(), "xRot", "pitch"),
+                              boolArg(args, playerOnGround(), "onGround", "ground")
                            ),
                            "typed constructor"
                         );
@@ -679,9 +679,9 @@ public final class PacketCommandBuilder {
                   }
                }
             } else {
-               init_V_Map_StrArr(args, "brand", "payload", "channel");
-               String channel = init_Str_Map_StrArr(args, "channel");
-               String brand = init_Str_Map_StrArr(args, "brand", "payload");
+               rejectUnknownArgs(args, "brand", "payload", "channel");
+               String channel = firstArg(args, "channel");
+               String brand = firstArg(args, "brand", "payload");
                return brand != null && (channel == null || write(channel).equals("minecraft:brand") || write(channel).equals("brand"))
                   ? PacketCommandBuilder.Inner_StreamUtil.init(new ServerboundCustomPayloadPacket(new BrandPayload(brand)), "brand payload")
                   : PacketCommandBuilder.Inner_StreamUtil.init("Use Packet Logger > Payload Sender for arbitrary plugin payload bytes. .send can build minecraft:brand only.");
@@ -690,7 +690,7 @@ public final class PacketCommandBuilder {
       } catch (IllegalArgumentException e) {
          return PacketCommandBuilder.Inner_StreamUtil.init(e.getMessage());
       } catch (Throwable t) {
-         return PacketCommandBuilder.Inner_StreamUtil.init("Special builder failed: " + init_Str_Throwable(t));
+         return PacketCommandBuilder.Inner_StreamUtil.init("Special builder failed: " + errorMessage(t));
       }
    }
 
@@ -714,16 +714,16 @@ public final class PacketCommandBuilder {
             Object[] values = new Object[components.length];
 
             for (int i = 0; i < components.length; i++) {
-               values[i] = init_Obj_Map(args, components[i].getName(), components[i].getType(), components[i].getGenericType());
+               values[i] = argValue(args, components[i].getName(), components[i].getType(), components[i].getGenericType());
             }
 
-            init_V_Map_List(args, load(init_List_RecordComponentArr(components)));
+            rejectUnknownArgList(args, load(componentNames(components)));
             constructor.setAccessible(true);
             return PacketCommandBuilder.Inner_StreamUtil.init((Packet<?>)constructor.newInstance(values), "record constructor");
          } catch (IllegalArgumentException e) {
             return PacketCommandBuilder.Inner_StreamUtil.init(e.getMessage());
          } catch (Throwable t) {
-            return PacketCommandBuilder.Inner_StreamUtil.init("Record builder failed: " + init_Str_Throwable(t));
+            return PacketCommandBuilder.Inner_StreamUtil.init("Record builder failed: " + errorMessage(t));
          }
       } else {
          return null;
@@ -745,10 +745,10 @@ public final class PacketCommandBuilder {
                   for (int i = 0; i < schema.fields().size(); i++) {
                      String fieldName = schema.fields().get(i).name();
                      names.add(fieldName);
-                     values[i] = init_Obj_Map(args, fieldName, parameterTypes[i], parameterTypes[i]);
+                     values[i] = argValue(args, fieldName, parameterTypes[i], parameterTypes[i]);
                   }
 
-                  init_V_Map_List(args, load(names));
+                  rejectUnknownArgList(args, load(names));
                   constructor.setAccessible(true);
                   return PacketCommandBuilder.Inner_StreamUtil.init((Packet<?>)constructor.newInstance(values), "schema constructor");
                } catch (IllegalArgumentException e) {
@@ -777,10 +777,10 @@ public final class PacketCommandBuilder {
       return false;
    }
 
-   private static Map<String, String> init_Map_Str(String rawArgs) {
+   private static Map<String, String> parseArgs(String rawArgs) {
       Map<String, String> out = new LinkedHashMap<>();
       if (rawArgs != null && !rawArgs.isBlank()) {
-         for (String token : init_List_Str(rawArgs)) {
+         for (String token : tokenize(rawArgs)) {
             if (!token.isBlank()) {
                int eq = token.indexOf(61);
                if (eq < 0) {
@@ -804,7 +804,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static List<String> init_List_Str(String text) {
+   private static List<String> tokenize(String text) {
       List<String> out = new ArrayList<>();
       StringBuilder token = new StringBuilder();
       boolean quoted = false;
@@ -848,17 +848,17 @@ public final class PacketCommandBuilder {
       return out;
    }
 
-   private static String init_Str_List(List<String> tokens) {
+   private static String joinQuoted(List<String> tokens) {
       List<String> out = new ArrayList<>();
 
       for (String token : tokens) {
-         out.add(init_Str_Str(token));
+         out.add(quoteIfNeeded(token));
       }
 
       return String.join(" ", out);
    }
 
-   private static String init_Str_Str(String token) {
+   private static String quoteIfNeeded(String token) {
       if (token == null) {
          return "";
       }
@@ -873,7 +873,7 @@ public final class PacketCommandBuilder {
       return !needsQuote ? token : "\"" + token.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
    }
 
-   private static int init_I_Str(String text) {
+   private static int currentTokenStart(String text) {
       boolean quoted = false;
       char quote = 0;
       boolean escaped = false;
@@ -905,7 +905,7 @@ public final class PacketCommandBuilder {
       String prefix = tokenStart <= 0 ? "" : text.substring(0, tokenStart);
 
       try {
-         out.addAll(init_Map_Str(prefix).keySet());
+         out.addAll(parseArgs(prefix).keySet());
       } catch (IllegalArgumentException var5) {
       }
 
@@ -915,7 +915,7 @@ public final class PacketCommandBuilder {
    private static List<String> init_List_Class(Class<? extends Packet<?>> packetClass) {
       List<String> fields = load_List(packetClass);
       if (!fields.isEmpty()) {
-         return init_List_List(fields);
+         return withRawArgs(fields);
       }
 
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
@@ -926,13 +926,13 @@ public final class PacketCommandBuilder {
             out.add(field.name());
          }
 
-         return init_List_List(out);
+         return withRawArgs(out);
       } else {
-         return init_List_List(List.of("help"));
+         return withRawArgs(List.of("help"));
       }
    }
 
-   private static List<String> init_List_List(List<String> fields) {
+   private static List<String> withRawArgs(List<String> fields) {
       List<String> out = new ArrayList<>(fields);
       out.add("rawHex");
       out.add("packetHex");
@@ -983,7 +983,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static List<String> init_List_Class_Str(Class<? extends Packet<?>> packetClass, String rawField) {
+   private static List<String> valueSuggestions(Class<? extends Packet<?>> packetClass, String rawField) {
       String field = sync(rawField);
       if (field.equals("rawhex") || field.equals("raw") || field.equals("body") || field.equals("bodyhex") || field.equals("hex") || field.equals("bytes")) {
          return List.of("hex:010203", "utf8:text");
@@ -999,7 +999,7 @@ public final class PacketCommandBuilder {
       }
 
       if (!field.equals("base64") && !field.equals("b64") && !field.equals("bodybase64")) {
-         Class<? extends Enum<?>> enumClass = init_Class_Class_Str(packetClass, field);
+         Class<? extends Enum<?>> enumClass = enumTypeFor(packetClass, field);
          if (enumClass != null) {
             List<String> values = new ArrayList<>();
 
@@ -1019,15 +1019,15 @@ public final class PacketCommandBuilder {
          } else if (field.equals("slot") || field.equals("slotnum") || field.equals("slotid")) {
             return List.of("current", "0");
          } else if (field.equals("x")) {
-            return List.of(init_Str_D(init_D()));
+            return List.of(formatDouble(playerX()));
          } else if (field.equals("y")) {
-            return List.of(init_Str_D(load_D()));
+            return List.of(formatDouble(playerY()));
          } else if (field.equals("z")) {
-            return List.of(init_Str_D(read_D()));
+            return List.of(formatDouble(playerZ()));
          } else if (field.equals("yaw") || field.equals("yrot")) {
-            return List.of(init_Str_F(init_F()));
+            return List.of(formatFloat(playerYaw()));
          } else if (field.equals("pitch") || field.equals("xrot")) {
-            return List.of(init_Str_F(load_F()));
+            return List.of(formatFloat(playerPitch()));
          } else if (field.equals("pos") || field.equals("blockpos") || field.equals("hit") || field.equals("size")) {
             return List.of("0,64,0");
          } else if (field.equals("item") || field.equals("itemstack") || field.equals("carried")) {
@@ -1050,7 +1050,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Class<? extends Enum<?>> init_Class_Class_Str(Class<? extends Packet<?>> packetClass, String field) {
+   private static Class<? extends Enum<?>> enumTypeFor(Class<? extends Packet<?>> packetClass, String field) {
       if (field.equals("action")) {
          if (packetClass == ServerboundResourcePackPacket.class) {
             return net.minecraft.network.protocol.common.ServerboundResourcePackPacket.Action.class;
@@ -1192,7 +1192,7 @@ public final class PacketCommandBuilder {
    }
 
    private static String init_Str_Class_Str(Class<? extends Packet<?>> packetClass, String field) {
-      List<String> values = init_List_Class_Str(packetClass, field);
+      List<String> values = valueSuggestions(packetClass, field);
       return !values.isEmpty() ? read(values.get(0)) : "0";
    }
 
@@ -1205,7 +1205,7 @@ public final class PacketCommandBuilder {
    }
 
    private static List<String> read_List(Class<? extends Packet<?>> packetClass) {
-      String prefix = ".send " + read_Str(packetClass) + " ";
+      String prefix = ".send " + packetName(packetClass) + " ";
       String name = packetClass.getName();
       if (packetClass == ServerboundUseItemPacket.class) {
          return List.of(prefix + "hand=MAIN_HAND");
@@ -1252,78 +1252,78 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Object init_Obj_Map(Map<String, String> args, String fieldName, Class<?> targetType, Type genericType) {
-      String value = init_Str_Map_StrArr(args, init_StrArr_Str(fieldName));
+   private static Object argValue(Map<String, String> args, String fieldName, Class<?> targetType, Type genericType) {
+      String value = firstArg(args, argAliases(fieldName));
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + fieldName);
       } else {
-         return init_Obj_Str(fieldName, value, targetType, genericType);
+         return parseValue(fieldName, value, targetType, genericType);
       }
    }
 
-   private static Object init_Obj_Str(String fieldName, String value, Class<?> targetType, Type genericType) {
-      if (load_Z(value)) {
-         return init_Obj_Str_Class(fieldName, targetType);
+   private static Object parseValue(String fieldName, String value, Class<?> targetType, Type genericType) {
+      if (isCurrent(value)) {
+         return currentValue(fieldName, targetType);
       } else if (targetType == String.class) {
          return value;
       } else if (targetType == int.class || targetType == Integer.class) {
-         return init_I_Str_Str(fieldName, value);
+         return decodeInt(fieldName, value);
       } else if (targetType == short.class || targetType == Short.class) {
-         return (short)init_I_Str_Str(fieldName, value);
+         return (short)decodeInt(fieldName, value);
       } else if (targetType == byte.class || targetType == Byte.class) {
-         return (byte)init_I_Str_Str(fieldName, value);
+         return (byte)decodeInt(fieldName, value);
       } else if (targetType == long.class || targetType == Long.class) {
-         return init_J_Str_Str(fieldName, value);
+         return decodeLong(fieldName, value);
       } else if (targetType == float.class || targetType == Float.class) {
          return Float.parseFloat(value);
       } else if (targetType == double.class || targetType == Double.class) {
          return Double.parseDouble(value);
       } else if (targetType == boolean.class || targetType == Boolean.class) {
-         return init_Z_Str_Str(fieldName, value);
+         return parseBoolean(fieldName, value);
       } else if (targetType.isEnum()) {
-         return init_Enum_Class_Str((Class)targetType, value);
+         return parseEnum((Class)targetType, value);
       } else if (targetType == Identifier.class) {
          return Identifier.parse(value);
       } else if (targetType == BlockPos.class) {
-         return init_BlockPos_Str(value);
+         return parseBlockPos(value);
       } else if (targetType == Vec3i.class) {
-         return init_Vec3i_Str(value);
+         return parseVec3i(value);
       } else if (targetType == Vec3.class) {
-         return init_Vec3_Str(value);
+         return parseVec3(value);
       } else if (targetType == UUID.class) {
          return UUID.fromString(value);
       } else if (targetType == Instant.class) {
-         return init_Instant_Str(value);
+         return parseInstant(value);
       } else if (targetType == byte[].class) {
-         return init_BArr_Str(value);
+         return parseBytes(value);
       } else if (targetType == String[].class) {
-         return init_List_Str(value, "\\|", 64).toArray(new String[0]);
+         return splitList(value, "\\|", 64).toArray(new String[0]);
       } else if (targetType == Optional.class) {
          return init_Obj_Str(fieldName, value, genericType);
       } else if (targetType == List.class) {
          return load(fieldName, value, genericType);
       } else if (targetType == Set.class) {
-         return init_Set_Str_Str(fieldName, value);
+         return parseEmptySet(fieldName, value);
       } else if (targetType == Map.class) {
-         return init_Map_Str_Str(fieldName, value);
+         return parseEmptyMap(fieldName, value);
       } else if (targetType == Int2ObjectMap.class) {
          return init_Int2ObjectMap_Str(value);
       } else if (targetType == HashedStack.class) {
-         return init_HashedStack_Str(value);
+         return parseHashedStack(value);
       } else if (targetType == ItemStack.class) {
-         return init_ItemStack_Str(value);
+         return parseItemStack(value);
       } else if (targetType == Input.class) {
-         return init_Input_Str(value);
+         return parseInput(value);
       } else if (targetType == ClientInformation.class) {
          return ClientInformation.createDefault();
       } else if (targetType == RecipeDisplayId.class) {
-         return new RecipeDisplayId(init_I_Str_Str(fieldName, value));
+         return new RecipeDisplayId(decodeInt(fieldName, value));
       } else if (targetType == ArgumentSignatures.class) {
-         return init_ArgumentSignatures_Str(value);
+         return parseArgumentSignatures(value);
       } else if (targetType == Update.class) {
-         return init_LastSeenMessages_U_Str(value);
+         return parseLastSeenUpdate(value);
       } else if (targetType == MessageSignature.class) {
-         return init_MessageSignature_Str(value);
+         return parseMessageSignature(value);
       } else {
          throw new IllegalArgumentException(
             "Argument '"
@@ -1335,11 +1335,11 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Object init_Obj_Str_Class(String fieldName, Class<?> targetType) {
+   private static Object currentValue(String fieldName, Class<?> targetType) {
       String normalized = sync(fieldName);
       if (targetType == int.class || targetType == Integer.class) {
          if (normalized.equals("containerid")) {
-            return load_I();
+            return containerId();
          }
 
          if (normalized.equals("stateid")) {
@@ -1347,56 +1347,56 @@ public final class PacketCommandBuilder {
          }
 
          if (normalized.equals("slot") || normalized.equals("slotid") || normalized.equals("slotnum")) {
-            return init_I();
+            return selectedSlot();
          }
 
-         if ((normalized.equals("id") || normalized.equals("entityid")) && init_Minecraft != null && init_Minecraft.player != null) {
-            return init_Minecraft.player.getId();
+         if ((normalized.equals("id") || normalized.equals("entityid")) && MC != null && MC.player != null) {
+            return MC.player.getId();
          }
       }
 
       if ((targetType == short.class || targetType == Short.class)
          && (normalized.equals("slot") || normalized.equals("slotid") || normalized.equals("slotnum"))) {
-         return (short)init_I();
+         return (short)selectedSlot();
       }
 
       if (targetType != byte.class && targetType != Byte.class || !normalized.equals("buttonnum") && !normalized.equals("button")) {
          if (targetType == double.class || targetType == Double.class) {
             if (normalized.equals("x")) {
-               return init_D();
+               return playerX();
             }
 
             if (normalized.equals("y")) {
-               return load_D();
+               return playerY();
             }
 
             if (normalized.equals("z")) {
-               return read_D();
+               return playerZ();
             }
          }
 
          if (targetType == float.class || targetType == Float.class) {
             if (normalized.equals("yrot") || normalized.equals("yaw")) {
-               return init_F();
+               return playerYaw();
             }
 
             if (normalized.equals("xrot") || normalized.equals("pitch")) {
-               return load_F();
+               return playerPitch();
             }
          }
 
          if (targetType == boolean.class || targetType == Boolean.class) {
             if (normalized.equals("onground") || normalized.equals("ground")) {
-               return init_Z();
+               return playerOnGround();
             }
 
             if (normalized.equals("horizontalcollision") || normalized.equals("collision")) {
-               return load_Z();
+               return playerHorizontalCollision();
             }
          }
 
          if (targetType == BlockPos.class) {
-            BlockHitResult hit = init_BlockHitResult();
+            BlockHitResult hit = currentBlockHit();
             if (hit != null) {
                return hit.getBlockPos();
             }
@@ -1404,17 +1404,17 @@ public final class PacketCommandBuilder {
 
          if (targetType == Vec3.class) {
             if (normalized.equals("position") || normalized.equals("pos")) {
-               return new Vec3(init_D(), load_D(), read_D());
+               return new Vec3(playerX(), playerY(), playerZ());
             }
 
-            BlockHitResult hit = init_BlockHitResult();
+            BlockHitResult hit = currentBlockHit();
             if (hit != null) {
                return hit.getLocation();
             }
          }
 
          if (targetType == ItemStack.class) {
-            return init_ItemStack_Str("held");
+            return parseItemStack("held");
          } else if (targetType == ClientInformation.class) {
             return ClientInformation.createDefault();
          } else if (targetType == Instant.class) {
@@ -1427,32 +1427,32 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static int init_I_Map_StrArr(Map<String, String> args, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
+   private static int requireInt(Map<String, String> args, String... names) {
+      String value = firstArg(args, names);
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + names[0]);
       } else {
-         return init_I_Str_Str(names[0], value);
+         return decodeInt(names[0], value);
       }
    }
 
-   private static int init_I_Map(Map<String, String> args, int fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value != null && !load_Z(value) ? init_I_Str_Str(names[0], value) : fallback;
+   private static int intArg(Map<String, String> args, int fallback, String... names) {
+      String value = firstArg(args, names);
+      return value != null && !isCurrent(value) ? decodeInt(names[0], value) : fallback;
    }
 
-   private static int init_I_Map_2(Map<String, String> args, IntSupplier fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value != null && !load_Z(value) ? init_I_Str_Str(names[0], value) : fallback.getAsInt();
+   private static int intArgOr(Map<String, String> args, IntSupplier fallback, String... names) {
+      String value = firstArg(args, names);
+      return value != null && !isCurrent(value) ? decodeInt(names[0], value) : fallback.getAsInt();
    }
 
-   private static long init_J_Map(Map<String, String> args, long fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value == null ? fallback : init_J_Str_Str(names[0], value);
+   private static long longArg(Map<String, String> args, long fallback, String... names) {
+      String value = firstArg(args, names);
+      return value == null ? fallback : decodeLong(names[0], value);
    }
 
-   private static double init_D_Map_Str(Map<String, String> args, String name) {
-      String value = init_Str_Map_StrArr(args, name);
+   private static double requireDouble(Map<String, String> args, String name) {
+      String value = firstArg(args, name);
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + name);
       } else {
@@ -1460,13 +1460,13 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static double init_D_Map(Map<String, String> args, double fallback, String name) {
-      String value = init_Str_Map_StrArr(args, name);
-      return value != null && !load_Z(value) ? Double.parseDouble(value) : fallback;
+   private static double doubleArg(Map<String, String> args, double fallback, String name) {
+      String value = firstArg(args, name);
+      return value != null && !isCurrent(value) ? Double.parseDouble(value) : fallback;
    }
 
-   private static float init_F_Map_StrArr(Map<String, String> args, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
+   private static float requireFloat(Map<String, String> args, String... names) {
+      String value = firstArg(args, names);
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + names[0]);
       } else {
@@ -1474,77 +1474,77 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static float init_F_Map(Map<String, String> args, float fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value != null && !load_Z(value) ? Float.parseFloat(value) : fallback;
+   private static float floatArg(Map<String, String> args, float fallback, String... names) {
+      String value = firstArg(args, names);
+      return value != null && !isCurrent(value) ? Float.parseFloat(value) : fallback;
    }
 
-   private static boolean init_Z_Map(Map<String, String> args, boolean fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value != null && !load_Z(value) ? init_Z_Str_Str(names[0], value) : fallback;
+   private static boolean boolArg(Map<String, String> args, boolean fallback, String... names) {
+      String value = firstArg(args, names);
+      return value != null && !isCurrent(value) ? parseBoolean(names[0], value) : fallback;
    }
 
-   private static <E extends Enum<E>> E init_Enum_Class(Class<E> enumClass, Map<String, String> args, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
+   private static <E extends Enum<E>> E requireEnum(Class<E> enumClass, Map<String, String> args, String... names) {
+      String value = firstArg(args, names);
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + names[0]);
       } else {
-         return init_Enum_Class_Str(enumClass, value);
+         return parseEnum(enumClass, value);
       }
    }
 
-   private static <E extends Enum<E>> E init_Enum_Class(Class<E> enumClass, Map<String, String> args, E fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value == null ? fallback : init_Enum_Class_Str(enumClass, value);
+   private static <E extends Enum<E>> E enumArg(Class<E> enumClass, Map<String, String> args, E fallback, String... names) {
+      String value = firstArg(args, names);
+      return value == null ? fallback : parseEnum(enumClass, value);
    }
 
-   private static BlockPos init_BlockPos_Map(Map<String, String> args) {
-      String packed = init_Str_Map_StrArr(args, "pos", "blockPos");
+   private static BlockPos posArg(Map<String, String> args) {
+      String packed = firstArg(args, "pos", "blockPos");
       return packed != null
-         ? init_BlockPos_Str(packed)
-         : new BlockPos(init_I_Map_StrArr(args, "x"), init_I_Map_StrArr(args, "y"), init_I_Map_StrArr(args, "z"));
+         ? parseBlockPos(packed)
+         : new BlockPos(requireInt(args, "x"), requireInt(args, "y"), requireInt(args, "z"));
    }
 
-   private static BlockHitResult init_BlockHitResult_Map(Map<String, String> args) {
-      BlockHitResult current = init_BlockHitResult();
-      boolean hasExplicitPos = init_Str_Map_StrArr(args, "pos", "blockPos") != null
-         || init_Str_Map_StrArr(args, "x") != null
-         || init_Str_Map_StrArr(args, "y") != null
-         || init_Str_Map_StrArr(args, "z") != null;
-      boolean hasExplicitDirection = init_Str_Map_StrArr(args, "direction", "dir", "face") != null;
-      boolean hasExplicitHit = init_Str_Map_StrArr(args, "hit") != null
-         || init_Str_Map_StrArr(args, "hitX") != null
-         || init_Str_Map_StrArr(args, "hitY") != null
-         || init_Str_Map_StrArr(args, "hitZ") != null;
+   private static BlockHitResult hitResultArg(Map<String, String> args) {
+      BlockHitResult current = currentBlockHit();
+      boolean hasExplicitPos = firstArg(args, "pos", "blockPos") != null
+         || firstArg(args, "x") != null
+         || firstArg(args, "y") != null
+         || firstArg(args, "z") != null;
+      boolean hasExplicitDirection = firstArg(args, "direction", "dir", "face") != null;
+      boolean hasExplicitHit = firstArg(args, "hit") != null
+         || firstArg(args, "hitX") != null
+         || firstArg(args, "hitY") != null
+         || firstArg(args, "hitZ") != null;
       if (!hasExplicitPos && !hasExplicitDirection && !hasExplicitHit && current != null) {
          return current;
       }
 
-      BlockPos pos = hasExplicitPos ? init_BlockPos_Map(args) : (current != null ? current.getBlockPos() : null);
+      BlockPos pos = hasExplicitPos ? posArg(args) : (current != null ? current.getBlockPos() : null);
       if (pos == null) {
          throw new IllegalArgumentException("Missing required block position. Use pos=x,y,z or look at a block.");
       }
 
       Direction direction = hasExplicitDirection
-         ? init_Enum_Class(Direction.class, args, "direction", "dir", "face")
+         ? requireEnum(Direction.class, args, "direction", "dir", "face")
          : (current != null ? current.getDirection() : Direction.UP);
-      Vec3 hit = init_Vec3_Map(args, current != null ? current.getLocation() : init_Vec3_BlockPos(pos), "hit");
-      boolean inside = init_Z_Map(args, current != null && current.isInside(), "inside");
+      Vec3 hit = vec3Arg(args, current != null ? current.getLocation() : center(pos), "hit");
+      boolean inside = boolArg(args, current != null && current.isInside(), "inside");
       return new BlockHitResult(hit, direction, pos, inside);
    }
 
-   private static Vec3i init_Vec3i_Map(Map<String, String> args, Vec3i fallback, String packedName) {
-      String packed = init_Str_Map_StrArr(args, packedName);
-      return packed == null ? fallback : init_Vec3i_Str(packed);
+   private static Vec3i vec3iArg(Map<String, String> args, Vec3i fallback, String packedName) {
+      String packed = firstArg(args, packedName);
+      return packed == null ? fallback : parseVec3i(packed);
    }
 
-   private static BlockPos init_BlockPos_Str(String value) {
-      if (load_Z(value)) {
-         BlockHitResult hit = init_BlockHitResult();
+   private static BlockPos parseBlockPos(String value) {
+      if (isCurrent(value)) {
+         BlockHitResult hit = currentBlockHit();
          if (hit != null) {
             return hit.getBlockPos();
-         } else if (init_Minecraft != null && init_Minecraft.player != null) {
-            return init_Minecraft.player.blockPosition();
+         } else if (MC != null && MC.player != null) {
+            return MC.player.blockPosition();
          } else {
             throw new IllegalArgumentException("current BlockPos needs a player or block hit.");
          }
@@ -1553,19 +1553,19 @@ public final class PacketCommandBuilder {
          if (parts.length != 3) {
             throw new IllegalArgumentException("BlockPos must be x,y,z.");
          } else {
-            return new BlockPos(init_I_Str_Str("x", parts[0].trim()), init_I_Str_Str("y", parts[1].trim()), init_I_Str_Str("z", parts[2].trim()));
+            return new BlockPos(decodeInt("x", parts[0].trim()), decodeInt("y", parts[1].trim()), decodeInt("z", parts[2].trim()));
          }
       }
    }
 
-   private static Vec3 init_Vec3_Map(Map<String, String> args, Vec3 fallback, String packedName) {
-      String packed = init_Str_Map_StrArr(args, packedName);
+   private static Vec3 vec3Arg(Map<String, String> args, Vec3 fallback, String packedName) {
+      String packed = firstArg(args, packedName);
       if (packed != null) {
-         return init_Vec3_Str(packed);
+         return parseVec3(packed);
       } else {
-         String hx = init_Str_Map_StrArr(args, packedName + "X");
-         String hy = init_Str_Map_StrArr(args, packedName + "Y");
-         String hz = init_Str_Map_StrArr(args, packedName + "Z");
+         String hx = firstArg(args, packedName + "X");
+         String hy = firstArg(args, packedName + "Y");
+         String hz = firstArg(args, packedName + "Z");
          if (hx == null && hy == null && hz == null) {
             return fallback;
          } else if (hx != null && hy != null && hz != null) {
@@ -1576,13 +1576,13 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Vec3 init_Vec3_BlockPos(BlockPos pos) {
+   private static Vec3 center(BlockPos pos) {
       return new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
    }
 
-   private static Vec3 init_Vec3_Str(String value) {
-      if (load_Z(value)) {
-         return new Vec3(init_D(), load_D(), read_D());
+   private static Vec3 parseVec3(String value) {
+      if (isCurrent(value)) {
+         return new Vec3(playerX(), playerY(), playerZ());
       } else {
          String[] parts = value.trim().split("[,;]");
          if (parts.length != 3) {
@@ -1593,31 +1593,31 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Vec3i init_Vec3i_Str(String value) {
-      if (!load_Z(value)) {
+   private static Vec3i parseVec3i(String value) {
+      if (!isCurrent(value)) {
          String[] parts = value.trim().split("[,;]");
          if (parts.length != 3) {
             throw new IllegalArgumentException("Vec3i must be x,y,z.");
          } else {
-            return new Vec3i(init_I_Str_Str("x", parts[0].trim()), init_I_Str_Str("y", parts[1].trim()), init_I_Str_Str("z", parts[2].trim()));
+            return new Vec3i(decodeInt("x", parts[0].trim()), decodeInt("y", parts[1].trim()), decodeInt("z", parts[2].trim()));
          }
       } else {
-         return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.blockPosition() : Vec3i.ZERO;
+         return MC != null && MC.player != null ? MC.player.blockPosition() : Vec3i.ZERO;
       }
    }
 
-   private static byte[] init_BArr_Str(String value) {
+   private static byte[] parseBytes(String value) {
       String trimmed = value == null ? "" : value.trim();
       if (trimmed.isEmpty() || init_Z_Str(trimmed)) {
          return new byte[0];
       } else if (trimmed.regionMatches(true, 0, "base64:", 0, 7)) {
          return Base64.getDecoder().decode(trimmed.substring(7).trim());
       } else if (trimmed.regionMatches(true, 0, "hex:", 0, 4)) {
-         return load_BArr(trimmed.substring(4));
+         return parseHexBytes(trimmed.substring(4));
       } else {
          String compactHex = trimmed.replace(" ", "").replace("_", "");
          if (compactHex.length() % 2 == 0 && compactHex.matches("(?i)[0-9a-f]+")) {
-            return load_BArr(compactHex);
+            return parseHexBytes(compactHex);
          } else {
             return trimmed.regionMatches(true, 0, "utf8:", 0, 5)
                ? trimmed.substring(5).getBytes(StandardCharsets.UTF_8)
@@ -1626,7 +1626,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static byte[] load_BArr(String value) {
+   private static byte[] parseHexBytes(String value) {
       String compact = value.replaceAll("[^0-9A-Fa-f]", "");
       if (compact.length() % 2 != 0) {
          throw new IllegalArgumentException("Hex byte string must have an even length.");
@@ -1643,8 +1643,8 @@ public final class PacketCommandBuilder {
 
    private static Object init_Obj_Str(String fieldName, String value, Type genericType) {
       if (value != null && !init_Z_Str(value)) {
-         if (init_Type_Type(genericType) instanceof Class<?> innerClass) {
-            return Optional.of(init_Obj_Str(fieldName, value, innerClass, innerClass));
+         if (firstTypeArgument(genericType) instanceof Class<?> innerClass) {
+            return Optional.of(parseValue(fieldName, value, innerClass, innerClass));
          } else {
             throw new IllegalArgumentException("Optional argument '" + fieldName + "' only supports empty/null here.");
          }
@@ -1654,25 +1654,25 @@ public final class PacketCommandBuilder {
    }
 
    private static Object load(String fieldName, String value, Type genericType) {
-      if (!(init_Type_Type(genericType) instanceof Class<?> innerClass)) {
+      if (!(firstTypeArgument(genericType) instanceof Class<?> innerClass)) {
          if (init_Z_Str(value)) {
             return List.of();
          } else {
             throw new IllegalArgumentException("List argument '" + fieldName + "' needs a supported element type.");
          }
       } else {
-         List<String> var8 = init_List_Str(value, "\\|", 256);
+         List<String> var8 = splitList(value, "\\|", 256);
          ArrayList values = new ArrayList(var8.size());
 
          for (String part : var8) {
-            values.add(init_Obj_Str(fieldName, part, innerClass, innerClass));
+            values.add(parseValue(fieldName, part, innerClass, innerClass));
          }
 
          return List.copyOf(values);
       }
    }
 
-   private static Set<?> init_Set_Str_Str(String fieldName, String value) {
+   private static Set<?> parseEmptySet(String fieldName, String value) {
       if (init_Z_Str(value)) {
          return Set.of();
       } else {
@@ -1680,7 +1680,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Map<?, ?> init_Map_Str_Str(String fieldName, String value) {
+   private static Map<?, ?> parseEmptyMap(String fieldName, String value) {
       if (init_Z_Str(value)) {
          return Map.of();
       } else {
@@ -1688,7 +1688,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Type init_Type_Type(Type genericType) {
+   private static Type firstTypeArgument(Type genericType) {
       return genericType instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments().length > 0
          ? parameterized.getActualTypeArguments()[0]
          : Object.class;
@@ -1697,15 +1697,15 @@ public final class PacketCommandBuilder {
    private static Int2ObjectMap<HashedStack> init_Int2ObjectMap_Str(String value) {
       Int2ObjectOpenHashMap<HashedStack> out = new Int2ObjectOpenHashMap<>();
       if (value != null && !init_Z_Str(value)) {
-         for (String entry : init_List_Str(value, "\\|", 128)) {
+         for (String entry : splitList(value, "\\|", 128)) {
             if (!entry.isBlank()) {
                int eq = entry.indexOf(61);
                if (eq < 0) {
                   throw new IllegalArgumentException("changedSlots entries must be slot=empty.");
                }
 
-               int slot = init_I_Str_Str("changedSlots", entry.substring(0, eq).trim());
-               HashedStack stack = init_HashedStack_Str(entry.substring(eq + 1).trim());
+               int slot = decodeInt("changedSlots", entry.substring(0, eq).trim());
+               HashedStack stack = parseHashedStack(entry.substring(eq + 1).trim());
                out.put(slot, stack);
             }
          }
@@ -1716,7 +1716,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static HashedStack init_HashedStack_Str(String value) {
+   private static HashedStack parseHashedStack(String value) {
       if (value != null && !init_Z_Str(value)) {
          throw new IllegalArgumentException("HashedStack from .send currently supports only empty/null. Capture/resend for real hashed item data.");
       } else {
@@ -1724,20 +1724,20 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static ItemStack init_ItemStack_Str(String value) {
+   private static ItemStack parseItemStack(String value) {
       if (value != null && !init_Z_Str(value)) {
          String normalized = sync(value);
-         if (init_Minecraft.player != null) {
+         if (MC.player != null) {
             if ("held".equals(normalized) || "mainhand".equals(normalized)) {
-               return init_Minecraft.player.getMainHandItem().copy();
+               return MC.player.getMainHandItem().copy();
             }
 
             if ("offhand".equals(normalized)) {
-               return init_Minecraft.player.getOffhandItem().copy();
+               return MC.player.getOffhandItem().copy();
             }
 
-            if ("cursor".equals(normalized) && init_Minecraft.player.containerMenu != null) {
-               return init_Minecraft.player.containerMenu.getCarried().copy();
+            if ("cursor".equals(normalized) && MC.player.containerMenu != null) {
+               return MC.player.containerMenu.getCarried().copy();
             }
          }
 
@@ -1747,7 +1747,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Input init_Input_Str(String value) {
+   private static Input parseInput(String value) {
       if (value != null && !init_Z_Str(value)) {
          boolean forward = false;
          boolean backward = false;
@@ -1801,11 +1801,11 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static String[] init_StrArr_Map(Map<String, String> args) {
-      String packed = init_Str_Map_StrArr(args, "lines");
+   private static String[] signLines(Map<String, String> args) {
+      String packed = firstArg(args, "lines");
       String[] lines = new String[]{"", "", "", ""};
       if (packed != null) {
-         List<String> parts = init_List_Str(packed, "\\|", 4);
+         List<String> parts = splitList(packed, "\\|", 4);
 
          for (int i = 0; i < Math.min(4, parts.size()); i++) {
             lines[i] = parts.get(i);
@@ -1813,7 +1813,7 @@ public final class PacketCommandBuilder {
       }
 
       for (int i = 0; i < 4; i++) {
-         String value = init_Str_Map_StrArr(args, "line" + i, "l" + i);
+         String value = firstArg(args, "line" + i, "l" + i);
          if (value != null) {
             lines[i] = value;
          }
@@ -1822,15 +1822,15 @@ public final class PacketCommandBuilder {
       return lines;
    }
 
-   private static Optional<String> init_Optional_Str(String value) {
+   private static Optional<String> optionalString(String value) {
       return value != null && !init_Z_Str(value) ? Optional.of(value) : Optional.empty();
    }
 
    private static List<Entry> init_List_Map(Map<String, String> args) {
-      String packed = init_Str_Map_StrArr(args, "entries", "rules");
+      String packed = firstArg(args, "entries", "rules");
       if (packed == null) {
-         String rule = init_Str_Map_StrArr(args, "rule");
-         String value = init_Str_Map_StrArr(args, "value");
+         String rule = firstArg(args, "rule");
+         String value = firstArg(args, "value");
          if (rule == null || value == null) {
             throw new IllegalArgumentException("Provide entries=rule=value|rule2=value2 or rule=... value=...");
          }
@@ -1840,20 +1840,20 @@ public final class PacketCommandBuilder {
 
       List<Entry> entries = new ArrayList<>();
 
-      for (String entry : init_List_Str(packed, "\\|", 256)) {
+      for (String entry : splitList(packed, "\\|", 256)) {
          int eq = entry.indexOf(61);
          if (eq < 0) {
             throw new IllegalArgumentException("Game rule entries must be rule=value.");
          }
 
-         ResourceKey<GameRule<?>> key = ResourceKey.create(Registries.GAME_RULE, init_Identifier_Str(entry.substring(0, eq).trim()));
+         ResourceKey<GameRule<?>> key = ResourceKey.create(Registries.GAME_RULE, parseIdentifier(entry.substring(0, eq).trim()));
          entries.add(new Entry(key, entry.substring(eq + 1)));
       }
 
       return List.copyOf(entries);
    }
 
-   private static Identifier init_Identifier_Str(String value) {
+   private static Identifier parseIdentifier(String value) {
       return value.contains(":") ? Identifier.parse(value) : Identifier.withDefaultNamespace(value);
    }
 
@@ -1861,8 +1861,8 @@ public final class PacketCommandBuilder {
       return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str_Map_Str(Map<String, String> args, String name) {
-      String value = init_Str_Map_StrArr(args, name);
+   private static String requireString(Map<String, String> args, String name) {
+      String value = firstArg(args, name);
       if (value == null) {
          throw new IllegalArgumentException("Missing required argument: " + name);
       } else {
@@ -1884,7 +1884,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static List<String> init_List_Str(String value, String delimiterRegex, int max) {
+   private static List<String> splitList(String value, String delimiterRegex, int max) {
       if (value != null && !init_Z_Str(value)) {
          String[] parts = value.split(delimiterRegex, -1);
          if (parts.length > max) {
@@ -1917,11 +1917,11 @@ public final class PacketCommandBuilder {
          || normalized.equals("[]");
    }
 
-   private static boolean load_Z(String value) {
+   private static boolean isCurrent(String value) {
       return value != null && value.trim().equalsIgnoreCase("current");
    }
 
-   private static int init_I_Str_Str(String name, String value) {
+   private static int decodeInt(String name, String value) {
       try {
          return Integer.decode(value.trim());
       } catch (NumberFormatException e) {
@@ -1929,7 +1929,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static long init_J_Str_Str(String name, String value) {
+   private static long decodeLong(String name, String value) {
       try {
          return Long.decode(value.trim());
       } catch (NumberFormatException e) {
@@ -1937,12 +1937,12 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Instant init_Instant_Map(Map<String, String> args, Instant fallback, String... names) {
-      String value = init_Str_Map_StrArr(args, names);
-      return value == null ? fallback : init_Instant_Str(value);
+   private static Instant instantArg(Map<String, String> args, Instant fallback, String... names) {
+      String value = firstArg(args, names);
+      return value == null ? fallback : parseInstant(value);
    }
 
-   private static Instant init_Instant_Str(String value) {
+   private static Instant parseInstant(String value) {
       if (value != null && !value.isBlank() && !"now".equalsIgnoreCase(value.trim())) {
          String trimmed = value.trim();
          return trimmed.matches("-?\\d+") ? Instant.ofEpochMilli(Long.parseLong(trimmed)) : Instant.parse(trimmed);
@@ -1951,7 +1951,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static ArgumentSignatures init_ArgumentSignatures_Str(String value) {
+   private static ArgumentSignatures parseArgumentSignatures(String value) {
       if (value != null && !init_Z_Str(value)) {
          throw new IllegalArgumentException("ArgumentSignatures supports only empty/null from .send.");
       } else {
@@ -1959,11 +1959,11 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Update init_LastSeenMessages_U_Str(String value) {
+   private static Update parseLastSeenUpdate(String value) {
       if (value != null && !init_Z_Str(value)) {
          String[] parts = value.split("[,;]");
          if (parts.length == 1) {
-            return new Update(init_I_Str_Str("lastSeenOffset", parts[0].trim()), new BitSet(20), (byte)0);
+            return new Update(decodeInt("lastSeenOffset", parts[0].trim()), new BitSet(20), (byte)0);
          } else {
             throw new IllegalArgumentException("lastSeen supports empty/null or an offset integer.");
          }
@@ -1972,9 +1972,9 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static MessageSignature init_MessageSignature_Str(String value) {
+   private static MessageSignature parseMessageSignature(String value) {
       if (value != null && !init_Z_Str(value)) {
-         byte[] bytes = init_BArr_Str(value);
+         byte[] bytes = parseBytes(value);
          if (bytes.length != 256) {
             throw new IllegalArgumentException("MessageSignature must be exactly 256 bytes.");
          } else {
@@ -1985,22 +1985,22 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Data init_RemoteChatSession_() {
-      if (init_Minecraft != null && init_Minecraft.getConnection() != null) {
+   private static Data currentChatSession() {
+      if (MC != null && MC.getConnection() != null) {
          try {
-            Field field = init_Minecraft.getConnection().getClass().getDeclaredField("chatSession");
+            Field field = MC.getConnection().getClass().getDeclaredField("chatSession");
             field.setAccessible(true);
-            if (field.get(init_Minecraft.getConnection()) instanceof LocalChatSession localChatSession) {
+            if (field.get(MC.getConnection()) instanceof LocalChatSession localChatSession) {
                return localChatSession.asRemote().asData();
             }
          } catch (Throwable var7) {
          }
 
-         for (Field field : init_Minecraft.getConnection().getClass().getDeclaredFields()) {
+         for (Field field : MC.getConnection().getClass().getDeclaredFields()) {
             try {
                if (field.getType() == LocalChatSession.class) {
                   field.setAccessible(true);
-                  if (field.get(init_Minecraft.getConnection()) instanceof LocalChatSession localChatSession) {
+                  if (field.get(MC.getConnection()) instanceof LocalChatSession localChatSession) {
                      return localChatSession.asRemote().asData();
                   }
                }
@@ -2014,7 +2014,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static boolean init_Z_Str_Str(String name, String value) {
+   private static boolean parseBoolean(String name, String value) {
       String normalized = value.trim().toLowerCase(Locale.ROOT);
       boolean var10000;
       switch (normalized) {
@@ -2039,7 +2039,7 @@ public final class PacketCommandBuilder {
       return var10000;
    }
 
-   private static <E extends Enum<E>> E init_Enum_Class_Str(Class<E> enumClass, String value) {
+   private static <E extends Enum<E>> E parseEnum(Class<E> enumClass, String value) {
       String wanted = sync(value);
 
       for (E constant : enumClass.getEnumConstants()) {
@@ -2048,10 +2048,10 @@ public final class PacketCommandBuilder {
          }
       }
 
-      throw new IllegalArgumentException("Invalid " + enumClass.getSimpleName() + ": " + value + ". Options: " + load_Str(enumClass));
+      throw new IllegalArgumentException("Invalid " + enumClass.getSimpleName() + ": " + value + ". Options: " + enumNames(enumClass));
    }
 
-   private static String load_Str(Class<? extends Enum<?>> enumClass) {
+   private static String enumNames(Class<? extends Enum<?>> enumClass) {
       List<String> names = new ArrayList<>();
 
       for (Enum<?> constant : enumClass.getEnumConstants()) {
@@ -2061,7 +2061,7 @@ public final class PacketCommandBuilder {
       return String.join(", ", names);
    }
 
-   private static void init_V_Map_StrArr(Map<String, String> args, String... allowed) {
+   private static void rejectUnknownArgs(Map<String, String> args, String... allowed) {
       Set<String> normalized = new HashSet<>();
 
       for (String name : allowed) {
@@ -2075,7 +2075,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static void init_V_Map_List(Map<String, String> args, List<String> allowed) {
+   private static void rejectUnknownArgList(Map<String, String> args, List<String> allowed) {
       Set<String> normalized = new HashSet<>();
 
       for (String name : allowed) {
@@ -2089,7 +2089,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static List<String> init_List_RecordComponentArr(RecordComponent[] components) {
+   private static List<String> componentNames(RecordComponent[] components) {
       List<String> names = new ArrayList<>();
 
       for (RecordComponent component : components) {
@@ -2103,7 +2103,7 @@ public final class PacketCommandBuilder {
       List<String> out = new ArrayList<>();
 
       for (String name : names) {
-         for (String alias : init_StrArr_Str(name)) {
+         for (String alias : argAliases(name)) {
             out.add(alias);
          }
       }
@@ -2111,7 +2111,7 @@ public final class PacketCommandBuilder {
       return out;
    }
 
-   private static String[] init_StrArr_Str(String name) {
+   private static String[] argAliases(String name) {
       String normalized = sync(name);
       String[] var10000;
       switch (normalized) {
@@ -2198,7 +2198,7 @@ public final class PacketCommandBuilder {
       return args.get(sync(name));
    }
 
-   private static String init_Str_Map_StrArr(Map<String, String> args, String... names) {
+   private static String firstArg(Map<String, String> args, String... names) {
       for (String name : names) {
          String value = load(args, name);
          if (value != null) {
@@ -2256,64 +2256,64 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static String read_Str(Class<?> packetClass) {
+   private static String packetName(Class<?> packetClass) {
       String known = PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packetClass);
       return known != null ? known : packetClass.getSimpleName().replace('$', '.');
    }
 
-   private static float init_F() {
-      return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getYRot() : 0.0F;
+   private static float playerYaw() {
+      return MC != null && MC.player != null ? MC.player.getYRot() : 0.0F;
    }
 
-   private static float load_F() {
-      return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getXRot() : 0.0F;
+   private static float playerPitch() {
+      return MC != null && MC.player != null ? MC.player.getXRot() : 0.0F;
    }
 
-   private static double init_D() {
-      return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getX() : 0.0;
+   private static double playerX() {
+      return MC != null && MC.player != null ? MC.player.getX() : 0.0;
    }
 
-   private static double load_D() {
-      return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getY() : 0.0;
+   private static double playerY() {
+      return MC != null && MC.player != null ? MC.player.getY() : 0.0;
    }
 
-   private static double read_D() {
-      return init_Minecraft != null && init_Minecraft.player != null ? init_Minecraft.player.getZ() : 0.0;
+   private static double playerZ() {
+      return MC != null && MC.player != null ? MC.player.getZ() : 0.0;
    }
 
-   private static boolean init_Z() {
-      return init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.onGround();
+   private static boolean playerOnGround() {
+      return MC != null && MC.player != null && MC.player.onGround();
    }
 
-   private static boolean load_Z() {
-      return init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.horizontalCollision;
+   private static boolean playerHorizontalCollision() {
+      return MC != null && MC.player != null && MC.player.horizontalCollision;
    }
 
-   private static int init_I() {
-      if (init_Minecraft != null && init_Minecraft.player != null) {
-         return init_Minecraft.player.getInventory().getSelectedSlot();
+   private static int selectedSlot() {
+      if (MC != null && MC.player != null) {
+         return MC.player.getInventory().getSelectedSlot();
       } else {
          throw new IllegalArgumentException("Player is required for current selected slot.");
       }
    }
 
-   private static int load_I() {
-      if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.containerMenu != null) {
-         return init_Minecraft.player.containerMenu.containerId;
+   private static int containerId() {
+      if (MC != null && MC.player != null && MC.player.containerMenu != null) {
+         return MC.player.containerMenu.containerId;
       } else {
          throw new IllegalArgumentException("Open/current container is required.");
       }
    }
 
    private static int read_I() {
-      return init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.containerMenu != null
-         ? init_Minecraft.player.containerMenu.getStateId()
+      return MC != null && MC.player != null && MC.player.containerMenu != null
+         ? MC.player.containerMenu.getStateId()
          : 0;
    }
 
    private static int write() {
-      if (init_Minecraft != null
-         && init_Minecraft.hitResult instanceof EntityHitResult entityHit
+      if (MC != null
+         && MC.hitResult instanceof EntityHitResult entityHit
          && entityHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
          return entityHit.getEntity().getId();
       } else {
@@ -2321,31 +2321,31 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Vec3 init_Vec3_Vec3(Vec3 fallback) {
-      return init_Minecraft != null
-            && init_Minecraft.hitResult instanceof EntityHitResult entityHit
+   private static Vec3 entityHitLocation(Vec3 fallback) {
+      return MC != null
+            && MC.hitResult instanceof EntityHitResult entityHit
             && entityHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS
          ? entityHit.getLocation()
          : fallback;
    }
 
-   private static BlockHitResult init_BlockHitResult() {
-      return init_Minecraft != null
-            && init_Minecraft.hitResult instanceof BlockHitResult blockHit
+   private static BlockHitResult currentBlockHit() {
+      return MC != null
+            && MC.hitResult instanceof BlockHitResult blockHit
             && blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS
          ? blockHit
          : null;
    }
 
-   private static String init_Str_D(double value) {
+   private static String formatDouble(double value) {
       return String.format(Locale.ROOT, "%.3f", value);
    }
 
-   private static String init_Str_F(float value) {
+   private static String formatFloat(float value) {
       return String.format(Locale.ROOT, "%.2f", value);
    }
 
-   private static String init_Str_Throwable(Throwable t) {
+   private static String errorMessage(Throwable t) {
       if (t == null) {
          return "unknown";
       }
@@ -2356,7 +2356,7 @@ public final class PacketCommandBuilder {
 
    static {
       List<String> names = new ArrayList<>();
-      names.addAll(init_List);
+      names.addAll(RAW_BODY_ARG_NAMES);
       names.addAll(load);
       names.addAll(read);
       write = List.copyOf(names);

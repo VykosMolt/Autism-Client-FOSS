@@ -10,7 +10,7 @@ public final class SwingTimingModel {
    private static final double update = 0.9;
    private static final double sync = 60.0;
    private static final double flush = 120.0;
-   private final Random init_Random;
+   private final Random random;
    private double close;
 
    public SwingTimingModel() {
@@ -18,16 +18,16 @@ public final class SwingTimingModel {
    }
 
    public SwingTimingModel(Random rng) {
-      this.init_Random = rng == null ? new Random() : rng;
-      this.close = 0.9 * this.init_Random.nextGaussian();
+      this.random = rng == null ? new Random() : rng;
+      this.close = 0.9 * this.random.nextGaussian();
    }
 
    public double init(double lowMs, double highMs, double hesitationChance) {
       double low = Math.min(lowMs, highMs);
       double high = Math.max(lowMs, highMs);
-      double ms = low + (high - low) * this.init_Random.nextDouble();
-      if (this.init_Random.nextDouble() < hesitationChance) {
-         ms += 60.0 + 120.0 * this.init_Random.nextDouble();
+      double ms = low + (high - low) * this.random.nextDouble();
+      if (this.random.nextDouble() < hesitationChance) {
+         ms += 60.0 + 120.0 * this.random.nextDouble();
       }
 
       return ms;
@@ -36,7 +36,7 @@ public final class SwingTimingModel {
    public long init(double lowMs, double highMs) {
       double low = Math.max(1.0, Math.min(lowMs, highMs));
       double high = Math.max(low, Math.max(lowMs, highMs));
-      this.close = 0.4 * this.close + 0.9 * this.init_Random.nextGaussian();
+      this.close = 0.4 * this.close + 0.9 * this.random.nextGaussian();
       return ClickTimingMath.load(low + (high - low) * init(this.close));
    }
 

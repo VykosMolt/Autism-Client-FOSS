@@ -25,7 +25,7 @@ final class PlayerDisplayNameParser {
       }
 
       PlayerDisplayNameParser.Inner_DataUtil text = init(display);
-      return text != null && init(text.init_StringBuilder.toString(), accountName) >= 0;
+      return text != null && init(text.text.toString(), accountName) >= 0;
    }
 
    static boolean init(String name) {
@@ -55,13 +55,13 @@ final class PlayerDisplayNameParser {
       }
 
       PlayerDisplayNameParser.Inner_DataUtil display = init(serverDisplay);
-      int start = display == null ? -1 : init(display.init_StringBuilder.toString(), accountName);
+      int start = display == null ? -1 : init(display.text.toString(), accountName);
       MutableComponent result = Component.empty();
       int runStart = 0;
-      TextColor current = start < 0 ? fallbackColor : init(display.init_List.get(start), fallbackColor);
+      TextColor current = start < 0 ? fallbackColor : init(display.colors.get(start), fallbackColor);
 
       for (int i = 1; i <= accountName.length(); i++) {
-         TextColor next = i != accountName.length() && start >= 0 ? init(display.init_List.get(start + i), fallbackColor) : fallbackColor;
+         TextColor next = i != accountName.length() && start >= 0 ? init(display.colors.get(start + i), fallbackColor) : fallbackColor;
          if (i == accountName.length() || !Objects.equals(current, next)) {
             result.append(Component.literal(accountName.substring(runStart, i)).setStyle(current == null ? Style.EMPTY : Style.EMPTY.withColor(current)));
             runStart = i;
@@ -131,7 +131,7 @@ final class PlayerDisplayNameParser {
       if (depth <= 32 && ++out.load <= 256) {
          if (component.getContents() instanceof PlainTextContents plain) {
             String var9 = plain.text();
-            if ((out.init_I = out.init_I + var9.length()) > 2048) {
+            if ((out.length = out.length + var9.length()) > 2048) {
                return false;
             }
 
@@ -179,8 +179,8 @@ final class PlayerDisplayNameParser {
                i += 2;
             }
          } else {
-            out.init_StringBuilder.append(c);
-            out.init_List.add(color);
+            out.text.append(c);
+            out.colors.add(color);
             i++;
          }
       }
@@ -210,9 +210,9 @@ final class PlayerDisplayNameParser {
    }
 
    private static final class Inner_DataUtil {
-      final StringBuilder init_StringBuilder = new StringBuilder();
-      final List<TextColor> init_List = new ArrayList<>();
-      int init_I;
+      final StringBuilder text = new StringBuilder();
+      final List<TextColor> colors = new ArrayList<>();
+      int length;
       int load;
    }
 }

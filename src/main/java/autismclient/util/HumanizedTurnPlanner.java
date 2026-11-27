@@ -5,8 +5,8 @@ import java.util.Random;
 public final class HumanizedTurnPlanner {
    private static final double init_D = 24.0;
    private static final double load = 2.0;
-   private final HumanHandProfile init_am;
-   private final Random init_Random;
+   private final HumanHandProfile hand;
+   private final Random random;
    private double read;
    private double write;
    private double update;
@@ -28,8 +28,8 @@ public final class HumanizedTurnPlanner {
    private boolean init_Z;
 
    public HumanizedTurnPlanner(HumanHandProfile hand, Random random) {
-      this.init_am = hand;
-      this.init_Random = random;
+      this.hand = hand;
+      this.random = random;
    }
 
    public void start(float yaw, float pitch, float targetYaw, int ticks) {
@@ -39,18 +39,18 @@ public final class HumanizedTurnPlanner {
          this.write = this.put = init(pitch, -90.0, 90.0);
          this.update = init((double)targetYaw - yaw);
          double distance = Math.abs(this.update);
-         double tempo = init(1.0 + this.init_am.open() * 0.55 * this.load(), 0.9, 1.12);
+         double tempo = init(1.0 + this.hand.open() * 0.55 * this.load(), 0.9, 1.12);
          this.sync = Math.max(1, ticks) * tempo;
          this.sync = Math.max(this.sync, Math.sqrt(8.0 * distance / 14.0));
          this.sync = Math.max(this.sync, 2.7 * distance / 24.0);
-         this.flush = 0.8 + 0.06 * this.init_Random.nextDouble();
-         this.close = this.flush - 0.12 - 0.05 * this.init_Random.nextDouble();
-         this.open = init(this.init_am.read() + this.init_am.write() * 0.35 * this.load(), 0.9, 0.98);
-         this.poll = init(this.init_am.close() + 0.025 * this.load(), 0.78, 1.0);
+         this.flush = 0.8 + 0.06 * this.random.nextDouble();
+         this.close = this.flush - 0.12 - 0.05 * this.random.nextDouble();
+         this.open = init(this.hand.read() + this.hand.write() * 0.35 * this.load(), 0.9, 0.98);
+         this.poll = init(this.hand.close() + 0.025 * this.load(), 0.78, 1.0);
          this.push = 0.07 * this.load();
-         this.pop = init((this.init_am.sync() + this.init_am.flush() * this.load()) * distance * 0.35, -0.28, 0.28);
-         this.tick = Math.min(distance * 0.006, this.init_am.tick() * 0.55);
-         this.run = this.init_Random.nextDouble() * 3.141592653589793 * 2.0;
+         this.pop = init((this.hand.sync() + this.hand.flush() * this.load()) * distance * 0.35, -0.28, 0.28);
+         this.tick = Math.min(distance * 0.006, this.hand.tick() * 0.55);
+         this.run = this.random.nextDouble() * 3.141592653589793 * 2.0;
          this.init_Z = true;
       }
    }
@@ -116,7 +116,7 @@ public final class HumanizedTurnPlanner {
    }
 
    private double load() {
-      return init(this.init_Random.nextGaussian(), -2.0, 2.0);
+      return init(this.random.nextGaussian(), -2.0, 2.0);
    }
 
    private static double init(double v, double lo, double hi) {

@@ -35,9 +35,9 @@ final class PrintMover {
                for (int[] d : init_IArr2) {
                   PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(d[0] > 0, d[0] < 0, d[1] > 0, d[1] < 0, jump == 1, crouched, false);
                   if (!keys.moving() || !autismclient.ai.engine.AiFallGuard.init(world, start, init(keys, yaw))) {
-                     double cost = init_D_NodeWalker_StreamU(start, world, yaw, keys, goal, false);
+                     double cost = moveCost(start, world, yaw, keys, goal, false);
                      if (tapDrop && keys.moving() && jump == 0) {
-                        cost = Math.min(cost, init_D_NodeWalker_StreamU(start, world, yaw, keys, goal, true));
+                        cost = Math.min(cost, moveCost(start, world, yaw, keys, goal, true));
                      }
 
                      if (init_Z && keys.moving() && jump == 0 && !crouched && goal.stop()) {
@@ -76,7 +76,7 @@ final class PrintMover {
             direction[0] > 0, direction[0] < 0, direction[1] > 0, direction[1] < 0, false, goal.crouch(), false
          );
          if ((!keys.moving() || !autismclient.ai.engine.AiFallGuard.init(world, start, init(keys, yaw)))
-            && Double.isFinite(init_D_NodeWalker_StreamU(start, world, yaw, keys, goal, true))) {
+            && Double.isFinite(moveCost(start, world, yaw, keys, goal, true))) {
             AiPhysics.MotionState state = AiPhysics.stepCompat(start, init(keys, yaw), world);
             boolean workable = works.test(state);
             AiPhysics.MoveInput coast = init(goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE, yaw);
@@ -98,7 +98,7 @@ final class PrintMover {
       return best;
    }
 
-   static double init_D_NodeWalker_StreamU(
+   static double moveCost(
       AiPhysics.MotionState start,
       AiPhysics.PhysicsWorld world,
       float yaw,

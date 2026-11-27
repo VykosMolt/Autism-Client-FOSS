@@ -25,7 +25,7 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class GridWalkNavigator {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft mc = Minecraft.getInstance();
    private static final double init_D = 1.44;
    private static final double load_D = 0.25;
    private static final double read_D = 2.25;
@@ -59,29 +59,29 @@ public final class GridWalkNavigator {
    private static final int start = 8;
    private static final int stop = 16;
    private static final int next = 32;
-   private static final float[] init_FArr = new float[]{0.0F, -45.0F, 45.0F, -90.0F, 90.0F, -135.0F, 135.0F, 180.0F};
-   private static final int[] init_IArr = new int[]{1, 3, 9, 2, 8, 6, 12, 4};
-   private static final int[] load_IArr = new int[]{1, -1, 0, 0};
-   private static final int[] read_IArr = new int[]{0, 0, 1, -1};
-   private static final ArrayList<GridWalkNavigator.Inner_StreamUtil> init_ArrayList = new ArrayList<>();
+   private static final float[] YAW_OFFSETS = new float[]{0.0F, -45.0F, 45.0F, -90.0F, 90.0F, -135.0F, 135.0F, 180.0F};
+   private static final int[] KEY_MASKS = new int[]{1, 3, 9, 2, 8, 6, 12, 4};
+   private static final int[] DX = new int[]{1, -1, 0, 0};
+   private static final int[] DZ = new int[]{0, 0, 1, -1};
+   private static final ArrayList<GridWalkNavigator.Inner_StreamUtil> path = new ArrayList<>();
    private static int prev;
-   private static BlockPos init_BlockPos;
+   private static BlockPos currentTarget;
    private static int valid;
    private static int size;
    private static int data;
-   private static final HashMap<Long, Integer> init_HashMap = new HashMap<>();
-   private static final HashMap<Long, Long> load_HashMap = new HashMap<>();
+   private static final HashMap<Long, Integer> gScore = new HashMap<>();
+   private static final HashMap<Long, Long> cameFrom = new HashMap<>();
    private static final HashSet<Long> init_HashSet = new HashSet<>();
-   private static final HashSet<Long> load_HashSet = new HashSet<>();
-   private static final PriorityQueue<GridWalkNavigator.Inner_DataUtil> init_PriorityQueue = new PriorityQueue<>();
-   private static final ArrayList<Long> load_ArrayList = new ArrayList<>();
+   private static final HashSet<Long> closed = new HashSet<>();
+   private static final PriorityQueue<GridWalkNavigator.Inner_DataUtil> openQueue = new PriorityQueue<>();
+   private static final ArrayList<Long> pathKeys = new ArrayList<>();
    private static final ArrayList<GridWalkNavigator.Inner_StreamUtil> read_ArrayList = new ArrayList<>();
-   private static final HashSet<Long> read_HashSet = new HashSet<>();
-   private static final HashMap<Long, Boolean> read_HashMap = new HashMap<>();
-   private static boolean init_Z;
+   private static final HashSet<Long> goalKeys = new HashSet<>();
+   private static final HashMap<Long, Boolean> standableCache = new HashMap<>();
+   private static boolean cacheEnabled;
    private static final HashMap<BlockPos, Double> write_HashMap = new HashMap<>();
    private static int value = -2147483648;
-   private static final MutableBlockPos init_BlockPos_MutableBl = new MutableBlockPos();
+   private static final MutableBlockPos scratchPos = new MutableBlockPos();
    private static int cache;
    private static int state;
    private static int queue;
@@ -103,21 +103,21 @@ public final class GridWalkNavigator {
    }
 
    public static boolean init_Z_BlockPos(BlockPos pos) {
-      return pos != null && init_Minecraft != null && init_Minecraft.level != null && write_Z(pos.getX(), pos.getY(), pos.getZ());
+      return pos != null && mc != null && mc.level != null && isStandable(pos.getX(), pos.getY(), pos.getZ());
    }
 
    public static boolean load(BlockPos target) {
-      if (target != null && init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.player != null) {
-         double dx = target.getX() + 0.5 - init_Minecraft.player.getX();
-         double dz = target.getZ() + 0.5 - init_Minecraft.player.getZ();
-         return dx * dx + dz * dz <= 1.44 && init_Z_Vec3_BlockPos(init_Minecraft.player.getEyePosition(), target);
+      if (target != null && mc != null && mc.level != null && mc.player != null) {
+         double dx = target.getX() + 0.5 - mc.player.getX();
+         double dz = target.getZ() + 0.5 - mc.player.getZ();
+         return dx * dx + dz * dz <= 1.44 && init_Z_Vec3_BlockPos(mc.player.getEyePosition(), target);
       } else {
          return false;
       }
    }
 
    public static double pathCost(BlockPos target) {
-      if (target != null && init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.player != null && !write(target)) {
+      if (target != null && mc != null && mc.level != null && mc.player != null && !write(target)) {
          int now = AutismSessionState.getInstance().getClientTick();
          if (value != now) {
             value = now;
@@ -129,7 +129,7 @@ public final class GridWalkNavigator {
             return cached;
          }
 
-         double cost = load(target) ? 0.0 : init(init_Minecraft.player.getX(), init_Minecraft.player.getY(), init_Minecraft.player.getZ(), target, false, 1200);
+         double cost = load(target) ? 0.0 : init(mc.player.getX(), mc.player.getY(), mc.player.getZ(), target, false, 1200);
          write_HashMap.put(target.immutable(), cost);
          return cost;
       } else {
@@ -139,12 +139,12 @@ public final class GridWalkNavigator {
 
    private static boolean init_Z_Vec3_BlockPos(Vec3 eye, BlockPos target) {
       Vec3 aim = Vec3.atCenterOf(target);
-      double reach = init_Minecraft.player.blockInteractionRange();
+      double reach = mc.player.blockInteractionRange();
       if (eye.distanceToSqr(aim) > reach * reach) {
          return false;
       }
 
-      BlockHitResult hit = init_Minecraft.level.clip(new ClipContext(eye, aim, Block.OUTLINE, Fluid.NONE, init_Minecraft.player));
+      BlockHitResult hit = mc.level.clip(new ClipContext(eye, aim, Block.OUTLINE, Fluid.NONE, mc.player));
       return hit.getType() == Type.MISS || hit.getBlockPos().equals(target);
    }
 
@@ -157,32 +157,32 @@ public final class GridWalkNavigator {
 
    public static void load() {
       update();
-      init_ArrayList.clear();
+      path.clear();
       prev = 0;
-      init_BlockPos = null;
+      currentTarget = null;
       load_BlockPos = null;
       node = 0;
       task = 0;
       pool = 0;
-      init_HashMap.clear();
-      load_HashMap.clear();
+      gScore.clear();
+      cameFrom.clear();
       init_HashSet.clear();
-      load_HashSet.clear();
-      init_PriorityQueue.clear();
-      load_ArrayList.clear();
+      closed.clear();
+      openQueue.clear();
+      pathKeys.clear();
       read_ArrayList.clear();
-      read_HashSet.clear();
-      read_HashMap.clear();
+      goalKeys.clear();
+      standableCache.clear();
       write_HashMap.clear();
       value = -2147483648;
       load_Z = false;
    }
 
    public static boolean read(BlockPos target) {
-      if (init_Minecraft == null || init_Minecraft.player == null || init_Minecraft.level == null || init_Minecraft.options == null) {
+      if (mc == null || mc.player == null || mc.level == null || mc.options == null) {
          update();
          sync();
-         init_BlockPos = null;
+         currentTarget = null;
          return false;
       }
 
@@ -196,18 +196,18 @@ public final class GridWalkNavigator {
       if (write(target)) {
          update();
          sync();
-         init_BlockPos = null;
+         currentTarget = null;
          return false;
       }
 
-      LocalPlayer player = init_Minecraft.player;
+      LocalPlayer player = mc.player;
       double px = player.getX();
       double py = player.getY();
       double pz = player.getZ();
-      if (init_BlockPos == null || !init_BlockPos.equals(target)) {
-         if (init_BlockPos != null && update(target)) {
-            init_BlockPos = target.immutable();
-            if (prev >= init_ArrayList.size() && index == 0) {
+      if (currentTarget == null || !currentTarget.equals(target)) {
+         if (currentTarget != null && update(target)) {
+            currentTarget = target.immutable();
+            if (prev >= path.size() && index == 0) {
                task = 0;
                pool = 0;
                poll_D = px;
@@ -216,7 +216,7 @@ public final class GridWalkNavigator {
          } else {
             update();
             sync();
-            init_BlockPos = target.immutable();
+            currentTarget = target.immutable();
             task = 0;
             pool = 0;
             poll_D = px;
@@ -224,8 +224,8 @@ public final class GridWalkNavigator {
          }
       }
 
-      if (load(init_BlockPos)) {
-         flush_HashMap.remove(init_BlockPos);
+      if (load(currentTarget)) {
+         flush_HashMap.remove(currentTarget);
          task = 0;
          pool = 0;
          poll_D = px;
@@ -237,13 +237,13 @@ public final class GridWalkNavigator {
 
       int feetY = Mth.floor(py);
       init_V_D(px, py, pz, feetY);
-      boolean followGoal = prev >= init_ArrayList.size()
-         && !init_ArrayList.isEmpty()
+      boolean followGoal = prev >= path.size()
+         && !path.isEmpty()
          && init_Z()
-         && init_Z_D(px, py, pz, init_BlockPos.getX() + 0.5, init_BlockPos.getZ() + 0.5);
-      boolean needPlan = prev >= init_ArrayList.size() && !followGoal;
-      if (prev < init_ArrayList.size()) {
-         GridWalkNavigator.Inner_StreamUtil node = init_ArrayList.get(prev);
+         && init_Z_D(px, py, pz, currentTarget.getX() + 0.5, currentTarget.getZ() + 0.5);
+      boolean needPlan = prev >= path.size() && !followGoal;
+      if (prev < path.size()) {
+         GridWalkNavigator.Inner_StreamUtil node = path.get(prev);
          double segX = node.init_I - valid;
          double segZ = node.read - data;
          double fromX = valid + 0.5;
@@ -257,12 +257,12 @@ public final class GridWalkNavigator {
          }
 
          if (!needPlan
-            && !node.init_Z
+            && !node.jump
             && node.load == size
             && player.onGround()
             && !update(Mth.floor(px), feetY, Mth.floor(pz))
             && !update(Mth.floor(px), feetY + 1, Mth.floor(pz))
-            && PathfindingGeometryHelper.init(load_D(valid, size, data), load_D(node.init_I, node.load, node.read), 0.6)) {
+            && PathfindingGeometryHelper.init(floorHeight(valid, size, data), floorHeight(node.init_I, node.load, node.read), 0.6)) {
             double nx = node.init_I + 0.5 - px;
             double nz = node.read + 0.5 - pz;
             double fraction = Math.min(1.0, 0.8 / Math.max(0.001, Math.hypot(nx, nz)));
@@ -270,8 +270,8 @@ public final class GridWalkNavigator {
          }
       }
 
-      if (needPlan && init_Z_BlockPos_I(init_BlockPos, now)) {
-         load(init_BlockPos, now);
+      if (needPlan && init_Z_BlockPos_I(currentTarget, now)) {
+         load(currentTarget, now);
          if (!init_Z_D(px, py, pz)) {
             write();
             update();
@@ -306,10 +306,10 @@ public final class GridWalkNavigator {
          return true;
       }
 
-      if (prev >= init_ArrayList.size() && !followGoal) {
+      if (prev >= path.size() && !followGoal) {
          update();
          load_Z = false;
-         if (!init_ArrayList.isEmpty()) {
+         if (!path.isEmpty()) {
             sync();
          }
 
@@ -319,17 +319,17 @@ public final class GridWalkNavigator {
          int nodeY;
          int nodeZ;
          boolean nodeJump;
-         if (prev < init_ArrayList.size()) {
-            GridWalkNavigator.Inner_StreamUtil node = init_ArrayList.get(prev);
+         if (prev < path.size()) {
+            GridWalkNavigator.Inner_StreamUtil node = path.get(prev);
             nodeX = node.init_I;
             nodeY = node.load;
             nodeZ = node.read;
-            nodeJump = node.init_Z;
+            nodeJump = node.jump;
             load_Z = false;
          } else {
-            nodeX = init_BlockPos.getX();
-            nodeY = init_BlockPos.getY();
-            nodeZ = init_BlockPos.getZ();
+            nodeX = currentTarget.getX();
+            nodeY = currentTarget.getY();
+            nodeZ = currentTarget.getZ();
             nodeJump = false;
             load_Z = true;
          }
@@ -339,13 +339,13 @@ public final class GridWalkNavigator {
          double distSq = dx * dx + dz * dz;
          float desiredYaw = (float)Math.toDegrees(Math.atan2(-dx, dz));
          float delta = Mth.wrapDegrees(desiredYaw - player.getYRot());
-         int mask = init_I_F(delta);
+         int mask = keyMaskFor(delta);
          double frac = py - feetY;
          int standCellY = frac > 0.5 ? feetY + 1 : feetY;
-         boolean headroom = load_Z(Mth.floor(px), standCellY + 2, Mth.floor(pz));
-         double jumpRangeSq = load_D(nodeX, nodeY, nodeZ) - py > 0.6 ? 3.61 : 2.5600000000000005;
-         double liveRise = load_D(nodeX, nodeY, nodeZ) - py;
-         if (liveRise <= -0.5 && !FarmlandTrampleGuard.init(init_Minecraft.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, false, liveRise)) {
+         boolean headroom = isPassable(Mth.floor(px), standCellY + 2, Mth.floor(pz));
+         double jumpRangeSq = floorHeight(nodeX, nodeY, nodeZ) - py > 0.6 ? 3.61 : 2.5600000000000005;
+         double liveRise = floorHeight(nodeX, nodeY, nodeZ) - py;
+         if (liveRise <= -0.5 && !FarmlandTrampleGuard.init(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, false, liveRise)) {
             update();
             sync();
             return true;
@@ -356,7 +356,7 @@ public final class GridWalkNavigator {
             jump = !init_Z_D_2(px, feetY, pz) && !flush(nodeX, nodeY - 1, nodeZ);
          }
 
-         if (jump && !FarmlandTrampleGuard.init(init_Minecraft.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, true, 0.0)) {
+         if (jump && !FarmlandTrampleGuard.init(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, true, 0.0)) {
             jump = false;
             if (nodeJump) {
                update();
@@ -366,7 +366,7 @@ public final class GridWalkNavigator {
          }
 
          int sprint = (mask & 1) != 0 && !jump ? 32 : 0;
-         init_V_I(mask | (jump ? 16 : 0) | sprint);
+         applyKeyMask(mask | (jump ? 16 : 0) | sprint);
          pool = jump ? pool + 1 : 0;
          if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.AutoArmorModule.load_Z_9()) {
             double movedX = px - poll_D;
@@ -403,13 +403,13 @@ public final class GridWalkNavigator {
    }
 
    public static BlockPos nextNode() {
-      if (init_BlockPos == null) {
+      if (currentTarget == null) {
          return null;
-      } else if (prev < init_ArrayList.size()) {
-         GridWalkNavigator.Inner_StreamUtil node = init_ArrayList.get(prev);
+      } else if (prev < path.size()) {
+         GridWalkNavigator.Inner_StreamUtil node = path.get(prev);
          return new BlockPos(node.init_I, node.load, node.read);
       } else {
-         return load_Z ? init_BlockPos : null;
+         return load_Z ? currentTarget : null;
       }
    }
 
@@ -442,12 +442,12 @@ public final class GridWalkNavigator {
    }
 
    private static void write() {
-      int fails = flush_HashMap.merge(init_BlockPos, 1, Integer::sum);
+      int fails = flush_HashMap.merge(currentTarget, 1, Integer::sum);
       int ticks = Math.min(100 << Math.min(fails - 1, 2), 400);
-      init_V_BlockPos_I(init_BlockPos, ticks);
+      init_V_BlockPos_I(currentTarget, ticks);
    }
 
-   private static int init_I_F(float delta) {
+   private static int keyMaskFor(float delta) {
       if (Math.abs(delta) <= 12.0F) {
          return 1;
       }
@@ -455,45 +455,45 @@ public final class GridWalkNavigator {
       int best = 0;
       float bestError = 3.4028235E38F;
 
-      for (int i = 0; i < init_IArr.length; i++) {
-         float error = Math.abs(Mth.wrapDegrees(delta - init_FArr[i]));
+      for (int i = 0; i < KEY_MASKS.length; i++) {
+         float error = Math.abs(Mth.wrapDegrees(delta - YAW_OFFSETS[i]));
          if (error < bestError) {
             bestError = error;
             best = i;
          }
       }
 
-      return init_IArr[best];
+      return KEY_MASKS[best];
    }
 
-   private static void init_V_I(int mask) {
-      if (init_Minecraft.options == null) {
+   private static void applyKeyMask(int mask) {
+      if (mc.options == null) {
          index = 0;
       } else {
          int changed = mask ^ index;
          if (changed != 0) {
             if ((changed & 1) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keyUp, (mask & 1) != 0);
+               setKey(mc.options.keyUp, (mask & 1) != 0);
             }
 
             if ((changed & 2) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keyLeft, (mask & 2) != 0);
+               setKey(mc.options.keyLeft, (mask & 2) != 0);
             }
 
             if ((changed & 4) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keyDown, (mask & 4) != 0);
+               setKey(mc.options.keyDown, (mask & 4) != 0);
             }
 
             if ((changed & 8) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keyRight, (mask & 8) != 0);
+               setKey(mc.options.keyRight, (mask & 8) != 0);
             }
 
             if ((changed & 16) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keyJump, (mask & 16) != 0);
+               setKey(mc.options.keyJump, (mask & 16) != 0);
             }
 
             if ((changed & 32) != 0) {
-               init_V_KeyMapping_Z(init_Minecraft.options.keySprint, (mask & 32) != 0);
+               setKey(mc.options.keySprint, (mask & 32) != 0);
             }
 
             index = mask;
@@ -501,7 +501,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   private static void init_V_KeyMapping_Z(KeyMapping key, boolean down) {
+   private static void setKey(KeyMapping key, boolean down) {
       if (down) {
          key.setDown(true);
       } else {
@@ -510,7 +510,7 @@ public final class GridWalkNavigator {
    }
 
    private static void update() {
-      init_V_I(0);
+      applyKeyMask(0);
    }
 
    public static void read() {
@@ -518,17 +518,17 @@ public final class GridWalkNavigator {
    }
 
    private static void sync() {
-      init_ArrayList.clear();
+      path.clear();
       prev = 0;
       load_Z = false;
    }
 
    private static void init_V_D(double px, double py, double pz, int feetY) {
-      while (prev < init_ArrayList.size() && (prev != init_ArrayList.size() - 1 || init_Z())) {
-         GridWalkNavigator.Inner_StreamUtil node = init_ArrayList.get(prev);
+      while (prev < path.size() && (prev != path.size() - 1 || init_Z())) {
+         GridWalkNavigator.Inner_StreamUtil node = path.get(prev);
          double dx = node.init_I + 0.5 - px;
          double dz = node.read + 0.5 - pz;
-         if (dx * dx + dz * dz < 0.25 && Math.abs(feetY - node.load) <= 1 && (!node.init_Z || init_Z_bA_StreamUtil_D(node, py))) {
+         if (dx * dx + dz * dz < 0.25 && Math.abs(feetY - node.load) <= 1 && (!node.jump || init_Z_bA_StreamUtil_D(node, py))) {
             valid = node.init_I;
             size = node.load;
             data = node.read;
@@ -540,7 +540,7 @@ public final class GridWalkNavigator {
    }
 
    private static boolean init_Z_bA_StreamUtil_D(GridWalkNavigator.Inner_StreamUtil node, double py) {
-      double ledgeTop = load_D(node.init_I, node.load, node.read);
+      double ledgeTop = floorHeight(node.init_I, node.load, node.read);
       return py >= ledgeTop - 0.0625;
    }
 
@@ -571,7 +571,7 @@ public final class GridWalkNavigator {
    }
 
    private static boolean init_Z() {
-      return load_BlockPos != null && !load_BlockPos.equals(init_BlockPos) && update(init_BlockPos);
+      return load_BlockPos != null && !load_BlockPos.equals(currentTarget) && update(currentTarget);
    }
 
    private static boolean init_Z_BlockPos_I(BlockPos target, int now) {
@@ -585,32 +585,32 @@ public final class GridWalkNavigator {
 
    private static boolean init_Z_D(double px, double py, double pz) {
       sync();
-      return Double.isFinite(init(px, py, pz, init_BlockPos, true, 6000));
+      return Double.isFinite(init(px, py, pz, currentTarget, true, 6000));
    }
 
    private static double init(double px, double py, double pz, BlockPos target, boolean materialize, int expansionLimit) {
-      init_HashMap.clear();
-      load_HashMap.clear();
+      gScore.clear();
+      cameFrom.clear();
       init_HashSet.clear();
-      load_HashSet.clear();
-      init_PriorityQueue.clear();
-      load_ArrayList.clear();
+      closed.clear();
+      openQueue.clear();
+      pathKeys.clear();
       read_ArrayList.clear();
-      read_HashSet.clear();
-      read_HashMap.clear();
-      init_Z = true;
+      goalKeys.clear();
+      standableCache.clear();
+      cacheEnabled = true;
 
       try {
          return load(px, py, pz, target, materialize, expansionLimit);
       } finally {
-         init_Z = false;
+         cacheEnabled = false;
       }
    }
 
    private static double load(double px, double py, double pz, BlockPos target, boolean materialize, int expansionLimit) {
       int startX = Mth.floor(px);
       int startZ = Mth.floor(pz);
-      int startY = read_I(startX, Mth.floor(py), startZ);
+      int startY = findLandingY(startX, Mth.floor(py), startZ);
       if (startY == -2147483648) {
          return 1.0 / 0.0;
       }
@@ -623,10 +623,10 @@ public final class GridWalkNavigator {
       init_V_I_2(cache, queue, target);
 
       for (int d = 0; d < 4; d++) {
-         init_V_I_2(cache + load_IArr[d], queue + read_IArr[d], target);
+         init_V_I_2(cache + DX[d], queue + DZ[d], target);
       }
 
-      if (read_HashSet.isEmpty()) {
+      if (goalKeys.isEmpty()) {
          return 1.0 / 0.0;
       }
 
@@ -641,26 +641,26 @@ public final class GridWalkNavigator {
          data = startZ;
       }
 
-      init_HashMap.put(startKey, 0);
-      init_PriorityQueue.add(new GridWalkNavigator.Inner_DataUtil(startKey, load_I(startX, startY, startZ)));
+      gScore.put(startKey, 0);
+      openQueue.add(new GridWalkNavigator.Inner_DataUtil(startKey, heuristic(startX, startY, startZ)));
       int expanded = 0;
 
-      while (!init_PriorityQueue.isEmpty() && expanded < expansionLimit) {
-         GridWalkNavigator.Inner_DataUtil entry = init_PriorityQueue.poll();
-         if (load_HashSet.add(entry.init_J)) {
+      while (!openQueue.isEmpty() && expanded < expansionLimit) {
+         GridWalkNavigator.Inner_DataUtil entry = openQueue.poll();
+         if (closed.add(entry.key)) {
             expanded++;
-            if (read_HashSet.contains(entry.init_J)) {
+            if (goalKeys.contains(entry.key)) {
                if (materialize) {
-                  init_V_J(startKey, entry.init_J, startX, startY, startZ);
-                  if (init_ArrayList.isEmpty()) {
-                     init_ArrayList.add(new GridWalkNavigator.Inner_StreamUtil(startX, startY, startZ, false));
+                  reconstructPath(startKey, entry.key, startX, startY, startZ);
+                  if (path.isEmpty()) {
+                     path.add(new GridWalkNavigator.Inner_StreamUtil(startX, startY, startZ, false));
                   }
                }
 
-               return init_HashMap.get(entry.init_J).intValue();
+               return gScore.get(entry.key).intValue();
             }
 
-            init_V_J(entry.init_J);
+            expand(entry.key);
          }
       }
 
@@ -668,47 +668,47 @@ public final class GridWalkNavigator {
    }
 
    private static void init_V_I_2(int x, int z, BlockPos target) {
-      double eyeHeight = init_Minecraft.player.getEyeY() - init_Minecraft.player.getY();
+      double eyeHeight = mc.player.getEyeY() - mc.player.getY();
 
       for (int y = target.getY() + 1; y >= target.getY() - 3; y--) {
-         if (write_Z(x, y, z) && init_Z_Vec3_BlockPos(new Vec3(x + 0.5, load_D(x, y, z) + eyeHeight, z + 0.5), target)) {
-            read_HashSet.add(BlockPos.asLong(x, y, z));
+         if (isStandable(x, y, z) && init_Z_Vec3_BlockPos(new Vec3(x + 0.5, floorHeight(x, y, z) + eyeHeight, z + 0.5), target)) {
+            goalKeys.add(BlockPos.asLong(x, y, z));
          }
       }
    }
 
-   private static void init_V_J(long currentKey) {
+   private static void expand(long currentKey) {
       int cx = BlockPos.getX(currentKey);
       int cy = BlockPos.getY(currentKey);
       int cz = BlockPos.getZ(currentKey);
-      int gCurrent = init_HashMap.get(currentKey);
+      int gCurrent = gScore.get(currentKey);
 
       for (int d = 0; d < 4; d++) {
-         int nx = cx + load_IArr[d];
-         int nz = cz + read_IArr[d];
+         int nx = cx + DX[d];
+         int nz = cz + DZ[d];
          if (Math.abs(nx - buffer) + Math.abs(nz - entry) <= 40) {
-            double fromFloor = load_D(cx, cy, cz);
-            double rise = load_D(nx, cy + 1, nz) - fromFloor;
+            double fromFloor = floorHeight(cx, cy, cz);
+            double rise = floorHeight(nx, cy + 1, nz) - fromFloor;
             boolean hop = rise > 0.6;
-            if (write_Z(nx, cy + 1, nz)
-               && (!hop || load_Z(cx, cy + 2, cz))
+            if (isStandable(nx, cy + 1, nz)
+               && (!hop || isPassable(cx, cy + 2, cz))
                && rise <= 1.25
-               && FarmlandTrampleGuard.init(init_Minecraft.level, cx, cy, cz, nx, cy + 1, nz, hop, rise)) {
-               init_V_J(currentKey, gCurrent, nx, cy + 1, nz, (hop ? 14 : 10) + (hop && flush(nx, cy, nz) ? 26 : 0), hop);
+               && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, nx, cy + 1, nz, hop, rise)) {
+               relaxNeighbor(currentKey, gCurrent, nx, cy + 1, nz, (hop ? 14 : 10) + (hop && flush(nx, cy, nz) ? 26 : 0), hop);
             }
 
-            for (int ny = cy; ny >= cy - 3 && init_Z_I(nx, ny, nz) && load_Z(nx, ny + 1, nz) && !update(nx, ny, nz) && !update(nx, ny + 1, nz); ny--) {
+            for (int ny = cy; ny >= cy - 3 && init_Z_I(nx, ny, nz) && isPassable(nx, ny + 1, nz) && !update(nx, ny, nz) && !update(nx, ny + 1, nz); ny--) {
                if (close(nx, ny, nz)) {
-                  double toFloor = load_D(nx, ny, nz);
+                  double toFloor = floorHeight(nx, ny, nz);
                   double floorRise = toFloor - fromFloor;
                   boolean needsHop = floorRise > 0.6;
-                  if (write_Z(nx, ny, nz)
+                  if (isStandable(nx, ny, nz)
                      && floorRise <= 1.25
                      && floorRise >= -3.0
-                     && (!needsHop || load_Z(cx, cy + 2, cz))
-                     && FarmlandTrampleGuard.init(init_Minecraft.level, cx, cy, cz, nx, ny, nz, needsHop, floorRise)) {
+                     && (!needsHop || isPassable(cx, cy + 2, cz))
+                     && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, nx, ny, nz, needsHop, floorRise)) {
                      boolean trample = (needsHop || floorRise <= -0.5) && flush(nx, ny - 1, nz);
-                     init_V_J(
+                     relaxNeighbor(
                         currentKey, gCurrent, nx, ny, nz, 10 + (needsHop ? 4 : (int)Math.ceil(Math.max(0.0, -floorRise) * 2.0)) + (trample ? 26 : 0), needsHop
                      );
                   }
@@ -716,46 +716,46 @@ public final class GridWalkNavigator {
                }
             }
 
-            int jx = cx + load_IArr[d] * 2;
-            int jz = cz + read_IArr[d] * 2;
+            int jx = cx + DX[d] * 2;
+            int jz = cz + DZ[d] * 2;
             if (Math.abs(jx - buffer) + Math.abs(jz - entry) <= 40
-               && !write_Z(nx, cy, nz)
-               && write_Z(jx, cy, jz)
-               && load_Z(cx, cy + 2, cz)
-               && load_Z(jx, cy + 2, jz)
-               && load_Z(nx, cy + 1, nz)
-               && load_Z(nx, cy + 2, nz)
+               && !isStandable(nx, cy, nz)
+               && isStandable(jx, cy, jz)
+               && isPassable(cx, cy + 2, cz)
+               && isPassable(jx, cy + 2, jz)
+               && isPassable(nx, cy + 1, nz)
+               && isPassable(nx, cy + 2, nz)
                && !update(nx, cy + 1, nz)
                && !update(nx, cy + 2, nz)
-               && Math.abs(load_D(jx, cy, jz) - fromFloor) < 0.0625
+               && Math.abs(floorHeight(jx, cy, jz) - fromFloor) < 0.0625
                && open(nx, cy, nz)
-               && FarmlandTrampleGuard.init(init_Minecraft.level, cx, cy, cz, jx, cy, jz, true, 0.0)) {
-               init_V_J(currentKey, gCurrent, jx, cy, jz, 18 + (flush(jx, cy - 1, jz) ? 26 : 0), true);
+               && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, jx, cy, jz, true, 0.0)) {
+               relaxNeighbor(currentKey, gCurrent, jx, cy, jz, 18 + (flush(jx, cy - 1, jz) ? 26 : 0), true);
             }
          }
       }
    }
 
-   private static void init_V_J(long fromKey, int gFrom, int nx, int ny, int nz, int stepCost, boolean jump) {
+   private static void relaxNeighbor(long fromKey, int gFrom, int nx, int ny, int nz, int stepCost, boolean jump) {
       long key = BlockPos.asLong(nx, ny, nz);
-      if (!load_HashSet.contains(key)) {
-         int g = gFrom + stepCost + init_I_I(nx, ny, nz);
-         Integer old = init_HashMap.get(key);
+      if (!closed.contains(key)) {
+         int g = gFrom + stepCost + hazardCost(nx, ny, nz);
+         Integer old = gScore.get(key);
          if (old == null || old > g) {
-            init_HashMap.put(key, g);
-            load_HashMap.put(key, fromKey);
+            gScore.put(key, g);
+            cameFrom.put(key, fromKey);
             if (jump) {
                init_HashSet.add(key);
             } else {
                init_HashSet.remove(key);
             }
 
-            init_PriorityQueue.add(new GridWalkNavigator.Inner_DataUtil(key, g + load_I(nx, ny, nz)));
+            openQueue.add(new GridWalkNavigator.Inner_DataUtil(key, g + heuristic(nx, ny, nz)));
          }
       }
    }
 
-   private static int init_I_I(int x, int y, int z) {
+   private static int hazardCost(int x, int y, int z) {
       int cost = 0;
       if (sync(x, y, z)) {
          cost += 30;
@@ -768,54 +768,54 @@ public final class GridWalkNavigator {
       return cost;
    }
 
-   private static int load_I(int x, int y, int z) {
+   private static int heuristic(int x, int y, int z) {
       int best = 2147483647;
 
-      for (long key : read_HashSet) {
+      for (long key : goalKeys) {
          best = Math.min(best, PathfindingGeometryHelper.init(x, z, BlockPos.getX(key), BlockPos.getZ(key)));
       }
 
       return best;
    }
 
-   private static void init_V_J(long startKey, long goalKey, int startX, int startY, int startZ) {
-      load_ArrayList.clear();
+   private static void reconstructPath(long startKey, long goalKey, int startX, int startY, int startZ) {
+      pathKeys.clear();
 
-      for (long key = goalKey; key != startKey; key = load_HashMap.get(key)) {
-         load_ArrayList.add(key);
+      for (long key = goalKey; key != startKey; key = cameFrom.get(key)) {
+         pathKeys.add(key);
       }
 
-      init_ArrayList.clear();
+      path.clear();
 
-      for (int i = load_ArrayList.size() - 1; i >= 0; i--) {
-         long nodeKey = load_ArrayList.get(i);
-         init_ArrayList.add(new GridWalkNavigator.Inner_StreamUtil(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), init_HashSet.contains(nodeKey)));
+      for (int i = pathKeys.size() - 1; i >= 0; i--) {
+         long nodeKey = pathKeys.get(i);
+         path.add(new GridWalkNavigator.Inner_StreamUtil(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), init_HashSet.contains(nodeKey)));
       }
 
       init_V_I(startX, startY, startZ);
    }
 
    private static void init_V_I(int startX, int startY, int startZ) {
-      if (init_ArrayList.size() >= 3) {
+      if (path.size() >= 3) {
          read_ArrayList.clear();
          int anchorX = startX;
          int anchorY = startY;
          int anchorZ = startZ;
          int i = 0;
 
-         while (i < init_ArrayList.size()) {
+         while (i < path.size()) {
             int far = i;
-            int limit = Math.min(init_ArrayList.size() - 1, i + 12);
+            int limit = Math.min(path.size() - 1, i + 12);
 
             for (int j = limit; j > i; j--) {
-               GridWalkNavigator.Inner_StreamUtil candidate = init_ArrayList.get(j);
-               if (!candidate.init_Z && candidate.load == anchorY && init_Z_I(anchorX, anchorY, anchorZ, candidate.init_I, candidate.read)) {
+               GridWalkNavigator.Inner_StreamUtil candidate = path.get(j);
+               if (!candidate.jump && candidate.load == anchorY && init_Z_I(anchorX, anchorY, anchorZ, candidate.init_I, candidate.read)) {
                   far = j;
                   break;
                }
             }
 
-            GridWalkNavigator.Inner_StreamUtil next = init_ArrayList.get(far);
+            GridWalkNavigator.Inner_StreamUtil next = path.get(far);
             read_ArrayList.add(next);
             anchorX = next.init_I;
             anchorY = next.load;
@@ -823,14 +823,14 @@ public final class GridWalkNavigator {
             i = far + 1;
          }
 
-         init_ArrayList.clear();
-         init_ArrayList.addAll(read_ArrayList);
+         path.clear();
+         path.addAll(read_ArrayList);
          read_ArrayList.clear();
       }
    }
 
    private static boolean init_Z_I(int ax, int ay, int az, int bx, int bz) {
-      return init_Z_D(ax + 0.5, load_D(ax, ay, az), az + 0.5, bx + 0.5, bz + 0.5);
+      return init_Z_D(ax + 0.5, floorHeight(ax, ay, az), az + 0.5, bx + 0.5, bz + 0.5);
    }
 
    private static boolean init_Z_D(double ax, double floorY, double az, double bx, double bz) {
@@ -856,7 +856,7 @@ public final class GridWalkNavigator {
             return false;
          }
 
-         double nextFloor = load_D(cx, cellY, cz);
+         double nextFloor = floorHeight(cx, cellY, cz);
          if (!autismclient.util.PathfindingGeometryHelper.init(lastFloor, nextFloor, 0.6)) {
             return false;
          }
@@ -875,7 +875,7 @@ public final class GridWalkNavigator {
 
    private static int init_I_I(int x, int feetY, int z, double fromFloor) {
       for (int y = feetY + 1; y >= feetY - 1; y--) {
-         if (write_Z(x, y, z) && PathfindingGeometryHelper.init(fromFloor, load_D(x, y, z), 0.6)) {
+         if (isStandable(x, y, z) && PathfindingGeometryHelper.init(fromFloor, floorHeight(x, y, z), 0.6)) {
             return y;
          }
       }
@@ -889,7 +889,7 @@ public final class GridWalkNavigator {
          Math.min(ax, bx) - half, floor + 1.0E-5, Math.min(az, bz) - half, Math.max(ax, bx) + half, floor + 1.8 - 1.0E-5, Math.max(az, bz) + half
       );
 
-      for (VoxelShape shape : init_Minecraft.level.getBlockCollisions(init_Minecraft.player, bounds)) {
+      for (VoxelShape shape : mc.level.getBlockCollisions(mc.player, bounds)) {
          for (AABB box : shape.toAabbs()) {
             if (!(box.maxY <= bounds.minY)
                && !(box.minY >= bounds.maxY)
@@ -903,15 +903,15 @@ public final class GridWalkNavigator {
    }
 
    private static boolean init_Z_I(int x, int y, int z) {
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
       if (!state.getFluidState().isEmpty()) {
          return false;
       } else {
-         VoxelShape shape = state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+         VoxelShape shape = state.getCollisionShape(mc.level, scratchPos);
          if (shape.isEmpty() || !(shape.min(Axis.Y) > 1.0E-4) && !(shape.max(Axis.Y) > 0.6)) {
-            VoxelShape below = init_Minecraft.level
-               .getBlockState(init_BlockPos_MutableBl.set(x, y - 1, z))
-               .getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+            VoxelShape below = mc.level
+               .getBlockState(scratchPos.set(x, y - 1, z))
+               .getCollisionShape(mc.level, scratchPos);
             return below.isEmpty() || below.max(Axis.Y) <= 1.0001;
          } else {
             return false;
@@ -919,62 +919,62 @@ public final class GridWalkNavigator {
       }
    }
 
-   private static boolean load_Z(int x, int y, int z) {
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
-      return !state.getFluidState().isEmpty() ? false : state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl).isEmpty();
+   private static boolean isPassable(int x, int y, int z) {
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
+      return !state.getFluidState().isEmpty() ? false : state.getCollisionShape(mc.level, scratchPos).isEmpty();
    }
 
-   private static boolean read_Z(int x, int y, int z) {
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
-      if (state.isFaceSturdy(init_Minecraft.level, init_BlockPos_MutableBl, Direction.UP)) {
+   private static boolean isSturdyFloor(int x, int y, int z) {
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
+      if (state.isFaceSturdy(mc.level, scratchPos, Direction.UP)) {
          return true;
       }
 
-      VoxelShape shape = state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+      VoxelShape shape = state.getCollisionShape(mc.level, scratchPos);
       return !shape.isEmpty() && shape.max(Axis.Y) >= 0.5;
    }
 
-   private static boolean write_Z(int x, int y, int z) {
+   private static boolean isStandable(int x, int y, int z) {
       long key = BlockPos.asLong(x, y, z);
-      if (init_Z) {
-         Boolean cached = read_HashMap.get(key);
+      if (cacheEnabled) {
+         Boolean cached = standableCache.get(key);
          if (cached != null) {
             return cached;
          }
       }
 
-      boolean result = y >= init_Minecraft.level.getMinY()
-         && y < init_Minecraft.level.getMaxY()
-         && init_Minecraft.level.hasChunkAt(init_BlockPos_MutableBl.set(x, y, z))
+      boolean result = y >= mc.level.getMinY()
+         && y < mc.level.getMaxY()
+         && mc.level.hasChunkAt(scratchPos.set(x, y, z))
          && init_Z_I(x, y, z)
-         && load_Z(x, y + 1, z)
+         && isPassable(x, y + 1, z)
          && close(x, y, z)
          && !update(x, y, z)
          && !update(x, y + 1, z)
-         && load(x + 0.5, z + 0.5, x + 0.5, z + 0.5, load_D(x, y, z));
-      if (init_Z) {
-         read_HashMap.put(key, result);
+         && load(x + 0.5, z + 0.5, x + 0.5, z + 0.5, floorHeight(x, y, z));
+      if (cacheEnabled) {
+         standableCache.put(key, result);
       }
 
       return result;
    }
 
    private static boolean update(int x, int y, int z) {
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
       return state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE) || state.is(Blocks.POWDER_SNOW);
    }
 
    private static boolean sync(int x, int y, int z) {
-      if (init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z)).is(Blocks.SWEET_BERRY_BUSH)) {
+      if (mc.level.getBlockState(scratchPos.set(x, y, z)).is(Blocks.SWEET_BERRY_BUSH)) {
          return true;
       }
 
-      BlockState floor = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y - 1, z));
+      BlockState floor = mc.level.getBlockState(scratchPos.set(x, y - 1, z));
       return floor.is(Blocks.MAGMA_BLOCK) || floor.is(Blocks.CACTUS);
    }
 
    private static boolean flush(int x, int y, int z) {
-      return init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z)).is(Blocks.FARMLAND);
+      return mc.level.getBlockState(scratchPos.set(x, y, z)).is(Blocks.FARMLAND);
    }
 
    private static boolean init_Z_D_2(double px, int feetY, double pz) {
@@ -984,35 +984,35 @@ public final class GridWalkNavigator {
    }
 
    private static boolean close(int x, int y, int z) {
-      if (read_Z(x, y - 1, z)) {
+      if (isSturdyFloor(x, y - 1, z)) {
          return true;
       }
 
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
-      VoxelShape shape = state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
+      VoxelShape shape = state.getCollisionShape(mc.level, scratchPos);
       return !shape.isEmpty() && shape.min(Axis.Y) <= 1.0E-4 && shape.max(Axis.Y) <= 0.6;
    }
 
    private static double init_D_I(int x, int y, int z) {
-      VoxelShape shape = init_Minecraft.level
-         .getBlockState(init_BlockPos_MutableBl.set(x, y, z))
-         .getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+      VoxelShape shape = mc.level
+         .getBlockState(scratchPos.set(x, y, z))
+         .getCollisionShape(mc.level, scratchPos);
       return shape.isEmpty() ? 0.0 : shape.max(Axis.Y);
    }
 
-   private static double load_D(int x, int y, int z) {
-      BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
+   private static double floorHeight(int x, int y, int z) {
+      BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
       if (!state.getFluidState().isEmpty()) {
          return y;
       }
 
-      VoxelShape shape = state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl);
+      VoxelShape shape = state.getCollisionShape(mc.level, scratchPos);
       return !shape.isEmpty() && shape.min(Axis.Y) <= 1.0E-4 && shape.max(Axis.Y) <= 0.6 ? y + shape.max(Axis.Y) : y - 1 + init_D_I(x, y - 1, z);
    }
 
    private static boolean open(int x, int y, int z) {
       for (int gy = y; gy >= y - 3; gy--) {
-         BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, gy, z));
+         BlockState state = mc.level.getBlockState(scratchPos.set(x, gy, z));
          if (!state.getFluidState().isEmpty()) {
             return !state.getFluidState().is(FluidTags.LAVA);
          }
@@ -1025,7 +1025,7 @@ public final class GridWalkNavigator {
             return true;
          }
 
-         if (!state.getCollisionShape(init_Minecraft.level, init_BlockPos_MutableBl).isEmpty()) {
+         if (!state.getCollisionShape(mc.level, scratchPos).isEmpty()) {
             return false;
          }
       }
@@ -1033,22 +1033,22 @@ public final class GridWalkNavigator {
       return false;
    }
 
-   private static int read_I(int x, int feetY, int z) {
+   private static int findLandingY(int x, int feetY, int z) {
       for (int y = feetY + 1; y >= feetY - 3; y--) {
-         if (write_Z(x, y, z)) {
+         if (isStandable(x, y, z)) {
             return y;
          }
       }
 
       for (int y = feetY + 1; y >= feetY - 3; y--) {
-         if (init_Z_I(x, y, z) && load_Z(x, y + 1, z) && close(x, y, z)) {
+         if (init_Z_I(x, y, z) && isPassable(x, y + 1, z) && close(x, y, z)) {
             return y;
          }
       }
 
       for (int y = feetY + 1; y >= feetY - 3; y--) {
-         BlockState state = init_Minecraft.level.getBlockState(init_BlockPos_MutableBl.set(x, y, z));
-         if (!state.getFluidState().isEmpty() && !state.getFluidState().is(FluidTags.LAVA) && load_Z(x, y + 1, z)) {
+         BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
+         if (!state.getFluidState().isEmpty() && !state.getFluidState().is(FluidTags.LAVA) && isPassable(x, y + 1, z)) {
             return y;
          }
       }
@@ -1056,23 +1056,23 @@ public final class GridWalkNavigator {
       return -2147483648;
    }
 
-   private static int write_I(int x, int ty, int z) {
-      if (write_Z(x, ty, z)) {
+   private static int standableY(int x, int ty, int z) {
+      if (isStandable(x, ty, z)) {
          return ty;
-      } else if (write_Z(x, ty + 1, z)) {
+      } else if (isStandable(x, ty + 1, z)) {
          return ty + 1;
       } else {
-         return write_Z(x, ty - 1, z) ? ty - 1 : -2147483648;
+         return isStandable(x, ty - 1, z) ? ty - 1 : -2147483648;
       }
    }
 
    private static final class Inner_DataUtil implements Comparable<GridWalkNavigator.Inner_DataUtil> {
-      final long init_J;
-      final int init_I;
+      final long key;
+      final int fScore;
 
       Inner_DataUtil(long key, int f) {
-         this.init_J = key;
-         this.init_I = f;
+         this.key = key;
+         this.fScore = f;
       }
 
       public int compareTo(GridWalkNavigator.Inner_DataUtil other) {
@@ -1080,7 +1080,7 @@ public final class GridWalkNavigator {
       }
 
       public int init(GridWalkNavigator.Inner_DataUtil other) {
-         return Integer.compare(this.init_I, other.init_I);
+         return Integer.compare(this.fScore, other.fScore);
       }
    }
 
@@ -1088,13 +1088,13 @@ public final class GridWalkNavigator {
       final int init_I;
       final int load;
       final int read;
-      final boolean init_Z;
+      final boolean jump;
 
       Inner_StreamUtil(int x, int y, int z, boolean jump) {
          this.init_I = x;
          this.load = y;
          this.read = z;
-         this.init_Z = jump;
+         this.jump = jump;
       }
    }
 }

@@ -22,11 +22,11 @@ import net.minecraft.network.protocol.Packet;
 public final class JoinMacroController {
    private static boolean init_Z;
    private static boolean load;
-   private static final JoinMacroController.Inner_DataUtil init_aA_DataUtil = new JoinMacroController.Inner_DataUtil();
+   private static final JoinMacroController.Inner_DataUtil detector = new JoinMacroController.Inner_DataUtil();
    private static int init_I;
-   private static volatile AutismMacro init_aM;
-   private static volatile ClientConfigurationPacketListenerImpl init_ClientConfiguratio;
-   private static volatile Thread init_Thread;
+   private static volatile AutismMacro pendingMacro;
+   private static volatile ClientConfigurationPacketListenerImpl configListener;
+   private static volatile Thread workerThread;
 
    private JoinMacroController() {
    }
@@ -91,7 +91,7 @@ public final class JoinMacroController {
 
    public static void init_V() {
       load = false;
-      init_aA_DataUtil.init();
+      detector.init();
    }
 
    public static void onJoin() {
@@ -112,7 +112,7 @@ public final class JoinMacroController {
    public static void tick(Minecraft mc) {
       if (hasMacro() && !init_Z && mc != null) {
          JoinMacroController.Inner_StreamUtil timing = timing();
-         if (init_aA_DataUtil.init(mc, timing, load)) {
+         if (detector.init(mc, timing, load)) {
             load(timing);
          }
       }
@@ -121,11 +121,11 @@ public final class JoinMacroController {
    public static void write() {
       init_V();
       init_Z = false;
-      init_aM = null;
+      pendingMacro = null;
       autismclient.util.custommenu.CustomMenuTracker.clear();
-      init_ClientConfiguratio = null;
-      Thread worker = init_Thread;
-      init_Thread = null;
+      configListener = null;
+      Thread worker = workerThread;
+      workerThread = null;
       if (worker != null) {
          worker.interrupt();
       }
@@ -133,7 +133,7 @@ public final class JoinMacroController {
 
    public static void init(ClientConfigurationPacketListenerImpl listener) {
       write();
-      init_ClientConfiguratio = listener;
+      configListener = listener;
       init_I++;
       if (hasMacro() && trigger().init_Z_I(init_I)) {
          AutismMacro selected = MacroLibraryManager.getInstance().findByName(macroName());
@@ -153,9 +153,9 @@ public final class JoinMacroController {
                prefix++;
             }
 
-            init_aM = copy.copy();
+            pendingMacro = copy.copy();
             if (prefix > 0) {
-               init_aM.actions.subList(0, prefix).clear();
+               pendingMacro.actions.subList(0, prefix).clear();
             }
 
             if (prefix != 0 && sawCustomMenu) {
@@ -163,7 +163,7 @@ public final class JoinMacroController {
                Connection connection = ((ClientCommonNetworkHandlerAccessor) listener).getConnection();
                Thread worker = new Thread(() -> init(leading, connection), "AUTISM-Join-CustomMenu");
                worker.setDaemon(true);
-               init_Thread = worker;
+               workerThread = worker;
                worker.start();
             }
          }
@@ -175,7 +175,7 @@ public final class JoinMacroController {
    }
 
    public static boolean isRunning() {
-      Thread worker = init_Thread;
+      Thread worker = workerThread;
       return worker != null && worker.isAlive();
    }
 
@@ -188,7 +188,7 @@ public final class JoinMacroController {
             mc.getConnection().send(packet);
             return true;
          } else {
-            ClientConfigurationPacketListenerImpl listener = init_ClientConfiguratio;
+            ClientConfigurationPacketListenerImpl listener = configListener;
             if (listener != null) {
                listener.send(packet);
                return true;
@@ -206,7 +206,7 @@ public final class JoinMacroController {
    private static boolean auditStillOn(Connection bound) {
       Minecraft mc = Minecraft.getInstance();
       ClientPacketListener play = mc.getConnection();
-      ClientConfigurationPacketListenerImpl config = init_ClientConfiguratio;
+      ClientConfigurationPacketListenerImpl config = configListener;
       Connection live = play != null ? play.getConnection() : config != null ? ((ClientCommonNetworkHandlerAccessor) config).getConnection() : null;
       return !Thread.currentThread().isInterrupted() && live == bound && bound.isConnected();
    }
@@ -256,12 +256,12 @@ public final class JoinMacroController {
 
                if (snapshot != null && prepared != null) {
                   if (!prepared.isReady()) {
-                     load_V(prepared.error());
+                     notifySkipped(prepared.error());
                   } else {
                      Screen answered = autismclient.util.custommenu.DialogScreenBridge.currentScreen(mc);
                      CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
                      if (!result.success()) {
-                        load_V(result.error());
+                        notifySkipped(result.error());
                      } else {
                         for (Packet<?> packet : result.packets()) {
                            if (!auditStillOn(connection)) {
@@ -269,7 +269,7 @@ public final class JoinMacroController {
                            }
 
                            if (!init(packet)) {
-                              load_V("Connection closed");
+                              notifySkipped("Connection closed");
                               return;
                            }
                         }
@@ -279,7 +279,7 @@ public final class JoinMacroController {
                      }
                   }
                } else {
-                  load_V(lastError.isBlank() ? "Custom screen never appeared (timed out)" : lastError + " (timed out)");
+                  notifySkipped(lastError.isBlank() ? "Custom screen never appeared (timed out)" : lastError + " (timed out)");
                }
             }
          }
@@ -323,7 +323,7 @@ public final class JoinMacroController {
       }
    }
 
-   private static void load_V(String reason) {
+   private static void notifySkipped(String reason) {
       bi.read(reason != null && !reason.isBlank() ? reason : "Join custom menu skipped");
    }
 
@@ -389,7 +389,7 @@ public final class JoinMacroController {
       if (hasMacro() && !init_Z && trigger().init_Z_I(init_I)) {
          init_Z = true;
          String macroName = macroName();
-         AutismMacro macro = init_aM != null ? init_aM : MacroLibraryManager.getInstance().findByName(macroName);
+         AutismMacro macro = pendingMacro != null ? pendingMacro : MacroLibraryManager.getInstance().findByName(macroName);
          if (macro == null) {
             bi.read("Join macro missing: " + macroName);
             setMacroName("");
@@ -425,12 +425,12 @@ public final class JoinMacroController {
       }
    }
 
-   private static boolean init_Z(Minecraft mc) {
+   private static boolean isInWorld(Minecraft mc) {
       return mc.getConnection() != null && mc.player != null && mc.level != null;
    }
 
    private static boolean load(Minecraft mc) {
-      return init_Z(mc) && mc.gui.screen() == null;
+      return isInWorld(mc) && mc.gui.screen() == null;
    }
 
    public static String summary() {
@@ -597,7 +597,7 @@ public final class JoinMacroController {
       }
 
       public boolean init(Minecraft mc, JoinMacroController.Inner_StreamUtil timing, boolean joined) {
-         if (!JoinMacroController.init_Z(mc)) {
+         if (!JoinMacroController.isInWorld(mc)) {
             this.init();
             return false;
          }

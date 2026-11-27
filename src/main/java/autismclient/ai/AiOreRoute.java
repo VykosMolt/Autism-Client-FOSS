@@ -75,10 +75,10 @@ final class AiOreRoute {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          return new AiOperation() {
-            final long init_J = System.nanoTime() + Math.max(30, seconds) * 1000000000L;
-            final Direction init_Direction = Direction.fromYRot(mc.player.getYRot());
+            final long deadline = System.nanoTime() + Math.max(30, seconds) * 1000000000L;
+            final Direction heading = Direction.fromYRot(mc.player.getYRot());
             AiOreRoute.Inner_DataUtil init_aH_DataUtil = !nearOnly && AiOreRoute.init(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.Inner_DataUtil.DESCEND : AiOreRoute.Inner_DataUtil.NEAR;
-            AiOperation init_AiOperation;
+            AiOperation child;
             int init_I;
             int load;
             int read;
@@ -91,18 +91,18 @@ final class AiOreRoute {
                      return this.init(AiOperation.Status.SUCCEEDED, "Have " + AiCraft.countItem(drop) + " " + drop);
                   }
 
-                  if (System.nanoTime() > this.init_J) {
+                  if (System.nanoTime() > this.deadline) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time looking for " + family);
                   }
 
-                  if (this.init_AiOperation != null) {
-                     AiOperation.Result r = this.init_AiOperation.tick();
+                  if (this.child != null) {
+                     AiOperation.Result r = this.child.tick();
                      if (!r.terminal()) {
                         return this.init(r.message());
                      }
 
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                     this.child.cancel();
+                     this.child = null;
                      if (r.status() == AiOperation.Status.CANCELLED) {
                         return this.init(AiOperation.Status.CANCELLED, "Cancelled");
                      }
@@ -129,7 +129,7 @@ final class AiOreRoute {
                         );
                      return this.init(r);
                   } else if (AiProgression.freeSlots(mc) < 3) {
-                     this.init_AiOperation = AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.init_JsonArray()));
+                     this.child = AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.keepItems()));
                      return this.init("Making room in the bag");
                   } else {
                      return this.init_AiOperation_Result_18();
@@ -141,12 +141,12 @@ final class AiOreRoute {
 
             AiOperation.Result init_AiOperation_Result_18() {
                int missingBlocks = Math.max(1, blocks - Math.max(0, AiCraft.countItem(drop) - (targetHeld - blocks)));
-               int legSeconds = (int)Math.max(20L, Math.min(300L, (this.init_J - System.nanoTime()) / 1000000000L));
+               int legSeconds = (int)Math.max(20L, Math.min(300L, (this.deadline - System.nanoTime()) / 1000000000L));
                switch (this.init_aH_DataUtil) {
                   case NEAR:
                   case DEEP:
                   case MINE_BRANCH:
-                     this.init_AiOperation = autismclient.ai.engine.AiMine.init(
+                     this.child = autismclient.ai.engine.AiMine.init(
                         AiJson.objectOf(
                            "block",
                            family,
@@ -161,8 +161,8 @@ final class AiOreRoute {
                      return this.init("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
                   case DESCEND: {
                      this.read = mc.player.getBlockY();
-                     Direction d = AiOreRoute.init(this.init_Direction, this.load);
-                     this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
+                     Direction d = AiOreRoute.init(this.heading, this.load);
+                     this.child = autismclient.ai.engine.AiExcavate.load(
                         AiJson.objectOf(
                            "shape", "staircase", "targetY", bestY, "direction", d.getName(), "timeoutSeconds", Math.max(60, legSeconds * 2)
                         )
@@ -170,8 +170,8 @@ final class AiOreRoute {
                      return this.init("Digging down " + d.getName() + " to y " + bestY + " for " + family);
                   }
                   case BRANCH: {
-                     Direction d = AiOreRoute.init(this.init_Direction, this.init_I);
-                     this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
+                     Direction d = AiOreRoute.init(this.heading, this.init_I);
+                     this.child = autismclient.ai.engine.AiExcavate.load(
                         AiJson.objectOf("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
                      );
                      return this.init("Branch tunnel " + (this.init_I + 1) + " " + d.getName() + " looking for " + family);
@@ -221,7 +221,7 @@ final class AiOreRoute {
                return this.init("Next: " + this.init_aH_DataUtil.name().toLowerCase(Locale.ROOT).replace('_', ' '));
             }
 
-            JsonArray init_JsonArray() {
+            JsonArray keepItems() {
                JsonArray keep = new JsonArray();
 
                for (String id : List.of(
@@ -236,19 +236,19 @@ final class AiOreRoute {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_33());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               if (this.child != null) {
+                  this.child.cancel();
+                  this.child = null;
                }
 
-               return AiGameOperations.result(status, message, this.init_JsonObject_33());
+               return AiGameOperations.result(status, message, this.progressJson());
             }
 
-            JsonObject init_JsonObject_33() {
+            JsonObject progressJson() {
                return AiJson.objectOf(
                   "ore",
                   family,
@@ -268,19 +268,19 @@ final class AiOreRoute {
             @Override
             public void cancel() {
                this.init_Z = true;
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
+               if (this.child != null) {
+                  this.child.cancel();
                }
             }
 
             @Override
             public boolean canInterruptNow() {
-               return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+               return this.child == null || this.child.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+               return this.child != null && this.child.requiresReconciliationAfterEmergency();
             }
          };
       } else {

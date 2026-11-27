@@ -20,8 +20,8 @@ import net.minecraft.world.phys.Vec3;
 public final class FreecamController {
    private static final Minecraft MC = Minecraft.getInstance();
    private static final double init_D = 0.5;
-   private static final double load_D = 0.05;
-   private static final double read_D = 30.0;
+   private static final double MIN_SPEED = 0.05;
+   private static final double MAX_SPEED = 30.0;
    private static boolean active;
    private static Vec3 position = Vec3.ZERO;
    private static Vec3 prevPosition = Vec3.ZERO;

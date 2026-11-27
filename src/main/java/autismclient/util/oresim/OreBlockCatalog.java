@@ -36,7 +36,7 @@ public final class OreBlockCatalog {
       "minecraft:nether_quartz_ore",
       "minecraft:ancient_debris"
    );
-   private static volatile Set<Block> init_Set;
+   private static volatile Set<Block> knownOres;
 
    private OreBlockCatalog() {
    }
@@ -46,7 +46,7 @@ public final class OreBlockCatalog {
          return false;
       }
 
-      Set<Block> known = init_Set;
+      Set<Block> known = knownOres;
       if (known == null) {
          Set<Block> built = Collections.newSetFromMap(new IdentityHashMap<>());
 
@@ -58,7 +58,7 @@ public final class OreBlockCatalog {
          }
 
          known = built;
-         init_Set = known;
+         knownOres = known;
       }
 
       return known.contains(block);
@@ -114,42 +114,42 @@ public final class OreBlockCatalog {
    }
 
    public static final class Inner_StreamUtil {
-      private static final Map<BlockState, Integer> init_Map = new IdentityHashMap<>();
-      private static volatile BlockState[] init_BlockStateArr = new BlockState[0];
-      private static volatile OreBlockCatalog.Inner_DataUtil[] init_CachePool_DataUtilArr = new OreBlockCatalog.Inner_DataUtil[0];
+      private static final Map<BlockState, Integer> stateIds = new IdentityHashMap<>();
+      private static volatile BlockState[] states = new BlockState[0];
+      private static volatile OreBlockCatalog.Inner_DataUtil[] kinds = new OreBlockCatalog.Inner_DataUtil[0];
 
       private Inner_StreamUtil() {
       }
 
       private static synchronized int init(BlockState state, OreBlockCatalog.Inner_DataUtil kind) {
-         Integer existing = init_Map.get(state);
+         Integer existing = stateIds.get(state);
          if (existing != null) {
             return existing;
          }
 
-         int id = init_BlockStateArr.length;
-         BlockState[] nextStates = Arrays.copyOf(init_BlockStateArr, id + 1);
-         OreBlockCatalog.Inner_DataUtil[] nextKinds = Arrays.copyOf(init_CachePool_DataUtilArr, id + 1);
+         int id = states.length;
+         BlockState[] nextStates = Arrays.copyOf(states, id + 1);
+         OreBlockCatalog.Inner_DataUtil[] nextKinds = Arrays.copyOf(kinds, id + 1);
          nextStates[id] = state;
          nextKinds[id] = kind;
-         init_Map.put(state, id);
-         init_CachePool_DataUtilArr = nextKinds;
-         init_BlockStateArr = nextStates;
+         stateIds.put(state, id);
+         kinds = nextKinds;
+         states = nextStates;
          return id;
       }
 
       public static BlockState stateById(int id) {
-         BlockState[] snapshot = init_BlockStateArr;
+         BlockState[] snapshot = states;
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
       public static OreBlockCatalog.Inner_DataUtil kindById(int id) {
-         OreBlockCatalog.Inner_DataUtil[] snapshot = init_CachePool_DataUtilArr;
+         OreBlockCatalog.Inner_DataUtil[] snapshot = kinds;
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
       public static int init() {
-         return init_BlockStateArr.length;
+         return states.length;
       }
 
       public static int init(BlockState state) {

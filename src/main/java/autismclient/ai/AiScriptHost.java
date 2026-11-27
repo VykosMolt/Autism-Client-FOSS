@@ -31,19 +31,19 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 final class AiScriptHost implements AutoCloseable {
-   private static final Set<Process> init_Set = ConcurrentHashMap.newKeySet();
-   private final Path init_Path;
-   private final AiScriptHost.Inner_DataUtil init_bZ_DataUtil;
-   private volatile Process init_Process;
-   private final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(r -> {
+   private static final Set<Process> LIVE_PROCESSES = ConcurrentHashMap.newKeySet();
+   private final Path directory;
+   private final AiScriptHost.Inner_DataUtil tools;
+   private volatile Process process;
+   private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
       Thread t = new Thread(r, "autism-ai-script-pipe");
       t.setDaemon(true);
       return t;
    });
 
    AiScriptHost(Path directory, AiScriptHost.Inner_DataUtil tools) {
-      this.init_Path = directory;
-      this.init_bZ_DataUtil = tools;
+      this.directory = directory;
+      this.tools = tools;
    }
 
    JsonObject init(String source, int timeout, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
@@ -71,7 +71,7 @@ final class AiScriptHost implements AutoCloseable {
                ? "Syntax only; no behavioral fixture supplied"
                : "Supplied tool fixtures only; live game and unrestricted Java effects are not simulated"
          );
-         Path checks = this.init_Path.resolve("script-checks");
+         Path checks = this.directory.resolve("script-checks");
          AiJson.writeAtomicJson(checks.resolve(AiJson.sha256Hex(source) + ".json"), report);
          AiMemoryStore.prune(checks, 100);
          return report;
@@ -111,14 +111,14 @@ final class AiScriptHost implements AutoCloseable {
             throw new IllegalArgumentException("Script request exceeds 500,000 characters after encoding; shorten the script");
          }
 
-         Path scripts = this.init_Path.resolve("scripts");
+         Path scripts = this.directory.resolve("scripts");
          Files.createDirectories(scripts);
          String fingerprint = AiJson.sha256Hex(source);
          Path saved = scripts.resolve(fingerprint + ".js");
          AiJson.auditPrivateFile(saved);
          Files.writeString(saved, source);
          AiMemoryStore.prune(scripts, 100);
-         Path jar = this.init_Path.resolve("runtime").resolve("worker.jar");
+         Path jar = this.directory.resolve("runtime").resolve("worker.jar");
          Files.createDirectories(jar.getParent());
 
          try (InputStream bundled = AiScriptHost.class.getResourceAsStream("/autism-ai/worker.jar")) {
@@ -145,12 +145,12 @@ final class AiScriptHost implements AutoCloseable {
          builder.directory(scripts.toFile());
          builder.redirectError(Redirect.DISCARD);
          builder.environment().keySet().removeIf(AiScriptHost::init);
-         this.init_Process = builder.start();
-         Process live = this.init_Process;
-         init_Set.add(live);
+         this.process = builder.start();
+         Process live = this.process;
+         LIVE_PROCESSES.add(live);
          long deadline = System.nanoTime() + Math.max(1, Math.min(3600, timeout)) * 1000000000L;
-         BufferedReader input = new BufferedReader(new InputStreamReader(this.init_Process.getInputStream(), StandardCharsets.UTF_8));
-         PrintWriter output = new PrintWriter(new OutputStreamWriter(this.init_Process.getOutputStream(), StandardCharsets.UTF_8), true);
+         BufferedReader input = new BufferedReader(new InputStreamReader(this.process.getInputStream(), StandardCharsets.UTF_8));
+         PrintWriter output = new PrintWriter(new OutputStreamWriter(this.process.getOutputStream(), StandardCharsets.UTF_8), true);
 
          try {
             output.println(requestLine);
@@ -158,7 +158,7 @@ final class AiScriptHost implements AutoCloseable {
 
             label165:
             while (true) {
-               Future<String> next = this.init_ExecutorService.submit(() -> AiBoundedIo.init(input, 256000));
+               Future<String> next = this.executor.submit(() -> AiBoundedIo.init(input, 256000));
 
                while (!cancelled.getAsBoolean()) {
                   if (System.nanoTime() > deadline) {
@@ -202,7 +202,7 @@ final class AiScriptHost implements AutoCloseable {
                   String name = AiJson.getString(message, "tool", "");
                   if (!name.equals("script_run") && !name.equals("script_check") && !name.equals("finish")) {
                      try {
-                        output.println(this.init_bZ_DataUtil.call(name, message.getAsJsonObject("arguments")));
+                        output.println(this.tools.call(name, message.getAsJsonObject("arguments")));
                      } catch (Exception e) {
                         output.println(AiJson.objectOf("status", "FAILED", "error", e.getMessage()));
                      }
@@ -216,7 +216,7 @@ final class AiScriptHost implements AutoCloseable {
             }
          } finally {
             this.init();
-            init_Set.remove(live);
+            LIVE_PROCESSES.remove(live);
             output.close();
             input.close();
          }
@@ -226,7 +226,7 @@ final class AiScriptHost implements AutoCloseable {
    }
 
    void init() {
-      Process p = this.init_Process;
+      Process p = this.process;
       if (p != null) {
          try {
             if (p.isAlive()) {
@@ -267,11 +267,11 @@ final class AiScriptHost implements AutoCloseable {
    @Override
    public void close() {
       this.init();
-      this.init_ExecutorService.shutdownNow();
+      this.executor.shutdownNow();
    }
 
    static {
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> init_Set.forEach(p -> {
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> LIVE_PROCESSES.forEach(p -> {
          try {
             p.descendants().forEach(ProcessHandle::destroyForcibly);
          } catch (RuntimeException ignored) {

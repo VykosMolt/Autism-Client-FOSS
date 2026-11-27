@@ -13,18 +13,18 @@ import net.minecraft.client.multiplayer.ServerData;
 public final class NameScrapeController {
    private static final int init_I = 120000;
    private static final int load_I = 150000;
-   private static final char[] init_CArr = new char[]{'|', '/', '-', '\\'};
-   private static volatile boolean init_Z;
+   private static final char[] SPINNER = new char[]{'|', '/', '-', '\\'};
+   private static volatile boolean scraping;
    private static volatile boolean load_Z;
    private static volatile boolean read_Z;
-   private static volatile int read_I;
-   private static volatile int write_I;
-   private static volatile int update_I;
-   private static volatile boolean write_Z;
-   private static volatile boolean update_Z;
+   private static volatile int namesFound;
+   private static volatile int queriesSent;
+   private static volatile int targetLimit;
+   private static volatile boolean hasLimit;
+   private static volatile boolean deepScan;
    private static volatile int sync;
-   private static volatile String init_Str = "";
-   private static volatile ClientPacketListener init_ClientPacketListen;
+   private static volatile String statusText = "";
+   private static volatile ClientPacketListener activeConnection;
    private static final CommandTabNameProber.Inner_DataUtil init_be_DataUtil = new CommandTabNameProber.Inner_DataUtil() {
       @Override
       public boolean isCancelled() {
@@ -33,12 +33,12 @@ public final class NameScrapeController {
 
       @Override
       public boolean isPaused() {
-         return NameScrapeController.load_Z && NameScrapeController.init_Z;
+         return NameScrapeController.load_Z && NameScrapeController.scraping;
       }
 
       @Override
       public int maxNames() {
-         return NameScrapeController.update_I;
+         return NameScrapeController.targetLimit;
       }
 
       @Override
@@ -48,14 +48,14 @@ public final class NameScrapeController {
 
       @Override
       public boolean write() {
-         return NameScrapeController.update_Z;
+         return NameScrapeController.deepScan;
       }
 
       @Override
       public void init(int names, int queries, int maxQueries, String status) {
-         NameScrapeController.read_I = names;
-         NameScrapeController.write_I = queries;
-         NameScrapeController.init_Str = status == null ? "" : status;
+         NameScrapeController.namesFound = names;
+         NameScrapeController.queriesSent = queries;
+         NameScrapeController.statusText = status == null ? "" : status;
       }
    };
 
@@ -63,14 +63,14 @@ public final class NameScrapeController {
    }
 
    public static boolean isRunning() {
-      return init_Z;
+      return scraping;
    }
 
    public static boolean load_Z() {
-      return init_Z && load_Z;
+      return scraping && load_Z;
    }
 
-   public static void init_V(int requestedLimit) {
+   public static void start(int requestedLimit) {
       init(requestedLimit, false);
    }
 
@@ -78,40 +78,40 @@ public final class NameScrapeController {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.getConnection() == null || mc.player == null) {
          AutismClientMessaging.sendPrefixed("Namescrape: join a server first.");
-      } else if (init_Z) {
+      } else if (scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: already running. Use stop / pause / resume.");
       } else {
-         init_Z = true;
+         scraping = true;
          load_Z = false;
          read_Z = false;
-         update_Z = deep;
-         read_I = 0;
-         write_I = 0;
-         init_Str = "Starting...";
-         write_Z = requestedLimit > 0;
-         update_I = write_Z ? Math.min(requestedLimit, 120000) : 120000;
+         deepScan = deep;
+         namesFound = 0;
+         queriesSent = 0;
+         statusText = "Starting...";
+         hasLimit = requestedLimit > 0;
+         targetLimit = hasLimit ? Math.min(requestedLimit, 120000) : 120000;
          sync = init(mc);
          ClientPacketListener connection = mc.getConnection();
-         init_ClientPacketListen = connection;
+         activeConnection = connection;
          String self = mc.player.getName().getString();
          LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
-         read_I = names.size();
+         namesFound = names.size();
          List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
          BackgroundTaskExecutor.submit("namescrape", () -> init(names, connection, self, vectors));
       }
    }
 
    public static void pause() {
-      if (!init_Z) {
+      if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to pause.");
       } else {
          load_Z = true;
-         AutismClientMessaging.sendPrefixed("Namescrape: paused (" + read_I + " so far). Use resume.");
+         AutismClientMessaging.sendPrefixed("Namescrape: paused (" + namesFound + " so far). Use resume.");
       }
    }
 
    public static void resume() {
-      if (!init_Z) {
+      if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to resume.");
       } else {
          load_Z = false;
@@ -120,13 +120,13 @@ public final class NameScrapeController {
    }
 
    public static void stop() {
-      if (!init_Z) {
+      if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to stop.");
       } else {
          read_Z = true;
          load_Z = false;
-         init_Z = false;
-         AutismClientMessaging.sendPrefixed("Namescrape: stopping, copying " + read_I + " so far...");
+         scraping = false;
+         AutismClientMessaging.sendPrefixed("Namescrape: stopping, copying " + namesFound + " so far...");
       }
    }
 
@@ -134,8 +134,8 @@ public final class NameScrapeController {
       try {
          CommandTabNameProber.init(connection, names, self, vectors, init_be_DataUtil);
          List<String> result = new ArrayList<>(names.values());
-         if (write_Z && result.size() > update_I) {
-            result = new ArrayList<>(result.subList(0, update_I));
+         if (hasLimit && result.size() > targetLimit) {
+            result = new ArrayList<>(result.subList(0, targetLimit));
          }
 
          init(result);
@@ -145,9 +145,9 @@ public final class NameScrapeController {
    }
 
    private static boolean read_Z() {
-      if (init_Z && !autismclient.modules.aD.read_Z()) {
+      if (scraping && !autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
-         return mc == null || mc.getConnection() != init_ClientPacketListen;
+         return mc == null || mc.getConnection() != activeConnection;
       } else {
          return true;
       }
@@ -171,9 +171,9 @@ public final class NameScrapeController {
    private static void init(String message, String clipboard, int count) {
       Minecraft mc = Minecraft.getInstance();
       Runnable done = () -> {
-         init_Z = false;
+         scraping = false;
          load_Z = false;
-         init_ClientPacketListen = null;
+         activeConnection = null;
          if (!autismclient.modules.aD.write_Z()) {
             if (count > 0 && mc != null && mc.keyboardHandler != null && !clipboard.isEmpty()) {
                mc.keyboardHandler.setClipboard(clipboard);
@@ -190,13 +190,13 @@ public final class NameScrapeController {
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      if (init_Z) {
+      if (scraping) {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
             autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, mc.font, -1, -1);
             autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().colors();
-            int names = read_I;
-            char spin = init_CArr[(int)(System.currentTimeMillis() / 120L % init_CArr.length)];
+            int names = namesFound;
+            char spin = SPINNER[(int)(System.currentTimeMillis() / 120L % SPINNER.length)];
             int width = 244;
             int height = 46;
             int pad = 9;
@@ -204,25 +204,25 @@ public final class NameScrapeController {
             int y = 6;
             autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, width, height), colors.popupSurface, colors.borderStrong);
             String title = (load_Z ? "|| " : spin + " ") + (load_Z ? "Namescrape paused" : "Scraping names");
-            int target = init_I();
-            String count = init_Str(names) + (target > 0 ? " / " + init_Str(target) : "");
+            int target = target();
+            String count = formatCount(names) + (target > 0 ? " / " + formatCount(target) : "");
             ctx.init_PoolEntry().draw(graphics, title, x + pad, y + 6, colors.textPrimary);
             int cw = ctx.init_PoolEntry().measureWidth(count);
             ctx.init_PoolEntry().draw(graphics, count, x + width - pad - cw, y + 6, colors.textSecondary);
-            autismclient.gui.ui.widgets.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), init_D());
-            String status = init_Str != null && !init_Str.isBlank() ? init_Str : "Starting...";
+            autismclient.gui.ui.widgets.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), progress());
+            String status = statusText != null && !statusText.isBlank() ? statusText : "Starting...";
             ctx.init_PoolEntry().draw(graphics, init(ctx, status, width - pad * 2), x + pad, y + 33, colors.textSecondary);
          }
       }
    }
 
-   private static int init_I() {
-      return write_Z ? update_I : sync;
+   private static int target() {
+      return hasLimit ? targetLimit : sync;
    }
 
-   private static double init_D() {
-      int target = init_I();
-      return target > 0 ? Math.min(1.0, (double)read_I / target) : read_I / (read_I + 1500.0);
+   private static double progress() {
+      int target = target();
+      return target > 0 ? Math.min(1.0, (double)namesFound / target) : namesFound / (namesFound + 1500.0);
    }
 
    private static int init(Minecraft mc) {
@@ -237,7 +237,7 @@ public final class NameScrapeController {
       return 0;
    }
 
-   private static String init_Str(int n) {
+   private static String formatCount(int n) {
       return String.format(Locale.US, "%,d", n);
    }
 

@@ -7,9 +7,9 @@ final class AutoFishStateMachine {
    static final int load_I = 8;
    private static final int read_I = 2;
    private static final int write_I = 4;
-   private AutoFishStateMachine.Inner_StreamUtil init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.IDLE;
-   private long init_J;
-   private long load_J;
+   private AutoFishStateMachine.Inner_StreamUtil state = AutoFishStateMachine.Inner_StreamUtil.IDLE;
+   private long tick;
+   private long actionSeq;
    private long read_J;
    private long write_J;
    private long update_J;
@@ -19,59 +19,59 @@ final class AutoFishStateMachine {
    private int flush_I;
    private long flush_J = -9223372036854775808L;
    private long close_J = -9223372036854775808L;
-   private AutoFishStateMachine.Inner_CachePool init_BitSetUtil_CachePo;
-   private AutoFishStateMachine.Inner_StreamUtil load_BitSetUtil_StreamU;
+   private AutoFishStateMachine.Inner_CachePool pendingAction;
+   private AutoFishStateMachine.Inner_StreamUtil resumeState;
    private boolean init_Z;
-   private int close_I = 8;
-   private IntSupplier init_IntSupplier = () -> 10;
+   private int settleTicks = 8;
+   private IntSupplier recastDelay = () -> 10;
 
-   AutoFishStateMachine.Inner_StreamUtil init_BitSetUtil_StreamU() {
-      return this.init_BitSetUtil_StreamU;
+   AutoFishStateMachine.Inner_StreamUtil state() {
+      return this.state;
    }
 
    boolean init_Z() {
-      return this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.FISHING
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
+      return this.state == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.FISHING
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
    }
 
    AutoFishStateMachine.Inner_CachePool init(int observedHook, boolean autoCast, int timeoutTicks, int settleTicks, boolean movementBusy, IntSupplier recastDelay) {
-      this.init_J++;
-      this.close_I = Math.max(8, settleTicks);
-      this.init_IntSupplier = recastDelay;
+      this.tick++;
+      this.settleTicks = Math.max(8, settleTicks);
+      this.recastDelay = recastDelay;
       this.load(observedHook);
-      if (this.init_BitSetUtil_CachePo != null) {
-         if (this.init_J - this.init_BitSetUtil_CachePo.load() > 4L) {
-            this.init(this.init_BitSetUtil_CachePo, false, observedHook);
+      if (this.pendingAction != null) {
+         if (this.tick - this.pendingAction.load() > 4L) {
+            this.init(this.pendingAction, false, observedHook);
          }
 
          return null;
       } else {
-         if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT && this.init_J >= this.update_J) {
-            this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.FISHING;
+         if (this.state == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT && this.tick >= this.update_J) {
+            this.state = AutoFishStateMachine.Inner_StreamUtil.FISHING;
          }
 
-         if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT) {
-            if (observedHook == -1 && (this.update_I != -1 ? this.flush_I >= 2 : this.init_J - this.sync_J >= this.close_I)) {
+         if (this.state == AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT) {
+            if (observedHook == -1 && (this.update_I != -1 ? this.flush_I >= 2 : this.tick - this.sync_J >= this.settleTicks)) {
                this.write();
             }
 
             return null;
          } else {
-            if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.FISHING && autoCast && timeoutTicks > 0 && this.init_J - this.write_J >= timeoutTicks
+            if (this.state == AutoFishStateMachine.Inner_StreamUtil.FISHING && autoCast && timeoutTicks > 0 && this.tick - this.write_J >= timeoutTicks
                )
              {
-               this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
-               this.read_J = this.init_J;
+               this.state = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
+               this.read_J = this.tick;
             }
 
-            if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY && this.init_J >= this.read_J) {
+            if (this.state == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY && this.tick >= this.read_J) {
                return this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(AutoFishStateMachine.Inner_DataUtil.REEL, observedHook);
             } else {
-               return (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.IDLE || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY)
-                     && this.init_J >= this.read_J
+               return (this.state == AutoFishStateMachine.Inner_StreamUtil.IDLE || this.state == AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY)
+                     && this.tick >= this.read_J
                      && autoCast
                      && !movementBusy
                      && observedHook == -1
@@ -86,14 +86,14 @@ final class AutoFishStateMachine {
       if (observed != -1) {
          this.flush_I = 0;
          if (observed != this.sync_I
-            || this.init_BitSetUtil_StreamU != AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY && this.init_BitSetUtil_StreamU != AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING) {
+            || this.state != AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY && this.state != AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING) {
             if ((this.update_I == -1 || observed == this.update_I)
-               && this.init_BitSetUtil_StreamU != AutoFishStateMachine.Inner_StreamUtil.IDLE
-               && this.init_BitSetUtil_StreamU != AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY
-               && this.init_BitSetUtil_StreamU != AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING) {
+               && this.state != AutoFishStateMachine.Inner_StreamUtil.IDLE
+               && this.state != AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY
+               && this.state != AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING) {
                this.update_I = observed;
-               if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT && this.init_J >= this.update_J) {
-                  this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.FISHING;
+               if (this.state == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT && this.tick >= this.update_J) {
+                  this.state = AutoFishStateMachine.Inner_StreamUtil.FISHING;
                }
             } else {
                this.read(observed);
@@ -101,20 +101,20 @@ final class AutoFishStateMachine {
          } else {
             this.update();
             this.update_I = observed;
-            this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
+            this.state = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
          }
       } else {
-         if (this.flush_J != this.init_J) {
+         if (this.flush_J != this.tick) {
             this.flush_I++;
-            this.flush_J = this.init_J;
+            this.flush_J = this.tick;
          }
 
          if (this.update_I != -1
             && this.flush_I >= 2
             && (
-               this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.FISHING
-                  || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
-                  || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING
+               this.state == AutoFishStateMachine.Inner_StreamUtil.FISHING
+                  || this.state == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
+                  || this.state == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING
             )) {
             this.write();
          }
@@ -122,9 +122,9 @@ final class AutoFishStateMachine {
    }
 
    boolean init_Z(int delay) {
-      if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.FISHING && this.init_J >= this.update_J) {
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
-         this.read_J = this.init_J + Math.max(0, delay);
+      if (this.state == AutoFishStateMachine.Inner_StreamUtil.FISHING && this.tick >= this.update_J) {
+         this.state = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
+         this.read_J = this.tick + Math.max(0, delay);
          return true;
       } else {
          return false;
@@ -134,9 +134,9 @@ final class AutoFishStateMachine {
    boolean init_Z_I_J(int delay, long clientTick) {
       boolean fresh = this.close_J == -9223372036854775808L || clientTick - this.close_J >= 4L;
       this.close_J = clientTick;
-      if (fresh && this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT) {
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
-         this.read_J = Math.max(this.update_J, this.init_J + Math.max(0, delay));
+      if (fresh && this.state == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT) {
+         this.state = AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY;
+         this.read_J = Math.max(this.update_J, this.tick + Math.max(0, delay));
          return true;
       } else {
          return fresh && this.init_Z(delay);
@@ -144,16 +144,16 @@ final class AutoFishStateMachine {
    }
 
    private AutoFishStateMachine.Inner_CachePool init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(AutoFishStateMachine.Inner_DataUtil action, int observed) {
-      this.load_BitSetUtil_StreamU = this.init_BitSetUtil_StreamU;
-      this.init_BitSetUtil_StreamU = action == AutoFishStateMachine.Inner_DataUtil.CAST ? AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING : AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING;
-      this.init_BitSetUtil_CachePo = new AutoFishStateMachine.Inner_CachePool(++this.load_J, action, observed, this.init_J);
-      return this.init_BitSetUtil_CachePo;
+      this.resumeState = this.state;
+      this.state = action == AutoFishStateMachine.Inner_DataUtil.CAST ? AutoFishStateMachine.Inner_StreamUtil.CAST_PENDING : AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING;
+      this.pendingAction = new AutoFishStateMachine.Inner_CachePool(++this.actionSeq, action, observed, this.tick);
+      return this.pendingAction;
    }
 
    boolean init_Z_BitSetUtil_CachePo_I(AutoFishStateMachine.Inner_CachePool use, int observed) {
-      if (this.init_BitSetUtil_CachePo == null || !this.init_BitSetUtil_CachePo.equals(use) || this.init_J - use.load() > 4L) {
+      if (this.pendingAction == null || !this.pendingAction.equals(use) || this.tick - use.load() > 4L) {
          return false;
-      } else if (use.init_BitSetUtil_DataUti() == AutoFishStateMachine.Inner_DataUtil.CAST) {
+      } else if (use.action() == AutoFishStateMachine.Inner_DataUtil.CAST) {
          return observed == -1;
       } else {
          return use.init_I() == -1 ? this.update_I == -1 || observed == this.update_I : observed == use.init_I();
@@ -161,27 +161,27 @@ final class AutoFishStateMachine {
    }
 
    void init(AutoFishStateMachine.Inner_CachePool use, boolean dispatched, int observed) {
-      if (this.init_BitSetUtil_CachePo != null && this.init_BitSetUtil_CachePo.equals(use)) {
+      if (this.pendingAction != null && this.pendingAction.equals(use)) {
          boolean valid = this.init_Z_BitSetUtil_CachePo_I(use, observed);
-         this.init_BitSetUtil_CachePo = null;
+         this.pendingAction = null;
          if (dispatched && valid) {
-            if (use.init_BitSetUtil_DataUti() == AutoFishStateMachine.Inner_DataUtil.CAST) {
+            if (use.action() == AutoFishStateMachine.Inner_DataUtil.CAST) {
                this.update_I = -1;
                this.sync_I = -1;
                this.flush_I = 0;
-               this.write_J = this.init_J;
-               this.update_J = this.init_J + 8L;
-               this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
+               this.write_J = this.tick;
+               this.update_J = this.tick + 8L;
+               this.state = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
             } else {
                this.update_I = observed != -1 ? observed : use.init_I();
                this.sync_I = this.update_I;
                this.flush_I = 0;
-               this.sync_J = this.init_J;
-               this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
+               this.sync_J = this.tick;
+               this.state = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
             }
          } else {
-            this.init_BitSetUtil_StreamU = this.load_BitSetUtil_StreamU;
-            this.read_J = this.init_J + 2L;
+            this.state = this.resumeState;
+            this.read_J = this.tick + 2L;
             this.load(observed);
          }
       }
@@ -190,8 +190,8 @@ final class AutoFishStateMachine {
    private void write() {
       this.update();
       this.sync_I = this.update_I;
-      this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY;
-      this.read_J = this.init_J + Math.max(1, this.init_IntSupplier.getAsInt());
+      this.state = AutoFishStateMachine.Inner_StreamUtil.RECAST_DELAY;
+      this.read_J = this.tick + Math.max(1, this.recastDelay.getAsInt());
       this.init_Z = true;
    }
 
@@ -207,9 +207,9 @@ final class AutoFishStateMachine {
       this.sync_I = -1;
       this.flush_I = 0;
       this.flush_J = -9223372036854775808L;
-      this.write_J = this.init_J;
-      this.update_J = this.init_J + 8L;
-      this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
+      this.write_J = this.tick;
+      this.update_J = this.tick + 8L;
+      this.state = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
       this.init_Z = false;
    }
 
@@ -220,58 +220,58 @@ final class AutoFishStateMachine {
          this.update_I = beforeUseHook;
          this.sync_I = this.update_I;
          this.flush_I = 0;
-         this.sync_J = this.init_J;
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
+         this.sync_J = this.tick;
+         this.state = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
       } else {
          this.update_I = this.sync_I = -1;
          this.flush_I = 0;
-         this.write_J = this.init_J;
-         this.update_J = this.init_J + 8L;
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
+         this.write_J = this.tick;
+         this.update_J = this.tick + 8L;
+         this.state = AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT;
       }
    }
 
    void init_V() {
-      boolean wasCast = this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.FISHING
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
-         || this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING;
+      boolean wasCast = this.state == AutoFishStateMachine.Inner_StreamUtil.CAST_WAIT
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.FISHING
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY
+         || this.state == AutoFishStateMachine.Inner_StreamUtil.REEL_PENDING;
       this.init_V(-1);
       if (wasCast) {
-         this.sync_J = this.init_J;
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
+         this.sync_J = this.tick;
+         this.state = AutoFishStateMachine.Inner_StreamUtil.REEL_WAIT;
       }
    }
 
    void load_V() {
-      if (this.init_BitSetUtil_CachePo != null) {
-         this.init_BitSetUtil_StreamU = this.load_BitSetUtil_StreamU;
+      if (this.pendingAction != null) {
+         this.state = this.resumeState;
          this.update();
       }
 
-      if (this.init_BitSetUtil_StreamU == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY) {
-         this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.FISHING;
+      if (this.state == AutoFishStateMachine.Inner_StreamUtil.CATCH_DELAY) {
+         this.state = AutoFishStateMachine.Inner_StreamUtil.FISHING;
       }
 
       this.init_Z = false;
    }
 
    private void update() {
-      this.init_BitSetUtil_CachePo = null;
-      this.load_J++;
+      this.pendingAction = null;
+      this.actionSeq++;
    }
 
    void read() {
       this.update();
-      this.init_BitSetUtil_StreamU = AutoFishStateMachine.Inner_StreamUtil.IDLE;
+      this.state = AutoFishStateMachine.Inner_StreamUtil.IDLE;
       this.update_I = this.sync_I = -1;
       this.flush_I = 0;
-      this.read_J = this.write_J = this.update_J = this.sync_J = this.init_J = 0L;
+      this.read_J = this.write_J = this.update_J = this.sync_J = this.tick = 0L;
       this.close_J = this.flush_J = -9223372036854775808L;
       this.init_Z = false;
    }
 
-   record Inner_CachePool(long init_J, AutoFishStateMachine.Inner_DataUtil init_BitSetUtil_DataUti, int init_I, long load) {
+   record Inner_CachePool(long init_J, AutoFishStateMachine.Inner_DataUtil action, int init_I, long load) {
    }
 
    enum Inner_DataUtil {

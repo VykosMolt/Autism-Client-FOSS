@@ -52,8 +52,8 @@ public class MacroClipboardCodec {
    private static final String load = "autism_macro_steps";
    private static final String read = "autism_macro_list";
    private static String write;
-   private static List<AutismMacro> init_List = List.of();
-   private static boolean init_Z;
+   private static List<AutismMacro> clipboardMacros = List.of();
+   private static boolean clipboardIsCut;
    private static final long init_J = 8388608L;
    private static volatile Set<String> init_Set;
 
@@ -143,22 +143,22 @@ public class MacroClipboardCodec {
             }
          }
 
-         init_V(live, cut);
+         rememberClipboard(live, cut);
          return true;
       } else {
          return false;
       }
    }
 
-   private static void init_V(List<AutismMacro> macros, boolean cut) {
+   private static void rememberClipboard(List<AutismMacro> macros, boolean cut) {
       List<AutismMacro> copies = new ArrayList<>(macros.size());
 
       for (AutismMacro macro : macros) {
          copies.add(macro.copy());
       }
 
-      init_List = List.copyOf(copies);
-      init_Z = cut;
+      clipboardMacros = List.copyOf(copies);
+      clipboardIsCut = cut;
 
       try {
          write = Minecraft.getInstance().keyboardHandler.getClipboard();
@@ -175,19 +175,19 @@ public class MacroClipboardCodec {
          clipboard = null;
       }
 
-      if (clipboard != null && write != null && clipboard.equals(write) && !init_List.isEmpty()) {
-         List<AutismMacro> out = new ArrayList<>(init_List.size());
+      if (clipboard != null && write != null && clipboard.equals(write) && !clipboardMacros.isEmpty()) {
+         List<AutismMacro> out = new ArrayList<>(clipboardMacros.size());
 
-         for (AutismMacro macro : init_List) {
+         for (AutismMacro macro : clipboardMacros) {
             AutismMacro copy = macro.copy();
-            if (!init_Z) {
+            if (!clipboardIsCut) {
                copy.keyCode = -1;
             }
 
             out.add(copy);
          }
 
-         init_Z = false;
+         clipboardIsCut = false;
          return new MacroClipboardCodec.Inner_StreamUtil(out, true);
       } else {
          List<AutismMacro> list = init_List();
@@ -201,7 +201,7 @@ public class MacroClipboardCodec {
    }
 
    public static MacroClipboardCodec.Inner_DataUtil clipboardKind() {
-      CompoundTag rootTag = init_CompoundTag();
+      CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
          return MacroClipboardCodec.Inner_DataUtil.NONE;
       } else {
@@ -214,7 +214,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   private static CompoundTag init_CompoundTag() {
+   private static CompoundTag readClipboardTag() {
       try {
          String base64 = Minecraft.getInstance().keyboardHandler.getClipboard();
          if (base64 != null && !base64.trim().isEmpty()) {
@@ -261,7 +261,7 @@ public class MacroClipboardCodec {
       return actions;
    }
 
-   private static AutismMacro init_aM(CompoundTag macroTag) {
+   private static AutismMacro decodeMacro(CompoundTag macroTag) {
       int dropped = AutismMacro.pruneUnknownActions(macroTag);
       AutismMacro macro = new AutismMacro().fromTag(macroTag).sanitizeForSharing();
       macro.keyCode = -1;
@@ -276,7 +276,7 @@ public class MacroClipboardCodec {
    }
 
    public static AutismMacro pasteMacro() {
-      CompoundTag rootTag = init_CompoundTag();
+      CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
          return null;
       }
@@ -288,7 +288,7 @@ public class MacroClipboardCodec {
             AutismClientAddon.LOG.warn("[Autism] Macro clipboard payload was empty");
             return null;
          } else {
-            return init_aM(macroTag);
+            return decodeMacro(macroTag);
          }
       } else if ("autism_macro_steps".equals(type)) {
          List<MacroAction> actions = init(rootTag.getList("actions").orElse(new ListTag()));
@@ -307,7 +307,7 @@ public class MacroClipboardCodec {
 
    public static List<AutismMacro> init_List() {
       List<AutismMacro> macros = new ArrayList<>();
-      CompoundTag rootTag = init_CompoundTag();
+      CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
          return macros;
       }
@@ -321,14 +321,14 @@ public class MacroClipboardCodec {
 
       for (int i = 0; i < macroList.size(); i++) {
          if (macroList.get(i) instanceof CompoundTag macroTag && !macroTag.isEmpty()) {
-            macros.add(init_aM(macroTag));
+            macros.add(decodeMacro(macroTag));
          }
       }
 
       return macros;
    }
 
-   private static CompoundTag init_CompoundTag(String base64) {
+   private static CompoundTag decodeTag(String base64) {
       try {
          if (base64 != null && !base64.trim().isEmpty()) {
             byte[] data = Base64.getDecoder().decode(base64.trim());
@@ -362,7 +362,7 @@ public class MacroClipboardCodec {
    }
 
    public static AutismMacro init_aM(String base64) {
-      CompoundTag rootTag = init_CompoundTag(base64);
+      CompoundTag rootTag = decodeTag(base64);
       if (rootTag == null) {
          return null;
       }
@@ -370,7 +370,7 @@ public class MacroClipboardCodec {
       String type = rootTag.getStringOr("type", "");
       if ("autism_macro".equals(type)) {
          CompoundTag macroTag = rootTag.getCompound("macro").orElse(new CompoundTag());
-         return macroTag.isEmpty() ? null : init_aM(macroTag);
+         return macroTag.isEmpty() ? null : decodeMacro(macroTag);
       }
 
       if ("autism_macro_steps".equals(type)) {
@@ -388,7 +388,7 @@ public class MacroClipboardCodec {
    }
 
    public static String init_Str(String base64) {
-      CompoundTag rootTag = init_CompoundTag(base64);
+      CompoundTag rootTag = decodeTag(base64);
       if (rootTag == null) {
          return null;
       } else {
@@ -440,7 +440,7 @@ public class MacroClipboardCodec {
    }
 
    public static List<MacroAction> pasteSteps() {
-      CompoundTag rootTag = init_CompoundTag();
+      CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
          return null;
       }
@@ -528,7 +528,7 @@ public class MacroClipboardCodec {
                AutismSessionState.DelayedPacket qp = readDelayedPacket(tag);
                return qp != null ? qp.packet : null;
             } else {
-               return init_Packet(tag);
+               return decodePacketFromTag(tag);
             }
          } else {
             return null;
@@ -572,7 +572,7 @@ public class MacroClipboardCodec {
          }
 
          CompoundTag packetData = tag.getCompound("packet").orElse(new CompoundTag());
-         Packet<?> packet = init_Packet(packetData);
+         Packet<?> packet = decodePacketFromTag(packetData);
          if (packet != null) {
             return id > 0 ? new AutismSessionState.DelayedPacket(packet, delay, id, replayMode) : new AutismSessionState.DelayedPacket(packet, delay, replayMode);
          } else {
@@ -609,7 +609,7 @@ public class MacroClipboardCodec {
       return tag;
    }
 
-   private static Packet<?> init_Packet(CompoundTag tag) {
+   private static Packet<?> decodePacketFromTag(CompoundTag tag) {
       try {
          if (tag.getBooleanOr("customPayloadPacket", false)) {
             String channel = tag.getStringOr("payloadChannel", "");
@@ -642,7 +642,7 @@ public class MacroClipboardCodec {
             return (Packet<?>)init(packetClass, fieldsTag);
          }
 
-         Packet<?> packet = (Packet<?>)init_o_CachePool().init_Obj_Class(packetClass);
+         Packet<?> packet = (Packet<?>)unsafe().allocateInstance(packetClass);
          load(packet, fieldsTag);
          if (!PacketTypeRegistry.getC2sPackets().contains(packetClass)) {
             AutismClientAddon.LOG.warn("[Autism] Deserialized packet {} is NOT a registered C2S packet! It may be skipped when sending.", className);
@@ -682,7 +682,7 @@ public class MacroClipboardCodec {
                CompoundTag stackNbt = new CompoundTag();
 
                try {
-                  Tag encoded = ItemStack.CODEC.encodeStart(load_HolderLookup_Provi().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
+                  Tag encoded = ItemStack.CODEC.encodeStart(registries().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
                   tag.put(name, encoded);
                } catch (Throwable e) {
                   stackNbt.putString("id", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
@@ -835,32 +835,32 @@ public class MacroClipboardCodec {
                   try {
                      Object value = init(fieldsTag, fieldName, field.getType());
                      if (value != null) {
-                        long offset = init_o_CachePool().init_J_Field(field);
+                        long offset = unsafe().objectFieldOffset(field);
                         Class<?> type = field.getType();
                         if (type == int.class) {
-                           init_o_CachePool().init_V_Obj_5(obj, offset, (Integer)value);
+                           unsafe().putInt(obj, offset, (Integer)value);
                         } else if (type == boolean.class) {
-                           init_o_CachePool().init_V_Obj_9(obj, offset, (Boolean)value);
+                           unsafe().putBoolean(obj, offset, (Boolean)value);
                         } else if (type == byte.class) {
-                           init_o_CachePool().init_V_Obj(obj, offset, (Byte)value);
+                           unsafe().putByte(obj, offset, (Byte)value);
                         } else if (type == short.class) {
-                           init_o_CachePool().init_V_Obj_8(obj, offset, (Short)value);
+                           unsafe().putShort(obj, offset, (Short)value);
                         } else if (type == long.class) {
-                           init_o_CachePool().init_V_Obj_6(obj, offset, (Long)value);
+                           unsafe().putLong(obj, offset, (Long)value);
                         } else if (type == float.class) {
-                           init_o_CachePool().init_V_Obj_4(obj, offset, (Float)value);
+                           unsafe().putFloat(obj, offset, (Float)value);
                         } else if (type == double.class) {
-                           init_o_CachePool().init_V_Obj_3(obj, offset, (Double)value);
+                           unsafe().putDouble(obj, offset, (Double)value);
                         } else if (type == char.class) {
-                           init_o_CachePool().init_V_Obj_2(obj, offset, (Character)value);
+                           unsafe().putChar(obj, offset, (Character)value);
                         } else {
-                           init_o_CachePool().init_V_Obj_7(obj, offset, value);
+                           unsafe().putObject(obj, offset, value);
                         }
                      } else {
                         Object defaultValue = init(field.getType(), fieldName);
                         if (defaultValue != null) {
-                           long offset = init_o_CachePool().init_J_Field(field);
-                           init_o_CachePool().init_V_Obj_7(obj, offset, defaultValue);
+                           long offset = unsafe().objectFieldOffset(field);
+                           unsafe().putObject(obj, offset, defaultValue);
                         }
                      }
                   } catch (Exception e) {
@@ -888,7 +888,7 @@ public class MacroClipboardCodec {
                Tag stackNbt = tag.get(name);
                return stackNbt == null
                   ? ItemStack.EMPTY
-                  : ItemStack.CODEC.parse(load_HolderLookup_Provi().createSerializationContext(NbtOps.INSTANCE), stackNbt).result().orElse(ItemStack.EMPTY);
+                  : ItemStack.CODEC.parse(registries().createSerializationContext(NbtOps.INSTANCE), stackNbt).result().orElse(ItemStack.EMPTY);
             } catch (Exception e) {
                return ItemStack.EMPTY;
             }
@@ -1027,9 +1027,9 @@ public class MacroClipboardCodec {
                } else if (targetType == HashedStack.class) {
                   return HashedStack.EMPTY;
                } else if (Int2ObjectMap.class.isAssignableFrom(targetType)) {
-                  return init_Int2ObjectMap(tag.getCompound(name).orElse(new CompoundTag()));
+                  return decodeIntMap(tag.getCompound(name).orElse(new CompoundTag()));
                } else if (Map.class.isAssignableFrom(targetType)) {
-                  return init_Map(tag.getCompound(name).orElse(new CompoundTag()));
+                  return decodeMap(tag.getCompound(name).orElse(new CompoundTag()));
                } else if (List.class.isAssignableFrom(targetType)) {
                   return load((ListTag)tag.get(name));
                } else {
@@ -1040,7 +1040,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   private static Int2ObjectMap<Object> init_Int2ObjectMap(CompoundTag mapTag) {
+   private static Int2ObjectMap<Object> decodeIntMap(CompoundTag mapTag) {
       Int2ObjectMap<Object> map = new Int2ObjectArrayMap<>();
       int size = mapTag.getIntOr("size", 0);
 
@@ -1059,7 +1059,7 @@ public class MacroClipboardCodec {
       return map;
    }
 
-   private static Map<Object, Object> init_Map(CompoundTag mapTag) {
+   private static Map<Object, Object> decodeMap(CompoundTag mapTag) {
       Map<Object, Object> map = new HashMap<>();
       int size = mapTag.getIntOr("size", 0);
 
@@ -1092,7 +1092,7 @@ public class MacroClipboardCodec {
       return list;
    }
 
-   private static Provider load_HolderLookup_Provi() {
+   private static Provider registries() {
       if (Minecraft.getInstance().level != null) {
          return Minecraft.getInstance().level.registryAccess();
       } else {
@@ -1103,7 +1103,7 @@ public class MacroClipboardCodec {
    }
 
    public static Provider init_HolderLookup_Provi() {
-      return load_HolderLookup_Provi();
+      return registries();
    }
 
    public static NbtAccounter createNbtAccounter() {
@@ -1137,8 +1137,8 @@ public class MacroClipboardCodec {
       }
    }
 
-   private static MacroClipboardCodec.Inner_CachePool init_o_CachePool() {
-      return MacroClipboardCodec.Inner_CachePool.init_o_CachePool;
+   private static MacroClipboardCodec.Inner_CachePool unsafe() {
+      return MacroClipboardCodec.Inner_CachePool.INSTANCE;
    }
 
    private static Object init(Class<?> recordClass, CompoundTag fieldsTag) throws InstantiationException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -1324,9 +1324,9 @@ public class MacroClipboardCodec {
    }
 
    private static final class Inner_CachePool {
-      private static final MacroClipboardCodec.Inner_CachePool init_o_CachePool = init_o_CachePool();
-      private final Object init_Obj;
-      private final Method init_Method;
+      private static final MacroClipboardCodec.Inner_CachePool INSTANCE = create();
+      private final Object unsafe;
+      private final Method objectFieldOffset;
       private final Method load;
       private final Method read;
       private final Method write;
@@ -1339,8 +1339,8 @@ public class MacroClipboardCodec {
       private final Method push;
 
       private Inner_CachePool(Object unsafe, Class<?> type) throws NoSuchMethodException {
-         this.init_Obj = unsafe;
-         this.init_Method = type.getMethod("objectFieldOffset", Field.class);
+         this.unsafe = unsafe;
+         this.objectFieldOffset = type.getMethod("objectFieldOffset", Field.class);
          this.load = type.getMethod("putInt", Object.class, long.class, int.class);
          this.read = type.getMethod("putBoolean", Object.class, long.class, boolean.class);
          this.write = type.getMethod("putByte", Object.class, long.class, byte.class);
@@ -1353,7 +1353,7 @@ public class MacroClipboardCodec {
          this.push = type.getMethod("allocateInstance", Class.class);
       }
 
-      private static MacroClipboardCodec.Inner_CachePool init_o_CachePool() {
+      private static MacroClipboardCodec.Inner_CachePool create() {
          try {
             Class<?> type = Class.forName("sun.misc.Unsafe");
             Field f = type.getDeclaredField("theUnsafe");
@@ -1364,69 +1364,69 @@ public class MacroClipboardCodec {
          }
       }
 
-      long init_J_Field(Field field) {
-         return this.init_J_Method_ObjArr(this.init_Method, field);
+      long objectFieldOffset(Field field) {
+         return this.invokeLong(this.objectFieldOffset, field);
       }
 
-      void init_V_Obj_5(Object object, long offset, int value) {
-         this.init_V_Method_ObjArr(this.load, object, offset, value);
+      void putInt(Object object, long offset, int value) {
+         this.invokeVoid(this.load, object, offset, value);
       }
 
-      void init_V_Obj_9(Object object, long offset, boolean value) {
-         this.init_V_Method_ObjArr(this.read, object, offset, value);
+      void putBoolean(Object object, long offset, boolean value) {
+         this.invokeVoid(this.read, object, offset, value);
       }
 
-      void init_V_Obj(Object object, long offset, byte value) {
-         this.init_V_Method_ObjArr(this.write, object, offset, value);
+      void putByte(Object object, long offset, byte value) {
+         this.invokeVoid(this.write, object, offset, value);
       }
 
-      void init_V_Obj_8(Object object, long offset, short value) {
-         this.init_V_Method_ObjArr(this.update, object, offset, value);
+      void putShort(Object object, long offset, short value) {
+         this.invokeVoid(this.update, object, offset, value);
       }
 
-      void init_V_Obj_6(Object object, long offset, long value) {
-         this.init_V_Method_ObjArr(this.sync, object, offset, value);
+      void putLong(Object object, long offset, long value) {
+         this.invokeVoid(this.sync, object, offset, value);
       }
 
-      void init_V_Obj_4(Object object, long offset, float value) {
-         this.init_V_Method_ObjArr(this.flush, object, offset, value);
+      void putFloat(Object object, long offset, float value) {
+         this.invokeVoid(this.flush, object, offset, value);
       }
 
-      void init_V_Obj_3(Object object, long offset, double value) {
-         this.init_V_Method_ObjArr(this.close, object, offset, value);
+      void putDouble(Object object, long offset, double value) {
+         this.invokeVoid(this.close, object, offset, value);
       }
 
-      void init_V_Obj_2(Object object, long offset, char value) {
-         this.init_V_Method_ObjArr(this.open, object, offset, value);
+      void putChar(Object object, long offset, char value) {
+         this.invokeVoid(this.open, object, offset, value);
       }
 
-      void init_V_Obj_7(Object object, long offset, Object value) {
-         this.init_V_Method_ObjArr(this.poll, object, offset, value);
+      void putObject(Object object, long offset, Object value) {
+         this.invokeVoid(this.poll, object, offset, value);
       }
 
-      Object init_Obj_Class(Class<?> type) {
-         return this.init_Obj_Method_ObjArr(this.push, type);
+      Object allocateInstance(Class<?> type) {
+         return this.invokeObject(this.push, type);
       }
 
-      private long init_J_Method_ObjArr(Method method, Object... args) {
+      private long invokeLong(Method method, Object... args) {
          try {
-            return (Long)method.invoke(this.init_Obj, args);
+            return (Long)method.invoke(this.unsafe, args);
          } catch (Exception e) {
             throw new RuntimeException("Unsafe call failed", e);
          }
       }
 
-      private void init_V_Method_ObjArr(Method method, Object... args) {
+      private void invokeVoid(Method method, Object... args) {
          try {
-            method.invoke(this.init_Obj, args);
+            method.invoke(this.unsafe, args);
          } catch (Exception e) {
             throw new RuntimeException("Unsafe call failed", e);
          }
       }
 
-      private Object init_Obj_Method_ObjArr(Method method, Object... args) {
+      private Object invokeObject(Method method, Object... args) {
          try {
-            return method.invoke(this.init_Obj, args);
+            return method.invoke(this.unsafe, args);
          } catch (Exception e) {
             throw new RuntimeException("Unsafe call failed", e);
          }

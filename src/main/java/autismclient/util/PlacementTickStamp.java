@@ -10,7 +10,7 @@ public final class PlacementTickStamp {
       init = AutismSessionState.getInstance().getClientTick();
    }
 
-   public static boolean init_Z() {
+   public static boolean isThisTick() {
       return init == AutismSessionState.getInstance().getClientTick();
    }
 }

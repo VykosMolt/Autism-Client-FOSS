@@ -31,9 +31,9 @@ public final class GifImageDecoder {
       if (bytes != null && bytes.length != 0) {
          if (bytes.length > 67108864) {
             throw new GifImageDecoder.Inner_CachePool("file too large (max 25 MB)");
-         } else if (init_Z(bytes)) {
+         } else if (isGif(bytes)) {
             return read_DataUtil_DataUtil(bytes);
-         } else if (!load_Z(bytes) && !read_Z(bytes)) {
+         } else if (!isPng(bytes) && !isJpeg(bytes)) {
             throw new GifImageDecoder.Inner_CachePool("unsupported image format");
          } else {
             return load_DataUtil_DataUtil(bytes);
@@ -43,20 +43,20 @@ public final class GifImageDecoder {
       }
    }
 
-   private static boolean init_Z(byte[] b) {
+   private static boolean isGif(byte[] b) {
       return b.length >= 6 && b[0] == 71 && b[1] == 73 && b[2] == 70 && b[3] == 56 && (b[4] == 55 || b[4] == 57) && b[5] == 97;
    }
 
-   private static boolean load_Z(byte[] b) {
+   private static boolean isPng(byte[] b) {
       return b.length >= 4 && (b[0] & 255) == 137 && b[1] == 80 && b[2] == 78 && b[3] == 71;
    }
 
-   private static boolean read_Z(byte[] b) {
+   private static boolean isJpeg(byte[] b) {
       return b.length >= 2 && (b[0] & 255) == 255 && (b[1] & 255) == 216;
    }
 
    private static GifImageDecoder.Inner_DataUtil load_DataUtil_DataUtil(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
-      if (load_Z(bytes) && bytes.length >= 24) {
+      if (isPng(bytes) && bytes.length >= 24) {
          int w = load(bytes, 16);
          int h = load(bytes, 20);
          if (w > 0 && h > 0) {

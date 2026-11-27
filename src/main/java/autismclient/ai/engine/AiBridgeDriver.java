@@ -18,10 +18,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class AiBridgeDriver {
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final AiBridger init_JsonUtil;
-   private final AiAim init_DataUtil;
-   private AiLiveWorld init_BitSetUtil;
+   private final Minecraft mc = Minecraft.getInstance();
+   private final AiBridger bridger;
+   private final AiAim aim;
+   private AiLiveWorld liveWorld;
    private int init_I;
    private int load;
    private BlockPos init_BlockPos;
@@ -31,16 +31,16 @@ public final class AiBridgeDriver {
    }
 
    public AiBridgeDriver(AiBridger.Inner_CachePool lane, AiBridger.Inner_ConfigStore style, AiAim aim, boolean stopAtEnd) {
-      this.init_JsonUtil = new AiBridger(lane, style, stopAtEnd);
-      this.init_DataUtil = aim;
+      this.bridger = new AiBridger(lane, style, stopAtEnd);
+      this.aim = aim;
    }
 
    public AiBridger getBridger() {
-      return this.init_JsonUtil;
+      return this.bridger;
    }
 
    public AiBridger.Inner_CachePool getLane() {
-      return this.init_JsonUtil.getLane();
+      return this.bridger.getLane();
    }
 
    public int getTicks() {
@@ -52,13 +52,13 @@ public final class AiBridgeDriver {
    }
 
    public BlockPos nextSupport() {
-      if (this.init_BitSetUtil == null || this.init_BitSetUtil.getLevel() != this.init_Minecraft.level) {
-         this.init_BitSetUtil = new AiLiveWorld(this.init_Minecraft.level, this.init_Minecraft.player);
+      if (this.liveWorld == null || this.liveWorld.getLevel() != this.mc.level) {
+         this.liveWorld = new AiLiveWorld(this.mc.level, this.mc.player);
       }
 
-      this.init_BitSetUtil.clearCaches();
-      int next = this.init_JsonUtil.init_I_NodeWalker_CachePo(this.init_BitSetUtil);
-      AiBridger.Inner_CachePool lane = this.init_JsonUtil.getLane();
+      this.liveWorld.clearCaches();
+      int next = this.bridger.init_I_NodeWalker_CachePo(this.liveWorld);
+      AiBridger.Inner_CachePool lane = this.bridger.getLane();
       return next > lane.length() ? null : new BlockPos(lane.cellX(next), lane.floorY(), lane.cellZ(next));
    }
 
@@ -86,13 +86,13 @@ public final class AiBridgeDriver {
    }
 
    public AiBridgeDriver.Inner_DataUtil init(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
-      LocalPlayer player = this.init_Minecraft.player;
-      AiBridger.Inner_CachePool lane = this.init_JsonUtil.getLane();
+      LocalPlayer player = this.mc.player;
+      AiBridger.Inner_CachePool lane = this.bridger.getLane();
       this.init_I++;
       if (this.init_I == 1) {
          BlockPos footing = new BlockPos(lane.cellX(0), lane.floorY(), lane.cellZ(0));
-         BlockState state = this.init_Minecraft.level.getBlockState(footing);
-         if (!Block.isShapeFullBlock(state.getCollisionShape(this.init_Minecraft.level, footing))) {
+         BlockState state = this.mc.level.getBlockState(footing);
+         if (!Block.isShapeFullBlock(state.getCollisionShape(this.mc.level, footing))) {
             return AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING;
          }
       }
@@ -105,31 +105,31 @@ public final class AiBridgeDriver {
          return AiBridgeDriver.Inner_DataUtil.FELL;
       }
 
-      if (this.init_BitSetUtil == null || this.init_BitSetUtil.getLevel() != this.init_Minecraft.level) {
-         this.init_BitSetUtil = new AiLiveWorld(this.init_Minecraft.level, player);
+      if (this.liveWorld == null || this.liveWorld.getLevel() != this.mc.level) {
+         this.liveWorld = new AiLiveWorld(this.mc.level, player);
       }
 
-      this.init_BitSetUtil.clearCaches();
+      this.liveWorld.clearCaches();
       AiBridger.Inner_DataUtil currentRot = new AiBridger.Inner_DataUtil(player.getYRot(), player.getXRot());
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.init()
          ? (wire.initialized() ? new AiBridger.Inner_DataUtil(wire.currentYaw(), wire.currentPitch()) : null)
          : currentRot;
-      AiBridger.Inner_StreamUtil cmd = this.init_JsonUtil
+      AiBridger.Inner_StreamUtil cmd = this.bridger
          .putAt(
             AiPhysics.MotionState.of(player),
             currentRot,
             wireRot,
             player.getEyeHeight() < 1.5F,
-            this.init_BitSetUtil,
+            this.liveWorld,
             slot >= 0
          );
       if (cmd.done()) {
          return AiBridgeDriver.Inner_DataUtil.DONE;
       }
 
-      this.init_DataUtil.setProfile(AiAim.AimProfile.TELLY);
-      this.init_DataUtil.setTargetRotation(new RotationMath.Rotation(cmd.yaw(), cmd.pitch()));
+      this.aim.setProfile(AiAim.AimProfile.TELLY);
+      this.aim.setTargetRotation(new RotationMath.Rotation(cmd.yaw(), cmd.pitch()));
       boolean failedPlace = false;
       if (cmd.place() > 0 && slot >= 0) {
          BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));
@@ -141,21 +141,21 @@ public final class AiBridgeDriver {
          }
       }
 
-      this.init_DataUtil.tick();
-      this.init_Minecraft.options.keyUp.setDown(cmd.forward() > 0);
-      this.init_Minecraft.options.keyDown.setDown(cmd.forward() < 0);
-      this.init_Minecraft.options.keyLeft.setDown(cmd.left() > 0);
-      this.init_Minecraft.options.keyRight.setDown(cmd.left() < 0);
-      this.init_Minecraft.options.keyJump.setDown(cmd.jump());
-      this.init_Minecraft.options.keyShift.setDown(cmd.sneak() || this.init_BlockPos != null || failedPlace && player.onGround());
+      this.aim.tick();
+      this.mc.options.keyUp.setDown(cmd.forward() > 0);
+      this.mc.options.keyDown.setDown(cmd.forward() < 0);
+      this.mc.options.keyLeft.setDown(cmd.left() > 0);
+      this.mc.options.keyRight.setDown(cmd.left() < 0);
+      this.mc.options.keyJump.setDown(cmd.jump());
+      this.mc.options.keyShift.setDown(cmd.sneak() || this.init_BlockPos != null || failedPlace && player.onGround());
       if (cmd.sprint()) {
          player.setSprinting(true);
-         if (!this.init_Minecraft.options.toggleSprint().get()) {
-            this.init_Minecraft.options.keySprint.setDown(true);
+         if (!this.mc.options.toggleSprint().get()) {
+            this.mc.options.keySprint.setDown(true);
          }
       } else {
          player.setSprinting(false);
-         this.init_Minecraft.options.keySprint.setDown(false);
+         this.mc.options.keySprint.setDown(false);
       }
 
       if (AiNavDebug.isEnabled()) {
@@ -177,7 +177,7 @@ public final class AiBridgeDriver {
                + " command="
                + cmd
                + " next="
-               + this.init_JsonUtil.init_I_NodeWalker_CachePo(this.init_BitSetUtil)
+               + this.bridger.init_I_NodeWalker_CachePo(this.liveWorld)
          );
       }
 
@@ -187,14 +187,14 @@ public final class AiBridgeDriver {
    private boolean init_Z_LocalPlayer(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
       BlockHitResult hit = AiAim.raycastLookBlock();
       if (hit != null && hit.getBlockPos().relative(hit.getDirection()).equals(cell)) {
-         BlockState face = this.init_Minecraft.level.getBlockState(hit.getBlockPos());
+         BlockState face = this.mc.level.getBlockState(hit.getBlockPos());
          if (BlockPlacementPlanner.wouldInteractWithoutSneak(face, hit.getBlockPos(), true)) {
             return false;
          }
 
          if (BlockPlacementPlanner.requiresSneakToPlace(face, hit.getBlockPos())) {
             this.init_BlockPos = cell;
-            this.init_Minecraft.options.keyShift.setDown(true);
+            this.mc.options.keyShift.setDown(true);
             if (!player.isShiftKeyDown() || !player.getLastSentInput().shift()) {
                return false;
             }
@@ -205,12 +205,12 @@ public final class AiBridgeDriver {
             return false;
          }
 
-         InteractionResult result = this.init_Minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
+         InteractionResult result = this.mc.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
          if (result.consumesAction()) {
             Compat263.swing(player, InteractionHand.MAIN_HAND);
          }
 
-         boolean stands = !this.init_Minecraft.level.getBlockState(cell).getCollisionShape(this.init_Minecraft.level, cell).isEmpty();
+         boolean stands = !this.mc.level.getBlockState(cell).getCollisionShape(this.mc.level, cell).isEmpty();
          if (stands) {
             this.init_BlockPos = null;
          }

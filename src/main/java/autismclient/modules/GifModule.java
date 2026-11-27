@@ -29,7 +29,7 @@ public final class GifModule extends Module {
             .build()
       );
       this.add(
-         new ActionSetting("cape-pick", "Pick File", this::init_V_8)
+         new ActionSetting("cape-pick", "Pick File", this::pickCapeImage)
             .description("Choose image file.")
             .group("Cape")
             .availableOffline()
@@ -175,7 +175,7 @@ public final class GifModule extends Module {
       this.read();
    }
 
-   private void init_V_8() {
+   private void pickCapeImage() {
       autismclient.util.NativeImageFilePicker.pickImage(this.text("cape-image").trim(), selected -> this.setValue("cape-image", selected));
    }
 

@@ -7,8 +7,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 
 public final class RegistryCompatGuard {
-   private static final int init_I = 64;
-   private static final ThreadLocal<RegistryCompatGuard.Inner_DataUtil> init_ThreadLocal = new ThreadLocal<>();
+   private static final int MAX_WARNINGS = 64;
+   private static final ThreadLocal<RegistryCompatGuard.Inner_DataUtil> STATE = new ThreadLocal<>();
    private static final ThreadLocal<ConnectionPrivacyRegistry.ConnectionSession> load = new ThreadLocal<>();
 
    private RegistryCompatGuard() {
@@ -38,10 +38,10 @@ public final class RegistryCompatGuard {
 
    public static void load(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (init_Z(context)) {
-         RegistryCompatGuard.Inner_DataUtil state = init_ThreadLocal.get();
+         RegistryCompatGuard.Inner_DataUtil state = STATE.get();
          if (state == null) {
             state = new RegistryCompatGuard.Inner_DataUtil();
-            init_ThreadLocal.set(state);
+            STATE.set(state);
          }
 
          state.init_I++;
@@ -56,11 +56,11 @@ public final class RegistryCompatGuard {
    }
 
    public static void load() {
-      RegistryCompatGuard.Inner_DataUtil state = init_ThreadLocal.get();
+      RegistryCompatGuard.Inner_DataUtil state = STATE.get();
       if (state != null) {
          state.init_I--;
          if (state.init_I <= 0) {
-            init_ThreadLocal.remove();
+            STATE.remove();
          }
       }
    }
@@ -121,7 +121,7 @@ public final class RegistryCompatGuard {
    }
 
    private static RegistryCompatGuard.Inner_DataUtil init_TaskTimer_DataUtil() {
-      RegistryCompatGuard.Inner_DataUtil state = init_ThreadLocal.get();
+      RegistryCompatGuard.Inner_DataUtil state = STATE.get();
       return state != null && state.init_I > 0 ? state : null;
    }
 

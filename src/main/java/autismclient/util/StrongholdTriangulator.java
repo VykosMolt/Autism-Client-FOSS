@@ -14,77 +14,77 @@ import net.minecraft.core.Direction.Plane;
 import net.minecraft.world.phys.Vec3;
 
 public final class StrongholdTriangulator {
-   private final List<StrongholdTriangulator.Inner_BufferHelper> init_List = new ArrayList<>();
-   private StrongholdTriangulator.Inner_DataUtil init_cS_DataUtil;
-   private StrongholdTriangulator.Inner_DataUtil load_cS_DataUtil;
-   private StrongholdRingEstimator.Inner_StreamUtil init_cT_StreamUtil;
-   private boolean init_Z;
-   private boolean load_Z;
+   private final List<StrongholdTriangulator.Inner_BufferHelper> samples = new ArrayList<>();
+   private StrongholdTriangulator.Inner_DataUtil solution;
+   private StrongholdTriangulator.Inner_DataUtil provisional;
+   private StrongholdRingEstimator.Inner_StreamUtil ringEstimate;
+   private boolean enabled;
+   private boolean legacy;
 
-   public List<StrongholdTriangulator.Inner_BufferHelper> init_List() {
-      return List.copyOf(this.init_List);
+   public List<StrongholdTriangulator.Inner_BufferHelper> getSamples() {
+      return List.copyOf(this.samples);
    }
 
    public StrongholdTriangulator.Inner_BufferHelper lastThrow() {
-      return this.init_List.isEmpty() ? null : this.init_List.getLast();
+      return this.samples.isEmpty() ? null : this.samples.getLast();
    }
 
    public StrongholdTriangulator.Inner_DataUtil estimate() {
-      return this.init_cS_DataUtil != null ? this.init_cS_DataUtil : this.load_cS_DataUtil;
+      return this.solution != null ? this.solution : this.provisional;
    }
 
    public StrongholdRingEstimator.Inner_StreamUtil ringEstimate() {
-      return this.init_cS_DataUtil == null ? this.init_cT_StreamUtil : null;
+      return this.solution == null ? this.ringEstimate : null;
    }
 
    public int throwCount() {
-      return this.init_List.size();
+      return this.samples.size();
    }
 
    public void configure(boolean enabled, boolean legacy) {
-      if (this.init_Z != enabled || this.load_Z != legacy) {
-         this.init_Z = enabled;
-         this.load_Z = legacy;
-         this.init_cT_StreamUtil = null;
-         this.load_cS_DataUtil = null;
+      if (this.enabled != enabled || this.legacy != legacy) {
+         this.enabled = enabled;
+         this.legacy = legacy;
+         this.ringEstimate = null;
+         this.provisional = null;
          this.load();
       }
    }
 
    private void load() {
-      if (this.init_Z && this.init_cS_DataUtil == null) {
-         StrongholdRingEstimator.Inner_StreamUtil fresh = StrongholdRingEstimator.init(this.init_List, this.load_Z);
+      if (this.enabled && this.solution == null) {
+         StrongholdRingEstimator.Inner_StreamUtil fresh = StrongholdRingEstimator.init(this.samples, this.legacy);
          if (fresh == null) {
-            if (this.load_cS_DataUtil != null
+            if (this.provisional != null
                && this.lastThrow() != null
-               && init_Z_Vec3_cS_BufferHelper(this.load_cS_DataUtil.init_Vec3, this.lastThrow())) {
+               && init_Z_Vec3_cS_BufferHelper(this.provisional.position, this.lastThrow())) {
                return;
             }
 
-            if (this.init_List.size() > 1) {
+            if (this.samples.size() > 1) {
                StrongholdTriangulator.Inner_BufferHelper last = this.lastThrow();
-               fresh = StrongholdRingEstimator.init(last, this.load_Z);
+               fresh = StrongholdRingEstimator.init(last, this.legacy);
                if (fresh != null) {
-                  this.init_List.clear();
-                  this.init_List.add(last);
+                  this.samples.clear();
+                  this.samples.add(last);
                }
             }
          }
 
-         this.init_cT_StreamUtil = fresh;
-         this.load_cS_DataUtil = this.init_cT_StreamUtil == null
+         this.ringEstimate = fresh;
+         this.provisional = this.ringEstimate == null
             ? null
-            : new StrongholdTriangulator.Inner_DataUtil(this.init_cT_StreamUtil.center(), this.init_cT_StreamUtil.uncertainty());
+            : new StrongholdTriangulator.Inner_DataUtil(this.ringEstimate.center(), this.ringEstimate.uncertainty());
       } else {
-         this.init_cT_StreamUtil = null;
-         this.load_cS_DataUtil = null;
+         this.ringEstimate = null;
+         this.provisional = null;
       }
    }
 
-   public void init_V() {
-      this.init_List.clear();
-      this.init_cS_DataUtil = this.load_cS_DataUtil = null;
-      this.init_cT_StreamUtil = null;
+   public void reset() {
+      this.samples.clear();
+      this.solution = this.provisional = null;
+      this.ringEstimate = null;
    }
 
    public boolean addThrow(Vec3 origin, Vec3 travel) {
@@ -95,43 +95,43 @@ public final class StrongholdTriangulator {
          }
 
          StrongholdTriangulator.Inner_BufferHelper ray = new StrongholdTriangulator.Inner_BufferHelper(origin, new Vec3(travel.x / length, 0.0, travel.z / length));
-         StrongholdTriangulator.Inner_DataUtil previous = this.init_cS_DataUtil;
-         if (previous != null && !init_Z_Vec3_cS_BufferHelper(previous.init_Vec3, ray)) {
-            this.init_List.clear();
-            this.init_cS_DataUtil = null;
+         StrongholdTriangulator.Inner_DataUtil previous = this.solution;
+         if (previous != null && !init_Z_Vec3_cS_BufferHelper(previous.position, ray)) {
+            this.samples.clear();
+            this.solution = null;
             previous = null;
          }
 
-         if (!this.init_List.isEmpty() && horizontalDistance(origin, this.init_List.getLast().init) < 8.0) {
-            this.init_List.removeLast();
+         if (!this.samples.isEmpty() && horizontalDistance(origin, this.samples.getLast().init) < 8.0) {
+            this.samples.removeLast();
          }
 
-         this.init_List.add(ray);
-         if (this.init_List.size() > 8) {
-            this.init_List.removeFirst();
+         this.samples.add(ray);
+         if (this.samples.size() > 8) {
+            this.samples.removeFirst();
          }
 
-         this.init_cS_DataUtil = init_cS_DataUtil_List(this.init_List);
-         if (this.init_cS_DataUtil == null && previous != null) {
+         this.solution = triangulate(this.samples);
+         if (this.solution == null && previous != null) {
             boolean agrees = true;
 
-            for (StrongholdTriangulator.Inner_BufferHelper r : this.init_List) {
-               if (!init_Z_Vec3_cS_BufferHelper(previous.init_Vec3, r)) {
+            for (StrongholdTriangulator.Inner_BufferHelper r : this.samples) {
+               if (!init_Z_Vec3_cS_BufferHelper(previous.position, r)) {
                   agrees = false;
                   break;
                }
             }
 
             if (agrees) {
-               this.init_cS_DataUtil = previous;
+               this.solution = previous;
             }
          }
 
-         if (this.init_cS_DataUtil == null && this.init_List.size() >= 3) {
-            List<StrongholdTriangulator.Inner_BufferHelper> fresh = List.of(this.init_List.get(this.init_List.size() - 2), this.init_List.getLast());
-            if (init_cS_DataUtil_List(fresh) != null) {
-               this.init_List.clear();
-               this.init_List.add(ray);
+         if (this.solution == null && this.samples.size() >= 3) {
+            List<StrongholdTriangulator.Inner_BufferHelper> fresh = List.of(this.samples.get(this.samples.size() - 2), this.samples.getLast());
+            if (triangulate(fresh) != null) {
+               this.samples.clear();
+               this.samples.add(ray);
             }
          }
 
@@ -142,7 +142,7 @@ public final class StrongholdTriangulator {
       }
    }
 
-   private static StrongholdTriangulator.Inner_DataUtil init_cS_DataUtil_List(List<StrongholdTriangulator.Inner_BufferHelper> rays) {
+   private static StrongholdTriangulator.Inner_DataUtil triangulate(List<StrongholdTriangulator.Inner_BufferHelper> rays) {
       if (rays.size() < 2) {
          return null;
       }
@@ -191,7 +191,7 @@ public final class StrongholdTriangulator {
    public Vec3 destinationFor(Vec3 player) {
       StrongholdTriangulator.Inner_DataUtil destination = this.estimate();
       if (destination != null) {
-         return new Vec3(destination.init_Vec3.x, player.y, destination.init_Vec3.z);
+         return new Vec3(destination.position.x, player.y, destination.position.z);
       }
 
       StrongholdTriangulator.Inner_BufferHelper ray = this.lastThrow();
@@ -272,38 +272,38 @@ public final class StrongholdTriangulator {
    public record Inner_CachePool(BlockPos pos, Direction facing) {
    }
 
-   public record Inner_DataUtil(Vec3 init_Vec3, double uncertainty) {
+   public record Inner_DataUtil(Vec3 position, double uncertainty) {
    }
 
    public static final class Inner_StreamUtil {
-      private final Vec3 init_Vec3;
-      private Vec3 load_Vec3;
+      private final Vec3 origin;
+      private Vec3 last;
       private Vec3 read_Vec3;
-      private double init_D;
-      private double load_D;
-      private double read_D;
+      private double sumX;
+      private double sumZ;
+      private double sumXX;
       private double write;
       private double update;
-      private int init_I;
+      private int count;
       private boolean init_Z;
       private boolean load_Z;
 
       public Inner_StreamUtil(Vec3 origin) {
-         this.init_Vec3 = origin;
-         this.load_Vec3 = origin;
+         this.origin = origin;
+         this.last = origin;
          this.init_Z = !StrongholdTriangulator.isValidPoint(origin);
       }
 
       public StrongholdTriangulator.Inner_BufferHelper init(Vec3 at, int age) {
          if (!this.init_Z && !this.load_Z && age <= 60 && StrongholdTriangulator.isValidPoint(at)) {
-            if (at.distanceToSqr(this.load_Vec3) > 9.0) {
+            if (at.distanceToSqr(this.last) > 9.0) {
                this.init_Z = true;
                return null;
             }
 
-            Vec3 travel = at.subtract(this.init_Vec3);
+            Vec3 travel = at.subtract(this.origin);
             double length = travel.horizontalDistance();
-            if (!(length > 16.0) && !(length + 0.2 < this.load_Vec3.subtract(this.init_Vec3).horizontalDistance())) {
+            if (!(length > 16.0) && !(length + 0.2 < this.last.subtract(this.origin).horizontalDistance())) {
                if (length >= 0.5) {
                   Vec3 direction = new Vec3(travel.x / length, 0.0, travel.z / length);
                   if (this.read_Vec3 == null) {
@@ -314,31 +314,31 @@ public final class StrongholdTriangulator {
                   }
                }
 
-               this.load_Vec3 = at;
+               this.last = at;
                if (length < 0.1) {
                   return null;
                }
 
-               this.init_I++;
-               this.init_D = this.init_D + travel.x;
-               this.load_D = this.load_D + travel.z;
-               this.read_D = this.read_D + travel.x * travel.x;
+               this.count++;
+               this.sumX = this.sumX + travel.x;
+               this.sumZ = this.sumZ + travel.z;
+               this.sumXX = this.sumXX + travel.x * travel.x;
                this.write = this.write + travel.z * travel.z;
                this.update = this.update + travel.x * travel.z;
-               if (!(length < 8.0) && this.init_I >= 6) {
-                  double xx = this.read_D - this.init_D * this.init_D / this.init_I;
-                  double zz = this.write - this.load_D * this.load_D / this.init_I;
-                  double xz = this.update - this.init_D * this.load_D / this.init_I;
+               if (!(length < 8.0) && this.count >= 6) {
+                  double xx = this.sumXX - this.sumX * this.sumX / this.count;
+                  double zz = this.write - this.sumZ * this.sumZ / this.count;
+                  double xz = this.update - this.sumX * this.sumZ / this.count;
                   double angle = 0.5 * Math.atan2(2.0 * xz, xx - zz);
                   double x = Math.cos(angle);
                   double z = Math.sin(angle);
-                  if (x * this.init_D + z * this.load_D < 0.0) {
+                  if (x * this.sumX + z * this.sumZ < 0.0) {
                      x = -x;
                      z = -z;
                   }
 
                   this.load_Z = true;
-                  return new StrongholdTriangulator.Inner_BufferHelper(this.init_Vec3, new Vec3(x, 0.0, z));
+                  return new StrongholdTriangulator.Inner_BufferHelper(this.origin, new Vec3(x, 0.0, z));
                } else {
                   return null;
                }

@@ -96,7 +96,7 @@ final class AiRedstone {
                            }
 
                            if (this.init_AiOperation == null) {
-                              this.init_AiOperation = AiGoto.approachBlockCompat(pos, Math.min(120, this.init_I_25()));
+                              this.init_AiOperation = AiGoto.approachBlockCompat(pos, Math.min(120, this.secondsLeft()));
                            }
 
                            AiOperation.Result legResult = this.init_AiOperation.tick();
@@ -154,7 +154,7 @@ final class AiRedstone {
                   }
                }
 
-               int init_I_25() {
+               int secondsLeft() {
                   return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
                }
 

@@ -185,7 +185,7 @@ public class LookAtBlockAction implements MacroAction {
             var10000 = "(" + this.blockX + ", " + this.blockY + ", " + this.blockZ + ")";
             break;
          case BLOCK:
-            var10000 = this.init_Str_5();
+            var10000 = this.blockLabel();
             break;
          case ENTITY:
             var10000 = this.load();
@@ -304,7 +304,7 @@ public class LookAtBlockAction implements MacroAction {
       return typeIds.contains(typeId);
    }
 
-   private String init_Str_5() {
+   private String blockLabel() {
       if (this.blockIds.isEmpty()) {
          return "Block (none)";
       }

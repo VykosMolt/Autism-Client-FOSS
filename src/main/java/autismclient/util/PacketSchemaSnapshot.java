@@ -37,11 +37,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 public record PacketSchemaSnapshot(
-   Packet<?> init_Packet, PacketSchemaRegistry.Inner_StreamUtil schema, List<PacketFieldSnapshot> fields, boolean init_Z, boolean load_Z, String status, String fallbackNote
+   Packet<?> packet, PacketSchemaRegistry.Inner_StreamUtil schema, List<PacketFieldSnapshot> fields, boolean init_Z, boolean load_Z, String status, String fallbackNote
 ) {
    private static final int init_I = 12;
-   private static final int load_I = 220;
-   private static final Object init_Obj = new Object();
+   private static final int MAX_VALUE_LENGTH = 220;
+   private static final Object UNREADABLE = new Object();
 
    public PacketSchemaSnapshot {
       fields = fields == null ? List.of() : List.copyOf(fields);
@@ -73,7 +73,7 @@ public record PacketSchemaSnapshot(
 
          for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
             Object value = init(packet, field.name());
-            boolean readable = value != init_Obj;
+            boolean readable = value != UNREADABLE;
             if (!readable) {
                allReadable = false;
             }
@@ -96,7 +96,7 @@ public record PacketSchemaSnapshot(
       }
    }
 
-   public Optional<PacketFieldSnapshot> init_Optional_Str(String name) {
+   public Optional<PacketFieldSnapshot> field(String name) {
       if (name != null && !name.isBlank()) {
          for (PacketFieldSnapshot field : this.fields) {
             if (field.name().equals(name)) {
@@ -112,7 +112,7 @@ public record PacketSchemaSnapshot(
 
    private static Object init(Object target, String name) {
       if (target != null && name != null && !name.isBlank()) {
-         for (String methodName : init_List_Str(name)) {
+         for (String methodName : accessorNames(name)) {
             try {
                Method method = target.getClass().getMethod(methodName);
                if (method.getParameterCount() == 0 && !Modifier.isStatic(method.getModifiers())) {
@@ -134,13 +134,13 @@ public record PacketSchemaSnapshot(
             }
          }
 
-         return init_Obj;
+         return UNREADABLE;
       } else {
-         return init_Obj;
+         return UNREADABLE;
       }
    }
 
-   private static List<String> init_List_Str(String name) {
+   private static List<String> accessorNames(String name) {
       String capitalized = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1);
       return List.of(name, "get" + capitalized, "is" + capitalized);
    }
@@ -150,7 +150,7 @@ public record PacketSchemaSnapshot(
       if (packet.getClass().isRecord()) {
          for (RecordComponent component : packet.getClass().getRecordComponents()) {
             String type = component.getGenericType().getTypeName();
-            fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(component.getName(), type, init_Str_Str(type), init_Z_Str(init_Str_Str(type))));
+            fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(component.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
          }
       } else {
          List<Field> fields = new ArrayList<>();
@@ -169,7 +169,7 @@ public record PacketSchemaSnapshot(
          for (Field field : fields) {
             if (seen.add(field.getName())) {
                String type = field.getGenericType().getTypeName();
-               fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(field.getName(), type, init_Str_Str(type), init_Z_Str(init_Str_Str(type))));
+               fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(field.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
             }
          }
       }
@@ -178,7 +178,7 @@ public record PacketSchemaSnapshot(
 
       for (PacketSchemaRegistry.Inner_DataUtil field : fieldSchemas) {
          Object value = init(packet, field.name());
-         boolean readable = value != init_Obj;
+         boolean readable = value != UNREADABLE;
          values.add(
             new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
          );
@@ -187,7 +187,7 @@ public record PacketSchemaSnapshot(
       return values;
    }
 
-   private static String init_Str_Str(String type) {
+   private static String schemaKind(String type) {
       if (type == null) {
          return "object";
       } else {
@@ -226,7 +226,7 @@ public record PacketSchemaSnapshot(
       }
    }
 
-   private static boolean init_Z_Str(String kind) {
+   private static boolean isScalarKind(String kind) {
       return Set.of("number", "boolean", "string", "identifier", "enum", "uuid").contains(kind);
    }
 
@@ -256,11 +256,11 @@ public record PacketSchemaSnapshot(
       } else if (value instanceof Component component) {
          lines.add(load(component.getString()));
       } else if (value instanceof ItemStack stack) {
-         lines.add(init_Str_ItemStack(stack));
+         lines.add(describeStack(stack));
       } else if (value instanceof HashedStack hashedStack) {
-         lines.add(init_Str_HashedStack(hashedStack));
+         lines.add(describeHashedStack(hashedStack));
       } else if (value instanceof Holder<?> holder) {
-         lines.add(init_Str_Holder(holder));
+         lines.add(describeHolder(holder));
       } else if (value instanceof BlockPos pos) {
          lines.add("x=" + pos.getX() + ", y=" + pos.getY() + ", z=" + pos.getZ());
       } else if (value instanceof ChunkPos pos) {
@@ -270,13 +270,13 @@ public record PacketSchemaSnapshot(
       } else if (value instanceof PositionMoveRotation movement) {
          lines.add(
             "position="
-               + init_Str_Vec3(movement.position())
+               + formatVec3(movement.position())
                + ", delta="
-               + init_Str_Vec3(movement.deltaMovement())
+               + formatVec3(movement.deltaMovement())
                + ", yaw="
-               + init_Str_F(movement.yRot())
+               + formatFloat(movement.yRot())
                + ", pitch="
-               + init_Str_F(movement.xRot())
+               + formatFloat(movement.xRot())
          );
       } else if (value instanceof Optional<?> optional) {
          if (optional.isEmpty()) {
@@ -356,7 +356,7 @@ public record PacketSchemaSnapshot(
       return lines.isEmpty() ? "null" : lines.getFirst();
    }
 
-   private static String init_Str_ItemStack(ItemStack stack) {
+   private static String describeStack(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          String itemId;
          try {
@@ -396,17 +396,17 @@ public record PacketSchemaSnapshot(
       }
    }
 
-   private static String init_Str_HashedStack(HashedStack stack) {
+   private static String describeHashedStack(HashedStack stack) {
       if (stack != null && stack != HashedStack.EMPTY) {
          return stack instanceof ActualItem actual
-            ? init_Str_Holder(actual.item()) + " x" + actual.count() + " hashedComponents=" + read(String.valueOf(actual.components()))
+            ? describeHolder(actual.item()) + " x" + actual.count() + " hashedComponents=" + read(String.valueOf(actual.components()))
             : read(String.valueOf(stack));
       } else {
          return "empty";
       }
    }
 
-   private static String init_Str_Holder(Holder<?> holder) {
+   private static String describeHolder(Holder<?> holder) {
       if (holder == null) {
          return "null";
       }
@@ -440,11 +440,11 @@ public record PacketSchemaSnapshot(
       }
    }
 
-   private static String init_Str_Vec3(Vec3 vec) {
+   private static String formatVec3(Vec3 vec) {
       return vec == null ? "null" : String.format(Locale.ROOT, "(%.5f, %.5f, %.5f)", vec.x, vec.y, vec.z);
    }
 
-   private static String init_Str_F(float value) {
+   private static String formatFloat(float value) {
       return String.format(Locale.ROOT, "%.4f", value);
    }
 
@@ -462,7 +462,7 @@ public record PacketSchemaSnapshot(
    }
 
    public boolean init_Z() {
-      return this.init_Packet instanceof ServerboundMovePlayerPacket;
+      return this.packet instanceof ServerboundMovePlayerPacket;
    }
 
    public boolean load_Z() {

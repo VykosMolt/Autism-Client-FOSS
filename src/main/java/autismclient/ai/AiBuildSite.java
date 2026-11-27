@@ -30,34 +30,34 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class AiBuildSite {
-   private static final int init_I = 21;
-   private static final int load_I = 1048576;
-   private static final long init_J = 2097151L;
-   private static final int read_I = 0;
-   private static final int write_I = 21;
-   private static final int update_I = 42;
+   private static final int DELTA_BITS = 21;
+   private static final int DELTA_BIAS = 1048576;
+   private static final long DELTA_MASK = 2097151L;
+   private static final int Z_SHIFT = 0;
+   private static final int Y_SHIFT = 21;
+   private static final int X_SHIFT = 42;
    private static final int sync_I = 4096;
    private static final int flush_I = 4095;
    private static final int close_I = 4;
    private static final int open = 4096;
    private static final int poll = 8192;
    private static final int push = 8;
-   private static final AiBuildSite.Inner_CachePool[] init_IoWorker_CachePoolArr = AiBuildSite.Inner_CachePool.values();
-   private static final Direction[] init_DirectionArr = Direction.values();
-   private static final int[] init_IArr = new int[0];
-   private final AiBuilder.Blueprint init_TableIndex_DataUti;
-   private final Map<String, List<String>> init_Map;
-   private final LevelReader init_LevelReader;
+   private static final AiBuildSite.Inner_CachePool[] KINDS = AiBuildSite.Inner_CachePool.values();
+   private static final Direction[] DIRECTIONS = Direction.values();
+   private static final int[] EMPTY_INTS = new int[0];
+   private final AiBuilder.Blueprint blueprint;
+   private final Map<String, List<String>> substitutes;
+   private final LevelReader world;
    private final int pop;
-   private final BlockPos init_BlockPos;
+   private final BlockPos origin;
    private final int tick;
    private final int run;
    private final int get;
-   private final AiBuilder.CellSpec[] init_TableIndex_StreamUArr;
-   private final long[] init_JArr;
-   private final long[] load_JArr;
-   private final byte[] init_BArr;
-   private final Item[] init_ItemArr;
+   private final AiBuilder.CellSpec[] specs;
+   private final long[] deltas;
+   private final long[] positions;
+   private final byte[] kindOrdinals;
+   private final Item[] items;
    private final byte[] load_BArr;
    private final int[] load_IArr;
    private final BitSet init_BitSet;
@@ -66,24 +66,24 @@ final class AiBuildSite {
    private final int[] read_IArr;
    private final BitSet read_BitSet;
    private int set;
-   private final long[] write_JArr;
-   private final int[] write_IArr;
-   private final int[] update_IArr;
-   private final int[] sync_IArr;
+   private final long[] sortedKeys;
+   private final int[] byPosition;
+   private final int[] indexByRank;
+   private final int[] rankByIndex;
    private final Map<Long, int[]> load_Map;
-   private final BitSet write_BitSet;
-   private final BitSet update_BitSet;
-   private final BitSet sync_BitSet;
+   private final BitSet pending;
+   private final BitSet placed;
+   private final BitSet failed;
    private final BitSet flush_BitSet;
-   private final int[] flush_IArr;
+   private final int[] observedIndices;
    private int put;
    private int add;
    private int clear;
-   private Map<Integer, String> read_Map;
+   private Map<Integer, String> failureReasons;
    private List<Long> init_List;
    private Set<Long> init_Set;
    private Set<Long> load_Set;
-   private int[] close_IArr = init_IArr;
+   private int[] close_IArr = EMPTY_INTS;
    private int reset;
    private int start;
    private int stop = -1;
@@ -91,7 +91,7 @@ final class AiBuildSite {
    private Map<String, Integer> write_Map = Map.of();
    private int prev = 8;
    private static final double init_D = 8.0;
-   private static final BlockPos[] init_BlockPosArr = new BlockPos[0];
+   private static final BlockPos[] EMPTY_POSITIONS = new BlockPos[0];
 
    AiBuildSite(AiBuilder.Blueprint blueprint, Map<String, List<String>> substitutes) {
       this(blueprint, substitutes, null);
@@ -102,25 +102,25 @@ final class AiBuildSite {
          throw new IllegalArgumentException("A build site needs a blueprint");
       }
 
-      this.init_TableIndex_DataUti = blueprint;
-      this.init_Map = substitutes == null ? Map.of() : substitutes;
-      this.init_LevelReader = world;
+      this.blueprint = blueprint;
+      this.substitutes = substitutes == null ? Map.of() : substitutes;
+      this.world = world;
       List<AiBuilder.CellSpec> input = blueprint.cells();
       this.pop = input.size();
-      this.init_BlockPos = blueprint.origin();
-      this.tick = this.init_BlockPos.getX();
-      this.run = this.init_BlockPos.getY();
-      this.get = this.init_BlockPos.getZ();
-      this.init_TableIndex_StreamUArr = new AiBuilder.CellSpec[this.pop];
-      this.init_JArr = new long[this.pop];
-      this.load_JArr = new long[this.pop];
-      this.init_BArr = new byte[this.pop];
-      this.init_ItemArr = new Item[this.pop];
+      this.origin = blueprint.origin();
+      this.tick = this.origin.getX();
+      this.run = this.origin.getY();
+      this.get = this.origin.getZ();
+      this.specs = new AiBuilder.CellSpec[this.pop];
+      this.deltas = new long[this.pop];
+      this.positions = new long[this.pop];
+      this.kindOrdinals = new byte[this.pop];
+      this.items = new Item[this.pop];
       this.load_BArr = new byte[this.pop];
       this.load_IArr = new int[this.pop];
-      this.write_BitSet = new BitSet(this.pop);
-      this.update_BitSet = new BitSet(this.pop);
-      this.sync_BitSet = new BitSet(this.pop);
+      this.pending = new BitSet(this.pop);
+      this.placed = new BitSet(this.pop);
+      this.failed = new BitSet(this.pop);
       this.flush_BitSet = new BitSet(this.pop);
       this.init_BitSet = new BitSet(this.pop);
       this.read_BitSet = new BitSet(this.pop);
@@ -130,9 +130,9 @@ final class AiBuildSite {
 
       for (int i = 0; i < this.pop; i++) {
          AiBuilder.CellSpec cell = input.get(i);
-         this.init_TableIndex_StreamUArr[i] = cell;
-         this.init_JArr[i] = load_J_I(cell.dx(), cell.dy(), cell.dz());
-         this.load_JArr[i] = BlockPos.asLong(this.tick + cell.dx(), this.run + cell.dy(), this.get + cell.dz());
+         this.specs[i] = cell;
+         this.deltas[i] = packDelta(cell.dx(), cell.dy(), cell.dz());
+         this.positions[i] = BlockPos.asLong(this.tick + cell.dx(), this.run + cell.dy(), this.get + cell.dz());
          AiBuildSite.Inner_DataUtil entry = classified.computeIfAbsent(cell.block(), ignored -> new HashMap<>()).get(cell.properties());
          if (entry == null) {
             boolean standable = false;
@@ -143,7 +143,7 @@ final class AiBuildSite {
             try {
                kind = AiBuildIntent.kindOf(cell);
                item = AiBuildIntent.itemFor(cell, kind);
-               dependencies = init_B_TableIndex_StreamU_IoWorker_CachePool(cell, kind);
+               dependencies = offsetMask(cell, kind);
                standable = init_Z_TableIndex_StreamU(cell);
             } catch (RuntimeException unknown) {
                if (classificationFailures++ == 0) {
@@ -159,17 +159,17 @@ final class AiBuildSite {
             classified.get(cell.block()).put(cell.properties(), entry);
          }
 
-         this.init_BArr[i] = entry.kindOrdinal();
-         this.init_ItemArr[i] = entry.item();
+         this.kindOrdinals[i] = entry.kindOrdinal();
+         this.items[i] = entry.item();
          this.load_BArr[i] = entry.dependencies();
          if (entry.standable()) {
             this.init_BitSet.set(i);
          }
 
-         boolean placeable = this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.DERIVED.ordinal()
-            && this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.SKIP.ordinal();
+         boolean placeable = this.kindOrdinals[i] != (byte)AiBuildSite.Inner_CachePool.DERIVED.ordinal()
+            && this.kindOrdinals[i] != (byte)AiBuildSite.Inner_CachePool.SKIP.ordinal();
          if (placeable) {
-            this.write_BitSet.set(i);
+            this.pending.set(i);
             this.put++;
             if (AiBuilder.isFlowingFluidCell(cell)) {
                this.flush_BitSet.set(i);
@@ -178,7 +178,7 @@ final class AiBuildSite {
          }
       }
 
-      this.flush_IArr = observedIndices.init_IArr();
+      this.observedIndices = observedIndices.toArray();
       int[] byPosition = new int[this.pop];
       int i = 0;
 
@@ -186,12 +186,12 @@ final class AiBuildSite {
          byPosition[i] = i++;
       }
 
-      this.init_V_IArr(byPosition);
-      this.write_IArr = byPosition;
-      this.write_JArr = new long[this.pop];
+      this.mergeSort(byPosition);
+      this.byPosition = byPosition;
+      this.sortedKeys = new long[this.pop];
 
       for (int rank = 0; rank < this.pop; rank++) {
-         this.write_JArr[rank] = this.load_JArr[byPosition[rank]];
+         this.sortedKeys[rank] = this.positions[byPosition[rank]];
       }
 
       this.load_BitSet = new BitSet(this.pop);
@@ -207,34 +207,34 @@ final class AiBuildSite {
       int at = 0;
 
       for (int rank = 0; rank < this.pop && at < i; rank++) {
-         int index = this.write_IArr[rank];
+         int index = this.byPosition[rank];
          if (this.load_BitSet.get(index)) {
-            this.read_JArr[at++] = this.load_JArr[index];
+            this.read_JArr[at++] = this.positions[index];
          }
       }
 
       this.read_V();
       this.load_Map = this.load_Map();
-      int[] ordered = this.read_IArr();
-      this.update_IArr = this.init_IArr_IArr(ordered);
-      this.sync_IArr = new int[this.pop];
+      int[] ordered = this.buildSweepOrder();
+      this.indexByRank = this.init_IArr_IArr(ordered);
+      this.rankByIndex = new int[this.pop];
       int rank = 0;
 
       while (rank < this.pop) {
-         this.sync_IArr[this.update_IArr[rank]] = rank++;
+         this.rankByIndex[this.indexByRank[rank]] = rank++;
       }
 
       this.read_IArr = new int[i];
       rank = 0;
 
       for (int rankx = 0; rankx < this.pop && rank < i; rankx++) {
-         int index = this.update_IArr[rankx];
+         int index = this.indexByRank[rankx];
          if (this.load_BitSet.get(index)) {
             this.read_IArr[rank++] = index;
          }
       }
 
-      this.init_V();
+      this.advanceFirstPending();
    }
 
    static boolean init_Z_TableIndex_StreamU(AiBuilder.CellSpec cell) {
@@ -275,62 +275,62 @@ final class AiBuildSite {
       return this.pop;
    }
 
-   long init_J_I(int index) {
-      return this.load_JArr[index];
+   long posKeyAt(int index) {
+      return this.positions[index];
    }
 
-   BlockPos init_BlockPos_I(int index) {
-      return BlockPos.of(this.load_JArr[index]);
+   BlockPos posAt(int index) {
+      return BlockPos.of(this.positions[index]);
    }
 
-   AiBuilder.CellSpec init_TableIndex_StreamU_I(int index) {
-      return this.init_TableIndex_StreamUArr[index];
+   AiBuilder.CellSpec specAt(int index) {
+      return this.specs[index];
    }
 
-   AiBuildSite.Inner_CachePool init_IoWorker_CachePool_I(int index) {
-      return init_IoWorker_CachePoolArr[this.init_BArr[index] & 0xFF];
+   AiBuildSite.Inner_CachePool kindAt(int index) {
+      return KINDS[this.kindOrdinals[index] & 0xFF];
    }
 
-   Item init_Item_I(int index) {
-      return this.init_ItemArr[index];
+   Item itemAt(int index) {
+      return this.items[index];
    }
 
-   int init_I_I(int index) {
-      return read_I_J(this.init_JArr[index]);
+   int deltaYAt(int index) {
+      return unpackDy(this.deltas[index]);
    }
 
-   int load_I_I(int index) {
-      return this.sync_IArr[index];
+   int rankOf(int index) {
+      return this.rankByIndex[index];
    }
 
-   BlockPos init_BlockPos() {
-      return this.init_BlockPos;
+   BlockPos getOrigin() {
+      return this.origin;
    }
 
-   AiBuilder.Blueprint init_TableIndex_DataUti() {
-      return this.init_TableIndex_DataUti;
+   AiBuilder.Blueprint getBlueprint() {
+      return this.blueprint;
    }
 
-   Map<String, List<String>> init_Map() {
-      return this.init_Map;
+   Map<String, List<String>> getSubstitutes() {
+      return this.substitutes;
    }
 
-   int init_I_BlockPos(BlockPos position) {
-      return position == null ? -1 : this.init_I_J(position.asLong());
+   int indexOf(BlockPos position) {
+      return position == null ? -1 : this.indexOfKey(position.asLong());
    }
 
-   int init_I_J(long positionKey) {
+   int indexOfKey(long positionKey) {
       int low = 0;
       int high = this.pop - 1;
 
       while (low <= high) {
          int middle = low + high >>> 1;
-         long key = this.write_JArr[middle];
+         long key = this.sortedKeys[middle];
          if (key < positionKey) {
             low = middle + 1;
          } else {
             if (key <= positionKey) {
-               return this.write_IArr[middle];
+               return this.byPosition[middle];
             }
 
             high = middle - 1;
@@ -340,36 +340,36 @@ final class AiBuildSite {
       return -1;
    }
 
-   int read_I_I(int rank) {
-      return this.update_IArr[rank];
+   int indexAtRank(int rank) {
+      return this.indexByRank[rank];
    }
 
    int write_I_I(int index) {
       return this.load_IArr[index];
    }
 
-   AiBuilder.CellSpec load_TableIndex_StreamU_I(int index) {
-      return AiBuildIntent.unpoweredLever(this.init_TableIndex_StreamUArr[index]);
+   AiBuilder.CellSpec unpoweredLeverSpecAt(int index) {
+      return AiBuildIntent.unpoweredLever(this.specs[index]);
    }
 
-   boolean init_Z_I(int index) {
-      return AiBuildIntent.isPoweredLever(this.init_TableIndex_StreamUArr[index]);
+   boolean isPoweredLeverAt(int index) {
+      return AiBuildIntent.isPoweredLever(this.specs[index]);
    }
 
-   boolean load_Z_I(int index) {
-      return AiBuilder.isDoubleSlabCell(this.init_TableIndex_StreamUArr[index]);
+   boolean isDoubleSlabAt(int index) {
+      return AiBuilder.isDoubleSlabCell(this.specs[index]);
    }
 
    int update_I(int index) {
-      return this.flush_I(index);
+      return this.chestPartnerOf(index);
    }
 
-   boolean read_Z_I(int index) {
-      return this.flush_I(index) >= 0;
+   boolean hasChestPartner(int index) {
+      return this.chestPartnerOf(index) >= 0;
    }
 
    boolean write_Z_I(int index) {
-      AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(index);
+      AiBuildSite.Inner_CachePool kind = this.kindAt(index);
       return kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && !this.flush_BitSet.get(index);
    }
 
@@ -377,27 +377,27 @@ final class AiBuildSite {
       return this.flush_BitSet.get(index);
    }
 
-   int[] init_IArr() {
-      return this.flush_IArr;
+   int[] getObservedIndices() {
+      return this.observedIndices;
    }
 
-   int load_I() {
-      if (this.flush_IArr.length == 0) {
+   int reconcileObserved() {
+      if (this.observedIndices.length == 0) {
          return 0;
       }
 
-      LevelReader level = this.init_LevelReader();
+      LevelReader level = this.currentLevel();
       if (level == null) {
          return 0;
       }
 
       int reconciled = 0;
 
-      for (int index : this.flush_IArr) {
-         if (!this.update_BitSet.get(index)) {
-            BlockPos at = this.init_BlockPos_I(index);
+      for (int index : this.observedIndices) {
+         if (!this.placed.get(index)) {
+            BlockPos at = this.posAt(index);
             if (read(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
-               this.init_V_I(index);
+               this.markPlaced(index);
                reconciled++;
             }
          }
@@ -411,31 +411,31 @@ final class AiBuildSite {
          AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
 
          for (int i = 0; i < this.pop; i++) {
-            if (AiBuildIntent.isPoweredLever(this.init_TableIndex_StreamUArr[i])) {
+            if (AiBuildIntent.isPoweredLever(this.specs[i])) {
                found.init(i);
             }
          }
 
-         this.close_IArr = found.init_IArr();
+         this.close_IArr = found.toArray();
       }
 
       return this.close_IArr;
    }
 
    boolean sync_Z(int index) {
-      LevelReader level = this.init_LevelReader();
+      LevelReader level = this.currentLevel();
       if (level == null) {
-         return this.update_BitSet.get(index);
+         return this.placed.get(index);
       }
 
-      BlockPos at = this.init_BlockPos_I(index);
-      return read(level, at) && AiBuildIntent.init(this.init_TableIndex_StreamUArr[index], level.getBlockState(at));
+      BlockPos at = this.posAt(index);
+      return read(level, at) && AiBuildIntent.init(this.specs[index], level.getBlockState(at));
    }
 
-   int read_I() {
-      if (this.flush_IArr.length > 0 && --this.prev <= 0) {
+   int pendingCount() {
+      if (this.observedIndices.length > 0 && --this.prev <= 0) {
          this.prev = 8;
-         this.load_I();
+         this.reconcileObserved();
       }
 
       return this.put;
@@ -449,46 +449,46 @@ final class AiBuildSite {
       return this.clear;
    }
 
-   String init_Str_I(int index) {
-      return this.read_Map == null ? null : this.read_Map.get(index);
+   String failureReason(int index) {
+      return this.failureReasons == null ? null : this.failureReasons.get(index);
    }
 
-   private void init_V() {
-      while (this.reset < this.pop && !this.write_BitSet.get(this.update_IArr[this.reset])) {
+   private void advanceFirstPending() {
+      while (this.reset < this.pop && !this.pending.get(this.indexByRank[this.reset])) {
          this.reset++;
       }
    }
 
-   boolean flush_Z(int index) {
-      return this.write_BitSet.get(index);
+   boolean isPending(int index) {
+      return this.pending.get(index);
    }
 
-   boolean close_Z(int index) {
-      return this.update_BitSet.get(index);
+   boolean isPlaced(int index) {
+      return this.placed.get(index);
    }
 
-   boolean open_Z_I(int index) {
-      return this.sync_BitSet.get(index);
+   boolean isFailed(int index) {
+      return this.failed.get(index);
    }
 
-   boolean init_Z_J(long posKey) {
-      return this.init_I_J(posKey) >= 0;
+   boolean contains(long posKey) {
+      return this.indexOfKey(posKey) >= 0;
    }
 
-   LongPredicate init_LongPredicate() {
-      return this::init_Z_J;
+   LongPredicate containsPredicate() {
+      return this::contains;
    }
 
    long[] init_JArr() {
-      return this.write_JArr;
+      return this.sortedKeys;
    }
 
-   void init_V_I(int index) {
+   void markPlaced(int index) {
       if (index >= 0 && index < this.pop) {
-         boolean wasPending = this.write_BitSet.get(index);
-         boolean wasFailed = this.sync_BitSet.get(index);
-         this.write_BitSet.clear(index);
-         this.sync_BitSet.clear(index);
+         boolean wasPending = this.pending.get(index);
+         boolean wasFailed = this.failed.get(index);
+         this.pending.clear(index);
+         this.failed.clear(index);
          if (wasPending) {
             this.put--;
          }
@@ -497,79 +497,79 @@ final class AiBuildSite {
             this.clear--;
          }
 
-         if (!this.update_BitSet.get(index)) {
-            this.update_BitSet.set(index);
+         if (!this.placed.get(index)) {
+            this.placed.set(index);
             this.add++;
          }
 
-         if (this.read_Map != null) {
-            this.read_Map.remove(index);
+         if (this.failureReasons != null) {
+            this.failureReasons.remove(index);
          }
 
          this.start++;
          this.write_V_I(index);
          int partner = this.close_I(index);
-         if (partner >= 0 && !this.update_BitSet.get(partner)) {
+         if (partner >= 0 && !this.placed.get(partner)) {
             this.poll_Z_I(partner);
          }
       }
    }
 
-   void load_V_I(int index) {
+   void markPending(int index) {
       if (index >= 0 && index < this.pop) {
-         if (this.update_BitSet.get(index)) {
-            this.update_BitSet.clear(index);
+         if (this.placed.get(index)) {
+            this.placed.clear(index);
             this.add--;
          }
 
-         if (this.sync_BitSet.get(index)) {
-            this.sync_BitSet.clear(index);
+         if (this.failed.get(index)) {
+            this.failed.clear(index);
             this.clear--;
          }
 
-         if (!this.write_BitSet.get(index)) {
-            this.write_BitSet.set(index);
+         if (!this.pending.get(index)) {
+            this.pending.set(index);
             this.put++;
-            this.reset = Math.min(this.reset, this.sync_IArr[index]);
+            this.reset = Math.min(this.reset, this.rankByIndex[index]);
          }
 
          this.start++;
       }
    }
 
-   void init_V_I_Str(int index, String reason) {
+   void markFailed(int index, String reason) {
       if (index >= 0 && index < this.pop) {
-         if (this.update_BitSet.get(index)) {
-            this.update_BitSet.clear(index);
+         if (this.placed.get(index)) {
+            this.placed.clear(index);
             this.add--;
          }
 
-         if (this.write_BitSet.get(index)) {
-            this.write_BitSet.clear(index);
+         if (this.pending.get(index)) {
+            this.pending.clear(index);
             this.put--;
          }
 
-         if (!this.sync_BitSet.get(index)) {
-            this.sync_BitSet.set(index);
+         if (!this.failed.get(index)) {
+            this.failed.set(index);
             this.clear++;
          }
 
-         if (this.read_Map == null) {
-            this.read_Map = new LinkedHashMap<>();
+         if (this.failureReasons == null) {
+            this.failureReasons = new LinkedHashMap<>();
          }
 
-         this.read_Map.put(index, reason == null ? "failed" : reason);
+         this.failureReasons.put(index, reason == null ? "failed" : reason);
          this.start++;
-         this.init_V();
+         this.advanceFirstPending();
       }
    }
 
-   void read_V_I(int index) {
-      this.load_V_I(index);
+   void requeue(int index) {
+      this.markPending(index);
    }
 
    int sync() {
-      LevelReader level = this.init_LevelReader();
+      LevelReader level = this.currentLevel();
       if (level == null) {
          return 0;
       }
@@ -577,10 +577,10 @@ final class AiBuildSite {
       int adopted = 0;
 
       for (int i = 0; i < this.pop; i++) {
-         if (!this.update_BitSet.get(i)) {
-            BlockPos at = this.init_BlockPos_I(i);
+         if (!this.placed.get(i)) {
+            BlockPos at = this.posAt(i);
             if (read(level, at) && this.init_Z_I_BlockState(i, level.getBlockState(at))) {
-               this.init_V_I(i);
+               this.markPlaced(i);
                adopted++;
             }
          }
@@ -590,42 +590,42 @@ final class AiBuildSite {
    }
 
    boolean poll_Z_I(int index) {
-      LevelReader level = this.init_LevelReader();
+      LevelReader level = this.currentLevel();
       if (level == null) {
-         return this.update_BitSet.get(index);
+         return this.placed.get(index);
       }
 
-      BlockPos at = this.init_BlockPos_I(index);
+      BlockPos at = this.posAt(index);
       if (read(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
-         this.init_V_I(index);
+         this.markPlaced(index);
          return true;
       }
 
-      if (this.update_BitSet.get(index)) {
-         this.read_V_I(index);
+      if (this.placed.get(index)) {
+         this.requeue(index);
       }
 
       return false;
    }
 
-   boolean init_Z_BlockPos(BlockPos pos) {
-      LevelReader level = this.init_LevelReader();
+   boolean isOccupied(BlockPos pos) {
+      LevelReader level = this.currentLevel();
       return level != null && pos != null && read(level, pos) ? !level.getBlockState(pos).isAir() : false;
    }
 
    boolean push(int index) {
-      return this.init_Z_I_LevelReader(index, this.init_LevelReader());
+      return this.init_Z_I_LevelReader(index, this.currentLevel());
    }
 
    int[] init_IArr_Vec3(Vec3 eye, double radius, int max) {
       if (eye != null && max > 0 && this.pop != 0) {
-         int[] near = this.init_IArr_Vec3_D(eye, radius);
+         int[] near = this.indicesNear(eye, radius);
          if (near.length == 0) {
-            return init_IArr;
+            return EMPTY_INTS;
          }
 
-         this.init_V_IArr_I(near, near.length);
-         LevelReader level = this.init_LevelReader();
+         this.mergeSort(near, near.length);
+         LevelReader level = this.currentLevel();
          int[] answer = new int[Math.min(max, near.length)];
          int count = 0;
 
@@ -638,23 +638,23 @@ final class AiBuildSite {
             }
          }
 
-         return count == answer.length ? answer : (count == 0 ? init_IArr : Arrays.copyOf(answer, count));
+         return count == answer.length ? answer : (count == 0 ? EMPTY_INTS : Arrays.copyOf(answer, count));
       } else {
-         return init_IArr;
+         return EMPTY_INTS;
       }
    }
 
    int[] load_IArr_Vec3(Vec3 center, double radius, int max) {
       if (center != null && max > 0 && this.pop != 0) {
-         int[] near = this.init_IArr_Vec3_D(center, radius);
+         int[] near = this.indicesNear(center, radius);
          if (near.length == 0) {
-            return init_IArr;
+            return EMPTY_INTS;
          }
 
-         this.init_V_IArr_I(near, near.length);
+         this.mergeSort(near, near.length);
          return near.length <= max ? near : Arrays.copyOf(near, max);
       } else {
-         return init_IArr;
+         return EMPTY_INTS;
       }
    }
 
@@ -671,13 +671,13 @@ final class AiBuildSite {
       int limit = Math.min(this.pop, this.reset + 4096);
 
       for (int rank = this.reset; rank < limit && out.size() < max; rank++) {
-         int index = this.update_IArr[rank];
-         if (this.write_BitSet.get(index) && !this.flush_BitSet.get(index)) {
-            Item item = this.init_ItemArr[index];
+         int index = this.indexByRank[rank];
+         if (this.pending.get(index) && !this.flush_BitSet.get(index)) {
+            Item item = this.items[index];
             if (item != null && item != Items.AIR) {
                int cost;
                try {
-                  cost = AiBuilder.itemCountForCell(this.init_TableIndex_StreamUArr[index]);
+                  cost = AiBuilder.itemCountForCell(this.specs[index]);
                } catch (RuntimeException unknown) {
                   cost = 1;
                }
@@ -709,7 +709,7 @@ final class AiBuildSite {
          return this.init_List;
       }
 
-      LevelReader level = this.init_LevelReader();
+      LevelReader level = this.currentLevel();
       if (level == null) {
          this.init_List = List.of();
          return this.init_List;
@@ -719,17 +719,17 @@ final class AiBuildSite {
       int limit = Math.min(this.pop, this.reset + 8192);
 
       for (int rank = this.reset; rank < limit; rank++) {
-         int index = this.update_IArr[rank];
-         if (this.write_BitSet.get(index) && this.write_Z_I(index)) {
+         int index = this.indexByRank[rank];
+         if (this.pending.get(index) && this.write_Z_I(index)) {
             int mask = this.load_BArr[index] & 255;
             if (mask != 0) {
-               boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.FLUID;
-               BlockPos base = this.init_BlockPos_I(index);
+               boolean fluid = this.kindAt(index) == AiBuildSite.Inner_CachePool.FLUID;
+               BlockPos base = this.posAt(index);
 
-               for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
+               for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
                   if ((mask & 1 << ordinal) != 0) {
-                     BlockPos at = base.relative(init_DirectionArr[ordinal]);
-                     if (!this.init_Z_J(at.asLong())) {
+                     BlockPos at = base.relative(DIRECTIONS[ordinal]);
+                     if (!this.contains(at.asLong())) {
                         boolean held = fluid ? update(level, at) : write(level, at);
                         if (!held) {
                            out.add(at.asLong());
@@ -751,8 +751,8 @@ final class AiBuildSite {
 
    boolean tick(int index) {
       if (index >= 0 && index < this.pop) {
-         BlockPos at = BlockPos.of(this.load_JArr[index]).below();
-         int below = this.init_I_J(at.asLong());
+         BlockPos at = BlockPos.of(this.positions[index]).below();
+         int below = this.indexOfKey(at.asLong());
          return below >= 0 && this.init_BitSet.get(below);
       } else {
          return false;
@@ -761,10 +761,10 @@ final class AiBuildSite {
 
    boolean run(int index) {
       if (index >= 0 && index < this.pop) {
-         BlockPos at = BlockPos.of(this.load_JArr[index]);
-         return this.init_I_J(BlockPos.asLong(at.getX(), at.getY() + 1, at.getZ())) >= 0
+         BlockPos at = BlockPos.of(this.positions[index]);
+         return this.indexOfKey(BlockPos.asLong(at.getX(), at.getY() + 1, at.getZ())) >= 0
             ? false
-            : this.init_I_J(BlockPos.asLong(at.getX(), at.getY() + 2, at.getZ())) < 0;
+            : this.indexOfKey(BlockPos.asLong(at.getX(), at.getY() + 2, at.getZ())) < 0;
       } else {
          return false;
       }
@@ -780,7 +780,7 @@ final class AiBuildSite {
 
    int[] init_IArr_I_I(int fromIndex, int max) {
       if (max > 0 && this.read_IArr.length != 0) {
-         int lowerRank = fromIndex >= 0 && fromIndex < this.pop ? this.sync_IArr[fromIndex] : 0;
+         int lowerRank = fromIndex >= 0 && fromIndex < this.pop ? this.rankByIndex[fromIndex] : 0;
          int[] found = this.load_IArr_I_I(lowerRank, max);
          if (found.length == 0 && this.set < this.read_IArr.length) {
             this.load_V();
@@ -789,7 +789,7 @@ final class AiBuildSite {
 
          return found;
       } else {
-         return init_IArr;
+         return EMPTY_INTS;
       }
    }
 
@@ -800,7 +800,7 @@ final class AiBuildSite {
 
       while (low <= high) {
          int middle = low + high >>> 1;
-         if (this.sync_IArr[this.read_IArr[middle]] < lowerRank) {
+         if (this.rankByIndex[this.read_IArr[middle]] < lowerRank) {
             low = middle + 1;
          } else {
             start = middle;
@@ -811,14 +811,14 @@ final class AiBuildSite {
       AiBuildSite.Inner_StreamUtil out = new AiBuildSite.Inner_StreamUtil();
       int budget = Math.max(512, max * 64);
 
-      for (int at = start; at < this.read_IArr.length && out.init_I() < max && budget-- > 0; at++) {
+      for (int at = start; at < this.read_IArr.length && out.size() < max && budget-- > 0; at++) {
          int index = this.read_IArr[at];
-         if (this.write_BitSet.get(index) && !this.update_BitSet.get(index) && this.read_BitSet.get(index)) {
+         if (this.pending.get(index) && !this.placed.get(index) && this.read_BitSet.get(index)) {
             out.init(index);
          }
       }
 
-      return out.init_IArr();
+      return out.toArray();
    }
 
    private void load_V() {
@@ -826,18 +826,18 @@ final class AiBuildSite {
 
       while (this.set < this.read_IArr.length && budget-- > 0) {
          int index = this.read_IArr[this.set++];
-         if (this.write_BitSet.get(index) && !this.update_BitSet.get(index) && this.get(index)) {
+         if (this.pending.get(index) && !this.placed.get(index) && this.get(index)) {
             this.read_BitSet.set(index);
          }
       }
    }
 
    private boolean get(int index) {
-      BlockPos base = this.init_BlockPos_I(index);
+      BlockPos base = this.posAt(index);
 
-      for (Direction direction : init_DirectionArr) {
-         int other = this.init_I_J(base.relative(direction).asLong());
-         if (other >= 0 && this.update_BitSet.get(other)) {
+      for (Direction direction : DIRECTIONS) {
+         int other = this.indexOfKey(base.relative(direction).asLong());
+         if (other >= 0 && this.placed.get(other)) {
             return true;
          }
       }
@@ -846,36 +846,36 @@ final class AiBuildSite {
    }
 
    private void write_V_I(int index) {
-      BlockPos base = this.init_BlockPos_I(index);
+      BlockPos base = this.posAt(index);
 
-      for (Direction direction : init_DirectionArr) {
-         int other = this.init_I_J(base.relative(direction).asLong());
-         if (other >= 0 && !this.update_BitSet.get(other) && this.write_BitSet.get(other) && this.load_BitSet.get(other)) {
+      for (Direction direction : DIRECTIONS) {
+         int other = this.indexOfKey(base.relative(direction).asLong());
+         if (other >= 0 && !this.placed.get(other) && this.pending.get(other) && this.load_BitSet.get(other)) {
             this.read_BitSet.set(other);
          }
       }
    }
 
-   int[] init_IArr_BlockPos(BlockPos position) {
+   int[] neighborIndices(BlockPos position) {
       if (position == null) {
-         return init_IArr;
+         return EMPTY_INTS;
       }
 
-      int[] found = new int[init_DirectionArr.length];
+      int[] found = new int[DIRECTIONS.length];
       int count = 0;
 
-      for (Direction direction : init_DirectionArr) {
-         int other = this.init_I_J(position.relative(direction).asLong());
+      for (Direction direction : DIRECTIONS) {
+         int other = this.indexOfKey(position.relative(direction).asLong());
          if (other >= 0 && this.load_BitSet.get(other)) {
             found[count++] = other;
          }
       }
 
       if (count > 1) {
-         this.init_V_IArr_I(found, count);
+         this.mergeSort(found, count);
       }
 
-      return count == 0 ? init_IArr : (count == found.length ? found : Arrays.copyOf(found, count));
+      return count == 0 ? EMPTY_INTS : (count == found.length ? found : Arrays.copyOf(found, count));
    }
 
    Set<Long> load_Set() {
@@ -890,15 +890,15 @@ final class AiBuildSite {
       return this.read_JArr;
    }
 
-   boolean load_Z_BlockPos(BlockPos feet) {
-      LevelReader level = this.init_LevelReader();
+   boolean canStandAt(BlockPos feet) {
+      LevelReader level = this.currentLevel();
       if (level == null || feet == null) {
          return false;
       } else if (read(level, feet.below()) && read(level, feet) && read(level, feet.above())) {
-         return this.init_I_J(feet.asLong()) < 0 && this.init_I_J(feet.above().asLong()) < 0
+         return this.indexOfKey(feet.asLong()) < 0 && this.indexOfKey(feet.above().asLong()) < 0
             ? this.init_Z_LevelReader_BlockPos(level, feet.below())
-               && load_Z_LevelReader_BlockPos(level, feet)
-               && load_Z_LevelReader_BlockPos(level, feet.above())
+               && isPassable(level, feet)
+               && isPassable(level, feet.above())
             : false;
       } else {
          return false;
@@ -906,7 +906,7 @@ final class AiBuildSite {
    }
 
    private boolean init_Z_LevelReader_BlockPos(LevelReader level, BlockPos floorPos) {
-      int index = this.init_I_J(floorPos.asLong());
+      int index = this.indexOfKey(floorPos.asLong());
       if (index < 0) {
          BlockState state = level.getBlockState(floorPos);
          if (state.isAir() || state.canBeReplaced()) {
@@ -917,11 +917,11 @@ final class AiBuildSite {
             return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.LiveGridView.isFloorHazardCompat(state);
          }
       } else {
-         return this.update_BitSet.get(index) && this.init_BitSet.get(index);
+         return this.placed.get(index) && this.init_BitSet.get(index);
       }
    }
 
-   private static boolean load_Z_LevelReader_BlockPos(LevelReader level, BlockPos pos) {
+   private static boolean isPassable(LevelReader level, BlockPos pos) {
       BlockState state = level.getBlockState(pos);
       if (!state.getCollisionShape(level, pos).isEmpty()) {
          return false;
@@ -934,14 +934,14 @@ final class AiBuildSite {
 
    BlockPos[] init_BlockPosArr_Vec3(Vec3 center, double radius, int max) {
       if (center != null && max > 0 && this.pop != 0) {
-         LevelReader level = this.init_LevelReader();
+         LevelReader level = this.currentLevel();
          if (level == null) {
-            return init_BlockPosArr;
+            return EMPTY_POSITIONS;
          }
 
          double capped = Math.min(radius, 8.0);
          if (capped <= 0.0) {
-            return init_BlockPosArr;
+            return EMPTY_POSITIONS;
          }
 
          double radiusSq = capped * capped;
@@ -960,7 +960,7 @@ final class AiBuildSite {
                   double distance = Vec3.atBottomCenterOf(feet).distanceToSqr(center);
                   if (!(distance > radiusSq)
                      && (count != best.length || init_Z_D(distance, feet, bestDistance[count - 1], best[count - 1]))
-                     && this.load_Z_BlockPos(feet)) {
+                     && this.canStandAt(feet)) {
                      int at;
                      for (at = count < best.length ? count : best.length - 1; at > 0 && init_Z_D(distance, feet, bestDistance[at - 1], best[at - 1]); at--) {
                         best[at] = best[at - 1];
@@ -977,9 +977,9 @@ final class AiBuildSite {
             }
          }
 
-         return count == 0 ? init_BlockPosArr : Arrays.copyOf(best, count);
+         return count == 0 ? EMPTY_POSITIONS : Arrays.copyOf(best, count);
       } else {
-         return init_BlockPosArr;
+         return EMPTY_POSITIONS;
       }
    }
 
@@ -995,7 +995,7 @@ final class AiBuildSite {
       }
    }
 
-   private int[] read_IArr() {
+   private int[] buildSweepOrder() {
       int[] order = new int[this.pop];
       int i = 0;
 
@@ -1009,17 +1009,17 @@ final class AiBuildSite {
       for (int pass = 0; pass < 6; pass++) {
          for (int ix = 0; ix < this.pop; ix++) {
             int index = order[ix];
-            long delta = this.init_JArr[index];
+            long delta = this.deltas[index];
             int var12;
             switch (pass) {
                case 0:
-                  var12 = init_I_I_I(load_I_J(delta), write_I_J(delta));
+                  var12 = init_I_I_I(unpackDx(delta), unpackDz(delta));
                   break;
                case 1:
-                  var12 = poll_I_I(write_I_J(delta));
+                  var12 = poll_I_I(unpackDz(delta));
                   break;
                case 2:
-                  var12 = open_I_I(this.init_BArr[index] & 255);
+                  var12 = open_I_I(this.kindOrdinals[index] & 255);
                   break;
                case 3:
                   var12 = poll_I_I(this.load_IArr[index]);
@@ -1028,7 +1028,7 @@ final class AiBuildSite {
                   var12 = this.sync_I(index);
                   break;
                default:
-                  var12 = poll_I_I(read_I_J(delta));
+                  var12 = poll_I_I(unpackDy(delta));
             }
 
             field[ix] = var12;
@@ -1048,7 +1048,7 @@ final class AiBuildSite {
          }
 
          int range = var10000;
-         init_V_IArr(order, target, field, range);
+         countingSort(order, target, field, range);
          other = order;
          order = target;
       }
@@ -1073,7 +1073,7 @@ final class AiBuildSite {
 
       for (int rankx = 0; rankx < this.pop; rankx++) {
          int index = base[rankx];
-         AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(index);
+         AiBuildSite.Inner_CachePool kind = this.kindAt(index);
          if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
             int found = this.init_I_I(index, this.load_BArr[index] & 255, baseRank, 2147483647);
             if (found >= 0) {
@@ -1090,7 +1090,7 @@ final class AiBuildSite {
       for (int rankx = 0; rankx < this.pop; rankx++) {
          int index = base[rankx];
          if (provider[index] < 0) {
-            int sibling = this.flush_I(index);
+            int sibling = this.chestPartnerOf(index);
             if (sibling >= 0 && baseRank[sibling] < rankx) {
                provider[index] = sibling;
             }
@@ -1188,13 +1188,13 @@ final class AiBuildSite {
    private int init_I_I(int index, int mask, int[] baseRank, int ignore) {
       int best = -1;
       int bestRank = 2147483647;
-      BlockPos base = this.init_BlockPos_I(index);
+      BlockPos base = this.posAt(index);
 
-      for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
+      for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
          if ((mask & 1 << ordinal) != 0) {
-            int found = this.init_I_J(base.relative(init_DirectionArr[ordinal]).asLong());
+            int found = this.indexOfKey(base.relative(DIRECTIONS[ordinal]).asLong());
             if (found >= 0 && found != index) {
-               AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(found);
+               AiBuildSite.Inner_CachePool kind = this.kindAt(found);
                if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && found != ignore
                   )
                 {
@@ -1219,15 +1219,15 @@ final class AiBuildSite {
 
       int best = -1;
       int bestRank = 2147483647;
-      BlockPos base = this.init_BlockPos_I(index);
+      BlockPos base = this.posAt(index);
 
-      for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
+      for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
          if ((mask & 1 << ordinal) != 0) {
-            Direction direction = init_DirectionArr[ordinal];
+            Direction direction = DIRECTIONS[ordinal];
             if (direction.getAxis().isHorizontal()) {
-               int found = this.init_I_J(base.relative(direction).asLong());
+               int found = this.indexOfKey(base.relative(direction).asLong());
                if (found >= 0 && found != index) {
-                  AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(found);
+                  AiBuildSite.Inner_CachePool kind = this.kindAt(found);
                   if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP) {
                      int rank = baseRank[found];
                      if (rank < bestRank) {
@@ -1243,17 +1243,17 @@ final class AiBuildSite {
       return best;
    }
 
-   private int flush_I(int index) {
-      AiBuilder.CellSpec cell = this.init_TableIndex_StreamUArr[index];
+   private int chestPartnerOf(int index) {
+      AiBuilder.CellSpec cell = this.specs[index];
       String type = cell.properties().get("type");
       if (type != null && !type.equals("single") && cell.block().endsWith("chest")) {
          Direction side = AiBuilder.chestPartnerDirection(cell);
          if (side == null) {
             return -1;
          } else {
-            int sibling = this.init_I_J(this.init_BlockPos_I(index).relative(side).asLong());
+            int sibling = this.indexOfKey(this.posAt(index).relative(side).asLong());
             if (sibling >= 0 && sibling != index) {
-               return this.init_TableIndex_StreamUArr[sibling].block().equals(cell.block()) ? sibling : -1;
+               return this.specs[sibling].block().equals(cell.block()) ? sibling : -1;
             } else {
                return -1;
             }
@@ -1264,16 +1264,16 @@ final class AiBuildSite {
    }
 
    private int close_I(int index) {
-      int rank = this.sync_IArr[index];
+      int rank = this.rankByIndex[index];
       if (rank + 1 < this.pop) {
-         int next = this.update_IArr[rank + 1];
+         int next = this.indexByRank[rank + 1];
          if (this.init_Z_I_I(next, index)) {
             return next;
          }
       }
 
       if (rank > 0) {
-         int previous = this.update_IArr[rank - 1];
+         int previous = this.indexByRank[rank - 1];
          if (this.init_Z_I_I(index, previous)) {
             return previous;
          }
@@ -1287,25 +1287,25 @@ final class AiBuildSite {
          return false;
       }
 
-      if (this.init_IoWorker_CachePool_I(dependent) == AiBuildSite.Inner_CachePool.PARTNER) {
+      if (this.kindAt(dependent) == AiBuildSite.Inner_CachePool.PARTNER) {
          int mask = this.load_BArr[dependent] & 255;
-         BlockPos base = this.init_BlockPos_I(dependent);
+         BlockPos base = this.posAt(dependent);
 
-         for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
-            if ((mask & 1 << ordinal) != 0 && this.init_I_J(base.relative(init_DirectionArr[ordinal]).asLong()) == provider) {
+         for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
+            if ((mask & 1 << ordinal) != 0 && this.indexOfKey(base.relative(DIRECTIONS[ordinal]).asLong()) == provider) {
                return true;
             }
          }
 
          return false;
       } else {
-         return this.flush_I(dependent) == provider;
+         return this.chestPartnerOf(dependent) == provider;
       }
    }
 
    private static int open_I_I(int kindOrdinal) {
       byte var10000;
-      switch (init_IoWorker_CachePoolArr[kindOrdinal]) {
+      switch (KINDS[kindOrdinal]) {
          case SIMPLE:
          case INTERACT:
          case PARTNER:
@@ -1336,7 +1336,7 @@ final class AiBuildSite {
       return Math.clamp(value, 0, 4095);
    }
 
-   private static void init_V_IArr(int[] src, int[] dst, int[] field, int range) {
+   private static void countingSort(int[] src, int[] dst, int[] field, int range) {
       int[] counts = new int[range];
 
       for (int i = 0; i < src.length; i++) {
@@ -1357,7 +1357,7 @@ final class AiBuildSite {
       }
    }
 
-   private static byte init_B_TableIndex_StreamU_IoWorker_CachePool(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
+   private static byte offsetMask(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
       List<BlockPos> offsets = AiBuildIntent.offsetsFor(cell, kind);
       if (offsets.isEmpty()) {
          return 0;
@@ -1391,9 +1391,9 @@ final class AiBuildSite {
                }
 
                chain[length++] = current;
-               int belowY = this.run + read_I_J(this.init_JArr[current]) - 1;
-               long belowKey = BlockPos.asLong(this.tick + load_I_J(this.init_JArr[current]), belowY, this.get + write_I_J(this.init_JArr[current]));
-               int below = this.init_I_J(belowKey);
+               int belowY = this.run + unpackDy(this.deltas[current]) - 1;
+               long belowKey = BlockPos.asLong(this.tick + unpackDx(this.deltas[current]), belowY, this.get + unpackDz(this.deltas[current]));
+               int below = this.indexOfKey(belowKey);
                if (below < 0) {
                   base = 0;
                   break;
@@ -1424,25 +1424,25 @@ final class AiBuildSite {
       HashMap<Long, AiBuildSite.Inner_StreamUtil> grouped = new HashMap<>();
 
       for (int i = 0; i < this.pop; i++) {
-         long delta = this.init_JArr[i];
-         long key = init_J_I(this.tick + load_I_J(delta), this.run + read_I_J(delta), this.get + write_I_J(delta));
+         long delta = this.deltas[i];
+         long key = sectionKey(this.tick + unpackDx(delta), this.run + unpackDy(delta), this.get + unpackDz(delta));
          grouped.computeIfAbsent(key, ignored -> new AiBuildSite.Inner_StreamUtil()).init(i);
       }
 
       HashMap<Long, int[]> out = new HashMap<>(Math.max(16, grouped.size() * 2));
 
       for (Entry<Long, AiBuildSite.Inner_StreamUtil> entry : grouped.entrySet()) {
-         out.put(entry.getKey(), entry.getValue().init_IArr());
+         out.put(entry.getKey(), entry.getValue().toArray());
       }
 
       return out;
    }
 
-   private static long init_J_I(int x, int y, int z) {
+   private static long sectionKey(int x, int y, int z) {
       return BlockPos.asLong(x >> 4, y >> 4, z >> 4);
    }
 
-   private int[] init_IArr_Vec3_D(Vec3 center, double radius) {
+   private int[] indicesNear(Vec3 center, double radius) {
       AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
       double radiusSq = radius * radius;
       int minSectionX = (int)Math.floor(center.x - radius) >> 4;
@@ -1458,11 +1458,11 @@ final class AiBuildSite {
                int[] indices = this.load_Map.get(BlockPos.asLong(sectionX, sectionY, sectionZ));
                if (indices != null) {
                   for (int index : indices) {
-                     if (this.write_BitSet.get(index) && !this.flush_BitSet.get(index)) {
-                        long delta = this.init_JArr[index];
-                        double dx = this.tick + load_I_J(delta) + 0.5 - center.x;
-                        double dy = this.run + read_I_J(delta) + 0.5 - center.y;
-                        double dz = this.get + write_I_J(delta) + 0.5 - center.z;
+                     if (this.pending.get(index) && !this.flush_BitSet.get(index)) {
+                        long delta = this.deltas[index];
+                        double dx = this.tick + unpackDx(delta) + 0.5 - center.x;
+                        double dy = this.run + unpackDy(delta) + 0.5 - center.y;
+                        double dz = this.get + unpackDz(delta) + 0.5 - center.z;
                         if (dx * dx + dy * dy + dz * dz <= radiusSq) {
                            found.init(index);
                         }
@@ -1473,12 +1473,12 @@ final class AiBuildSite {
          }
       }
 
-      return found.init_IArr();
+      return found.toArray();
    }
 
-   private LevelReader init_LevelReader() {
-      if (this.init_LevelReader != null) {
-         return this.init_LevelReader;
+   private LevelReader currentLevel() {
+      if (this.world != null) {
+         return this.world;
       }
 
       try {
@@ -1493,19 +1493,19 @@ final class AiBuildSite {
       if (index >= 0 && index < this.pop) {
          int mask = this.load_BArr[index] & 255;
          if (mask != 0 && level != null) {
-            BlockPos base = this.init_BlockPos_I(index);
-            boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.FLUID;
+            BlockPos base = this.posAt(index);
+            boolean fluid = this.kindAt(index) == AiBuildSite.Inner_CachePool.FLUID;
 
-            for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
+            for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
                if ((mask & 1 << ordinal) != 0) {
-                  BlockPos at = base.relative(init_DirectionArr[ordinal]);
-                  int other = this.init_I_J(at.asLong());
+                  BlockPos at = base.relative(DIRECTIONS[ordinal]);
+                  int other = this.indexOfKey(at.asLong());
                   if (other >= 0) {
-                     AiBuildSite.Inner_CachePool otherKind = this.init_IoWorker_CachePool_I(other);
+                     AiBuildSite.Inner_CachePool otherKind = this.kindAt(other);
                      if (otherKind != AiBuildSite.Inner_CachePool.FLUID
                         && otherKind != AiBuildSite.Inner_CachePool.DERIVED
                         && otherKind != AiBuildSite.Inner_CachePool.SKIP
-                        && !this.update_BitSet.get(other)) {
+                        && !this.placed.get(other)) {
                         return false;
                      }
                   } else if (fluid && !update(level, at)) {
@@ -1546,15 +1546,15 @@ final class AiBuildSite {
    }
 
    private boolean init_Z_I_BlockState(int index, BlockState live) {
-      AiBuilder.CellSpec cell = this.init_TableIndex_StreamUArr[index];
+      AiBuilder.CellSpec cell = this.specs[index];
       if (AiBuildIntent.init(cell, live)) {
          return true;
       } else {
-         return AiBuildIntent.isPoweredLever(cell) && AiBuildIntent.init(AiBuildIntent.unpoweredLever(cell), live) ? true : AiBuildIntent.init(cell, live, this.init_Map);
+         return AiBuildIntent.isPoweredLever(cell) && AiBuildIntent.init(AiBuildIntent.unpoweredLever(cell), live) ? true : AiBuildIntent.init(cell, live, this.substitutes);
       }
    }
 
-   private void init_V_IArr(int[] values) {
+   private void mergeSort(int[] values) {
       int size = values.length;
       if (size >= 2) {
          int[] buffer = new int[size];
@@ -1568,7 +1568,7 @@ final class AiBuildSite {
                int write = low;
 
                while (left < middle && right < high) {
-                  if (this.load_JArr[values[left]] <= this.load_JArr[values[right]]) {
+                  if (this.positions[values[left]] <= this.positions[values[right]]) {
                      buffer[write++] = values[left++];
                   } else {
                      buffer[write++] = values[right++];
@@ -1589,7 +1589,7 @@ final class AiBuildSite {
       }
    }
 
-   private void init_V_IArr_I(int[] values, int size) {
+   private void mergeSort(int[] values, int size) {
       if (size >= 2) {
          int[] buffer = new int[size];
 
@@ -1602,7 +1602,7 @@ final class AiBuildSite {
                int write = low;
 
                while (left < middle && right < high) {
-                  if (this.sync_IArr[values[left]] <= this.sync_IArr[values[right]]) {
+                  if (this.rankByIndex[values[left]] <= this.rankByIndex[values[right]]) {
                      buffer[write++] = values[left++];
                   } else {
                      buffer[write++] = values[right++];
@@ -1623,22 +1623,22 @@ final class AiBuildSite {
       }
    }
 
-   private static long load_J_I(int dx, int dy, int dz) {
+   private static long packDelta(int dx, int dy, int dz) {
       long x = (long)(dx + 1048576) << 42;
       long y = (long)(dy + 1048576) << 21;
       long z = (long)(dz + 1048576) << 0;
       return x | y | z;
    }
 
-   private static int load_I_J(long delta) {
+   private static int unpackDx(long delta) {
       return (int)(delta >>> 42 & 2097151L) - 1048576;
    }
 
-   private static int read_I_J(long delta) {
+   private static int unpackDy(long delta) {
       return (int)(delta >>> 21 & 2097151L) - 1048576;
    }
 
-   private static int write_I_J(long delta) {
+   private static int unpackDz(long delta) {
       return (int)(delta >>> 0 & 2097151L) - 1048576;
    }
 
@@ -1650,7 +1650,7 @@ final class AiBuildSite {
 
       @Override
       public boolean contains(Object candidate) {
-         return candidate instanceof Long key && AiBuildSite.this.init_I_J(key) >= 0;
+         return candidate instanceof Long key && AiBuildSite.this.indexOfKey(key) >= 0;
       }
 
       @Override
@@ -1671,7 +1671,7 @@ final class AiBuildSite {
                if (this.init >= AiBuildSite.this.pop) {
                   throw new NoSuchElementException();
                } else {
-                  return AiBuildSite.this.write_JArr[this.init++];
+                  return AiBuildSite.this.sortedKeys[this.init++];
                }
             }
          };
@@ -1750,23 +1750,23 @@ final class AiBuildSite {
    }
 
    private static final class Inner_StreamUtil {
-      private int[] init_IArr = new int[8];
-      private int init_I;
+      private int[] buffer = new int[8];
+      private int size;
 
       void init(int value) {
-         if (this.init_I == this.init_IArr.length) {
-            this.init_IArr = Arrays.copyOf(this.init_IArr, this.init_I * 2);
+         if (this.size == this.buffer.length) {
+            this.buffer = Arrays.copyOf(this.buffer, this.size * 2);
          }
 
-         this.init_IArr[this.init_I++] = value;
+         this.buffer[this.size++] = value;
       }
 
-      int init_I() {
-         return this.init_I;
+      int size() {
+         return this.size;
       }
 
-      int[] init_IArr() {
-         return this.init_I == 0 ? AiBuildSite.init_IArr : Arrays.copyOf(this.init_IArr, this.init_I);
+      int[] toArray() {
+         return this.size == 0 ? AiBuildSite.EMPTY_INTS : Arrays.copyOf(this.buffer, this.size);
       }
    }
 }

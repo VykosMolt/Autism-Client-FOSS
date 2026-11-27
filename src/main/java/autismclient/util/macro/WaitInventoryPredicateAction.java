@@ -33,7 +33,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
          }
 
          MacroItemTarget target = MacroItemTarget.parse(resolution.value());
-         this.init_V_Minecraft_ArrayUtil(mc, target);
+         this.captureBaseline(mc, target);
          boolean var10000;
          switch (this.condition) {
             case ITEM_EXISTS:
@@ -52,13 +52,13 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
                var10000 = countItem(mc, target) < this.init_I;
                break;
             case SLOT_EMPTY:
-               var10000 = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
+               var10000 = stackInSlot(mc, this.slot).isEmpty();
                break;
             case SLOT_FILLED:
-               var10000 = !init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
+               var10000 = !stackInSlot(mc, this.slot).isEmpty();
                break;
             case SLOT_CHANGED:
-               var10000 = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty() != this.load;
+               var10000 = stackInSlot(mc, this.slot).isEmpty() != this.load;
                break;
             case INVENTORY_FULL:
                var10000 = load(mc);
@@ -92,10 +92,10 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       this.init_Z = false;
    }
 
-   private void init_V_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
+   private void captureBaseline(Minecraft mc, MacroItemTarget target) {
       if (!this.init_Z) {
          this.init_I = countItem(mc, target);
-         this.load = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
+         this.load = stackInSlot(mc, this.slot).isEmpty();
          this.init_Z = true;
       }
    }
@@ -121,7 +121,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       }
    }
 
-   private static ItemStack init_ItemStack_Minecraft_I(Minecraft mc, int slot) {
+   private static ItemStack stackInSlot(Minecraft mc, int slot) {
       if (mc != null && mc.player != null) {
          int idx = Math.max(0, Math.min(mc.player.getInventory().getContainerSize() - 1, slot));
          return mc.player.getInventory().getItem(idx);

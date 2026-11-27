@@ -12,15 +12,15 @@ import java.util.Set;
 public final class PayloadStudyTracker {
    private static final int init_I = 512;
    private static final int load_I = 6;
-   private static volatile boolean init_Z;
-   private static String init_Str = "";
-   private static long init_J;
+   private static volatile boolean studying;
+   private static String currentLabel = "";
+   private static long studyStartedAt;
    private static final List<String> init_List = new ArrayList<>();
-   private static final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
-   private static final LinkedHashMap<String, PayloadStudyTracker.Inner_DataUtil> init_LinkedHashMap = new LinkedHashMap<>();
+   private static final LinkedHashSet<String> ignoredChannels = new LinkedHashSet<>();
+   private static final LinkedHashMap<String, PayloadStudyTracker.Inner_DataUtil> statsByChannel = new LinkedHashMap<>();
    private static final LinkedHashSet<String> load_LinkedHashSet = new LinkedHashSet<>();
-   private static final LinkedHashSet<String> read_LinkedHashSet = new LinkedHashSet<>();
-   private static int read_I;
+   private static final LinkedHashSet<String> seenFingerprints = new LinkedHashSet<>();
+   private static int payloadCount;
    private static int write;
    private static int update;
 
@@ -28,15 +28,15 @@ public final class PayloadStudyTracker {
    }
 
    public static synchronized void init(String studyLabel, Collection<String> studyPatterns, Collection<String> registeredNow) {
-      init_Z = true;
-      init_Str = studyLabel != null && !studyLabel.isBlank() ? studyLabel.trim() : "Payloads";
-      init_J = System.currentTimeMillis();
+      studying = true;
+      currentLabel = studyLabel != null && !studyLabel.isBlank() ? studyLabel.trim() : "Payloads";
+      studyStartedAt = System.currentTimeMillis();
       init_List.clear();
-      init_LinkedHashSet.clear();
-      init_LinkedHashMap.clear();
+      ignoredChannels.clear();
+      statsByChannel.clear();
       load_LinkedHashSet.clear();
-      read_LinkedHashSet.clear();
-      read_I = 0;
+      seenFingerprints.clear();
+      payloadCount = 0;
       write = 0;
       update = 0;
       if (studyPatterns != null) {
@@ -52,7 +52,7 @@ public final class PayloadStudyTracker {
          for (String channel : registeredNow) {
             String normalized = PayloadRegistrationManager.normalize(channel);
             if (PayloadRegistrationManager.isExactChannel(normalized)) {
-               init_LinkedHashSet.add(normalized);
+               ignoredChannels.add(normalized);
             }
          }
       }
@@ -61,28 +61,28 @@ public final class PayloadStudyTracker {
    }
 
    public static boolean isActive() {
-      return init_Z;
+      return studying;
    }
 
    public static synchronized String title() {
-      return init_Z ? "Payload Study: " + init_Str : "";
+      return studying ? "Payload Study: " + currentLabel : "";
    }
 
    public static synchronized String statusLine() {
-      return !init_Z ? "" : read_I + " payloads | " + init_LinkedHashMap.size() + " channels | ESC to finish";
+      return !studying ? "" : payloadCount + " payloads | " + statsByChannel.size() + " channels | ESC to finish";
    }
 
    public static synchronized String read() {
-      if (!init_Z) {
+      if (!studying) {
          return "";
       }
 
-      if (init_LinkedHashMap.isEmpty()) {
+      if (statsByChannel.isEmpty()) {
          return "Interact with the plugin GUI/commands now.";
       }
 
-      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(init_LinkedHashMap.values());
-      sorted.sort((a, b) -> Integer.compare(b.init_I, a.init_I));
+      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(statsByChannel.values());
+      sorted.sort((a, b) -> Integer.compare(b.count, a.count));
       StringBuilder sb = new StringBuilder("Top: ");
       int shown = 0;
 
@@ -95,7 +95,7 @@ public final class PayloadStudyTracker {
             sb.append(", ");
          }
 
-         sb.append(stats.init_Str).append(" x").append(stats.init_I);
+         sb.append(stats.channel).append(" x").append(stats.count);
          shown++;
       }
 
@@ -107,43 +107,43 @@ public final class PayloadStudyTracker {
    }
 
    public static synchronized void reset() {
-      init_Z = false;
-      init_Str = "";
-      init_J = 0L;
+      studying = false;
+      currentLabel = "";
+      studyStartedAt = 0L;
       init_List.clear();
-      init_LinkedHashSet.clear();
-      init_LinkedHashMap.clear();
+      ignoredChannels.clear();
+      statsByChannel.clear();
       load_LinkedHashSet.clear();
-      read_LinkedHashSet.clear();
-      read_I = 0;
+      seenFingerprints.clear();
+      payloadCount = 0;
       write = 0;
       update = 0;
       PacketCaptureState.write();
    }
 
    public static synchronized boolean recordPayload(AutismPayloadSupport.PayloadEntry snapshot) {
-      if (init_Z && snapshot != null) {
+      if (studying && snapshot != null) {
          String channel = PayloadRegistrationManager.normalize(snapshot.channel());
          if (channel.isBlank()) {
             return false;
          }
 
-         String fingerprint = init_Str(snapshot);
+         String fingerprint = fingerprint(snapshot);
          if (!fingerprint.isBlank()) {
-            if (!read_LinkedHashSet.add(fingerprint)) {
+            if (!seenFingerprints.add(fingerprint)) {
                return false;
             }
 
-            while (read_LinkedHashSet.size() > 512) {
-               String first = read_LinkedHashSet.iterator().next();
-               read_LinkedHashSet.remove(first);
+            while (seenFingerprints.size() > 512) {
+               String first = seenFingerprints.iterator().next();
+               seenFingerprints.remove(first);
             }
          }
 
          PayloadSubscriptionManager.init(snapshot);
-         read_I++;
-         PayloadStudyTracker.Inner_DataUtil stats = init_LinkedHashMap.computeIfAbsent(channel, PayloadStudyTracker.Inner_DataUtil::new);
-         stats.init_I++;
+         payloadCount++;
+         PayloadStudyTracker.Inner_DataUtil stats = statsByChannel.computeIfAbsent(channel, PayloadStudyTracker.Inner_DataUtil::new);
+         stats.count++;
          stats.init_J = stats.init_J + Math.max(0, snapshot.byteLength());
          String direction = snapshot.direction() == null ? "" : snapshot.direction().trim().toUpperCase(Locale.ROOT);
          if ("C2S".equals(direction)) {
@@ -156,7 +156,7 @@ public final class PayloadStudyTracker {
 
          for (String pattern : init_List) {
             if (PayloadChannelFilterManager.matchesPattern(pattern, channel)) {
-               stats.init_Set.add(pattern);
+               stats.patterns.add(pattern);
                matched = true;
             }
          }
@@ -184,17 +184,17 @@ public final class PayloadStudyTracker {
    }
 
    public static synchronized boolean finish() {
-      if (!init_Z) {
+      if (!studying) {
          return false;
       }
 
       PayloadStudyTracker.Inner_StreamUtil summary = init_bI_StreamUtil();
-      if (summary.init_I() == 0) {
+      if (summary.payloads() == 0) {
          bi.read("Payload study finished: no payloads captured.");
          return true;
       }
 
-      bi.init("Payload study: " + summary.init_I() + " payloads, " + summary.load_I() + " channels.");
+      bi.init("Payload study: " + summary.payloads() + " payloads, " + summary.channels() + " channels.");
       if (!summary.load_Str().isBlank()) {
          bi.init(summary.load_Str(), -7346000);
       }
@@ -207,12 +207,12 @@ public final class PayloadStudyTracker {
    }
 
    public static synchronized PayloadStudyTracker.Inner_StreamUtil init_bI_StreamUtil() {
-      long durationMs = init_Z ? Math.max(0L, System.currentTimeMillis() - init_J) : 0L;
-      init_Z = false;
-      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(init_LinkedHashMap.values());
+      long durationMs = studying ? Math.max(0L, System.currentTimeMillis() - studyStartedAt) : 0L;
+      studying = false;
+      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(statsByChannel.values());
       sorted.sort((a, b) -> {
-         int count = Integer.compare(b.init_I, a.init_I);
-         return count != 0 ? count : a.init_Str.compareToIgnoreCase(b.init_Str);
+         int count = Integer.compare(b.count, a.count);
+         return count != 0 ? count : a.channel.compareToIgnoreCase(b.channel);
       });
       StringBuilder top = new StringBuilder();
       int shown = 0;
@@ -226,7 +226,7 @@ public final class PayloadStudyTracker {
             top.append(", ");
          }
 
-         top.append(stats.init_Str).append(" x").append(stats.init_I);
+         top.append(stats.channel).append(" x").append(stats.count);
          shown++;
       }
 
@@ -234,25 +234,25 @@ public final class PayloadStudyTracker {
          top.append(" +").append(sorted.size() - shown);
       }
 
-      int learned = init_LinkedHashSet().size();
-      PayloadStudyTracker.Inner_StreamUtil summary = new PayloadStudyTracker.Inner_StreamUtil(init_Str, durationMs, read_I, init_LinkedHashMap.size(), write, update, learned, top.toString());
+      int learned = collectLearned().size();
+      PayloadStudyTracker.Inner_StreamUtil summary = new PayloadStudyTracker.Inner_StreamUtil(currentLabel, durationMs, payloadCount, statsByChannel.size(), write, update, learned, top.toString());
       PacketCaptureState.write();
       return summary;
    }
 
-   public static synchronized List<String> init_List() {
-      return List.copyOf(init_LinkedHashSet());
+   public static synchronized List<String> learnedChannels() {
+      return List.copyOf(collectLearned());
    }
 
-   private static LinkedHashSet<String> init_LinkedHashSet() {
+   private static LinkedHashSet<String> collectLearned() {
       LinkedHashSet<String> learned = new LinkedHashSet<>();
-      learned.addAll(init_LinkedHashMap.keySet());
+      learned.addAll(statsByChannel.keySet());
       learned.addAll(load_LinkedHashSet);
-      learned.removeAll(init_LinkedHashSet);
+      learned.removeAll(ignoredChannels);
       return learned;
    }
 
-   private static String init_Str(AutismPayloadSupport.PayloadEntry snapshot) {
+   private static String fingerprint(AutismPayloadSupport.PayloadEntry snapshot) {
       byte[] bytes = snapshot.rawBytes();
       return (snapshot.direction() == null ? "" : snapshot.direction())
          + "|"
@@ -268,18 +268,18 @@ public final class PayloadStudyTracker {
    }
 
    private static final class Inner_DataUtil {
-      private final String init_Str;
-      private final Set<String> init_Set = new LinkedHashSet<>();
-      private int init_I;
+      private final String channel;
+      private final Set<String> patterns = new LinkedHashSet<>();
+      private int count;
       private int load;
       private int read;
       private long init_J;
 
       private Inner_DataUtil(String channel) {
-         this.init_Str = channel;
+         this.channel = channel;
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, long init_J, int init_I, int load_I, int read, int write, int update, String load_Str) {
+   public record Inner_StreamUtil(String label, long durationMs, int payloads, int channels, int read, int write, int update, String load_Str) {
    }
 }

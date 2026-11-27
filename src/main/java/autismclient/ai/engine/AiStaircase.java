@@ -34,7 +34,7 @@ public final class AiStaircase {
    private AiStaircase() {
    }
 
-   public static List<BlockPos> init_List_BlockPos(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked) {
+   public static List<BlockPos> planSteps(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked) {
       return planSteps(start, target, maxSteps, blocked, cell -> false);
    }
 
@@ -570,10 +570,10 @@ public final class AiStaircase {
    }
 
    public static AiOperation init(List<BlockPos> steps, int timeoutSeconds) {
-      return init_AiOperation_List(steps, timeoutSeconds, () -> false);
+      return followStepsOperation(steps, timeoutSeconds, () -> false);
    }
 
-   public static AiOperation init_AiOperation_List(List<BlockPos> steps, int timeoutSeconds, BooleanSupplier enough) {
+   public static AiOperation followStepsOperation(List<BlockPos> steps, int timeoutSeconds, BooleanSupplier enough) {
       return followStepsOperation(steps, timeoutSeconds, enough, null);
    }
 

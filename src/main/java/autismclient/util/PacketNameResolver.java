@@ -9,13 +9,13 @@ import java.util.concurrent.ConcurrentMap;
 import net.minecraft.network.protocol.Packet;
 
 public class PacketNameResolver {
-   private static final String init_Str = "Unknown Packet";
-   private static final ConcurrentMap<Class<?>, String> init_ConcurrentMap = new ConcurrentHashMap<>();
+   private static final String UNKNOWN = "Unknown Packet";
+   private static final ConcurrentMap<Class<?>, String> NAME_CACHE = new ConcurrentHashMap<>();
    private static final ConcurrentMap<String, String> load = new ConcurrentHashMap<>();
    private static final ConcurrentMap<Class<?>, String> read = new ConcurrentHashMap<>();
    private static final ConcurrentMap<Class<?>, String> write = new ConcurrentHashMap<>();
    private static final ConcurrentMap<String, String> update = new ConcurrentHashMap<>();
-   private static final Map<String, String> init_Map = init_Map();
+   private static final Map<String, String> ALIASES = buildAliases();
 
    private static String read(String name) {
       return name != null && name.endsWith("Packet") ? name.substring(0, name.length() - 6) : name;
@@ -23,7 +23,7 @@ public class PacketNameResolver {
 
    public static String nameOf(Packet<?> packet) {
       Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
-      String cached = init_ConcurrentMap.get(packetClass);
+      String cached = NAME_CACHE.get(packetClass);
       if (cached != null) {
          return cached;
       }
@@ -49,7 +49,7 @@ public class PacketNameResolver {
 
    public static String directionalName(Packet<?> packet, String direction) {
       Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
-      ConcurrentMap<Class<?>, String> classCache = init_ConcurrentMap_Str(direction);
+      ConcurrentMap<Class<?>, String> classCache = cacheFor(direction);
       if (classCache != null) {
          String fast = classCache.get(packetClass);
          if (fast != null) {
@@ -82,7 +82,7 @@ public class PacketNameResolver {
       return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, readable != null ? readable : "Unknown Packet"));
    }
 
-   private static ConcurrentMap<Class<?>, String> init_ConcurrentMap_Str(String direction) {
+   private static ConcurrentMap<Class<?>, String> cacheFor(String direction) {
       if ("S2C".equalsIgnoreCase(direction)) {
          return read;
       } else {
@@ -99,7 +99,7 @@ public class PacketNameResolver {
    }
 
    public static String nameOfClass(Class<? extends Packet<?>> packetClass) {
-      String cached = init_ConcurrentMap.get(packetClass);
+      String cached = NAME_CACHE.get(packetClass);
       if (cached != null) {
          return cached;
       }
@@ -116,7 +116,7 @@ public class PacketNameResolver {
    private static String init_Str_Class_Str(Class<?> packetClass, String value) {
       String safe = value == null ? "Unknown Packet" : value;
       if (packetClass != null) {
-         init_ConcurrentMap.putIfAbsent(packetClass, safe);
+         NAME_CACHE.putIfAbsent(packetClass, safe);
       }
 
       return safe;
@@ -226,7 +226,7 @@ public class PacketNameResolver {
             return null;
          }
 
-         String manual = init_Map.get(normalizedText);
+         String manual = ALIASES.get(normalizedText);
          if (manual != null) {
             return manual;
          }
@@ -251,12 +251,12 @@ public class PacketNameResolver {
             return null;
          }
 
-         String manual = init_Map.get(normalizedText);
+         String manual = ALIASES.get(normalizedText);
          if (manual != null) {
             return manual;
          }
 
-         for (Class<? extends Packet<?>> registeredClass : init_Iterable_Str(direction)) {
+         for (Class<? extends Packet<?>> registeredClass : registeredClasses(direction)) {
             String registeredName = PacketTypeRegistry.getPacketName(registeredClass);
             if (registeredName != null && init_Z_Str(normalizedText, registeredName, registeredClass)) {
                return registeredName;
@@ -270,7 +270,7 @@ public class PacketNameResolver {
    }
 
    private static String write(Class<? extends Packet<?>> packetClass, String direction) {
-      for (Class<? extends Packet<?>> registeredClass : init_Iterable_Str(direction)) {
+      for (Class<? extends Packet<?>> registeredClass : registeredClasses(direction)) {
          if (registeredClass == packetClass) {
             return PacketTypeRegistry.getPacketName(registeredClass);
          }
@@ -279,7 +279,7 @@ public class PacketNameResolver {
       return null;
    }
 
-   private static Iterable<Class<? extends Packet<?>>> init_Iterable_Str(String direction) {
+   private static Iterable<Class<? extends Packet<?>>> registeredClasses(String direction) {
       if ("C2S".equalsIgnoreCase(direction)) {
          return PacketTypeRegistry.getC2sPackets();
       } else {
@@ -314,9 +314,9 @@ public class PacketNameResolver {
       }
    }
 
-   private static Map<String, String> init_Map() {
+   private static Map<String, String> buildAliases() {
       Map<String, String> aliases = new HashMap<>();
-      init_V_Map(
+      alias(
          aliases,
          "BundleS2CPacket",
          "BundleS2C",
@@ -328,7 +328,7 @@ public class PacketNameResolver {
       return Collections.unmodifiableMap(aliases);
    }
 
-   private static void init_V_Map(Map<String, String> aliases, String canonicalName, String... variants) {
+   private static void alias(Map<String, String> aliases, String canonicalName, String... variants) {
       aliases.put(load(canonicalName), canonicalName);
       aliases.put(load(read(canonicalName)), canonicalName);
 

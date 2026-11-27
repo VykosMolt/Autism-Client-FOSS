@@ -14,11 +14,11 @@ import net.minecraft.client.Minecraft;
 
 public final class AiMacroTools implements autismclient.util.macro.MacroToolBridge.Inner_DataUtil {
    private static final AiMacroTools init_am = new AiMacroTools();
-   private volatile List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> init_List = List.of();
+   private volatile List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> tools = List.of();
    private volatile List<String> load = List.of();
    private String init_Str = "";
    private final ArrayDeque<AiMacroTools.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
-   private AiMacroTools.Inner_DataUtil init_am_DataUtil;
+   private AiMacroTools.Inner_DataUtil request;
 
    private AiMacroTools() {
    }
@@ -30,7 +30,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    @Override
    public List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> tools() {
-      return this.init_List;
+      return this.tools;
    }
 
    @Override
@@ -43,16 +43,16 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       return AiDirectOps.currentHandle();
    }
 
-   static boolean init_Z_Str(String id) {
+   static boolean isMacroCallableTool(String id) {
       return AiDirectOps.isToolId(id) && !"client:run_macro".equals(id);
    }
 
    private void load_V_Minecraft(Minecraft mc) {
       AiCatalog.Snapshot snapshot = AiDirectOps.catalogSnapshot();
       if (!this.init_Str.equals(snapshot.revision())) {
-         this.init_List = snapshot.entries()
+         this.tools = snapshot.entries()
             .stream()
-            .filter(e -> init_Z_Str(e.contract().id()) && e.contract().classification() != AiCapabilityDescriptor.Classification.DISCOVER_ONLY)
+            .filter(e -> isMacroCallableTool(e.contract().id()) && e.contract().classification() != AiCapabilityDescriptor.Classification.DISCOVER_ONLY)
             .map(
                e -> new autismclient.util.macro.MacroToolBridge.Inner_TaskQueue(e.contract().id(), load_Str_Str(e.contract().id()), init_Str_Str(e.contract().inputSchema()))
             )
@@ -106,7 +106,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    @Override
    public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init(String id, String argumentsJson) {
-      if (!init_Z_Str(id)) {
+      if (!isMacroCallableTool(id)) {
          throw new IllegalArgumentException("Choose a direct tool; use Start Macro for another macro");
       }
 
@@ -147,8 +147,8 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
          return CompletableFuture.failedFuture(new IllegalArgumentException("Unknown tool operation: " + operation));
       } else if ("STOP".equals(operation)) {
          AiClientTick.execute(() -> {
-            if (this.init_am_DataUtil != null && this.init_am_DataUtil.load == job) {
-               this.init_am_DataUtil.init_k_StreamUtil.cancel();
+            if (this.request != null && this.request.load == job) {
+               this.request.init_k_StreamUtil.cancel();
             } else {
                job.cancel();
             }
@@ -169,8 +169,8 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                   return queued.init_k_StreamUtil.snapshot();
                }
 
-               autismclient.util.macro.MacroToolBridge.Inner_StreamUtil inner = this.init_am_DataUtil != null && this.init_am_DataUtil.init_k_StreamUtil == job
-                  ? this.init_am_DataUtil.load
+               autismclient.util.macro.MacroToolBridge.Inner_StreamUtil inner = this.request != null && this.request.init_k_StreamUtil == job
+                  ? this.request.load
                   : job;
                if (AiDirectOps.currentHandle() == inner && AiDirectOps.isRunning()) {
                   if ("PAUSE".equals(operation)) {
@@ -183,8 +183,8 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                      AiDirectOps.resume();
                   }
 
-                  if (this.init_am_DataUtil != null && this.init_am_DataUtil.load == inner) {
-                     load_V_am_DataUtil(this.init_am_DataUtil);
+                  if (this.request != null && this.request.load == inner) {
+                     load_V_am_DataUtil(this.request);
                   }
 
                   return inner.snapshot();
@@ -203,10 +203,10 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    public static void tick(Minecraft mc) {
       init_am.load_V_Minecraft(mc);
-      if (init_am.init_am_DataUtil != null) {
-         load_V_am_DataUtil(init_am.init_am_DataUtil);
-         if (init_am.init_am_DataUtil.init_k_StreamUtil.load().isDone()) {
-            init_am.init_am_DataUtil = null;
+      if (init_am.request != null) {
+         load_V_am_DataUtil(init_am.request);
+         if (init_am.request.init_k_StreamUtil.load().isDone()) {
+            init_am.request = null;
          }
       }
 
@@ -218,14 +218,14 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
             return requestx.init_k_StreamUtil.load().isDone();
          }
       });
-      if (init_am.init_am_DataUtil == null && !AiDirectOps.isRunning()) {
+      if (init_am.request == null && !AiDirectOps.isRunning()) {
          AiMacroTools.Inner_DataUtil request = init_am.init_ArrayDeque.peek();
          if (request != null && !request.init_Z) {
             init_am.init_ArrayDeque.remove();
 
             try {
-               request.load = AiDirectOps.start(request.init_k_StreamUtil.toolId(), JsonParser.parseString(request.init_Str).getAsJsonObject());
-               init_am.init_am_DataUtil = request;
+               request.load = AiDirectOps.start(request.init_k_StreamUtil.toolId(), JsonParser.parseString(request.arguments).getAsJsonObject());
+               init_am.request = request;
                request.load.load().whenComplete((outcome, error) -> {
                   if (error != null) {
                      request.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.FAILED, "Tool completion failed", "{}");
@@ -244,14 +244,14 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    private static final class Inner_DataUtil {
       final autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil;
-      final String init_Str;
+      final String arguments;
       Object init_Obj;
       autismclient.util.macro.MacroToolBridge.Inner_StreamUtil load;
       boolean init_Z;
 
       Inner_DataUtil(String id, String arguments) {
          this.init_k_StreamUtil = new autismclient.util.macro.MacroToolBridge.Inner_StreamUtil(id);
-         this.init_Str = arguments;
+         this.arguments = arguments;
       }
    }
 }

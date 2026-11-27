@@ -16,17 +16,17 @@ import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
 
 public final class CachedGpuMeshBuffer implements AutoCloseable {
-   private static final int init_I = 1048576;
-   private final String init_Str;
+   private static final int SCRATCH_SIZE = 1048576;
+   private final String label;
    private GpuBuffer init_GpuBuffer;
    private PrimitiveTopology init_PrimitiveTopology;
    private int load;
 
    public CachedGpuMeshBuffer(String label) {
-      this.init_Str = label;
+      this.label = label;
    }
 
-   public boolean init_Z() {
+   public boolean hasBuffer() {
       return this.init_GpuBuffer != null && !this.init_GpuBuffer.isClosed() && this.load > 0;
    }
 
@@ -49,15 +49,15 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
 
             this.init_PrimitiveTopology = state.primitiveTopology();
             this.load = state.indexCount();
-            this.init_GpuBuffer = RenderSystem.getDevice().createBuffer(() -> this.init_Str, 32, mesh.vertexBuffer());
+            this.init_GpuBuffer = RenderSystem.getDevice().createBuffer(() -> this.label, 32, mesh.vertexBuffer());
          }
 
-         return this.init_Z();
+         return this.hasBuffer();
       }
    }
 
    public void init(RenderType type, Matrix4fc framePose, double offsetX, double offsetY, double offsetZ) {
-      if (this.init_Z()) {
+      if (this.hasBuffer()) {
          AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(this.init_PrimitiveTopology);
          GpuBuffer indices = sequential.getBuffer(this.load);
          Matrix4fStack modelView = RenderSystem.getModelViewStack();

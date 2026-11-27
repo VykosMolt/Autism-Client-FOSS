@@ -42,7 +42,7 @@ public final class AiExcavate {
    private static final double load_D = 2.25;
    private static final int sync = 20;
    private static final int flush = 12;
-   private static final int[][] init_IArr2 = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+   private static final int[][] NEIGHBOR_OFFSETS = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
    static boolean init(BlockState state) {
       String path = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
@@ -160,7 +160,7 @@ public final class AiExcavate {
    }
 
    public static boolean init(AiExcavate.Inner_BufferHelper lava, int x, int y, int z) {
-      for (int[] d : init_IArr2) {
+      for (int[] d : NEIGHBOR_OFFSETS) {
          if (lava.test(x + d[0], y + d[1], z + d[2])) {
             return true;
          }
@@ -294,41 +294,41 @@ public final class AiExcavate {
    }
 
    private static final class Inner_CachePool implements AiOperation {
-      final Minecraft init_Minecraft = Minecraft.getInstance();
-      final String init_Str;
-      final List<BlockPos> init_List;
-      final int init_I;
-      final boolean init_Z;
-      final int load_I;
-      final long init_J;
-      final int read_I;
-      final AiExcavate.Inner_ConfigStore init_ByteReader_ConfigS;
+      final Minecraft mc = Minecraft.getInstance();
+      final String label;
+      final List<BlockPos> order;
+      final int layers;
+      final boolean collect;
+      final int maxBlocks;
+      final long deadline;
+      final int originalSlot;
+      final AiExcavate.Inner_ConfigStore stair;
       AiOperation init_AiOperation;
-      final Object init_Obj = this.init_Minecraft.level;
-      final AiBackfill init_StreamUtil;
-      final Map<String, Integer> init_Map;
-      final JsonArray init_JsonArray = new JsonArray();
-      final AiExcavate.Inner_StreamUtil init_ByteReader_StreamU;
+      final Object startLevel = this.mc.level;
+      final AiBackfill backfill;
+      final Map<String, Integer> startCounts;
+      final JsonArray skipped = new JsonArray();
+      final AiExcavate.Inner_StreamUtil orderCursor;
       final AiExcavate.Inner_DataUtil init_ByteReader_DataUti = new AiExcavate.Inner_DataUtil();
       long load_J;
       AiOperation load_AiOperation;
       boolean load_Z;
       Vec3 init_Vec3;
-      final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition().immutable();
-      final AiAim init_DataUtil = new AiAim();
-      final ItemStack[] init_ItemStackArr = new ItemStack[9];
-      int write_I;
+      final BlockPos startPos = this.mc.player.blockPosition().immutable();
+      final AiAim aim = new AiAim();
+      final ItemStack[] hotbar = new ItemStack[9];
+      int dug;
       int update_I;
       int sync;
       int flush;
       int close;
       int open;
-      BlockPos load_BlockPos;
-      AiOperation read_AiOperation;
+      BlockPos currentCell;
+      AiOperation dropTravel;
       boolean read_Z;
       int poll = -1;
       int push;
-      List<ItemEntity> load_List = new ArrayList<>();
+      List<ItemEntity> drops = new ArrayList<>();
       boolean write_Z;
       boolean update_Z;
 
@@ -346,82 +346,82 @@ public final class AiExcavate {
          boolean backfill,
          AiExcavate.Inner_ConfigStore stair
       ) {
-         this.init_Str = label;
-         this.init_List = order;
-         this.init_ByteReader_StreamU = new AiExcavate.Inner_StreamUtil(order);
-         this.init_I = layers;
-         this.init_Z = collect;
-         this.load_I = maxBlocks;
-         this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         this.read_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
-         this.init_StreamUtil = backfill ? new AiBackfill(this.init_Minecraft) : null;
-         this.init_Map = this.init_Map_2();
-         this.init_ByteReader_ConfigS = stair;
+         this.label = label;
+         this.order = order;
+         this.orderCursor = new AiExcavate.Inner_StreamUtil(order);
+         this.layers = layers;
+         this.collect = collect;
+         this.maxBlocks = maxBlocks;
+         this.deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+         this.originalSlot = this.mc.player.getInventory().getSelectedSlot();
+         this.backfill = backfill ? new AiBackfill(this.mc) : null;
+         this.startCounts = this.inventoryCounts();
+         this.stair = stair;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (!this.update_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (this.init_Minecraft.level != this.init_Obj) {
+         if (!this.update_Z && this.mc.player != null && this.mc.level != null) {
+            if (this.mc.level != this.startLevel) {
                this.cancel();
-               return AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "World changed during excavation", this.load_JsonObject_2().toString());
+               return AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "World changed during excavation", this.statusJson().toString());
             }
 
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
+            if (this.mc.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                this.cancel();
                return AiOperation.Result.failed(
                   AiFailure.LOW_HEALTH,
-                  AiLowHealth.init("excavation", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()),
-                  this.load_JsonObject_2().toString()
+                  AiLowHealth.init("excavation", this.mc.player.getHealth(), this.mc.player.getMaxHealth()),
+                  this.statusJson().toString()
                );
             }
 
-            if (System.nanoTime() > this.init_J) {
-               return this.init(AiOperation.Status.TIMED_OUT, this.init_Str + " deadline reached");
+            if (System.nanoTime() > this.deadline) {
+               return this.init(AiOperation.Status.TIMED_OUT, this.label + " deadline reached");
             }
 
             this.flush++;
-            if (this.read_AiOperation != null) {
-               AiOperation.Result r = this.read_AiOperation.tick();
+            if (this.dropTravel != null) {
+               AiOperation.Result r = this.dropTravel.tick();
                if (!r.terminal()) {
                   return this.load("Moving to the next cell");
                }
 
-               this.read_AiOperation.cancel();
-               this.read_AiOperation = null;
+               this.dropTravel.cancel();
+               this.dropTravel = null;
                if (r.status() == AiOperation.Status.SUCCEEDED) {
                   return this.load("Arrived; digging");
                }
 
                if (this.read_Z) {
                   this.read_Z = false;
-                  if (!this.load_List.isEmpty()) {
-                     this.load_List.remove(0);
+                  if (!this.drops.isEmpty()) {
+                     this.drops.remove(0);
                   }
 
                   return this.load("Drop unreachable; continuing");
                } else {
-                  this.init(this.load_BlockPos, "unreachable");
-                  this.load_BlockPos = null;
+                  this.init(this.currentCell, "unreachable");
+                  this.currentCell = null;
                   return this.load("Cell unreachable; continuing");
                }
-            } else if (this.load_BlockPos != null) {
+            } else if (this.currentCell != null) {
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = AiBreakBlock.breakBlock(this.load_BlockPos, this.init(60), AiExcavate.init(this.init_BlockState(this.load_BlockPos)));
+                  this.init_AiOperation = AiBreakBlock.breakBlock(this.currentCell, this.init(60), AiExcavate.init(this.stateAt(this.currentCell)));
                }
 
                AiOperation.Result result = this.init_AiOperation.tick();
                if (!result.terminal()) {
-                  return this.load("Clearing " + this.load_BlockPos.toShortString() + ": " + result.message());
+                  return this.load("Clearing " + this.currentCell.toShortString() + ": " + result.message());
                }
 
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
                if (result.status() != AiOperation.Status.SUCCEEDED) {
                   if (result.failure() == AiFailure.TOOL_WORN) {
-                     JsonObject failureData = this.load_JsonObject_2();
+                     JsonObject failureData = this.statusJson();
                      failureData.addProperty("reason", "TOOL_WORN");
-                     Item needed = AiItems.cheapestRequiredTool(this.init_BlockState(this.load_BlockPos));
+                     Item needed = AiItems.cheapestRequiredTool(this.stateAt(this.currentCell));
                      JsonObject missing = new JsonObject();
                      missing.addProperty(needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString(), 1);
                      failureData.add("missing", missing);
@@ -429,94 +429,94 @@ public final class AiExcavate {
                      return AiOperation.Result.failed(result.failure(), result.message(), failureData.toString());
                   }
 
-                  if (this.init_ByteReader_DataUti.init(this.load_BlockPos, 3)) {
-                     this.init_ByteReader_StreamU.init(this.load_BlockPos);
+                  if (this.init_ByteReader_DataUti.init(this.currentCell, 3)) {
+                     this.orderCursor.init(this.currentCell);
                   } else {
-                     if (this.init_ByteReader_ConfigS != null) {
+                     if (this.stair != null) {
                         return this.init("Could not break a staircase cell", AiFailure.NO_REACHABLE_TARGET);
                      }
 
-                     this.init(this.load_BlockPos, "break_failed");
+                     this.init(this.currentCell, "break_failed");
                   }
 
-                  this.load_BlockPos = null;
+                  this.currentCell = null;
                   return this.load("Break failed; continuing");
                } else {
-                  this.write_I++;
-                  if (this.init_StreamUtil != null) {
-                     this.init_StreamUtil.recordDugCell(this.load_BlockPos);
+                  this.dug++;
+                  if (this.backfill != null) {
+                     this.backfill.recordDugCell(this.currentCell);
                   }
 
-                  if (this.init_Z) {
+                  if (this.collect) {
                      this.write_Z = true;
                      this.open = 0;
-                     this.init_V_4(this.load_BlockPos);
+                     this.collectDrops(this.currentCell);
                   }
 
-                  this.load_BlockPos = null;
-                  return this.load("Dug " + this.write_I + "/" + this.init_I_13() + " cells");
+                  this.currentCell = null;
+                  return this.load("Dug " + this.dug + "/" + this.init_I_13() + " cells");
                }
             } else {
-               if (this.init_Z && (this.write_Z || !this.load_List.isEmpty())) {
+               if (this.collect && (this.write_Z || !this.drops.isEmpty())) {
                   AiOperation.Result collecting = this.init_AiOperation_Result_12();
                   if (collecting != null) {
                      return collecting;
                   }
                }
 
-               if (this.init_StreamUtil != null && !this.init_StreamUtil.isIdle()) {
-                  this.init_StreamUtil.tick();
-                  if (this.init_StreamUtil.isBackfilling()) {
+               if (this.backfill != null && !this.backfill.isIdle()) {
+                  this.backfill.tick();
+                  if (this.backfill.isBackfilling()) {
                      return this.load("Backfilling behind the dig");
                   }
                }
 
                long sweepDeadline = System.nanoTime() + 750000L;
 
-               while (this.init_ByteReader_StreamU.init_Z() && System.nanoTime() < sweepDeadline) {
-                  if (this.write_I >= this.load_I) {
-                     return this.init("maxBlocks cap reached; cleared " + this.write_I + " of " + this.init_I_13() + " cells");
+               while (this.orderCursor.hasNext() && System.nanoTime() < sweepDeadline) {
+                  if (this.dug >= this.maxBlocks) {
+                     return this.init("maxBlocks cap reached; cleared " + this.dug + " of " + this.init_I_13() + " cells");
                   }
 
-                  BlockPos cell = this.init_ByteReader_StreamU.init_BlockPos();
-                  AiPathfinder.CellInfo probe = this.init_ClassCache_FileCac(cell);
+                  BlockPos cell = this.orderCursor.next();
+                  AiPathfinder.CellInfo probe = this.classifyCell(cell);
                   if (!probe.loaded()) {
-                     this.init_ByteReader_StreamU.init(cell);
-                  } else if (!this.init_BlockState(cell).isAir()) {
-                     if (AiExcavate.init((x, y, z) -> this.init_ClassCache_FileCac(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
-                        if (this.init_ByteReader_ConfigS != null) {
+                     this.orderCursor.init(cell);
+                  } else if (!this.stateAt(cell).isAir()) {
+                     if (AiExcavate.init((x, y, z) -> this.classifyCell(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
+                        if (this.stair != null) {
                            return this.init("Lava beside the staircase", AiFailure.LAVA_DETECTED);
                         }
 
                         this.sync++;
-                     } else if (!(this.init_BlockState(cell).getDestroySpeed(this.init_Minecraft.level, cell) < 0.0F)
-                        && !this.init_BlockState(cell).hasBlockEntity()
-                        && this.init_BlockState(cell).getFluidState().isEmpty()
-                        && AiPathfinder.LiveGridView.isSafeToDigCompat(this.init_Minecraft.level, cell)) {
-                        BlockState cellState = this.init_BlockState(cell);
-                        if (!this.init_Minecraft.player.hasInfiniteMaterials()
+                     } else if (!(this.stateAt(cell).getDestroySpeed(this.mc.level, cell) < 0.0F)
+                        && !this.stateAt(cell).hasBlockEntity()
+                        && this.stateAt(cell).getFluidState().isEmpty()
+                        && AiPathfinder.LiveGridView.isSafeToDigCompat(this.mc.level, cell)) {
+                        BlockState cellState = this.stateAt(cell);
+                        if (!this.mc.player.hasInfiniteMaterials()
                            && AiPathfinder.LiveGridView.lacksRequiredToolCompat(
-                              cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.hasCorrectToolInSlotsCompat(this.init_Minecraft, cellState, 36)
+                              cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.hasCorrectToolInSlotsCompat(this.mc, cellState, 36)
                            )) {
-                           if (this.init_ByteReader_ConfigS != null) {
+                           if (this.stair != null) {
                               return this.init("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
                            }
 
                            this.init(cell, "no_tool");
                         } else {
-                           if (!cell.equals(this.init_Minecraft.player.blockPosition().below()) || !this.init_ClassCache_FileCac(cell.below(2)).passable()) {
-                              this.load_BlockPos = cell;
+                           if (!cell.equals(this.mc.player.blockPosition().below()) || !this.classifyCell(cell.below(2)).passable()) {
+                              this.currentCell = cell;
                               return this.load("Digging " + cell.toShortString());
                            }
 
-                           if (this.init_ByteReader_ConfigS != null) {
+                           if (this.stair != null) {
                               return this.init("No floor under the staircase", AiFailure.NO_REACHABLE_TARGET);
                            }
 
                            this.init(cell, "footing");
                         }
                      } else {
-                        if (this.init_ByteReader_ConfigS != null) {
+                        if (this.stair != null) {
                            return this.init("An undiggable or fluid cell blocks the staircase", AiFailure.UNBREAKABLE_OBSTACLE);
                         }
 
@@ -525,42 +525,42 @@ public final class AiExcavate {
                   }
                }
 
-               if (this.init_ByteReader_StreamU.init_Z()) {
+               if (this.orderCursor.hasNext()) {
                   return this.load("Scanning for the next cell");
                }
 
-               int waiting = this.init_ByteReader_StreamU.init_List().size();
+               int waiting = this.orderCursor.init_List().size();
                if (waiting > 0) {
-                  if (this.init_ByteReader_StreamU.init(this.write_I, 100)) {
+                  if (this.orderCursor.init(this.dug, 100)) {
                      return this.load("Re-sweeping " + waiting + " deferred cells");
                   }
 
-                  for (BlockPos cell : this.init_ByteReader_StreamU.init_List()) {
+                  for (BlockPos cell : this.orderCursor.init_List()) {
                      this.init(cell, "unreachable");
                   }
                }
 
-               if (this.write_I == 0 && this.update_I == 0 && this.sync == 0) {
+               if (this.dug == 0 && this.update_I == 0 && this.sync == 0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Nothing to dig: every cell is already air");
                }
 
                if (this.update_I <= 0 && this.sync <= 0) {
-                  return this.init("Excavation complete: dug " + this.write_I + " of " + this.init_I_13() + " cells");
+                  return this.init("Excavation complete: dug " + this.dug + " of " + this.init_I_13() + " cells");
                }
 
                this.cancel();
-               return AiOperation.Result.failed(AiFailure.NO_REACHABLE_TARGET, "Excavation incomplete; some cells could not be cleared", this.load_JsonObject_2().toString());
+               return AiOperation.Result.failed(AiFailure.NO_REACHABLE_TARGET, "Excavation incomplete; some cells could not be cleared", this.statusJson().toString());
             }
          } else {
-            return this.init(AiOperation.Status.CANCELLED, this.init_Str + " cancelled");
+            return this.init(AiOperation.Status.CANCELLED, this.label + " cancelled");
          }
       }
 
       AiOperation.Result init(String message) {
-         if (this.init_StreamUtil != null && !this.init_StreamUtil.isIdle()) {
+         if (this.backfill != null && !this.backfill.isIdle()) {
             if (!this.load_Z) {
                if (this.load_AiOperation == null) {
-                  this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 1.5, false, false, false, 20);
+                  this.load_AiOperation = AiGoto.travelToCompat(this.startPos, 1.5, false, false, false, 20);
                }
 
                AiOperation.Result r = this.load_AiOperation.tick();
@@ -582,21 +582,21 @@ public final class AiExcavate {
                   double cx = 0.0;
                   double cz = 0.0;
 
-                  for (BlockPos cell : this.init_List) {
+                  for (BlockPos cell : this.order) {
                      cx += cell.getX() + 0.5;
                      cz += cell.getZ() + 0.5;
                   }
 
-                  cx /= this.init_List.size();
-                  cz /= this.init_List.size();
+                  cx /= this.order.size();
+                  cz /= this.order.size();
                   this.init_Vec3 = new Vec3(
-                     2.0 * (this.init_BlockPos.getX() + 0.5) - cx, this.init_BlockPos.getY() + 1.62, 2.0 * (this.init_BlockPos.getZ() + 0.5) - cz
+                     2.0 * (this.startPos.getX() + 0.5) - cx, this.startPos.getY() + 1.62, 2.0 * (this.startPos.getZ() + 0.5) - cz
                   );
                }
 
-               this.init_DataUtil.aimAt(this.init_Vec3);
-               this.init_DataUtil.tick();
-               this.init_StreamUtil.tick();
+               this.aim.aimAt(this.init_Vec3);
+               this.aim.tick();
+               this.backfill.tick();
                return this.load("Backfilling behind the dig");
             }
          }
@@ -605,22 +605,22 @@ public final class AiExcavate {
       }
 
       AiOperation.Result init_AiOperation_Result_12() {
-         if (this.load_List.isEmpty()) {
+         if (this.drops.isEmpty()) {
             if (++this.open > 12) {
                this.write_Z = false;
                return null;
             }
 
-            if (this.init_StreamUtil != null) {
-               this.init_StreamUtil.tick();
+            if (this.backfill != null) {
+               this.backfill.tick();
             }
 
             return this.load("Waiting for drops");
          } else {
             this.write_Z = false;
-            ItemEntity drop = this.load_List.get(0);
+            ItemEntity drop = this.drops.get(0);
             if (!drop.isAlive()) {
-               this.load_List.remove(0);
+               this.drops.remove(0);
                this.close = 0;
                this.poll = -1;
                return this.load("Collecting drops");
@@ -632,18 +632,18 @@ public final class AiExcavate {
             }
 
             if (++this.push > 120) {
-               this.load_List.remove(0);
+               this.drops.remove(0);
                this.poll = -1;
                return this.load("Drop unreachable; continuing");
             }
 
-            if (this.init_Minecraft.player.distanceToSqr(drop) <= 2.25) {
-               if (this.init_StreamUtil != null) {
-                  this.init_StreamUtil.tick();
+            if (this.mc.player.distanceToSqr(drop) <= 2.25) {
+               if (this.backfill != null) {
+                  this.backfill.tick();
                }
 
                if (++this.close > 20) {
-                  this.load_List.remove(0);
+                  this.drops.remove(0);
                   this.close = 0;
                }
 
@@ -651,59 +651,59 @@ public final class AiExcavate {
             } else {
                this.close = 0;
                this.read_Z = true;
-               this.read_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.2, true, true, true, this.init(8));
+               this.dropTravel = AiGoto.travelToCompat(drop.blockPosition(), 1.2, true, true, true, this.init(8));
                return this.load("Collecting drops");
             }
          }
       }
 
-      void init_V_4(BlockPos near) {
-         this.load_List = new ArrayList<>();
+      void collectDrops(BlockPos near) {
+         this.drops = new ArrayList<>();
          Vec3 center = Vec3.atCenterOf(near);
 
-         for (Entity entity : this.init_Minecraft.level.entitiesForRendering()) {
+         for (Entity entity : this.mc.level.entitiesForRendering()) {
             if (entity instanceof ItemEntity item && item.isAlive() && !(item.position().distanceToSqr(center) > 64.0)) {
-               if (this.load_List.size() >= 8) {
+               if (this.drops.size() >= 8) {
                   break;
                }
 
-               this.load_List.add(item);
+               this.drops.add(item);
             }
          }
 
-         this.load_List.sort(Comparator.comparingDouble(this.init_Minecraft.player::distanceToSqr));
+         this.drops.sort(Comparator.comparingDouble(this.mc.player::distanceToSqr));
          this.close = 0;
       }
 
-      AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos pos) {
-         return AiPathfinder.LiveGridView.classifyCellCompat(this.init_Minecraft, this.init_Minecraft.level, pos, this.init_ItemStackArr);
+      AiPathfinder.CellInfo classifyCell(BlockPos pos) {
+         return AiPathfinder.LiveGridView.classifyCellCompat(this.mc, this.mc.level, pos, this.hotbar);
       }
 
-      BlockState init_BlockState(BlockPos pos) {
-         return this.init_Minecraft.level == null ? null : this.init_Minecraft.level.getBlockState(pos);
+      BlockState stateAt(BlockPos pos) {
+         return this.mc.level == null ? null : this.mc.level.getBlockState(pos);
       }
 
       void init(BlockPos cell, String reason) {
-         if (this.init_JsonArray.size() < 32) {
-            this.init_JsonArray.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
+         if (this.skipped.size() < 32) {
+            this.skipped.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
          }
 
          this.update_I++;
       }
 
       int init_I_13() {
-         return this.init_List.size();
+         return this.order.size();
       }
 
       int init(int cap) {
-         return (int)Math.max(1L, Math.min(cap, (this.init_J - System.nanoTime()) / 1000000000L));
+         return (int)Math.max(1L, Math.min(cap, (this.deadline - System.nanoTime()) / 1000000000L));
       }
 
-      Map<String, Integer> init_Map_2() {
+      Map<String, Integer> inventoryCounts() {
          Map<String, Integer> counts = new LinkedHashMap<>();
 
          for (int i = 0; i < 36; i++) {
-            ItemStack stack = this.init_Minecraft.player.getInventory().getItem(i);
+            ItemStack stack = this.mc.player.getInventory().getItem(i);
             if (!stack.isEmpty()) {
                counts.merge(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount(), Integer::sum);
             }
@@ -712,10 +712,10 @@ public final class AiExcavate {
          return counts;
       }
 
-      JsonObject init_JsonObject_26() {
+      JsonObject gainedItems() {
          JsonObject out = new JsonObject();
-         this.init_Map_2().forEach((item, count) -> {
-            int delta = count - this.init_Map.getOrDefault(item, 0);
+         this.inventoryCounts().forEach((item, count) -> {
+            int delta = count - this.startCounts.getOrDefault(item, 0);
             if (delta > 0 && out.size() < 32) {
                out.addProperty(item, delta);
             }
@@ -724,26 +724,26 @@ public final class AiExcavate {
       }
 
       AiOperation.Result init(String why, AiFailure code) {
-         int reachedY = AiExcavate.init(this.init_ByteReader_ConfigS.origin().getY(), this.load_I_7());
+         int reachedY = AiExcavate.init(this.stair.origin().getY(), this.clearedSteps());
          this.cancel();
          return AiOperation.Result.failed(
             code,
-            why + "; staircase descended to y=" + reachedY + " (target " + this.init_ByteReader_ConfigS.targetY() + ")",
-            this.load_JsonObject_2().toString()
+            why + "; staircase descended to y=" + reachedY + " (target " + this.stair.targetY() + ")",
+            this.statusJson().toString()
          );
       }
 
-      int load_I_7() {
+      int clearedSteps() {
          int cleared = 0;
 
-         for (int i = 0; i <= this.init_ByteReader_ConfigS.steps(); i++) {
+         for (int i = 0; i <= this.stair.steps(); i++) {
             BlockPos feet = new BlockPos(
-               this.init_ByteReader_ConfigS.origin().getX() + i * this.init_ByteReader_ConfigS.stepX(),
-               this.init_ByteReader_ConfigS.origin().getY() - i,
-               this.init_ByteReader_ConfigS.origin().getZ() + i * this.init_ByteReader_ConfigS.stepZ()
+               this.stair.origin().getX() + i * this.stair.stepX(),
+               this.stair.origin().getY() - i,
+               this.stair.origin().getZ() + i * this.stair.stepZ()
             );
-            BlockState feetState = this.init_BlockState(feet);
-            BlockState headState = this.init_BlockState(feet.above());
+            BlockState feetState = this.stateAt(feet);
+            BlockState headState = this.stateAt(feet.above());
             if (feetState == null || headState == null || !feetState.isAir() || !headState.isAir()) {
                break;
             }
@@ -754,55 +754,55 @@ public final class AiExcavate {
          return cleared;
       }
 
-      JsonObject load_JsonObject_2() {
+      JsonObject statusJson() {
          JsonObject out = AiJson.objectOf(
             "op",
-            this.init_Str,
+            this.label,
             "dug",
-            this.write_I,
+            this.dug,
             "planned",
             this.init_I_13(),
             "layers",
-            this.init_I,
+            this.layers,
             "skipped",
-            this.init_JsonArray,
+            this.skipped,
             "skippedTotal",
             this.update_I,
             "skippedLava",
             this.sync,
             "maxBlocks",
-            this.load_I,
+            this.maxBlocks,
             "drops",
-            this.init_JsonObject_26(),
+            this.gainedItems(),
             "backfilled",
-            this.init_StreamUtil == null ? 0 : this.init_StreamUtil.getBackfilledCount(),
+            this.backfill == null ? 0 : this.backfill.getBackfilledCount(),
             "position",
-            this.init_Minecraft.player == null ? null : this.init_Minecraft.player.blockPosition().toShortString()
+            this.mc.player == null ? null : this.mc.player.blockPosition().toShortString()
          );
-         if (this.init_ByteReader_ConfigS != null) {
-            out.addProperty("targetY", this.init_ByteReader_ConfigS.targetY());
-            out.addProperty("reachedY", AiExcavate.init(this.init_ByteReader_ConfigS.origin().getY(), this.load_I_7()));
+         if (this.stair != null) {
+            out.addProperty("targetY", this.stair.targetY());
+            out.addProperty("reachedY", AiExcavate.init(this.stair.origin().getY(), this.clearedSteps()));
          }
 
          return out;
       }
 
       AiOperation.Result load(String message) {
-         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.load_JsonObject_2().toString(), List.of());
+         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusJson().toString(), List.of());
       }
 
       AiOperation.Result init(AiOperation.Status status, String message) {
          this.cancel();
-         return new AiOperation.Result(status, message, this.load_JsonObject_2().toString(), List.of());
+         return new AiOperation.Result(status, message, this.statusJson().toString(), List.of());
       }
 
       @Override
       public void cancel() {
          if (!this.update_Z) {
             this.update_Z = true;
-            if (this.read_AiOperation != null) {
-               this.read_AiOperation.cancel();
-               this.read_AiOperation = null;
+            if (this.dropTravel != null) {
+               this.dropTravel.cancel();
+               this.dropTravel = null;
             }
 
             if (this.init_AiOperation != null) {
@@ -810,26 +810,26 @@ public final class AiExcavate {
                this.init_AiOperation = null;
             }
 
-            if (this.init_StreamUtil != null) {
-               this.init_StreamUtil.reset();
+            if (this.backfill != null) {
+               this.backfill.reset();
             }
 
-            if (this.init_Minecraft.options != null) {
+            if (this.mc.options != null) {
                for (KeyMapping key : List.of(
-                  this.init_Minecraft.options.keyUp,
-                  this.init_Minecraft.options.keyDown,
-                  this.init_Minecraft.options.keyLeft,
-                  this.init_Minecraft.options.keyRight,
-                  this.init_Minecraft.options.keyJump,
-                  this.init_Minecraft.options.keySprint,
-                  this.init_Minecraft.options.keyShift
+                  this.mc.options.keyUp,
+                  this.mc.options.keyDown,
+                  this.mc.options.keyLeft,
+                  this.mc.options.keyRight,
+                  this.mc.options.keyJump,
+                  this.mc.options.keySprint,
+                  this.mc.options.keyShift
                )) {
                   key.setDown(KeyMappingControl.of(key).autism$physicalForBody());
                }
             }
 
-            if (this.init_Minecraft.player != null) {
-               this.init_Minecraft.player.getInventory().setSelectedSlot(this.read_I);
+            if (this.mc.player != null) {
+               this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
             }
          }
       }
@@ -850,22 +850,22 @@ public final class AiExcavate {
    }
 
    static final class Inner_StreamUtil {
-      private List<BlockPos> init_List;
+      private List<BlockPos> order;
       private final List<BlockPos> load_List = new ArrayList<>();
-      private int init_I;
-      private int load_I = -1;
+      private int cursor;
+      private int dug = -1;
       private int read;
 
       Inner_StreamUtil(List<BlockPos> order) {
-         this.init_List = order;
+         this.order = order;
       }
 
-      boolean init_Z() {
-         return this.init_I < this.init_List.size();
+      boolean hasNext() {
+         return this.cursor < this.order.size();
       }
 
-      BlockPos init_BlockPos() {
-         return this.init_List.get(this.init_I++);
+      BlockPos next() {
+         return this.order.get(this.cursor++);
       }
 
       void init(BlockPos cell) {
@@ -881,16 +881,16 @@ public final class AiExcavate {
             return false;
          }
 
-         if (dug > this.load_I) {
-            this.load_I = dug;
+         if (dug > this.dug) {
+            this.dug = dug;
             this.read = 0;
          } else if (++this.read > maxDryPasses) {
             return false;
          }
 
-         this.init_List = new ArrayList<>(this.load_List);
+         this.order = new ArrayList<>(this.load_List);
          this.load_List.clear();
-         this.init_I = 0;
+         this.cursor = 0;
          return true;
       }
    }

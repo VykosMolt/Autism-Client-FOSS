@@ -672,9 +672,9 @@ final class AiWorldMemory {
                && mc.level.getBlockState(stand.above()).getCollisionShape(mc.level, stand.above()).isEmpty()
                && mc.level.getFluidState(stand).isEmpty()
                && mc.level.getFluidState(stand.above()).isEmpty()
-               && !init_Z(mc.level.getBlockState(stand))
-               && !init_Z(mc.level.getBlockState(stand.above()))
-               && !init_Z(mc.level.getBlockState(stand.below()))) {
+               && !isHazard(mc.level.getBlockState(stand))
+               && !isHazard(mc.level.getBlockState(stand.above()))
+               && !isHazard(mc.level.getBlockState(stand.below()))) {
                out.addProperty("candidateStandingPosition", stand.toShortString());
                out.addProperty("reachability", "local stance observed; route and interaction ray still require validation");
                break;
@@ -731,7 +731,7 @@ final class AiWorldMemory {
       }
    }
 
-   private static boolean init_Z(BlockState state) {
+   private static boolean isHazard(BlockState state) {
       return state.is(BlockTags.FIRE)
          || state.is(Blocks.MAGMA_BLOCK)
          || state.is(Blocks.CACTUS)

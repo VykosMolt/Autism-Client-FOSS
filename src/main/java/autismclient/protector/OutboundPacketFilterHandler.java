@@ -19,10 +19,10 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
    private static final Map<Connection, Map<Packet<?>, Boolean>> init_Map = new IdentityHashMap<>();
    private static int load;
    private static int read;
-   private final Connection init_Connection;
+   private final Connection connection;
 
    public OutboundPacketFilterHandler(Connection connection) {
-      this.init_Connection = connection;
+      this.connection = connection;
    }
 
    @Override
@@ -31,10 +31,10 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          super.write(ctx, msg, promise);
       } else {
          Packet<?> packet = (Packet<?>)msg;
-         if (load(this.init_Connection, packet)) {
+         if (load(this.connection, packet)) {
             super.write(ctx, msg, promise);
          } else {
-            OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(this.init_Connection, packet);
+            OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(this.connection, packet);
             switch (verdict.kind) {
                case PASS:
                   ProtectorFeatureFlags.load(packet);
@@ -218,7 +218,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          }
 
          OutboundPacketFilterHandler filter = pipeline.get(OutboundPacketFilterHandler.class);
-         return filter != null && filter.init_Connection == connection;
+         return filter != null && filter.connection == connection;
       } else {
          return false;
       }

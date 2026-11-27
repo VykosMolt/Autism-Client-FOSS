@@ -40,11 +40,11 @@ public final class RangeSliderRenderer {
          );
       }
 
-      init_V_SyncManager(context, bounds, lowX, hovered || activeThumb == 0);
-      init_V_SyncManager(context, bounds, highX, hovered || activeThumb == 1);
+      drawThumb(context, bounds, lowX, hovered || activeThumb == 0);
+      drawThumb(context, bounds, highX, hovered || activeThumb == 1);
    }
 
-   private static void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int centerX, boolean lit) {
+   private static void drawThumb(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int centerX, boolean lit) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float r = Math.max(1.5F, bounds.sync() / 2.0F - 2.0F);
       float cx = Math.max(bounds.read() + 2 + r, Math.min(bounds.init() - 2 - r, centerX));

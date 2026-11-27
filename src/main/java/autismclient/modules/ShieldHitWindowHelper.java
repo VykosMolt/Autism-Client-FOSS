@@ -127,14 +127,14 @@ final class ShieldHitWindowHelper {
 
    static final class Inner_BufferHelper {
       static final int init_I = 60;
-      private final Map<UUID, ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil> init_Map = new HashMap<>();
-      private double init_D = 1.0;
+      private final Map<UUID, ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil> windows = new HashMap<>();
+      private double timeScale = 1.0;
 
       boolean init_Z(UUID id, int hurt, int tick, boolean afterFirstHit) {
          if (!afterFirstHit) {
             return true;
          } else {
-            ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.get(id);
+            ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
             if (w == null) {
                return false;
             } else {
@@ -150,13 +150,13 @@ final class ShieldHitWindowHelper {
       }
 
       void init() {
-         for (ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w : this.init_Map.values()) {
+         for (ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w : this.windows.values()) {
             w.poll = -2147483648;
          }
       }
 
       void init_V_UUID_I(UUID id, int tick) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.get(id);
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
          if (w != null) {
             w.poll = tick;
          }
@@ -168,7 +168,7 @@ final class ShieldHitWindowHelper {
       }
 
       void init(double scale) {
-         this.init_D = Double.isFinite(scale) ? Math.clamp(scale, 0.25, 4.0) : 1.0;
+         this.timeScale = Double.isFinite(scale) ? Math.clamp(scale, 0.25, 4.0) : 1.0;
       }
 
       boolean init_Z(UUID id, int hurt, int tick, double damage) {
@@ -176,7 +176,7 @@ final class ShieldHitWindowHelper {
       }
 
       boolean init(UUID id, int hurt, int tick, double damage, boolean movingOpportunity) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
          this.init_V_l_BufferHelper_Dat(w, hurt, tick);
          if (tick == w.sync) {
             return false;
@@ -188,7 +188,7 @@ final class ShieldHitWindowHelper {
       }
 
       boolean load(UUID id, int hurt, int tick, double damage) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
          this.init_V_l_BufferHelper_Dat(w, hurt, tick);
          if (tick == w.sync) {
             return false;
@@ -203,12 +203,12 @@ final class ShieldHitWindowHelper {
 
       int init_I(UUID id, int hurt, int tick, double damage) {
          int ready = this.init_I(id, hurt, tick, false);
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.get(id);
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
          return w.init_Z && damage > w.init_D + 0.01 ? (tick == w.sync ? 1 : 0) : ready;
       }
 
       int init(UUID id, int hurt, int tick, boolean strict, boolean movingOpportunity) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
          this.init_V_l_BufferHelper_Dat(w, hurt, tick);
          int open = strict ? Math.max(init_I_l_BufferHelper_Dat(w, hurt, movingOpportunity), w.update) : w.update;
          if (w.sync == tick) {
@@ -223,7 +223,7 @@ final class ShieldHitWindowHelper {
       }
 
       boolean init(UUID id, int tick, int waitChance, DoubleSupplier random) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.get(id);
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
          if (w != null && tick != w.sync && tick >= w.write && tick < w.update) {
             int chance = Math.clamp(waitChance, 10, 100);
             if (chance == 100) {
@@ -243,7 +243,7 @@ final class ShieldHitWindowHelper {
       }
 
       void init_V(UUID id, int hurt, int tick, double damage) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
          this.init_V_l_BufferHelper_Dat(w, hurt, tick);
          w.sync = tick;
          if (tick < w.update) {
@@ -256,7 +256,7 @@ final class ShieldHitWindowHelper {
             w.load_I = tick;
             w.write = tick + 4;
             w.read_Z = false;
-            w.open = Math.max(1, (int)Math.round(10.0 * this.init_D));
+            w.open = Math.max(1, (int)Math.round(10.0 * this.timeScale));
             w.init_D = damage;
             w.init_Z = false;
          }
@@ -266,7 +266,7 @@ final class ShieldHitWindowHelper {
          if (w.init_I != tick) {
             if (hurt > w.read_I) {
                boolean ours = tick >= w.load_I && tick - w.load_I <= w.open && tick >= w.sync && tick - w.sync <= 4;
-               w.update = tick + (int)Math.ceil(Math.max(0, hurt) * this.init_D);
+               w.update = tick + (int)Math.ceil(Math.max(0, hurt) * this.timeScale);
                if (ours) {
                   w.update = w.load_I + w.open;
                   w.write = tick;
@@ -278,15 +278,15 @@ final class ShieldHitWindowHelper {
 
             w.read_I = hurt;
             w.init_I = tick;
-            if (this.init_Map.size() > 64) {
-               this.init_Map.values().removeIf(old -> tick - old.init_I > 200);
+            if (this.windows.size() > 64) {
+               this.windows.values().removeIf(old -> tick - old.init_I > 200);
             }
          }
       }
 
       void load() {
-         this.init_Map.clear();
-         this.init_D = 1.0;
+         this.windows.clear();
+         this.timeScale = 1.0;
       }
 
       private static final class Inner_DataUtil {

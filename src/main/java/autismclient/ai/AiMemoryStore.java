@@ -234,11 +234,11 @@ public final class AiMemoryStore {
             }
 
             LinkedHashMap<String, AiMemoryStore.Memory> before = new LinkedHashMap<>(this.init_Map);
-            String normalized = load_Str_Str(text);
+            String normalized = normalize(text);
             AiMemoryStore.Memory existing = this.init_Map
                .values()
                .stream()
-               .filter(mx -> mx.kind() == kind && mx.scope().equals(scope) && load_Str_Str(mx.text()).equals(normalized))
+               .filter(mx -> mx.kind() == kind && mx.scope().equals(scope) && normalize(mx.text()).equals(normalized))
                .findFirst()
                .orElse(null);
             AiMemoryStore.Memory m;
@@ -281,7 +281,7 @@ public final class AiMemoryStore {
       }
    }
 
-   static String load_Str_Str(String text) {
+   static String normalize(String text) {
       return text.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
    }
 
@@ -291,7 +291,7 @@ public final class AiMemoryStore {
          .stream()
          .filter(m -> m.scope().equals("user") || m.scope().equals(scope))
          .sorted(
-            Comparator.<AiMemoryStore.Memory>comparingInt(m -> init_I_Str_StrArr(m.text(), terms))
+            Comparator.<AiMemoryStore.Memory>comparingInt(m -> matchCount(m.text(), terms))
                .reversed()
                .thenComparing(Comparator.comparingLong(AiMemoryStore.Memory::timestamp).reversed())
          )
@@ -316,7 +316,7 @@ public final class AiMemoryStore {
          ? List.of()
          : all.stream()
             .filter(m -> !chosen.contains(m.id()) && (m.scope().equals("user") || m.scope().equals(scope)))
-            .map(m -> Map.entry(m, init_I_Str_StrArr(m.text(), terms)))
+            .map(m -> Map.entry(m, matchCount(m.text(), terms)))
             .filter(e -> e.getValue() > 0)
             .sorted(Entry.<AiMemoryStore.Memory, Integer>comparingByValue().reversed().thenComparingLong(e -> -e.getKey().timestamp()))
             .limit(8L)
@@ -337,7 +337,7 @@ public final class AiMemoryStore {
          .toList();
    }
 
-   private static int init_I_Str_StrArr(String text, String[] terms) {
+   private static int matchCount(String text, String[] terms) {
       int n = 0;
       String normalized = text.toLowerCase(Locale.ROOT);
 

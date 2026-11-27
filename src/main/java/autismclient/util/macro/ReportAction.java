@@ -46,7 +46,7 @@ public class ReportAction implements MacroAction {
                long spentMs = (System.nanoTime() - executeStartNanos) / 1000000L;
                long remainingMs = Math.max(100, this.timeoutMs) - spentMs;
                if (remainingMs <= 0L) {
-                  AutismClientMessaging.sendPrefixed("§eReport \"" + this.init_Str_3() + "\": no time left after start event");
+                  AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": no time left after start event");
                } else {
                   int remainingTimeout = (int)Math.min(Integer.MAX_VALUE, remainingMs);
                   MacroAction condition = this.write_MacroAction();
@@ -72,16 +72,16 @@ public class ReportAction implements MacroAction {
                   }
 
                   if (!fired) {
-                     AutismClientMessaging.sendPrefixed("§eReport \"" + this.init_Str_3() + "\": timeout waiting for " + this.read_Str());
+                     AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": timeout waiting for " + this.read_Str());
                   } else {
                      long deltaMs = (System.nanoTime() - startNanos) / 1000000L;
                      AutismClientMessaging.sendPrefixed(
-                        "§b" + this.init_Str_3() + ": " + deltaMs + " ms (" + this.load_Str_2() + " -> " + this.read_Str() + ")"
+                        "§b" + this.displayLabel() + ": " + deltaMs + " ms (" + this.load_Str_2() + " -> " + this.read_Str() + ")"
                      );
                      if (this.stashToSharedState) {
                         AutismSessionState.getInstance()
                            .recordTimingMeasurement(
-                              new AutismSessionState.TimingMeasurement(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
+                              new AutismSessionState.TimingMeasurement(this.displayLabel(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
                            );
                      }
                   }
@@ -105,7 +105,7 @@ public class ReportAction implements MacroAction {
                String command = init_Str_Str_2(this.commandText);
                if (command.isBlank()) {
                   sendListener.cancel();
-                  AutismClientMessaging.sendPrefixed("Report \"" + this.init_Str_3() + "\": set a command for COMMAND_SENT.");
+                  AutismClientMessaging.sendPrefixed("Report \"" + this.displayLabel() + "\": set a command for COMMAND_SENT.");
                   return null;
                }
 
@@ -124,7 +124,7 @@ public class ReportAction implements MacroAction {
                Thread.currentThread().interrupt();
                return null;
             }
-            AutismClientMessaging.sendPrefixed("§eReport \"" + this.init_Str_3() + "\": timeout waiting for start event " + this.startEvent.name());
+            AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": timeout waiting for start event " + this.startEvent.name());
             return null;
          }
       } else {
@@ -305,7 +305,7 @@ public class ReportAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Report \"" + this.init_Str_3() + "\" [" + this.load_Str_2() + " -> " + this.read_Str() + "]";
+      return "Report \"" + this.displayLabel() + "\" [" + this.load_Str_2() + " -> " + this.read_Str() + "]";
    }
 
    @Override
@@ -313,7 +313,7 @@ public class ReportAction implements MacroAction {
       return "Rep";
    }
 
-   private String init_Str_3() {
+   private String displayLabel() {
       return this.reportLabel != null && !this.reportLabel.isBlank() ? this.reportLabel.trim() : "Report";
    }
 

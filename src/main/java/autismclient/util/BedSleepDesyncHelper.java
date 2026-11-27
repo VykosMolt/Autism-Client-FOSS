@@ -9,7 +9,7 @@ import net.minecraft.world.entity.Pose;
 public final class BedSleepDesyncHelper {
    private static final double init_D = 25.0;
    private static volatile boolean init_Z;
-   private static volatile long init_J = -9223372036854775808L;
+   private static volatile long sleepingPos = -9223372036854775808L;
 
    private BedSleepDesyncHelper() {
    }
@@ -21,7 +21,7 @@ public final class BedSleepDesyncHelper {
          Minecraft mc = Minecraft.getInstance();
          LocalPlayer player = mc.player;
          if (player != null) {
-            init_J = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
+            sleepingPos = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
             init_Z = true;
             init(player);
             load(mc);
@@ -31,7 +31,7 @@ public final class BedSleepDesyncHelper {
 
    public static void load() {
       init_Z = false;
-      init_J = -9223372036854775808L;
+      sleepingPos = -9223372036854775808L;
    }
 
    public static boolean isClientAwake() {
@@ -45,14 +45,14 @@ public final class BedSleepDesyncHelper {
             load();
          } else if (player.isSleeping()) {
             long current = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
-            if (current != init_J) {
+            if (current != sleepingPos) {
                load();
                return;
             }
 
             init(player);
             load(mc);
-         } else if (init_J != -9223372036854775808L && player.blockPosition().distSqr(BlockPos.of(init_J)) > 25.0) {
+         } else if (sleepingPos != -9223372036854775808L && player.blockPosition().distSqr(BlockPos.of(sleepingPos)) > 25.0) {
             load();
          }
       }

@@ -25,10 +25,10 @@ import net.minecraft.util.Util;
 import org.joml.Matrix3x2f;
 
 public final class CustomSplashProvider {
-   private static final Random init_Random = new Random();
+   private static final Random RANDOM = new Random();
    private static final int init_I = -256;
-   private static List<String> init_List;
-   private static Component init_Component;
+   private static List<String> cachedLines;
+   private static Component cachedSplash;
 
    private CustomSplashProvider() {
    }
@@ -39,7 +39,7 @@ public final class CustomSplashProvider {
          return null;
       }
 
-      String text = lines.get(init_Random.nextInt(lines.size()));
+      String text = lines.get(RANDOM.nextInt(lines.size()));
       return new SplashRenderer(Component.literal(text).setStyle(Style.EMPTY.withColor(-256)));
    }
 
@@ -64,8 +64,8 @@ public final class CustomSplashProvider {
    }
 
    private static Component init_Component(Minecraft client) {
-      if (init_Component != null) {
-         return init_Component;
+      if (cachedSplash != null) {
+         return cachedSplash;
       }
 
       List<String> lines = load(client);
@@ -73,14 +73,14 @@ public final class CustomSplashProvider {
          return null;
       }
 
-      String text = lines.get(init_Random.nextInt(lines.size()));
-      init_Component = Component.literal(text).setStyle(Style.EMPTY.withColor(-256));
-      return init_Component;
+      String text = lines.get(RANDOM.nextInt(lines.size()));
+      cachedSplash = Component.literal(text).setStyle(Style.EMPTY.withColor(-256));
+      return cachedSplash;
    }
 
    private static List<String> load(Minecraft client) {
-      if (init_List != null) {
-         return init_List;
+      if (cachedLines != null) {
+         return cachedLines;
       }
 
       List<String> lines = new ArrayList<>();
@@ -97,7 +97,7 @@ public final class CustomSplashProvider {
       } catch (Exception var8) {
       }
 
-      init_List = List.copyOf(lines);
-      return init_List;
+      cachedLines = List.copyOf(lines);
+      return cachedLines;
    }
 }

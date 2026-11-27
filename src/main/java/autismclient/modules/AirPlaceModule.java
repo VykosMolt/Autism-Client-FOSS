@@ -22,7 +22,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class AirPlaceModule extends Module {
-   static final String init_Str = "Places blocks in air.";
+   static final String DESCRIPTION = "Places blocks in air.";
    static final String load = "Set placement reach";
    static final String read = "Show placement guide";
    static final String write = "Fill placement guide";
@@ -48,9 +48,9 @@ public final class AirPlaceModule extends Module {
       if (MC != null && MC.level != null) {
          Player player = MC.player;
          AirPlaceModule.Inner_DataUtil placement = init(player, MC.hitResult, this.decimal("range"));
-         if (placement != null && !al.init_Z_HitResult(placement.init_BlockHitResult(), placement.init_InteractionHand(), this.id())) {
+         if (placement != null && !al.init_Z_HitResult(placement.hit(), placement.hand(), this.id())) {
             if (this.bool("guide")) {
-               this.init_BlockPos = placement.init_BlockHitResult().getBlockPos().immutable();
+               this.init_BlockPos = placement.hit().getBlockPos().immutable();
             }
 
             this.init_V_StreamUtil_DataUti(placement);
@@ -70,7 +70,7 @@ public final class AirPlaceModule extends Module {
          } else if (MC.player.isHandsBusy()) {
             return true;
          } else {
-            return al.init_Z_HitResult(placement.init_BlockHitResult(), placement.init_InteractionHand(), this.id()) ? true : true;
+            return al.init_Z_HitResult(placement.hit(), placement.hand(), this.id()) ? true : true;
          }
       } else {
          return false;
@@ -89,7 +89,7 @@ public final class AirPlaceModule extends Module {
                return;
             }
 
-            this.init_V_BlockHitResult(placement.init_BlockHitResult());
+            this.init_V_BlockHitResult(placement.hit());
             ((AutismMinecraftAccessor)MC).autism$setRightClickDelay(4);
          } finally {
             autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
@@ -163,7 +163,7 @@ public final class AirPlaceModule extends Module {
    }
 
    static AirPlaceModule.Inner_DataUtil init(Player player, HitResult currentHit, double range) {
-      if (player != null && player.level() != null && currentHit != null && currentHit.getType() == Type.MISS && !init_Z_Player(player)) {
+      if (player != null && player.level() != null && currentHit != null && currentHit.getType() == Type.MISS && !isHandsBusy(player)) {
          InteractionHand hand = init_InteractionHand_Player(player);
          if (hand == null) {
             return null;
@@ -206,7 +206,7 @@ public final class AirPlaceModule extends Module {
       return stack != null && !stack.isEmpty() && stack.getItem() instanceof BlockItem && stack.isItemEnabled(player.level().enabledFeatures());
    }
 
-   private static boolean init_Z_Player(Player player) {
+   private static boolean isHandsBusy(Player player) {
       return player instanceof LocalPlayer local ? local.isHandsBusy() : player.isUsingItem();
    }
 
@@ -214,6 +214,6 @@ public final class AirPlaceModule extends Module {
       return List.of("Set placement reach", "Show placement guide", "Fill placement guide", "Set guide color");
    }
 
-   public record Inner_DataUtil(BlockHitResult init_BlockHitResult, InteractionHand init_InteractionHand) {
+   public record Inner_DataUtil(BlockHitResult hit, InteractionHand hand) {
    }
 }

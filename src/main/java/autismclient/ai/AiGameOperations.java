@@ -270,13 +270,13 @@ final class AiGameOperations {
          final Minecraft init_Minecraft = Minecraft.getInstance();
          final BlockPos init_BlockPos = AiGameOperations.requireBlockPos(args);
          final long init_J = System.nanoTime() + 30000000000L;
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
          BlockState init_BlockState;
          BlockState load_BlockState;
          net.minecraft.world.level.block.Block init_Block;
          BlockPos load_BlockPos;
          long load_J;
-         long read_J;
+         long revision;
          int init_I;
          int load_I;
          int read_I;
@@ -305,7 +305,7 @@ final class AiGameOperations {
                   this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);
                   this.init_I = this.init_Minecraft.player.containerMenu.containerId;
                   this.load_J = AiServerEvidence.blockRevision(this.init_BlockPos);
-                  this.read_J = AiServerEvidence.serverMessageRevision();
+                  this.revision = AiServerEvidence.serverMessageRevision();
                }
 
                Direction desiredFace = args.has("face") ? Direction.valueOf(AiJson.getString(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
@@ -324,8 +324,8 @@ final class AiGameOperations {
                }
 
                BlockHitResult hit = kind.equals("interact") && aimY < 0.0 && desiredFace == null ? reachableHit : AiGameOperations.clipOutline(this.init_Minecraft, aimPoint);
-               if (!this.load_Z && !this.init_DataUtil.isSettled()) {
-                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
+               if (!this.load_Z && !this.aim.isSettled()) {
+                  AiGameOperations.aimAndStep(this.aim, aimPoint);
                   if (++this.write <= 40) {
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Turning toward " + this.init_BlockPos.toShortString(), new JsonObject());
                   }
@@ -343,9 +343,9 @@ final class AiGameOperations {
 
                   aimPoint = solved.getLocation();
                   hit = solved;
-                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
+                  AiGameOperations.aimAndStep(this.aim, aimPoint);
                } else if (!this.load_Z) {
-                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
+                  AiGameOperations.aimAndStep(this.aim, aimPoint);
                }
 
                if (this.load_Z || hit != null && hit.getBlockPos().equals(this.init_BlockPos)) {
@@ -413,7 +413,7 @@ final class AiGameOperations {
                   } else if (!kind.equals("place") && this.init_Minecraft.player.isSleeping()) {
                      return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Now sleeping", AiJson.objectOf("sleeping", true));
                   } else {
-                     String reply = !kind.equals("place") && this.load_I >= 5 && this.read_I == 0 ? AiGameOperations.latestServerReplyAfter(this.read_J) : null;
+                     String reply = !kind.equals("place") && this.load_I >= 5 && this.read_I == 0 ? AiGameOperations.latestServerReplyAfter(this.revision) : null;
                      if (reply != null) {
                         return AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
@@ -520,7 +520,7 @@ final class AiGameOperations {
             final Set<String> init_Set = new HashSet<>();
             final Set<String> load_Set = new HashSet<>();
             String init_Str = "";
-            String load_Str = "";
+            String regionCell = "";
             BlockPos load_BlockPos;
             AiOperation init_AiOperation;
             BlockPos read_BlockPos = this.init_BlockPos;
@@ -572,7 +572,7 @@ final class AiGameOperations {
                         this.load_Set.add(AiRegions.init(this.load_BlockPos.getX(), this.load_BlockPos.getZ()));
                      }
 
-                     this.init_Str = r.status() == AiOperation.Status.SUCCEEDED ? this.load_Str : "";
+                     this.init_Str = r.status() == AiOperation.Status.SUCCEEDED ? this.regionCell : "";
                      this.read_BlockPos = this.init_Minecraft.player.blockPosition();
                      this.load_I = 0;
                      this.read_I = this.write_I = this.update = this.sync = this.flush = this.close = 0;
@@ -633,11 +633,11 @@ final class AiGameOperations {
 
                   String regionCell = AiRegions.init(this.read_BlockPos.getX(), this.read_BlockPos.getZ());
                   AiService service = AiService.getExistingInstance();
-                  if (!regionCell.equals(this.load_Str) && service != null) {
+                  if (!regionCell.equals(this.regionCell) && service != null) {
                      service.recordSurveyRegion(this.read_BlockPos, this.read_I, this.write_I, this.update, this.sync, villagers, this.init_Str);
                   }
 
-                  this.load_Str = regionCell;
+                  this.regionCell = regionCell;
                   if (village
                      && this.read_I >= 3
                      && this.update >= 8

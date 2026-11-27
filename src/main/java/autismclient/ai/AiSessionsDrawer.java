@@ -11,33 +11,33 @@ final class AiSessionsDrawer {
    private static final long init_J = 3000L;
    private static final int load_I = 4;
    private static final int read_I = 2;
-   private final AiService init_cc;
-   private final AiViewState init_cF;
-   private final AiAssistantOverlay init_AiAssistantOverlay;
+   private final AiService service;
+   private final AiViewState view;
+   private final AiAssistantOverlay host;
    final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search chats");
    final autismclient.gui.ui.widgets.TextInputWidget renameInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96);
-   private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
-   private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private final AiUiKit.Inner_StreamUtil scroller = new AiUiKit.Inner_StreamUtil(false);
+   private autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    boolean open;
    private String init_Str;
    private String load_Str;
    private long load_J;
-   private List<AiSessions.Inner_StreamUtil> init_List = List.of();
-   private List<AiSessions.Inner_StreamUtil> load_List;
-   private String read_Str = "";
+   private List<AiSessions.Inner_StreamUtil> filteredSessions = List.of();
+   private List<AiSessions.Inner_StreamUtil> lastSessions;
+   private String lastQuery = "";
 
    AiSessionsDrawer(AiService service, AiViewState view, AiAssistantOverlay host) {
-      this.init_cc = service;
-      this.init_cF = view;
-      this.init_AiAssistantOverlay = host;
+      this.service = service;
+      this.view = view;
+      this.host = host;
       this.renameInput.setOnSubmit(text -> this.write());
    }
 
    void toggle() {
       this.open = !this.open;
       if (this.open) {
-         this.init_cF.invalidate();
-         this.init_cE_StreamUtil.scrollToTop();
+         this.view.invalidate();
+         this.scroller.scrollToTop();
       } else {
          this.load();
       }
@@ -53,7 +53,7 @@ final class AiSessionsDrawer {
    }
 
    boolean contains(double x, double y) {
-      return this.open && this.init_NetHelper.init_Z((int)x, (int)y);
+      return this.open && this.bounds.init_Z((int)x, (int)y);
    }
 
    boolean cancelRename() {
@@ -77,11 +77,11 @@ final class AiSessionsDrawer {
          }
 
          int w = Math.max(110, Math.min(160, area.update() * 2 / 5));
-         this.init_NetHelper = autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.min(w, area.update()), area.sync());
-         kit.blockClicks(this.init_NetHelper);
-         kit.blockScroll(this.init_NetHelper);
-         autismclient.gui.f.b.BufferHelper.init(kit.renderContext, this.init_NetHelper);
-         autismclient.gui.f.NetHelper inner = this.init_NetHelper.init(4);
+         this.bounds = autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.min(w, area.update()), area.sync());
+         kit.blockClicks(this.bounds);
+         kit.blockScroll(this.bounds);
+         autismclient.gui.f.b.BufferHelper.init(kit.renderContext, this.bounds);
+         autismclient.gui.f.NetHelper inner = this.bounds.init(4);
          int ctrl = AiUiKit.toolbarHeight();
          int y = inner.write();
          kit.drawIconLabelButton(
@@ -92,7 +92,7 @@ final class AiSessionsDrawer {
             this::read
          );
          y += ctrl + 2;
-         List<AiSessions.Inner_StreamUtil> sessions = this.init_cF.sessions;
+         List<AiSessions.Inner_StreamUtil> sessions = this.view.sessions;
          if (sessions.size() > 8) {
             kit.drawTextInput(this.searchInput, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
@@ -101,20 +101,20 @@ final class AiSessionsDrawer {
             this.searchInput.setFocused(false);
          }
 
-         List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.searchInput.getValue());
+         List<AiSessions.Inner_StreamUtil> rows = this.filterSessions(sessions, this.searchInput.getValue());
          autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), Math.max(0, inner.load() - y));
          int rowH = AiUiKit.inputHeight();
          int step = rowH + 1;
-         this.init_cE_StreamUtil.layout(list, rows.size() * step);
-         kit.registerScrollPane(this.init_cE_StreamUtil);
+         this.scroller.layout(list, rows.size() * step);
+         kit.registerScrollPane(this.scroller);
          if (rows.isEmpty()) {
             kit.drawEllipsizedText(sessions.isEmpty() ? "No chats yet" : "No matches", list.read() + 4, list.write() + 3, list.update() - 8, kit.colors.textSecondary);
          } else {
             kit.pushClip(list);
-            int rowW = list.update() - (this.init_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
+            int rowW = list.update() - (this.scroller.maxScroll() > 0 ? 7 : 0);
 
-            for (int i = Math.max(0, this.init_cE_StreamUtil.offset / step); i < rows.size(); i++) {
-               int ry = list.write() - this.init_cE_StreamUtil.offset + i * step;
+            for (int i = Math.max(0, this.scroller.offset / step); i < rows.size(); i++) {
+               int ry = list.write() - this.scroller.offset + i * step;
                if (ry >= list.load()) {
                   break;
                }
@@ -123,7 +123,7 @@ final class AiSessionsDrawer {
             }
 
             kit.popClip();
-            kit.drawScrollbar(this.init_cE_StreamUtil);
+            kit.drawScrollbar(this.scroller);
          }
       }
    }
@@ -131,7 +131,7 @@ final class AiSessionsDrawer {
    private void init(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       String id = meta.id();
-      boolean active = id.equals(this.init_cF.activeSessionId);
+      boolean active = id.equals(this.view.activeSessionId);
       boolean hovered = kit.isHovered(row);
       boolean armed = id.equals(this.load_Str);
       if (active) {
@@ -140,9 +140,9 @@ final class AiSessionsDrawer {
          PacketUtil.load(kit.graphics, row, 3, colors.cardSurfaceElevated);
       }
 
-      kit.addInteractiveRegion(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
+      kit.addInteractiveRegion(row, () -> this.openSession(id), () -> this.host.init(id), null);
       kit.drawStatusDot(
-         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.stateColor(kit, active ? this.init_cF.runState.name() : meta.state())
+         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.stateColor(kit, active ? this.view.runState.name() : meta.state())
       );
       int textX = row.read() + 11;
       int icon = row.sync() - 2;
@@ -161,52 +161,52 @@ final class AiSessionsDrawer {
             right = trash.read() - 3;
          }
 
-         kit.drawCenteredRowText(init_Str_cd_StreamUtil(meta), row, textX, Math.max(1, right - textX), active ? colors.textPrimary : colors.textSecondary);
+         kit.drawCenteredRowText(displayTitle(meta), row, textX, Math.max(1, right - textX), active ? colors.textPrimary : colors.textSecondary);
       }
    }
 
-   static String init_Str_cd_StreamUtil(AiSessions.Inner_StreamUtil meta) {
+   static String displayTitle(AiSessions.Inner_StreamUtil meta) {
       String title = meta.title() == null ? "" : meta.title().trim();
       return !title.isEmpty() && !title.equals("New session") ? title : "New chat";
    }
 
-   private List<AiSessions.Inner_StreamUtil> init_List_List_Str(List<AiSessions.Inner_StreamUtil> sessions, String query) {
+   private List<AiSessions.Inner_StreamUtil> filterSessions(List<AiSessions.Inner_StreamUtil> sessions, String query) {
       String q = query.trim().toLowerCase(Locale.ROOT);
-      if (sessions == this.load_List && q.equals(this.read_Str)) {
-         return this.init_List;
+      if (sessions == this.lastSessions && q.equals(this.lastQuery)) {
+         return this.filteredSessions;
       }
 
-      this.load_List = sessions;
-      this.read_Str = q;
+      this.lastSessions = sessions;
+      this.lastQuery = q;
       if (q.isEmpty()) {
-         return this.init_List = sessions;
+         return this.filteredSessions = sessions;
       }
 
       List<AiSessions.Inner_StreamUtil> out = new ArrayList<>();
 
       for (AiSessions.Inner_StreamUtil meta : sessions) {
-         if (init_Str_cd_StreamUtil(meta).toLowerCase(Locale.ROOT).contains(q)) {
+         if (displayTitle(meta).toLowerCase(Locale.ROOT).contains(q)) {
             out.add(meta);
          }
       }
 
-      return this.init_List = out;
+      return this.filteredSessions = out;
    }
 
    private void read() {
-      this.init_cc.createSession();
+      this.service.createSession();
       this.load();
-      this.init_cF.invalidate();
-      this.init_AiAssistantOverlay.write_V();
+      this.view.invalidate();
+      this.host.write_V();
    }
 
-   private void init_V_Str(String id) {
-      if (!id.equals(this.init_cF.activeSessionId)) {
-         this.init_cc.switchSession(id);
+   private void openSession(String id) {
+      if (!id.equals(this.view.activeSessionId)) {
+         this.service.switchSession(id);
       }
 
       this.load();
-      this.init_cF.invalidate();
+      this.view.invalidate();
    }
 
    private void load(String id) {
@@ -215,8 +215,8 @@ final class AiSessionsDrawer {
          this.load_J = System.currentTimeMillis();
       } else {
          this.load_Str = null;
-         this.init_cc.deleteSession(id);
-         this.init_cF.invalidate();
+         this.service.deleteSession(id);
+         this.view.invalidate();
          autismclient.util.bi.load("Chat deleted");
       }
    }
@@ -226,30 +226,30 @@ final class AiSessionsDrawer {
          case 0:
             AiSessions.Inner_StreamUtil meta = null;
 
-            for (AiSessions.Inner_StreamUtil m : this.init_cF.sessions) {
+            for (AiSessions.Inner_StreamUtil m : this.view.sessions) {
                if (m.id().equals(id)) {
                   meta = m;
                }
             }
 
             this.init_Str = id;
-            this.renameInput.setValue(meta == null ? "" : init_Str_cd_StreamUtil(meta));
+            this.renameInput.setValue(meta == null ? "" : displayTitle(meta));
             this.renameInput.moveCursorToEnd();
-            this.init_AiAssistantOverlay.init(this.renameInput);
+            this.host.init(this.renameInput);
             break;
          case 1:
-            if (!this.init_cc.branchSession(id)) {
+            if (!this.service.branchSession(id)) {
                autismclient.util.bi.read("Nothing to branch yet");
             } else {
                autismclient.util.bi.load("Branched into a new chat");
                this.load();
             }
 
-            this.init_cF.invalidate();
+            this.view.invalidate();
             break;
          case 2:
-            this.init_cc.deleteSession(id);
-            this.init_cF.invalidate();
+            this.service.deleteSession(id);
+            this.view.invalidate();
             autismclient.util.bi.load("Chat deleted");
       }
    }
@@ -260,8 +260,8 @@ final class AiSessionsDrawer {
       this.init_Str = null;
       this.renameInput.setFocused(false);
       if (id != null && !text.isEmpty()) {
-         this.init_cc.renameSession(id, text);
-         this.init_cF.invalidate();
+         this.service.renameSession(id, text);
+         this.view.invalidate();
       }
    }
 }

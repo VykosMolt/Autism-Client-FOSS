@@ -6,20 +6,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public final class BoundedPositionCache<T> {
-   private final int init_I;
-   private final Map<Long, T> init_Map;
+   private final int capacity;
+   private final Map<Long, T> entries;
 
    public BoundedPositionCache(int capacity) {
       if (capacity <= 0) {
          throw new IllegalArgumentException("capacity must be positive");
       }
 
-      this.init_I = capacity;
+      this.capacity = capacity;
       // At capacity the oldest position is dropped so new ones are still tracked.
-      this.init_Map = new LinkedHashMap<>() {
+      this.entries = new LinkedHashMap<>() {
          @Override
          protected boolean removeEldestEntry(Entry<Long, T> eldest) {
-            return this.size() > BoundedPositionCache.this.init_I;
+            return this.size() > BoundedPositionCache.this.capacity;
          }
       };
    }
@@ -29,31 +29,31 @@ public final class BoundedPositionCache<T> {
          throw new NullPointerException("value");
       }
 
-      this.init_Map.put(position, value);
+      this.entries.put(position, value);
       return true;
    }
 
    public T get(long position) {
-      return this.init_Map.get(position);
+      return this.entries.get(position);
    }
 
-   public void init_V(long position) {
-      this.init_Map.remove(position);
+   public void remove(long position) {
+      this.entries.remove(position);
    }
 
    public Collection<T> entries() {
-      return this.init_Map.values();
+      return this.entries.values();
    }
 
    public int size() {
-      return this.init_Map.size();
+      return this.entries.size();
    }
 
-   public boolean init_Z() {
-      return this.init_Map.isEmpty();
+   public boolean isEmpty() {
+      return this.entries.isEmpty();
    }
 
    public void clear() {
-      this.init_Map.clear();
+      this.entries.clear();
    }
 }

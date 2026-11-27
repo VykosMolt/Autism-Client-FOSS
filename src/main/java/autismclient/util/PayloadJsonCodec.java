@@ -50,7 +50,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 public final class PayloadJsonCodec {
-   private static final Gson init_Gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+   private static final Gson PRETTY_GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
    private static final int init_I = 16;
 
    private PayloadJsonCodec() {
@@ -90,7 +90,7 @@ public final class PayloadJsonCodec {
       }
 
       root.add("payload", payload != null ? init(payload, new IdentityHashMap<>(), 0) : new JsonObject());
-      return init_Gson.toJson(root);
+      return PRETTY_GSON.toJson(root);
    }
 
    public static String init(String channel, CustomPacketPayload payload) {
@@ -122,7 +122,7 @@ public final class PayloadJsonCodec {
    public static String prettyPrint(String jsonText) {
       if (jsonText != null && !jsonText.isBlank()) {
          try {
-            return init_Gson.toJson(JsonParser.parseString(jsonText));
+            return PRETTY_GSON.toJson(JsonParser.parseString(jsonText));
          } catch (Throwable ignored) {
             return jsonText;
          }
@@ -239,7 +239,7 @@ public final class PayloadJsonCodec {
       }
 
       try {
-         Constructor<?> intCtor = init_Constructor(payloadClass);
+         Constructor<?> intCtor = findConstructor(payloadClass);
          if (intCtor != null) {
             if (!intCtor.canAccess(null)) {
                intCtor.setAccessible(true);
@@ -258,7 +258,7 @@ public final class PayloadJsonCodec {
       return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
    }
 
-   private static Constructor<?> init_Constructor(Class<?> clazz) {
+   private static Constructor<?> findConstructor(Class<?> clazz) {
       for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
          Class<?>[] params = ctor.getParameterTypes();
          if (params.length == 1 && (params[0] == int.class || params[0] == Integer.class)) {
@@ -374,7 +374,7 @@ public final class PayloadJsonCodec {
       root.addProperty("channel", channel == null ? "" : channel);
       root.addProperty("payloadHex", "");
       root.add("payload", new JsonObject());
-      return init_Gson.toJson(root);
+      return PRETTY_GSON.toJson(root);
    }
 
    private static byte[] init(JsonObject root) {
@@ -440,8 +440,8 @@ public final class PayloadJsonCodec {
          }
       }
 
-      if (init_Z(value)) {
-         return init_JsonElement(value);
+      if (isSimpleValue(value)) {
+         return toJson(value);
       } else if (value instanceof Optional<?> optional) {
          return optional.<JsonElement>map(v -> init(v, visited, depth + 1)).orElse(JsonNull.INSTANCE);
       } else if (value instanceof Component text) {
@@ -489,7 +489,7 @@ public final class PayloadJsonCodec {
             JsonObject object = new JsonObject();
 
             for (Entry<?, ?> entry : map.entrySet()) {
-               String key = init_Str(entry.getKey());
+               String key = keyString(entry.getKey());
                object.add(key, init(entry.getValue(), visited, depth + 1));
             }
 
@@ -507,7 +507,7 @@ public final class PayloadJsonCodec {
 
                return object;
             } else {
-               for (Field field : init_List(value.getClass())) {
+               for (Field field : instanceFields(value.getClass())) {
                   String label = init(field);
                   Object fieldValue = init(field, value);
                   object.add(label, init(fieldValue, visited, depth + 1));
@@ -555,11 +555,11 @@ public final class PayloadJsonCodec {
          } else if (targetType.isEnum()) {
             return init(targetType, element.getAsString(), template);
          } else if (targetType == Component.class) {
-            return init_Component(element);
+            return parseComponent(element);
          } else if (targetType == BlockPos.class) {
-            return init_BlockPos(element);
+            return parseBlockPos(element);
          } else if (targetType == Vec3.class) {
-            return init_Vec3(element);
+            return parseVec3(element);
          } else if (ItemStack.class.isAssignableFrom(targetType)) {
             return ItemStack.CODEC.parse(init().createSerializationContext(JsonOps.INSTANCE), element).result().orElse(ItemStack.EMPTY);
          } else if (Tag.class.isAssignableFrom(targetType)) {
@@ -567,7 +567,7 @@ public final class PayloadJsonCodec {
          } else if (Optional.class.isAssignableFrom(targetType)) {
             Type innerType = init(genericType, 0);
             Class<?> innerClass = init(innerType, template == null ? Object.class : template.getClass());
-            return Optional.ofNullable(init(element, innerType, innerClass, init_Obj(template), depth + 1));
+            return Optional.ofNullable(init(element, innerType, innerClass, unwrapOptional(template), depth + 1));
          } else if (targetType.isArray()) {
             return init(element, targetType.getComponentType(), init(genericType), template, depth);
          } else if (Collection.class.isAssignableFrom(targetType)) {
@@ -622,10 +622,10 @@ public final class PayloadJsonCodec {
          return template;
       }
 
-      Object instance = template != null ? template : init_Obj(targetType);
+      Object instance = template != null ? template : instantiate(targetType);
       JsonObject object = element.getAsJsonObject();
 
-      for (Field field : init_List(targetType)) {
+      for (Field field : instanceFields(targetType)) {
          String label = init(field);
          if (object.has(label)) {
             Object currentValue = init(field, instance);
@@ -691,7 +691,7 @@ public final class PayloadJsonCodec {
       return map;
    }
 
-   private static Object init_Obj(Class<?> targetType) {
+   private static Object instantiate(Class<?> targetType) {
       try {
          Constructor<?> ctor = targetType.getDeclaredConstructor();
          if (!ctor.canAccess(null)) {
@@ -728,7 +728,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static JsonElement init_JsonElement(Object value) {
+   private static JsonElement toJson(Object value) {
       if (value == null) {
          return JsonNull.INSTANCE;
       } else if (value instanceof Number number) {
@@ -770,7 +770,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static boolean init_Z(Object value) {
+   private static boolean isSimpleValue(Object value) {
       return value instanceof Number
          || value instanceof Boolean
          || value instanceof Character
@@ -783,7 +783,7 @@ public final class PayloadJsonCodec {
          || value instanceof byte[];
    }
 
-   private static List<Field> init_List(Class<?> type) {
+   private static List<Field> instanceFields(Class<?> type) {
       List<Field> fields = new ArrayList<>();
 
       for (Class<?> cursor = type; cursor != null && cursor != Object.class; cursor = cursor.getSuperclass()) {
@@ -852,7 +852,7 @@ public final class PayloadJsonCodec {
       return template;
    }
 
-   private static Component init_Component(JsonElement element) {
+   private static Component parseComponent(JsonElement element) {
       try {
          return element.isJsonPrimitive()
             ? Component.literal(element.getAsString())
@@ -862,7 +862,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static BlockPos init_BlockPos(JsonElement element) {
+   private static BlockPos parseBlockPos(JsonElement element) {
       if (!element.isJsonObject()) {
          return BlockPos.ZERO;
       }
@@ -873,7 +873,7 @@ public final class PayloadJsonCodec {
       );
    }
 
-   private static Vec3 init_Vec3(JsonElement element) {
+   private static Vec3 parseVec3(JsonElement element) {
       if (!element.isJsonObject()) {
          return Vec3.ZERO;
       }
@@ -886,7 +886,7 @@ public final class PayloadJsonCodec {
       );
    }
 
-   private static String init_Str(Object key) {
+   private static String keyString(Object key) {
       if (key == null) {
          return "null";
       } else if (key instanceof Identifier identifier) {
@@ -941,7 +941,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init_Obj(Object template) {
+   private static Object unwrapOptional(Object template) {
       return template instanceof Optional<?> optional ? optional.orElse(null) : null;
    }
 

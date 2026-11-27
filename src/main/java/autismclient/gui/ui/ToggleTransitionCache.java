@@ -8,7 +8,7 @@ import autismclient.gui.f.NetHelper;
 public final class ToggleTransitionCache {
    private static final long init_J = 150000000L;
    private static final long load = 30000000000L;
-   private static final Map<String, ToggleTransitionCache.Inner_DataUtil> init_Map = new HashMap<>();
+   private static final Map<String, ToggleTransitionCache.Inner_DataUtil> STATES = new HashMap<>();
    private static long read;
 
    private ToggleTransitionCache() {
@@ -16,10 +16,10 @@ public final class ToggleTransitionCache {
 
    public static float init(String key, boolean on) {
       long now = System.nanoTime();
-      ToggleTransitionCache.Inner_DataUtil state = init_Map.get(key);
+      ToggleTransitionCache.Inner_DataUtil state = STATES.get(key);
       if (state == null) {
          state = new ToggleTransitionCache.Inner_DataUtil(on ? 1.0F : 0.0F, on, now);
-         init_Map.put(key, state);
+         STATES.put(key, state);
          return state.load_F;
       }
 
@@ -32,7 +32,7 @@ public final class ToggleTransitionCache {
       state.load_J = now;
       if (now - read > 30000000000L) {
          read = now;
-         Iterator<ToggleTransitionCache.Inner_DataUtil> it = init_Map.values().iterator();
+         Iterator<ToggleTransitionCache.Inner_DataUtil> it = STATES.values().iterator();
 
          while (it.hasNext()) {
             if (now - it.next().load_J > 30000000000L) {

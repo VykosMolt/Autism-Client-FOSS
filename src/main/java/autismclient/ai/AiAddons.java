@@ -43,30 +43,30 @@ import javax.tools.ToolProvider;
 import net.fabricmc.loader.api.FabricLoader;
 
 public final class AiAddons {
-   static final Pattern init_Pattern = Pattern.compile("[a-z][a-z0-9_-]{1,31}");
-   static final Set<String> init_Set = Set.of("module", "macro-action", "macro-condition", "command", "ai-capability");
+   static final Pattern ID_PATTERN = Pattern.compile("[a-z][a-z0-9_-]{1,31}");
+   static final Set<String> FEATURE_KINDS = Set.of("module", "macro-action", "macro-condition", "command", "ai-capability");
    static final int init_I = 200000;
    static final int load_I = 64000;
    static final int read = 20;
    static final int write = 200;
    static final int update = 40;
-   static final long init_J = TimeUnit.SECONDS.toNanos(120L);
+   static final long BUILD_TIMEOUT_NANOS = TimeUnit.SECONDS.toNanos(120L);
    static final String init_Str = "no Java compiler found; point the game at a full JDK";
-   private static final String[] init_StrArr = new String[]{
+   private static final String[] ADDON_COLORS = new String[]{
       "80,220,120", "120,200,255", "255,190,90", "230,140,255", "255,120,130", "120,230,220", "200,220,120", "180,170,255"
    };
-   private static final AtomicReference<Path> init_AtomicReference = new AtomicReference<>();
-   private static final Pattern load_Pattern = Pattern.compile("^(.+?\\.java):(\\d+):\\s+(error|warning|note):\\s+(.*)$");
+   private static final AtomicReference<Path> ROOT_OVERRIDE = new AtomicReference<>();
+   private static final Pattern DIAGNOSTIC_PATTERN = Pattern.compile("^(.+?\\.java):(\\d+):\\s+(error|warning|note):\\s+(.*)$");
 
    private AiAddons() {
    }
 
-   static void init_V(Path root) {
-      init_AtomicReference.set(root);
+   static void setRootOverride(Path root) {
+      ROOT_OVERRIDE.set(root);
    }
 
-   static Path init_Path() {
-      Path override = init_AtomicReference.get();
+   static Path addonsRoot() {
+      Path override = ROOT_OVERRIDE.get();
       return override != null ? override : AutismClientAddon.FOLDER.toPath().resolve("addons");
    }
 
@@ -147,7 +147,7 @@ public final class AiAddons {
       }
    }
 
-   private static AiOperation.Result init_AiOperation_Result(AiOperation.Status status, String message, JsonObject data) {
+   private static AiOperation.Result result(AiOperation.Status status, String message, JsonObject data) {
       return new AiOperation.Result(status, message, data.toString(), List.of());
    }
 
@@ -155,7 +155,7 @@ public final class AiAddons {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            return AiAddons.init_AiOperation_Result(status, message, data);
+            return AiAddons.result(status, message, data);
          }
 
          @Override
@@ -164,11 +164,11 @@ public final class AiAddons {
       };
    }
 
-   static String init_Str(String id) {
-      if (id != null && init_Pattern.matcher(id).matches()) {
+   static String validateId(String id) {
+      if (id != null && ID_PATTERN.matcher(id).matches()) {
          return id;
       } else {
-         throw new IllegalArgumentException("Invalid addon id '" + id + "'; must match " + init_Pattern.pattern());
+         throw new IllegalArgumentException("Invalid addon id '" + id + "'; must match " + ID_PATTERN.pattern());
       }
    }
 
@@ -283,7 +283,7 @@ public final class AiAddons {
       json.addProperty("name", name);
       json.addProperty("description", description != null && !description.isBlank() ? description : "AI-authored AUTISM addon.");
       JsonObject custom = new JsonObject();
-      custom.addProperty("autism:color", init_StrArr[Math.floorMod(id.hashCode(), init_StrArr.length)]);
+      custom.addProperty("autism:color", ADDON_COLORS[Math.floorMod(id.hashCode(), ADDON_COLORS.length)]);
       json.add("custom", custom);
       json.addProperty("environment", "client");
       JsonObject entrypoints = new JsonObject();
@@ -298,14 +298,14 @@ public final class AiAddons {
       return json;
    }
 
-   static List<AiAddons.Inner_BufferHelper> init_List(String output) {
+   static List<AiAddons.Inner_BufferHelper> parseDiagnostics(String output) {
       List<AiAddons.Inner_BufferHelper> out = new ArrayList<>();
       if (output == null) {
          return out;
       }
 
       for (String line : output.split("\\R")) {
-         Matcher matcher = load_Pattern.matcher(line.trim());
+         Matcher matcher = DIAGNOSTIC_PATTERN.matcher(line.trim());
          if (matcher.matches() && out.size() < 20) {
             out.add(new AiAddons.Inner_BufferHelper(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3), matcher.group(4).trim()));
          }
@@ -318,7 +318,7 @@ public final class AiAddons {
       return init(
          ToolProvider::getSystemJavaCompiler,
          Path.of(System.getProperty("java.home", ".")),
-         AiAddons::init_Path,
+         AiAddons::findOnPath,
          () -> System.getenv("JAVA_HOME"),
          AiAddons::load
       );
@@ -332,7 +332,7 @@ public final class AiAddons {
          return new AiAddons.Inner_StreamUtil(compiler, null);
       }
 
-      Path home = init_Path(javaHome == null ? null : javaHome.resolve("bin"));
+      Path home = javacIn(javaHome == null ? null : javaHome.resolve("bin"));
       if (home != null) {
          return new AiAddons.Inner_StreamUtil(null, home);
       }
@@ -344,7 +344,7 @@ public final class AiAddons {
 
       String env = javaHomeEnv == null ? null : javaHomeEnv.get();
       if (env != null && !env.isBlank()) {
-         Path fromEnv = init_Path(Path.of(env).resolve("bin"));
+         Path fromEnv = javacIn(Path.of(env).resolve("bin"));
          if (fromEnv != null) {
             return new AiAddons.Inner_StreamUtil(null, fromEnv);
          }
@@ -352,7 +352,7 @@ public final class AiAddons {
 
       if (prismRuntimeDirs != null) {
          for (Path dir : prismRuntimeDirs.get()) {
-            Path found = init_Path(dir.resolve("bin"));
+            Path found = javacIn(dir.resolve("bin"));
             if (found != null) {
                return new AiAddons.Inner_StreamUtil(null, found);
             }
@@ -362,7 +362,7 @@ public final class AiAddons {
       return null;
    }
 
-   private static Path init_Path(Path binDir) {
+   private static Path javacIn(Path binDir) {
       if (binDir == null) {
          return null;
       }
@@ -376,7 +376,7 @@ public final class AiAddons {
       return Files.isRegularFile(exe) ? exe : null;
    }
 
-   private static Path init_Path(String executable) {
+   private static Path findOnPath(String executable) {
       String path = System.getenv("PATH");
       if (path == null) {
          return null;
@@ -384,7 +384,7 @@ public final class AiAddons {
 
       for (String dir : path.split(Pattern.quote(File.pathSeparator))) {
          if (!dir.isBlank()) {
-            Path found = init_Path(Path.of(dir));
+            Path found = javacIn(Path.of(dir));
             if (found != null) {
                return found;
             }
@@ -438,7 +438,7 @@ public final class AiAddons {
       return List.copyOf(out);
    }
 
-   private static AiAddons.Inner_ConfigStore init_CachePool_ConfigSt(Path addonDir) {
+   private static AiAddons.Inner_ConfigStore readManifest(Path addonDir) {
       Path file = addonDir.resolve("addon.json");
       if (!Files.isRegularFile(file)) {
          return null;
@@ -459,12 +459,12 @@ public final class AiAddons {
       AiJson.writeAtomicJson(addonDir.resolve("addon.json"), meta.toJson());
    }
 
-   private static Path load_Path(String id) {
-      return init_Path().resolve(id).normalize();
+   private static Path addonDir(String id) {
+      return addonsRoot().resolve(id).normalize();
    }
 
    private static AiAddons.Inner_ConfigStore init(String id, Path dir) {
-      AiAddons.Inner_ConfigStore meta = init_CachePool_ConfigSt(dir);
+      AiAddons.Inner_ConfigStore meta = readManifest(dir);
       if (meta != null) {
          return meta;
       }
@@ -474,7 +474,7 @@ public final class AiAddons {
    }
 
    private static AiOperation load(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
+      String id = validateId(AiJson.getString(args, "id", ""));
       String name = AiJson.getString(args, "name", "").trim();
       if (name.isEmpty()) {
          name = id;
@@ -489,12 +489,12 @@ public final class AiAddons {
          throw new IllegalArgumentException("Addon description must be at most 256 characters");
       }
 
-      List<String> features = init_List(args);
-      Path dir = load_Path(id);
+      List<String> features = parseFeatures(args);
+      Path dir = addonDir(id);
       boolean force = AiJson.getBoolean(args, "force", false);
 
       try {
-         if (Files.isDirectory(dir) && init_Z(dir)) {
+         if (Files.isDirectory(dir) && hasEntries(dir)) {
             if (!force) {
                return init_AiOperation(
                   AiOperation.Status.FAILED,
@@ -525,13 +525,13 @@ public final class AiAddons {
       }
    }
 
-   private static List<String> init_List(JsonObject args) {
+   private static List<String> parseFeatures(JsonObject args) {
       List<String> out = new ArrayList<>();
       if (args.has("features") && args.get("features").isJsonArray()) {
          for (JsonElement element : args.getAsJsonArray("features")) {
             String kind = element.getAsString().toLowerCase(Locale.ROOT).trim();
-            if (!init_Set.contains(kind)) {
-               throw new IllegalArgumentException("Unknown feature kind '" + kind + "'; expected one of " + init_Set);
+            if (!FEATURE_KINDS.contains(kind)) {
+               throw new IllegalArgumentException("Unknown feature kind '" + kind + "'; expected one of " + FEATURE_KINDS);
             }
 
             if (!out.contains(kind)) {
@@ -547,7 +547,7 @@ public final class AiAddons {
       return out;
    }
 
-   private static boolean init_Z(Path dir) throws IOException {
+   private static boolean hasEntries(Path dir) throws IOException {
       try (Stream<Path> entries = Files.list(dir)) {
          return entries.findAny().isPresent();
       }
@@ -628,8 +628,8 @@ public final class AiAddons {
    }
 
    private static AiOperation read(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
-      Path dir = load_Path(id);
+      String id = validateId(AiJson.getString(args, "id", ""));
+      Path dir = addonDir(id);
       Path target = init(dir, AiJson.getString(args, "path", ""));
       if (!target.getFileName().toString().endsWith(".java")) {
          throw new IllegalArgumentException("Only .java source files can be written: " + target.getFileName());
@@ -658,8 +658,8 @@ public final class AiAddons {
    }
 
    private static AiOperation write(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
-      Path dir = load_Path(id);
+      String id = validateId(AiJson.getString(args, "id", ""));
+      Path dir = addonDir(id);
       if (!Files.isDirectory(dir)) {
          return init_AiOperation(AiOperation.Status.FAILED, "No scaffolded addon '" + id + "'", AiJson.objectOf("id", id));
       }
@@ -729,8 +729,8 @@ public final class AiAddons {
    }
 
    static AiOperation init(JsonObject args, final AiAddons.Inner_CachePool locator, final Supplier<List<Path>> classpath) {
-      final String id = init_Str(AiJson.getString(args, "id", ""));
-      final Path dir = load_Path(id);
+      final String id = validateId(AiJson.getString(args, "id", ""));
+      final Path dir = addonDir(id);
 
       final List<Path> sources;
       try {
@@ -754,7 +754,7 @@ public final class AiAddons {
          Thread init_Thread;
 
          {
-            this.init_J = System.nanoTime() + AiAddons.init_J;
+            this.init_J = System.nanoTime() + AiAddons.BUILD_TIMEOUT_NANOS;
             this.init_AtomicReference = new AtomicReference<>();
             this.init_AtomicBoolean = new AtomicBoolean();
          }
@@ -762,7 +762,7 @@ public final class AiAddons {
          @Override
          public AiOperation.Result tick() {
             if (this.init_AtomicBoolean.get()) {
-               return AiAddons.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Addon build cancelled", AiJson.objectOf("id", id));
+               return AiAddons.result(AiOperation.Status.CANCELLED, "Addon build cancelled", AiJson.objectOf("id", id));
             }
 
             if (this.init_Thread == null) {
@@ -780,9 +780,9 @@ public final class AiAddons {
             if (done == null) {
                if (System.nanoTime() > this.init_J) {
                   this.cancel();
-                  return AiAddons.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Addon build exceeded 120s", AiJson.objectOf("id", id));
+                  return AiAddons.result(AiOperation.Status.TIMED_OUT, "Addon build exceeded 120s", AiJson.objectOf("id", id));
                } else {
-                  return AiAddons.init_AiOperation_Result(
+                  return AiAddons.result(
                      AiOperation.Status.RUNNING,
                      "Compiling addon '" + id + "' (" + sources.size() + " sources)",
                      AiJson.objectOf("id", id, "sources", sources.size())
@@ -803,8 +803,8 @@ public final class AiAddons {
                }
 
                return done.cancelled()
-                  ? AiAddons.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Addon build cancelled", data)
-                  : AiAddons.init_AiOperation_Result(done.success() ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, done.message(), data);
+                  ? AiAddons.result(AiOperation.Status.CANCELLED, "Addon build cancelled", data)
+                  : AiAddons.result(done.success() ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, done.message(), data);
             }
          }
 
@@ -1033,7 +1033,7 @@ public final class AiAddons {
             running.compareAndSet(process, null);
          }
 
-         List<AiAddons.Inner_BufferHelper> parsed = new ArrayList<>(init_List(output.toString()));
+         List<AiAddons.Inner_BufferHelper> parsed = new ArrayList<>(parseDiagnostics(output.toString()));
          if (exitCode != 0 && parsed.stream().noneMatch(d -> d.kind().equals("error"))) {
             String summary = output.toString().trim();
             if (summary.isEmpty()) {
@@ -1094,8 +1094,8 @@ public final class AiAddons {
    }
 
    private static AiOperation update(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
-      Path dir = load_Path(id);
+      String id = validateId(AiJson.getString(args, "id", ""));
+      Path dir = addonDir(id);
       Path classesDir = dir.resolve("classes");
 
       int classCount;
@@ -1139,7 +1139,7 @@ public final class AiAddons {
    }
 
    private static AiOperation sync(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
+      String id = validateId(AiJson.getString(args, "id", ""));
       boolean unloaded = autismclient.b.DataUtil.init_Z(id);
       return init_AiOperation(
          unloaded ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
@@ -1149,8 +1149,8 @@ public final class AiAddons {
    }
 
    private static AiOperation flush(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
-      Path dir = load_Path(id);
+      String id = validateId(AiJson.getString(args, "id", ""));
+      Path dir = addonDir(id);
       Path jar = dir.resolve(id + ".jar");
       if (!Files.isRegularFile(jar)) {
          return init_AiOperation(AiOperation.Status.FAILED, "No built jar for '" + id + "'; run action=build first", AiJson.objectOf("id", id));
@@ -1204,13 +1204,13 @@ public final class AiAddons {
    }
 
    private static AiOperation init_AiOperation() {
-      Path root = init_Path();
+      Path root = addonsRoot();
       JsonArray addons = new JsonArray();
       if (Files.isDirectory(root)) {
          try (Stream<Path> entries = Files.list(root)) {
             for (Path dir : entries.filter(x$0 -> Files.isDirectory(x$0)).sorted().toList()) {
                String id = dir.getFileName().toString();
-               if (init_Pattern.matcher(id).matches()) {
+               if (ID_PATTERN.matcher(id).matches()) {
                   JsonObject entry = new JsonObject();
                   entry.addProperty("id", id);
 
@@ -1225,8 +1225,8 @@ public final class AiAddons {
                   entry.addProperty("classes", classes);
                   entry.addProperty("jar", Files.isRegularFile(dir.resolve(id + ".jar")));
                   entry.addProperty("runtimeLoaded", init_Z(id));
-                  entry.addProperty("installed", load_Z(id));
-                  AiAddons.Inner_ConfigStore meta = init_CachePool_ConfigSt(dir);
+                  entry.addProperty("installed", hasModJar(id));
+                  AiAddons.Inner_ConfigStore meta = readManifest(dir);
                   if (meta != null && !meta.entryClass().isBlank()) {
                      entry.addProperty("entryClass", meta.entryClass());
                   }
@@ -1243,7 +1243,7 @@ public final class AiAddons {
    }
 
    private static AiOperation close(JsonObject args) {
-      String id = init_Str(AiJson.getString(args, "id", ""));
+      String id = validateId(AiJson.getString(args, "id", ""));
       boolean loaded = init_Z(id);
       JsonObject data = AiJson.objectOf("id", id, "runtimeLoaded", loaded);
       autismclient.b.DataUtil.StreamUtil report = init_DataUtil_StreamUti(id);
@@ -1260,7 +1260,7 @@ public final class AiAddons {
          }
       }
 
-      AiAddons.Inner_ConfigStore meta = init_CachePool_ConfigSt(load_Path(id));
+      AiAddons.Inner_ConfigStore meta = readManifest(addonDir(id));
       if (meta != null && !meta.lastRegistered().isEmpty()) {
          data.add("registered", AiJson.GSON.toJsonTree(meta.lastRegistered().stream().limit(40L).toList()));
       }
@@ -1290,7 +1290,7 @@ public final class AiAddons {
       }
    }
 
-   private static boolean load_Z(String id) {
+   private static boolean hasModJar(String id) {
       try {
          return Files.isRegularFile(FabricLoader.getInstance().getGameDir().resolve("mods").resolve(id + ".jar"));
       } catch (Throwable t) {

@@ -579,7 +579,7 @@ final class AiClientConfig {
                   return init(module);
                case "block":
                case "unblock":
-                  boolean c2s = init_Z(args);
+                  boolean c2s = isServerbound(args);
                   Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.resolvePacketClass(load(args, "packet"));
                   if (packet == null) {
                      throw new IllegalArgumentException(
@@ -602,7 +602,7 @@ final class AiClientConfig {
 
                   return init(module);
                case "clear":
-                  boolean c2sClear = init_Z(args);
+                  boolean c2sClear = isServerbound(args);
                   if (c2sClear) {
                      module.setCustomC2sPackets(new LinkedHashSet<>());
                   } else {
@@ -650,7 +650,7 @@ final class AiClientConfig {
       );
    }
 
-   private static boolean init_Z(JsonObject args) {
+   private static boolean isServerbound(JsonObject args) {
       String d = AiJson.getString(args, "direction", "c2s").trim().toLowerCase(Locale.ROOT);
       if (d.equals("c2s")) {
          return true;
@@ -691,7 +691,7 @@ final class AiClientConfig {
             case "list":
                break;
             case "add":
-               BlockPos pos = init_BlockPos(args);
+               BlockPos pos = parsePos(args);
                int color = args.has("color") ? init(AiJson.getString(args, "color", ""), "color") : -8337153;
                w.init(scope, new AutismWaypoints.Waypoint(load(args, "name"), pos.getX(), pos.getY(), pos.getZ(), color, System.currentTimeMillis()));
                break;
@@ -730,7 +730,7 @@ final class AiClientConfig {
       });
    }
 
-   private static BlockPos init_BlockPos(JsonObject args) {
+   private static BlockPos parsePos(JsonObject args) {
       if (args.has("x") && args.has("y") && args.has("z")) {
          return new BlockPos(AiJson.getInt(args, "x", 0), AiJson.getInt(args, "y", 0), AiJson.getInt(args, "z", 0));
       } else {

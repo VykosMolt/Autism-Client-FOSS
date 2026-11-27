@@ -5,7 +5,7 @@ public final class PacketCaptureState {
    public static final int load_I = 2;
    public static final byte[] EMPTY_BYTES = new byte[0];
    private static final int read = 3;
-   private static volatile long init_J;
+   private static volatile long capturedState;
    private static volatile long load_J;
    private static final ThreadLocal<int[]> init_ThreadLocal = new ThreadLocal<>();
 
@@ -13,11 +13,11 @@ public final class PacketCaptureState {
    }
 
    public static long getState() {
-      return init_J;
+      return capturedState;
    }
 
    public static long effectiveState() {
-      long current = init_J;
+      long current = capturedState;
       if (!load(current)) {
          return current;
       }
@@ -60,11 +60,11 @@ public final class PacketCaptureState {
    }
 
    public static boolean isLoggerCaptureActive() {
-      return isLoggerCapture(init_J);
+      return isLoggerCapture(capturedState);
    }
 
    public static boolean load_Z() {
-      return load(init_J);
+      return load(capturedState);
    }
 
    public static void write() {
@@ -105,16 +105,16 @@ public final class PacketCaptureState {
    }
 
    private static void init_V_I(int nextMode) {
-      long previous = init_J;
+      long previous = capturedState;
       if (captureFlags(previous) != nextMode) {
          synchronized (PacketCaptureState.class) {
-            previous = init_J;
+            previous = capturedState;
             if (captureFlags(previous) == nextMode) {
                return;
             }
 
             long nextEpoch = (previous >>> 2) + 1L;
-            init_J = nextEpoch << 2 | nextMode & 3;
+            capturedState = nextEpoch << 2 | nextMode & 3;
          }
 
          cf.init_V_J_Z(1024L, nextMode != 0);

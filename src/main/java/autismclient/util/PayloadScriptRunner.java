@@ -15,40 +15,40 @@ public final class PayloadScriptRunner {
          AutismClientMessaging.sendPrefixed("§eNote: Java scripting is disabled. Sending raw payload bytes.");
       }
 
-      return safeContext.init(safeContext.init_Str(), safeContext.init_BArr());
+      return safeContext.init(safeContext.getChannel(), safeContext.getRawBytes());
    }
 
    public static final class Inner_DataUtil {
-      private final String init_Str;
-      private final byte[] init_BArr;
-      private final Integer init_Integer;
+      private final String channel;
+      private final byte[] rawBytes;
+      private final Integer commandApiValue;
 
       public Inner_DataUtil(String channel, byte[] rawBytes, Integer commandApiValue) {
-         this.init_Str = channel == null ? "minecraft:empty" : channel;
-         this.init_BArr = rawBytes == null ? new byte[0] : (byte[])rawBytes.clone();
-         this.init_Integer = commandApiValue;
+         this.channel = channel == null ? "minecraft:empty" : channel;
+         this.rawBytes = rawBytes == null ? new byte[0] : (byte[])rawBytes.clone();
+         this.commandApiValue = commandApiValue;
       }
 
-      public String init_Str() {
-         return this.init_Str;
+      public String getChannel() {
+         return this.channel;
       }
 
-      public Identifier init_Identifier() {
-         return AutismPayloadSupport.parseChannelId(this.init_Str);
+      public Identifier channelId() {
+         return AutismPayloadSupport.parseChannelId(this.channel);
       }
 
-      public byte[] init_BArr() {
-         return (byte[])this.init_BArr.clone();
+      public byte[] getRawBytes() {
+         return (byte[])this.rawBytes.clone();
       }
 
-      public Integer init_Integer() {
-         return this.init_Integer;
+      public Integer getCommandApiValue() {
+         return this.commandApiValue;
       }
 
-      public FriendlyByteBuf init_FriendlyByteBuf() {
+      public FriendlyByteBuf newBuffer() {
          FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-         if (this.init_BArr.length > 0) {
-            buf.writeBytes(this.init_BArr);
+         if (this.rawBytes.length > 0) {
+            buf.writeBytes(this.rawBytes);
          }
 
          return buf;
@@ -71,11 +71,11 @@ public final class PayloadScriptRunner {
       }
 
       public byte[] init(int value) {
-         return AutismPayloadSupport.withLeadingBigEndianInt(this.init_BArr, value);
+         return AutismPayloadSupport.withLeadingBigEndianInt(this.rawBytes, value);
       }
 
       public PayloadScriptRunner.Inner_StreamUtil init(String nextChannel, byte[] bytes) {
-         return new PayloadScriptRunner.Inner_StreamUtil(nextChannel != null && !nextChannel.isBlank() ? nextChannel : this.init_Str, bytes);
+         return new PayloadScriptRunner.Inner_StreamUtil(nextChannel != null && !nextChannel.isBlank() ? nextChannel : this.channel, bytes);
       }
    }
 

@@ -44,8 +44,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
 public final class SurroundModule extends Module implements SilentMovementCoordinator.Participant {
-   private static final Direction[] init_DirectionArr = new Direction[]{Direction.DOWN, Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
-   private static final Direction[] load_DirectionArr = new Direction[]{Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH};
+   private static final Direction[] FACE_ORDER = new Direction[]{Direction.DOWN, Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
+   private static final Direction[] HORIZONTALS = new Direction[]{Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH};
    private static final float init_F = 600.0F;
    private static final double init_D = 0.25;
    private static final int init_I = 4;
@@ -56,26 +56,26 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private static final int write_I = 256;
    private static final long init_J = 2000000000L;
    private static final int update_I = 64;
-   private final Map<Integer, SurroundModule.Inner_DataUtil> init_Map = new ConcurrentHashMap<>();
+   private final Map<Integer, SurroundModule.Inner_DataUtil> breakProgress = new ConcurrentHashMap<>();
    private final Set<BlockPos> init_Set = new HashSet<>();
-   private final List<BlockPos> init_List = new ArrayList<>();
-   private final Set<BlockPos> load_Set = new LinkedHashSet<>();
+   private final List<BlockPos> toPlace = new ArrayList<>();
+   private final Set<BlockPos> recentPlacements = new LinkedHashSet<>();
    private boolean init_Z;
-   private double write_D;
-   private double update_D;
-   private double sync_D;
+   private double startY;
+   private double startX;
+   private double startZ;
    private double flush_D;
    private double close_D;
    private boolean load_Z;
-   private int sync_I = -2147483648;
+   private int lastTick = -2147483648;
    private int flush_I = -2147483648;
-   private final autismclient.util.BlockPlacementPlanner.RayBudget init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.RayBudget(4);
-   private int close_I = -1;
+   private final autismclient.util.BlockPlacementPlanner.RayBudget rayBudget = new autismclient.util.BlockPlacementPlanner.RayBudget(4);
+   private int previousSlot = -1;
    private int open = -1;
    private int poll;
    private final KillAuraModule.Inner_JsonUtil init_aa_JsonUtil = new KillAuraModule.Inner_JsonUtil();
-   private String init_Str;
-   private Set<Block> read_Set = Set.of();
+   private String raw;
+   private Set<Block> allowedBlocks = Set.of();
    private BlockPos init_BlockPos;
 
    public SurroundModule() {
@@ -124,32 +124,32 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
    @Override
    public void onEnable() {
-      this.init_V_23();
+      this.resetState();
    }
 
    @Override
    public void onDisable() {
-      this.init_V_23();
+      this.resetState();
       autismclient.util.SilentRotationManager.releaseOwner(this.id());
    }
 
    @Override
    public void onGameLeft() {
-      this.init_V_23();
+      this.resetState();
       if (this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          autismclient.util.SilentRotationManager.resetAll();
       }
    }
 
-   private void init_V_23() {
+   private void resetState() {
       this.init_Z = false;
       this.load_Z = false;
-      this.init_List.clear();
-      this.load_Set.clear();
+      this.toPlace.clear();
+      this.recentPlacements.clear();
       this.init_Set.clear();
-      this.init_Map.clear();
-      this.sync_I = -2147483648;
-      this.close_I = -1;
+      this.breakProgress.clear();
+      this.lastTick = -2147483648;
+      this.previousSlot = -1;
       this.open = -1;
       this.poll = 0;
       autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
@@ -174,7 +174,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
    @Override
    public String info() {
-      int remaining = this.init_List.size();
+      int remaining = this.toPlace.size();
       return remaining <= 0 ? "" : Integer.toString(remaining);
    }
 
@@ -190,10 +190,10 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    @Override
    public boolean isSilentMovementActive() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.read_Z_13());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.canAct());
    }
 
-   private boolean read_Z_13() {
+   private boolean canAct() {
       return MC != null
          && MC.player != null
          && MC.level != null
@@ -228,7 +228,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private void load_V_19() {
+   private void releaseRotation() {
       if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          autismclient.util.SilentRotationManager.releaseOwner(this.id());
          autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
@@ -248,14 +248,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
          int progress = destruction.getProgress();
          if (progress >= 0 && progress <= 9) {
-            if (this.init_Map.size() >= 256 && !this.init_Map.containsKey(destruction.getId())) {
+            if (this.breakProgress.size() >= 256 && !this.breakProgress.containsKey(destruction.getId())) {
                return false;
             }
 
-            this.init_Map.put(destruction.getId(), new SurroundModule.Inner_DataUtil(destruction.getPos().asLong(), progress, System.nanoTime()));
+            this.breakProgress.put(destruction.getId(), new SurroundModule.Inner_DataUtil(destruction.getPos().asLong(), progress, System.nanoTime()));
             return false;
          } else {
-            this.init_Map.remove(destruction.getId());
+            this.breakProgress.remove(destruction.getId());
             return false;
          }
       } else {
@@ -263,18 +263,18 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private void read_V_13() {
+   private void updateBreakProgress() {
       this.init_Set.clear();
       if (!this.bool("protect")) {
-         this.init_Map.clear();
+         this.breakProgress.clear();
       } else {
          long now = System.nanoTime();
          int minStage = this.integer("min-destroy-progress");
-         this.init_Map.values().removeIf(entryx -> now - entryx.load() > 2000000000L);
+         this.breakProgress.values().removeIf(entryx -> now - entryx.load() > 2000000000L);
 
-         for (SurroundModule.Inner_DataUtil entry : this.init_Map.values()) {
-            if (entry.init_I() >= minStage) {
-               this.init_Set.add(BlockPos.of(entry.init_J()));
+         for (SurroundModule.Inner_DataUtil entry : this.breakProgress.values()) {
+            if (entry.progress() >= minStage) {
+               this.init_Set.add(BlockPos.of(entry.posKey()));
             }
          }
       }
@@ -285,46 +285,46 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       if (!AutismLiteVariant.enabled()) {
          if (MC != null && MC.player != null && MC.level != null && MC.getConnection() != null) {
             if (!this.init_Z) {
-               this.write_V_13();
+               this.captureStart();
             }
 
             this.flush_V_6();
             double x = MC.player.getX();
             double y = MC.player.getY();
             double z = MC.player.getZ();
-            String reason = this.init_Str_D(x, y, z);
+            String reason = this.disableReason(x, y, z);
             this.flush_D = x;
             this.close_D = z;
             this.load_Z = true;
             if (reason != null) {
                this.disableWithToggleMessage("Surround disabled: " + reason + ".");
             } else {
-               this.read_V_13();
-               this.update_V_11();
+               this.updateBreakProgress();
+               this.collectTargets();
                this.sync_V_7();
             }
          } else {
-            this.init_List.clear();
-            this.load_V_19();
+            this.toPlace.clear();
+            this.releaseRotation();
          }
       }
    }
 
-   private void write_V_13() {
-      this.write_D = MC.player.getY();
+   private void captureStart() {
+      this.startY = MC.player.getY();
       BlockPos block = MC.player.blockPosition();
-      this.update_D = block.getX() + 0.5;
-      this.sync_D = block.getZ() + 0.5;
+      this.startX = block.getX() + 0.5;
+      this.startZ = block.getZ() + 0.5;
       this.load_Z = false;
       this.init_Z = true;
    }
 
-   private String init_Str_D(double x, double y, double z) {
-      if (this.bool("disable-on-y-change") && y != this.write_D) {
+   private String disableReason(double x, double y, double z) {
+      if (this.bool("disable-on-y-change") && y != this.startY) {
          return "your Y changed";
       }
 
-      if (!this.bool("disable-on-xz-move") || !(Math.abs(x - this.update_D) > 0.5) && !(Math.abs(z - this.sync_D) > 0.5)) {
+      if (!this.bool("disable-on-xz-move") || !(Math.abs(x - this.startX) > 0.5) && !(Math.abs(z - this.startZ) > 0.5)) {
          if (this.bool("disable-on-xz-speed") && this.load_Z) {
             double dx = x - this.flush_D;
             double dz = z - this.close_D;
@@ -339,8 +339,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private void update_V_11() {
-      this.init_List.clear();
+   private void collectTargets() {
+      this.toPlace.clear();
       AABB box = MC.player.getBoundingBox();
       int feetY = Mth.floor(box.minY + 0.001);
       List<BlockPos> hole = this.init(box, feetY);
@@ -352,7 +352,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       boolean forceExtra = this.bool("force-extra-layer");
       boolean extraLayer = this.bool("protect") && this.bool("extra-layer");
       boolean corners = extraLayer && this.bool("extra-layer-corners");
-      Direction[] order = this.init_DirectionArr();
+      Direction[] order = this.faceOrder();
 
       for (BlockPos holePos : hole) {
          for (Direction direction : order) {
@@ -361,15 +361,15 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                if (direction == Direction.DOWN) {
                   down.add(pos);
                   if (addDown) {
-                     init_V_List_2(down, seen, holePos.below(2));
+                     addUnique(down, seen, holePos.below(2));
                   }
                } else {
                   ring.add(pos);
                   if (forceExtra || extraLayer && this.init_Set.contains(pos)) {
-                     init_V_List_2(extra, seen, pos.relative(direction));
-                     init_V_List_2(extra, seen, pos.above());
+                     addUnique(extra, seen, pos.relative(direction));
+                     addUnique(extra, seen, pos.above());
                      if (corners) {
-                        init_V_List_2(extra, seen, pos.relative(direction.getClockWise()));
+                        addUnique(extra, seen, pos.relative(direction.getClockWise()));
                      }
                   }
                }
@@ -377,14 +377,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          }
       }
 
-      this.init_V_List(ring);
-      this.init_V_List(down);
-      this.init_V_List(extra);
+      this.addPlaceable(ring);
+      this.addPlaceable(down);
+      this.addPlaceable(extra);
    }
 
-   private Direction[] init_DirectionArr() {
+   private Direction[] faceOrder() {
       if (this.integer("aim-speed") <= 1) {
-         return init_DirectionArr;
+         return FACE_ORDER;
       }
 
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
@@ -392,40 +392,40 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       int start = 0;
       float best = 3.4028235E38F;
 
-      for (int i = 0; i < load_DirectionArr.length; i++) {
-         float turn = Math.abs(RotationMath.angleDelta(load_DirectionArr[i].toYRot(), fromYaw));
+      for (int i = 0; i < HORIZONTALS.length; i++) {
+         float turn = Math.abs(RotationMath.angleDelta(HORIZONTALS[i].toYRot(), fromYaw));
          if (turn < best) {
             best = turn;
             start = i;
          }
       }
 
-      Direction[] order = new Direction[load_DirectionArr.length + 1];
+      Direction[] order = new Direction[HORIZONTALS.length + 1];
       order[0] = Direction.DOWN;
 
-      for (int i = 0; i < load_DirectionArr.length; i++) {
-         order[i + 1] = load_DirectionArr[(start + i) % load_DirectionArr.length];
+      for (int i = 0; i < HORIZONTALS.length; i++) {
+         order[i + 1] = HORIZONTALS[(start + i) % HORIZONTALS.length];
       }
 
       return order;
    }
 
-   private static void init_V_List_2(List<BlockPos> target, Set<BlockPos> seen, BlockPos pos) {
+   private static void addUnique(List<BlockPos> target, Set<BlockPos> seen, BlockPos pos) {
       if (seen.add(pos)) {
          target.add(pos);
       }
    }
 
-   private void init_V_List(List<BlockPos> group) {
+   private void addPlaceable(List<BlockPos> group) {
       for (BlockPos pos : group) {
-         if (this.load_Set.contains(pos) && MC.level.getBlockState(pos).canBeReplaced()) {
-            this.init_List.add(pos);
+         if (this.recentPlacements.contains(pos) && MC.level.getBlockState(pos).canBeReplaced()) {
+            this.toPlace.add(pos);
          }
       }
 
       for (BlockPos pos : group) {
-         if (!this.load_Set.contains(pos) && MC.level.getBlockState(pos).canBeReplaced()) {
-            this.init_List.add(pos);
+         if (!this.recentPlacements.contains(pos) && MC.level.getBlockState(pos).canBeReplaced()) {
+            this.toPlace.add(pos);
          }
       }
    }
@@ -436,7 +436,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          return List.of(feet);
       }
 
-      if (this.bool("no-waste") && this.init_Z_BlockPos_5(feet)) {
+      if (this.bool("no-waste") && this.isSurrounded(feet)) {
          return List.of(feet);
       }
 
@@ -455,8 +455,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return columns.isEmpty() ? List.of(feet) : columns;
    }
 
-   private boolean init_Z_BlockPos_5(BlockPos feet) {
-      for (Direction direction : init_DirectionArr) {
+   private boolean isSurrounded(BlockPos feet) {
+      for (Direction direction : FACE_ORDER) {
          float resistance = MC.level.getBlockState(feet.relative(direction)).getBlock().getExplosionResistance();
          if (resistance < 600.0F) {
             return false;
@@ -467,37 +467,37 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void sync_V_7() {
-      if (!this.read_Z_13()) {
-         this.load_V_19();
+      if (!this.canAct()) {
+         this.releaseRotation();
       } else {
-         int slot = this.init_I_17();
+         int slot = this.findBlockSlot();
          if (this.sync_Z_7()) {
-            this.load_V_19();
+            this.releaseRotation();
             if (slot >= 0 && slot != MC.player.getInventory().getSelectedSlot()) {
                this.init_V_I_9(slot);
             }
          } else if (BlinkPacketManager.isHoldingActionsOnly()) {
-            this.load_V_19();
-         } else if (!this.init_List.isEmpty() && slot >= 0) {
+            this.releaseRotation();
+         } else if (!this.toPlace.isEmpty() && slot >= 0) {
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
             RotationMath.Rotation wireRotation = wire.initialized() ? new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch()) : null;
             RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
-            SurroundModule.Inner_StreamUtil plan = this.init_aK_StreamUtil_ce_DataUtil(from, material, null);
+            SurroundModule.Inner_StreamUtil plan = this.findPlacement(from, material, null);
             if (plan == null) {
-               this.load_V_19();
+               this.releaseRotation();
                this.open();
             } else {
                this.poll = 0;
                boolean slotReady = slot == MC.player.getInventory().getSelectedSlot();
                BlockHitResult hit = wireRotation == null ? null : this.init(plan, wireRotation);
-               boolean fire = hit != null && slotReady && !BedDefenderModule.init_Z_10() && this.close_Z_5();
+               boolean fire = hit != null && slotReady && !BedDefenderModule.init_Z_10() && this.isNewTick();
                boolean aimed;
                if (fire) {
-                  SurroundModule.Inner_StreamUtil next = this.init_aK_StreamUtil_ce_DataUtil(from, material, plan.init_BlockPos());
-                  aimed = this.init(next != null ? next.init_ce_DataUtil() : plan.init_ce_DataUtil(), true);
+                  SurroundModule.Inner_StreamUtil next = this.findPlacement(from, material, plan.cell());
+                  aimed = this.init(next != null ? next.goalRotation() : plan.goalRotation(), true);
                } else {
-                  aimed = this.init(plan.init_ce_DataUtil(), false);
+                  aimed = this.init(plan.goalRotation(), false);
                }
 
                if (fire && aimed) {
@@ -510,7 +510,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                }
             }
          } else {
-            this.load_V_19();
+            this.releaseRotation();
             this.open();
          }
       }
@@ -524,11 +524,11 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
 
       int speed = this.integer("aim-speed");
-      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, init_F_I_2(speed), holdPitch ? 0.0F : init_F_I_2(speed), init_ap_StreamUtil_I(speed));
+      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, maxStepForSpeed(speed), holdPitch ? 0.0F : maxStepForSpeed(speed), profileForSpeed(speed));
       return true;
    }
 
-   private static autismclient.util.RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil_I(int speed) {
+   private static autismclient.util.RotationStreamPlanner.Inner_StreamUtil profileForSpeed(int speed) {
       autismclient.util.RotationStreamPlanner.Inner_StreamUtil var10000;
       switch (speed) {
          case 2:
@@ -550,7 +550,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return var10000;
    }
 
-   private static float init_F_I_2(int speed) {
+   private static float maxStepForSpeed(int speed) {
       float var10000;
       switch (speed) {
          case 3:
@@ -569,7 +569,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return var10000;
    }
 
-   private SurroundModule.Inner_StreamUtil init_aK_StreamUtil_ce_DataUtil(RotationMath.Rotation from, ItemStack material, BlockPos skip) {
+   private SurroundModule.Inner_StreamUtil findPlacement(RotationMath.Rotation from, ItemStack material, BlockPos skip) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       AABB playerBox = MC.player.getBoundingBox();
@@ -581,11 +581,11 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          .withFromRotation(from)
          .withSneaking(MC.player.isShiftKeyDown())
          .withLeadEye(eye.add(delta))
-         .withRayBudget(this.init_U_StreamUtil);
+         .withRayBudget(this.rayBudget);
 
-      for (BlockPos cell : this.init_List) {
+      for (BlockPos cell : this.toPlace) {
          if (!cell.equals(skip) && !this.init(cell, placed, playerBox, delta)) {
-            this.init_U_StreamUtil.reset(4);
+            this.rayBudget.reset(4);
             autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request.withTargetCell(cell));
             if (candidate != null) {
                return new SurroundModule.Inner_StreamUtil(cell, candidate);
@@ -611,17 +611,17 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       autismclient.util.BlockPlacementPlanner.Query gate = new autismclient.util.BlockPlacementPlanner.Query(
-            plan.init_BlockPos(),
+            plan.cell(),
             eye,
             reach,
             autismclient.util.BlockPlacementPlanner.blockItemValidator(MC.player.getItemInHand(InteractionHand.MAIN_HAND), MC.player, InteractionHand.MAIN_HAND)
          )
          .withSneaking(MC.player.isShiftKeyDown());
-      return autismclient.util.BlockPlacementPlanner.verifyWithRotation(plan.init_U_CachePool(), rotation, eye, reach, gate);
+      return autismclient.util.BlockPlacementPlanner.verifyWithRotation(plan.plan(), rotation, eye, reach, gate);
    }
 
-   private boolean close_Z_5() {
-      return AutismSessionState.getInstance().getClientTick() != this.sync_I;
+   private boolean isNewTick() {
+      return AutismSessionState.getInstance().getClientTick() != this.lastTick;
    }
 
    private void init(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
@@ -637,8 +637,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                return;
             }
 
-            this.close_V_5();
-            this.init_BlockPos = plan.init_BlockPos();
+            this.markTick();
+            this.init_BlockPos = plan.cell();
          } finally {
             autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
@@ -650,18 +650,18 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          BlockPos cell = this.init_BlockPos;
          this.init_BlockPos = null;
          if (!MC.level.getBlockState(cell).canBeReplaced()) {
-            this.init_V_BlockPos_5(cell);
+            this.markPlaced(cell);
          }
       }
    }
 
-   private void close_V_5() {
-      this.sync_I = AutismSessionState.getInstance().getClientTick();
+   private void markTick() {
+      this.lastTick = AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.sync_I == AutismSessionState.getInstance().getClientTick();
+      return this.lastTick == AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
@@ -669,18 +669,18 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
-   private void init_V_BlockPos_5(BlockPos cell) {
-      this.init_List.remove(cell);
+   private void markPlaced(BlockPos cell) {
+      this.toPlace.remove(cell);
       BlockPos immutable = cell.immutable();
-      this.load_Set.remove(immutable);
-      this.load_Set.add(immutable);
+      this.recentPlacements.remove(immutable);
+      this.recentPlacements.add(immutable);
 
-      while (this.load_Set.size() > 64) {
-         this.load_Set.remove(this.load_Set.iterator().next());
+      while (this.recentPlacements.size() > 64) {
+         this.recentPlacements.remove(this.recentPlacements.iterator().next());
       }
    }
 
-   private int init_I_17() {
+   private int findBlockSlot() {
       Inventory inventory = MC.player.getInventory();
       int selected = inventory.getSelectedSlot();
       int best = -1;
@@ -688,7 +688,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       for (int slot = 0; slot < 9; slot++) {
          if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
             ItemStack stack = inventory.getItem(slot);
-            if (this.init_Z_ItemStack_5(stack)) {
+            if (this.isUsableBlock(stack)) {
                if (slot == selected) {
                   return slot;
                }
@@ -707,8 +707,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       if (!BedDefenderModule.init_Z_10() && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (this.close_I < 0 && this.bool("switch-back")) {
-               this.close_I = selected;
+            if (this.previousSlot < 0 && this.bool("switch-back")) {
+               this.previousSlot = selected;
             }
 
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
@@ -720,17 +720,17 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void open() {
-      if (this.close_I >= 0) {
+      if (this.previousSlot >= 0) {
          if (!this.bool("switch-back")) {
-            this.close_I = -1;
+            this.previousSlot = -1;
             this.open = -1;
          } else if (this.open >= 0 && MC.player.getInventory().getSelectedSlot() != this.open) {
-            this.close_I = -1;
+            this.previousSlot = -1;
             this.open = -1;
          } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
-               autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.close_I);
-               this.close_I = -1;
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.previousSlot);
+               this.previousSlot = -1;
                this.open = -1;
                this.poll = 0;
             } finally {
@@ -740,7 +740,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean init_Z_ItemStack_5(ItemStack stack) {
+   private boolean isUsableBlock(ItemStack stack) {
       if (!(stack != null && !stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem)) {
          return false;
       }
@@ -749,14 +749,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          return false;
       }
 
-      boolean listed = this.init_Set_7().contains(blockItem.getBlock());
+      boolean listed = this.getAllowedBlocks().contains(blockItem.getBlock());
       return "Whitelist".equals(this.choice("filter-mode")) == listed;
    }
 
-   private Set<Block> init_Set_7() {
+   private Set<Block> getAllowedBlocks() {
       String raw = this.value("blocks");
-      if (raw.equals(this.init_Str)) {
-         return this.read_Set;
+      if (raw.equals(this.raw)) {
+         return this.allowedBlocks;
       }
 
       Set<Block> blocks = new HashSet<>();
@@ -768,17 +768,17 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          }
       }
 
-      this.init_Str = raw;
-      this.read_Set = Set.copyOf(blocks);
-      return this.read_Set;
+      this.raw = raw;
+      this.allowedBlocks = Set.copyOf(blocks);
+      return this.allowedBlocks;
    }
 
-   private record Inner_DataUtil(long init_J, int init_I, long load) {
+   private record Inner_DataUtil(long posKey, int progress, long load) {
    }
 
-   private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool) {
-      RotationMath.Rotation init_ce_DataUtil() {
-         return this.init_U_CachePool.aim().goalRotation();
+   private record Inner_StreamUtil(BlockPos cell, autismclient.util.BlockPlacementPlanner.PlacementPlan plan) {
+      RotationMath.Rotation goalRotation() {
+         return this.plan.aim().goalRotation();
       }
    }
 }

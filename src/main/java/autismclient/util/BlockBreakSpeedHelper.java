@@ -35,7 +35,7 @@ public final class BlockBreakSpeedHelper {
          }
 
          if (speed > 1.0F) {
-            int efficiency = init_I(mc, stack);
+            int efficiency = efficiencyLevel(mc, stack);
             if (efficiency > 0) {
                float addition = (float)efficiency * efficiency + 1.0F;
                speed += Math.max(0.0F, Math.min(1024.0F, addition));
@@ -48,7 +48,7 @@ public final class BlockBreakSpeedHelper {
       }
    }
 
-   private static int init_I(Minecraft mc, ItemStack stack) {
+   private static int efficiencyLevel(Minecraft mc, ItemStack stack) {
       return init(mc, stack, Enchantments.EFFICIENCY);
    }
 

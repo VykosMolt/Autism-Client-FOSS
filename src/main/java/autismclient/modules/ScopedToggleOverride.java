@@ -5,17 +5,17 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public final class ScopedToggleOverride {
-   private final BooleanSupplier init_BooleanSupplier;
-   private final Consumer<Boolean> init_Consumer;
+   private final BooleanSupplier configured;
+   private final Consumer<Boolean> transition;
    private final ArrayList<ScopedToggleOverride.Inner_DataUtil> init_ArrayList = new ArrayList<>();
 
    public ScopedToggleOverride(BooleanSupplier configured, Consumer<Boolean> transition) {
-      this.init_BooleanSupplier = configured;
-      this.init_Consumer = transition;
+      this.configured = configured;
+      this.transition = transition;
    }
 
    public boolean isEnabled() {
-      return this.init_ArrayList.isEmpty() ? this.init_BooleanSupplier.getAsBoolean() : this.init_ArrayList.getLast().init;
+      return this.init_ArrayList.isEmpty() ? this.configured.getAsBoolean() : this.init_ArrayList.getLast().init;
    }
 
    public ScopedToggleOverride.Inner_StreamUtil push(boolean enabled) {
@@ -44,7 +44,7 @@ public final class ScopedToggleOverride {
    private void init_V(boolean before) {
       boolean after = this.isEnabled();
       if (before != after) {
-         this.init_Consumer.accept(after);
+         this.transition.accept(after);
       }
    }
 

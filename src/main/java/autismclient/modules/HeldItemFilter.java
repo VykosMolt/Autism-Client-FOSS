@@ -46,19 +46,19 @@ final class HeldItemFilter {
    private Set<String> init_Set() {
       List<String> source = this.init_RegistryListSettin.get();
       if (source != this.init_List) {
-         this.init_Set = init_Set_List(source);
+         this.init_Set = normalizeIds(source);
          this.init_List = source;
       }
 
       return this.init_Set;
    }
 
-   static Set<String> init_Set_List(List<String> entries) {
+   static Set<String> normalizeIds(List<String> entries) {
       if (entries != null && !entries.isEmpty()) {
          Set<String> out = new LinkedHashSet<>();
 
          for (String entry : entries) {
-            String id = init_Str_Str(entry);
+            String id = normalizeId(entry);
             if (id != null) {
                out.add(id);
             }
@@ -71,11 +71,11 @@ final class HeldItemFilter {
    }
 
    static boolean init(Set<String> ids, String itemId) {
-      String id = init_Str_Str(itemId);
+      String id = normalizeId(itemId);
       return id != null && ids.contains(id);
    }
 
-   private static String init_Str_Str(String raw) {
+   private static String normalizeId(String raw) {
       if (raw == null) {
          return null;
       } else {

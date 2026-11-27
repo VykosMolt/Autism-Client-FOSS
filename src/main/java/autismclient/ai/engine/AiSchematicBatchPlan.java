@@ -175,8 +175,8 @@ final class AiSchematicBatchPlan {
    static final class Inner_CachePool {
       private static final int init_I = 16;
       private final List<AiSchematicBatchPlan.Inner_BufferHelper> init_List;
-      private final int load_I;
-      private final long init_J;
+      private final int targets;
+      private final long all;
       private final double[][] init_DArr2;
       private final double[] init_DArr;
       private final double[] load_DArr;
@@ -199,7 +199,7 @@ final class AiSchematicBatchPlan {
       Inner_CachePool(List<AiSchematicBatchPlan.Inner_BufferHelper> stations, Vec3 worker, BlockPos continuation, int targets, long available) {
          if (targets >= 0 && targets <= 32 && stations.size() <= 128 && (available & ~((1L << targets) - 1L)) == 0L) {
             this.init_List = List.copyOf(stations);
-            this.load_I = targets;
+            this.targets = targets;
             int count = stations.size();
             long all = 0L;
 
@@ -211,18 +211,18 @@ final class AiSchematicBatchPlan {
                all |= station.jobs;
             }
 
-            this.init_J = all;
+            this.all = all;
             this.init_DArr2 = new double[count][count];
             this.init_DArr = new double[count];
             this.load_DArr = new double[count];
             BlockPos start = BlockPos.containing(worker);
 
             for (int i = 0; i < count; i++) {
-               this.init_DArr[i] = init_D_BlockPos_BlockPos(start, stations.get(i).feet);
-               this.load_DArr[i] = continuation == null ? 0.0 : init_D_BlockPos_BlockPos(stations.get(i).feet, continuation);
+               this.init_DArr[i] = directionalHeuristic(start, stations.get(i).feet);
+               this.load_DArr[i] = continuation == null ? 0.0 : directionalHeuristic(stations.get(i).feet, continuation);
 
                for (int j = 0; j < count; j++) {
-                  this.init_DArr2[i][j] = init_D_BlockPos_BlockPos(stations.get(i).feet, stations.get(j).feet);
+                  this.init_DArr2[i][j] = directionalHeuristic(stations.get(i).feet, stations.get(j).feet);
                }
             }
 
@@ -253,7 +253,7 @@ final class AiSchematicBatchPlan {
             this.load_c_CachePool_Stream = this.read_c_CachePool_Stream;
             this.write_c_CachePool_Stream = this.read_c_CachePool_Stream;
             this.init_D = 1.0 / 0.0;
-            this.init_Z = this.init_J == 0L;
+            this.init_Z = this.all == 0L;
          } else {
             throw new IllegalArgumentException("Unbounded route search");
          }
@@ -268,7 +268,7 @@ final class AiSchematicBatchPlan {
             if (this.read_I < 3) {
                this.load();
             } else if (this.update_I >= this.load_List.size()) {
-               if (!this.init_Map.isEmpty() && ++this.flush < this.load_I) {
+               if (!this.init_Map.isEmpty() && ++this.flush < this.targets) {
                   ArrayList<AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil> ranked = new ArrayList<>(this.init_Map.values());
                   ranked.sort(
                      Comparator.comparingInt(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::supports)
@@ -298,8 +298,8 @@ final class AiSchematicBatchPlan {
                         this.load_c_CachePool_Stream = candidate;
                      }
 
-                     if (candidate.done == this.init_J) {
-                        if (this.init_Z_c_CachePool_Stream_c_CachePool_Stream(candidate, this.init_c_CachePool_Stream)) {
+                     if (candidate.done == this.all) {
+                        if (this.isBetterCandidate(candidate, this.init_c_CachePool_Stream)) {
                            this.init_c_CachePool_Stream = candidate;
                         }
                      } else if (this.init_c_CachePool_Stream == null
@@ -327,14 +327,14 @@ final class AiSchematicBatchPlan {
                   this.load_c_CachePool_Stream = this.write_c_CachePool_Stream;
                }
 
-               if (this.write_c_CachePool_Stream.done != this.init_J) {
+               if (this.write_c_CachePool_Stream.done != this.all) {
                   this.write_I = 0;
                   this.update_c_CachePool_Stream = null;
                   this.init_D = 1.0 / 0.0;
                   return;
                }
 
-               if (this.init_Z_c_CachePool_Stream_c_CachePool_Stream(this.write_c_CachePool_Stream, this.init_c_CachePool_Stream)) {
+               if (this.isBetterCandidate(this.write_c_CachePool_Stream, this.init_c_CachePool_Stream)) {
                   this.init_c_CachePool_Stream = this.write_c_CachePool_Stream;
                }
             }
@@ -351,7 +351,7 @@ final class AiSchematicBatchPlan {
                   this.load_c_CachePool_Stream = candidate;
                }
 
-               if (candidate.done == this.init_J && this.init_Z_c_CachePool_Stream_c_CachePool_Stream(candidate, this.init_c_CachePool_Stream)) {
+               if (candidate.done == this.all && this.isBetterCandidate(candidate, this.init_c_CachePool_Stream)) {
                   this.init_c_CachePool_Stream = candidate;
                }
 
@@ -387,7 +387,7 @@ final class AiSchematicBatchPlan {
 
          long available = station.jobs & ~state.done;
 
-         for (int i = 0; i < this.load_I; i++) {
+         for (int i = 0; i < this.targets; i++) {
             if ((station.blockers[i] & state.done) != 0L) {
                available &= ~(1L << i);
             }
@@ -397,9 +397,9 @@ final class AiSchematicBatchPlan {
             return null;
          }
 
-         long[] before = new long[this.load_I];
+         long[] before = new long[this.targets];
 
-         for (int job = 0; job < this.load_I; job++) {
+         for (int job = 0; job < this.targets; job++) {
             if ((available & 1L << job) != 0L) {
                long blockers = station.blockers[job] & available;
 
@@ -413,9 +413,9 @@ final class AiSchematicBatchPlan {
 
          List<Integer> ordered = AiSchematicBatchPlan.init(available, before);
          long done = state.done;
-         long[][] views = new long[this.load_I][2];
+         long[][] views = new long[this.targets][2];
 
-         for (int j = 0; j < this.load_I; j++) {
+         for (int j = 0; j < this.targets; j++) {
             views[j] = (long[])state.views[j].clone();
          }
 
@@ -426,8 +426,8 @@ final class AiSchematicBatchPlan {
                long after = done | 1L << job;
                boolean safe = true;
 
-               for (int j = 0; j < this.load_I; j++) {
-                  if ((this.init_J & ~after & 1L << j) != 0L
+               for (int j = 0; j < this.targets; j++) {
+                  if ((this.all & ~after & 1L << j) != 0L
                      && (views[j][0] & ~this.init_JArr3[job][j][0]) == 0L
                      && (views[j][1] & ~this.init_JArr3[job][j][1]) == 0L) {
                      safe = false;
@@ -439,7 +439,7 @@ final class AiSchematicBatchPlan {
                   done = after;
                   clicks.add(job);
 
-                  for (int j = 0; j < this.load_I; j++) {
+                  for (int j = 0; j < this.targets; j++) {
                      views[j][0] = views[j][0] & ~this.init_JArr3[job][j][0];
                      views[j][1] = views[j][1] & ~this.init_JArr3[job][j][1];
                   }
@@ -473,8 +473,8 @@ final class AiSchematicBatchPlan {
          double reach = 0.0;
          int maxCover = 1;
 
-         for (int job = 0; job < this.load_I; job++) {
-            if ((this.init_J & ~done & 1L << job) != 0L) {
+         for (int job = 0; job < this.targets; job++) {
+            if ((this.all & ~done & 1L << job) != 0L) {
                double nearest = 1.0 / 0.0;
 
                for (int s = 0; s < this.init_List.size(); s++) {
@@ -491,7 +491,7 @@ final class AiSchematicBatchPlan {
             maxCover = Math.max(maxCover, Long.bitCount(station.jobs & ~done));
          }
 
-         int stops = (Long.bitCount(this.init_J & ~done) + maxCover - 1) / maxCover;
+         int stops = (Long.bitCount(this.all & ~done) + maxCover - 1) / maxCover;
          return reach + stops * 24.0;
       }
 
@@ -499,16 +499,16 @@ final class AiSchematicBatchPlan {
          return state.cost + (state.at < 0 ? 0.0 : this.load_DArr[state.at]);
       }
 
-      private boolean init_Z_c_CachePool_Stream_c_CachePool_Stream(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil candidate, AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil prior) {
+      private boolean isBetterCandidate(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil candidate, AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil prior) {
          return prior == null || candidate.supports < prior.supports || candidate.supports == prior.supports && this.init(candidate) < this.init(prior);
       }
 
       AiSchematicBatchPlan.Inner_StreamUtil getChoice() {
          AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil chosen = this.init_c_CachePool_Stream == null ? this.load_c_CachePool_Stream : this.init_c_CachePool_Stream;
-         return new AiSchematicBatchPlan.Inner_StreamUtil(chosen.stops, chosen.done, this.init_J, this.init(chosen) + Long.bitCount(chosen.done) * 10.0, chosen.supports);
+         return new AiSchematicBatchPlan.Inner_StreamUtil(chosen.stops, chosen.done, this.all, this.init(chosen) + Long.bitCount(chosen.done) * 10.0, chosen.supports);
       }
 
-      private static double init_D_BlockPos_BlockPos(BlockPos from, BlockPos to) {
+      private static double directionalHeuristic(BlockPos from, BlockPos to) {
          return AiPathfinder.MoveCosts.estimateDirectionalHeuristicCompat(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
       }
 
@@ -525,14 +525,14 @@ final class AiSchematicBatchPlan {
    }
 
    static final class Inner_DataUtil {
-      private final LongSupplier init_LongSupplier;
+      private final LongSupplier clock;
       private final long init_J;
       private long load;
       private long read = -9223372036854775808L;
 
       Inner_DataUtil(LongSupplier clock, long nanos) {
          if (nanos > 0L && nanos <= 10000000000L) {
-            this.init_LongSupplier = clock;
+            this.clock = clock;
             this.init_J = clock.getAsLong();
             this.load = this.init_J + nanos;
          } else {
@@ -541,25 +541,25 @@ final class AiSchematicBatchPlan {
       }
 
       void init(long nanos) {
-         this.load = Math.min(this.load, this.init_LongSupplier.getAsLong() + Math.max(0L, nanos));
+         this.load = Math.min(this.load, this.clock.getAsLong() + Math.max(0L, nanos));
       }
 
       boolean isExpired() {
-         return this.init_LongSupplier.getAsLong() >= this.load;
+         return this.clock.getAsLong() >= this.load;
       }
 
       long remainingNanos() {
-         return Math.max(0L, this.load - this.init_LongSupplier.getAsLong());
+         return Math.max(0L, this.load - this.clock.getAsLong());
       }
 
       void start() {
          if (this.read == -9223372036854775808L) {
-            this.read = this.init_LongSupplier.getAsLong();
+            this.read = this.clock.getAsLong();
          }
       }
 
       double elapsedMs() {
-         return ((this.read == -9223372036854775808L ? this.init_LongSupplier.getAsLong() : this.read) - this.init_J) / 1000000.0;
+         return ((this.read == -9223372036854775808L ? this.clock.getAsLong() : this.read) - this.init_J) / 1000000.0;
       }
    }
 

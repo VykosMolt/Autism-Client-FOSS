@@ -9,13 +9,13 @@ import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
 
 public final class ScreenMacroStopWidget {
-   private static final int init_I = 172;
+   private static final int WIDTH = 172;
    private static final int load = 10;
    private static final int read = 58;
    private static final int write = 16;
    private static final int update = 3;
    private static final int sync = 40;
-   private static volatile autismclient.gui.f.NetHelper init_NetHelper;
+   private static volatile autismclient.gui.f.NetHelper bounds;
 
    private ScreenMacroStopWidget() {
    }
@@ -30,7 +30,7 @@ public final class ScreenMacroStopWidget {
    }
 
    public static void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY, autismclient.gui.f.NetHelper... avoid) {
-      init_NetHelper = null;
+      bounds = null;
       Minecraft mc = Minecraft.getInstance();
       int panelH = MacroStatusHudRenderer.layoutHeight(mc.font, 172, 10);
       if (panelH > 0) {
@@ -47,18 +47,18 @@ public final class ScreenMacroStopWidget {
          int vy = cA.init_I_D(mouseY);
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, mc.font, vx, vy);
          autismclient.gui.f.b.CachePool.init(ui, stop, "Stop", GuiIconAtlas.STOP, autismclient.gui.f.b.CachePool.Inner_DataUtil.update, stop.init_Z(vx, vy), false, 0.0F);
-         init_NetHelper = stop;
+         bounds = stop;
       }
    }
 
    public static boolean handleClick(double mouseX, double mouseY) {
-      autismclient.gui.f.NetHelper stop = init_NetHelper;
+      autismclient.gui.f.NetHelper stop = bounds;
       if (stop != null && isVisible(Minecraft.getInstance())) {
          if (!stop.init_Z(cA.init_I_D(mouseX), cA.init_I_D(mouseY))) {
             return false;
          }
 
-         init_NetHelper = null;
+         bounds = null;
          MacroExecutor.stopAll();
          bi.init("Macro stopped", -14249);
          return true;
@@ -67,8 +67,8 @@ public final class ScreenMacroStopWidget {
       }
    }
 
-   static autismclient.gui.f.NetHelper init_NetHelper() {
-      return init_NetHelper;
+   static autismclient.gui.f.NetHelper getBounds() {
+      return bounds;
    }
 
    private static int init_I_Screen(Screen screen, autismclient.gui.f.NetHelper[] avoid, int x, int w, int h) {

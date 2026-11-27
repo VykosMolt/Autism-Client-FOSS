@@ -23,24 +23,24 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 
 public final class LoginPasswordScreen extends VirtualScaledScreen {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder STYLE_THEME = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 16;
    private static final int load_I = 9;
-   private static final String init_Str = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-   private final Screen init_Screen;
-   private final Consumer<Map<String, String>> init_Consumer;
+   private static final String PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+   private final Screen parent;
+   private final Consumer<Map<String, String>> onSave;
    private final Map<String, String> init_Map;
-   private EditBox init_EditBox;
-   private boolean load_Z = true;
-   private String read_Str = "";
+   private EditBox passwordField;
+   private boolean masked = true;
+   private String statusText = "";
    private int update = GuiColorPalette.close;
    private int sync = 124;
 
    public LoginPasswordScreen(Screen parent, Map<String, String> values, Consumer<Map<String, String>> onSave) {
       super(Component.literal("Login Password"));
-      this.init_Screen = parent;
+      this.parent = parent;
       this.init_Map = values == null ? new LinkedHashMap<>() : new LinkedHashMap<>(values);
-      this.init_Consumer = onSave == null ? ignored -> {} : onSave;
+      this.onSave = onSave == null ? ignored -> {} : onSave;
    }
 
    @Override
@@ -53,44 +53,44 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       int ctrlH = this.read_I_16();
       int step = ctrlH + gap;
       int fieldY = l.contentTop();
-      int revealW = Math.max(this.init_I_Str_19("Show"), this.init_I_Str_19("Hide"));
+      int revealW = Math.max(this.buttonWidth("Show"), this.buttonWidth("Hide"));
       revealW = Math.max(1, Math.min(revealW, innerW - gap - 1));
-      String existing = this.init_EditBox != null ? this.init_EditBox.getValue() : Objects.requireNonNullElse(this.init_Map.get("password"), "");
+      String existing = this.passwordField != null ? this.passwordField.getValue() : Objects.requireNonNullElse(this.init_Map.get("password"), "");
       int editW = Math.max(1, innerW - revealW - gap);
-      this.init_EditBox = new MsdfEditBox(this.font, innerX, fieldY, editW, ctrlH, Component.literal("Password"));
-      this.init_EditBox.setMaxLength(16);
-      this.init_EditBox.setHint(Component.literal("Type a password"));
-      this.load_V_23();
-      this.init_EditBox.setValue(existing);
-      this.addRenderableWidget(this.init_EditBox);
+      this.passwordField = new MsdfEditBox(this.font, innerX, fieldY, editW, ctrlH, Component.literal("Password"));
+      this.passwordField.setMaxLength(16);
+      this.passwordField.setHint(Component.literal("Type a password"));
+      this.applyMask();
+      this.passwordField.setValue(existing);
+      this.addRenderableWidget(this.passwordField);
       this.addRenderableWidget(
          new StyledButton(
             innerX + innerW - revealW,
             fieldY,
             revealW,
             ctrlH,
-            Component.literal(this.load_Z ? "Show" : "Hide"),
+            Component.literal(this.masked ? "Show" : "Hide"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-            () -> this.load_Z ? "Show" : "Hide",
-            b -> this.load_Z = !this.load_Z
+            () -> this.masked ? "Show" : "Hide",
+            b -> this.masked = !this.masked
          )
       );
       int y = fieldY + step;
-      int genW = this.init_I_Str_19("Generate Random");
-      int clearW = this.init_I_Str_19("Clear");
+      int genW = this.buttonWidth("Generate Random");
+      int clearW = this.buttonWidth("Clear");
       if (genW + gap + clearW <= innerW) {
-         this.init(innerX, y, genW, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.update_V_13());
-         this.init(innerX + genW + gap, y, clearW, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.read_V_16());
+         this.init(innerX, y, genW, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
+         this.init(innerX + genW + gap, y, clearW, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
       } else {
          int half = Math.max(1, (innerW - gap) / 2);
-         this.init(innerX, y, half, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.update_V_13());
-         this.init(innerX + half + gap, y, Math.max(1, innerW - half - gap), "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.read_V_16());
+         this.init(innerX, y, half, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
+         this.init(innerX + half + gap, y, Math.max(1, innerW - half - gap), "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
       }
 
       y += step;
       this.sync = y + (l.h() < 110 ? 2 : 4);
-      int saveW = this.init_I_Str_19("Save");
-      int backW = this.init_I_Str_19("Back");
+      int saveW = this.buttonWidth("Save");
+      int backW = this.buttonWidth("Back");
       int footerRight = l.x() + l.w();
       if (saveW + gap + backW <= l.w()) {
          this.init(footerRight - backW - gap - saveW, l.footerY(), saveW, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
@@ -104,8 +104,8 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
 
    @Override
    protected void setInitialFocus() {
-      if (this.init_EditBox != null) {
-         this.setInitialFocus(this.init_EditBox);
+      if (this.passwordField != null) {
+         this.setInitialFocus(this.passwordField);
       }
    }
 
@@ -132,48 +132,48 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private void load_V_23() {
-      if (this.init_EditBox != null) {
-         this.init_EditBox.addFormatter((value, offset) -> FormattedCharSequence.forward(this.load_Z ? "*".repeat(value.length()) : value, Style.EMPTY));
+   private void applyMask() {
+      if (this.passwordField != null) {
+         this.passwordField.addFormatter((value, offset) -> FormattedCharSequence.forward(this.masked ? "*".repeat(value.length()) : value, Style.EMPTY));
       }
    }
 
-   private void read_V_16() {
-      if (this.init_EditBox != null) {
-         this.init_EditBox.setValue("");
+   private void clearPassword() {
+      if (this.passwordField != null) {
+         this.passwordField.setValue("");
       }
 
       this.load("Password cleared. Press Save to apply.", GuiColorPalette.open);
    }
 
-   private void update_V_13() {
-      String generated = init_Str_12();
-      this.load_Z = false;
-      if (this.init_EditBox != null) {
-         this.init_EditBox.setValue(generated);
+   private void generatePassword() {
+      String generated = randomPassword();
+      this.masked = false;
+      if (this.passwordField != null) {
+         this.passwordField.setValue(generated);
       }
 
       this.load("Generated a random password (9-16 chars). Press Save to keep it.", GuiColorPalette.open);
    }
 
-   private static String init_Str_12() {
+   private static String randomPassword() {
       SecureRandom random = new SecureRandom();
       int length = 9 + random.nextInt(8);
       StringBuilder out = new StringBuilder(length);
 
       for (int i = 0; i < length; i++) {
-         out.append(init_Str.charAt(random.nextInt(init_Str.length())));
+         out.append(PASSWORD_ALPHABET.charAt(random.nextInt(PASSWORD_ALPHABET.length())));
       }
 
       return out.toString();
    }
 
-   private String load_Str_7() {
+   private String helpText() {
       return "Password used to fill {secret.password} in Join Macros and custom login screens. Leave blank and press Save to clear.";
    }
 
    private void close() {
-      String password = this.init_EditBox == null ? "" : this.init_EditBox.getValue();
+      String password = this.passwordField == null ? "" : this.passwordField.getValue();
       if (password != null && password.length() > 16) {
          this.load("Password must be at most 16 characters.", GuiColorPalette.poll);
          return;
@@ -186,23 +186,23 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
          updated.put("password", password);
       }
 
-      this.init_Consumer.accept(updated);
+      this.onSave.accept(updated);
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
       }
    }
 
    private void load(String text, int color) {
-      this.read_Str = text == null ? "" : text;
+      this.statusText = text == null ? "" : text;
       this.update = color;
    }
 
-   private int init_I_Str_19(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+   private int buttonWidth(String label) {
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, STYLE_THEME.init_Identifier_l(l.read), 0));
    }
 
    private void init(int x, int y, int w, int h, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
-      int width = w <= 0 ? this.init_I_Str_19(label) : Math.max(1, w);
+      int width = w <= 0 ? this.buttonWidth(label) : Math.max(1, w);
       this.addRenderableWidget(new StyledButton(x, y, width, h, Component.literal(label), tone, press));
    }
 
@@ -246,17 +246,17 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
             ThemePaletteManager.recolor(-401402080, ThemePaletteManager.ColorRole.BUTTON),
             border
          );
-         int titleY = this.init_I_I_I_10(l.y() + 6, this.write_I_14());
+         int titleY = this.centeredTextY(l.y() + 6, this.write_I_14());
          this.init(graphics, "Login Password", l.x() + 6, titleY, textColor);
          int textX = l.x() + 6;
          int textW = Math.max(1, l.w() - 12);
          int maxTextY = l.bottom() - (l.h() < 110 ? 3 : 6);
-         List<FormattedCharSequence> statusLines = this.read_Str.isBlank() ? List.of() : this.font.split(FormattedText.of(this.read_Str), textW);
+         List<FormattedCharSequence> statusLines = this.statusText.isBlank() ? List.of() : this.font.split(FormattedText.of(this.statusText), textW);
          int statusReserve = statusLines.isEmpty() ? 0 : statusLines.size() * 10 + 4;
          int helpLimitY = maxTextY - statusReserve;
          int hy = this.sync;
 
-         for (FormattedCharSequence line : this.font.split(FormattedText.of(this.load_Str_7()), textW)) {
+         for (FormattedCharSequence line : this.font.split(FormattedText.of(this.helpText()), textW)) {
             if (hy + 9 > helpLimitY) {
                break;
             }
@@ -284,19 +284,19 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       }
    }
 
-   private int init_I_I_I_10(int boxY, int boxH) {
-      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+   private int centeredTextY(int boxY, int boxH) {
+      return UiLayoutMath.centerTextY(boxY, boxH, STYLE_THEME.init_I_l(l.read), STYLE_THEME.flush());
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color) {
-      Identifier fontId = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read);
+      Identifier fontId = STYLE_THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
       k.init(graphics, this.font, text, fontId, color, x, y, false);
    }
 
    @Override
    public void onClose() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
       }
    }
 

@@ -10,7 +10,7 @@ public final class ToggleSwitchRenderer {
    private static final long load_J = 30000000000L;
    private static final int init_I = -12961216;
    private static final int load_I = -1447444;
-   private static final Map<String, ToggleSwitchRenderer.Inner_DataUtil> init_Map = new HashMap<>();
+   private static final Map<String, ToggleSwitchRenderer.Inner_DataUtil> STATES = new HashMap<>();
    private static long read;
 
    private ToggleSwitchRenderer() {
@@ -68,10 +68,10 @@ public final class ToggleSwitchRenderer {
 
    private static float load(String key, boolean target) {
       long now = System.nanoTime();
-      ToggleSwitchRenderer.Inner_DataUtil state = init_Map.get(key);
+      ToggleSwitchRenderer.Inner_DataUtil state = STATES.get(key);
       if (state == null) {
          state = new ToggleSwitchRenderer.Inner_DataUtil(target ? 1.0F : 0.0F, target, now);
-         init_Map.put(key, state);
+         STATES.put(key, state);
          return state.init(now);
       }
 
@@ -84,7 +84,7 @@ public final class ToggleSwitchRenderer {
       state.load = now;
       if (now - read > 30000000000L) {
          read = now;
-         Iterator<ToggleSwitchRenderer.Inner_DataUtil> it = init_Map.values().iterator();
+         Iterator<ToggleSwitchRenderer.Inner_DataUtil> it = STATES.values().iterator();
 
          while (it.hasNext()) {
             if (now - it.next().load > 30000000000L) {

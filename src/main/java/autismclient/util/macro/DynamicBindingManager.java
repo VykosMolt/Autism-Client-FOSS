@@ -14,7 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public final class DynamicBindingManager {
    public static final String init_Str = "_dynamicBindings";
-   private static final Map<MacroAction, Map<String, String>> init_Map = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<MacroAction, Map<String, String>> BINDINGS_BY_ACTION = Collections.synchronizedMap(new WeakHashMap<>());
 
    private DynamicBindingManager() {
    }
@@ -32,17 +32,17 @@ public final class DynamicBindingManager {
          }
 
          if (values.isEmpty()) {
-            init_Map.remove(action);
+            BINDINGS_BY_ACTION.remove(action);
          } else {
-            init_Map.put(action, values);
+            BINDINGS_BY_ACTION.put(action, values);
          }
       }
    }
 
    public static void load(MacroAction action, CompoundTag actionTag) {
       if (action != null && actionTag != null) {
-         synchronized (init_Map) {
-            Map<String, String> values = init_Map.get(action);
+         synchronized (BINDINGS_BY_ACTION) {
+            Map<String, String> values = BINDINGS_BY_ACTION.get(action);
             if (values != null && !values.isEmpty()) {
                CompoundTag bindings = new CompoundTag();
                values.forEach(bindings::putString);
@@ -55,8 +55,8 @@ public final class DynamicBindingManager {
    }
 
    public static String init(MacroAction action, String key) {
-      synchronized (init_Map) {
-         Map<String, String> values = init_Map.get(action);
+      synchronized (BINDINGS_BY_ACTION) {
+         Map<String, String> values = BINDINGS_BY_ACTION.get(action);
          return values == null ? "" : values.getOrDefault(key, "");
       }
    }
@@ -64,8 +64,8 @@ public final class DynamicBindingManager {
    public static void setBinding(MacroAction action, String key, String template) {
       if (action != null && key != null && !key.isBlank()) {
          String value = template == null ? "" : template.trim();
-         synchronized (init_Map) {
-            Map<String, String> values = init_Map.computeIfAbsent(action, ignored -> new LinkedHashMap<>());
+         synchronized (BINDINGS_BY_ACTION) {
+            Map<String, String> values = BINDINGS_BY_ACTION.computeIfAbsent(action, ignored -> new LinkedHashMap<>());
             if (value.isBlank()) {
                values.remove(key);
             } else {
@@ -73,15 +73,15 @@ public final class DynamicBindingManager {
             }
 
             if (values.isEmpty()) {
-               init_Map.remove(action);
+               BINDINGS_BY_ACTION.remove(action);
             }
          }
       }
    }
 
    public static Map<String, String> init(MacroAction action) {
-      synchronized (init_Map) {
-         Map<String, String> values = init_Map.get(action);
+      synchronized (BINDINGS_BY_ACTION) {
+         Map<String, String> values = BINDINGS_BY_ACTION.get(action);
          return values == null ? Map.of() : Map.copyOf(values);
       }
    }

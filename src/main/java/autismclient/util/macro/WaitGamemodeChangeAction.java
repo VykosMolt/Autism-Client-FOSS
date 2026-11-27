@@ -73,10 +73,10 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
    }
 
    public boolean init(GameType mode) {
-      return mode == null ? false : this.match == WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE || mode == this.init_GameType();
+      return mode == null ? false : this.match == WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE || mode == this.targetGameType();
    }
 
-   public GameType init_GameType() {
+   public GameType targetGameType() {
       GameType var10000;
       switch (this.gameMode) {
          case SURVIVAL:

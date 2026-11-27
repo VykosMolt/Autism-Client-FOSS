@@ -14,28 +14,28 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public class ForceOpPreviewScreen extends VirtualScaledScreen {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = -1442840576;
-   private static final int load_I = init_CharEncoder.poll();
-   private static final int read = init_CharEncoder.set();
-   private static final int write = init_CharEncoder.run();
-   private static final int update = init_CharEncoder.load(l.read);
-   private static final int sync = init_CharEncoder.load(l.write);
+   private static final int load_I = THEME.poll();
+   private static final int read = THEME.set();
+   private static final int write = THEME.run();
+   private static final int update = THEME.load(l.read);
+   private static final int sync = THEME.load(l.write);
    private static final int flush = 300;
    private static final int close = 3;
    private static final int open = 2;
-   private final Screen init_Screen;
-   private final String[] init_StrArr;
+   private final Screen parent;
+   private final String[] passwords;
    private final List<String> init_List;
    private int poll = 0;
    private boolean init_Z = false;
-   private double init_D = 0.0;
-   private final List<ForceOpPreviewScreen.Inner_DataUtil> load_List = new ArrayList<>();
+   private double dragOffset = 0.0;
+   private final List<ForceOpPreviewScreen.Inner_DataUtil> hitRegions = new ArrayList<>();
 
    public ForceOpPreviewScreen(Screen parent, String[] passwords) {
       super(Component.literal("ForceOp Preview"));
-      this.init_Screen = parent;
-      this.init_StrArr = passwords;
+      this.parent = parent;
+      this.passwords = passwords;
       this.init_List = new ArrayList<>();
       int limit = Math.min(passwords.length, 500);
 
@@ -73,20 +73,20 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       return this.init_List.size() * this.sync();
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_4() {
+   private autismclient.gui.f.NetHelper listBounds() {
       int x = this.close();
       int y = this.open();
       int headerH = this.update();
       return autismclient.gui.f.NetHelper.init(x + 4, y + headerH + 4, this.read() - 8, this.write() - headerH - 8);
    }
 
-   private autismclient.gui.f.NetHelper load_NetHelper() {
-      autismclient.gui.f.NetHelper list = this.init_NetHelper_4();
+   private autismclient.gui.f.NetHelper innerBounds() {
+      autismclient.gui.f.NetHelper list = this.listBounds();
       return autismclient.gui.f.NetHelper.init(list.read() + 2, list.write() + 2, list.update() - 4, list.sync() - 4);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_6() {
-      autismclient.gui.f.NetHelper inner = this.load_NetHelper();
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
+      autismclient.gui.f.NetHelper inner = this.innerBounds();
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(this.flush(), inner.sync(), inner.init() - 6, inner.write(), 6, inner.sync(), this.poll);
    }
 
@@ -97,7 +97,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         this.load_List.clear();
+         this.hitRegions.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -1442840576);
          int x = this.close();
          int y = this.open();
@@ -108,9 +108,9 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
             return;
          }
 
-         autismclient.gui.f.NetHelper list = this.init_NetHelper_4();
+         autismclient.gui.f.NetHelper list = this.listBounds();
          autismclient.gui.f.PacketUtil.load(graphics, list, 5, -1442248437, read);
-         autismclient.gui.f.NetHelper inner = this.load_NetHelper();
+         autismclient.gui.f.NetHelper inner = this.innerBounds();
          int innerX = inner.read();
          int innerY = inner.write();
          int innerW = inner.update();
@@ -129,8 +129,8 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
                if (rowY + rowH > innerY && rowY < innerY + innerH) {
                   int color = i % 2 == 0 ? -10046721 : -24474;
                   autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(graphics, innerX, rowY, innerW - 8, rowH, false, false);
-                  String text = k.init(this.font, this.init_List.get(i), innerW - 8 - 8, init_CharEncoder.init_Identifier_l(l.read), color);
-                  this.init(graphics, text, innerX + 4, UiLayoutMath.centerTextY(rowY, rowH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()), color, innerW - 8 - 8);
+                  String text = k.init(this.font, this.init_List.get(i), innerW - 8 - 8, THEME.init_Identifier_l(l.read), color);
+                  this.init(graphics, text, innerX + 4, UiLayoutMath.centerTextY(rowY, rowH, THEME.init_I_l(l.read), THEME.flush()), color, innerW - 8 - 8);
                }
             }
          } finally {
@@ -138,10 +138,10 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          }
 
          if (maxScroll > 0) {
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_6();
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
             boolean overBar = metrics.containsTrack(mx, my);
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, overBar, this.init_Z);
-            this.load_List.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
+            this.hitRegions.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -155,18 +155,18 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.load_List.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync()));
+      this.hitRegions.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync()));
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
-      String display = k.init(this.font, text, Math.max(0, w - 8), init_CharEncoder.init_Identifier_l(l.load), color);
-      int tw = k.init(this.font, display, init_CharEncoder.init_Identifier_l(l.load), color);
-      int th = init_CharEncoder.init_I_l(l.load);
+      String display = k.init(this.font, text, Math.max(0, w - 8), THEME.init_Identifier_l(l.load), color);
+      int tw = k.init(this.font, display, THEME.init_Identifier_l(l.load), color);
+      int th = THEME.init_I_l(l.load);
       k.init(
          graphics,
          this.font,
          display,
-         init_CharEncoder.init_Identifier_l(l.load),
+         THEME.init_Identifier_l(l.load),
          color,
          x + Math.max(2, (w - tw) / 2),
          y + Math.max(1, (h - th + 1) / 2 + 1),
@@ -175,7 +175,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
-      k.init(graphics, this.font, text, init_CharEncoder.init_Identifier_l(l.read), color, x, y, false);
+      k.init(graphics, this.font, text, THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
    @Override
@@ -183,18 +183,18 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
 
-      for (ForceOpPreviewScreen.Inner_DataUtil hit : this.load_List) {
+      for (ForceOpPreviewScreen.Inner_DataUtil hit : this.hitRegions) {
          if (hit.init(mx, my)) {
-            if (hit.init_SyncManager_Stream == ForceOpPreviewScreen.Inner_StreamUtil.CLOSE && Compat263.mouseEventGlfwButton(event) == 0) {
+            if (hit.kind == ForceOpPreviewScreen.Inner_StreamUtil.CLOSE && Compat263.mouseEventGlfwButton(event) == 0) {
                this.onClose();
                return true;
             }
 
-            if (hit.init_SyncManager_Stream == ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_6();
+            if (hit.kind == ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
                if (metrics.containsThumb(mx, my)) {
                   this.init_Z = true;
-                  this.init_D = my - metrics.thumbY();
+                  this.dragOffset = my - metrics.thumbY();
                } else {
                   this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, metrics.thumbHeight() / 2);
                }
@@ -223,7 +223,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_6(), my, (int)this.init_D);
+         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), my, (int)this.dragOffset);
          return true;
       } else {
          return super.mouseDragged(event, dragX, dragY);
@@ -234,10 +234,10 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       int mx = cA.init_I_D(mouseX);
       int my = cA.init_I_D(mouseY);
-      autismclient.gui.f.NetHelper list = this.init_NetHelper_4();
+      autismclient.gui.f.NetHelper list = this.listBounds();
       if (list.init_Z(mx, my)) {
          this.poll = (int)(this.poll - scrollY * this.sync() * 2.0);
-         int maxScroll = Math.max(0, this.flush() - this.load_NetHelper().sync());
+         int maxScroll = Math.max(0, this.flush() - this.innerBounds().sync());
          this.poll = Math.max(0, Math.min(maxScroll, this.poll));
          return true;
       } else {
@@ -258,7 +258,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    @Override
    public void onClose() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
       }
    }
 
@@ -270,9 +270,9 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.write(), 6);
    }
 
-   private record Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil init_SyncManager_Stream, int init_I, int load, int read, int write) {
+   private record Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil kind, int x, int load, int read, int write) {
       boolean init(int mx, int my) {
-         return mx >= this.init_I && mx < this.init_I + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }
 

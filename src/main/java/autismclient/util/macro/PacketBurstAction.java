@@ -85,7 +85,7 @@ public class PacketBurstAction implements MacroAction {
                mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.getStateId() : 0,
                (short)this.slot,
                (byte)this.button,
-               this.init_ContainerInput(),
+               this.parsedContainerInput(),
                new Int2ObjectOpenHashMap<>(),
                HashedStack.EMPTY
             );
@@ -96,7 +96,7 @@ public class PacketBurstAction implements MacroAction {
                id = mc.crosshairPickEntity.getId();
             }
 
-            var10000 = id < 0 ? null : new ServerboundInteractPacket(id, this.init_InteractionHand_2(), Vec3.ZERO, false);
+            var10000 = id < 0 ? null : new ServerboundInteractPacket(id, this.parsedHand(), Vec3.ZERO, false);
             break;
          case CLIENT_COMMAND:
             var10000 = mc.player == null
@@ -110,7 +110,7 @@ public class PacketBurstAction implements MacroAction {
             break;
          case USE_ITEM:
             var10000 = new ServerboundUseItemPacket(
-               this.init_InteractionHand_2(), 0, mc.player == null ? 0.0F : mc.player.getYRot(), mc.player == null ? 0.0F : mc.player.getXRot()
+               this.parsedHand(), 0, mc.player == null ? 0.0F : mc.player.getYRot(), mc.player == null ? 0.0F : mc.player.getXRot()
             );
             break;
          case RELEASE_ITEM:
@@ -134,11 +134,11 @@ public class PacketBurstAction implements MacroAction {
       return var10000;
    }
 
-   private ContainerInput init_ContainerInput() {
+   private ContainerInput parsedContainerInput() {
       return MacroNbtCodecHelper.parseEnum(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
    }
 
-   private InteractionHand init_InteractionHand_2() {
+   private InteractionHand parsedHand() {
       return "OFF_HAND".equalsIgnoreCase(this.hand) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
    }
 

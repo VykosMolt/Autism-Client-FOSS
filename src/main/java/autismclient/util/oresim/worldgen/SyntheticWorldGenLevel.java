@@ -59,25 +59,25 @@ import net.minecraft.world.ticks.LevelTickAccess;
 import net.minecraft.world.ticks.WorldGenTickAccess;
 
 public final class SyntheticWorldGenLevel implements WorldGenLevel {
-   private static final BlockState init_BlockState = Blocks.AIR.defaultBlockState();
-   private static final FluidState init_FluidState = Blocks.AIR.defaultBlockState().getFluidState();
-   private final VanillaWorldGenBootstrap init_ConfigStore;
-   private final Map<Long, ChunkAccess> init_Map;
-   private final BiomeManager init_BiomeManager;
-   private final LevelLightEngine init_LevelLightEngine;
-   private RandomSource init_RandomSource;
+   private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+   private static final FluidState EMPTY_FLUID = Blocks.AIR.defaultBlockState().getFluidState();
+   private final VanillaWorldGenBootstrap bootstrap;
+   private final Map<Long, ChunkAccess> chunks;
+   private final BiomeManager biomeManager;
+   private final LevelLightEngine lightEngine;
+   private RandomSource random;
    private long init_J;
    private int init_I;
    private int load_I;
    private int read;
-   private final WorldGenTickAccess<Block> init_WorldGenTickAccess = new WorldGenTickAccess<>(pos -> this.init(pos).getBlockTicks());
-   private final WorldGenTickAccess<Fluid> load_WorldGenTickAccess = new WorldGenTickAccess<>(pos -> this.init(pos).getFluidTicks());
+   private final WorldGenTickAccess<Block> blockTicks = new WorldGenTickAccess<>(pos -> this.init(pos).getBlockTicks());
+   private final WorldGenTickAccess<Fluid> fluidTicks = new WorldGenTickAccess<>(pos -> this.init(pos).getFluidTicks());
 
    public SyntheticWorldGenLevel(VanillaWorldGenBootstrap context, Map<Long, ChunkAccess> chunks) {
-      this.init_ConfigStore = context;
-      this.init_Map = chunks;
-      this.init_BiomeManager = new BiomeManager(this, BiomeManager.obfuscateSeed(context.seed()));
-      this.init_LevelLightEngine = new LevelLightEngine(new LightChunkGetter() {
+      this.bootstrap = context;
+      this.chunks = chunks;
+      this.biomeManager = new BiomeManager(this, BiomeManager.obfuscateSeed(context.seed()));
+      this.lightEngine = new LevelLightEngine(new LightChunkGetter() {
          @Override
          public LightChunk getChunkForLighting(int chunkX, int chunkZ) {
             return SyntheticWorldGenLevel.this.init(chunkX, chunkZ);
@@ -92,7 +92,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    }
 
    public void init(ChunkPos center, int writeRadius) {
-      this.init_RandomSource = this.init_ConfigStore
+      this.random = this.bootstrap
          .randomState()
          .getOrCreateRandomFactory(Identifier.withDefaultNamespace("worldgen_region_random"))
          .at(center.getWorldPosition());
@@ -103,7 +103,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    }
 
    private ChunkAccess init(int chunkX, int chunkZ) {
-      return this.init_Map.get(ChunkPos.pack(chunkX, chunkZ));
+      return this.chunks.get(ChunkPos.pack(chunkX, chunkZ));
    }
 
    private ChunkAccess init(BlockPos pos) {
@@ -115,27 +115,27 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
       }
    }
 
-   StructureTemplateManager init_StructureTemplateM() {
-      return this.init_ConfigStore.structureTemplates();
+   StructureTemplateManager structureTemplates() {
+      return this.bootstrap.structureTemplates();
    }
 
    ChunkGenerator chunkGenerator() {
-      return this.init_ConfigStore.chunkGenerator();
+      return this.bootstrap.chunkGenerator();
    }
 
    @Override
    public LevelTickAccess<Block> getBlockTicks() {
-      return this.init_WorldGenTickAccess;
+      return this.blockTicks;
    }
 
    @Override
    public LevelTickAccess<Fluid> getFluidTicks() {
-      return this.load_WorldGenTickAccess;
+      return this.fluidTicks;
    }
 
    @Override
    public long getSeed() {
-      return this.init_ConfigStore.seed();
+      return this.bootstrap.seed();
    }
 
    @Override
@@ -156,21 +156,21 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    @Override
    public BlockState getBlockState(BlockPos pos) {
       if (this.isOutsideBuildHeight(pos)) {
-         return init_BlockState;
+         return AIR;
       }
 
       ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
-      return chunk == null ? init_BlockState : chunk.getBlockState(pos);
+      return chunk == null ? AIR : chunk.getBlockState(pos);
    }
 
    @Override
    public FluidState getFluidState(BlockPos pos) {
       if (this.isOutsideBuildHeight(pos)) {
-         return init_FluidState;
+         return EMPTY_FLUID;
       }
 
       ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
-      return chunk == null ? init_FluidState : chunk.getFluidState(pos);
+      return chunk == null ? EMPTY_FLUID : chunk.getFluidState(pos);
    }
 
    @Override
@@ -230,37 +230,37 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public Holder<Biome> getUncachedNoiseBiome(int quartX, int quartY, int quartZ) {
-      return this.init_ConfigStore.biomeSource().createCachingResolver(this.init_ConfigStore.randomState()).getNoiseBiome(quartX, quartY, quartZ);
+      return this.bootstrap.biomeSource().createCachingResolver(this.bootstrap.randomState()).getNoiseBiome(quartX, quartY, quartZ);
    }
 
    @Override
    public BiomeManager getBiomeManager() {
-      return this.init_BiomeManager;
+      return this.biomeManager;
    }
 
    @Override
    public RegistryAccess registryAccess() {
-      return this.init_ConfigStore.registryAccess();
+      return this.bootstrap.registryAccess();
    }
 
    @Override
    public DimensionType dimensionType() {
-      return this.init_ConfigStore.dimensionType();
+      return this.bootstrap.dimensionType();
    }
 
    @Override
    public int getMinY() {
-      return this.init_ConfigStore.heightAccessor().getMinY();
+      return this.bootstrap.heightAccessor().getMinY();
    }
 
    @Override
    public int getHeight() {
-      return this.init_ConfigStore.heightAccessor().getHeight();
+      return this.bootstrap.heightAccessor().getHeight();
    }
 
    @Override
    public int getSeaLevel() {
-      return this.init_ConfigStore.chunkGenerator().getSeaLevel();
+      return this.bootstrap.chunkGenerator().getSeaLevel();
    }
 
    @Override
@@ -350,7 +350,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public LevelLightEngine getLightEngine() {
-      return this.init_LevelLightEngine;
+      return this.lightEngine;
    }
 
    @Override
@@ -386,17 +386,17 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public boolean removeBlock(BlockPos pos, boolean move) {
-      return this.setBlock(pos, init_BlockState, 3, 512);
+      return this.setBlock(pos, AIR, 3, 512);
    }
 
    @Override
    public boolean destroyBlock(BlockPos pos, boolean drop, Entity breaker, int recursionLeft) {
-      return this.setBlock(pos, init_BlockState, 3, recursionLeft);
+      return this.setBlock(pos, AIR, 3, recursionLeft);
    }
 
    @Override
    public RandomSource getRandom() {
-      return this.init_RandomSource;
+      return this.random;
    }
 
    @Override

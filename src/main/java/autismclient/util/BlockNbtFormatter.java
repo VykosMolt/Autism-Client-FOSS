@@ -14,7 +14,7 @@ public final class BlockNbtFormatter {
 
    public static BlockNbtFormatter.Inner_DataUtil init(CompoundTag source, List<ItemStack> containerItems, String note) {
       CompoundTag root = source == null ? new CompoundTag() : source.copy();
-      List<ItemStack> items = init_List(containerItems);
+      List<ItemStack> items = copyStacks(containerItems);
       CompoundTag state = root.getCompound("state").orElse(new CompoundTag());
       String blockId = state.getStringOr("Name", "minecraft:air");
       String raw = root.toString();
@@ -82,7 +82,7 @@ public final class BlockNbtFormatter {
       return new BlockNbtFormatter.Inner_DataUtil(blockId, List.copyOf(nice), List.copyOf(rawLines), pretty.toString(), raw);
    }
 
-   private static List<ItemStack> init_List(List<ItemStack> source) {
+   private static List<ItemStack> copyStacks(List<ItemStack> source) {
       if (source != null && !source.isEmpty()) {
          List<ItemStack> copy = new ArrayList<>(source.size());
 

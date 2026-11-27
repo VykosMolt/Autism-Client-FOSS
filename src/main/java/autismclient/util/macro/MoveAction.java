@@ -18,7 +18,7 @@ public class MoveAction implements MacroAction {
       this.durationTicks = durationTicks;
    }
 
-   public KeyMapping init_KeyMapping(Minecraft mc) {
+   public KeyMapping keyMapping(Minecraft mc) {
       if (mc.options == null) {
          return null;
       }
@@ -46,14 +46,14 @@ public class MoveAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      KeyMapping key = this.init_KeyMapping(mc);
+      KeyMapping key = this.keyMapping(mc);
       if (key != null) {
          key.setDown(true);
       }
    }
 
    public void releaseKey(Minecraft mc) {
-      KeyMapping key = this.init_KeyMapping(mc);
+      KeyMapping key = this.keyMapping(mc);
       if (key != null) {
          key.setDown(false);
       }
@@ -100,7 +100,7 @@ public class MoveAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Move " + this.direction.init_Str() + " (" + this.durationTicks + "t)" + (this.nonBlocking ? " [BG]" : "");
+      return "Move " + this.direction.displayName() + " (" + this.durationTicks + "t)" + (this.nonBlocking ? " [BG]" : "");
    }
 
    @Override
@@ -124,7 +124,7 @@ public class MoveAction implements MacroAction {
       LEFT,
       RIGHT;
 
-      public String init_Str() {
+      public String displayName() {
          return this.name().charAt(0) + this.name().substring(1).toLowerCase();
       }
 

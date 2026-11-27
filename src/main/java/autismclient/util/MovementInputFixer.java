@@ -18,11 +18,11 @@ public final class MovementInputFixer {
    private static final int[] read_IArr = new int[]{2};
    private static final int[] write_IArr = new int[]{6};
    private int write_I = -2147483648;
-   private int update_I = -1;
+   private int chosen = -1;
    private int sync_I;
    private float flush_F;
-   private float close_F = 0.0F / 0.0F;
-   private int flush_I = -2147483648;
+   private float pressed = 0.0F / 0.0F;
+   private int clientTick = -2147483648;
    private int close_I = -2147483648;
    private int open_I = -1;
    private int poll_I;
@@ -31,7 +31,7 @@ public final class MovementInputFixer {
 
    public void init() {
       this.load();
-      this.flush_I = -2147483648;
+      this.clientTick = -2147483648;
    }
 
    public Input init(Input input, float cameraYaw, float silentYaw, int clientTick) {
@@ -41,11 +41,11 @@ public final class MovementInputFixer {
    public Input init(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.Inner_DataUtil footing) {
       MovementInputFixer copy = new MovementInputFixer();
       copy.write_I = this.write_I;
-      copy.update_I = this.update_I;
+      copy.chosen = this.chosen;
       copy.sync_I = this.sync_I;
       copy.flush_F = this.flush_F;
-      copy.close_F = this.close_F;
-      copy.flush_I = this.flush_I;
+      copy.pressed = this.pressed;
+      copy.clientTick = this.clientTick;
       copy.close_I = this.close_I;
       copy.open_I = this.open_I;
       copy.poll_I = this.poll_I;
@@ -63,38 +63,38 @@ public final class MovementInputFixer {
          return null;
       }
 
-      if (clientTick == this.flush_I) {
+      if (clientTick == this.clientTick) {
          this.write_I = this.close_I;
-         this.update_I = this.open_I;
+         this.chosen = this.open_I;
          this.sync_I = this.poll_I;
          this.flush_F = this.open_F;
-         this.close_F = this.poll_F;
+         this.pressed = this.poll_F;
       } else {
-         if (this.flush_I == -2147483648 || clientTick != this.flush_I + 1) {
+         if (this.clientTick == -2147483648 || clientTick != this.clientTick + 1) {
             this.load();
          }
 
          this.close_I = this.write_I;
-         this.open_I = this.update_I;
+         this.open_I = this.chosen;
          this.poll_I = this.sync_I;
          this.open_F = this.flush_F;
-         this.poll_F = this.close_F;
-         this.flush_I = clientTick;
+         this.poll_F = this.pressed;
+         this.clientTick = clientTick;
       }
 
-      float forward = init_F_Z_Z(input.forward(), input.backward());
-      float sideways = init_F_Z_Z(input.left(), input.right());
+      float forward = inputAxis(input.forward(), input.backward());
+      float sideways = inputAxis(input.left(), input.right());
       if (forward == 0.0F && sideways == 0.0F) {
          this.load();
          return input;
       }
 
       float pressed = (float)Math.toDegrees(Math.atan2(sideways, forward));
-      if (Float.isNaN(this.close_F) || pressed != this.close_F) {
+      if (Float.isNaN(this.pressed) || pressed != this.pressed) {
          this.flush_F = 0.0F;
       }
 
-      this.close_F = pressed;
+      this.pressed = pressed;
       float wanted = (float)Mth.wrapDegrees(pressed - ((double)cameraYaw - silentYaw));
       int next = init_I_I_F(this.write_I, Math.abs(wanted));
       if (next != this.write_I) {
@@ -103,13 +103,13 @@ public final class MovementInputFixer {
       }
 
       int[] keys = this.write_I > 0 ? init_IArr : (this.write_I < 0 ? load_IArr : (wanted >= 0.0F ? read_IArr : write_IArr));
-      int chosen = this.init_Z_IArr_F(keys, wanted) ? this.update_I : this.init_I_IArr_F(keys, wanted);
+      int chosen = this.init_Z_IArr_F(keys, wanted) ? this.chosen : this.init_I_IArr_F(keys, wanted);
       if (footing != null) {
          chosen = init(chosen, wanted, pressed, cameraYaw, silentYaw, footing);
       }
 
-      this.sync_I = chosen == this.update_I ? this.sync_I + 1 : 1;
-      this.update_I = chosen;
+      this.sync_I = chosen == this.chosen ? this.sync_I + 1 : 1;
+      this.chosen = chosen;
       this.flush_F = Mth.clamp(this.flush_F + read(wanted, chosen), -0.75F, 0.75F);
       return init_Input_I_Input(chosen, input);
    }
@@ -165,13 +165,13 @@ public final class MovementInputFixer {
    }
 
    private boolean init_Z_IArr_F(int[] keys, float wanted) {
-      if (this.update_I >= 0 && init_Z_IArr_I(keys, this.update_I)) {
-         if (Math.abs(load(wanted, this.update_I)) > 45.001F) {
+      if (this.chosen >= 0 && init_Z_IArr_I(keys, this.chosen)) {
+         if (Math.abs(load(wanted, this.chosen)) > 45.001F) {
             return false;
          }
 
          float band = this.sync_I < 2 ? 0.75F : 0.5F;
-         return Math.abs(this.flush_F + read(wanted, this.update_I)) <= band;
+         return Math.abs(this.flush_F + read(wanted, this.chosen)) <= band;
       } else {
          return false;
       }
@@ -232,16 +232,16 @@ public final class MovementInputFixer {
       return false;
    }
 
-   private static float init_F_Z_Z(boolean positive, boolean negative) {
+   private static float inputAxis(boolean positive, boolean negative) {
       return positive == negative ? 0.0F : (positive ? 1.0F : -1.0F);
    }
 
    private void load() {
       this.write_I = -2147483648;
-      this.update_I = -1;
+      this.chosen = -1;
       this.sync_I = 0;
       this.flush_F = 0.0F;
-      this.close_F = 0.0F / 0.0F;
+      this.pressed = 0.0F / 0.0F;
    }
 
    public interface Inner_DataUtil {

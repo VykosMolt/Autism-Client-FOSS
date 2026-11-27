@@ -75,13 +75,13 @@ final class AiFish {
                if (!this.read_Z && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(
-                        this.init_I_6() > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
-                        "Fishing deadline reached with " + this.init_I_6() + "/" + goal
+                        this.currentCount() > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
+                        "Fishing deadline reached with " + this.currentCount() + "/" + goal
                      );
                   }
 
-                  if (this.init_I_6() >= goal) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Fishing target reached (" + this.init_I_6() + "/" + goal + ")");
+                  if (this.currentCount() >= goal) {
+                     return this.init(AiOperation.Status.SUCCEEDED, "Fishing target reached (" + this.currentCount() + "/" + goal + ")");
                   }
 
                   ItemStack rod = mc.player.getMainHandItem();
@@ -117,7 +117,7 @@ final class AiFish {
                            return this.init(AiOperation.Status.CANCELLED, "AutoFish was disabled while the operation ran");
                         }
 
-                        int now = this.init_I_6();
+                        int now = this.currentCount();
                         if (now > this.read_I) {
                            this.read_I = now;
                            this.load_I = 0;
@@ -133,13 +133,13 @@ final class AiFish {
                }
             }
 
-            int init_I_6() {
+            int currentCount() {
                return wanted == null ? AiFish.init_I() : AiItems.countInInventory(wanted);
             }
 
             JsonObject init_JsonObject_12() {
                JsonObject out = AiJson.objectOf(
-                  "item", spec.isBlank() ? "any catch" : spec, "goal", goal, "have", this.init_I_6(), "startedWith", held, "freeSlots", AiItems.countFreeSlots()
+                  "item", spec.isBlank() ? "any catch" : spec, "goal", goal, "have", this.currentCount(), "startedWith", held, "freeSlots", AiItems.countFreeSlots()
                );
                ItemStack rod = mc.player == null ? ItemStack.EMPTY : mc.player.getMainHandItem();
                if (rod.isDamageableItem()) {

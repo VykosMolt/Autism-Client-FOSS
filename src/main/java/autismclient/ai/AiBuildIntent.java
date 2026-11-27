@@ -34,10 +34,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 final class AiBuildIntent {
-   private static final List<BlockPos> init_List = List.of(
+   private static final List<BlockPos> NEIGHBOR_OFFSETS = List.of(
       new BlockPos(0, -1, 0), new BlockPos(1, 0, 0), new BlockPos(-1, 0, 0), new BlockPos(0, 0, 1), new BlockPos(0, 0, -1)
    );
-   private static final LevelReader init_LevelReader = init();
+   private static final LevelReader EMPTY_LEVEL = init();
 
    private AiBuildIntent() {
    }
@@ -49,7 +49,7 @@ final class AiBuildIntent {
          return AiBuildSite.Inner_CachePool.SKIP;
       } else if (AiBuilder.fluidOfCell(cell) != null) {
          return AiBuildSite.Inner_CachePool.FLUID;
-      } else if (!init_List(cell).isEmpty()) {
+      } else if (!unsupportedProperties(cell).isEmpty()) {
          return AiBuildSite.Inner_CachePool.SKIP;
       } else if (AiSchematicActions.isBedHead(cell) || "upper".equals(cell.properties().get("half")) || "head".equals(cell.properties().get("part"))) {
          return AiBuildSite.Inner_CachePool.PARTNER;
@@ -64,7 +64,7 @@ final class AiBuildIntent {
       }
    }
 
-   static Item init_Item(AiBuilder.CellSpec cell) {
+   static Item itemOf(AiBuilder.CellSpec cell) {
       return itemFor(cell, kindOf(cell));
    }
 
@@ -96,11 +96,11 @@ final class AiBuildIntent {
       }
    }
 
-   static List<String> init_List(AiBuilder.CellSpec cell) {
+   static List<String> unsupportedProperties(AiBuilder.CellSpec cell) {
       return List.copyOf(AiBuilder.unsupportedProperties(cell));
    }
 
-   static List<BlockPos> load_List(AiBuilder.CellSpec cell) {
+   static List<BlockPos> offsetsOf(AiBuilder.CellSpec cell) {
       return offsetsFor(cell, kindOf(cell));
    }
 
@@ -108,14 +108,14 @@ final class AiBuildIntent {
       if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return List.of();
       } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
-         return AiBuilder.isFlowingFluidCell(cell) ? List.of() : init_List;
+         return AiBuilder.isFlowingFluidCell(cell) ? List.of() : NEIGHBOR_OFFSETS;
       } else if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
          Direction provider = init_Direction(cell);
          return provider == null ? List.of() : List.of(init(provider));
       } else if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
          return List.of();
       } else {
-         Block block = init_Block(cell);
+         Block block = blockOf(cell);
          Direction support = init(cell, block);
          if (support != null) {
             return List.of(init(support));
@@ -141,12 +141,12 @@ final class AiBuildIntent {
          return null;
       }
 
-      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init_u_DataUtil(cell, BlockPos.ZERO);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, BlockPos.ZERO);
       return constraint == null ? null : constraint.clickYaw();
    }
 
    static double init_D(AiBuilder.CellSpec cell) {
-      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init_u_DataUtil(cell, BlockPos.ZERO);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, BlockPos.ZERO);
       return constraint == null ? 35.0 : constraint.yawTolerance();
    }
 
@@ -155,7 +155,7 @@ final class AiBuildIntent {
       if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
       } else {
-         autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
+         autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, target == null ? BlockPos.ZERO : target);
          if (constraint == null) {
             return null;
          } else {
@@ -168,7 +168,7 @@ final class AiBuildIntent {
 
    static Boolean init_Boolean(AiBuilder.CellSpec cell) {
       AiBuildSite.Inner_CachePool kind = kindOf(cell);
-      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, init_Block(cell));
+      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, blockOf(cell));
    }
 
    static boolean init(AiBuilder.CellSpec cell, BlockState live) {
@@ -192,7 +192,7 @@ final class AiBuildIntent {
    }
 
    static Direction init_Direction(AiBuilder.CellSpec cell, BlockPos target) {
-      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, target == null ? BlockPos.ZERO : target);
       return constraint == null ? null : constraint.clickFace();
    }
 
@@ -234,9 +234,9 @@ final class AiBuildIntent {
       }
    }
 
-   static boolean load_Z(AiBuilder.CellSpec cell) {
+   static boolean isWallMounted(AiBuilder.CellSpec cell) {
       try {
-         return AiBuilder.isWallMountedBlock(init_Block(cell));
+         return AiBuilder.isWallMountedBlock(blockOf(cell));
       } catch (RuntimeException unknown) {
          return false;
       }
@@ -256,7 +256,7 @@ final class AiBuildIntent {
       return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), Collections.unmodifiableMap(properties));
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
+   static AiBuilder.Blueprint stripPoweredLevers(AiBuilder.Blueprint blueprint) {
       return AiBuilder.stripPoweredLevers(blueprint);
    }
 
@@ -272,9 +272,9 @@ final class AiBuildIntent {
       return List.copyOf(controls);
    }
 
-   static autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil(AiBuilder.CellSpec cell, BlockPos target) {
+   static autismclient.ai.engine.PlacementGoal.PlaceConstraint placeConstraint(AiBuilder.CellSpec cell, BlockPos target) {
       try {
-         return AiBuilder.buildPlaceConstraint(cell, init_Block(cell), target, init_BlockGetter(cell));
+         return AiBuilder.buildPlaceConstraint(cell, blockOf(cell), target, init_BlockGetter(cell));
       } catch (RuntimeException e) {
          return null;
       }
@@ -300,7 +300,7 @@ final class AiBuildIntent {
       String type = cell.properties().get("type");
       if (type != null && !type.equals("single") && cell.block().endsWith("chest")) {
          try {
-            return init_Block(cell) instanceof ChestBlock;
+            return blockOf(cell) instanceof ChestBlock;
          } catch (RuntimeException unknown) {
             return false;
          }
@@ -309,7 +309,7 @@ final class AiBuildIntent {
       }
    }
 
-   private static Block init_Block(AiBuilder.CellSpec cell) {
+   private static Block blockOf(AiBuilder.CellSpec cell) {
       return AiBuilder.toBlockState(cell).getBlock();
    }
 
@@ -360,7 +360,7 @@ final class AiBuildIntent {
 
    private static boolean update(AiBuilder.CellSpec cell) {
       try {
-         return !AiBuilder.toBlockState(cell).canSurvive(init_LevelReader, BlockPos.ZERO);
+         return !AiBuilder.toBlockState(cell).canSurvive(EMPTY_LEVEL, BlockPos.ZERO);
       } catch (RuntimeException e) {
          return true;
       }
@@ -413,7 +413,7 @@ final class AiBuildIntent {
    }
 
    static List<String> read_List(AiBuilder.CellSpec cell) {
-      Block block = init_Block(cell);
+      Block block = blockOf(cell);
       ArrayList<String> out = new ArrayList<>(2);
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {

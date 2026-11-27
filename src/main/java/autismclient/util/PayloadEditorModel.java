@@ -49,7 +49,7 @@ public final class PayloadEditorModel {
          return model;
       }
 
-      model.direction = init_Str_Str(action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection);
+      model.direction = normalizeDirection(action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection);
       model.phase = load_Str_Str(action.payloadPhase);
       model.channel = action.channel != null && !action.channel.isBlank() ? action.channel.strip() : "minecraft:brand";
       model.write_Str = action.payloadClassName == null ? "" : action.payloadClassName;
@@ -90,7 +90,7 @@ public final class PayloadEditorModel {
       }
 
       action.channel = this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand";
-      action.payloadDirection = init_Str_Str(this.direction);
+      action.payloadDirection = normalizeDirection(this.direction);
       action.sourceDirection = action.payloadDirection;
       action.payloadPhase = load_Str_Str(this.phase);
       action.sourceProtocol = this.update_Str != null && !this.update_Str.isBlank()
@@ -137,7 +137,7 @@ public final class PayloadEditorModel {
                String value = line.substring(split + 1).strip();
                switch (key) {
                   case "direction":
-                     parsed.direction = init_Str_Str(value);
+                     parsed.direction = normalizeDirection(value);
                      break;
                   case "phase":
                      parsed.phase = load_Str_Str(value);
@@ -151,7 +151,7 @@ public final class PayloadEditorModel {
                      break;
                   case "packetid":
                   case "packet_id":
-                     parsed.packetId = init_I_Str_I(value, -1);
+                     parsed.packetId = parseIntOr(value, -1);
                      break;
                   case "sourceprotocol":
                   case "source_protocol":
@@ -211,7 +211,7 @@ public final class PayloadEditorModel {
                String value = line.substring(split + 1).strip();
                switch (key) {
                   case "direction":
-                     parsed.direction = init_Str_Str(value);
+                     parsed.direction = normalizeDirection(value);
                      break;
                   case "phase":
                      parsed.phase = load_Str_Str(value);
@@ -221,7 +221,7 @@ public final class PayloadEditorModel {
                      break;
                   case "packetid":
                   case "packet_id":
-                     parsed.packetId = init_I_Str_I(value, -1);
+                     parsed.packetId = parseIntOr(value, -1);
                      break;
                   case "bodyhex":
                   case "body_hex":
@@ -246,13 +246,13 @@ public final class PayloadEditorModel {
       try {
          if (logicalHex != null && !logicalHex.isBlank()) {
             PayloadEditorModel.Inner_DataUtil logical = init_bE_DataUtil_Str(logicalHex);
-            if (parsed.packetId >= 0 && logical.init_I != parsed.packetId) {
+            if (parsed.packetId >= 0 && logical.packetId != parsed.packetId) {
                throw new IllegalArgumentException("Logical packet id does not match packetId");
             }
 
-            parsed.packetId = logical.init_I;
-            parsed.channel = logical.init_Str;
-            parsed.init_V_BArr_bE_StreamUtil(logical.init_BArr, PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
+            parsed.packetId = logical.packetId;
+            parsed.channel = logical.channel;
+            parsed.init_V_BArr_bE_StreamUtil(logical.body, PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          } else if (bodyHex != null) {
             parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          }
@@ -275,7 +275,7 @@ public final class PayloadEditorModel {
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.append("direction = ").append(init_Str_Str(this.direction)).append('\n');
+      sb.append("direction = ").append(normalizeDirection(this.direction)).append('\n');
       sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
       sb.append("channel = ").append(this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand").append('\n');
       if (this.packetId >= 0) {
@@ -339,7 +339,7 @@ public final class PayloadEditorModel {
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.append("direction = ").append(init_Str_Str(this.direction)).append('\n');
+      sb.append("direction = ").append(normalizeDirection(this.direction)).append('\n');
       sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
       sb.append("channel = ").append(this.channel == null ? "" : this.channel).append('\n');
       sb.append("packetId = ").append(this.packetId >= 0 ? this.packetId : "unavailable").append('\n');
@@ -587,7 +587,7 @@ public final class PayloadEditorModel {
       }
    }
 
-   private static String init_Str_Str(String raw) {
+   private static String normalizeDirection(String raw) {
       return "S2C".equalsIgnoreCase(raw == null ? "" : raw.strip()) ? "S2C" : "C2S";
    }
 
@@ -596,7 +596,7 @@ public final class PayloadEditorModel {
       return value.contains("CONFIG") ? "CONFIGURATION" : "PLAY";
    }
 
-   private static int init_I_Str_I(String value, int fallback) {
+   private static int parseIntOr(String value, int fallback) {
       try {
          return Integer.parseInt(value == null ? "" : value.strip());
       } catch (Throwable ignored) {
@@ -604,7 +604,7 @@ public final class PayloadEditorModel {
       }
    }
 
-   private record Inner_DataUtil(int init_I, String init_Str, byte[] init_BArr) {
+   private record Inner_DataUtil(int packetId, String channel, byte[] body) {
    }
 
    public enum Inner_StreamUtil {

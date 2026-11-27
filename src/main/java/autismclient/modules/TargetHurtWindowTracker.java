@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class TargetHurtWindowTracker {
-   static final int init_I = 10;
+   static final int HURT_WINDOW_TICKS = 10;
    static final int load = 3;
    private static final int read = -2147483648;
    private static final int write = 8;
-   private final Map<Integer, TargetHurtWindowTracker.Inner_DataUtil> init_Map = new HashMap<>();
+   private final Map<Integer, TargetHurtWindowTracker.Inner_DataUtil> windows = new HashMap<>();
    private final int[] init_IArr = new int[8];
    private int update;
    private int sync;
@@ -25,7 +25,7 @@ final class TargetHurtWindowTracker {
    }
 
    boolean init_Z(int target, int tick, int fallback) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.init_Map.get(target);
+      TargetHurtWindowTracker.Inner_DataUtil w = this.windows.get(target);
       if (w == null) {
          return false;
       }
@@ -61,19 +61,19 @@ final class TargetHurtWindowTracker {
    }
 
    void init() {
-      this.init_Map.clear();
+      this.windows.clear();
       this.update = this.sync = 0;
    }
 
-   void init_V(int target) {
-      this.init_Map.remove(target);
+   void forget(int target) {
+      this.windows.remove(target);
    }
 
    private TargetHurtWindowTracker.Inner_DataUtil init(int target, int tick) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.init_Map.computeIfAbsent(target, ignored -> new TargetHurtWindowTracker.Inner_DataUtil());
+      TargetHurtWindowTracker.Inner_DataUtil w = this.windows.computeIfAbsent(target, ignored -> new TargetHurtWindowTracker.Inner_DataUtil());
       w.write = tick;
-      if (this.init_Map.size() > 64) {
-         this.init_Map.values().removeIf(old -> tick - old.write > 400);
+      if (this.windows.size() > 64) {
+         this.windows.values().removeIf(old -> tick - old.write > 400);
       }
 
       return w;

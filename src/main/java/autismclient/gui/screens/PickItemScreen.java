@@ -25,8 +25,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public final class PickItemScreen extends VirtualScaledScreen {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private static final int init_I = 300;
+   private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
+   private static final int MAX_PANEL_WIDTH = 300;
    private static final int load_I = 4;
    private static final int read_I = 3;
    private static final int write = 16;
@@ -37,17 +37,17 @@ public final class PickItemScreen extends VirtualScaledScreen {
    private static final int open = -791321;
    private static final int poll = -4743522;
    private static final int push = -50373;
-   private final Screen init_Screen;
-   private final Consumer<String> init_Consumer;
-   private final List<PickItemScreen.Inner_DataUtil> init_List;
-   private final List<PickItemScreen.Inner_StreamUtil> load_List = new ArrayList<>();
-   private String init_Str;
-   private ThemedTextInputBox init_k;
+   private final Screen parent;
+   private final Consumer<String> onPick;
+   private final List<PickItemScreen.Inner_DataUtil> allItems;
+   private final List<PickItemScreen.Inner_StreamUtil> rowHits = new ArrayList<>();
+   private String selectedId;
+   private ThemedTextInputBox searchBox;
    private int pop;
    private boolean init_Z;
    private int tick;
-   private String load_Str;
-   private List<PickItemScreen.Inner_DataUtil> read_List = List.of();
+   private String cachedNeedle;
+   private List<PickItemScreen.Inner_DataUtil> cachedMatches = List.of();
 
    private static int read() {
       return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
@@ -55,10 +55,10 @@ public final class PickItemScreen extends VirtualScaledScreen {
 
    public PickItemScreen(Screen parent, String selectedId, Consumer<String> onPick) {
       super(Component.literal("Pick Item"));
-      this.init_Screen = parent;
-      this.init_Str = load(selectedId);
-      this.init_Consumer = onPick == null ? ignored -> {} : onPick;
-      this.init_List = this.load_List_7();
+      this.parent = parent;
+      this.selectedId = load(selectedId);
+      this.onPick = onPick == null ? ignored -> {} : onPick;
+      this.allItems = this.loadItems();
    }
 
    @Override
@@ -73,7 +73,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         this.load_List.clear();
+         this.rowHits.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.open();
          int y = this.poll();
@@ -81,18 +81,18 @@ public final class PickItemScreen extends VirtualScaledScreen {
          int panelH = this.pop();
          this.load(graphics, x, y, panelW, panelH, mx, my);
          if (panelW < 180 || panelH < 100) {
-            this.init(graphics, "Window too small.", x + 4, this.init_I_5(y + this.write(), 12), read(), Math.max(0, panelW - 8));
+            this.init(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.write(), 12), read(), Math.max(0, panelW - 8));
             return;
          }
 
-         this.init_V(x + 4, this.flush(), panelW - 8, this.update());
-         this.init_k.render(graphics, mx, my, delta);
-         autismclient.gui.f.NetHelper list = this.init_NetHelper_5();
+         this.ensureSearchBox(x + 4, this.flush(), panelW - 8, this.update());
+         this.searchBox.render(graphics, mx, my, delta);
+         autismclient.gui.f.NetHelper list = this.listBounds();
          int listX = list.read();
          int listY = list.write();
          int listW = list.update();
          int listH = list.sync();
-         autismclient.gui.f.PacketUtil.load(graphics, list, 5, -1442248437, init_CharEncoder.set());
+         autismclient.gui.f.PacketUtil.load(graphics, list, 5, -1442248437, THEME.set());
          autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(listX + 1, listY + 1, Math.max(1, listW - 8), Math.max(1, listH - 2));
          autismclient.gui.ui.UiClipStack.getInstance().push(graphics, clip);
 
@@ -102,7 +102,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
             autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
 
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetricsFor(listX, listY, listW, listH);
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -110,12 +110,12 @@ public final class PickItemScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<PickItemScreen.Inner_DataUtil> rows = this.init_List_12();
+      List<PickItemScreen.Inner_DataUtil> rows = this.filteredItems();
       int rowH = this.sync();
       int maxScroll = Math.max(0, this.close() - h);
       this.pop = init(this.pop, 0, maxScroll);
       if (rows.isEmpty()) {
-         this.init(graphics, "No items matched.", x + 4, this.init_I_5(y, rowH), read(), w - 8);
+         this.init(graphics, "No items matched.", x + 4, this.centeredTextY(y, rowH), read(), w - 8);
       } else {
          int first = init(this.pop / rowH, 0, Math.max(0, rows.size() - 1));
          int last = init((this.pop + h - 1) / rowH + 1, 0, rows.size() - 1);
@@ -131,25 +131,25 @@ public final class PickItemScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, PickItemScreen.Inner_DataUtil entry, int x, int y, int w, int mx, int my) {
-      boolean selected = entry.init_Str.equals(this.init_Str);
+      boolean selected = entry.id.equals(this.selectedId);
       int rowH = this.sync();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
       autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH - 1, selected ? -1440345836 : (over ? -1441000940 : -1441722092));
-      this.init(graphics, entry.init_ItemStack, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
+      this.init(graphics, entry.stack, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
       int textX = x + 2 + 16 + 4;
       int textMax = Math.max(1, w - (textX - x) - 4);
-      int textY = this.init_I_5(y, rowH - 1);
+      int textY = this.centeredTextY(y, rowH - 1);
       this.init(graphics, entry.load, textX, textY, selected ? -50373 : -791321, textMax);
-      if (!entry.init_Str.equals(entry.load)) {
-         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, entry.load, init_CharEncoder.init_Identifier_l(l.read), 0));
+      if (!entry.id.equals(entry.load)) {
+         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, entry.load, THEME.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
          int idMax = textX + textMax - idX;
          if (idMax >= 16) {
-            this.init(graphics, entry.init_Str, idX, textY, read(), idMax);
+            this.init(graphics, entry.id, idX, textY, read(), idMax);
          }
       }
 
-      this.load_List.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.ITEM, x, y, w, rowH, entry.init_Str));
+      this.rowHits.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.ITEM, x, y, w, rowH, entry.id));
    }
 
    private void init(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
@@ -165,7 +165,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Pick Item", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.load_List.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.rowHits.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -176,11 +176,11 @@ public final class PickItemScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (this.searchBox != null && this.searchBox.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_7();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
       if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
          this.init_Z = true;
          this.tick = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
@@ -188,15 +188,15 @@ public final class PickItemScreen extends VirtualScaledScreen {
          return true;
       }
 
-      for (int i = this.load_List.size() - 1; i >= 0; i--) {
-         PickItemScreen.Inner_StreamUtil hit = this.load_List.get(i);
-         if (hit.init(mx, my) && (hit.init_TextFormat_CachePo != PickItemScreen.Inner_CachePool.ITEM || this.init_NetHelper_5().init_Z(mx, my))) {
-            switch (hit.init_TextFormat_CachePo) {
+      for (int i = this.rowHits.size() - 1; i >= 0; i--) {
+         PickItemScreen.Inner_StreamUtil hit = this.rowHits.get(i);
+         if (hit.init(mx, my) && (hit.kind != PickItemScreen.Inner_CachePool.ITEM || this.listBounds().init_Z(mx, my))) {
+            switch (hit.kind) {
                case CLOSE:
                   this.onClose();
                   break;
                case ITEM:
-                  this.init_V_Str_9(hit.init_Str);
+                  this.pick(hit.id);
             }
 
             return true;
@@ -209,8 +209,8 @@ public final class PickItemScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       this.init_Z = false;
-      if (this.init_k != null) {
-         this.init_k.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      if (this.searchBox != null) {
+         this.searchBox.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
       }
 
       return true;
@@ -221,17 +221,17 @@ public final class PickItemScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_7(), my, this.tick);
+         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), my, this.tick);
          return true;
       } else {
-         return this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
+         return this.searchBox != null && this.searchBox.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
       }
    }
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       int amount = scrollY < 0.0 ? this.sync() : -this.sync();
-      this.pop = init(this.pop + amount, 0, this.init_PoolEntry_DataUtil_7().maxScroll());
+      this.pop = init(this.pop + amount, 0, this.scrollbarMetrics().maxScroll());
       return true;
    }
 
@@ -241,83 +241,83 @@ public final class PickItemScreen extends VirtualScaledScreen {
          this.onClose();
          return true;
       } else {
-         return this.init_k != null && this.init_k.keyPressed(input) ? true : true;
+         return this.searchBox != null && this.searchBox.keyPressed(input) ? true : true;
       }
    }
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      if (this.init_k != null) {
-         this.init_k.charTyped(input);
+      if (this.searchBox != null) {
+         this.searchBox.charTyped(input);
       }
 
       return true;
    }
 
-   private void init_V(int x, int y, int w, int h) {
-      if (this.init_k == null) {
-         this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, true);
-         this.init_k.setPlaceholder(Component.literal("Search item id or name"));
-         this.init_k.setChangedListener(value -> this.pop = 0);
-         this.init_k.setSubmitHandler(value -> {
-            List<PickItemScreen.Inner_DataUtil> rows = this.init_List_12();
+   private void ensureSearchBox(int x, int y, int w, int h) {
+      if (this.searchBox == null) {
+         this.searchBox = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, true);
+         this.searchBox.setPlaceholder(Component.literal("Search item id or name"));
+         this.searchBox.setChangedListener(value -> this.pop = 0);
+         this.searchBox.setSubmitHandler(value -> {
+            List<PickItemScreen.Inner_DataUtil> rows = this.filteredItems();
             if (!rows.isEmpty()) {
-               this.init_V_Str_9(rows.get(0).init_Str);
+               this.pick(rows.get(0).id);
             }
 
             return true;
          });
-         this.init_k.setFocused(true);
+         this.searchBox.setFocused(true);
       }
 
-      this.init_k.setX(x);
-      this.init_k.setY(y);
-      this.init_k.setWidth(w);
-      this.init_k.setHeight(h);
+      this.searchBox.setX(x);
+      this.searchBox.setY(y);
+      this.searchBox.setWidth(w);
+      this.searchBox.setHeight(h);
    }
 
-   private String init_Str_10() {
-      return this.init_k == null ? "" : this.init_k.getValue();
+   private String searchText() {
+      return this.searchBox == null ? "" : this.searchBox.getValue();
    }
 
    @Override
    public void onClose() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
       }
    }
 
-   private void init_V_Str_9(String id) {
-      this.init_Str = load(id);
-      this.init_Consumer.accept(this.init_Str);
+   private void pick(String id) {
+      this.selectedId = load(id);
+      this.onPick.accept(this.selectedId);
       this.onClose();
    }
 
-   private List<PickItemScreen.Inner_DataUtil> init_List_12() {
-      String needle = this.init_Str_10().trim().toLowerCase(Locale.ROOT);
-      if (needle.equals(this.load_Str)) {
-         return this.read_List;
+   private List<PickItemScreen.Inner_DataUtil> filteredItems() {
+      String needle = this.searchText().trim().toLowerCase(Locale.ROOT);
+      if (needle.equals(this.cachedNeedle)) {
+         return this.cachedMatches;
       }
 
-      this.load_Str = needle;
+      this.cachedNeedle = needle;
       if (needle.isEmpty()) {
-         this.read_List = this.init_List;
-         return this.read_List;
+         this.cachedMatches = this.allItems;
+         return this.cachedMatches;
       }
 
       List<PickItemScreen.Inner_DataUtil> out = new ArrayList<>();
 
-      for (PickItemScreen.Inner_DataUtil entry : this.init_List) {
-         if (entry.init_Str.contains(needle) || entry.read.contains(needle)) {
+      for (PickItemScreen.Inner_DataUtil entry : this.allItems) {
+         if (entry.id.contains(needle) || entry.read.contains(needle)) {
             out.add(entry);
          }
       }
 
-      this.read_List = List.copyOf(out);
-      return this.read_List;
+      this.cachedMatches = List.copyOf(out);
+      return this.cachedMatches;
    }
 
-   private List<PickItemScreen.Inner_DataUtil> load_List_7() {
+   private List<PickItemScreen.Inner_DataUtil> loadItems() {
       List<PickItemScreen.Inner_DataUtil> out = new ArrayList<>();
       BuiltInRegistries.ITEM.forEach(item -> {
          if (item != Items.AIR) {
@@ -329,16 +329,16 @@ public final class PickItemScreen extends VirtualScaledScreen {
             }
          }
       });
-      out.sort(Comparator.comparing(PickItemScreen.Inner_DataUtil::read).thenComparing(entry -> entry.init_Str));
+      out.sort(Comparator.comparing(PickItemScreen.Inner_DataUtil::read).thenComparing(entry -> entry.id));
       return List.copyOf(out);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_7() {
-      autismclient.gui.f.NetHelper list = this.init_NetHelper_5();
-      return this.init_PoolEntry_DataUtil(list.read(), list.write(), list.update(), list.sync());
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
+      autismclient.gui.f.NetHelper list = this.listBounds();
+      return this.scrollbarMetricsFor(list.read(), list.write(), list.update(), list.sync());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetricsFor(int listX, int listY, int listW, int listH) {
       int viewH = Math.max(1, listH - 6);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
    }
@@ -359,18 +359,18 @@ public final class PickItemScreen extends VirtualScaledScreen {
       return this.poll() + this.write() + 4;
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_5() {
+   private autismclient.gui.f.NetHelper listBounds() {
       int listY = this.flush() + this.update() + 2;
       return autismclient.gui.f.NetHelper.init(this.open() + 4, listY, this.push() - 8, this.poll() + this.pop() - listY - 4);
    }
 
    private int close() {
-      int size = this.init_List_12().size();
+      int size = this.filteredItems().size();
       return size == 0 ? 0 : size * this.sync() + 2;
    }
 
-   private int init_I_5(int boxY, int boxH) {
-      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+   private int centeredTextY(int boxY, int boxH) {
+      return UiLayoutMath.centerTextY(boxY, boxH, THEME.init_I_l(l.read), THEME.flush());
    }
 
    private int open() {
@@ -389,16 +389,16 @@ public final class PickItemScreen extends VirtualScaledScreen {
       int rowH = this.sync();
       int minList = 4 * rowH;
       int maxList = Math.max(minList, (int)(this.virtualHeight() * 0.65F));
-      int list = init(this.init_List.size() * rowH + 2, minList, maxList);
+      int list = init(this.allItems.size() * rowH + 2, minList, maxList);
       int chrome = this.write() + 4 + this.update() + 2 + 6 + 4;
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + list);
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
       String display = autismclient.gui.f.b.k.init(
-         this.font, text == null ? "" : text, Math.max(0, maxWidth), init_CharEncoder.init_Identifier_l(l.read), color
+         this.font, text == null ? "" : text, Math.max(0, maxWidth), THEME.init_Identifier_l(l.read), color
       );
-      autismclient.gui.f.b.k.init(graphics, this.font, display, init_CharEncoder.init_Identifier_l(l.read), color, x, y, false);
+      autismclient.gui.f.b.k.init(graphics, this.font, display, THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
    private static String load(String id) {
@@ -414,15 +414,15 @@ public final class PickItemScreen extends VirtualScaledScreen {
       ITEM;
    }
 
-   private record Inner_DataUtil(String init_Str, String load, String read, ItemStack init_ItemStack) {
+   private record Inner_DataUtil(String id, String load, String read, ItemStack stack) {
       private Inner_DataUtil(String id, String label, ItemStack icon) {
          this(id, label != null && !label.isBlank() ? label : id, (label == null ? id : label).toLowerCase(Locale.ROOT), icon == null ? ItemStack.EMPTY : icon);
       }
    }
 
-   private record Inner_StreamUtil(PickItemScreen.Inner_CachePool init_TextFormat_CachePo, int init_I, int load, int read, int write, String init_Str) {
+   private record Inner_StreamUtil(PickItemScreen.Inner_CachePool kind, int x, int load, int read, int write, String id) {
       boolean init(int mx, int my) {
-         return mx >= this.init_I && mx < this.init_I + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }
 }

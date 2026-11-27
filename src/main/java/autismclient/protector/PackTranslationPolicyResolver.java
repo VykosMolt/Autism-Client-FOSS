@@ -134,7 +134,7 @@ public final class PackTranslationPolicyResolver {
 
    public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.ConnectionSession origin) {
       PackTranslationPolicyResolver.Inner_DataUtil current = init.get();
-      return origin != null && current instanceof PackTranslationPolicyResolver.Inner_CachePool scope && scope.init_BufferHelper_Strea == origin
+      return origin != null && current instanceof PackTranslationPolicyResolver.Inner_CachePool scope && scope.capturedContext == origin
          ? init(resourceManager, pack, sourcePackId) && init.get() == current
          : false;
    }
@@ -175,21 +175,21 @@ public final class PackTranslationPolicyResolver {
       PacketListener init_PacketListener,
       ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe,
       ResourcePackSessionTracker.PackSession init_FileCache_BufferHe,
-      ServerPackSelectionRegistry.Inner_StreamUtil init_CharEncoder_Stream
+      ServerPackSelectionRegistry.Inner_StreamUtil provenance
    ) {
    }
 
    private static final class Inner_CachePool implements PackTranslationPolicyResolver.Inner_DataUtil {
-      private final ResourceManager init_ResourceManager;
-      private final Supplier<ResourceManager> init_Supplier;
-      private final Supplier<PacketListener> load_Supplier;
-      private final Object init_Obj;
-      private final ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache;
-      private final List<PackResources> init_List;
-      private final IdentityHashMap<PackResources, String> init_IdentityHashMap;
-      private final IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> load_IdentityHashMap;
-      private final PacketListener init_PacketListener;
-      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
+      private final ResourceManager buildingManager;
+      private final Supplier<ResourceManager> currentManager;
+      private final Supplier<PacketListener> currentListener;
+      private final Object policyIdentity;
+      private final ConnectionPrivacyRegistry.PrivacyMode mode;
+      private final List<PackResources> selectedPacks;
+      private final IdentityHashMap<PackResources, String> packIds;
+      private final IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> serverBindings;
+      private final PacketListener capturedListener;
+      private final ConnectionPrivacyRegistry.ConnectionSession capturedContext;
       private volatile boolean init_Z;
 
       private Inner_CachePool(
@@ -204,30 +204,30 @@ public final class PackTranslationPolicyResolver {
          PacketListener capturedListener,
          ConnectionPrivacyRegistry.ConnectionSession capturedContext
       ) {
-         this.init_ResourceManager = buildingManager;
-         this.init_Supplier = currentManager;
-         this.load_Supplier = currentListener;
-         this.init_Obj = policyIdentity;
-         this.init_BufferHelper_Cache = mode;
-         this.init_List = selectedPacks;
-         this.init_IdentityHashMap = packIds;
-         this.load_IdentityHashMap = serverBindings;
-         this.init_PacketListener = capturedListener;
-         this.init_BufferHelper_Strea = capturedContext;
+         this.buildingManager = buildingManager;
+         this.currentManager = currentManager;
+         this.currentListener = currentListener;
+         this.policyIdentity = policyIdentity;
+         this.mode = mode;
+         this.selectedPacks = selectedPacks;
+         this.packIds = packIds;
+         this.serverBindings = serverBindings;
+         this.capturedListener = capturedListener;
+         this.capturedContext = capturedContext;
          this.init_Z = true;
       }
 
       private Inner_CachePool() {
-         this.init_ResourceManager = null;
-         this.init_Supplier = null;
-         this.load_Supplier = null;
-         this.init_Obj = null;
-         this.init_BufferHelper_Cache = null;
-         this.init_List = List.of();
-         this.init_IdentityHashMap = new IdentityHashMap<>();
-         this.load_IdentityHashMap = new IdentityHashMap<>();
-         this.init_PacketListener = null;
-         this.init_BufferHelper_Strea = null;
+         this.buildingManager = null;
+         this.currentManager = null;
+         this.currentListener = null;
+         this.policyIdentity = null;
+         this.mode = null;
+         this.selectedPacks = List.of();
+         this.packIds = new IdentityHashMap<>();
+         this.serverBindings = new IdentityHashMap<>();
+         this.capturedListener = null;
+         this.capturedContext = null;
          this.init_Z = false;
       }
 
@@ -238,25 +238,25 @@ public final class PackTranslationPolicyResolver {
          }
 
          try {
-            if (resourceManager == this.init_ResourceManager && this.init_Supplier.get() == this.init_ResourceManager) {
-               PacketListener listener = this.load_Supplier.get();
-               if (listener != this.init_PacketListener) {
+            if (resourceManager == this.buildingManager && this.currentManager.get() == this.buildingManager) {
+               PacketListener listener = this.currentListener.get();
+               if (listener != this.capturedListener) {
                   return this.load();
                }
 
                ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
-               if (context != this.init_BufferHelper_Strea) {
+               if (context != this.capturedContext) {
                   return this.load();
                }
 
-               if (PackTranslationPolicyResolver.init(context) == this.init_BufferHelper_Cache && this.init_Obj == ProtectorFeatureFlags.identity()) {
-                  PackTranslationPolicyResolver.Inner_BufferHelper server = this.load_IdentityHashMap.get(pack);
-                  if (this.init_BufferHelper_Cache == ConnectionPrivacyRegistry.PrivacyMode.VANILLA && server == null) {
+               if (PackTranslationPolicyResolver.init(context) == this.mode && this.policyIdentity == ProtectorFeatureFlags.identity()) {
+                  PackTranslationPolicyResolver.Inner_BufferHelper server = this.serverBindings.get(pack);
+                  if (this.mode == ConnectionPrivacyRegistry.PrivacyMode.VANILLA && server == null) {
                      return false;
                   } else if (!this.init()) {
                      return this.load();
                   } else {
-                     String capturedId = this.init_IdentityHashMap.get(pack);
+                     String capturedId = this.packIds.get(pack);
                      if (capturedId != null && capturedId.equals(sourcePackId)) {
                         return server == null ? false : this.init(server, pack) || this.load();
                      } else {
@@ -276,18 +276,18 @@ public final class PackTranslationPolicyResolver {
 
       private boolean init() {
          List<PackResources> current;
-         try (Stream<PackResources> stream = this.init_ResourceManager.listPacks()) {
+         try (Stream<PackResources> stream = this.buildingManager.listPacks()) {
             current = stream.toList();
          }
 
-         if (current.size() != this.init_List.size()) {
+         if (current.size() != this.selectedPacks.size()) {
             return false;
          }
 
          for (int index = 0; index < current.size(); index++) {
-            PackResources selected = this.init_List.get(index);
+            PackResources selected = this.selectedPacks.get(index);
             PackResources actual = current.get(index);
-            if (actual != selected || !Objects.equals(this.init_IdentityHashMap.get(selected), actual.packId())) {
+            if (actual != selected || !Objects.equals(this.packIds.get(selected), actual.packId())) {
                return false;
             }
          }
@@ -303,7 +303,7 @@ public final class PackTranslationPolicyResolver {
             && Objects.equals(context.serverEndpoint(), server.init_BufferHelper_Buffe())) {
             ResourcePackSessionTracker.PackSession session = server.init_FileCache_BufferHe();
             if (ResourcePackSessionTracker.sessionFor(context) == session && ResourcePackSessionTracker.isActive(session)) {
-               ServerPackSelectionRegistry.Inner_StreamUtil captured = server.init_CharEncoder_Stream();
+               ServerPackSelectionRegistry.Inner_StreamUtil captured = server.provenance();
                return captured.equals(ServerPackSelectionRegistry.provenanceOf(session, pack));
             } else {
                return false;

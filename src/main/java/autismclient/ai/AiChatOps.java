@@ -74,7 +74,7 @@ public final class AiChatOps {
       } else {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final long init_J = AiChatLedger.revision();
+            final long baseline = AiChatLedger.revision();
             final long load_J = System.nanoTime() + 5000000000L;
             final int init_I = this.init_Minecraft.player != null ? this.init_Minecraft.player.containerMenu.containerId : -1;
             final Screen init_Screen = this.init_Minecraft.gui.screen();
@@ -94,7 +94,7 @@ public final class AiChatOps {
                } else {
                   boolean menuChanged = this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu.containerId != this.init_I;
                   boolean screenChanged = this.init_Minecraft.gui.screen() != this.init_Screen;
-                  if (AiChatLedger.revision() <= this.init_J && !menuChanged && !screenChanged) {
+                  if (AiChatLedger.revision() <= this.baseline && !menuChanged && !screenChanged) {
                      return System.nanoTime() > this.load_J
                         ? AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
@@ -109,7 +109,7 @@ public final class AiChatOps {
                         AiOperation.Status.SUCCEEDED,
                         "Chat button command observed a response",
                         AiJson.objectOf(
-                           "command", command, "responses", AiChatOps.init(this.init_J), "menuChanged", menuChanged, "screenChanged", screenChanged
+                           "command", command, "responses", AiChatOps.init(this.baseline), "menuChanged", menuChanged, "screenChanged", screenChanged
                         )
                      );
                   }

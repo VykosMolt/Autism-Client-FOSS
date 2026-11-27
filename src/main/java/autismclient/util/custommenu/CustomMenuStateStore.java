@@ -6,8 +6,8 @@ import autismclient.api.custommenu.CustomMenuSnapshot;
 import net.minecraft.network.protocol.Packet;
 
 public final class CustomMenuStateStore {
-   private volatile long init_J;
-   private volatile CustomMenuSnapshot init_CustomMenuSnapshot;
+   private volatile long revision;
+   private volatile CustomMenuSnapshot snapshot;
 
    public boolean init(Packet<?> packet, String phase) {
       return !CustomMenuAdapterRegistry.acceptsInbound(packet) ? false : this.load(packet, phase);
@@ -21,10 +21,10 @@ public final class CustomMenuStateStore {
 
       synchronized (this) {
          if (event.type() == CustomMenuEvent.Type.CLEAR) {
-            this.init_CustomMenuSnapshot = null;
-            this.init_J++;
+            this.snapshot = null;
+            this.revision++;
          } else if (event.snapshot() != null) {
-            this.init_CustomMenuSnapshot = event.snapshot().withConnectionState(phase, ++this.init_J);
+            this.snapshot = event.snapshot().withConnectionState(phase, ++this.revision);
          }
 
          return true;
@@ -32,32 +32,32 @@ public final class CustomMenuStateStore {
    }
 
    public CustomMenuSnapshot snapshot() {
-      return this.init_CustomMenuSnapshot;
+      return this.snapshot;
    }
 
    public long generation() {
-      return this.init_J;
+      return this.revision;
    }
 
    public synchronized void init(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
-      if (expected == null || this.init_CustomMenuSnapshot == null || this.init_CustomMenuSnapshot.generation() == expected.generation()) {
-         this.init_CustomMenuSnapshot = replacement == null ? null : replacement.withConnectionState(expected == null ? "" : expected.phase(), ++this.init_J);
+      if (expected == null || this.snapshot == null || this.snapshot.generation() == expected.generation()) {
+         this.snapshot = replacement == null ? null : replacement.withConnectionState(expected == null ? "" : expected.phase(), ++this.revision);
       }
    }
 
    public synchronized void init(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
-      if (this.init_J == seenGeneration) {
-         this.init_J++;
-         this.init_CustomMenuSnapshot = replacement == null ? null : replacement.withConnectionState(phase == null ? "" : phase, this.init_J);
+      if (this.revision == seenGeneration) {
+         this.revision++;
+         this.snapshot = replacement == null ? null : replacement.withConnectionState(phase == null ? "" : phase, this.revision);
       }
    }
 
    public void clear() {
-      if (this.init_CustomMenuSnapshot != null) {
+      if (this.snapshot != null) {
          synchronized (this) {
-            if (this.init_CustomMenuSnapshot != null) {
-               this.init_CustomMenuSnapshot = null;
-               this.init_J++;
+            if (this.snapshot != null) {
+               this.snapshot = null;
+               this.revision++;
             }
          }
       }

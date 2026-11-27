@@ -13,43 +13,43 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.LivingEntity;
 
 final class AiCombatDeaths {
-   private final Set<UUID> init_Set = new HashSet<>();
+   private final Set<UUID> counted = new HashSet<>();
    private final Set<UUID> load = new HashSet<>();
-   private final Map<UUID, LivingEntity> init_Map = new HashMap<>();
+   private final Map<UUID, LivingEntity> tracked = new HashMap<>();
    private final JsonArray init_JsonArray = new JsonArray();
 
    void init(UUID identity) {
       if (!this.load.contains(identity)) {
-         this.init_Set.add(identity);
+         this.counted.add(identity);
       }
    }
 
    void init(LivingEntity entity) {
       this.init(entity.getUUID());
-      if (this.init_Set.contains(entity.getUUID())) {
-         this.init_Map.put(entity.getUUID(), entity);
+      if (this.counted.contains(entity.getUUID())) {
+         this.tracked.put(entity.getUUID(), entity);
       }
    }
 
    boolean init(UUID identity, boolean confirmedDeath, boolean stillPresent) {
-      if (!this.init_Set.contains(identity)) {
+      if (!this.counted.contains(identity)) {
          return false;
       }
 
       if (confirmedDeath) {
-         this.init_Set.remove(identity);
+         this.counted.remove(identity);
          return this.load.add(identity);
       }
 
       if (!stillPresent) {
-         this.init_Set.remove(identity);
+         this.counted.remove(identity);
       }
 
       return false;
    }
 
    void init(Minecraft mc) {
-      Iterator<Entry<UUID, LivingEntity>> iterator = this.init_Map.entrySet().iterator();
+      Iterator<Entry<UUID, LivingEntity>> iterator = this.tracked.entrySet().iterator();
 
       while (iterator.hasNext()) {
          Entry<UUID, LivingEntity> entry = iterator.next();
@@ -58,7 +58,7 @@ final class AiCombatDeaths {
             this.init_JsonArray.add(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
          }
 
-         if (!this.init_Set.contains(entry.getKey())) {
+         if (!this.counted.contains(entry.getKey())) {
             iterator.remove();
          }
       }

@@ -68,97 +68,97 @@ public final class AiBreakBlock {
       final BiPredicate<BlockState, ItemStack> acceptedTool
    ) {
       return new AiOperation() {
-         final Minecraft init_Minecraft = Minecraft.getInstance();
-         final Object init_Obj = this.init_Minecraft.level;
-         final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, seconds)) * 1000000000L;
-         final AiAim init_DataUtil = new AiAim();
-         final AiBreakBlock.Inner_DataUtil init_ConfigStore_DataUt = new AiBreakBlock.Inner_DataUtil();
-         final int init_I = this.init_Minecraft.player == null ? -1 : this.init_Minecraft.player.getInventory().getSelectedSlot();
+         final Minecraft mc = Minecraft.getInstance();
+         final Object level = this.mc.level;
+         final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, seconds)) * 1000000000L;
+         final AiAim aim = new AiAim();
+         final AiBreakBlock.Inner_DataUtil children = new AiBreakBlock.Inner_DataUtil();
+         final int originalSlot = this.mc.player == null ? -1 : this.mc.player.getInventory().getSelectedSlot();
          final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
-               this.init_Minecraft,
-               s -> this.init_Minecraft.player.getInventory().setSelectedSlot(s),
-               this.init_DataUtil::aimAt,
+               this.mc,
+               s -> this.mc.player.getInventory().setSelectedSlot(s),
+               this.aim::aimAt,
                true,
                requireDrops,
-               this.init_DataUtil::tick
+               this.aim::tick
             )
             .withSealedWaterCompat(sealedWater)
             .withAcceptedToolCompat(acceptedTool);
-         AiOperation init_AiOperation;
+         AiOperation child;
          int load_I;
          boolean init_Z;
          boolean load_Z;
 
          @Override
          public AiOperation.Result tick() {
-            if (this.init_Z || this.init_Minecraft.player == null || this.init_Minecraft.level == null) {
+            if (this.init_Z || this.mc.player == null || this.mc.level == null) {
                return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Break cancelled");
             }
 
-            if (this.init_Minecraft.level != this.init_Obj) {
+            if (this.mc.level != this.level) {
                return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during break");
             }
 
-            if (System.nanoTime() >= this.init_J) {
+            if (System.nanoTime() >= this.deadline) {
                return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Break deadline reached");
             }
 
-            if (this.init_AiOperation != null) {
-               AiOperation.Result result = this.init_ConfigStore_DataUt.tickChild(this.init_AiOperation);
+            if (this.child != null) {
+               AiOperation.Result result = this.children.tickChild(this.child);
                if (!result.terminal()) {
                   return result;
                }
 
-               this.init_AiOperation = null;
-               if (result.status() != AiOperation.Status.SUCCEEDED || this.init_ConfigStore_DataUt.needsReconciliation) {
+               this.child = null;
+               if (result.status() != AiOperation.Status.SUCCEEDED || this.children.needsReconciliation) {
                   return this.init(result);
                }
             }
 
-            if (this.init_Minecraft.level.getBlockState(target).getDestroySpeed(this.init_Minecraft.level, target) < 0.0F) {
+            if (this.mc.level.getBlockState(target).getDestroySpeed(this.mc.level, target) < 0.0F) {
                return this.init(AiOperation.Status.FAILED, AiFailure.UNBREAKABLE_OBSTACLE, "Target is unbreakable");
             }
 
-            if (requireDrops && MiningCost.load(this.init_Minecraft, this.init_Minecraft.level.getBlockState(target), true) < 0) {
+            if (requireDrops && MiningCost.load(this.mc, this.mc.level.getBlockState(target), true) < 0) {
                return this.init(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
             }
 
-            if (requireDrops && AiBreakBlock.hasLavaBelow(this.init_Minecraft.level, target)) {
+            if (requireDrops && AiBreakBlock.hasLavaBelow(this.mc.level, target)) {
                return this.init(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
             }
 
-            if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(target) && AiBlockInteraction.findClimbSafeFaceHit(this.init_Minecraft, target, null) == null) {
-               if (this.init_Minecraft.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null
-                  && this.init_Minecraft.level.getBlockState(target).isAir()) {
+            if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(target) && AiBlockInteraction.findClimbSafeFaceHit(this.mc, target, null) == null) {
+               if (this.mc.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null
+                  && this.mc.level.getBlockState(target).isAir()) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Block already absent");
                }
             } else {
-               if (this.init_Minecraft.player.onClimbable() && !this.init_Minecraft.player.onGround()) {
-                  this.init_Minecraft.options.keyShift.setDown(true);
+               if (this.mc.player.onClimbable() && !this.mc.player.onGround()) {
+                  this.mc.options.keyShift.setDown(true);
                   if (!this.load_Z) {
                      this.load_Z = true;
                      return this.init("Holding the ladder before breaking");
                   }
 
-                  if (Boolean.getBoolean("autism.navigation.debug") && this.init_Minecraft.player.tickCount % 5 == 0) {
+                  if (Boolean.getBoolean("autism.navigation.debug") && this.mc.player.tickCount % 5 == 0) {
                      AiNavDebug.log(
                         "break ladder target="
                            + target
                            + " body="
-                           + this.init_Minecraft.player.position()
+                           + this.mc.player.position()
                            + " motion="
-                           + this.init_Minecraft.player.getDeltaMovement()
+                           + this.mc.player.getDeltaMovement()
                            + " pose="
-                           + this.init_Minecraft.player.getPose()
+                           + this.mc.player.getPose()
                            + " shift="
-                           + this.init_Minecraft.player.isShiftKeyDown()
+                           + this.mc.player.isShiftKeyDown()
                      );
                   }
                }
 
                boolean wasDigging = this.init_RefQueue_DataUtil.isDiggingTargetCompat(target);
                AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.digCompat(target);
-               this.init_DataUtil.tick();
+               this.aim.tick();
                if (status == AiBlockDigger.Inner_DataUtil_2.load) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
                }
@@ -167,8 +167,8 @@ public final class AiBreakBlock {
                   return this.init("Breaking target");
                }
 
-               this.init_ConfigStore_DataUt.recordTransition(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.isDiggingTargetCompat(target));
-               if (this.init_ConfigStore_DataUt.needsReconciliation) {
+               this.children.recordTransition(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.isDiggingTargetCompat(target));
+               if (this.children.needsReconciliation) {
                   return this.init(
                      AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat()
                   );
@@ -180,9 +180,9 @@ public final class AiBreakBlock {
             }
 
             this.init();
-            this.init_AiOperation = AiGoto.approachBlockToBreakCompat(
+            this.child = AiGoto.approachBlockToBreakCompat(
                target,
-               (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L),
+               (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L),
                protectedCells,
                allowScaffold,
                this.load_I > 0 ? 1.75 : 0.25,
@@ -200,8 +200,8 @@ public final class AiBreakBlock {
          }
 
          AiOperation.Result init(AiOperation.Result result) {
-            this.init_ConfigStore_DataUt.markPending(this.requiresReconciliationAfterEmergency());
-            result = this.init_ConfigStore_DataUt.wrapResult(result);
+            this.children.markPending(this.requiresReconciliationAfterEmergency());
+            result = this.children.wrapResult(result);
             this.cancel();
             return result;
          }
@@ -209,38 +209,38 @@ public final class AiBreakBlock {
          void init() {
             if (this.load_Z) {
                this.load_Z = false;
-               this.init_Minecraft.options.keyShift.setDown(KeyMappingControl.of(this.init_Minecraft.options.keyShift).autism$physicalForBody());
+               this.mc.options.keyShift.setDown(KeyMappingControl.of(this.mc.options.keyShift).autism$physicalForBody());
             }
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_ConfigStore_DataUt
-               .canInterrupt(this.init_RefQueue_DataUtil.isDiggingTargetCompat(target), this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return this.children
+               .canInterrupt(this.init_RefQueue_DataUtil.isDiggingTargetCompat(target), this.child == null || this.child.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_ConfigStore_DataUt.needsReconciliation
+            return this.children.needsReconciliation
                || this.init_RefQueue_DataUtil.isDiggingTargetCompat(target)
-               || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+               || this.child != null && this.child.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
             if (!this.init_Z) {
-               this.init_ConfigStore_DataUt.markPending(this.requiresReconciliationAfterEmergency());
+               this.children.markPending(this.requiresReconciliationAfterEmergency());
                this.init_Z = true;
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               if (this.child != null) {
+                  this.child.cancel();
+                  this.child = null;
                }
 
                this.init_RefQueue_DataUtil.stopCompat();
-               this.init_DataUtil.clear();
+               this.aim.clear();
                this.init();
-               if (this.init_Minecraft.player != null && this.init_I >= 0) {
-                  this.init_Minecraft.player.getInventory().setSelectedSlot(this.init_I);
+               if (this.mc.player != null && this.originalSlot >= 0) {
+                  this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
                }
             }
          }

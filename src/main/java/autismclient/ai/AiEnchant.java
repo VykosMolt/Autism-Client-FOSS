@@ -99,7 +99,7 @@ final class AiEnchant {
       int lapisInSlot = init(menu.getSlot(1).getItem());
       int xpLevel = mc.player.experienceLevel;
       ItemStack input = menu.getSlot(0).getItem();
-      IntFunction<String> resolver = init_IntFunction(mc);
+      IntFunction<String> resolver = enchantmentResolver(mc);
       JsonArray options = new JsonArray();
 
       for (int i = 0; i < 3; i++) {
@@ -276,7 +276,7 @@ final class AiEnchant {
       return AiGameOperations.immediate(AiOperation.Status.FAILED, message, new JsonObject());
    }
 
-   private static IntFunction<String> init_IntFunction(Minecraft mc) {
+   private static IntFunction<String> enchantmentResolver(Minecraft mc) {
       return clue -> {
          if (clue >= 0 && mc.level != null) {
             try {

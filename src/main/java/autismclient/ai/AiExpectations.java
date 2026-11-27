@@ -10,9 +10,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
 final class AiExpectations implements AiOperation {
-   private final JsonObject init_JsonObject;
-   private final String init_Str;
-   private final long init_J = System.currentTimeMillis();
+   private final JsonObject expected;
+   private final String failureContains;
+   private final long startedAt = System.currentTimeMillis();
    private final long load;
    private final long read = AiServerEvidence.inventoryRevision();
    private final long write;
@@ -22,40 +22,40 @@ final class AiExpectations implements AiOperation {
 
    AiExpectations(JsonObject args) {
       if (args.has("expected") && args.get("expected").isJsonObject()) {
-         this.init_JsonObject = args.getAsJsonObject("expected").deepCopy();
-         this.init_Str = AiJson.getString(args, "failureContains", "");
-         if (this.init_JsonObject.isEmpty()) {
+         this.expected = args.getAsJsonObject("expected").deepCopy();
+         this.failureContains = AiJson.getString(args, "failureContains", "");
+         if (this.expected.isEmpty()) {
             throw new IllegalArgumentException("Expected result must declare an observable inventory, slot, menu, or message condition");
          }
 
-         for (String key : this.init_JsonObject.keySet()) {
+         for (String key : this.expected.keySet()) {
             if (!Set.of("inventory", "slot", "menu", "message").contains(key)) {
                throw new IllegalArgumentException("Unknown workflow postcondition " + key);
             }
          }
 
-         if (this.init_JsonObject.has("inventory")) {
-            JsonObject e = this.init_JsonObject.getAsJsonObject("inventory");
+         if (this.expected.has("inventory")) {
+            JsonObject e = this.expected.getAsJsonObject("inventory");
             if (AiJson.getString(e, "item", "").isBlank() || AiJson.getInt(e, "count", -1) < 0) {
                throw new IllegalArgumentException("Expected inventory requires item and nonnegative count");
             }
          }
 
-         if (this.init_JsonObject.has("slot")) {
-            JsonObject e = this.init_JsonObject.getAsJsonObject("slot");
+         if (this.expected.has("slot")) {
+            JsonObject e = this.expected.getAsJsonObject("slot");
             if (AiJson.getInt(e, "slot", -1) < 0 || AiJson.getInt(e, "count", -1) < 0 || AiJson.getString(e, "item", "").isBlank()) {
                throw new IllegalArgumentException("Expected slot requires slot, item and count");
             }
          }
 
-         if (this.init_JsonObject.has("menu")) {
-            JsonObject e = this.init_JsonObject.getAsJsonObject("menu");
+         if (this.expected.has("menu")) {
+            JsonObject e = this.expected.getAsJsonObject("menu");
             if (AiJson.getString(e, "adapter", "").isBlank()) {
                throw new IllegalArgumentException("Expected menu requires adapter ID");
             }
          }
 
-         if (this.init_JsonObject.has("message") && AiJson.getString(this.init_JsonObject.getAsJsonObject("message"), "contains", "").isBlank()) {
+         if (this.expected.has("message") && AiJson.getString(this.expected.getAsJsonObject("message"), "contains", "").isBlank()) {
             throw new IllegalArgumentException("Expected server message requires nonempty contains text");
          }
 
@@ -74,7 +74,7 @@ final class AiExpectations implements AiOperation {
          return this.init(AiOperation.Status.CANCELLED, "Workflow observation cancelled; dispatched effects may remain");
       }
 
-      if (!this.init_Str.isBlank() && this.init(this.init_Str)) {
+      if (!this.failureContains.isBlank() && this.init(this.failureContains)) {
          return this.init(AiOperation.Status.FAILED, "Observed the configured server rejection response");
       }
 
@@ -93,12 +93,12 @@ final class AiExpectations implements AiOperation {
 
    private boolean init() {
       Minecraft mc = Minecraft.getInstance();
-      if (this.init_JsonObject.has("inventory")) {
+      if (this.expected.has("inventory")) {
          if (AiServerEvidence.inventoryRevision() <= this.read) {
             return false;
          }
 
-         JsonObject e = this.init_JsonObject.getAsJsonObject("inventory");
+         JsonObject e = this.expected.getAsJsonObject("inventory");
          int count = AiGameState.countInventoryItem(AiJson.getString(e, "item", ""));
          int target = AiJson.getInt(e, "count", 0);
          if (AiJson.getBoolean(e, "exact", false) ? count != target : count < target) {
@@ -106,12 +106,12 @@ final class AiExpectations implements AiOperation {
          }
       }
 
-      if (this.init_JsonObject.has("slot")) {
+      if (this.expected.has("slot")) {
          if (AiServerEvidence.containerRevision(mc.player.containerMenu.containerId) <= this.read) {
             return false;
          }
 
-         JsonObject e = this.init_JsonObject.getAsJsonObject("slot");
+         JsonObject e = this.expected.getAsJsonObject("slot");
          int index = AiJson.getInt(e, "slot", -1);
          AbstractContainerMenu menu = mc.player.containerMenu;
          if (index < 0 || index >= menu.slots.size()) {
@@ -129,9 +129,9 @@ final class AiExpectations implements AiOperation {
          }
       }
 
-      if (this.init_JsonObject.has("menu")) {
+      if (this.expected.has("menu")) {
          CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.snapshot();
-         JsonObject e = this.init_JsonObject.getAsJsonObject("menu");
+         JsonObject e = this.expected.getAsJsonObject("menu");
          if (current == null
             || current.generation() <= this.write
             || !current.adapterId().equals(AiJson.getString(e, "adapter", ""))
@@ -140,7 +140,7 @@ final class AiExpectations implements AiOperation {
          }
       }
 
-      return !this.init_JsonObject.has("message") || this.init(AiJson.getString(this.init_JsonObject.getAsJsonObject("message"), "contains", ""));
+      return !this.expected.has("message") || this.init(AiJson.getString(this.expected.getAsJsonObject("message"), "contains", ""));
    }
 
    private boolean init(String text) {
@@ -148,7 +148,7 @@ final class AiExpectations implements AiOperation {
    }
 
    private AiOperation.Result init(AiOperation.Status status, String text) {
-      return AiGameOperations.result(status, text, AiJson.objectOf("expected", this.init_JsonObject, "startedAt", this.init_J));
+      return AiGameOperations.result(status, text, AiJson.objectOf("expected", this.expected, "startedAt", this.startedAt));
    }
 
    @Override

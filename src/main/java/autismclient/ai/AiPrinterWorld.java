@@ -7,9 +7,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class AiPrinterWorld {
-   private static Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas;
-   private static Level init_Level;
-   private static Thread init_Thread;
+   private static Long2ObjectOpenHashMap<BlockState> plannedStates;
+   private static Level plannedLevel;
+   private static Thread plannedThread;
    private static LongOpenHashSet init_LongOpenHashSet;
    private static Level load_Level;
    private static Thread load_Thread;
@@ -22,8 +22,8 @@ public final class AiPrinterWorld {
          init_LongOpenHashSet.add(pos.asLong());
       }
 
-      Long2ObjectOpenHashMap<BlockState> planned = init_Long2ObjectOpenHas;
-      return planned != null && reading == init_Level && Thread.currentThread() == init_Thread ? planned.get(pos.asLong()) : null;
+      Long2ObjectOpenHashMap<BlockState> planned = plannedStates;
+      return planned != null && reading == plannedLevel && Thread.currentThread() == plannedThread ? planned.get(pos.asLong()) : null;
    }
 
    static void init(Level source, LongOpenHashSet into) {
@@ -33,14 +33,14 @@ public final class AiPrinterWorld {
    }
 
    static void init(Level live, Long2ObjectOpenHashMap<BlockState> planned) {
-      init_Level = live;
-      init_Thread = Thread.currentThread();
-      init_Long2ObjectOpenHas = planned;
+      plannedLevel = live;
+      plannedThread = Thread.currentThread();
+      plannedStates = planned;
    }
 
    static void init() {
-      init_Long2ObjectOpenHas = null;
-      init_Level = null;
-      init_Thread = null;
+      plannedStates = null;
+      plannedLevel = null;
+      plannedThread = null;
    }
 }

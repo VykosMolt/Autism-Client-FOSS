@@ -724,14 +724,14 @@ final class AiSchematicReadiness {
          problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE, gap));
       }
 
-      if (!init_Z(cell) && AiSchematicActions.materialPlans(cell).isEmpty()) {
+      if (!isSecondaryCell(cell) && AiSchematicActions.materialPlans(cell).isEmpty()) {
          problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN, "required work has no placement, material, or verified interaction action"));
       }
 
       return List.copyOf(problems);
    }
 
-   private static boolean init_Z(AiBuilder.CellSpec cell) {
+   private static boolean isSecondaryCell(AiBuilder.CellSpec cell) {
       return AiBuilder.isTransientPistonCell(cell)
          || AiBuilder.isFlowingFluidCell(cell)
          || "upper".equals(cell.properties().get("half"))

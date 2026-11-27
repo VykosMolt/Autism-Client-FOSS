@@ -13,20 +13,20 @@ import java.util.function.LongSupplier;
 
 final class AiRetryGuard {
    static final long init_J = 300000L;
-   private final Map<String, ArrayDeque<Long>> init_Map = new HashMap<>();
+   private final Map<String, ArrayDeque<Long>> dispatchTimes = new HashMap<>();
    private final Set<String> init_Set = new HashSet<>();
-   private final LongSupplier init_LongSupplier;
+   private final LongSupplier clock;
 
    AiRetryGuard() {
       this(System::currentTimeMillis);
    }
 
    AiRetryGuard(LongSupplier clock) {
-      this.init_LongSupplier = clock;
+      this.clock = clock;
    }
 
    synchronized void init() {
-      this.init_Map.clear();
+      this.dispatchTimes.clear();
       this.init_Set.clear();
    }
 
@@ -54,28 +54,28 @@ final class AiRetryGuard {
       }
 
       if (Set.of("FAILED", "TIMED_OUT").contains(status)) {
-         this.init_Map.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(this.init_LongSupplier.getAsLong());
+         this.dispatchTimes.computeIfAbsent(key, k -> new ArrayDeque<>()).addLast(this.clock.getAsLong());
       }
 
       if (status.equals("SUCCEEDED")) {
-         this.init_Map.remove(key);
+         this.dispatchTimes.remove(key);
       }
    }
 
    private int init_I_Str(String key) {
-      ArrayDeque<Long> stamps = this.init_Map.get(key);
+      ArrayDeque<Long> stamps = this.dispatchTimes.get(key);
       if (stamps == null) {
          return 0;
       }
 
-      long cutoff = this.init_LongSupplier.getAsLong() - 300000L;
+      long cutoff = this.clock.getAsLong() - 300000L;
 
       while (!stamps.isEmpty() && stamps.peekFirst() <= cutoff) {
          stamps.pollFirst();
       }
 
       if (stamps.isEmpty()) {
-         this.init_Map.remove(key);
+         this.dispatchTimes.remove(key);
       }
 
       return stamps.size();

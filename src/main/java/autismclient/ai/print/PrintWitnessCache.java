@@ -15,7 +15,7 @@ import java.util.function.IntConsumer;
 
 final class PrintWitnessCache {
    private static final int[] init_IArr = new int[0];
-   private final int init_I;
+   private final int maxEntries;
    private final int load;
    private final int read;
    private final IntConsumer init_IntConsumer;
@@ -29,7 +29,7 @@ final class PrintWitnessCache {
 
    PrintWitnessCache(int maxEntries, int maxLinks, int maxDependencies, IntConsumer evicted) {
       if (maxEntries >= 1 && maxLinks >= 1 && maxDependencies >= 1) {
-         this.init_I = maxEntries;
+         this.maxEntries = maxEntries;
          this.load = maxLinks;
          this.read = Math.min(maxDependencies, maxLinks);
          this.init_IntConsumer = Objects.requireNonNull(evicted);
@@ -48,7 +48,7 @@ final class PrintWitnessCache {
       return entry == null ? null : entry.witness();
    }
 
-   boolean init_Z_I(int id) {
+   boolean contains(int id) {
       return this.init_Int2ObjectLinkedOp.containsKey(id);
    }
 
@@ -56,7 +56,7 @@ final class PrintWitnessCache {
       return this.init_Int2ObjectLinkedOp.size();
    }
 
-   boolean init_Z() {
+   boolean isEmpty() {
       return this.init_Int2ObjectLinkedOp.isEmpty();
    }
 
@@ -93,7 +93,7 @@ final class PrintWitnessCache {
             }
          }
 
-         while (this.init_Int2ObjectLinkedOp.size() >= this.init_I || this.write + cells.size() > this.load) {
+         while (this.init_Int2ObjectLinkedOp.size() >= this.maxEntries || this.write + cells.size() > this.load) {
             int idToEvict = this.init_Int2ObjectLinkedOp.firstIntKey();
             this.read(idToEvict);
             this.init_IntConsumer.accept(idToEvict);
@@ -158,7 +158,7 @@ final class PrintWitnessCache {
       return ids == null ? init_IArr : ids.toIntArray();
    }
 
-   Collection<PrintCore.aM> init_Collection() {
+   Collection<PrintCore.aM> witnesses() {
       return new AbstractCollection<PrintCore.aM>() {
          @Override
          public int size() {

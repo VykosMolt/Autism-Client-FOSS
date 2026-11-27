@@ -35,20 +35,20 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 
 public final class PlacementGoal implements AiPathfinder.PathGoal {
-   private final BlockPos init_BlockPos;
-   private final Item init_Item;
-   private final double init_D;
-   private final double load_D;
-   private final AiPathfinder.GridView init_ClassCache_StateCa;
-   private final AABB init_AABB;
-   private final Set<Long> init_Set;
+   private final BlockPos targetBlock;
+   private final Item item;
+   private final double reach;
+   private final double eyeHeight;
+   private final AiPathfinder.GridView grid;
+   private final AABB workVolume;
+   private final Set<Long> rejected;
    private final AiPathfinder.PathGoal init_ClassCache_JsonUti;
-   private final Set<Long> load_Set;
-   private final PlacementGoal.PlaceConstraint init_u_DataUtil;
+   private final Set<Long> protectedCells;
+   private final PlacementGoal.PlaceConstraint constraint;
    private Set<Long> read;
    private Map<Long, PlacementGoal.ClickGeometry> init_Map;
    private boolean init_Z = true;
-   private final List<PlacementGoal> init_List;
+   private final List<PlacementGoal> alternatives;
 
    public PlacementGoal(BlockPos target, Item item, double reach, double eyeHeight) {
       this(target, item, reach, eyeHeight, null);
@@ -78,37 +78,37 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       PlacementGoal.PlaceConstraint constraint,
       List<PlacementGoal> alternatives
    ) {
-      this.init_BlockPos = target.immutable();
-      this.init_Item = item;
-      this.init_D = reach;
-      this.load_D = eyeHeight;
-      this.load_Set = protectedCells;
-      this.init_u_DataUtil = constraint;
-      this.init_List = alternatives;
-      this.init_ClassCache_StateCa = grid;
-      this.init_Set = rejected;
-      this.init_AABB = workVolume;
+      this.targetBlock = target.immutable();
+      this.item = item;
+      this.reach = reach;
+      this.eyeHeight = eyeHeight;
+      this.protectedCells = protectedCells;
+      this.constraint = constraint;
+      this.alternatives = alternatives;
+      this.grid = grid;
+      this.rejected = rejected;
+      this.workVolume = workVolume;
       this.init_ClassCache_JsonUti = new InteractionGoal(target, reach, eyeHeight);
    }
 
    @Override
    public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
-      ArrayList<PlacementGoal> bound = new ArrayList<>(this.init_List.size());
+      ArrayList<PlacementGoal> bound = new ArrayList<>(this.alternatives.size());
 
-      for (PlacementGoal alternative : this.init_List) {
+      for (PlacementGoal alternative : this.alternatives) {
          bound.add((PlacementGoal)alternative.init(grid));
       }
 
       PlacementGoal result = new PlacementGoal(
-         this.init_BlockPos,
-         this.init_Item,
-         this.init_D,
-         this.load_D,
+         this.targetBlock,
+         this.item,
+         this.reach,
+         this.eyeHeight,
          grid,
-         this.init_Set,
-         this.init_AABB,
-         this.load_Set,
-         this.init_u_DataUtil,
+         this.rejected,
+         this.workVolume,
+         this.protectedCells,
+         this.constraint,
          List.copyOf(bound)
       );
       result.read = this.read;
@@ -119,16 +119,16 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    PlacementGoal init(Set<Long> stances) {
       PlacementGoal result = new PlacementGoal(
-         this.init_BlockPos,
-         this.init_Item,
-         this.init_D,
-         this.load_D,
-         this.init_ClassCache_StateCa,
-         this.init_Set,
-         this.init_AABB,
-         this.load_Set,
-         this.init_u_DataUtil,
-         this.init_List
+         this.targetBlock,
+         this.item,
+         this.reach,
+         this.eyeHeight,
+         this.grid,
+         this.rejected,
+         this.workVolume,
+         this.protectedCells,
+         this.constraint,
+         this.alternatives
       );
       result.read = Set.copyOf(stances);
       result.init_Map = this.init_Map;
@@ -152,16 +152,16 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       }
 
       PlacementGoal result = new PlacementGoal(
-         this.init_BlockPos,
-         this.init_Item,
-         this.init_D,
-         this.load_D,
-         this.init_ClassCache_StateCa,
-         this.init_Set,
-         this.init_AABB,
-         this.load_Set,
-         this.init_u_DataUtil,
-         this.init_List
+         this.targetBlock,
+         this.item,
+         this.reach,
+         this.eyeHeight,
+         this.grid,
+         this.rejected,
+         this.workVolume,
+         this.protectedCells,
+         this.constraint,
+         this.alternatives
       );
       result.read = this.read;
       result.init_Map = this.init_Map;
@@ -195,16 +195,16 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return new PlacementGoal(first.pos(), first.item(), reach, eyeHeight, null, rejected, workVolume, protectedCells, first.constraint(), List.copyOf(alternatives));
    }
 
-   public String init_Str() {
-      return BuiltInRegistries.ITEM.getKey(this.init_Item).toString();
+   public String itemId() {
+      return BuiltInRegistries.ITEM.getKey(this.item).toString();
    }
 
    public AABB getWorkVolume() {
-      return this.init_AABB;
+      return this.workVolume;
    }
 
    public boolean load() {
-      return this.load_Set != null;
+      return this.protectedCells != null;
    }
 
    @Override
@@ -214,7 +214,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean allowsCell(BlockPos cell) {
-      return this.load_Set != null || this.init_AABB == null || !this.init_AABB.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
+      return this.protectedCells != null || this.workVolume == null || !this.workVolume.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
    }
 
    @Override
@@ -222,22 +222,22 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       if (!this.init_Z) {
          return false;
       } else {
-         return this.load_Set != null
-            ? !this.load_Set.contains(cell.asLong()) && (this.init_AABB == null || cell.getY() >= Math.floor(this.init_AABB.minY) || this.sync(cell))
-            : this.init_AABB != null && !this.init_AABB.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
+         return this.protectedCells != null
+            ? !this.protectedCells.contains(cell.asLong()) && (this.workVolume == null || cell.getY() >= Math.floor(this.workVolume.minY) || this.sync(cell))
+            : this.workVolume != null && !this.workVolume.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
       }
    }
 
    private boolean sync(BlockPos cell) {
-      if (this.init_u_DataUtil != null
-         && this.init_u_DataUtil.crouchForLook()
-         && Math.abs(cell.getX() - this.init_BlockPos.getX()) <= 2
-         && Math.abs(cell.getZ() - this.init_BlockPos.getZ()) <= 2
-         && cell.getY() >= this.init_BlockPos.getY() - 3) {
+      if (this.constraint != null
+         && this.constraint.crouchForLook()
+         && Math.abs(cell.getX() - this.targetBlock.getX()) <= 2
+         && Math.abs(cell.getZ() - this.targetBlock.getZ()) <= 2
+         && cell.getY() >= this.targetBlock.getY() - 3) {
          return true;
       }
 
-      for (PlacementGoal alternative : this.init_List) {
+      for (PlacementGoal alternative : this.alternatives) {
          if (alternative.sync(cell)) {
             return true;
          }
@@ -252,19 +252,19 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          return false;
       }
 
-      if (cell.equals(this.init_BlockPos)) {
+      if (cell.equals(this.targetBlock)) {
          return false;
       }
 
-      for (PlacementGoal alternative : this.init_List) {
-         if (cell.equals(alternative.init_BlockPos)) {
+      for (PlacementGoal alternative : this.alternatives) {
+         if (cell.equals(alternative.targetBlock)) {
             return false;
          }
       }
 
-      return this.load_Set != null
-         ? !this.load_Set.contains(cell.asLong())
-         : this.init_AABB == null || !this.init_AABB.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
+      return this.protectedCells != null
+         ? !this.protectedCells.contains(cell.asLong())
+         : this.workVolume == null || !this.workVolume.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
    }
 
    @Override
@@ -273,7 +273,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          double best = 1.7976931348623157E308;
 
          for (long stance : this.read) {
-            if (!this.init_Set.contains(stance)) {
+            if (!this.rejected.contains(stance)) {
                best = Math.min(best, AiPathfinder.MoveCosts.estimateDirectionalHeuristicCompat(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
             }
          }
@@ -282,7 +282,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       } else {
          double best = this.init_D_I(x, y, z);
 
-         for (PlacementGoal alternative : this.init_List) {
+         for (PlacementGoal alternative : this.alternatives) {
             best = Math.min(best, alternative.init_D_I(x, y, z));
          }
 
@@ -291,14 +291,14 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    private double init_D_I(int x, int y, int z) {
-      double rise = Math.max(0.0, this.init_BlockPos.getY() - y - this.load_D - this.init_D - 1.0);
+      double rise = Math.max(0.0, this.targetBlock.getY() - y - this.eyeHeight - this.reach - 1.0);
       return Math.max(this.init_ClassCache_JsonUti.heuristic(x, y, z), rise * 5.5)
-         + (y > this.init_BlockPos.getY() ? (y - this.init_BlockPos.getY()) * 0.5 : 0.0);
+         + (y > this.targetBlock.getY() ? (y - this.targetBlock.getY()) * 0.5 : 0.0);
    }
 
    @Override
    public BlockPos getTargetBlock() {
-      return this.init_BlockPos;
+      return this.targetBlock;
    }
 
    @Override
@@ -307,7 +307,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          return false;
       }
 
-      for (PlacementGoal alternative : this.init_List) {
+      for (PlacementGoal alternative : this.alternatives) {
          if (!alternative.init_ClassCache_JsonUti.outsideSearchBox(origin, horizontal, vertical)) {
             return false;
          }
@@ -318,13 +318,13 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean isInGoal(int x, int y, int z) {
-      return this.isInGoalWithGrid(x, y, z, this.init_ClassCache_StateCa);
+      return this.isInGoalWithGrid(x, y, z, this.grid);
    }
 
    @Override
    public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView grid) {
       long feet = BlockPos.asLong(x, y, z);
-      if (grid != null && !this.init_Set.contains(feet) && (this.read == null || this.read.contains(feet))) {
+      if (grid != null && !this.rejected.contains(feet) && (this.read == null || this.read.contains(feet))) {
          if (this.init_Map != null) {
             PlacementGoal.ClickGeometry proof = this.init_Map.get(feet);
             AiPathfinder.CellInfo floor = grid.probeCell(x, y - 1, z);
@@ -335,7 +335,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                }
 
                Vec3 point = proof.point().add(-proof.face().getStepX() * 0.001, -proof.face().getStepY() * 0.001, -proof.face().getStepZ() * 0.001);
-               return InteractionGoal.init(grid, proof.support(), x, y, z, proof.eyeHeight(), point.x, point.y, point.z, this.init_D, proof.face(), null);
+               return InteractionGoal.init(grid, proof.support(), x, y, z, proof.eyeHeight(), point.x, point.y, point.z, this.reach, proof.face(), null);
             } else {
                return false;
             }
@@ -344,7 +344,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                return true;
             }
 
-            for (PlacementGoal alternative : this.init_List) {
+            for (PlacementGoal alternative : this.alternatives) {
                if (alternative.load(x, y, z, grid)) {
                   return true;
                }
@@ -358,50 +358,50 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    private boolean load(int x, int y, int z, AiPathfinder.GridView grid) {
-      if (!(Math.abs(x - this.init_BlockPos.getX()) > this.init_D + 1.5) && !(Math.abs(z - this.init_BlockPos.getZ()) > this.init_D + 1.5)) {
+      if (!(Math.abs(x - this.targetBlock.getX()) > this.reach + 1.5) && !(Math.abs(z - this.targetBlock.getZ()) > this.reach + 1.5)) {
          AiPathfinder.CellInfo floor = grid.probeCell(x, y - 1, z);
-         double actualEyeHeight = floor != null && !floor.passable() ? this.load_D - 1.0 + floor.top16() / 16.0 : this.load_D;
-         double feetOffset = actualEyeHeight - this.load_D;
-         if (this.init_u_DataUtil != null && this.init_u_DataUtil.crouchForLook()) {
-            actualEyeHeight -= Math.max(0.0, this.load_D - 1.27);
+         double actualEyeHeight = floor != null && !floor.passable() ? this.eyeHeight - 1.0 + floor.top16() / 16.0 : this.eyeHeight;
+         double feetOffset = actualEyeHeight - this.eyeHeight;
+         if (this.constraint != null && this.constraint.crouchForLook()) {
+            actualEyeHeight -= Math.max(0.0, this.eyeHeight - 1.27);
          }
 
-         if (this.load_Set == null && this.init_AABB != null && this.init_AABB.intersects(x + 0.2, y, z + 0.2, x + 0.8, y + 1.8, z + 0.8)) {
+         if (this.protectedCells == null && this.workVolume != null && this.workVolume.intersects(x + 0.2, y, z + 0.2, x + 0.8, y + 1.8, z + 0.8)) {
             return false;
          }
 
-         if (this.init_u_DataUtil != null && this.init_u_DataUtil.placedShape() != null) {
+         if (this.constraint != null && this.constraint.placedShape() != null) {
             double feetY = y + feetOffset;
             AABB body = new AABB(x + 0.2, feetY, z + 0.2, x + 0.8, feetY + 1.8, z + 0.8);
 
-            for (AABB box : AiShapes.boxes(this.init_u_DataUtil.placedShape())) {
-               if (box.move(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ()).intersects(body)) {
+            for (AABB box : AiShapes.boxes(this.constraint.placedShape())) {
+               if (box.move(this.targetBlock.getX(), this.targetBlock.getY(), this.targetBlock.getZ()).intersects(body)) {
                   return false;
                }
             }
-         } else if (x == this.init_BlockPos.getX()
-            && z == this.init_BlockPos.getZ()
-            && this.init_BlockPos.getY() >= y
-            && this.init_BlockPos.getY() <= y + 1
+         } else if (x == this.targetBlock.getX()
+            && z == this.targetBlock.getZ()
+            && this.targetBlock.getY() >= y
+            && this.targetBlock.getY() <= y + 1
             && (
-               !(this.init_Item instanceof BlockItem blockItem)
+               !(this.item instanceof BlockItem blockItem)
                   || blockItem.getBlock().defaultBlockState().isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
             )) {
             return false;
          }
 
          for (Direction face : Direction.values()) {
-            if (this.init_u_DataUtil == null || this.init_u_DataUtil.acceptsFace(face.getOpposite())) {
-               BlockPos support = this.init_BlockPos.relative(face);
+            if (this.constraint == null || this.constraint.acceptsFace(face.getOpposite())) {
+               BlockPos support = this.targetBlock.relative(face);
                AiPathfinder.CellInfo p = grid.probeCell(support.getX(), support.getY(), support.getZ());
                if (p != null && p.loaded() && !p.lava()) {
-                  double dot = (x + 0.5 - this.init_BlockPos.getX() - 0.5) * face.getStepX()
-                     + (y + actualEyeHeight - this.init_BlockPos.getY() - 0.5) * face.getStepY()
-                     + (z + 0.5 - this.init_BlockPos.getZ() - 0.5) * face.getStepZ();
+                  double dot = (x + 0.5 - this.targetBlock.getX() - 0.5) * face.getStepX()
+                     + (y + actualEyeHeight - this.targetBlock.getY() - 0.5) * face.getStepY()
+                     + (z + 0.5 - this.targetBlock.getZ() - 0.5) * face.getStepZ();
                   if (!(dot > 0.5)) {
                      for (AABB box : AiShapes.boxes(grid.collisionShapeCode(support.getX(), support.getY(), support.getZ()))) {
-                        double[] heights = this.init_u_DataUtil != null && this.init_u_DataUtil.highHalf() != null && face.getAxis().isHorizontal()
-                           ? (this.init_u_DataUtil.highHalf() ? new double[]{0.75, 0.55, 0.95} : new double[]{0.25, 0.45, 0.05})
+                        double[] heights = this.constraint != null && this.constraint.highHalf() != null && face.getAxis().isHorizontal()
+                           ? (this.constraint.highHalf() ? new double[]{0.75, 0.55, 0.95} : new double[]{0.25, 0.45, 0.05})
                            : new double[]{(box.minY + box.maxY) / 2.0};
 
                         for (double height : heights) {
@@ -411,10 +411,10 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                               double hitY = support.getY() + (face.getStepY() == 0 ? height : (face.getStepY() > 0 ? box.minY + 0.001 : box.maxY - 0.001));
                               double hitZ = support.getZ()
                                  + (face.getStepZ() == 0 ? (box.minZ + box.maxZ) / 2.0 : (face.getStepZ() > 0 ? box.minZ + 0.001 : box.maxZ - 0.001));
-                              if (face.getAxis() == Axis.Y && this.init_u_DataUtil != null && this.init_u_DataUtil.crouchForLook()) {
+                              if (face.getAxis() == Axis.Y && this.constraint != null && this.constraint.crouchForLook()) {
                                  double edgeX = Mth.clamp(x + 0.5, support.getX() + box.minX + 0.035, support.getX() + box.maxX - 0.035);
                                  double edgeZ = Mth.clamp(z + 0.5, support.getZ() + box.minZ + 0.035, support.getZ() + box.maxZ - 0.035);
-                                 if (this.init_u_DataUtil.acceptsRay(edgeX - x - 0.5, hitY - y - actualEyeHeight, edgeZ - z - 0.5)
+                                 if (this.constraint.acceptsRay(edgeX - x - 0.5, hitY - y - actualEyeHeight, edgeZ - z - 0.5)
                                     && InteractionGoal.init(
                                        grid,
                                        support,
@@ -425,19 +425,19 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                                        edgeX,
                                        hitY,
                                        edgeZ,
-                                       this.init_D,
+                                       this.reach,
                                        face.getOpposite(),
-                                       this.init_u_DataUtil.highHalf()
+                                       this.constraint.highHalf()
                                     )) {
                                     return true;
                                  }
                               }
 
-                              if (face.getAxis() == Axis.Y && this.init_u_DataUtil != null && this.init_u_DataUtil.clickYaw() != null) {
-                                 double yawRadians = Math.toRadians(this.init_u_DataUtil.clickYaw().floatValue());
+                              if (face.getAxis() == Axis.Y && this.constraint != null && this.constraint.clickYaw() != null) {
+                                 double yawRadians = Math.toRadians(this.constraint.clickYaw().floatValue());
                                  double aimedX = hitX - Math.sin(yawRadians) * (box.maxX - box.minX) * 0.25;
                                  double aimedZ = hitZ + Math.cos(yawRadians) * (box.maxZ - box.minZ) * 0.25;
-                                 if (this.init_u_DataUtil.acceptsRay(aimedX - x - 0.5, hitY - y - actualEyeHeight, aimedZ - z - 0.5)
+                                 if (this.constraint.acceptsRay(aimedX - x - 0.5, hitY - y - actualEyeHeight, aimedZ - z - 0.5)
                                     && InteractionGoal.init(
                                        grid,
                                        support,
@@ -448,15 +448,15 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                                        aimedX,
                                        hitY,
                                        aimedZ,
-                                       this.init_D,
+                                       this.reach,
                                        face.getOpposite(),
-                                       this.init_u_DataUtil.highHalf()
+                                       this.constraint.highHalf()
                                     )) {
                                     return true;
                                  }
                               }
 
-                              if ((this.init_u_DataUtil == null || this.init_u_DataUtil.acceptsRay(hitX - x - 0.5, hitY - y - actualEyeHeight, hitZ - z - 0.5))
+                              if ((this.constraint == null || this.constraint.acceptsRay(hitX - x - 0.5, hitY - y - actualEyeHeight, hitZ - z - 0.5))
                                  && InteractionGoal.init(
                                     grid,
                                     support,
@@ -467,9 +467,9 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                                     hitX,
                                     hitY,
                                     hitZ,
-                                    this.init_D,
+                                    this.reach,
                                     face.getOpposite(),
-                                    this.init_u_DataUtil == null ? null : this.init_u_DataUtil.highHalf()
+                                    this.constraint == null ? null : this.constraint.highHalf()
                                  )) {
                                  return true;
                               }
@@ -488,12 +488,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    public boolean init(Minecraft mc) {
-      if (mc.player == null || !this.init_Set.contains(AiStance.init(mc).asLong()) && (this.read == null || this.read.contains(AiStance.init(mc).asLong()))) {
+      if (mc.player == null || !this.rejected.contains(AiStance.init(mc).asLong()) && (this.read == null || this.read.contains(AiStance.init(mc).asLong()))) {
          if (this.load(mc)) {
             return true;
          }
 
-         for (PlacementGoal alternative : this.init_List) {
+         for (PlacementGoal alternative : this.alternatives) {
             if (alternative.load(mc)) {
                return true;
             }
@@ -506,24 +506,24 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    private boolean load(Minecraft mc) {
-      if (mc.player != null && mc.level != null && (this.load_Set != null || this.init_AABB == null || !mc.player.getBoundingBox().intersects(this.init_AABB))) {
-         if (this.init_u_DataUtil != null && this.init_u_DataUtil.placedShape() != null) {
-            for (AABB box : AiShapes.boxes(this.init_u_DataUtil.placedShape())) {
-               if (box.move(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ()).intersects(mc.player.getBoundingBox())) {
+      if (mc.player != null && mc.level != null && (this.protectedCells != null || this.workVolume == null || !mc.player.getBoundingBox().intersects(this.workVolume))) {
+         if (this.constraint != null && this.constraint.placedShape() != null) {
+            for (AABB box : AiShapes.boxes(this.constraint.placedShape())) {
+               if (box.move(this.targetBlock.getX(), this.targetBlock.getY(), this.targetBlock.getZ()).intersects(mc.player.getBoundingBox())) {
                   return false;
                }
             }
          }
 
-         BlockPlacementPlanner.PlacementPlan hit = init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, 72);
-         if (hit != null && this.init_Item instanceof BlockItem blockItem) {
+         BlockPlacementPlanner.PlacementPlan hit = init(mc, this.targetBlock, this.item, this.constraint, 72);
+         if (hit != null && this.item instanceof BlockItem blockItem) {
             BlockState state = blockItem.getBlock()
                .getStateForPlacement(
-                  init_BlockPlaceContext_Player(
+                  placeContext(
                      mc.player,
-                     new ItemStack(this.init_Item),
+                     new ItemStack(this.item),
                      hit.hit(),
-                     init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, mc.player.position(), false)
+                     init(mc, this.targetBlock, this.item, this.constraint, mc.player.position(), false)
                   )
                );
             if (state == null) {
@@ -531,7 +531,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
             }
 
             if (Shapes.joinIsNotEmpty(
-               state.getCollisionShape(mc.level, this.init_BlockPos).move(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ()),
+               state.getCollisionShape(mc.level, this.targetBlock).move(this.targetBlock.getX(), this.targetBlock.getY(), this.targetBlock.getZ()),
                Shapes.create(mc.player.getBoundingBox()),
                BooleanOp.AND
             )) {
@@ -573,7 +573,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return feet.add(0.0, init(mc, target, item, constraint, future), 0.0);
    }
 
-   private static BlockPlaceContext init_BlockPlaceContext_Player(Player player, ItemStack stack, BlockHitResult hit, Vec3 eye) {
+   private static BlockPlaceContext placeContext(Player player, ItemStack stack, BlockHitResult hit, Vec3 eye) {
       return AutismLiteVariant.enabled() ? new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit) : new AiPlacementContext(player, stack, hit, eye);
    }
 
@@ -664,7 +664,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       } else if (!(item instanceof BlockItem blockItem)) {
          return false;
       } else {
-         BlockPlaceContext context = init_BlockPlaceContext_Player(mc.player, new ItemStack(item), hit, eye);
+         BlockPlaceContext context = placeContext(mc.player, new ItemStack(item), hit, eye);
          if (context.canPlace() && context.getClickedPos().equals(target)) {
             if (constraint == null
                || constraint.acceptsFace(hit.getDirection())
@@ -712,12 +712,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    public boolean update(BlockPos feet) {
-      if (this.init_Set.size() < 64) {
-         this.init_Set.add(feet.asLong());
+      if (this.rejected.size() < 64) {
+         this.rejected.add(feet.asLong());
          return true;
       } else {
-         this.init_Set.clear();
-         this.init_Set.add(feet.asLong());
+         this.rejected.clear();
+         this.rejected.add(feet.asLong());
          return false;
       }
    }

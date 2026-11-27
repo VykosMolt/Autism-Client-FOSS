@@ -119,7 +119,7 @@ final class BedMiningEstimator {
       double reach = init_Minecraft.player.blockInteractionRange();
       Vec3 preferred = eye.add(Vec3.directionFromRotation(init_Minecraft.player.getXRot(), init_Minecraft.player.getYRot()).scale(reach));
       BedMiningEstimator.Inner_DataUtil cached = init_Map.get(bed);
-      if (cached == null || !eye.equals(cached.init_Vec3) || reach != cached.init_D || !cells.equals(cached.init_List)) {
+      if (cached == null || !eye.equals(cached.eye) || reach != cached.reach || !cells.equals(cached.init_List)) {
          cached = new BedMiningEstimator.Inner_DataUtil(eye, reach, List.copyOf(cells), BedBreachRouteSolver.solve(cells, eye, reach, preferred));
          if (init_Map.size() >= 16 && !init_Map.containsKey(bed)) {
             init_Map.remove(init_Map.keySet().iterator().next());
@@ -270,7 +270,7 @@ final class BedMiningEstimator {
       );
    }
 
-   private record Inner_DataUtil(Vec3 init_Vec3, double init_D, List<BedBreachRouteSolver.Inner_DataUtil> init_List, BedBreachRouteSolver.Inner_CachePool init_DataPipe_CachePool) {
+   private record Inner_DataUtil(Vec3 eye, double reach, List<BedBreachRouteSolver.Inner_DataUtil> init_List, BedBreachRouteSolver.Inner_CachePool init_DataPipe_CachePool) {
    }
 
    record Inner_StreamUtil(BedBreachRouteSolver.Inner_DataUtil init_DataPipe_DataUtil, Vec3 init_Vec3, boolean init_Z) {

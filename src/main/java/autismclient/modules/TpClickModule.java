@@ -28,15 +28,15 @@ public final class TpClickModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init_V_25();
+      this.resetState();
    }
 
    @Override
    public void onGameLeft() {
-      this.init_V_25();
+      this.resetState();
    }
 
-   private void init_V_25() {
+   private void resetState() {
       this.init_j_DataUtil.init();
       this.init_j_StreamUtil = null;
       this.init_Z = false;
@@ -57,9 +57,9 @@ public final class TpClickModule extends Module {
    @Override
    public void tick() {
       if (!this.isEnabled()) {
-         this.init_V_25();
+         this.resetState();
       } else if (MC != null && MC.player != null && MC.level != null && !aD.read_Z()) {
-         int bind = this.load_I_9();
+         int bind = this.clickKey();
          boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
          boolean pressed = down && !this.init_Z;
          this.init_Z = down;
@@ -81,11 +81,11 @@ public final class TpClickModule extends Module {
             this.init_j_StreamUtil = null;
          }
       } else {
-         this.init_V_25();
+         this.resetState();
       }
    }
 
-   private int load_I_9() {
+   private int clickKey() {
       try {
          return Integer.parseInt(this.value("click-key"));
       } catch (NumberFormatException ignored) {
@@ -97,7 +97,7 @@ public final class TpClickModule extends Module {
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
       return MC != null && MC.options != null && MC.options.keyShift.isDown()
          ? false
-         : this.load_I_9() == autismclient.util.ValueSink.init_I(1) && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
+         : this.clickKey() == autismclient.util.ValueSink.init_I(1) && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
    }
 
    public AABB targetBox() {

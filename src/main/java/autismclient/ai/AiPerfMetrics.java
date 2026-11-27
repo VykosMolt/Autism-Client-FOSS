@@ -4,23 +4,23 @@ import com.google.gson.JsonObject;
 import java.util.Arrays;
 
 final class AiPerfMetrics {
-   private final long[] init_JArr = new long[1200];
-   private long init_J;
+   private final long[] samples = new long[1200];
+   private long total;
    private volatile long load;
 
    void init(long nanos) {
-      this.init_J += nanos;
+      this.total += nanos;
    }
 
    void load(long nanos) {
-      this.init_JArr[(int)(this.load % this.init_JArr.length)] = this.init_J + nanos;
-      this.init_J = 0L;
+      this.samples[(int)(this.load % this.samples.length)] = this.total + nanos;
+      this.total = 0L;
       this.load++;
    }
 
    JsonObject init() {
-      int size = (int)Math.min(this.load, this.init_JArr.length);
-      long[] copy = Arrays.copyOf(this.init_JArr, size);
+      int size = (int)Math.min(this.load, this.samples.length);
+      long[] copy = Arrays.copyOf(this.samples, size);
       Arrays.sort(copy);
       return AiJson.objectOf(
          "samples",

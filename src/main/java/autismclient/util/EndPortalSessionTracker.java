@@ -3,7 +3,7 @@ package autismclient.util;
 import java.util.Objects;
 
 public final class EndPortalSessionTracker {
-   private final EndPortalMemoryCache init_cR;
+   private final EndPortalMemoryCache cache;
    private Object init_Obj;
    private Object load_Obj;
    private String init_Str;
@@ -11,7 +11,7 @@ public final class EndPortalSessionTracker {
    private EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil;
 
    public EndPortalSessionTracker(EndPortalMemoryCache memory) {
-      this.init_cR = Objects.requireNonNull(memory);
+      this.cache = Objects.requireNonNull(memory);
    }
 
    public boolean init(Object world, Object connection, String server, String dimension) {
@@ -27,7 +27,7 @@ public final class EndPortalSessionTracker {
       this.load_Obj = connection;
       this.init_Str = server;
       this.load_Str = dimension;
-      this.init_cR_DataUtil = this.init_cR.init(server, dimension);
+      this.init_cR_DataUtil = this.cache.init(server, dimension);
       return true;
    }
 

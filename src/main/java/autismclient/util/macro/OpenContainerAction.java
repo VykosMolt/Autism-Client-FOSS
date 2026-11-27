@@ -50,7 +50,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    private autismclient.util.InteractionTargetRef init_E_2() {
-      for (String ref : this.init_List_13()) {
+      for (String ref : this.targetRefs()) {
          if (ref != null && !ref.isBlank()) {
             autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
             if (target != null) {
@@ -70,7 +70,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    public boolean openTarget(Minecraft mc) {
       if (mc != null && mc.player != null) {
          if (this.targetMode == OpenContainerAction.Inner_DataUtil.ENTITY) {
-            List<String> refs = this.init_List_13();
+            List<String> refs = this.targetRefs();
             boolean sentAny = false;
 
             for (String ref : refs) {
@@ -102,7 +102,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
 
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.ENTITY) {
-         List<String> refs = this.init_List_13();
+         List<String> refs = this.targetRefs();
          boolean hasTarget = false;
 
          for (String ref : refs) {
@@ -141,10 +141,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    public String load() {
-      return init_Str_Str_10(this.entityTarget);
+      return describeTarget(this.entityTarget);
    }
 
-   private static String init_Str_Str_10(String targetRef) {
+   private static String describeTarget(String targetRef) {
       if (targetRef == null || targetRef.isBlank()) {
          return "(none)";
       } else if (targetRef.startsWith("~")) {
@@ -215,8 +215,8 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
             var10000 = this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
             break;
          case ENTITY:
-            List<String> refs = this.init_List_13();
-            var10000 = refs.isEmpty() ? "(none)" : (refs.size() == 1 ? init_Str_Str_10(refs.get(0)) : refs.size() + " entities");
+            List<String> refs = this.targetRefs();
+            var10000 = refs.isEmpty() ? "(none)" : (refs.size() == 1 ? describeTarget(refs.get(0)) : refs.size() + " entities");
             break;
          case LAST_TARGET:
             var10000 = "Last Target";
@@ -238,7 +238,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       tag.putInt("x", this.blockPos.getX());
       tag.putInt("y", this.blockPos.getY());
       tag.putInt("z", this.blockPos.getZ());
-      List<String> refs = this.init_List_13();
+      List<String> refs = this.targetRefs();
       tag.putString("entityTarget", refs.isEmpty() ? "" : refs.get(0));
       ListTag entityTargets = new ListTag();
 
@@ -296,7 +296,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       this.init = tag.getBooleanOr("enabled", true);
    }
 
-   private List<String> init_List_13() {
+   private List<String> targetRefs() {
       if (!this.entityTargets.isEmpty()) {
          return this.entityTargets;
       } else {

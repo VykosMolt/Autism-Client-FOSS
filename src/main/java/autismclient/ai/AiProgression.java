@@ -50,7 +50,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class AiProgression {
-   static final Map<String, AiProgression.Inner_StreamUtil> init_Map = Map.of(
+   static final Map<String, AiProgression.Inner_StreamUtil> ORE_SOURCES = Map.of(
       "minecraft:raw_iron",
       new AiProgression.Inner_StreamUtil("iron_ore", "minecraft:raw_iron", 16, AiProgression.Inner_CachePool.STONE, 1),
       "minecraft:diamond",
@@ -70,7 +70,7 @@ final class AiProgression {
       "minecraft:obsidian",
       new AiProgression.Inner_StreamUtil("obsidian", "minecraft:obsidian", -54, AiProgression.Inner_CachePool.DIAMOND, 1)
    );
-   static final Map<String, String> load_Map = Map.of(
+   static final Map<String, String> SMELT_INPUTS = Map.of(
       "minecraft:iron_ingot",
       "minecraft:raw_iron",
       "minecraft:gold_ingot",
@@ -91,8 +91,8 @@ final class AiProgression {
    static final int init_I = 14;
    static final int load_I = 9;
    static final int read_I = 23;
-   static final List<String> load_List = List.of("minecraft:cobblestone", "minecraft:cobbled_deepslate", "minecraft:blackstone");
-   static final List<String> read_List = List.of(
+   static final List<String> STONE_TOOL_BLOCKS = List.of("minecraft:cobblestone", "minecraft:cobbled_deepslate", "minecraft:blackstone");
+   static final List<String> STONE_BLOCKS = List.of(
       "minecraft:stone", "minecraft:cobblestone", "minecraft:deepslate", "minecraft:cobbled_deepslate", "minecraft:blackstone"
    );
    static final int write_I = 20;
@@ -103,9 +103,9 @@ final class AiProgression {
    }
 
    static boolean init_Z(String material) {
-      AiProgression.Inner_StreamUtil ore = init_Map.get(material);
-      if (ore == null && load_Map.containsKey(material)) {
-         ore = init_Map.get(load_Map.get(material));
+      AiProgression.Inner_StreamUtil ore = ORE_SOURCES.get(material);
+      if (ore == null && SMELT_INPUTS.containsKey(material)) {
+         ore = ORE_SOURCES.get(SMELT_INPUTS.get(material));
       }
 
       return ore != null && ore.nether();
@@ -129,7 +129,7 @@ final class AiProgression {
       return out;
    }
 
-   static boolean load_Z(String itemId) {
+   static boolean isNetheriteGear(String itemId) {
       return itemId.startsWith("minecraft:netherite_")
          && !itemId.equals("minecraft:netherite_ingot")
          && !itemId.equals("minecraft:netherite_scrap")
@@ -138,9 +138,9 @@ final class AiProgression {
    }
 
    static AiProgression.Inner_CachePool init_bx_CachePool(String material) {
-      AiProgression.Inner_StreamUtil ore = init_Map.get(material);
-      if (ore == null && load_Map.containsKey(material)) {
-         ore = init_Map.get(load_Map.get(material));
+      AiProgression.Inner_StreamUtil ore = ORE_SOURCES.get(material);
+      if (ore == null && SMELT_INPUTS.containsKey(material)) {
+         ore = ORE_SOURCES.get(SMELT_INPUTS.get(material));
       }
 
       return ore == null ? AiProgression.Inner_CachePool.NONE : ore.pick();
@@ -207,7 +207,7 @@ final class AiProgression {
    }
 
    static int init(AiProgression.Inner_StreamUtil ore, int drops) {
-      return Math.max(1, (drops + ore.kw_yield_I() - 1) / ore.kw_yield_I());
+      return Math.max(1, (drops + ore.yieldPerOre() - 1) / ore.yieldPerOre());
    }
 
    static boolean init_Z(String itemId, int goal) {
@@ -215,7 +215,7 @@ final class AiProgression {
          return true;
       }
 
-      if (load_Z(itemId)) {
+      if (isNetheriteGear(itemId)) {
          return true;
       }
 
@@ -519,7 +519,7 @@ final class AiProgression {
    static int init() {
       int total = 0;
 
-      for (String id : load_List) {
+      for (String id : STONE_TOOL_BLOCKS) {
          total += AiCraft.countItem(id);
       }
 
@@ -1001,7 +1001,7 @@ final class AiProgression {
                            }
                         } else {
                            String drop = this.write_Str.substring("ore:".length());
-                           AiProgression.Inner_StreamUtil ore = AiProgression.init_Map.get(drop);
+                           AiProgression.Inner_StreamUtil ore = AiProgression.ORE_SOURCES.get(drop);
                            JsonObject detail = AiJson.parseObject(r.dataJson());
                            if (ore != null && detail.has("targetX") && detail.has("targetY") && detail.has("targetZ")) {
                               this.load_Map
@@ -1189,9 +1189,9 @@ final class AiProgression {
                Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
-                     autismclient.ai.engine.AiBlockMine.init(AiProgression.read_List),
+                     autismclient.ai.engine.AiBlockMine.init(AiProgression.STONE_BLOCKS),
                      "drops",
-                     autismclient.ai.engine.AiBlockMine.init(AiProgression.load_List),
+                     autismclient.ai.engine.AiBlockMine.init(AiProgression.STONE_TOOL_BLOCKS),
                      "held",
                      stoneBatch,
                      "radius",
@@ -1226,7 +1226,7 @@ final class AiProgression {
                   });
                   return this.init(needs, "for " + (unfinished.isEmpty() ? AiProgression.displayName(itemId) : String.join(", ", unfinished)));
                } else {
-                  if (AiProgression.load_Z(itemId)) {
+                  if (AiProgression.isNetheriteGear(itemId)) {
                      return this.read_AiOperation_Result_10();
                   }
 
@@ -1291,7 +1291,7 @@ final class AiProgression {
             int jointSmelts = 0;
 
             for (Entry<String, Integer> e : pending.entrySet()) {
-               if (AiProgression.load_Map.containsKey(e.getKey())) {
+               if (AiProgression.SMELT_INPUTS.containsKey(e.getKey())) {
                   jointSmelts += e.getValue();
                }
             }
@@ -1353,7 +1353,7 @@ final class AiProgression {
                }
             }
 
-            String raw = AiProgression.load_Map.get(material);
+            String raw = AiProgression.SMELT_INPUTS.get(material);
             if (raw == null) {
                return this.init(material, missing, why);
             }
@@ -1476,14 +1476,14 @@ final class AiProgression {
                && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
                && AiProgression.bestTier(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()
                && AiCraft.countItem("minecraft:diamond") < 3) {
-               return AiProgression.init_Map.get("minecraft:diamond");
+               return AiProgression.ORE_SOURCES.get("minecraft:diamond");
             }
 
             for (String m : AiProgression.init(this.init_Map_4().keySet())) {
                if (!m.equals(material)) {
-                  AiProgression.Inner_StreamUtil o = AiProgression.init_Map.get(m);
-                  if (o == null && AiProgression.load_Map.containsKey(m)) {
-                     o = AiProgression.init_Map.get(AiProgression.load_Map.get(m));
+                  AiProgression.Inner_StreamUtil o = AiProgression.ORE_SOURCES.get(m);
+                  if (o == null && AiProgression.SMELT_INPUTS.containsKey(m)) {
+                     o = AiProgression.ORE_SOURCES.get(AiProgression.SMELT_INPUTS.get(m));
                   }
 
                   if (o != null && !o.nether()) {
@@ -1504,7 +1504,7 @@ final class AiProgression {
 
                try {
                   JsonObject data = JsonParser.parseString(r.dataJson()).getAsJsonObject();
-                  at = AiProgression.init_BlockPos(AiJson.getString(data, "stationAt", ""));
+                  at = AiProgression.parseBlockPos(AiJson.getString(data, "stationAt", ""));
                   fuel = AiJson.getString(data, "fuel", "");
                   this.push_Str = AiJson.getString(data, "station", "minecraft:furnace");
                   cookTicks = Math.max(1, AiJson.getInt(data, "cookTicksPerItem", 200));
@@ -1544,8 +1544,8 @@ final class AiProgression {
             Map<String, Integer> resources = new LinkedHashMap<>();
 
             for (Entry<String, Integer> need : this.init_Map_4().entrySet()) {
-               String raw = AiProgression.load_Map.getOrDefault(need.getKey(), need.getKey());
-               if (AiProgression.init_Map.containsKey(raw)) {
+               String raw = AiProgression.SMELT_INPUTS.getOrDefault(need.getKey(), need.getKey());
+               if (AiProgression.ORE_SOURCES.containsKey(raw)) {
                   int held = Math.max(0, AiCraft.countItem(raw) - (raw.equals(input) && this.init_BlockPos == null ? committed : 0));
                   resources.put(raw, Math.max(held, need.getValue() - (raw.equals(input) ? committed : 0)));
                }
@@ -1654,7 +1654,7 @@ final class AiProgression {
 
          AiOperation init(int seconds, int stockGoal) {
             BlockPos feet = mc.player.blockPosition();
-            AiProgression.Inner_StreamUtil next = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() ? AiProgression.init_Map.get("minecraft:raw_iron") : null;
+            AiProgression.Inner_StreamUtil next = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() ? AiProgression.ORE_SOURCES.get("minecraft:raw_iron") : null;
             Predicate<BlockState> ore = next == null ? state -> false : autismclient.ai.engine.AiStaircase.init(next.family());
             BlockPos target = next == null ? null : this.load_Map.get(next.family());
             if (target != null && (!ore.test(mc.level.getBlockState(target)) || !this.init_Z_BlockPos_6(target))) {
@@ -1686,7 +1686,7 @@ final class AiProgression {
                   int inShaft = AiProgression.init();
 
                   for (int y = top.getY() - 1; y >= target.getY(); y--) {
-                     if (AiProgression.read_List
+                     if (AiProgression.STONE_BLOCKS
                         .contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(new BlockPos(top.getX(), y, top.getZ())).getBlock()).toString())) {
                         inShaft++;
                      }
@@ -1731,7 +1731,7 @@ final class AiProgression {
 
             for (int i = 0; i <= last && enough < 0; i++) {
                for (int h = 0; h < 3; h++) {
-                  if (AiProgression.read_List.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(steps.get(i).above(h)).getBlock()).toString())) {
+                  if (AiProgression.STONE_BLOCKS.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(steps.get(i).above(h)).getBlock()).toString())) {
                      stone++;
                   }
                }
@@ -1818,7 +1818,7 @@ final class AiProgression {
 
          boolean init(BlockPos feet, int radius) {
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-radius, -radius, -radius), feet.offset(radius, radius, radius))) {
-               if (AiProgression.read_List.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(p).getBlock()).toString())) {
+               if (AiProgression.STONE_BLOCKS.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(p).getBlock()).toString())) {
                   for (Direction d : Direction.values()) {
                      if (mc.level.getBlockState(p.relative(d)).isAir()) {
                         return true;
@@ -1984,7 +1984,7 @@ final class AiProgression {
          }
 
          AiOperation.Result init(String drop, int count, String why) {
-            AiProgression.Inner_StreamUtil ore = AiProgression.init_Map.get(drop);
+            AiProgression.Inner_StreamUtil ore = AiProgression.ORE_SOURCES.get(drop);
             if (AiRunResources.isCampaignActive() && drop.equals("minecraft:diamond") && !this.update_Z_6() && AiCraft.countItem("minecraft:water_bucket") < 2) {
                if (this.init_Map.getOrDefault("expedition-water", 0) >= 3) {
                   return this.init(AiOperation.Status.FAILED, "Diamond descent blocked: both water buckets could not be filled");
@@ -2638,7 +2638,7 @@ final class AiProgression {
       return 0.5 + Math.max(Math.hypot(dx, dz) * 0.25, Math.max(0.0, dy) * 0.45) + Math.max(0.0, -dy) * 0.2;
    }
 
-   static BlockPos init_BlockPos(String text) {
+   static BlockPos parseBlockPos(String text) {
       String[] parts = text.split(",");
       if (parts.length != 3) {
          return null;
@@ -2691,8 +2691,8 @@ final class AiProgression {
    }
 
    static {
-      Set<String> base = new LinkedHashSet<>(init_Map.keySet());
-      base.addAll(load_Map.keySet());
+      Set<String> base = new LinkedHashSet<>(ORE_SOURCES.keySet());
+      base.addAll(SMELT_INPUTS.keySet());
       KEEP_ITEMS = Set.copyOf(base);
    }
 
@@ -2708,7 +2708,7 @@ final class AiProgression {
    record Inner_DataUtil(int planks, int sticks) {
    }
 
-   record Inner_StreamUtil(String family, String drop, int bestY, AiProgression.Inner_CachePool pick, int kw_yield_I, boolean nether) {
+   record Inner_StreamUtil(String family, String drop, int bestY, AiProgression.Inner_CachePool pick, int yieldPerOre, boolean nether) {
       Inner_StreamUtil(String family, String drop, int bestY, AiProgression.Inner_CachePool pick, int yield) {
          this(family, drop, bestY, pick, yield, false);
       }

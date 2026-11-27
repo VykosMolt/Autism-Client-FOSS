@@ -27,7 +27,7 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 final class AiForage {
    static final int init_I = 7;
    static final int load = 24;
-   static final List<String> init_List = List.of(
+   static final List<String> WOOL_COLORS = List.of(
       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
    );
    static final int read = 8;
@@ -36,17 +36,17 @@ final class AiForage {
    private AiForage() {
    }
 
-   static int init_I() {
+   static int bedCount() {
       return AiItems.countInInventory(AiItems.resolve("bed"));
    }
 
    static boolean init_Z() {
       boolean bow = AiRunResources.countUsableItem("minecraft:bow", 24) > 0;
-      return bow && (AiRunResources.totalArrowCount() >= 24 || init_I() >= 7 && AiRunResources.totalArrowCount() >= 12);
+      return bow && (AiRunResources.totalArrowCount() >= 24 || bedCount() >= 7 && AiRunResources.totalArrowCount() >= 12);
    }
 
    static boolean load() {
-      return init_I() >= 4 || AiRunResources.countUsableItem("minecraft:bow", 12) > 0 && AiRunResources.totalArrowCount() >= 12;
+      return bedCount() >= 4 || AiRunResources.countUsableItem("minecraft:bow", 12) > 0 && AiRunResources.totalArrowCount() >= 12;
    }
 
    static AiOperation cook(int seconds) {
@@ -129,17 +129,17 @@ final class AiForage {
             return null;
          }
 
-         if (init_I() < 7 && AiItems.countFreeSlots() < 2) {
+         if (bedCount() < 7 && AiItems.countFreeSlots() < 2) {
             return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 3));
          }
 
          int stringForBow = AiRunResources.countUsableItem("minecraft:bow", 24) > 0 ? 0 : 3;
-         if (init_I() < 7 && AiCraft.countItem("minecraft:string") - stringForBow >= 4 && AiCraft.countItem("minecraft:white_wool") < 3) {
+         if (bedCount() < 7 && AiCraft.countItem("minecraft:string") - stringForBow >= 4 && AiCraft.countItem("minecraft:white_wool") < 3) {
             return AiCraft.craft(AiJson.objectOf("item", "minecraft:white_wool", "count", AiCraft.countItem("minecraft:white_wool") + 1, "timeoutSeconds", 30));
          }
 
-         for (String color : init_List) {
-            if (init_I() < 7 && AiCraft.countItem("minecraft:" + color + "_wool") >= 3) {
+         for (String color : WOOL_COLORS) {
+            if (bedCount() < 7 && AiCraft.countItem("minecraft:" + color + "_wool") >= 3) {
                if (AiItems.countInInventory(AiItems.resolveItem("planks")) < 3) {
                   return AiObtain.init(AiJson.objectOf("item", "planks", "count", 3, "timeoutSeconds", 60));
                }
@@ -170,7 +170,7 @@ final class AiForage {
             }
          }
 
-         if (init_I() < 7) {
+         if (bedCount() < 7) {
             BlockPos bed = AiWorldScan.findNearestBlock(s -> s.getBlock() instanceof BedBlock && s.getValue(BedBlock.PART) == BedPart.HEAD, 4);
             if (bed != null && bed.distSqr(mc.player.blockPosition()) <= range * range * 4.0) {
                String id = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(bed).getBlock().asItem()).toString();
@@ -183,7 +183,7 @@ final class AiForage {
 
             Entity sheep = findEntity(mc, "minecraft:sheep", range);
             if (sheep != null) {
-               return init_AiOperation_Str("minecraft:sheep", "wool", range);
+               return huntFor("minecraft:sheep", "wool", range);
             }
          }
 
@@ -191,18 +191,18 @@ final class AiForage {
          if (!bow && AiCraft.countItem("minecraft:string") < 3) {
             for (String spider : List.of("minecraft:spider", "minecraft:cave_spider")) {
                if (findEntity(mc, spider, range / 2.0) != null) {
-                  return init_AiOperation_Str(spider, "minecraft:string", range / 2.0);
+                  return huntFor(spider, "minecraft:string", range / 2.0);
                }
             }
          }
 
          if (AiRunResources.totalArrowCount() < 24) {
             if (findEntity(mc, "minecraft:skeleton", range / 2.0) != null) {
-               return init_AiOperation_Str("minecraft:skeleton", "minecraft:arrow", range / 2.0);
+               return huntFor("minecraft:skeleton", "minecraft:arrow", range / 2.0);
             }
 
             if (AiCraft.countItem("minecraft:feather") < 6 && findEntity(mc, "minecraft:chicken", range / 2.0) != null) {
-               return init_AiOperation_Str("minecraft:chicken", "minecraft:feather", range / 2.0);
+               return huntFor("minecraft:chicken", "minecraft:feather", range / 2.0);
             }
          }
 
@@ -258,7 +258,7 @@ final class AiForage {
       return null;
    }
 
-   static AiOperation init_AiOperation_Str(String type, String drop, double range) {
+   static AiOperation huntFor(String type, String drop, double range) {
       return AiNetherRun.init(
          AiCombat.init(
             AiJson.objectOf("target", type, "count", 1, "radius", (int)Math.ceil(range), "useShield", true, "retreatHealth", 8, "timeoutSeconds", 40)
@@ -271,11 +271,11 @@ final class AiForage {
    static AiOperation huntEnderman(final int enderman, final Predicate<BlockPos> safe, final Runnable refused) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final Object init_Obj = mc.level;
-         final Object load_Obj = mc.getConnection();
-         final UUID init_UUID = mc.level != null && mc.level.getEntity(enderman) != null ? mc.level.getEntity(enderman).getUUID() : null;
-         AiOperation init_AiOperation;
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         final Object level = mc.level;
+         final Object connection = mc.getConnection();
+         final UUID targetUuid = mc.level != null && mc.level.getEntity(enderman) != null ? mc.level.getEntity(enderman).getUUID() : null;
+         AiOperation child;
          boolean init_Z;
          int init_I;
          int load_I;
@@ -285,11 +285,11 @@ final class AiForage {
             if (!this.init_Z
                && mc.player != null
                && mc.level != null
-               && mc.level == this.init_Obj
-               && mc.getConnection() == this.load_Obj
+               && mc.level == this.level
+               && mc.getConnection() == this.connection
                && mc.player.isAlive()) {
                Entity observed = mc.level.getEntity(enderman);
-               if (observed != null && !observed.getUUID().equals(this.init_UUID)) {
+               if (observed != null && !observed.getUUID().equals(this.targetUuid)) {
                   this.cancel();
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Enderman identity changed", new JsonObject());
                }
@@ -300,7 +300,7 @@ final class AiForage {
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Off safe ground in the hunt", new JsonObject());
                }
 
-               if (this.init_AiOperation == null) {
+               if (this.child == null) {
                   if (!(mc.level.getEntity(enderman) instanceof Enderman man) || !man.isAlive()) {
                      return AiGameOperations.result(AiOperation.Status.FAILED, "The enderman is gone", new JsonObject());
                   }
@@ -313,31 +313,31 @@ final class AiForage {
                         mc.options.keyRight.setDown(false);
                         mc.options.keyJump.setDown(false);
                         mc.options.keySprint.setDown(false);
-                        this.init_DataUtil.allowEnderman(enderman).aimAt(man.getEyePosition());
-                        this.init_DataUtil.tick();
+                        this.aim.allowEnderman(enderman).aimAt(man.getEyePosition());
+                        this.aim.tick();
                         return AiGameOperations.result(AiOperation.Status.RUNNING, "Looking the enderman in the eye", new JsonObject());
                      }
 
                      refused.run();
-                     this.init_DataUtil.clear();
+                     this.aim.clear();
                      return AiGameOperations.result(AiOperation.Status.FAILED, "The enderman would not turn", new JsonObject());
                   }
 
-                  this.init_DataUtil.clear();
+                  this.aim.clear();
                   AutismClientAddon.LOG
                      .info(
                         "[AI] pearl hunt: the enderman at {} turned on the player after {} ticks; holding ground",
                         man.blockPosition().toShortString(),
                         this.init_I
                      );
-                  this.init_AiOperation = AiCombat.init(
+                  this.child = AiCombat.init(
                      AiJson.objectOf(
                         "entityId", enderman, "count", 1, "radius", 48, "useShield", true, "retreatHealth", 6, "hold", true, "timeoutSeconds", 40
                      )
                   );
                }
 
-               AiOperation.Result r = this.init_AiOperation.tick();
+               AiOperation.Result r = this.child.tick();
                if (r.terminal() && !r.message().startsWith("Killed")) {
                   refused.run();
                }
@@ -351,22 +351,22 @@ final class AiForage {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+            return this.child == null || this.child.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.child != null && this.child.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
             this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            if (this.child != null) {
+               this.child.cancel();
             }
 
-            this.init_DataUtil.clear();
+            this.aim.clear();
          }
       };
    }
@@ -457,7 +457,7 @@ final class AiForage {
 
    static AiOperation load(double range) {
       AiOperation provoked = read(range);
-      return provoked != null ? provoked : init_AiOperation_Str("minecraft:enderman", "minecraft:ender_pearl", range);
+      return provoked != null ? provoked : huntFor("minecraft:enderman", "minecraft:ender_pearl", range);
    }
 
    static AiOperation read(double range) {
@@ -512,6 +512,6 @@ final class AiForage {
    }
 
    static String kitSummary() {
-      return init_I() + " beds, " + (AiCraft.countItem("minecraft:bow") > 0 ? "a bow" : "no bow") + ", " + AiCraft.countItem("minecraft:arrow") + " arrows";
+      return bedCount() + " beds, " + (AiCraft.countItem("minecraft:bow") > 0 ? "a bow" : "no bow") + ", " + AiCraft.countItem("minecraft:arrow") + " arrows";
    }
 }

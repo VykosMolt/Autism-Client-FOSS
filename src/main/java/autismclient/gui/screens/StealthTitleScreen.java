@@ -37,17 +37,17 @@ import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.util.ARGB;
 
 public final class StealthTitleScreen extends Screen {
-   private static final Component init_Component = Component.translatable("narrator.screen.title");
+   private static final Component TITLE = Component.translatable("narrator.screen.title");
    private static final Component load = Component.translatable("title.credits");
-   private static final Random init_Random = new Random();
-   private static List<String> init_List;
-   private final LogoRenderer init_LogoRenderer = new LogoRenderer(false);
-   private SplashRenderer init_SplashRenderer;
+   private static final Random RANDOM = new Random();
+   private static List<String> cachedSplashes;
+   private final LogoRenderer logo = new LogoRenderer(false);
+   private SplashRenderer splash;
    private boolean init_Z;
-   private FriendsButton init_FriendsButton;
+   private FriendsButton friendsButton;
 
    public StealthTitleScreen() {
-      super(init_Component);
+      super(TITLE);
    }
 
    @Override
@@ -59,7 +59,7 @@ public final class StealthTitleScreen extends Screen {
             .bounds(this.width / 2 - 100, topPos, 200, 20)
             .build()
       );
-      Component disabledReason = this.init_Component();
+      Component disabledReason = this.multiplayerDisabledReason();
       boolean multiplayerAllowed = disabledReason == null;
       Tooltip tooltip = disabledReason != null ? Tooltip.create(disabledReason) : null;
       int multiplayerY = topPos + spacing;
@@ -77,14 +77,14 @@ public final class StealthTitleScreen extends Screen {
          .active = multiplayerAllowed;
       int iconRowY = realmsY + spacing;
       boolean friendsAvailable = !this.minecraft.isDemo();
-      this.init_FriendsButton = this.addRenderableWidget(
+      this.friendsButton = this.addRenderableWidget(
          CommonButtons.friends(
             20,
             b -> OnlineOptionsScreen.confirmFriendsListEnabled(this.minecraft, () -> this.minecraft.gui.setScreen(new FriendsOverlayScreen(this)), this),
             friendsAvailable
          )
       );
-      this.init_FriendsButton.setPosition(this.init(1, 3, 20), iconRowY);
+      this.friendsButton.setPosition(this.init(1, 3, 20), iconRowY);
       SpriteIconButton language = this.addRenderableWidget(
          CommonButtons.language(
             20, b -> this.minecraft.gui.setScreen(new LanguageSelectScreen(this, this.minecraft.options, this.minecraft.getLanguageManager())), true
@@ -127,8 +127,8 @@ public final class StealthTitleScreen extends Screen {
 
    @Override
    public void tick() {
-      if (this.init_FriendsButton != null) {
-         this.init_FriendsButton.refreshIncomingRequestCount();
+      if (this.friendsButton != null) {
+         this.friendsButton.refreshIncomingRequestCount();
       }
    }
 
@@ -150,33 +150,33 @@ public final class StealthTitleScreen extends Screen {
    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
       this.minecraft.gameRenderer.panorama().extractRenderState(graphics, this.width, this.height);
       super.extractRenderState(graphics, mouseX, mouseY, delta);
-      this.init_LogoRenderer.extractRenderState(graphics, this.width, 1.0F);
+      this.logo.extractRenderState(graphics, this.width, 1.0F);
       if (!this.init_Z) {
-         this.init_SplashRenderer = this.init_SplashRenderer();
+         this.splash = this.pickSplash();
          this.init_Z = true;
       }
 
-      if (this.init_SplashRenderer != null && !this.minecraft.options.hideSplashTexts().get()) {
-         this.init_SplashRenderer.extractRenderState(graphics, this.width, this.font, 1.0F);
+      if (this.splash != null && !this.minecraft.options.hideSplashTexts().get()) {
+         this.splash.extractRenderState(graphics, this.width, this.font, 1.0F);
       }
 
       String version = "Minecraft " + SharedConstants.getCurrentVersion().name();
       graphics.text(this.font, version, 2, this.height - 10, ARGB.white(1.0F));
    }
 
-   private SplashRenderer init_SplashRenderer() {
-      List<String> pool = this.init_List();
+   private SplashRenderer pickSplash() {
+      List<String> pool = this.splashes();
       if (pool.isEmpty()) {
          return null;
       }
 
-      String text = pool.get(init_Random.nextInt(pool.size()));
+      String text = pool.get(RANDOM.nextInt(pool.size()));
       return new SplashRenderer(Component.literal(text).setStyle(Style.EMPTY.withColor(-256)));
    }
 
-   private List<String> init_List() {
-      if (init_List != null) {
-         return init_List;
+   private List<String> splashes() {
+      if (cachedSplashes != null) {
+         return cachedSplashes;
       }
 
       List<String> pool = new ArrayList<>();
@@ -193,11 +193,11 @@ public final class StealthTitleScreen extends Screen {
       } catch (Exception var8) {
       }
 
-      init_List = List.copyOf(pool);
-      return init_List;
+      cachedSplashes = List.copyOf(pool);
+      return cachedSplashes;
    }
 
-   private Component init_Component() {
+   private Component multiplayerDisabledReason() {
       if (this.minecraft.allowsMultiplayer()) {
          return null;
       } else if (this.minecraft.isNameBanned()) {

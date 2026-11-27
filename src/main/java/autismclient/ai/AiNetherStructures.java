@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class AiNetherStructures {
-   private static AiNetherStructures.Inner_DataUtil init_aC_DataUtil;
+   private static AiNetherStructures.Inner_DataUtil bastionAt;
    private static WeakReference<Object> init_WeakReference = new WeakReference<>(null);
    private static long load;
    static final long init_J = 120000000000L;
@@ -107,13 +107,13 @@ final class AiNetherStructures {
 
    static AiNetherStructures.Inner_DataUtil bastionAt(BlockPos at) {
       Minecraft mc = Minecraft.getInstance();
-      if (init_aC_DataUtil != null
+      if (bastionAt != null
          && init_WeakReference.get() == mc.level
-         && init_aC_DataUtil.at.distSqr(at) < 64.0
+         && bastionAt.at.distSqr(at) < 64.0
          && AiThreats.currentClientTick() - load >= 0L
          && AiThreats.currentClientTick() - load < 100L
-         && init_aC_DataUtil.revision == autismclient.ai.engine.AiGridRevisions.globalRevision()) {
-         return init_aC_DataUtil;
+         && bastionAt.revision == autismclient.ai.engine.AiGridRevisions.globalRevision()) {
+         return bastionAt;
       }
 
       int bricks = 0;
@@ -190,7 +190,7 @@ final class AiNetherStructures {
       }
 
       load = AiThreats.currentClientTick();
-      init_aC_DataUtil = new AiNetherStructures.Inner_DataUtil(
+      bastionAt = new AiNetherStructures.Inner_DataUtil(
          at.immutable(),
          bricks,
          gold,
@@ -209,7 +209,7 @@ final class AiNetherStructures {
          autismclient.ai.engine.AiGridRevisions.globalRevision()
       );
       init_WeakReference = new WeakReference<>(mc.level);
-      return init_aC_DataUtil;
+      return bastionAt;
    }
 
    static double init(AiNetherStructures.Inner_DataUtil e, double distance) {

@@ -5,8 +5,8 @@ import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 final class MapNonEmptyCache {
-   private Object init_Obj;
-   private MapId init_MapId;
+   private Object level;
+   private MapId id;
    private MapItemSavedData init_MapItemSavedData;
    private int init_I;
    private boolean init_Z;
@@ -18,12 +18,12 @@ final class MapNonEmptyCache {
          return false;
       }
 
-      if (this.init_Z && this.init_Obj == level && id.equals(this.init_MapId) && this.init_MapItemSavedData == data && this.init_I == tick) {
+      if (this.init_Z && this.level == level && id.equals(this.id) && this.init_MapItemSavedData == data && this.init_I == tick) {
          return this.load;
       }
 
-      this.init_Obj = level;
-      this.init_MapId = id;
+      this.level = level;
+      this.id = id;
       this.init_MapItemSavedData = data;
       this.init_I = tick;
       this.init_Z = true;
@@ -40,14 +40,14 @@ final class MapNonEmptyCache {
    }
 
    void init(MapId id) {
-      if (id != null && id.equals(this.init_MapId)) {
+      if (id != null && id.equals(this.id)) {
          this.init_Z = false;
       }
    }
 
    void init() {
-      this.init_Obj = null;
-      this.init_MapId = null;
+      this.level = null;
+      this.id = null;
       this.init_MapItemSavedData = null;
       this.init_Z = this.load = false;
    }

@@ -23,16 +23,16 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class BlockInspectionService {
-   static final String init_Str = "autism:block_data/v1";
-   private static final long init_J = 1500000000L;
+   static final String FORMAT_ID = "autism:block_data/v1";
+   private static final long PENDING_TIMEOUT_NANOS = 1500000000L;
    private static boolean init_Z;
-   private static BlockInspectionService.Inner_DataUtil init_StreamGate_DataUti;
+   private static BlockInspectionService.Inner_DataUtil pendingInspection;
 
    private BlockInspectionService() {
    }
 
    public static boolean init() {
-      return init_Z || init_StreamGate_DataUti != null;
+      return init_Z || pendingInspection != null;
    }
 
    public static void tick(Minecraft mc) {
@@ -40,12 +40,12 @@ public final class BlockInspectionService {
          init_Z = false;
       }
 
-      BlockInspectionService.Inner_DataUtil pending = init_StreamGate_DataUti;
+      BlockInspectionService.Inner_DataUtil pending = pendingInspection;
       if (pending != null && mc != null) {
          if (mc.player != null) {
             AbstractContainerMenu menu = mc.player.containerMenu;
-            if (menu != null && menu != mc.player.inventoryMenu && menu.containerId != pending.init_I()) {
-               init_StreamGate_DataUti = null;
+            if (menu != null && menu != mc.player.inventoryMenu && menu.containerId != pending.containerId()) {
+               pendingInspection = null;
                List<ItemStack> items = init(menu, mc.player.getInventory());
                String title = mc.gui.screen() == null ? "" : mc.gui.screen().getTitle().getString();
                CompoundTag complete = init(mc, pending.init_CompoundTag(), items, title, String.valueOf(BuiltInRegistries.MENU.getKey(menu.getType())));
@@ -56,7 +56,7 @@ public final class BlockInspectionService {
          }
 
          if (System.nanoTime() - pending.load() >= 1500000000L) {
-            init_StreamGate_DataUti = null;
+            pendingInspection = null;
             init(mc, pending.init_CompoundTag(), List.of(), "Contents were not provided.");
          }
       }
@@ -113,7 +113,7 @@ public final class BlockInspectionService {
 
          if (init(mc, pos, state, blockEntity)) {
             int containerId = mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
-            init_StreamGate_DataUti = new BlockInspectionService.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
+            pendingInspection = new BlockInspectionService.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
             bi.init("Reading block contents...", UiColorPalette.cyan());
             return false;
          }
@@ -139,10 +139,10 @@ public final class BlockInspectionService {
       CompoundTag root = new CompoundTag();
       root.putString("format", "autism:block_data/v1");
       root.putString("source", source == null ? "client" : source);
-      root.putString("dimension", snapshot.init_Str());
-      root.putIntArray("position", new int[]{snapshot.init_BlockPos().getX(), snapshot.init_BlockPos().getY(), snapshot.init_BlockPos().getZ()});
+      root.putString("dimension", snapshot.dimension());
+      root.putIntArray("position", new int[]{snapshot.pos().getX(), snapshot.pos().getY(), snapshot.pos().getZ()});
       root.putString("block_state", snapshot.load());
-      root.put("state", snapshot.init_CompoundTag().copy());
+      root.put("state", snapshot.state().copy());
       if (blockEntity != null) {
          root.put("block_entity", blockEntity.copy());
       }
@@ -325,18 +325,18 @@ public final class BlockInspectionService {
       }
    }
 
-   private record Inner_DataUtil(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int init_I, long load) {
+   private record Inner_DataUtil(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int containerId, long load) {
       private Inner_DataUtil {
          init_CompoundTag = init_CompoundTag == null ? new CompoundTag() : init_CompoundTag.copy();
       }
    }
 
-   record Inner_StreamUtil(String init_Str, BlockPos init_BlockPos, String load, CompoundTag init_CompoundTag) {
+   record Inner_StreamUtil(String dimension, BlockPos pos, String load, CompoundTag state) {
       Inner_StreamUtil {
-         init_Str = init_Str == null ? "" : init_Str;
-         init_BlockPos = init_BlockPos == null ? BlockPos.ZERO : init_BlockPos.immutable();
+         dimension = dimension == null ? "" : dimension;
+         pos = pos == null ? BlockPos.ZERO : pos.immutable();
          load = load == null ? "minecraft:air" : load;
-         init_CompoundTag = init_CompoundTag == null ? new CompoundTag() : init_CompoundTag.copy();
+         state = state == null ? new CompoundTag() : state.copy();
       }
    }
 }

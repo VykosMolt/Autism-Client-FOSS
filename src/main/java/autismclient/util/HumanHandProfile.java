@@ -27,17 +27,17 @@ public record HumanHandProfile(
    double get,
    double set
 ) {
-   private static final String init_Str = "hand.seed";
-   private static volatile HumanHandProfile init_am;
+   private static final String SEED_FILE = "hand.seed";
+   private static volatile HumanHandProfile instance;
 
    public static HumanHandProfile shared() {
-      HumanHandProfile hand = init_am;
+      HumanHandProfile hand = instance;
       if (hand == null) {
          synchronized (HumanHandProfile.class) {
-            hand = init_am;
+            hand = instance;
             if (hand == null) {
-               hand = init_am_J(init_J());
-               init_am = hand;
+               hand = generate(loadSeed());
+               instance = hand;
             }
          }
       }
@@ -45,7 +45,7 @@ public record HumanHandProfile(
       return hand;
    }
 
-   public static HumanHandProfile init_am_J(long seed) {
+   public static HumanHandProfile generate(long seed) {
       Random r = new Random(seed);
       double curvatureMagnitude = 0.01 + 0.03 * r.nextDouble();
       return new HumanHandProfile(
@@ -98,7 +98,7 @@ public record HumanHandProfile(
       return Math.max(-2.5, Math.min(2.5, random.nextGaussian()));
    }
 
-   private static long init_J() {
+   private static long loadSeed() {
       File file = new File(AutismClientAddon.FOLDER, "hand.seed");
 
       try {

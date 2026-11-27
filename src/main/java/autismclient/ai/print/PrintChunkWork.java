@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 final class PrintChunkWork {
-   private final PrintCore init_UiHelper;
+   private final PrintCore core;
    final Long2ObjectLinkedOpenHashMap<PrintChunkWork.Inner_StreamUtil> chunks = new Long2ObjectLinkedOpenHashMap<>();
    boolean init_Z;
    int init_I;
@@ -17,7 +17,7 @@ final class PrintChunkWork {
    private int read = -1;
 
    PrintChunkWork(PrintCore core) {
-      this.init_UiHelper = core;
+      this.core = core;
    }
 
    PrintChunkWork(PrintCore core, Long2ObjectMap<IntArrayList> groups) {
@@ -46,16 +46,16 @@ final class PrintChunkWork {
    }
 
    private boolean init_Z_I_B(int i, byte state) {
-      PrintTarget.Inner_DataUtil kind = this.init_UiHelper.targets[i].kind();
+      PrintTarget.Inner_DataUtil kind = this.core.targets[i].kind();
       return (state == 0 || state == 2 || state == 1) && kind != PrintTarget.Inner_DataUtil.FLOW && kind != PrintTarget.Inner_DataUtil.PARTNER;
    }
 
    void init(int i, byte before, byte after) {
-      if (this.init_UiHelper.phase != PrintCore.J.VERIFY) {
+      if (this.core.phase != PrintCore.J.VERIFY) {
          this.resetAudit();
       }
 
-      PrintChunkWork.Inner_StreamUtil chunk = this.chunks.get(chunkKey(this.init_UiHelper.targets[i].pos()));
+      PrintChunkWork.Inner_StreamUtil chunk = this.chunks.get(chunkKey(this.core.targets[i].pos()));
       if (before != 3) {
          chunk.unfinishedCells--;
       }
@@ -83,7 +83,7 @@ final class PrintChunkWork {
    }
 
    boolean init_Z_CachePool_StreamUt(PrintChunkWork.Inner_StreamUtil chunk) {
-      return this.init_UiHelper.env.hasChunkAt(this.init_UiHelper.targets[chunk.cells.getInt(0)].pos());
+      return this.core.env.hasChunkAt(this.core.targets[chunk.cells.getInt(0)].pos());
    }
 
    void markChunkDirty(long key) {
@@ -164,10 +164,10 @@ final class PrintChunkWork {
                }
 
                this.init_I++;
-               if (this.init_UiHelper.cellStates[i] != 3) {
-                  if (this.init_UiHelper.targets[i].kind() == PrintTarget.Inner_DataUtil.FLOW) {
+               if (this.core.cellStates[i] != 3) {
+                  if (this.core.targets[i].kind() == PrintTarget.Inner_DataUtil.FLOW) {
                      chunk.sync++;
-                  } else if (this.init_UiHelper.cellStates[i] == 5) {
+                  } else if (this.core.cellStates[i] == 5) {
                      chunk.update++;
                   } else {
                      chunk.write++;

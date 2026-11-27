@@ -44,25 +44,25 @@ import java.util.function.Consumer;
 
 public final class AiProvider implements AutoCloseable {
    static final String init_Str = "thinking-binding-controls-2026-08-01";
-   private static final JsonObject init_JsonObject = AiJson.objectOf("type", "ephemeral", "ttl", "1h");
+   private static final JsonObject CACHE_CONTROL = AiJson.objectOf("type", "ephemeral", "ttl", "1h");
    static final int init_I = 2000;
    private static final long init_J = 300000L;
    private static final int load_I = 6;
-   private final HttpClient init_HttpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20L)).followRedirects(Redirect.NEVER).build();
-   private volatile CompletableFuture<?> init_CompletableFuture;
-   private volatile InputStream init_InputStream;
-   private volatile Thread init_Thread;
+   private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20L)).followRedirects(Redirect.NEVER).build();
+   private volatile CompletableFuture<?> future;
+   private volatile InputStream responseBody;
+   private volatile Thread timer;
    private volatile boolean init_Z;
-   private volatile long load_J = 2000L;
-   private final AiSettings init_AiSettings;
+   private volatile long millis = 2000L;
+   private final AiSettings settings;
    private volatile boolean load_Z;
 
    public AiProvider(AiSettings settings) {
-      this.init_AiSettings = settings.copy();
-      this.load_Z = init_Z_AiSettings(this.init_AiSettings);
+      this.settings = settings.copy();
+      this.load_Z = isOfficialOpenAi(this.settings);
    }
 
-   static boolean init_Z_AiSettings(AiSettings s) {
+   static boolean isOfficialOpenAi(AiSettings s) {
       if (s.provider != AiSettings.Provider.OPENAI) {
          return false;
       }
@@ -74,37 +74,37 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   void init_V_J(long millis) {
-      this.load_J = millis;
+   void setMillis(long millis) {
+      this.millis = millis;
    }
 
    public AiSettings.Provider provider() {
-      return this.init_AiSettings.provider;
+      return this.settings.provider;
    }
 
    public String model() {
-      return this.init_AiSettings.model;
+      return this.settings.model;
    }
 
    public synchronized void applySettings(AiSettings live) {
       if (live != null) {
-         this.init_AiSettings.effort = AiSettings.normalizeEffort(live.effort);
-         if (live.outputTokens >= 256 && live.outputTokens <= this.init_AiSettings.contextTokens / 2) {
-            this.init_AiSettings.outputTokens = live.outputTokens;
+         this.settings.effort = AiSettings.normalizeEffort(live.effort);
+         if (live.outputTokens >= 256 && live.outputTokens <= this.settings.contextTokens / 2) {
+            this.settings.outputTokens = live.outputTokens;
          }
       }
    }
 
-   public synchronized void init_V_Str(String level) {
-      this.init_AiSettings.effort = AiSettings.normalizeEffort(level);
+   public synchronized void setEffort(String level) {
+      this.settings.effort = AiSettings.normalizeEffort(level);
    }
 
    public synchronized String load() {
-      return AiSettings.nearestEffort(AiSettings.effortLevels(this.init_AiSettings.provider, this.init_AiSettings.model), this.init_AiSettings.effort);
+      return AiSettings.nearestEffort(AiSettings.effortLevels(this.settings.provider, this.settings.model), this.settings.effort);
    }
 
    public JsonObject userMessage(String text) {
-      return this.init_AiSettings.provider == AiSettings.Provider.GEMINI
+      return this.settings.provider == AiSettings.Provider.GEMINI
          ? AiJson.objectOf("role", "user", "parts", List.of(AiJson.objectOf("text", text)))
          : AiJson.objectOf("role", "user", "content", text);
    }
@@ -112,7 +112,7 @@ public final class AiProvider implements AutoCloseable {
    public void appendUserText(List<JsonObject> history, String text) {
       JsonObject last = history.isEmpty() ? null : history.getLast();
       boolean lastIsUser = last != null && "user".equals(AiJson.getString(last, "role", ""));
-      if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
+      if (this.settings.provider == AiSettings.Provider.GEMINI) {
          if (lastIsUser) {
             if (!last.has("parts") || !last.get("parts").isJsonArray()) {
                last.add("parts", new JsonArray());
@@ -122,7 +122,7 @@ public final class AiProvider implements AutoCloseable {
          } else {
             history.add(this.userMessage(text));
          }
-      } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
+      } else if (this.settings.provider == AiSettings.Provider.ANTHROPIC) {
          if (lastIsUser) {
             if (!last.has("content") || !last.get("content").isJsonArray()) {
                String prior = AiJson.getString(last, "content", "");
@@ -162,7 +162,7 @@ public final class AiProvider implements AutoCloseable {
 
          List<JsonObject> out = new ArrayList<>(this.toolResults(calls, clean));
          JsonArray content = new JsonArray();
-         if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
+         if (this.settings.provider == AiSettings.Provider.GEMINI) {
             content.add(AiJson.objectOf("text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
             pictures.forEach(px -> content.add(AiJson.objectOf("inlineData", AiJson.objectOf("mimeType", "image/png", "data", px))));
             out.get(out.size() - 1).getAsJsonArray("parts").addAll(content);
@@ -171,13 +171,13 @@ public final class AiProvider implements AutoCloseable {
 
             for (String p : pictures) {
                content.add(
-                  this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC
+                  this.settings.provider == AiSettings.Provider.ANTHROPIC
                      ? AiJson.objectOf("type", "image", "source", AiJson.objectOf("type", "base64", "media_type", "image/png", "data", p))
                      : AiJson.objectOf("type", "image_url", "image_url", AiJson.objectOf("url", "data:image/png;base64," + p))
                );
             }
 
-            if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
+            if (this.settings.provider == AiSettings.Provider.ANTHROPIC) {
                out.get(out.size() - 1).getAsJsonArray("content").addAll(content);
             } else {
                out.add(AiJson.objectOf("role", "user", "content", content));
@@ -187,7 +187,7 @@ public final class AiProvider implements AutoCloseable {
          return out;
       } else {
          List<JsonObject> out = new ArrayList<>();
-         if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
+         if (this.settings.provider == AiSettings.Provider.GEMINI) {
             JsonArray parts = new JsonArray();
 
             for (int i = 0; i < calls.size(); i++) {
@@ -200,7 +200,7 @@ public final class AiProvider implements AutoCloseable {
             }
 
             out.add(AiJson.objectOf("role", "user", "parts", parts));
-         } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
+         } else if (this.settings.provider == AiSettings.Provider.ANTHROPIC) {
             JsonArray content = new JsonArray();
 
             for (int i = 0; i < calls.size(); i++) {
@@ -219,22 +219,22 @@ public final class AiProvider implements AutoCloseable {
    }
 
    public JsonObject init_JsonObject_Str(String system, List<JsonObject> history, JsonArray functions) {
-      return this.init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, null);
+      return this.buildRequest(AiContext.Inner_StreamUtil.of(system), history, functions, null);
    }
 
    public JsonObject init_JsonObject_Str(String system, List<JsonObject> history, JsonArray functions, String toolChoice) {
-      return this.init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice);
+      return this.buildRequest(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice);
    }
 
    public JsonObject init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions) {
-      return this.init_JsonObject_c_StreamUtil(prompt, history, functions, null);
+      return this.buildRequest(prompt, history, functions, null);
    }
 
-   public synchronized JsonObject init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
+   public synchronized JsonObject buildRequest(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
       String effort = this.load();
-      JsonObject body = AiJson.objectOf("model", this.init_AiSettings.model, "stream", true);
+      JsonObject body = AiJson.objectOf("model", this.settings.model, "stream", true);
       JsonArray wireTools = new JsonArray();
-      if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
+      if (this.settings.provider == AiSettings.Provider.GEMINI) {
          JsonArray declarations = new JsonArray();
 
          for (JsonElement function : functions) {
@@ -242,11 +242,11 @@ public final class AiProvider implements AutoCloseable {
             declarations.add(AiJson.objectOf("name", f.get("name"), "description", f.get("description"), "parametersJsonSchema", f.get("parameters")));
          }
 
-         JsonObject generation = AiJson.objectOf("maxOutputTokens", this.init_AiSettings.outputTokens);
-         if (AiSettings.geminiThinkingLevels(this.init_AiSettings.model)) {
+         JsonObject generation = AiJson.objectOf("maxOutputTokens", this.settings.outputTokens);
+         if (AiSettings.geminiThinkingLevels(this.settings.model)) {
             generation.add("thinkingConfig", AiJson.objectOf("thinkingLevel", effort.toUpperCase(Locale.ROOT)));
-         } else if (AiSettings.geminiThinkingBudget(this.init_AiSettings.model)) {
-            int budget = AiSettings.thinkingBudget(this.init_AiSettings.provider, effort, this.init_AiSettings.outputTokens);
+         } else if (AiSettings.geminiThinkingBudget(this.settings.model)) {
+            int budget = AiSettings.thinkingBudget(this.settings.provider, effort, this.settings.outputTokens);
             if (budget > 0) {
                generation.add("thinkingConfig", AiJson.objectOf("thinkingBudget", budget));
             }
@@ -269,28 +269,28 @@ public final class AiProvider implements AutoCloseable {
                );
             }
          }
-      } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
+      } else if (this.settings.provider == AiSettings.Provider.ANTHROPIC) {
          for (JsonElement item : functions) {
             JsonObject f = item.getAsJsonObject();
             wireTools.add(AiJson.objectOf("name", f.get("name"), "description", f.get("description"), "input_schema", f.get("parameters")));
          }
 
-         body.add("system", init_JsonArray_c_StreamUtil(prompt));
+         body.add("system", systemBlocks(prompt));
          body.add("messages", AiJson.GSON.toJsonTree(history));
-         body.addProperty("max_tokens", this.init_AiSettings.outputTokens);
+         body.addProperty("max_tokens", this.settings.outputTokens);
          if (!wireTools.isEmpty()) {
             body.add("tools", wireTools);
          }
 
-         body.add("cache_control", init_JsonObject.deepCopy());
+         body.add("cache_control", CACHE_CONTROL.deepCopy());
          JsonObject thinking = null;
-         switch (AiSettings.anthropicThinking(this.init_AiSettings.model)) {
+         switch (AiSettings.anthropicThinking(this.settings.model)) {
             case ADAPTIVE:
                thinking = AiJson.objectOf("type", "adaptive");
                body.add("output_config", AiJson.objectOf("effort", effort));
                break;
             case BUDGET:
-               int budget = AiSettings.thinkingBudget(this.init_AiSettings.provider, effort, this.init_AiSettings.outputTokens);
+               int budget = AiSettings.thinkingBudget(this.settings.provider, effort, this.settings.outputTokens);
                if (budget > 0) {
                   thinking = AiJson.objectOf("type", "enabled", "budget_tokens", budget);
                }
@@ -298,7 +298,7 @@ public final class AiProvider implements AutoCloseable {
          }
 
          if (thinking != null) {
-            if (load(this.init_AiSettings)) {
+            if (load(this.settings)) {
                thinking.add("block_binding", AiJson.objectOf("prefix_mismatch_behavior", "drop_block"));
             }
 
@@ -314,7 +314,7 @@ public final class AiProvider implements AutoCloseable {
          }
       } else if (this.load_Z) {
          body = AiJson.objectOf(
-            "model", this.init_AiSettings.model, "stream", true, "store", false, "instructions", prompt.text(), "input", init_JsonArray_List(history)
+            "model", this.settings.model, "stream", true, "store", false, "instructions", prompt.text(), "input", responsesInput(history)
          );
 
          for (JsonElement item : functions) {
@@ -333,8 +333,8 @@ public final class AiProvider implements AutoCloseable {
             }
          }
 
-         body.addProperty("max_output_tokens", this.init_AiSettings.outputTokens);
-         if (AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model) != null) {
+         body.addProperty("max_output_tokens", this.settings.outputTokens);
+         if (AiSettings.effortField(this.settings.provider, this.settings.model) != null) {
             body.add("reasoning", AiJson.objectOf("effort", effort));
          }
       } else {
@@ -351,19 +351,19 @@ public final class AiProvider implements AutoCloseable {
             body.add("tools", wireTools);
          }
 
-         boolean completionTokens = this.init_AiSettings.provider == AiSettings.Provider.OPENAI
-            || this.init_AiSettings.provider == AiSettings.Provider.MOONSHOT
-               && "reasoning_effort".equals(AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model));
-         body.addProperty(completionTokens ? "max_completion_tokens" : "max_tokens", this.init_AiSettings.outputTokens);
+         boolean completionTokens = this.settings.provider == AiSettings.Provider.OPENAI
+            || this.settings.provider == AiSettings.Provider.MOONSHOT
+               && "reasoning_effort".equals(AiSettings.effortField(this.settings.provider, this.settings.model));
+         body.addProperty(completionTokens ? "max_completion_tokens" : "max_tokens", this.settings.outputTokens);
          body.add("stream_options", AiJson.objectOf("include_usage", true));
-         String effortField = AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model);
-         String modelId = this.init_AiSettings.model.toLowerCase(Locale.ROOT);
-         boolean thinkingRejectsForced = this.init_AiSettings.provider == AiSettings.Provider.DASHSCOPE
+         String effortField = AiSettings.effortField(this.settings.provider, this.settings.model);
+         String modelId = this.settings.model.toLowerCase(Locale.ROOT);
+         boolean thinkingRejectsForced = this.settings.provider == AiSettings.Provider.DASHSCOPE
                && (modelId.startsWith("qwen") || "thinking_budget".equals(effortField))
-            || this.init_AiSettings.provider == AiSettings.Provider.MOONSHOT && !modelId.startsWith("kimi-k3");
+            || this.settings.provider == AiSettings.Provider.MOONSHOT && !modelId.startsWith("kimi-k3");
          if (!wireTools.isEmpty()
             && toolChoice != null
-            && (this.init_AiSettings.provider != AiSettings.Provider.DEEPSEEK || "none".equals(toolChoice))
+            && (this.settings.provider != AiSettings.Provider.DEEPSEEK || "none".equals(toolChoice))
             && (!thinkingRejectsForced || !"required".equals(toolChoice))) {
             body.addProperty("tool_choice", toolChoice);
          }
@@ -371,13 +371,13 @@ public final class AiProvider implements AutoCloseable {
          if ("reasoning_effort".equals(effortField)) {
             body.addProperty(effortField, effort);
          } else if (effortField != null) {
-            int budget = AiSettings.thinkingBudget(this.init_AiSettings.provider, effort, this.init_AiSettings.outputTokens);
+            int budget = AiSettings.thinkingBudget(this.settings.provider, effort, this.settings.outputTokens);
             if (budget > 0) {
                body.addProperty(effortField, budget);
             }
          }
 
-         if (this.init_AiSettings.provider == AiSettings.Provider.DASHSCOPE && "thinking_budget".equals(effortField)) {
+         if (this.settings.provider == AiSettings.Provider.DASHSCOPE && "thinking_budget".equals(effortField)) {
             body.addProperty("enable_thinking", true);
          }
       }
@@ -385,15 +385,15 @@ public final class AiProvider implements AutoCloseable {
       return body;
    }
 
-   static JsonArray init_JsonArray_c_StreamUtil(AiContext.Inner_StreamUtil prompt) {
+   static JsonArray systemBlocks(AiContext.Inner_StreamUtil prompt) {
       JsonArray system = new JsonArray();
       JsonObject stable = AiJson.objectOf("type", "text", "text", prompt.stable().isEmpty() ? "." : prompt.stable());
-      stable.add("cache_control", init_JsonObject.deepCopy());
+      stable.add("cache_control", CACHE_CONTROL.deepCopy());
       system.add(stable);
       if (!prompt.objective().isEmpty()) {
          JsonObject objective = AiJson.objectOf("type", "text", "text", prompt.objective());
          if (prompt.objective().length() >= 2000) {
-            objective.add("cache_control", init_JsonObject.deepCopy());
+            objective.add("cache_control", CACHE_CONTROL.deepCopy());
          }
 
          system.add(objective);
@@ -402,7 +402,7 @@ public final class AiProvider implements AutoCloseable {
       return system;
    }
 
-   static JsonArray init_JsonArray_List(List<JsonObject> history) {
+   static JsonArray responsesInput(List<JsonObject> history) {
       JsonArray input = new JsonArray();
 
       for (JsonObject m : history) {
@@ -567,18 +567,18 @@ public final class AiProvider implements AutoCloseable {
       BooleanSupplier cancelled,
       Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      this.init_AiSettings.validate();
+      this.settings.validate();
       boolean responses = this.load_Z;
-      JsonObject body = this.init_JsonObject_c_StreamUtil(prompt, history, functions, toolChoice);
-      String beta = init_Str_AiSettings_JsonObject(this.init_AiSettings, body);
-      String base = AiHttp.baseUrl(this.init_AiSettings.provider, this.init_AiSettings.endpoint);
-      String suffix = this.init_AiSettings.provider == AiSettings.Provider.GEMINI
+      JsonObject body = this.buildRequest(prompt, history, functions, toolChoice);
+      String beta = init_Str_AiSettings_JsonObject(this.settings, body);
+      String base = AiHttp.baseUrl(this.settings.provider, this.settings.endpoint);
+      String suffix = this.settings.provider == AiSettings.Provider.GEMINI
          ? "/models/"
-            + URLEncoder.encode(this.init_AiSettings.model.replaceFirst("^models/", ""), StandardCharsets.UTF_8).replace("+", "%20")
+            + URLEncoder.encode(this.settings.model.replaceFirst("^models/", ""), StandardCharsets.UTF_8).replace("+", "%20")
             + ":streamGenerateContent?alt=sse"
-         : (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC ? "/messages" : (responses ? "/responses" : "/chat/completions"));
-      String key = this.init_AiSettings.key(this.init_AiSettings.provider.name());
-      Map<String, String> auth = AiHttp.authHeaders(this.init_AiSettings.provider, key);
+         : (this.settings.provider == AiSettings.Provider.ANTHROPIC ? "/messages" : (responses ? "/responses" : "/chat/completions"));
+      String key = this.settings.key(this.settings.provider.name());
+      Map<String, String> auth = AiHttp.authHeaders(this.settings.provider, key);
 
       for (int attempt = 0; attempt < 6; attempt++) {
          if (cancelled.getAsBoolean() || this.init_Z) {
@@ -595,8 +595,8 @@ public final class AiProvider implements AutoCloseable {
             request.header("anthropic-beta", beta);
          }
 
-         CompletableFuture<HttpResponse<InputStream>> future = this.init_HttpClient.sendAsync(request.build(), BodyHandlers.ofInputStream());
-         this.init_CompletableFuture = future;
+         CompletableFuture<HttpResponse<InputStream>> future = this.http.sendAsync(request.build(), BodyHandlers.ofInputStream());
+         this.future = future;
          AtomicBoolean content = new AtomicBoolean();
          AtomicBoolean toolDeltas = new AtomicBoolean();
 
@@ -623,7 +623,7 @@ public final class AiProvider implements AutoCloseable {
             } catch (TimeoutException e) {
                future.cancel(true);
                if (attempt < 5 && !this.init_Z && !cancelled.getAsBoolean()) {
-                  this.init_V_HttpResponse(null, attempt, cancelled);
+                  this.backoff(null, attempt, cancelled);
                   continue;
                }
 
@@ -631,7 +631,7 @@ public final class AiProvider implements AutoCloseable {
             }
 
             InputStream responseBody = response.body();
-            this.init_InputStream = responseBody;
+            this.responseBody = responseBody;
             if (response.statusCode() != 200) {
                String detail;
                try (InputStream input = responseBody) {
@@ -639,21 +639,21 @@ public final class AiProvider implements AutoCloseable {
                }
 
                int status = response.statusCode();
-               if (status == 400 && !responses && this.init_AiSettings.provider == AiSettings.Provider.OPENAI && detail.contains("/v1/responses")) {
+               if (status == 400 && !responses && this.settings.provider == AiSettings.Provider.OPENAI && detail.contains("/v1/responses")) {
                   responses = true;
                   this.load_Z = true;
-                  body = this.init_JsonObject_c_StreamUtil(prompt, history, functions, toolChoice);
+                  body = this.buildRequest(prompt, history, functions, toolChoice);
                   suffix = "/responses";
                   attempt--;
                   continue;
                }
 
                if ((status == 429 || status >= 500) && attempt < 5) {
-                  this.init_V_HttpResponse(response, attempt, cancelled);
+                  this.backoff(response, attempt, cancelled);
                   continue;
                }
 
-               String message = AiHttp.init(this.init_AiSettings.provider, status, detail, key);
+               String message = AiHttp.init(this.settings.provider, status, detail, key);
                if (status != 429 && status < 500) {
                   throw new IOException(message);
                }
@@ -663,10 +663,10 @@ public final class AiProvider implements AutoCloseable {
 
             AtomicLong activity = new AtomicLong(System.nanoTime());
             AtomicBoolean executing = new AtomicBoolean();
-            Thread timer = new Thread(() -> init_V_InputStream(responseBody, activity, executing), "ai-provider-stall-watch");
+            Thread timer = new Thread(() -> watchIdle(responseBody, activity, executing), "ai-provider-stall-watch");
             timer.setDaemon(true);
             timer.start();
-            this.init_Thread = timer;
+            this.timer = timer;
             Consumer<AiProvider.Inner_CachePool> timed = ready -> {
                executing.set(true);
 
@@ -681,14 +681,14 @@ public final class AiProvider implements AutoCloseable {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new AiProvider.Inner_StreamUtil(responseBody, activity), StandardCharsets.UTF_8))) {
                return responses
                   ? init_bA_BufferHelper_BufferedReader(reader, onText, cancelled, content, toolDeltas, timed)
-                  : init_bA_BufferHelper_AiSettings_Provide(this.init_AiSettings.provider, reader, onText, cancelled, content, toolDeltas, timed);
+                  : init_bA_BufferHelper_AiSettings_Provide(this.settings.provider, reader, onText, cancelled, content, toolDeltas, timed);
             }
          } catch (AiProvider.Inner_ConfigStore e) {
             if (attempt >= 5 || toolDeltas.get() || this.init_Z) {
                throw e;
             }
 
-            this.init_V_HttpResponse(null, attempt, cancelled);
+            this.backoff(null, attempt, cancelled);
          } catch (IOException e) {
             String safe = AiHttp.init(e.getMessage(), key);
             if (!Objects.equals(safe, e.getMessage())) {
@@ -697,14 +697,14 @@ public final class AiProvider implements AutoCloseable {
 
             throw e;
          } finally {
-            Thread timer = this.init_Thread;
-            this.init_Thread = null;
+            Thread timer = this.timer;
+            this.timer = null;
             if (timer != null) {
                timer.interrupt();
             }
 
-            InputStream input = this.init_InputStream;
-            this.init_InputStream = null;
+            InputStream input = this.responseBody;
+            this.responseBody = null;
             if (input != null) {
                try {
                   input.close();
@@ -712,16 +712,16 @@ public final class AiProvider implements AutoCloseable {
                }
             }
 
-            this.init_CompletableFuture = null;
+            this.future = null;
          }
       }
 
       throw new IOException("Provider retry limit reached");
    }
 
-   private void init_V_HttpResponse(HttpResponse<?> response, int attempt, BooleanSupplier cancelled) throws InterruptedException {
-      long scheduled = this.load_J * (attempt == 0 ? 1 : (attempt == 1 ? 4 : 15));
-      long header = response == null ? 0L : init_J_Str(response.headers().firstValue("Retry-After").orElse(null));
+   private void backoff(HttpResponse<?> response, int attempt, BooleanSupplier cancelled) throws InterruptedException {
+      long scheduled = this.millis * (attempt == 0 ? 1 : (attempt == 1 ? 4 : 15));
+      long header = response == null ? 0L : retryAfterMillis(response.headers().firstValue("Retry-After").orElse(null));
       long wait = Math.min(60000L, Math.max(scheduled, header));
       long slept = 0L;
 
@@ -736,7 +736,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static long init_J_Str(String value) {
+   private static long retryAfterMillis(String value) {
       if (value != null && !value.isBlank()) {
          String trimmed = value.trim();
 
@@ -756,7 +756,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static void init_V_InputStream(InputStream body, AtomicLong activity, AtomicBoolean executing) {
+   private static void watchIdle(InputStream body, AtomicLong activity, AtomicBoolean executing) {
       try {
          while (!Thread.currentThread().isInterrupted()) {
             if (executing.get()) {
@@ -779,7 +779,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static String init_Str_Str_I(String raw, int max) {
+   private static String snippet(String raw, int max) {
       String collapsed = AiHttp.init(raw, null).replaceAll("\\s+", " ").trim();
       return collapsed.length() <= max ? collapsed : collapsed.substring(0, max);
    }
@@ -849,7 +849,7 @@ public final class AiProvider implements AutoCloseable {
                try {
                   event = AiJson.parseObject(data);
                } catch (RuntimeException e) {
-                  throw new IOException("Provider sent a malformed streaming event: " + init_Str_Str_I(data, 500), e);
+                  throw new IOException("Provider sent a malformed streaming event: " + snippet(data, 500), e);
                }
 
                if (!event.has("error") && !"error".equals(AiJson.getString(event, "type", ""))) {
@@ -926,17 +926,17 @@ public final class AiProvider implements AutoCloseable {
                            content.set(true);
                            if (d.has("text")) {
                               String delta = d.get("text").getAsString();
-                              init_V_JsonObject(b, "text", delta);
+                              appendProperty(b, "text", delta);
                               text.append(delta);
                               onText.accept(delta);
                            }
 
                            if (d.has("thinking")) {
-                              init_V_JsonObject(b, "thinking", d.get("thinking").getAsString());
+                              appendProperty(b, "thinking", d.get("thinking").getAsString());
                            }
 
                            if (d.has("signature")) {
-                              init_V_JsonObject(b, "signature", d.get("signature").getAsString());
+                              appendProperty(b, "signature", d.get("signature").getAsString());
                            }
 
                            if (d.has("partial_json")) {
@@ -945,7 +945,7 @@ public final class AiProvider implements AutoCloseable {
                         } else if (type.equals("content_block_stop")) {
                            JsonObject b = blocks.get(index);
                            if (b != null && "tool_use".equals(AiJson.getString(b, "type", ""))) {
-                              init_V_TreeMap(
+                              markCallReady(
                                  ready,
                                  index,
                                  init_bA_DataUtil_JsonObject_Str(b, arguments.containsKey(index) ? arguments.get(index).toString() : null),
@@ -996,7 +996,7 @@ public final class AiProvider implements AutoCloseable {
                   JsonObject delta = choice.has("delta") && choice.get("delta").isJsonObject() ? choice.getAsJsonObject("delta") : null;
                   if (delta == null) {
                      if (finishMarker) {
-                        init_V_TreeMap(blocks, ready, onCallReady);
+                        markAllBlocksReady(blocks, ready, onCallReady);
                      }
                      continue;
                   }
@@ -1005,7 +1005,7 @@ public final class AiProvider implements AutoCloseable {
                   text.append(deltaContent);
                   if (!deltaContent.isEmpty()) {
                      content.set(true);
-                     init_V_TreeMap(blocks, ready, onCallReady);
+                     markAllBlocksReady(blocks, ready, onCallReady);
                      onText.accept(deltaContent);
                   }
 
@@ -1038,7 +1038,7 @@ public final class AiProvider implements AutoCloseable {
                               bf.addProperty("name", name);
                            }
 
-                           init_V_JsonObject(bf, "arguments", AiJson.getString(f, "arguments", ""));
+                           appendProperty(bf, "arguments", AiJson.getString(f, "arguments", ""));
                         }
                      }
 
@@ -1050,14 +1050,14 @@ public final class AiProvider implements AutoCloseable {
                   }
 
                   if (finishMarker) {
-                     init_V_TreeMap(blocks, ready, onCallReady);
+                     markAllBlocksReady(blocks, ready, onCallReady);
                   }
                   continue;
                }
 
                throw new IOException(
                   "Provider returned a streaming error: "
-                     + init_Str_Str_I(event.has("error") && !event.get("error").isJsonNull() ? event.get("error").toString() : data, 500)
+                     + snippet(event.has("error") && !event.get("error").isJsonNull() ? event.get("error").toString() : data, 500)
                );
             }
             break;
@@ -1094,7 +1094,7 @@ public final class AiProvider implements AutoCloseable {
                      block.add("input", raw.isBlank() ? new JsonObject() : AiJson.parseObject(raw));
                   } catch (RuntimeException e) {
                      block.add("input", new JsonObject());
-                     argumentErrors.put(entry.getKey(), init_Str_Str_I(raw, 1000));
+                     argumentErrors.put(entry.getKey(), snippet(raw, 1000));
                   }
                }
             }
@@ -1113,14 +1113,14 @@ public final class AiProvider implements AutoCloseable {
                      b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : new JsonObject(),
                      argumentErrors.get(entry.getKey())
                   );
-                  init_V_TreeMap(ready, entry.getKey(), call, onCallReady);
+                  markCallReady(ready, entry.getKey(), call, onCallReady);
                }
 
                calls.add(call);
             }
          }
       } else {
-         init_V_TreeMap(blocks, ready, onCallReady);
+         markAllBlocksReady(blocks, ready, onCallReady);
          wire = AiJson.objectOf("role", "assistant", "content", text.toString());
          if (!reasoning.isEmpty()) {
             wire.addProperty("reasoning_content", reasoning.toString());
@@ -1177,7 +1177,7 @@ public final class AiProvider implements AutoCloseable {
                try {
                   event = AiJson.parseObject(data);
                } catch (RuntimeException e) {
-                  throw new IOException("Provider sent a malformed streaming event: " + init_Str_Str_I(data, 500), e);
+                  throw new IOException("Provider sent a malformed streaming event: " + snippet(data, 500), e);
                }
 
                String type = AiJson.getString(event, "type", "");
@@ -1186,11 +1186,11 @@ public final class AiProvider implements AutoCloseable {
                JsonObject response = event.has("response") && event.get("response").isJsonObject() ? event.getAsJsonObject("response") : null;
                switch (type) {
                   case "error":
-                     throw new IOException("Provider returned a streaming error: " + init_Str_Str_I(data, 500));
+                     throw new IOException("Provider returned a streaming error: " + snippet(data, 500));
                   case "response.failed":
                      throw new IOException(
                         "Provider returned a streaming error: "
-                           + init_Str_Str_I(
+                           + snippet(
                               response != null && response.has("error") && !response.get("error").isJsonNull() ? response.get("error").toString() : data, 500
                            )
                      );
@@ -1208,7 +1208,7 @@ public final class AiProvider implements AutoCloseable {
                      content.set(true);
                      if (item != null && "function_call".equals(AiJson.getString(item, "type", ""))) {
                         toolDeltas.set(true);
-                        blocks.put(index, init_JsonObject_JsonObject(item));
+                        blocks.put(index, toToolCall(item));
                      }
                      break;
                   case "response.function_call_arguments.delta":
@@ -1216,7 +1216,7 @@ public final class AiProvider implements AutoCloseable {
                      toolDeltas.set(true);
                      JsonObject b = blocks.get(index);
                      if (b != null) {
-                        init_V_JsonObject(b.getAsJsonObject("function"), "arguments", AiJson.getString(event, "delta", ""));
+                        appendProperty(b.getAsJsonObject("function"), "arguments", AiJson.getString(event, "delta", ""));
                      }
                      break;
                   case "response.output_item.done":
@@ -1228,8 +1228,8 @@ public final class AiProvider implements AutoCloseable {
                      if (itemType.equals("function_call")) {
                         content.set(true);
                         toolDeltas.set(true);
-                        blocks.put(index, init_JsonObject_JsonObject(item));
-                        init_V_TreeMap_2(blocks, ready, index, onCallReady);
+                        blocks.put(index, toToolCall(item));
+                        markBlockReady(blocks, ready, index, onCallReady);
                      } else if (itemType.equals("message") && !streamedText.contains(index) && item.has("content") && item.get("content").isJsonArray()) {
                         for (JsonElement part : item.getAsJsonArray("content")) {
                            if (part.isJsonObject()) {
@@ -1248,7 +1248,7 @@ public final class AiProvider implements AutoCloseable {
                   case "response.incomplete":
                      content.set(true);
                      if (response != null && response.has("usage") && response.get("usage").isJsonObject()) {
-                        init_V_JsonObject_JArr(response.getAsJsonObject("usage"), meter);
+                        readUsage(response.getAsJsonObject("usage"), meter);
                      }
 
                      if (type.equals("response.completed")) {
@@ -1277,7 +1277,7 @@ public final class AiProvider implements AutoCloseable {
          throw new IOException("Model output limit reached before a complete response");
       }
 
-      init_V_TreeMap(blocks, ready, onCallReady);
+      markAllBlocksReady(blocks, ready, onCallReady);
       JsonObject wire = AiJson.objectOf("role", "assistant", "content", text.toString());
       if (!blocks.isEmpty()) {
          wire.add("tool_calls", AiJson.GSON.toJsonTree(blocks.values()));
@@ -1297,7 +1297,7 @@ public final class AiProvider implements AutoCloseable {
       return new AiProvider.Inner_BufferHelper(wire, text.toString(), List.copyOf(calls), usage.reported() ? usage.total() : meter[4], finish, usage);
    }
 
-   private static JsonObject init_JsonObject_JsonObject(JsonObject item) {
+   private static JsonObject toToolCall(JsonObject item) {
       return AiJson.objectOf(
          "id",
          AiJson.getString(item, "call_id", ""),
@@ -1308,77 +1308,77 @@ public final class AiProvider implements AutoCloseable {
       );
    }
 
-   static void init_V_JsonObject_JArr(JsonObject u, long[] m) {
-      long input = init_J_JsonObject_Str(u, "input_tokens");
+   static void readUsage(JsonObject u, long[] m) {
+      long input = longOrZero(u, "input_tokens");
       JsonObject details = u.has("input_tokens_details") && u.get("input_tokens_details").isJsonObject() ? u.getAsJsonObject("input_tokens_details") : null;
-      long cached = init_Z_JsonObject_Str(details, "cached_tokens") ? init_J_JsonObject_Str(details, "cached_tokens") : 0L;
+      long cached = hasPrimitive(details, "cached_tokens") ? longOrZero(details, "cached_tokens") : 0L;
       m[1] = Math.min(cached, input);
       m[0] = Math.max(0L, input - cached);
       m[2] = 0L;
-      m[3] = init_J_JsonObject_Str(u, "output_tokens");
-      m[4] = init_J_JsonObject_Str(u, "total_tokens");
+      m[3] = longOrZero(u, "output_tokens");
+      m[4] = longOrZero(u, "total_tokens");
    }
 
-   private static boolean init_Z_JsonObject_Str(JsonObject o, String key) {
+   private static boolean hasPrimitive(JsonObject o, String key) {
       return o != null && o.has(key) && o.get(key).isJsonPrimitive();
    }
 
-   private static long init_J_JsonObject_Str(JsonObject o, String key) {
-      return init_Z_JsonObject_Str(o, key) ? o.get(key).getAsLong() : 0L;
+   private static long longOrZero(JsonObject o, String key) {
+      return hasPrimitive(o, key) ? o.get(key).getAsLong() : 0L;
    }
 
    static void load(JsonObject u, long[] m) {
-      if (init_Z_JsonObject_Str(u, "input_tokens")) {
-         m[0] = init_J_JsonObject_Str(u, "input_tokens");
+      if (hasPrimitive(u, "input_tokens")) {
+         m[0] = longOrZero(u, "input_tokens");
       }
 
-      if (init_Z_JsonObject_Str(u, "cache_read_input_tokens")) {
-         m[1] = init_J_JsonObject_Str(u, "cache_read_input_tokens");
+      if (hasPrimitive(u, "cache_read_input_tokens")) {
+         m[1] = longOrZero(u, "cache_read_input_tokens");
       }
 
-      if (init_Z_JsonObject_Str(u, "cache_creation_input_tokens")) {
-         m[2] = init_J_JsonObject_Str(u, "cache_creation_input_tokens");
+      if (hasPrimitive(u, "cache_creation_input_tokens")) {
+         m[2] = longOrZero(u, "cache_creation_input_tokens");
       }
 
-      if (init_Z_JsonObject_Str(u, "output_tokens")) {
-         m[3] = init_J_JsonObject_Str(u, "output_tokens");
+      if (hasPrimitive(u, "output_tokens")) {
+         m[3] = longOrZero(u, "output_tokens");
       }
    }
 
    static void read(JsonObject u, long[] m) {
-      long prompt = init_J_JsonObject_Str(u, "prompt_tokens");
-      if (!init_Z_JsonObject_Str(u, "prompt_cache_hit_tokens") && !init_Z_JsonObject_Str(u, "prompt_cache_miss_tokens")) {
+      long prompt = longOrZero(u, "prompt_tokens");
+      if (!hasPrimitive(u, "prompt_cache_hit_tokens") && !hasPrimitive(u, "prompt_cache_miss_tokens")) {
          JsonObject details = u.has("prompt_tokens_details") && u.get("prompt_tokens_details").isJsonObject()
             ? u.getAsJsonObject("prompt_tokens_details")
             : null;
-         long cached = init_Z_JsonObject_Str(details, "cached_tokens")
-            ? init_J_JsonObject_Str(details, "cached_tokens")
-            : init_J_JsonObject_Str(u, "cached_tokens");
+         long cached = hasPrimitive(details, "cached_tokens")
+            ? longOrZero(details, "cached_tokens")
+            : longOrZero(u, "cached_tokens");
          m[1] = Math.min(cached, prompt);
          m[0] = Math.max(0L, prompt - cached);
       } else {
-         long hit = init_J_JsonObject_Str(u, "prompt_cache_hit_tokens");
-         long miss = init_J_JsonObject_Str(u, "prompt_cache_miss_tokens");
+         long hit = longOrZero(u, "prompt_cache_hit_tokens");
+         long miss = longOrZero(u, "prompt_cache_miss_tokens");
          m[1] = hit;
          m[0] = hit + miss == 0L ? prompt : miss;
       }
 
       m[2] = 0L;
-      m[3] = init_J_JsonObject_Str(u, "completion_tokens");
-      m[4] = init_J_JsonObject_Str(u, "total_tokens");
+      m[3] = longOrZero(u, "completion_tokens");
+      m[4] = longOrZero(u, "total_tokens");
    }
 
    static void write(JsonObject u, long[] m) {
-      long prompt = init_J_JsonObject_Str(u, "promptTokenCount") + init_J_JsonObject_Str(u, "toolUsePromptTokenCount");
-      long cached = init_J_JsonObject_Str(u, "cachedContentTokenCount");
+      long prompt = longOrZero(u, "promptTokenCount") + longOrZero(u, "toolUsePromptTokenCount");
+      long cached = longOrZero(u, "cachedContentTokenCount");
       m[0] = Math.max(0L, prompt - cached);
       m[1] = Math.min(cached, prompt);
       m[2] = 0L;
-      m[3] = init_J_JsonObject_Str(u, "candidatesTokenCount") + init_J_JsonObject_Str(u, "thoughtsTokenCount");
-      m[4] = init_J_JsonObject_Str(u, "totalTokenCount");
+      m[3] = longOrZero(u, "candidatesTokenCount") + longOrZero(u, "thoughtsTokenCount");
+      m[4] = longOrZero(u, "totalTokenCount");
    }
 
-   private static AiProvider.Inner_DataUtil init_bA_DataUtil_Str(String id, String name, String rawArguments) {
+   private static AiProvider.Inner_DataUtil parseToolCall(String id, String name, String rawArguments) {
       if (rawArguments.isBlank()) {
          return new AiProvider.Inner_DataUtil(id, name, new JsonObject());
       }
@@ -1386,11 +1386,11 @@ public final class AiProvider implements AutoCloseable {
       try {
          return new AiProvider.Inner_DataUtil(id, name, AiJson.parseObject(rawArguments));
       } catch (RuntimeException e) {
-         return new AiProvider.Inner_DataUtil(id, name, new JsonObject(), init_Str_Str_I(rawArguments, 1000));
+         return new AiProvider.Inner_DataUtil(id, name, new JsonObject(), snippet(rawArguments, 1000));
       }
    }
 
-   private static void init_V_TreeMap(TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, AiProvider.Inner_DataUtil call, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void markCallReady(TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, AiProvider.Inner_DataUtil call, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
       if (ready.putIfAbsent(index, call) == null) {
          if (ready.size() > 32) {
             throw new IOException("Too many tool calls");
@@ -1400,17 +1400,17 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static void init_V_TreeMap_2(
+   private static void markBlockReady(
       TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException {
       if (!ready.containsKey(index)) {
          JsonObject b = blocks.get(index);
          if (b != null) {
             JsonObject f = b.getAsJsonObject("function");
-            init_V_TreeMap(
+            markCallReady(
                ready,
                index,
-               init_bA_DataUtil_Str(AiJson.getString(b, "id", ""), f.get("name").getAsString(), f.get("arguments").getAsString()),
+               parseToolCall(AiJson.getString(b, "id", ""), f.get("name").getAsString(), f.get("arguments").getAsString()),
                onCallReady
             );
          }
@@ -1431,15 +1431,15 @@ public final class AiProvider implements AutoCloseable {
                   return;
                }
 
-               init_V_TreeMap(ready, index, init_bA_DataUtil_Str(AiJson.getString(b, "id", ""), name, raw), onCallReady);
+               markCallReady(ready, index, parseToolCall(AiJson.getString(b, "id", ""), name, raw), onCallReady);
             }
          }
       }
    }
 
-   private static void init_V_TreeMap(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void markAllBlocksReady(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
       for (int index : blocks.keySet()) {
-         init_V_TreeMap_2(blocks, ready, index, onCallReady);
+         markBlockReady(blocks, ready, index, onCallReady);
       }
    }
 
@@ -1450,7 +1450,7 @@ public final class AiProvider implements AutoCloseable {
             block.add("input", raw.isBlank() ? new JsonObject() : AiJson.parseObject(raw));
          } catch (RuntimeException e) {
             block.add("input", new JsonObject());
-            error = init_Str_Str_I(raw, 1000);
+            error = snippet(raw, 1000);
          }
       }
 
@@ -1462,24 +1462,24 @@ public final class AiProvider implements AutoCloseable {
       );
    }
 
-   private static void init_V_JsonObject(JsonObject o, String key, String value) {
+   private static void appendProperty(JsonObject o, String key, String value) {
       o.addProperty(key, AiJson.getString(o, key, "") + value);
    }
 
    @Override
    public void close() {
       this.init_Z = true;
-      CompletableFuture<?> future = this.init_CompletableFuture;
+      CompletableFuture<?> future = this.future;
       if (future != null) {
          future.cancel(true);
       }
 
-      Thread timer = this.init_Thread;
+      Thread timer = this.timer;
       if (timer != null) {
          timer.interrupt();
       }
 
-      InputStream input = this.init_InputStream;
+      InputStream input = this.responseBody;
       if (input != null) {
          try {
             input.close();
@@ -1487,7 +1487,7 @@ public final class AiProvider implements AutoCloseable {
          }
       }
 
-      this.init_HttpClient.shutdownNow();
+      this.http.shutdownNow();
    }
 
    public record Inner_BufferHelper(JsonObject wireMessage, String text, List<AiProvider.Inner_DataUtil> calls, long tokens, String finish, AiProvider.Inner_TaskQueue usage) {

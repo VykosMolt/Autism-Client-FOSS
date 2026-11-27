@@ -110,7 +110,7 @@ public final class AiBlockMine {
    static final long update_J = 600000000000L;
    static final double pop_D = 4.3;
    static final double tick_D = 0.5;
-   private static final Map<Long, long[]> init_Map = new HashMap<>();
+   private static final Map<Long, long[]> STRIKES_BY_CELL = new HashMap<>();
    private static final long[] init_JArr = new long[2];
    static final long sync_J = 180000000000L;
    static final long flush_J = 300000000000L;
@@ -161,7 +161,7 @@ public final class AiBlockMine {
       return false;
    }
 
-   static Set<Block> init_Set(Set<Item> wanted, Predicate<Block> matches) {
+   static Set<Block> sourceBlocks(Set<Item> wanted, Predicate<Block> matches) {
       Set<Block> sources = new HashSet<>();
 
       for (Item item : wanted) {
@@ -175,16 +175,16 @@ public final class AiBlockMine {
       return Set.copyOf(sources);
    }
 
-   static Predicate<Block> init_Predicate(Set<Item> wanted, Predicate<Block> requested) {
+   static Predicate<Block> sourceBlockFilter(Set<Item> wanted, Predicate<Block> requested) {
       if (wanted.isEmpty()) {
          return requested;
       }
 
-      Set<Block> sources = init_Set(wanted, requested);
+      Set<Block> sources = sourceBlocks(wanted, requested);
       return sources::contains;
    }
 
-   static boolean init_Z(BlockPos feet, BlockPos target, int radius) {
+   static boolean withinRadius(BlockPos feet, BlockPos target, int radius) {
       return target.distSqr(feet) <= (double)radius * radius;
    }
 
@@ -231,7 +231,7 @@ public final class AiBlockMine {
       }
    }
 
-   static boolean init_Z_I(int x, int y, int z, Vec3 item) {
+   static boolean isItemAtBlock(int x, int y, int z, Vec3 item) {
       return Math.abs(item.x - (x + 0.5)) <= 1.3 && Math.abs(item.z - (z + 0.5)) <= 1.3 && item.y >= y - 0.5 && item.y <= y + 2.3;
    }
 
@@ -421,7 +421,7 @@ public final class AiBlockMine {
       return load(args, Set.of());
    }
 
-   static Set<Long> init_Set(JsonObject args) {
+   static Set<Long> parseAvoidBox(JsonObject args) {
       if (args.has("avoid") && args.get("avoid").isJsonObject()) {
          JsonObject box = args.getAsJsonObject("avoid");
          int minX = AiJson.getInt(box, "minX", 0);
@@ -459,7 +459,7 @@ public final class AiBlockMine {
    private static AiOperation load(final JsonObject args, Set<Long> callerCells) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final Set<Long> avoid = init_Set(args);
+         final Set<Long> avoid = parseAvoidBox(args);
          Set<Long> keep = callerCells;
          if (!avoid.isEmpty()) {
             keep = new HashSet<>(callerCells);
@@ -530,7 +530,7 @@ public final class AiBlockMine {
             final Object init_Obj = mc.level;
             final Set<Long> init_Set = new HashSet<>(avoid);
             final Set<Long> load_Set = new HashSet<>();
-            final Predicate<Block> init_Predicate = AiBlockMine.init_Predicate(
+            final Predicate<Block> init_Predicate = AiBlockMine.sourceBlockFilter(
                wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString())
             );
             final Map<Block, Boolean> init_Map = new IdentityHashMap<>();
@@ -675,15 +675,15 @@ public final class AiBlockMine {
 
                      if (target != null && AiBlockMine.init(mc, target)) {
                         this.write_Z = true;
-                        AiBlockMine.init_V(target);
+                        AiBlockMine.recordStrike(target);
                         AutismClientAddon.LOG
                            .info(
                               "[AI] block mine {}: low on air under water going for {} ({} dive strikes)",
                               label,
                               target.toShortString(),
-                              AiBlockMine.init_I(target)
+                              AiBlockMine.strikeCount(target)
                            );
-                        if (AiBlockMine.init_I(target) >= 2) {
+                        if (AiBlockMine.strikeCount(target) >= 2) {
                            this.init_Set.add(target.asLong());
                         }
                      }
@@ -694,12 +694,12 @@ public final class AiBlockMine {
             AiOperation.Result init_AiOperation_Result_2(BlockPos cell) {
                if (!this.write_Z) {
                   this.write_Z = true;
-                  AiBlockMine.init_V(cell);
+                  AiBlockMine.recordStrike(cell);
                }
 
                BlockState state = mc.level.getBlockState(cell);
                double breakTicks = MiningCost.breakTicks(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
-               if (AiBlockMine.init_I(cell) >= 2 || breakTicks + AiBlockDigger.airTicksToSurfaceCompat(mc) + 40.0 > mc.player.getMaxAirSupply()) {
+               if (AiBlockMine.strikeCount(cell) >= 2 || breakTicks + AiBlockDigger.airTicksToSurfaceCompat(mc) + 40.0 > mc.player.getMaxAirSupply()) {
                   this.init_Set.add(cell.asLong());
                }
 
@@ -708,7 +708,7 @@ public final class AiBlockMine {
                      "[AI] block mine {}: too little air to break {} under water ({} dive strikes){}",
                      label,
                      cell.toShortString(),
-                     AiBlockMine.init_I(cell),
+                     AiBlockMine.strikeCount(cell),
                      this.init_Set.contains(cell.asLong()) ? "; left" : "; surfacing first"
                   );
                if (this.init_HashUtil_CachePool != null) {
@@ -1028,7 +1028,7 @@ public final class AiBlockMine {
                         this.sync_V_2();
                         this.write_V_4();
                         this.write_Map.values().removeIf(until -> until < System.nanoTime());
-                        this.init_BufferHelper_Cache.init_Map.keySet().retainAll(this.write_Map.keySet());
+                        this.init_BufferHelper_Cache.entitiesByCell.keySet().retainAll(this.write_Map.keySet());
                         List<Vec3> drops = this.load_List_2();
                         if (held > 0 && this.load_I_6() + this.pop_I + this.write_Map.size() >= held) {
                            drops = this.init(true);
@@ -1240,7 +1240,7 @@ public final class AiBlockMine {
                                  if (this.open_Set.contains(item)
                                     ? AiBlockMine.init(body, item)
                                     : spawning.contains(item)
-                                       && AiBlockMine.init_Z_I(mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ(), item)) {
+                                       && AiBlockMine.isItemAtBlock(mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ(), item)) {
                                     inBox.add(item);
                                  }
                               }
@@ -1355,8 +1355,8 @@ public final class AiBlockMine {
                                  }
 
                                  if (this.init_BufferHelper_Strea != null
-                                    && feet.getY() <= this.init_BufferHelper_Strea.init_I
-                                    && this.init_BufferHelper_Strea.init_I <= nearest.getY()) {
+                                    && feet.getY() <= this.init_BufferHelper_Strea.maxY
+                                    && this.init_BufferHelper_Strea.maxY <= nearest.getY()) {
                                     this.flush_BlockPos = nearest;
                                  }
 
@@ -1406,13 +1406,13 @@ public final class AiBlockMine {
                                           );
                                        }
 
-                                       this.init_BufferHelper_Strea = AiBlockMine.Inner_StreamUtil.init_BufferHelper_Strea_BlockPos_BlockPos(feet, nearest);
+                                       this.init_BufferHelper_Strea = AiBlockMine.Inner_StreamUtil.descentToward(feet, nearest);
                                        if (this.init_FieldCache.isIdle()) {
                                           this.init_V_3(nearest);
                                        }
 
                                        if (approach) {
-                                          this.init_BufferHelper_Strea.init_Set = this.init_Set_3();
+                                          this.init_BufferHelper_Strea.blocked = this.init_Set_3();
                                        }
 
                                        AutismClientAddon.LOG
@@ -1420,7 +1420,7 @@ public final class AiBlockMine {
                                              "[AI] block mine {}: descending from y {} to y {} toward {} ({} goal cells, {} known, focus {}, nearest known {})",
                                              label,
                                              feet.getY(),
-                                             this.init_BufferHelper_Strea.init_I,
+                                             this.init_BufferHelper_Strea.maxY,
                                              nearest.toShortString(),
                                              goalCells.size(),
                                              this.init_List.size(),
@@ -1567,7 +1567,7 @@ public final class AiBlockMine {
                                     List<Vec3> inBox = new ArrayList<>();
 
                                     for (Vec3 item : drops) {
-                                       if (AiBlockMine.init_Z_I(feet.getX(), feet.getY(), feet.getZ(), item)) {
+                                       if (AiBlockMine.isItemAtBlock(feet.getX(), feet.getY(), feet.getZ(), item)) {
                                           inBox.add(item);
                                        }
                                     }
@@ -2207,7 +2207,7 @@ public final class AiBlockMine {
                BlockPos feet = mc.player.blockPosition();
 
                for (BlockPos t : this.init_List) {
-                  if (!this.init_Set.contains(t.asLong()) && AiBlockMine.init_Z(feet, t, radius)) {
+                  if (!this.init_Set.contains(t.asLong()) && AiBlockMine.withinRadius(feet, t, radius)) {
                      return false;
                   }
                }
@@ -3023,7 +3023,7 @@ public final class AiBlockMine {
             }
 
             BiPredicate<BlockState, ItemStack> init_BiPredicate() {
-               Set<Block> sources = AiBlockMine.init_Set(wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString()));
+               Set<Block> sources = AiBlockMine.sourceBlocks(wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString()));
                BiPredicate<BlockState, ItemStack> wanted = AiItems.dropFilterFor(mc, wantedDrops);
                return (state, tool) -> !sources.contains(state.getBlock()) || wanted.test(state, tool);
             }
@@ -3078,7 +3078,7 @@ public final class AiBlockMine {
                      return false;
                   }
 
-                  if (AiBlockMine.init_I(pos) >= 2 && AiBlockMine.init(mc, pos)) {
+                  if (AiBlockMine.strikeCount(pos) >= 2 && AiBlockMine.init(mc, pos)) {
                      return false;
                   }
 
@@ -3521,24 +3521,24 @@ public final class AiBlockMine {
       return init_JArr[0] != 0L && init_JArr[1] - init_JArr[0] < 180000000000L && now - init_JArr[1] < 300000000000L;
    }
 
-   static synchronized int init_I(BlockPos pos) {
-      long[] strike = init_Map.get(pos.asLong());
+   static synchronized int strikeCount(BlockPos pos) {
+      long[] strike = STRIKES_BY_CELL.get(pos.asLong());
       if (strike == null) {
          return 0;
       } else if (System.nanoTime() - strike[1] > 600000000000L) {
-         init_Map.remove(pos.asLong());
+         STRIKES_BY_CELL.remove(pos.asLong());
          return 0;
       } else {
          return (int)strike[0];
       }
    }
 
-   static synchronized void init_V(BlockPos pos) {
-      long[] strike = init_Map.computeIfAbsent(pos.asLong(), key -> new long[2]);
+   static synchronized void recordStrike(BlockPos pos) {
+      long[] strike = STRIKES_BY_CELL.computeIfAbsent(pos.asLong(), key -> new long[2]);
       strike[0]++;
       strike[1] = System.nanoTime();
-      if (init_Map.size() > 256) {
-         init_Map.entrySet().removeIf(e -> System.nanoTime() - e.getValue()[1] > 600000000000L);
+      if (STRIKES_BY_CELL.size() > 256) {
+         STRIKES_BY_CELL.entrySet().removeIf(e -> System.nanoTime() - e.getValue()[1] > 600000000000L);
       }
    }
 
@@ -3652,8 +3652,8 @@ public final class AiBlockMine {
    }
 
    static final class Inner_BufferHelper implements AiPathfinder.PathGoal {
-      final BlockPos init_BlockPos;
-      final int init_I;
+      final BlockPos origin;
+      final int level;
       final BlockPos load;
 
       Inner_BufferHelper(BlockPos origin, int level) {
@@ -3661,8 +3661,8 @@ public final class AiBlockMine {
       }
 
       Inner_BufferHelper(BlockPos origin, int level, BlockPos toward) {
-         this.init_BlockPos = origin;
-         this.init_I = level;
+         this.origin = origin;
+         this.level = level;
          this.load = toward;
       }
 
@@ -3675,17 +3675,17 @@ public final class AiBlockMine {
       public double heuristic(int x, int y, int z) {
          double away = this.load != null
             ? 1.92 * Math.hypot(x - this.load.getX(), z - this.load.getZ())
-            : -1.92 * Math.hypot(x - this.init_BlockPos.getX(), z - this.init_BlockPos.getZ());
-         return this.init_I == -2147483648 ? away : away + Math.abs(y - this.init_I) * 6.0;
+            : -1.92 * Math.hypot(x - this.origin.getX(), z - this.origin.getZ());
+         return this.level == -2147483648 ? away : away + Math.abs(y - this.level) * 6.0;
       }
    }
 
    static final class Inner_CachePool {
-      final Map<Long, Set<UUID>> init_Map = new HashMap<>();
+      final Map<Long, Set<UUID>> entitiesByCell = new HashMap<>();
       final Set<UUID> init_Set = new HashSet<>();
 
       void init(long cell, Collection<UUID> present) {
-         this.init_Map.put(cell, Set.copyOf(present));
+         this.entitiesByCell.put(cell, Set.copyOf(present));
       }
 
       Long init(Collection<Long> pending, UUID entity, Vec3 position, int age) {
@@ -3696,7 +3696,7 @@ public final class AiBlockMine {
          List<Long> eligible = new ArrayList<>();
 
          for (Long cell : pending) {
-            Set<UUID> before = this.init_Map.get(cell);
+            Set<UUID> before = this.entitiesByCell.get(cell);
             if (before != null && !before.contains(entity)) {
                eligible.add(cell);
             }
@@ -3705,7 +3705,7 @@ public final class AiBlockMine {
          Long cell = AiBlockMine.init(eligible, position, age);
          if (cell != null) {
             this.init_Set.add(entity);
-            this.init_Map.remove(cell);
+            this.entitiesByCell.remove(cell);
          }
 
          return cell;
@@ -3734,27 +3734,27 @@ public final class AiBlockMine {
    }
 
    static final class Inner_DataUtil implements AiPathfinder.PathGoal {
-      final Set<Long> init_Set = new HashSet<>();
-      final List<BlockPos> init_List;
+      final Set<Long> targetCells = new HashSet<>();
+      final List<BlockPos> targets;
 
       Inner_DataUtil(List<BlockPos> targets) {
-         this.init_List = List.copyOf(targets);
+         this.targets = List.copyOf(targets);
 
          for (BlockPos p : targets) {
-            this.init_Set.add(p.asLong());
+            this.targetCells.add(p.asLong());
          }
       }
 
       @Override
       public boolean isInGoal(int x, int y, int z) {
-         return this.init_Set.contains(BlockPos.asLong(x, y, z)) || this.init_Set.contains(BlockPos.asLong(x, y + 1, z));
+         return this.targetCells.contains(BlockPos.asLong(x, y, z)) || this.targetCells.contains(BlockPos.asLong(x, y + 1, z));
       }
 
       @Override
       public double heuristic(int x, int y, int z) {
          double best = 1.7976931348623157E308;
 
-         for (BlockPos p : this.init_List) {
+         for (BlockPos p : this.targets) {
             int dy = p.getY() - y;
             if (dy == 1) {
                dy = 0;
@@ -3768,50 +3768,50 @@ public final class AiBlockMine {
    }
 
    static final class Inner_StreamUtil implements AiPathfinder.PathGoal {
-      final int init_I;
-      final BlockPos init_BlockPos;
-      final double init_D;
-      Set<Long> init_Set = Set.of();
+      final int maxY;
+      final BlockPos toward;
+      final double maxAcross;
+      Set<Long> blocked = Set.of();
 
       Inner_StreamUtil(int y, BlockPos toward) {
          this(y, toward, 1.7976931348623157E308);
       }
 
       Inner_StreamUtil(int y, BlockPos toward, double maxAcross) {
-         this.init_I = y;
-         this.init_BlockPos = toward;
-         this.init_D = maxAcross;
+         this.maxY = y;
+         this.toward = toward;
+         this.maxAcross = maxAcross;
       }
 
       @Override
       public boolean load(BlockPos cell) {
-         return !this.init_Set.contains(cell.asLong());
+         return !this.blocked.contains(cell.asLong());
       }
 
-      static AiBlockMine.Inner_StreamUtil init_BufferHelper_Strea_BlockPos_BlockPos(BlockPos feet, BlockPos target) {
+      static AiBlockMine.Inner_StreamUtil descentToward(BlockPos feet, BlockPos target) {
          double across = Math.hypot(feet.getX() - target.getX(), feet.getZ() - target.getZ());
          return new AiBlockMine.Inner_StreamUtil(Math.max(target.getY(), feet.getY() - 8), target, Math.max(3.0, across - 8.0));
       }
 
       boolean init_Z_BlockPos_BlockPos(BlockPos feet, BlockPos target) {
-         return feet.getY() > this.init_I && this.init_BlockPos.distSqr(target) <= 36.0;
+         return feet.getY() > this.maxY && this.toward.distSqr(target) <= 36.0;
       }
 
       @Override
       public boolean isInGoal(int x, int yy, int z) {
-         return yy <= this.init_I;
+         return yy <= this.maxY;
       }
 
       @Override
       public double heuristic(int x, int yy, int z) {
-         double across = Math.hypot(x - this.init_BlockPos.getX(), z - this.init_BlockPos.getZ());
-         double shortfall = this.init_D == 1.7976931348623157E308 ? 0.0 : Math.max(0.0, across - this.init_D);
-         return Math.max(0, yy - this.init_I) * 20.0 + shortfall * 20.0 + across;
+         double across = Math.hypot(x - this.toward.getX(), z - this.toward.getZ());
+         double shortfall = this.maxAcross == 1.7976931348623157E308 ? 0.0 : Math.max(0.0, across - this.maxAcross);
+         return Math.max(0, yy - this.maxY) * 20.0 + shortfall * 20.0 + across;
       }
 
       @Override
       public String toString() {
-         return "descent(y<=" + this.init_I + " toward " + this.init_BlockPos.toShortString() + ")";
+         return "descent(y<=" + this.maxY + " toward " + this.toward.toShortString() + ")";
       }
    }
 
@@ -3854,7 +3854,7 @@ public final class AiBlockMine {
       @Override
       public boolean isInGoal(int x, int y, int z) {
          for (Vec3 item : this.load_List) {
-            if (AiBlockMine.init_Z_I(x, y, z, item)) {
+            if (AiBlockMine.isItemAtBlock(x, y, z, item)) {
                return true;
             }
          }
@@ -3889,7 +3889,7 @@ public final class AiBlockMine {
 
          if (planned != null && planned.probeCell(x, y, z).water()) {
             for (Vec3 item : this.load_List) {
-               if (AiBlockMine.init_Z_I(x, y, z, item)) {
+               if (AiBlockMine.isItemAtBlock(x, y, z, item)) {
                   return true;
                }
             }

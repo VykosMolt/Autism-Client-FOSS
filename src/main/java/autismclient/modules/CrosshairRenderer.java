@@ -29,7 +29,7 @@ import org.joml.Matrix3x2fStack;
 import org.joml.Vector3fc;
 
 public final class CrosshairRenderer {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
    private static final int init_I = 0;
    private static final int load_I = 1;
    private static final int read = 2;
@@ -48,13 +48,13 @@ public final class CrosshairRenderer {
          return false;
       }
 
-      int guiScale = Math.max(1, init_Minecraft.getWindow().getGuiScale());
+      int guiScale = Math.max(1, MINECRAFT.getWindow().getGuiScale());
       if (look.style().isPreset()) {
          graphics.pose().pushMatrix();
 
          try {
             graphics.pose().scale(1.0F / guiScale, 1.0F / guiScale);
-            if (CrosshairVectorPipeline.init(graphics, look, init_Minecraft.getWindow().getWidth() / 2.0F, init_Minecraft.getWindow().getHeight() / 2.0F, guiScale, 0, init(look))) {
+            if (CrosshairVectorPipeline.init(graphics, look, MINECRAFT.getWindow().getWidth() / 2.0F, MINECRAFT.getWindow().getHeight() / 2.0F, guiScale, 0, init(look))) {
                return true;
             }
          } finally {
@@ -67,8 +67,8 @@ public final class CrosshairRenderer {
          return false;
       }
 
-      int x = (init_Minecraft.getWindow().getWidth() - entry.init_I()) / 2;
-      int y = (init_Minecraft.getWindow().getHeight() - entry.init_I()) / 2;
+      int x = (MINECRAFT.getWindow().getWidth() - entry.width()) / 2;
+      int y = (MINECRAFT.getWindow().getHeight() - entry.width()) / 2;
       graphics.pose().pushMatrix();
 
       try {
@@ -89,7 +89,7 @@ public final class CrosshairRenderer {
       GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, double centerX, double centerY, float pixelsPerUnit, int maxPixels
    ) {
       if (look != null && !(pixelsPerUnit <= 0.0F)) {
-         int guiScale = Math.max(1, init_Minecraft.getWindow().getGuiScale());
+         int guiScale = Math.max(1, MINECRAFT.getWindow().getGuiScale());
          if (look.style().isPreset()) {
             graphics.pose().pushMatrix();
 
@@ -105,8 +105,8 @@ public final class CrosshairRenderer {
 
          CrosshairRenderer.Inner_DataUtil entry = load_o_BufferHelper.init(look, guiScale, maxPixels);
          if (entry != null) {
-            int x = (int)Math.round(centerX * pixelsPerUnit - entry.init_I() / 2.0);
-            int y = (int)Math.round(centerY * pixelsPerUnit - entry.init_I() / 2.0);
+            int x = (int)Math.round(centerX * pixelsPerUnit - entry.width() / 2.0);
+            int y = (int)Math.round(centerY * pixelsPerUnit - entry.width() / 2.0);
             graphics.pose().pushMatrix();
 
             try {
@@ -153,8 +153,8 @@ public final class CrosshairRenderer {
    }
 
    private static void init(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.Inner_DataUtil entry, int cell, int x, int y, int color) {
-      int size = entry.init_I();
-      graphics.blit(pipeline, entry.init_Identifier(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.load(), entry.read(), color);
+      int size = entry.width();
+      graphics.blit(pipeline, entry.texture(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.load(), entry.read(), color);
    }
 
    private static int init(int argb, float opacity) {
@@ -163,25 +163,25 @@ public final class CrosshairRenderer {
    }
 
    private static int init(CrosshairRenderState.Inner_DataUtil look) {
-      if (look.read_Z() && init_Minecraft.player != null && init_Minecraft.level != null) {
-         Camera camera = init_Minecraft.gameRenderer.mainCamera();
+      if (look.read_Z() && MINECRAFT.player != null && MINECRAFT.level != null) {
+         Camera camera = MINECRAFT.gameRenderer.mainCamera();
          if (camera != null && camera.isInitialized()) {
             Vec3 from = camera.position();
             Vector3fc forward = camera.forwardVector();
             Vec3 direction = new Vec3(forward.x(), forward.y(), forward.z());
-            double reach = init_Minecraft.player.entityInteractionRange();
+            double reach = MINECRAFT.player.entityInteractionRange();
             double range = look.write_Z() ? Math.max(reach, look.update()) : reach;
-            HitResult block = init_Minecraft.level
-               .clip(new ClipContext(from, from.add(direction.scale(range)), Block.OUTLINE, Fluid.NONE, init_Minecraft.player));
+            HitResult block = MINECRAFT.level
+               .clip(new ClipContext(from, from.add(direction.scale(range)), Block.OUTLINE, Fluid.NONE, MINECRAFT.player));
             double limit = block.getType() == Type.MISS ? range : from.distanceTo(block.getLocation());
             Vec3 end = from.add(direction.scale(limit));
-            Entity viewer = init_Minecraft.getCameraEntity() == null ? init_Minecraft.player : init_Minecraft.getCameraEntity();
+            Entity viewer = MINECRAFT.getCameraEntity() == null ? MINECRAFT.player : MINECRAFT.getCameraEntity();
             EntityHitResult hit = ProjectileUtil.getEntityHitResult(
                viewer,
                from,
                end,
                new AABB(from, end).inflate(1.0),
-               entityx -> entityx != init_Minecraft.player && !entityx.isSpectator() && entityx.isPickable(),
+               entityx -> entityx != MINECRAFT.player && !entityx.isSpectator() && entityx.isPickable(),
                limit * limit
             );
             if (hit == null) {
@@ -212,14 +212,14 @@ public final class CrosshairRenderer {
    }
 
    private static final class Inner_BufferHelper {
-      private final String init_Str;
-      private final long init_J;
-      private CrosshairRenderer.Inner_DataUtil init_o_DataUtil;
+      private final String name;
+      private final long throttleMillis;
+      private CrosshairRenderer.Inner_DataUtil cached;
       private long load;
 
       Inner_BufferHelper(String name, long throttleMillis) {
-         this.init_Str = name;
-         this.init_J = throttleMillis;
+         this.name = name;
+         this.throttleMillis = throttleMillis;
       }
 
       CrosshairRenderer.Inner_DataUtil init(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
@@ -235,17 +235,17 @@ public final class CrosshairRenderer {
             maxPixels,
             custom ? look.art() : null
          );
-         if (this.init_o_DataUtil != null && this.init_o_DataUtil.init_o_StreamUtil().equals(key)) {
-            return this.init_o_DataUtil;
+         if (this.cached != null && this.cached.key().equals(key)) {
+            return this.cached;
          }
 
          long now = System.currentTimeMillis();
-         if (this.init_o_DataUtil != null && now - this.load < this.init_J) {
-            return this.init_o_DataUtil;
+         if (this.cached != null && now - this.load < this.throttleMillis) {
+            return this.cached;
          }
 
          if (custom && look.art() == null) {
-            return this.init_o_DataUtil;
+            return this.cached;
          }
 
          double density = guiScale;
@@ -260,13 +260,13 @@ public final class CrosshairRenderer {
             if (maxPixels <= 0 || raster.pixelCount() <= maxPixels || attempt == 3) {
                CrosshairRenderer.Inner_DataUtil built = this.init(key, raster);
                if (built == null) {
-                  return this.init_o_DataUtil;
+                  return this.cached;
                }
 
                this.init();
-               this.init_o_DataUtil = built;
+               this.cached = built;
                this.load = now;
-               return this.init_o_DataUtil;
+               return this.cached;
             }
 
             density *= Math.max(0.05, (maxPixels - 4.0) / raster.pixelCount());
@@ -299,8 +299,8 @@ public final class CrosshairRenderer {
                }
             }
 
-            Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/crosshair/" + this.init_Str + "_" + ++CrosshairRenderer.sync);
-            CrosshairRenderer.init_Minecraft.getTextureManager().register(id, new CrosshairRenderer.Inner_CachePool(this.init_Str, image));
+            Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/crosshair/" + this.name + "_" + ++CrosshairRenderer.sync);
+            CrosshairRenderer.MINECRAFT.getTextureManager().register(id, new CrosshairRenderer.Inner_CachePool(this.name, image));
             return new CrosshairRenderer.Inner_DataUtil(key, id, size, width, height);
          } catch (Throwable t) {
             image.close();
@@ -309,12 +309,12 @@ public final class CrosshairRenderer {
       }
 
       private void init() {
-         if (this.init_o_DataUtil != null) {
-            Identifier id = this.init_o_DataUtil.init_Identifier();
-            this.init_o_DataUtil = null;
+         if (this.cached != null) {
+            Identifier id = this.cached.texture();
+            this.cached = null;
 
             try {
-               CrosshairRenderer.init_Minecraft.getTextureManager().release(id);
+               CrosshairRenderer.MINECRAFT.getTextureManager().release(id);
             } catch (Throwable var3) {
             }
          }
@@ -329,7 +329,7 @@ public final class CrosshairRenderer {
       }
    }
 
-   private record Inner_DataUtil(CrosshairRenderer.Inner_StreamUtil init_o_StreamUtil, Identifier init_Identifier, int init_I, int load, int read) {
+   private record Inner_DataUtil(CrosshairRenderer.Inner_StreamUtil key, Identifier texture, int width, int load, int read) {
    }
 
    private record Inner_StreamUtil(

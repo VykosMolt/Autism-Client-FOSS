@@ -13,8 +13,8 @@ public final class CrosshairModule extends Module {
    private final ColorSetting load;
    private final ColorSetting read;
    private final ColorSetting write;
-   private String init_Str;
-   private CrosshairPixelArt init_m;
+   private String raw;
+   private CrosshairPixelArt drawn;
 
    public CrosshairModule() {
       super("crosshair", "Crosshair", ae.update, "Custom crosshair shapes and colors.");
@@ -25,30 +25,30 @@ public final class CrosshairModule extends Module {
             .build()
       );
       this.add(
-         new ActionSetting("edit", "Drawing", this::load_V_33)
+         new ActionSetting("edit", "Drawing", this::openEditor)
             .buttonLabel("Edit")
             .description("Draw your own crosshair.")
             .group("Shape")
             .availableOffline()
-            .visibleWhen(this::init_Z_50)
+            .visibleWhen(this::isCustomStyle)
             .build()
       );
       this.add(new StringSetting("art", "Art", "").group("Shape").keepOnReset().visibleWhen(() -> false).build());
       this.add(
-         new DoubleSetting("scale", "Scale", 1.0, 0.25, 4.0, 0.05).description("Size, sharp at any value.").group("Shape").formatter(CrosshairModule::init_Str_Str_4).build()
+         new DoubleSetting("scale", "Scale", 1.0, 0.25, 4.0, 0.05).description("Size, sharp at any value.").group("Shape").formatter(CrosshairModule::formatScale).build()
       );
       this.add(
          new DoubleSetting("thickness", "Thickness", 1.0, 0.5, 4.0, 0.25)
             .description("Line width.")
             .group("Shape")
-            .visibleWhen(() -> !this.init_Z_50())
+            .visibleWhen(() -> !this.isCustomStyle())
             .build()
       );
       this.add(
          new DoubleSetting("gap", "Gap", 2.0, 0.0, 8.0, 0.5)
             .description("Space around the dot.")
             .group("Shape")
-            .visibleWhen(() -> this.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL)
+            .visibleWhen(() -> this.getStyle() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL)
             .build()
       );
       this.add(new BoolSetting("invert", "Invert", false).description("Negative, like vanilla's.").group("Look").build());
@@ -56,7 +56,7 @@ public final class CrosshairModule extends Module {
          new ColorSetting("color", "Color", -1)
             .description("Crosshair color.")
             .group("Look")
-            .visibleWhen(() -> !this.init_Z_50() && !this.bool("invert"))
+            .visibleWhen(() -> !this.isCustomStyle() && !this.bool("invert"))
             .build()
       );
       this.add(new DoubleSetting("opacity", "Opacity", 100.0, 10.0, 100.0, 5.0).unit("%").group("Look").build());
@@ -121,12 +121,12 @@ public final class CrosshairModule extends Module {
       }
    }
 
-   public CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper() {
+   public CrosshairPresetGeometry.Inner_NetHelper getStyle() {
       return CrosshairPresetGeometry.Inner_NetHelper.init(this.choice("style"));
    }
 
-   private boolean init_Z_50() {
-      return this.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
+   private boolean isCustomStyle() {
+      return this.getStyle() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
    }
 
    public double thickness() {
@@ -139,30 +139,30 @@ public final class CrosshairModule extends Module {
 
    public CrosshairPixelArt art() {
       String raw = this.text("art");
-      if (this.init_m == null || !raw.equals(this.init_Str)) {
+      if (this.drawn == null || !raw.equals(this.raw)) {
          CrosshairPixelArt decoded = CrosshairPixelArt.init(raw);
-         this.init_m = decoded != null ? decoded : load_m();
-         this.init_Str = raw;
+         this.drawn = decoded != null ? decoded : defaultArt();
+         this.raw = raw;
       }
 
-      return this.init_m;
+      return this.drawn;
    }
 
    public void setArt(CrosshairPixelArt drawn) {
       if (drawn != null) {
-         this.init_m = drawn;
-         this.init_Str = drawn.encode();
-         this.setValue("art", this.init_Str);
+         this.drawn = drawn;
+         this.raw = drawn.encode();
+         this.setValue("art", this.raw);
       }
    }
 
-   public static CrosshairPixelArt load_m() {
+   public static CrosshairPixelArt defaultArt() {
       return CrosshairPresetGeometry.init(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
    public CrosshairRenderState.Inner_DataUtil init_q_DataUtil_m(CrosshairPixelArt drawing) {
       return new CrosshairRenderState.Inner_DataUtil(
-         this.init_p_NetHelper(),
+         this.getStyle(),
          this.decimal("scale"),
          this.thickness(),
          this.gap(),
@@ -185,13 +185,13 @@ public final class CrosshairModule extends Module {
       CrosshairRenderState.init(this.init_q_DataUtil_m(this.art()));
    }
 
-   private void load_V_33() {
+   private void openEditor() {
       if (MC != null && MC.gui != null) {
          MC.gui.setScreen(new autismclient.gui.screens.CrosshairEditorScreen(MC.gui.screen(), this));
       }
    }
 
-   private static String init_Str_Str_4(String raw) {
+   private static String formatScale(String raw) {
       try {
          return String.format(Locale.ROOT, "%.2fx", Double.parseDouble(raw));
       } catch (NumberFormatException e) {

@@ -22,7 +22,7 @@ final class QueuedAttackBuffer {
       QueuedAttackBuffer.Inner_DataUtil last = this.init.peekLast();
       if (last != null && last.read == null) {
          this.init.removeLast();
-         this.init.addLast(new QueuedAttackBuffer.Inner_DataUtil(last.init_Obj, last.init_Runnable, last.load, swing));
+         this.init.addLast(new QueuedAttackBuffer.Inner_DataUtil(last.target, last.action, last.load, swing));
          return true;
       } else {
          return false;
@@ -47,9 +47,9 @@ final class QueuedAttackBuffer {
       int count = 0;
 
       for (QueuedAttackBuffer.Inner_DataUtil hit : hits) {
-         if (valid.test(hit.init_Obj)) {
-            hit.init_Runnable.run();
-            sent.accept(hit.init_Obj);
+         if (valid.test(hit.target)) {
+            hit.action.run();
+            sent.accept(hit.target);
             hit.load.run();
             if (hit.read != null) {
                hit.read.run();
@@ -70,7 +70,7 @@ final class QueuedAttackBuffer {
       return owner == null || owner.isBlank() || "kill-aura".equals(owner) || "kb-displacement".equals(owner);
    }
 
-   private record Inner_DataUtil(Object init_Obj, Runnable init_Runnable, Runnable load, Runnable read) {
+   private record Inner_DataUtil(Object target, Runnable action, Runnable load, Runnable read) {
    }
 
    static final class Inner_StreamUtil {

@@ -17,17 +17,17 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 public final class MsdfFontAtlas {
-   private final String init_Str;
-   private final Identifier init_Identifier;
-   private final Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> init_Int2ObjectOpenHash;
-   private final double init_D;
-   private final double load_D;
+   private final String name;
+   private final Identifier textureId;
+   private final Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> glyphs;
+   private final double lineHeight;
+   private final double ascender;
    private final double read;
    private final double write;
-   private final int init_I;
-   private final int load_I;
-   private final MsdfFontAtlas.Inner_StreamUtil init_StreamUtil_StreamU;
-   private NativeImage init_NativeImage;
+   private final int atlasWidth;
+   private final int atlasHeight;
+   private final MsdfFontAtlas.Inner_StreamUtil spaceGlyph;
+   private NativeImage pixels;
    private MsdfFontAtlas.Inner_DataUtil init_StreamUtil_DataUti;
    private boolean init_Z;
 
@@ -44,17 +44,17 @@ public final class MsdfFontAtlas {
       MsdfFontAtlas.Inner_StreamUtil spaceAdvance,
       NativeImage pixels
    ) {
-      this.init_Str = name;
-      this.init_Identifier = textureId;
-      this.init_Int2ObjectOpenHash = glyphs;
-      this.init_D = lineHeight;
-      this.load_D = ascender;
+      this.name = name;
+      this.textureId = textureId;
+      this.glyphs = glyphs;
+      this.lineHeight = lineHeight;
+      this.ascender = ascender;
       this.read = descender;
       this.write = capHeight;
-      this.init_I = atlasWidth;
-      this.load_I = atlasHeight;
-      this.init_StreamUtil_StreamU = spaceAdvance;
-      this.init_NativeImage = pixels;
+      this.atlasWidth = atlasWidth;
+      this.atlasHeight = atlasHeight;
+      this.spaceGlyph = spaceAdvance;
+      this.pixels = pixels;
    }
 
    public static MsdfFontAtlas load(String baseName) {
@@ -130,11 +130,11 @@ public final class MsdfFontAtlas {
    }
 
    public double lineHeight() {
-      return this.init_D;
+      return this.lineHeight;
    }
 
    public double load() {
-      return -this.load_D;
+      return -this.ascender;
    }
 
    public double read() {
@@ -145,8 +145,8 @@ public final class MsdfFontAtlas {
       return this.write;
    }
 
-   public boolean init_Z_I(int codePoint) {
-      return this.init_Int2ObjectOpenHash.containsKey(codePoint);
+   public boolean hasGlyph(int codePoint) {
+      return this.glyphs.containsKey(codePoint);
    }
 
    public boolean canRender(String text) {
@@ -154,7 +154,7 @@ public final class MsdfFontAtlas {
 
       while (i < text.length()) {
          int cp = text.codePointAt(i);
-         if (!this.init_Int2ObjectOpenHash.containsKey(cp)) {
+         if (!this.glyphs.containsKey(cp)) {
             return false;
          }
 
@@ -170,9 +170,9 @@ public final class MsdfFontAtlas {
 
       while (i < text.length()) {
          int cp = text.codePointAt(i);
-         MsdfFontAtlas.Inner_StreamUtil g = this.init_Int2ObjectOpenHash.get(cp);
+         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
          if (g == null) {
-            g = this.init_StreamUtil_StreamU;
+            g = this.spaceGlyph;
          }
 
          if (g != null) {
@@ -193,9 +193,9 @@ public final class MsdfFontAtlas {
 
          while (i < text.length()) {
             int cp = text.codePointAt(i);
-            MsdfFontAtlas.Inner_StreamUtil glyph = this.init_Int2ObjectOpenHash.get(cp);
+            MsdfFontAtlas.Inner_StreamUtil glyph = this.glyphs.get(cp);
             if (glyph == null) {
-               glyph = this.init_StreamUtil_StreamU;
+               glyph = this.spaceGlyph;
             }
 
             if (glyph != null && glyph.init_Z) {
@@ -217,9 +217,9 @@ public final class MsdfFontAtlas {
 
       while (end < text.length()) {
          int cp = text.codePointAt(end);
-         MsdfFontAtlas.Inner_StreamUtil g = this.init_Int2ObjectOpenHash.get(cp);
+         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
          if (g == null) {
-            g = this.init_StreamUtil_StreamU;
+            g = this.spaceGlyph;
          }
 
          double advance = g != null ? g.init_D * size : 0.0;
@@ -245,15 +245,15 @@ public final class MsdfFontAtlas {
 
    public int init(String text, float x, float yTop, float size, float[] out, int offset) {
       float cursor = x;
-      float baseline = yTop + (float)(-this.load_D * size);
+      float baseline = yTop + (float)(-this.ascender * size);
       int quads = 0;
       int i = 0;
 
       while (i < text.length()) {
          int cp = text.codePointAt(i);
-         MsdfFontAtlas.Inner_StreamUtil g = this.init_Int2ObjectOpenHash.get(cp);
+         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
          if (g == null) {
-            g = this.init_StreamUtil_StreamU;
+            g = this.spaceGlyph;
          }
 
          if (g != null) {
@@ -279,21 +279,21 @@ public final class MsdfFontAtlas {
       return quads;
    }
 
-   public Identifier init_Identifier() {
-      return this.init_Identifier;
+   public Identifier textureId() {
+      return this.textureId;
    }
 
    public MsdfFontAtlas.Inner_DataUtil texture() {
       if (this.init_StreamUtil_DataUti == null && !this.init_Z) {
          try {
-            this.init_StreamUtil_DataUti = new MsdfFontAtlas.Inner_DataUtil(this.init_NativeImage != null ? this.init_NativeImage : new NativeImage(1, 1, false));
-            Minecraft.getInstance().getTextureManager().register(this.init_Identifier, this.init_StreamUtil_DataUti);
+            this.init_StreamUtil_DataUti = new MsdfFontAtlas.Inner_DataUtil(this.pixels != null ? this.pixels : new NativeImage(1, 1, false));
+            Minecraft.getInstance().getTextureManager().register(this.textureId, this.init_StreamUtil_DataUti);
          } catch (Throwable t) {
             this.init_Z = true;
          } finally {
-            if (this.init_NativeImage != null) {
-               this.init_NativeImage.close();
-               this.init_NativeImage = null;
+            if (this.pixels != null) {
+               this.pixels.close();
+               this.pixels = null;
             }
          }
       }
@@ -304,7 +304,7 @@ public final class MsdfFontAtlas {
    public void release() {
       if (this.init_StreamUtil_DataUti != null) {
          try {
-            Minecraft.getInstance().getTextureManager().release(this.init_Identifier);
+            Minecraft.getInstance().getTextureManager().release(this.textureId);
             this.init_StreamUtil_DataUti.close();
          } catch (Throwable var2) {
          }

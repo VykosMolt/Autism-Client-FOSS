@@ -68,16 +68,16 @@ final class AiIntents {
       "log", "planks", "cobblestone", "stone", "dirt", "sand", "gravel", "stick", "wheat_seeds", "torch", "coal", "wool", "glass"
    );
    private static final int write_I = 16;
-   private static final Pattern sync_Pattern = init_Pattern(
+   private static final Pattern sync_Pattern = quantityPattern(
       "get\\s+me|go\\s+get|go\\s+find|go\\s+grab|go\\s+fetch|find\\s+me|bring\\s+me|get|obtain|collect|gather|grab|fetch|acquire|find|look\\s+for|search\\s+for"
    );
-   private static final Pattern flush = init_Pattern("mine|dig\\s+up|dig\\s+for");
+   private static final Pattern flush = quantityPattern("mine|dig\\s+up|dig\\s+for");
    private static final Pattern close = Pattern.compile(
       "^(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?([a-z][a-z _'-]*?)$"
    );
-   private static final Pattern open = init_Pattern("craft|make|build\\s+me");
-   private static final Pattern poll = init_Pattern("smelt|cook|bake|roast");
-   private static final Pattern push = init_Pattern("harvest|farm");
+   private static final Pattern open = quantityPattern("craft|make|build\\s+me");
+   private static final Pattern poll = quantityPattern("smelt|cook|bake|roast");
+   private static final Pattern push = quantityPattern("harvest|farm");
    private static final Pattern pop = Pattern.compile(
       "^(?:chop|cut)(?:\\s+down)?\\s+(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?(?:(?:the\\s+)?(?:nearest\\s+|closest\\s+)?(?:([a-z ]+?)\\s+)?(?:trees?|logs?|wood))$"
    );
@@ -215,7 +215,7 @@ final class AiIntents {
    private AiIntents() {
    }
 
-   private static Pattern init_Pattern(String verbs) {
+   private static Pattern quantityPattern(String verbs) {
       return Pattern.compile(
          "^(?:"
             + verbs

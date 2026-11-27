@@ -28,18 +28,18 @@ public final class OreSimEngine {
    private static final int load_I = 4;
    private static final int read_I = 8;
    private static final int write_I = 5;
-   private static final int update_I = 600000;
-   private static final int sync_I = 3;
+   private static final int MAX_CACHED_ORES = 600000;
+   private static final int MAX_CACHED_CONTEXTS = 3;
    private static final long init_J = TimeUnit.SECONDS.toNanos(5L);
-   private static final Object init_Obj = new Object();
-   private static final Map<Long, OreSimEngine.Inner_DataUtil> init_Map = new ConcurrentHashMap<>();
+   private static final Object LOCK = new Object();
+   private static final Map<Long, OreSimEngine.Inner_DataUtil> chunkOres = new ConcurrentHashMap<>();
    private static final Map<Long, OreSimEngine.Inner_DataUtil> load_Map = new HashMap<>();
    private static final LongOpenHashSet inFlightTiles = new LongOpenHashSet();
    private static boolean initialChunkPending;
    private static final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
    private static final int flush_I = 200000;
-   private static final OreSimWorkerPool init_ConfigStore_2 = new OreSimWorkerPool("Autism-OreSim-Worldgen");
-   private static final LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
+   private static final OreSimWorkerPool WORKERS = new OreSimWorkerPool("Autism-OreSim-Worldgen");
+   private static final LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> contextCache = new LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
       4, 0.75F, true
    ) {
       @Override
@@ -48,8 +48,8 @@ public final class OreSimEngine {
       }
    };
    private static OreSimEngine.Inner_StreamUtil init_StreamUtil_StreamU;
-   private static volatile autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap init_ConfigStore;
-   private static volatile long load_J;
+   private static volatile autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap worldgenContext;
+   private static volatile long generation;
    private static volatile boolean init_Z;
    private static volatile boolean load_Z;
    private static boolean read_Z;
@@ -57,8 +57,8 @@ public final class OreSimEngine {
    private static volatile boolean update_Z;
    private static volatile boolean sync_Z;
    private static volatile String init_Str = "";
-   private static int close_I;
-   private static int open_I;
+   private static int trackedCenterX;
+   private static int trackedCenterZ;
    private static int poll = 1;
    private static boolean flush_Z;
    private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
@@ -81,7 +81,7 @@ public final class OreSimEngine {
          return OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN;
       } else if (init_StreamUtil_StreamU == null) {
          return OreSimEngine.Inner_BufferHelper.IDLE;
-      } else if (!init_Z && init_ConfigStore != null) {
+      } else if (!init_Z && worldgenContext != null) {
          return load_Z ? OreSimEngine.Inner_BufferHelper.GENERATING : OreSimEngine.Inner_BufferHelper.READY;
       } else {
          return OreSimEngine.Inner_BufferHelper.LOADING_CONTEXT;
@@ -89,7 +89,7 @@ public final class OreSimEngine {
    }
 
    public static boolean isReady() {
-      return init_ConfigStore != null && !write_Z && !update_Z && !sync_Z;
+      return worldgenContext != null && !write_Z && !update_Z && !sync_Z;
    }
 
    public static boolean load_Z() {
@@ -105,17 +105,17 @@ public final class OreSimEngine {
    }
 
    public static int simulatedChunkCount() {
-      return init_Map.size();
+      return chunkOres.size();
    }
 
    public static OreSimEngine.Inner_ConfigStore progress() {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          if (init_StreamUtil_StreamU == null) {
-            return new OreSimEngine.Inner_ConfigStore(load_J, 0, 0);
+            return new OreSimEngine.Inner_ConfigStore(generation, 0, 0);
          }
 
-         int centerX = SectionPos.blockToSectionCoord(close_I);
-         int centerZ = SectionPos.blockToSectionCoord(open_I);
+         int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
+         int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
          int radius = Math.max(1, Math.min(poll, 8));
          int diameter = radius * 2 + 1;
          int complete = 0;
@@ -123,13 +123,13 @@ public final class OreSimEngine {
          for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                long key = ChunkPos.pack(centerX + dx, centerZ + dz);
-               if (init_Map.containsKey(key) || load_Map.containsKey(key)) {
+               if (chunkOres.containsKey(key) || load_Map.containsKey(key)) {
                   complete++;
                }
             }
          }
 
-         return new OreSimEngine.Inner_ConfigStore(load_J, complete, diameter * diameter);
+         return new OreSimEngine.Inner_ConfigStore(generation, complete, diameter * diameter);
       }
    }
 
@@ -147,9 +147,9 @@ public final class OreSimEngine {
 
    public static void reset() {
       read_J = 0L;
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          if (init_StreamUtil_StreamU != null
-            || !init_Map.isEmpty()
+            || !chunkOres.isEmpty()
             || !load_Map.isEmpty()
             || init_Z
             || load_Z
@@ -159,11 +159,11 @@ public final class OreSimEngine {
             || sync_Z
             || !init_Str.isEmpty()
             || !auditIsDisprovenEmpty()
-            || !init_ConfigStore_2.isIdle()) {
-            load_J++;
+            || !WORKERS.isIdle()) {
+            generation++;
             update_V();
             init_StreamUtil_StreamU = null;
-            init_ConfigStore = null;
+            worldgenContext = null;
             init_Z = false;
             load_Z = false;
             read_Z = false;
@@ -176,7 +176,7 @@ public final class OreSimEngine {
             write_J = 0L;
             auditHasWriteDeadline = false;
             push = 0;
-            init_Map.clear();
+            chunkOres.clear();
             load_Map.clear();
             inFlightTiles.clear();
             initialChunkPending = false;
@@ -236,17 +236,17 @@ public final class OreSimEngine {
       if (level != null && playerPos != null && worldSeed != null) {
          ResourceKey<Level> dimension = level.dimension();
          if (!init(dimension)) {
-            synchronized (init_Obj) {
-               if (!update_Z || init_StreamUtil_StreamU != null || !init_Map.isEmpty() || !load_Map.isEmpty() || init_Z || load_Z || sync_Z) {
-                  load_J++;
+            synchronized (LOCK) {
+               if (!update_Z || init_StreamUtil_StreamU != null || !chunkOres.isEmpty() || !load_Map.isEmpty() || init_Z || load_Z || sync_Z) {
+                  generation++;
                   update_V();
                   init_StreamUtil_StreamU = null;
-                  init_ConfigStore = null;
+                  worldgenContext = null;
                   init_Z = false;
                   load_Z = false;
                   read_Z = false;
                   flush_Z = false;
-                  init_Map.clear();
+                  chunkOres.clear();
                   load_Map.clear();
                   inFlightTiles.clear();
                   initialChunkPending = false;
@@ -264,40 +264,40 @@ public final class OreSimEngine {
             }
          } else {
             OreSimEngine.Inner_StreamUtil wanted = new OreSimEngine.Inner_StreamUtil(worldSeed, dimension);
-            synchronized (init_Obj) {
+            synchronized (LOCK) {
                if (!wanted.equals(init_StreamUtil_StreamU)) {
                   init(wanted);
                }
 
-               close_I = playerPos.getX();
-               open_I = playerPos.getZ();
+               trackedCenterX = playerPos.getX();
+               trackedCenterZ = playerPos.getZ();
                poll = Math.max(1, Math.min(radius, 8));
                flush();
                sync_V();
-               if (init_ConfigStore != null && !load_Z && !read_Z && (!auditHasWriteDeadline || System.nanoTime() - write_J >= 0L)) {
-                  init_V_ConfigStore_J(init_ConfigStore, load_J);
-               } else if (!sync_Z && !read_Z && enabledMask != 0 && !write_Z && !close_Z && init_ConfigStore != null && !initialChunkPending) {
+               if (worldgenContext != null && !load_Z && !read_Z && (!auditHasWriteDeadline || System.nanoTime() - write_J >= 0L)) {
+                  init_V_ConfigStore_J(worldgenContext, generation);
+               } else if (!sync_Z && !read_Z && enabledMask != 0 && !write_Z && !close_Z && worldgenContext != null && !initialChunkPending) {
                   if (!flush_Z) {
-                     int centerChunkX = SectionPos.blockToSectionCoord(close_I);
-                     int centerChunkZ = SectionPos.blockToSectionCoord(open_I);
+                     int centerChunkX = SectionPos.blockToSectionCoord(trackedCenterX);
+                     int centerChunkZ = SectionPos.blockToSectionCoord(trackedCenterZ);
                      long centerKey = ChunkPos.pack(centerChunkX, centerChunkZ);
-                     if (!init_Map.containsKey(centerKey) && !load_Map.containsKey(centerKey)) {
-                        init_V_I(centerChunkX, centerChunkZ, init_ConfigStore, load_J);
+                     if (!chunkOres.containsKey(centerKey) && !load_Map.containsKey(centerKey)) {
+                        generateChunk(centerChunkX, centerChunkZ, worldgenContext, generation);
                         return;
                      }
 
                      flush_Z = true;
                   }
 
-                  int maxParallel = init_ConfigStore_2.maxWorkers();
+                  int maxParallel = WORKERS.maxWorkers();
 
                   while (inFlightTiles.size() < maxParallel) {
-                     OreSimEngine.Inner_TaskQueue tile = init_StreamUtil_TaskQue_I(close_I, open_I, poll);
+                     OreSimEngine.Inner_TaskQueue tile = nearestTile(trackedCenterX, trackedCenterZ, poll);
                      if (tile == null) {
                         break;
                      }
 
-                     init_V_StreamUtil_TaskQue(tile, init_ConfigStore, load_J);
+                     generateTile(tile, worldgenContext, generation);
                   }
                }
             }
@@ -312,11 +312,11 @@ public final class OreSimEngine {
    }
 
    private static void init(OreSimEngine.Inner_StreamUtil wanted) {
-      load_J++;
+      generation++;
       update_V();
       init_StreamUtil_StreamU = wanted;
-      init_ConfigStore = init_LinkedHashMap.get(wanted);
-      init_Z = init_ConfigStore == null;
+      worldgenContext = contextCache.get(wanted);
+      init_Z = worldgenContext == null;
       load_Z = false;
       read_Z = false;
       flush_Z = false;
@@ -331,35 +331,35 @@ public final class OreSimEngine {
       synchronized (init_LongOpenHashSet) {
          init_LongOpenHashSet.clear();
       }
-      if (!init_Map.isEmpty()) {
-         init_Map.clear();
+      if (!chunkOres.isEmpty()) {
+         chunkOres.clear();
       }
 
       load_Map.clear();
       inFlightTiles.clear();
       initialChunkPending = false;
       init_AtomicInteger.incrementAndGet();
-      if (init_ConfigStore == null) {
-         init_V_StreamUtil_StreamU_J(wanted, load_J);
+      if (worldgenContext == null) {
+         buildContext(wanted, generation);
       }
    }
 
-   private static void init_V_StreamUtil_StreamU_J(OreSimEngine.Inner_StreamUtil key, long token) {
-      init_ConfigStore_2.init(() -> {
+   private static void buildContext(OreSimEngine.Inner_StreamUtil key, long token) {
+      WORKERS.init(() -> {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap built;
          boolean tagsVerified;
          try {
-            built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(key.init_J(), key.init_ResourceKey());
+            built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(key.seed(), key.dimension());
             tagsVerified = built.init_Z();
          } catch (Throwable error) {
-            init_V_J(token, "Minecraft 26.3 worldgen bootstrap failed", error);
+            fail(token, "Minecraft 26.3 worldgen bootstrap failed", error);
             return;
          }
 
-         synchronized (init_Obj) {
-            if (token == load_J && key.equals(init_StreamUtil_StreamU)) {
-               init_LinkedHashMap.put(key, built);
-               init_ConfigStore = built;
+         synchronized (LOCK) {
+            if (token == generation && key.equals(init_StreamUtil_StreamU)) {
+               contextCache.put(key, built);
+               worldgenContext = built;
                init_Z = false;
                write_J = System.nanoTime() + init_J;
                auditHasWriteDeadline = true;
@@ -371,10 +371,10 @@ public final class OreSimEngine {
       });
    }
 
-   private static void init_V_I(int chunkX, int chunkZ, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
+   private static void generateChunk(int chunkX, int chunkZ, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       initialChunkPending = true;
       load_Z = true;
-      init_ConfigStore_2.init(() -> {
+      WORKERS.init(() -> {
          try {
             try {
                if (!context.init_Z()) {
@@ -384,31 +384,31 @@ public final class OreSimEngine {
 
                int regionMinX = chunkX - 2;
                int regionMinZ = chunkZ - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 5, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 5, () -> token != generation);
                long chunkKey = ChunkPos.pack(chunkX, chunkZ);
                ChunkAccess chunk = generated.get(chunkKey);
                if (chunk == null) {
                   throw new IllegalStateException("Generator omitted initial complete chunk " + chunkX + ", " + chunkZ);
                }
 
-               OreSimEngine.Inner_DataUtil ores = init_StreamUtil_DataUti_ChunkAccess_BooleanSupplier(chunk, () -> token != load_J);
+               OreSimEngine.Inner_DataUtil ores = extractOres(chunk, () -> token != generation);
                if (!context.init_Z()) {
                   init_V_J_Str(token, "Minecraft block tags changed during initial chunk generation");
                   return;
                }
 
-               synchronized (init_Obj) {
-                  if (token != load_J || context != init_ConfigStore) {
+               synchronized (LOCK) {
+                  if (token != generation || context != worldgenContext) {
                      return;
                   }
 
-                  if (!init_Map.containsKey(chunkKey) && !load_Map.containsKey(chunkKey)) {
+                  if (!chunkOres.containsKey(chunkKey) && !load_Map.containsKey(chunkKey)) {
                      if (push + ores.init() > 600000) {
                         close_Z = true;
                         return;
                      }
 
-                     init_Map.put(chunkKey, ores);
+                     chunkOres.put(chunkKey, ores);
                      push = push + ores.init();
                      init_AtomicInteger.incrementAndGet();
                   }
@@ -419,11 +419,11 @@ public final class OreSimEngine {
                }
             } catch (CancellationException var33) {
             } catch (Throwable error) {
-               init_V_J(token, "Minecraft 26.3 initial chunk generation failed at " + chunkX + ", " + chunkZ, error);
+               fail(token, "Minecraft 26.3 initial chunk generation failed at " + chunkX + ", " + chunkZ, error);
             }
          } finally {
-            synchronized (init_Obj) {
-               if (token == load_J) {
+            synchronized (LOCK) {
+               if (token == generation) {
                   initialChunkPending = false;
                   load_Z = !inFlightTiles.isEmpty();
                }
@@ -432,34 +432,34 @@ public final class OreSimEngine {
       });
    }
 
-   private static void init_V_StreamUtil_TaskQue(OreSimEngine.Inner_TaskQueue tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
-      long tileKey = ChunkPos.pack(tile.init_I(), tile.load());
+   private static void generateTile(OreSimEngine.Inner_TaskQueue tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
+      long tileKey = ChunkPos.pack(tile.minChunkX(), tile.load());
       inFlightTiles.add(tileKey);
       load_Z = true;
       LongOpenHashSet alreadyComplete = new LongOpenHashSet(16);
 
       for (int dx = 0; dx < 4; dx++) {
          for (int dz = 0; dz < 4; dz++) {
-            long key = ChunkPos.pack(tile.init_I() + dx, tile.load() + dz);
-            if (init_Map.containsKey(key) || load_Map.containsKey(key)) {
+            long key = ChunkPos.pack(tile.minChunkX() + dx, tile.load() + dz);
+            if (chunkOres.containsKey(key) || load_Map.containsKey(key)) {
                alreadyComplete.add(key);
             }
          }
       }
 
-      init_ConfigStore_2.submitParallel(() -> {
+      WORKERS.submitParallel(() -> {
          try {
             if (!context.init_Z()) {
                init_V_J_Str(token, "Minecraft block tags changed before region generation");
             } else {
-               int regionMinX = tile.init_I() - 2;
+               int regionMinX = tile.minChunkX() - 2;
                int regionMinZ = tile.load() - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 8, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 8, () -> token != generation);
                Map<Long, OreSimEngine.Inner_DataUtil> completed = new HashMap<>(16);
 
                for (int dxx = 0; dxx < 4; dxx++) {
                   for (int dzx = 0; dzx < 4; dzx++) {
-                     int chunkX = tile.init_I() + dxx;
+                     int chunkX = tile.minChunkX() + dxx;
                      int chunkZ = tile.load() + dzx;
                      long chunkKey = ChunkPos.pack(chunkX, chunkZ);
                      if (!alreadyComplete.contains(chunkKey)) {
@@ -468,7 +468,7 @@ public final class OreSimEngine {
                            throw new IllegalStateException("Generator omitted complete chunk " + chunkX + ", " + chunkZ);
                         }
 
-                        OreSimEngine.Inner_DataUtil ores = init_StreamUtil_DataUti_ChunkAccess_BooleanSupplier(chunk, () -> token != load_J);
+                        OreSimEngine.Inner_DataUtil ores = extractOres(chunk, () -> token != generation);
                         completed.put(chunkKey, ores);
                      }
                   }
@@ -477,12 +477,12 @@ public final class OreSimEngine {
                if (!context.init_Z()) {
                   init_V_J_Str(token, "Minecraft block tags changed during region generation");
                } else {
-                  synchronized (init_Obj) {
-                     if (token == load_J && context == init_ConfigStore) {
+                  synchronized (LOCK) {
+                     if (token == generation && context == worldgenContext) {
                         int added = 0;
 
                         for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
-                           if (!init_Map.containsKey(entry.getKey()) && !load_Map.containsKey(entry.getKey())) {
+                           if (!chunkOres.containsKey(entry.getKey()) && !load_Map.containsKey(entry.getKey())) {
                               added += entry.getValue().init();
                            }
                         }
@@ -491,7 +491,7 @@ public final class OreSimEngine {
                            close_Z = true;
                         } else {
                            for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
-                              if (!init_Map.containsKey(entry.getKey()) && !load_Map.containsKey(entry.getKey())) {
+                              if (!chunkOres.containsKey(entry.getKey()) && !load_Map.containsKey(entry.getKey())) {
                                  load_Map.put(entry.getKey(), entry.getValue());
                                  push = push + entry.getValue().init();
                               }
@@ -506,10 +506,10 @@ public final class OreSimEngine {
             }
          } catch (CancellationException var36) {
          } catch (Throwable error) {
-            init_V_J(token, "Minecraft 26.3 region generation failed at tile " + tile.init_I() + ", " + tile.load(), error);
+            fail(token, "Minecraft 26.3 region generation failed at tile " + tile.minChunkX() + ", " + tile.load(), error);
          } finally {
-            synchronized (init_Obj) {
-               if (token == load_J) {
+            synchronized (LOCK) {
+               if (token == generation) {
                   inFlightTiles.remove(tileKey);
                   load_Z = initialChunkPending || !inFlightTiles.isEmpty();
                }
@@ -518,7 +518,7 @@ public final class OreSimEngine {
       });
    }
 
-   private static OreSimEngine.Inner_DataUtil init_StreamUtil_DataUti_ChunkAccess_BooleanSupplier(ChunkAccess chunk, BooleanSupplier cancelled) {
+   private static OreSimEngine.Inner_DataUtil extractOres(ChunkAccess chunk, BooleanSupplier cancelled) {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
       autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
@@ -529,14 +529,14 @@ public final class OreSimEngine {
          }
       }, cancelled);
       return positions.isEmpty()
-         ? OreSimEngine.Inner_DataUtil.init_StreamUtil_DataUti
+         ? OreSimEngine.Inner_DataUtil.EMPTY
          : new OreSimEngine.Inner_DataUtil(positions.toLongArray(), stateIds.toIntArray());
    }
 
-   private static void init_V_J(long token, String message, Throwable error) {
+   private static void fail(long token, String message, Throwable error) {
       boolean accepted = false;
-      synchronized (init_Obj) {
-         if (token != load_J) {
+      synchronized (LOCK) {
+         if (token != generation) {
             return;
          }
 
@@ -546,8 +546,8 @@ public final class OreSimEngine {
          read_Z = false;
          flush_Z = false;
          init_Str = message + ": " + error.getClass().getSimpleName() + (error.getMessage() == null ? "" : " - " + error.getMessage());
-         init_ConfigStore = null;
-         init_Map.clear();
+         worldgenContext = null;
+         chunkOres.clear();
          load_Map.clear();
          inFlightTiles.clear();
          initialChunkPending = false;
@@ -563,15 +563,15 @@ public final class OreSimEngine {
    }
 
    private static void init_V_J_Str(long token, String message) {
-      synchronized (init_Obj) {
-         if (token == load_J) {
+      synchronized (LOCK) {
+         if (token == generation) {
             init(message);
          }
       }
    }
 
    private static void init(String message) {
-      load_J++;
+      generation++;
       update_V();
       init_Z = false;
       load_Z = false;
@@ -585,7 +585,7 @@ public final class OreSimEngine {
       write_J = System.nanoTime() + init_J;
       auditHasWriteDeadline = true;
       push = 0;
-      init_Map.clear();
+      chunkOres.clear();
       load_Map.clear();
       inFlightTiles.clear();
       initialChunkPending = false;
@@ -596,12 +596,12 @@ public final class OreSimEngine {
    }
 
    private static void update_V() {
-      init_ConfigStore_2.init_V();
+      WORKERS.init_V();
    }
 
    private static void init_V_ConfigStore_J(autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       read_Z = true;
-      init_ConfigStore_2.init(() -> {
+      WORKERS.init(() -> {
          boolean verified = false;
          Throwable failure = null;
 
@@ -615,15 +615,15 @@ public final class OreSimEngine {
             AutismClientAddon.LOG.warn("OreSim could not verify Minecraft block tags", failure);
          }
 
-         synchronized (init_Obj) {
-            if (token == load_J && context == init_ConfigStore) {
+         synchronized (LOCK) {
+            if (token == generation && context == worldgenContext) {
                read_Z = false;
                write_J = System.nanoTime() + init_J;
                auditHasWriteDeadline = true;
                if (!verified) {
                   init(failure == null ? "Minecraft block tags differ from the vanilla 26.3 worldgen profile" : "Minecraft block tags could not be verified");
                } else if (sync_Z) {
-                  load_J++;
+                  generation++;
                   sync_Z = false;
                   init_Str = "";
                   flush_Z = false;
@@ -634,7 +634,7 @@ public final class OreSimEngine {
       });
    }
 
-   private static OreSimEngine.Inner_TaskQueue init_StreamUtil_TaskQue_I(int blockX, int blockZ, int radius) {
+   private static OreSimEngine.Inner_TaskQueue nearestTile(int blockX, int blockZ, int radius) {
       int centerChunkX = SectionPos.blockToSectionCoord(blockX);
       int centerChunkZ = SectionPos.blockToSectionCoord(blockZ);
       int minTileX = Math.floorDiv(centerChunkX - radius, 4);
@@ -648,8 +648,8 @@ public final class OreSimEngine {
             int minChunkX = tileX * 4;
             int minChunkZ = tileZ * 4;
             if (!inFlightTiles.contains(ChunkPos.pack(minChunkX, minChunkZ)) && !init_Z_I_I(minChunkX, minChunkZ)) {
-               double distance = init_D_D(blockX + 0.5, blockZ + 0.5, minChunkX, minChunkZ);
-               if (best == null || distance < best.init_D() || distance == best.init_D() && init_Z_I(minChunkX, minChunkZ, best)) {
+               double distance = distanceToTile(blockX + 0.5, blockZ + 0.5, minChunkX, minChunkZ);
+               if (best == null || distance < best.distance() || distance == best.distance() && init_Z_I(minChunkX, minChunkZ, best)) {
                   best = new OreSimEngine.Inner_TaskQueue(minChunkX, minChunkZ, distance);
                }
             }
@@ -663,7 +663,7 @@ public final class OreSimEngine {
       for (int dx = 0; dx < 4; dx++) {
          for (int dz = 0; dz < 4; dz++) {
             long key = ChunkPos.pack(minChunkX + dx, minChunkZ + dz);
-            if (!init_Map.containsKey(key) && !load_Map.containsKey(key)) {
+            if (!chunkOres.containsKey(key) && !load_Map.containsKey(key)) {
                return false;
             }
          }
@@ -672,7 +672,7 @@ public final class OreSimEngine {
       return true;
    }
 
-   private static double init_D_D(double x, double z, int minChunkX, int minChunkZ) {
+   private static double distanceToTile(double x, double z, int minChunkX, int minChunkZ) {
       double minX = minChunkX * 16.0 + 0.5;
       double minZ = minChunkZ * 16.0 + 0.5;
       double maxX = (minChunkX + 4) * 16.0 - 0.5;
@@ -683,7 +683,7 @@ public final class OreSimEngine {
    }
 
    private static boolean init_Z_I(int x, int z, OreSimEngine.Inner_TaskQueue other) {
-      return x < other.init_I() || x == other.init_I() && z < other.load();
+      return x < other.minChunkX() || x == other.minChunkX() && z < other.load();
    }
 
    private static void sync_V() {
@@ -696,8 +696,8 @@ public final class OreSimEngine {
             Entry<Long, OreSimEngine.Inner_DataUtil> entry = iterator.next();
             int chunkX = ChunkPos.getX(entry.getKey());
             int chunkZ = ChunkPos.getZ(entry.getKey());
-            if (NearestChunkSelector.init(close_I + 0.5, open_I + 0.5, chunkX, chunkZ, missing)) {
-               init_Map.put(entry.getKey(), entry.getValue());
+            if (NearestChunkSelector.init(trackedCenterX + 0.5, trackedCenterZ + 0.5, chunkX, chunkZ, missing)) {
+               chunkOres.put(entry.getKey(), entry.getValue());
                iterator.remove();
                changed = true;
             }
@@ -710,22 +710,22 @@ public final class OreSimEngine {
    }
 
    private static NearestChunkSelector.Inner_DataUtil init_TaskQueue_DataUtil() {
-      int centerX = SectionPos.blockToSectionCoord(close_I);
-      int centerZ = SectionPos.blockToSectionCoord(open_I);
+      int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
+      int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
       return NearestChunkSelector.select(
-         close_I + 0.5, open_I + 0.5, centerX, centerZ, poll, key -> init_Map.containsKey(key) || load_Map.containsKey(key)
+         trackedCenterX + 0.5, trackedCenterZ + 0.5, centerX, centerZ, poll, key -> chunkOres.containsKey(key) || load_Map.containsKey(key)
       );
    }
 
    private static void flush() {
-      int centerX = SectionPos.blockToSectionCoord(close_I);
-      int centerZ = SectionPos.blockToSectionCoord(open_I);
+      int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
+      int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
       int keep = poll + 4;
       int removed = 0;
 
-      for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : init_Map.entrySet()) {
+      for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : chunkOres.entrySet()) {
          long key = entry.getKey();
-         if ((Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) && init_Map.remove(key, entry.getValue())) {
+         if ((Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) && chunkOres.remove(key, entry.getValue())) {
             removed += entry.getValue().init();
          }
       }
@@ -754,7 +754,7 @@ public final class OreSimEngine {
 
    public static int init(double eyeX, double eyeY, double eyeZ, int radius, IntPredicate stateAllowed, int cap, long[] outPos, int[] outState) {
       open_Z = false;
-      if (cap > 0 && outPos != null && outState != null && !init_Map.isEmpty()) {
+      if (cap > 0 && outPos != null && outState != null && !chunkOres.isEmpty()) {
          int limit = Math.min(cap, Math.min(outPos.length, outState.length));
          if (limit <= 0) {
             return 0;
@@ -778,12 +778,12 @@ public final class OreSimEngine {
                for (int dx = -ring; dx <= ring; dx++) {
                   for (int dz = -ring; dz <= ring; dz++) {
                      if (Math.max(Math.abs(dx), Math.abs(dz)) == ring) {
-                        OreSimEngine.Inner_DataUtil ores = init_Map.get(ChunkPos.pack(centerX + dx, centerZ + dz));
-                        if (ores != null && ores.init_JArr.length != 0) {
-                           for (int i = 0; i < ores.init_JArr.length; i++) {
-                              int stateId = ores.init_IArr[i];
+                        OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(centerX + dx, centerZ + dz));
+                        if (ores != null && ores.positions.length != 0) {
+                           for (int i = 0; i < ores.positions.length; i++) {
+                              int stateId = ores.stateIds[i];
                               if (stateAllowed == null || stateAllowed.test(stateId)) {
-                                 long packed = ores.init_JArr[i];
+                                 long packed = ores.positions[i];
                                  if (!anyDisproven || !init_LongOpenHashSet.contains(packed)) {
                                     double px = BlockPos.getX(packed) + 0.5 - eyeX;
                                     double py = BlockPos.getY(packed) + 0.5 - eyeY;
@@ -808,7 +808,7 @@ public final class OreSimEngine {
    }
 
    public static void collectPositions(BlockPos center, int blockRadius, LongOpenHashSet out) {
-      if (center != null && out != null && !init_Map.isEmpty()) {
+      if (center != null && out != null && !chunkOres.isEmpty()) {
          int minX = center.getX() - blockRadius;
          int maxX = center.getX() + blockRadius;
          int minY = center.getY() - blockRadius;
@@ -819,9 +819,9 @@ public final class OreSimEngine {
          synchronized (init_LongOpenHashSet) {
             for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
                for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
-                  OreSimEngine.Inner_DataUtil ores = init_Map.get(ChunkPos.pack(chunkX, chunkZ));
+                  OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
                   if (ores != null) {
-                     for (long packed : ores.init_JArr) {
+                     for (long packed : ores.positions) {
                         if (!init_LongOpenHashSet.contains(packed)) {
                            int x = BlockPos.getX(packed);
                            int y = BlockPos.getY(packed);
@@ -839,7 +839,7 @@ public final class OreSimEngine {
    }
 
    public static void forEachPosition(BlockPos center, int blockRadius, OreSimEngine.Inner_CachePool judge) {
-      if (center != null && judge != null && !init_Map.isEmpty()) {
+      if (center != null && judge != null && !chunkOres.isEmpty()) {
          int minX = center.getX() - blockRadius;
          int maxX = center.getX() + blockRadius;
          int minY = center.getY() - blockRadius;
@@ -851,10 +851,10 @@ public final class OreSimEngine {
          synchronized (init_LongOpenHashSet) {
             for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
                for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
-                  OreSimEngine.Inner_DataUtil ores = init_Map.get(ChunkPos.pack(chunkX, chunkZ));
+                  OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
                   if (ores != null) {
-                     for (int i = 0; i < ores.init_JArr.length; i++) {
-                        long packed = ores.init_JArr[i];
+                     for (int i = 0; i < ores.positions.length; i++) {
+                        long packed = ores.positions[i];
                         if (!init_LongOpenHashSet.contains(packed)) {
                            int x = BlockPos.getX(packed);
                            int y = BlockPos.getY(packed);
@@ -865,7 +865,7 @@ public final class OreSimEngine {
                               && y <= maxY
                               && z >= minZ
                               && z <= maxZ
-                              && judge.shouldDrop(ores.init_IArr[i], packed)
+                              && judge.shouldDrop(ores.stateIds[i], packed)
                               && init_LongOpenHashSet.size() < 200000) {
                               changed |= init_LongOpenHashSet.add(packed);
                            }
@@ -917,26 +917,26 @@ public final class OreSimEngine {
    }
 
    private static final class Inner_DataUtil {
-      static final OreSimEngine.Inner_DataUtil init_StreamUtil_DataUti = new OreSimEngine.Inner_DataUtil(new long[0], new int[0]);
-      final long[] init_JArr;
-      final int[] init_IArr;
+      static final OreSimEngine.Inner_DataUtil EMPTY = new OreSimEngine.Inner_DataUtil(new long[0], new int[0]);
+      final long[] positions;
+      final int[] stateIds;
 
       Inner_DataUtil(long[] positions, int[] stateIds) {
-         this.init_JArr = positions;
-         this.init_IArr = stateIds;
+         this.positions = positions;
+         this.stateIds = stateIds;
       }
 
       int init() {
-         return this.init_JArr.length;
+         return this.positions.length;
       }
    }
 
-   private record Inner_StreamUtil(long init_J, ResourceKey<Level> init_ResourceKey) {
+   private record Inner_StreamUtil(long seed, ResourceKey<Level> dimension) {
    }
 
-   private record Inner_TaskQueue(int init_I, int load, double init_D) {
-      long init_J() {
-         return ChunkPos.pack(this.init_I, this.load);
+   private record Inner_TaskQueue(int minChunkX, int load, double distance) {
+      long packedPos() {
+         return ChunkPos.pack(this.minChunkX, this.load);
       }
    }
 }

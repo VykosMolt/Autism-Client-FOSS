@@ -110,9 +110,9 @@ public final class WaypointsCommand extends Command {
       Minecraft mc = Minecraft.getInstance();
       AutismWaypoints store = AutismWaypoints.getInstance();
       String scope = AuditWaypointScope.current(mc);
-      int x = init_I_D(dx);
-      int y = init_I_D(dy);
-      int z = init_I_D(dz);
+      int x = floorToInt(dx);
+      int y = floorToInt(dy);
+      int z = floorToInt(dz);
       String name = store.nextName(scope, "Waypoint");
       store.init(scope, new AutismWaypoints.Waypoint(name, x, y, z, update(), System.currentTimeMillis()));
       AutismClientMessaging.sendPrefixed("§aWaypoint saved: §f" + name + " §7(" + x + " " + y + " " + z + ")");
@@ -187,7 +187,7 @@ public final class WaypointsCommand extends Command {
       }
    }
 
-   private static int init_I_D(double value) {
+   private static int floorToInt(double value) {
       return Double.isFinite(value) ? (int)Math.floor(value) : 0;
    }
 }

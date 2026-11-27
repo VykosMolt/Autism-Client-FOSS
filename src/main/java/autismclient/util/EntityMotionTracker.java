@@ -8,20 +8,20 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 public final class EntityMotionTracker {
-   public static final int init_I = 3;
+   public static final int MAX_LOOKAHEAD = 3;
    private int load_I = -2147483648;
    private Vec3 init_Vec3;
    private int read;
    private Vec3 load_Vec3 = Vec3.ZERO;
-   private final Vec3[] init_Vec3Arr = new Vec3[32];
-   private final int[] init_IArr = new int[32];
+   private final Vec3[] positions = new Vec3[32];
+   private final int[] ticks = new int[32];
 
    public void init(LivingEntity target, int tick) {
       if (target == null) {
          this.load_I = -2147483648;
          this.init_Vec3 = null;
          this.load_Vec3 = Vec3.ZERO;
-         Arrays.fill(this.init_Vec3Arr, null);
+         Arrays.fill(this.positions, null);
       } else {
          this.init(target.getId(), observedPosition(target), tick);
       }
@@ -30,7 +30,7 @@ public final class EntityMotionTracker {
    void init(int targetId, Vec3 now, int tick) {
       if (targetId != this.load_I || this.init_Vec3 == null) {
          this.load_I = targetId;
-         Arrays.fill(this.init_Vec3Arr, null);
+         Arrays.fill(this.positions, null);
          this.load_Vec3 = Vec3.ZERO;
          this.init_Vec3 = now;
          this.read = tick;
@@ -40,15 +40,15 @@ public final class EntityMotionTracker {
          this.read = tick;
       }
 
-      int slot = tick & this.init_Vec3Arr.length - 1;
-      this.init_Vec3Arr[slot] = now;
-      this.init_IArr[slot] = tick;
+      int slot = tick & this.positions.length - 1;
+      this.positions[slot] = now;
+      this.ticks[slot] = tick;
    }
 
    public Vec3 init(int tick, int age) {
-      int wanted = tick - Math.max(0, Math.min(this.init_Vec3Arr.length - 1, age));
-      int slot = wanted & this.init_Vec3Arr.length - 1;
-      return this.init_Vec3Arr[slot] != null && this.init_IArr[slot] == wanted ? this.init_Vec3Arr[slot] : this.init_Vec3;
+      int wanted = tick - Math.max(0, Math.min(this.positions.length - 1, age));
+      int slot = wanted & this.positions.length - 1;
+      return this.positions[slot] != null && this.ticks[slot] == wanted ? this.positions[slot] : this.init_Vec3;
    }
 
    public void reset() {

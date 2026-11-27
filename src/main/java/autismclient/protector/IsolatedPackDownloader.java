@@ -32,8 +32,8 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.Pack.Metadata;
 
 public final class IsolatedPackDownloader {
-   private static final Object init_Obj = new Object();
-   private static final Map<ResourcePackSessionTracker.PackSession, Map<UUID, IsolatedPackDownloader.Inner_DataUtil>> init_Map = new IdentityHashMap<>();
+   private static final Object LOCK = new Object();
+   private static final Map<ResourcePackSessionTracker.PackSession, Map<UUID, IsolatedPackDownloader.Inner_DataUtil>> SNAPSHOTS = new IdentityHashMap<>();
 
    private IsolatedPackDownloader() {
    }
@@ -248,25 +248,25 @@ public final class IsolatedPackDownloader {
             return ordinary.get();
          }
 
-         synchronized (init_Obj) {
-            Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = init_Map.get(session);
+         synchronized (LOCK) {
+            Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = SNAPSHOTS.get(session);
             IsolatedPackDownloader.Inner_DataUtil cached = sessionSnapshots == null ? null : sessionSnapshots.get(packId);
-            if (cached != null && cached.init_J == generation && cached.init_Path.equals(path)) {
-               return cached.init_FilePackResources_;
+            if (cached != null && cached.generation == generation && cached.path.equals(path)) {
+               return cached.supplier;
             }
          }
 
          IsolatedResourcePack.Inner_DataUtil snapshot = IsolatedResourcePack.Inner_DataUtil.init(path);
          FileResourcesSupplier supplier = new IsolatedPackDownloader.Inner_CachePool(path, snapshot, isolation);
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             if (!ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
                return new IsolatedPackDownloader.Inner_CachePool(path, IsolatedResourcePack.Inner_DataUtil.init(), isolation);
             }
 
-            Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = init_Map.computeIfAbsent(session, ignored -> new LinkedHashMap<>());
+            Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = SNAPSHOTS.computeIfAbsent(session, ignored -> new LinkedHashMap<>());
             IsolatedPackDownloader.Inner_DataUtil cached = sessionSnapshots.get(packId);
-            if (cached != null && cached.init_J == generation && cached.init_Path.equals(path)) {
-               return cached.init_FilePackResources_;
+            if (cached != null && cached.generation == generation && cached.path.equals(path)) {
+               return cached.supplier;
             }
 
             sessionSnapshots.put(packId, new IsolatedPackDownloader.Inner_DataUtil(generation, path, supplier));
@@ -291,15 +291,15 @@ public final class IsolatedPackDownloader {
 
    static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null) {
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             if (packId == null) {
-               init_Map.remove(session);
+               SNAPSHOTS.remove(session);
             } else {
-               Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = init_Map.get(session);
+               Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = SNAPSHOTS.get(session);
                if (sessionSnapshots != null) {
                   sessionSnapshots.remove(packId);
                   if (sessionSnapshots.isEmpty()) {
-                     init_Map.remove(session);
+                     SNAPSHOTS.remove(session);
                   }
                }
             }
@@ -308,8 +308,8 @@ public final class IsolatedPackDownloader {
    }
 
    static int init(ResourcePackSessionTracker.PackSession session) {
-      synchronized (init_Obj) {
-         Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = init_Map.get(session);
+      synchronized (LOCK) {
+         Map<UUID, IsolatedPackDownloader.Inner_DataUtil> sessionSnapshots = SNAPSHOTS.get(session);
          return sessionSnapshots == null ? 0 : sessionSnapshots.size();
       }
    }
@@ -319,39 +319,39 @@ public final class IsolatedPackDownloader {
    }
 
    private static final class Inner_CachePool extends FileResourcesSupplier {
-      private final IsolatedResourcePack.Inner_DataUtil init_JsonUtil_DataUtil;
-      private final IsolatedPackDownloader.Inner_ConfigStore init_EventBus_ConfigSto;
+      private final IsolatedResourcePack.Inner_DataUtil snapshot;
+      private final IsolatedPackDownloader.Inner_ConfigStore isolation;
 
       private Inner_CachePool(Path path, IsolatedResourcePack.Inner_DataUtil snapshot, IsolatedPackDownloader.Inner_ConfigStore isolation) {
          super(path);
-         this.init_JsonUtil_DataUtil = snapshot;
-         this.init_EventBus_ConfigSto = isolation;
+         this.snapshot = snapshot;
+         this.isolation = isolation;
       }
 
       @Override
       public PackMetadataResources openMetadata(PackLocationInfo location) {
-         return this.init_JsonUtil_DataUtil.init(location, "", true, this.init_EventBus_ConfigSto);
+         return this.snapshot.init(location, "", true, this.isolation);
       }
 
       @Override
       public Stream<PackResources> openResources(PackLocationInfo location, Metadata metadata) {
-         PackResources primary = this.init_JsonUtil_DataUtil.init(location, "", false, this.init_EventBus_ConfigSto);
+         PackResources primary = this.snapshot.init(location, "", false, this.isolation);
          List<PackResources> overlays = new ArrayList<>();
 
          for (String overlay : metadata.overlays()) {
             if (IsolatedResourcePack.Inner_DataUtil.init(overlay)) {
-               overlays.add(this.init_JsonUtil_DataUtil.init(location, overlay, false, this.init_EventBus_ConfigSto));
+               overlays.add(this.snapshot.init(location, overlay, false, this.isolation));
             }
          }
 
-         return Stream.of(overlays.isEmpty() ? primary : new IsolatedPackDownloader.Inner_StreamUtil(primary, overlays, this.init_EventBus_ConfigSto));
+         return Stream.of(overlays.isEmpty() ? primary : new IsolatedPackDownloader.Inner_StreamUtil(primary, overlays, this.isolation));
       }
    }
 
    record Inner_ConfigStore(ResourcePackSessionTracker.PackSession session, UUID packId, long generation, Path path) {
    }
 
-   private record Inner_DataUtil(long init_J, Path init_Path, FileResourcesSupplier init_FilePackResources_) {
+   private record Inner_DataUtil(long generation, Path path, FileResourcesSupplier supplier) {
    }
 
    private static final class Inner_StreamUtil extends OverlayedPackResources implements IsolatedPackDownloader.Inner_BufferHelper {
@@ -369,10 +369,10 @@ public final class IsolatedPackDownloader {
    }
 
    private static final class Inner_TaskQueue {
-      private final ResourcePackSessionTracker.PackSession init_FileCache_BufferHe;
-      private final Map<UUID, Long> init_Map;
-      private final Set<UUID> init_Set;
-      private final Consumer<BatchResult> init_Consumer;
+      private final ResourcePackSessionTracker.PackSession session;
+      private final Map<UUID, Long> controlled;
+      private final Set<UUID> omitted;
+      private final Consumer<BatchResult> output;
       private BatchResult init_DownloadQueue_Batc;
       private BatchResult load_DownloadQueue_Batc;
       private boolean init_Z;
@@ -380,10 +380,10 @@ public final class IsolatedPackDownloader {
       private boolean read;
 
       private Inner_TaskQueue(ResourcePackSessionTracker.PackSession session, Map<UUID, Long> controlled, Set<UUID> omitted, Consumer<BatchResult> output) {
-         this.init_FileCache_BufferHe = session;
-         this.init_Map = controlled;
-         this.init_Set = omitted;
-         this.init_Consumer = output;
+         this.session = session;
+         this.controlled = controlled;
+         this.omitted = omitted;
+         this.output = output;
       }
 
       private void init(BatchResult result) {
@@ -424,13 +424,13 @@ public final class IsolatedPackDownloader {
                merged.failed().addAll(this.init_DownloadQueue_Batc.failed());
             }
 
-            if (IsolatedPackDownloader.init(this.init_FileCache_BufferHe, this.load_DownloadQueue_Batc, this.init_Map, this.init_Set)) {
+            if (IsolatedPackDownloader.init(this.session, this.load_DownloadQueue_Batc, this.controlled, this.omitted)) {
                merged.downloaded().putAll(this.load_DownloadQueue_Batc.downloaded());
                merged.failed().addAll(this.load_DownloadQueue_Batc.failed());
             }
          }
 
-         this.init_Consumer.accept(merged);
+         this.output.accept(merged);
       }
    }
 }

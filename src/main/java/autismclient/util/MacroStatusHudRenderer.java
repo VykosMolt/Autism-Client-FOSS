@@ -11,17 +11,17 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 public final class MacroStatusHudRenderer {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final long init_J = 50000000L;
    private static final int init_I = -9448565;
-   private static final Identifier init_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write);
-   private static final Identifier load_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read);
-   private static final Identifier read_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load);
-   private static final int load_I = init_CharEncoder.load(autismclient.gui.f.b.l.write);
-   private static final int read_I = init_CharEncoder.load(autismclient.gui.f.b.l.read);
+   private static final Identifier init_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
+   private static final Identifier load_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
+   private static final Identifier read_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
+   private static final int load_I = THEME.load(autismclient.gui.f.b.l.write);
+   private static final int read_I = THEME.load(autismclient.gui.f.b.l.read);
    private static String[] init_StrArr = new String[0];
-   private static int[] init_IArr = new int[0];
-   private static int[] load_IArr = new int[0];
+   private static int[] cachedSteps = new int[0];
+   private static int[] cachedTotals = new int[0];
    private static int[] read_IArr = new int[0];
    private static int write = -2147483648;
    private static int update = -2147483648;
@@ -30,11 +30,11 @@ public final class MacroStatusHudRenderer {
    private static int close = -2147483648;
    private static int open = -2147483648;
    private static int poll = -2147483648;
-   private static String init_Str = null;
+   private static String title = null;
    private static String load_Str = "";
-   private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> init_List = List.of();
-   private static long load_J;
-   private static Font init_Font;
+   private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> cachedLines = List.of();
+   private static long lastRefreshNanos;
+   private static Font cachedFont;
    private static int push = -2147483648;
    private static int pop = -2147483648;
    private static long read_J;
@@ -52,7 +52,7 @@ public final class MacroStatusHudRenderer {
       if (textRenderer == null) {
          return 0;
       } else {
-         return !init_Z(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.init(init_List.size());
+         return !init_Z(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.init(cachedLines.size());
       }
    }
 
@@ -61,18 +61,18 @@ public final class MacroStatusHudRenderer {
    ) {
       return textRenderer != null && init_Z(textRenderer, panelWidth, maxLines)
          ? autismclient.gui.ui.layout.InfoCardRenderer.init(
-            context, textRenderer, x, y, panelWidth, load_Str, init_List, init_CharEncoder.run(), 0, true, rightBorder, topBorder, bottomBorder
+            context, textRenderer, x, y, panelWidth, load_Str, cachedLines, THEME.run(), 0, true, rightBorder, topBorder, bottomBorder
          )
          : 0;
    }
 
    private static boolean init_Z(Font textRenderer, int panelWidth, int maxLines) {
-      if (load_Z && textRenderer == init_Font && panelWidth == push && maxLines == pop && System.nanoTime() - read_J < 8000000L) {
+      if (load_Z && textRenderer == cachedFont && panelWidth == push && maxLines == pop && System.nanoTime() - read_J < 8000000L) {
          load_Z = false;
          return init_Z;
       } else {
          boolean result = load(textRenderer, panelWidth, maxLines);
-         init_Font = textRenderer;
+         cachedFont = textRenderer;
          push = panelWidth;
          pop = maxLines;
          read_J = System.nanoTime();
@@ -85,7 +85,7 @@ public final class MacroStatusHudRenderer {
    private static boolean load(Font textRenderer, int panelWidth, int maxLines) {
       List<MacroExecutor.ActiveRunSnapshot> runs = MacroExecutor.getActiveRunSnapshots();
       if (runs.isEmpty()) {
-         init_V();
+         clearCache();
          return false;
       }
 
@@ -105,7 +105,7 @@ public final class MacroStatusHudRenderer {
 
          return true;
       } else {
-         init_V();
+         clearCache();
          return false;
       }
    }
@@ -127,7 +127,7 @@ public final class MacroStatusHudRenderer {
       if (rowsPerRun == write && runs.size() == init_StrArr.length) {
          for (int i = 0; i < runs.size(); i++) {
             MacroExecutor.ActiveRunSnapshot run = runs.get(i);
-            if (run.currentStep() != init_IArr[i] || run.totalSteps() != load_IArr[i] || run.lastCompletedStep() != read_IArr[i] || !Objects.equals(run.macroName(), init_StrArr[i])) {
+            if (run.currentStep() != cachedSteps[i] || run.totalSteps() != cachedTotals[i] || run.lastCompletedStep() != read_IArr[i] || !Objects.equals(run.macroName(), init_StrArr[i])) {
                return false;
             }
          }
@@ -142,10 +142,10 @@ public final class MacroStatusHudRenderer {
       boolean layoutChanged = !runsMatch || sync != total || close != visibleRows || open != panelWidth || poll != ThemePaletteManager.generation();
       if (layoutChanged) {
          return true;
-      } else if (init_List.isEmpty()) {
+      } else if (cachedLines.isEmpty()) {
          return true;
       } else {
-         return update == current && flush == scroll ? false : now - load_J >= 50000000L;
+         return update == current && flush == scroll ? false : now - lastRefreshNanos >= 50000000L;
       }
    }
 
@@ -201,15 +201,15 @@ public final class MacroStatusHudRenderer {
       MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       int runCount = runs.size();
       init_StrArr = new String[runCount];
-      init_IArr = new int[runCount];
-      load_IArr = new int[runCount];
+      cachedSteps = new int[runCount];
+      cachedTotals = new int[runCount];
       read_IArr = new int[runCount];
 
       for (int i = 0; i < runCount; i++) {
          MacroExecutor.ActiveRunSnapshot run = runs.get(i);
          init_StrArr[i] = run.macroName();
-         init_IArr[i] = run.currentStep();
-         load_IArr[i] = run.totalSteps();
+         cachedSteps[i] = run.currentStep();
+         cachedTotals[i] = run.totalSteps();
          read_IArr[i] = run.lastCompletedStep();
       }
 
@@ -222,16 +222,16 @@ public final class MacroStatusHudRenderer {
       close = init(primaryTotal, rowsPerRun);
       open = panelWidth;
       poll = ThemePaletteManager.generation();
-      init_Str = runs.size() == 1 ? primary.macroName() : runs.size() + " macros";
+      title = runs.size() == 1 ? primary.macroName() : runs.size() + " macros";
       load_Str = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, read_Identifier, read_I);
-      init_List = rows;
-      load_J = now;
+      cachedLines = rows;
+      lastRefreshNanos = now;
    }
 
-   private static void init_V() {
+   private static void clearCache() {
       init_StrArr = new String[0];
-      init_IArr = new int[0];
-      load_IArr = new int[0];
+      cachedSteps = new int[0];
+      cachedTotals = new int[0];
       read_IArr = new int[0];
       write = -2147483648;
       update = -2147483648;
@@ -240,9 +240,9 @@ public final class MacroStatusHudRenderer {
       close = -2147483648;
       open = -2147483648;
       poll = -2147483648;
-      init_Str = null;
+      title = null;
       load_Str = "";
-      init_List = List.of();
-      load_J = 0L;
+      cachedLines = List.of();
+      lastRefreshNanos = 0L;
    }
 }

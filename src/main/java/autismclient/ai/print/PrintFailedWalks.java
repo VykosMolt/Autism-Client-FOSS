@@ -10,7 +10,7 @@ final class PrintFailedWalks {
    static final int init_I = 128;
    private final LinkedHashMap<PrintFailedWalks.Inner_DataUtil, Long2ObjectOpenHashMap<BlockState>> init_LinkedHashMap = new LinkedHashMap<>();
 
-   int init_I() {
+   int size() {
       return this.init_LinkedHashMap.size();
    }
 

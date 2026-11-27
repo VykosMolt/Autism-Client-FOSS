@@ -96,12 +96,12 @@ final class BedBreachRouteSolver {
          }
       }
 
-      crossings.sort(Comparator.comparingDouble(BedBreachRouteSolver.Inner_StreamUtil::init_D).thenComparing(c -> Double.isFinite(c.init_DataPipe_DataUtil.ticks)));
+      crossings.sort(Comparator.comparingDouble(BedBreachRouteSolver.Inner_StreamUtil::closest).thenComparing(c -> Double.isFinite(c.init_DataPipe_DataUtil.ticks)));
       ArrayList<BedBreachRouteSolver.Inner_DataUtil> blocks = new ArrayList<>();
       double ticks = 0.0;
 
       for (BedBreachRouteSolver.Inner_StreamUtil hit : crossings) {
-         if (!Double.isFinite(hit.init_DataPipe_DataUtil.ticks) || blocks.isEmpty() && hit.init_D > reach * reach) {
+         if (!Double.isFinite(hit.init_DataPipe_DataUtil.ticks) || blocks.isEmpty() && hit.closest > reach * reach) {
             return null;
          }
 
@@ -112,7 +112,7 @@ final class BedBreachRouteSolver {
          blocks.add(hit.init_DataPipe_DataUtil);
          ticks += hit.init_DataPipe_DataUtil.ticks;
          if (hit.init_DataPipe_DataUtil.init_Z) {
-            return new BedBreachRouteSolver.Inner_BufferHelper(List.copyOf(blocks), end, ticks, hit.init_D <= reach * reach);
+            return new BedBreachRouteSolver.Inner_BufferHelper(List.copyOf(blocks), end, ticks, hit.closest <= reach * reach);
          }
       }
 
@@ -179,6 +179,6 @@ final class BedBreachRouteSolver {
       }
    }
 
-   private record Inner_StreamUtil(BedBreachRouteSolver.Inner_DataUtil init_DataPipe_DataUtil, double init_D) {
+   private record Inner_StreamUtil(BedBreachRouteSolver.Inner_DataUtil init_DataPipe_DataUtil, double closest) {
    }
 }

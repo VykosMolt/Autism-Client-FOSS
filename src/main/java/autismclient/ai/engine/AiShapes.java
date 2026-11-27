@@ -20,7 +20,7 @@ public final class AiShapes {
    public static short shapeId(List<AABB> boxes) {
       if (boxes != null && !boxes.isEmpty()) {
          List<AABB> key = List.copyOf(boxes);
-         if (key.size() == 1 && init_Z_AABB(key.get(0))) {
+         if (key.size() == 1 && isFullCube(key.get(0))) {
             return 1;
          }
 
@@ -63,7 +63,7 @@ public final class AiShapes {
       return top;
    }
 
-   public static short init_S_I(int top16) {
+   public static short heightShapeId(int top16) {
       if (top16 <= 0) {
          return 0;
       } else {
@@ -75,7 +75,7 @@ public final class AiShapes {
       if (!loaded) {
          return 1;
       } else {
-         return passable ? 0 : init_S_I(top16);
+         return passable ? 0 : heightShapeId(top16);
       }
    }
 
@@ -83,7 +83,7 @@ public final class AiShapes {
       return probe == null ? -1 : init(probe.loaded(), probe.passable(), probe.top16());
    }
 
-   private static boolean init_Z_AABB(AABB b) {
+   private static boolean isFullCube(AABB b) {
       return b.minX <= 1.0E-6 && b.minY <= 1.0E-6 && b.minZ <= 1.0E-6 && b.maxX >= 0.999999 && b.maxY >= 0.999999 && b.maxZ >= 0.999999;
    }
 

@@ -2159,60 +2159,60 @@ final class AiPortalCast {
    }
 
    static final class Inner_StateCache implements AiOperation {
-      private final AiOperation init_AiOperation;
-      private final long init_J;
-      private final LongSupplier init_LongSupplier;
-      private final AiPreparationReceipt init_bb = new AiPreparationReceipt();
-      private AiOperation.Result init_AiOperation_Result;
+      private final AiOperation child;
+      private final long deadline;
+      private final LongSupplier clock;
+      private final AiPreparationReceipt receipt = new AiPreparationReceipt();
+      private AiOperation.Result finalResult;
       private boolean init_Z;
 
       Inner_StateCache(AiOperation child, long deadline, LongSupplier now) {
-         this.init_AiOperation = child;
-         this.init_J = deadline;
-         this.init_LongSupplier = now;
+         this.child = child;
+         this.deadline = deadline;
+         this.clock = now;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (this.init_AiOperation_Result != null) {
-            return this.init_AiOperation_Result;
+         if (this.finalResult != null) {
+            return this.finalResult;
          }
 
          if (this.init_Z) {
             return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Pour face approach cancelled", "{}", List.of()));
          }
 
-         if (this.init_LongSupplier.getAsLong() >= this.init_J) {
+         if (this.clock.getAsLong() >= this.deadline) {
             return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Pour face approach exceeded its bounded deadline", "{}"));
          }
 
-         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
-         return result.terminal() ? this.init(this.init_bb.lastChildResult()) : result;
+         AiOperation.Result result = this.receipt.tickChild(this.child);
+         return result.terminal() ? this.init(this.receipt.lastChildResult()) : result;
       }
 
       private AiOperation.Result init(AiOperation.Result result) {
-         this.init_AiOperation_Result = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(this.init_AiOperation));
-         this.init_bb.cancelChild(this.init_AiOperation);
-         return this.init_AiOperation_Result;
+         this.finalResult = this.receipt.finalizeResult(result, this.receipt.requiresReconciliation(this.child));
+         this.receipt.cancelChild(this.child);
+         return this.finalResult;
       }
 
       AiOperation.Result init() {
-         return this.init_AiOperation_Result == null ? this.init_bb.lastChildResult() : this.init_AiOperation_Result;
+         return this.finalResult == null ? this.receipt.lastChildResult() : this.finalResult;
       }
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation_Result != null || this.init_AiOperation.canInterruptNow());
+         return !this.receipt.requiresReconciliation(this.child) && (this.finalResult != null || this.child.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.requiresReconciliation(this.init_AiOperation);
+         return this.receipt.requiresReconciliation(this.child);
       }
 
       @Override
       public void cancel() {
-         this.init_bb.cancelChild(this.init_AiOperation);
+         this.receipt.cancelChild(this.child);
          this.init_Z = true;
       }
    }

@@ -37,7 +37,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
             "Lost: the vanilla disguise. Not full protection anymore"
       }
    };
-   private final Screen init_Screen;
+   private final Screen parent;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private final long load_J = System.currentTimeMillis();
    private final SimpleVoiceChatDetectedScreen.Inner_DataUtil init_a_DataUtil = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Keep Vanilla", () -> this.init(true));
@@ -52,7 +52,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
 
    public SimpleVoiceChatDetectedScreen(Screen parent) {
       super(Component.literal("Simple Voice Chat detected"));
-      this.init_Screen = parent;
+      this.parent = parent;
    }
 
    private void init(boolean keepVanillaMode) {
@@ -61,7 +61,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          module.setSpoofClientVanilla(keepVanillaMode);
       }
 
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 
    @Override
@@ -78,7 +78,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
    }
 
-   private boolean init_Z() {
+   private boolean isReady() {
       return System.currentTimeMillis() - this.load_J >= 5000L;
    }
 
@@ -115,7 +115,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
             graphics, autismclient.gui.f.NetHelper.init(x, y, innerW, 1), ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.OUTLINE)
          );
          y += 5;
-         int lineH = this.load_I();
+         int lineH = this.lineHeight();
          int bodyColor = this.init_CharEncoder.load(l.write);
          List<List<String>> linesBySection = this.init_List(innerW);
 
@@ -131,8 +131,8 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
             y += 4;
          }
 
-         boolean ready = this.init_Z();
-         this.load_a_DataUtil.init_Str = ready ? "Switch to Modded" : "Switch to Modded (" + this.init_I() + ")";
+         boolean ready = this.isReady();
+         this.load_a_DataUtil.label = ready ? "Switch to Modded" : "Switch to Modded (" + this.init_I() + ")";
          this.init(graphics, this.init_a_DataUtil, uiMouseX, uiMouseY, ready);
          this.init(graphics, this.load_a_DataUtil, uiMouseX, uiMouseY, ready);
       } finally {
@@ -142,15 +142,15 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-      if (Compat263.mouseEventGlfwButton(event) == 0 && this.init_Z()) {
+      if (Compat263.mouseEventGlfwButton(event) == 0 && this.isReady()) {
          float mx = (float)cA.init_D_D(event.x());
          float my = (float)cA.init_D_D(event.y());
          this.load_V();
          if (this.init_a_DataUtil.init(mx, my)) {
-            this.init_a_DataUtil.init_Runnable.run();
+            this.init_a_DataUtil.action.run();
             return true;
          } else if (this.load_a_DataUtil.init(mx, my)) {
-            this.load_a_DataUtil.init_Runnable.run();
+            this.load_a_DataUtil.action.run();
             return true;
          } else {
             return false;
@@ -160,7 +160,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       }
    }
 
-   private int load_I() {
+   private int lineHeight() {
       return k.init(load_Identifier) + 2;
    }
 
@@ -200,7 +200,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
 
    private int sync() {
       int innerW = Math.max(1, this.write() - 12);
-      int lineH = this.load_I();
+      int lineH = this.lineHeight();
       int h = 6 + k.init(init_Identifier) + 4 + 1 + 4;
       List<List<String>> linesBySection = this.init_List(innerW);
 
@@ -287,7 +287,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       boolean hovered = enabled && btn.init(mouseX, mouseY);
       autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, this.font, (int)mouseX, (int)mouseY);
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(btn.init_I, btn.load, btn.read, btn.write);
-      autismclient.gui.f.b.CachePool.init(ctx, bounds, btn.init_Str, autismclient.gui.f.b.CachePool.Inner_DataUtil.load, hovered, false);
+      autismclient.gui.f.b.CachePool.init(ctx, bounds, btn.label, autismclient.gui.f.b.CachePool.Inner_DataUtil.load, hovered, false);
       if (!enabled) {
          autismclient.gui.f.PacketUtil.init(graphics, bounds, 1711276032);
       }
@@ -303,16 +303,16 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private static final class Inner_DataUtil {
-      private String init_Str;
-      private final Runnable init_Runnable;
+      private String label;
+      private final Runnable action;
       private int init_I;
       private int load;
       private int read;
       private int write;
 
       private Inner_DataUtil(String label, Runnable action) {
-         this.init_Str = label;
-         this.init_Runnable = action;
+         this.label = label;
+         this.action = action;
       }
 
       private void init(int x, int y, int w, int h) {

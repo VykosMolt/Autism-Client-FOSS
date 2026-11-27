@@ -11,11 +11,11 @@ public final class ToastNotificationStack {
    private static final int load_I = 3;
    private static final int read_I = 15;
    private static final int write_I = 10;
-   private final List<ToastNotificationStack.Inner_DataUtil> init_List = new CopyOnWriteArrayList<>();
+   private final List<ToastNotificationStack.Inner_DataUtil> toasts = new CopyOnWriteArrayList<>();
    private volatile boolean init_Z;
-   private final long load_J;
-   private final float read_F;
-   private final float write_F;
+   private final long lifetimeMs;
+   private final float enterMs;
+   private final float exitMs;
    private final int update;
    private final int sync;
    private final int flush;
@@ -25,9 +25,9 @@ public final class ToastNotificationStack {
    }
 
    public ToastNotificationStack(long lifetimeMs, float enterMs, float exitMs, int maxVisible, int gap, int height) {
-      this.load_J = Math.max(1L, lifetimeMs);
-      this.read_F = Math.max(1.0F, enterMs);
-      this.write_F = Math.max(1.0F, exitMs);
+      this.lifetimeMs = Math.max(1L, lifetimeMs);
+      this.enterMs = Math.max(1.0F, enterMs);
+      this.exitMs = Math.max(1.0F, exitMs);
       this.update = Math.max(1, maxVisible);
       this.sync = Math.max(0, gap);
       this.flush = Math.max(1, height);
@@ -36,12 +36,12 @@ public final class ToastNotificationStack {
    public void init(String message, int accentColor) {
       if (message != null && !message.isBlank()) {
          long nowNanos = System.nanoTime();
-         this.init_V_J(nowNanos);
-         if (this.init_List.size() >= this.update) {
-            this.init_List.remove(0);
+         this.expire(nowNanos);
+         if (this.toasts.size() >= this.update) {
+            this.toasts.remove(0);
          }
 
-         this.init_List.add(new ToastNotificationStack.Inner_DataUtil(message, nowNanos, accentColor));
+         this.toasts.add(new ToastNotificationStack.Inner_DataUtil(message, nowNanos, accentColor));
          this.init_Z = true;
       }
    }
@@ -50,8 +50,8 @@ public final class ToastNotificationStack {
       if (!this.init_Z) {
          return false;
       } else {
-         this.init_V_J(System.nanoTime());
-         if (this.init_List.isEmpty()) {
+         this.expire(System.nanoTime());
+         if (this.toasts.isEmpty()) {
             this.init_Z = false;
             return false;
          } else {
@@ -65,24 +65,24 @@ public final class ToastNotificationStack {
          return 0;
       }
 
-      this.init_V_J(System.nanoTime());
-      if (this.init_List.isEmpty()) {
+      this.expire(System.nanoTime());
+      if (this.toasts.isEmpty()) {
          this.init_Z = false;
       }
 
-      return this.init_List.size();
+      return this.toasts.size();
    }
 
    public void clear() {
-      this.init_List.clear();
+      this.toasts.clear();
       this.init_Z = false;
    }
 
    public void init(autismclient.gui.f.SyncManager context, int anchorX, int anchorY, int anchorWidth) {
       if (context != null && anchorWidth > 0) {
          long nowNanos = System.nanoTime();
-         this.init_V_J(nowNanos);
-         if (this.init_List.isEmpty()) {
+         this.expire(nowNanos);
+         if (this.toasts.isEmpty()) {
             this.init_Z = false;
          } else {
             int maxToastWidth = Math.max(1, Math.min(anchorWidth, 260));
@@ -92,12 +92,12 @@ public final class ToastNotificationStack {
             int maxTextWidth = Math.max(1, maxToastWidth - padX * 2);
             int y = anchorY;
 
-            for (int i = this.init_List.size() - 1; i >= 0; i--) {
-               ToastNotificationStack.Inner_DataUtil toast = this.init_List.get(i);
-               float ageMs = Math.max(0.0F, (float)(nowNanos - toast.init_J()) / 1000000.0F);
-               float alpha = Math.min(init_F_F(ageMs / this.read_F), init_F_F(((float)this.load_J - ageMs) / this.write_F));
+            for (int i = this.toasts.size() - 1; i >= 0; i--) {
+               ToastNotificationStack.Inner_DataUtil toast = this.toasts.get(i);
+               float ageMs = Math.max(0.0F, (float)(nowNanos - toast.createdAt()) / 1000000.0F);
+               float alpha = Math.min(clamp01(ageMs / this.enterMs), clamp01(((float)this.lifetimeMs - ageMs) / this.exitMs));
                if (!(alpha <= 0.001F)) {
-                  List<String> lines = context.init_PoolEntry().wrapLines(toast.init_Str(), maxTextWidth);
+                  List<String> lines = context.init_PoolEntry().wrapLines(toast.text(), maxTextWidth);
                   int widest = 0;
 
                   for (String line : lines) {
@@ -108,18 +108,18 @@ public final class ToastNotificationStack {
                   int textBlockHeight = lines.size() * lineHeight;
                   int toastHeight = Math.max(this.flush, textBlockHeight + verticalPad);
                   int drawX = anchorX + Math.max(0, (anchorWidth - toastWidth) / 2);
-                  float slide = init_F_F(ageMs / this.read_F);
+                  float slide = clamp01(ageMs / this.enterMs);
                   float eased = 1.0F - (1.0F - slide) * (1.0F - slide) * (1.0F - slide);
                   int drawY = y - Math.round((1.0F - eased) * (toastHeight + this.sync + 2));
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, toastWidth, toastHeight);
                   autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-                  int fill = init(colors.windowSurface & 16777215, toast.init_I(), 0.22F);
+                  int fill = init(colors.windowSurface & 16777215, toast.color(), 0.22F);
                   autismclient.gui.f.PacketUtil.load(
                      context.init_GuiGraphicsExtract(),
                      bounds,
                      5,
                      autismclient.gui.f.PacketUtil.init(-704643072 | fill, alpha),
-                     autismclient.gui.f.PacketUtil.init(toast.init_I(), alpha)
+                     autismclient.gui.f.PacketUtil.init(toast.color(), alpha)
                   );
                   int textColor = autismclient.gui.f.PacketUtil.init(colors.textPrimary, alpha);
                   int textTop = drawY + Math.max(2, (toastHeight - textBlockHeight + 1) / 2 + 1);
@@ -137,11 +137,11 @@ public final class ToastNotificationStack {
       }
    }
 
-   private void init_V_J(long nowNanos) {
-      this.init_List.removeIf(toast -> (nowNanos - toast.init_J()) / 1000000L >= this.load_J);
+   private void expire(long nowNanos) {
+      this.toasts.removeIf(toast -> (nowNanos - toast.createdAt()) / 1000000L >= this.lifetimeMs);
    }
 
-   private static float init_F_F(float value) {
+   private static float clamp01(float value) {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
@@ -158,6 +158,6 @@ public final class ToastNotificationStack {
       return r << 16 | g << 8 | b;
    }
 
-   private record Inner_DataUtil(String init_Str, long init_J, int init_I) {
+   private record Inner_DataUtil(String text, long createdAt, int color) {
    }
 }

@@ -40,8 +40,8 @@ import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final DateTimeFormatter init_DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault());
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault());
    private static final int flush_I = 14;
    private static final int close_I = 10;
    private static final int open_I = 2;
@@ -57,9 +57,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private static final int put = 2;
    private static final int add = -4809052;
    private static final int clear = -6114880;
-   private static final Set<String> init_Set = load_Set();
-   private static final Set<String> load_Set = init_Set_2();
-   private static final Set<String> read_Set = new HashSet<>(
+   private static final Set<String> DEFAULT_BLOCKED_S2C_PACKETS = defaultBlockedS2cPackets();
+   private static final Set<String> DEFAULT_BLOCKED_PACKETS = defaultBlockedPackets();
+   private static final Set<String> INVENTORY_PACKET_KEYWORDS = new HashSet<>(
       Arrays.asList(
          "ClickSlot",
          "CloseAbstractContainerScreen",
@@ -100,7 +100,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          "MerchantOffers"
       )
    );
-   private static final Set<String> write_Set = new HashSet<>(
+   private static final Set<String> MOVEMENT_PACKET_KEYWORDS = new HashSet<>(
       Arrays.asList(
          "PlayerMove",
          "PlayerMoveFull",
@@ -136,7 +136,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          "ClientboundTeleportEntity"
       )
    );
-   private static final Set<String> update_Set = new HashSet<>(
+   private static final Set<String> PAYLOAD_PACKET_KEYWORDS = new HashSet<>(
       Arrays.asList(
          "CustomPacketPayload",
          "CustomPacketPayloadC2S",
@@ -148,77 +148,77 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          "DiscardedPayload"
       )
    );
-   private final Font init_Font;
-   private final AutismPacketInspectOverlay init_AutismPacketInspec;
-   private final AutismPacketLoggerOverlay.BlockedPacketListOverlay init_AutismPacketLogger;
-   private final AutismPacketLoggerOverlay.PayloadChannelListenerOverlay init_AutismPacketLogger_3;
-   private final PayloadChannelFilterManager init_bB;
-   private final PayloadRegistrationManager init_bC;
-   private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final OverlayContextMenu<AutismPacketLoggerOverlay.LoggedPacketEntry> init_F_2;
+   private final Font font;
+   private final AutismPacketInspectOverlay inspectOverlay;
+   private final AutismPacketLoggerOverlay.BlockedPacketListOverlay blockedListOverlay;
+   private final AutismPacketLoggerOverlay.PayloadChannelListenerOverlay channelListenerOverlay;
+   private final PayloadChannelFilterManager channelFilters;
+   private final PayloadRegistrationManager payloadRegistrations;
+   private final autismclient.gui.f.b.CharEncoder styleTheme = new autismclient.gui.f.b.CharEncoder();
+   private final OverlayContextMenu<AutismPacketLoggerOverlay.LoggedPacketEntry> contextMenu;
    private int reset = 360;
    private int start = 250;
    private int stop = 250;
-   private volatile boolean write_Z = true;
-   private boolean update_Z = false;
-   private boolean sync_Z;
-   private double init_D;
-   private double load_D;
+   private volatile boolean paused = true;
+   private boolean configurationOnly = false;
+   private boolean dragging;
+   private double dragOffsetX;
+   private double dragOffsetY;
    private boolean flush_Z;
    private int next;
-   private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-   private boolean close_Z;
+   private final autismclient.gui.ui.widgets.ScrollOffsetController scroller = new autismclient.gui.ui.widgets.ScrollOffsetController();
+   private boolean scrollbarDragging;
    private int prev;
-   private String load_Str = "";
-   private final ThemedTextInputBox init_k;
-   private AutismPacketLoggerOverlay.LogCategory init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.ALL;
+   private String searchQuery = "";
+   private final ThemedTextInputBox searchField;
+   private AutismPacketLoggerOverlay.LogCategory category = AutismPacketLoggerOverlay.LogCategory.ALL;
    private boolean open_Z = true;
    private int valid = 0;
-   private boolean poll_Z;
-   private final Set<String> sync_Set = new LinkedHashSet<>();
-   private final Set<String> flush_Set = new HashSet<>();
-   private final Map<Class<?>, Boolean> init_Map = new HashMap<>();
+   private boolean payloadFilteredOnly;
+   private final Set<String> blockedPackets = new LinkedHashSet<>();
+   private final Set<String> blockedKeys = new HashSet<>();
+   private final Map<Class<?>, Boolean> blockedClassCache = new HashMap<>();
    private boolean push_Z;
-   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> init_Deque = new ArrayDeque<>();
-   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> load_Deque = new ArrayDeque<>();
-   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> read_Deque = new ArrayDeque<>();
-   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> write_Deque = new ArrayDeque<>();
-   private final List<AutismPacketLoggerOverlay.LoggedPacketEntry> init_List = new ArrayList<>();
-   private final PacketStateDeltaTracker init_bq = new PacketStateDeltaTracker();
+   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> allBuffer = new ArrayDeque<>();
+   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> inventoryBuffer = new ArrayDeque<>();
+   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> movementBuffer = new ArrayDeque<>();
+   private final Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> payloadBuffer = new ArrayDeque<>();
+   private final List<AutismPacketLoggerOverlay.LoggedPacketEntry> pendingEntries = new ArrayList<>();
+   private final PacketStateDeltaTracker stateDeltaTracker = new PacketStateDeltaTracker();
    private volatile int size;
-   private long load_J;
-   private List<AutismPacketLoggerOverlay.DisplayRow> load_List = new ArrayList<>();
-   private volatile boolean pop_Z = true;
-   private final Set<String> close_Set = new HashSet<>();
-   private static long read_J = 0L;
+   private long lastFlushTime;
+   private List<AutismPacketLoggerOverlay.DisplayRow> displayRows = new ArrayList<>();
+   private volatile boolean rowsDirty = true;
+   private final Set<String> expandedGroups = new HashSet<>();
+   private static long nextEntryId = 0L;
 
    public AutismPacketLoggerOverlay(Font textRenderer) {
       super("AutismPacketLoggerOverlay", 360, 250);
-      this.init_Font = textRenderer;
-      this.reset = this.get_I_15();
+      this.font = textRenderer;
+      this.reset = this.preferredWidth();
       this.start = this.set_I_15();
       this.stop = this.start;
       this.windowX = 200;
       this.windowY = 40;
-      this.init_k = new ThemedTextInputBox(init_Minecraft, textRenderer, 0, 0, this.next_I_5(), this.reset_I_5(), false);
-      this.init_k.setPlaceholder(Component.literal("Search..."));
-      this.init_k.setMaxLength(160);
-      this.init_k.setChangedListener(value -> {
-         this.load_Str = value == null ? "" : value;
-         this.pop_Z = true;
+      this.searchField = new ThemedTextInputBox(MC, textRenderer, 0, 0, this.searchFieldWidth(), this.reset_I_5(), false);
+      this.searchField.setPlaceholder(Component.literal("Search..."));
+      this.searchField.setMaxLength(160);
+      this.searchField.setChangedListener(value -> {
+         this.searchQuery = value == null ? "" : value;
+         this.rowsDirty = true;
       });
-      this.init_AutismPacketInspec = new AutismPacketInspectOverlay(textRenderer);
-      this.init_AutismPacketLogger = new AutismPacketLoggerOverlay.BlockedPacketListOverlay();
-      this.init_bB = new PayloadChannelFilterManager();
-      this.init_bC = new PayloadRegistrationManager();
-      this.init_AutismPacketLogger_3 = new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay();
-      this.init_F_2 = new OverlayContextMenu<>(this.init_CharEncoder, textRenderer, this::init_StrArr_AutismPacketLogger, this.put_I_6());
-      this.setActiveContextMenu(this.init_F_2);
-      OverlayManager.getInstance().register(this.init_AutismPacketInspec);
-      OverlayManager.getInstance().register(this.init_AutismPacketLogger);
-      OverlayManager.getInstance().register(this.init_AutismPacketLogger_3);
-      this.poll_V_7();
-      this.write_Z = !AutismConfig.getGlobal().packetLoggerCapturing;
+      this.inspectOverlay = new AutismPacketInspectOverlay(textRenderer);
+      this.blockedListOverlay = new AutismPacketLoggerOverlay.BlockedPacketListOverlay();
+      this.channelFilters = new PayloadChannelFilterManager();
+      this.payloadRegistrations = new PayloadRegistrationManager();
+      this.channelListenerOverlay = new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay();
+      this.contextMenu = new OverlayContextMenu<>(this.styleTheme, textRenderer, this::contextMenuItems, this.rowHeight());
+      this.setActiveContextMenu(this.contextMenu);
+      OverlayManager.getInstance().register(this.inspectOverlay);
+      OverlayManager.getInstance().register(this.blockedListOverlay);
+      OverlayManager.getInstance().register(this.channelListenerOverlay);
+      this.loadBlockedFromConfig();
+      this.paused = !AutismConfig.getGlobal().packetLoggerCapturing;
    }
 
    @Override
@@ -232,17 +232,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    public synchronized String debugSummary() {
       return "capturing="
-         + !this.write_Z
+         + !this.paused
          + " all="
-         + this.init_Deque.size()
+         + this.allBuffer.size()
          + " inv="
-         + this.load_Deque.size()
+         + this.inventoryBuffer.size()
          + " move="
-         + this.read_Deque.size()
+         + this.movementBuffer.size()
          + " payload="
-         + this.write_Deque.size()
+         + this.payloadBuffer.size()
          + " pending="
-         + this.init_List.size();
+         + this.pendingEntries.size();
    }
 
    public synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> queryEntries(String category, int offset, int limit) {
@@ -251,17 +251,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       switch (key) {
          case "INVENTORY":
          case "INV":
-            var10002 = this.load_Deque;
+            var10002 = this.inventoryBuffer;
             break;
          case "MOVEMENT":
          case "MOVE":
-            var10002 = this.read_Deque;
+            var10002 = this.movementBuffer;
             break;
          case "PAYLOAD":
-            var10002 = this.write_Deque;
+            var10002 = this.payloadBuffer;
             break;
          default:
-            var10002 = this.init_Deque;
+            var10002 = this.allBuffer;
       }
 
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> newestFirst = new ArrayList<>(var10002);
@@ -273,8 +273,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    public synchronized void applyFilters(String searchText, String direction, String category) {
       if (searchText != null) {
-         this.init_k.setValue(searchText);
-         this.load_Str = this.init_k.getValue();
+         this.searchField.setValue(searchText);
+         this.searchQuery = this.searchField.getValue();
       }
 
       if (direction != null) {
@@ -295,51 +295,51 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          switch (category.trim().toUpperCase(Locale.ROOT)) {
             case "INVENTORY":
             case "INV":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.INVENTORY;
+               this.category = AutismPacketLoggerOverlay.LogCategory.INVENTORY;
                break;
             case "MOVEMENT":
             case "MOVE":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.MOVEMENT;
+               this.category = AutismPacketLoggerOverlay.LogCategory.MOVEMENT;
                break;
             case "PAYLOAD":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.PAYLOAD;
+               this.category = AutismPacketLoggerOverlay.LogCategory.PAYLOAD;
                break;
             case "ALL":
             default:
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.ALL;
+               this.category = AutismPacketLoggerOverlay.LogCategory.ALL;
          }
       }
 
-      this.pop_Z = true;
+      this.rowsDirty = true;
    }
 
-   public synchronized void update_V_16() {
-      this.init_k.setValue("");
-      this.load_Str = "";
+   public synchronized void resetFilters() {
+      this.searchField.setValue("");
+      this.searchQuery = "";
       this.valid = 0;
-      this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.LogCategory.ALL;
-      this.poll_Z = false;
-      this.pop_Z = true;
+      this.category = AutismPacketLoggerOverlay.LogCategory.ALL;
+      this.payloadFilteredOnly = false;
+      this.rowsDirty = true;
    }
 
    public synchronized JsonObject stateJson() {
       JsonObject state = new JsonObject();
-      state.addProperty("paused", this.write_Z);
-      state.addProperty("configurationOnly", this.update_Z);
+      state.addProperty("paused", this.paused);
+      state.addProperty("configurationOnly", this.configurationOnly);
       JsonObject buffers = new JsonObject();
-      buffers.addProperty("all", this.init_Deque.size());
-      buffers.addProperty("inventory", this.load_Deque.size());
-      buffers.addProperty("movement", this.read_Deque.size());
-      buffers.addProperty("payload", this.write_Deque.size());
-      buffers.addProperty("pending", this.init_List.size());
+      buffers.addProperty("all", this.allBuffer.size());
+      buffers.addProperty("inventory", this.inventoryBuffer.size());
+      buffers.addProperty("movement", this.movementBuffer.size());
+      buffers.addProperty("payload", this.payloadBuffer.size());
+      buffers.addProperty("pending", this.pendingEntries.size());
       state.add("buffers", buffers);
       JsonObject filters = new JsonObject();
-      filters.addProperty("search", this.load_Str);
+      filters.addProperty("search", this.searchQuery);
       filters.addProperty("direction", this.valid == 1 ? "C2S" : (this.valid == 2 ? "S2C" : "Both"));
-      filters.addProperty("category", this.init_AutismPacketLogger_2.name());
-      filters.addProperty("payloadFilteredOnly", this.poll_Z);
+      filters.addProperty("category", this.category.name());
+      filters.addProperty("payloadFilteredOnly", this.payloadFilteredOnly);
       state.add("filters", filters);
-      state.addProperty("blockedCount", this.sync_Set.size());
+      state.addProperty("blockedCount", this.blockedPackets.size());
       return state;
    }
 
@@ -353,9 +353,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    public void restoreState() {
       this.loadBounds();
-      this.init_bB.reloadFromConfig();
-      this.init_bC.reloadFromConfig();
-      this.pop_Z = true;
+      this.channelFilters.reloadFromConfig();
+      this.payloadRegistrations.reloadFromConfig();
+      this.rowsDirty = true;
    }
 
    public static boolean isSavedVisible() {
@@ -365,12 +365,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    @Override
    public int getMinWidth() {
-      return this.get_I_15();
+      return this.preferredWidth();
    }
 
    @Override
    public int getMinHeight() {
-      return 14 + this.clear_I_6() + this.stop_I_5() + 12 + this.put_I_6() * 2;
+      return 14 + this.clear_I_6() + this.toolbarHeight() + 12 + this.rowHeight() * 2;
    }
 
    @Override
@@ -380,13 +380,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    @Override
    protected int getResizeMinHeight() {
-      return this.getMinHeight() + this.put_I_6();
+      return this.getMinHeight() + this.rowHeight();
    }
 
    @Override
    protected void onSizeChanged() {
       if (!this.hasCustomStoredSize()) {
-         this.reset = this.get_I_15();
+         this.reset = this.preferredWidth();
          this.start = this.set_I_15();
       }
    }
@@ -414,33 +414,33 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    public boolean isPaused() {
-      return this.write_Z;
+      return this.paused;
    }
 
    public void load(boolean configurationOnly) {
-      boolean leavingOfflineSetup = this.update_Z && !configurationOnly;
-      this.update_Z = configurationOnly;
+      boolean leavingOfflineSetup = this.configurationOnly && !configurationOnly;
+      this.configurationOnly = configurationOnly;
       if (configurationOnly) {
-         this.init_F_2.close();
+         this.contextMenu.close();
       }
 
       if (leavingOfflineSetup) {
-         this.init_AutismPacketInspec.clearInspection();
-         this.init_AutismPacketLogger.setVisible(false);
-         this.init_AutismPacketLogger_3.setVisible(false);
+         this.inspectOverlay.clearInspection();
+         this.blockedListOverlay.setVisible(false);
+         this.channelListenerOverlay.setVisible(false);
       }
    }
 
    public synchronized void read(boolean paused) {
-      if (this.write_Z != paused) {
+      if (this.paused != paused) {
          if (paused) {
-            this.next_V_5();
+            this.drainPending();
          } else {
-            this.load_J = System.currentTimeMillis();
+            this.lastFlushTime = System.currentTimeMillis();
          }
 
-         this.write_Z = paused;
-         this.pop_Z = true;
+         this.paused = paused;
+         this.rowsDirty = true;
          PacketCaptureState.write();
          AutismConfig config = AutismConfig.getGlobal();
          if (config.packetLoggerCapturing != !paused) {
@@ -451,29 +451,29 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    public void logPacket(Packet<?> packet, String direction) {
-      this.init_V_Packet(packet, direction, false, false);
+      this.logPacket(packet, direction, false, false);
    }
 
    public void logPayloadPacket(Packet<?> packet, String direction) {
-      this.init_V_Packet(packet, direction, true, true);
+      this.logPacket(packet, direction, true, true);
    }
 
    public void logPayload(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payloadSnapshot) {
       if (payloadSnapshot != null) {
          synchronized (this) {
-            String name = packetClass != null && Packet.class.isAssignableFrom(packetClass) ? init_Str_Class(packetClass) : "Custom Payload";
-            boolean isInventory = init_Z_Str_Set(name, read_Set);
-            boolean isMovement = init_Z_Str_Set(name, write_Set);
+            String name = packetClass != null && Packet.class.isAssignableFrom(packetClass) ? packetName(packetClass) : "Custom Payload";
+            boolean isInventory = containsAny(name, INVENTORY_PACKET_KEYWORDS);
+            boolean isMovement = containsAny(name, MOVEMENT_PACKET_KEYWORDS);
             AutismPacketLoggerOverlay.LoggedPacketEntry e = new AutismPacketLoggerOverlay.LoggedPacketEntry(
                timestampMs, tick, direction, name, packetClass, null, isInventory, isMovement, true, null, null, payloadSnapshot, PacketStateDeltaTracker.EMPTY_CAPTURE
             );
-            this.init_List.add(e);
+            this.pendingEntries.add(e);
             this.flush(true);
          }
       }
    }
 
-   private static String init_Str_Class(Class<?> packetClass) {
+   private static String packetName(Class<?> packetClass) {
       try {
          return PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)packetClass);
       } catch (Throwable ignored) {
@@ -481,21 +481,21 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Packet(Packet<?> packet, String direction, boolean ignorePaused, boolean payloadOnly) {
-      if (packet != null && (ignorePaused || !this.write_Z)) {
+   private void logPacket(Packet<?> packet, String direction, boolean ignorePaused, boolean payloadOnly) {
+      if (packet != null && (ignorePaused || !this.paused)) {
          synchronized (this) {
-            if (ignorePaused || !this.write_Z) {
+            if (ignorePaused || !this.paused) {
                Class<?> cls = packet.getClass();
                String name = PacketNameResolver.directionalName(packet, direction);
-               boolean isInventory = init_Z_Str_Set(name, read_Set);
-               boolean isMovement = init_Z_Str_Set(name, write_Set);
-               boolean isPayload = init_Z_Class_Str(cls, name);
-               if ((payloadOnly && isPayload || !this.load_Z_Class_Str(cls, name)) && (!payloadOnly || isPayload)) {
-                  PacketStateDeltaTracker.Inner_DataUtil packetContext = this.init_bq.capture(packet, direction);
-                  AutismPacketLoggerOverlay.CaptureContext captureContext = init_AutismPacketLogger_Packet(packet);
+               boolean isInventory = containsAny(name, INVENTORY_PACKET_KEYWORDS);
+               boolean isMovement = containsAny(name, MOVEMENT_PACKET_KEYWORDS);
+               boolean isPayload = isPayloadPacket(cls, name);
+               if ((payloadOnly && isPayload || !this.isBlocked(cls, name)) && (!payloadOnly || isPayload)) {
+                  PacketStateDeltaTracker.Inner_DataUtil packetContext = this.stateDeltaTracker.capture(packet, direction);
+                  AutismPacketLoggerOverlay.CaptureContext captureContext = captureContext(packet);
                   AutismPayloadSupport.PayloadEntry payloadSnapshot = isPayload ? AutismPayloadSupport.inspectPacket(packet, direction) : null;
                   if (payloadSnapshot != null) {
-                     PayloadChannelFilterManager.Inner_StreamUtil match = this.init_bB.findMatchingRuleForEntry(payloadSnapshot, direction);
+                     PayloadChannelFilterManager.Inner_StreamUtil match = this.channelFilters.findMatchingRuleForEntry(payloadSnapshot, direction);
                      if (match != null) {
                         PayloadNotificationTracker.init(payloadSnapshot.channel(), direction, match);
                      }
@@ -511,12 +511,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      isInventory,
                      isMovement,
                      isPayload,
-                     captureContext.init_Str(),
+                     captureContext.blockState(),
                      captureContext.load(),
                      payloadSnapshot,
                      packetContext
                   );
-                  this.init_List.add(e);
+                  this.pendingEntries.add(e);
                   this.flush(false);
                }
             }
@@ -524,33 +524,33 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static AutismPacketLoggerOverlay.CaptureContext init_AutismPacketLogger_Packet(Packet<?> packet) {
-      if (packet != null && init_Minecraft != null && init_Minecraft.isSameThread()) {
+   private static AutismPacketLoggerOverlay.CaptureContext captureContext(Packet<?> packet) {
+      if (packet != null && MC != null && MC.isSameThread()) {
          try {
             if (packet instanceof ServerboundPlayerActionPacket actionPacket) {
-               return new AutismPacketLoggerOverlay.CaptureContext(init_Str_BlockPos_2(actionPacket.getPos()), null);
+               return new AutismPacketLoggerOverlay.CaptureContext(blockName(actionPacket.getPos()), null);
             }
 
             if (packet instanceof ServerboundUseItemOnPacket interactBlockPacket) {
-               return new AutismPacketLoggerOverlay.CaptureContext(init_Str_BlockPos_2(interactBlockPacket.hitResult().getBlockPos()), null);
+               return new AutismPacketLoggerOverlay.CaptureContext(blockName(interactBlockPacket.hitResult().getBlockPos()), null);
             }
 
             if (packet instanceof ServerboundContainerClosePacket) {
-               return new AutismPacketLoggerOverlay.CaptureContext(null, read_Str_6());
+               return new AutismPacketLoggerOverlay.CaptureContext(null, screenTitle());
             }
          } catch (Throwable var2) {
          }
 
-         return AutismPacketLoggerOverlay.CaptureContext.init_AutismPacketLogger;
+         return AutismPacketLoggerOverlay.CaptureContext.EMPTY;
       } else {
-         return AutismPacketLoggerOverlay.CaptureContext.init_AutismPacketLogger;
+         return AutismPacketLoggerOverlay.CaptureContext.EMPTY;
       }
    }
 
-   private static String init_Str_BlockPos_2(BlockPos pos) {
-      if (pos != null && init_Minecraft.level != null) {
+   private static String blockName(BlockPos pos) {
+      if (pos != null && MC.level != null) {
          try {
-            BlockState state = init_Minecraft.level.getBlockState(pos);
+            BlockState state = MC.level.getBlockState(pos);
             return state == null ? null : BuiltInRegistries.BLOCK.getKey(state.getBlock()) + " " + state;
          } catch (Throwable ignored) {
             return null;
@@ -560,14 +560,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static String read_Str_6() {
-      if (init_Minecraft.gui.screen() == null) {
+   private static String screenTitle() {
+      if (MC.gui.screen() == null) {
          return null;
       }
 
       try {
-         String title = init_Minecraft.gui.screen().getTitle() == null ? "" : init_Minecraft.gui.screen().getTitle().getString().trim();
-         String className = init_Minecraft.gui.screen().getClass().getSimpleName();
+         String title = MC.gui.screen().getTitle() == null ? "" : MC.gui.screen().getTitle().getString().trim();
+         String className = MC.gui.screen().getClass().getSimpleName();
          if (title.isEmpty()) {
             return className;
          } else {
@@ -582,7 +582,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return this.load(cls);
    }
 
-   private static boolean init_Z_Str_Set(String name, Set<String> set) {
+   private static boolean containsAny(String name, Set<String> set) {
       for (String s : set) {
          if (name.contains(s)) {
             return true;
@@ -592,8 +592,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private static boolean init_Z_Class_Str(Class<?> cls, String name) {
-      if (init_Z_Str_Set(name, update_Set)) {
+   private static boolean isPayloadPacket(Class<?> cls, String name) {
+      if (containsAny(name, PAYLOAD_PACKET_KEYWORDS)) {
          return true;
       }
 
@@ -602,17 +602,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       String simpleName = cls.getSimpleName();
-      if (init_Z_Str_Set(simpleName, update_Set)) {
+      if (containsAny(simpleName, PAYLOAD_PACKET_KEYWORDS)) {
          return true;
       }
 
       String className = cls.getName();
-      return init_Z_Str_Set(className, update_Set);
+      return containsAny(className, PAYLOAD_PACKET_KEYWORDS);
    }
 
-   private static Set<String> init_Set_2() {
+   private static Set<String> defaultBlockedPackets() {
       Set<String> keys = new LinkedHashSet<>();
-      init_V_Set_StrArr(
+      addKeys(
          keys,
          "ServerboundMovePlayerPacket.Pos",
          "ServerboundMovePlayerPacket.PosRot",
@@ -659,13 +659,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          "ClientboundSetObjectivePacket",
          "ClientboundTickingStatePacket"
       );
-      keys.addAll(init_Set);
+      keys.addAll(DEFAULT_BLOCKED_S2C_PACKETS);
       return Collections.unmodifiableSet(keys);
    }
 
-   private static Set<String> load_Set() {
+   private static Set<String> defaultBlockedS2cPackets() {
       Set<String> keys = new LinkedHashSet<>();
-      init_V_Set_StrArr(
+      addKeys(
          keys,
          "ClientboundSetScorePacket",
          "ClientboundSetEquipmentPacket",
@@ -682,19 +682,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return Collections.unmodifiableSet(keys);
    }
 
-   private static void init_V_Set_StrArr(Set<String> keys, String... names) {
+   private static void addKeys(Set<String> keys, String... names) {
       for (String name : names) {
-         init_V_Set_Str_2(keys, name);
+         addKey(keys, name);
       }
    }
 
-   private static void init_V_Set_Str_2(Set<String> keys, String name) {
+   private static void addKey(Set<String> keys, String name) {
       if (name != null && !name.isBlank()) {
          keys.add(name.trim());
       }
    }
 
-   private static String init_Str_Str_5(String value) {
+   private static String normalizeKey(String value) {
       if (value != null && !value.isEmpty()) {
          String lower = value.toLowerCase(Locale.ROOT);
          StringBuilder normalized = new StringBuilder(lower.length());
@@ -712,37 +712,37 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void open_V_10() {
-      this.flush_Set.clear();
-      this.init_Map.clear();
+   private void rebuildBlockedKeys() {
+      this.blockedKeys.clear();
+      this.blockedClassCache.clear();
 
-      for (String name : this.sync_Set) {
+      for (String name : this.blockedPackets) {
          if (name != null && !name.isBlank()) {
-            this.flush_Set.add(init_Str_Str_5(name));
+            this.blockedKeys.add(normalizeKey(name));
             if (name.endsWith("Packet")) {
-               this.flush_Set.add(init_Str_Str_5(name.substring(0, name.length() - 6)));
+               this.blockedKeys.add(normalizeKey(name.substring(0, name.length() - 6)));
             }
          }
       }
    }
 
-   private boolean load_Z_Class_Str(Class<?> cls, String friendlyName) {
-      if (this.flush_Set.isEmpty()) {
+   private boolean isBlocked(Class<?> cls, String friendlyName) {
+      if (this.blockedKeys.isEmpty()) {
          return false;
       } else {
-         return this.flush_Set.contains(init_Str_Str_5(friendlyName)) ? true : this.load(cls);
+         return this.blockedKeys.contains(normalizeKey(friendlyName)) ? true : this.load(cls);
       }
    }
 
    private boolean load(Class<?> cls) {
-      if (cls != null && !this.flush_Set.isEmpty()) {
-         Boolean cached = this.init_Map.get(cls);
+      if (cls != null && !this.blockedKeys.isEmpty()) {
+         Boolean cached = this.blockedClassCache.get(cls);
          if (cached != null) {
             return cached;
          }
 
          boolean blocked = this.read(cls);
-         this.init_Map.put(cls, blocked);
+         this.blockedClassCache.put(cls, blocked);
          return blocked;
       } else {
          return false;
@@ -750,17 +750,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private boolean read(Class<?> cls) {
-      if (this.flush_Set.contains(init_Str_Str_5(cls.getSimpleName()))) {
+      if (this.blockedKeys.contains(normalizeKey(cls.getSimpleName()))) {
          return true;
       }
 
-      if (this.flush_Set.contains(init_Str_Str_5(cls.getName()))) {
+      if (this.blockedKeys.contains(normalizeKey(cls.getName()))) {
          return true;
       }
 
       if (Packet.class.isAssignableFrom(cls)) {
          Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)cls;
-         if (this.flush_Set.contains(init_Str_Str_5(PacketNameResolver.nameOfClass(packetClass)))) {
+         if (this.blockedKeys.contains(normalizeKey(PacketNameResolver.nameOfClass(packetClass)))) {
             return true;
          }
       }
@@ -768,34 +768,34 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private void poll_V_7() {
+   private void loadBlockedFromConfig() {
       AutismConfig config = AutismConfig.getGlobal();
-      this.sync_Set.clear();
+      this.blockedPackets.clear();
       if (config.packetLoggerBlockedInit) {
          if (config.packetLoggerBlocked != null) {
-            this.sync_Set.addAll(config.packetLoggerBlocked);
+            this.blockedPackets.addAll(config.packetLoggerBlocked);
          }
 
          if (config.packetLoggerBlockedDefaultsVersion < 2) {
-            this.sync_Set.addAll(init_Set);
-            config.packetLoggerBlocked = new ArrayList<>(this.sync_Set);
+            this.blockedPackets.addAll(DEFAULT_BLOCKED_S2C_PACKETS);
+            config.packetLoggerBlocked = new ArrayList<>(this.blockedPackets);
             config.packetLoggerBlockedDefaultsVersion = 2;
             config.save();
          }
       } else {
-         this.sync_Set.addAll(load_Set);
-         config.packetLoggerBlocked = new ArrayList<>(this.sync_Set);
+         this.blockedPackets.addAll(DEFAULT_BLOCKED_PACKETS);
+         config.packetLoggerBlocked = new ArrayList<>(this.blockedPackets);
          config.packetLoggerBlockedInit = true;
          config.packetLoggerBlockedDefaultsVersion = 2;
          config.save();
       }
 
-      this.open_V_10();
+      this.rebuildBlockedKeys();
    }
 
-   private void set_V_7() {
+   private void saveBlockedToConfig() {
       AutismConfig config = AutismConfig.getGlobal();
-      config.packetLoggerBlocked = new ArrayList<>(this.sync_Set);
+      config.packetLoggerBlocked = new ArrayList<>(this.blockedPackets);
       config.packetLoggerBlockedInit = true;
       config.packetLoggerBlockedDefaultsVersion = 2;
       config.save();
@@ -803,31 +803,31 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    public synchronized void load(String name) {
       if (name != null && !name.isBlank()) {
-         if (this.sync_Set.add(name.trim())) {
-            this.open_V_10();
-            this.set_V_7();
+         if (this.blockedPackets.add(name.trim())) {
+            this.rebuildBlockedKeys();
+            this.saveBlockedToConfig();
          }
 
-         this.clear_V_6();
+         this.purgeBlockedEntries();
       }
    }
 
    private synchronized void read(String name) {
-      if (this.sync_Set.remove(name)) {
-         this.open_V_10();
-         this.set_V_7();
+      if (this.blockedPackets.remove(name)) {
+         this.rebuildBlockedKeys();
+         this.saveBlockedToConfig();
       }
    }
 
    private synchronized void init_V_Class_Str(Class<?> cls, String friendlyName) {
       Set<String> targets = new HashSet<>();
       if (friendlyName != null && !friendlyName.isBlank()) {
-         targets.add(init_Str_Str_5(friendlyName));
+         targets.add(normalizeKey(friendlyName));
       }
 
       if (cls != null) {
-         targets.add(init_Str_Str_5(cls.getSimpleName()));
-         targets.add(init_Str_Str_5(cls.getName()));
+         targets.add(normalizeKey(cls.getSimpleName()));
+         targets.add(normalizeKey(cls.getName()));
       }
 
       for (String t : new ArrayList<>(targets)) {
@@ -838,45 +838,45 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       targets.remove("");
       if (!targets.isEmpty()) {
-         boolean changed = this.sync_Set
+         boolean changed = this.blockedPackets
             .removeIf(
                raw -> {
                   if (raw == null) {
                      return false;
                   } else {
-                     return targets.contains(init_Str_Str_5(raw))
+                     return targets.contains(normalizeKey(raw))
                         ? true
-                        : raw.endsWith("Packet") && targets.contains(init_Str_Str_5(raw.substring(0, raw.length() - 6)));
+                        : raw.endsWith("Packet") && targets.contains(normalizeKey(raw.substring(0, raw.length() - 6)));
                   }
                }
             );
          if (changed) {
-            this.open_V_10();
-            this.set_V_7();
+            this.rebuildBlockedKeys();
+            this.saveBlockedToConfig();
          }
       }
    }
 
-   private synchronized void put_V_6() {
-      this.sync_Set.clear();
-      this.sync_Set.addAll(load_Set);
-      this.open_V_10();
-      this.set_V_7();
-      this.clear_V_6();
+   private synchronized void resetBlockedToDefaults() {
+      this.blockedPackets.clear();
+      this.blockedPackets.addAll(DEFAULT_BLOCKED_PACKETS);
+      this.rebuildBlockedKeys();
+      this.saveBlockedToConfig();
+      this.purgeBlockedEntries();
    }
 
-   private synchronized void add_V_7() {
-      this.sync_Set.clear();
-      this.open_V_10();
-      this.set_V_7();
+   private synchronized void clearBlocked() {
+      this.blockedPackets.clear();
+      this.rebuildBlockedKeys();
+      this.saveBlockedToConfig();
    }
 
-   private synchronized void clear_V_6() {
-      this.init_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
-      this.load_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
-      this.read_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
-      this.write_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
-      this.pop_Z = true;
+   private synchronized void purgeBlockedEntries() {
+      this.allBuffer.removeIf(e -> this.isBlocked(e.packetClass, e.name));
+      this.inventoryBuffer.removeIf(e -> this.isBlocked(e.packetClass, e.name));
+      this.movementBuffer.removeIf(e -> this.isBlocked(e.packetClass, e.name));
+      this.payloadBuffer.removeIf(e -> this.isBlocked(e.packetClass, e.name));
+      this.rowsDirty = true;
    }
 
    public static boolean isPayloadPacket(Packet<?> packet) {
@@ -889,10 +889,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       Class<?> cls = packet.getClass();
-      return init_Z_Class_Str(cls, PacketNameResolver.directionalName(packet, ""));
+      return isPayloadPacket(cls, PacketNameResolver.directionalName(packet, ""));
    }
 
-   private static void init_V_Deque(Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> buf, AutismPacketLoggerOverlay.LoggedPacketEntry e, int cap) {
+   private static void appendCapped(Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> buf, AutismPacketLoggerOverlay.LoggedPacketEntry e, int cap) {
       buf.addLast(e);
 
       while (buf.size() > cap) {
@@ -908,46 +908,46 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    private void flush(boolean force) {
       long now = System.currentTimeMillis();
-      if (!force && this.init_List.size() < 1600) {
-         if (this.init_List.isEmpty()) {
+      if (!force && this.pendingEntries.size() < 1600) {
+         if (this.pendingEntries.isEmpty()) {
             return;
          }
 
-         if (this.load_J != 0L && now - this.load_J < 500L) {
+         if (this.lastFlushTime != 0L && now - this.lastFlushTime < 500L) {
             return;
          }
       }
 
-      this.next_V_5();
-      this.load_J = now;
+      this.drainPending();
+      this.lastFlushTime = now;
    }
 
-   private void stop_V_5() {
+   private void flushPending() {
       synchronized (this) {
-         this.next_V_5();
-         this.load_J = System.currentTimeMillis();
+         this.drainPending();
+         this.lastFlushTime = System.currentTimeMillis();
       }
    }
 
-   private void next_V_5() {
-      if (!this.init_List.isEmpty()) {
-         for (AutismPacketLoggerOverlay.LoggedPacketEntry e : this.init_List) {
-            init_V_Deque(this.init_Deque, e, 800);
+   private void drainPending() {
+      if (!this.pendingEntries.isEmpty()) {
+         for (AutismPacketLoggerOverlay.LoggedPacketEntry e : this.pendingEntries) {
+            appendCapped(this.allBuffer, e, 800);
             if (e.inventoryPacket) {
-               init_V_Deque(this.load_Deque, e, 400);
+               appendCapped(this.inventoryBuffer, e, 400);
             }
 
             if (e.movementPacket) {
-               init_V_Deque(this.read_Deque, e, 200);
+               appendCapped(this.movementBuffer, e, 200);
             }
 
             if (e.payloadPacket) {
-               init_V_Deque(this.write_Deque, e, 400);
+               appendCapped(this.payloadBuffer, e, 400);
             }
          }
 
-         this.init_List.clear();
-         this.pop_Z = true;
+         this.pendingEntries.clear();
+         this.rowsDirty = true;
       }
    }
 
@@ -956,12 +956,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.windowVisible = v;
       if (v) {
          this.next = 0;
-         this.init_CacheEntry.jumpTo(0, 0);
-         this.pop_Z = true;
-         this.init_F_2.close();
+         this.scroller.jumpTo(0, 0);
+         this.rowsDirty = true;
+         this.contextMenu.close();
          OverlayManager.getInstance().bringToFront(this);
       } else {
-         this.init_AutismPacketInspec.clearInspection();
+         this.inspectOverlay.clearInspection();
       }
 
       this.saveBounds();
@@ -985,12 +985,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    public void setCollapsed(boolean c) {
       if (this.windowCollapsed != c) {
          this.windowCollapsed = c;
-         this.sync_Z = false;
+         this.dragging = false;
          this.flush_Z = false;
-         this.close_Z = false;
+         this.scrollbarDragging = false;
          if (c) {
             this.clearFocusAndDismissMenu();
-            this.init_F_2.close();
+            this.contextMenu.close();
          }
 
          this.saveBounds();
@@ -1004,13 +1004,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean hasFocusedTextInput() {
-      return this.init_k != null && this.init_k.isFocused();
+      return this.searchField != null && this.searchField.isFocused();
    }
 
    @Override
    public void clearInputFocus() {
-      if (this.init_k != null) {
-         this.init_k.setFocused(false);
+      if (this.searchField != null) {
+         this.searchField.setFocused(false);
       }
    }
 
@@ -1019,8 +1019,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return 10;
    }
 
-   private void init_V_GuiGraphicsExtract_8(GuiGraphicsExtractor context, String text, autismclient.gui.f.b.l tone, int color, int x, int y) {
-      autismclient.gui.f.b.k.init(context, this.init_Font, text, this.init_CharEncoder.init_Identifier_l(tone), color, x, y, false);
+   private void drawText(GuiGraphicsExtractor context, String text, autismclient.gui.f.b.l tone, int color, int x, int y) {
+      autismclient.gui.f.b.k.init(context, this.font, text, this.styleTheme.init_Identifier_l(tone), color, x, y, false);
    }
 
    @Override
@@ -1033,7 +1033,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, panelHeight, this.windowVisible, this.windowCollapsed);
       int h = this.renderedHeight(bounds, this.windowCollapsed);
       boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.reset && my >= this.windowY && my <= this.windowY + h;
-      return overPanel | this.init_F_2.init(mx, my);
+      return overPanel | this.contextMenu.init(mx, my);
    }
 
    @Override
@@ -1047,13 +1047,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
       if (this.windowVisible || this.isClosing()) {
          this.reset_V_5();
-         if (this.pop_Z) {
-            this.prev_V_5();
-            this.pop_Z = false;
+         if (this.rowsDirty) {
+            this.rebuildDisplayRows();
+            this.rowsDirty = false;
          }
 
          OverlayBounds clamped = this.clampToScreen(
-            this, new OverlayBounds(this.windowX, this.windowY, this.resolveWindowWidth(this.reset, this.getMinWidth()), this.tick_I_17(), this.windowVisible, this.windowCollapsed)
+            this, new OverlayBounds(this.windowX, this.windowY, this.resolveWindowWidth(this.reset, this.getMinWidth()), this.preferredHeight(), this.windowVisible, this.windowCollapsed)
          );
          this.windowX = clamped.x;
          this.windowY = clamped.y;
@@ -1062,87 +1062,87 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int ph = this.stop;
          int total = 0;
 
-         for (AutismPacketLoggerOverlay.DisplayRow r : this.load_List) {
-            total += r.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.GROUP ? r.init_I : 1;
+         for (AutismPacketLoggerOverlay.DisplayRow r : this.displayRows) {
+            total += r.kind == AutismPacketLoggerOverlay.DisplayRowKind.GROUP ? r.count : 1;
          }
 
          int bodyMx = mx;
          int bodyMy = my;
-         if (this.init_F_2.init(mx, my)) {
+         if (this.contextMenu.init(mx, my)) {
             bodyMx = -10000;
             bodyMy = -10000;
          }
 
          String title = "Packet Logger";
          OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, ph, this.windowVisible, this.windowCollapsed);
-         this.renderWindowFrame(ctx, bodyMx, bodyMy, bounds, title, this.windowCollapsed, this.sync_Z);
+         this.renderWindowFrame(ctx, bodyMx, bodyMy, bounds, title, this.windowCollapsed, this.dragging);
          this.renderPinButton(ctx, bodyMx, bodyMy, bounds);
          boolean clipBody = this.beginBodyClip(ctx, bounds, this.windowCollapsed);
          if (!clipBody) {
-            this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.sync_Z);
+            this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.dragging);
          } else {
             try {
                int tabY = this.windowY + 14 + 2;
-               this.init_V_GuiGraphicsExtract_6(ctx, bodyMx, bodyMy, tabY, total);
+               this.renderCategoryTabs(ctx, bodyMx, bodyMy, tabY, total);
                int filterY = tabY + this.clear_I_6() + 2;
-               this.init_V_GuiGraphicsExtract_9(ctx, bodyMx, bodyMy, filterY);
-               int contentY = filterY + this.stop_I_5() + 2;
-               int contentEndY = contentY + this.pop_I_19();
-               if (this.load_List.isEmpty()) {
-                  this.init_V_GuiGraphicsExtract_8(
-                     ctx, "No packets matching filters", autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), this.windowX + 10, this.init_I_I_8(contentY)
+               this.renderToolbar(ctx, bodyMx, bodyMy, filterY);
+               int contentY = filterY + this.toolbarHeight() + 2;
+               int contentEndY = contentY + this.listViewHeight();
+               if (this.displayRows.isEmpty()) {
+                  this.drawText(
+                     ctx, "No packets matching filters", autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), this.windowX + 10, this.rowTextY(contentY)
                   );
                } else {
-                  int contentHeight = this.load_List.size() * this.put_I_6();
-                  int viewHeight = this.pop_I_19();
+                  int contentHeight = this.displayRows.size() * this.rowHeight();
+                  int viewHeight = this.listViewHeight();
                   int maxScroll = Math.max(0, contentHeight - viewHeight);
-                  this.next = this.quantizeScrollOffset(this.next, this.put_I_6(), maxScroll);
-                  this.init_CacheEntry.setOffset(this.next, maxScroll);
-                  int drawScroll = this.init_CacheEntry.tickAndClamp(delta, maxScroll);
+                  this.next = this.quantizeScrollOffset(this.next, this.rowHeight(), maxScroll);
+                  this.scroller.setOffset(this.next, maxScroll);
+                  int drawScroll = this.scroller.tickAndClamp(delta, maxScroll);
                   autismclient.gui.ui.UiClipStack.getInstance()
                      .push(ctx, autismclient.gui.f.NetHelper.init(this.windowX, contentY, this.reset, contentEndY - contentY));
                   int drawBase = contentY - drawScroll;
 
-                  for (int i = 0; i < this.load_List.size(); i++) {
-                     int ey = drawBase + i * this.put_I_6();
-                     if (ey + this.put_I_6() > contentY && ey < contentEndY) {
-                        AutismPacketLoggerOverlay.DisplayRow row = this.load_List.get(i);
-                        if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
-                           this.init_V_GuiGraphicsExtract_7(ctx, row, ey, bodyMx, bodyMy);
+                  for (int i = 0; i < this.displayRows.size(); i++) {
+                     int ey = drawBase + i * this.rowHeight();
+                     if (ey + this.rowHeight() > contentY && ey < contentEndY) {
+                        AutismPacketLoggerOverlay.DisplayRow row = this.displayRows.get(i);
+                        if (row.kind == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
+                           this.renderGroupRow(ctx, row, ey, bodyMx, bodyMy);
                         } else {
-                           this.init_V_GuiGraphicsExtract_8(ctx, row.init_AutismPacketLogger, ey, bodyMx, bodyMy);
+                           this.renderEntryRow(ctx, row.entry, ey, bodyMx, bodyMy);
                         }
                      }
                   }
 
                   autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(bodyMx, bodyMy), this.close_Z);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(bodyMx, bodyMy), this.scrollbarDragging);
                }
             } finally {
                this.endBodyClip(ctx, clipBody);
-               this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.sync_Z);
+               this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.dragging);
             }
 
-            if (this.init_F_2.isOpen()) {
+            if (this.contextMenu.isOpen()) {
                ctx.nextStratum();
-               this.init_F_2.init(ctx, mx, my);
+               this.contextMenu.init(ctx, mx, my);
             }
          }
       }
    }
 
-   private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, int mx, int my, int y, int total) {
+   private void renderCategoryTabs(GuiGraphicsExtractor ctx, int mx, int my, int y, int total) {
       int x = this.windowX + 4;
 
       for (AutismPacketLoggerOverlay.LogCategory cat : AutismPacketLoggerOverlay.LogCategory.values()) {
-         int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, this.clear_I_6(), cat.init_Str, this.init_AutismPacketLogger_2 == cat, mx, my);
+         int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, this.clear_I_6(), cat.init_Str, this.category == cat, mx, my);
          x += w + 2;
       }
 
-      String summary = this.write_Z ? "Paused  " + total : Integer.toString(total);
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
+      String summary = this.paused ? "Paused  " + total : Integer.toString(total);
+      if (this.category == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
          PayloadSubscriptionManager.Inner_BufferHelper subscriptionStatus = PayloadSubscriptionManager.status();
          String channelStatus = subscriptionStatus == null ? "" : subscriptionStatus.describe();
          if (!channelStatus.isBlank()) {
@@ -1150,51 +1150,51 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      int summaryColor = this.write_Z ? this.init_CharEncoder.load(autismclient.gui.f.b.l.write) : UiColorPalette.textBody();
+      int summaryColor = this.paused ? this.styleTheme.load(autismclient.gui.f.b.l.write) : UiColorPalette.textBody();
       int summaryWidth = autismclient.gui.f.b.k.init(
-         this.init_Font, summary, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), summaryColor
+         this.font, summary, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write), summaryColor
       );
       int summaryX = this.windowX + this.reset - 6 - summaryWidth;
       int minSummaryX = x + 4;
       if (summaryX >= minSummaryX) {
-         int summaryY = UiLayoutMath.centerTextY(y, this.clear_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
-         this.init_V_GuiGraphicsExtract_8(ctx, summary, autismclient.gui.f.b.l.write, summaryColor, summaryX, summaryY);
+         int summaryY = UiLayoutMath.centerTextY(y, this.clear_I_6(), this.styleTheme.init_I_l(autismclient.gui.f.b.l.write), this.styleTheme.flush());
+         this.drawText(ctx, summary, autismclient.gui.f.b.l.write, summaryColor, summaryX, summaryY);
       }
    }
 
-   private int push_I_19() {
-      return this.windowY + 14 + 2 + this.clear_I_6() + 2 + this.stop_I_5() + 2;
+   private int listTopY() {
+      return this.windowY + 14 + 2 + this.clear_I_6() + 2 + this.toolbarHeight() + 2;
    }
 
-   private int pop_I_19() {
-      int rawHeight = Math.max(0, this.stop - 14 - this.clear_I_6() - this.stop_I_5() - 8 - this.run_I_17());
-      return this.alignHeightToStep(rawHeight, this.put_I_6());
+   private int listViewHeight() {
+      int rawHeight = Math.max(0, this.stop - 14 - this.clear_I_6() - this.toolbarHeight() - 8 - this.run_I_17());
+      return this.alignHeightToStep(rawHeight, this.rowHeight());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_7() {
-      int contentHeight = this.load_List.size() * this.put_I_6();
-      int viewHeight = this.pop_I_19();
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
+      int contentHeight = this.displayRows.size() * this.rowHeight();
+      int viewHeight = this.listViewHeight();
       int maxScroll = Math.max(0, contentHeight - viewHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-         contentHeight, viewHeight, this.windowX + this.reset - 5, this.push_I_19(), 3, viewHeight, this.init_CacheEntry.tickAndClamp(0.0F, maxScroll)
+         contentHeight, viewHeight, this.windowX + this.reset - 5, this.listTopY(), 3, viewHeight, this.scroller.tickAndClamp(0.0F, maxScroll)
       );
    }
 
-   private String write_Str_4() {
-      return this.update_Z ? (this.write_Z ? "Auto OFF" : "Auto ON") : (this.write_Z ? "Start" : "Stop");
+   private String captureButtonLabel() {
+      return this.configurationOnly ? (this.paused ? "Auto OFF" : "Auto ON") : (this.paused ? "Start" : "Stop");
    }
 
-   private String[] init_StrArr_2() {
-      return new String[]{this.write_Str_4(), "Clear", "Copy", this.open_Z ? "Group" : "Ungrp", "Blocked", "Channels", "Payload"};
+   private String[] toolbarLabels() {
+      return new String[]{this.captureButtonLabel(), "Clear", "Copy", this.open_Z ? "Group" : "Ungrp", "Blocked", "Channels", "Payload"};
    }
 
-   private AutismPacketLoggerOverlay.FilterColumnLayout init_AutismPacketLogger_2() {
-      String[] labels = this.init_StrArr_2();
+   private AutismPacketLoggerOverlay.FilterColumnLayout toolbarLayout() {
+      String[] labels = this.toolbarLabels();
       int[] widths = new int[labels.length];
       int total = 0;
 
       for (int i = 0; i < labels.length; i++) {
-         widths[i] = this.init_I_Str_6(labels[i]);
+         widths[i] = this.buttonWidth(labels[i]);
          total += widths[i];
       }
 
@@ -1204,74 +1204,74 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       int[] legacy = new int[labels.length];
       legacy[0] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(
-         this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[0], 5, 38, this.update_Z ? 66 : 54
+         this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[0], 5, 38, this.configurationOnly ? 66 : 54
       );
-      legacy[1] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[1], 5, 34, 54);
-      legacy[2] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[2], 5, 34, 52);
-      legacy[3] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[3], 5, 38, 58);
-      legacy[4] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[4], 5, 54, 72);
-      legacy[5] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[5], 5, 58, 78);
-      legacy[6] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[6], 5, 44, 64);
+      legacy[1] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[1], 5, 34, 54);
+      legacy[2] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[2], 5, 34, 52);
+      legacy[3] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[3], 5, 38, 58);
+      legacy[4] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[4], 5, 54, 72);
+      legacy[5] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[5], 5, 58, 78);
+      legacy[6] = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, labels[6], 5, 44, 64);
       return new AutismPacketLoggerOverlay.FilterColumnLayout(labels, legacy, 2);
    }
 
-   private void init_V_GuiGraphicsExtract_9(GuiGraphicsExtractor ctx, int mx, int my, int y) {
+   private void renderToolbar(GuiGraphicsExtractor ctx, int mx, int my, int y) {
       int gap = 2;
       int row1Y = y;
       int row2Y = y + this.reset_I_5() + this.start_I_12();
       int x = this.windowX + 4;
-      AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.init_AutismPacketLogger_2();
-      this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[0], this.reset_I_5(), row1.init_StrArr[0], !this.write_Z, "packet-logger:capture", mx, my);
-      x += row1.init_IArr[0] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
+      AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.toolbarLayout();
+      this.renderToggleButton(ctx, x, row1Y, row1.widths[0], this.reset_I_5(), row1.labels[0], !this.paused, "packet-logger:capture", mx, my);
+      x += row1.widths[0] + row1.gap;
+      this.renderButton(
+         ctx, x, row1Y, row1.widths[1], this.reset_I_5(), row1.labels[1], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
-      x += row1.init_IArr[1] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
+      x += row1.widths[1] + row1.gap;
+      this.renderButton(
+         ctx, x, row1Y, row1.widths[2], this.reset_I_5(), row1.labels[2], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
-      x += row1.init_IArr[2] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[3], this.reset_I_5(), row1.init_StrArr[3], this.open_Z, "packet-logger:grouping", mx, my);
-      x += row1.init_IArr[3] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
+      x += row1.widths[2] + row1.gap;
+      this.renderToggleButton(ctx, x, row1Y, row1.widths[3], this.reset_I_5(), row1.labels[3], this.open_Z, "packet-logger:grouping", mx, my);
+      x += row1.widths[3] + row1.gap;
+      this.renderButton(
+         ctx, x, row1Y, row1.widths[4], this.reset_I_5(), row1.labels[4], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
-      x += row1.init_IArr[4] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
+      x += row1.widths[4] + row1.gap;
+      this.renderButton(
+         ctx, x, row1Y, row1.widths[5], this.reset_I_5(), row1.labels[5], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
-      x += row1.init_IArr[5] + row1.init_I;
-      this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
+      x += row1.widths[5] + row1.gap;
+      this.renderButton(
+         ctx, x, row1Y, row1.widths[6], this.reset_I_5(), row1.labels[6], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x = this.windowX + 4;
       int sw = this.prev_I_4();
-      this.init_k.setX(x);
-      this.init_k.setY(row2Y);
-      this.init_k.setWidth(sw);
-      this.init_k.setHeight(this.reset_I_5());
-      if (!Objects.equals(this.init_k.getValue(), this.load_Str)) {
-         this.init_k.setValue(this.load_Str);
+      this.searchField.setX(x);
+      this.searchField.setY(row2Y);
+      this.searchField.setWidth(sw);
+      this.searchField.setHeight(this.reset_I_5());
+      if (!Objects.equals(this.searchField.getValue(), this.searchQuery)) {
+         this.searchField.setValue(this.searchQuery);
       }
 
-      this.init_k.render(ctx, mx, my, 0.0F);
+      this.searchField.render(ctx, mx, my, 0.0F);
       x += sw + 3;
       String[] dirLabels = new String[]{"Both", "C2S", "S2C"};
 
       for (int d = 0; d < 3; d++) {
-         int bw = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.init_Font, x, row2Y, bw, this.reset_I_5(), dirLabels[d], this.valid == d, mx, my);
+         int bw = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, row2Y, bw, this.reset_I_5(), dirLabels[d], this.valid == d, mx, my);
          x += bw + gap;
       }
 
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
-         String listenLabel = this.poll_Z ? "Filtered" : "All";
-         int listenW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.init_Font, x, row2Y, listenW, this.reset_I_5(), listenLabel, this.poll_Z, mx, my);
+      if (this.category == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
+         String listenLabel = this.payloadFilteredOnly ? "Filtered" : "All";
+         int listenW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, row2Y, listenW, this.reset_I_5(), listenLabel, this.payloadFilteredOnly, mx, my);
       }
    }
 
-   private void init_V_GuiGraphicsExtract_3(
+   private void renderButton(
       GuiGraphicsExtractor ctx,
       int x,
       int y,
@@ -1283,32 +1283,32 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, h, label, variant, active, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, h, label, variant, active, mx, my);
    }
 
-   private void init_V_GuiGraphicsExtract_4(
+   private void renderToggleButton(
       GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled, String animationKey, int mx, int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, h, label, enabled, animationKey, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, h, label, enabled, animationKey, mx, my);
    }
 
-   private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.DisplayRow row, int y, int mx, int my) {
+   private void renderGroupRow(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.DisplayRow row, int y, int mx, int my) {
       int x = this.windowX + 4;
-      boolean exp = this.close_Set.contains(row.init_Str);
-      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.put_I_6();
-      PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = row.init_AutismPayloadSuppo == null
+      boolean exp = this.expandedGroups.contains(row.groupKey);
+      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.rowHeight();
+      PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = row.payload == null
          ? null
-         : this.init_bB.findMatchingRuleForEntry(row.init_AutismPayloadSuppo, row.load);
+         : this.channelFilters.findMatchingRuleForEntry(row.payload, row.load);
       if (listenerMatch != null) {
-         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
+         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.rowHeight(), UiColorPalette.filterRowFill(hov));
       } else if (hov) {
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.rowHeight(), true, false);
       }
 
       autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
          ctx,
          x,
-         y + (this.put_I_6() - 8) / 2,
+         y + (this.rowHeight() - 8) / 2,
          8,
          exp ? autismclient.gui.ui.widgets.GlyphIndicatorRenderer.Inner_DataUtil.DOWN : autismclient.gui.ui.widgets.GlyphIndicatorRenderer.Inner_DataUtil.RIGHT,
          hov ? -659730 : -1582374,
@@ -1318,44 +1318,44 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       x += 10;
       String arrow = row.load.equals("C2S") ? ">" : "<";
       int color = row.load.equals("C2S") ? -12268289 : -21948;
-      this.init_V_GuiGraphicsExtract_8(ctx, arrow, autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
+      this.drawText(ctx, arrow, autismclient.gui.f.b.l.read, color, x, this.rowTextY(y));
       x += 12;
-      String displayName = row.init_Str.contains(":") ? row.init_Str.substring(row.init_Str.indexOf(58) + 1) : row.init_Str;
-      String summary = row.init_AutismPayloadSuppo == null ? "" : AutismPayloadSupport.formatSummary(row.init_AutismPayloadSuppo, true);
+      String displayName = row.groupKey.contains(":") ? row.groupKey.substring(row.groupKey.indexOf(58) + 1) : row.groupKey;
+      String summary = row.payload == null ? "" : AutismPayloadSupport.formatSummary(row.payload, true);
       String listenText = listenerMatch == null ? "" : " [" + listenerMatch.load() + "]";
-      String line = displayName + " (x" + row.init_I + ")" + listenText + (summary.isBlank() ? "" : " " + summary);
+      String line = displayName + " (x" + row.count + ")" + listenText + (summary.isBlank() ? "" : " " + summary);
       int maxW = this.reset - (x - this.windowX) - 32;
-      if (autismclient.gui.f.b.k.init(this.init_Font, line, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), color) > maxW) {
+      if (autismclient.gui.f.b.k.init(this.font, line, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), color) > maxW) {
          line = autismclient.gui.f.b.k.init(
-            this.init_Font, line, Math.max(1, maxW), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), color
+            this.font, line, Math.max(1, maxW), this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), color
          );
       }
 
-      this.init_V_GuiGraphicsExtract_8(ctx, line, autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
+      this.drawText(ctx, line, autismclient.gui.f.b.l.read, color, x, this.rowTextY(y));
       int bx = this.windowX + this.reset - 28;
-      boolean hb = mx >= bx && mx <= bx + 24 && my >= y && my < y + this.put_I_6();
-      this.init_V_GuiGraphicsExtract_8(ctx, "BLK", autismclient.gui.f.b.l.write, hb ? -48060 : UiColorPalette.textSecondary(), bx, this.init_I_I_8(y));
+      boolean hb = mx >= bx && mx <= bx + 24 && my >= y && my < y + this.rowHeight();
+      this.drawText(ctx, "BLK", autismclient.gui.f.b.l.write, hb ? -48060 : UiColorPalette.textSecondary(), bx, this.rowTextY(y));
    }
 
-   private void init_V_GuiGraphicsExtract_8(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.LoggedPacketEntry e, int y, int mx, int my) {
+   private void renderEntryRow(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.LoggedPacketEntry e, int y, int mx, int my) {
       int x = this.windowX + 4;
-      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.put_I_6();
-      PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = this.init_bB_StreamUtil_AutismPacketLogger(e);
+      boolean hov = mx >= this.windowX && mx <= this.windowX + this.reset && my >= y && my < y + this.rowHeight();
+      PayloadChannelFilterManager.Inner_StreamUtil listenerMatch = this.matchingChannelRule(e);
       if (listenerMatch != null) {
-         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.put_I_6(), UiColorPalette.filterRowFill(hov));
+         ctx.fill(this.windowX + 2, y, this.windowX + this.reset - 4, y + this.rowHeight(), UiColorPalette.filterRowFill(hov));
       } else if (hov) {
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.rowHeight(), true, false);
       }
 
       int color = e.direction.equals("C2S") ? -12268289 : -21948;
-      this.init_V_GuiGraphicsExtract_8(ctx, e.direction.equals("C2S") ? ">" : "<", autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
+      this.drawText(ctx, e.direction.equals("C2S") ? ">" : "<", autismclient.gui.f.b.l.read, color, x, this.rowTextY(y));
       x += 12;
-      String time = init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs));
-      this.init_V_GuiGraphicsExtract_8(ctx, time, autismclient.gui.f.b.l.write, -4809052, x, this.init_I_I_8(y));
-      x += autismclient.gui.f.b.k.init(this.init_Font, time, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), -4809052) + 4;
+      String time = TIME_FORMAT.format(Instant.ofEpochMilli(e.timestampMs));
+      this.drawText(ctx, time, autismclient.gui.f.b.l.write, -4809052, x, this.rowTextY(y));
+      x += autismclient.gui.f.b.k.init(this.font, time, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write), -4809052) + 4;
       String tick = "T" + e.tick;
-      this.init_V_GuiGraphicsExtract_8(ctx, tick, autismclient.gui.f.b.l.write, -6114880, x, this.init_I_I_8(y));
-      x += autismclient.gui.f.b.k.init(this.init_Font, tick, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), -6114880) + 4;
+      this.drawText(ctx, tick, autismclient.gui.f.b.l.write, -6114880, x, this.rowTextY(y));
+      x += autismclient.gui.f.b.k.init(this.font, tick, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write), -6114880) + 4;
       int maxW = this.reset - (x - this.windowX) - 30;
       String name = e.name;
       if (e.payloadSnapshot != null) {
@@ -1369,44 +1369,44 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          name = name + " [" + listenerMatch.load() + "]";
       }
 
-      if (autismclient.gui.f.b.k.init(this.init_Font, name, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.textBright()) > maxW) {
+      if (autismclient.gui.f.b.k.init(this.font, name, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.textBright()) > maxW) {
          name = autismclient.gui.f.b.k.init(
-            this.init_Font, name, Math.max(1, maxW), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.textBright()
+            this.font, name, Math.max(1, maxW), this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.textBright()
          );
       }
 
-      this.init_V_GuiGraphicsExtract_8(ctx, name, autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
+      this.drawText(ctx, name, autismclient.gui.f.b.l.read, color, x, this.rowTextY(y));
       int bx = this.windowX + this.reset - 16;
-      boolean hb = mx >= bx && mx <= bx + 12 && my >= y && my < y + this.put_I_6();
-      this.init_V_GuiGraphicsExtract_8(ctx, "=", autismclient.gui.f.b.l.write, hb ? -8875 : UiColorPalette.textSecondary(), bx, this.init_I_I_8(y));
+      boolean hb = mx >= bx && mx <= bx + 12 && my >= y && my < y + this.rowHeight();
+      this.drawText(ctx, "=", autismclient.gui.f.b.l.write, hb ? -8875 : UiColorPalette.textSecondary(), bx, this.rowTextY(y));
    }
 
    private void load(GuiGraphicsExtractor ctx, int mx, int my, int startY, int endY) {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, this.windowX + 4, startY, this.reset - 8);
       int y = startY + 3;
-      boolean hh = mx >= this.windowX + 4 && mx <= this.windowX + 150 && my >= y && my < y + this.put_I_6();
+      boolean hh = mx >= this.windowX + 4 && mx <= this.windowX + 150 && my >= y && my < y + this.rowHeight();
       int blockedColor = hh ? ThemePaletteManager.recolor(-30584, ThemePaletteManager.ColorRole.DANGER) : ThemePaletteManager.recolor(-39322, ThemePaletteManager.ColorRole.DANGER);
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.windowX + 6, y + 1, 9, 9), this.push_Z, blockedColor);
-      this.init_V_GuiGraphicsExtract_8(ctx, "Blocked (" + this.sync_Set.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.windowX + 17, y + 1);
+      this.drawText(ctx, "Blocked (" + this.blockedPackets.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.windowX + 17, y + 1);
       int ubX = this.windowX + this.reset - 58;
-      boolean hua = mx >= ubX && mx <= ubX + 54 && my >= y && my < y + this.put_I_6();
-      this.init_V_GuiGraphicsExtract_8(ctx, "CLR ALL", autismclient.gui.f.b.l.write, hua ? -12255420 : UiColorPalette.textBody(), ubX, y + 1);
+      boolean hua = mx >= ubX && mx <= ubX + 54 && my >= y && my < y + this.rowHeight();
+      this.drawText(ctx, "CLR ALL", autismclient.gui.f.b.l.write, hua ? -12255420 : UiColorPalette.textBody(), ubX, y + 1);
       int rstX = ubX - 44;
-      boolean hRst = mx >= rstX && mx <= rstX + 40 && my >= y && my < y + this.put_I_6();
-      this.init_V_GuiGraphicsExtract_8(ctx, "RESET", autismclient.gui.f.b.l.write, hRst ? -10923 : UiColorPalette.textBody(), rstX, y + 1);
+      boolean hRst = mx >= rstX && mx <= rstX + 40 && my >= y && my < y + this.rowHeight();
+      this.drawText(ctx, "RESET", autismclient.gui.f.b.l.write, hRst ? -10923 : UiColorPalette.textBody(), rstX, y + 1);
       if (this.push_Z) {
-         y += this.put_I_6();
+         y += this.rowHeight();
 
-         for (String name : this.sync_Set) {
-            if (y + this.put_I_6() > endY) {
+         for (String name : this.blockedPackets) {
+            if (y + this.rowHeight() > endY) {
                break;
             }
 
-            this.init_V_GuiGraphicsExtract_8(
+            this.drawText(
                ctx,
                "  "
                   + autismclient.gui.f.b.k.init(
-                     this.init_Font, name, Math.max(1, this.reset - 50), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), -5609882
+                     this.font, name, Math.max(1, this.reset - 50), this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), -5609882
                   ),
                autismclient.gui.f.b.l.read,
                -5609882,
@@ -1414,18 +1414,18 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                y + 1
             );
             int ux = this.windowX + this.reset - 28;
-            boolean hu = mx >= ux && mx <= ux + 24 && my >= y && my < y + this.put_I_6();
-            this.init_V_GuiGraphicsExtract_8(ctx, "UB", autismclient.gui.f.b.l.write, hu ? -12255420 : UiColorPalette.textBody(), ux, y + 1);
-            y += this.put_I_6();
+            boolean hu = mx >= ux && mx <= ux + 24 && my >= y && my < y + this.rowHeight();
+            this.drawText(ctx, "UB", autismclient.gui.f.b.l.write, hu ? -12255420 : UiColorPalette.textBody(), ux, y + 1);
+            y += this.rowHeight();
          }
       }
    }
 
-   private String[] init_StrArr_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry e) {
+   private String[] contextMenuItems(AutismPacketLoggerOverlay.LoggedPacketEntry e) {
       boolean isC2S = e != null && "C2S".equalsIgnoreCase(e.direction);
       boolean isPayload = e != null && e.payloadPacket;
       String[] base;
-      if (this.update_Z) {
+      if (this.configurationOnly) {
          if (isC2S && isPayload) {
             base = new String[]{"Block", "Queue", "Edit Payload", "+PAYLOAD", "+SEND", "+WAIT", "+ Filter", "- Filter", "Copy", "Inspect"};
          } else {
@@ -1444,8 +1444,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return base;
    }
 
-   private void init_V_AutismPacketLogger_2(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int mouseX, int mouseY) {
-      this.init_F_2.init(mouseX, mouseY, entry);
+   private void openContextMenu(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int mouseX, int mouseY) {
+      this.contextMenu.init(mouseX, mouseY, entry);
    }
 
    @Override
@@ -1454,7 +1454,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      if (this.init_F_2.init(mouseX, mouseY, button, (entry, action, index) -> this.init_V_Str_AutismPacketLogger(action, entry))) {
+      if (this.contextMenu.init(mouseX, mouseY, button, (entry, action, index) -> this.onContextAction(action, entry))) {
          return true;
       }
 
@@ -1463,7 +1463,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       if (mouseY >= this.windowY && mouseY <= this.windowY + 14 && mouseX >= this.windowX && mouseX <= this.windowX + this.reset) {
-         OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, this.tick_I_17(), this.windowVisible, this.windowCollapsed);
+         OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.reset, this.preferredHeight(), this.windowVisible, this.windowCollapsed);
          if (this.isOverPinButton(mouseX, mouseY, bounds)) {
             this.togglePinned();
             return true;
@@ -1475,10 +1475,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0) {
-            this.sync_Z = true;
+            this.dragging = true;
             this.flush_Z = false;
-            this.init_D = mouseX - this.windowX;
-            this.load_D = mouseY - this.windowY;
+            this.dragOffsetX = mouseX - this.windowX;
+            this.dragOffsetY = mouseY - this.windowY;
          }
 
          return true;
@@ -1489,15 +1489,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          int tabY = this.windowY + 14 + 2;
          int filterY = tabY + this.clear_I_6() + 2;
-         int contentY = filterY + this.stop_I_5() + 2;
+         int contentY = filterY + this.toolbarHeight() + 2;
          if (mouseY >= tabY && mouseY < tabY + this.clear_I_6() && button == 0) {
             int x = this.windowX + 4;
 
             for (AutismPacketLoggerOverlay.LogCategory cat : AutismPacketLoggerOverlay.LogCategory.values()) {
-               int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
+               int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
                if (mouseX >= x && mouseX < x + w) {
-                  this.init_AutismPacketLogger_2 = cat;
-                  this.pop_Z = true;
+                  this.category = cat;
+                  this.rowsDirty = true;
                   this.next = 0;
                   return true;
                }
@@ -1507,30 +1507,30 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
             return true;
          } else {
-            if (mouseY >= filterY && mouseY < filterY + this.stop_I_5() && button == 0) {
+            if (mouseY >= filterY && mouseY < filterY + this.toolbarHeight() && button == 0) {
                return this.read(mouseX, mouseY, filterY);
             }
 
-            if (this.init_k.isFocused()) {
-               this.init_k.setFocused(false);
+            if (this.searchField.isFocused()) {
+               this.searchField.setFocused(false);
             }
 
-            int contentEndY = contentY + this.pop_I_19();
+            int contentEndY = contentY + this.listViewHeight();
             if (mouseY >= contentY && mouseY < contentEndY) {
                if (button == 0) {
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics();
                   if (scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack((int)mouseX, (int)mouseY)) {
-                     this.close_Z = true;
+                     this.scrollbarDragging = true;
                      this.prev = Math.max(0, (int)mouseY - scrollbarMetrics.thumbY());
                      this.next = this.quantizeScrollOffset(
-                        autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)mouseY, this.prev), this.put_I_6(), scrollbarMetrics.maxScroll()
+                        autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)mouseY, this.prev), this.rowHeight(), scrollbarMetrics.maxScroll()
                      );
-                     this.init_CacheEntry.jumpTo(this.next, scrollbarMetrics.maxScroll());
+                     this.scroller.jumpTo(this.next, scrollbarMetrics.maxScroll());
                      return true;
                   }
                }
 
-               return this.init_Z_D(mouseX, mouseY, contentY, button);
+               return this.handleListClick(mouseX, mouseY, contentY, button);
             } else {
                return false;
             }
@@ -1543,14 +1543,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int row1Y = y;
       int row2Y = y + this.reset_I_5() + this.start_I_12();
       int x = this.windowX + 4;
-      AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.init_AutismPacketLogger_2();
+      AutismPacketLoggerOverlay.FilterColumnLayout row1 = this.toolbarLayout();
       if (mouseY >= row1Y && mouseY < row1Y + this.reset_I_5()) {
-         for (int i = 0; i < row1.init_IArr.length; i++) {
-            int w = row1.init_IArr[i];
+         for (int i = 0; i < row1.widths.length; i++) {
+            int w = row1.widths[i];
             if (mouseX >= x && mouseX < x + w) {
                switch (i) {
                   case 0:
-                     this.read(!this.write_Z);
+                     this.read(!this.paused);
                      break;
                   case 1:
                      this.cache();
@@ -1560,7 +1560,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      break;
                   case 3:
                      this.open_Z = !this.open_Z;
-                     this.pop_Z = true;
+                     this.rowsDirty = true;
                      break;
                   case 4:
                      this.size();
@@ -1575,14 +1575,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                return true;
             }
 
-            x += w + row1.init_I;
+            x += w + row1.gap;
          }
       }
 
       x = this.windowX + 4;
       int sw = this.prev_I_4();
       if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + sw) {
-         this.init_k.mouseClicked(mouseX, mouseY, 0);
+         this.searchField.mouseClicked(mouseX, mouseY, 0);
          return true;
       }
 
@@ -1590,60 +1590,60 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       String[] dirLabels = new String[]{"Both", "C2S", "S2C"};
 
       for (int d = 0; d < 3; d++) {
-         int dirW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
+         int dirW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
          if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + dirW) {
             this.valid = d;
-            this.pop_Z = true;
+            this.rowsDirty = true;
             return true;
          }
 
          x += dirW + gap;
       }
 
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
-         String listenLabel = this.poll_Z ? "Filtered" : "All";
-         int listenW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
+      if (this.category == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
+         String listenLabel = this.payloadFilteredOnly ? "Filtered" : "All";
+         int listenW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
          if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + listenW) {
-            this.poll_Z = !this.poll_Z;
-            this.pop_Z = true;
+            this.payloadFilteredOnly = !this.payloadFilteredOnly;
+            this.rowsDirty = true;
             return true;
          }
       }
 
-      this.init_k.setFocused(false);
+      this.searchField.setFocused(false);
       return true;
    }
 
-   private boolean init_Z_D(double mouseX, double mouseY, int contentY, int button) {
+   private boolean handleListClick(double mouseX, double mouseY, int contentY, int button) {
       int idx = (int)(
-         (mouseY - contentY + this.init_CacheEntry.tickAndClamp(0.0F, Math.max(0, this.load_List.size() * this.put_I_6() - this.pop_I_19()))) / this.put_I_6()
+         (mouseY - contentY + this.scroller.tickAndClamp(0.0F, Math.max(0, this.displayRows.size() * this.rowHeight() - this.listViewHeight()))) / this.rowHeight()
       );
-      if (idx >= 0 && idx < this.load_List.size()) {
-         AutismPacketLoggerOverlay.DisplayRow row = this.load_List.get(idx);
-         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
+      if (idx >= 0 && idx < this.displayRows.size()) {
+         AutismPacketLoggerOverlay.DisplayRow row = this.displayRows.get(idx);
+         if (row.kind == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
             int bx = this.windowX + this.reset - 28;
-            if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.init_Class != null) {
-               String n = PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)row.init_Class);
+            if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.packetClass != null) {
+               String n = PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)row.packetClass);
                this.load(n);
                return true;
             }
 
             if (button == 0) {
-               if (this.close_Set.contains(row.init_Str)) {
-                  this.close_Set.remove(row.init_Str);
+               if (this.expandedGroups.contains(row.groupKey)) {
+                  this.expandedGroups.remove(row.groupKey);
                } else {
-                  this.close_Set.add(row.init_Str);
+                  this.expandedGroups.add(row.groupKey);
                }
 
-               this.pop_Z = true;
+               this.rowsDirty = true;
                return true;
             }
          }
 
-         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.ENTRY && row.init_AutismPacketLogger != null) {
+         if (row.kind == AutismPacketLoggerOverlay.DisplayRowKind.ENTRY && row.entry != null) {
             int menuIconX = this.windowX + this.reset - 16;
             if (button == 1 || button == 0 && mouseX >= menuIconX) {
-               this.init_V_AutismPacketLogger_2(row.init_AutismPacketLogger, (int)mouseX, (int)mouseY);
+               this.openContextMenu(row.entry, (int)mouseX, (int)mouseY);
                return true;
             }
          }
@@ -1654,8 +1654,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Str_AutismPacketLogger(String action, AutismPacketLoggerOverlay.LoggedPacketEntry e) {
-      if (!this.update_Z || !"Send".equals(action) && !"Replay".equals(action)) {
+   private void onContextAction(String action, AutismPacketLoggerOverlay.LoggedPacketEntry e) {
+      if (!this.configurationOnly || !"Send".equals(action) && !"Replay".equals(action)) {
          switch (action) {
             case "Block":
                this.load(e.name);
@@ -1714,27 +1714,27 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
                break;
             case "Copy":
-               String line = e.direction + " " + init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs)) + " T" + e.tick + " " + e.name;
-               init_Minecraft.keyboardHandler.setClipboard(line);
+               String line = e.direction + " " + TIME_FORMAT.format(Instant.ofEpochMilli(e.timestampMs)) + " T" + e.tick + " " + e.name;
+               MC.keyboardHandler.setClipboard(line);
                bi.init("Copied packet info.");
                break;
             case "Inspect":
-               this.init_AutismPacketInspec.inspect(e, this.windowX + this.reset + 10, this.windowY + 8);
+               this.inspectOverlay.inspect(e, this.windowX + this.reset + 10, this.windowY + 8);
          }
       }
    }
 
    private boolean write(double mouseX, double mouseY, int contentEndY) {
       int y = contentEndY + 3;
-      if (mouseY >= y && mouseY < y + this.put_I_6()) {
+      if (mouseY >= y && mouseY < y + this.rowHeight()) {
          int ubX = this.windowX + this.reset - 58;
          if (mouseX >= ubX && mouseX <= ubX + 54) {
-            this.add_V_7();
+            this.clearBlocked();
             return true;
          } else {
             int rstX = ubX - 44;
             if (mouseX >= rstX && mouseX <= rstX + 40) {
-               this.put_V_6();
+               this.resetBlockedToDefaults();
                return true;
             } else {
                this.push_Z = !this.push_Z;
@@ -1743,16 +1743,16 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       } else {
          if (this.push_Z) {
-            int ey = y + this.put_I_6();
+            int ey = y + this.rowHeight();
             int ux = this.windowX + this.reset - 28;
 
-            for (String name : new ArrayList<>(this.sync_Set)) {
-               if (mouseX >= ux && mouseX <= ux + 24 && mouseY >= ey && mouseY < ey + this.put_I_6()) {
+            for (String name : new ArrayList<>(this.blockedPackets)) {
+               if (mouseX >= ux && mouseX <= ux + 24 && mouseY >= ey && mouseY < ey + this.rowHeight()) {
                   this.read(name);
                   return true;
                }
 
-               ey += this.put_I_6();
+               ey += this.rowHeight();
             }
          }
 
@@ -1762,15 +1762,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseDragged(double mx, double my, int b, double dx, double dy) {
-      if (this.close_Z && b == 0) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
-         this.next = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)my, this.prev), this.put_I_6(), scrollbarMetrics.maxScroll());
-         this.init_CacheEntry.jumpTo(this.next, scrollbarMetrics.maxScroll());
+      if (this.scrollbarDragging && b == 0) {
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics();
+         this.next = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)my, this.prev), this.rowHeight(), scrollbarMetrics.maxScroll());
+         this.scroller.jumpTo(this.next, scrollbarMetrics.maxScroll());
          return true;
       }
 
-      if (this.sync_Z && b == 0) {
-         OverlayBounds nextBounds = this.clampToScreen(this, new OverlayBounds((int)(mx - this.init_D), (int)(my - this.load_D), this.reset, this.start, this.windowVisible, this.windowCollapsed));
+      if (this.dragging && b == 0) {
+         OverlayBounds nextBounds = this.clampToScreen(this, new OverlayBounds((int)(mx - this.dragOffsetX), (int)(my - this.dragOffsetY), this.reset, this.start, this.windowVisible, this.windowCollapsed));
          if (nextBounds.x != this.windowX || nextBounds.y != this.windowY) {
             this.flush_Z = true;
          }
@@ -1779,32 +1779,32 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.windowY = nextBounds.y;
          return true;
       } else {
-         return this.init_k.mouseDragged(mx, my, b, dx, dy);
+         return this.searchField.mouseDragged(mx, my, b, dx, dy);
       }
    }
 
    @Override
    public boolean mouseReleased(double mx, double my, int b) {
-      if (b == 0 && this.close_Z) {
-         this.close_Z = false;
+      if (b == 0 && this.scrollbarDragging) {
+         this.scrollbarDragging = false;
          return true;
-      } else if (b == 0 && this.sync_Z) {
-         this.sync_Z = false;
+      } else if (b == 0 && this.dragging) {
+         this.dragging = false;
          this.flush_Z = false;
          this.saveBounds();
          return true;
       } else {
-         return this.init_k.mouseReleased(mx, my, b);
+         return this.searchField.mouseReleased(mx, my, b);
       }
    }
 
    @Override
    public boolean mouseScrolled(double mx, double my, double amt) {
       if (this.windowVisible && !this.windowCollapsed) {
-         int totalH = this.load_List.size() * this.put_I_6();
-         int visH = this.pop_I_19();
+         int totalH = this.displayRows.size() * this.rowHeight();
+         int visH = this.listViewHeight();
          int maxScroll = Math.max(0, totalH - visH);
-         this.next = this.quantizeScrollOffset(this.next - (int)Math.round(amt * this.put_I_6() * 3.0), this.put_I_6(), maxScroll);
+         this.next = this.quantizeScrollOffset(this.next - (int)Math.round(amt * this.rowHeight() * 3.0), this.rowHeight(), maxScroll);
          return true;
       } else {
          return false;
@@ -1813,31 +1813,31 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean keyPressed(int key, int scan, int mods) {
-      return this.windowVisible && !this.windowCollapsed ? this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, mods)) : false;
+      return this.windowVisible && !this.windowCollapsed ? this.searchField.isFocused() && this.searchField.keyPressed(Compat263.newGlfwKeyEvent(key, scan, mods)) : false;
    }
 
    @Override
    public boolean charTyped(char c, int mods) {
-      return this.windowVisible && !this.windowCollapsed ? this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(c)) : false;
+      return this.windowVisible && !this.windowCollapsed ? this.searchField.isFocused() && this.searchField.charTyped(new CharacterEvent(c)) : false;
    }
 
-   private synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> init_List_10() {
-      switch (this.init_AutismPacketLogger_2) {
+   private synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> categoryEntries() {
+      switch (this.category) {
          case ALL:
          default:
-            return new ArrayList<>(this.init_Deque);
+            return new ArrayList<>(this.allBuffer);
          case INVENTORY:
-            return new ArrayList<>(this.load_Deque);
+            return new ArrayList<>(this.inventoryBuffer);
          case MOVEMENT:
-            return new ArrayList<>(this.read_Deque);
+            return new ArrayList<>(this.movementBuffer);
          case PAYLOAD:
-            return new ArrayList<>(this.write_Deque);
+            return new ArrayList<>(this.payloadBuffer);
       }
    }
 
-   private PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   private PayloadChannelFilterManager.Inner_StreamUtil matchingChannelRule(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return entry != null && entry.payloadPacket && entry.payloadSnapshot != null
-         ? this.init_bB.findMatchingRuleForEntry(entry.payloadSnapshot, entry.direction)
+         ? this.channelFilters.findMatchingRuleForEntry(entry.payloadSnapshot, entry.direction)
          : null;
    }
 
@@ -1846,25 +1846,25 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return "";
       }
 
-      PayloadChannelFilterManager.Inner_StreamUtil match = this.init_bB_StreamUtil_AutismPacketLogger(entry);
+      PayloadChannelFilterManager.Inner_StreamUtil match = this.matchingChannelRule(entry);
       return match == null ? entry.init() : entry.init() + " " + match.init_Str();
    }
 
-   private void prev_V_5() {
-      List<AutismPacketLoggerOverlay.LoggedPacketEntry> source = this.init_List_10();
+   private void rebuildDisplayRows() {
+      List<AutismPacketLoggerOverlay.LoggedPacketEntry> source = this.categoryEntries();
       if (source == null) {
          source = new ArrayList<>();
       }
 
-      String ls = this.load_Str.toLowerCase(Locale.ROOT);
+      String ls = this.searchQuery.toLowerCase(Locale.ROOT);
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> filtered = new ArrayList<>();
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : source) {
          if (!this.load(e.packetClass)
             && (
-               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
-                  || !this.poll_Z
-                  || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
+               this.category != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
+                  || !this.payloadFilteredOnly
+                  || this.matchingChannelRule(e) != null
             )
             && (ls.isEmpty() || this.init_Str_AutismPacketLogger(e).contains(ls))
             && (this.valid != 1 || e.direction.equals("C2S"))
@@ -1902,19 +1902,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          String key = e.key;
          if (groupedKeys.contains(key) && added.add(key)) {
             AutismPacketLoggerOverlay.DisplayRow h = new AutismPacketLoggerOverlay.DisplayRow();
-            h.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.GROUP;
-            h.init_Str = key;
-            h.init_I = counts.get(key);
+            h.kind = AutismPacketLoggerOverlay.DisplayRowKind.GROUP;
+            h.groupKey = key;
+            h.count = counts.get(key);
             h.load = dirs.get(key);
-            h.init_Class = classes.get(key);
-            h.init_AutismPayloadSuppo = e.payloadSnapshot;
+            h.packetClass = classes.get(key);
+            h.payload = e.payloadSnapshot;
             rows.add(h);
-            if (this.close_Set.contains(key)) {
+            if (this.expandedGroups.contains(key)) {
                for (AutismPacketLoggerOverlay.LoggedPacketEntry child : reversed) {
                   if (child.key.equals(key)) {
                      AutismPacketLoggerOverlay.DisplayRow r = new AutismPacketLoggerOverlay.DisplayRow();
-                     r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
-                     r.init_AutismPacketLogger = child;
+                     r.kind = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
+                     r.entry = child;
                      rows.add(r);
                   }
                }
@@ -1925,27 +1925,27 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : reversed) {
          if (!groupedKeys.contains(e.key)) {
             AutismPacketLoggerOverlay.DisplayRow r = new AutismPacketLoggerOverlay.DisplayRow();
-            r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
-            r.init_AutismPacketLogger = e;
+            r.kind = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
+            r.entry = e;
             rows.add(r);
          }
       }
 
-      this.load_List = rows;
-      this.valid_V_3();
+      this.displayRows = rows;
+      this.clampScroll();
    }
 
-   private void valid_V_3() {
-      int totalH = this.load_List.size() * this.put_I_6();
-      int visH = this.stop - 14 - this.clear_I_6() - this.stop_I_5() - 8 - this.run_I_17();
+   private void clampScroll() {
+      int totalH = this.displayRows.size() * this.rowHeight();
+      int visH = this.stop - 14 - this.clear_I_6() - this.toolbarHeight() - 8 - this.run_I_17();
       int maxScroll = Math.max(0, totalH - visH);
-      this.next = this.quantizeScrollOffset(this.next, this.put_I_6(), maxScroll);
+      this.next = this.quantizeScrollOffset(this.next, this.rowHeight(), maxScroll);
    }
 
-   private int tick_I_17() {
-      int rc = Math.min(this.load_List.size(), this.valid_I_3());
-      int chrome = 14 + this.clear_I_6() + this.stop_I_5() + 12 + this.run_I_17();
-      int content = Math.max(rc * this.put_I_6(), this.put_I_6() * 2);
+   private int preferredHeight() {
+      int rc = Math.min(this.displayRows.size(), this.maxVisibleRows());
+      int chrome = 14 + this.clear_I_6() + this.toolbarHeight() + 12 + this.run_I_17();
+      int content = Math.max(rc * this.rowHeight(), this.rowHeight() * 2);
       return this.resolveWindowHeight(Math.max(this.getMinHeight(), Math.min(chrome + content, Math.max(this.start, this.set_I_15()))), this.getResizeMinHeight());
    }
 
@@ -1956,23 +1956,23 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private void size() {
       int sw = cA.init_I();
       int sh = cA.load_I();
-      this.init_AutismPacketLogger.windowX = Math.max(4, (sw - this.init_AutismPacketLogger.windowWidth) / 2);
-      this.init_AutismPacketLogger.windowY = Math.max(4, (sh - this.init_AutismPacketLogger.windowHeight) / 2);
-      this.init_AutismPacketLogger.setVisible(true);
-      this.init_AutismPacketLogger.write_V_19();
-      OverlayManager.getInstance().bringToFront(this.init_AutismPacketLogger);
+      this.blockedListOverlay.windowX = Math.max(4, (sw - this.blockedListOverlay.windowWidth) / 2);
+      this.blockedListOverlay.windowY = Math.max(4, (sh - this.blockedListOverlay.windowHeight) / 2);
+      this.blockedListOverlay.setVisible(true);
+      this.blockedListOverlay.refilter();
+      OverlayManager.getInstance().bringToFront(this.blockedListOverlay);
    }
 
    private void data() {
       int sw = cA.init_I();
       int sh = cA.load_I();
-      this.init_bB.reloadFromConfig();
-      this.init_bC.reloadFromConfig();
-      this.init_AutismPacketLogger_3.windowX = Math.max(4, (sw - this.init_AutismPacketLogger_3.windowWidth) / 2);
-      this.init_AutismPacketLogger_3.windowY = Math.max(4, (sh - this.init_AutismPacketLogger_3.windowHeight) / 2);
-      this.init_AutismPacketLogger_3.setVisible(true);
-      this.init_AutismPacketLogger_3.put_V_7();
-      OverlayManager.getInstance().bringToFront(this.init_AutismPacketLogger_3);
+      this.channelFilters.reloadFromConfig();
+      this.payloadRegistrations.reloadFromConfig();
+      this.channelListenerOverlay.windowX = Math.max(4, (sw - this.channelListenerOverlay.windowWidth) / 2);
+      this.channelListenerOverlay.windowY = Math.max(4, (sh - this.channelListenerOverlay.windowHeight) / 2);
+      this.channelListenerOverlay.setVisible(true);
+      this.channelListenerOverlay.rebuildRows();
+      OverlayManager.getInstance().bringToFront(this.channelListenerOverlay);
    }
 
    private void value() {
@@ -1982,43 +1982,43 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private synchronized void cache() {
-      this.init_List.clear();
-      this.init_Deque.clear();
-      this.load_Deque.clear();
-      this.read_Deque.clear();
-      this.write_Deque.clear();
-      this.init_bq.reset();
-      this.load_List.clear();
+      this.pendingEntries.clear();
+      this.allBuffer.clear();
+      this.inventoryBuffer.clear();
+      this.movementBuffer.clear();
+      this.payloadBuffer.clear();
+      this.stateDeltaTracker.reset();
+      this.displayRows.clear();
       this.next = 0;
-      this.init_CacheEntry.jumpTo(0, 0);
-      this.close_Set.clear();
-      this.pop_Z = true;
+      this.scroller.jumpTo(0, 0);
+      this.expandedGroups.clear();
+      this.rowsDirty = true;
    }
 
    private void state() {
-      this.stop_V_5();
+      this.flushPending();
       StringBuilder sb = new StringBuilder();
-      sb.append("=== Packet Logger [").append(this.init_AutismPacketLogger_2.init_Str).append("] ===\n");
-      if (!this.load_Str.isEmpty()) {
-         sb.append("Search: \"").append(this.load_Str).append("\"\n");
+      sb.append("=== Packet Logger [").append(this.category.init_Str).append("] ===\n");
+      if (!this.searchQuery.isEmpty()) {
+         sb.append("Search: \"").append(this.searchQuery).append("\"\n");
       }
 
       sb.append(String.format("%-5s %-14s %-8s %s%n", "DIR", "TIME", "TICK", "PACKET"));
       sb.append("----------------------------------------------\n");
-      List<AutismPacketLoggerOverlay.LoggedPacketEntry> source = this.init_List_10();
+      List<AutismPacketLoggerOverlay.LoggedPacketEntry> source = this.categoryEntries();
       if (source == null) {
          source = new ArrayList<>();
       }
 
-      String ls = this.load_Str.toLowerCase(Locale.ROOT);
+      String ls = this.searchQuery.toLowerCase(Locale.ROOT);
       int count = 0;
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : source) {
          if (!this.load(e.packetClass)
             && (
-               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
-                  || !this.poll_Z
-                  || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
+               this.category != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
+                  || !this.payloadFilteredOnly
+                  || this.matchingChannelRule(e) != null
             )
             && (ls.isEmpty() || this.init_Str_AutismPacketLogger(e).contains(ls))
             && (this.valid != 1 || e.direction.equals("C2S"))
@@ -2031,7 +2031,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
             }
 
-            PayloadChannelFilterManager.Inner_StreamUtil match = this.init_bB_StreamUtil_AutismPacketLogger(e);
+            PayloadChannelFilterManager.Inner_StreamUtil match = this.matchingChannelRule(e);
             if (match != null) {
                copiedName = copiedName + " [" + match.load() + "]";
             }
@@ -2040,7 +2040,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                String.format(
                   "%-5s %-14s %-8s %s%n",
                   e.direction.equals("C2S") ? "->" : "<-",
-                  init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs)),
+                  TIME_FORMAT.format(Instant.ofEpochMilli(e.timestampMs)),
                   "T" + e.tick,
                   copiedName
                )
@@ -2051,103 +2051,103 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       sb.append("----------------------------------------------\n");
       sb.append("Total: ").append(count).append(" packets\n");
-      init_Minecraft.keyboardHandler.setClipboard(sb.toString());
+      MC.keyboardHandler.setClipboard(sb.toString());
       bi.init("Copied " + count + " packets.");
    }
 
-   private int get_I_15() {
-      String[] labels = this.init_StrArr_2();
+   private int preferredWidth() {
+      String[] labels = this.toolbarLabels();
       int row1 = 0;
 
       for (String label : labels) {
-         row1 += this.init_I_Str_6(label);
+         row1 += this.buttonWidth(label);
       }
 
       row1 += 2 * (labels.length - 1);
-      int row2 = this.next_I_5() + 3;
+      int row2 = this.searchFieldWidth() + 3;
 
       for (String label : new String[]{"Both", "C2S", "S2C"}) {
-         row2 += autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 4, 30, 48) + 2;
+         row2 += autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, label, 4, 30, 48) + 2;
       }
 
       return Math.max(row1, row2) + 8;
    }
 
    private int set_I_15() {
-      return 14 + this.clear_I_6() + this.stop_I_5() + 12 + this.put_I_6() * 14;
+      return 14 + this.clear_I_6() + this.toolbarHeight() + 12 + this.rowHeight() * 14;
    }
 
-   private int init_I_Str_6(String label) {
+   private int buttonWidth(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
-         autismclient.gui.f.b.k.init(this.init_Font, label, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
+         autismclient.gui.f.b.k.init(this.font, label, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
       );
    }
 
-   private int put_I_6() {
-      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(12), this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.read, 2));
+   private int rowHeight() {
+      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(12), this.styleTheme.init_I_l_I(autismclient.gui.f.b.l.read, 2));
    }
 
-   private int init_I_I_8(int y) {
-      return UiLayoutMath.centerTextY(y, this.put_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+   private int rowTextY(int y) {
+      return UiLayoutMath.centerTextY(y, this.rowHeight(), this.styleTheme.init_I_l(autismclient.gui.f.b.l.read), this.styleTheme.flush());
    }
 
-   private int add_I_13() {
+   private int controlHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int clear_I_6() {
-      return this.add_I_13();
+      return this.controlHeight();
    }
 
    private int reset_I_5() {
-      return this.add_I_13();
+      return this.controlHeight();
    }
 
    private int start_I_12() {
       return 2;
    }
 
-   private int stop_I_5() {
+   private int toolbarHeight() {
       return this.reset_I_5() * 2 + this.start_I_12();
    }
 
-   private int next_I_5() {
+   private int searchFieldWidth() {
       return 148;
    }
 
    private int prev_I_4() {
-      return this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.LogCategory.PAYLOAD ? 108 : this.next_I_5();
+      return this.category == AutismPacketLoggerOverlay.LogCategory.PAYLOAD ? 108 : this.searchFieldWidth();
    }
 
-   private int valid_I_3() {
+   private int maxVisibleRows() {
       return 22;
    }
 
    private final class BlockedPacketListOverlay extends DraggableOverlayWindow {
-      private final ThemedTextInputBox init_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 120, 16, false);
-      private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-      private final List<Class<? extends Packet<?>>> init_List = new ArrayList<>();
+      private final ThemedTextInputBox searchField = new ThemedTextInputBox(AutismPacketLoggerOverlay.MC, AutismPacketLoggerOverlay.this.font, 0, 0, 120, 16, false);
+      private final autismclient.gui.ui.widgets.ScrollOffsetController scroller = new autismclient.gui.ui.widgets.ScrollOffsetController();
+      private final List<Class<? extends Packet<?>>> allPackets = new ArrayList<>();
       private final Set<Class<? extends Packet<?>>> init_Set = new HashSet<>();
-      private final List<Class<? extends Packet<?>>> load_List = new ArrayList<>();
-      private int flush_I;
+      private final List<Class<? extends Packet<?>>> filteredPackets = new ArrayList<>();
+      private int scrollOffset;
       private boolean write_Z;
-      private int close_I;
+      private int thumbGrabOffset;
       private boolean update_Z;
-      private boolean sync_Z;
-      private double init_D;
-      private double load_D;
+      private boolean dragging;
+      private double dragOffsetX;
+      private double dragOffsetY;
       private boolean flush_Z;
 
-      private int push_I_20() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6("Blocked");
+      private int blockedButtonWidth() {
+         return AutismPacketLoggerOverlay.this.buttonWidth("Blocked");
       }
 
-      private int pop_I_20() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6("Clear");
+      private int clearButtonWidth() {
+         return AutismPacketLoggerOverlay.this.buttonWidth("Clear");
       }
 
-      private int tick_I_18() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6("Reset");
+      private int resetButtonWidth() {
+         return AutismPacketLoggerOverlay.this.buttonWidth("Reset");
       }
 
       BlockedPacketListOverlay() {
@@ -2155,29 +2155,29 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.windowX = 260;
          this.windowY = 56;
          this.windowVisible = false;
-         this.init_k.setPlaceholder(Component.literal("Search packets..."));
-         this.init_k.setMaxLength(120);
-         this.init_k.setChangedListener(value -> this.flush_Z = true);
+         this.searchField.setPlaceholder(Component.literal("Search packets..."));
+         this.searchField.setMaxLength(120);
+         this.searchField.setChangedListener(value -> this.flush_Z = true);
          List<Class<? extends Packet<?>>> c2s = new ArrayList<>(PacketTypeRegistry.getC2sPackets());
          List<Class<? extends Packet<?>>> s2c = new ArrayList<>(PacketTypeRegistry.getS2cPackets());
          Comparator<Class<? extends Packet<?>>> byName = Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER);
          c2s.sort(byName);
          s2c.sort(byName);
          this.init_Set.addAll(c2s);
-         this.init_List.addAll(c2s);
-         this.init_List.addAll(s2c);
+         this.allPackets.addAll(c2s);
+         this.allPackets.addAll(s2c);
       }
 
-      private int run_I_18() {
+      private int firstRowY() {
          return this.windowY + 14 + 4;
       }
 
       private int get_I_16() {
-         return this.run_I_18() + AutismPacketLoggerOverlay.this.add_I_13() + 2;
+         return this.firstRowY() + AutismPacketLoggerOverlay.this.controlHeight() + 2;
       }
 
       private int set_I_16() {
-         return this.get_I_16() + AutismPacketLoggerOverlay.this.add_I_13() + 4;
+         return this.get_I_16() + AutismPacketLoggerOverlay.this.controlHeight() + 4;
       }
 
       private String init(Class<? extends Packet<?>> cls) {
@@ -2190,7 +2190,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (this.windowVisible || this.isClosing()) {
             if (this.flush_Z) {
                this.flush_Z = false;
-               this.write_V_19();
+               this.refilter();
             }
 
             OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.windowX, this.windowY, this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
@@ -2203,25 +2203,25 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             } else {
                try {
                   int x = this.windowX + 6;
-                  int y = this.run_I_18();
-                  int rowH = AutismPacketLoggerOverlay.this.add_I_13();
-                  this.init_k.setX(x);
-                  this.init_k.setY(y);
-                  this.init_k.setWidth(Math.max(80, this.windowWidth - 12));
-                  this.init_k.setHeight(rowH);
-                  this.init_k.render(ctx, mx, my, delta);
+                  int y = this.firstRowY();
+                  int rowH = AutismPacketLoggerOverlay.this.controlHeight();
+                  this.searchField.setX(x);
+                  this.searchField.setY(y);
+                  this.searchField.setWidth(Math.max(80, this.windowWidth - 12));
+                  this.searchField.setHeight(rowH);
+                  this.searchField.render(ctx, mx, my, delta);
                   y = this.get_I_16();
                   int bx = x;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
-                     ctx, AutismPacketLoggerOverlay.this.init_Font, bx, y, this.push_I_20(), rowH, "Blocked", this.update_Z, mx, my
+                     ctx, AutismPacketLoggerOverlay.this.font, bx, y, this.blockedButtonWidth(), rowH, "Blocked", this.update_Z, mx, my
                   );
-                  int clearX = bx + this.push_I_20() + 2;
+                  int clearX = bx + this.blockedButtonWidth() + 2;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      clearX,
                      y,
-                     this.pop_I_20(),
+                     this.clearButtonWidth(),
                      rowH,
                      "Clear",
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
@@ -2229,13 +2229,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      mx,
                      my
                   );
-                  int resetX = clearX + this.pop_I_20() + 2;
+                  int resetX = clearX + this.clearButtonWidth() + 2;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      resetX,
                      y,
-                     this.tick_I_18(),
+                     this.resetButtonWidth(),
                      rowH,
                      "Reset",
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
@@ -2243,59 +2243,59 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      mx,
                      my
                   );
-                  int countX = resetX + this.tick_I_18() + 6;
-                  AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+                  int countX = resetX + this.resetButtonWidth() + 6;
+                  AutismPacketLoggerOverlay.this.drawText(
                      ctx,
-                     AutismPacketLoggerOverlay.this.sync_Set.size() + " blocked",
+                     AutismPacketLoggerOverlay.this.blockedPackets.size() + " blocked",
                      autismclient.gui.f.b.l.write,
                      UiColorPalette.textBody(),
                      countX,
                      UiLayoutMath.centerTextY(
                         y,
                         rowH,
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write),
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.flush()
+                        AutismPacketLoggerOverlay.this.styleTheme.init_I_l(autismclient.gui.f.b.l.write),
+                        AutismPacketLoggerOverlay.this.styleTheme.flush()
                      )
                   );
                   int listTop = this.set_I_16();
                   int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
-                  int contentH = this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6();
+                  int contentH = this.filteredPackets.size() * AutismPacketLoggerOverlay.this.rowHeight();
                   int maxScroll = Math.max(0, contentH - listH);
-                  this.flush_I = this.quantizeScrollOffset(this.flush_I, AutismPacketLoggerOverlay.this.put_I_6(), maxScroll);
-                  this.init_CacheEntry.setOffset(this.flush_I, maxScroll);
-                  int drawScroll = this.init_CacheEntry.tickAndClamp(delta, maxScroll);
+                  this.scrollOffset = this.quantizeScrollOffset(this.scrollOffset, AutismPacketLoggerOverlay.this.rowHeight(), maxScroll);
+                  this.scroller.setOffset(this.scrollOffset, maxScroll);
+                  int drawScroll = this.scroller.tickAndClamp(delta, maxScroll);
                   autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.windowX + 4, listTop, this.windowWidth - 8, listH));
                   int base = listTop - drawScroll;
-                  int rowHeight = AutismPacketLoggerOverlay.this.put_I_6();
+                  int rowHeight = AutismPacketLoggerOverlay.this.rowHeight();
                   int firstVisible = Math.max(0, drawScroll / rowHeight);
-                  int lastVisible = Math.min(this.load_List.size() - 1, (drawScroll + listH - 1) / rowHeight);
+                  int lastVisible = Math.min(this.filteredPackets.size() - 1, (drawScroll + listH - 1) / rowHeight);
 
                   for (int i = firstVisible; i <= lastVisible; i++) {
                      int ry = base + i * rowHeight;
-                     Class<? extends Packet<?>> cls = this.load_List.get(i);
+                     Class<? extends Packet<?>> cls = this.filteredPackets.get(i);
                      boolean c2s = this.init_Set.contains(cls);
-                     boolean blocked = AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls));
+                     boolean blocked = AutismPacketLoggerOverlay.this.isBlocked(cls, PacketNameResolver.nameOfClass(cls));
                      boolean hover = mx >= this.windowX + 4
                         && mx < this.windowX + this.windowWidth - 8
                         && my >= ry
-                        && my < ry + AutismPacketLoggerOverlay.this.put_I_6();
+                        && my < ry + AutismPacketLoggerOverlay.this.rowHeight();
                      int fill = blocked ? UiColorPalette.blockedRowFill(hover) : UiColorPalette.packetRowFill(c2s, i, hover);
-                     ctx.fill(this.windowX + 4, ry, this.windowX + this.windowWidth - 8, ry + AutismPacketLoggerOverlay.this.put_I_6(), fill);
+                     ctx.fill(this.windowX + 4, ry, this.windowX + this.windowWidth - 8, ry + AutismPacketLoggerOverlay.this.rowHeight(), fill);
                      if (blocked) {
-                        ctx.fill(this.windowX + 4, ry, this.windowX + 6, ry + AutismPacketLoggerOverlay.this.put_I_6(), UiColorPalette.blockedRowBar());
+                        ctx.fill(this.windowX + 4, ry, this.windowX + 6, ry + AutismPacketLoggerOverlay.this.rowHeight(), UiColorPalette.blockedRowBar());
                      }
 
                      int color = UiColorPalette.packetRowAccent(c2s, i);
                      String name = PacketNameResolver.nameOfClass(cls);
                      String label = autismclient.gui.f.b.k.init(
-                        AutismPacketLoggerOverlay.this.init_Font,
+                        AutismPacketLoggerOverlay.this.font,
                         name,
                         Math.max(1, this.windowWidth - 24),
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                        AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                         color
                      );
-                     AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-                        ctx, label, autismclient.gui.f.b.l.read, color, this.windowX + 9, AutismPacketLoggerOverlay.this.init_I_I_8(ry)
+                     AutismPacketLoggerOverlay.this.drawText(
+                        ctx, label, autismclient.gui.f.b.l.read, color, this.windowX + 9, AutismPacketLoggerOverlay.this.rowTextY(ry)
                      );
                   }
 
@@ -2312,12 +2312,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private void write_V_19() {
-         String query = this.init_k.getValue() == null ? "" : this.init_k.getValue().trim().toLowerCase(Locale.ROOT);
-         this.load_List.clear();
+      private void refilter() {
+         String query = this.searchField.getValue() == null ? "" : this.searchField.getValue().trim().toLowerCase(Locale.ROOT);
+         this.filteredPackets.clear();
 
-         for (Class<? extends Packet<?>> cls : this.init_List) {
-            if (!this.update_Z || AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls))) {
+         for (Class<? extends Packet<?>> cls : this.allPackets) {
+            if (!this.update_Z || AutismPacketLoggerOverlay.this.isBlocked(cls, PacketNameResolver.nameOfClass(cls))) {
                if (!query.isEmpty()) {
                   String hay = (PacketNameResolver.nameOfClass(cls) + " " + cls.getSimpleName()).toLowerCase(Locale.ROOT);
                   if (!hay.contains(query)) {
@@ -2325,11 +2325,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               this.load_List.add(cls);
+               this.filteredPackets.add(cls);
             }
          }
 
-         this.flush_I = Math.min(this.flush_I, Math.max(0, this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6()));
+         this.scrollOffset = Math.min(this.scrollOffset, Math.max(0, this.filteredPackets.size() * AutismPacketLoggerOverlay.this.rowHeight()));
       }
 
       @Override
@@ -2350,9 +2350,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0 && this.isOverHeader(mx, my)) {
-            this.sync_Z = true;
-            this.init_D = mx - this.windowX;
-            this.load_D = my - this.windowY;
+            this.dragging = true;
+            this.dragOffsetX = mx - this.windowX;
+            this.dragOffsetY = my - this.windowY;
             return true;
          }
 
@@ -2361,30 +2361,30 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          int x = this.windowX + 6;
-         if (this.init_k.mouseClicked(mx, my, button)) {
+         if (this.searchField.mouseClicked(mx, my, button)) {
             return true;
          }
 
          int y = this.get_I_16();
-         if (button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.add_I_13()) {
-            int clearX = x + this.push_I_20() + 2;
-            int resetX = clearX + this.pop_I_20() + 2;
-            if (mx >= x && mx < x + this.push_I_20()) {
+         if (button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.controlHeight()) {
+            int clearX = x + this.blockedButtonWidth() + 2;
+            int resetX = clearX + this.clearButtonWidth() + 2;
+            if (mx >= x && mx < x + this.blockedButtonWidth()) {
                this.update_Z = !this.update_Z;
-               this.flush_I = 0;
-               this.write_V_19();
+               this.scrollOffset = 0;
+               this.refilter();
                return true;
             }
 
-            if (mx >= clearX && mx < clearX + this.pop_I_20()) {
-               AutismPacketLoggerOverlay.this.add_V_7();
-               this.write_V_19();
+            if (mx >= clearX && mx < clearX + this.clearButtonWidth()) {
+               AutismPacketLoggerOverlay.this.clearBlocked();
+               this.refilter();
                return true;
             }
 
-            if (mx >= resetX && mx < resetX + this.tick_I_18()) {
-               AutismPacketLoggerOverlay.this.put_V_6();
-               this.write_V_19();
+            if (mx >= resetX && mx < resetX + this.resetButtonWidth()) {
+               AutismPacketLoggerOverlay.this.resetBlockedToDefaults();
+               this.refilter();
                return true;
             }
          }
@@ -2392,27 +2392,27 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int listTop = this.set_I_16();
          int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-            this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.flush_I
+            this.filteredPackets.size() * AutismPacketLoggerOverlay.this.rowHeight(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.scrollOffset
          );
          if (button == 0 && metrics.isScrollable() && metrics.containsTrack((int)mx, (int)my)) {
             this.write_Z = true;
-            this.close_I = (int)my - metrics.thumbY();
+            this.thumbGrabOffset = (int)my - metrics.thumbY();
             return true;
          }
 
          if (button == 0 && my >= listTop) {
-            int index = (int)((my - listTop + this.flush_I) / AutismPacketLoggerOverlay.this.put_I_6());
-            if (index >= 0 && index < this.load_List.size()) {
-               Class<? extends Packet<?>> cls = this.load_List.get(index);
+            int index = (int)((my - listTop + this.scrollOffset) / AutismPacketLoggerOverlay.this.rowHeight());
+            if (index >= 0 && index < this.filteredPackets.size()) {
+               Class<? extends Packet<?>> cls = this.filteredPackets.get(index);
                String key = this.init(cls);
-               if (AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls))) {
+               if (AutismPacketLoggerOverlay.this.isBlocked(cls, PacketNameResolver.nameOfClass(cls))) {
                   AutismPacketLoggerOverlay.this.init_V_Class_Str(cls, PacketNameResolver.nameOfClass(cls));
                } else {
                   AutismPacketLoggerOverlay.this.load(key);
                }
 
                if (this.update_Z) {
-                  this.write_V_19();
+                  this.refilter();
                }
 
                return true;
@@ -2424,35 +2424,35 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       @Override
       public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-         if (this.sync_Z && button == 0) {
-            this.setBounds(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
+         if (this.dragging && button == 0) {
+            this.setBounds(new OverlayBounds((int)Math.round(mx - this.dragOffsetX), (int)Math.round(my - this.dragOffsetY), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
             return true;
          } else if (this.write_Z && button == 0) {
             int listTop = this.set_I_16();
             int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.flush_I
+               this.filteredPackets.size() * AutismPacketLoggerOverlay.this.rowHeight(), listH, this.windowX + this.windowWidth - 5, listTop, 3, listH, this.scrollOffset
             );
-            this.flush_I = this.quantizeScrollOffset(
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.close_I), AutismPacketLoggerOverlay.this.put_I_6(), metrics.maxScroll()
+            this.scrollOffset = this.quantizeScrollOffset(
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.thumbGrabOffset), AutismPacketLoggerOverlay.this.rowHeight(), metrics.maxScroll()
             );
             return true;
          } else {
-            return this.init_k.mouseDragged(mx, my, button, dx, dy);
+            return this.searchField.mouseDragged(mx, my, button, dx, dy);
          }
       }
 
       @Override
       public boolean mouseReleased(double mx, double my, int button) {
-         if (button == 0 && this.sync_Z) {
-            this.sync_Z = false;
+         if (button == 0 && this.dragging) {
+            this.dragging = false;
             this.saveBounds();
             return true;
          } else if (button == 0 && this.write_Z) {
             this.write_Z = false;
             return true;
          } else {
-            return this.init_k.mouseReleased(mx, my, button);
+            return this.searchField.mouseReleased(mx, my, button);
          }
       }
 
@@ -2461,11 +2461,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my)) {
             int listTop = this.set_I_16();
             int listH = Math.max(20, this.windowY + this.windowHeight - listTop - 6);
-            int maxScroll = Math.max(0, this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6() - listH);
-            this.flush_I = this.quantizeScrollOffset(
-               this.flush_I - (int)Math.signum(amount) * AutismPacketLoggerOverlay.this.put_I_6(), AutismPacketLoggerOverlay.this.put_I_6(), maxScroll
+            int maxScroll = Math.max(0, this.filteredPackets.size() * AutismPacketLoggerOverlay.this.rowHeight() - listH);
+            this.scrollOffset = this.quantizeScrollOffset(
+               this.scrollOffset - (int)Math.signum(amount) * AutismPacketLoggerOverlay.this.rowHeight(), AutismPacketLoggerOverlay.this.rowHeight(), maxScroll
             );
-            this.init_CacheEntry.jumpTo(this.flush_I, maxScroll);
+            this.scroller.jumpTo(this.scrollOffset, maxScroll);
             return true;
          } else {
             return false;
@@ -2474,48 +2474,48 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       @Override
       public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-         return this.windowVisible && this.init_k.isFocused() && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers));
+         return this.windowVisible && this.searchField.isFocused() && this.searchField.keyPressed(Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers));
       }
 
       @Override
       public boolean charTyped(char chr, int modifiers) {
-         return this.windowVisible && this.init_k.isFocused() && this.init_k.charTyped(new CharacterEvent(chr));
+         return this.windowVisible && this.searchField.isFocused() && this.searchField.charTyped(new CharacterEvent(chr));
       }
 
       @Override
       public boolean hasFocusedTextInput() {
-         return this.windowVisible && this.init_k.isFocused();
+         return this.windowVisible && this.searchField.isFocused();
       }
 
       @Override
       public void clearInputFocus() {
-         this.init_k.setFocused(false);
+         this.searchField.setFocused(false);
       }
    }
 
-   private record FilterColumnLayout(String[] init_StrArr, int[] init_IArr, int init_I) {
+   private record FilterColumnLayout(String[] labels, int[] widths, int gap) {
    }
 
    static class DisplayRow {
-      AutismPacketLoggerOverlay.DisplayRowKind init_AutismPacketLogger_2;
-      AutismPacketLoggerOverlay.LoggedPacketEntry init_AutismPacketLogger;
-      String init_Str;
-      int init_I;
+      AutismPacketLoggerOverlay.DisplayRowKind kind;
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry;
+      String groupKey;
+      int count;
       String load;
-      Class<?> init_Class;
-      AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo;
+      Class<?> packetClass;
+      AutismPayloadSupport.PayloadEntry payload;
    }
 
    private static final class ChannelListRow {
-      final AutismPacketLoggerOverlay.ChannelRowKind init_AutismPacketLogger;
-      final String init_Str;
-      final int init_I;
-      final AutismConfig.PayloadChannelFilterRule init_AutismConfig_Paylo;
-      final int load_I;
-      final AutismConfig.PayloadChannelRegistrationRule init_AutismConfig_Paylo_2;
-      final String load_Str;
-      final AutismPacketLoggerOverlay.ChannelFamilyBucket init_AutismPacketLogger_2;
-      final PayloadChannelFilterManager.Inner_CachePool init_bB_CachePool;
+      final AutismPacketLoggerOverlay.ChannelRowKind kind;
+      final String header;
+      final int ruleIndex;
+      final AutismConfig.PayloadChannelFilterRule rule;
+      final int registrationIndex;
+      final AutismConfig.PayloadChannelRegistrationRule registration;
+      final String learnedChannel;
+      final AutismPacketLoggerOverlay.ChannelFamilyBucket family;
+      final PayloadChannelFilterManager.Inner_CachePool preset;
 
       private ChannelListRow(
          AutismPacketLoggerOverlay.ChannelRowKind kind,
@@ -2528,15 +2528,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          AutismPacketLoggerOverlay.ChannelFamilyBucket family,
          PayloadChannelFilterManager.Inner_CachePool preset
       ) {
-         this.init_AutismPacketLogger = kind;
-         this.init_Str = header;
-         this.init_I = ruleIndex;
-         this.init_AutismConfig_Paylo = rule;
-         this.load_I = registrationIndex;
-         this.init_AutismConfig_Paylo_2 = registration;
-         this.load_Str = learnedChannel;
-         this.init_AutismPacketLogger_2 = family;
-         this.init_bB_CachePool = preset;
+         this.kind = kind;
+         this.header = header;
+         this.ruleIndex = ruleIndex;
+         this.rule = rule;
+         this.registrationIndex = registrationIndex;
+         this.registration = registration;
+         this.learnedChannel = learnedChannel;
+         this.family = family;
+         this.preset = preset;
       }
 
       static AutismPacketLoggerOverlay.ChannelListRow init(String label) {
@@ -2582,7 +2582,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    public static class LoggedPacketEntry {
-      public final long init_J = AutismPacketLoggerOverlay.read_J++;
+      public final long id = AutismPacketLoggerOverlay.nextEntryId++;
       public final long timestampMs;
       public final int tick;
       public final String direction;
@@ -2644,8 +2644,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record CaptureContext(String init_Str, String load) {
-      private static final AutismPacketLoggerOverlay.CaptureContext init_AutismPacketLogger = new AutismPacketLoggerOverlay.CaptureContext(null, null);
+   private record CaptureContext(String blockState, String load) {
+      private static final AutismPacketLoggerOverlay.CaptureContext EMPTY = new AutismPacketLoggerOverlay.CaptureContext(null, null);
    }
 
    enum DisplayRowKind {
@@ -2654,26 +2654,26 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private static final class ChannelGroup {
-      final String init_Str;
-      final Map<String, AutismPacketLoggerOverlay.ChannelFamilyBucket> init_Map = new LinkedHashMap<>();
-      final List<PayloadChannelFilterManager.Inner_CachePool> init_List = new ArrayList<>();
+      final String group;
+      final Map<String, AutismPacketLoggerOverlay.ChannelFamilyBucket> families = new LinkedHashMap<>();
+      final List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>();
       List<AutismPacketLoggerOverlay.ChannelFamilyBucket> load = List.of();
       List<PayloadChannelFilterManager.Inner_CachePool> read = List.of();
 
       ChannelGroup(String group) {
-         this.init_Str = group;
+         this.group = group;
       }
 
       AutismPacketLoggerOverlay.ChannelFamilyBucket init(AutismPacketLoggerOverlay.ChannelFamilyKey familyKey) {
-         return this.init_Map.computeIfAbsent(familyKey.init_Str(), unused -> new AutismPacketLoggerOverlay.ChannelFamilyBucket(familyKey));
+         return this.families.computeIfAbsent(familyKey.key(), unused -> new AutismPacketLoggerOverlay.ChannelFamilyBucket(familyKey));
       }
    }
 
-   private record PacketColumnLayout(String[] init_StrArr, int[] init_IArr, int init_I) {
+   private record PacketColumnLayout(String[] labels, int[] widths, int gap) {
    }
 
    private record ChannelFamilyKey(String init, String load, String read) {
-      String init_Str() {
+      String key() {
          return this.init + "|" + this.load;
       }
 
@@ -2704,9 +2704,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       final String init_Str;
       final String load_Str;
       final String read;
-      final List<PayloadChannelFilterManager.Inner_CachePool> init_List = new ArrayList<>();
-      List<PayloadChannelFilterManager.Inner_CachePool> load_List = List.of();
-      private Set<String> init_Set;
+      final List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>();
+      List<PayloadChannelFilterManager.Inner_CachePool> displayPresets = List.of();
+      private Set<String> cachedChannels;
 
       ChannelFamilyBucket(AutismPacketLoggerOverlay.ChannelFamilyKey familyKey) {
          this.init_Str = familyKey.load();
@@ -2714,22 +2714,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.read = familyKey.write();
       }
 
-      String init_Str() {
+      String key() {
          return this.init_Str + "|" + this.load_Str;
       }
 
-      int init_I() {
-         return this.init_Set().size();
+      int channelCount() {
+         return this.channels().size();
       }
 
-      Set<String> init_Set() {
-         if (this.init_Set != null) {
-            return this.init_Set;
+      Set<String> channels() {
+         if (this.cachedChannels != null) {
+            return this.cachedChannels;
          }
 
          LinkedHashSet<String> channels = new LinkedHashSet<>();
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : this.init_List) {
+         for (PayloadChannelFilterManager.Inner_CachePool preset : this.presets) {
             if (preset != null) {
                String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
                if (PayloadRegistrationManager.isExactChannel(pattern)) {
@@ -2738,46 +2738,46 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.init_Set = Collections.unmodifiableSet(channels);
-         return this.init_Set;
+         this.cachedChannels = Collections.unmodifiableSet(channels);
+         return this.cachedChannels;
       }
 
-      List<PayloadChannelFilterManager.Inner_CachePool> init_List() {
-         return this.load_List != null && !this.load_List.isEmpty() ? this.load_List : this.init_List;
+      List<PayloadChannelFilterManager.Inner_CachePool> effectivePresets() {
+         return this.displayPresets != null && !this.displayPresets.isEmpty() ? this.displayPresets : this.presets;
       }
    }
 
    private final class PayloadChannelListenerOverlay extends DraggableOverlayWindow {
-      private final ThemedTextInputBox init_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 120, 16, false);
-      private final ThemedTextInputBox load_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 112, 16, false);
-      private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-      private final List<AutismPacketLoggerOverlay.ChannelListRow> init_List = new ArrayList<>();
-      private int flush_I;
+      private final ThemedTextInputBox searchField = new ThemedTextInputBox(AutismPacketLoggerOverlay.MC, AutismPacketLoggerOverlay.this.font, 0, 0, 120, 16, false);
+      private final ThemedTextInputBox patternField = new ThemedTextInputBox(AutismPacketLoggerOverlay.MC, AutismPacketLoggerOverlay.this.font, 0, 0, 112, 16, false);
+      private final autismclient.gui.ui.widgets.ScrollOffsetController scroller = new autismclient.gui.ui.widgets.ScrollOffsetController();
+      private final List<AutismPacketLoggerOverlay.ChannelListRow> rows = new ArrayList<>();
+      private int scrollOffset;
       private boolean write_Z;
-      private int close_I;
+      private int thumbGrabOffset;
       private boolean update_Z;
-      private double init_D;
-      private double load_D;
-      private boolean sync_Z;
-      private boolean flush_Z;
-      private final Set<String> init_Set = new HashSet<>();
-      private int open_I = -1;
+      private double dragOffsetX;
+      private double dragOffsetY;
+      private boolean showEnabledOnly;
+      private boolean configDirty;
+      private final Set<String> expandedFamilies = new HashSet<>();
+      private int editingFilterIndex = -1;
       private int poll = -1;
-      private Map<String, AutismPacketLoggerOverlay.ChannelGroup> init_Map;
-      private List<AutismPacketLoggerOverlay.ChannelGroup> load_List;
+      private Map<String, AutismPacketLoggerOverlay.ChannelGroup> cachedGroups;
+      private List<AutismPacketLoggerOverlay.ChannelGroup> sortedGroups;
       private final Set<String> load_Set = new HashSet<>();
       private final Set<String> read_Set = new HashSet<>();
-      private final Set<String> write_Set = new LinkedHashSet<>();
+      private final Set<String> enabledRegistrations = new LinkedHashSet<>();
       private final Map<String, Integer> load_Map = new HashMap<>();
-      private final Map<String, Integer> read_Map = new HashMap<>();
-      private final Map<String, PayloadChannelFilterManager.Inner_CachePool> write_Map = new HashMap<>();
-      private final Map<PayloadChannelFilterManager.Inner_CachePool, String> update_Map = new IdentityHashMap<>();
-      private final Map<String, PayloadSubscriptionManager.Inner_CachePool> sync_Map = new HashMap<>();
+      private final Map<String, Integer> exactCountByGroup = new HashMap<>();
+      private final Map<String, PayloadChannelFilterManager.Inner_CachePool> presetByPattern = new HashMap<>();
+      private final Map<PayloadChannelFilterManager.Inner_CachePool, String> presetSearchText = new IdentityHashMap<>();
+      private final Map<String, PayloadSubscriptionManager.Inner_CachePool> impactCache = new HashMap<>();
       private int push;
-      private String init_Str_2 = "";
+      private String subscriptionStatus = "";
       private int pop = 96;
-      private boolean close_Z;
-      private long init_J;
+      private boolean lockNoticeVisible;
+      private long lockNoticeShownAt;
       private boolean open_Z;
       private static final int tick = 14;
       private static final int run = 2;
@@ -2806,15 +2806,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.windowX = 270;
          this.windowY = 58;
          this.windowVisible = false;
-         this.init_k.setPlaceholder(Component.literal("Search presets/channels..."));
-         this.init_k.setMaxLength(120);
-         this.init_k.setChangedListener(value -> this.open_Z = true);
-         this.load_k.setPlaceholder(Component.literal("channel or wildcard: shopgui:main / oraxen:*"));
-         this.load_k.setMaxLength(96);
+         this.searchField.setPlaceholder(Component.literal("Search presets/channels..."));
+         this.searchField.setMaxLength(120);
+         this.searchField.setChangedListener(value -> this.open_Z = true);
+         this.patternField.setPlaceholder(Component.literal("channel or wildcard: shopgui:main / oraxen:*"));
+         this.patternField.setMaxLength(96);
       }
 
       private int push_I_21() {
-         return AutismPacketLoggerOverlay.this.add_I_13() + 2;
+         return AutismPacketLoggerOverlay.this.controlHeight() + 2;
       }
 
       private int pop_I_21() {
@@ -2841,73 +2841,73 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return this.get_I_17() + this.push_I_21() + 2;
       }
 
-      private int add_I_14() {
+      private int contentLeft() {
          return this.windowX + 6;
       }
 
-      private int clear_I_7() {
+      private int contentRight() {
          return this.windowX + this.windowWidth - 6 - 7;
       }
 
-      private int reset_I_6() {
-         return Math.max(20, this.clear_I_7() - this.add_I_14());
+      private int contentWidth() {
+         return Math.max(20, this.contentRight() - this.contentLeft());
       }
 
       private int start_I_13() {
-         return this.add_I_14() - 2;
+         return this.contentLeft() - 2;
       }
 
       private int stop_I_6() {
          return this.windowX + this.windowWidth - 5;
       }
 
-      private int next_I_6() {
+      private int listHeight() {
          int raw = Math.max(14, this.windowY + this.windowHeight - this.put_I_7() - 8);
          return Math.max(14, this.alignHeightToStep(raw, 14));
       }
 
-      private boolean poll_Z_14() {
-         return this.open_I >= 0 || this.poll >= 0;
+      private boolean isEditing() {
+         return this.editingFilterIndex >= 0 || this.poll >= 0;
       }
 
-      private int prev_I_5() {
-         int buttons = this.valid() + (this.poll_Z_14() ? 2 + this.size() : 0);
+      private int patternFieldWidth() {
+         int buttons = this.valid() + (this.isEditing() ? 2 + this.size() : 0);
          return Math.max(120, this.windowWidth - 12 - buttons - 2);
       }
 
       private int valid() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6(this.poll_Z_14() ? "Save" : "Add");
+         return AutismPacketLoggerOverlay.this.buttonWidth(this.isEditing() ? "Save" : "Add");
       }
 
       private int size() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6("Cancel");
+         return AutismPacketLoggerOverlay.this.buttonWidth("Cancel");
       }
 
       private int data() {
          String label = PayloadSubscriptionManager.isRegistrationUnlocked() ? "Registration : On" : "Registration : Off";
-         return AutismPacketLoggerOverlay.this.init_I_Str_6(label);
+         return AutismPacketLoggerOverlay.this.buttonWidth(label);
       }
 
-      private String load_Str_10() {
+      private String acceptButtonLabel() {
          int remaining = this.state();
          return remaining <= 0 ? "Accept" : "Accept " + remaining + "s";
       }
 
       private int value() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6("Cancel");
+         return AutismPacketLoggerOverlay.this.buttonWidth("Cancel");
       }
 
       private int cache() {
-         return AutismPacketLoggerOverlay.this.init_I_Str_6(this.load_Str_10());
+         return AutismPacketLoggerOverlay.this.buttonWidth(this.acceptButtonLabel());
       }
 
-      private AutismPacketLoggerOverlay.PacketColumnLayout init_AutismPacketLogger_4() {
-         String[] labels = new String[]{"Recommended", "Known On", "Capture", this.sync_Z ? "Enabled" : "All", "Apply", "Revert", "All Off"};
+      private AutismPacketLoggerOverlay.PacketColumnLayout toolbarLayout() {
+         String[] labels = new String[]{"Recommended", "Known On", "Capture", this.showEnabledOnly ? "Enabled" : "All", "Apply", "Revert", "All Off"};
          int[] widths = new int[labels.length];
          int total = 0;
 
          for (int i = 0; i < labels.length; i++) {
-            widths[i] = AutismPacketLoggerOverlay.this.init_I_Str_6(labels[i]);
+            widths[i] = AutismPacketLoggerOverlay.this.buttonWidth(labels[i]);
             total += widths[i];
          }
 
@@ -2916,38 +2916,38 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             : new AutismPacketLoggerOverlay.PacketColumnLayout(labels, new int[]{88, 62, 56, 62, 46, 50, 50}, 2);
       }
 
-      private void write_V_20() {
-         this.open_I = -1;
+      private void cancelEdit() {
+         this.editingFilterIndex = -1;
          this.poll = -1;
-         this.load_k.setValue("");
-         this.load_k.setPlaceholder(Component.literal("exact channel or highlight wildcard"));
-         this.load_k.setFocused(false);
+         this.patternField.setValue("");
+         this.patternField.setPlaceholder(Component.literal("exact channel or highlight wildcard"));
+         this.patternField.setFocused(false);
       }
 
-      private void update_V_17() {
-         AutismPacketLoggerOverlay.this.init_bB.syncToConfig(false);
-         AutismPacketLoggerOverlay.this.init_bC.save(false);
+      private void syncManagersToConfig() {
+         AutismPacketLoggerOverlay.this.channelFilters.syncToConfig(false);
+         AutismPacketLoggerOverlay.this.payloadRegistrations.save(false);
       }
 
-      private void sync_V_15() {
-         this.flush_Z = true;
-         AutismPacketLoggerOverlay.this.pop_Z = true;
+      private void markDirty() {
+         this.configDirty = true;
+         AutismPacketLoggerOverlay.this.rowsDirty = true;
       }
 
-      private void flush_V_14() {
-         if (this.flush_Z) {
-            this.update_V_17();
+      private void saveIfDirty() {
+         if (this.configDirty) {
+            this.syncManagersToConfig();
             AutismConfig.getGlobal().save();
-            this.flush_Z = false;
+            this.configDirty = false;
          }
       }
 
       @Override
       public void setVisible(boolean v) {
          if (!v) {
-            this.flush_V_14();
-            this.write_V_20();
-            this.close_Z = false;
+            this.saveIfDirty();
+            this.cancelEdit();
+            this.lockNoticeVisible = false;
          }
 
          super.setVisible(v);
@@ -2958,7 +2958,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (this.windowVisible || this.isClosing()) {
             if (this.open_Z) {
                this.open_Z = false;
-               this.put_V_7();
+               this.rebuildRows();
             }
 
             OverlayBounds bounds = this.clampToScreen(this, new OverlayBounds(this.windowX, this.windowY, this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
@@ -2972,42 +2972,42 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                try {
                   int x = this.windowX + 6;
                   int y = this.pop_I_21();
-                  this.init_k.setX(x);
-                  this.init_k.setY(y);
-                  this.init_k.setWidth(Math.max(80, this.windowWidth - 12));
-                  this.init_k.setHeight(AutismPacketLoggerOverlay.this.add_I_13());
-                  this.init_k.render(ctx, mx, my, delta);
+                  this.searchField.setX(x);
+                  this.searchField.setY(y);
+                  this.searchField.setWidth(Math.max(80, this.windowWidth - 12));
+                  this.searchField.setHeight(AutismPacketLoggerOverlay.this.controlHeight());
+                  this.searchField.render(ctx, mx, my, delta);
                   y = this.tick_I_19();
-                  int customW = this.prev_I_5();
-                  this.load_k.setX(x);
-                  this.load_k.setY(y);
-                  this.load_k.setWidth(customW);
-                  this.load_k.setHeight(AutismPacketLoggerOverlay.this.add_I_13());
-                  this.load_k.render(ctx, mx, my, delta);
+                  int customW = this.patternFieldWidth();
+                  this.patternField.setX(x);
+                  this.patternField.setY(y);
+                  this.patternField.setWidth(customW);
+                  this.patternField.setHeight(AutismPacketLoggerOverlay.this.controlHeight());
+                  this.patternField.render(ctx, mx, my, delta);
                   int addW = this.valid();
                   int addX = x + customW + 2;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      addX,
                      y,
                      addW,
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     this.poll_Z_14() ? "Save" : "Add",
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     this.isEditing() ? "Save" : "Add",
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
                   );
-                  if (this.poll_Z_14()) {
+                  if (this.isEditing()) {
                      int cancelX = addX + addW + 2;
                      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                         ctx,
-                        AutismPacketLoggerOverlay.this.init_Font,
+                        AutismPacketLoggerOverlay.this.font,
                         cancelX,
                         y,
                         this.size(),
-                        AutismPacketLoggerOverlay.this.add_I_13(),
+                        AutismPacketLoggerOverlay.this.controlHeight(),
                         "Cancel",
                         autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                         true,
@@ -3017,102 +3017,102 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
 
                   y = this.run_I_19();
-                  AutismPacketLoggerOverlay.PacketColumnLayout controls = this.init_AutismPacketLogger_4();
+                  AutismPacketLoggerOverlay.PacketColumnLayout controls = this.toolbarLayout();
                   int cx = x;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[0],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[0],
-                     AutismPacketLoggerOverlay.this.init_bB.isOnlyDefaultsEnabled()
+                     controls.widths[0],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[0],
+                     AutismPacketLoggerOverlay.this.channelFilters.isOnlyDefaultsEnabled()
                         ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST
                         : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[0] + controls.init_I;
+                  cx += controls.widths[0] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[1],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[1],
+                     controls.widths[1],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[1],
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[1] + controls.init_I;
+                  cx += controls.widths[1] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[2],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[2],
+                     controls.widths[2],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[2],
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[2] + controls.init_I;
+                  cx += controls.widths[2] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[3],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[3],
-                     this.sync_Z ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
+                     controls.widths[3],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[3],
+                     this.showEnabledOnly ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[3] + controls.init_I;
+                  cx += controls.widths[3] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[4],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[4],
+                     controls.widths[4],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[4],
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[4] + controls.init_I;
+                  cx += controls.widths[4] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[5],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[5],
+                     controls.widths[5],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[5],
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
                   );
-                  cx += controls.init_IArr[5] + controls.init_I;
+                  cx += controls.widths[5] + controls.gap;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      cx,
                      y,
-                     controls.init_IArr[6],
-                     AutismPacketLoggerOverlay.this.add_I_13(),
-                     controls.init_StrArr[6],
+                     controls.widths[6],
+                     AutismPacketLoggerOverlay.this.controlHeight(),
+                     controls.labels[6],
                      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
@@ -3129,27 +3129,27 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   int lockX = this.windowX + this.windowWidth - 8 - lockW;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      ctx,
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      lockX,
                      this.set_I_17(),
                      lockW,
-                     AutismPacketLoggerOverlay.this.add_I_13(),
+                     AutismPacketLoggerOverlay.this.controlHeight(),
                      registrationUnlocked ? "Registration : On" : "Registration : Off",
                      registrationUnlocked ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
                   );
-                  String count = this.push + " highlight  " + sub + this.init_Str_2;
+                  String count = this.push + " highlight  " + sub + this.subscriptionStatus;
                   int countX = x;
                   int countMaxW = Math.max(1, lockX - countX - 5);
-                  AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+                  AutismPacketLoggerOverlay.this.drawText(
                      ctx,
                      autismclient.gui.f.b.k.init(
-                        AutismPacketLoggerOverlay.this.init_Font,
+                        AutismPacketLoggerOverlay.this.font,
                         count,
                         countMaxW,
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                        AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                         UiColorPalette.textBody()
                      ),
                      autismclient.gui.f.b.l.write,
@@ -3157,32 +3157,32 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      countX,
                      UiLayoutMath.centerTextY(
                         this.get_I_17(),
-                        AutismPacketLoggerOverlay.this.add_I_13(),
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write),
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.flush()
+                        AutismPacketLoggerOverlay.this.controlHeight(),
+                        AutismPacketLoggerOverlay.this.styleTheme.init_I_l(autismclient.gui.f.b.l.write),
+                        AutismPacketLoggerOverlay.this.styleTheme.flush()
                      )
                   );
                   int listTop = this.put_I_7();
-                  int listH = this.next_I_6();
-                  int contentH = this.init_List.size() * 14;
+                  int listH = this.listHeight();
+                  int contentH = this.rows.size() * 14;
                   int maxScroll = Math.max(0, contentH - listH);
-                  this.flush_I = this.quantizeScrollOffset(this.flush_I, 14, maxScroll);
-                  this.init_CacheEntry.setOffset(this.flush_I, maxScroll);
-                  int drawScroll = this.init_CacheEntry.tickAndClamp(delta, maxScroll);
+                  this.scrollOffset = this.quantizeScrollOffset(this.scrollOffset, 14, maxScroll);
+                  this.scroller.setOffset(this.scrollOffset, maxScroll);
+                  int drawScroll = this.scroller.tickAndClamp(delta, maxScroll);
                   autismclient.gui.f.PacketUtil.init(
                      ctx,
                      autismclient.gui.f.NetHelper.init(this.start_I_13(), listTop - 2, Math.max(1, this.stop_I_6() - this.start_I_13()), listH + 4),
                      UiColorPalette.listBoxSurface(),
                      UiColorPalette.divider()
                   );
-                  autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.add_I_14(), listTop, this.reset_I_6(), listH));
+                  autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.contentLeft(), listTop, this.contentWidth(), listH));
                   int base = listTop - drawScroll;
                   int firstVisible = Math.max(0, drawScroll / 14);
-                  int lastVisible = Math.min(this.init_List.size() - 1, (drawScroll + listH - 1) / 14);
+                  int lastVisible = Math.min(this.rows.size() - 1, (drawScroll + listH - 1) / 14);
 
                   for (int i = firstVisible; i <= lastVisible; i++) {
                      int ry = base + i * 14;
-                     this.init(ctx, this.init_List.get(i), ry, mx, my, i);
+                     this.init(ctx, this.rows.get(i), ry, mx, my, i);
                   }
 
                   autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
@@ -3190,8 +3190,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      contentH, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, drawScroll
                   );
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, metrics, metrics.containsTrack(mx, my), this.write_Z);
-                  if (this.close_Z) {
-                     this.init_V_GuiGraphicsExtract_6(ctx, mx, my);
+                  if (this.lockNoticeVisible) {
+                     this.renderBody(ctx, mx, my);
                   }
                } finally {
                   this.endBodyClip(ctx, clip);
@@ -3201,10 +3201,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, int mx, int my) {
+      private void renderBody(GuiGraphicsExtractor ctx, int mx, int my) {
          int bodyTop = this.windowY + 14;
          ctx.fill(this.windowX + 4, bodyTop + 2, this.windowX + this.windowWidth - 4, this.windowY + this.windowHeight - 5, -872086265);
-         AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.init_AutismPacketLogger_3();
+         AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.columnMetrics();
          int x = bounds.init;
          int y = bounds.load;
          int w = bounds.read;
@@ -3228,11 +3228,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int acceptX = cancelX + cancelW + 6;
          autismclient.gui.ui.widgets.ButtonDrawHelper.init(
             ctx,
-            AutismPacketLoggerOverlay.this.init_Font,
+            AutismPacketLoggerOverlay.this.font,
             cancelX,
             buttonY,
             cancelW,
-            AutismPacketLoggerOverlay.this.add_I_13(),
+            AutismPacketLoggerOverlay.this.controlHeight(),
             "Cancel",
             autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
             true,
@@ -3242,12 +3242,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          boolean ready = this.state() <= 0;
          autismclient.gui.ui.widgets.ButtonDrawHelper.init(
             ctx,
-            AutismPacketLoggerOverlay.this.init_Font,
+            AutismPacketLoggerOverlay.this.font,
             acceptX,
             buttonY,
             acceptW,
-            AutismPacketLoggerOverlay.this.add_I_13(),
-            this.load_Str_10(),
+            AutismPacketLoggerOverlay.this.controlHeight(),
+            this.acceptButtonLabel(),
             autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
             ready,
             mx,
@@ -3256,7 +3256,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int state() {
-         long elapsed = Math.max(0L, System.currentTimeMillis() - this.init_J);
+         long elapsed = Math.max(0L, System.currentTimeMillis() - this.lockNoticeShownAt);
          long remaining = Math.max(0L, 5000L - elapsed);
          return (int)Math.ceil(remaining / 1000.0);
       }
@@ -3266,19 +3266,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.init_AutismPacketLogger_3();
+         AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.columnMetrics();
          int cancelW = this.value();
          int acceptW = this.cache();
          int buttonsW = cancelW + 6 + acceptW;
          int cancelX = bounds.init + (bounds.read - buttonsW) / 2;
          int acceptX = cancelX + cancelW + 6;
          int buttonY = bounds.update;
-         if (my >= buttonY && my < buttonY + AutismPacketLoggerOverlay.this.add_I_13() && mx >= cancelX && mx < cancelX + cancelW) {
-            this.close_Z = false;
+         if (my >= buttonY && my < buttonY + AutismPacketLoggerOverlay.this.controlHeight() && mx >= cancelX && mx < cancelX + cancelW) {
+            this.lockNoticeVisible = false;
             return true;
          }
 
-         if (!(my >= buttonY) || !(my < buttonY + AutismPacketLoggerOverlay.this.add_I_13()) || !(mx >= acceptX) || !(mx < acceptX + acceptW)) {
+         if (!(my >= buttonY) || !(my < buttonY + AutismPacketLoggerOverlay.this.controlHeight()) || !(mx >= acceptX) || !(mx < acceptX + acceptW)) {
             return true;
          }
 
@@ -3286,76 +3286,76 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         this.close_Z = false;
+         this.lockNoticeVisible = false;
          PayloadSubscriptionManager.read();
-         this.put_V_7();
+         this.rebuildRows();
          bi.init("Payload registration unlocked. Press Apply.");
          return true;
       }
 
-      private AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics init_AutismPacketLogger_3() {
+      private AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics columnMetrics() {
          int bodyTop = this.windowY + 14;
          int contentW = 0;
          contentW = Math.max(
-            contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.recolor(-19276, ThemePaletteManager.ColorRole.DANGER))
+            contentW, this.textWidth("Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.recolor(-19276, ThemePaletteManager.ColorRole.DANGER))
          );
-         contentW = Math.max(contentW, this.init_I_Str_3("Servers can see every registered channel.", autismclient.gui.f.b.l.read, UiColorPalette.textBright()));
-         contentW = Math.max(contentW, this.init_I_Str_3("This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, UiColorPalette.textBright()));
-         contentW = Math.max(contentW, this.init_I_Str_3("Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, UiColorPalette.textBody()));
+         contentW = Math.max(contentW, this.textWidth("Servers can see every registered channel.", autismclient.gui.f.b.l.read, UiColorPalette.textBright()));
+         contentW = Math.max(contentW, this.textWidth("This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, UiColorPalette.textBright()));
+         contentW = Math.max(contentW, this.textWidth("Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, UiColorPalette.textBody()));
          int buttonsW = this.value() + 6 + this.cache();
          int maxW = Math.max(180, this.windowWidth - 24);
          int w = Math.min(maxW, Math.max(buttonsW + 28, contentW + 28));
-         int h = 75 + AutismPacketLoggerOverlay.this.add_I_13() + 10;
+         int h = 75 + AutismPacketLoggerOverlay.this.controlHeight() + 10;
          int x = this.windowX + (this.windowWidth - w) / 2;
          int y = bodyTop + Math.max(8, (this.windowHeight - 14 - h) / 2);
-         return new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics(x, y, w, h, y + h - 10 - AutismPacketLoggerOverlay.this.add_I_13());
+         return new AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics(x, y, w, h, y + h - 10 - AutismPacketLoggerOverlay.this.controlHeight());
       }
 
-      private int init_I_Str_3(String text, autismclient.gui.f.b.l tone, int color) {
+      private int textWidth(String text, autismclient.gui.f.b.l tone, int color) {
          return autismclient.gui.f.b.k.init(
-            AutismPacketLoggerOverlay.this.init_Font, text, AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(tone), color
+            AutismPacketLoggerOverlay.this.font, text, AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(tone), color
          );
       }
 
       private void init(GuiGraphicsExtractor ctx, String text, autismclient.gui.f.b.l tone, int color, int x, int w, int y) {
          String fitted = autismclient.gui.f.b.k.init(
-            AutismPacketLoggerOverlay.this.init_Font, text, Math.max(1, w - 28), AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(tone), color
+            AutismPacketLoggerOverlay.this.font, text, Math.max(1, w - 28), AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(tone), color
          );
          int textW = autismclient.gui.f.b.k.init(
-            AutismPacketLoggerOverlay.this.init_Font, fitted, AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(tone), color
+            AutismPacketLoggerOverlay.this.font, fitted, AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(tone), color
          );
-         AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(ctx, fitted, tone, color, x + Math.max(0, (w - textW) / 2), y);
+         AutismPacketLoggerOverlay.this.drawText(ctx, fitted, tone, color, x + Math.max(0, (w - textW) / 2), y);
       }
 
-      private void close_V_13() {
-         this.close_Z = true;
-         this.init_J = System.currentTimeMillis();
+      private void showLockNotice() {
+         this.lockNoticeVisible = true;
+         this.lockNoticeShownAt = System.currentTimeMillis();
       }
 
-      private void open_V_11() {
-         this.flush_V_14();
-         PayloadSubscriptionManager.lockRegistration(AutismPacketLoggerOverlay.init_Minecraft);
-         this.put_V_7();
+      private void lockRegistration() {
+         this.saveIfDirty();
+         PayloadSubscriptionManager.lockRegistration(AutismPacketLoggerOverlay.MC);
+         this.rebuildRows();
          bi.read("Payload registration locked.");
       }
 
-      private boolean push_Z_11() {
+      private boolean ensureRegistrationUnlocked() {
          if (PayloadSubscriptionManager.isRegistrationUnlocked()) {
             return true;
          }
 
-         this.close_V_13();
+         this.showLockNotice();
          return false;
       }
 
       private void init(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.ChannelListRow row, int y, int mx, int my, int index) {
-         int left = this.add_I_14();
-         int right = this.clear_I_7();
+         int left = this.contentLeft();
+         int right = this.contentRight();
          int width = Math.max(1, right - left);
          int x = left + 4;
-         if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.HEADER) {
-            boolean groupHeader = this.load_Map.getOrDefault(this.init_Str_2(row.init_Str), 0) > 0;
-            boolean groupOn = groupHeader && this.load_Z_2(row.init_Str);
+         if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.HEADER) {
+            boolean groupHeader = this.load_Map.getOrDefault(this.cleanGroup(row.header), 0) > 0;
+            boolean groupOn = groupHeader && this.isGroupFullyEnabled(row.header);
             ctx.fill(left, y, right, y + 14, UiColorPalette.sectionBarFill());
             autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, left + 2, y + 14 - 1, Math.max(1, width - 4));
             int statusW = groupHeader ? 30 : 0;
@@ -3364,43 +3364,43 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int studyX = groupHeader ? channelX - 36 - 3 : right;
             int maxHeaderW = groupHeader ? Math.max(1, studyX - x - 6) : Math.max(1, width - 10);
             String header = autismclient.gui.f.b.k.init(
-               AutismPacketLoggerOverlay.this.init_Font,
-               row.init_Str,
+               AutismPacketLoggerOverlay.this.font,
+               row.header,
                maxHeaderW,
-               AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+               AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                UiColorPalette.textBody()
             );
-            AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-               ctx, header, autismclient.gui.f.b.l.write, UiColorPalette.textBody(), x, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+            AutismPacketLoggerOverlay.this.drawText(
+               ctx, header, autismclient.gui.f.b.l.write, UiColorPalette.textBody(), x, this.rowTextY(y, autismclient.gui.f.b.l.write)
             );
             if (groupHeader) {
                this.init(ctx, studyX, y, mx, my, "Study");
-               this.load(ctx, row.init_Str, channelX, y);
+               this.load(ctx, row.header, channelX, y);
                this.init(ctx, statusX, y + 1, statusW, 12, groupOn ? "ON" : "OFF", groupOn);
             }
-         } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.EMPTY) {
+         } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.EMPTY) {
             ctx.fill(left, y, right, y + 14, UiColorPalette.rowSurface());
-            AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+            AutismPacketLoggerOverlay.this.drawText(
                ctx,
                autismclient.gui.f.b.k.init(
-                  AutismPacketLoggerOverlay.this.init_Font,
-                  row.init_Str == null ? "" : row.init_Str,
+                  AutismPacketLoggerOverlay.this.font,
+                  row.header == null ? "" : row.header,
                   Math.max(1, width - 12),
-                  AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                  AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                   UiColorPalette.textSecondary()
                ),
                autismclient.gui.f.b.l.write,
                UiColorPalette.textSecondary(),
                x + 4,
-               this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+               this.rowTextY(y, autismclient.gui.f.b.l.write)
             );
          } else {
             boolean hover = mx >= left && mx < right && my >= y && my < y + 14;
-            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY) {
-               AutismPacketLoggerOverlay.ChannelFamilyBucket family = row.init_AutismPacketLogger_2;
+            if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY) {
+               AutismPacketLoggerOverlay.ChannelFamilyBucket family = row.family;
                if (family != null) {
-                  int total = family.init_I();
-                  int enabled = this.init_I(family);
+                  int total = family.channelCount();
+                  int enabled = this.enabledCount(family);
                   boolean allEnabled = total > 0 && enabled == total;
                   int fill = enabled > 0 ? UiColorPalette.filterRowFill(hover) : (hover ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
                   ctx.fill(left, y, right, y + 14, fill);
@@ -3411,30 +3411,30 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   int statusX = right - 30 - 4;
                   int channelX = statusX - 58 - 3;
                   int studyX = channelX - 36 - 3;
-                  boolean familyExpanded = this.init_Set.contains(family.init_Str());
+                  boolean familyExpanded = this.expandedFamilies.contains(family.key());
                   String text = family.read + "  " + enabled + "/" + total;
                   int textColor = enabled > 0 ? UiColorPalette.filterActiveText() : UiColorPalette.textBright();
                   autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x + 4, y + 2, 9, 9), familyExpanded, textColor);
-                  AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+                  AutismPacketLoggerOverlay.this.drawText(
                      ctx,
                      autismclient.gui.f.b.k.init(
-                        AutismPacketLoggerOverlay.this.init_Font,
+                        AutismPacketLoggerOverlay.this.font,
                         text,
                         Math.max(1, studyX - (x + 15) - 5),
-                        AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                        AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                         textColor
                      ),
                      autismclient.gui.f.b.l.read,
                      textColor,
                      x + 15,
-                     this.init_I_I_l(y, autismclient.gui.f.b.l.read)
+                     this.rowTextY(y, autismclient.gui.f.b.l.read)
                   );
                   this.init(ctx, studyX, y, mx, my, "Study");
-                  this.init_V_GuiGraphicsExtract_9(ctx, total + "ch", total > 0 ? -7346000 : UiColorPalette.textSecondary(), channelX, y);
+                  this.renderBadge(ctx, total + "ch", total > 0 ? -7346000 : UiColorPalette.textSecondary(), channelX, y);
                   this.init(ctx, statusX, y + 1, 30, 12, allEnabled ? "ON" : "OFF", allEnabled);
                }
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION) {
-               AutismConfig.PayloadChannelRegistrationRule rule = row.init_AutismConfig_Paylo_2;
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION) {
+               AutismConfig.PayloadChannelRegistrationRule rule = row.registration;
                boolean enabled = rule != null && rule.enabled;
                int fill = enabled ? UiColorPalette.filterRowFill(hover) : (hover ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
                ctx.fill(left, y, right, y + 14, fill);
@@ -3445,7 +3445,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                String label = rule != null && rule.label != null && !rule.label.isBlank() ? rule.label.trim() : "";
                String channel = rule == null ? "" : PayloadRegistrationManager.normalize(rule.channel);
                String text = !label.isBlank() && !label.equals(channel) ? label + "  " + channel : channel;
-               boolean editable = this.init_Z(rule);
+               boolean editable = this.isEditableRegistration(rule);
                int removeX = editable ? right - 14 : right;
                int editX = editable ? removeX - 14 : right;
                int statusRight = editable ? editX - 3 : right - 4;
@@ -3454,40 +3454,40 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                int sourceX = statusX - sourceW - 3;
                int maxTextW = Math.max(1, sourceX - (x + 4) - 5);
                int color = enabled ? UiColorPalette.filterActiveText() : UiColorPalette.textBright();
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+               AutismPacketLoggerOverlay.this.drawText(
                   ctx,
                   autismclient.gui.f.b.k.init(
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      text,
                      maxTextW,
-                     AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                     AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                      color
                   ),
                   autismclient.gui.f.b.l.read,
                   color,
                   x + 4,
-                  this.init_I_I_l(y, autismclient.gui.f.b.l.read)
+                  this.rowTextY(y, autismclient.gui.f.b.l.read)
                );
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+               AutismPacketLoggerOverlay.this.drawText(
                   ctx,
                   autismclient.gui.f.b.k.init(
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      PayloadRegistrationManager.sourceLabel(rule == null ? "" : rule.source),
                      sourceW,
-                     AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                     AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                      UiColorPalette.textBody()
                   ),
                   autismclient.gui.f.b.l.write,
                   UiColorPalette.textBody(),
                   sourceX,
-                  this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+                  this.rowTextY(y, autismclient.gui.f.b.l.write)
                );
                this.init(ctx, statusX, y + 1, 30, 12, enabled ? "ON" : "OFF", enabled);
                if (editable) {
                   boolean eu = mx >= editX && mx <= editX + 14 && my >= y && my < y + 14;
                   boolean hu = mx >= removeX && mx <= removeX + 14 && my >= y && my < y + 14;
-                  AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-                     ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : UiColorPalette.textBody(), editX + 3, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+                  AutismPacketLoggerOverlay.this.drawText(
+                     ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : UiColorPalette.textBody(), editX + 3, this.rowTextY(y, autismclient.gui.f.b.l.write)
                   );
                   autismclient.gui.f.PacketUtil.read(
                      ctx,
@@ -3495,31 +3495,31 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      hu ? ThemePaletteManager.recolor(-39322, ThemePaletteManager.ColorRole.DANGER) : UiColorPalette.textBody()
                   );
                }
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED) {
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED) {
                ctx.fill(left, y, right, y + 14, hover ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
                int statusX = right - 30 - 4;
                int sourceX = statusX - 56;
                int maxTextW = Math.max(1, sourceX - (x + 4) - 5);
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+               AutismPacketLoggerOverlay.this.drawText(
                   ctx,
                   autismclient.gui.f.b.k.init(
-                     AutismPacketLoggerOverlay.this.init_Font,
-                     row.load_Str == null ? "" : row.load_Str,
+                     AutismPacketLoggerOverlay.this.font,
+                     row.learnedChannel == null ? "" : row.learnedChannel,
                      maxTextW,
-                     AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                     AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                      UiColorPalette.textBright()
                   ),
                   autismclient.gui.f.b.l.read,
                   UiColorPalette.textBright(),
                   x + 4,
-                  this.init_I_I_l(y, autismclient.gui.f.b.l.read)
+                  this.rowTextY(y, autismclient.gui.f.b.l.read)
                );
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-                  ctx, "Learned", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), sourceX, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+               AutismPacketLoggerOverlay.this.drawText(
+                  ctx, "Learned", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), sourceX, this.rowTextY(y, autismclient.gui.f.b.l.write)
                );
                this.init(ctx, statusX, y + 1, 30, 12, "OFF", false);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE) {
-               AutismConfig.PayloadChannelFilterRule rule = row.init_AutismConfig_Paylo;
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE) {
+               AutismConfig.PayloadChannelFilterRule rule = row.rule;
                int fill = rule.enabled ? UiColorPalette.filterRowFill(hover) : (hover ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
                ctx.fill(left, y, right, y + 14, fill);
                if (rule.enabled) {
@@ -3537,34 +3537,34 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                int channelX = statusX - 58 - 3;
                int studyX = channelX - 36 - 3;
                int maxTextW = Math.max(1, studyX - (x + 4) - 4);
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+               AutismPacketLoggerOverlay.this.drawText(
                   ctx,
                   autismclient.gui.f.b.k.init(
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      text,
                      maxTextW,
-                     AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                     AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                      color
                   ),
                   autismclient.gui.f.b.l.read,
                   color,
                   x + 4,
-                  this.init_I_I_l(y, autismclient.gui.f.b.l.read)
+                  this.rowTextY(y, autismclient.gui.f.b.l.read)
                );
                this.init(ctx, studyX, y, mx, my, "Study");
-               this.init_V_GuiGraphicsExtract_11(ctx, rule.pattern, channelX, y);
+               this.renderImpactBadge(ctx, rule.pattern, channelX, y);
                this.init(ctx, statusX, y + 1, statusW, 12, rule.enabled ? "ON" : "OFF", rule.enabled);
                boolean eu = mx >= editX && mx <= editX + 14 && my >= y && my < y + 14;
                boolean hu = mx >= removeX && mx <= removeX + 14 && my >= y && my < y + 14;
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
-                  ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : UiColorPalette.textBody(), editX + 3, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+               AutismPacketLoggerOverlay.this.drawText(
+                  ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : UiColorPalette.textBody(), editX + 3, this.rowTextY(y, autismclient.gui.f.b.l.write)
                );
                autismclient.gui.f.PacketUtil.read(
                   ctx, autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9), hu ? ThemePaletteManager.recolor(-39322, ThemePaletteManager.ColorRole.DANGER) : UiColorPalette.textBody()
                );
             } else {
-               PayloadChannelFilterManager.Inner_CachePool preset = row.init_bB_CachePool;
-               boolean enabled = this.init_Z(preset);
+               PayloadChannelFilterManager.Inner_CachePool preset = row.preset;
+               boolean enabled = this.isPresetEnabled(preset);
                int fill = enabled ? UiColorPalette.filterRowFill(hover) : (hover ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
                ctx.fill(left, y, right, y + 14, fill);
                if (enabled) {
@@ -3579,43 +3579,43 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                int channelX = statusX - 58 - 3;
                int studyX = channelX - 36 - 3;
                int maxTextW = Math.max(1, studyX - (x + 4) - 5);
-               AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+               AutismPacketLoggerOverlay.this.drawText(
                   ctx,
                   autismclient.gui.f.b.k.init(
-                     AutismPacketLoggerOverlay.this.init_Font,
+                     AutismPacketLoggerOverlay.this.font,
                      text,
                      maxTextW,
-                     AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                     AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
                      textColor
                   ),
                   autismclient.gui.f.b.l.read,
                   textColor,
                   x + 4,
-                  this.init_I_I_l(y, autismclient.gui.f.b.l.read)
+                  this.rowTextY(y, autismclient.gui.f.b.l.read)
                );
-               this.init(ctx, studyX, y, mx, my, this.init_Str(preset));
-               this.init_V_GuiGraphicsExtract_10(ctx, preset, channelX, y);
+               this.init(ctx, studyX, y, mx, my, this.presetActionLabel(preset));
+               this.renderPresetImpact(ctx, preset, channelX, y);
                this.init(ctx, statusX, y + 1, statusW, 12, status, enabled);
             }
          }
       }
 
-      private String init_Str(PayloadChannelFilterManager.Inner_CachePool preset) {
+      private String presetActionLabel(PayloadChannelFilterManager.Inner_CachePool preset) {
          return preset != null && preset.kind().isEditableTemplate() ? "Use" : "Study";
       }
 
       private void init(GuiGraphicsExtractor ctx, int x, int y, int mx, int my, String label) {
          int h = 12;
          int py = y + (14 - h) / 2;
-         boolean disabled = AutismPacketLoggerOverlay.this.update_Z && !"Use".equals(label);
+         boolean disabled = AutismPacketLoggerOverlay.this.configurationOnly && !"Use".equals(label);
          boolean hover = !disabled && mx >= x && mx < x + 36 && my >= py && my < py + h;
          if (disabled) {
             autismclient.gui.ui.widgets.PillBadgeRenderer.init(
-               autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, mx, my), autismclient.gui.f.NetHelper.init(x, py, 36, h), label
+               autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, mx, my), autismclient.gui.f.NetHelper.init(x, py, 36, h), label
             );
          } else {
             autismclient.gui.ui.widgets.PillBadgeRenderer.init(
-               autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, mx, my),
+               autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, mx, my),
                autismclient.gui.f.NetHelper.init(x, py, 36, h),
                label,
                false,
@@ -3625,7 +3625,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private boolean write(double mx, double my, int rowY) {
-         int right = this.clear_I_7();
+         int right = this.contentRight();
          int statusX = right - 30 - 4;
          int channelX = statusX - 58 - 3;
          int studyX = channelX - 36 - 3;
@@ -3634,23 +3634,23 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private boolean update(double mx, double my, int rowY) {
-         int x = this.add_I_14() + 4;
+         int x = this.contentLeft() + 4;
          return mx >= x && mx < x + 16 && my >= rowY && my < rowY + 14;
       }
 
-      private void init_V_GuiGraphicsExtract_11(GuiGraphicsExtractor ctx, String pattern, int x, int y) {
-         PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
-         boolean core = impact.channelCount() <= 0 && this.init_Z_3(pattern);
+      private void renderImpactBadge(GuiGraphicsExtractor ctx, String pattern, int x, int y) {
+         PayloadSubscriptionManager.Inner_CachePool impact = this.impactOf(pattern);
+         boolean core = impact.channelCount() <= 0 && this.isCoreChannel(pattern);
          String label = impact.channelCount() > 0 ? impact.label() : (core ? "Core" : "Highlight");
          int color = impact.channelCount() <= 0 && !core ? UiColorPalette.textSecondary() : -7346000;
-         this.init_V_GuiGraphicsExtract_9(ctx, label, color, x, y);
+         this.renderBadge(ctx, label, color, x, y);
       }
 
-      private void init_V_GuiGraphicsExtract_10(GuiGraphicsExtractor ctx, PayloadChannelFilterManager.Inner_CachePool preset, int x, int y) {
+      private void renderPresetImpact(GuiGraphicsExtractor ctx, PayloadChannelFilterManager.Inner_CachePool preset, int x, int y) {
          if (preset == null) {
-            this.init_V_GuiGraphicsExtract_11(ctx, "", x, y);
+            this.renderImpactBadge(ctx, "", x, y);
          } else {
-            PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(preset.read());
+            PayloadSubscriptionManager.Inner_CachePool impact = this.impactOf(preset.read());
             String label;
             int color;
             if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
@@ -3667,19 +3667,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                color = UiColorPalette.textSecondary();
             }
 
-            this.init_V_GuiGraphicsExtract_9(ctx, label, color, x, y);
+            this.renderBadge(ctx, label, color, x, y);
          }
       }
 
-      private void init_V_GuiGraphicsExtract_9(GuiGraphicsExtractor ctx, String label, int color, int x, int y) {
+      private void renderBadge(GuiGraphicsExtractor ctx, String label, int color, int x, int y) {
          label = autismclient.gui.f.b.k.init(
-            AutismPacketLoggerOverlay.this.init_Font,
+            AutismPacketLoggerOverlay.this.font,
             label,
             Math.max(1, 56),
-            AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+            AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
             color
          );
-         AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+         AutismPacketLoggerOverlay.this.drawText(
             ctx,
             label,
             autismclient.gui.f.b.l.write,
@@ -3689,18 +3689,18 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      0,
                      58
                         - autismclient.gui.f.b.k.init(
-                           AutismPacketLoggerOverlay.this.init_Font,
+                           AutismPacketLoggerOverlay.this.font,
                            label,
-                           AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                           AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                            color
                         )
                   )
                   / 2,
-            this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+            this.rowTextY(y, autismclient.gui.f.b.l.write)
          );
       }
 
-      private boolean init_Z_3(String pattern) {
+      private boolean isCoreChannel(String pattern) {
          String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
          boolean var10000;
          switch (normalized) {
@@ -3719,10 +3719,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void load(GuiGraphicsExtractor ctx, String group, int x, int y) {
-         int count = this.init_I_4(group);
+         int count = this.exactCount(group);
          String label = count > 0 ? count + "ch" : "Tpl";
          int color = count > 0 ? -7346000 : UiColorPalette.textSecondary();
-         AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
+         AutismPacketLoggerOverlay.this.drawText(
             ctx,
             label,
             autismclient.gui.f.b.l.write,
@@ -3732,39 +3732,39 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      0,
                      58
                         - autismclient.gui.f.b.k.init(
-                           AutismPacketLoggerOverlay.this.init_Font,
+                           AutismPacketLoggerOverlay.this.font,
                            label,
-                           AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                           AutismPacketLoggerOverlay.this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.write),
                            color
                         )
                   )
                   / 2,
-            this.init_I_I_l(y, autismclient.gui.f.b.l.write)
+            this.rowTextY(y, autismclient.gui.f.b.l.write)
          );
       }
 
-      private int init_I_4(String group) {
-         return group == null ? 0 : this.read_Map.getOrDefault(this.init_Str_2(group), 0);
+      private int exactCount(String group) {
+         return group == null ? 0 : this.exactCountByGroup.getOrDefault(this.cleanGroup(group), 0);
       }
 
-      private boolean init_Z(PayloadChannelFilterManager.Inner_CachePool preset) {
+      private boolean isPresetEnabled(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset == null) {
             return false;
          }
 
          String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-         return this.read_Set.contains(preset.init_Str()) || PayloadRegistrationManager.isExactChannel(pattern) && this.write_Set.contains(pattern);
+         return this.read_Set.contains(preset.init_Str()) || PayloadRegistrationManager.isExactChannel(pattern) && this.enabledRegistrations.contains(pattern);
       }
 
-      private int init_I(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
+      private int enabledCount(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
          if (family == null) {
             return 0;
          }
 
          int enabled = 0;
 
-         for (String channel : family.init_Set()) {
-            if (this.write_Set.contains(channel)) {
+         for (String channel : family.channels()) {
+            if (this.enabledRegistrations.contains(channel)) {
                enabled++;
             }
          }
@@ -3772,34 +3772,34 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return enabled;
       }
 
-      private boolean init_Z(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
-         return family != null && family.init_I() > 0 && this.init_I(family) == family.init_I();
+      private boolean isFamilyFullyEnabled(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
+         return family != null && family.channelCount() > 0 && this.enabledCount(family) == family.channelCount();
       }
 
-      private boolean load_Z_2(String group) {
+      private boolean isGroupFullyEnabled(String group) {
          if (group != null && !group.isBlank()) {
-            String cleanGroup = this.init_Str_2(group);
+            String cleanGroup = this.cleanGroup(group);
             int total = this.load_Map.getOrDefault(cleanGroup, 0);
             if (total <= 0) {
                return false;
             }
 
             int enabled = 0;
-            AutismPacketLoggerOverlay.ChannelGroup category = this.init_Map_2().get(cleanGroup);
+            AutismPacketLoggerOverlay.ChannelGroup category = this.groups().get(cleanGroup);
             if (category == null) {
                return false;
             }
 
-            for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.init_Map.values()) {
-               for (PayloadChannelFilterManager.Inner_CachePool preset : family.init_List) {
-                  if (this.init_Z(preset)) {
+            for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.families.values()) {
+               for (PayloadChannelFilterManager.Inner_CachePool preset : family.presets) {
+                  if (this.isPresetEnabled(preset)) {
                      enabled++;
                   }
                }
             }
 
-            for (PayloadChannelFilterManager.Inner_CachePool preset : category.init_List) {
-               if (this.init_Z(preset)) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : category.presets) {
+               if (this.isPresetEnabled(preset)) {
                   enabled++;
                }
             }
@@ -3812,7 +3812,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void init(GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled) {
          autismclient.gui.ui.widgets.PillBadgeRenderer.init(
-            autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, -1, -1),
+            autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, -1, -1),
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             label,
             enabled,
@@ -3820,24 +3820,24 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          );
       }
 
-      private int init_I_I_l(int y, autismclient.gui.f.b.l tone) {
-         return UiLayoutMath.centerTextY(y, 14, AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(tone), AutismPacketLoggerOverlay.this.init_CharEncoder.flush());
+      private int rowTextY(int y, autismclient.gui.f.b.l tone) {
+         return UiLayoutMath.centerTextY(y, 14, AutismPacketLoggerOverlay.this.styleTheme.init_I_l(tone), AutismPacketLoggerOverlay.this.styleTheme.flush());
       }
 
-      private void poll_V_8() {
-         this.write_Set.clear();
+      private void reloadEnabledRegistrations() {
+         this.enabledRegistrations.clear();
 
-         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.rules()) {
+         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.payloadRegistrations.rules()) {
             if (rule != null && rule.enabled) {
                String channel = PayloadRegistrationManager.normalize(rule.channel);
                if (PayloadRegistrationManager.isExactChannel(channel)) {
-                  this.write_Set.add(channel);
+                  this.enabledRegistrations.add(channel);
                }
             }
          }
 
          if (this.load_Set.isEmpty()) {
-            for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.init_bB.getPresets()) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.channelFilters.getPresets()) {
                if (preset != null) {
                   this.load_Set.add(preset.init_Str());
                }
@@ -3847,7 +3847,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.read_Set.clear();
          this.push = 0;
 
-         for (AutismConfig.PayloadChannelFilterRule rule : AutismPacketLoggerOverlay.this.init_bB.getRules()) {
+         for (AutismConfig.PayloadChannelFilterRule rule : AutismPacketLoggerOverlay.this.channelFilters.getRules()) {
             if (rule != null) {
                if (rule.enabled) {
                   this.push++;
@@ -3859,25 +3859,25 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
          }
 
-         if (this.load_Map.isEmpty() && this.read_Map.isEmpty()) {
-            this.set_V_8();
+         if (this.load_Map.isEmpty() && this.exactCountByGroup.isEmpty()) {
+            this.recountGroups();
          }
 
          this.pop = this.buffer();
-         this.init_Str_2 = this.read_Str_7();
+         this.subscriptionStatus = this.subscriptionStatusText();
       }
 
-      private void set_V_8() {
-         for (AutismPacketLoggerOverlay.ChannelGroup category : this.init_Map_2().values()) {
-            int presetCount = category.init_List.size();
+      private void recountGroups() {
+         for (AutismPacketLoggerOverlay.ChannelGroup category : this.groups().values()) {
+            int presetCount = category.presets.size();
             LinkedHashSet<String> exact = new LinkedHashSet<>();
 
-            for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.init_Map.values()) {
-               presetCount += family.init_List.size();
-               exact.addAll(family.init_Set());
+            for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.families.values()) {
+               presetCount += family.presets.size();
+               exact.addAll(family.channels());
             }
 
-            for (PayloadChannelFilterManager.Inner_CachePool preset : category.init_List) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : category.presets) {
                if (preset != null) {
                   String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
                   if (PayloadRegistrationManager.isExactChannel(pattern)) {
@@ -3886,40 +3886,40 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
             }
 
-            this.load_Map.put(category.init_Str, presetCount);
-            this.read_Map.put(category.init_Str, exact.size());
+            this.load_Map.put(category.group, presetCount);
+            this.exactCountByGroup.put(category.group, exact.size());
          }
       }
 
-      private void put_V_7() {
-         this.poll_V_8();
-         String query = this.init_k.getValue() == null ? "" : this.init_k.getValue().trim().toLowerCase(Locale.ROOT);
-         this.init_List.clear();
+      private void rebuildRows() {
+         this.reloadEnabledRegistrations();
+         String query = this.searchField.getValue() == null ? "" : this.searchField.getValue().trim().toLowerCase(Locale.ROOT);
+         this.rows.clear();
          boolean registrationUnlocked = PayloadSubscriptionManager.isRegistrationUnlocked();
          String registeredHeader = registrationUnlocked ? "Registered Channels" : "Saved Channels (Locked)";
-         List<AutismConfig.PayloadChannelRegistrationRule> registrations = AutismPacketLoggerOverlay.this.init_bC.rules();
+         List<AutismConfig.PayloadChannelRegistrationRule> registrations = AutismPacketLoggerOverlay.this.payloadRegistrations.rules();
          Map<String, List<AutismPacketLoggerOverlay.ChannelListRow>> registeredGroups = new LinkedHashMap<>();
 
          for (int i = 0; i < registrations.size(); i++) {
             AutismConfig.PayloadChannelRegistrationRule rule = registrations.get(i);
-            if (rule != null && rule.enabled && this.init_Z_AutismConfig_Paylo_Str(rule, query)) {
-               String group = this.init_Str(rule);
+            if (rule != null && rule.enabled && this.registrationMatches(rule, query)) {
+               String group = this.registrationGroup(rule);
                registeredGroups.computeIfAbsent(group, unused -> new ArrayList<>()).add(AutismPacketLoggerOverlay.ChannelListRow.init(i, rule));
             }
          }
 
          int registeredCount = registeredGroups.values().stream().mapToInt(List::size).sum();
          if (!registeredGroups.isEmpty()) {
-            this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(registeredHeader));
+            this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(registeredHeader));
 
             for (Entry<String, List<AutismPacketLoggerOverlay.ChannelListRow>> group : this.init(registeredGroups)) {
-               this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(group.getKey()));
-               group.getValue().sort(this::init_I_AutismPacketLogger_AutismPacketLogger);
-               this.init_List.addAll(group.getValue());
+               this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(group.getKey()));
+               group.getValue().sort(this::compareRegistrationRows);
+               this.rows.addAll(group.getValue());
             }
          } else if (query.isEmpty()) {
-            this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(registeredHeader));
-            this.init_List
+            this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(registeredHeader));
+            this.rows
                .add(
                   AutismPacketLoggerOverlay.ChannelListRow.load(
                      registrationUnlocked
@@ -3928,7 +3928,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   )
                );
          } else if (registeredCount == 0) {
-            this.init_List
+            this.rows
                .add(AutismPacketLoggerOverlay.ChannelListRow.load(registrationUnlocked ? "No matching registered channels." : "No matching saved channels."));
          }
 
@@ -3941,60 +3941,60 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          boolean customHeaderAdded = false;
-         List<AutismConfig.PayloadChannelFilterRule> active = AutismPacketLoggerOverlay.this.init_bB.getRules();
+         List<AutismConfig.PayloadChannelFilterRule> active = AutismPacketLoggerOverlay.this.channelFilters.getRules();
 
          for (int i = 0; i < active.size(); i++) {
             AutismConfig.PayloadChannelFilterRule rule = active.get(i);
-            if (rule != null && !rule.preset && !this.load_Set.contains(PayloadChannelFilterManager.normalizePattern(rule.pattern)) && (!this.sync_Z || rule.enabled)) {
+            if (rule != null && !rule.preset && !this.load_Set.contains(PayloadChannelFilterManager.normalizePattern(rule.pattern)) && (!this.showEnabledOnly || rule.enabled)) {
                String normalizedPattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
                if (!PayloadRegistrationManager.isExactChannel(normalizedPattern) || !knownRegistrationChannels.contains(normalizedPattern)) {
                   String hay = ((rule.label == null ? "" : rule.label) + " " + rule.pattern).toLowerCase(Locale.ROOT);
                   if (query.isEmpty() || hay.contains(query)) {
                      if (!customHeaderAdded) {
-                        this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init("Custom Highlights"));
+                        this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init("Custom Highlights"));
                         customHeaderAdded = true;
                      }
 
-                     this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(i, rule));
+                     this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(i, rule));
                   }
                }
             }
          }
 
          boolean availableHeader = false;
-         if (!this.sync_Z) {
+         if (!this.showEnabledOnly) {
             for (String learned : PayloadSubscriptionManager.learnedChannels()) {
                if (learned != null
                   && !learned.isBlank()
                   && !knownRegistrationChannels.contains(learned)
                   && (query.isEmpty() || learned.toLowerCase(Locale.ROOT).contains(query))) {
                   if (!availableHeader) {
-                     this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init("Learned Exact Channels"));
+                     this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init("Learned Exact Channels"));
                      availableHeader = true;
                   }
 
-                  this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.read(learned));
+                  this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.read(learned));
                }
             }
          }
 
          for (int i = 0; i < registrations.size(); i++) {
             AutismConfig.PayloadChannelRegistrationRule rule = registrations.get(i);
-            if (rule != null && !rule.enabled && !this.sync_Z && !"preset".equals(rule.source) && this.init_Z_AutismConfig_Paylo_Str(rule, query)) {
+            if (rule != null && !rule.enabled && !this.showEnabledOnly && !"preset".equals(rule.source) && this.registrationMatches(rule, query)) {
                if (!availableHeader) {
-                  this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init("Available Exact Channels"));
+                  this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init("Available Exact Channels"));
                   availableHeader = true;
                }
 
-               this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(i, rule));
+               this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(i, rule));
             }
          }
 
-         for (AutismPacketLoggerOverlay.ChannelGroup category : this.init_List_11()) {
+         for (AutismPacketLoggerOverlay.ChannelGroup category : this.sortedGroupList()) {
             List<AutismPacketLoggerOverlay.ChannelFamilyBucket> visibleFamilies = new ArrayList<>();
 
             for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.load) {
-               if (this.init_Z_AutismPacketLogger_Str(family, query) && (!this.sync_Z || this.init_I(family) > 0)) {
+               if (this.familyMatches(family, query) && (!this.showEnabledOnly || this.enabledCount(family) > 0)) {
                   visibleFamilies.add(family);
                }
             }
@@ -4002,104 +4002,104 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             List<PayloadChannelFilterManager.Inner_CachePool> standalone = new ArrayList<>();
 
             for (PayloadChannelFilterManager.Inner_CachePool preset : category.read) {
-               if (this.init_Z_bB_CachePool_Str(preset, query) && (!this.sync_Z || this.init_Z(preset))) {
+               if (this.presetMatches(preset, query) && (!this.showEnabledOnly || this.isPresetEnabled(preset))) {
                   standalone.add(preset);
                }
             }
 
             if (!visibleFamilies.isEmpty() || !standalone.isEmpty()) {
-               this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(category.init_Str));
+               this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(category.group));
 
                for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : visibleFamilies) {
-                  this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(family));
-                  if (this.load_Z_AutismPacketLogger_Str(family, query)) {
-                     for (PayloadChannelFilterManager.Inner_CachePool preset : family.init_List()) {
-                        if (this.init_Z_AutismPacketLogger(family, preset, query) && (!this.sync_Z || this.init_Z(preset))) {
-                           this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(preset));
+                  this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(family));
+                  if (this.isFamilyExpanded(family, query)) {
+                     for (PayloadChannelFilterManager.Inner_CachePool preset : family.effectivePresets()) {
+                        if (this.presetMatchesInFamily(family, preset, query) && (!this.showEnabledOnly || this.isPresetEnabled(preset))) {
+                           this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(preset));
                         }
                      }
                   }
                }
 
                for (PayloadChannelFilterManager.Inner_CachePool preset : standalone) {
-                  this.init_List.add(AutismPacketLoggerOverlay.ChannelListRow.init(preset));
+                  this.rows.add(AutismPacketLoggerOverlay.ChannelListRow.init(preset));
                }
             }
          }
 
-         if (this.init_List.isEmpty()) {
-            this.init_List
-               .add(AutismPacketLoggerOverlay.ChannelListRow.load(this.sync_Z ? "No enabled payload channels or highlights." : "No payload channels match."));
+         if (this.rows.isEmpty()) {
+            this.rows
+               .add(AutismPacketLoggerOverlay.ChannelListRow.load(this.showEnabledOnly ? "No enabled payload channels or highlights." : "No payload channels match."));
          }
 
-         this.add_V_8();
+         this.clampScroll();
       }
 
-      private Map<String, AutismPacketLoggerOverlay.ChannelGroup> init_Map_2() {
-         if (this.init_Map != null) {
-            return this.init_Map;
+      private Map<String, AutismPacketLoggerOverlay.ChannelGroup> groups() {
+         if (this.cachedGroups != null) {
+            return this.cachedGroups;
          }
 
          Map<String, AutismPacketLoggerOverlay.ChannelGroup> categories = new LinkedHashMap<>();
-         this.write_Map.clear();
-         this.update_Map.clear();
+         this.presetByPattern.clear();
+         this.presetSearchText.clear();
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.init_bB.getPresets()) {
+         for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.channelFilters.getPresets()) {
             if (preset != null) {
-               this.update_Map.put(preset, (preset.write() + " " + preset.load() + " " + preset.read()).toLowerCase(Locale.ROOT));
+               this.presetSearchText.put(preset, (preset.write() + " " + preset.load() + " " + preset.read()).toLowerCase(Locale.ROOT));
                if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                   String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
                   if (PayloadRegistrationManager.isExactChannel(pattern)) {
-                     PayloadChannelFilterManager.Inner_CachePool existing = this.write_Map.get(pattern);
-                     if (existing == null || this.load_I(preset) < this.load_I(existing)) {
-                        this.write_Map.put(pattern, preset);
+                     PayloadChannelFilterManager.Inner_CachePool existing = this.presetByPattern.get(pattern);
+                     if (existing == null || this.presetKindOrder(preset) < this.presetKindOrder(existing)) {
+                        this.presetByPattern.put(pattern, preset);
                      }
                   }
                }
 
-               String group = this.init_Str_2(preset.write());
+               String group = this.cleanGroup(preset.write());
                AutismPacketLoggerOverlay.ChannelGroup category = categories.computeIfAbsent(group, AutismPacketLoggerOverlay.ChannelGroup::new);
-               AutismPacketLoggerOverlay.ChannelFamilyKey familyKey = this.init_AutismPacketLogger(preset);
+               AutismPacketLoggerOverlay.ChannelFamilyKey familyKey = this.familyKeyFor(preset);
                if (familyKey != null) {
-                  category.init(familyKey).init_List.add(preset);
+                  category.init(familyKey).presets.add(preset);
                } else {
-                  category.init_List.add(preset);
+                  category.presets.add(preset);
                }
             }
          }
 
-         this.init_Map = categories;
-         this.load_List = new ArrayList<>(categories.values());
-         this.load_List.sort((a, b) -> {
-            int priority = Integer.compare(this.read_I_3(a.init_Str), this.read_I_3(b.init_Str));
-            return priority != 0 ? priority : String.CASE_INSENSITIVE_ORDER.compare(a.init_Str, b.init_Str);
+         this.cachedGroups = categories;
+         this.sortedGroups = new ArrayList<>(categories.values());
+         this.sortedGroups.sort((a, b) -> {
+            int priority = Integer.compare(this.groupRank(a.group), this.groupRank(b.group));
+            return priority != 0 ? priority : String.CASE_INSENSITIVE_ORDER.compare(a.group, b.group);
          });
 
-         for (AutismPacketLoggerOverlay.ChannelGroup category : this.load_List) {
-            category.load = new ArrayList<>(category.init_Map.values());
-            category.load.sort(this::init_I_AutismPacketLogger_AutismPacketLogger_2);
-            category.read = new ArrayList<>(category.init_List);
+         for (AutismPacketLoggerOverlay.ChannelGroup category : this.sortedGroups) {
+            category.load = new ArrayList<>(category.families.values());
+            category.load.sort(this::compareFamilies);
+            category.read = new ArrayList<>(category.presets);
             this.init(category.read);
 
             for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.load) {
-               family.load_List = new ArrayList<>(family.init_List);
-               this.init(family.load_List);
+               family.displayPresets = new ArrayList<>(family.presets);
+               this.init(family.displayPresets);
             }
          }
 
-         return this.init_Map;
+         return this.cachedGroups;
       }
 
-      private List<AutismPacketLoggerOverlay.ChannelGroup> init_List_11() {
-         this.init_Map_2();
-         return this.load_List == null ? List.of() : this.load_List;
+      private List<AutismPacketLoggerOverlay.ChannelGroup> sortedGroupList() {
+         this.groups();
+         return this.sortedGroups == null ? List.of() : this.sortedGroups;
       }
 
-      private String init_Str_2(String group) {
+      private String cleanGroup(String group) {
          return group != null && !group.isBlank() ? group.trim() : "Other";
       }
 
-      private AutismPacketLoggerOverlay.ChannelFamilyKey init_AutismPacketLogger(PayloadChannelFilterManager.Inner_CachePool preset) {
+      private AutismPacketLoggerOverlay.ChannelFamilyKey familyKeyFor(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset != null && PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (!PayloadRegistrationManager.isExactChannel(pattern)) {
@@ -4107,7 +4107,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
 
             String family = this.load_Str(pattern);
-            return family.isBlank() ? null : new AutismPacketLoggerOverlay.ChannelFamilyKey(this.init_Str_2(preset.write()), family, family);
+            return family.isBlank() ? null : new AutismPacketLoggerOverlay.ChannelFamilyKey(this.cleanGroup(preset.write()), family, family);
          } else {
             return null;
          }
@@ -4131,7 +4131,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private boolean init_Z_AutismPacketLogger_Str(AutismPacketLoggerOverlay.ChannelFamilyBucket family, String query) {
+      private boolean familyMatches(AutismPacketLoggerOverlay.ChannelFamilyBucket family, String query) {
          if (family == null) {
             return false;
          }
@@ -4142,8 +4142,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                return true;
             }
 
-            for (PayloadChannelFilterManager.Inner_CachePool preset : family.init_List) {
-               if (this.init_Z_bB_CachePool_Str(preset, needle)) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : family.presets) {
+               if (this.presetMatches(preset, needle)) {
                   return true;
                }
             }
@@ -4154,23 +4154,23 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.ChannelFamilyBucket family, PayloadChannelFilterManager.Inner_CachePool preset, String query) {
+      private boolean presetMatchesInFamily(AutismPacketLoggerOverlay.ChannelFamilyBucket family, PayloadChannelFilterManager.Inner_CachePool preset, String query) {
          if (query != null && !query.isBlank()) {
             String needle = query.toLowerCase(Locale.ROOT);
             return family != null && (family.init_Str + " " + family.read).toLowerCase(Locale.ROOT).contains(needle)
                ? true
-               : this.init_Z_bB_CachePool_Str(preset, needle);
+               : this.presetMatches(preset, needle);
          } else {
             return true;
          }
       }
 
-      private boolean load_Z_AutismPacketLogger_Str(AutismPacketLoggerOverlay.ChannelFamilyBucket family, String query) {
-         return family != null && (this.init_Set.contains(family.init_Str()) || query != null && !query.isBlank());
+      private boolean isFamilyExpanded(AutismPacketLoggerOverlay.ChannelFamilyBucket family, String query) {
+         return family != null && (this.expandedFamilies.contains(family.key()) || query != null && !query.isBlank());
       }
 
-      private int init_I_AutismPacketLogger_AutismPacketLogger_2(AutismPacketLoggerOverlay.ChannelFamilyBucket a, AutismPacketLoggerOverlay.ChannelFamilyBucket b) {
-         int exact = Integer.compare(b.init_I(), a.init_I());
+      private int compareFamilies(AutismPacketLoggerOverlay.ChannelFamilyBucket a, AutismPacketLoggerOverlay.ChannelFamilyBucket b) {
+         int exact = Integer.compare(b.channelCount(), a.channelCount());
          return exact != 0 ? exact : String.CASE_INSENSITIVE_ORDER.compare(a.read, b.read);
       }
 
@@ -4183,13 +4183,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return out;
       }
 
-      private int init_I_AutismPacketLogger_AutismPacketLogger(AutismPacketLoggerOverlay.ChannelListRow a, AutismPacketLoggerOverlay.ChannelListRow b) {
-         String ac = a != null && a.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.normalize(a.init_AutismConfig_Paylo_2.channel) : "";
-         String bc = b != null && b.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.normalize(b.init_AutismConfig_Paylo_2.channel) : "";
+      private int compareRegistrationRows(AutismPacketLoggerOverlay.ChannelListRow a, AutismPacketLoggerOverlay.ChannelListRow b) {
+         String ac = a != null && a.registration != null ? PayloadRegistrationManager.normalize(a.registration.channel) : "";
+         String bc = b != null && b.registration != null ? PayloadRegistrationManager.normalize(b.registration.channel) : "";
          return String.CASE_INSENSITIVE_ORDER.compare(ac, bc);
       }
 
-      private String init_Str(AutismConfig.PayloadChannelRegistrationRule rule) {
+      private String registrationGroup(AutismConfig.PayloadChannelRegistrationRule rule) {
          if (rule == null) {
             return "Registered: Other";
          } else {
@@ -4199,9 +4199,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             } else if ("learned".equals(source)) {
                return "Registered: Learned";
             } else {
-               PayloadChannelFilterManager.Inner_CachePool preset = this.init_bB_CachePool(rule.channel);
+               PayloadChannelFilterManager.Inner_CachePool preset = this.presetForChannel(rule.channel);
                if (preset != null && preset.write() != null && !preset.write().isBlank()) {
-                  AutismPacketLoggerOverlay.ChannelFamilyKey family = this.init_AutismPacketLogger(preset);
+                  AutismPacketLoggerOverlay.ChannelFamilyKey family = this.familyKeyFor(preset);
                   return family != null ? "Registered: " + preset.write().trim() + " - " + family.write() : "Registered: " + preset.write().trim();
                } else {
                   return "Registered: Other";
@@ -4226,30 +4226,30 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else if ("Learned".equalsIgnoreCase(clean)) {
             return 101;
          } else {
-            return "Other".equalsIgnoreCase(clean) ? 102 : this.read_I_3(clean);
+            return "Other".equalsIgnoreCase(clean) ? 102 : this.groupRank(clean);
          }
       }
 
-      private PayloadChannelFilterManager.Inner_CachePool init_bB_CachePool(String channel) {
+      private PayloadChannelFilterManager.Inner_CachePool presetForChannel(String channel) {
          String normalized = PayloadRegistrationManager.normalize(channel);
          if (normalized.isBlank()) {
             return null;
          }
 
-         this.init_Map_2();
-         return this.write_Map.get(normalized);
+         this.groups();
+         return this.presetByPattern.get(normalized);
       }
 
-      private boolean init_Z_bB_CachePool_Str(PayloadChannelFilterManager.Inner_CachePool preset, String query) {
+      private boolean presetMatches(PayloadChannelFilterManager.Inner_CachePool preset, String query) {
          if (preset == null) {
             return false;
          }
 
          if (query != null && !query.isBlank()) {
-            String hay = this.update_Map.get(preset);
+            String hay = this.presetSearchText.get(preset);
             if (hay == null) {
                hay = (preset.write() + " " + preset.load() + " " + preset.read()).toLowerCase(Locale.ROOT);
-               this.update_Map.put(preset, hay);
+               this.presetSearchText.put(preset, hay);
             }
 
             return hay.contains(query);
@@ -4260,7 +4260,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void init(List<PayloadChannelFilterManager.Inner_CachePool> presets) {
          presets.sort((a, b) -> {
-            int kind = Integer.compare(this.load_I(a), this.load_I(b));
+            int kind = Integer.compare(this.presetKindOrder(a), this.presetKindOrder(b));
             if (kind != 0) {
                return kind;
             }
@@ -4290,12 +4290,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return PayloadRegistrationManager.isExactChannel(pattern) ? 1 : 0;
       }
 
-      private PayloadSubscriptionManager.Inner_CachePool init_bD_CachePool(String pattern) {
+      private PayloadSubscriptionManager.Inner_CachePool impactOf(String pattern) {
          String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
-         return normalized.isBlank() ? new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of()) : this.sync_Map.computeIfAbsent(normalized, PayloadSubscriptionManager::impactOf);
+         return normalized.isBlank() ? new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of()) : this.impactCache.computeIfAbsent(normalized, PayloadSubscriptionManager::impactOf);
       }
 
-      private int load_I(PayloadChannelFilterManager.Inner_CachePool preset) {
+      private int presetKindOrder(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset != null && preset.kind() != null) {
             byte var10000;
             switch (preset.kind()) {
@@ -4321,7 +4321,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private int read_I_3(String group) {
+      private int groupRank(String group) {
          byte var10000;
          switch (group == null ? "" : group.toLowerCase(Locale.ROOT)) {
             case "minecraft":
@@ -4373,7 +4373,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return var10000;
       }
 
-      private boolean init_Z_AutismConfig_Paylo_Str(AutismConfig.PayloadChannelRegistrationRule rule, String query) {
+      private boolean registrationMatches(AutismConfig.PayloadChannelRegistrationRule rule, String query) {
          if (query != null && !query.isBlank()) {
             String hay = ((rule.label == null ? "" : rule.label) + " " + (rule.channel == null ? "" : rule.channel) + " " + PayloadRegistrationManager.sourceLabel(rule.source))
                .toLowerCase(Locale.ROOT);
@@ -4383,51 +4383,51 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private void init_V_I_Runnable(int clickedIndex, Runnable mutation) {
+      private void mutateKeepingAnchor(int clickedIndex, Runnable mutation) {
          String anchor = this.init(clickedIndex);
          int oldIndex = clickedIndex;
          mutation.run();
-         this.put_V_7();
+         this.rebuildRows();
          if (anchor != null) {
-            int newIndex = this.write_I_2(anchor);
+            int newIndex = this.rowIndexOf(anchor);
             if (newIndex >= 0) {
-               this.flush_I += (newIndex - oldIndex) * 14;
+               this.scrollOffset += (newIndex - oldIndex) * 14;
             }
          }
 
-         this.add_V_8();
-         int listH = this.next_I_6();
-         int maxScroll = Math.max(0, this.init_List.size() * 14 - listH);
-         this.init_CacheEntry.jumpTo(this.flush_I, maxScroll);
+         this.clampScroll();
+         int listH = this.listHeight();
+         int maxScroll = Math.max(0, this.rows.size() * 14 - listH);
+         this.scroller.jumpTo(this.scrollOffset, maxScroll);
       }
 
       private String init(int index) {
-         if (index >= 0 && index < this.init_List.size()) {
-            AutismPacketLoggerOverlay.ChannelListRow row = this.init_List.get(index);
-            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE && row.init_AutismConfig_Paylo != null) {
-               return "custom:" + PayloadChannelFilterManager.normalizePattern(row.init_AutismConfig_Paylo.pattern);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION && row.init_AutismConfig_Paylo_2 != null) {
-               return "reg:" + PayloadRegistrationManager.normalize(row.init_AutismConfig_Paylo_2.channel);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED && row.load_Str != null) {
-               return "learned:" + PayloadRegistrationManager.normalize(row.load_Str);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.PRESET && row.init_bB_CachePool != null) {
-               return "preset:" + row.init_bB_CachePool.init_Str();
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY && row.init_AutismPacketLogger_2 != null) {
-               return "family:" + row.init_AutismPacketLogger_2.init_Str();
+         if (index >= 0 && index < this.rows.size()) {
+            AutismPacketLoggerOverlay.ChannelListRow row = this.rows.get(index);
+            if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE && row.rule != null) {
+               return "custom:" + PayloadChannelFilterManager.normalizePattern(row.rule.pattern);
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION && row.registration != null) {
+               return "reg:" + PayloadRegistrationManager.normalize(row.registration.channel);
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED && row.learnedChannel != null) {
+               return "learned:" + PayloadRegistrationManager.normalize(row.learnedChannel);
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.PRESET && row.preset != null) {
+               return "preset:" + row.preset.init_Str();
+            } else if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY && row.family != null) {
+               return "family:" + row.family.key();
             } else {
-               return row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.HEADER && row.init_Str != null ? "header:" + row.init_Str : null;
+               return row.kind == AutismPacketLoggerOverlay.ChannelRowKind.HEADER && row.header != null ? "header:" + row.header : null;
             }
          } else {
             return null;
          }
       }
 
-      private int write_I_2(String key) {
+      private int rowIndexOf(String key) {
          if (key == null) {
             return -1;
          }
 
-         for (int i = 0; i < this.init_List.size(); i++) {
+         for (int i = 0; i < this.rows.size(); i++) {
             if (key.equals(this.init(i))) {
                return i;
             }
@@ -4436,10 +4436,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return -1;
       }
 
-      private void add_V_8() {
-         int listH = this.next_I_6();
-         int maxScroll = Math.max(0, this.init_List.size() * 14 - listH);
-         this.flush_I = this.quantizeScrollOffset(this.flush_I, 14, maxScroll);
+      private void clampScroll() {
+         int listH = this.listHeight();
+         int maxScroll = Math.max(0, this.rows.size() * 14 - listH);
+         this.scrollOffset = this.quantizeScrollOffset(this.scrollOffset, 14, maxScroll);
       }
 
       @Override
@@ -4459,14 +4459,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         if (this.close_Z) {
+         if (this.lockNoticeVisible) {
             return this.read(mx, my, button);
          }
 
          if (button == 0 && this.isOverHeader(mx, my)) {
             this.update_Z = true;
-            this.init_D = mx - this.windowX;
-            this.load_D = my - this.windowY;
+            this.dragOffsetX = mx - this.windowX;
+            this.dragOffsetY = my - this.windowY;
             return true;
          }
 
@@ -4474,228 +4474,228 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         if (this.init_k.mouseClicked(mx, my, button)) {
+         if (this.searchField.mouseClicked(mx, my, button)) {
             return true;
          }
 
-         if (this.load_k.mouseClicked(mx, my, button)) {
+         if (this.patternField.mouseClicked(mx, my, button)) {
             return true;
          }
 
          int y = this.tick_I_19();
-         int customW = this.prev_I_5();
+         int customW = this.patternFieldWidth();
          int addW = this.valid();
          int addX = this.windowX + 6 + customW + 2;
-         if (button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.add_I_13()) {
+         if (button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.controlHeight()) {
             if (mx >= addX && mx < addX + addW) {
-               this.clear_V_7();
+               this.submitPattern();
                return true;
             }
 
-            if (this.poll_Z_14()) {
+            if (this.isEditing()) {
                int cancelX = addX + addW + 2;
                if (mx >= cancelX && mx < cancelX + this.size()) {
-                  this.write_V_20();
+                  this.cancelEdit();
                   return true;
                }
             }
          }
 
          y = this.run_I_19();
-         AutismPacketLoggerOverlay.PacketColumnLayout controls = this.init_AutismPacketLogger_4();
+         AutismPacketLoggerOverlay.PacketColumnLayout controls = this.toolbarLayout();
          int cx = this.windowX + 6;
-         boolean inControlsRow = button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.add_I_13();
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[0]) {
-            AutismPacketLoggerOverlay.this.init_bB.resetToDefaultsInMemory();
-            AutismPacketLoggerOverlay.this.init_bC.update();
-            this.sync_V_15();
-            this.put_V_7();
-            AutismPacketLoggerOverlay.this.pop_Z = true;
+         boolean inControlsRow = button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.controlHeight();
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[0]) {
+            AutismPacketLoggerOverlay.this.channelFilters.resetToDefaultsInMemory();
+            AutismPacketLoggerOverlay.this.payloadRegistrations.update();
+            this.markDirty();
+            this.rebuildRows();
+            AutismPacketLoggerOverlay.this.rowsDirty = true;
             return true;
          }
 
-         cx += controls.init_IArr[0] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[1]) {
+         cx += controls.widths[0] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[1]) {
             this.reset_V_6();
             return true;
          }
 
-         cx += controls.init_IArr[1] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[2]) {
+         cx += controls.widths[1] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[2]) {
             this.load(false);
             return true;
          }
 
-         cx += controls.init_IArr[2] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[3]) {
-            this.sync_Z = !this.sync_Z;
-            this.put_V_7();
+         cx += controls.widths[2] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[3]) {
+            this.showEnabledOnly = !this.showEnabledOnly;
+            this.rebuildRows();
             return true;
          }
 
-         cx += controls.init_IArr[3] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[4]) {
+         cx += controls.widths[3] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[4]) {
             this.next_V_6();
             return true;
          }
 
-         cx += controls.init_IArr[4] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[5]) {
+         cx += controls.widths[4] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[5]) {
             this.prev_V_6();
             return true;
          }
 
-         cx += controls.init_IArr[5] + controls.init_I;
-         if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[6]) {
-            AutismPacketLoggerOverlay.this.init_bB.disableAllInMemory();
-            AutismPacketLoggerOverlay.this.init_bC.disableAll();
-            this.sync_V_15();
-            this.put_V_7();
-            AutismPacketLoggerOverlay.this.pop_Z = true;
+         cx += controls.widths[5] + controls.gap;
+         if (inControlsRow && mx >= cx && mx < cx + controls.widths[6]) {
+            AutismPacketLoggerOverlay.this.channelFilters.disableAllInMemory();
+            AutismPacketLoggerOverlay.this.payloadRegistrations.disableAll();
+            this.markDirty();
+            this.rebuildRows();
+            AutismPacketLoggerOverlay.this.rowsDirty = true;
             return true;
          }
 
          int lockW = this.data();
          int lockX = this.windowX + this.windowWidth - 8 - lockW;
          int lockY = this.set_I_17();
-         if (button == 0 && my >= lockY && my < lockY + AutismPacketLoggerOverlay.this.add_I_13() && mx >= lockX && mx < lockX + lockW) {
+         if (button == 0 && my >= lockY && my < lockY + AutismPacketLoggerOverlay.this.controlHeight() && mx >= lockX && mx < lockX + lockW) {
             if (PayloadSubscriptionManager.isRegistrationUnlocked()) {
-               this.open_V_11();
+               this.lockRegistration();
             } else {
-               this.close_V_13();
+               this.showLockNotice();
             }
 
             return true;
          } else {
             int listTop = this.put_I_7();
-            int listH = this.next_I_6();
+            int listH = this.listHeight();
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.init_List.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.flush_I
+               this.rows.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.scrollOffset
             );
             if (button == 0 && metrics.isScrollable() && metrics.containsTrack((int)mx, (int)my)) {
                this.write_Z = true;
-               this.close_I = (int)my - metrics.thumbY();
+               this.thumbGrabOffset = (int)my - metrics.thumbY();
                return true;
             }
 
-            if (button == 0 && my >= listTop && my < listTop + listH && mx >= this.add_I_14() && mx < this.clear_I_7()) {
-               int index = (int)((my - listTop + this.flush_I) / 14.0);
-               if (index >= 0 && index < this.init_List.size()) {
-                  AutismPacketLoggerOverlay.ChannelListRow row = this.init_List.get(index);
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION) {
-                     boolean editable = this.init_Z(row.init_AutismConfig_Paylo_2);
-                     int removeX = editable ? this.clear_I_7() - 14 : this.clear_I_7();
-                     int editX = editable ? removeX - 14 : this.clear_I_7();
+            if (button == 0 && my >= listTop && my < listTop + listH && mx >= this.contentLeft() && mx < this.contentRight()) {
+               int index = (int)((my - listTop + this.scrollOffset) / 14.0);
+               if (index >= 0 && index < this.rows.size()) {
+                  AutismPacketLoggerOverlay.ChannelListRow row = this.rows.get(index);
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION) {
+                     boolean editable = this.isEditableRegistration(row.registration);
+                     int removeX = editable ? this.contentRight() - 14 : this.contentRight();
+                     int editX = editable ? removeX - 14 : this.contentRight();
                      if (editable && mx >= removeX && mx <= removeX + 14) {
-                        this.init_V_I_Runnable(index, () -> {
-                           this.load_V_I_AutismConfig_Paylo_2(row.load_I, row.init_AutismConfig_Paylo_2);
-                           this.sync_V_15();
+                        this.mutateKeepingAnchor(index, () -> {
+                           this.load_V_I_AutismConfig_Paylo_2(row.registrationIndex, row.registration);
+                           this.markDirty();
                         });
                      } else if (editable && mx >= editX && mx <= editX + 14) {
-                        this.init_V_I_AutismConfig_Paylo_2(row.load_I, row.init_AutismConfig_Paylo_2);
+                        this.editRegistration(row.registrationIndex, row.registration);
                      } else {
-                        this.init_V_I_Runnable(index, () -> {
-                           AutismPacketLoggerOverlay.this.init_bC.toggle(row.load_I);
-                           this.sync_V_15();
+                        this.mutateKeepingAnchor(index, () -> {
+                           AutismPacketLoggerOverlay.this.payloadRegistrations.toggle(row.registrationIndex);
+                           this.markDirty();
                         });
                      }
 
-                     AutismPacketLoggerOverlay.this.pop_Z = true;
+                     AutismPacketLoggerOverlay.this.rowsDirty = true;
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED) {
-                     if (!this.init_Z(List.of(row.load_Str))) {
-                        this.stop_V_6();
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED) {
+                     if (!this.fitsChannelCap(List.of(row.learnedChannel))) {
+                        this.reportChannelCap();
                         return true;
                      }
 
-                     this.init_V_I_Runnable(index, () -> {
-                        AutismPacketLoggerOverlay.this.init_bC.load(row.load_Str, row.load_Str, "learned");
-                        this.sync_V_15();
+                     this.mutateKeepingAnchor(index, () -> {
+                        AutismPacketLoggerOverlay.this.payloadRegistrations.load(row.learnedChannel, row.learnedChannel, "learned");
+                        this.markDirty();
                      });
-                     AutismPacketLoggerOverlay.this.pop_Z = true;
+                     AutismPacketLoggerOverlay.this.rowsDirty = true;
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE) {
-                     if (this.write(mx, my, listTop + index * 14 - this.flush_I)) {
-                        this.write(row.init_I, row.init_AutismConfig_Paylo);
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE) {
+                     if (this.write(mx, my, listTop + index * 14 - this.scrollOffset)) {
+                        this.write(row.ruleIndex, row.rule);
                         return true;
                      }
 
-                     int ux = this.clear_I_7() - 14;
+                     int ux = this.contentRight() - 14;
                      int editX = ux - 14;
                      if (mx >= ux && mx <= ux + 14) {
-                        this.init_V_I_Runnable(index, () -> this.read_V_I_AutismConfig_Paylo(row.init_I, row.init_AutismConfig_Paylo));
+                        this.mutateKeepingAnchor(index, () -> this.read_V_I_AutismConfig_Paylo(row.ruleIndex, row.rule));
                      } else if (mx >= editX && mx <= editX + 14) {
-                        this.init_V_I_AutismConfig_Paylo(row.init_I, row.init_AutismConfig_Paylo);
+                        this.editFilterRule(row.ruleIndex, row.rule);
                      } else {
-                        this.init_V_I_Runnable(index, () -> this.load_V_I_AutismConfig_Paylo(row.init_I, row.init_AutismConfig_Paylo));
+                        this.mutateKeepingAnchor(index, () -> this.load_V_I_AutismConfig_Paylo(row.ruleIndex, row.rule));
                      }
 
-                     AutismPacketLoggerOverlay.this.pop_Z = true;
+                     AutismPacketLoggerOverlay.this.rowsDirty = true;
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY) {
-                     int rowY = listTop + index * 14 - this.flush_I;
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY) {
+                     int rowY = listTop + index * 14 - this.scrollOffset;
                      if (this.write(mx, my, rowY)) {
-                        this.init_V(row.init_AutismPacketLogger_2);
+                        this.init_V(row.family);
                         return true;
                      }
 
                      if (this.update(mx, my, rowY)) {
-                        if (row.init_AutismPacketLogger_2 != null) {
-                           String key = row.init_AutismPacketLogger_2.init_Str();
-                           if (!this.init_Set.remove(key)) {
-                              this.init_Set.add(key);
+                        if (row.family != null) {
+                           String key = row.family.key();
+                           if (!this.expandedFamilies.remove(key)) {
+                              this.expandedFamilies.add(key);
                            }
 
-                           this.put_V_7();
+                           this.rebuildRows();
                         }
 
                         return true;
                      }
 
-                     this.init_V_I_Runnable(index, () -> this.load(row.init_AutismPacketLogger_2));
-                     AutismPacketLoggerOverlay.this.pop_Z = true;
+                     this.mutateKeepingAnchor(index, () -> this.load(row.family));
+                     AutismPacketLoggerOverlay.this.rowsDirty = true;
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.PRESET) {
-                     if (!this.write(mx, my, listTop + index * 14 - this.flush_I)) {
-                        if (row.init_bB_CachePool != null
-                           && row.init_bB_CachePool.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT
-                           && !this.init_Z(row.init_bB_CachePool)
-                           && !this.init_Z(List.of(row.init_bB_CachePool.read()))) {
-                           this.stop_V_6();
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.PRESET) {
+                     if (!this.write(mx, my, listTop + index * 14 - this.scrollOffset)) {
+                        if (row.preset != null
+                           && row.preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT
+                           && !this.isPresetEnabled(row.preset)
+                           && !this.fitsChannelCap(List.of(row.preset.read()))) {
+                           this.reportChannelCap();
                            return true;
                         }
 
-                        this.init_V_I_Runnable(index, () -> this.init_V(row.init_bB_CachePool));
-                        AutismPacketLoggerOverlay.this.pop_Z = true;
+                        this.mutateKeepingAnchor(index, () -> this.init_V(row.preset));
+                        AutismPacketLoggerOverlay.this.rowsDirty = true;
                         return true;
                      }
 
-                     if (row.init_bB_CachePool != null && row.init_bB_CachePool.kind().isEditableTemplate()) {
-                        this.load_V(row.init_bB_CachePool);
+                     if (row.preset != null && row.preset.kind().isEditableTemplate()) {
+                        this.load_V(row.preset);
                      } else {
-                        this.read(row.init_bB_CachePool);
+                        this.read(row.preset);
                      }
 
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.HEADER
-                     && this.load_Map.getOrDefault(this.init_Str_2(row.init_Str), 0) > 0) {
-                     if (this.write(mx, my, listTop + index * 14 - this.flush_I)) {
-                        this.write_V_2(row.init_Str);
+                  if (row.kind == AutismPacketLoggerOverlay.ChannelRowKind.HEADER
+                     && this.load_Map.getOrDefault(this.cleanGroup(row.header), 0) > 0) {
+                     if (this.write(mx, my, listTop + index * 14 - this.scrollOffset)) {
+                        this.write_V_2(row.header);
                         return true;
                      }
 
-                     this.init_V_I_Runnable(index, () -> this.update(row.init_Str));
-                     AutismPacketLoggerOverlay.this.pop_Z = true;
+                     this.mutateKeepingAnchor(index, () -> this.update(row.header));
+                     AutismPacketLoggerOverlay.this.rowsDirty = true;
                      return true;
                   }
                }
@@ -4705,7 +4705,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private boolean init_Z(AutismConfig.PayloadChannelRegistrationRule rule) {
+      private boolean isEditableRegistration(AutismConfig.PayloadChannelRegistrationRule rule) {
          if (rule == null) {
             return false;
          }
@@ -4714,57 +4714,57 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return "custom".equals(source) || "learned".equals(source);
       }
 
-      private void init_V_I_AutismConfig_Paylo_2(int index, AutismConfig.PayloadChannelRegistrationRule rule) {
-         if (!this.init_Z(rule)) {
+      private void editRegistration(int index, AutismConfig.PayloadChannelRegistrationRule rule) {
+         if (!this.isEditableRegistration(rule)) {
             bi.read("Presets can be toggled, not edited.");
          } else {
             this.poll = index;
-            this.open_I = -1;
-            this.load_k.setValue(PayloadRegistrationManager.normalize(rule.channel));
-            this.load_k.setPlaceholder(Component.literal("edit exact channel"));
-            this.load_k.setFocused(true);
+            this.editingFilterIndex = -1;
+            this.patternField.setValue(PayloadRegistrationManager.normalize(rule.channel));
+            this.patternField.setPlaceholder(Component.literal("edit exact channel"));
+            this.patternField.setFocused(true);
          }
       }
 
-      private void init_V_I_AutismConfig_Paylo(int index, AutismConfig.PayloadChannelFilterRule rule) {
+      private void editFilterRule(int index, AutismConfig.PayloadChannelFilterRule rule) {
          if (rule != null && !rule.preset) {
-            this.open_I = index;
+            this.editingFilterIndex = index;
             this.poll = -1;
-            this.load_k.setValue(PayloadChannelFilterManager.normalizePattern(rule.pattern));
-            this.load_k.setPlaceholder(Component.literal("edit highlight pattern"));
-            this.load_k.setFocused(true);
+            this.patternField.setValue(PayloadChannelFilterManager.normalizePattern(rule.pattern));
+            this.patternField.setPlaceholder(Component.literal("edit highlight pattern"));
+            this.patternField.setFocused(true);
          }
       }
 
-      private void clear_V_7() {
-         String pattern = this.load_k.getValue() == null ? "" : this.load_k.getValue().trim();
+      private void submitPattern() {
+         String pattern = this.patternField.getValue() == null ? "" : this.patternField.getValue().trim();
          if (pattern.isBlank()) {
             bi.read("Enter a payload channel first.");
-         } else if (!this.poll_Z_14() && !this.init_Z(List.of(pattern))) {
-            this.stop_V_6();
+         } else if (!this.isEditing() && !this.fitsChannelCap(List.of(pattern))) {
+            this.reportChannelCap();
          } else {
             String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
             String label = normalized;
             if (this.poll >= 0) {
                this.init_V_3(normalized);
-            } else if (this.open_I >= 0) {
+            } else if (this.editingFilterIndex >= 0) {
                this.load_V_2(normalized);
             } else {
-               boolean filterChanged = AutismPacketLoggerOverlay.this.init_bB.addRuleInMemory(label, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
+               boolean filterChanged = AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(label, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
                boolean registrationChanged = false;
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  registrationChanged = AutismPacketLoggerOverlay.this.init_bC.load(label, normalized, "custom");
+                  registrationChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(label, normalized, "custom");
                }
 
                if (!filterChanged && !registrationChanged) {
                   bi.read("Payload channel already exists.");
                } else {
-                  this.load_k.setValue("");
-                  this.sync_V_15();
-                  this.put_V_7();
-                  this.flush_I = 0;
-                  this.init_CacheEntry.jumpTo(0, Math.max(0, this.init_List.size() * 14 - this.next_I_6()));
-                  AutismPacketLoggerOverlay.this.pop_Z = true;
+                  this.patternField.setValue("");
+                  this.markDirty();
+                  this.rebuildRows();
+                  this.scrollOffset = 0;
+                  this.scroller.jumpTo(0, Math.max(0, this.rows.size() * 14 - this.listHeight()));
+                  AutismPacketLoggerOverlay.this.rowsDirty = true;
                   if (PayloadRegistrationManager.isExactChannel(normalized)) {
                      bi.init("Payload channel added. Press Apply to register.");
                   } else {
@@ -4779,9 +4779,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (!PayloadRegistrationManager.isExactChannel(normalized)) {
             bi.read("Exact registered channels need namespace:path.");
          } else {
-            List<AutismConfig.PayloadChannelRegistrationRule> regs = AutismPacketLoggerOverlay.this.init_bC.mutableRules();
+            List<AutismConfig.PayloadChannelRegistrationRule> regs = AutismPacketLoggerOverlay.this.payloadRegistrations.mutableRules();
             if (this.poll >= 0 && this.poll < regs.size()) {
-               int existing = AutismPacketLoggerOverlay.this.init_bC.indexOf(normalized);
+               int existing = AutismPacketLoggerOverlay.this.payloadRegistrations.indexOf(normalized);
                String oldChannel = "";
                AutismConfig.PayloadChannelRegistrationRule currentRule = this.poll >= 0 && this.poll < regs.size() ? regs.get(this.poll) : null;
                if (currentRule != null) {
@@ -4789,11 +4789,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
 
                if (existing >= 0 && existing != this.poll) {
-                  AutismPacketLoggerOverlay.this.init_bC.write(this.poll);
-                  AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.write(this.poll);
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "custom");
                } else {
                   AutismConfig.PayloadChannelRegistrationRule rule = regs.get(this.poll);
-                  if (rule != null && this.init_Z(rule)) {
+                  if (rule != null && this.isEditableRegistration(rule)) {
                      rule.channel = normalized;
                      rule.label = normalized;
                      rule.source = "custom";
@@ -4805,22 +4805,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.read_V_2(oldChannel);
                }
 
-               AutismPacketLoggerOverlay.this.init_bB.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
-               this.write_V_20();
-               this.sync_V_15();
-               this.put_V_7();
+               AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
+               this.cancelEdit();
+               this.markDirty();
+               this.rebuildRows();
                bi.init("Payload channel edited. Press Apply to register.");
             } else {
-               this.write_V_20();
-               this.put_V_7();
+               this.cancelEdit();
+               this.rebuildRows();
             }
          }
       }
 
       private void load_V_2(String normalized) {
-         List<AutismConfig.PayloadChannelFilterRule> filters = AutismPacketLoggerOverlay.this.init_bB.getMutableRules();
-         if (this.open_I >= 0 && this.open_I < filters.size()) {
-            AutismConfig.PayloadChannelFilterRule rule = filters.get(this.open_I);
+         List<AutismConfig.PayloadChannelFilterRule> filters = AutismPacketLoggerOverlay.this.channelFilters.getMutableRules();
+         if (this.editingFilterIndex >= 0 && this.editingFilterIndex < filters.size()) {
+            AutismConfig.PayloadChannelFilterRule rule = filters.get(this.editingFilterIndex);
             if (rule != null && !rule.preset) {
                String oldPattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
                rule.pattern = normalized;
@@ -4831,41 +4831,41 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
 
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "custom");
                }
             }
 
-            this.write_V_20();
-            this.sync_V_15();
-            this.put_V_7();
+            this.cancelEdit();
+            this.markDirty();
+            this.rebuildRows();
             bi.init("Payload highlight edited.");
          } else {
-            this.write_V_20();
-            this.put_V_7();
+            this.cancelEdit();
+            this.rebuildRows();
          }
       }
 
       private void init_V(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset != null) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-            boolean enabled = this.init_Z(preset);
+            boolean enabled = this.isPresetEnabled(preset);
             if (!enabled) {
-               AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
+               AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
-                  AutismPacketLoggerOverlay.this.init_bC.load(preset.load(), pattern, "preset");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
                }
 
-               this.sync_V_15();
+               this.markDirty();
             } else {
-               if (AutismPacketLoggerOverlay.this.init_bB.isPresetEnabled(preset)) {
-                  AutismPacketLoggerOverlay.this.init_bB.togglePresetInMemory(preset);
+               if (AutismPacketLoggerOverlay.this.channelFilters.isPresetEnabled(preset)) {
+                  AutismPacketLoggerOverlay.this.channelFilters.togglePresetInMemory(preset);
                }
 
                if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                   this.sync(pattern);
                }
 
-               this.sync_V_15();
+               this.markDirty();
             }
          }
       }
@@ -4874,39 +4874,39 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (rule != null) {
             String pattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
             boolean enabling = !rule.enabled;
-            AutismPacketLoggerOverlay.this.init_bB.toggleRuleInMemory(ruleIndex);
+            AutismPacketLoggerOverlay.this.channelFilters.toggleRuleInMemory(ruleIndex);
             if (PayloadRegistrationManager.isExactChannel(pattern)) {
                if (enabling) {
-                  AutismPacketLoggerOverlay.this.init_bC.load(rule.label, pattern, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(rule.label, pattern, "custom");
                } else {
                   this.flush(pattern);
                }
             }
 
-            this.sync_V_15();
+            this.markDirty();
          }
       }
 
       private void read_V_I_AutismConfig_Paylo(int ruleIndex, AutismConfig.PayloadChannelFilterRule rule) {
          String pattern = rule == null ? "" : PayloadChannelFilterManager.normalizePattern(rule.pattern);
-         AutismPacketLoggerOverlay.this.init_bB.removeRuleInMemory(ruleIndex);
+         AutismPacketLoggerOverlay.this.channelFilters.removeRuleInMemory(ruleIndex);
          if (PayloadRegistrationManager.isExactChannel(pattern)) {
             this.flush(pattern);
          }
 
-         this.sync_V_15();
+         this.markDirty();
       }
 
       private void load_V_I_AutismConfig_Paylo_2(int registrationIndex, AutismConfig.PayloadChannelRegistrationRule rule) {
          String channel = rule == null ? "" : PayloadRegistrationManager.normalize(rule.channel);
-         AutismPacketLoggerOverlay.this.init_bC.write(registrationIndex);
+         AutismPacketLoggerOverlay.this.payloadRegistrations.write(registrationIndex);
          this.read_V_2(channel);
       }
 
       private void read_V_2(String pattern) {
          String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
          if (!normalized.isBlank()) {
-            List<AutismConfig.PayloadChannelFilterRule> filters = AutismPacketLoggerOverlay.this.init_bB.getMutableRules();
+            List<AutismConfig.PayloadChannelFilterRule> filters = AutismPacketLoggerOverlay.this.channelFilters.getMutableRules();
 
             for (int i = filters.size() - 1; i >= 0; i--) {
                AutismConfig.PayloadChannelFilterRule rule = filters.get(i);
@@ -4919,30 +4919,30 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void load_V(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset != null) {
-            this.open_I = -1;
+            this.editingFilterIndex = -1;
             this.poll = -1;
             String prefix = PayloadChannelFilterManager.editablePrefixFor(preset);
-            this.load_k.setValue(prefix);
-            this.load_k.setPlaceholder(Component.literal("finish exact channel from " + preset.load()));
-            this.load_k.setFocused(true);
+            this.patternField.setValue(prefix);
+            this.patternField.setPlaceholder(Component.literal("finish exact channel from " + preset.load()));
+            this.patternField.setFocused(true);
             bi.init("Finish the exact payload channel, then Add.");
          }
       }
 
       private void read(PayloadChannelFilterManager.Inner_CachePool preset) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11() && preset != null) {
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked() && preset != null) {
             this.init_V_Str_7("Preset: " + preset.load(), List.of(preset), List.of(preset.read()));
          }
       }
 
       private void write_V_2(String group) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11() && group != null && !group.isBlank()) {
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked() && group != null && !group.isBlank()) {
             List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>();
             List<String> patterns = new ArrayList<>();
-            AutismPacketLoggerOverlay.ChannelGroup category = this.init_Map_2().get(this.init_Str_2(group));
+            AutismPacketLoggerOverlay.ChannelGroup category = this.groups().get(this.cleanGroup(group));
             if (category != null) {
                for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.load) {
-                  for (PayloadChannelFilterManager.Inner_CachePool preset : family.init_List()) {
+                  for (PayloadChannelFilterManager.Inner_CachePool preset : family.effectivePresets()) {
                      presets.add(preset);
                      patterns.add(preset.read());
                   }
@@ -4959,61 +4959,61 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void init_V(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11() && family != null && !family.init_List.isEmpty()) {
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked() && family != null && !family.presets.isEmpty()) {
             List<String> patterns = new ArrayList<>();
 
-            for (PayloadChannelFilterManager.Inner_CachePool preset : family.init_List) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : family.presets) {
                patterns.add(preset.read());
             }
 
-            this.init_V_Str_7("Family: " + family.read, new ArrayList<>(family.init_List), patterns);
+            this.init_V_Str_7("Family: " + family.read, new ArrayList<>(family.presets), patterns);
          }
       }
 
       private void write(int ruleIndex, AutismConfig.PayloadChannelFilterRule rule) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11() && rule != null) {
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked() && rule != null) {
             if (!rule.enabled) {
-               AutismPacketLoggerOverlay.this.init_bB.toggleRuleInMemory(ruleIndex);
-               this.sync_V_15();
+               AutismPacketLoggerOverlay.this.channelFilters.toggleRuleInMemory(ruleIndex);
+               this.markDirty();
             }
 
             String pattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
             String label = rule.label != null && !rule.label.isBlank() ? rule.label.trim() : pattern;
             int skipped = this.init_I_Str_4(label, pattern, "custom");
-            this.sync_V_15();
-            this.put_V_7();
+            this.markDirty();
+            this.rebuildRows();
             this.init_V_Str_6(label, List.of(pattern), skipped);
          }
       }
 
       private void init_V_Str_7(String label, List<PayloadChannelFilterManager.Inner_CachePool> presets, List<String> patterns) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11() && presets != null && !presets.isEmpty()) {
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked() && presets != null && !presets.isEmpty()) {
             int skipped = 0;
 
             for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
                if (preset != null) {
-                  AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
+                  AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                   skipped += this.init_I_Str_4(preset.load(), preset.read(), "preset");
                }
             }
 
-            this.sync_V_15();
-            this.put_V_7();
+            this.markDirty();
+            this.rebuildRows();
             this.init_V_Str_6(label, patterns, skipped);
          }
       }
 
       private int init_I_Str_4(String label, String pattern, String source) {
-         PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
+         PayloadSubscriptionManager.Inner_CachePool impact = this.impactOf(pattern);
          int skipped = 0;
 
          for (String channel : impact.channels()) {
             String normalized = PayloadRegistrationManager.normalize(channel);
             if (PayloadRegistrationManager.isExactChannel(normalized)) {
-               if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
+               if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                   skipped++;
                } else {
-                  AutismPacketLoggerOverlay.this.init_bC.load(label, normalized, source);
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(label, normalized, source);
                }
             }
          }
@@ -5022,10 +5022,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void init_V_Str_6(String label, List<String> patterns, int skipped) {
-         if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11()) {
-            this.flush_V_14();
+         if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked()) {
+            this.saveIfDirty();
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
+            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
             if (skipped > 0 || status != null && status.read() > 0) {
                int count = status == null ? 0 : status.registered();
@@ -5036,22 +5036,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             List<String> applied = status == null ? List.of() : status.applied();
             PayloadStudyTracker.init(label, patterns == null ? List.of() : patterns, applied);
             this.setVisible(false);
-            if (AutismPacketLoggerOverlay.init_Minecraft != null) {
-               AutismPacketLoggerOverlay.init_Minecraft.gui.setScreen(null);
+            if (AutismPacketLoggerOverlay.MC != null) {
+               AutismPacketLoggerOverlay.MC.gui.setScreen(null);
             }
          }
       }
 
       private void update(String group) {
          if (group != null && !group.isBlank()) {
-            boolean enable = !this.load_Z_2(group);
+            boolean enable = !this.isGroupFullyEnabled(group);
             boolean capHit = false;
-            AutismPacketLoggerOverlay.ChannelGroup category = this.init_Map_2().get(this.init_Str_2(group));
+            AutismPacketLoggerOverlay.ChannelGroup category = this.groups().get(this.cleanGroup(group));
             if (category != null) {
                List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>();
 
                for (AutismPacketLoggerOverlay.ChannelFamilyBucket family : category.load) {
-                  presets.addAll(family.init_List());
+                  presets.addAll(family.effectivePresets());
                }
 
                presets.addAll(category.read);
@@ -5059,17 +5059,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
                   String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
                   if (enable) {
-                     if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && !this.init_Z(List.of(pattern))) {
+                     if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && !this.fitsChannelCap(List.of(pattern))) {
                         capHit = true;
                      } else {
-                        AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
+                        AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                         if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
-                           AutismPacketLoggerOverlay.this.init_bC.load(preset.load(), pattern, "preset");
+                           AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
                         }
                      }
                   } else {
-                     if (AutismPacketLoggerOverlay.this.init_bB.isPresetEnabled(preset)) {
-                        AutismPacketLoggerOverlay.this.init_bB.togglePresetInMemory(preset);
+                     if (AutismPacketLoggerOverlay.this.channelFilters.isPresetEnabled(preset)) {
+                        AutismPacketLoggerOverlay.this.channelFilters.togglePresetInMemory(preset);
                      }
 
                      if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
@@ -5079,34 +5079,34 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
 
                if (capHit) {
-                  this.stop_V_6();
+                  this.reportChannelCap();
                }
 
-               this.sync_V_15();
+               this.markDirty();
             }
          }
       }
 
       private void load(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
-         if (family != null && !family.init_List.isEmpty()) {
-            boolean enable = !this.init_Z(family);
+         if (family != null && !family.presets.isEmpty()) {
+            boolean enable = !this.isFamilyFullyEnabled(family);
             boolean capHit = false;
-            List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>(family.init_List);
+            List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>(family.presets);
             this.init(presets);
 
             for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
                String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
                if (PayloadRegistrationManager.isExactChannel(pattern)) {
                   if (enable) {
-                     if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(pattern) && !this.init_Z(List.of(pattern))) {
+                     if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(pattern) && !this.fitsChannelCap(List.of(pattern))) {
                         capHit = true;
                      } else {
-                        AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
-                        AutismPacketLoggerOverlay.this.init_bC.load(preset.load(), pattern, "preset");
+                        AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
+                        AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
                      }
                   } else {
-                     if (AutismPacketLoggerOverlay.this.init_bB.isPresetEnabled(preset)) {
-                        AutismPacketLoggerOverlay.this.init_bB.togglePresetInMemory(preset);
+                     if (AutismPacketLoggerOverlay.this.channelFilters.isPresetEnabled(preset)) {
+                        AutismPacketLoggerOverlay.this.channelFilters.togglePresetInMemory(preset);
                      }
 
                      this.sync(pattern);
@@ -5115,36 +5115,36 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
 
             if (capHit) {
-               this.stop_V_6();
+               this.reportChannelCap();
             }
 
-            this.sync_V_15();
+            this.markDirty();
          }
       }
 
       private void sync(String channel) {
-         int index = AutismPacketLoggerOverlay.this.init_bC.indexOf(channel);
+         int index = AutismPacketLoggerOverlay.this.payloadRegistrations.indexOf(channel);
          if (index >= 0) {
-            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.rules();
+            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.payloadRegistrations.rules();
             if (index < rules.size()) {
                AutismConfig.PayloadChannelRegistrationRule rule = rules.get(index);
                if (rule != null && "preset".equals(rule.source)) {
-                  AutismPacketLoggerOverlay.this.init_bC.write(index);
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.write(index);
                }
             }
          }
       }
 
       private void flush(String channel) {
-         int index = AutismPacketLoggerOverlay.this.init_bC.indexOf(channel);
+         int index = AutismPacketLoggerOverlay.this.payloadRegistrations.indexOf(channel);
          if (index >= 0) {
-            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.rules();
+            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.payloadRegistrations.rules();
             if (index < rules.size()) {
                AutismConfig.PayloadChannelRegistrationRule rule = rules.get(index);
                if (rule != null) {
                   String source = rule.source == null ? "" : rule.source;
                   if ("custom".equals(source) || "learned".equals(source)) {
-                     AutismPacketLoggerOverlay.this.init_bC.write(index);
+                     AutismPacketLoggerOverlay.this.payloadRegistrations.write(index);
                   }
                }
             }
@@ -5157,7 +5157,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             bi.read("No captured payload channels yet.");
          } else {
             if (replaceExisting) {
-               AutismPacketLoggerOverlay.this.init_bC.disableAll();
+               AutismPacketLoggerOverlay.this.payloadRegistrations.disableAll();
             }
 
             int added = 0;
@@ -5166,11 +5166,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             for (String channel : learned) {
                String normalized = PayloadRegistrationManager.normalize(channel);
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
+                  if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                      skipped++;
                   } else {
-                     boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
-                     AutismPacketLoggerOverlay.this.init_bB.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
+                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "learned");
+                     AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
                      if (regChanged) {
                         added++;
                      }
@@ -5178,9 +5178,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
             }
 
-            this.sync_V_15();
-            this.put_V_7();
-            AutismPacketLoggerOverlay.this.pop_Z = true;
+            this.markDirty();
+            this.rebuildRows();
+            AutismPacketLoggerOverlay.this.rowsDirty = true;
             if (skipped > 0) {
                bi.write("Captured " + added + ", skipped " + skipped + " at channel cap.");
             } else {
@@ -5196,11 +5196,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          for (String channel : PayloadSubscriptionManager.learnedChannels()) {
             String normalized = PayloadRegistrationManager.normalize(channel);
             if (PayloadRegistrationManager.isExactChannel(normalized)) {
-               if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
+               if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                   skipped++;
                } else {
-                  boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
-                  AutismPacketLoggerOverlay.this.init_bB.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
+                  boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "learned");
+                  AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
                   if (regChanged) {
                      added++;
                   }
@@ -5208,17 +5208,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.init_Map_2();
+         this.groups();
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : this.write_Map.values()) {
+         for (PayloadChannelFilterManager.Inner_CachePool preset : this.presetByPattern.values()) {
             if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
-               AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
+               AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                String normalized = PayloadRegistrationManager.normalize(preset.read());
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
+                  if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                      skipped++;
                   } else {
-                     boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(preset.load(), normalized, "preset");
+                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), normalized, "preset");
                      if (regChanged) {
                         added++;
                      }
@@ -5227,11 +5227,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.sync_V_15();
-         this.put_V_7();
-         this.flush_I = 0;
-         this.init_CacheEntry.jumpTo(0, Math.max(0, this.init_List.size() * 14 - this.next_I_6()));
-         AutismPacketLoggerOverlay.this.pop_Z = true;
+         this.markDirty();
+         this.rebuildRows();
+         this.scrollOffset = 0;
+         this.scroller.jumpTo(0, Math.max(0, this.rows.size() * 14 - this.listHeight()));
+         AutismPacketLoggerOverlay.this.rowsDirty = true;
          if (skipped > 0) {
             bi.write("Known channels enabled with " + skipped + " skipped at cap.");
          } else {
@@ -5239,14 +5239,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private boolean init_Z(Collection<String> patterns) {
-         return this.init_LinkedHashSet(patterns).size() <= this.pop;
+      private boolean fitsChannelCap(Collection<String> patterns) {
+         return this.projectedChannels(patterns).size() <= this.pop;
       }
 
-      private LinkedHashSet<String> init_LinkedHashSet(Collection<String> patterns) {
+      private LinkedHashSet<String> projectedChannels(Collection<String> patterns) {
          LinkedHashSet<String> projected = new LinkedHashSet<>();
 
-         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.rules()) {
+         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.payloadRegistrations.rules()) {
             if (rule != null && rule.enabled) {
                String channel = PayloadRegistrationManager.normalize(rule.channel);
                if (PayloadRegistrationManager.isExactChannel(channel)) {
@@ -5257,7 +5257,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          if (patterns != null) {
             for (String pattern : patterns) {
-               PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
+               PayloadSubscriptionManager.Inner_CachePool impact = this.impactOf(pattern);
 
                for (String channel : impact.channels()) {
                   String normalized = PayloadRegistrationManager.normalize(channel);
@@ -5280,11 +5280,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return status != null && status.limit() > 0 ? status.limit() : 96;
       }
 
-      private List<String> init_List(String group) {
+      private List<String> groupPatterns(String group) {
          if (group != null && !group.isBlank()) {
             List<String> patterns = new ArrayList<>();
 
-            for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.init_bB.getPresets()) {
+            for (PayloadChannelFilterManager.Inner_CachePool preset : AutismPacketLoggerOverlay.this.channelFilters.getPresets()) {
                if (group.equals(preset.write())) {
                   patterns.add(preset.read());
                }
@@ -5296,16 +5296,16 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private void stop_V_6() {
+      private void reportChannelCap() {
          int limit = this.queue();
-         int count = Math.min(this.write_Set.size(), limit);
+         int count = Math.min(this.enabledRegistrations.size(), limit);
          bi.write("Payload channel cap reached: " + count + "/" + limit);
       }
 
-      private String read_Str_7() {
+      private String subscriptionStatusText() {
          PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
          Set<String> applied = new LinkedHashSet<>(status == null ? List.of() : status.applied());
-         Set<String> wanted = this.write_Set;
+         Set<String> wanted = this.enabledRegistrations;
          int added = 0;
 
          for (String channel : wanted) {
@@ -5326,15 +5326,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void next_V_6() {
-         this.flush_V_14();
+         this.saveIfDirty();
          if (!PayloadSubscriptionManager.isRegistrationUnlocked()) {
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
+            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
             bi.read("Registration locked. Saved, nothing sent.");
-            this.put_V_7();
+            this.rebuildRows();
          } else {
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
+            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
             if (status != null && status.read() > 0) {
                bi.write("Payload channel cap reached: " + status.registered() + "/" + status.limit());
@@ -5342,33 +5342,33 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                bi.init("Payload channels applied.");
             }
 
-            this.put_V_7();
+            this.rebuildRows();
          }
       }
 
       private void prev_V_6() {
          PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
-         AutismPacketLoggerOverlay.this.init_bC.enableApplied(status == null ? List.of() : status.applied());
-         AutismPacketLoggerOverlay.this.init_bC.reloadFromConfig();
-         this.put_V_7();
+         AutismPacketLoggerOverlay.this.payloadRegistrations.enableApplied(status == null ? List.of() : status.applied());
+         AutismPacketLoggerOverlay.this.payloadRegistrations.reloadFromConfig();
+         this.rebuildRows();
          bi.init("Payload channels reverted.");
       }
 
       @Override
       public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
          if (this.update_Z && button == 0) {
-            this.setBounds(new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
+            this.setBounds(new OverlayBounds((int)Math.round(mx - this.dragOffsetX), (int)Math.round(my - this.dragOffsetY), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
             return true;
          } else if (this.write_Z && button == 0) {
             int listTop = this.put_I_7();
-            int listH = this.next_I_6();
+            int listH = this.listHeight();
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-               this.init_List.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.flush_I
+               this.rows.size() * 14, listH, this.windowX + this.windowWidth - 7, listTop, 3, listH, this.scrollOffset
             );
-            this.flush_I = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.close_I), 14, metrics.maxScroll());
+            this.scrollOffset = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, (int)my, this.thumbGrabOffset), 14, metrics.maxScroll());
             return true;
          } else {
-            return this.init_k.mouseDragged(mx, my, button, dx, dy) ? true : this.load_k.mouseDragged(mx, my, button, dx, dy);
+            return this.searchField.mouseDragged(mx, my, button, dx, dy) ? true : this.patternField.mouseDragged(mx, my, button, dx, dy);
          }
       }
 
@@ -5382,7 +5382,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             this.write_Z = false;
             return true;
          } else {
-            return this.init_k.mouseReleased(mx, my, button) ? true : this.load_k.mouseReleased(mx, my, button);
+            return this.searchField.mouseReleased(mx, my, button) ? true : this.patternField.mouseReleased(mx, my, button);
          }
       }
 
@@ -5390,10 +5390,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       public boolean mouseScrolled(double mx, double my, double amount) {
          if (this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my)) {
             int listTop = this.put_I_7();
-            int listH = this.next_I_6();
-            int maxScroll = Math.max(0, this.init_List.size() * 14 - listH);
-            this.flush_I = this.quantizeScrollOffset(this.flush_I - (int)Math.signum(amount) * 14, 14, maxScroll);
-            this.init_CacheEntry.jumpTo(this.flush_I, maxScroll);
+            int listH = this.listHeight();
+            int maxScroll = Math.max(0, this.rows.size() * 14 - listH);
+            this.scrollOffset = this.quantizeScrollOffset(this.scrollOffset - (int)Math.signum(amount) * 14, 14, maxScroll);
+            this.scroller.jumpTo(this.scrollOffset, maxScroll);
             return true;
          } else {
             return false;
@@ -5406,10 +5406,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return false;
          } else {
             KeyEvent event = Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers);
-            if (this.init_k.isFocused()) {
-               return this.init_k.keyPressed(event);
+            if (this.searchField.isFocused()) {
+               return this.searchField.keyPressed(event);
             } else {
-               return this.load_k.isFocused() ? this.load_k.keyPressed(event) : false;
+               return this.patternField.isFocused() ? this.patternField.keyPressed(event) : false;
             }
          }
       }
@@ -5420,23 +5420,23 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return false;
          } else {
             CharacterEvent event = new CharacterEvent(chr);
-            if (this.init_k.isFocused()) {
-               return this.init_k.charTyped(event);
+            if (this.searchField.isFocused()) {
+               return this.searchField.charTyped(event);
             } else {
-               return this.load_k.isFocused() ? this.load_k.charTyped(event) : false;
+               return this.patternField.isFocused() ? this.patternField.charTyped(event) : false;
             }
          }
       }
 
       @Override
       public boolean hasFocusedTextInput() {
-         return this.windowVisible && (this.init_k.isFocused() || this.load_k.isFocused());
+         return this.windowVisible && (this.searchField.isFocused() || this.patternField.isFocused());
       }
 
       @Override
       public void clearInputFocus() {
-         this.init_k.setFocused(false);
-         this.load_k.setFocused(false);
+         this.searchField.setFocused(false);
+         this.patternField.setFocused(false);
       }
 
       private record ColumnMetrics(int init, int load, int read, int write, int update) {

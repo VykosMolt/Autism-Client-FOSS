@@ -24,18 +24,18 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 public final class ThemeTextureRecolorer {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
    public static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/panorama");
    private static final Identifier load_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/panorama_overlay.png");
    private static final Identifier read_Identifier = Identifier.fromNamespaceAndPath("autismclient", "dynamic/theme/panorama_overlay");
-   private static final Map<Identifier, ThemeTextureRecolorer.Inner_BufferHelper> init_Map = new HashMap<>();
-   private static final Map<Identifier, ThemeTextureRecolorer.Inner_DataUtil> load_Map = new HashMap<>();
+   private static final Map<Identifier, ThemeTextureRecolorer.Inner_BufferHelper> recolorCache = new HashMap<>();
+   private static final Map<Identifier, ThemeTextureRecolorer.Inner_DataUtil> tintCache = new HashMap<>();
    private static final Set<Identifier> init_Set = new HashSet<>();
    private static final Set<Identifier> load_Set = new HashSet<>();
-   private static final Map<Identifier, Integer> read_Map = new HashMap<>();
+   private static final Map<Identifier, Integer> failedGenerations = new HashMap<>();
    private static final Map<Identifier, Identifier> write = new HashMap<>();
-   private static int init_I;
-   private static ThemeTextureRecolorer.Inner_ConfigStore init_cu_ConfigStore;
+   private static int currentGeneration;
+   private static ThemeTextureRecolorer.Inner_ConfigStore preview;
    private static volatile boolean init_Z;
    private static AbstractTexture init_AbstractTexture;
    private static boolean load_Z;
@@ -53,25 +53,25 @@ public final class ThemeTextureRecolorer {
          return source;
       }
 
-      ThemeTextureRecolorer.Inner_BufferHelper cached = init_Map.get(source);
-      if (cached != null && cached.init_I == init_I) {
-         return cached.init_Identifier;
+      ThemeTextureRecolorer.Inner_BufferHelper cached = recolorCache.get(source);
+      if (cached != null && cached.generation == currentGeneration) {
+         return cached.id;
       }
 
-      Integer failedGen = read_Map.get(source);
-      if (failedGen != null && failedGen == init_I) {
-         return cached != null ? cached.init_Identifier : source;
+      Integer failedGen = failedGenerations.get(source);
+      if (failedGen != null && failedGen == currentGeneration) {
+         return cached != null ? cached.id : source;
       }
 
       if (cached == null && !load_Set.contains(source)) {
-         Identifier built = init_Identifier(source, ch, st);
+         Identifier built = recoloredId(source, ch, st);
          if (built != null) {
             return built;
          }
       }
 
-      init_V(source, ch, st);
-      return cached != null ? cached.init_Identifier : source;
+      scheduleRecolor(source, ch, st);
+      return cached != null ? cached.id : source;
    }
 
    public static Identifier recolor(Identifier source, int targetColor) {
@@ -79,18 +79,18 @@ public final class ThemeTextureRecolorer {
          return null;
       }
 
-      ThemeTextureRecolorer.Inner_DataUtil cached = load_Map.get(source);
-      if (cached != null && cached.init_I == targetColor) {
-         return cached.init_Identifier;
+      ThemeTextureRecolorer.Inner_DataUtil cached = tintCache.get(source);
+      if (cached != null && cached.color == targetColor) {
+         return cached.id;
       }
 
-      init_V(source, targetColor);
-      return cached != null ? cached.init_Identifier : source;
+      scheduleTint(source, targetColor);
+      return cached != null ? cached.id : source;
    }
 
-   private static void init_V(Identifier source, int targetColor) {
+   private static void scheduleTint(Identifier source, int targetColor) {
       if (init_Set.add(source)) {
-         byte[] png = init_BArr(source);
+         byte[] png = readPng(source);
          if (png == null) {
             init_Set.remove(source);
          } else {
@@ -107,12 +107,12 @@ public final class ThemeTextureRecolorer {
                }
 
                NativeImage result = recolored;
-               init_Minecraft.execute(() -> {
+               MINECRAFT.execute(() -> {
                   init_Set.remove(source);
                   if (result != null) {
                      Identifier id = read(source);
-                     init_Minecraft.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
-                     load_Map.put(source, new ThemeTextureRecolorer.Inner_DataUtil(id, targetColor));
+                     MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
+                     tintCache.put(source, new ThemeTextureRecolorer.Inner_DataUtil(id, targetColor));
                   }
                });
             });
@@ -126,31 +126,31 @@ public final class ThemeTextureRecolorer {
       );
    }
 
-   private static Identifier init_Identifier(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
-      byte[] png = init_BArr(source);
+   private static Identifier recoloredId(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
+      byte[] png = readPng(source);
       if (png == null) {
          return null;
       }
 
-      int generation = init_I;
+      int generation = currentGeneration;
 
       try (NativeImage src = NativeImage.read(png)) {
          NativeImage recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorTexturePixel(argb, ch, st));
          Identifier id = write(source);
-         init_Minecraft.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), recolored, FilterMode.LINEAR));
-         init_Map.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
+         MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), recolored, FilterMode.LINEAR));
+         recolorCache.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
          return id;
       } catch (Throwable t) {
-         read_Map.put(source, generation);
+         failedGenerations.put(source, generation);
          AutismClientAddon.LOG.warn("Theme recolor (sync) failed for {} (backing off this theme generation)", source, t);
          return null;
       }
    }
 
-   private static void init_V(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
+   private static void scheduleRecolor(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
       if (load_Set.add(source)) {
-         int generation = init_I;
-         byte[] png = init_BArr(source);
+         int generation = currentGeneration;
+         byte[] png = readPng(source);
          if (png == null) {
             load_Set.remove(source);
          } else {
@@ -164,18 +164,18 @@ public final class ThemeTextureRecolorer {
                }
 
                NativeImage result = recolored;
-               init_Minecraft.execute(() -> {
+               MINECRAFT.execute(() -> {
                   load_Set.remove(source);
-                  if (generation != init_I) {
+                  if (generation != currentGeneration) {
                      if (result != null) {
                         result.close();
                      }
                   } else if (result == null) {
-                     read_Map.put(source, generation);
+                     failedGenerations.put(source, generation);
                   } else {
                      Identifier id = write(source);
-                     init_Minecraft.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
-                     init_Map.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
+                     MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
+                     recolorCache.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
                   }
                });
             });
@@ -183,9 +183,9 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private static byte[] init_BArr(Identifier source) {
+   private static byte[] readPng(Identifier source) {
       try {
-         Optional<Resource> res = init_Minecraft.getResourceManager().getResource(source);
+         Optional<Resource> res = MINECRAFT.getResourceManager().getResource(source);
          if (res.isEmpty()) {
             return null;
          }
@@ -194,7 +194,7 @@ public final class ThemeTextureRecolorer {
             return in.readAllBytes();
          }
       } catch (Throwable t) {
-         read_Map.put(source, init_I);
+         failedGenerations.put(source, currentGeneration);
          AutismClientAddon.LOG.warn("Theme recolor failed for {} (backing off this theme generation)", source, t);
          return null;
       }
@@ -211,14 +211,14 @@ public final class ThemeTextureRecolorer {
       }
 
       try {
-         TextureContents contents = TextureContents.load(init_Minecraft.getResourceManager(), source);
+         TextureContents contents = TextureContents.load(MINECRAFT.getResourceManager(), source);
          NativeImage src = contents.image();
          NativeImage white = src.mappedCopy(argb -> argb & 0xFF000000 | 16777215);
          src.close();
          Identifier id = Identifier.fromNamespaceAndPath(
             "autismclient", "dynamic/white/" + source.getNamespace() + "/" + source.getPath().replace('/', '_').replace(".png", "")
          );
-         init_Minecraft.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), white, FilterMode.LINEAR));
+         MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), white, FilterMode.LINEAR));
          write.put(source, id);
          return id;
       } catch (Throwable t) {
@@ -235,8 +235,8 @@ public final class ThemeTextureRecolorer {
 
    public static void init(TextureManager textureManager) {
       try {
-         init_cu_ConfigStore = new ThemeTextureRecolorer.Inner_ConfigStore(init_Identifier);
-         textureManager.register(init_Identifier, init_cu_ConfigStore);
+         preview = new ThemeTextureRecolorer.Inner_ConfigStore(init_Identifier);
+         textureManager.register(init_Identifier, preview);
       } catch (Throwable t) {
          init_Z = false;
          AutismClientAddon.LOG.warn("Failed to register themed panorama", t);
@@ -248,19 +248,19 @@ public final class ThemeTextureRecolorer {
    }
 
    public static void init_V() {
-      if (init_cu_ConfigStore != null && init_Z) {
-         int generation = init_I;
+      if (preview != null && init_Z) {
+         int generation = currentGeneration;
          Runnable jobDone = autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring panorama");
-         init_Minecraft.execute(() -> {
+         MINECRAFT.execute(() -> {
             try {
-               if (generation != init_I) {
+               if (generation != currentGeneration) {
                   return;
                }
 
-               TextureContents contents = init_cu_ConfigStore.loadContents(init_Minecraft.getResourceManager());
+               TextureContents contents = preview.loadContents(MINECRAFT.getResourceManager());
 
                try {
-                  init_cu_ConfigStore.apply(contents);
+                  preview.apply(contents);
                   return;
                } catch (Throwable t) {
                   AutismClientAddon.LOG.warn("Failed to upload the recolored panorama (keeping the current one)", t);
@@ -299,11 +299,11 @@ public final class ThemeTextureRecolorer {
    }
 
    private static void init(ThemePaletteManager.CompiledPalette st, Runnable jobDone) {
-      int generation = init_I;
+      int generation = currentGeneration;
 
       byte[] png;
       try {
-         Optional<Resource> res = init_Minecraft.getResourceManager().getResource(load_Identifier);
+         Optional<Resource> res = MINECRAFT.getResourceManager().getResource(load_Identifier);
          if (res.isEmpty()) {
             load_Z = false;
             jobDone.run();
@@ -329,9 +329,9 @@ public final class ThemeTextureRecolorer {
          }
 
          NativeImage result = recolored;
-         init_Minecraft.execute(() -> {
+         MINECRAFT.execute(() -> {
             try {
-               if (generation != init_I) {
+               if (generation != currentGeneration) {
                   if (result != null) {
                      result.close();
                   }
@@ -341,7 +341,7 @@ public final class ThemeTextureRecolorer {
 
                if (result != null) {
                   init_AbstractTexture = new ThemeTextureRecolorer.Inner_StreamUtil("panorama_overlay", result, FilterMode.LINEAR);
-                  init_Minecraft.getTextureManager().register(read_Identifier, init_AbstractTexture);
+                  MINECRAFT.getTextureManager().register(read_Identifier, init_AbstractTexture);
                   return;
                }
             } finally {
@@ -352,8 +352,8 @@ public final class ThemeTextureRecolorer {
    }
 
    public static void load() {
-      init_I++;
-      read_Map.clear();
+      currentGeneration++;
+      failedGenerations.clear();
       load_Z = false;
       init_AbstractTexture = null;
       ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
@@ -367,7 +367,7 @@ public final class ThemeTextureRecolorer {
 
    public static ThemeTextureRecolorer.Inner_CachePool init(Identifier source, ThemePaletteManager.ColorRole channel, int maxDim) {
       try {
-         TextureContents contents = TextureContents.load(init_Minecraft.getResourceManager(), source);
+         TextureContents contents = TextureContents.load(MINECRAFT.getResourceManager(), source);
          NativeImage full = contents.image();
          NativeImage scaled = init(full, maxDim);
          if (scaled != full) {
@@ -384,7 +384,7 @@ public final class ThemeTextureRecolorer {
 
          Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/theme/preview/" + source.getPath().replace('/', '_').replace(".png", ""));
          ThemeTextureRecolorer.Inner_StreamUtil tex = new ThemeTextureRecolorer.Inner_StreamUtil("preview " + source, work, FilterMode.LINEAR);
-         init_Minecraft.getTextureManager().register(id, tex);
+         MINECRAFT.getTextureManager().register(id, tex);
          return new ThemeTextureRecolorer.Inner_CachePool(channel, scaled, tex, id);
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("Failed to build theme preview for {}", source, t);
@@ -444,55 +444,55 @@ public final class ThemeTextureRecolorer {
       return out;
    }
 
-   private record Inner_BufferHelper(Identifier init_Identifier, int init_I) {
+   private record Inner_BufferHelper(Identifier id, int generation) {
    }
 
    public static final class Inner_CachePool implements AutoCloseable {
-      private final ThemePaletteManager.ColorRole init_ct_DataUtil;
-      private final NativeImage init_NativeImage;
-      private final ThemeTextureRecolorer.Inner_StreamUtil init_cu_StreamUtil;
-      private final Identifier init_Identifier;
-      private int init_I = -2147483648;
-      private final Object init_Obj = new Object();
+      private final ThemePaletteManager.ColorRole channel;
+      private final NativeImage source;
+      private final ThemeTextureRecolorer.Inner_StreamUtil texture;
+      private final Identifier id;
+      private int lastSignature = -2147483648;
+      private final Object lock = new Object();
       private boolean init_Z;
       private boolean load;
       private boolean read;
-      private ThemePaletteManager.CompiledPalette init_ct_StreamUtil;
+      private ThemePaletteManager.CompiledPalette pendingPalette;
 
       private Inner_CachePool(ThemePaletteManager.ColorRole channel, NativeImage source, ThemeTextureRecolorer.Inner_StreamUtil texture, Identifier id) {
-         this.init_ct_DataUtil = channel;
-         this.init_NativeImage = source;
-         this.init_cu_StreamUtil = texture;
-         this.init_Identifier = id;
+         this.channel = channel;
+         this.source = source;
+         this.texture = texture;
+         this.id = id;
       }
 
       public Identifier id() {
-         return this.init_Identifier;
+         return this.id;
       }
 
       public int width() {
-         return this.init_NativeImage.getWidth();
+         return this.source.getWidth();
       }
 
       public int height() {
-         return this.init_NativeImage.getHeight();
+         return this.source.getHeight();
       }
 
-      private static int init_I_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
+      private static int paletteSignature(ThemePaletteManager.CompiledPalette st) {
          int sig = Float.floatToIntBits(st.hue(ThemePaletteManager.ColorRole.BACKDROP)) * 31 + Float.floatToIntBits(st.saturation(ThemePaletteManager.ColorRole.BACKDROP));
          return sig == 0 ? 1 : sig;
       }
 
       public void applyPalette(ThemePaletteManager.CompiledPalette st) {
-         int sig = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP ? init_I_ct_StreamUtil(st) : st.roleSignature(this.init_ct_DataUtil);
-         if (sig != this.init_I) {
-            this.init_I = sig;
-            synchronized (this.init_Obj) {
+         int sig = this.channel == ThemePaletteManager.ColorRole.BACKDROP ? paletteSignature(st) : st.roleSignature(this.channel);
+         if (sig != this.lastSignature) {
+            this.lastSignature = sig;
+            synchronized (this.lock) {
                if (this.init_Z) {
                   return;
                }
 
-               this.init_ct_StreamUtil = st;
+               this.pendingPalette = st;
                if (this.load) {
                   return;
                }
@@ -508,46 +508,46 @@ public final class ThemeTextureRecolorer {
          try {
             while (true) {
                ThemePaletteManager.CompiledPalette st;
-               synchronized (this.init_Obj) {
-                  if (this.init_Z || this.init_ct_StreamUtil == null) {
+               synchronized (this.lock) {
+                  if (this.init_Z || this.pendingPalette == null) {
                      this.load = false;
                      break;
                   }
 
-                  st = this.init_ct_StreamUtil;
-                  this.init_ct_StreamUtil = null;
+                  st = this.pendingPalette;
+                  this.pendingPalette = null;
                }
 
-               int w = this.init_NativeImage.getWidth();
-               int h = this.init_NativeImage.getHeight();
+               int w = this.source.getWidth();
+               int h = this.source.getHeight();
                int[] out = new int[w * h];
 
                for (int y = 0; y < h; y++) {
                   for (int x = 0; x < w; x++) {
-                     out[y * w + x] = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP
+                     out[y * w + x] = this.channel == ThemePaletteManager.ColorRole.BACKDROP
                         ? ThemePaletteManager.recolorBackdropPixel(
-                           this.init_NativeImage.getPixel(x, y), st.hue(ThemePaletteManager.ColorRole.BACKDROP), st.saturation(ThemePaletteManager.ColorRole.BACKDROP)
+                           this.source.getPixel(x, y), st.hue(ThemePaletteManager.ColorRole.BACKDROP), st.saturation(ThemePaletteManager.ColorRole.BACKDROP)
                         )
-                        : ThemePaletteManager.recolorTexturePixel(this.init_NativeImage.getPixel(x, y), this.init_ct_DataUtil, st);
+                        : ThemePaletteManager.recolorTexturePixel(this.source.getPixel(x, y), this.channel, st);
                   }
                }
 
-               ThemeTextureRecolorer.init_Minecraft.execute(() -> {
-                  synchronized (this.init_Obj) {
+               ThemeTextureRecolorer.MINECRAFT.execute(() -> {
+                  synchronized (this.lock) {
                      if (!this.init_Z) {
                         for (int yx = 0; yx < h; yx++) {
                            for (int xx = 0; xx < w; xx++) {
-                              this.init_cu_StreamUtil.init.setPixel(xx, yx, out[yx * w + xx]);
+                              this.texture.init.setPixel(xx, yx, out[yx * w + xx]);
                            }
                         }
 
-                        this.init_cu_StreamUtil.init();
+                        this.texture.init();
                      }
                   }
                });
             }
          } catch (Throwable t) {
-            synchronized (this.init_Obj) {
+            synchronized (this.lock) {
                this.load = false;
             }
 
@@ -555,7 +555,7 @@ public final class ThemeTextureRecolorer {
          }
 
          boolean freeNow;
-         synchronized (this.init_Obj) {
+         synchronized (this.lock) {
             freeNow = this.init_Z;
          }
 
@@ -566,9 +566,9 @@ public final class ThemeTextureRecolorer {
 
       @Override
       public void close() {
-         synchronized (this.init_Obj) {
+         synchronized (this.lock) {
             this.init_Z = true;
-            this.init_ct_StreamUtil = null;
+            this.pendingPalette = null;
             if (this.load) {
                return;
             }
@@ -578,7 +578,7 @@ public final class ThemeTextureRecolorer {
       }
 
       private void load_V() {
-         synchronized (this.init_Obj) {
+         synchronized (this.lock) {
             if (this.read) {
                return;
             }
@@ -587,12 +587,12 @@ public final class ThemeTextureRecolorer {
          }
 
          try {
-            this.init_NativeImage.close();
+            this.source.close();
          } catch (Throwable var4) {
          }
 
          try {
-            this.init_cu_StreamUtil.close();
+            this.texture.close();
          } catch (Throwable var3) {
          }
       }
@@ -636,7 +636,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private record Inner_DataUtil(Identifier init_Identifier, int init_I) {
+   private record Inner_DataUtil(Identifier id, int color) {
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {

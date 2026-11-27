@@ -72,40 +72,40 @@ final class AiPrintClock {
    }
 
    private static final class Inner_DataUtil implements autismclient.ai.print.PrintMachineJob {
-      final autismclient.ai.print.LivePrintEnv init_DataUtil;
-      final autismclient.ai.print.PrintClockSpec init_NetHelper;
-      final Object init_Obj;
-      final Object load_Obj;
-      final boolean init_Z;
-      final boolean load_Z;
-      final BlockState init_BlockState;
-      final BlockState load_BlockState;
-      autismclient.ai.print.PrintMachineJob.JobStatus init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING;
-      long init_J;
-      long load_J;
-      String init_Str = "Preparing the source clock control";
+      final autismclient.ai.print.LivePrintEnv env;
+      final autismclient.ai.print.PrintClockSpec spec;
+      final Object worldToken;
+      final Object player;
+      final boolean powered;
+      final boolean creative;
+      final BlockState sourceState;
+      final BlockState targetState;
+      autismclient.ai.print.PrintMachineJob.JobStatus status = autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING;
+      long blockRevision;
+      long startNanos;
+      String message = "Preparing the source clock control";
 
       Inner_DataUtil(autismclient.ai.print.LivePrintEnv env, autismclient.ai.print.PrintClockSpec spec, boolean powered) {
-         this.init_DataUtil = env;
-         this.init_NetHelper = spec;
-         this.init_Obj = env.worldToken();
-         this.load_Obj = Minecraft.getInstance().player;
-         this.load_Z = env.isCreativeMode();
-         this.init_Z = powered;
-         this.init_BlockState = spec.source().get(spec.lever());
-         this.load_BlockState = this.init_BlockState.setValue(BlockStateProperties.POWERED, powered);
+         this.env = env;
+         this.spec = spec;
+         this.worldToken = env.worldToken();
+         this.player = Minecraft.getInstance().player;
+         this.creative = env.isCreativeMode();
+         this.powered = powered;
+         this.sourceState = spec.source().get(spec.lever());
+         this.targetState = this.sourceState.setValue(BlockStateProperties.POWERED, powered);
       }
 
-      boolean init_Z() {
-         return this.load_Obj != null
-            && Minecraft.getInstance().player == this.load_Obj
-            && this.init_DataUtil.worldToken() == this.init_Obj
-            && this.init_DataUtil.isCreativeMode() == this.load_Z;
+      boolean isSameSession() {
+         return this.player != null
+            && Minecraft.getInstance().player == this.player
+            && this.env.worldToken() == this.worldToken
+            && this.env.isCreativeMode() == this.creative;
       }
 
       @Override
       public BlockPos position() {
-         return this.init_NetHelper.lever();
+         return this.spec.lever();
       }
 
       @Override
@@ -115,57 +115,57 @@ final class AiPrintClock {
 
       @Override
       public String description() {
-         return this.init_Z ? "clock hold control" : "clock control restoration";
+         return this.powered ? "clock hold control" : "clock control restoration";
       }
 
       @Override
       public String detail() {
-         return this.init_Str;
+         return this.message;
       }
 
       @Override
       public boolean matchesSource(BlockState state) {
-         return state == this.init_BlockState;
+         return state == this.sourceState;
       }
 
       @Override
       public autismclient.ai.print.PrintMachineJob.JobStatus prepare() {
-         if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING
-            && this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.JobStatus.READY) {
-            return this.init_BitSetUtil_DataUti;
+         if (this.status != autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING
+            && this.status != autismclient.ai.print.PrintMachineJob.JobStatus.READY) {
+            return this.status;
          }
 
-         if (this.init_Z() && this.init_DataUtil.hasChunkAt(this.position())) {
-            BlockState actual = this.init_DataUtil.getBlockState(this.position());
-            if (actual != this.init_BlockState && actual != this.init_BlockState.setValue(BlockStateProperties.POWERED, true)) {
-               return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
-            } else if (actual == this.load_BlockState) {
-               this.init_Str = "Clock control changed without this action's receipt";
-               return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
+         if (this.isSameSession() && this.env.hasChunkAt(this.position())) {
+            BlockState actual = this.env.getBlockState(this.position());
+            if (actual != this.sourceState && actual != this.sourceState.setValue(BlockStateProperties.POWERED, true)) {
+               return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
+            } else if (actual == this.targetState) {
+               this.message = "Clock control changed without this action's receipt";
+               return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
             } else {
                Minecraft mc = Minecraft.getInstance();
                return mc.player != null
                      && mc.gui.screen() == null
                      && mc.player.containerMenu == mc.player.inventoryMenu
                      && mc.player.inventoryMenu.getCarried().isEmpty()
-                  ? (this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.READY)
-                  : (this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING);
+                  ? (this.status = autismclient.ai.print.PrintMachineJob.JobStatus.READY)
+                  : (this.status = autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING);
             }
          } else {
-            this.init_Str = "Clock control world, player or game mode changed";
-            return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
+            this.message = "Clock control world, player or game mode changed";
+            return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
          }
       }
 
       @Override
       public boolean beginDispatch() {
          if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY
-            && !this.init_DataUtil.isServerSneaking()
-            && !this.init_NetHelper.sweptVolume().intersects(this.init_DataUtil.serverPlayerBox())) {
-            this.init_J = AiServerEvidence.blockRevision(this.position());
-            this.load_J = this.init_DataUtil.nanoTime();
-            this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.SENT;
-            this.init_Str = "Waiting for the clock lever's native server receipt";
+            && !this.env.isServerSneaking()
+            && !this.spec.sweptVolume().intersects(this.env.serverPlayerBox())) {
+            this.blockRevision = AiServerEvidence.blockRevision(this.position());
+            this.startNanos = this.env.nanoTime();
+            this.status = autismclient.ai.print.PrintMachineJob.JobStatus.SENT;
+            this.message = "Waiting for the clock lever's native server receipt";
             return true;
          } else {
             return false;
@@ -174,38 +174,38 @@ final class AiPrintClock {
 
       @Override
       public autismclient.ai.print.PrintMachineJob.JobStatus pollStatus() {
-         if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
-            return this.init_BitSetUtil_DataUti;
+         if (this.status != autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
+            return this.status;
          }
 
-         if (!this.init_Z()) {
-            this.init_Str = "Clock control world, player or game mode changed after dispatch";
-            return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
+         if (!this.isSameSession()) {
+            this.message = "Clock control world, player or game mode changed after dispatch";
+            return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
          }
 
          AiServerEvidence.Inner_DataUtil reply = AiServerEvidence.lastBlockUpdate(this.position());
          if (reply == null
-            || reply.revision() <= this.init_J
-            || reply.state() != this.load_BlockState
-            || this.init_DataUtil.getBlockState(this.position()) != this.load_BlockState
-            || this.init_Z && !this.init_NetHelper.holding(this.init_DataUtil::getBlockState)) {
-            if (this.init_DataUtil.nanoTime() - this.load_J >= 5000000000L) {
-               this.init_Str = "Clock control was not acknowledged; do not repeat the toggle";
-               return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
+            || reply.revision() <= this.blockRevision
+            || reply.state() != this.targetState
+            || this.env.getBlockState(this.position()) != this.targetState
+            || this.powered && !this.spec.holding(this.env::getBlockState)) {
+            if (this.env.nanoTime() - this.startNanos >= 5000000000L) {
+               this.message = "Clock control was not acknowledged; do not repeat the toggle";
+               return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
             } else {
-               return this.init_BitSetUtil_DataUti;
+               return this.status;
             }
          } else {
-            this.init_Str = "Native clock control and holding geometry acknowledged";
-            return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED;
+            this.message = "Native clock control and holding geometry acknowledged";
+            return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED;
          }
       }
 
       @Override
       public void cancel() {
-         if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
-            this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
-            this.init_Str = "Clock control dispatch interrupted without a receipt";
+         if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
+            this.status = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
+            this.message = "Clock control dispatch interrupted without a receipt";
          }
       }
    }

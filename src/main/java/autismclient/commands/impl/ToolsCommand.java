@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 import net.minecraft.client.Minecraft;
 
 public final class ToolsCommand extends Command {
-   private static final List<String> init_List = List.of(
+   private static final List<String> SUBCOMMANDS = List.of(
       "goto",
       "parkour",
       "mine",
@@ -54,7 +54,7 @@ public final class ToolsCommand extends Command {
       "events"
    );
    private static final int init_I = 40;
-   private static final Set<String> init_Set = Set.of(
+   private static final Set<String> POSITIONED_TOOLS = Set.of(
       "game:goto",
       "game:navigate",
       "game:fill",
@@ -73,7 +73,7 @@ public final class ToolsCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(ctx -> this.init_I());
+      root.executes(ctx -> this.printHelp());
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("list").executes(ctx -> this.init_I_Str("")))
             .then(
@@ -84,7 +84,7 @@ public final class ToolsCommand extends Command {
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("schema")
-               .executes(ctx -> this.sync("Missing capability id\nUsage: " + load_Str() + "tools schema <id>")))
+               .executes(ctx -> this.sync("Missing capability id\nUsage: " + prefix() + "tools schema <id>")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("id", StringArgumentType.greedyString())
                   .suggests(ToolsCommand::init_CompletableFuture_CommandContext_SuggestionsBuilder)
@@ -93,7 +93,7 @@ public final class ToolsCommand extends Command {
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("call")
-               .executes(ctx -> this.sync("Missing capability id\nUsage: " + load_Str() + "tools call <id> [k=v ...]")))
+               .executes(ctx -> this.sync("Missing capability id\nUsage: " + prefix() + "tools call <id> [k=v ...]")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("invocation", StringArgumentType.greedyString())
                   .suggests((ctx, builder) -> AiToolsSuggest.init(builder))
@@ -101,7 +101,7 @@ public final class ToolsCommand extends Command {
             )
       );
 
-      for (String sub : init_List) {
+      for (String sub : SUBCOMMANDS) {
          LiteralArgumentBuilder<AutismCommandSource> shorthand = (LiteralArgumentBuilder<AutismCommandSource>)LiteralArgumentBuilder.<AutismCommandSource>literal(sub)
             .executes(ctx -> this.load(sub, ""));
          shorthand.then(
@@ -112,7 +112,7 @@ public final class ToolsCommand extends Command {
          root.then(shorthand);
       }
 
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("status").executes(ctx -> this.load_I()));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("status").executes(ctx -> this.printStatus()));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
          AiDirectOps.stop();
          return 1;
@@ -128,21 +128,21 @@ public final class ToolsCommand extends Command {
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("settings").executes(ctx -> this.read()));
    }
 
-   private int init_I() {
-      String t = load_Str() + "tools";
-      init_V_Str("§e" + t + " §7- run AI capabilities directly (no assistant)");
-      init_V_Str("§7" + t + " list [category] §8· §7" + t + " schema <id> §8· §7" + t + " call <id> [k=v ...]");
-      init_V_Str("§7" + t + " goto|parkour|mine|chop|follow|fight|build|fill|dig §8- §7positional shorthands (Tab completes every argument)");
-      init_V_Str("§8goto may dig, pillar and bridge (never where the player cannot build, e.g. adventure mode); parkour never breaks or places");
-      init_V_Str("§7" + t + " parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]");
-      init_V_Str("§8The flag can go last. Omit the destination to pick it in Freecam.");
-      init_V_Str(
+   private int printHelp() {
+      String t = prefix() + "tools";
+      send("§e" + t + " §7- run AI capabilities directly (no assistant)");
+      send("§7" + t + " list [category] §8· §7" + t + " schema <id> §8· §7" + t + " call <id> [k=v ...]");
+      send("§7" + t + " goto|parkour|mine|chop|follow|fight|build|fill|dig §8- §7positional shorthands (Tab completes every argument)");
+      send("§8goto may dig, pillar and bridge (never where the player cannot build, e.g. adventure mode); parkour never breaks or places");
+      send("§7" + t + " parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]");
+      send("§8The flag can go last. Omit the destination to pick it in Freecam.");
+      send(
          "§7"
             + t
             + " craft|smelt|obtain|collect <item> [count] §8· §7mine <block[=amount][,block[=amount]...]> [count per block] / chop <block> [count] §8· §7surface|cave|eat|sleep|trade|events"
       );
-      init_V_Str("§7" + t + " status §8· §7" + t + " stop §8· §7" + t + " pause §8· §7" + t + " resume §8· §7" + t + " settings");
-      init_V_Str("§8~ coords are feet-relative; pause suspends ticking (stops fight/shoot/dodge/mlg/telly)");
+      send("§7" + t + " status §8· §7" + t + " stop §8· §7" + t + " pause §8· §7" + t + " resume §8· §7" + t + " settings");
+      send("§8~ coords are feet-relative; pause suspends ticking (stops fight/shoot/dodge/mlg/telly)");
       return 1;
    }
 
@@ -151,7 +151,7 @@ public final class ToolsCommand extends Command {
       int total = 0;
 
       for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
-         if (init_Z_Str(entry.contract().id())) {
+         if (isToolId(entry.contract().id())) {
             grouped.computeIfAbsent(entry.contract().family(), f -> new ArrayList<>()).add(entry);
             total++;
          }
@@ -159,15 +159,15 @@ public final class ToolsCommand extends Command {
 
       String filter = category == null ? "" : category.trim().toLowerCase(Locale.ROOT);
       if (filter.isEmpty()) {
-         init_V_Str(
-            "§e" + total + " capabilities §7- " + load_Str() + "tools list <category> shows one group; " + load_Str() + "tools schema <id> shows arguments:"
+         send(
+            "§e" + total + " capabilities §7- " + prefix() + "tools list <category> shows one group; " + prefix() + "tools schema <id> shows arguments:"
          );
          StringBuilder line = new StringBuilder();
          int onLine = 0;
 
          for (Entry<String, List<AiCatalog.Entry>> family : grouped.entrySet()) {
             if (onLine == 3) {
-               init_V_Str(line.toString());
+               send(line.toString());
                line.setLength(0);
                onLine = 0;
             }
@@ -181,7 +181,7 @@ public final class ToolsCommand extends Command {
          }
 
          if (onLine > 0) {
-            init_V_Str(line.toString());
+            send(line.toString());
          }
 
          return 1;
@@ -210,7 +210,7 @@ public final class ToolsCommand extends Command {
          }
 
          List<AiCatalog.Entry> entries = grouped.get(family);
-         init_V_Str("§e" + family + " §7(" + entries.size() + "):");
+         send("§e" + family + " §7(" + entries.size() + "):");
          int shown = 0;
 
          for (AiCatalog.Entry entry : entries) {
@@ -218,11 +218,11 @@ public final class ToolsCommand extends Command {
                break;
             }
 
-            init_V_Str("§8- §f" + entry.contract().id() + " §7" + AiDirectOps.summarizePurpose(entry.contract().purpose()));
+            send("§8- §f" + entry.contract().id() + " §7" + AiDirectOps.summarizePurpose(entry.contract().purpose()));
          }
 
          if (entries.size() > 40) {
-            init_V_Str("§7… and " + (entries.size() - 40) + " more - " + load_Str() + "tools schema <id> for any of them.");
+            send("§7… and " + (entries.size() - 40) + " more - " + prefix() + "tools schema <id> for any of them.");
          }
 
          return 1;
@@ -230,7 +230,7 @@ public final class ToolsCommand extends Command {
    }
 
    private int load(String rawId) {
-      String id = init_Str_Str(rawId);
+      String id = resolveToolId(rawId);
       if (id == null) {
          return this.update(rawId);
       }
@@ -240,14 +240,14 @@ public final class ToolsCommand extends Command {
          return this.update(rawId);
       }
 
-      init_V_Str("§f" + id + " §8[" + entry.contract().family() + "]");
-      init_V_Str("§7" + AiDirectOps.summarizePurpose(entry.contract().purpose()));
+      send("§f" + id + " §8[" + entry.contract().family() + "]");
+      send("§7" + AiDirectOps.summarizePurpose(entry.contract().purpose()));
 
       JsonObject schema;
       try {
          schema = AiJson.parseObject(entry.contract().inputSchema());
       } catch (Exception e) {
-         init_V_Str("§7(no argument schema)");
+         send("§7(no argument schema)");
          return 1;
       }
 
@@ -261,12 +261,12 @@ public final class ToolsCommand extends Command {
 
          for (Entry<String, JsonElement> property : schema.getAsJsonObject("properties").entrySet()) {
             String type = AiJson.getString(property.getValue().getAsJsonObject(), "type", "any");
-            init_V_Str("§8- §f" + property.getKey() + " §7" + type + (required.contains(property.getKey()) ? " §c(required)" : ""));
+            send("§8- §f" + property.getKey() + " §7" + type + (required.contains(property.getKey()) ? " §c(required)" : ""));
          }
 
          return 1;
       } else {
-         init_V_Str("§7(no arguments)");
+         send("§7(no arguments)");
          return 1;
       }
    }
@@ -288,7 +288,7 @@ public final class ToolsCommand extends Command {
    }
 
    private int init_I_Str_Str(String rawId, String argsString) {
-      String id = init_Str_Str(rawId);
+      String id = resolveToolId(rawId);
       if (id == null) {
          return this.update(rawId);
       }
@@ -310,7 +310,7 @@ public final class ToolsCommand extends Command {
    }
 
    private static JsonObject init_JsonObject_Str_JsonObject(String id, JsonObject args) {
-      if (!init_Set.contains(id)) {
+      if (!POSITIONED_TOOLS.contains(id)) {
          return args;
       }
 
@@ -380,7 +380,7 @@ public final class ToolsCommand extends Command {
       if (name.isEmpty()) {
          this.sync(
             "Usage: "
-               + load_Str()
+               + prefix()
                + "tools build <schematic name|blueprint file|{inline json}>"
                + init_Str()
                + "\nBlueprint JSON: {origin:{x,y,z}?, blocks:[{dx,dy,dz,block},...]} in config/autism/ai/blueprints/; schematics load from the game's schematics/ folder"
@@ -436,9 +436,9 @@ public final class ToolsCommand extends Command {
       }
    }
 
-   private int load_I() {
+   private int printStatus() {
       for (String line : AiDirectOps.statusLines()) {
-         init_V_Str(line);
+         send(line);
       }
 
       return 1;
@@ -465,7 +465,7 @@ public final class ToolsCommand extends Command {
       }
    }
 
-   private static String init_Str_Str(String raw) {
+   private static String resolveToolId(String raw) {
       return AiDirectOps.resolveToolId(raw);
    }
 
@@ -474,21 +474,21 @@ public final class ToolsCommand extends Command {
       List<String> ids = new ArrayList<>();
 
       for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
-         if (init_Z_Str(entry.contract().id())) {
+         if (isToolId(entry.contract().id())) {
             ids.add(entry.contract().id());
          }
       }
 
       List<String> near = AiToolCallParser.init(raw, ids, 4);
       if (!near.isEmpty()) {
-         init_V_Str("§7Did you mean: §f" + String.join("§7, §f", near));
+         send("§7Did you mean: §f" + String.join("§7, §f", near));
       }
 
-      init_V_Str("§7" + load_Str() + "tools list shows everything callable.");
+      send("§7" + prefix() + "tools list shows everything callable.");
       return 1;
    }
 
-   private static boolean init_Z_Str(String id) {
+   private static boolean isToolId(String id) {
       return AiDirectOps.isToolId(id);
    }
 
@@ -500,7 +500,7 @@ public final class ToolsCommand extends Command {
       try {
          for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
             String id = entry.contract().id();
-            if (init_Z_Str(id) && id.toLowerCase(Locale.ROOT).startsWith(remaining)) {
+            if (isToolId(id) && id.toLowerCase(Locale.ROOT).startsWith(remaining)) {
                builder.suggest(id);
             }
          }
@@ -561,17 +561,17 @@ public final class ToolsCommand extends Command {
 
    private int sync(String message) {
       for (String line : (message == null ? "error" : message).split("\n")) {
-         AutismClientMessaging.sendPrefixed((line.startsWith("Usage:") ? "§e" : "§c") + line.replace(".tools", load_Str() + "tools"));
+         AutismClientMessaging.sendPrefixed((line.startsWith("Usage:") ? "§e" : "§c") + line.replace(".tools", prefix() + "tools"));
       }
 
       return 1;
    }
 
-   private static void init_V_Str(String line) {
-      AutismClientMessaging.sendPrefixed(line.replace(".tools", load_Str() + "tools"));
+   private static void send(String line) {
+      AutismClientMessaging.sendPrefixed(line.replace(".tools", prefix() + "tools"));
    }
 
-   private static String load_Str() {
+   private static String prefix() {
       return autismclient.commands.CommandManager.getPrefix();
    }
 }

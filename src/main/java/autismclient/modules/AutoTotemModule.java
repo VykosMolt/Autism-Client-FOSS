@@ -73,21 +73,21 @@ public final class AutoTotemModule extends Module {
    private static final int load_I = 0;
    private static final int read_I = 1;
    private static final int write_I = 2;
-   private static final Direction[] init_DirectionArr = new Direction[]{Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
-   private static final EquipmentSlot[] init_EquipmentSlotArr = new EquipmentSlot[]{
+   private static final Direction[] ENCLOSING_SIDES = new Direction[]{Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
+   private static final EquipmentSlot[] ARMOR_SLOTS = new EquipmentSlot[]{
       EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
    };
    private static final float init_F = 0.91F;
    private static final float load_F = 0.98F;
    private static final float read_F = 0.99F;
    private static final float write_F = 0.98F;
-   private static final List<BlockPos> init_List = init_List_F(10.0F);
+   private static final List<BlockPos> NEARBY_OFFSETS = sphereOffsets(10.0F);
    private static final long init_J = 2000L;
    private static final long load_J = 500L;
-   private long read_J;
+   private long lastSwitchTime;
    private long write_J = -1L;
    private int update_I = 0;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
+   private ItemStack offhandBefore = ItemStack.EMPTY;
    private int sync = -1;
    private long update_J = -1L;
    private Item init_Item = Items.AIR;
@@ -103,14 +103,14 @@ public final class AutoTotemModule extends Module {
    private int set;
    private int put;
    private int add = -1;
-   private autismclient.gui.AutismGhostInventoryScreen init_DataUtil;
-   private boolean init_Z;
+   private autismclient.gui.AutismGhostInventoryScreen ghostInventory;
+   private boolean ghostInventoryOpen;
    private int clear = -1;
    private static volatile int reset = -2147483648;
-   private final Map<String, String> init_Map = new HashMap<>();
-   private final Map<String, ValueRange> load_Map = new HashMap<>();
+   private final Map<String, String> lastRangeRaw = new HashMap<>();
+   private final Map<String, ValueRange> rangeCache = new HashMap<>();
    private static volatile int start = -2147483648;
-   private final Map<Long, Float> read_Map = new HashMap<>();
+   private final Map<Long, Float> damageCache = new HashMap<>();
    private int stop = -2;
 
    AutoTotemModule() {
@@ -231,7 +231,7 @@ public final class AutoTotemModule extends Module {
          return;
       }
 
-      this.init_V_5();
+      this.resetState();
    }
 
    @Override
@@ -242,7 +242,7 @@ public final class AutoTotemModule extends Module {
          return;
       }
 
-      this.init_V_5();
+      this.resetState();
    }
 
    @Override
@@ -253,25 +253,25 @@ public final class AutoTotemModule extends Module {
          return;
       }
 
-      this.init_V_5();
+      this.resetState();
    }
 
-   private void init_V_5() {
+   private void resetState() {
       this.update_I = 0;
       this.write_J = -1L;
-      this.read_J = 0L;
-      this.init_ItemStack = ItemStack.EMPTY;
+      this.lastSwitchTime = 0L;
+      this.offhandBefore = ItemStack.EMPTY;
       this.sync = -1;
       this.update_J = -1L;
       this.init_Item = Items.AIR;
       if (this.push != 0) {
          this.write_V_3();
       } else {
-         this.update_V_3();
+         this.resetClickSequence();
       }
 
-      this.init_V_Z_2(false);
-      this.read_Map.clear();
+      this.closeGhostInventory(false);
+      this.damageCache.clear();
       this.stop = -2;
       this.put = 0;
       this.add = -1;
@@ -289,8 +289,8 @@ public final class AutoTotemModule extends Module {
       if (MC != null && MC.player != null && MC.level != null) {
          if (aD.read_Z()) {
             boolean ghostHadClicks = this.push != 0;
-            this.update_V_3();
-            this.init_V_Z_2(ghostHadClicks);
+            this.resetClickSequence();
+            this.closeGhostInventory(ghostHadClicks);
          } else {
             this.load_V_4();
             if (this.push != 0) {
@@ -298,7 +298,7 @@ public final class AutoTotemModule extends Module {
             } else {
                int now = AutismSessionState.getInstance().getClientTick();
                boolean health = this.bool("health");
-               boolean wantTotem = health ? !sync_Z() && this.pop() : true;
+               boolean wantTotem = health ? !shouldIgnore() && this.pop() : true;
                int mode = wantTotem ? 1 : 0;
                if (mode == 0 && health && this.bool("switch-back") && this.update_I == 1) {
                   mode = 2;
@@ -323,10 +323,10 @@ public final class AutoTotemModule extends Module {
                boolean timed = this.push();
                if (!timed || now >= this.put) {
                   boolean handedOver = mode == 1 && autismclient.util.InventorySlotArbiter.didOtherReleaseClickRecently(this.id());
-                  if (handedOver || System.currentTimeMillis() - this.read_J >= this.integer("switch-delay")) {
+                  if (handedOver || System.currentTimeMillis() - this.lastSwitchTime >= this.integer("switch-delay")) {
                      int fromSlot;
                      if (mode == 1) {
-                        fromSlot = init_I_3();
+                        fromSlot = findTotemSlot();
                         if (fromSlot < 0) {
                            this.sync_V();
                            return;
@@ -354,8 +354,8 @@ public final class AutoTotemModule extends Module {
                         this.sync_V();
                      } else {
                         if (timed) {
-                           if (this.add < 0 && this.init_DataUtil == null) {
-                              this.add = now + this.init_I_Str("reaction", 0, 2);
+                           if (this.add < 0 && this.ghostInventory == null) {
+                              this.add = now + this.randomDelay("reaction", 0, 2);
                            }
 
                            if (now < this.add) {
@@ -367,23 +367,23 @@ public final class AutoTotemModule extends Module {
 
                         if (timed) {
                            if (this.clear >= 0) {
-                              if (this.init_DataUtil != null && MC.gui.screen() != this.init_DataUtil) {
-                                 this.init_DataUtil = null;
+                              if (this.ghostInventory != null && MC.gui.screen() != this.ghostInventory) {
+                                 this.ghostInventory = null;
                               }
 
-                              if (this.init_DataUtil != null && now < this.clear) {
-                                 init_V_I_2(this.write_I_2());
+                              if (this.ghostInventory != null && now < this.clear) {
+                                 delayUntil(this.clickDelay());
                                  return;
                               }
 
                               this.clear = -1;
-                           } else if (this.init_DataUtil == null && MC.gui.screen() == null && this.init_Z_I_2(fromSlot)) {
-                              this.init_DataUtil = new autismclient.gui.AutismGhostInventoryScreen(MC.player);
-                              this.init_Z = true;
-                              MC.gui.setScreen(this.init_DataUtil);
+                           } else if (this.ghostInventory == null && MC.gui.screen() == null && this.init_Z_I_2(fromSlot)) {
+                              this.ghostInventory = new autismclient.gui.AutismGhostInventoryScreen(MC.player);
+                              this.ghostInventoryOpen = true;
+                              MC.gui.setScreen(this.ghostInventory);
                               MC.mouseHandler.grabMouse();
-                              this.clear = now + this.init_I_Str("settle", 1, 1);
-                              init_V_I_2(this.write_I_2());
+                              this.clear = now + this.randomDelay("settle", 1, 1);
+                              delayUntil(this.clickDelay());
                               return;
                            }
                         }
@@ -392,17 +392,17 @@ public final class AutoTotemModule extends Module {
                         boolean switched = timed ? this.init_Z_I(fromSlot, mode == 1, offhandBefore) : this.init_Z_I_Z_2(fromSlot, mode == 1);
                         if (!switched) {
                            this.update_I = previousMode;
-                           this.init_V_Z_2(false);
+                           this.closeGhostInventory(false);
                         } else {
                            if (mode == 1 && health && this.bool("switch-back")) {
-                              this.init_ItemStack = offhandBefore;
+                              this.offhandBefore = offhandBefore;
                               this.sync = fromSlot;
                            } else {
-                              this.init_ItemStack = ItemStack.EMPTY;
+                              this.offhandBefore = ItemStack.EMPTY;
                               this.sync = -1;
                            }
 
-                           this.read_J = System.currentTimeMillis();
+                           this.lastSwitchTime = System.currentTimeMillis();
                            this.load_V_4();
                         }
                      }
@@ -416,7 +416,7 @@ public final class AutoTotemModule extends Module {
    private void load_V_4() {
       boolean tripLive = this.write_Z_2();
       if (!tripLive && this.sync >= 0) {
-         this.init_ItemStack = ItemStack.EMPTY;
+         this.offhandBefore = ItemStack.EMPTY;
          this.sync = -1;
       }
 
@@ -428,7 +428,7 @@ public final class AutoTotemModule extends Module {
          autismclient.util.InventorySlotArbiter.releaseAllSlots(this.id());
       }
 
-      if (!tripLive && this.push == 0 && !this.update_Z_2() && !init_Z_ItemStack_2(MC.player.getOffhandItem())) {
+      if (!tripLive && this.push == 0 && !this.update_Z_2() && !isTotem(MC.player.getOffhandItem())) {
          autismclient.util.InventorySlotArbiter.releaseHotbar(this.id());
       } else {
          autismclient.util.InventorySlotArbiter.claimHotbar(this.id());
@@ -443,7 +443,7 @@ public final class AutoTotemModule extends Module {
       } else if (this.push != 0) {
          return true;
       } else {
-         return this.load_I_2() >= 0 ? true : System.currentTimeMillis() - this.read_J < 2000L;
+         return this.load_I_2() >= 0 ? true : System.currentTimeMillis() - this.lastSwitchTime < 2000L;
       }
    }
 
@@ -460,24 +460,24 @@ public final class AutoTotemModule extends Module {
       return false;
    }
 
-   private static boolean sync_Z() {
+   private static boolean shouldIgnore() {
       return MC.player.isCreative() || MC.player.isSpectator() || MC.player.isDeadOrDying();
    }
 
-   private static int init_I_3() {
+   private static int findTotemSlot() {
       LocalPlayer player = MC.player;
-      if (init_Z_ItemStack_2(player.getOffhandItem())) {
+      if (isTotem(player.getOffhandItem())) {
          return 40;
       }
 
       for (int i = 0; i < 9; i++) {
-         if (init_Z_ItemStack_2(player.getInventory().getItem(i))) {
+         if (isTotem(player.getInventory().getItem(i))) {
             return i;
          }
       }
 
       for (int i = 9; i < 36; i++) {
-         if (init_Z_ItemStack_2(player.getInventory().getItem(i))) {
+         if (isTotem(player.getInventory().getItem(i))) {
             return i;
          }
       }
@@ -485,17 +485,17 @@ public final class AutoTotemModule extends Module {
       return -1;
    }
 
-   private static boolean init_Z_ItemStack_2(ItemStack stack) {
+   private static boolean isTotem(ItemStack stack) {
       return !stack.isEmpty() && stack.has(DataComponents.DEATH_PROTECTION);
    }
 
    private int load_I_2() {
       if (this.sync >= 0 && this.sync != 40) {
          ItemStack stack = MC.player.getInventory().getItem(this.sync);
-         if (this.init_ItemStack.isEmpty()) {
+         if (this.offhandBefore.isEmpty()) {
             return stack.isEmpty() ? this.sync : -1;
          } else {
-            return !stack.isEmpty() && stack.getItem() == this.init_ItemStack.getItem() ? this.sync : -1;
+            return !stack.isEmpty() && stack.getItem() == this.offhandBefore.getItem() ? this.sync : -1;
          }
       } else {
          return -1;
@@ -592,8 +592,8 @@ public final class AutoTotemModule extends Module {
                this.pop = fromSlot;
                this.run = 0;
                this.get = 1;
-               this.set = now + this.init_I_Str("close-delay", 1, 2);
-               init_V_I_2(this.write_I_2());
+               this.set = now + this.randomDelay("close-delay", 1, 2);
+               delayUntil(this.clickDelay());
                this.close_V();
             }
 
@@ -629,8 +629,8 @@ public final class AutoTotemModule extends Module {
             this.pop = fromSlot;
             this.run = 1;
             this.get = (offhandBefore.isEmpty() ? 2 : 3) + 1;
-            this.set = now + this.init_I_Str("click-delay", 1, 2);
-            init_V_I_2(this.write_I_2());
+            this.set = now + this.randomDelay("click-delay", 1, 2);
+            delayUntil(this.clickDelay());
             this.close_V();
             return true;
          }
@@ -666,8 +666,8 @@ public final class AutoTotemModule extends Module {
 
             this.init_Item = MC.player.getOffhandItem().getItem();
             this.update_J = System.currentTimeMillis();
-            init_V_I_2(this.write_I_2());
-            this.put = now + this.init_I_Str("operation-delay", 0, 2);
+            delayUntil(this.clickDelay());
+            this.put = now + this.randomDelay("operation-delay", 0, 2);
             this.close_V();
             return true;
          } else {
@@ -686,8 +686,8 @@ public final class AutoTotemModule extends Module {
             this.tick = selected;
             this.run = 1;
             this.get = 3;
-            this.set = now + this.init_I_Str("click-delay", 1, 2);
-            init_V_I_2(this.write_I_2());
+            this.set = now + this.randomDelay("click-delay", 1, 2);
+            delayUntil(this.clickDelay());
             this.close_V();
             return true;
          }
@@ -698,9 +698,9 @@ public final class AutoTotemModule extends Module {
 
    private void read_V_3() {
       int now = AutismSessionState.getInstance().getClientTick();
-      reset = now + this.write_I_2();
-      if (this.init_DataUtil != null && MC.gui.screen() != this.init_DataUtil) {
-         this.init_DataUtil = null;
+      reset = now + this.clickDelay();
+      if (this.ghostInventory != null && MC.gui.screen() != this.ghostInventory) {
+         this.ghostInventory = null;
       }
 
       if (now >= this.set) {
@@ -732,11 +732,11 @@ public final class AutoTotemModule extends Module {
                this.write_V_3();
             } else {
                this.run++;
-               this.set = now + this.read_I_2();
+               this.set = now + this.nextDelay();
                this.close_V();
                if (this.run >= this.get) {
-                  this.put = now + this.init_I_Str("operation-delay", 0, 2);
-                  this.update_V_3();
+                  this.put = now + this.randomDelay("operation-delay", 0, 2);
+                  this.resetClickSequence();
                }
             }
          }
@@ -808,12 +808,12 @@ public final class AutoTotemModule extends Module {
          }
       }
 
-      this.put = AutismSessionState.getInstance().getClientTick() + this.init_I_Str("operation-delay", 0, 2);
-      this.init_V_Z_2(true);
-      this.update_V_3();
+      this.put = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 0, 2);
+      this.closeGhostInventory(true);
+      this.resetClickSequence();
    }
 
-   private void update_V_3() {
+   private void resetClickSequence() {
       this.push = 0;
       this.pop = -1;
       this.tick = -1;
@@ -829,14 +829,14 @@ public final class AutoTotemModule extends Module {
    }
 
    private void sync_V() {
-      this.init_V_Z_2(false);
+      this.closeGhostInventory(false);
    }
 
-   private void init_V_Z_2(boolean humanShape) {
-      this.init_Z = false;
+   private void closeGhostInventory(boolean humanShape) {
+      this.ghostInventoryOpen = false;
       this.clear = -1;
-      autismclient.gui.AutismGhostInventoryScreen screen = this.init_DataUtil;
-      this.init_DataUtil = null;
+      autismclient.gui.AutismGhostInventoryScreen screen = this.ghostInventory;
+      this.ghostInventory = null;
       if (screen != null && MC.gui.screen() == screen) {
          if (humanShape && MC.getConnection() != null && MC.player != null) {
             screen.onClose();
@@ -849,47 +849,47 @@ public final class AutoTotemModule extends Module {
       }
    }
 
-   private static void init_V_I_2(int ticks) {
+   private static void delayUntil(int ticks) {
       reset = AutismSessionState.getInstance().getClientTick() + ticks;
    }
 
-   private ValueRange init_ValueRange_Str(String settingId, int fallbackMin, int fallbackMax) {
+   private ValueRange rangeSetting(String settingId, int fallbackMin, int fallbackMax) {
       String raw = this.value(settingId);
-      String previous = this.init_Map.put(settingId, raw);
+      String previous = this.lastRangeRaw.put(settingId, raw);
       if (previous == null || !previous.equals(raw)) {
-         this.load_Map.put(settingId, ValueRange.parse(raw, new ValueRange(fallbackMin, fallbackMax)).clamp(0.0, 10.0));
+         this.rangeCache.put(settingId, ValueRange.parse(raw, new ValueRange(fallbackMin, fallbackMax)).clamp(0.0, 10.0));
       }
 
-      return this.load_Map.get(settingId);
+      return this.rangeCache.get(settingId);
    }
 
-   private int init_I_Str(String settingId, int fallbackMin, int fallbackMax) {
-      return (int)Math.round(this.init_ValueRange_Str(settingId, fallbackMin, fallbackMax).random(ThreadLocalRandom.current()));
+   private int randomDelay(String settingId, int fallbackMin, int fallbackMax) {
+      return (int)Math.round(this.rangeSetting(settingId, fallbackMin, fallbackMax).random(ThreadLocalRandom.current()));
    }
 
-   private int read_I_2() {
+   private int nextDelay() {
       boolean nextIsClose = this.push == 3 || this.push == 1 && this.run == this.get - 1;
-      return nextIsClose ? this.init_I_Str("close-delay", 1, 2) : this.init_I_Str("click-delay", 1, 2);
+      return nextIsClose ? this.randomDelay("close-delay", 1, 2) : this.randomDelay("click-delay", 1, 2);
    }
 
-   private int write_I_2() {
-      return Math.max(1, this.init_I_Str("click-delay", 1, 2));
+   private int clickDelay() {
+      return Math.max(1, this.randomDelay("click-delay", 1, 2));
    }
 
-   private double init_D_Str_I(String settingId, int fallbackMax) {
-      return this.init_ValueRange_Str(settingId, 0, fallbackMax).max();
+   private double rangeMax(String settingId, int fallbackMax) {
+      return this.rangeSetting(settingId, 0, fallbackMax).max();
    }
 
    private boolean push() {
-      return this.init_D_Str_I("click-delay", 5) > 0.0
-         || this.init_D_Str_I("close-delay", 5) > 0.0
-         || this.init_D_Str_I("operation-delay", 5) > 0.0
-         || this.init_D_Str_I("reaction", 7) > 0.0;
+      return this.rangeMax("click-delay", 5) > 0.0
+         || this.rangeMax("close-delay", 5) > 0.0
+         || this.rangeMax("operation-delay", 5) > 0.0
+         || this.rangeMax("reaction", 7) > 0.0;
    }
 
    private void flush_V() {
-      if (this.init_Z) {
-         this.init_V_Z_2(true);
+      if (this.ghostInventoryOpen) {
+         this.closeGhostInventory(true);
       } else if (MC.getConnection() != null && MC.gui.screen() == null && MC.player.containerMenu == MC.player.inventoryMenu) {
          MC.getConnection().send(new ServerboundContainerClosePacket(MC.player.containerMenu.containerId));
       }
@@ -1014,7 +1014,7 @@ public final class AutoTotemModule extends Module {
       }
 
       if (this.bool("missing-armor")) {
-         for (EquipmentSlot slot : init_EquipmentSlotArr) {
+         for (EquipmentSlot slot : ARMOR_SLOTS) {
             if (MC.player.getItemBySlot(slot).isEmpty()) {
                return true;
             }
@@ -1022,7 +1022,7 @@ public final class AutoTotemModule extends Module {
       }
 
       float health = MC.player.getHealth() + MC.player.getAbsorptionAmount();
-      boolean safetyOperating = this.bool("safety") && (run() || tick_Z());
+      boolean safetyOperating = this.bool("safety") && (run() || isSurrounded());
       float allowedDamage = health - (safetyOperating ? this.integer("safe-health-threshold") : this.integer("health-threshold"));
       if (allowedDamage <= 0.0F) {
          return true;
@@ -1032,21 +1032,21 @@ public final class AutoTotemModule extends Module {
          allowedDamage = health;
       }
 
-      float calculatedDamage = this.init_F_F(allowedDamage);
+      float calculatedDamage = this.predictedExplosionDamage(allowedDamage);
       if (calculatedDamage >= allowedDamage) {
          return true;
       }
 
-      calculatedDamage = Math.max(calculatedDamage, this.load_F_F(allowedDamage));
+      calculatedDamage = Math.max(calculatedDamage, this.predictedBlockExplosionDamage(allowedDamage));
       if (calculatedDamage >= allowedDamage) {
          return true;
       }
 
-      calculatedDamage += this.init_F_2();
+      calculatedDamage += this.predictedFallDamage();
       return calculatedDamage >= allowedDamage;
    }
 
-   private float init_F_F(float allowedDamage) {
+   private float predictedExplosionDamage(float allowedDamage) {
       if (!this.bool("predict-explosions")) {
          return 0.0F;
       }
@@ -1071,19 +1071,19 @@ public final class AutoTotemModule extends Module {
       int now = AutismSessionState.getInstance().getClientTick();
       if (now - this.stop >= 2) {
          this.stop = now;
-         this.read_Map.clear();
+         this.damageCache.clear();
       }
 
       Vec3 pos = entity.position();
       long key = (long)entity.getId() << 48 | ((long)(pos.x * 4.0) & 65535L) << 32 | ((long)(pos.y * 4.0) & 65535L) << 16 | (long)(pos.z * 4.0) & 65535L;
-      Float cached = this.read_Map.get(key);
+      Float cached = this.damageCache.get(key);
       if (cached != null) {
          return cached;
       }
 
       float damage = load_F_Entity(entity, floor);
       if (damage >= 0.0F) {
-         this.read_Map.put(key, damage);
+         this.damageCache.put(key, damage);
       }
 
       return damage;
@@ -1108,7 +1108,7 @@ public final class AutoTotemModule extends Module {
       }
    }
 
-   private float load_F_F(float allowedDamage) {
+   private float predictedBlockExplosionDamage(float allowedDamage) {
       if (!this.bool("predict-block-explosions")) {
          return 0.0F;
       }
@@ -1122,7 +1122,7 @@ public final class AutoTotemModule extends Module {
       BlockPos center = MC.player.blockPosition();
       float maxDamage = 0.0F;
 
-      for (BlockPos offset : init_List) {
+      for (BlockPos offset : NEARBY_OFFSETS) {
          BlockPos pos = center.offset(offset);
          BlockState state = MC.level.getBlockState(pos);
          Block block = state.getBlock();
@@ -1156,7 +1156,7 @@ public final class AutoTotemModule extends Module {
          return -1.0F;
       }
 
-      float exposure = exclude == null ? ServerExplosion.getSeenPercent(pos, player) : init_F_LocalPlayer_2(player, pos, exclude);
+      float exposure = exclude == null ? ServerExplosion.getSeenPercent(pos, player) : exposure(player, pos, exclude);
       return auditExplosionDamage(exposure, distanceDecay, range, source);
    }
 
@@ -1166,7 +1166,7 @@ public final class AutoTotemModule extends Module {
       return preprocessedDamage == 0.0 ? 0.0F : init_F_DamageSource_F(source, (float)preprocessedDamage);
    }
 
-   private static float init_F_LocalPlayer_2(LocalPlayer player, Vec3 source, List<BlockPos> exclude) {
+   private static float exposure(LocalPlayer player, Vec3 source, List<BlockPos> exclude) {
       AABB box = player.getBoundingBox();
       double stepX = 1.0 / ((box.maxX - box.minX) * 2.0 + 1.0);
       double stepY = 1.0 / ((box.maxY - box.minY) * 2.0 + 1.0);
@@ -1197,7 +1197,7 @@ public final class AutoTotemModule extends Module {
       }
    }
 
-   private float init_F_2() {
+   private float predictedFallDamage() {
       LocalPlayer player = MC.player;
       if (this.bool("predict-fall-damage") && !(player.fallDistance <= 3.0)) {
          Module noFall = al.init_Module_Str("no-fall");
@@ -1297,7 +1297,7 @@ public final class AutoTotemModule extends Module {
                float horizontalAngle = 3.1415927F;
                Vec3 sourcePosition = source.getSourcePosition();
                if (sourcePosition != null) {
-                  Vec3 view = init_Vec3_LocalPlayer(player);
+                  Vec3 view = headForward(player);
                   Vec3 direction = sourcePosition.subtract(player.position());
                   direction = new Vec3(direction.x, 0.0, direction.z).normalize();
                   horizontalAngle = (float)Math.acos(Mth.clamp(direction.dot(view), -1.0, 1.0));
@@ -1309,16 +1309,16 @@ public final class AutoTotemModule extends Module {
       }
    }
 
-   private static Vec3 init_Vec3_LocalPlayer(LocalPlayer player) {
+   private static Vec3 headForward(LocalPlayer player) {
       float yaw = player.getYHeadRot() * 0.017453292F;
       return new Vec3(-Mth.sin(yaw), 0.0, Mth.cos(yaw));
    }
 
-   private static boolean tick_Z() {
-      BlockPos feet = init_BlockPos();
+   private static boolean isSurrounded() {
+      BlockPos feet = feetPos();
 
-      for (Direction direction : init_DirectionArr) {
-         if (!init_Z_BlockPos_2(feet.relative(direction))) {
+      for (Direction direction : ENCLOSING_SIDES) {
+         if (!isBlastProof(feet.relative(direction))) {
             return false;
          }
       }
@@ -1327,19 +1327,19 @@ public final class AutoTotemModule extends Module {
    }
 
    private static boolean run() {
-      return init_Z_BlockPos_2(init_BlockPos());
+      return isBlastProof(feetPos());
    }
 
-   private static boolean init_Z_BlockPos_2(BlockPos pos) {
+   private static boolean isBlastProof(BlockPos pos) {
       return MC.level.getBlockState(pos).getBlock().getExplosionResistance() >= 600.0F;
    }
 
-   private static BlockPos init_BlockPos() {
+   private static BlockPos feetPos() {
       AABB box = MC.player.getBoundingBox();
       return new BlockPos(Mth.floor(Mth.lerp(0.5, box.minX, box.maxX)), Mth.ceil(box.minY), Mth.floor(Mth.lerp(0.5, box.minZ, box.maxZ)));
    }
 
-   private static List<BlockPos> init_List_F(float radius) {
+   private static List<BlockPos> sphereOffsets(float radius) {
       List<BlockPos> out = new ArrayList<>();
       int r = Mth.ceil(radius);
       float rSq = radius * radius;
@@ -1359,18 +1359,18 @@ public final class AutoTotemModule extends Module {
    }
 
    private static final class Inner_DataUtil {
-      private final LocalPlayer init_LocalPlayer;
-      private double init_D;
+      private final LocalPlayer player;
+      private double x;
       private double load;
       private double read;
       private double write;
       private double update;
       private double sync;
-      private int init_I;
+      private int ticks;
 
       private Inner_DataUtil(LocalPlayer player) {
-         this.init_LocalPlayer = player;
-         this.init_D = player.getX();
+         this.player = player;
+         this.x = player.getX();
          this.load = player.getY();
          this.read = player.getZ();
          Vec3 delta = player.getDeltaMovement();
@@ -1384,9 +1384,9 @@ public final class AutoTotemModule extends Module {
          Vec3 rotationVec = player.getLookAngle();
 
          for (int i = 0; i < ticks; i++) {
-            Vec3 start = new Vec3(sim.init_D, sim.load, sim.read);
+            Vec3 start = new Vec3(sim.x, sim.load, sim.read);
             sim.init(rotationVec);
-            Vec3 end = new Vec3(sim.init_D, sim.load, sim.read);
+            Vec3 end = new Vec3(sim.x, sim.load, sim.read);
             AABB box = player.getDimensions(player.getPose()).makeBoundingBox(start).expandTowards(end.subtract(start));
             Optional<BlockPos> support = Module.MC.level.findSupportingBlock(player, box);
             if (support.isPresent()) {
@@ -1398,29 +1398,29 @@ public final class AutoTotemModule extends Module {
       }
 
       private void init(Vec3 rotationVec) {
-         if (this.init_LocalPlayer.isFallFlying()) {
+         if (this.player.isFallFlying()) {
             this.load(rotationVec);
          } else {
             this.init_V();
          }
 
-         this.init_D = this.init_D + this.write;
+         this.x = this.x + this.write;
          this.load = this.load + this.update;
          this.read = this.read + this.sync;
-         this.init_I++;
+         this.ticks++;
       }
 
       private void init_V() {
-         double gravity = this.init_LocalPlayer.getGravity();
+         double gravity = this.player.getGravity();
          if (this.update <= 0.0 && this.init(MobEffects.SLOW_FALLING)) {
             this.update = this.update - Math.min(gravity, 0.01);
          } else {
             this.update -= gravity;
          }
 
-         float speed = this.init_LocalPlayer.getSpeed() * 0.1F;
+         float speed = this.player.getSpeed() * 0.1F;
          if (speed > 0.0F) {
-            Vec3 input = AutismEntityAccessor.autism$getInputVector(this.init_Vec3(), speed, this.init_LocalPlayer.getYRot());
+            Vec3 input = AutismEntityAccessor.autism$getInputVector(this.inputVector(), speed, this.player.getYRot());
             this.write = this.write + input.x;
             this.sync = this.sync + input.z;
          }
@@ -1436,7 +1436,7 @@ public final class AutoTotemModule extends Module {
             gravity = 0.01;
          }
 
-         double pitchRad = this.init_LocalPlayer.getXRot() * 0.017453292F;
+         double pitchRad = this.player.getXRot() * 0.017453292F;
          double k = Math.sqrt(rotationVec.x * rotationVec.x + rotationVec.z * rotationVec.z);
          double l = Math.sqrt(this.write * this.write + this.sync * this.sync);
          double m = rotationVec.length();
@@ -1457,20 +1457,20 @@ public final class AutoTotemModule extends Module {
             vec = vec.add((rotationVec.x / k * l - vec.x) * 0.1, 0.0, (rotationVec.z / k * l - vec.z) * 0.1);
          }
 
-         vec = vec.add(AutismEntityAccessor.autism$getInputVector(this.init_Vec3(), 0.02F, this.init_LocalPlayer.getYRot()));
-         float blockSpeedFactor = ((AutismPlayerAccessor)this.init_LocalPlayer).autism$getBlockSpeedFactor();
+         vec = vec.add(AutismEntityAccessor.autism$getInputVector(this.inputVector(), 0.02F, this.player.getYRot()));
+         float blockSpeedFactor = ((AutismPlayerAccessor)this.player).autism$getBlockSpeedFactor();
          this.write = vec.x * 0.9900000095367432 * blockSpeedFactor;
          this.update = vec.y * 0.9800000190734863;
          this.sync = vec.z * 0.9900000095367432 * blockSpeedFactor;
       }
 
       private boolean init(Holder<MobEffect> effect) {
-         MobEffectInstance instance = this.init_LocalPlayer.getEffect(effect);
-         return instance != null && instance.getDuration() >= this.init_I;
+         MobEffectInstance instance = this.player.getEffect(effect);
+         return instance != null && instance.getDuration() >= this.ticks;
       }
 
-      private Vec3 init_Vec3() {
-         Input keyPresses = this.init_LocalPlayer.input.keyPresses;
+      private Vec3 inputVector() {
+         Input keyPresses = this.player.input.keyPresses;
          float forward = (keyPresses.forward() ? 1.0F : 0.0F) - (keyPresses.backward() ? 1.0F : 0.0F);
          float sideways = (keyPresses.left() ? 1.0F : 0.0F) - (keyPresses.right() ? 1.0F : 0.0F);
          return new Vec3(sideways * 0.98, 0.0, forward * 0.98);

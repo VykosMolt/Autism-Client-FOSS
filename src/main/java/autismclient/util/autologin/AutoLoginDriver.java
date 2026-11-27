@@ -9,10 +9,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class AutoLoginDriver {
-   private final AutoLoginBackend init_BufferHelper;
-   private volatile AuthPromptParser.Inner_DataUtil init_DataUtil_DataUtil;
+   private final AutoLoginBackend host;
+   private volatile AuthPromptParser.Inner_DataUtil detection;
    private volatile long init_J;
-   private volatile AutoLoginTimings init_StreamUtil;
+   private volatile AutoLoginTimings newConfig;
    private volatile AutoLoginDriver.Inner_DataUtil init_CachePool_DataUtil;
    private long load_J;
    private long read_J;
@@ -29,30 +29,30 @@ public final class AutoLoginDriver {
    private String load_Str;
 
    public AutoLoginDriver(AutoLoginBackend host) {
-      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
-      this.init_StreamUtil = AutoLoginTimings.defaults();
+      this.detection = AuthPromptParser.Inner_DataUtil.NONE;
+      this.newConfig = AutoLoginTimings.defaults();
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.IDLE;
       this.close = -9223372036854775808L;
       this.init_Str = "";
       this.load_Str = "";
-      this.init_BufferHelper = host;
+      this.host = host;
    }
 
    public void init(AutoLoginTimings newConfig) {
       if (newConfig != null) {
-         this.init_StreamUtil = newConfig;
+         this.newConfig = newConfig;
       }
    }
 
    public void reset(long now) {
-      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
+      this.detection = AuthPromptParser.Inner_DataUtil.NONE;
       this.init_J = now == 0L ? 1L : now;
    }
 
    public void init(String line) {
       AuthPromptParser.Inner_DataUtil detection = AuthPromptParser.init(line);
       if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
-         this.init_DataUtil_DataUtil = detection;
+         this.detection = detection;
       }
    }
 
@@ -72,7 +72,7 @@ public final class AutoLoginDriver {
    public void load(long now) {
       this.init_V();
       if (this.init_CachePool_DataUtil != AutoLoginDriver.Inner_DataUtil.IDLE && !this.init_Z()) {
-         if (now - this.load_J >= this.init_StreamUtil.giveUpMs()) {
+         if (now - this.load_J >= this.newConfig.giveUpMs()) {
             this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
          } else if (!this.init_Z(now)) {
             this.read(now);
@@ -102,13 +102,13 @@ public final class AutoLoginDriver {
    }
 
    private boolean init_Z(long now) {
-      CustomMenuSnapshot snapshot = this.init_BufferHelper.currentMenu();
+      CustomMenuSnapshot snapshot = this.host.currentMenu();
       if (snapshot == null) {
          this.close = -9223372036854775808L;
          return false;
       }
 
-      if (this.init_BufferHelper.read()) {
+      if (this.host.read()) {
          return true;
       }
 
@@ -129,7 +129,7 @@ public final class AutoLoginDriver {
          }
       }
 
-      String password = this.init_BufferHelper.password();
+      String password = this.host.password();
       if (hasText && password.isEmpty()) {
          this.load(snapshot.title());
          return true;
@@ -141,7 +141,7 @@ public final class AutoLoginDriver {
          CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.init(snapshot.buttons());
          button = accept != null ? accept : CustomMenuActionPlanner.read(snapshot.buttons());
          if (button == null) {
-            this.update = now + this.init_StreamUtil.write();
+            this.update = now + this.newConfig.write();
             return true;
          }
 
@@ -151,60 +151,60 @@ public final class AutoLoginDriver {
             values.put(input.key(), input.kind() == CustomMenuInput.Kind.TEXT ? password : input.initialValue());
          }
       } catch (RuntimeException error) {
-         this.update = now + this.init_StreamUtil.write();
+         this.update = now + this.newConfig.write();
          return true;
       }
 
-      if (!this.init_BufferHelper.init(snapshot, new CustomMenuSubmission(values, button))) {
-         this.update = now + this.init_StreamUtil.write();
+      if (!this.host.init(snapshot, new CustomMenuSubmission(values, button))) {
+         this.update = now + this.newConfig.write();
          return true;
       }
 
       this.close = snapshot.generation();
       if (hasText) {
          this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-         this.sync = now + this.init_StreamUtil.read();
+         this.sync = now + this.newConfig.read();
       }
 
       return true;
    }
 
    private void read(long now) {
-      if (!this.init_BufferHelper.isConnected()) {
+      if (!this.host.isConnected()) {
          this.read_J = 0L;
       } else {
          if (this.read_J == 0L) {
             this.read_J = now;
          }
 
-         if (now - this.read_J >= this.init_StreamUtil.promptDelayMs()) {
-            AuthPromptParser.Inner_DataUtil detection = this.init_DataUtil_DataUtil;
+         if (now - this.read_J >= this.newConfig.promptDelayMs()) {
+            AuthPromptParser.Inner_DataUtil detection = this.detection;
             if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
                if (now >= this.write) {
-                  if (this.init_I >= this.init_StreamUtil.maxAttempts()) {
+                  if (this.init_I >= this.newConfig.maxAttempts()) {
                      this.load();
                   } else {
-                     String password = this.init_BufferHelper.password();
+                     String password = this.host.password();
                      if (password.isEmpty()) {
                         this.load("AuthMe login");
-                     } else if (this.init_BufferHelper.load()) {
-                        this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
-                        if (!this.init_BufferHelper.sendCommand(detection.init(password))) {
-                           this.init_DataUtil_DataUtil = detection;
+                     } else if (this.host.load()) {
+                        this.detection = AuthPromptParser.Inner_DataUtil.NONE;
+                        if (!this.host.sendCommand(detection.init(password))) {
+                           this.detection = detection;
                            this.write = now + 250L;
                         } else {
                            this.init_I++;
-                           this.write = now + this.init_StreamUtil.read();
+                           this.write = now + this.newConfig.read();
                            if (detection.kind() == AuthPromptParser.Inner_StreamUtil.REGISTER) {
                               this.init_Str = detection.command();
                               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.REGISTERING;
                               this.init_Z = true;
-                              this.flush = now + this.init_StreamUtil.update();
+                              this.flush = now + this.newConfig.update();
                            } else {
                               this.load_Str = detection.command();
                               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
                               this.init_Z = false;
-                              this.sync = now + this.init_StreamUtil.read();
+                              this.sync = now + this.newConfig.read();
                            }
                         }
                      }
@@ -221,20 +221,20 @@ public final class AutoLoginDriver {
 
    private void write(long now) {
       this.init_Z = false;
-      if (this.init_I >= this.init_StreamUtil.maxAttempts()) {
+      if (this.init_I >= this.newConfig.maxAttempts()) {
          this.load();
       } else {
-         String password = this.init_BufferHelper.password();
-         if (!password.isEmpty() && this.init_BufferHelper.load()) {
+         String password = this.host.password();
+         if (!password.isEmpty() && this.host.load()) {
             String token = AuthPromptParser.init(this.init_Str, this.load_Str);
-            if (!this.init_BufferHelper.sendCommand(token + " " + password)) {
+            if (!this.host.sendCommand(token + " " + password)) {
                this.init_Z = true;
                this.flush = now + 250L;
             } else {
                this.init_I++;
-               this.write = now + this.init_StreamUtil.read();
+               this.write = now + this.newConfig.read();
                this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-               this.sync = now + this.init_StreamUtil.read();
+               this.sync = now + this.newConfig.read();
             }
          }
       }
@@ -243,7 +243,7 @@ public final class AutoLoginDriver {
    private void load() {
       if (!this.load_Z) {
          this.load_Z = true;
-         this.init_BufferHelper.report("Auto login failed after " + this.init_StreamUtil.maxAttempts() + " attempts - check the password.");
+         this.host.report("Auto login failed after " + this.newConfig.maxAttempts() + " attempts - check the password.");
       }
 
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
@@ -252,7 +252,7 @@ public final class AutoLoginDriver {
    private void load(String context) {
       if (!this.read_Z) {
          this.read_Z = true;
-         this.init_BufferHelper.load(context == null ? "" : context);
+         this.host.load(context == null ? "" : context);
       }
    }
 

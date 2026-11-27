@@ -61,13 +61,13 @@ import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import org.slf4j.Logger;
 
 final class RecipeCatalogLoader {
-   private static final Logger init_Logger = LogUtils.getLogger();
-   private static final Object init_Obj = new Object();
-   private static final FileToIdConverter init_FileToIdConverter = FileToIdConverter.registry(Registries.RECIPE);
-   private static RegistryAccess init_RegistryAccess;
-   private static FeatureFlagSet init_FeatureFlagSet;
-   private static RecipeCatalogLoader.Inner_CachePool init_aK_CachePool;
-   private static CompletableFuture<RecipeCatalogLoader.Inner_CachePool> init_CompletableFuture;
+   private static final Logger LOGGER = LogUtils.getLogger();
+   private static final Object LOCK = new Object();
+   private static final FileToIdConverter RECIPE_FILES = FileToIdConverter.registry(Registries.RECIPE);
+   private static RegistryAccess cachedAccess;
+   private static FeatureFlagSet cachedFeatures;
+   private static RecipeCatalogLoader.Inner_CachePool cachedSnapshot;
+   private static CompletableFuture<RecipeCatalogLoader.Inner_CachePool> pendingLoad;
    private static Object load_Obj;
    private static RecipeCatalogLoader.Inner_CachePool load_aK_CachePool;
 
@@ -87,9 +87,9 @@ final class RecipeCatalogLoader {
          RecipeCatalogLoader.Inner_CachePool server = load_aK_CachePool(mc);
          return server != null && !server.craftingRecipes().isEmpty()
             ? server
-            : init(init_RegistryAccess(mc), init_FeatureFlagSet(mc), SlotDisplayContext.fromLevel(mc.level), mc);
+            : init(registryAccess(mc), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level), mc);
       } else {
-         return RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool;
+         return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
    }
 
@@ -105,12 +105,12 @@ final class RecipeCatalogLoader {
             thread.setDaemon(true);
             thread.start();
          } else {
-            RegistryAccess access = init_RegistryAccess(mc);
-            FeatureFlagSet features = init_FeatureFlagSet(mc);
+            RegistryAccess access = registryAccess(mc);
+            FeatureFlagSet features = enabledFeatures(mc);
             ContextMap slotContext = SlotDisplayContext.fromLevel(mc.level);
-            synchronized (init_Obj) {
-               if (!init(access, features) || init_aK_CachePool == null && init_CompletableFuture == null) {
-                  init_CompletableFuture(access, features, slotContext);
+            synchronized (LOCK) {
+               if (!init(access, features) || cachedSnapshot == null && pendingLoad == null) {
+                  loadAsync(access, features, slotContext);
                }
             }
          }
@@ -124,20 +124,20 @@ final class RecipeCatalogLoader {
             return server.craftingRecipes();
          }
 
-         RegistryAccess access = init_RegistryAccess(mc);
-         FeatureFlagSet features = init_FeatureFlagSet(mc);
-         synchronized (init_Obj) {
+         RegistryAccess access = registryAccess(mc);
+         FeatureFlagSet features = enabledFeatures(mc);
+         synchronized (LOCK) {
             if (init(access, features)) {
-               if (init_aK_CachePool != null && !init_aK_CachePool.craftingRecipes().isEmpty()) {
-                  return init_aK_CachePool.craftingRecipes();
+               if (cachedSnapshot != null && !cachedSnapshot.craftingRecipes().isEmpty()) {
+                  return cachedSnapshot.craftingRecipes();
                }
 
-               if (init_CompletableFuture != null) {
+               if (pendingLoad != null) {
                   return null;
                }
             }
 
-            init_CompletableFuture(access, features, SlotDisplayContext.fromLevel(mc.level));
+            loadAsync(access, features, SlotDisplayContext.fromLevel(mc.level));
             return null;
          }
       } else {
@@ -149,38 +149,38 @@ final class RecipeCatalogLoader {
       return init(access, features, slotContext, null).craftingRecipes();
    }
 
-   static int init_I(Minecraft mc) {
-      return mc == null ? -1 : init_FileToIdConverter.listMatchingResources(mc.getResourceManager()).size();
+   static int recipeFileCount(Minecraft mc) {
+      return mc == null ? -1 : RECIPE_FILES.listMatchingResources(mc.getResourceManager()).size();
    }
 
-   private static RegistryAccess init_RegistryAccess(Minecraft mc) {
+   private static RegistryAccess registryAccess(Minecraft mc) {
       return mc.getConnection() != null ? mc.getConnection().registryAccess() : mc.level.registryAccess();
    }
 
-   private static FeatureFlagSet init_FeatureFlagSet(Minecraft mc) {
+   private static FeatureFlagSet enabledFeatures(Minecraft mc) {
       return mc.getConnection() != null ? mc.getConnection().enabledFeatures() : mc.level.enabledFeatures();
    }
 
    private static boolean init(RegistryAccess access, FeatureFlagSet features) {
-      return init_RegistryAccess == access && Objects.equals(init_FeatureFlagSet, features);
+      return cachedAccess == access && Objects.equals(cachedFeatures, features);
    }
 
-   private static CompletableFuture<RecipeCatalogLoader.Inner_CachePool> init_CompletableFuture(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
-      init_RegistryAccess = access;
-      init_FeatureFlagSet = features;
-      init_aK_CachePool = null;
-      CompletableFuture<RecipeCatalogLoader.Inner_CachePool> load = CompletableFuture.supplyAsync(() -> init_aK_CachePool(access, features, slotContext), runnable -> {
+   private static CompletableFuture<RecipeCatalogLoader.Inner_CachePool> loadAsync(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
+      cachedAccess = access;
+      cachedFeatures = features;
+      cachedSnapshot = null;
+      CompletableFuture<RecipeCatalogLoader.Inner_CachePool> load = CompletableFuture.supplyAsync(() -> buildSnapshot(access, features, slotContext), runnable -> {
          Thread thread = new Thread(runnable, "Autism-Recipes");
          thread.setDaemon(true);
          thread.start();
       });
-      init_CompletableFuture = load;
+      pendingLoad = load;
       load.whenComplete((snapshot, error) -> {
-         synchronized (init_Obj) {
-            if (init_CompletableFuture == load) {
-               init_CompletableFuture = null;
+         synchronized (LOCK) {
+            if (pendingLoad == load) {
+               pendingLoad = null;
                if (snapshot != null) {
-                  init_aK_CachePool = snapshot;
+                  cachedSnapshot = snapshot;
                }
             }
          }
@@ -190,16 +190,16 @@ final class RecipeCatalogLoader {
 
    private static RecipeCatalogLoader.Inner_CachePool init(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext, Minecraft mc) {
       if (access == null) {
-         return RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool;
+         return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
 
       CompletableFuture<RecipeCatalogLoader.Inner_CachePool> pending;
-      synchronized (init_Obj) {
-         if (init(access, features) && init_aK_CachePool != null) {
-            return init_aK_CachePool;
+      synchronized (LOCK) {
+         if (init(access, features) && cachedSnapshot != null) {
+            return cachedSnapshot;
          }
 
-         pending = init(access, features) && init_CompletableFuture != null ? init_CompletableFuture : init_CompletableFuture(access, features, slotContext);
+         pending = init(access, features) && pendingLoad != null ? pendingLoad : loadAsync(access, features, slotContext);
       }
 
       RecipeCatalogLoader.Inner_CachePool loaded;
@@ -212,11 +212,11 @@ final class RecipeCatalogLoader {
       if (loaded != null && !loaded.craftingRecipes().isEmpty()) {
          return loaded;
       } else {
-         return mc == null ? RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool : init(mc.getResourceManager(), access, features, slotContext);
+         return mc == null ? RecipeCatalogLoader.Inner_CachePool.EMPTY : init(mc.getResourceManager(), access, features, slotContext);
       }
    }
 
-   static RecipeCatalogLoader.Inner_CachePool init_aK_CachePool(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
+   static RecipeCatalogLoader.Inner_CachePool buildSnapshot(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
       long started = System.nanoTime();
       Map<Identifier, IoSupplier<InputStream>> files = new TreeMap<>(Comparator.comparing(Identifier::toString));
       VanillaPackResources pack = ServerPacksSource.createVanillaPackSource();
@@ -224,7 +224,7 @@ final class RecipeCatalogLoader {
       try {
          Compat263.vanillaListResources(pack, PackType.SERVER_DATA, "minecraft", "recipe", files::putIfAbsent);
          RecipeCatalogLoader.Inner_CachePool parsed = init(files, access, features, slotContext, "client jar");
-         init_Logger.info(
+         LOGGER.info(
             "[Autism] recipes: {} crafting + {} cooking from the client jar ({} files, {} skipped) in {} ms",
             parsed.craftingRecipes().size(),
             parsed.cookingRecipes().size(),
@@ -235,8 +235,8 @@ final class RecipeCatalogLoader {
          Compat263.vanillaClose(pack);
          return parsed;
       } catch (RuntimeException e) {
-         init_Logger.warn("[Autism] recipes: the client jar's data pack could not be read: {}", e.toString());
-         return RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool;
+         LOGGER.warn("[Autism] recipes: the client jar's data pack could not be read: {}", e.toString());
+         return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
    }
 
@@ -249,7 +249,7 @@ final class RecipeCatalogLoader {
       int failed = 0;
 
       for (Entry<Identifier, IoSupplier<InputStream>> entry : files.entrySet()) {
-         Identifier recipeId = init_FileToIdConverter.fileToId(entry.getKey());
+         Identifier recipeId = RECIPE_FILES.fileToId(entry.getKey());
 
          try (Reader reader = new BufferedReader(new InputStreamReader(entry.getValue().get(), StandardCharsets.UTF_8))) {
             JsonElement json = JsonParser.parseReader(reader);
@@ -277,17 +277,17 @@ final class RecipeCatalogLoader {
 
    private static RecipeCatalogLoader.Inner_CachePool init(ResourceManager manager, RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
       if (manager == null) {
-         return RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool;
+         return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
 
       Map<Identifier, IoSupplier<InputStream>> files = new TreeMap<>(Comparator.comparing(Identifier::toString));
 
-      for (Entry<Identifier, Resource> entry : init_FileToIdConverter.listMatchingResources(manager).entrySet()) {
+      for (Entry<Identifier, Resource> entry : RECIPE_FILES.listMatchingResources(manager).entrySet()) {
          Resource resource = entry.getValue();
          files.put(entry.getKey(), resource::open);
       }
 
-      return files.isEmpty() ? RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool : init(files, access, features, slotContext, "client resources");
+      return files.isEmpty() ? RecipeCatalogLoader.Inner_CachePool.EMPTY : init(files, access, features, slotContext, "client resources");
    }
 
    private static RecipeCatalogLoader.Inner_CachePool load_aK_CachePool(Minecraft mc) {
@@ -307,13 +307,13 @@ final class RecipeCatalogLoader {
          return null;
       }
 
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          if (load_Obj == manager && load_aK_CachePool != null) {
             return load_aK_CachePool;
          }
 
          try {
-            load_aK_CachePool = init(manager.getRecipes(), init_FeatureFlagSet(mc), SlotDisplayContext.fromLevel(mc.level));
+            load_aK_CachePool = init(manager.getRecipes(), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level));
             load_Obj = manager;
          } catch (RuntimeException e) {
             return null;
@@ -391,7 +391,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static <T> List<T> init_List(List<T> values) {
+   private static <T> List<T> immutableCopy(List<T> values) {
       return values != null && !values.isEmpty() ? Collections.unmodifiableList(new ArrayList<>(values)) : List.of();
    }
 
@@ -671,7 +671,7 @@ final class RecipeCatalogLoader {
    }
 
    record Inner_CachePool(List<RecipeCatalogLoader.Inner_StreamUtil> craftingRecipes, List<RecipeCatalogLoader.Inner_DataUtil> cookingRecipes, String source, int filesRead, int filesSkipped) {
-      static final RecipeCatalogLoader.Inner_CachePool init_aK_CachePool = new RecipeCatalogLoader.Inner_CachePool(List.of(), List.of(), "none", 0, 0);
+      static final RecipeCatalogLoader.Inner_CachePool EMPTY = new RecipeCatalogLoader.Inner_CachePool(List.of(), List.of(), "none", 0, 0);
 
       Inner_CachePool(List<RecipeCatalogLoader.Inner_StreamUtil> crafting, List<RecipeCatalogLoader.Inner_DataUtil> cooking) {
          this(crafting, cooking, "server", crafting.size() + cooking.size(), 0);
@@ -710,8 +710,8 @@ final class RecipeCatalogLoader {
          this.width = width;
          this.height = height;
          this.shaped = shaped;
-         this.gridIngredients = RecipeCatalogLoader.init_List(gridIngredients);
-         this.requirements = RecipeCatalogLoader.init_List(requirements);
+         this.gridIngredients = RecipeCatalogLoader.immutableCopy(gridIngredients);
+         this.requirements = RecipeCatalogLoader.immutableCopy(requirements);
          this.signature = signature;
       }
 

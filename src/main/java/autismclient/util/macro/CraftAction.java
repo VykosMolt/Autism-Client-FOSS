@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 public class CraftAction implements MacroAction {
    public final List<CraftAction.Inner_DataUtil> entries = new ArrayList<>();
 
-   public void init_V_8() {
+   public void clearEntries() {
       this.entries.clear();
    }
 
@@ -131,7 +131,7 @@ public class CraftAction implements MacroAction {
 
       CraftAction.Inner_DataUtil first = this.entries.get(0);
       if (this.entries.size() == 1) {
-         return "Craft " + first.init_Str();
+         return "Craft " + first.label();
       }
 
       String firstName = first.resultName != null && !first.resultName.isBlank() ? first.resultName : "item";
@@ -168,7 +168,7 @@ public class CraftAction implements MacroAction {
          return (this.recipeId >= 0 || !this.recipeKey.isBlank()) && !this.resultName.isBlank();
       }
 
-      public String init_Str() {
+      public String label() {
          if (!this.isValid()) {
             return "unset";
          } else {

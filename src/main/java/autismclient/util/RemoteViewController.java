@@ -22,7 +22,7 @@ public final class RemoteViewController {
       return !AutismLiteVariant.enabled() && !autismclient.e.TableIndex.init() ? false : init_UUID != null;
    }
 
-   public static String init_Str() {
+   public static String getOldName() {
       return init_Str;
    }
 

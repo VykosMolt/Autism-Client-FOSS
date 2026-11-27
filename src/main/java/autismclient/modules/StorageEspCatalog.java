@@ -116,7 +116,7 @@ public final class StorageEspCatalog {
    private static void load(Module module, ClientLevel level, Player player, float tickDelta, StorageEspCatalog.Inner_DataUtil boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
          StorageEspCatalog.Inner_ConfigStore selection = init_ap_ConfigStore(module.value("storage-list"));
-         List<StorageEspCatalog.Inner_BufferHelper> blockTargets = selection.init_List();
+         List<StorageEspCatalog.Inner_BufferHelper> blockTargets = selection.blockTargets();
          List<StorageEspCatalog.Inner_BufferHelper> entityTargets = selection.load();
          if (!blockTargets.isEmpty() || !entityTargets.isEmpty()) {
             StorageEspCatalog.Inner_StreamUtil colors = init(module);
@@ -201,8 +201,8 @@ public final class StorageEspCatalog {
       int bestDepth = -1;
 
       for (StorageEspCatalog.Inner_BufferHelper target : targets) {
-         if (target.init_Class != null && target.init_Class.isInstance(be)) {
-            int depth = init(be.getClass(), target.init_Class);
+         if (target.beClass != null && target.beClass.isInstance(be)) {
+            int depth = init(be.getClass(), target.beClass);
             if (depth >= 0 && (best == null || depth < bestDepth)) {
                best = target;
                bestDepth = depth;
@@ -218,8 +218,8 @@ public final class StorageEspCatalog {
       int bestDepth = -1;
 
       for (StorageEspCatalog.Inner_BufferHelper target : targets) {
-         if (target.load_Class != null && target.load_Class.isInstance(entity)) {
-            int depth = init(entity.getClass(), target.load_Class);
+         if (target.entityClass != null && target.entityClass.isInstance(entity)) {
+            int depth = init(entity.getClass(), target.entityClass);
             if (depth >= 0 && (best == null || depth < bestDepth)) {
                best = target;
                bestDepth = depth;
@@ -307,7 +307,7 @@ public final class StorageEspCatalog {
    private static StorageEspCatalog.Inner_ConfigStore init_ap_ConfigStore(String value) {
       String safe = value == null ? "" : value;
       StorageEspCatalog.Inner_ConfigStore cached = init_ap_ConfigStore;
-      if (cached.init_Str().equals(safe)) {
+      if (cached.safe().equals(safe)) {
          return cached;
       }
 
@@ -373,10 +373,10 @@ public final class StorageEspCatalog {
       public final String id;
       public final String label;
       public final String read;
-      private final Supplier<ItemStack> init_Supplier;
+      private final Supplier<ItemStack> iconSupplier;
       private final boolean init_Z;
-      private final Class<? extends BlockEntity> init_Class;
-      private final Class<? extends Entity> load_Class;
+      private final Class<? extends BlockEntity> beClass;
+      private final Class<? extends Entity> entityClass;
 
       private Inner_BufferHelper(
          String id, String label, String group, Supplier<ItemStack> iconSupplier, Class<? extends BlockEntity> beClass, Class<? extends Entity> entityClass
@@ -384,15 +384,15 @@ public final class StorageEspCatalog {
          this.id = id;
          this.label = label;
          this.read = group;
-         this.init_Supplier = iconSupplier;
+         this.iconSupplier = iconSupplier;
          this.init_Z = beClass != null;
-         this.init_Class = beClass;
-         this.load_Class = entityClass;
+         this.beClass = beClass;
+         this.entityClass = entityClass;
       }
 
       public ItemStack icon() {
          try {
-            ItemStack stack = this.init_Supplier.get();
+            ItemStack stack = this.iconSupplier.get();
             return stack == null ? ItemStack.EMPTY : stack;
          } catch (Throwable ignored) {
             return ItemStack.EMPTY;
@@ -430,7 +430,7 @@ public final class StorageEspCatalog {
       }
    }
 
-   private record Inner_ConfigStore(String init_Str, List<StorageEspCatalog.Inner_BufferHelper> init_List, List<StorageEspCatalog.Inner_BufferHelper> load) {
+   private record Inner_ConfigStore(String safe, List<StorageEspCatalog.Inner_BufferHelper> blockTargets, List<StorageEspCatalog.Inner_BufferHelper> load) {
    }
 
    @FunctionalInterface

@@ -241,7 +241,7 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   private static int init_I_Str_4(String entry) {
+   private static int entrySlot(String entry) {
       if (entry != null && entry.startsWith("#")) {
          int separator = entry.indexOf(124);
          String slotRaw = separator >= 0 ? entry.substring(1, separator).trim() : entry.substring(1).trim();

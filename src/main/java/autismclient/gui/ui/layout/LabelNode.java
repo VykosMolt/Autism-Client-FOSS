@@ -7,8 +7,8 @@ import autismclient.gui.f.b.l;
 public class LabelNode extends LayoutNode {
    private String init_Str;
    private l init_l;
-   private boolean write_Z;
-   private boolean update_Z;
+   private boolean shadow;
+   private boolean trimToBounds;
 
    public LabelNode(String text, l tone) {
       this.init_Str = text == null ? "" : text;
@@ -37,12 +37,12 @@ public class LabelNode extends LayoutNode {
    }
 
    public LabelNode init_PoolEntry(boolean shadow) {
-      this.write_Z = shadow;
+      this.shadow = shadow;
       return this;
    }
 
    public LabelNode setTrimToBounds(boolean trimToBounds) {
-      this.update_Z = trimToBounds;
+      this.trimToBounds = trimToBounds;
       return this;
    }
 
@@ -65,7 +65,7 @@ public class LabelNode extends LayoutNode {
    public void render(LayoutContext context) {
       if (this.nodeVisible) {
          String displayComponent = this.init_Str;
-         if (this.update_Z && this.nodeWidth > 0.0F) {
+         if (this.trimToBounds && this.nodeWidth > 0.0F) {
             displayComponent = k.init(
                context.font(),
                this.init_Str,
@@ -83,7 +83,7 @@ public class LabelNode extends LayoutNode {
             context.applyAlpha(context.theme().load(this.init_l)),
             Math.round(this.nodeX),
             UiLayoutMath.centerTextY(Math.round(this.nodeY), Math.round(this.nodeHeight), context.theme().init_I_l(this.init_l), context.theme().flush()),
-            this.write_Z
+            this.shadow
          );
       }
    }

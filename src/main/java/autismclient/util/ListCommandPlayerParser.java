@@ -22,8 +22,8 @@ public final class ListCommandPlayerParser {
          && translated.getKey().equals("commands.list.players")) {
          Object[] args = translated.getArgs();
          if (args.length == 3 && args[2] instanceof Component names) {
-            int var12 = init_I(args[0]);
-            int max = init_I(args[1]);
+            int var12 = intValue(args[0]);
+            int max = intValue(args[1]);
             if (var12 >= 0 && var12 <= 4096 && max >= var12) {
                List<ListCommandPlayerParser.Inner_DataUtil> players = new ArrayList<>();
                if (init(names, players, 0, new int[]{0}) && players.size() == var12) {
@@ -63,8 +63,8 @@ public final class ListCommandPlayerParser {
                return false;
             }
 
-            String name = init_Str(args[0]);
-            String id = init_Str(args[1]);
+            String name = plainText(args[0]);
+            String id = plainText(args[1]);
             if (!name.matches("[A-Za-z0-9_]{1,16}") || !id.matches("[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}")) {
                return false;
             }
@@ -91,7 +91,7 @@ public final class ListCommandPlayerParser {
       }
    }
 
-   private static String init_Str(Object value) {
+   private static String plainText(Object value) {
       if (value instanceof String text) {
          return text;
       } else {
@@ -101,7 +101,7 @@ public final class ListCommandPlayerParser {
       }
    }
 
-   private static int init_I(Object value) {
+   private static int intValue(Object value) {
       if (value instanceof Number n && n.doubleValue() == n.intValue()) {
          return n.intValue();
       } else {

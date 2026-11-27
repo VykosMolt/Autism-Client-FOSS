@@ -61,15 +61,15 @@ import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 public final class VanillaWorldGenBootstrap {
    private static final Object init_Obj = new Object();
    private static volatile VanillaWorldGenBootstrap.Inner_DataUtil init_ConfigStore_DataUt;
-   private final long init_J;
-   private final ResourceKey<Level> init_ResourceKey;
+   private final long seed;
+   private final ResourceKey<Level> dimension;
    private final Provider init_HolderLookup_Provi;
    private final RegistryAccess init_RegistryAccess;
-   private final ChunkGenerator init_ChunkGenerator;
-   private final RandomState init_RandomState;
+   private final ChunkGenerator generator;
+   private final RandomState randomState;
    private final ChunkGeneratorStructureState init_ChunkGeneratorStru;
    private final StructureTemplateManager init_StructureTemplateM;
-   private final DimensionType init_DimensionType;
+   private final DimensionType dimensionType;
    private final LevelHeightAccessor init_LevelHeightAccesso;
 
    private VanillaWorldGenBootstrap(
@@ -80,22 +80,22 @@ public final class VanillaWorldGenBootstrap {
       RandomState randomState,
       DimensionType dimensionType
    ) {
-      this.init_J = seed;
-      this.init_ResourceKey = dimension;
-      this.init_HolderLookup_Provi = bootstrap.init_RegistryAccess_Fro();
-      this.init_RegistryAccess = bootstrap.init_RegistryAccess_Fro();
-      this.init_ChunkGenerator = generator;
-      this.init_RandomState = randomState;
+      this.seed = seed;
+      this.dimension = dimension;
+      this.init_HolderLookup_Provi = bootstrap.registries();
+      this.init_RegistryAccess = bootstrap.registries();
+      this.generator = generator;
+      this.randomState = randomState;
       this.init_ChunkGeneratorStru = generator.createState(this.init_HolderLookup_Provi.lookupOrThrow(Registries.STRUCTURE_SET), randomState, seed);
       this.init_ChunkGeneratorStru.ensureStructuresGenerated();
-      this.init_StructureTemplateM = bootstrap.init_StructureTemplateM();
-      this.init_DimensionType = dimensionType;
+      this.init_StructureTemplateM = bootstrap.templates();
+      this.dimensionType = dimensionType;
       this.init_LevelHeightAccesso = LevelHeightAccessor.create(dimensionType.minY(), dimensionType.height());
    }
 
    public static VanillaWorldGenBootstrap init(long seed, ResourceKey<Level> dimension) {
       VanillaWorldGenBootstrap.Inner_DataUtil bootstrap = init_ConfigStore_DataUt();
-      Provider lookup = bootstrap.init_RegistryAccess_Fro();
+      Provider lookup = bootstrap.registries();
       ResourceKey<LevelStem> stemKey = init(dimension);
       WorldPreset preset = lookup.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value();
       LevelStem stem = preset.createWorldDimensions().dimensions().get(stemKey);
@@ -206,11 +206,11 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public long seed() {
-      return this.init_J;
+      return this.seed;
    }
 
    public ResourceKey<Level> dimension() {
-      return this.init_ResourceKey;
+      return this.dimension;
    }
 
    public Provider registries() {
@@ -222,19 +222,19 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public ChunkGenerator chunkGenerator() {
-      return this.init_ChunkGenerator;
+      return this.generator;
    }
 
    public NoiseBasedChunkGenerator noiseGenerator() {
-      return (NoiseBasedChunkGenerator)this.init_ChunkGenerator;
+      return (NoiseBasedChunkGenerator)this.generator;
    }
 
    public BiomeSource biomeSource() {
-      return this.init_ChunkGenerator.getBiomeSource();
+      return this.generator.getBiomeSource();
    }
 
    public RandomState randomState() {
-      return this.init_RandomState;
+      return this.randomState;
    }
 
    public ChunkGeneratorStructureState structureState() {
@@ -248,7 +248,7 @@ public final class VanillaWorldGenBootstrap {
    public boolean init_Z() {
       Map<Identifier, List<Identifier>> current = init(BuiltInRegistries.BLOCK);
 
-      for (Entry<Identifier, List<Identifier>> entry : init_ConfigStore_DataUt.init_Map().entrySet()) {
+      for (Entry<Identifier, List<Identifier>> entry : init_ConfigStore_DataUt.vanillaBlockTags().entrySet()) {
          if (!entry.getValue().equals(current.get(entry.getKey()))) {
             return false;
          }
@@ -258,7 +258,7 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public DimensionType dimensionType() {
-      return this.init_DimensionType;
+      return this.dimensionType;
    }
 
    public LevelHeightAccessor heightAccessor() {
@@ -308,11 +308,11 @@ public final class VanillaWorldGenBootstrap {
    }
 
    private record Inner_DataUtil(
-      Frozen init_RegistryAccess_Fro,
-      CloseableResourceManager init_CloseableResourceM,
-      LevelStorageAccess init_LevelStorageSource,
-      StructureTemplateManager init_StructureTemplateM,
-      Map<Identifier, List<Identifier>> init_Map
+      Frozen registries,
+      CloseableResourceManager resources,
+      LevelStorageAccess storage,
+      StructureTemplateManager templates,
+      Map<Identifier, List<Identifier>> vanillaBlockTags
    ) {
    }
 }

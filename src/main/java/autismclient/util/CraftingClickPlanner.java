@@ -19,8 +19,8 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 
 final class CraftingClickPlanner {
-   static final int init_I = 96;
-   private static final Map<Item, ItemStack> init_Map = new ConcurrentHashMap<>();
+   static final int MAX_BATCH_CLICKS = 96;
+   private static final Map<Item, ItemStack> remainderCache = new ConcurrentHashMap<>();
 
    private CraftingClickPlanner() {
    }
@@ -28,8 +28,8 @@ final class CraftingClickPlanner {
    static CraftingClickPlanner.Inner_BufferHelper planNextPhase(
       CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.Inner_NetHelper spec, int wantCrafts, int selectedHotbar
    ) {
-      if (spec != null && spec.init_ItemStack() != null && !spec.init_ItemStack().isEmpty()) {
-         if (!spec.init_Z_I_CachePool(layout)) {
+      if (spec != null && spec.result() != null && !spec.result().isEmpty()) {
+         if (!spec.fits(layout)) {
             return new CraftingClickPlanner.Inner_BufferHelper(null, "This recipe needs a 3x3 crafting table.");
          }
 
@@ -44,11 +44,11 @@ final class CraftingClickPlanner {
          }
 
          if (first.init_Z) {
-            return new CraftingClickPlanner.Inner_BufferHelper(null, first.init_Str);
+            return new CraftingClickPlanner.Inner_BufferHelper(null, first.error);
          }
 
          CraftingClickPlanner.Inner_ConfigStore best = null;
-         String reason = first.init_Str;
+         String reason = first.error;
          int lo = 1;
          int hi = upper - 1;
 
@@ -60,11 +60,11 @@ final class CraftingClickPlanner {
                lo = mid + 1;
             } else {
                if (attempt.init_Z) {
-                  return new CraftingClickPlanner.Inner_BufferHelper(null, attempt.init_Str);
+                  return new CraftingClickPlanner.Inner_BufferHelper(null, attempt.error);
                }
 
                if (mid == 1 || best == null) {
-                  reason = attempt.init_Str;
+                  reason = attempt.error;
                }
 
                hi = mid - 1;
@@ -105,7 +105,7 @@ final class CraftingClickPlanner {
       CraftingClickPlanner.Inner_TaskQueue sim = new CraftingClickPlanner.Inner_TaskQueue(layout, null, slots, carried);
       sim.init_Z();
       sim.load_Z();
-      return sim.init_List.isEmpty() ? null : sim.init_I_ConfigStore(0);
+      return sim.clicks.isEmpty() ? null : sim.init_I_ConfigStore(0);
    }
 
    private static CraftingClickPlanner.Inner_DataUtil init_I_DataUtil(
@@ -122,12 +122,12 @@ final class CraftingClickPlanner {
 
       Map<Integer, ItemStack> assignment = init(sim, crafts);
       if (assignment == null) {
-         return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.init_ItemStack().getHoverName().getString() + ".");
+         return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.result().getHoverName().getString() + ".");
       }
 
       if (crafts > 1) {
          for (ItemStack key : assignment.values()) {
-            if (!init_ItemStack(key).isEmpty()) {
+            if (!craftingRemainder(key).isEmpty()) {
                return CraftingClickPlanner.Inner_DataUtil.init("one craft at a time");
             }
          }
@@ -145,12 +145,12 @@ final class CraftingClickPlanner {
             }
          }
 
-         groups.computeIfAbsent(key == null ? entry.getValue() : key, ignored -> new ArrayList<>()).add(layout.init_IArr()[entry.getKey()]);
+         groups.computeIfAbsent(key == null ? entry.getValue() : key, ignored -> new ArrayList<>()).add(layout.inputSlots()[entry.getKey()]);
       }
 
       for (Entry<ItemStack, List<Integer>> group : groups.entrySet()) {
          if (!init(sim, group.getKey(), group.getValue(), crafts, selectedHotbar)) {
-            return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.init_ItemStack().getHoverName().getString() + ".");
+            return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.result().getHoverName().getString() + ".");
          }
       }
 
@@ -161,8 +161,8 @@ final class CraftingClickPlanner {
       sim.init_V();
       if (!sim.init_Z && sim.load_I == crafts) {
          sim.load_Z();
-         if (sim.init_ItemStack.isEmpty() && !sim.init_Z) {
-            return crafts > 1 && sim.init_List.size() > 96
+         if (sim.carried.isEmpty() && !sim.init_Z) {
+            return crafts > 1 && sim.clicks.size() > 96
                ? CraftingClickPlanner.Inner_DataUtil.init("too many clicks")
                : new CraftingClickPlanner.Inner_DataUtil(sim.init_I_ConfigStore(crafts), null, false);
          } else {
@@ -174,12 +174,12 @@ final class CraftingClickPlanner {
    }
 
    private static Map<Integer, ItemStack> init(CraftingClickPlanner.Inner_TaskQueue sim, int crafts) {
-      Ingredient[] cells = sim.init_IngredientArr;
+      Ingredient[] cells = sim.cells;
       List<ItemStack> keys = new ArrayList<>();
       List<Integer> avail = new ArrayList<>();
 
-      for (int slot = sim.init_I_CachePool.write(); slot < sim.init_I_CachePool.update(); slot++) {
-         ItemStack stack = sim.init_ItemStackArr[slot];
+      for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
+         ItemStack stack = sim.slots[slot];
          if (isUsableIngredient(stack)) {
             int index = init(keys, stack);
             if (index < 0) {
@@ -267,21 +267,21 @@ final class CraftingClickPlanner {
             break;
          }
 
-         int count = sim.init_ItemStackArr[source].getCount();
+         int count = sim.slots[source].getCount();
          if (count > 0) {
             int half = (count + 1) / 2;
             if (count > remaining && half >= remaining && half - remaining < count - remaining) {
                sim.load(source);
             } else {
-               sim.init_V(source);
+               sim.click(source);
             }
 
             init(sim, source, need);
-            if (!sim.init_ItemStack.isEmpty()) {
-               sim.init_V(source);
+            if (!sim.carried.isEmpty()) {
+               sim.click(source);
             }
 
-            if (!sim.init_ItemStack.isEmpty()) {
+            if (!sim.carried.isEmpty()) {
                return false;
             }
          }
@@ -293,7 +293,7 @@ final class CraftingClickPlanner {
    private static void init(CraftingClickPlanner.Inner_TaskQueue sim, int source, Map<Integer, Integer> need) {
       int guard = 0;
 
-      while (!sim.init_ItemStack.isEmpty() && guard++ < 512) {
+      while (!sim.carried.isEmpty() && guard++ < 512) {
          List<Integer> open = new ArrayList<>();
          int low = 2147483647;
          int high = 0;
@@ -310,7 +310,7 @@ final class CraftingClickPlanner {
             return;
          }
 
-         int amount = sim.init_ItemStack.getCount();
+         int amount = sim.carried.getCount();
          if (low == high) {
             int cellsOpen = open.size();
             int each = low;
@@ -344,7 +344,7 @@ final class CraftingClickPlanner {
 
             if (cellsOpen == 1) {
                int cell = open.get(0);
-               sim.init_V(cell);
+               sim.click(cell);
                need.merge(cell, -amount, Integer::sum);
                return;
             }
@@ -358,7 +358,7 @@ final class CraftingClickPlanner {
                }
             } else {
                for (int cell : open) {
-                  if (sim.init_ItemStack.isEmpty()) {
+                  if (sim.carried.isEmpty()) {
                      break;
                   }
 
@@ -368,7 +368,7 @@ final class CraftingClickPlanner {
             }
          } else {
             for (int cell : open) {
-               while (need.get(cell) > low && !sim.init_ItemStack.isEmpty()) {
+               while (need.get(cell) > low && !sim.carried.isEmpty()) {
                   sim.load(cell);
                   need.merge(cell, -1, Integer::sum);
                }
@@ -379,7 +379,7 @@ final class CraftingClickPlanner {
 
    private static void init(CraftingClickPlanner.Inner_TaskQueue sim, List<Integer> open, Map<Integer, Integer> need, int each) {
       if (open.size() == 1) {
-         sim.init_V(open.get(0));
+         sim.click(open.get(0));
       } else {
          sim.init(open);
       }
@@ -392,21 +392,21 @@ final class CraftingClickPlanner {
    private static List<Integer> init(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, int total, int selectedHotbar) {
       List<Integer> sources = new ArrayList<>();
 
-      for (int slot = sim.init_I_CachePool.write(); slot < sim.init_I_CachePool.update(); slot++) {
-         ItemStack stack = sim.init_ItemStackArr[slot];
+      for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
+         ItemStack stack = sim.slots[slot];
          if (isUsableIngredient(stack) && ItemStack.isSameItemSameComponents(stack, key)) {
             sources.add(slot);
          }
       }
 
-      int selectedSlot = selectedHotbar < 0 ? -1 : sim.init_I_CachePool.sync() + selectedHotbar;
-      Comparator<Integer> tier = Comparator.comparingInt(slotx -> slotx == selectedSlot ? 2 : (slotx >= sim.init_I_CachePool.sync() ? 1 : 0));
+      int selectedSlot = selectedHotbar < 0 ? -1 : sim.layout.sync() + selectedHotbar;
+      Comparator<Integer> tier = Comparator.comparingInt(slotx -> slotx == selectedSlot ? 2 : (slotx >= sim.layout.sync() ? 1 : 0));
       Integer cover = null;
 
       for (int slot : sources) {
-         int count = sim.init_ItemStackArr[slot].getCount();
+         int count = sim.slots[slot].getCount();
          if (count >= total
-            && (cover == null || tier.compare(slot, cover) < 0 || tier.compare(slot, cover) == 0 && count < sim.init_ItemStackArr[cover].getCount())) {
+            && (cover == null || tier.compare(slot, cover) < 0 || tier.compare(slot, cover) == 0 && count < sim.slots[cover].getCount())) {
             cover = slot;
          }
       }
@@ -416,7 +416,7 @@ final class CraftingClickPlanner {
          sources.add(0, cover);
          return sources;
       } else {
-         sources.sort(tier.thenComparing(slotx -> -sim.init_ItemStackArr[slotx].getCount()));
+         sources.sort(tier.thenComparing(slotx -> -sim.slots[slotx].getCount()));
          return sources;
       }
    }
@@ -444,15 +444,15 @@ final class CraftingClickPlanner {
       return stack != null && !stack.isEmpty() && stack.has(DataComponents.BUNDLE_CONTENTS);
    }
 
-   static ItemStack init_ItemStack(ItemStack stack) {
+   static ItemStack craftingRemainder(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
-         return !stack.getComponentsPatch().isEmpty() ? load_ItemStack(stack) : init_Map.computeIfAbsent(stack.getItem(), item -> load_ItemStack(stack)).copy();
+         return !stack.getComponentsPatch().isEmpty() ? computeRemainder(stack) : remainderCache.computeIfAbsent(stack.getItem(), item -> computeRemainder(stack)).copy();
       } else {
          return ItemStack.EMPTY;
       }
    }
 
-   private static ItemStack load_ItemStack(ItemStack stack) {
+   private static ItemStack computeRemainder(ItemStack stack) {
       try {
          List<ItemStack> remaining = CraftingRecipe.defaultCraftingReminder(CraftingInput.of(1, 1, List.of(stack.copyWithCount(1))));
          return remaining.isEmpty() ? ItemStack.EMPTY : remaining.get(0).copy();
@@ -510,7 +510,7 @@ final class CraftingClickPlanner {
    record Inner_BufferHelper(CraftingClickPlanner.Inner_ConfigStore phase, String error) {
    }
 
-   record Inner_CachePool(int resultSlot, int load, int read, int[] init_IArr, int write, int update, int sync) {
+   record Inner_CachePool(int resultSlot, int load, int read, int[] inputSlots, int write, int update, int sync) {
       static CraftingClickPlanner.Inner_CachePool craftingTable() {
          return new CraftingClickPlanner.Inner_CachePool(0, 3, 3, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 46, 37);
       }
@@ -520,7 +520,7 @@ final class CraftingClickPlanner {
       }
 
       boolean init(int slot) {
-         return slot >= this.init_IArr[0] && slot <= this.init_IArr[this.init_IArr.length - 1];
+         return slot >= this.inputSlots[0] && slot <= this.inputSlots[this.inputSlots.length - 1];
       }
 
       public int load_I() {
@@ -556,7 +556,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   private record Inner_DataUtil(CraftingClickPlanner.Inner_ConfigStore init_I_ConfigStore, String init_Str, boolean init_Z) {
+   private record Inner_DataUtil(CraftingClickPlanner.Inner_ConfigStore init_I_ConfigStore, String error, boolean init_Z) {
       static CraftingClickPlanner.Inner_DataUtil init(String reason) {
          return new CraftingClickPlanner.Inner_DataUtil(null, reason, false);
       }
@@ -566,31 +566,31 @@ final class CraftingClickPlanner {
       }
    }
 
-   record Inner_NetHelper(String init_Str, ItemStack init_ItemStack, int init_I, int load, boolean init_Z, List<Ingredient> init_List) {
+   record Inner_NetHelper(String init_Str, ItemStack result, int init_I, int load, boolean shaped, List<Ingredient> ingredients) {
       static CraftingClickPlanner.Inner_NetHelper fromRecipe(RecipeCatalogLoader.Inner_StreamUtil recipe) {
          return new CraftingClickPlanner.Inner_NetHelper(
             recipe.recipeKey, recipe.result, recipe.width, recipe.height, recipe.shaped, recipe.shaped ? recipe.gridIngredients : recipe.requirements
          );
       }
 
-      boolean init_Z_I_CachePool(CraftingClickPlanner.Inner_CachePool layout) {
-         return !this.init_Z ? this.init_List.size() <= layout.init_IArr().length : this.init_I <= layout.load_I() && this.load <= layout.read();
+      boolean fits(CraftingClickPlanner.Inner_CachePool layout) {
+         return !this.shaped ? this.ingredients.size() <= layout.inputSlots().length : this.init_I <= layout.load_I() && this.load <= layout.read();
       }
 
-      Ingredient[] init_IngredientArr_I_CachePool(CraftingClickPlanner.Inner_CachePool layout) {
-         Ingredient[] cells = new Ingredient[layout.init_IArr().length];
-         if (this.init_Z) {
+      Ingredient[] placeIngredients(CraftingClickPlanner.Inner_CachePool layout) {
+         Ingredient[] cells = new Ingredient[layout.inputSlots().length];
+         if (this.shaped) {
             for (int row = 0; row < this.load; row++) {
                for (int col = 0; col < this.init_I; col++) {
                   int index = row * this.init_I + col;
-                  if (index < this.init_List.size()) {
-                     cells[row * layout.load_I() + col] = this.init_List.get(index);
+                  if (index < this.ingredients.size()) {
+                     cells[row * layout.load_I() + col] = this.ingredients.get(index);
                   }
                }
             }
          } else {
-            for (int i = 0; i < this.init_List.size(); i++) {
-               cells[i] = this.init_List.get(i);
+            for (int i = 0; i < this.ingredients.size(); i++) {
+               cells[i] = this.ingredients.get(i);
             }
          }
 
@@ -629,12 +629,12 @@ final class CraftingClickPlanner {
    }
 
    static final class Inner_TaskQueue {
-      final CraftingClickPlanner.Inner_CachePool init_I_CachePool;
-      final CraftingClickPlanner.Inner_NetHelper init_I_NetHelper;
-      final Ingredient[] init_IngredientArr;
-      final ItemStack[] init_ItemStackArr;
-      ItemStack init_ItemStack;
-      final List<CraftingClickPlanner.Inner_StreamUtil> init_List = new ArrayList<>();
+      final CraftingClickPlanner.Inner_CachePool layout;
+      final CraftingClickPlanner.Inner_NetHelper spec;
+      final Ingredient[] cells;
+      final ItemStack[] slots;
+      ItemStack carried;
+      final List<CraftingClickPlanner.Inner_StreamUtil> clicks = new ArrayList<>();
       final List<ItemStack[]> load_List = new ArrayList<>();
       final List<ItemStack> read = new ArrayList<>();
       final List<ItemStack> write = new ArrayList<>();
@@ -643,95 +643,95 @@ final class CraftingClickPlanner {
       int load_I;
 
       Inner_TaskQueue(CraftingClickPlanner.Inner_CachePool layout, CraftingClickPlanner.Inner_NetHelper spec, ItemStack[] slots, ItemStack carried) {
-         this.init_I_CachePool = layout;
-         this.init_I_NetHelper = spec;
-         this.init_IngredientArr = spec == null ? new Ingredient[layout.init_IArr().length] : spec.init_IngredientArr_I_CachePool(layout);
-         this.init_ItemStackArr = CraftingClickPlanner.init(slots);
-         this.init_ItemStack = carried != null && !carried.isEmpty() ? carried.copy() : ItemStack.EMPTY;
+         this.layout = layout;
+         this.spec = spec;
+         this.cells = spec == null ? new Ingredient[layout.inputSlots().length] : spec.placeIngredients(layout);
+         this.slots = CraftingClickPlanner.init(slots);
+         this.carried = carried != null && !carried.isEmpty() ? carried.copy() : ItemStack.EMPTY;
       }
 
       CraftingClickPlanner.Inner_ConfigStore init_I_ConfigStore(int crafts) {
          return new CraftingClickPlanner.Inner_ConfigStore(
-            List.copyOf(this.init_List), crafts, List.copyOf(this.load_List), List.copyOf(this.read), List.copyOf(this.write), this.init_I
+            List.copyOf(this.clicks), crafts, List.copyOf(this.load_List), List.copyOf(this.read), List.copyOf(this.write), this.init_I
          );
       }
 
-      private ItemStack[] init_ItemStackArr() {
-         ItemStack[] grid = new ItemStack[this.init_I_CachePool.init_IArr().length];
+      private ItemStack[] gridSnapshot() {
+         ItemStack[] grid = new ItemStack[this.layout.inputSlots().length];
 
          for (int i = 0; i < grid.length; i++) {
-            grid[i] = this.init_ItemStackArr[this.init_I_CachePool.init_IArr()[i]].copy();
+            grid[i] = this.slots[this.layout.inputSlots()[i]].copy();
          }
 
          return grid;
       }
 
-      private void init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil click, Runnable action) {
-         ItemStack[] gridBefore = this.init_ItemStackArr();
-         this.write.add(this.init_ItemStackArr[this.init_I_CachePool.resultSlot()].copy());
+      private void recordClick(CraftingClickPlanner.Inner_StreamUtil click, Runnable action) {
+         ItemStack[] gridBefore = this.gridSnapshot();
+         this.write.add(this.slots[this.layout.resultSlot()].copy());
          action.run();
-         if (this.init_ItemStack.isEmpty()) {
-            this.init_ItemStack = ItemStack.EMPTY;
+         if (this.carried.isEmpty()) {
+            this.carried = ItemStack.EMPTY;
          }
 
-         this.load_V();
-         this.init_List.add(click);
+         this.updateResult();
+         this.clicks.add(click);
          if (this.init_I < 0) {
-            ItemStack[] gridAfter = this.init_ItemStackArr();
+            ItemStack[] gridAfter = this.gridSnapshot();
 
             for (int i = 0; i < gridAfter.length; i++) {
                if (!ItemStack.matches(gridBefore[i], gridAfter[i])) {
-                  this.init_I = this.init_List.size() - 1;
+                  this.init_I = this.clicks.size() - 1;
                   break;
                }
             }
          }
 
-         this.load_List.add(CraftingClickPlanner.init(this.init_ItemStackArr));
-         this.read.add(this.init_ItemStack.copy());
+         this.load_List.add(CraftingClickPlanner.init(this.slots));
+         this.read.add(this.carried.copy());
       }
 
-      void init_V(int slot) {
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.init(slot), () -> this.init_V_I_Z(slot, true));
+      void click(int slot) {
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.init(slot), () -> this.simulateClick(slot, true));
       }
 
       void load(int slot) {
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.load(slot), () -> this.init_V_I_Z(slot, false));
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.load(slot), () -> this.simulateClick(slot, false));
       }
 
       void read(int slot) {
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.read(slot), () -> this.write(slot));
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.read(slot), () -> this.write(slot));
       }
 
       void init_V() {
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.read(this.init_I_CachePool.resultSlot()), this::read_V);
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.read(this.layout.resultSlot()), this::read_V);
       }
 
       void init(List<Integer> targets) {
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.init_I_StreamUtil(), () -> {});
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.init_I_StreamUtil(), () -> {});
 
          for (int target : targets) {
-            this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.write(target), () -> {});
+            this.recordClick(CraftingClickPlanner.Inner_StreamUtil.write(target), () -> {});
          }
 
-         this.init_V_I_StreamUtil_Runnable(CraftingClickPlanner.Inner_StreamUtil.load_I_StreamUtil(), () -> this.load(targets));
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.load_I_StreamUtil(), () -> this.load(targets));
       }
 
       boolean init_Z() {
          int guard = 0;
 
-         while (!this.init_ItemStack.isEmpty() && guard++ < 64) {
+         while (!this.carried.isEmpty() && guard++ < 64) {
             int target = -1;
 
-            for (int slot = this.init_I_CachePool.write(); slot < this.init_I_CachePool.update() && target < 0; slot++) {
-               ItemStack stack = this.init_ItemStackArr[slot];
-               if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, this.init_ItemStack) && stack.getCount() < stack.getMaxStackSize()) {
+            for (int slot = this.layout.write(); slot < this.layout.update() && target < 0; slot++) {
+               ItemStack stack = this.slots[slot];
+               if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, this.carried) && stack.getCount() < stack.getMaxStackSize()) {
                   target = slot;
                }
             }
 
-            for (int slot = this.init_I_CachePool.write(); slot < this.init_I_CachePool.update() && target < 0; slot++) {
-               if (this.init_ItemStackArr[slot].isEmpty()) {
+            for (int slot = this.layout.write(); slot < this.layout.update() && target < 0; slot++) {
+               if (this.slots[slot].isEmpty()) {
                   target = slot;
                }
             }
@@ -740,19 +740,19 @@ final class CraftingClickPlanner {
                return false;
             }
 
-            this.init_V(target);
+            this.click(target);
          }
 
-         return this.init_ItemStack.isEmpty();
+         return this.carried.isEmpty();
       }
 
       boolean load_Z() {
          boolean clear = true;
 
-         for (int slot : this.init_I_CachePool.init_IArr()) {
-            if (!this.init_ItemStackArr[slot].isEmpty()) {
+         for (int slot : this.layout.inputSlots()) {
+            if (!this.slots[slot].isEmpty()) {
                this.read(slot);
-               if (!this.init_ItemStackArr[slot].isEmpty()) {
+               if (!this.slots[slot].isEmpty()) {
                   clear = false;
                }
             }
@@ -762,17 +762,17 @@ final class CraftingClickPlanner {
       }
 
       boolean read_Z() {
-         if (this.init_I_NetHelper == null) {
+         if (this.spec == null) {
             return false;
          }
 
-         for (int pos = 0; pos < this.init_IngredientArr.length; pos++) {
-            ItemStack stack = this.init_ItemStackArr[this.init_I_CachePool.init_IArr()[pos]];
-            if (this.init_IngredientArr[pos] == null) {
+         for (int pos = 0; pos < this.cells.length; pos++) {
+            ItemStack stack = this.slots[this.layout.inputSlots()[pos]];
+            if (this.cells[pos] == null) {
                if (!stack.isEmpty()) {
                   return false;
                }
-            } else if (stack.isEmpty() || !this.init_IngredientArr[pos].test(stack)) {
+            } else if (stack.isEmpty() || !this.cells[pos].test(stack)) {
                return false;
             }
          }
@@ -780,94 +780,94 @@ final class CraftingClickPlanner {
          return true;
       }
 
-      private void load_V() {
-         this.init_ItemStackArr[this.init_I_CachePool.resultSlot()] = this.read_Z() ? this.init_I_NetHelper.init_ItemStack().copy() : ItemStack.EMPTY;
+      private void updateResult() {
+         this.slots[this.layout.resultSlot()] = this.read_Z() ? this.spec.result().copy() : ItemStack.EMPTY;
       }
 
-      private void init_V_I_Z(int slot, boolean primary) {
-         ItemStack clicked = this.init_ItemStackArr[slot];
-         if ((CraftingClickPlanner.load_Z(clicked) || CraftingClickPlanner.load_Z(this.init_ItemStack)) && (!primary || !clicked.isEmpty() && !this.init_ItemStack.isEmpty())) {
+      private void simulateClick(int slot, boolean primary) {
+         ItemStack clicked = this.slots[slot];
+         if ((CraftingClickPlanner.load_Z(clicked) || CraftingClickPlanner.load_Z(this.carried)) && (!primary || !clicked.isEmpty() && !this.carried.isEmpty())) {
             this.init_Z = true;
          }
 
          if (clicked.isEmpty()) {
-            if (!this.init_ItemStack.isEmpty()) {
-               int amount = primary ? this.init_ItemStack.getCount() : 1;
-               int moved = Math.min(Math.min(amount, this.init_ItemStack.getCount()), this.init_ItemStack.getMaxStackSize());
+            if (!this.carried.isEmpty()) {
+               int amount = primary ? this.carried.getCount() : 1;
+               int moved = Math.min(Math.min(amount, this.carried.getCount()), this.carried.getMaxStackSize());
                if (moved > 0) {
-                  this.init_ItemStackArr[slot] = this.init_ItemStack.split(moved);
+                  this.slots[slot] = this.carried.split(moved);
                }
             }
-         } else if (this.init_ItemStack.isEmpty()) {
+         } else if (this.carried.isEmpty()) {
             int amount = primary ? clicked.getCount() : (clicked.getCount() + 1) / 2;
-            this.init_ItemStack = clicked.split(amount);
+            this.carried = clicked.split(amount);
             if (clicked.isEmpty()) {
-               this.init_ItemStackArr[slot] = ItemStack.EMPTY;
+               this.slots[slot] = ItemStack.EMPTY;
             }
-         } else if (ItemStack.isSameItemSameComponents(clicked, this.init_ItemStack)) {
-            int amount = primary ? this.init_ItemStack.getCount() : 1;
-            int moved = Math.min(Math.min(amount, this.init_ItemStack.getCount()), this.init_ItemStack.getMaxStackSize() - clicked.getCount());
+         } else if (ItemStack.isSameItemSameComponents(clicked, this.carried)) {
+            int amount = primary ? this.carried.getCount() : 1;
+            int moved = Math.min(Math.min(amount, this.carried.getCount()), this.carried.getMaxStackSize() - clicked.getCount());
             if (moved > 0) {
-               this.init_ItemStack.shrink(moved);
+               this.carried.shrink(moved);
                clicked.grow(moved);
             }
-         } else if (this.init_ItemStack.getCount() <= this.init_ItemStack.getMaxStackSize()) {
-            this.init_ItemStackArr[slot] = this.init_ItemStack;
-            this.init_ItemStack = clicked;
+         } else if (this.carried.getCount() <= this.carried.getMaxStackSize()) {
+            this.slots[slot] = this.carried;
+            this.carried = clicked;
          }
       }
 
       private void load(List<Integer> targets) {
-         if (!this.init_ItemStack.isEmpty()) {
+         if (!this.carried.isEmpty()) {
             List<Integer> added = new ArrayList<>();
 
             for (int target : targets) {
-               if (init_Z_ItemStack_ItemStack(this.init_ItemStackArr[target], this.init_ItemStack) && this.init_ItemStack.getCount() > added.size()) {
+               if (canStack(this.slots[target], this.carried) && this.carried.getCount() > added.size()) {
                   added.add(target);
                }
             }
 
             if (!added.isEmpty()) {
                if (added.size() == 1) {
-                  this.init_V_I_Z(added.get(0), true);
+                  this.simulateClick(added.get(0), true);
                } else {
-                  ItemStack source = this.init_ItemStack.copy();
-                  int remaining = this.init_ItemStack.getCount();
+                  ItemStack source = this.carried.copy();
+                  int remaining = this.carried.getCount();
 
                   for (int target : added) {
-                     if (init_Z_ItemStack_ItemStack(this.init_ItemStackArr[target], this.init_ItemStack) && this.init_ItemStack.getCount() >= added.size()) {
-                        int carry = this.init_ItemStackArr[target].isEmpty() ? 0 : this.init_ItemStackArr[target].getCount();
+                     if (canStack(this.slots[target], this.carried) && this.carried.getCount() >= added.size()) {
+                        int carry = this.slots[target].isEmpty() ? 0 : this.slots[target].getCount();
                         int newCount = Math.min(source.getCount() / added.size() + carry, source.getMaxStackSize());
                         remaining -= newCount - carry;
-                        this.init_ItemStackArr[target] = source.copyWithCount(newCount);
+                        this.slots[target] = source.copyWithCount(newCount);
                      }
                   }
 
                   source.setCount(remaining);
-                  this.init_ItemStack = source.isEmpty() ? ItemStack.EMPTY : source;
+                  this.carried = source.isEmpty() ? ItemStack.EMPTY : source;
                }
             }
          }
       }
 
-      private static boolean init_Z_ItemStack_ItemStack(ItemStack inSlot, ItemStack carried) {
+      private static boolean canStack(ItemStack inSlot, ItemStack carried) {
          return inSlot.isEmpty() ? true : ItemStack.isSameItemSameComponents(carried, inSlot) && inSlot.getCount() <= carried.getMaxStackSize();
       }
 
       private void write(int slot) {
          int guard = 0;
 
-         while (!this.init_ItemStackArr[slot].isEmpty() && guard++ < 64) {
-            ItemStack stack = this.init_ItemStackArr[slot];
+         while (!this.slots[slot].isEmpty() && guard++ < 64) {
+            ItemStack stack = this.slots[slot];
             int before = stack.getCount();
-            if (!this.init_I_CachePool.init(slot)) {
+            if (!this.layout.init(slot)) {
                this.init_Z = true;
                return;
             }
 
-            this.init(stack, this.init_I_CachePool.write(), this.init_I_CachePool.update(), false);
+            this.init(stack, this.layout.write(), this.layout.update(), false);
             if (stack.isEmpty()) {
-               this.init_ItemStackArr[slot] = ItemStack.EMPTY;
+               this.slots[slot] = ItemStack.EMPTY;
             }
 
             if (stack.getCount() == before) {
@@ -880,14 +880,14 @@ final class CraftingClickPlanner {
          int guard = 0;
 
          while (guard++ < 4096) {
-            ItemStack result = this.init_ItemStackArr[this.init_I_CachePool.resultSlot()];
+            ItemStack result = this.slots[this.layout.resultSlot()];
             if (result.isEmpty()) {
                return;
             }
 
             ItemStack clicked = result.copy();
             ItemStack moving = result.copy();
-            if (!this.init(moving, this.init_I_CachePool.write(), this.init_I_CachePool.update(), true)) {
+            if (!this.init(moving, this.layout.write(), this.layout.update(), true)) {
                return;
             }
 
@@ -895,11 +895,11 @@ final class CraftingClickPlanner {
                this.init_Z = true;
             }
 
-            this.init_ItemStackArr[this.init_I_CachePool.resultSlot()] = ItemStack.EMPTY;
+            this.slots[this.layout.resultSlot()] = ItemStack.EMPTY;
             this.write();
             this.load_I++;
-            this.load_V();
-            ItemStack now = this.init_ItemStackArr[this.init_I_CachePool.resultSlot()];
+            this.updateResult();
+            ItemStack now = this.slots[this.layout.resultSlot()];
             if (now.isEmpty() || !ItemStack.isSameItem(now, clicked)) {
                return;
             }
@@ -907,19 +907,19 @@ final class CraftingClickPlanner {
       }
 
       private void write() {
-         for (int slot : this.init_I_CachePool.init_IArr()) {
-            ItemStack stack = this.init_ItemStackArr[slot];
+         for (int slot : this.layout.inputSlots()) {
+            ItemStack stack = this.slots[slot];
             if (!stack.isEmpty()) {
-               ItemStack remainder = CraftingClickPlanner.init_ItemStack(stack);
+               ItemStack remainder = CraftingClickPlanner.craftingRemainder(stack);
                stack.shrink(1);
                if (stack.isEmpty()) {
-                  this.init_ItemStackArr[slot] = ItemStack.EMPTY;
+                  this.slots[slot] = ItemStack.EMPTY;
                }
 
                if (!remainder.isEmpty()) {
-                  ItemStack now = this.init_ItemStackArr[slot];
+                  ItemStack now = this.slots[slot];
                   if (now.isEmpty()) {
-                     this.init_ItemStackArr[slot] = remainder;
+                     this.slots[slot] = remainder;
                   } else if (ItemStack.isSameItemSameComponents(now, remainder)) {
                      now.grow(remainder.getCount());
                   } else {
@@ -935,7 +935,7 @@ final class CraftingClickPlanner {
          int dest = backwards ? end - 1 : start;
          if (stack.isStackable()) {
             for (; !stack.isEmpty() && (backwards ? dest >= start : dest < end); dest += backwards ? -1 : 1) {
-               ItemStack target = this.init_ItemStackArr[dest];
+               ItemStack target = this.slots[dest];
                if (!target.isEmpty() && ItemStack.isSameItemSameComponents(stack, target)) {
                   int total = target.getCount() + stack.getCount();
                   int max = target.getMaxStackSize();
@@ -954,8 +954,8 @@ final class CraftingClickPlanner {
 
          if (!stack.isEmpty()) {
             for (int var10 = backwards ? end - 1 : start; backwards ? var10 >= start : var10 < end; var10 += backwards ? -1 : 1) {
-               if (this.init_ItemStackArr[var10].isEmpty()) {
-                  this.init_ItemStackArr[var10] = stack.split(Math.min(stack.getCount(), stack.getMaxStackSize()));
+               if (this.slots[var10].isEmpty()) {
+                  this.slots[var10] = stack.split(Math.min(stack.getCount(), stack.getMaxStackSize()));
                   changed = true;
                   break;
                }

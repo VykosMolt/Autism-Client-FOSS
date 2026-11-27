@@ -65,16 +65,16 @@ public final class PacketDetailFormatter {
 
       init_V_AutismPacketLogger_bh_StreamUtil(entry, out);
       PacketDetailFormatter.Inner_CachePool wireDecode = init_bh_CachePool_AutismPacketLogger(entry);
-      Packet<?> packet = wireDecode.init_Packet != null ? wireDecode.init_Packet : entry.packet;
+      Packet<?> packet = wireDecode.packet != null ? wireDecode.packet : entry.packet;
       if (packet == null) {
          if (wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
+            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.decoded ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          }
 
          return out.init(false, "fallback");
       } else {
          boolean complete = init_Z_Packet(packet, out, wireDecode);
-         return out.init(complete, complete ? "complete" : (out.init() ? wireDecode.init_Str_2() : "fallback"));
+         return out.init(complete, complete ? "complete" : (out.init() ? wireDecode.sourceLabel() : "fallback"));
       }
    }
 
@@ -87,18 +87,18 @@ public final class PacketDetailFormatter {
       StringBuilder out = new StringBuilder();
       if (analysis.init_Z()) {
          out.append("[Reality]\n");
-         init_V_StringBuilder_List(out, analysis.lines());
+         appendLines(out, analysis.lines());
       }
 
       if (analysis.hasMeaning()) {
          out.append("\n[Meaning]\n");
-         init_V_StringBuilder_List(out, analysis.meaningLines());
+         appendLines(out, analysis.meaningLines());
       }
 
       return out.toString().stripTrailing();
    }
 
-   private static void init_V_StringBuilder_List(StringBuilder out, List<PacketInspectorEngine.ColoredLine> lines) {
+   private static void appendLines(StringBuilder out, List<PacketInspectorEngine.ColoredLine> lines) {
       for (PacketInspectorEngine.ColoredLine line : lines) {
          if (line != null) {
             out.append(line.text()).append('\n');
@@ -108,11 +108,11 @@ public final class PacketDetailFormatter {
 
    private static PacketDetailFormatter.Inner_CachePool init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry == null || entry.packet == null || entry.packetClass == null) {
-         return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
+         return PacketDetailFormatter.Inner_CachePool.none();
       }
 
       if (!Packet.class.isAssignableFrom(entry.packetClass)) {
-         return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
+         return PacketDetailFormatter.Inner_CachePool.none();
       }
 
       PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
@@ -125,13 +125,13 @@ public final class PacketDetailFormatter {
             return PacketDetailFormatter.Inner_CachePool.init("captured plaintext was kept, but STREAM_CODEC decode failed: " + load(t));
          }
       } else {
-         return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
+         return PacketDetailFormatter.Inner_CachePool.none();
       }
    }
 
    private static boolean init_Z_Packet(Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out, PacketDetailFormatter.Inner_CachePool wireDecode) {
       if (wireDecode != null && wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
+         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.decoded ? UiColorPalette.mint() : UiColorPalette.warningYellow());
       }
 
       PacketSchemaSnapshot view = PacketSchemaSnapshot.capture(packet);
@@ -187,11 +187,11 @@ public final class PacketDetailFormatter {
       if (packet instanceof ClientboundOpenScreenPacket open) {
          out.load("Server opens a handled screen.", UiColorPalette.textBright());
          out.load("Container: #" + open.getContainerId() + " type=" + load(open.getType()), UiColorPalette.blue());
-         out.load("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
+         out.load("Title: " + quote(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
          out.load("Server replaces the full contents of a container.", UiColorPalette.textBright());
          out.load("Container: #" + content.containerId() + " state=" + content.stateId(), UiColorPalette.blue());
-         out.load("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
+         out.load("Slots: " + content.items().size() + " total, " + countNonEmpty(content.items()) + " non-empty", UiColorPalette.textBright());
          out.load("Carried Item: " + PacketStateDeltaTracker.describeStack(content.carriedItem()), UiColorPalette.successText());
          init_V_List_bh_StreamUtil(content.items(), out);
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
@@ -215,8 +215,8 @@ public final class PacketDetailFormatter {
       } else if (packet instanceof ServerboundContainerClickPacket click) {
          out.load("Client clicks inside a handled screen.", UiColorPalette.textBright());
          out.load("Container: #" + click.containerId() + " state=" + click.stateId(), UiColorPalette.blue());
-         out.load("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
-         out.load("Slot: " + click.slotNum() + " | Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
+         out.load("Input: " + describeInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
+         out.load("Slot: " + click.slotNum() + " | Button: " + describeButton(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
          out.load("Changed Slots: " + click.changedSlots().size(), UiColorPalette.textBright());
          int shown = 0;
 
@@ -233,45 +233,45 @@ public final class PacketDetailFormatter {
          out.load("Carried Item: " + PacketStateDeltaTracker.describeHashedStack(click.carriedItem()), UiColorPalette.successText());
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
          out.load("Client presses a handled-screen button.", UiColorPalette.textBright());
-         out.load("Container: #" + load(init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
-         out.load("Button Id: " + load(init_Obj_Obj_StrArr(button, "buttonId", "getButtonId")), UiColorPalette.textBright());
+         out.load("Container: #" + load(callFirst(button, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
+         out.load("Button Id: " + load(callFirst(button, "buttonId", "getButtonId")), UiColorPalette.textBright());
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
          out.load(packet instanceof ServerboundContainerClosePacket ? "Client closes a handled screen." : "Server closes a handled screen.", UiColorPalette.textBright());
          Object id = packet instanceof ClientboundContainerClosePacket close
             ? close.getContainerId()
-            : init_Obj_Obj_StrArr(packet, "containerId", "getContainerId");
+            : callFirst(packet, "containerId", "getContainerId");
          out.load("Container: #" + load(id), UiColorPalette.blue());
       } else if (packet instanceof ClientboundContainerSetDataPacket data) {
          out.load("Server updates a container property/data slot.", UiColorPalette.textBright());
-         out.load("Container: #" + load(init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
+         out.load("Container: #" + load(callFirst(data, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
          out.load(
             "Property: "
-               + load(init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"))
+               + load(callFirst(data, "id", "getId", "propertyId", "getPropertyId"))
                + " = "
-               + load(init_Obj_Obj_StrArr(data, "value", "getValue")),
+               + load(callFirst(data, "value", "getValue")),
             UiColorPalette.successText()
          );
       } else if (packet instanceof ServerboundSetCreativeModeSlotPacket creative) {
          out.load("Client sets a creative inventory slot.", UiColorPalette.textBright());
-         out.load("Slot: " + load(init_Obj_Obj_StrArr(creative, "slot", "getSlot")), UiColorPalette.blue());
-         out.load("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
+         out.load("Slot: " + load(callFirst(creative, "slot", "getSlot")), UiColorPalette.blue());
+         out.load("Stack: " + formatValue(callFirst(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
       } else if (packet instanceof ServerboundSelectBundleItemPacket bundle) {
          out.load("Client selects an item inside a bundle.", UiColorPalette.textBright());
          out.load(
             "Slot: "
-               + load(init_Obj_Obj_StrArr(bundle, "slot", "getSlot"))
+               + load(callFirst(bundle, "slot", "getSlot"))
                + " | Index: "
-               + load(init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex")),
+               + load(callFirst(bundle, "selectedItemIndex", "index", "getIndex")),
             UiColorPalette.blue()
          );
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
          PositionMoveRotation change = position.change();
          out.load("Server sends an authoritative player position/rotation correction.", UiColorPalette.textBright());
          out.load("Teleport Id: " + position.id(), UiColorPalette.blue());
-         out.load("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.textBright());
-         out.load("Encoded Position: " + init_Str_Vec3(change.position()), UiColorPalette.textBright());
-         out.load("Encoded Velocity Delta: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.textBright());
-         out.load("Encoded Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.textBright());
+         out.load("Relative Flags: " + formatRelatives(position.relatives()), UiColorPalette.textBright());
+         out.load("Encoded Position: " + formatVec(change.position()), UiColorPalette.textBright());
+         out.load("Encoded Velocity Delta: " + formatVec(change.deltaMovement()), UiColorPalette.textBright());
+         out.load("Encoded Rotation: yaw=" + formatFloat(change.yRot()) + ", pitch=" + formatFloat(change.xRot()), UiColorPalette.textBright());
          out.load("Expected Reply: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.amber());
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
          out.load("Client sends player movement state.", UiColorPalette.textBright());
@@ -279,7 +279,7 @@ public final class PacketDetailFormatter {
          out.load("Has Position: " + move.hasPosition() + " | Has Rotation: " + move.hasRotation(), UiColorPalette.textBright());
          out.load("On Ground: " + move.isOnGround() + " | Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.textBright());
          out.load("Encoded Position: x=" + move.getX(0.0) + ", y=" + move.getY(0.0) + ", z=" + move.getZ(0.0), UiColorPalette.successText());
-         out.load("Encoded Rotation: yaw=" + init_Str_F(move.getYRot(0.0F)) + ", pitch=" + init_Str_F(move.getXRot(0.0F)), UiColorPalette.successText());
+         out.load("Encoded Rotation: yaw=" + formatFloat(move.getYRot(0.0F)) + ", pitch=" + formatFloat(move.getXRot(0.0F)), UiColorPalette.successText());
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
          out.load("Client acknowledges a server teleport/correction.", UiColorPalette.textBright());
          out.load("Teleport Id: " + ack.id(), UiColorPalette.blue());
@@ -365,14 +365,14 @@ public final class PacketDetailFormatter {
          out.init("Meaning: server opened a handled screen", UiColorPalette.textBright());
          out.init("Container Id: " + open.getContainerId(), UiColorPalette.blue());
          out.init("Screen Type: " + load(open.getType()), UiColorPalette.textBright());
-         out.init("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
+         out.init("Title: " + quote(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
          out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server replaced full container contents", UiColorPalette.textBright());
          out.init("Container Id: " + content.containerId(), UiColorPalette.blue());
          out.init("State Id: " + content.stateId(), UiColorPalette.textBody());
-         out.init("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
+         out.init("Slots: " + content.items().size() + " total, " + countNonEmpty(content.items()) + " non-empty", UiColorPalette.textBright());
          out.init("Container Area: " + init_Str_bq_CachePool(after), UiColorPalette.textBright());
          out.init("Cursor: " + PacketStateDeltaTracker.describeStack(content.carriedItem()), UiColorPalette.successText());
          load(content.items(), out);
@@ -417,8 +417,8 @@ public final class PacketDetailFormatter {
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
          out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client clicked a handled-screen button", UiColorPalette.textBright());
-         out.init("Container Id: " + init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
-         out.init("Button Id: " + init_Obj_Obj_StrArr(button, "buttonId", "getButtonId"), UiColorPalette.textBright());
+         out.init("Container Id: " + callFirst(button, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
+         out.init("Button Id: " + callFirst(button, "buttonId", "getButtonId"), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
          out.init("Status: context-aware", UiColorPalette.mint());
@@ -427,31 +427,31 @@ public final class PacketDetailFormatter {
          );
          Object id = packet instanceof ClientboundContainerClosePacket close
             ? close.getContainerId()
-            : init_Obj_Obj_StrArr(packet, "containerId", "getContainerId");
+            : callFirst(packet, "containerId", "getContainerId");
          out.init("Container Id: " + load(id), UiColorPalette.blue());
          if (!before.screenTitle().isBlank()) {
-            out.init("Closed Screen: " + init_Str_Str(before.screenTitle()), UiColorPalette.successText());
+            out.init("Closed Screen: " + quote(before.screenTitle()), UiColorPalette.successText());
          }
 
          return true;
       } else if (packet instanceof ClientboundContainerSetDataPacket data) {
          out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server updated container property/data", UiColorPalette.textBright());
-         out.init("Container Id: " + init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
-         out.init("Property: " + init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"), UiColorPalette.textBright());
-         out.init("Value: " + init_Obj_Obj_StrArr(data, "value", "getValue"), UiColorPalette.successText());
+         out.init("Container Id: " + callFirst(data, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
+         out.init("Property: " + callFirst(data, "id", "getId", "propertyId", "getPropertyId"), UiColorPalette.textBright());
+         out.init("Value: " + callFirst(data, "value", "getValue"), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCreativeModeSlotPacket creative) {
          out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client set a creative inventory slot", UiColorPalette.textBright());
-         out.init("Slot: " + init_Obj_Obj_StrArr(creative, "slot", "getSlot"), UiColorPalette.blue());
-         out.init("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
+         out.init("Slot: " + callFirst(creative, "slot", "getSlot"), UiColorPalette.blue());
+         out.init("Stack: " + formatValue(callFirst(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSelectBundleItemPacket bundle) {
          out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client selected an item inside a bundle", UiColorPalette.textBright());
-         out.init("Slot: " + init_Obj_Obj_StrArr(bundle, "slot", "getSlot"), UiColorPalette.blue());
-         out.init("Selected Item Index: " + init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex"), UiColorPalette.textBright());
+         out.init("Slot: " + callFirst(bundle, "slot", "getSlot"), UiColorPalette.blue());
+         out.init("Selected Item Index: " + callFirst(bundle, "selectedItemIndex", "index", "getIndex"), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
          init_V_ClientboundPlayerP(position, before, after, out);
@@ -532,7 +532,7 @@ public final class PacketDetailFormatter {
          out.init("Url: " + pack.url(), UiColorPalette.successText());
          out.init("Hash: " + pack.hash(), UiColorPalette.textBody());
          out.init("Required: " + pack.required(), UiColorPalette.textBright());
-         pack.prompt().ifPresent(component -> out.init("Prompt: " + init_Str_Str(component.getString()), UiColorPalette.textBright()));
+         pack.prompt().ifPresent(component -> out.init("Prompt: " + quote(component.getString()), UiColorPalette.textBright()));
          return true;
       } else if (packet instanceof ClientboundResourcePackPopPacket pack) {
          out.init("Status: complete", UiColorPalette.mint());
@@ -556,9 +556,9 @@ public final class PacketDetailFormatter {
       out.init("Meaning: client clicked inside a handled screen", UiColorPalette.textBright());
       out.init("Container Id: " + click.containerId(), UiColorPalette.blue());
       out.init("State Id: " + click.stateId(), UiColorPalette.textBody());
-      out.init("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
+      out.init("Input: " + describeInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
       out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.describeSlot(before, click.slotNum()) + ")", UiColorPalette.textBright());
-      out.init("Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
+      out.init("Button: " + describeButton(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
       out.init("Slot Before: " + before.init(click.slotNum()), UiColorPalette.textMuted());
       out.init("Slot After: " + after.init(click.slotNum()), UiColorPalette.successText());
       out.init("Cursor Before: " + before.carriedItem(), UiColorPalette.textMuted());
@@ -587,10 +587,10 @@ public final class PacketDetailFormatter {
       out.init("Status: context-aware", UiColorPalette.mint());
       out.init("Meaning: server corrected/teleported local player", UiColorPalette.textBright());
       out.init("Teleport Id: " + position.id(), UiColorPalette.blue());
-      out.init("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.textBright());
-      out.init("Raw Position Change: " + init_Str_Vec3(change.position()), UiColorPalette.textBright());
-      out.init("Raw Delta Movement: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.textBright());
-      out.init("Raw Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.textBright());
+      out.init("Relative Flags: " + formatRelatives(position.relatives()), UiColorPalette.textBright());
+      out.init("Raw Position Change: " + formatVec(change.position()), UiColorPalette.textBright());
+      out.init("Raw Delta Movement: " + formatVec(change.deltaMovement()), UiColorPalette.textBright());
+      out.init("Raw Rotation: yaw=" + formatFloat(change.yRot()) + ", pitch=" + formatFloat(change.xRot()), UiColorPalette.textBright());
       if (before.serverPosition() != null) {
          out.init("Before Server Pos: " + PacketStateDeltaTracker.formatPosition(before.serverPosition()), UiColorPalette.textMuted());
       }
@@ -646,7 +646,7 @@ public final class PacketDetailFormatter {
          }
 
          if (after.containerId() >= 0 || !after.screenTitle().isBlank()) {
-            out.load("Screen: #" + after.containerId() + " " + init_Str_Str(after.screenTitle()) + " " + after.menuType(), UiColorPalette.successText());
+            out.load("Screen: #" + after.containerId() + " " + quote(after.screenTitle()) + " " + after.menuType(), UiColorPalette.successText());
          }
 
          if (!after.dimension().isBlank()) {
@@ -730,7 +730,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static int init_I_Collection(Collection<ItemStack> items) {
+   private static int countNonEmpty(Collection<ItemStack> items) {
       int count = 0;
       if (items != null) {
          for (ItemStack item : items) {
@@ -743,7 +743,7 @@ public final class PacketDetailFormatter {
       return count;
    }
 
-   private static String init_Str_ContainerInput(ContainerInput input) {
+   private static String describeInput(ContainerInput input) {
       if (input == null) {
          return "unknown";
       }
@@ -778,7 +778,7 @@ public final class PacketDetailFormatter {
       return var10000;
    }
 
-   private static String init_Str_ContainerInput_I(ContainerInput input, int button) {
+   private static String describeButton(ContainerInput input, int button) {
       if (input == ContainerInput.PICKUP) {
          return button == 0 ? "0 left click" : (button == 1 ? "1 right click" : String.valueOf(button));
       } else if (input == ContainerInput.QUICK_MOVE) {
@@ -792,23 +792,23 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static String init_Str_Obj(Object value) {
+   private static String formatValue(Object value) {
       return value instanceof ItemStack stack ? PacketStateDeltaTracker.describeStack(stack) : load(value);
    }
 
-   private static String init_Str_Set(Set<Relative> relatives) {
+   private static String formatRelatives(Set<Relative> relatives) {
       return relatives != null && !relatives.isEmpty() ? relatives.toString() : "none / absolute";
    }
 
-   private static String init_Str_Vec3(Vec3 vec) {
+   private static String formatVec(Vec3 vec) {
       return vec == null ? "unknown" : String.format(Locale.ROOT, "x=%.3f, y=%.3f, z=%.3f", vec.x, vec.y, vec.z);
    }
 
-   private static String init_Str_F(float value) {
+   private static String formatFloat(float value) {
       return String.format(Locale.ROOT, "%.2f", value);
    }
 
-   private static Object init_Obj_Obj_StrArr(Object target, String... methodNames) {
+   private static Object callFirst(Object target, String... methodNames) {
       if (target != null && methodNames != null) {
          for (String methodName : methodNames) {
             if (methodName != null && !methodName.isBlank()) {
@@ -848,7 +848,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static String init_Str_Str(String value) {
+   private static String quote(String value) {
       if (value == null) {
          return "\"\"";
       }
@@ -857,8 +857,8 @@ public final class PacketDetailFormatter {
       return "\"" + trimmed + "\"";
    }
 
-   private record Inner_CachePool(Packet<?> init_Packet, boolean init_Z, String init_Str) {
-      static PacketDetailFormatter.Inner_CachePool init_bh_CachePool() {
+   private record Inner_CachePool(Packet<?> packet, boolean decoded, String init_Str) {
+      static PacketDetailFormatter.Inner_CachePool none() {
          return new PacketDetailFormatter.Inner_CachePool(null, false, "");
       }
 
@@ -870,8 +870,8 @@ public final class PacketDetailFormatter {
          return new PacketDetailFormatter.Inner_CachePool(null, false, message);
       }
 
-      String init_Str_2() {
-         return this.init_Z ? "wire-codec" : "fallback";
+      String sourceLabel() {
+         return this.decoded ? "wire-codec" : "fallback";
       }
 
       public String load() {

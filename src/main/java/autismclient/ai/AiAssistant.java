@@ -10,15 +10,15 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 
 public final class AiAssistant implements autismclient.util.SilentMovementCoordinator.Participant {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final AiAssistant init_ConfigStore = new AiAssistant();
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final AiAssistant INSTANCE = new AiAssistant();
    private boolean init_Z;
    private boolean load;
    private long init_J;
-   private AiAssistantOverlay init_AiAssistantOverlay;
+   private AiAssistantOverlay overlay;
 
    public static AiAssistant getInstance() {
-      return init_ConfigStore;
+      return INSTANCE;
    }
 
    private AiAssistant() {
@@ -61,22 +61,22 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    }
 
    public AutismOverlay getOverlay() {
-      return this.init_AiAssistantOverlay;
+      return this.overlay;
    }
 
    public void restoreOverlay() {
-      if (this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.isVisible()) {
-         OverlayManager.getInstance().register(this.init_AiAssistantOverlay);
+      if (this.overlay != null && this.overlay.isVisible()) {
+         OverlayManager.getInstance().register(this.overlay);
       }
    }
 
    public void read() {
       OverlayManager manager = OverlayManager.getInstance();
-      if (this.init_AiAssistantOverlay != null
-         && this.init_AiAssistantOverlay.isVisible()
-         && manager.getOverlays().contains(this.init_AiAssistantOverlay)
-         && !manager.isHidden(this.init_AiAssistantOverlay)) {
-         this.init_AiAssistantOverlay.setVisible(false);
+      if (this.overlay != null
+         && this.overlay.isVisible()
+         && manager.getOverlays().contains(this.overlay)
+         && !manager.isHidden(this.overlay)) {
+         this.overlay.setVisible(false);
       } else {
          this.openOverlay();
       }
@@ -84,40 +84,40 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void openOverlay() {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.SyncManager.init()) {
-         if (this.init_AiAssistantOverlay == null) {
-            this.init_AiAssistantOverlay = new AiAssistantOverlay(AiService.getInstance());
+         if (this.overlay == null) {
+            this.overlay = new AiAssistantOverlay(AiService.getInstance());
          }
 
          OverlayManager manager = OverlayManager.getInstance();
-         manager.register(this.init_AiAssistantOverlay);
-         manager.setHidden(this.init_AiAssistantOverlay, false);
-         this.init_AiAssistantOverlay.setVisible(true);
-         this.init_AiAssistantOverlay.setCollapsed(false);
-         manager.bringToFront(this.init_AiAssistantOverlay);
-         if (init_Minecraft.gui.screen() == null) {
-            init_Minecraft.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(this.init_AiAssistantOverlay, null, false, false));
+         manager.register(this.overlay);
+         manager.setHidden(this.overlay, false);
+         this.overlay.setVisible(true);
+         this.overlay.setCollapsed(false);
+         manager.bringToFront(this.overlay);
+         if (MC.gui.screen() == null) {
+            MC.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(this.overlay, null, false, false));
          }
       }
    }
 
    public void init(String view) {
       this.openOverlay();
-      this.init_AiAssistantOverlay.load(view);
+      this.overlay.load(view);
    }
 
    public void update_V() {
       this.openOverlay();
-      this.init_AiAssistantOverlay.sync_V();
+      this.overlay.sync_V();
    }
 
    public void init(String action, String query) {
       this.openOverlay();
-      this.init_AiAssistantOverlay.openAction(action, query);
+      this.overlay.openAction(action, query);
    }
 
    public void sync() {
-      if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.update_V();
+      if (this.overlay != null) {
+         this.overlay.update_V();
       }
    }
 
@@ -130,60 +130,60 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    }
 
    public void close() {
-      if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.flush_V();
+      if (this.overlay != null) {
+         this.overlay.flush_V();
       }
    }
 
    public void open() {
-      if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.close_V();
+      if (this.overlay != null) {
+         this.overlay.close_V();
       }
    }
 
    public JsonObject load_JsonObject() {
-      return this.init_AiAssistantOverlay == null ? new JsonObject() : this.init_AiAssistantOverlay.init_JsonObject();
+      return this.overlay == null ? new JsonObject() : this.overlay.init_JsonObject();
    }
 
    void poll() {
-      if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.hide();
+      if (this.overlay != null) {
+         this.overlay.hide();
       }
    }
 
    boolean isShown() {
-      return this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.isVisible() || aP.init_Z();
+      return this.overlay != null && this.overlay.isVisible() || aP.init_Z();
    }
 
    void push() {
-      if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.poll_V();
+      if (this.overlay != null) {
+         this.overlay.poll_V();
       }
    }
 
    public void pop() {
-      if (this.init_AiAssistantOverlay != null
-         && this.init_AiAssistantOverlay.isVisible()
-         && init_Minecraft.gui.screen() != null
-         && OverlayManager.getInstance().getOverlays().contains(this.init_AiAssistantOverlay)) {
-         this.init_AiAssistantOverlay.clearInputFocus();
-         init_Minecraft.gui.setScreen(null);
+      if (this.overlay != null
+         && this.overlay.isVisible()
+         && MC.gui.screen() != null
+         && OverlayManager.getInstance().getOverlays().contains(this.overlay)) {
+         this.overlay.clearInputFocus();
+         MC.gui.setScreen(null);
       }
    }
 
    private void tick() {
       int bind = AutismConfig.getGlobal().keybindAiAssistant;
-      boolean pressed = bind != -1 && autismclient.util.ValueSink.init(init_Minecraft, bind);
+      boolean pressed = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
       boolean openFromKey = pressed && !this.load;
       this.load = pressed;
       if (!autismclient.modules.aD.init_Z() && autismclient.e.RefQueue.init()) {
-         AiWorldMemory.init(init_Minecraft);
+         AiWorldMemory.init(MC);
          if (openFromKey && autismclient.util.at.init()) {
             this.read();
          }
 
          if ("ai-assistant".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) || autismclient.util.SilentRotationManager.isReturningToPlayer()) {
-            autismclient.util.SilentRotationManager.tick("ai-assistant", init_Minecraft.player);
+            autismclient.util.SilentRotationManager.tick("ai-assistant", MC.player);
          }
       }
    }

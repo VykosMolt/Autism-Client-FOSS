@@ -26,7 +26,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.getConnection() != null) {
-         MacroItemTarget target = this.init_ArrayUtil_3();
+         MacroItemTarget target = this.resolvedTarget();
          target = target.resolveTemplates(mc);
          if (target != null) {
             if (target.hasSlot() || target.hasItemFilter()) {
@@ -53,7 +53,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "USE_ITEM");
-      MacroItemTarget target = this.init_ArrayUtil_3();
+      MacroItemTarget target = this.resolvedTarget();
       if (target.hasSlot() || target.hasItemFilter()) {
          tag.put("itemName", target.toTag());
       }
@@ -154,7 +154,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
 
    @Override
    public String getDisplayName() {
-      MacroItemTarget target = this.init_ArrayUtil_3();
+      MacroItemTarget target = this.resolvedTarget();
       String item = !target.hasSlot() && !target.hasItemFilter() ? "current" : target.formatSummary();
       String count = this.useCount > 1 ? " x" + this.useCount : "";
       String wait = this.waitForFinish ? ", wait" : "";
@@ -180,7 +180,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       this.init = e;
    }
 
-   private MacroItemTarget init_ArrayUtil_3() {
+   private MacroItemTarget resolvedTarget() {
       MacroItemTarget target = this.itemTarget != null ? this.itemTarget.copy() : MacroItemTarget.parse(this.itemName);
       if (!target.hasSlot() && !target.hasItemFilter()) {
          target = MacroItemTarget.parse(this.itemName);

@@ -138,7 +138,7 @@ final class AiTidy {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiTidy.Inner_DataUtil action = init_cx_DataUtil(AiJson.getString(args, "action", "inspect"));
+         AiTidy.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
          final int wantFree = Math.max(1, Math.min(36, AiJson.getInt(args, "freeSlots", 4)));
          final int maxDrops = Math.max(1, Math.min(36, AiJson.getInt(args, "maxDrops", 9)));
          final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
@@ -168,7 +168,7 @@ final class AiTidy {
                int read_I;
                long load_J;
                int write;
-               AiTidy.Inner_StreamUtil init_cx_StreamUtil;
+               AiTidy.Inner_StreamUtil worst;
                int update;
                boolean init_Z;
 
@@ -192,26 +192,26 @@ final class AiTidy {
                      }
 
                      if (this.load_I >= 0) {
-                        OptionalInt confirmedCount = AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item());
-                        if (confirmedCount.isPresent() && confirmedCount.getAsInt() <= this.write - this.init_cx_StreamUtil.count()) {
+                        OptionalInt confirmedCount = AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.worst.item());
+                        if (confirmedCount.isPresent() && confirmedCount.getAsInt() <= this.write - this.worst.count()) {
                            this.init_JsonArray
                               .add(
                                  AiJson.objectOf(
                                     "slot",
-                                    this.init_cx_StreamUtil.slot(),
+                                    this.worst.slot(),
                                     "item",
-                                    this.init_cx_StreamUtil.item(),
+                                    this.worst.item(),
                                     "count",
-                                    this.init_cx_StreamUtil.count(),
+                                    this.worst.count(),
                                     "rank",
-                                    this.init_cx_StreamUtil.rank(),
+                                    this.worst.rank(),
                                     "confirmed",
                                     true
                                  )
                               );
                            this.update++;
                            this.load_I = -1;
-                           this.init_cx_StreamUtil = null;
+                           this.worst = null;
                            this.read_I = 0;
                            return this.init("Drop confirmed");
                         } else {
@@ -243,7 +243,7 @@ final class AiTidy {
 
                         this.load_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
                         this.load_I = worst.slot();
-                        this.init_cx_StreamUtil = worst;
+                        this.worst = worst;
                         this.write = AiCraft.countItem(worst.item());
                         AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, AiTidy.init(mc, worst.slot()), 1, ContainerInput.THROW);
                         return this.init("Dropping " + worst.count() + " " + worst.item());
@@ -257,22 +257,22 @@ final class AiTidy {
                   JsonObject out = AiJson.objectOf(
                      "freeSlots", AiItems.countFreeSlots(), "target", wantFree, "startedWith", this.init_I, "drops", this.update, "maxDrops", maxDrops
                   );
-                  if (this.init_cx_StreamUtil != null) {
+                  if (this.worst != null) {
                      out.add(
                         "pendingDrop",
                         AiJson.objectOf(
                            "slot",
                            this.load_I,
                            "item",
-                           this.init_cx_StreamUtil.item(),
+                           this.worst.item(),
                            "count",
-                           this.init_cx_StreamUtil.count(),
+                           this.worst.count(),
                            "beforeCount",
                            this.write,
                            "currentCount",
-                           AiCraft.countItem(this.init_cx_StreamUtil.item()),
+                           AiCraft.countItem(this.worst.item()),
                            "minimumServerCountAfterClick",
-                           AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item()).orElse(-1),
+                           AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.worst.item()).orElse(-1),
                            "repliesBefore",
                            this.load_J,
                            "repliesNow",
@@ -377,13 +377,13 @@ final class AiTidy {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty() && slot != selected && !init_Z(stack, keep)) {
             int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.reservedItemCount(stack.getItem()));
-            if ((reserved <= 0 || AiGameState.countMainInventoryItem(load_Str(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
+            if ((reserved <= 0 || AiGameState.countMainInventoryItem(itemId(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
                int stackWood = stack.is(ItemTags.PLANKS) ? stack.getCount() : (stack.is(ItemTags.LOGS) ? 4 * stack.getCount() : 0);
                if ((stackWood <= 0 || wood - stackWood >= keptWood)
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
                   && (!autismclient.ai.engine.AiRestock.isStoneBlock(stack) || stone - stack.getCount() >= autismclient.ai.engine.AiRestock.baseStoneReserve())) {
                   int rank = init_I(stack, held);
-                  ranked.add(new AiTidy.Inner_StreamUtil(slot, load_Str(stack), stack.getCount(), rank));
+                  ranked.add(new AiTidy.Inner_StreamUtil(slot, itemId(stack), stack.getCount(), rank));
                }
             }
          }
@@ -410,7 +410,7 @@ final class AiTidy {
       if (stack.isEmpty()) {
          return 0;
       } else {
-         String id = load_Str(stack);
+         String id = itemId(stack);
          if (stack.isDamageableItem()) {
             return 100;
          } else if (read_List.contains(id)) {
@@ -441,10 +441,10 @@ final class AiTidy {
 
    static boolean init(ItemStack stack, ItemStack replacement) {
       if (AiItems.isDisposableTierTool(stack) && replacement != null && AiItems.hasEnoughDurability(replacement, 2) && stack.has(DataComponents.TOOL) && replacement.has(DataComponents.TOOL)) {
-         String kind = init_Str(stack);
+         String kind = toolKind(stack);
          int tier = read(stack);
          int otherTier = read(replacement);
-         if (!kind.isEmpty() && kind.equals(init_Str(replacement)) && tier >= 0 && otherTier >= tier && load_I(replacement) >= load_I(stack)) {
+         if (!kind.isEmpty() && kind.equals(toolKind(replacement)) && tier >= 0 && otherTier >= tier && durabilityLeft(replacement) >= durabilityLeft(stack)) {
             for (BlockState state : init_List(kind)) {
                float speed = stack.getDestroySpeed(state);
                float otherSpeed = replacement.getDestroySpeed(state);
@@ -465,11 +465,11 @@ final class AiTidy {
       }
    }
 
-   private static int load_I(ItemStack stack) {
+   private static int durabilityLeft(ItemStack stack) {
       return stack.getMaxDamage() - stack.getDamageValue();
    }
 
-   private static String init_Str(ItemStack stack) {
+   private static String toolKind(ItemStack stack) {
       if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("minecraft")) {
          String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
 
@@ -539,7 +539,7 @@ final class AiTidy {
       if (!stack.isEmpty() && stack.getItem() instanceof BlockItem item) {
          Block block = item.getBlock();
          BlockState state = block.defaultBlockState();
-         String id = load_Str(stack);
+         String id = itemId(stack);
          if (init_List.contains(id)
             || write_List.contains(id)
             || stack.is(ItemTags.BEDS)
@@ -589,7 +589,7 @@ final class AiTidy {
       return false;
    }
 
-   private static String load_Str(ItemStack stack) {
+   private static String itemId(ItemStack stack) {
       return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
@@ -602,7 +602,7 @@ final class AiTidy {
       }
    }
 
-   private static AiTidy.Inner_DataUtil init_cx_DataUtil(String text) {
+   private static AiTidy.Inner_DataUtil parseAction(String text) {
       try {
          return AiTidy.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {

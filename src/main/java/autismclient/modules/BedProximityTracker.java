@@ -32,8 +32,8 @@ import net.minecraft.world.scores.TeamColor;
 
 final class BedProximityTracker {
    private Object init_Obj;
-   private DyeColor init_DyeColor;
-   private String init_Str;
+   private DyeColor own;
+   private String teamName;
    private BlockPos init_BlockPos;
    private int init_I;
    private final BedProximityTracker.Inner_CachePool init_v_CachePool = new BedProximityTracker.Inner_CachePool();
@@ -46,8 +46,8 @@ final class BedProximityTracker {
 
    void reset() {
       this.init_Obj = null;
-      this.init_DyeColor = null;
-      this.init_Str = null;
+      this.own = null;
+      this.teamName = null;
       this.init_BlockPos = null;
       this.init_I = 0;
       this.init_v_CachePool.init();
@@ -72,7 +72,7 @@ final class BedProximityTracker {
             .stream()
             .min(Comparator.comparingDouble(BedProximityTracker.Inner_StreamUtil::init_D).thenComparing(BedProximityTracker.Inner_StreamUtil::init_UUID))
             .orElseThrow();
-         result.add(new BedProximityTracker.Inner_DataUtil(entry.getKey(), closest.init_Component, closest.init_I, entry.getValue().size(), closest.init_D));
+         result.add(new BedProximityTracker.Inner_DataUtil(entry.getKey(), closest.init_Component, closest.tint, entry.getValue().size(), closest.init_D));
       }
 
       result.sort(Comparator.comparingDouble(BedProximityTracker.Inner_DataUtil::init_D).thenComparing(BedProximityTracker.Inner_DataUtil::init_Str));
@@ -91,11 +91,11 @@ final class BedProximityTracker {
             ownRgb == null ? null : ownRgb.getValue()
          );
          String teamName = ownTeam == null ? null : ownTeam.getName();
-         if (this.init_Obj != mc.level || this.init_DyeColor != own || !Objects.equals(this.init_Str, teamName)) {
+         if (this.init_Obj != mc.level || this.own != own || !Objects.equals(this.teamName, teamName)) {
             this.reset();
             this.init_Obj = mc.level;
-            this.init_DyeColor = own;
-            this.init_Str = teamName;
+            this.own = own;
+            this.teamName = teamName;
          }
 
          this.init_I++;
@@ -148,7 +148,7 @@ final class BedProximityTracker {
                }
 
                List<BedProximityTracker.Inner_DataUtil> next = init_List_List_D(people, module.decimal("bed-warning-radius"));
-               if (module.bool("bed-warning-sound") && this.init_I - this.load >= 60 && init_Z_List_List(this.init_List, next)) {
+               if (module.bool("bed-warning-sound") && this.init_I - this.load >= 60 && hasNewGroup(this.init_List, next)) {
                   module.playBedSound();
                   this.load = this.init_I;
                }
@@ -161,7 +161,7 @@ final class BedProximityTracker {
       }
    }
 
-   static boolean init_Z_List_List(List<BedProximityTracker.Inner_DataUtil> previous, List<BedProximityTracker.Inner_DataUtil> next) {
+   static boolean hasNewGroup(List<BedProximityTracker.Inner_DataUtil> previous, List<BedProximityTracker.Inner_DataUtil> next) {
       return next.stream().anyMatch(group -> previous.stream().noneMatch(old -> old.init_Str().equals(group.init_Str())));
    }
 
@@ -177,10 +177,10 @@ final class BedProximityTracker {
             for (int dz = -radius; dz <= radius; dz++) {
                LevelChunk chunk = mc.level.getChunkSource().getChunk(cx + dx, cz + dz, ChunkStatus.FULL, false);
                if (chunk != null) {
-                  for (EspChunkWorker.EspBox entry : init_List_LevelChunk_J(chunk, mc.level.getGameTime())) {
+                  for (EspChunkWorker.EspBox entry : scanBeds(chunk, mc.level.getGameTime())) {
                      BlockPos at = BlockPos.containing(entry.tracer());
                      BlockState state = mc.level.getBlockState(at);
-                     if (state.getBlock() instanceof BedBlock block && block.getColor() == this.init_DyeColor) {
+                     if (state.getBlock() instanceof BedBlock block && block.getColor() == this.own) {
                         double distance = at.distToCenterSqr(mc.player.position());
                         if (!(distance >= closest)) {
                            closest = distance;
@@ -195,7 +195,7 @@ final class BedProximityTracker {
       }
    }
 
-   static List<EspChunkWorker.EspBox> init_List_LevelChunk_J(LevelChunk chunk, long time) {
+   static List<EspChunkWorker.EspBox> scanBeds(LevelChunk chunk, long time) {
       return EspChunkWorker.load
          .init(
             chunk,
@@ -244,7 +244,7 @@ final class BedProximityTracker {
          } else {
             BedProximityTracker.Inner_CachePool.Inner_StreamUtil signal = new BedProximityTracker.Inner_CachePool.Inner_StreamUtil(team, color);
             BedProximityTracker.Inner_CachePool.Inner_DataUtil old = this.init_Map.get(id);
-            int since = old != null && old.init_v_CachePool_Stream().equals(signal) ? old.init_I() : tick;
+            int since = old != null && old.signal().equals(signal) ? old.since() : tick;
             this.init_Map.put(id, new BedProximityTracker.Inner_CachePool.Inner_DataUtil(signal, since, tick));
             return tick - since >= settleTicks;
          }
@@ -255,18 +255,18 @@ final class BedProximityTracker {
          this.init_I = -2147483648;
       }
 
-      private record Inner_DataUtil(BedProximityTracker.Inner_CachePool.Inner_StreamUtil init_v_CachePool_Stream, int init_I, int load) {
+      private record Inner_DataUtil(BedProximityTracker.Inner_CachePool.Inner_StreamUtil signal, int since, int load) {
       }
 
-      private record Inner_StreamUtil(String init_Str, DyeColor init_DyeColor) {
+      private record Inner_StreamUtil(String team, DyeColor init_DyeColor) {
       }
    }
 
-   record Inner_DataUtil(String init_Str, Component init_Component, int init_I, int load, double init_D) {
+   record Inner_DataUtil(String init_Str, Component init_Component, int tint, int load, double init_D) {
       Component init(boolean distances) {
          MutableComponent label = this.load == 1
             ? (as.init_Z_33() ? as.load(this.init_Component).copy() : this.init_Component.copy())
-            : Component.literal(this.load + " players").withColor(this.init_I & 16777215);
+            : Component.literal(this.load + " players").withColor(this.tint & 16777215);
          if (distances) {
             label.append(Component.literal("  " + (int)Math.ceil(this.init_D) + " m").withColor(14540253));
          }
@@ -275,6 +275,6 @@ final class BedProximityTracker {
       }
    }
 
-   record Inner_StreamUtil(UUID init_UUID, String init_Str, Component init_Component, int init_I, double init_D) {
+   record Inner_StreamUtil(UUID init_UUID, String init_Str, Component init_Component, int tint, double init_D) {
    }
 }

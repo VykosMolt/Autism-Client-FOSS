@@ -18,8 +18,8 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.network.chat.Component;
 
 public class KeyBindArgumentType implements ArgumentType<Integer> {
-   private static final Map<String, Integer> init_Map = new LinkedHashMap<>();
-   private static final SimpleCommandExceptionType init_SimpleCommandExcep = new SimpleCommandExceptionType(Component.literal("Unknown key"));
+   private static final Map<String, Integer> KEYS = new LinkedHashMap<>();
+   private static final SimpleCommandExceptionType INVALID_KEY = new SimpleCommandExceptionType(Component.literal("Unknown key"));
 
    public static KeyBindArgumentType init() {
       return new KeyBindArgumentType();
@@ -34,7 +34,7 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
          return "NONE";
       }
 
-      for (Entry<String, Integer> e : init_Map.entrySet()) {
+      for (Entry<String, Integer> e : KEYS.entrySet()) {
          if (e.getValue() == code) {
             return e.getKey();
          }
@@ -50,7 +50,7 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
    public Integer init_Integer_StringReader(StringReader reader) throws CommandSyntaxException {
       String raw = reader.readUnquotedString();
       String upper = raw.toUpperCase(Locale.ROOT);
-      Integer code = init_Map.get(upper);
+      Integer code = KEYS.get(upper);
       if (code != null) {
          return code;
       }
@@ -66,14 +66,14 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
          }
       }
 
-      throw init_SimpleCommandExcep.create();
+      throw INVALID_KEY.create();
    }
 
    @Override
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toUpperCase(Locale.ROOT);
 
-      for (String n : init_Map.keySet()) {
+      for (String n : KEYS.keySet()) {
          if (n.startsWith(remaining)) {
             builder.suggest(n);
          }
@@ -88,7 +88,7 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
          if (n.startsWith("GLFW_KEY_")) {
             try {
                int code = f.getInt(null);
-               init_Map.put(n.substring("GLFW_KEY_".length()).toUpperCase(Locale.ROOT), code);
+               KEYS.put(n.substring("GLFW_KEY_".length()).toUpperCase(Locale.ROOT), code);
             } catch (Throwable var6) {
             }
          }

@@ -9,11 +9,11 @@ import autismclient.api.module.RegistryListSetting;
 import autismclient.util.BlockSelectionOutlineRenderer;
 
 public final class WorldModule extends Module {
-   private boolean init_Z;
+   private boolean darken;
    private String init_Str = "";
-   private int init_I = -2147483648;
-   private int load_I = -2147483648;
-   private String load_Str = "";
+   private int darkness = -2147483648;
+   private int tint = -2147483648;
+   private String blocks = "";
 
    public WorldModule() {
       super("world", "World", ae.update, "World render tweaks.");
@@ -132,13 +132,13 @@ public final class WorldModule extends Module {
       int darkness = this.integer("darkness");
       int tint = am.init_I_Module(this, "tint-color", -16777216);
       String blocks = this.value("blocks");
-      boolean switched = darken != this.init_Z || !mode.equals(this.init_Str) || !blocks.equals(this.load_Str);
-      if (switched || darkness != this.init_I || tint != this.load_I) {
-         this.init_Z = darken;
+      boolean switched = darken != this.darken || !mode.equals(this.init_Str) || !blocks.equals(this.blocks);
+      if (switched || darkness != this.darkness || tint != this.tint) {
+         this.darken = darken;
          this.init_Str = mode;
-         this.init_I = darkness;
-         this.load_I = tint;
-         this.load_Str = blocks;
+         this.darkness = darkness;
+         this.tint = tint;
+         this.blocks = blocks;
          if (switched) {
             am.init_V();
          } else {

@@ -76,7 +76,7 @@ public final class EntityEsp2DRenderer {
                   && init_Z_Entity(entity, tickDelta, camera, screenW, screenH)
                   && !(init_an_DataUtil.read < 0.0F)
                   && !(init_an_DataUtil.write < 0.0F)
-                  && !(init_an_DataUtil.init_F > screenW)
+                  && !(init_an_DataUtil.sx > screenW)
                   && !(init_an_DataUtil.load > screenH)) {
                   init_V_GuiGraphicsExtract(context, am.init_I(entity), fade, fill, px);
                   if (entity instanceof LivingEntity living) {
@@ -87,7 +87,7 @@ public final class EntityEsp2DRenderer {
             }
          }
 
-         init_V_J(frame);
+         pruneShown(frame);
       }
    }
 
@@ -124,23 +124,23 @@ public final class EntityEsp2DRenderer {
          && box.init(cx - alongX, bottom, cz - alongZ)
          && box.init(cx + alongX, top, cz + alongZ)
          && box.init(cx - alongX, top, cz - alongZ)
-         && box.read - box.init_F > 0.5F
+         && box.read - box.sx > 0.5F
          && box.write - box.load > 0.5F;
    }
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int rgb, float fade, boolean fill, float px) {
-      float x = init_an_DataUtil.init_F;
+      float x = init_an_DataUtil.sx;
       float y = init_an_DataUtil.load;
       float w = init_an_DataUtil.read - x;
       float h = init_an_DataUtil.write - y;
       float radius = Math.max(0.75F, 2.0F * px);
-      int shadow = init_I_F(0.62F * fade);
+      int shadow = alphaBits(0.62F * fade);
       if (fill) {
-         autismclient.gui.sdf.SdfShapeRenderer.drawRoundedRect(context, x, y, w, h, radius, init_I_F(0.2F * fade) | rgb, init_I_F(0.05F * fade) | rgb, 0, 0);
+         autismclient.gui.sdf.SdfShapeRenderer.drawRoundedRect(context, x, y, w, h, radius, alphaBits(0.2F * fade) | rgb, alphaBits(0.05F * fade) | rgb, 0, 0);
       }
 
       autismclient.gui.sdf.SdfShapeRenderer.init(context, x - px, y - px, w + 2.0F * px, h + 2.0F * px, radius + px, 0, shadow);
-      autismclient.gui.sdf.SdfShapeRenderer.init(context, x, y, w, h, radius, 0, init_I_F(fade) | rgb);
+      autismclient.gui.sdf.SdfShapeRenderer.init(context, x, y, w, h, radius, 0, alphaBits(fade) | rgb);
       if (w > 4.0F * px && h > 4.0F * px) {
          autismclient.gui.sdf.SdfShapeRenderer.init(context, x + px, y + px, w - 2.0F * px, h - 2.0F * px, Math.max(0.75F, radius - px), 0, shadow);
       }
@@ -156,16 +156,16 @@ public final class EntityEsp2DRenderer {
          shown.init_F = shown.init_F + (health - shown.init_F) * healthLerp;
       }
 
-      shown.init_J = frame;
+      shown.frame = frame;
       float y = init_an_DataUtil.load;
       float h = init_an_DataUtil.write - init_an_DataUtil.load;
       float barW = 5.0F * px;
-      float x = init_an_DataUtil.init_F - 3.0F * px - barW;
-      init_V_GuiGraphicsExtract(context, x, y - px, barW, h + 2.0F * px, init_I_F(0.62F * fade));
+      float x = init_an_DataUtil.sx - 3.0F * px - barW;
+      init_V_GuiGraphicsExtract(context, x, y - px, barW, h + 2.0F * px, alphaBits(0.62F * fade));
       float inner = barW - 2.0F * px;
       float filled = h * shown.init_F;
       if (!(filled <= 0.25F * px)) {
-         int color = init_I_F(fade) | Mth.hsvToRgb(shown.init_F / 3.0F, 0.78F, 1.0F);
+         int color = alphaBits(fade) | Mth.hsvToRgb(shown.init_F / 3.0F, 0.78F, 1.0F);
          init_V_GuiGraphicsExtract(context, x + px, y + h - filled, inner, filled, color);
       }
    }
@@ -183,19 +183,19 @@ public final class EntityEsp2DRenderer {
       }
    }
 
-   private static int init_I_F(float opacity) {
+   private static int alphaBits(float opacity) {
       return Math.round(Mth.clamp(opacity, 0.0F, 1.0F) * 255.0F) << 24;
    }
 
-   private static void init_V_J(long frame) {
+   private static void pruneShown(long frame) {
       if ((frame & 63L) == 0L && !init_Int2ObjectOpenHash.isEmpty()) {
-         init_Int2ObjectOpenHash.values().removeIf(shown -> frame - shown.init_J > 20L);
+         init_Int2ObjectOpenHash.values().removeIf(shown -> frame - shown.frame > 20L);
       }
    }
 
    private static final class Inner_DataUtil {
       private final Vector4f init_Vector4f = new Vector4f();
-      float init_F;
+      float sx;
       float load;
       float read;
       float write;
@@ -205,7 +205,7 @@ public final class EntityEsp2DRenderer {
       void init(float screenW, float screenH) {
          this.update = screenW;
          this.sync = screenH;
-         this.init_F = this.load = 3.4028235E38F;
+         this.sx = this.load = 3.4028235E38F;
          this.read = this.write = -3.4028235E38F;
       }
 
@@ -219,8 +219,8 @@ public final class EntityEsp2DRenderer {
          float sx = (this.init_Vector4f.x / this.init_Vector4f.w * 0.5F + 0.5F) * this.update;
          float sy = (0.5F - this.init_Vector4f.y / this.init_Vector4f.w * 0.5F) * this.sync;
          if (Float.isFinite(sx) && Float.isFinite(sy)) {
-            if (sx < this.init_F) {
-               this.init_F = sx;
+            if (sx < this.sx) {
+               this.sx = sx;
             }
 
             if (sx > this.read) {
@@ -244,7 +244,7 @@ public final class EntityEsp2DRenderer {
 
    private static final class Inner_StreamUtil {
       float init_F;
-      long init_J;
+      long frame;
 
       Inner_StreamUtil(float value) {
          this.init_F = value;

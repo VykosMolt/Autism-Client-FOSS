@@ -11,7 +11,7 @@ public final class SnbtBraceRepairer {
    public static String repair(String raw) {
       if (raw != null && !raw.isBlank()) {
          try {
-            return init_Str(init_List(raw));
+            return init_Str(tokenize(raw));
          } catch (Throwable t) {
             return raw.trim();
          }
@@ -24,7 +24,7 @@ public final class SnbtBraceRepairer {
       int deficit = 0;
 
       for (SnbtBraceRepairer.Inner_StreamUtil t : in) {
-         deficit += t.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.OPEN ? 1 : (t.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.CLOSE ? -1 : 0);
+         deficit += t.kind == SnbtBraceRepairer.Inner_DataUtil.OPEN ? 1 : (t.kind == SnbtBraceRepairer.Inner_DataUtil.CLOSE ? -1 : 0);
       }
 
       List<SnbtBraceRepairer.Inner_StreamUtil> out = new ArrayList<>(in.size() + 8);
@@ -32,7 +32,7 @@ public final class SnbtBraceRepairer {
       SnbtBraceRepairer.Inner_StreamUtil prev = null;
 
       for (SnbtBraceRepairer.Inner_StreamUtil t : in) {
-         if (deficit > 0 && t.init_dl_DataUtil != SnbtBraceRepairer.Inner_DataUtil.CLOSE && prev != null && t.init_I > prev.init_I) {
+         if (deficit > 0 && t.kind != SnbtBraceRepairer.Inner_DataUtil.CLOSE && prev != null && t.init_I > prev.init_I) {
             while (deficit > 0 && !open.isEmpty() && open.peek().init_I < t.init_I && t.load <= open.peek().load) {
                init(out, open.pop());
                deficit--;
@@ -41,7 +41,7 @@ public final class SnbtBraceRepairer {
             prev = init_dl_StreamUtil(out);
          }
 
-         switch (t.init_dl_DataUtil) {
+         switch (t.kind) {
             case OPEN:
                init(out, prev, t);
                open.push(t);
@@ -54,15 +54,15 @@ public final class SnbtBraceRepairer {
 
                init_V(out);
                SnbtBraceRepairer.Inner_StreamUtil opener = open.pop();
-               out.add(new SnbtBraceRepairer.Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil.CLOSE, opener.init_Str.equals("{") ? "}" : "]", t.init_I, t.load));
+               out.add(new SnbtBraceRepairer.Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil.CLOSE, opener.text.equals("{") ? "}" : "]", t.init_I, t.load));
                break;
             case COMMA:
                SnbtBraceRepairer.Inner_StreamUtil lastTok = init_dl_StreamUtil(out);
                if (lastTok == null
-                  || lastTok.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.OPEN
-                  || lastTok.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.COMMA
-                  || lastTok.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.COLON
-                  || lastTok.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.SEMI) {
+                  || lastTok.kind == SnbtBraceRepairer.Inner_DataUtil.OPEN
+                  || lastTok.kind == SnbtBraceRepairer.Inner_DataUtil.COMMA
+                  || lastTok.kind == SnbtBraceRepairer.Inner_DataUtil.COLON
+                  || lastTok.kind == SnbtBraceRepairer.Inner_DataUtil.SEMI) {
                   continue;
                }
 
@@ -86,7 +86,7 @@ public final class SnbtBraceRepairer {
       StringBuilder sb = new StringBuilder();
 
       for (SnbtBraceRepairer.Inner_StreamUtil t : out) {
-         sb.append(t.init_Str);
+         sb.append(t.text);
       }
 
       return sb.isEmpty() ? "{}" : sb.toString();
@@ -94,12 +94,12 @@ public final class SnbtBraceRepairer {
 
    private static void init(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil prev, SnbtBraceRepairer.Inner_StreamUtil t) {
       if (prev != null) {
-         boolean prevEnds = prev.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.ATOM
-            || prev.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.STRING
-            || prev.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.CLOSE;
-         boolean starts = t.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.ATOM
-            || t.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.STRING
-            || t.init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.OPEN;
+         boolean prevEnds = prev.kind == SnbtBraceRepairer.Inner_DataUtil.ATOM
+            || prev.kind == SnbtBraceRepairer.Inner_DataUtil.STRING
+            || prev.kind == SnbtBraceRepairer.Inner_DataUtil.CLOSE;
+         boolean starts = t.kind == SnbtBraceRepairer.Inner_DataUtil.ATOM
+            || t.kind == SnbtBraceRepairer.Inner_DataUtil.STRING
+            || t.kind == SnbtBraceRepairer.Inner_DataUtil.OPEN;
          if (prevEnds && starts) {
             out.add(new SnbtBraceRepairer.Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil.COMMA, ",", t.init_I, t.load));
          }
@@ -108,18 +108,18 @@ public final class SnbtBraceRepairer {
 
    private static void init(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil opener) {
       SnbtBraceRepairer.Inner_StreamUtil trailing = null;
-      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.COMMA) {
+      if (!out.isEmpty() && out.get(out.size() - 1).kind == SnbtBraceRepairer.Inner_DataUtil.COMMA) {
          trailing = out.remove(out.size() - 1);
       }
 
-      out.add(new SnbtBraceRepairer.Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil.CLOSE, opener.init_Str.equals("{") ? "}" : "]", opener.init_I, opener.load));
+      out.add(new SnbtBraceRepairer.Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil.CLOSE, opener.text.equals("{") ? "}" : "]", opener.init_I, opener.load));
       if (trailing != null) {
          out.add(trailing);
       }
    }
 
    private static void init_V(List<SnbtBraceRepairer.Inner_StreamUtil> out) {
-      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == SnbtBraceRepairer.Inner_DataUtil.COMMA) {
+      if (!out.isEmpty() && out.get(out.size() - 1).kind == SnbtBraceRepairer.Inner_DataUtil.COMMA) {
          out.remove(out.size() - 1);
       }
    }
@@ -128,7 +128,7 @@ public final class SnbtBraceRepairer {
       return out.isEmpty() ? null : out.get(out.size() - 1);
    }
 
-   private static List<SnbtBraceRepairer.Inner_StreamUtil> init_List(String s) {
+   private static List<SnbtBraceRepairer.Inner_StreamUtil> tokenize(String s) {
       List<SnbtBraceRepairer.Inner_StreamUtil> out = new ArrayList<>();
       int line = 0;
       int lineIndent = 0;
@@ -228,6 +228,6 @@ public final class SnbtBraceRepairer {
       STRING;
    }
 
-   private record Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil init_dl_DataUtil, String init_Str, int init_I, int load) {
+   private record Inner_StreamUtil(SnbtBraceRepairer.Inner_DataUtil kind, String text, int init_I, int load) {
    }
 }

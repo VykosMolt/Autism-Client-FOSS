@@ -14,10 +14,10 @@ import net.minecraft.util.Util;
 import org.jspecify.annotations.Nullable;
 
 public class MsdfEditBox extends EditBox {
-   private float init_F;
-   private boolean init_Z;
+   private float caret;
+   private boolean centered;
    private boolean load;
-   private int init_I = -1;
+   private int cursor = -1;
    private String init_Str = "";
    private long init_J;
 
@@ -35,7 +35,7 @@ public class MsdfEditBox extends EditBox {
 
    @Override
    public void setCentered(boolean centered) {
-      this.init_Z = centered;
+      this.centered = centered;
       super.setCentered(centered);
    }
 
@@ -67,23 +67,23 @@ public class MsdfEditBox extends EditBox {
       float available = Math.max(1, this.getInnerWidth() - 1);
       float caret = this.init(value.substring(0, cursor));
       float maxScroll = Math.max(0.0F, this.init(value) - available);
-      this.init_F = Math.max(0.0F, Math.min(this.init_F, maxScroll));
-      if (caret < this.init_F) {
-         this.init_F = caret;
-      } else if (caret > this.init_F + available) {
-         this.init_F = caret - available;
+      this.caret = Math.max(0.0F, Math.min(this.caret, maxScroll));
+      if (caret < this.caret) {
+         this.caret = caret;
+      } else if (caret > this.caret + available) {
+         this.caret = caret - available;
       }
    }
 
    private float init_F() {
       float width = this.init(this.getValue());
-      return this.init_Z && width < this.getInnerWidth() ? this.getX() + (this.getWidth() - width) / 2.0F : this.getX() + (this.isBordered() ? 4 : 0);
+      return this.centered && width < this.getInnerWidth() ? this.getX() + (this.getWidth() - width) / 2.0F : this.getX() + (this.isBordered() ? 4 : 0);
    }
 
    private int init(double mouseX) {
       this.init_V();
       String value = this.getValue();
-      float target = (float)mouseX - this.init_F() + this.init_F;
+      float target = (float)mouseX - this.init_F() + this.caret;
       float previousWidth = 0.0F;
       int previous = 0;
 
@@ -142,7 +142,7 @@ public class MsdfEditBox extends EditBox {
 
       this.init_V();
       int end = Utf16TextCursor.clampIndex(this.getValue(), charIndex);
-      return Math.round(this.init_F() - this.init_F + this.init(this.getValue().substring(0, end)));
+      return Math.round(this.init_F() - this.caret + this.init(this.getValue().substring(0, end)));
    }
 
    @Override
@@ -170,14 +170,14 @@ public class MsdfEditBox extends EditBox {
 
             int cursor = Utf16TextCursor.clampIndex(value, acc.autism$cursorPos());
             int highlight = Utf16TextCursor.clampIndex(value, acc.autism$highlightPos());
-            if (cursor != this.init_I || !value.equals(this.init_Str)) {
-               this.init_I = cursor;
+            if (cursor != this.cursor || !value.equals(this.init_Str)) {
+               this.cursor = cursor;
                this.init_Str = value;
                this.init_J = Util.getMillis();
             }
 
             int textColor = acc.autism$isEditable() ? colors.textPrimary : colors.textMuted;
-            float drawX = this.init_F() - this.init_F;
+            float drawX = this.init_F() - this.caret;
             float textY = autismclient.gui.sdf.MsdfTextRenderer.centerVertically(face, this.getY(), this.getHeight(), size);
             float textTop = autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, textY, size);
             float cursorX = drawX + this.init(value.substring(0, cursor));

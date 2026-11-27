@@ -25,20 +25,20 @@ public final class AnimatedToggleButtonRenderer {
       if (state == null) {
          state = new AnimatedToggleButtonRenderer.Inner_DataUtil(enabled ? 1.0F : 0.0F, enabled, now);
          init_Map.put(animationKey, state);
-      } else if (state.init_Z != enabled) {
-         state.init_F = state.init(now, 200000000L);
-         state.init_Z = enabled;
+      } else if (state.targetEnabled != enabled) {
+         state.startProgress = state.init(now, 200000000L);
+         state.targetEnabled = enabled;
          state.init_J = now;
       }
 
       state.load = now;
       init(context, bounds, label, hovered, state.init(now, 200000000L));
-      init_V_J(now);
+      pruneStale(now);
    }
 
    private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, float progress) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-      float p = init_F_F(progress);
+      float p = clamp01(progress);
       int fill = UiLayoutMath.lerpColor(colors.buttonSurface, colors.success, 0.22F * p);
       int border = UiLayoutMath.lerpColor(colors.borderControl, colors.success, p);
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
@@ -51,11 +51,11 @@ public final class AnimatedToggleButtonRenderer {
    }
 
    public static long init_J_I(int width) {
-      float t = init_F_F((float)(width - 40) / Math.max(1, 56));
+      float t = clamp01((float)(width - 40) / Math.max(1, 56));
       return Math.round(2.05E8F + -7.7E7F * t);
    }
 
-   private static void init_V_J(long now) {
+   private static void pruneStale(long now) {
       if (now - update >= 30000000000L) {
          update = now;
          Iterator<AnimatedToggleButtonRenderer.Inner_DataUtil> iterator = init_Map.values().iterator();
@@ -68,19 +68,19 @@ public final class AnimatedToggleButtonRenderer {
       }
    }
 
-   private static float init_F_F(float value) {
+   private static float clamp01(float value) {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
    private static final class Inner_DataUtil {
-      private float init_F;
-      private boolean init_Z;
+      private float startProgress;
+      private boolean targetEnabled;
       private long init_J;
       private long load;
 
       private Inner_DataUtil(float startProgress, boolean targetEnabled, long now) {
-         this.init_F = startProgress;
-         this.init_Z = targetEnabled;
+         this.startProgress = startProgress;
+         this.targetEnabled = targetEnabled;
          this.init_J = now;
          this.load = now;
       }
@@ -88,8 +88,8 @@ public final class AnimatedToggleButtonRenderer {
       private float init(long now, long durationNanos) {
          float elapsed = Math.min(1.0F, (float)(now - this.init_J) / (float)Math.max(1L, durationNanos));
          float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
-         float target = this.init_Z ? 1.0F : 0.0F;
-         return this.init_F + (target - this.init_F) * eased;
+         float target = this.targetEnabled ? 1.0F : 0.0F;
+         return this.startProgress + (target - this.startProgress) * eased;
       }
    }
 }

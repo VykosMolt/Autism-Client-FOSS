@@ -51,10 +51,10 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 
 final class AiPrintSupply {
-   private static final Direction[] init_DirectionArr = Direction.values();
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Direction[] DIRECTIONS = Direction.values();
+   private final Minecraft mc = Minecraft.getInstance();
    private final AiPrintSupply.Inner_CachePool init_bj_CachePool;
-   private final Map<Long, AiBuilder.CellSpec> init_Map;
+   private final Map<Long, AiBuilder.CellSpec> cells;
    private final AiPrintSupply.Inner_TaskQueue init_bj_TaskQueue = new AiPrintSupply.Inner_TaskQueue();
    private List<BlockPos> init_List;
    private int read;
@@ -81,15 +81,15 @@ final class AiPrintSupply {
    }
 
    AiPrintSupply(AiBuilder.Blueprint blueprint, boolean clearTerrain) {
-      ClientLevel world = this.init_Minecraft.level;
+      ClientLevel world = this.mc.level;
       this.init_bj_CachePool = new AiPrintSupply.Inner_CachePool(
          blueprint,
          world,
          p -> AiTerrain.isLoaded(world, p),
-         this.init_Minecraft.player == null ? BlockPos.ZERO : this.init_Minecraft.player.blockPosition(),
+         this.mc.player == null ? BlockPos.ZERO : this.mc.player.blockPosition(),
          clearTerrain
       );
-      this.init_Map = this.init_bj_CachePool.cells;
+      this.cells = this.init_bj_CachePool.cells;
       this.init_List = this.init_bj_CachePool.init_List;
    }
 
@@ -159,7 +159,7 @@ final class AiPrintSupply {
    }
 
    boolean canSupply(Item item) {
-      return this.init_bj_TaskQueue.init(item, item == null ? 0 : load(this.init_Minecraft.player.getInventory(), item));
+      return this.init_bj_TaskQueue.init(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
    }
 
    Item getMissingItem() {
@@ -168,7 +168,7 @@ final class AiPrintSupply {
 
    boolean hasPortableStock() {
       return this.init_bj_TaskQueue.init_Item != null
-         && !AiCarriedShulker.init(this.init_Minecraft.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true).isEmpty();
+         && !AiCarriedShulker.init(this.mc.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true).isEmpty();
    }
 
    void completeRefill() {
@@ -185,7 +185,7 @@ final class AiPrintSupply {
    }
 
    AiOperation refillOperation(ItemStack wanted, int additional, Set<Long> owned) {
-      if (!wanted.isEmpty() && additional > 0 && this.init_Minecraft.player != null && !this.init_Minecraft.player.hasInfiniteMaterials()) {
+      if (!wanted.isEmpty() && additional > 0 && this.mc.player != null && !this.mc.player.hasInfiniteMaterials()) {
          if (!ItemStack.isSameItemSameComponents(this.load_ItemStack, wanted)) {
             this.clearContentsRequest();
             this.load_ItemStack = wanted.copyWithCount(1);
@@ -195,7 +195,7 @@ final class AiPrintSupply {
             return null;
          }
 
-         ItemStack box = AiCarriedShulker.init(this.init_Minecraft.player.getInventory(), wanted, this.load_List);
+         ItemStack box = AiCarriedShulker.init(this.mc.player.getInventory(), wanted, this.load_List);
          if (box.isEmpty()) {
             return null;
          }
@@ -237,7 +237,7 @@ final class AiPrintSupply {
 
       if (this.init_bj_BufferHelper == null || this.init_bj_BufferHelper.init_Item != this.init_bj_TaskQueue.init_Item) {
          this.init_ItemStack = AiCarriedShulker.init(
-            this.init_Minecraft.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true
+            this.mc.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true
          );
          if (this.init_ItemStack.isEmpty() && this.init_bj_TaskQueue.init_Set.size() >= 3) {
             return true;
@@ -247,8 +247,8 @@ final class AiPrintSupply {
             this.init_bj_CachePool,
             this.init_bj_TaskQueue.init_Item,
             this.init_bj_TaskQueue.init_Set,
-            this.init_Minecraft.player.blockPosition(),
-            this.init_Minecraft.player.position()
+            this.mc.player.blockPosition(),
+            this.mc.player.position()
          );
          if (!this.init_ItemStack.isEmpty()) {
             this.init_bj_BufferHelper.init_V();
@@ -258,14 +258,14 @@ final class AiPrintSupply {
       this.init_bj_BufferHelper.init(workBudget);
       if (this.init_bj_BufferHelper.load_Z
          && !this.init_ItemStack.isEmpty()
-         && AiCarriedShulker.init(this.init_Minecraft.player.getInventory(), this.init_ItemStack, this.init_bj_TaskQueue.init_Item) == null) {
+         && AiCarriedShulker.init(this.mc.player.getInventory(), this.init_ItemStack, this.init_bj_TaskQueue.init_Item) == null) {
          this.init_bj_BufferHelper = null;
          this.init_ItemStack = ItemStack.EMPTY;
          return false;
       } else if (this.init_bj_BufferHelper.load_Z
          && this.init_bj_BufferHelper.init_BlockPos != null
-         && AiTerrain.isLoaded(this.init_Minecraft.level, this.init_bj_BufferHelper.init_BlockPos)
-         && !(this.init_Minecraft.level.getBlockState(this.init_bj_BufferHelper.init_BlockPos).getBlock() instanceof ShulkerBoxBlock)) {
+         && AiTerrain.isLoaded(this.mc.level, this.init_bj_BufferHelper.init_BlockPos)
+         && !(this.mc.level.getBlockState(this.init_bj_BufferHelper.init_BlockPos).getBlock() instanceof ShulkerBoxBlock)) {
          this.init_bj_TaskQueue.init(this.init_bj_BufferHelper.init_BlockPos.asLong());
          this.init_bj_BufferHelper = null;
          return false;
@@ -285,7 +285,7 @@ final class AiPrintSupply {
             if (!this.init_ItemStack.isEmpty()) {
                ItemStack selected = this.init_ItemStack;
                this.init_ItemStack = ItemStack.EMPTY;
-               Item supplied = AiCarriedShulker.init(this.init_Minecraft.player.getInventory(), selected, this.init_bj_TaskQueue.init_Item);
+               Item supplied = AiCarriedShulker.init(this.mc.player.getInventory(), selected, this.init_bj_TaskQueue.init_Item);
                if (supplied == null) {
                   return null;
                }
@@ -303,15 +303,15 @@ final class AiPrintSupply {
 
                JsonArray items = new JsonArray();
                items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
-               AiOperation approach = AiTerrain.isLoaded(this.init_Minecraft.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, source) != null
+               AiOperation approach = AiTerrain.isLoaded(this.mc.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, source) != null
                   ? null
                   : AiContainer.init(AiGoto.approachBlockToInteractCompat(source, 60, keep, false));
                return new AiPrintSupply.Inner_NetHelper(
                   approach,
-                  () -> !AiTerrain.isLoaded(this.init_Minecraft.level, source)
+                  () -> !AiTerrain.isLoaded(this.mc.level, source)
                      ? AiPrintSupply.Inner_StreamUtil.UNKNOWN
                      : (
-                        this.init_Minecraft.level.getBlockState(source).getBlock() instanceof ShulkerBoxBlock
+                        this.mc.level.getBlockState(source).getBlock() instanceof ShulkerBoxBlock
                            ? AiPrintSupply.Inner_StreamUtil.SHULKER
                            : AiPrintSupply.Inner_StreamUtil.REPLACED
                      ),
@@ -352,14 +352,14 @@ final class AiPrintSupply {
 
       for (int checked = 0; this.read < this.init_List.size() && checked < 64; checked++) {
          BlockPos p = this.init_List.get(this.read++);
-         if (!AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
+         if (!AiTerrain.isLoaded(this.mc.level, p)) {
             throw new IllegalStateException("Terrain is not loaded at " + p.toShortString());
          }
 
-         if (AiSchematicActions.init(this.init_Minecraft.level.getBlockState(p))
+         if (AiSchematicActions.init(this.mc.level.getBlockState(p))
             && !this.init_bj_CachePool.update_Set.contains(p.asLong())
             && !this.init_bj_CachePool.init_Z_BlockPos(p)) {
-            if (!AiSchematicActions.init(this.init_Minecraft.level, p)) {
+            if (!AiSchematicActions.init(this.mc.level, p)) {
                throw new IllegalStateException("Clearing terrain would release fluid at " + p.toShortString());
             }
 
@@ -683,7 +683,7 @@ final class AiPrintSupply {
                   }
                } else if (this.read_I < this.init_TableIndex_DataUti.cells().size()) {
                   BlockPos p = this.init_BlockPos_TableIndex_StreamU(this.init_TableIndex_DataUti.cells().get(this.read_I))
-                     .relative(AiPrintSupply.init_DirectionArr[this.write_I++]);
+                     .relative(AiPrintSupply.DIRECTIONS[this.write_I++]);
                   if (this.write_I == 6) {
                      this.write_I = 0;
                      this.read_I++;
@@ -751,14 +751,14 @@ final class AiPrintSupply {
       void load(BlockPos pos) {
          boolean relevant = this.cells.containsKey(pos.asLong()) || this.readsByCell.containsKey(pos.asLong());
 
-         for (Direction d : AiPrintSupply.init_DirectionArr) {
+         for (Direction d : AiPrintSupply.DIRECTIONS) {
             relevant |= this.cells.containsKey(pos.relative(d).asLong());
          }
 
          if (relevant) {
             this.load_Set.add(pos.asLong());
 
-            for (Direction d : AiPrintSupply.init_DirectionArr) {
+            for (Direction d : AiPrintSupply.DIRECTIONS) {
                this.load_Set.add(pos.relative(d).asLong());
             }
 
@@ -899,7 +899,7 @@ final class AiPrintSupply {
 
    static final class Inner_ConfigStore<V> extends AbstractMap<Long, V> {
       private final ConcurrentSkipListMap<Long, Map<Long, V>> init_ConcurrentSkipList = new ConcurrentSkipListMap<>();
-      private final AtomicInteger init_AtomicInteger = new AtomicInteger();
+      private final AtomicInteger size = new AtomicInteger();
 
       private static long init(long key) {
          return BlockPos.asLong(BlockPos.getX(key) >> 4, BlockPos.getY(key) >> 4, BlockPos.getZ(key) >> 4);
@@ -909,7 +909,7 @@ final class AiPrintSupply {
          Map<Long, V> map = this.init_ConcurrentSkipList.computeIfAbsent(init(key), ignored -> new ConcurrentHashMap<>());
          V before = map.put(key, value);
          if (before == null) {
-            this.init_AtomicInteger.incrementAndGet();
+            this.size.incrementAndGet();
          }
 
          return before;
@@ -937,7 +937,7 @@ final class AiPrintSupply {
 
       @Override
       public int size() {
-         return this.init_AtomicInteger.get();
+         return this.size.get();
       }
 
       @Override
@@ -945,7 +945,7 @@ final class AiPrintSupply {
          return new AbstractSet<Entry<Long, V>>() {
             @Override
             public int size() {
-               return Inner_ConfigStore.this.init_AtomicInteger.get();
+               return Inner_ConfigStore.this.size.get();
             }
 
             @Override
@@ -1043,12 +1043,12 @@ final class AiPrintSupply {
    }
 
    static final class Inner_JsonUtil extends AbstractList<BlockPos> {
-      private final TreeMap<Integer, BlockPos[]> init_TreeMap = new TreeMap<>();
-      private int init_I;
+      private final TreeMap<Integer, BlockPos[]> pages = new TreeMap<>();
+      private int size;
 
       @Override
       public int size() {
-         return this.init_I;
+         return this.size;
       }
 
       public BlockPos get(int index) {
@@ -1060,49 +1060,49 @@ final class AiPrintSupply {
       }
 
       public BlockPos init(int index) {
-         Objects.checkIndex(index, this.init_I);
-         return this.init_TreeMap.get(index >>> 10)[index & 1023];
+         Objects.checkIndex(index, this.size);
+         return this.pages.get(index >>> 10)[index & 1023];
       }
 
       public boolean init(BlockPos pos) {
-         this.init_TreeMap.computeIfAbsent(this.init_I >>> 10, ignored -> new BlockPos[1024])[this.init_I & 1023] = pos;
-         this.init_I++;
+         this.pages.computeIfAbsent(this.size >>> 10, ignored -> new BlockPos[1024])[this.size & 1023] = pos;
+         this.size++;
          return true;
       }
    }
 
    static final class Inner_NetHelper implements AiOperation {
-      private AiOperation init_AiOperation;
-      private AiOperation load_AiOperation;
-      private final Supplier<AiPrintSupply.Inner_StreamUtil> init_Supplier;
-      private final Supplier<AiOperation> load_Supplier;
-      private final long init_J;
-      private final AiPreparationReceipt init_bb = new AiPreparationReceipt();
-      private AiOperation.Result init_AiOperation_Result;
+      private AiOperation navigation;
+      private AiOperation opened;
+      private final Supplier<AiPrintSupply.Inner_StreamUtil> stateSupplier;
+      private final Supplier<AiOperation> opener;
+      private final long deadline;
+      private final AiPreparationReceipt receipt = new AiPreparationReceipt();
+      private AiOperation.Result finalResult;
 
       Inner_NetHelper(AiOperation navigation, Supplier<AiPrintSupply.Inner_StreamUtil> state, Supplier<AiOperation> open, long deadline) {
-         this.init_AiOperation = navigation;
-         this.init_Supplier = state;
-         this.load_Supplier = open;
-         this.init_J = deadline;
+         this.navigation = navigation;
+         this.stateSupplier = state;
+         this.opener = open;
+         this.deadline = deadline;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (this.init_AiOperation_Result != null) {
-            return this.init_AiOperation_Result;
+         if (this.finalResult != null) {
+            return this.finalResult;
          }
 
-         if (System.nanoTime() >= this.init_J) {
+         if (System.nanoTime() >= this.deadline) {
             return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (this.init_Supplier.get() == AiPrintSupply.Inner_StreamUtil.REPLACED) {
+         if (this.stateSupplier.get() == AiPrintSupply.Inner_StreamUtil.REPLACED) {
             return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
-         if (this.init_AiOperation != null) {
-            AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+         if (this.navigation != null) {
+            AiOperation.Result result = this.receipt.tickChild(this.navigation);
             if (!result.terminal()) {
                return result;
             }
@@ -1111,17 +1111,17 @@ final class AiPrintSupply {
                return this.init(AiContainer.init(result, AiJson.objectOf("action", "withdraw")));
             }
 
-            if (this.init_AiOperation.requiresReconciliationAfterEmergency() || !this.init_AiOperation.canInterruptNow()) {
+            if (this.navigation.requiresReconciliationAfterEmergency() || !this.navigation.canInterruptNow()) {
                return this.init(
                   new AiOperation.Result(AiOperation.Status.UNCERTAIN, "Stock approach needs reconciliation", result.dataJson(), result.evidence())
                );
             }
 
-            this.init_AiOperation.cancel();
-            this.init_AiOperation = null;
+            this.navigation.cancel();
+            this.navigation = null;
          }
 
-         AiPrintSupply.Inner_StreamUtil observed = this.init_Supplier.get();
+         AiPrintSupply.Inner_StreamUtil observed = this.stateSupplier.get();
          if (observed == AiPrintSupply.Inner_StreamUtil.UNKNOWN) {
             return new AiOperation.Result(AiOperation.Status.RUNNING, "Waiting for the remembered stock chunk", "{}", List.of());
          }
@@ -1130,36 +1130,36 @@ final class AiPrintSupply {
             return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
-         if (this.load_AiOperation == null) {
-            this.load_AiOperation = this.load_Supplier.get();
+         if (this.opened == null) {
+            this.opened = this.opener.get();
          }
 
-         AiOperation.Result result = this.init_bb.tickChild(this.load_AiOperation);
+         AiOperation.Result result = this.receipt.tickChild(this.opened);
          return result.terminal() ? this.init(result) : result;
       }
 
       private AiOperation.Result init(AiOperation.Result result) {
          boolean pending = this.requiresReconciliationAfterEmergency();
          this.init();
-         this.init_AiOperation_Result = this.init_bb.finalizeResult(result, pending);
-         return this.init_AiOperation_Result;
+         this.finalResult = this.receipt.finalizeResult(result, pending);
+         return this.finalResult;
       }
 
       private void init() {
-         if (this.init_AiOperation != null) {
-            this.init_bb.cancelChild(this.init_AiOperation);
-            this.init_AiOperation = null;
+         if (this.navigation != null) {
+            this.receipt.cancelChild(this.navigation);
+            this.navigation = null;
          }
 
-         if (this.load_AiOperation != null) {
-            this.init_bb.cancelChild(this.load_AiOperation);
-            this.load_AiOperation = null;
+         if (this.opened != null) {
+            this.receipt.cancelChild(this.opened);
+            this.opened = null;
          }
       }
 
       @Override
       public void cancel() {
-         if (this.init_AiOperation_Result == null) {
+         if (this.finalResult == null) {
             this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Stock operation cancelled", "{}", List.of()));
          } else {
             this.init();
@@ -1168,14 +1168,14 @@ final class AiPrintSupply {
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.requiresReconciliation(null)
-            && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-            && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
+         return !this.receipt.requiresReconciliation(null)
+            && (this.navigation == null || this.navigation.canInterruptNow())
+            && (this.opened == null || this.opened.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.requiresReconciliation(this.init_AiOperation) || this.init_bb.requiresReconciliation(this.load_AiOperation);
+         return this.receipt.requiresReconciliation(this.navigation) || this.receipt.requiresReconciliation(this.opened);
       }
    }
 

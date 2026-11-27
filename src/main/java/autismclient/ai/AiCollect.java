@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class AiCollect {
-   static final Map<String, String> init_Map = Map.ofEntries(
+   static final Map<String, String> ORE_DROPS = Map.ofEntries(
       Map.entry("minecraft:coal_ore", "minecraft:coal"),
       Map.entry("minecraft:deepslate_coal_ore", "minecraft:coal"),
       Map.entry("minecraft:iron_ore", "minecraft:raw_iron"),
@@ -61,7 +61,7 @@ final class AiCollect {
    }
 
    static String init(String blockId, String asItemId) {
-      return init_Map.getOrDefault(blockId, asItemId);
+      return ORE_DROPS.getOrDefault(blockId, asItemId);
    }
 
    static boolean init(String blockId, String asItemId, String item) {

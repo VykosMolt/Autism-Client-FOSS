@@ -4,10 +4,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public final class AsyncTraceLogger {
-   private static final int init_I = 4096;
-   private static final BlockingQueue<String> init_BlockingQueue = new ArrayBlockingQueue<>(4096);
+   private static final int QUEUE_CAPACITY = 4096;
+   private static final BlockingQueue<String> QUEUE = new ArrayBlockingQueue<>(4096);
    private static volatile boolean init_Z;
-   private static volatile long init_J;
+   private static volatile long dropped;
 
    private AsyncTraceLogger() {
    }
@@ -15,8 +15,8 @@ public final class AsyncTraceLogger {
    public static void init(String line) {
       if (line != null) {
          init();
-         if (!init_BlockingQueue.offer(line)) {
-            init_J++;
+         if (!QUEUE.offer(line)) {
+            dropped++;
          }
       }
    }
@@ -38,7 +38,7 @@ public final class AsyncTraceLogger {
    private static void load() {
       while (true) {
          try {
-            System.out.println(init_BlockingQueue.take());
+            System.out.println(QUEUE.take());
          } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             return;

@@ -41,48 +41,48 @@ public class AutismSettingsScreen extends Screen {
    private static final int open = 6;
    private static final int poll = 110;
    private static final int push = 200;
-   private final Screen init_Screen;
-   private final List<AutismSettingsScreen.CachePool> init_List = new ArrayList<>();
+   private final Screen parent;
+   private final List<AutismSettingsScreen.CachePool> keybinds = new ArrayList<>();
    private int pop = -1;
    private int tick;
    private boolean init_Z;
    private int run;
-   private final List<AutismSettingsScreen.Inner_DataUtil> load_List = new ArrayList<>();
-   private NetHelper init_NetHelper = NetHelper.init(0, 0, 0, 0);
+   private final List<AutismSettingsScreen.Inner_DataUtil> clickRegions = new ArrayList<>();
+   private NetHelper listBounds = NetHelper.init(0, 0, 0, 0);
    private int get;
    private int set;
-   private SyncManager init_SyncManager;
-   private DropdownMenu init_RefQueue;
+   private SyncManager ui;
+   private DropdownMenu dropdown;
 
    public AutismSettingsScreen(Screen parent) {
       super(Component.literal("AUTISM Client Settings"));
-      this.init_Screen = parent;
+      this.parent = parent;
       AutismConfig cfg = AutismConfig.getGlobal();
-      this.init_List.add(new AutismSettingsScreen.CachePool("Module Menu", () -> cfg.keybindModuleMenu, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Module Menu", () -> cfg.keybindModuleMenu, v -> {
          cfg.keybindModuleMenu = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Load GUI", () -> cfg.keybindLoadGui, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Load GUI", () -> cfg.keybindLoadGui, v -> {
          cfg.keybindLoadGui = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Flush Queue", () -> cfg.keybindFlushQueue, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Flush Queue", () -> cfg.keybindFlushQueue, v -> {
          cfg.keybindFlushQueue = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Clear Queue", () -> cfg.keybindClearQueue, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Clear Queue", () -> cfg.keybindClearQueue, v -> {
          cfg.keybindClearQueue = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Toggle Logger", () -> cfg.keybindToggleLogger, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Logger", () -> cfg.keybindToggleLogger, v -> {
          cfg.keybindToggleLogger = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Toggle Send", () -> cfg.keybindToggleSend, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Send", () -> cfg.keybindToggleSend, v -> {
          cfg.keybindToggleSend = v;
          cfg.save();
       }));
-      this.init_List.add(new AutismSettingsScreen.CachePool("Toggle Delay", () -> cfg.keybindToggleDelay, v -> {
+      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Delay", () -> cfg.keybindToggleDelay, v -> {
          cfg.keybindToggleDelay = v;
          cfg.save();
       }));
@@ -100,12 +100,12 @@ public class AutismSettingsScreen extends Screen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         this.load_List.clear();
-         this.init_SyncManager = UiHelper.init(graphics, this.font, mx, my);
+         this.clickRegions.clear();
+         this.ui = UiHelper.init(graphics, this.font, mx, my);
          int sw = cA.init_I();
          int sh = cA.load_I();
          PacketUtil.init(graphics, NetHelper.init(0, 0, sw, sh), -267843831);
-         List<AutismSettingsScreen.BufferHelper> rows = this.init_List();
+         List<AutismSettingsScreen.BufferHelper> rows = this.buildRows();
          int margin = 6;
          int contentW = 6 + this.set + 12 + 110 + 2 + 6;
          int titleW = k.init(this.font, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, -791321) + 16;
@@ -115,29 +115,29 @@ public class AutismSettingsScreen extends Screen {
          int px = (sw - panelW) / 2;
          int py = (sh - panelH) / 2;
          NetHelper panel = NetHelper.init(px, py, panelW, panelH);
-         PacketUtil.load(graphics, panel, 5, -435549684, this.init_I());
+         PacketUtil.load(graphics, panel, 5, -435549684, this.outlineColor());
          NetHelper header = NetHelper.init(px, py, panelW, 14);
          PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ThemePaletteManager.ColorRole.HEADER));
          this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), header);
          NetHelper footer = NetHelper.init(px, panel.load() - 17, panelW, 17);
          NetHelper done = NetHelper.init(px + 4, footer.write(), panelW - 8, 13);
          this.init(graphics, done, "Done", done.init_Z(mx, my), true);
-         this.init_V_NetHelper(done, this::onClose, null);
+         this.addClickRegion(done, this::onClose, null);
          int contentTop = py + 14 + 4;
          int contentBottom = footer.write() - 4;
-         this.init_NetHelper = NetHelper.init(px + 4, contentTop, panelW - 8, Math.max(0, contentBottom - contentTop));
+         this.listBounds = NetHelper.init(px + 4, contentTop, panelW - 8, Math.max(0, contentBottom - contentTop));
          this.get = rows.size() * 16;
-         this.tick = this.init_I(this.tick);
-         boolean needsBar = this.get > this.init_NetHelper.sync();
-         int rowW = this.init_NetHelper.update() - (needsBar ? 6 : 0);
-         UiClipStack.getInstance().push(graphics, this.init_NetHelper);
+         this.tick = this.clampScroll(this.tick);
+         boolean needsBar = this.get > this.listBounds.sync();
+         int rowW = this.listBounds.update() - (needsBar ? 6 : 0);
+         UiClipStack.getInstance().push(graphics, this.listBounds);
 
          try {
             for (int i = 0; i < rows.size(); i++) {
-               int ry = this.init_NetHelper.write() - this.tick + i * 16;
-               if (ry + 14 >= this.init_NetHelper.write() && ry <= this.init_NetHelper.load()) {
-                  NetHelper rb = NetHelper.init(this.init_NetHelper.read(), ry, rowW, 14);
-                  boolean visible = ry >= this.init_NetHelper.write() - 1 && ry + 14 <= this.init_NetHelper.load() + 1;
+               int ry = this.listBounds.write() - this.tick + i * 16;
+               if (ry + 14 >= this.listBounds.write() && ry <= this.listBounds.load()) {
+                  NetHelper rb = NetHelper.init(this.listBounds.read(), ry, rowW, 14);
+                  boolean visible = ry >= this.listBounds.write() - 1 && ry + 14 <= this.listBounds.load() + 1;
                   rows.get(i).render(graphics, rb, mx, my, visible);
                }
             }
@@ -146,46 +146,46 @@ public class AutismSettingsScreen extends Screen {
          }
 
          if (needsBar) {
-            ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil();
-            ScrollbarRenderer.init(this.init_SyncManager, metrics, metrics.init(mx, my), this.init_Z);
-            this.init_V_NetHelper(metrics.track(), () -> this.init(metrics, my), null);
+            ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarBounds();
+            ScrollbarRenderer.init(this.ui, metrics, metrics.init(mx, my), this.init_Z);
+            this.addClickRegion(metrics.track(), () -> this.init(metrics, my), null);
          }
 
-         if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-            this.init_RefQueue.render(this.init_SyncManager);
+         if (this.dropdown != null && this.dropdown.isOpen()) {
+            this.dropdown.render(this.ui);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
    }
 
-   private List<AutismSettingsScreen.BufferHelper> init_List() {
+   private List<AutismSettingsScreen.BufferHelper> buildRows() {
       AutismConfig cfg = AutismConfig.getGlobal();
       ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
       List<AutismSettingsScreen.BufferHelper> out = new ArrayList<>();
       this.set = this.init("Command Prefix");
 
-      for (AutismSettingsScreen.CachePool k : this.init_List) {
-         this.set = Math.max(this.set, this.init(k.init_Str()));
+      for (AutismSettingsScreen.CachePool k : this.keybinds) {
+         this.set = Math.max(this.set, this.init(k.label()));
       }
 
-      out.add(this.init_DataUtil_BufferHel_Str("Open Inside GUI", () -> cfg.keybindInsideGui, v -> {
+      out.add(this.keybindRow("Open Inside GUI", () -> cfg.keybindInsideGui, v -> {
          cfg.keybindInsideGui = v;
          cfg.save();
       }));
-      out.add(this.init_DataUtil_BufferHel_Str("Custom Main Menu", () -> cfg.customMainMenu, v -> {
+      out.add(this.keybindRow("Custom Main Menu", () -> cfg.customMainMenu, v -> {
          cfg.customMainMenu = v;
          cfg.save();
       }));
-      out.add(this.init_DataUtil_BufferHel_Str("Auto Probe Plugins", () -> cfg.autoProbePlugins, v -> {
+      out.add(this.keybindRow("Auto Probe Plugins", () -> cfg.autoProbePlugins, v -> {
          cfg.autoProbePlugins = v;
          cfg.save();
       }));
-      out.add(this.init_DataUtil_BufferHel_Str("InfiniChat", () -> cfg.infiniChat, v -> {
+      out.add(this.keybindRow("InfiniChat", () -> cfg.infiniChat, v -> {
          cfg.infiniChat = v;
          cfg.save();
       }));
-      out.add(this.init_DataUtil_BufferHel_Str("Stop On Leave", () -> cfg.stopMacroOnLeave, v -> {
+      out.add(this.keybindRow("Stop On Leave", () -> cfg.stopMacroOnLeave, v -> {
          cfg.stopMacroOnLeave = v;
          cfg.save();
       }));
@@ -196,9 +196,9 @@ public class AutismSettingsScreen extends Screen {
          cur = prefixes.isEmpty() ? "." : prefixes.get(0);
       }
 
-      out.add(this.init_DataUtil_BufferHel_PoolEntry(module, prefixes, cur));
+      out.add(this.prefixRow(module, prefixes, cur));
 
-      for (int i = 0; i < this.init_List.size(); i++) {
+      for (int i = 0; i < this.keybinds.size(); i++) {
          out.add(this.init_DataUtil_BufferHel(i));
       }
 
@@ -208,7 +208,7 @@ public class AutismSettingsScreen extends Screen {
       return out;
    }
 
-   private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_Str(String label, AutismSettingsScreen.StreamUtil getter, Consumer<Boolean> setter) {
+   private AutismSettingsScreen.BufferHelper keybindRow(String label, AutismSettingsScreen.StreamUtil getter, Consumer<Boolean> setter) {
       this.set = Math.max(this.set, this.init(label));
       return (g, rb, mx, my, clickable) -> {
          boolean on = getter.get();
@@ -222,7 +222,7 @@ public class AutismSettingsScreen extends Screen {
          int knobX = on ? tog.init() - 10 : tog.read() + 2;
          PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ThemePaletteManager.ColorRole.TOGGLE) : -7697782);
          if (clickable) {
-            this.init_V_NetHelper(rb, () -> setter.accept(!getter.get()), null);
+            this.addClickRegion(rb, () -> setter.accept(!getter.get()), null);
          }
       };
    }
@@ -236,17 +236,17 @@ public class AutismSettingsScreen extends Screen {
          int vw = k.init(this.font, value, autismclient.gui.f.a.DataUtil.init, -4743522);
          this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ThemePaletteManager.ColorRole.ACCENT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
-            this.init_V_NetHelper(rb, onLeft, onRight);
+            this.addClickRegion(rb, onLeft, onRight);
          }
       };
    }
 
-   private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_PoolEntry(ModuleRuntimeManager module, List<String> prefixes, String current) {
-      if (this.init_RefQueue == null) {
-         this.init_RefQueue = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::setCommandPrefix);
+   private AutismSettingsScreen.BufferHelper prefixRow(ModuleRuntimeManager module, List<String> prefixes, String current) {
+      if (this.dropdown == null) {
+         this.dropdown = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::setCommandPrefix);
       } else {
-         this.init_RefQueue.setOptions(prefixes);
-         this.init_RefQueue.setSelectedOption(current);
+         this.dropdown.setOptions(prefixes);
+         this.dropdown.setSelectedOption(current);
       }
 
       return (g, rb, mx, my, clickable) -> {
@@ -254,24 +254,24 @@ public class AutismSettingsScreen extends Screen {
          this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          int ctrlW = Math.min(110, rb.update() / 2);
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
-         this.init_RefQueue.setBounds(ctrl);
+         this.dropdown.setBounds(ctrl);
          boolean hover = clickable && ctrl.init_Z(mx, my);
-         DropdownMenu.renderTrigger(this.init_SyncManager, ctrl, current, hover, this.init_RefQueue.isOpen());
+         DropdownMenu.renderTrigger(this.ui, ctrl, current, hover, this.dropdown.isOpen());
          if (clickable) {
-            this.init_V_NetHelper(ctrl, () -> {
-               if (!this.init_RefQueue.isOpen()) {
-                  this.init_RefQueue.open();
+            this.addClickRegion(ctrl, () -> {
+               if (!this.dropdown.isOpen()) {
+                  this.dropdown.open();
                }
             }, null);
-         } else if (this.init_RefQueue.isOpen()) {
-            this.init_RefQueue.close();
+         } else if (this.dropdown.isOpen()) {
+            this.dropdown.close();
          }
       };
    }
 
    private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel(int idx) {
       return (g, rb, mx, my, clickable) -> {
-         AutismSettingsScreen.CachePool k = this.init_List.get(idx);
+         AutismSettingsScreen.CachePool k = this.keybinds.get(idx);
          boolean hover = clickable && rb.init_Z(mx, my);
          boolean active = this.pop == idx;
          PacketUtil.load(
@@ -281,12 +281,12 @@ public class AutismSettingsScreen extends Screen {
             active ? this.init(1428429341, ThemePaletteManager.ColorRole.ACCENT) : (hover ? this.init(1075845661, ThemePaletteManager.ColorRole.BUTTON) : 639113758),
             active ? this.init(-39836, ThemePaletteManager.ColorRole.ACCENT) : this.init(1717972012, ThemePaletteManager.ColorRole.OUTLINE)
          );
-         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
-         String v = active ? "press a key..." : ValueSink.init_Str(k.init_IntSupplier().getAsInt());
+         this.init(g, k.label(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
+         String v = active ? "press a key..." : ValueSink.init_Str(k.getter().getAsInt());
          int vw = autismclient.gui.f.b.k.init(this.font, v, autismclient.gui.f.a.DataUtil.init, -4743522);
          this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ThemePaletteManager.ColorRole.TEXT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
-            this.init_V_NetHelper(rb, () -> this.init_V(idx), null);
+            this.addClickRegion(rb, () -> this.startCapture(idx), null);
          }
       };
    }
@@ -295,42 +295,42 @@ public class AutismSettingsScreen extends Screen {
       return (g, rb, mx, my, clickable) -> {
          this.init(g, rb, label, clickable && rb.init_Z(mx, my), false);
          if (clickable) {
-            this.init_V_NetHelper(rb, onClick, null);
+            this.addClickRegion(rb, onClick, null);
          }
       };
    }
 
-   private void init_V_NetHelper(NetHelper bounds, Runnable onLeft, Runnable onRight) {
-      this.load_List.add(new AutismSettingsScreen.Inner_DataUtil(bounds, onLeft, onRight));
+   private void addClickRegion(NetHelper bounds, Runnable onLeft, Runnable onRight) {
+      this.clickRegions.add(new AutismSettingsScreen.Inner_DataUtil(bounds, onLeft, onRight));
    }
 
-   private int init_I(int value) {
-      int max = Math.max(0, this.get - this.init_NetHelper.sync());
+   private int clampScroll(int value) {
+      int max = Math.max(0, this.get - this.listBounds.sync());
       return Math.max(0, Math.min(value, max));
    }
 
-   private ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil() {
-      NetHelper track = NetHelper.init(this.init_NetHelper.init() - 6, this.init_NetHelper.write(), 6, this.init_NetHelper.sync());
-      return ScrollbarRenderer.init(track, this.get, this.init_NetHelper.sync(), this.tick);
+   private ScrollbarRenderer.ScrollbarBounds scrollbarBounds() {
+      NetHelper track = NetHelper.init(this.listBounds.init() - 6, this.listBounds.write(), 6, this.listBounds.sync());
+      return ScrollbarRenderer.init(track, this.get, this.listBounds.sync(), this.tick);
    }
 
    private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
       this.init_Z = true;
       this.run = metrics.load(metrics.track().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
-      this.tick = this.init_I(ScrollbarRenderer.scrollForDrag(metrics, my, this.run));
+      this.tick = this.clampScroll(ScrollbarRenderer.scrollForDrag(metrics, my, this.run));
    }
 
    private int init(int argb, ThemePaletteManager.ColorRole ch) {
       return ThemePaletteManager.recolor(argb, ch);
    }
 
-   private int init_I() {
+   private int outlineColor() {
       return this.init(-5035221, ThemePaletteManager.ColorRole.OUTLINE);
    }
 
    private void init(GuiGraphicsExtractor g, NetHelper b, String label, boolean hover, boolean primary) {
       autismclient.gui.f.b.CachePool.init(
-         this.init_SyncManager,
+         this.ui,
          b,
          label,
          primary ? autismclient.gui.f.b.CachePool.Inner_DataUtil.read : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -341,11 +341,11 @@ public class AutismSettingsScreen extends Screen {
 
    private void init(GuiGraphicsExtractor g, String text, Identifier fontId, int color, NetHelper area) {
       int tw = k.init(this.font, text, fontId, color);
-      this.init(g, text, fontId, color, area.read() + (area.update() - tw) / 2, this.init_SyncManager.init_PoolEntry().centerTextY(area));
+      this.init(g, text, fontId, color, area.read() + (area.update() - tw) / 2, this.ui.init_PoolEntry().centerTextY(area));
    }
 
    private int init(NetHelper rb) {
-      return this.init_SyncManager.init_PoolEntry().centerTextY(rb);
+      return this.ui.init_PoolEntry().centerTextY(rb);
    }
 
    private int init(String label) {
@@ -370,15 +370,15 @@ public class AutismSettingsScreen extends Screen {
          return true;
       }
 
-      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-         this.init_RefQueue.onMouseClicked(mx, my, Compat263.mouseEventGlfwButton(event));
+      if (this.dropdown != null && this.dropdown.isOpen()) {
+         this.dropdown.onMouseClicked(mx, my, Compat263.mouseEventGlfwButton(event));
          return true;
       }
 
-      for (int i = this.load_List.size() - 1; i >= 0; i--) {
-         AutismSettingsScreen.Inner_DataUtil hit = this.load_List.get(i);
-         if (hit.init_NetHelper().init_Z(mx, my)) {
-            Runnable action = right ? hit.load() : hit.init_Runnable();
+      for (int i = this.clickRegions.size() - 1; i >= 0; i--) {
+         AutismSettingsScreen.Inner_DataUtil hit = this.clickRegions.get(i);
+         if (hit.bounds().init_Z(mx, my)) {
+            Runnable action = right ? hit.load() : hit.onLeft();
             if (action != null) {
                action.run();
             }
@@ -393,8 +393,8 @@ public class AutismSettingsScreen extends Screen {
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       this.init_Z = false;
-      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-         this.init_RefQueue.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      if (this.dropdown != null && this.dropdown.isOpen()) {
+         this.dropdown.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
          return true;
       } else {
          return super.mouseReleased(event);
@@ -404,10 +404,10 @@ public class AutismSettingsScreen extends Screen {
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       if (this.init_Z) {
-         this.tick = this.init_I(ScrollbarRenderer.scrollForDrag(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
+         this.tick = this.clampScroll(ScrollbarRenderer.scrollForDrag(this.scrollbarBounds(), cA.init_I_D(event.y()), this.run));
          return true;
-      } else if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-         this.init_RefQueue.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);
+      } else if (this.dropdown != null && this.dropdown.isOpen()) {
+         this.dropdown.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);
          return true;
       } else {
          return super.mouseDragged(event, dx, dy);
@@ -416,13 +416,13 @@ public class AutismSettingsScreen extends Screen {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-         this.init_RefQueue.onMouseScrolled(cA.init_I_D(mouseX), cA.init_I_D(mouseY), scrollY);
+      if (this.dropdown != null && this.dropdown.isOpen()) {
+         this.dropdown.onMouseScrolled(cA.init_I_D(mouseX), cA.init_I_D(mouseY), scrollY);
          return true;
       }
 
       if (scrollY != 0.0) {
-         this.tick = this.init_I(this.tick - (int)Math.signum(scrollY) * 16 * 2);
+         this.tick = this.clampScroll(this.tick - (int)Math.signum(scrollY) * 16 * 2);
       }
 
       return true;
@@ -436,8 +436,8 @@ public class AutismSettingsScreen extends Screen {
       }
 
       if (Compat263.keyEventGlfwKey(event) == 256) {
-         if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
-            this.init_RefQueue.close();
+         if (this.dropdown != null && this.dropdown.isOpen()) {
+            this.dropdown.close();
             return true;
          } else {
             this.onClose();
@@ -448,30 +448,30 @@ public class AutismSettingsScreen extends Screen {
       }
    }
 
-   private void init_V(int idx) {
+   private void startCapture(int idx) {
       this.pop = idx;
    }
 
    private void load(int code) {
-      if (this.pop >= 0 && this.pop < this.init_List.size()) {
-         this.init_List.get(this.pop).init_IntConsumer().accept(code);
+      if (this.pop >= 0 && this.pop < this.keybinds.size()) {
+         this.keybinds.get(this.pop).setter().accept(code);
          this.pop = -1;
       }
    }
 
    @Override
    public void onClose() {
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 
    private interface BufferHelper {
       void render(GuiGraphicsExtractor var1, NetHelper var2, int var3, int var4, boolean var5);
    }
 
-   private record CachePool(String init_Str, IntSupplier init_IntSupplier, IntConsumer init_IntConsumer) {
+   private record CachePool(String label, IntSupplier getter, IntConsumer setter) {
    }
 
-   private record Inner_DataUtil(NetHelper init_NetHelper, Runnable init_Runnable, Runnable load) {
+   private record Inner_DataUtil(NetHelper bounds, Runnable onLeft, Runnable load) {
    }
 
    private interface StreamUtil {

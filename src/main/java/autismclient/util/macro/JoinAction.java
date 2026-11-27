@@ -60,7 +60,7 @@ public class JoinAction implements MacroAction {
       return playerLeft ? !stopOnLeave && !joinsAgain : joinsAgain || !stopOnLeave;
    }
 
-   public static boolean init_Z_Str_Str(String a, String b) {
+   public static boolean sameAddress(String a, String b) {
       if (a != null && b != null && !a.isBlank() && !b.isBlank()) {
          ServerAddress first = ServerAddress.parseString(a.trim());
          ServerAddress second = ServerAddress.parseString(b.trim());
@@ -82,7 +82,7 @@ public class JoinAction implements MacroAction {
       return last != null && last.ip != null ? last.ip.trim() : "";
    }
 
-   public autismclient.util.JoinMacroController.Inner_StreamUtil init_aA_StreamUtil() {
+   public autismclient.util.JoinMacroController.Inner_StreamUtil timing() {
       return autismclient.util.JoinMacroController.Inner_StreamUtil.init(this.when);
    }
 
@@ -104,7 +104,7 @@ public class JoinAction implements MacroAction {
 
       try {
          long budgetMs = Math.max(1, Math.min(300, this.timeoutSec)) * 1000L;
-         return new JoinAction.Inner_CachePool(mc, address, this.init_aA_StreamUtil(), budgetMs, status == null ? s -> {} : status).init_Z();
+         return new JoinAction.Inner_CachePool(mc, address, this.timing(), budgetMs, status == null ? s -> {} : status).init_Z();
       } finally {
          init_ReentrantLock.unlock();
       }
@@ -187,7 +187,7 @@ public class JoinAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("server", this.server == null ? "" : this.server);
-      tag.putString("when", this.init_aA_StreamUtil().id());
+      tag.putString("when", this.timing().id());
       tag.putInt("timeoutSec", this.timeoutSec);
       tag.putBoolean("enabled", this.init_Z);
       return tag;
@@ -230,11 +230,11 @@ public class JoinAction implements MacroAction {
    }
 
    private static final class Inner_CachePool {
-      private final Minecraft init_Minecraft;
-      private final String init_Str;
-      private final autismclient.util.JoinMacroController.Inner_StreamUtil init_aA_StreamUtil;
-      private final long init_J;
-      private final Consumer<String> init_Consumer;
+      private final Minecraft mc;
+      private final String address;
+      private final autismclient.util.JoinMacroController.Inner_StreamUtil timing;
+      private final long budgetMs;
+      private final Consumer<String> status;
       private final autismclient.util.JoinMacroController.Inner_DataUtil init_aA_DataUtil = new autismclient.util.JoinMacroController.Inner_DataUtil();
       private JoinAction.Inner_DataUtil init_ClassCache_DataUti;
       private int init_I;
@@ -243,21 +243,21 @@ public class JoinAction implements MacroAction {
       private long write;
       private long update;
       private String load_Str = "";
-      private Screen init_Screen;
-      private String read_Str;
+      private Screen screen;
+      private String line;
 
       Inner_CachePool(Minecraft mc, String address, autismclient.util.JoinMacroController.Inner_StreamUtil timing, long budgetMs, Consumer<String> status) {
-         this.init_Minecraft = mc;
-         this.init_Str = address;
-         this.init_aA_StreamUtil = timing;
-         this.init_J = budgetMs;
-         this.init_Consumer = status;
+         this.mc = mc;
+         this.address = address;
+         this.timing = timing;
+         this.budgetMs = budgetMs;
+         this.status = status;
       }
 
       boolean init_Z() throws InterruptedException {
          this.read_J = System.currentTimeMillis();
-         if (OverlayScreenController.getActualScreen(this.init_Minecraft) instanceof DisconnectedScreen earlier) {
-            this.init_Screen = earlier;
+         if (OverlayScreenController.getActualScreen(this.mc) instanceof DisconnectedScreen earlier) {
+            this.screen = earlier;
          }
 
          try {
@@ -268,15 +268,15 @@ public class JoinAction implements MacroAction {
                   this.read_J = now;
                   if (this.write()) {
                      this.init_ClassCache_DataUti = null;
-                     this.init_V_Str("Waiting: " + this.init_aA_StreamUtil.load());
-                     if (this.init_aA_DataUtil.init(this.init_Minecraft, this.init_aA_StreamUtil, true)) {
+                     this.setStatusLine("Waiting: " + this.timing.load());
+                     if (this.init_aA_DataUtil.init(this.mc, this.timing, true)) {
                         return true;
                      }
                      break;
                   }
 
                   this.init_aA_DataUtil.init();
-                  if (this.init_Minecraft.getConnection() == null && !this.init_Minecraft.hasSingleplayerServer()) {
+                  if (this.mc.getConnection() == null && !this.mc.hasSingleplayerServer()) {
                      Boolean done = this.init(now, elapsed);
                      if (done != null) {
                         return done;
@@ -303,12 +303,12 @@ public class JoinAction implements MacroAction {
       }
 
       private Boolean init(long now, long elapsed) {
-         Screen screen = OverlayScreenController.getActualScreen(this.init_Minecraft);
-         if (this.init_ClassCache_DataUti == null && screen instanceof ConnectScreen connecting && this.init_Minecraft.level == null) {
+         Screen screen = OverlayScreenController.getActualScreen(this.mc);
+         if (this.init_ClassCache_DataUti == null && screen instanceof ConnectScreen connecting && this.mc.level == null) {
             ServerData pending = autismclient.modules.AutoReconnectController.lastServer();
-            if (pending == null || !JoinAction.init_Z_Str_Str(pending.ip, this.init_Str)) {
+            if (pending == null || !JoinAction.sameAddress(pending.ip, this.address)) {
                this.load_J += elapsed;
-               this.init_V_Str("Waiting for another connection");
+               this.setStatusLine("Waiting for another connection");
                return this.load() ? this.read() : null;
             }
 
@@ -317,13 +317,13 @@ public class JoinAction implements MacroAction {
          }
 
          if (this.init_ClassCache_DataUti != null) {
-            switch (this.init_ClassCache_DataUti.init_ClassCache_StreamU_Minecraft_J(this.init_Minecraft, now)) {
+            switch (this.init_ClassCache_DataUti.init_ClassCache_StreamU_Minecraft_J(this.mc, now)) {
                case ALIVE:
-                  if (!this.init_ClassCache_DataUti.init_Z_Minecraft(this.init_Minecraft)) {
+                  if (!this.init_ClassCache_DataUti.init_Z_Minecraft(this.mc)) {
                      this.load_J += elapsed;
                   }
 
-                  this.init_V_Str(this.init_I > 1 ? "Joining " + this.init_Str + " (try " + this.init_I + ")" : "Joining " + this.init_Str);
+                  this.setStatusLine(this.init_I > 1 ? "Joining " + this.address + " (try " + this.init_I + ")" : "Joining " + this.address);
                   break;
                case FAILED:
                   this.load_J += elapsed;
@@ -341,7 +341,7 @@ public class JoinAction implements MacroAction {
                this.init_V_J(now);
             } else {
                long waitS = Math.max(1L, (this.update - now + 999L) / 1000L);
-               this.init_V_Str(this.load_Str.isEmpty() ? "Joining " + this.init_Str + " in " + waitS + "s" : "Retry in " + waitS + "s: " + this.load_Str);
+               this.setStatusLine(this.load_Str.isEmpty() ? "Joining " + this.address + " in " + waitS + "s" : "Retry in " + waitS + "s: " + this.load_Str);
             }
          }
 
@@ -349,29 +349,29 @@ public class JoinAction implements MacroAction {
       }
 
       private boolean load() {
-         return this.load_J > this.init_J;
+         return this.load_J > this.budgetMs;
       }
 
       private boolean read() {
          this.init_V();
-         long seconds = this.init_J / 1000L;
+         long seconds = this.budgetMs / 1000L;
          return JoinAction.init_Z(
-            "Join: could not get into " + this.init_Str + " within " + seconds + "s" + (this.load_Str.isEmpty() ? "" : " - " + this.load_Str)
+            "Join: could not get into " + this.address + " within " + seconds + "s" + (this.load_Str.isEmpty() ? "" : " - " + this.load_Str)
          );
       }
 
       private boolean write() {
-         if (this.init_Minecraft.getConnection() != null && this.init_Minecraft.level != null && !this.init_Minecraft.hasSingleplayerServer()) {
-            ServerData current = this.init_Minecraft.getCurrentServer();
-            return current != null && JoinAction.init_Z_Str_Str(current.ip, this.init_Str);
+         if (this.mc.getConnection() != null && this.mc.level != null && !this.mc.hasSingleplayerServer()) {
+            ServerData current = this.mc.getCurrentServer();
+            return current != null && JoinAction.sameAddress(current.ip, this.address);
          } else {
             return false;
          }
       }
 
       private void init(Screen screen, long now) {
-         if (screen instanceof DisconnectedScreen && screen != this.init_Screen) {
-            this.init_Screen = screen;
+         if (screen instanceof DisconnectedScreen && screen != this.screen) {
+            this.screen = screen;
             String reason = screen instanceof autismclient.mixin.duck.DisconnectedScreenDuck access ? access.autism$reason() : "";
             this.load_Str = JoinAction.init_Str(reason);
             this.update = Math.max(this.write + 5000L, now + 1000L);
@@ -384,22 +384,22 @@ public class JoinAction implements MacroAction {
          this.update = now + 5000L;
          JoinAction.Inner_DataUtil next = new JoinAction.Inner_DataUtil(now, true);
          this.init_ClassCache_DataUti = next;
-         this.init_V_Str(this.init_I > 1 ? "Joining " + this.init_Str + " (try " + this.init_I + ")" : "Joining " + this.init_Str);
-         ServerAddress target = ServerAddress.parseString(this.init_Str);
-         this.init_Minecraft.execute(() -> {
+         this.setStatusLine(this.init_I > 1 ? "Joining " + this.address + " (try " + this.init_I + ")" : "Joining " + this.address);
+         ServerAddress target = ServerAddress.parseString(this.address);
+         this.mc.execute(() -> {
             try {
-               Screen current = OverlayScreenController.getActualScreen(this.init_Minecraft);
+               Screen current = OverlayScreenController.getActualScreen(this.mc);
                if (current instanceof ConnectScreen already) {
-                  next.init_Z = false;
-                  next.init_ConnectScreen = already;
+                  next.ours = false;
+                  next.screen = already;
                } else {
-                  ConnectScreen.startConnecting(init_Screen_Screen(current), this.init_Minecraft, target, this.init_ServerData(), false, null);
-                  if (OverlayScreenController.getActualScreen(this.init_Minecraft) instanceof ConnectScreen connecting) {
-                     next.init_ConnectScreen = connecting;
+                  ConnectScreen.startConnecting(unwrapDisconnected(current), this.mc, target, this.init_ServerData(), false, null);
+                  if (OverlayScreenController.getActualScreen(this.mc) instanceof ConnectScreen connecting) {
+                     next.screen = connecting;
                   }
                }
             } catch (Throwable t) {
-               AutismClientAddon.LOG.warn("[Autism] Join could not start connecting to {}", this.init_Str, t);
+               AutismClientAddon.LOG.warn("[Autism] Join could not start connecting to {}", this.address, t);
             } finally {
                next.load_Z = true;
             }
@@ -408,12 +408,12 @@ public class JoinAction implements MacroAction {
 
       private ServerData init_ServerData() {
          try {
-            ServerList list = new ServerList(this.init_Minecraft);
+            ServerList list = new ServerList(this.mc);
             list.load();
 
             for (int i = 0; i < list.size(); i++) {
                ServerData entry = list.get(i);
-               if (entry != null && JoinAction.init_Z_Str_Str(entry.ip, this.init_Str)) {
+               if (entry != null && JoinAction.sameAddress(entry.ip, this.address)) {
                   return entry;
                }
             }
@@ -421,10 +421,10 @@ public class JoinAction implements MacroAction {
          }
 
          ServerData last = autismclient.modules.AutoReconnectController.lastServer();
-         return last != null && JoinAction.init_Z_Str_Str(last.ip, this.init_Str) ? last : new ServerData(this.init_Str, this.init_Str, Type.OTHER);
+         return last != null && JoinAction.sameAddress(last.ip, this.address) ? last : new ServerData(this.address, this.address, Type.OTHER);
       }
 
-      private static Screen init_Screen_Screen(Screen current) {
+      private static Screen unwrapDisconnected(Screen current) {
          if (current instanceof DisconnectedScreen && current instanceof autismclient.mixin.duck.DisconnectedScreenDuck access && access.autism$parent() != null) {
             return access.autism$parent();
          } else {
@@ -433,16 +433,16 @@ public class JoinAction implements MacroAction {
       }
 
       private boolean update() throws InterruptedException {
-         ServerData current = this.init_Minecraft.getCurrentServer();
-         this.init_V_Str(this.init_Minecraft.hasSingleplayerServer() ? "Leaving the world" : "Leaving " + (current == null ? "the server" : current.ip));
-         this.init_Minecraft.execute(() -> MacroExecutor.runWithSuppressedLeaveMark(() -> {
-            if (JoinAction.init(this.init_Minecraft)) {
-               this.init_Minecraft.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
+         ServerData current = this.mc.getCurrentServer();
+         this.setStatusLine(this.mc.hasSingleplayerServer() ? "Leaving the world" : "Leaving " + (current == null ? "the server" : current.ip));
+         this.mc.execute(() -> MacroExecutor.runWithSuppressedLeaveMark(() -> {
+            if (JoinAction.init(this.mc)) {
+               this.mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
             }
          }));
          long deadline = System.currentTimeMillis() + 30000L;
 
-         while (JoinAction.init(this.init_Minecraft)) {
+         while (JoinAction.init(this.mc)) {
             if (System.currentTimeMillis() > deadline) {
                return false;
             }
@@ -455,49 +455,49 @@ public class JoinAction implements MacroAction {
 
       private void init_V() {
          JoinAction.Inner_DataUtil current = this.init_ClassCache_DataUti;
-         if (current != null && current.init_Z) {
+         if (current != null && current.ours) {
             current.read = true;
-            ConnectScreen screen = current.init_ConnectScreen;
+            ConnectScreen screen = current.screen;
             if (screen != null) {
-               this.init_Minecraft.execute(() -> JoinAction.init_V_Minecraft_ConnectScreen(this.init_Minecraft, screen));
+               this.mc.execute(() -> JoinAction.init_V_Minecraft_ConnectScreen(this.mc, screen));
             }
          }
       }
 
-      private void init_V_Str(String line) {
-         if (!line.equals(this.read_Str)) {
-            this.read_Str = line;
-            this.init_Consumer.accept(line);
+      private void setStatusLine(String line) {
+         if (!line.equals(this.line)) {
+            this.line = line;
+            this.status.accept(line);
          }
       }
    }
 
    private static final class Inner_DataUtil {
-      volatile boolean init_Z;
-      volatile ConnectScreen init_ConnectScreen;
+      volatile boolean ours;
+      volatile ConnectScreen screen;
       volatile boolean load_Z;
       volatile boolean read;
-      private final long init_J;
+      private final long startedAt;
       private long load_J = -1L;
 
       Inner_DataUtil(long startedAt, boolean ours) {
-         this.init_J = startedAt;
-         this.init_Z = ours;
+         this.startedAt = startedAt;
+         this.ours = ours;
       }
 
       static JoinAction.Inner_DataUtil init_ClassCache_DataUti_ConnectScreen_J(ConnectScreen screen, long now) {
          JoinAction.Inner_DataUtil attempt = new JoinAction.Inner_DataUtil(now, false);
-         attempt.init_ConnectScreen = screen;
+         attempt.screen = screen;
          attempt.load_Z = true;
          return attempt;
       }
 
       JoinAction.Inner_StreamUtil init_ClassCache_StreamU_Minecraft_J(Minecraft mc, long now) {
          if (!this.load_Z) {
-            return now - this.init_J > 10000L ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.ALIVE;
+            return now - this.startedAt > 10000L ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.ALIVE;
          }
 
-         ConnectScreen connecting = this.init_ConnectScreen;
+         ConnectScreen connecting = this.screen;
          if (connecting == null) {
             return JoinAction.Inner_StreamUtil.FAILED;
          }
@@ -525,7 +525,7 @@ public class JoinAction implements MacroAction {
       }
 
       boolean init_Z_Minecraft(Minecraft mc) {
-         ConnectScreen connecting = this.init_ConnectScreen;
+         ConnectScreen connecting = this.screen;
          if (connecting != null && mc.level == null) {
             Screen current = OverlayScreenController.getActualScreen(mc);
             return current != connecting && !(current instanceof DisconnectedScreen) && init_Z_AutismConnectScree((AutismConnectScreenAccessor)connecting);

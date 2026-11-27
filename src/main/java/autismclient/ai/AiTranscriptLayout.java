@@ -16,24 +16,24 @@ final class AiTranscriptLayout {
    static final int close = 3;
    static final int open = 8;
    static final int poll = 3;
-   private final Map<AiService.TranscriptEntry, AiTranscriptLayout.Inner_StateCache> init_Map = new IdentityHashMap<>();
-   private List<AiTranscriptLayout.Inner_BufferHelper> init_List = List.of();
-   private List<AiTranscriptLayout.Inner_DataUtil> load_List = List.of();
+   private final Map<AiService.TranscriptEntry, AiTranscriptLayout.Inner_StateCache> wrapCache = new IdentityHashMap<>();
+   private List<AiTranscriptLayout.Inner_BufferHelper> lines = List.of();
+   private List<AiTranscriptLayout.Inner_DataUtil> blocks = List.of();
    private int push;
    private int pop = -1;
    private int tick = -1;
    private int run;
    private int get = -1;
-   private AiService.TranscriptEntry init_cc_JsonUtil;
-   private AiService.TranscriptEntry load_cc_JsonUtil;
-   private AiTranscriptLayout.Inner_TaskQueue init_cC_TaskQueue;
+   private AiService.TranscriptEntry firstEntry;
+   private AiService.TranscriptEntry lastEntry;
+   private AiTranscriptLayout.Inner_TaskQueue lastMetrics;
 
    List<AiTranscriptLayout.Inner_BufferHelper> lines() {
-      return this.init_List;
+      return this.lines;
    }
 
    List<AiTranscriptLayout.Inner_DataUtil> load() {
-      return this.load_List;
+      return this.blocks;
    }
 
    int height() {
@@ -53,23 +53,23 @@ final class AiTranscriptLayout {
       AiService.TranscriptEntry first = size == 0 ? null : messages.get(0);
       AiService.TranscriptEntry last = size == 0 ? null : messages.get(size - 1);
       if (size == this.pop
-         && first == this.init_cc_JsonUtil
-         && last == this.load_cc_JsonUtil
+         && first == this.firstEntry
+         && last == this.lastEntry
          && width == this.tick
          && epoch == this.run
          && toggleRevision == this.get
-         && metrics.equals(this.init_cC_TaskQueue)) {
+         && metrics.equals(this.lastMetrics)) {
          return false;
       }
 
       this.pop = size;
-      this.init_cc_JsonUtil = first;
-      this.load_cc_JsonUtil = last;
+      this.firstEntry = first;
+      this.lastEntry = last;
       this.tick = width;
       this.run = epoch;
       this.get = toggleRevision;
-      this.init_cC_TaskQueue = metrics;
-      this.init_V_List(messages, Math.max(20, width), epoch, metrics, pinned, measure);
+      this.lastMetrics = metrics;
+      this.rebuild(messages, Math.max(20, width), epoch, metrics, pinned, measure);
       return true;
    }
 
@@ -79,11 +79,11 @@ final class AiTranscriptLayout {
 
    int firstLineAt(int y) {
       int lo = 0;
-      int hi = this.init_List.size();
+      int hi = this.lines.size();
 
       while (lo < hi) {
          int mid = lo + hi >>> 1;
-         AiTranscriptLayout.Inner_BufferHelper line = this.init_List.get(mid);
+         AiTranscriptLayout.Inner_BufferHelper line = this.lines.get(mid);
          if (line.y() + line.height() <= y) {
             lo = mid + 1;
          } else {
@@ -96,11 +96,11 @@ final class AiTranscriptLayout {
 
    int firstBlockAt(int y) {
       int lo = 0;
-      int hi = this.load_List.size();
+      int hi = this.blocks.size();
 
       while (lo < hi) {
          int mid = lo + hi >>> 1;
-         if (this.load_List.get(mid).bottom() <= y) {
+         if (this.blocks.get(mid).bottom() <= y) {
             lo = mid + 1;
          } else {
             hi = mid;
@@ -110,13 +110,13 @@ final class AiTranscriptLayout {
       return lo;
    }
 
-   AiTranscriptLayout.Inner_DataUtil init_cC_DataUtil_I(int y) {
+   AiTranscriptLayout.Inner_DataUtil blockAt(int y) {
       int i = this.firstBlockAt(y);
-      if (i >= this.load_List.size()) {
+      if (i >= this.blocks.size()) {
          return null;
       }
 
-      AiTranscriptLayout.Inner_DataUtil block = this.load_List.get(i);
+      AiTranscriptLayout.Inner_DataUtil block = this.blocks.get(i);
       return y >= block.top() ? block : null;
    }
 
@@ -167,7 +167,7 @@ final class AiTranscriptLayout {
       return "tool".equals(message.role()) && !message.detail().isBlank() ? message.text() + "\n" + message.detail() : message.text();
    }
 
-   private void init_V_List(
+   private void rebuild(
       List<AiService.TranscriptEntry> messages, int width, int epoch, AiTranscriptLayout.Inner_TaskQueue m, Map<AiService.TranscriptEntry, Boolean> pinned, AiTranscriptLayout.Inner_ConfigStore measure
    ) {
       List<AiTranscriptLayout.Inner_BufferHelper> nextLines = new ArrayList<>(Math.max(16, messages.size() * 2));
@@ -193,7 +193,7 @@ final class AiTranscriptLayout {
          previous = kind;
          int top = y;
          boolean expanded = false;
-         AiTranscriptLayout.Inner_StateCache wrap = this.init_Map.computeIfAbsent(message, ignored -> new AiTranscriptLayout.Inner_StateCache());
+         AiTranscriptLayout.Inner_StateCache wrap = this.wrapCache.computeIfAbsent(message, ignored -> new AiTranscriptLayout.Inner_StateCache());
          switch (kind) {
             case USER:
                y += m.userPad();
@@ -289,17 +289,17 @@ final class AiTranscriptLayout {
          nextBlocks.add(new AiTranscriptLayout.Inner_DataUtil(message, kind, top, y, expanded));
       }
 
-      this.init_List = List.copyOf(nextLines);
-      this.load_List = List.copyOf(nextBlocks);
+      this.lines = List.copyOf(nextLines);
+      this.blocks = List.copyOf(nextBlocks);
       this.push = y;
-      if (this.init_Map.size() > messages.size() + 32) {
+      if (this.wrapCache.size() > messages.size() + 32) {
          Map<AiService.TranscriptEntry, Boolean> live = new IdentityHashMap<>();
 
          for (AiService.TranscriptEntry message : messages) {
             live.put(message, Boolean.TRUE);
          }
 
-         this.init_Map.keySet().removeIf(messagex -> !live.containsKey(messagex));
+         this.wrapCache.keySet().removeIf(messagex -> !live.containsKey(messagex));
       }
    }
 
@@ -308,10 +308,10 @@ final class AiTranscriptLayout {
    }
 
    private static List<String> init(AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, AiTranscriptLayout.Inner_ConfigStore measure) {
-      if (wrap.init_I != width || wrap.load_I != epoch) {
+      if (wrap.width != width || wrap.epoch != epoch) {
          wrap.init_List = init(text, width, measure);
-         wrap.init_I = width;
-         wrap.load_I = epoch;
+         wrap.width = width;
+         wrap.epoch = epoch;
       }
 
       return wrap.init_List;
@@ -530,8 +530,8 @@ final class AiTranscriptLayout {
    }
 
    private static final class Inner_StateCache {
-      int init_I = -1;
-      int load_I;
+      int width = -1;
+      int epoch;
       List<String> init_List = List.of();
       int read_I = -1;
       int write;

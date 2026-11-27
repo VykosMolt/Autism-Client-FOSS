@@ -5,8 +5,8 @@ import java.util.function.Consumer;
 
 public final class BacktrackPacketQueue<T> {
    public static final long init_J = 300000000L;
-   private final ArrayDeque<BacktrackPacketQueue.Inner_DataUtil<T>> init_ArrayDeque = new ArrayDeque<>();
-   private final int init_I;
+   private final ArrayDeque<BacktrackPacketQueue.Inner_DataUtil<T>> queue = new ArrayDeque<>();
+   private final int capacity;
    private Object init_Obj;
    private Object load_Obj;
    private Object read;
@@ -14,7 +14,7 @@ public final class BacktrackPacketQueue<T> {
    private long load_J;
 
    public BacktrackPacketQueue(int capacity) {
-      this.init_I = Math.max(1, capacity);
+      this.capacity = Math.max(1, capacity);
    }
 
    public void bind(Object world, Object player, Object listener, Object target) {
@@ -32,8 +32,8 @@ public final class BacktrackPacketQueue<T> {
    }
 
    public boolean init(T value, long now, long delay) {
-      if (this.init_Obj != null && this.load_Obj != null && this.read != null && this.write != null && delay > 0L && this.init_ArrayDeque.size() < this.init_I) {
-         this.init_ArrayDeque.addLast(new BacktrackPacketQueue.Inner_DataUtil<>(value, now, Math.min(300000000L, delay)));
+      if (this.init_Obj != null && this.load_Obj != null && this.read != null && this.write != null && delay > 0L && this.queue.size() < this.capacity) {
+         this.queue.addLast(new BacktrackPacketQueue.Inner_DataUtil<>(value, now, Math.min(300000000L, delay)));
          return true;
       } else {
          return false;
@@ -44,16 +44,16 @@ public final class BacktrackPacketQueue<T> {
       long expected = this.load_J;
 
       int count;
-      for (count = 0; this.load_J == expected && !this.init_ArrayDeque.isEmpty(); count++) {
-         BacktrackPacketQueue.Inner_DataUtil<T> first = this.init_ArrayDeque.peekFirst();
-         if (!all && now - first.init_J() < first.load()) {
+      for (count = 0; this.load_J == expected && !this.queue.isEmpty(); count++) {
+         BacktrackPacketQueue.Inner_DataUtil<T> first = this.queue.peekFirst();
+         if (!all && now - first.receivedAt() < first.load()) {
             break;
          }
 
-         this.init_ArrayDeque.removeFirst();
+         this.queue.removeFirst();
 
          try {
-            apply.accept(first.init_Obj());
+            apply.accept(first.packet());
          } catch (RuntimeException | Error failure) {
             this.clear();
             throw failure;
@@ -64,19 +64,19 @@ public final class BacktrackPacketQueue<T> {
    }
 
    public long init(long now) {
-      return this.init_ArrayDeque.isEmpty() ? 0L : Math.max(0L, now - this.init_ArrayDeque.peekFirst().init_J());
+      return this.queue.isEmpty() ? 0L : Math.max(0L, now - this.queue.peekFirst().receivedAt());
    }
 
    public int size() {
-      return this.init_ArrayDeque.size();
+      return this.queue.size();
    }
 
    public void clear() {
-      this.init_ArrayDeque.clear();
+      this.queue.clear();
       this.load_J++;
       this.init_Obj = this.load_Obj = this.read = this.write = null;
    }
 
-   private record Inner_DataUtil<T>(T init_Obj, long init_J, long load) {
+   private record Inner_DataUtil<T>(T packet, long receivedAt, long load) {
    }
 }

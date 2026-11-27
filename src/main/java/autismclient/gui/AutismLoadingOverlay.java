@@ -32,10 +32,10 @@ public class AutismLoadingOverlay extends LoadingOverlay {
    private static final int sync = 39;
    private static final long init_J = 1000L;
    private static final long load_J = 500L;
-   private final Minecraft init_Minecraft;
-   private final ReloadInstance init_ReloadInstance;
-   private final Consumer<Optional<Throwable>> init_Consumer;
-   private final boolean init_Z;
+   private final Minecraft minecraft;
+   private final ReloadInstance reload;
+   private final Consumer<Optional<Throwable>> onFinish;
+   private final boolean fadeIn;
    private float init_F;
    private long read_J = -1L;
    private long write_J = -1L;
@@ -50,10 +50,10 @@ public class AutismLoadingOverlay extends LoadingOverlay {
 
    public AutismLoadingOverlay(Minecraft minecraft, ReloadInstance reload, Consumer<Optional<Throwable>> onFinish, boolean fadeIn) {
       super(minecraft, reload, onFinish, fadeIn);
-      this.init_Minecraft = minecraft;
-      this.init_ReloadInstance = reload;
-      this.init_Consumer = onFinish;
-      this.init_Z = fadeIn;
+      this.minecraft = minecraft;
+      this.reload = reload;
+      this.onFinish = onFinish;
+      this.fadeIn = fadeIn;
    }
 
    private boolean init() {
@@ -62,9 +62,9 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       }
 
       if (this.read_J == -1L) {
-         this.init_Minecraft.gui.setOverlay(new LoadingOverlay(this.init_Minecraft, this.init_ReloadInstance, this.init_Consumer, false));
+         this.minecraft.gui.setOverlay(new LoadingOverlay(this.minecraft, this.reload, this.onFinish, false));
       } else {
-         this.init_Minecraft.gui.setOverlay(null);
+         this.minecraft.gui.setOverlay(null);
       }
 
       return true;
@@ -76,7 +76,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
          int width = graphics.guiWidth();
          int height = graphics.guiHeight();
          long now = Util.getMillis();
-         if (this.init_Z && this.write_J == -1L) {
+         if (this.fadeIn && this.write_J == -1L) {
             this.write_J = now;
          }
 
@@ -84,24 +84,24 @@ public class AutismLoadingOverlay extends LoadingOverlay {
          float fadeInAnim = this.write_J > -1L ? (float)(now - this.write_J) / 500.0F : -1.0F;
          float logoAlpha;
          if (fadeOutAnim >= 1.0F) {
-            if (this.init_Minecraft.gui.screen() != null) {
+            if (this.minecraft.gui.screen() != null) {
                this.init_V_GuiGraphicsExtract(graphics, 0, 0, a);
             } else {
-               this.init_Minecraft.gui.hud.extractDeferredSubtitles();
+               this.minecraft.gui.hud.extractDeferredSubtitles();
             }
 
             int alpha = Mth.ceil((1.0F - Mth.clamp(fadeOutAnim - 1.0F, 0.0F, 1.0F)) * 255.0F);
             graphics.nextStratum();
             PacketUtil.init(graphics, NetHelper.init(0, 0, width, height), init(read_I, alpha));
             logoAlpha = 1.0F - Mth.clamp(fadeOutAnim - 1.0F, 0.0F, 1.0F);
-         } else if (!this.init_Z) {
-            this.init_Minecraft.gameRenderer.gameRenderState().guiRenderState.clearColorOverride = init(read_I);
+         } else if (!this.fadeIn) {
+            this.minecraft.gameRenderer.gameRenderState().guiRenderState.clearColorOverride = init(read_I);
             logoAlpha = 1.0F;
          } else {
-            if (this.init_Minecraft.gui.screen() != null && fadeInAnim < 1.0F) {
+            if (this.minecraft.gui.screen() != null && fadeInAnim < 1.0F) {
                this.init_V_GuiGraphicsExtract(graphics, mouseX, mouseY, a);
             } else {
-               this.init_Minecraft.gui.hud.extractDeferredSubtitles();
+               this.minecraft.gui.hud.extractDeferredSubtitles();
             }
 
             int alpha = Mth.ceil(Mth.clamp(fadeInAnim, 0.15, 1.0) * 255.0);
@@ -114,20 +114,20 @@ public class AutismLoadingOverlay extends LoadingOverlay {
             this.load(graphics, width, height, logoAlpha);
          }
 
-         float actualProgress = this.init_ReloadInstance.getActualProgress();
+         float actualProgress = this.reload.getActualProgress();
          this.init_F = Mth.clamp(this.init_F * 0.95F + actualProgress * 0.050000012F, 0.0F, 1.0F);
          if (fadeOutAnim < 1.0F) {
             this.read(graphics, width, height, fadeOutAnim);
          }
 
          if (fadeOutAnim >= 2.0F) {
-            this.init_Minecraft.gui.setOverlay(null);
+            this.minecraft.gui.setOverlay(null);
          }
       }
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-      Screen screen = this.init_Minecraft.gui.screen();
+      Screen screen = this.minecraft.gui.screen();
       if (screen != null) {
          try {
             screen.extractRenderStateWithTooltipAndSubtitles(graphics, mouseX, mouseY, a);
@@ -186,24 +186,24 @@ public class AutismLoadingOverlay extends LoadingOverlay {
 
    @Override
    public void tick() {
-      if (!this.init() && this.read_J == -1L && this.init_ReloadInstance.isDone() && this.load()) {
+      if (!this.init() && this.read_J == -1L && this.reload.isDone() && this.load()) {
          try {
-            this.init_ReloadInstance.checkExceptions();
-            this.init_Consumer.accept(Optional.empty());
+            this.reload.checkExceptions();
+            this.onFinish.accept(Optional.empty());
          } catch (Throwable t) {
-            this.init_Consumer.accept(Optional.of(t));
+            this.onFinish.accept(Optional.of(t));
          }
 
          this.read_J = Util.getMillis();
-         if (this.init_Minecraft.gui.screen() != null) {
-            Window window = this.init_Minecraft.getWindow();
-            this.init_Minecraft.gui.screen().init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
+         if (this.minecraft.gui.screen() != null) {
+            Window window = this.minecraft.getWindow();
+            this.minecraft.gui.screen().init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
          }
       }
    }
 
    private boolean load() {
-      return !this.init_Z || this.write_J > -1L && Util.getMillis() - this.write_J >= 1000L;
+      return !this.fadeIn || this.write_J > -1L && Util.getMillis() - this.write_J >= 1000L;
    }
 
    @Override

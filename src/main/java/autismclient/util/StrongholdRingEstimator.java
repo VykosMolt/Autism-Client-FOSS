@@ -11,7 +11,7 @@ public final class StrongholdRingEstimator {
    private static final double load = 181.0;
    private static final double read = 640.0;
    private static final double write = 24373.0;
-   private static final int[] init_IArr = new int[]{3, 6, 10, 15, 21, 28, 36, 9};
+   private static final int[] RING_STRONGHOLDS = new int[]{3, 6, 10, 15, 21, 28, 36, 9};
 
    private StrongholdRingEstimator() {
    }
@@ -159,7 +159,7 @@ public final class StrongholdRingEstimator {
    }
 
    private static int init(double radius) {
-      for (int i = 0; i < init_IArr.length; i++) {
+      for (int i = 0; i < RING_STRONGHOLDS.length; i++) {
          if (Math.abs(radius - (2048 + 3072 * i)) <= 821.0) {
             return i;
          }
@@ -171,13 +171,13 @@ public final class StrongholdRingEstimator {
    private static double init(double radius, int ring) {
       double edge = Math.abs(radius - (2048 + 3072 * ring)) - 640.0;
       double snapWeight = edge <= 0.0 ? 1.0 : Math.max(1.0E-4, 1.0 - edge / 181.0);
-      return init_IArr[ring] * snapWeight / Math.max(1.0, radius);
+      return RING_STRONGHOLDS[ring] * snapWeight / Math.max(1.0, radius);
    }
 
    private static double[][] init(Vec3 origin) {
-      double[][] samples = new double[init_IArr.length][1024];
+      double[][] samples = new double[RING_STRONGHOLDS.length][1024];
 
-      for (int ring = 0; ring < init_IArr.length; ring++) {
+      for (int ring = 0; ring < RING_STRONGHOLDS.length; ring++) {
          int at = 0;
 
          for (int r = 0; r < 16; r++) {
@@ -197,7 +197,7 @@ public final class StrongholdRingEstimator {
    private static double init(double[][] samples, double distance, int candidateRing) {
       double log = 0.0;
 
-      for (int ring = 0; ring < init_IArr.length; ring++) {
+      for (int ring = 0; ring < RING_STRONGHOLDS.length; ring++) {
          double[] sorted = samples[ring];
          int low = 0;
          int high = sorted.length;
@@ -213,7 +213,7 @@ public final class StrongholdRingEstimator {
          }
 
          double closer = (double)low / sorted.length;
-         log += (init_IArr[ring] - (ring == candidateRing ? 1 : 0)) * Math.log(Math.max(1.0E-4, 1.0 - closer));
+         log += (RING_STRONGHOLDS[ring] - (ring == candidateRing ? 1 : 0)) * Math.log(Math.max(1.0E-4, 1.0 - closer));
       }
 
       return log;

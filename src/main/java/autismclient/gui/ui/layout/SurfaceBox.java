@@ -1,18 +1,18 @@
 package autismclient.gui.ui.layout;
 
 public class SurfaceBox extends LayoutContainer {
-   private final ColumnLayout init_PacketUtil = new ColumnLayout();
+   private final ColumnLayout content = new ColumnLayout();
    private boolean write_Z = true;
    private EdgeInsets init_IoWorker = EdgeInsets.uniform(4);
    private boolean update_Z = true;
    private boolean sync = true;
 
    public SurfaceBox() {
-      this.addChild(this.init_PacketUtil);
+      this.addChild(this.content);
    }
 
    public ColumnLayout getContent() {
-      return this.init_PacketUtil;
+      return this.content;
    }
 
    public SurfaceBox setActive(boolean active) {
@@ -43,19 +43,19 @@ public class SurfaceBox extends LayoutContainer {
    @Override
    public float measurePreferredWidth(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      return scaledPadding.init_I() + this.init_PacketUtil.measurePreferredWidth(context);
+      return scaledPadding.init_I() + this.content.measurePreferredWidth(context);
    }
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      return scaledPadding.load() + this.init_PacketUtil.measureHeight(context, Math.max(0.0F, availableWidth - scaledPadding.init_I()));
+      return scaledPadding.load() + this.content.measureHeight(context, Math.max(0.0F, availableWidth - scaledPadding.init_I()));
    }
 
    @Override
    protected void layoutChildren(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      this.init_PacketUtil
+      this.content
          .setBounds(
             this.nodeX + scaledPadding.read(),
             this.nodeY + scaledPadding.write(),

@@ -266,7 +266,7 @@ public final class AiServerIntel {
 
    public static AiOperation create(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      final String address = init_Str(mc);
+      final String address = serverAddress(mc);
       String precondition = init(!address.isBlank());
       if (precondition != null) {
          throw new IllegalArgumentException(precondition);
@@ -296,7 +296,7 @@ public final class AiServerIntel {
                return AiGameOperations.result(AiOperation.Status.CANCELLED, "Plugin scan cancelled", new JsonObject());
             }
 
-            String now = AiServerIntel.init_Str(Minecraft.getInstance());
+            String now = AiServerIntel.serverAddress(Minecraft.getInstance());
             if (!now.equals(address)) {
                this.load_Z = true;
                return AiGameOperations.result(AiOperation.Status.CANCELLED, "Left the server during the plugin scan", new JsonObject());
@@ -364,7 +364,7 @@ public final class AiServerIntel {
       String address = requested;
       AutismConfig.PluginScanCacheEntry entry = address.isBlank() ? null : config.getPluginScanByAddress(address);
       if (entry == null && requested.isBlank()) {
-         address = init_Str(mc);
+         address = serverAddress(mc);
          if (!address.isBlank()) {
             entry = config.getPluginScanByAddress(address);
          }
@@ -398,7 +398,7 @@ public final class AiServerIntel {
       }
    }
 
-   private static String init_Str(Minecraft mc) {
+   private static String serverAddress(Minecraft mc) {
       if (mc == null) {
          return "";
       }

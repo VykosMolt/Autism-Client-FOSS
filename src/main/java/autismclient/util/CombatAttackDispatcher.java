@@ -60,7 +60,7 @@ public final class CombatAttackDispatcher {
    }
 
    static final class Inner_DataUtil {
-      private final Deque<Runnable> init_Deque = new ArrayDeque<>();
+      private final Deque<Runnable> queue = new ArrayDeque<>();
       private final Deque<Runnable> load = new ArrayDeque<>();
       private Object init_Obj;
       private CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2 init_r_DataUtil_DataUti;
@@ -90,18 +90,18 @@ public final class CombatAttackDispatcher {
       }
 
       void init(Runnable receipt) {
-         this.init_Deque.addLast(Objects.requireNonNull(receipt));
+         this.queue.addLast(Objects.requireNonNull(receipt));
       }
 
       void load(Runnable receipt) {
-         this.init_Deque.removeLast();
+         this.queue.removeLast();
          this.init(receipt);
       }
 
       void init_V(Object target) {
          this.load();
-         this.load.addAll(this.init_Deque);
-         this.init_Deque.clear();
+         this.load.addAll(this.queue);
+         this.queue.clear();
          this.init_Obj = target;
       }
 
@@ -121,7 +121,7 @@ public final class CombatAttackDispatcher {
       }
 
       void init() {
-         this.init_Deque.clear();
+         this.queue.clear();
       }
 
       void load() {

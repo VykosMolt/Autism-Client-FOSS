@@ -30,11 +30,11 @@ final class PearlLandingEvaluator {
       int impactTick = 2147483647;
 
       for (int tick = 0; tick < 240; tick++) {
-         if (!world.init_Z(body.expandTowards(velocity))) {
+         if (!world.isClear(body.expandTowards(velocity))) {
             return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.UNKNOWN, fallen, 1.0F);
          }
 
-         PearlLandingEvaluator.Inner_DataUtil contact = world.init_aU_DataUtil(body);
+         PearlLandingEvaluator.Inner_DataUtil contact = world.contactAt(body);
          if (contact != null) {
             return new PearlLandingEvaluator.Inner_StreamUtil(contact, fallen, 0.0F);
          }
@@ -42,7 +42,7 @@ final class PearlLandingEvaluator {
          Vec3 moved = world.init(body, velocity);
          body = body.move(moved);
          fallen += Math.max(0.0, -moved.y);
-         contact = world.init_aU_DataUtil(body);
+         contact = world.contactAt(body);
          if (contact != null) {
             return new PearlLandingEvaluator.Inner_StreamUtil(contact, fallen, 0.0F);
          }
@@ -64,7 +64,7 @@ final class PearlLandingEvaluator {
             return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.VOID, fallen, 1.0F);
          }
 
-         double drag = grounded ? world.init_D(body) : 0.91;
+         double drag = grounded ? world.groundDrag(body) : 0.91;
          velocity = new Vec3(
             Math.abs(moved.x - velocity.x) > 1.0E-7 ? 0.0 : velocity.x * drag,
             ((grounded ? 0.0 : velocity.y) - gravity) * 0.98,
@@ -74,9 +74,9 @@ final class PearlLandingEvaluator {
 
       if (velocity.horizontalDistance() < 1.0E-4) {
          Vec3 down = new Vec3(0.0, world.init() - 17 - body.maxY, 0.0);
-         if (down.y < 0.0 && world.init_Z(body.expandTowards(down))) {
+         if (down.y < 0.0 && world.isClear(body.expandTowards(down))) {
             Vec3 moved = world.init(body, down);
-            PearlLandingEvaluator.Inner_DataUtil medium = world.init_aU_DataUtil(body.expandTowards(moved));
+            PearlLandingEvaluator.Inner_DataUtil medium = world.contactAt(body.expandTowards(moved));
             if (medium != null) {
                return new PearlLandingEvaluator.Inner_StreamUtil(medium, fallen - moved.y, 0.0F);
             }
@@ -118,7 +118,7 @@ final class PearlLandingEvaluator {
                }
 
                @Override
-               public boolean init_Z(AABB box) {
+               public boolean isClear(AABB box) {
                   for (int x = BlockPos.containing(box.minX, 0.0, 0.0).getX() >> 4; x <= BlockPos.containing(box.maxX, 0.0, 0.0).getX() >> 4; x++) {
                      for (int z = BlockPos.containing(0.0, 0.0, box.minZ).getZ() >> 4; z <= BlockPos.containing(0.0, 0.0, box.maxZ).getZ() >> 4; z++) {
                         if (!mc.level.hasChunk(x, z)) {
@@ -136,7 +136,7 @@ final class PearlLandingEvaluator {
                }
 
                @Override
-               public PearlLandingEvaluator.Inner_DataUtil init_aU_DataUtil(AABB box) {
+               public PearlLandingEvaluator.Inner_DataUtil contactAt(AABB box) {
                   boolean water = false;
 
                   for (BlockPos at : BlockPos.betweenClosed(
@@ -172,7 +172,7 @@ final class PearlLandingEvaluator {
                }
 
                @Override
-               public double init_D(AABB box) {
+               public double groundDrag(AABB box) {
                   return mc.level.getBlockState(BlockPos.containing(box.getCenter().x, box.minY - 0.01, box.getCenter().z)).getBlock().getFriction() * 0.91;
                }
             };
@@ -199,15 +199,15 @@ final class PearlLandingEvaluator {
    }
 
    interface Inner_CachePool {
-      boolean init_Z(AABB var1);
+      boolean isClear(AABB var1);
 
       Vec3 init(AABB var1, Vec3 var2);
 
-      PearlLandingEvaluator.Inner_DataUtil init_aU_DataUtil(AABB var1);
+      PearlLandingEvaluator.Inner_DataUtil contactAt(AABB var1);
 
       float init_F(AABB var1);
 
-      default double init_D(AABB box) {
+      default double groundDrag(AABB box) {
          return 0.546;
       }
 

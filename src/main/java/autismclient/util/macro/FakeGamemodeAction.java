@@ -17,9 +17,9 @@ public class FakeGamemodeAction implements MacroAction {
       if (this.mode == FakeGamemodeAction.Inner_StreamUtil.RESET) {
          result = autismclient.util.FakeGamemodeManager.clearFake();
       } else if (this.method == FakeGamemodeAction.Inner_DataUtil.REAL) {
-         result = autismclient.util.RealGamemodeSender.init(init_GameType(this.mode));
+         result = autismclient.util.RealGamemodeSender.init(gameTypeOf(this.mode));
       } else {
-         result = autismclient.util.FakeGamemodeManager.applyFake(init_GameType(this.mode));
+         result = autismclient.util.FakeGamemodeManager.applyFake(gameTypeOf(this.mode));
       }
 
       AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
@@ -63,7 +63,7 @@ public class FakeGamemodeAction implements MacroAction {
    public String getDisplayName() {
       return this.mode == FakeGamemodeAction.Inner_StreamUtil.RESET
          ? "GM: Reset"
-         : "GM: " + init_Str(this.mode) + (this.method == FakeGamemodeAction.Inner_DataUtil.REAL ? " (Real)" : " (Fake)");
+         : "GM: " + labelOf(this.mode) + (this.method == FakeGamemodeAction.Inner_DataUtil.REAL ? " (Real)" : " (Fake)");
    }
 
    @Override
@@ -81,7 +81,7 @@ public class FakeGamemodeAction implements MacroAction {
       this.init = enabled;
    }
 
-   private static GameType init_GameType(FakeGamemodeAction.Inner_StreamUtil mode) {
+   private static GameType gameTypeOf(FakeGamemodeAction.Inner_StreamUtil mode) {
       GameType var10000;
       switch (mode) {
          case SURVIVAL:
@@ -104,7 +104,7 @@ public class FakeGamemodeAction implements MacroAction {
       return var10000;
    }
 
-   private static String init_Str(FakeGamemodeAction.Inner_StreamUtil mode) {
+   private static String labelOf(FakeGamemodeAction.Inner_StreamUtil mode) {
       if (mode == null) {
          return "Reset";
       }

@@ -13,17 +13,17 @@ public final class PlacedBlockTrailRenderer {
    private static final double init_D = 0.62;
    private static final double load_D = 0.0035;
    private static final float init_F = 0.55F;
-   private static final int[] init_IArr = new int[32];
-   private static final int[] load_IArr = new int[32];
+   private static final int[] XS = new int[32];
+   private static final int[] YS = new int[32];
    private static final int[] read = new int[32];
-   private static final long[] init_JArr = new long[32];
-   private static final PlacedBlockTrailRenderer.Inner_DataUtil[] init_cg_DataUtilArr = new PlacedBlockTrailRenderer.Inner_DataUtil[32];
+   private static final long[] PLACED_AT = new long[32];
+   private static final PlacedBlockTrailRenderer.Inner_DataUtil[] SOURCES = new PlacedBlockTrailRenderer.Inner_DataUtil[32];
    private static final int[] write = new int[32];
-   private static final boolean[] init_ZArr = new boolean[32];
-   private static final PlacedBlockTrailRenderer.Inner_StreamUtil[] init_cg_StreamUtilArr = new PlacedBlockTrailRenderer.Inner_StreamUtil[]{
+   private static final boolean[] CUSTOM_COLOR = new boolean[32];
+   private static final PlacedBlockTrailRenderer.Inner_StreamUtil[] STYLES = new PlacedBlockTrailRenderer.Inner_StreamUtil[]{
       new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373), new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373)
    };
-   private static int load_I;
+   private static int nextIndex;
 
    private PlacedBlockTrailRenderer() {
    }
@@ -33,7 +33,7 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void init(PlacedBlockTrailRenderer.Inner_DataUtil source, boolean enabled, boolean custom, int customArgb) {
-      init_cg_StreamUtilArr[source.ordinal()] = new PlacedBlockTrailRenderer.Inner_StreamUtil(enabled, custom, customArgb);
+      STYLES[source.ordinal()] = new PlacedBlockTrailRenderer.Inner_StreamUtil(enabled, custom, customArgb);
       if (!enabled) {
          load(source);
       }
@@ -44,14 +44,14 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil source) {
-      PlacedBlockTrailRenderer.Inner_StreamUtil style = init_cg_StreamUtilArr[source.ordinal()];
-      init(source, false, style.load(), style.init_I());
+      PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
+      init(source, false, style.load(), style.argb());
    }
 
    public static void load(PlacedBlockTrailRenderer.Inner_DataUtil source) {
       for (int i = 0; i < 32; i++) {
-         if (init_cg_DataUtilArr[i] == source) {
-            init_JArr[i] = 0L;
+         if (SOURCES[i] == source) {
+            PLACED_AT[i] = 0L;
          }
       }
    }
@@ -61,16 +61,16 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void init(PlacedBlockTrailRenderer.Inner_DataUtil source, BlockPos pos) {
-      PlacedBlockTrailRenderer.Inner_StreamUtil style = init_cg_StreamUtilArr[source.ordinal()];
-      if (style.init_Z() && pos != null) {
-         init_IArr[load_I] = pos.getX();
-         load_IArr[load_I] = pos.getY();
-         read[load_I] = pos.getZ();
-         init_JArr[load_I] = System.nanoTime();
-         init_cg_DataUtilArr[load_I] = source;
-         write[load_I] = style.init_I() | 0xFF000000;
-         init_ZArr[load_I] = style.load();
-         load_I = (load_I + 1) % 32;
+      PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
+      if (style.enabled() && pos != null) {
+         XS[nextIndex] = pos.getX();
+         YS[nextIndex] = pos.getY();
+         read[nextIndex] = pos.getZ();
+         PLACED_AT[nextIndex] = System.nanoTime();
+         SOURCES[nextIndex] = source;
+         write[nextIndex] = style.argb() | 0xFF000000;
+         CUSTOM_COLOR[nextIndex] = style.load();
+         nextIndex = (nextIndex + 1) % 32;
       }
    }
 
@@ -85,7 +85,7 @@ public final class PlacedBlockTrailRenderer {
 
       long now = System.nanoTime();
 
-      for (long at : init_JArr) {
+      for (long at : PLACED_AT) {
          if (at != 0L && now >= at && now - at < 320000000L) {
             return true;
          }
@@ -98,8 +98,8 @@ public final class PlacedBlockTrailRenderer {
       long latest = 0L;
 
       for (int i = 0; i < 32; i++) {
-         if (init_cg_DataUtilArr[i] == source) {
-            latest = Math.max(latest, init_JArr[i]);
+         if (SOURCES[i] == source) {
+            latest = Math.max(latest, PLACED_AT[i]);
          }
       }
 
@@ -122,18 +122,18 @@ public final class PlacedBlockTrailRenderer {
                            autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
                            (pose, buffer) -> {
                               for (int i = 0; i < 32; i++) {
-                                 long t = init_JArr[i];
+                                 long t = PLACED_AT[i];
                                  if (t != 0L) {
                                     long age = now - t;
                                     if (age >= 0L && age < 320000000L) {
                                        init(
                                           pose,
                                           buffer,
-                                          init_IArr[i] - origin.x,
-                                          load_IArr[i] - origin.y,
+                                          XS[i] - origin.x,
+                                          YS[i] - origin.y,
                                           read[i] - origin.z,
                                           age / 3.2E8,
-                                          init_ZArr[i] ? write[i] : accent
+                                          CUSTOM_COLOR[i] ? write[i] : accent
                                        );
                                     }
                                  }
@@ -197,6 +197,6 @@ public final class PlacedBlockTrailRenderer {
       CLUTCH;
    }
 
-   private record Inner_StreamUtil(boolean init_Z, boolean load, int init_I) {
+   private record Inner_StreamUtil(boolean enabled, boolean load, int argb) {
    }
 }

@@ -41,31 +41,31 @@ public final class OreSimEspScanner {
    private static final int update = 64;
    private static final int sync = 4;
    private static final int flush = 96;
-   private static final long init_J = 400000000L;
+   private static final long RESCAN_INTERVAL_NANOS = 400000000L;
    private static final int close = 25;
    private static int open;
    private static int poll;
    private static boolean init_Z;
-   private static Long init_Long;
-   private static long load_J;
+   private static Long lastSeed;
+   private static long nextRescanAt;
    private static final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-   private static final long[] init_JArr = new long[8192];
-   private static final int[] init_IArr = new int[8192];
-   private static final double[] init_DArr = new double[8192];
-   private static final EspChunkWorker.EspBox[] init_af_CachePoolArr = new EspChunkWorker.EspBox[8192];
+   private static final long[] positionBuffer = new long[8192];
+   private static final int[] stateBuffer = new int[8192];
+   private static final double[] heapDistances = new double[8192];
+   private static final EspChunkWorker.EspBox[] heapEntries = new EspChunkWorker.EspBox[8192];
    static final int read_I = -3355444;
-   private static final OreSimEspScanner.Inner_StreamUtil init_ak_StreamUtil = new OreSimEspScanner.Inner_StreamUtil("", Set.of(), List.of(), 0);
-   private static volatile OreSimEspScanner.Inner_StreamUtil load_ak_StreamUtil = init_ak_StreamUtil;
-   private static volatile OreSimEspScanner.Inner_StreamUtil read_ak_StreamUtil = init_ak_StreamUtil;
+   private static final OreSimEspScanner.Inner_StreamUtil EMPTY_SELECTION = new OreSimEspScanner.Inner_StreamUtil("", Set.of(), List.of(), 0);
+   private static volatile OreSimEspScanner.Inner_StreamUtil whitelistSelection = EMPTY_SELECTION;
+   private static volatile OreSimEspScanner.Inner_StreamUtil oreSimSelection = EMPTY_SELECTION;
    private static int push = -2147483648;
-   private static boolean load_Z;
-   private static boolean read_Z;
+   private static boolean oreSimMode;
+   private static boolean espStyle;
    private static int pop = -2147483648;
    private static final Object2IntOpenHashMap<Block> init_Object2IntOpenHash = new Object2IntOpenHashMap<>();
-   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil init_BufferHelper_DataU = autismclient.util.oresim.OreSimSeedParser.init(null);
+   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil seedParse = autismclient.util.oresim.OreSimSeedParser.init(null);
    private static final long read_J = TimeUnit.MINUTES.toNanos(2L);
-   private static OreSimEspScanner.Inner_StreamUtil write_ak_StreamUtil;
-   private static boolean[] init_ZArr = new boolean[0];
+   private static OreSimEspScanner.Inner_StreamUtil tableSelection;
+   private static boolean[] stateTable = new boolean[0];
    private static volatile int tick;
    private static volatile int run;
    private static volatile int get;
@@ -74,12 +74,12 @@ public final class OreSimEspScanner {
    private OreSimEspScanner() {
    }
 
-   private static void init_V(Module xray) {
+   private static void refresh(Module xray) {
       int revision = al.init_I();
       if (revision != push) {
          push = revision;
-         load_Z = xray != null && "OreSim".equals(xray.value("mode"));
-         read_Z = xray != null && "ESP".equals(xray.value("render-style"));
+         oreSimMode = xray != null && "OreSim".equals(xray.value("mode"));
+         espStyle = xray != null && "ESP".equals(xray.value("render-style"));
       }
    }
 
@@ -88,52 +88,52 @@ public final class OreSimEspScanner {
          return false;
       }
 
-      init_V(xray);
-      return load_Z;
+      refresh(xray);
+      return oreSimMode;
    }
 
-   static boolean load_Z(Module xray) {
+   static boolean isEspStyle(Module xray) {
       if (xray == null) {
          return false;
       }
 
-      init_V(xray);
-      return read_Z;
+      refresh(xray);
+      return espStyle;
    }
 
    static boolean read_Z(Module xray) {
-      return xray != null && xray.isEnabled() && load_Z(xray);
+      return xray != null && xray.isEnabled() && isEspStyle(xray);
    }
 
    static boolean write_Z(Module xray) {
-      return xray != null && xray.isEnabled() && init_Z(xray) && !load_Z(xray);
+      return xray != null && xray.isEnabled() && init_Z(xray) && !isEspStyle(xray);
    }
 
    static boolean update(Module xray) {
-      return xray != null && xray.isEnabled() && !load_Z(xray);
+      return xray != null && xray.isEnabled() && !isEspStyle(xray);
    }
 
    static float init_F(Module xray) {
       return 0.3F;
    }
 
-   private static OreSimEspScanner.Inner_StreamUtil init_ak_StreamUtil(Module xray) {
+   private static OreSimEspScanner.Inner_StreamUtil selection(Module xray) {
       if (xray == null) {
-         return init_ak_StreamUtil;
+         return EMPTY_SELECTION;
       } else if (init_Z(xray)) {
-         OreSimEspScanner.Inner_StreamUtil next = init(xray.value("oresim-ores"), read_ak_StreamUtil);
-         read_ak_StreamUtil = next;
+         OreSimEspScanner.Inner_StreamUtil next = init(xray.value("oresim-ores"), oreSimSelection);
+         oreSimSelection = next;
          return next;
       } else {
-         OreSimEspScanner.Inner_StreamUtil next = init(xray.value("whitelist"), load_ak_StreamUtil);
-         load_ak_StreamUtil = next;
+         OreSimEspScanner.Inner_StreamUtil next = init(xray.value("whitelist"), whitelistSelection);
+         whitelistSelection = next;
          return next;
       }
    }
 
    private static OreSimEspScanner.Inner_StreamUtil init(String raw, OreSimEspScanner.Inner_StreamUtil cached) {
       String safe = raw == null ? "" : raw;
-      if (cached.init_Str().equals(safe)) {
+      if (cached.source().equals(safe)) {
          return cached;
       }
 
@@ -168,11 +168,11 @@ public final class OreSimEspScanner {
    }
 
    static int init_I(Module xray) {
-      return init_ak_StreamUtil(xray).init_I();
+      return selection(xray).init_I();
    }
 
    static boolean init_Z(Module xray, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
-      return kind != null && (init_ak_StreamUtil(xray).init_I() & 1 << kind.ordinal()) != 0;
+      return kind != null && (selection(xray).init_I() & 1 << kind.ordinal()) != 0;
    }
 
    static List<String> init_List(Module xray) {
@@ -180,16 +180,16 @@ public final class OreSimEspScanner {
          return List.of();
       }
 
-      OreSimEspScanner.Inner_StreamUtil next = init(xray.value("whitelist"), load_ak_StreamUtil);
-      load_ak_StreamUtil = next;
-      return next.init_List();
+      OreSimEspScanner.Inner_StreamUtil next = init(xray.value("whitelist"), whitelistSelection);
+      whitelistSelection = next;
+      return next.entries();
    }
 
    static boolean init(Module xray, String id) {
       return init_List(xray).contains(id);
    }
 
-   static int init_I(Module xray, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
+   static int colorFor(Module xray, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
       return am.init_I_Module(xray, kind.init(), kind.init_I);
    }
 
@@ -211,35 +211,35 @@ public final class OreSimEspScanner {
 
       Identifier id = BuiltInRegistries.BLOCK.getKey(block);
       autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil family = id == null ? null : autismclient.util.oresim.OreBlockCatalog.init(id.toString());
-      int color = family != null ? init_I(xray, family) : (id == null ? -3355444 : am.init_I_Module(xray, "block-color-" + id, -3355444));
+      int color = family != null ? colorFor(xray, family) : (id == null ? -3355444 : am.init_I_Module(xray, "block-color-" + id, -3355444));
       init_Object2IntOpenHash.put(block, color);
       return color;
    }
 
-   static Long init_Long(Module xray) {
+   static Long seedFor(Module xray) {
       autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(xray == null ? null : xray.value("oresim-seed"));
-      init_BufferHelper_DataU = parsed;
+      seedParse = parsed;
       return parsed.seed();
    }
 
    public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedInfo(Module xray) {
-      init_Long(xray);
-      return init_BufferHelper_DataU.status();
+      seedFor(xray);
+      return seedParse.status();
    }
 
    public static Long seed(Module xray) {
-      return init_Long(xray);
+      return seedFor(xray);
    }
 
    public static int targetCount(Module xray) {
-      return init_ak_StreamUtil(xray).init_Set().size();
+      return selection(xray).blocks().size();
    }
 
    public static int read_I(Module xray) {
       return init_I(xray);
    }
 
-   static int write_I(Module xray) {
+   static int radius(Module xray) {
       int configured = xray == null ? 3 : xray.integer("oresim-radius");
       return Math.max(1, Math.min(configured, 8));
    }
@@ -247,16 +247,16 @@ public final class OreSimEspScanner {
    static void init(Module xray, ClientLevel level, Player player) {
       if (init_Z(xray) && xray != null && xray.isEnabled() && level != null && player != null) {
          autismclient.util.oresim.OreSimEngine.read_V();
-         Long parsedSeed = init_Long(xray);
+         Long parsedSeed = seedFor(xray);
          int mask = init_I(xray);
          long now = System.nanoTime();
-         if (!init_Z || !Objects.equals(parsedSeed, init_Long)) {
+         if (!init_Z || !Objects.equals(parsedSeed, lastSeed)) {
             init_Z = true;
-            init_Long = parsedSeed;
-            load_J = now + 400000000L;
+            lastSeed = parsedSeed;
+            nextRescanAt = now + 400000000L;
             autismclient.util.oresim.OreSimEngine.reset();
-         } else if (parsedSeed != null && mask != 0 && now >= load_J) {
-            autismclient.util.oresim.OreSimEngine.init(level, player.blockPosition(), parsedSeed, write_I(xray), mask);
+         } else if (parsedSeed != null && mask != 0 && now >= nextRescanAt) {
+            autismclient.util.oresim.OreSimEngine.init(level, player.blockPosition(), parsedSeed, radius(xray), mask);
             if (++open >= 4) {
                open = 0;
                load(xray, level, player);
@@ -272,14 +272,14 @@ public final class OreSimEspScanner {
    public static void init_V() {
       if (autismclient.util.oresim.OreSimEngine.init(read_J)) {
          init_Z = false;
-         init_Long = null;
-         load_J = 0L;
+         lastSeed = null;
+         nextRescanAt = 0L;
       }
    }
 
    private static void load(Module xray, ClientLevel level, Player player) {
-      OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
-      if (!selection.init_Set().isEmpty()) {
+      OreSimEspScanner.Inner_StreamUtil selection = selection(xray);
+      if (!selection.blocks().isEmpty()) {
          Vec3 eyes = player.getEyePosition();
          double maxDistSq = 25.0;
          MutableBlockPos cursor = new MutableBlockPos();
@@ -328,13 +328,13 @@ public final class OreSimEspScanner {
 
    private static boolean init(OreSimEspScanner.Inner_StreamUtil selection, int stateId) {
       BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.stateById(stateId);
-      return state != null && selection.init_Set().contains(state.getBlock());
+      return state != null && selection.blocks().contains(state.getBlock());
    }
 
-   private static boolean[] init_ZArr(OreSimEspScanner.Inner_StreamUtil selection) {
+   private static boolean[] stateTableFor(OreSimEspScanner.Inner_StreamUtil selection) {
       int count = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init();
-      boolean[] table = init_ZArr;
-      if (selection == write_ak_StreamUtil && table.length == count) {
+      boolean[] table = stateTable;
+      if (selection == tableSelection && table.length == count) {
          return table;
       }
 
@@ -344,25 +344,25 @@ public final class OreSimEspScanner {
          table[id] = init(selection, id);
       }
 
-      write_ak_StreamUtil = selection;
-      init_ZArr = table;
+      tableSelection = selection;
+      stateTable = table;
       return table;
    }
 
-   private static IntPredicate init_IntPredicate(OreSimEspScanner.Inner_StreamUtil selection) {
-      boolean[] table = init_ZArr(selection);
+   private static IntPredicate statePredicate(OreSimEspScanner.Inner_StreamUtil selection) {
+      boolean[] table = stateTableFor(selection);
       return stateId -> stateId >= 0 && stateId < table.length && table[stateId];
    }
 
    static int init(Module xray, Player player, long[] outPos, int[] outState) {
       if (xray != null && xray.isEnabled() && player != null && init_Z(xray)) {
-         OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
-         if (selection.init_Set().isEmpty()) {
+         OreSimEspScanner.Inner_StreamUtil selection = selection(xray);
+         if (selection.blocks().isEmpty()) {
             return 0;
          }
 
          Vec3 eyes = player.getEyePosition();
-         return autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, outPos, outState);
+         return autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, radius(xray), statePredicate(selection), 8192, outPos, outState);
       } else {
          return 0;
       }
@@ -379,32 +379,32 @@ public final class OreSimEspScanner {
    }
 
    private static void init(Module xray, Player player, BiConsumer<AABB, Integer> emit) {
-      OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
-      if (!selection.init_Set().isEmpty()) {
+      OreSimEspScanner.Inner_StreamUtil selection = selection(xray);
+      if (!selection.blocks().isEmpty()) {
          Vec3 eyes = player.getEyePosition();
-         int count = autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, init_JArr, init_IArr);
+         int count = autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, radius(xray), statePredicate(selection), 8192, positionBuffer, stateBuffer);
          int[] colors = new int[autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values().length];
 
          for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
-            colors[kind.ordinal()] = init_I(xray, kind);
+            colors[kind.ordinal()] = colorFor(xray, kind);
          }
 
          for (int i = 0; i < count; i++) {
-            autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.kindById(init_IArr[i]);
-            emit.accept(init(init_JArr[i]), kind == null ? -3355444 : colors[kind.ordinal()]);
+            autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.kindById(stateBuffer[i]);
+            emit.accept(init(positionBuffer[i]), kind == null ? -3355444 : colors[kind.ordinal()]);
          }
       }
    }
 
    private static void load(Module xray, ClientLevel level, Player player, BiConsumer<AABB, Integer> emit) {
-      OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
-      if (!selection.init_Set().isEmpty()) {
+      OreSimEspScanner.Inner_StreamUtil selection = selection(xray);
+      if (!selection.blocks().isEmpty()) {
          EspChunkWorker.setLevel(level);
          Object2IntMap<Block> colors = new Object2IntOpenHashMap<>();
          colors.defaultReturnValue(-3355444);
          int colorsHash = 0;
 
-         for (Block block : selection.init_Set()) {
+         for (Block block : selection.blocks()) {
             int color = init(xray, block);
             colors.put(block, color);
             colorsHash = colorsHash * 31 + color;
@@ -412,14 +412,14 @@ public final class OreSimEspScanner {
 
          int chunkRadius = am.init_I();
          int playerBlockY = player.getBlockY();
-         String stamp = selection.init_Str() + "|" + colorsHash + "|b" + (playerBlockY >> 4);
+         String stamp = selection.source() + "|" + colorsHash + "|b" + (playerBlockY >> 4);
          long gameTime = level.getGameTime();
          ClientChunkCache chunks = level.getChunkSource();
          int playerChunkX = player.chunkPosition().x();
          int playerChunkZ = player.chunkPosition().z();
          Vec3 eyes = player.getEyePosition();
-         double[] heapDist = init_DArr;
-         EspChunkWorker.EspBox[] heapEntry = init_af_CachePoolArr;
+         double[] heapDist = heapDistances;
+         EspChunkWorker.EspBox[] heapEntry = heapEntries;
          int size = 0;
 
          for (int ring = 0; ring <= chunkRadius; ring++) {
@@ -515,7 +515,7 @@ public final class OreSimEspScanner {
       int minX = chunk.getPos().getMinBlockX();
       int minZ = chunk.getPos().getMinBlockZ();
       int playerBand = playerBlockY >> 4;
-      Set<Block> targets = selection.init_Set();
+      Set<Block> targets = selection.blocks();
       Predicate<BlockState> isTarget = statex -> targets.contains(statex.getBlock());
       int[] order = new int[sections.length];
       int i = 0;
@@ -565,8 +565,8 @@ public final class OreSimEspScanner {
 
    static void init(Module xray, ClientLevel level, Player player, OreSimEspScanner.Inner_DataUtil sink) {
       if (sink != null && init_Z(xray) && level != null && player != null) {
-         OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
-         if (!selection.init_Set().isEmpty()) {
+         OreSimEspScanner.Inner_StreamUtil selection = selection(xray);
+         if (!selection.blocks().isEmpty()) {
             BlockPos center = player.blockPosition();
             Vec3 eyes = player.getEyePosition();
             double maxDistSq = 25.0;
@@ -587,7 +587,7 @@ public final class OreSimEspScanner {
                      if (!(cx * cx + cy * cy + cz * cz > maxDistSq)) {
                         cursor.set(x, y, z);
                         BlockState state = level.getBlockState(cursor);
-                        if (selection.init_Set().contains(state.getBlock())) {
+                        if (selection.blocks().contains(state.getBlock())) {
                            matched++;
                            if (init(level, cursor)) {
                               touching++;
@@ -692,9 +692,9 @@ public final class OreSimEspScanner {
 
    static String statusLine(Module xray) {
       if (xray != null && xray.isEnabled() && init_Z(xray)) {
-         boolean shaderCullMode = !load_Z(xray) && am.pop();
-         Long parsedSeed = init_Long(xray);
-         if (init_BufferHelper_DataU.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
+         boolean shaderCullMode = !isEspStyle(xray) && am.pop();
+         Long parsedSeed = seedFor(xray);
+         if (seedParse.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";
@@ -732,6 +732,6 @@ public final class OreSimEspScanner {
       void accept(BlockPos var1, BlockState var2);
    }
 
-   private record Inner_StreamUtil(String init_Str, Set<Block> init_Set, List<String> init_List, int init_I) {
+   private record Inner_StreamUtil(String source, Set<Block> blocks, List<String> entries, int init_I) {
    }
 }

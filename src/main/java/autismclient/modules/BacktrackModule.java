@@ -52,21 +52,21 @@ import net.minecraft.world.phys.Vec3;
 
 public final class BacktrackModule extends Module {
    public static final String init_Str = "backtrack";
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft CLIENT = Minecraft.getInstance();
    private static final long init_J = 350000000L;
    private static final long load_J = 100000000L;
    private static final double init_D = 0.65;
-   private static volatile BacktrackModule init_TaskTimer;
-   private final AtomicLong init_AtomicLong = new AtomicLong();
-   private long read_J;
+   private static volatile BacktrackModule instance;
+   private final AtomicLong resetTicket = new AtomicLong();
+   private long epoch;
    private final Map<Packet<?>, BacktrackModule.Inner_DataUtil> init_Map = new IdentityHashMap<>();
-   private final BacktrackPacketQueue<Packet<?>> init_cN = new BacktrackPacketQueue<>(128);
-   private final BacktrackPositionTracker init_cO = new BacktrackPositionTracker();
-   private final BacktrackTrailHistory init_cP = new BacktrackTrailHistory();
-   private ClientLevel init_ClientLevel;
-   private LocalPlayer init_LocalPlayer;
-   private ClientPacketListener init_ClientPacketListen;
-   private LivingEntity init_LivingEntity;
+   private final BacktrackPacketQueue<Packet<?>> packetQueue = new BacktrackPacketQueue<>(128);
+   private final BacktrackPositionTracker positionTracker = new BacktrackPositionTracker();
+   private final BacktrackTrailHistory trailHistory = new BacktrackTrailHistory();
+   private ClientLevel level;
+   private LocalPlayer player;
+   private ClientPacketListener connection;
+   private LivingEntity target;
    private LivingEntity load_LivingEntity;
    private LivingEntity read_LivingEntity;
    private long write;
@@ -76,17 +76,17 @@ public final class BacktrackModule extends Module {
    private long flush;
    private long close;
    private long open;
-   private final ArrayDeque<Long> init_ArrayDeque = new ArrayDeque<>();
+   private final ArrayDeque<Long> recentHitTimes = new ArrayDeque<>();
    private long poll;
-   private boolean init_Z;
+   private boolean releasing;
    private long push;
    private long pop;
    private long tick;
    private long run;
    private long get;
    private long set;
-   private double load_D;
-   private String load_Str = "idle";
+   private double maxHeldMillis;
+   private String targetReason = "idle";
    private String read_Str = "idle";
 
    public BacktrackModule() {
@@ -146,38 +146,38 @@ public final class BacktrackModule extends Module {
 
    @Override
    public void onEnable() {
-      long ticket = this.init_AtomicLong.incrementAndGet();
+      long ticket = this.resetTicket.incrementAndGet();
       Runnable enable = () -> {
-         if (this.init_AtomicLong.get() == ticket) {
+         if (this.resetTicket.get() == ticket) {
             this.load(true);
             this.push = this.pop = this.tick = this.run = this.get = this.set = 0L;
-            this.load_D = 0.0;
-            this.init_ClientLevel = init_Minecraft.level;
-            this.init_LocalPlayer = init_Minecraft.player;
-            this.init_ClientPacketListen = init_Minecraft.getConnection();
-            init_TaskTimer = this;
+            this.maxHeldMillis = 0.0;
+            this.level = CLIENT.level;
+            this.player = CLIENT.player;
+            this.connection = CLIENT.getConnection();
+            instance = this;
          }
       };
-      if (init_Minecraft.isSameThread()) {
+      if (CLIENT.isSameThread()) {
          enable.run();
       } else {
-         init_Minecraft.execute(enable);
+         CLIENT.execute(enable);
       }
    }
 
    @Override
    public void onDisable() {
-      long ticket = this.init_AtomicLong.incrementAndGet();
-      init_TaskTimer = null;
+      long ticket = this.resetTicket.incrementAndGet();
+      instance = null;
       Runnable disable = () -> {
-         if (this.init_AtomicLong.get() == ticket) {
+         if (this.resetTicket.get() == ticket) {
             this.load(true);
          }
       };
-      if (init_Minecraft.isSameThread()) {
+      if (CLIENT.isSameThread()) {
          disable.run();
       } else {
-         init_Minecraft.execute(disable);
+         CLIENT.execute(disable);
       }
    }
 
@@ -188,7 +188,7 @@ public final class BacktrackModule extends Module {
 
    @Override
    protected void onOptionValueChanged(String id) {
-      if (init_Minecraft.isSameThread()) {
+      if (CLIENT.isSameThread()) {
          switch (id) {
             case "server-position":
             case "render-style":
@@ -197,7 +197,7 @@ public final class BacktrackModule extends Module {
             case "render-smoothing":
             case "position-color":
             case "delayed-color":
-               this.init_cP.init();
+               this.trailHistory.init();
                break;
             default:
                this.load(true);
@@ -207,36 +207,36 @@ public final class BacktrackModule extends Module {
 
    @Override
    public String info() {
-      return this.integer("hold-time") + "ms" + (this.init_cN.size() > 0 ? " · " + this.init_cN.size() : "");
+      return this.integer("hold-time") + "ms" + (this.packetQueue.size() > 0 ? " · " + this.packetQueue.size() : "");
    }
 
-   private boolean init_Z_21() {
-      return this.init_ClientLevel != null
-         && init_Minecraft.level == this.init_ClientLevel
-         && init_Minecraft.player == this.init_LocalPlayer
-         && init_Minecraft.getConnection() == this.init_ClientPacketListen;
+   private boolean isSameSession() {
+      return this.level != null
+         && CLIENT.level == this.level
+         && CLIENT.player == this.player
+         && CLIENT.getConnection() == this.connection;
    }
 
-   private boolean init_Z_LivingEntity(LivingEntity candidate) {
+   private boolean isValidTarget(LivingEntity candidate) {
       return candidate instanceof Player
-         && candidate != init_Minecraft.player
+         && candidate != CLIENT.player
          && candidate.isAlive()
          && !candidate.isSpectator()
-         && init_Minecraft.level.getEntity(candidate.getId()) == candidate
+         && CLIENT.level.getEntity(candidate.getId()) == candidate
          && !candidate.isPassenger()
          && !AntiBotTracker.shouldIgnoreEntity(candidate)
          && !TeamsModule.init(candidate, "killaura");
    }
 
    private boolean load_Z_10() {
-      return init_Minecraft.player != null
-         && init_Minecraft.level != null
-         && init_Minecraft.getConnection() != null
-         && !init_Minecraft.player.isDeadOrDying()
-         && !init_Minecraft.player.isSpectator()
-         && init_Minecraft.gui.screen() == null
-         && init_Minecraft.gui.overlay() == null
-         && !init_Minecraft.player.isUsingItem()
+      return CLIENT.player != null
+         && CLIENT.level != null
+         && CLIENT.getConnection() != null
+         && !CLIENT.player.isDeadOrDying()
+         && !CLIENT.player.isSpectator()
+         && CLIENT.gui.screen() == null
+         && CLIENT.gui.overlay() == null
+         && !CLIENT.player.isUsingItem()
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.isActive()
@@ -245,11 +245,11 @@ public final class BacktrackModule extends Module {
 
    @Override
    public boolean onPacketSend(Packet<?> packet) {
-      if (init_Minecraft.isSameThread()
+      if (CLIENT.isSameThread()
          && packet instanceof ServerboundAttackPacket attack
          && this.load_Z_10()
-         && init_Minecraft.level.getEntity(attack.entityId()) instanceof LivingEntity victim
-         && this.init_Z_LivingEntity(victim)) {
+         && CLIENT.level.getEntity(attack.entityId()) instanceof LivingEntity victim
+         && this.isValidTarget(victim)) {
          synchronized (this.init_Map) {
             if (this.init_Map.size() >= 16) {
                this.init_Map.clear();
@@ -259,7 +259,7 @@ public final class BacktrackModule extends Module {
                .put(
                   packet,
                   new BacktrackModule.Inner_DataUtil(
-                     init_Minecraft.level, init_Minecraft.player, init_Minecraft.getConnection(), victim, System.nanoTime(), this.read_J
+                     CLIENT.level, CLIENT.player, CLIENT.getConnection(), victim, System.nanoTime(), this.epoch
                   )
                );
          }
@@ -269,7 +269,7 @@ public final class BacktrackModule extends Module {
    }
 
    public static void init_V_Connection_Packet(Connection connection, Packet<?> packet) {
-      BacktrackModule module = init_TaskTimer;
+      BacktrackModule module = instance;
       if (module != null && packet instanceof ServerboundAttackPacket) {
          BacktrackModule.Inner_DataUtil arm;
          synchronized (module.init_Map) {
@@ -278,32 +278,32 @@ public final class BacktrackModule extends Module {
 
          if (arm != null) {
             long at = System.nanoTime();
-            init_Minecraft.execute(
+            CLIENT.execute(
                () -> {
-                  if (init_TaskTimer == module
+                  if (instance == module
                      && module.isEnabled()
-                     && init_Minecraft.level == arm.init_ClientLevel()
-                     && init_Minecraft.player == arm.init_LocalPlayer()
-                     && module.read_J == arm.load()
-                     && init_Minecraft.getConnection() == arm.init_ClientPacketListen()
-                     && arm.init_ClientPacketListen().getConnection() == connection
-                     && at - arm.init_J() <= 500000000L
-                     && module.init_Z_LivingEntity(arm.init_LivingEntity())) {
-                     if (module.init_ClientLevel != null && !module.init_Z_21()) {
+                     && CLIENT.level == arm.level()
+                     && CLIENT.player == arm.player()
+                     && module.epoch == arm.load()
+                     && CLIENT.getConnection() == arm.connection()
+                     && arm.connection().getConnection() == connection
+                     && at - arm.armedAt() <= 500000000L
+                     && module.isValidTarget(arm.victim())) {
+                     if (module.level != null && !module.isSameSession()) {
                         module.load(false);
                      }
 
-                     module.close = module.load_LivingEntity == arm.init_LivingEntity() && module.write != 0L ? at - module.write : 0L;
-                     if (module.load_LivingEntity != arm.init_LivingEntity()) {
-                        module.init_ArrayDeque.clear();
+                     module.close = module.load_LivingEntity == arm.victim() && module.write != 0L ? at - module.write : 0L;
+                     if (module.load_LivingEntity != arm.victim()) {
+                        module.recentHitTimes.clear();
                      }
 
-                     if (module.init_ArrayDeque.size() == 12) {
-                        module.init_ArrayDeque.removeFirst();
+                     if (module.recentHitTimes.size() == 12) {
+                        module.recentHitTimes.removeFirst();
                      }
 
-                     module.init_ArrayDeque.addLast(at);
-                     module.load_LivingEntity = arm.init_LivingEntity();
+                     module.recentHitTimes.addLast(at);
+                     module.load_LivingEntity = arm.victim();
                      module.write = at;
                      module.get++;
                      if (module.load_Z_10()) {
@@ -319,7 +319,7 @@ public final class BacktrackModule extends Module {
    @Override
    public void onPacketProcessFrame() {
       if (!AutismLiteVariant.enabled()) {
-         if (!this.init_Z_21() && this.init_ClientLevel != null) {
+         if (!this.isSameSession() && this.level != null) {
             this.load(false);
          }
 
@@ -327,10 +327,10 @@ public final class BacktrackModule extends Module {
             this.load(true);
          } else {
             this.init_V_19();
-            if (this.init_LivingEntity != null) {
+            if (this.target != null) {
                long now = System.nanoTime();
                if (this.init_Z_J_2(now)
-                  && this.init_Z_AABB_3(this.init_LivingEntity.getBoundingBox(), this.init_cO.init(), this.init_LocalPlayer.getEyePosition(), now)) {
+                  && this.init_Z_AABB_3(this.target.getBoundingBox(), this.positionTracker.init(), this.player.getEyePosition(), now)) {
                   this.init_V_Z_4(false);
                } else {
                   this.init_V_Z_4(true);
@@ -341,34 +341,34 @@ public final class BacktrackModule extends Module {
    }
 
    private void init_V_19() {
-      if (this.init_ClientLevel == null) {
-         this.init_ClientLevel = init_Minecraft.level;
-         this.init_LocalPlayer = init_Minecraft.player;
-         this.init_ClientPacketListen = init_Minecraft.getConnection();
+      if (this.level == null) {
+         this.level = CLIENT.level;
+         this.player = CLIENT.player;
+         this.connection = CLIENT.getConnection();
       }
 
-      LivingEntity selected = this.init_LivingEntity_2();
-      if (selected != this.init_LivingEntity) {
+      LivingEntity selected = this.selectTarget();
+      if (selected != this.target) {
          this.init_V_Z_4(true);
-         this.init_cP.init();
+         this.trailHistory.init();
          this.init_Vec3 = null;
-         this.init_LivingEntity = selected;
-         if (this.init_LivingEntity != null) {
-            InterpolationHandler interpolation = this.init_LivingEntity.getInterpolation();
+         this.target = selected;
+         if (this.target != null) {
+            InterpolationHandler interpolation = this.target.getInterpolation();
             Vec3 received = interpolation != null && interpolation.hasActiveInterpolation()
                ? Compat263.interpPos(interpolation)
-               : this.init_LivingEntity.position();
-            this.init_cO.init(this.init_LivingEntity.getPositionCodec().getBase(), received);
-            this.init_cN.bind(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity);
-            this.init_V_AABB(this.init_LivingEntity.getBoundingBox(), received, this.init_LocalPlayer.getEyePosition(), System.nanoTime());
+               : this.target.position();
+            this.positionTracker.init(this.target.getPositionCodec().getBase(), received);
+            this.packetQueue.bind(this.level, this.player, this.connection, this.target);
+            this.init_V_AABB(this.target.getBoundingBox(), received, this.player.getEyePosition(), System.nanoTime());
          }
       }
    }
 
-   private LivingEntity init_LivingEntity_2() {
-      this.load_Str = this.read_Str = "idle";
+   private LivingEntity selectTarget() {
+      this.targetReason = this.read_Str = "idle";
       if ("Hit".equals(this.choice("target"))) {
-         return this.init_LivingEntity_LivingEntity_Str(this.load_LivingEntity_2(), "hit");
+         return this.withReason(this.load_LivingEntity_2(), "hit");
       }
 
       if ("Combat".equals(this.choice("target"))) {
@@ -380,21 +380,21 @@ public final class BacktrackModule extends Module {
                LivingEntity enemy = module instanceof KillAuraModule aura
                   ? aura.activeTarget()
                   : (module instanceof CrystalAuraModule aura ? aura.currentTarget() : (module instanceof AnchorAuraModule aura ? aura.currentTarget() : null));
-               if (enemy != null && this.init_Z_LivingEntity(enemy)) {
-                  return this.init_LivingEntity_LivingEntity_Str(enemy, id);
+               if (enemy != null && this.isValidTarget(enemy)) {
+                  return this.withReason(enemy, id);
                }
             }
          }
 
-         return this.init_LivingEntity_LivingEntity_Str(this.load_LivingEntity_2(), "hit");
+         return this.withReason(this.load_LivingEntity_2(), "hit");
       } else {
          LivingEntity best = null;
-         double distance = this.init_D_5();
+         double distance = this.reach();
          double bestSquared = distance * distance;
 
-         for (Player enemy : init_Minecraft.level.players()) {
-            if (this.init_Z_LivingEntity(enemy) && (!this.bool("smart-timing") || this.load(enemy))) {
-               double squared = init_D_AABB_Vec3_2(enemy.getBoundingBox(), init_Minecraft.player.getEyePosition());
+         for (Player enemy : CLIENT.level.players()) {
+            if (this.isValidTarget(enemy) && (!this.bool("smart-timing") || this.load(enemy))) {
+               double squared = distanceToBox(enemy.getBoundingBox(), CLIENT.player.getEyePosition());
                if (squared < bestSquared) {
                   best = enemy;
                   bestSquared = squared;
@@ -402,41 +402,41 @@ public final class BacktrackModule extends Module {
             }
          }
 
-         return this.init_LivingEntity_LivingEntity_Str(best, "nearest");
+         return this.withReason(best, "nearest");
       }
    }
 
-   private LivingEntity init_LivingEntity_LivingEntity_Str(LivingEntity candidate, String reason) {
+   private LivingEntity withReason(LivingEntity candidate, String reason) {
       if (candidate != null) {
-         this.load_Str = this.read_Str = reason;
+         this.targetReason = this.read_Str = reason;
       }
 
       return candidate;
    }
 
    private boolean init_Z_J_2(long now) {
-      this.read_Str = this.load_Str;
-      if (this.init_Z_LivingEntity(this.init_LivingEntity) && this.init_LivingEntity.hurtTime <= this.integer("hurt-time") && this.integer("hold-time") > 0) {
-         if ((this.open == 0L || now - this.open >= 50000000L) && (!this.bool("pause-on-hurt") || this.init_LocalPlayer.hurtTime <= 0)) {
-            if (this.bool("smart-timing") && !"crystal-aura".equals(this.load_Str) && !"anchor-aura".equals(this.load_Str)) {
-               boolean auraIntent = "kill-aura".equals(this.load_Str);
-               if (!auraIntent && !this.load(this.init_LivingEntity)) {
+      this.read_Str = this.targetReason;
+      if (this.isValidTarget(this.target) && this.target.hurtTime <= this.integer("hurt-time") && this.integer("hold-time") > 0) {
+         if ((this.open == 0L || now - this.open >= 50000000L) && (!this.bool("pause-on-hurt") || this.player.hurtTime <= 0)) {
+            if (this.bool("smart-timing") && !"crystal-aura".equals(this.targetReason) && !"anchor-aura".equals(this.targetReason)) {
+               boolean auraIntent = "kill-aura".equals(this.targetReason);
+               if (!auraIntent && !this.load(this.target)) {
                   this.read_Str = "off-aim";
                   return false;
                }
 
-               int ping = this.init_I_13();
+               int ping = this.pingMillis();
                int hold = this.integer("hold-time");
                long sinceHit = now - this.write;
-               if (this.init_LivingEntity != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.close, hold)) {
+               if (this.target != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.close, hold)) {
                   int lookahead = hold + Math.min(100, ping / 2);
                   if (auraIntent && al.init_Module_Str("kill-aura") instanceof KillAuraModule aura) {
-                     if (aura.activeTarget() == this.init_LivingEntity && aura.init_Z_I_7(lookahead)) {
+                     if (aura.activeTarget() == this.target && aura.init_Z_I_7(lookahead)) {
                         return true;
                      }
-                  } else if (autismclient.util.LegacyCombatDetector.init(this.init_LocalPlayer)
+                  } else if (autismclient.util.LegacyCombatDetector.init(this.player)
                      || init_Z_D_I(
-                        (1.0F - this.init_LocalPlayer.getAttackStrengthScale(0.0F)) * this.init_LocalPlayer.getCurrentItemAttackStrengthDelay(), lookahead
+                        (1.0F - this.player.getAttackStrengthScale(0.0F)) * this.player.getCurrentItemAttackStrengthDelay(), lookahead
                      )) {
                      return true;
                   }
@@ -458,20 +458,20 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   private double init_D_5() {
-      return Math.min(this.decimal("max-distance"), this.init_LocalPlayer.entityInteractionRange());
+   private double reach() {
+      return Math.min(this.decimal("max-distance"), this.player.entityInteractionRange());
    }
 
    public static boolean init_Z_Player_Entity(Player attacker, Entity victim) {
-      BacktrackModule module = init_TaskTimer;
+      BacktrackModule module = instance;
       if (module != null
-         && attacker == init_Minecraft.player
-         && module.init_LivingEntity == victim
-         && module.init_Z_21()
+         && attacker == CLIENT.player
+         && module.target == victim
+         && module.isSameSession()
          && module.load_Z_10()
          && module.integer("hold-time") > 0
          && autismclient.util.LegacyCombatDetector.init(attacker)) {
-         if (module.init_Z_LivingEntity_J(module.init_LivingEntity, System.nanoTime())) {
+         if (module.init_Z_LivingEntity_J(module.target, System.nanoTime())) {
             return false;
          }
 
@@ -485,22 +485,22 @@ public final class BacktrackModule extends Module {
    private boolean init_Z_LivingEntity_J(LivingEntity victim, long now) {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       if (wire.initialized() && wire.position() != null) {
-         Vec3 eye = wire.position().add(0.0, this.init_LocalPlayer.getEyeHeight(), 0.0);
+         Vec3 eye = wire.position().add(0.0, this.player.getEyeHeight(), 0.0);
          Vec3 look = Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
-         double reach = this.init_LocalPlayer.entityInteractionRange();
+         double reach = this.player.entityInteractionRange();
          if (reach <= 0.0) {
             return false;
          } else {
             AABB drawn = victim.getBoundingBox();
             Vec3 current = victim.position();
-            AABB latest = drawn.move(this.init_cO.init().subtract(current));
-            if (init_Z_AABB_2(latest, eye, look, reach - 0.035)) {
+            AABB latest = drawn.move(this.positionTracker.init().subtract(current));
+            if (rayHits(latest, eye, look, reach - 0.035)) {
                return true;
-            } else if (this.init_cN.size() != 0 && this.read(now)) {
+            } else if (this.packetQueue.size() != 0 && this.read(now)) {
                AABB reachable = drawn.move(this.init_Vec3.subtract(current));
-               return init_Z_AABB_2(drawn, eye, look, reach - 0.035)
-                  && init_Z_AABB_2(reachable, eye, look, reach - 0.06)
-                  && init_Z_AABB_2(latest, eye, look, reach + 0.65);
+               return rayHits(drawn, eye, look, reach - 0.035)
+                  && rayHits(reachable, eye, look, reach - 0.06)
+                  && rayHits(latest, eye, look, reach + 0.65);
             } else {
                return false;
             }
@@ -510,12 +510,12 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   private static boolean init_Z_AABB_2(AABB box, Vec3 from, Vec3 look, double reach) {
+   private static boolean rayHits(AABB box, Vec3 from, Vec3 look, double reach) {
       return reach > 0.0 && (box.contains(from) || box.clip(from, from.add(look.scale(reach))).isPresent());
    }
 
-   private int init_I_13() {
-      PlayerInfo entry = this.init_ClientPacketListen.getPlayerInfo(this.init_LocalPlayer.getUUID());
+   private int pingMillis() {
+      PlayerInfo entry = this.connection.getPlayerInfo(this.player.getUUID());
       return entry == null ? 0 : Math.clamp(entry.getLatency(), 0, 300);
    }
 
@@ -525,10 +525,10 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean load(LivingEntity candidate) {
-      Vec3 eye = this.init_LocalPlayer.getEyePosition();
-      double reach = this.init_D_5();
-      return candidate.getBoundingBox().inflate(0.1).clip(eye, eye.add(this.init_LocalPlayer.getViewVector(1.0F).scale(reach))).isPresent()
-         && this.init_LocalPlayer.hasLineOfSight(candidate);
+      Vec3 eye = this.player.getEyePosition();
+      double reach = this.reach();
+      return candidate.getBoundingBox().inflate(0.1).clip(eye, eye.add(this.player.getViewVector(1.0F).scale(reach))).isPresent()
+         && this.player.hasLineOfSight(candidate);
    }
 
    public static boolean init_Z_D_I(double ticksUntilAttack, int holdMillis) {
@@ -541,17 +541,17 @@ public final class BacktrackModule extends Module {
    }
 
    private LivingEntity load_LivingEntity_2() {
-      if (this.load_LivingEntity != null && this.init_Z_LivingEntity(this.load_LivingEntity)) {
+      if (this.load_LivingEntity != null && this.isValidTarget(this.load_LivingEntity)) {
          long age = System.nanoTime() - this.write;
-         return age > this.integer("attack-window") * 1000000L && !init_Z_J(age, this.integer("hold-time"), this.init_I_13()) ? null : this.load_LivingEntity;
+         return age > this.integer("attack-window") * 1000000L && !init_Z_J(age, this.integer("hold-time"), this.pingMillis()) ? null : this.load_LivingEntity;
       } else {
          return null;
       }
    }
 
    public static boolean init_Z_ClientPacketListen_Packet(ClientPacketListener source, Packet<?> packet) {
-      BacktrackModule module = init_TaskTimer;
-      if (module == null || module.init_Z || !init_Minecraft.isSameThread()) {
+      BacktrackModule module = instance;
+      if (module == null || module.releasing || !CLIENT.isSameThread()) {
          return false;
       } else if (!module.isEnabled()) {
          module.load(true);
@@ -562,13 +562,13 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean load(ClientPacketListener source, Packet<?> packet) {
-      if (this.init_ClientLevel == null && init_Minecraft.getConnection() == source && init_Minecraft.level != null && init_Minecraft.player != null) {
-         this.init_ClientLevel = init_Minecraft.level;
-         this.init_LocalPlayer = init_Minecraft.player;
-         this.init_ClientPacketListen = source;
+      if (this.level == null && CLIENT.getConnection() == source && CLIENT.level != null && CLIENT.player != null) {
+         this.level = CLIENT.level;
+         this.player = CLIENT.player;
+         this.connection = source;
       }
 
-      if (!this.init_Z_21() || source != this.init_ClientPacketListen) {
+      if (!this.isSameSession() || source != this.connection) {
          this.load(false);
          return false;
       }
@@ -579,22 +579,22 @@ public final class BacktrackModule extends Module {
       }
 
       if (packet instanceof ClientboundRemoveEntitiesPacket removed) {
-         if (this.init_LivingEntity != null && removed.entityIds().contains(this.init_LivingEntity.getId())) {
+         if (this.target != null && removed.entityIds().contains(this.target.getId())) {
             this.load(false);
          }
 
          return false;
       } else if (!(packet instanceof ClientboundPlayerPositionPacket) && !(packet instanceof ClientboundSetPassengersPacket)) {
          if (packet instanceof ClientboundDamageEventPacket damage
-            && damage.entityId() != this.init_LocalPlayer.getId()
-            && this.init_ClientLevel.getEntity(damage.entityId()) instanceof LivingEntity victim
-            && (victim == this.init_LivingEntity || victim == this.load_LivingEntity)) {
-            DamageSource cause = damage.getSource(this.init_ClientLevel);
+            && damage.entityId() != this.player.getId()
+            && this.level.getEntity(damage.entityId()) instanceof LivingEntity victim
+            && (victim == this.target || victim == this.load_LivingEntity)) {
+            DamageSource cause = damage.getSource(this.level);
             if (cause.getEntity() != null) {
                this.poll = System.nanoTime();
             }
 
-            if (cause.getDirectEntity() == this.init_LocalPlayer && cause.is(DamageTypes.PLAYER_ATTACK)) {
+            if (cause.getDirectEntity() == this.player && cause.is(DamageTypes.PLAYER_ATTACK)) {
                this.init_V_LivingEntity_J(victim, this.poll);
             } else if (cause.getEntity() == null) {
                this.load(victim, System.nanoTime());
@@ -603,28 +603,28 @@ public final class BacktrackModule extends Module {
 
          if (packet instanceof ClientboundEntityEventPacket event
             && event.getEventId() == 2
-            && event.getEntity(this.init_ClientLevel) instanceof LivingEntity victim) {
+            && event.getEntity(this.level) instanceof LivingEntity victim) {
             this.load(victim, System.nanoTime());
          }
 
          if (packet instanceof ClientboundAnimatePacket animation
             && animation.getAction() == 1
-            && this.init_ClientLevel.getEntity(animation.getId()) instanceof LivingEntity victim) {
+            && this.level.getEntity(animation.getId()) instanceof LivingEntity victim) {
             this.load(victim, System.nanoTime());
          }
 
-         if (packet instanceof ClientboundHurtAnimationPacket animation && this.init_ClientLevel.getEntity(animation.id()) instanceof LivingEntity victim) {
+         if (packet instanceof ClientboundHurtAnimationPacket animation && this.level.getEntity(animation.id()) instanceof LivingEntity victim) {
             this.load(victim, System.nanoTime());
          }
 
          if (packet instanceof ClientboundExplodePacket explosion && explosion.playerKnockback().isPresent()
-            || packet instanceof ClientboundDamageEventPacket damage && damage.entityId() == this.init_LocalPlayer.getId()
-            || packet instanceof ClientboundSetHealthPacket health && health.getHealth() < this.init_LocalPlayer.getHealth()
-            || packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.init_LocalPlayer.getId()) {
+            || packet instanceof ClientboundDamageEventPacket damage && damage.entityId() == this.player.getId()
+            || packet instanceof ClientboundSetHealthPacket health && health.getHealth() < this.player.getHealth()
+            || packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.player.getId()) {
             this.open = System.nanoTime();
             this.init_Vec3 = null;
             this.init_V_Z_4(true);
-            this.init_cP.init();
+            this.trailHistory.init();
             return false;
          } else {
             if (!this.load_Z_10()) {
@@ -632,40 +632,40 @@ public final class BacktrackModule extends Module {
                return false;
             }
 
-            if (this.init_LivingEntity == null) {
+            if (this.target == null) {
                return false;
             }
 
-            if (!this.init_Z_LivingEntity(this.init_LivingEntity)) {
+            if (!this.isValidTarget(this.target)) {
                this.load(true);
                return false;
             }
 
             if (packet instanceof ClientboundTeleportEntityPacket teleport) {
-               if (teleport.id() == this.init_LivingEntity.getId()) {
+               if (teleport.id() == this.target.getId()) {
                   this.load(true);
                }
 
                return false;
             } else {
-               Vec3 before = this.init_cO.init();
+               Vec3 before = this.positionTracker.init();
                Vec3 next = before;
                boolean matches = false;
                boolean moved = false;
-               if (packet instanceof ClientboundMoveEntityPacket move && move.getEntity(this.init_ClientLevel) == this.init_LivingEntity) {
+               if (packet instanceof ClientboundMoveEntityPacket move && move.getEntity(this.level) == this.target) {
                   matches = true;
                   if (move.hasPosition()) {
-                     next = this.init_cO.init(Compat263.moveEntityXa(move), Compat263.moveEntityYa(move), Compat263.moveEntityZa(move));
+                     next = this.positionTracker.init(Compat263.moveEntityXa(move), Compat263.moveEntityYa(move), Compat263.moveEntityZa(move));
                      moved = true;
                   }
-               } else if (packet instanceof ClientboundEntityPositionSyncPacket sync && sync.id() == this.init_LivingEntity.getId()) {
+               } else if (packet instanceof ClientboundEntityPositionSyncPacket sync && sync.id() == this.target.getId()) {
                   moved = true;
                   matches = true;
                   next = Compat263.entityPosSyncValues(sync).position();
-                  this.init_cO.init(next);
-               } else if (packet instanceof ClientboundRotateHeadPacket head && head.getEntity(this.init_ClientLevel) == this.init_LivingEntity) {
+                  this.positionTracker.init(next);
+               } else if (packet instanceof ClientboundRotateHeadPacket head && head.getEntity(this.level) == this.target) {
                   matches = true;
-               } else if (packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.init_LivingEntity.getId()) {
+               } else if (packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.target.getId()) {
                   matches = true;
                }
 
@@ -673,15 +673,15 @@ public final class BacktrackModule extends Module {
                   return false;
                }
 
-               Vec3 eye = this.init_LocalPlayer.getEyePosition();
-               AABB box = this.init_LivingEntity.getBoundingBox();
+               Vec3 eye = this.player.getEyePosition();
+               AABB box = this.target.getBoundingBox();
                long now = System.nanoTime();
                if (moved && !next.equals(before)) {
                   this.init_V_AABB(box, next, eye, now);
                }
 
-               double nextRangeSq = init_D_AABB_Vec3_2(box.move(next.subtract(this.init_LivingEntity.position())), eye);
-               double beforeRangeSq = init_D_AABB_Vec3_2(box.move(before.subtract(this.init_LivingEntity.position())), eye);
+               double nextRangeSq = distanceToBox(box.move(next.subtract(this.target.position())), eye);
+               double beforeRangeSq = distanceToBox(box.move(before.subtract(this.target.position())), eye);
                boolean approaching = moved
                   && (this.load(now) ? Math.sqrt(nextRangeSq) + 0.08 < Math.sqrt(beforeRangeSq) : nextRangeSq + 0.0025 < beforeRangeSq);
                if (next.distanceToSqr(before) > 16.0 || approaching || !this.init_Z_J_2(now) || !this.init_Z_AABB_3(box, next, eye, now)) {
@@ -689,17 +689,17 @@ public final class BacktrackModule extends Module {
                   return false;
                }
 
-               if (!moved && this.init_cN.size() == 0) {
+               if (!moved && this.packetQueue.size() == 0) {
                   return false;
                }
 
-               if (!this.init_cN.init(packet, now, this.integer("hold-time") * 1000000L)) {
+               if (!this.packetQueue.init(packet, now, this.integer("hold-time") * 1000000L)) {
                   this.init_V_Z_4(true);
                   return false;
                }
 
                if (moved && this.bool("server-position")) {
-                  this.init_cP.init(this.init_LivingEntity, box, box.move(next.subtract(this.init_LivingEntity.position())), next, now);
+                  this.trailHistory.init(this.target, box, box.move(next.subtract(this.target.position())), next, now);
                }
 
                this.push++;
@@ -713,22 +713,22 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean load(long now) {
-      return this.init_LivingEntity != null && this.init_LivingEntity == this.read_LivingEntity && now - this.update <= 350000000L;
+      return this.target != null && this.target == this.read_LivingEntity && now - this.update <= 350000000L;
    }
 
    private void init_V_LivingEntity_J(LivingEntity victim, long at) {
       this.read_LivingEntity = victim;
       this.update = at;
-      if (victim == this.init_LivingEntity) {
-         this.init_V_AABB(victim.getBoundingBox(), this.init_cO.init(), this.init_LocalPlayer.getEyePosition(), at);
+      if (victim == this.target) {
+         this.init_V_AABB(victim.getBoundingBox(), this.positionTracker.init(), this.player.getEyePosition(), at);
       }
    }
 
    private void load(LivingEntity victim, long now) {
-      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.init(this.init_LocalPlayer) && (this.poll == 0L || now - this.poll > 75000000L)) {
-         int ping = this.init_I_13();
+      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.init(this.player) && (this.poll == 0L || now - this.poll > 75000000L)) {
+         int ping = this.pingMillis();
 
-         for (long attack : this.init_ArrayDeque) {
+         for (long attack : this.recentHitTimes) {
             if (init_Z_J_I(now - attack, ping)) {
                this.init_V_LivingEntity_J(victim, now);
                return;
@@ -747,8 +747,8 @@ public final class BacktrackModule extends Module {
    }
 
    private void init_V_AABB(AABB box, Vec3 next, Vec3 eye, long now) {
-      double reach = this.init_D_5();
-      if (box.move(next.subtract(this.init_LivingEntity.position())).distanceToSqr(eye) <= reach * reach) {
+      double reach = this.reach();
+      if (box.move(next.subtract(this.target.position())).distanceToSqr(eye) <= reach * reach) {
          this.init_Vec3 = next;
          this.sync = now;
          this.flush = 0L;
@@ -758,9 +758,9 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean init_Z_AABB_3(AABB box, Vec3 received, Vec3 eye, long now) {
-      Vec3 current = this.init_LivingEntity.position();
+      Vec3 current = this.target.position();
       double min = this.decimal("min-distance");
-      double reach = this.init_D_5();
+      double reach = this.reach();
       if (init(box, current, received, eye, min, reach)) {
          return true;
       }
@@ -776,78 +776,78 @@ public final class BacktrackModule extends Module {
    }
 
    private void init_V_Z_4(boolean all) {
-      if (this.init_cN.size() != 0) {
-         if (this.init_Z_21()
-            && this.init_LivingEntity != null
-            && this.init_ClientLevel.getEntity(this.init_LivingEntity.getId()) == this.init_LivingEntity
-            && this.init_cN.isBoundTo(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity)) {
+      if (this.packetQueue.size() != 0) {
+         if (this.isSameSession()
+            && this.target != null
+            && this.level.getEntity(this.target.getId()) == this.target
+            && this.packetQueue.isBoundTo(this.level, this.player, this.connection, this.target)) {
             long now = System.nanoTime();
-            this.load_D = Math.max(this.load_D, this.init_cN.init(now) / 1000000.0);
+            this.maxHeldMillis = Math.max(this.maxHeldMillis, this.packetQueue.init(now) / 1000000.0);
             if (all) {
                this.run++;
             }
 
-            this.init_Z = true;
+            this.releasing = true;
 
             try {
-               this.pop = this.pop + this.init_cN.init(now, all, packet -> init_V_Packet_ClientPacketListen(packet, this.init_ClientPacketListen));
+               this.pop = this.pop + this.packetQueue.init(now, all, packet -> handlePacket(packet, this.connection));
             } finally {
-               this.init_Z = false;
+               this.releasing = false;
             }
          } else {
-            this.tick = this.tick + this.init_cN.size();
-            this.init_cN.clear();
+            this.tick = this.tick + this.packetQueue.size();
+            this.packetQueue.clear();
          }
       }
    }
 
-   private static void init_V_Packet_ClientPacketListen(Packet<?> packet, ClientPacketListener listener) {
+   private static void handlePacket(Packet<?> packet, ClientPacketListener listener) {
       ((Packet<ClientPacketListener>)packet).handle(listener);
    }
 
    private void load(boolean replay) {
-      this.init_cP.init();
-      if (replay && this.init_Z_21()) {
+      this.trailHistory.init();
+      if (replay && this.isSameSession()) {
          this.init_V_Z_4(true);
       }
 
-      this.tick = this.tick + this.init_cN.size();
-      this.init_cN.clear();
+      this.tick = this.tick + this.packetQueue.size();
+      this.packetQueue.clear();
       synchronized (this.init_Map) {
          this.init_Map.clear();
       }
 
-      this.init_ArrayDeque.clear();
+      this.recentHitTimes.clear();
       this.poll = 0L;
-      this.init_LivingEntity = this.load_LivingEntity = this.read_LivingEntity = null;
-      this.init_ClientLevel = null;
-      this.init_LocalPlayer = null;
-      this.init_ClientPacketListen = null;
+      this.target = this.load_LivingEntity = this.read_LivingEntity = null;
+      this.level = null;
+      this.player = null;
+      this.connection = null;
       this.write = 0L;
       this.init_Vec3 = null;
       this.close = this.open = 0L;
-      this.load_Str = this.read_Str = "idle";
-      this.read_J++;
+      this.targetReason = this.read_Str = "idle";
+      this.epoch++;
    }
 
    public static Vec3 backtrackedPosition(LivingEntity entity) {
-      BacktrackModule module = init_TaskTimer;
-      return module != null && module.init_LivingEntity == entity && module.init_Z_21() && module.init_ClientLevel.getEntity(entity.getId()) == entity
-         ? module.init_cO.init()
+      BacktrackModule module = instance;
+      return module != null && module.target == entity && module.isSameSession() && module.level.getEntity(entity.getId()) == entity
+         ? module.positionTracker.init()
          : null;
    }
 
    static Vec3 init_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 eyes) {
-      BacktrackModule module = init_TaskTimer;
-      if (module != null && module.init_LivingEntity == entity && module.init_cN.size() != 0 && module.init_Z_21()) {
-         Vec3 received = module.init_cO.init();
+      BacktrackModule module = instance;
+      if (module != null && module.target == entity && module.packetQueue.size() != 0 && module.isSameSession()) {
+         Vec3 received = module.positionTracker.init();
          AABB drawn = entity.getBoundingBox();
          long now = System.nanoTime();
          if (!module.init_Z_AABB_3(drawn, received, eyes, now)) {
             return null;
          }
 
-         double reach = module.init_D_5();
+         double reach = module.reach();
          return drawn.move(received.subtract(entity.position())).distanceToSqr(eyes) <= reach * reach ? received : module.init_Vec3;
       } else {
          return null;
@@ -855,55 +855,55 @@ public final class BacktrackModule extends Module {
    }
 
    public static boolean init_Z_AABB_2(AABB space) {
-      BacktrackModule module = init_TaskTimer;
+      BacktrackModule module = instance;
       return module != null
-            && module.init_LivingEntity != null
-            && module.init_Z_21()
-            && module.init_LivingEntity.isAlive()
-            && module.init_ClientLevel.getEntity(module.init_LivingEntity.getId()) == module.init_LivingEntity
-         ? space.intersects(module.init_LivingEntity.getBoundingBox().move(module.init_cO.init().subtract(module.init_LivingEntity.position())))
+            && module.target != null
+            && module.isSameSession()
+            && module.target.isAlive()
+            && module.level.getEntity(module.target.getId()) == module.target
+         ? space.intersects(module.target.getBoundingBox().move(module.positionTracker.init().subtract(module.target.position())))
          : false;
    }
 
    public BacktrackModule.Inner_StreamUtil init_TaskTimer_StreamUt() {
-      boolean live = this.init_LivingEntity != null && this.init_Z_21();
+      boolean live = this.target != null && this.isSameSession();
       long now = System.nanoTime();
       return new BacktrackModule.Inner_StreamUtil(
-         this.init_LivingEntity == null ? -1 : this.init_LivingEntity.getId(),
-         this.init_cN.size(),
+         this.target == null ? -1 : this.target.getId(),
+         this.packetQueue.size(),
          this.push,
          this.pop,
          this.tick,
          this.run,
          this.get,
-         this.load_D,
-         live ? this.init_cO.init() : null,
-         this.read_J,
+         this.maxHeldMillis,
+         live ? this.positionTracker.init() : null,
+         this.epoch,
          this.read_Str,
-         this.init_Z_21() ? this.init_I_13() : 0,
-         live && this.bool("server-position") && (this.init_cN.size() > 0 || this.init_cP.hasRecentTrail(this.init_LivingEntity, now)),
+         this.isSameSession() ? this.pingMillis() : 0,
+         live && this.bool("server-position") && (this.packetQueue.size() > 0 || this.trailHistory.hasRecentTrail(this.target, now)),
          live && this.load(now),
          this.set
       );
    }
 
    public static List<EspHighlightBox> highlightBoxes() {
-      BacktrackModule module = init_TaskTimer;
+      BacktrackModule module = instance;
       if (module == null) {
          return List.of();
-      } else if (module.init_LivingEntity != null && module.init_Z_21() && module.bool("server-position")) {
-         float partial = init_Minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-         Vec3 received = module.init_cO.init();
-         AABB body = module.init_LivingEntity.getBoundingBox();
-         AABB drawn = body.move(module.init_LivingEntity.getPosition(partial).subtract(module.init_LivingEntity.position()));
-         return module.init_cP
+      } else if (module.target != null && module.isSameSession() && module.bool("server-position")) {
+         float partial = CLIENT.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+         Vec3 received = module.positionTracker.init();
+         AABB body = module.target.getBoundingBox();
+         AABB drawn = body.move(module.target.getPosition(partial).subtract(module.target.position()));
+         return module.trailHistory
             .init(
-               module.init_LivingEntity,
+               module.target,
                drawn,
-               body.move(received.subtract(module.init_LivingEntity.position())),
+               body.move(received.subtract(module.target.position())),
                received,
                System.nanoTime(),
-               module.init_cN.size() > 0,
+               module.packetQueue.size() > 0,
                module.choice("render-style"),
                module.bool("delayed-position"),
                module.bool("position-trail"),
@@ -912,7 +912,7 @@ public final class BacktrackModule extends Module {
                am.init_I_Module(module, "delayed-color", -1191201708)
             );
       } else {
-         module.init_cP.init();
+         module.trailHistory.init();
          return List.of();
       }
    }
@@ -930,9 +930,9 @@ public final class BacktrackModule extends Module {
          && Double.isFinite(server.y)
          && Double.isFinite(server.z)
          && !(server.distanceToSqr(rendered) > 4.0)) {
-         double oldDistance = init_D_AABB_Vec3_2(drawn, eye);
+         double oldDistance = distanceToBox(drawn, eye);
          AABB received = drawn.move(server.subtract(rendered));
-         double latestDistance = init_D_AABB_Vec3_2(received, eye);
+         double latestDistance = distanceToBox(received, eye);
          return oldDistance <= maximum * maximum
             && latestDistance <= maximum * maximum
             && oldDistance >= minimum * minimum
@@ -998,7 +998,7 @@ public final class BacktrackModule extends Module {
       return box.clip(eye, eye.add(direction.scale(range))).isPresent();
    }
 
-   private static double init_D_AABB_Vec3_2(AABB box, Vec3 eye) {
+   private static double distanceToBox(AABB box, Vec3 eye) {
       double x = Math.max(Math.max(box.minX - eye.x, eye.x - box.maxX), 0.0);
       double y = Math.max(Math.max(box.minY - eye.y, eye.y - box.maxY), 0.0);
       double z = Math.max(Math.max(box.minZ - eye.z, eye.z - box.maxZ), 0.0);
@@ -1006,11 +1006,11 @@ public final class BacktrackModule extends Module {
    }
 
    private record Inner_DataUtil(
-      ClientLevel init_ClientLevel,
-      LocalPlayer init_LocalPlayer,
-      ClientPacketListener init_ClientPacketListen,
-      LivingEntity init_LivingEntity,
-      long init_J,
+      ClientLevel level,
+      LocalPlayer player,
+      ClientPacketListener connection,
+      LivingEntity victim,
+      long armedAt,
       long load
    ) {
    }

@@ -10,21 +10,21 @@ final class AiEyeNavigation {
    static final double load = 0.008;
    static final double read = 8.0;
    private final List<AiEyeNavigation.Inner_CachePool> init_List = new ArrayList<>();
-   private AiEyeNavigation.Inner_DataUtil init_z_DataUtil;
+   private AiEyeNavigation.Inner_DataUtil located;
    private int init_I;
 
    void addThrow(Vec3 origin, Vec3 displacement) {
       double length = Math.hypot(displacement.x, displacement.z);
       if (!(length < 4.0)) {
          AiEyeNavigation.Inner_CachePool ray = new AiEyeNavigation.Inner_CachePool(origin, new Vec3(displacement.x / length, 0.0, displacement.z / length));
-         if (this.init_List.isEmpty() || !(init_D_Vec3_Vec3(origin, this.init_List.get(this.init_List.size() - 1).origin) < 8.0)) {
+         if (this.init_List.isEmpty() || !(horizontalDistance(origin, this.init_List.get(this.init_List.size() - 1).origin) < 8.0)) {
             this.init_List.add(ray);
             if (this.init_List.size() > 8) {
                this.init_List.remove(0);
             }
 
-            this.init_z_DataUtil = this.load();
-            if (this.init_z_DataUtil == null && this.init_List.size() >= 3) {
+            this.located = this.load();
+            if (this.located == null && this.init_List.size() >= 3) {
                List<AiEyeNavigation.Inner_CachePool> old = new ArrayList<>(this.init_List);
                this.init_List.clear();
                this.init_List.add(old.get(old.size() - 2));
@@ -32,7 +32,7 @@ final class AiEyeNavigation {
                AiEyeNavigation.Inner_DataUtil fresh = this.load();
                if (fresh != null && fresh.uncertainty < 160.0) {
                   this.init_I++;
-                  this.init_z_DataUtil = fresh;
+                  this.located = fresh;
                } else {
                   this.init_List.clear();
                   this.init_List.addAll(old);
@@ -43,7 +43,7 @@ final class AiEyeNavigation {
    }
 
    AiEyeNavigation.Inner_DataUtil getLocated() {
-      return this.init_z_DataUtil;
+      return this.located;
    }
 
    private AiEyeNavigation.Inner_DataUtil load() {
@@ -57,7 +57,7 @@ final class AiEyeNavigation {
       for (int i = 0; i < this.init_List.size() - 1; i++) {
          AiEyeNavigation.Inner_CachePool first = this.init_List.get(i);
          double cross = first.direction.x * last.direction.z - first.direction.z * last.direction.x;
-         double baseline = init_D_Vec3_Vec3(first.origin, last.origin);
+         double baseline = horizontalDistance(first.origin, last.origin);
          if (!(baseline < 32.0) && !(Math.abs(cross) < 0.008)) {
             double dx = last.origin.x - first.origin.x;
             double dz = last.origin.z - first.origin.z;
@@ -87,11 +87,11 @@ final class AiEyeNavigation {
    }
 
    Vec3 sidestepTarget(Vec3 at, Vec3 bearing) {
-      return this.init_z_DataUtil == null ? at.add(-bearing.z * 64.0, 0.0, bearing.x * 64.0) : null;
+      return this.located == null ? at.add(-bearing.z * 64.0, 0.0, bearing.x * 64.0) : null;
    }
 
    JsonObject statusJson() {
-      return this.init_z_DataUtil == null
+      return this.located == null
          ? AiJson.objectOf("rays", this.init_List.size(), "triangulated", false, "possibleTargetChanges", this.init_I)
          : AiJson.objectOf(
             "rays",
@@ -101,19 +101,19 @@ final class AiEyeNavigation {
             "possibleTargetChanges",
             this.init_I,
             "x",
-            this.init_z_DataUtil.position.x,
+            this.located.position.x,
             "z",
-            this.init_z_DataUtil.position.z,
+            this.located.position.z,
             "uncertaintyBlocks",
-            this.init_z_DataUtil.uncertainty,
+            this.located.uncertainty,
             "baselineBlocks",
-            this.init_z_DataUtil.baseline,
+            this.located.baseline,
             "crossing",
-            this.init_z_DataUtil.crossing
+            this.located.crossing
          );
    }
 
-   private static double init_D_Vec3_Vec3(Vec3 a, Vec3 b) {
+   private static double horizontalDistance(Vec3 a, Vec3 b) {
       return Math.hypot(a.x - b.x, a.z - b.z);
    }
 
@@ -124,7 +124,7 @@ final class AiEyeNavigation {
    }
 
    static final class Inner_StreamUtil {
-      private final Vec3 init_Vec3;
+      private final Vec3 origin;
       private double init_D;
       private double load;
       private double read;
@@ -134,12 +134,12 @@ final class AiEyeNavigation {
       private int init_I;
 
       Inner_StreamUtil(Vec3 origin) {
-         this.init_Vec3 = origin;
+         this.origin = origin;
       }
 
       Vec3 init(Vec3 at) {
-         double x = at.x - this.init_Vec3.x;
-         double z = at.z - this.init_Vec3.z;
+         double x = at.x - this.origin.x;
+         double z = at.z - this.origin.z;
          double d = Math.hypot(x, z);
          if (Double.isFinite(d) && !(d < 0.1)) {
             this.init_I++;
@@ -175,7 +175,7 @@ final class AiEyeNavigation {
       }
 
       Vec3 load() {
-         return this.init_I == 0 ? this.init_Vec3 : this.init_Vec3.add(this.init_D / this.init_I, 0.0, this.load / this.init_I);
+         return this.init_I == 0 ? this.origin : this.origin.add(this.init_D / this.init_I, 0.0, this.load / this.init_I);
       }
 
       double init_D() {

@@ -45,50 +45,50 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 public class RegistrySelectorScreen extends VirtualScaledScreen {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder STYLE_THEME = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 460;
    private static final int load_I = 4;
    private static final int read_I = 16;
-   private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/autism/empty_spawn_egg.png");
+   private static final Identifier EMPTY_SPAWN_EGG_TEXTURE = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/autism/empty_spawn_egg.png");
    private static final int write_I = -872086265;
    private static final int update = -1441722092;
    private static final int sync = -1441000940;
    private static final int flush = -791321;
    private static final int close = -4743522;
    private static final int open = -50373;
-   private final Screen init_Screen;
-   private final Module init_Module;
-   private final Setting<?, ?> init_Setting;
-   private final List<RegistrySelectorScreen.Inner_DataUtil> init_List;
-   private final Map<String, RegistrySelectorScreen.Inner_DataUtil> init_Map = new HashMap<>();
-   private final List<RegistrySelectorScreen.Inner_StreamUtil> load_List = new ArrayList<>();
-   private ThemedTextInputBox init_k;
+   private final Screen parent;
+   private final Module module;
+   private final Setting<?, ?> setting;
+   private final List<RegistrySelectorScreen.Inner_DataUtil> entries;
+   private final Map<String, RegistrySelectorScreen.Inner_DataUtil> entriesById = new HashMap<>();
+   private final List<RegistrySelectorScreen.Inner_StreamUtil> hitRegions = new ArrayList<>();
+   private ThemedTextInputBox searchField;
    private int poll;
    private int push;
-   private boolean init_Z;
-   private boolean load_Z;
+   private boolean availableScrollbarDragging;
+   private boolean selectedScrollbarDragging;
    private int pop;
-   private String init_Str;
-   private String load_Str;
-   private Set<String> init_Set = Set.of();
-   private List<RegistrySelectorScreen.Inner_ConfigStore> read_List = List.of();
-   private List<RegistrySelectorScreen.Inner_DataUtil> write_List = List.of();
+   private String cachedRawValue;
+   private String cachedNeedle;
+   private Set<String> cachedSelectedIds = Set.of();
+   private List<RegistrySelectorScreen.Inner_ConfigStore> cachedSelectedRows = List.of();
+   private List<RegistrySelectorScreen.Inner_DataUtil> cachedAvailable = List.of();
    private int tick = -1;
    private int run;
 
-   private static int read_I_10() {
+   private static int textColor() {
       return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public RegistrySelectorScreen(Screen parent, Module module, Setting<?, ?> option) {
       super(Component.literal(option == null ? "Select" : "Select " + option.label()));
-      this.init_Screen = parent;
-      this.init_Module = module;
-      this.init_Setting = option;
-      this.init_List = this.init_List_Kind(option == null ? Kind.ITEM_LIST : option.kind());
+      this.parent = parent;
+      this.module = module;
+      this.setting = option;
+      this.entries = this.buildEntries(option == null ? Kind.ITEM_LIST : option.kind());
 
-      for (RegistrySelectorScreen.Inner_DataUtil entry : this.init_List) {
-         this.init_Map.put(entry.init_Str, entry);
+      for (RegistrySelectorScreen.Inner_DataUtil entry : this.entries) {
+         this.entriesById.put(entry.init_Str, entry);
       }
    }
 
@@ -104,21 +104,21 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         this.load_List.clear();
+         this.hitRegions.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.pop();
-         int y = this.tick_I_11();
+         int y = this.panelY();
          int panelW = this.run();
          int panelH = this.get();
-         this.init(graphics, x, y, panelW, panelH, this.load_Str_3(), mx, my);
+         this.init(graphics, x, y, panelW, panelH, this.titleText(), mx, my);
          if (panelW < 260 || panelH < 100) {
-            this.load(graphics, "Window too small.", x + 4, this.init_I_I_I_6(y + this.sync(), 12), read_I_10(), Math.max(0, panelW - 8));
+            this.load(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.sync(), 12), textColor(), Math.max(0, panelW - 8));
             return;
          }
 
          this.init(x + 4, this.close(), panelW - 8, this.flush());
-         this.init_k.render(graphics, mx, my, delta);
-         RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
+         this.searchField.render(graphics, mx, my, delta);
+         RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
          this.init(graphics, pane, pane.init(), "Available", true, mx, my);
          this.init(graphics, pane, pane.load(), "Selected", false, mx, my);
       } finally {
@@ -131,8 +131,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int w = pane.write();
       int listTop = pane.sync();
       int listH = pane.flush();
-      this.init(graphics, x, y, w, pane.update(), 5, -1442248437, init_CharEncoder.set());
-      this.load(graphics, title, x + 4, this.init_I_I_I_6(y + 2, this.open()), -791321, w - 8);
+      this.init(graphics, x, y, w, pane.update(), 5, -1442248437, STYLE_THEME.set());
+      this.load(graphics, title, x + 4, this.centeredTextY(y + 2, this.open()), -791321, w - 8);
       autismclient.gui.ui.UiClipStack.getInstance().push(graphics, autismclient.gui.f.NetHelper.init(x + 1, listTop, Math.max(0, w - 2), Math.max(0, listH)));
 
       try {
@@ -146,12 +146,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init(available, x, listTop, w, listH);
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), available ? this.init_Z : this.load_Z);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), available ? this.availableScrollbarDragging : this.selectedScrollbarDragging);
    }
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<RegistrySelectorScreen.Inner_DataUtil> rows = this.init_List_8();
-      int maxScroll = Math.max(0, this.init_I_List_3(rows) - h);
+      List<RegistrySelectorScreen.Inner_DataUtil> rows = this.availableEntries();
+      int maxScroll = Math.max(0, this.contentHeight(rows) - h);
       this.poll = this.init(this.poll, 0, maxScroll);
       int rowY = y - this.poll;
       int rowH = this.poll();
@@ -159,7 +159,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       String lastGroup = "";
 
       for (RegistrySelectorScreen.Inner_DataUtil entry : rows) {
-         if (init_Z_Setting(this.init_Setting) && !entry.read.equals(lastGroup)) {
+         if (isGroupedKind(this.setting) && !entry.read.equals(lastGroup)) {
             if (rowY + groupH > y && rowY < y + h) {
                this.init(graphics, entry.read, x, rowY, w, groupH);
             }
@@ -177,12 +177,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<RegistrySelectorScreen.Inner_ConfigStore> rows = this.load_List_4();
+      List<RegistrySelectorScreen.Inner_ConfigStore> rows = this.selectedRows();
       int maxScroll = Math.max(0, this.write() - h);
       this.push = this.init(this.push, 0, maxScroll);
       int rowH = this.poll();
       if (rows.isEmpty()) {
-         this.load(graphics, "Nothing selected.", x + 4, this.init_I_I_I_6(y, rowH), read_I_10(), w - 8);
+         this.load(graphics, "Nothing selected.", x + 4, this.centeredTextY(y, rowH), textColor(), w - 8);
       } else {
          int first = this.init(this.push / rowH, 0, Math.max(0, rows.size() - 1));
          int last = this.init((this.push + h - 1) / rowH, 0, rows.size() - 1);
@@ -191,7 +191,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             RegistrySelectorScreen.Inner_ConfigStore row = rows.get(i);
             int rowY = y - this.push + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
-               this.init(graphics, row.init_NodeWalker_DataUti(), x, rowY, w, RegistrySelectorScreen.Inner_CachePool.REMOVE, row.init_Str, mx, my, row.init_Z);
+               this.init(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.Inner_CachePool.REMOVE, row.id, mx, my, row.init_Z);
             }
          }
       }
@@ -199,7 +199,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private void init(GuiGraphicsExtractor graphics, String label, int x, int y, int w, int groupH) {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawSectionHeader(graphics, x, y, w, groupH - 1);
-      this.load(graphics, label, x + 4, this.init_I_I_I_6(y, groupH - 1), read_I_10(), w - 8);
+      this.load(graphics, label, x + 4, this.centeredTextY(y, groupH - 1), textColor(), w - 8);
    }
 
    private void init(
@@ -229,14 +229,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int actionX = x + w - actionW - 2;
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
-      int textY = this.init_I_I_I_6(y, rowH - 1);
+      int textY = this.centeredTextY(y, rowH - 1);
       this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
-         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, STYLE_THEME.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
          int idMax = textX + textMax - idX;
          if (idMax >= 16) {
-            this.load(graphics, id, idX, textY, read_I_10(), idMax);
+            this.load(graphics, id, idX, textY, textColor(), idMax);
          }
       }
 
@@ -246,14 +246,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, actionX, actionY, actionW, actionW, over);
       }
 
-      this.load_List.add(new RegistrySelectorScreen.Inner_StreamUtil(type, x, y, w, rowH, value));
+      this.hitRegions.add(new RegistrySelectorScreen.Inner_StreamUtil(type, x, y, w, rowH, value));
    }
 
    private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.Inner_DataUtil entry, int x, int y) {
       if (entry.init_Z()) {
-         graphics.blit(init_Identifier, x, y, x + 16, y + 16, 0.0F, 1.0F, 0.0F, 1.0F);
+         graphics.blit(EMPTY_SPAWN_EGG_TEXTURE, x, y, x + 16, y + 16, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
-         ItemStack stack = entry.init_ItemStack();
+         ItemStack stack = entry.icon();
          if (stack != null && !stack.isEmpty()) {
             graphics.item(stack, x, y);
          }
@@ -267,7 +267,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.load_List.add(new RegistrySelectorScreen.Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.hitRegions.add(new RegistrySelectorScreen.Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -278,37 +278,37 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (this.searchField != null && this.searchField.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics availableMetrics = this.init_PoolEntry_DataUtil_Z(true);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics availableMetrics = this.scrollbarMetrics(true);
       if (availableMetrics.isScrollable() && availableMetrics.containsTrack(mx, my)) {
-         this.init_Z = true;
+         this.availableScrollbarDragging = true;
          this.pop = availableMetrics.containsThumb(mx, my) ? my - availableMetrics.thumbY() : availableMetrics.thumbHeight() / 2;
          this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(availableMetrics, my, this.pop);
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics selectedMetrics = this.init_PoolEntry_DataUtil_Z(false);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics selectedMetrics = this.scrollbarMetrics(false);
       if (selectedMetrics.isScrollable() && selectedMetrics.containsTrack(mx, my)) {
-         this.load_Z = true;
+         this.selectedScrollbarDragging = true;
          this.pop = selectedMetrics.containsThumb(mx, my) ? my - selectedMetrics.thumbY() : selectedMetrics.thumbHeight() / 2;
-         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(selectedMetrics, my, this.pop));
+         this.push = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(selectedMetrics, my, this.pop));
          return true;
       }
 
-      for (int i = this.load_List.size() - 1; i >= 0; i--) {
-         RegistrySelectorScreen.Inner_StreamUtil hit = this.load_List.get(i);
+      for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
+         RegistrySelectorScreen.Inner_StreamUtil hit = this.hitRegions.get(i);
          if (hit.init(mx, my)
-            && (hit.init_NodeWalker_CachePo != RegistrySelectorScreen.Inner_CachePool.ADD || this.init_Z_I_I_2(mx, my))
-            && (hit.init_NodeWalker_CachePo != RegistrySelectorScreen.Inner_CachePool.REMOVE || this.load(mx, my))) {
-            switch (hit.init_NodeWalker_CachePo) {
+            && (hit.action != RegistrySelectorScreen.Inner_CachePool.ADD || this.isOverAvailablePane(mx, my))
+            && (hit.action != RegistrySelectorScreen.Inner_CachePool.REMOVE || this.load(mx, my))) {
+            switch (hit.action) {
                case ADD:
-                  this.init_V_Str_6(hit.init_Str);
+                  this.init_V_Str_6(hit.value);
                   break;
                case REMOVE:
-                  this.load_V_2(hit.init_Str);
+                  this.load_V_2(hit.value);
                   break;
                case CLOSE:
                   this.onClose();
@@ -323,10 +323,10 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      this.init_Z = false;
-      this.load_Z = false;
-      if (this.init_k != null) {
-         this.init_k.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      this.availableScrollbarDragging = false;
+      this.selectedScrollbarDragging = false;
+      if (this.searchField != null) {
+         this.searchField.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
       }
 
       return true;
@@ -336,14 +336,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
-      if (this.init_Z) {
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_Z(true), my, this.pop);
+      if (this.availableScrollbarDragging) {
+         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(true), my, this.pop);
          return true;
-      } else if (this.load_Z) {
-         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_Z(false), my, this.pop));
+      } else if (this.selectedScrollbarDragging) {
+         this.push = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(false), my, this.pop));
          return true;
       } else {
-         return this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
+         return this.searchField != null && this.searchField.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
       }
    }
 
@@ -352,7 +352,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(mouseX);
       int my = cA.init_I_D(mouseY);
       int amount = scrollY < 0.0 ? this.poll() : -this.poll();
-      if (this.init_Z_I_I_2(mx, my)) {
+      if (this.isOverAvailablePane(mx, my)) {
          this.poll += amount;
       } else {
          if (!this.load(mx, my)) {
@@ -362,8 +362,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.push += amount;
       }
 
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).maxScroll());
-      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).maxScroll());
+      this.poll = this.init(this.poll, 0, this.scrollbarMetrics(true).maxScroll());
+      this.push = this.init(this.push, 0, this.scrollbarMetrics(false).maxScroll());
       return true;
    }
 
@@ -373,86 +373,86 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.onClose();
          return true;
       } else {
-         return this.init_k != null && this.init_k.keyPressed(input) ? true : true;
+         return this.searchField != null && this.searchField.keyPressed(input) ? true : true;
       }
    }
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      if (this.init_k != null) {
-         this.init_k.charTyped(input);
+      if (this.searchField != null) {
+         this.searchField.charTyped(input);
       }
 
       return true;
    }
 
    private void init(int x, int y, int w, int h) {
-      if (this.init_k == null) {
-         this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
-         this.init_k.setPlaceholder(Component.literal("Search"));
-         this.init_k.setChangedListener(value -> this.read_V_10());
-         this.init_k.setFocused(true);
+      if (this.searchField == null) {
+         this.searchField = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
+         this.searchField.setPlaceholder(Component.literal("Search"));
+         this.searchField.setChangedListener(value -> this.clampScrolls());
+         this.searchField.setFocused(true);
       }
 
-      this.init_k.setX(x);
-      this.init_k.setY(y);
-      this.init_k.setWidth(w);
-      this.init_k.setHeight(h);
+      this.searchField.setX(x);
+      this.searchField.setY(y);
+      this.searchField.setWidth(w);
+      this.searchField.setHeight(h);
    }
 
-   private String init_Str_6() {
-      return this.init_k == null ? "" : this.init_k.getValue();
+   private String searchText() {
+      return this.searchField == null ? "" : this.searchField.getValue();
    }
 
    @Override
    public void onClose() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
       }
    }
 
    private void init_V_Str_6(String id) {
-      List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
-      LinkedHashSet<String> valid = this.init_LinkedHashSet_List(tokens);
+      List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+      LinkedHashSet<String> valid = this.validIds(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
       valid.add(id);
-      this.init_V_Set_List(valid, invalid);
-      this.read_V_10();
+      this.storeIds(valid, invalid);
+      this.clampScrolls();
    }
 
    private void load_V_2(String id) {
-      List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
-      LinkedHashSet<String> valid = this.init_LinkedHashSet_List(tokens);
+      List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+      LinkedHashSet<String> valid = this.validIds(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
       String normalized = RegistryIdValidator.init(id);
       valid.remove(normalized);
       invalid.removeIf(token -> token.equals(id) || RegistryIdValidator.init(token).equals(normalized));
-      this.init_V_Set_List(valid, invalid);
-      this.read_V_10();
+      this.storeIds(valid, invalid);
+      this.clampScrolls();
    }
 
-   private void init_V_Set_List(Set<String> valid, List<String> invalid) {
+   private void storeIds(Set<String> valid, List<String> invalid) {
       List<String> out = new ArrayList<>(valid);
       out.addAll(invalid);
       String encoded = PipeDelimitedListUtil.init(out);
-      if (this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.isTitleSetup()) {
-         this.init_Module.setConfiguredValue(this.init_Setting.id(), encoded);
+      if (this.parent instanceof AutismModulesScreen moduleScreen && moduleScreen.isTitleSetup()) {
+         this.module.setConfiguredValue(this.setting.id(), encoded);
       } else {
-         this.init_Module.setValue(this.init_Setting.id(), encoded);
+         this.module.setValue(this.setting.id(), encoded);
       }
    }
 
-   private Set<String> init_Set() {
-      this.load_V_16();
-      return this.init_Set;
+   private Set<String> selectedIds() {
+      this.refreshCache();
+      return this.cachedSelectedIds;
    }
 
-   private LinkedHashSet<String> init_LinkedHashSet_List(List<String> tokens) {
+   private LinkedHashSet<String> validIds(List<String> tokens) {
       LinkedHashSet<String> out = new LinkedHashSet<>();
 
       for (String token : tokens) {
          String normalized = RegistryIdValidator.init(token);
-         if (RegistryIdValidator.init(this.init_Setting.kind(), normalized) && (!this.init_Z_8() || this.init_Map.containsKey(normalized))) {
+         if (RegistryIdValidator.init(this.setting.kind(), normalized) && (!this.hasBlockFilter() || this.entriesById.containsKey(normalized))) {
             out.add(normalized);
          }
       }
@@ -461,15 +461,15 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private List<String> init_List_List_2(List<String> tokens) {
-      if (!this.init_Z_8()) {
-         return RegistryIdValidator.init(this.init_Setting.kind(), tokens);
+      if (!this.hasBlockFilter()) {
+         return RegistryIdValidator.init(this.setting.kind(), tokens);
       }
 
       List<String> invalid = new ArrayList<>();
 
       for (String token : tokens) {
          String normalized = RegistryIdValidator.init(token);
-         if (!RegistryIdValidator.init(this.init_Setting.kind(), normalized) || !this.init_Map.containsKey(normalized)) {
+         if (!RegistryIdValidator.init(this.setting.kind(), normalized) || !this.entriesById.containsKey(normalized)) {
             invalid.add(token);
          }
       }
@@ -477,44 +477,44 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return invalid;
    }
 
-   private RegistryListSetting.BlockFilter init_RegistryListSettin() {
-      return this.init_Setting instanceof RegistryListSetting registry ? registry.blockFilter() : RegistryListSetting.BlockFilter.NONE;
+   private RegistryListSetting.BlockFilter blockFilter() {
+      return this.setting instanceof RegistryListSetting registry ? registry.blockFilter() : RegistryListSetting.BlockFilter.NONE;
    }
 
-   private boolean init_Z_8() {
-      return this.init_RegistryListSettin() != RegistryListSetting.BlockFilter.NONE;
+   private boolean hasBlockFilter() {
+      return this.blockFilter() != RegistryListSetting.BlockFilter.NONE;
    }
 
-   private List<RegistrySelectorScreen.Inner_DataUtil> init_List_8() {
-      this.load_V_16();
-      return this.write_List;
+   private List<RegistrySelectorScreen.Inner_DataUtil> availableEntries() {
+      this.refreshCache();
+      return this.cachedAvailable;
    }
 
-   private List<RegistrySelectorScreen.Inner_ConfigStore> load_List_4() {
-      this.load_V_16();
-      return this.read_List;
+   private List<RegistrySelectorScreen.Inner_ConfigStore> selectedRows() {
+      this.refreshCache();
+      return this.cachedSelectedRows;
    }
 
-   private void load_V_16() {
-      String rawValue = this.init_Module.value(this.init_Setting.id());
-      String needle = this.init_Str_6().trim().toLowerCase(Locale.ROOT);
-      if (!rawValue.equals(this.init_Str) || !needle.equals(this.load_Str)) {
-         List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
-         LinkedHashSet<String> selected = this.init_LinkedHashSet_List(tokens);
+   private void refreshCache() {
+      String rawValue = this.module.value(this.setting.id());
+      String needle = this.searchText().trim().toLowerCase(Locale.ROOT);
+      if (!rawValue.equals(this.cachedRawValue) || !needle.equals(this.cachedNeedle)) {
+         List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+         LinkedHashSet<String> selected = this.validIds(tokens);
          List<RegistrySelectorScreen.Inner_ConfigStore> selectedRows = new ArrayList<>();
 
          for (String id : selected) {
-            RegistrySelectorScreen.Inner_DataUtil entry = this.init_NodeWalker_DataUti_Str(id);
-            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(id, entry == null ? this.load_NodeWalker_DataUti(id) : entry, false));
+            RegistrySelectorScreen.Inner_DataUtil entry = this.entryById(id);
+            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(id, entry == null ? this.plainEntry(id) : entry, false));
          }
 
          for (String invalid : this.init_List_List_2(tokens)) {
-            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(invalid, this.init_NodeWalker_DataUti_Str_Str("Invalid: " + invalid, invalid), true));
+            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(invalid, this.labeledEntry("Invalid: " + invalid, invalid), true));
          }
 
          List<RegistrySelectorScreen.Inner_DataUtil> available = new ArrayList<>();
 
-         for (RegistrySelectorScreen.Inner_DataUtil entry : this.init_List) {
+         for (RegistrySelectorScreen.Inner_DataUtil entry : this.entries) {
             if (!selected.contains(entry.init_Str) && (needle.isEmpty() || entry.init_Str_2().contains(needle) || entry.init_Str.contains(needle))) {
                available.add(entry);
             }
@@ -524,16 +524,16 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             available.sort(Comparator.comparingInt(entryx -> init_I_NodeWalker_DataUti_Str(entryx, needle)));
          }
 
-         this.init_Str = rawValue;
-         this.load_Str = needle;
-         this.init_Set = Set.copyOf(selected);
-         this.read_List = List.copyOf(selectedRows);
-         this.write_List = List.copyOf(available);
+         this.cachedRawValue = rawValue;
+         this.cachedNeedle = needle;
+         this.cachedSelectedIds = Set.copyOf(selected);
+         this.cachedSelectedRows = List.copyOf(selectedRows);
+         this.cachedAvailable = List.copyOf(available);
       }
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil init_NodeWalker_DataUti_Str(String id) {
-      return this.init_Map.get(id);
+   private RegistrySelectorScreen.Inner_DataUtil entryById(String id) {
+      return this.entriesById.get(id);
    }
 
    private static int init_I_NodeWalker_DataUti_Str(RegistrySelectorScreen.Inner_DataUtil entry, String needle) {
@@ -559,7 +559,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private List<RegistrySelectorScreen.Inner_DataUtil> init_List_Kind(Kind type) {
+   private List<RegistrySelectorScreen.Inner_DataUtil> buildEntries(Kind type) {
       List<RegistrySelectorScreen.Inner_DataUtil> out = new ArrayList<>();
       switch (type) {
          case ITEM_LIST:
@@ -584,7 +584,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             BuiltInRegistries.BLOCK.forEach(block -> {
                Identifier id = BuiltInRegistries.BLOCK.getKey(block);
                if (block != Blocks.AIR && block != Blocks.BARRIER && id != null && !id.getPath().endsWith("_wall_banner")) {
-                  switch (this.init_RegistryListSettin()) {
+                  switch (this.blockFilter()) {
                      case NONE:
                         break;
                      case PLACEABLE:
@@ -611,7 +611,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             });
             break;
          case ENTITY_TYPE_LIST:
-            Map<EntityType<?>, ItemStack> spawnEggs = this.init_Map();
+            Map<EntityType<?>, ItemStack> spawnEggs = this.spawnEggsByType();
             BuiltInRegistries.ENTITY_TYPE
                .forEach(
                   typeEntry -> {
@@ -621,7 +621,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                            new RegistrySelectorScreen.Inner_DataUtil(
                               this.read(BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)typeEntry)),
                               typeEntry.getDescription().getString(),
-                              this.init_Str_EntityType((EntityType<?>)typeEntry),
+                              this.entityGroup((EntityType<?>)typeEntry),
                               iconx,
                               iconx.isEmpty()
                            )
@@ -639,9 +639,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         out.add(
                            new RegistrySelectorScreen.Inner_DataUtil(
                               this.read(soundId),
-                              this.init_Str_Identifier(soundId),
+                              this.displayName(soundId),
                               this.load(soundId),
-                              this.init_ItemStack_Identifier_Map(soundId, this.init_Map()),
+                              this.soundIcon(soundId, this.spawnEggsByType()),
                               false
                            )
                         );
@@ -660,7 +660,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return out;
    }
 
-   private Map<EntityType<?>, ItemStack> init_Map() {
+   private Map<EntityType<?>, ItemStack> spawnEggsByType() {
       Map<EntityType<?>, ItemStack> out = new HashMap<>();
       BuiltInRegistries.ITEM.forEach(item -> {
          TypedEntityData<EntityType<?>> data = item.components().get(DataComponents.ENTITY_DATA);
@@ -671,7 +671,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return out;
    }
 
-   private ItemStack init_ItemStack_Identifier_Map(Identifier soundId, Map<EntityType<?>, ItemStack> spawnEggs) {
+   private ItemStack soundIcon(Identifier soundId, Map<EntityType<?>, ItemStack> spawnEggs) {
       if (soundId == null) {
          return DisplayItemStackFactory.displayStack(Items.NOTE_BLOCK);
       }
@@ -727,7 +727,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       } else if (normalizedPath.contains("lightning") || normalizedPath.contains("thunder")) {
          return DisplayItemStackFactory.displayStack(Items.LIGHTNING_ROD.weathering().unaffected());
       } else if (normalizedPath.contains("music_disc_")) {
-         return this.load_ItemStack(normalizedPath.substring(normalizedPath.indexOf("music_disc_")));
+         return this.itemIcon(normalizedPath.substring(normalizedPath.indexOf("music_disc_")));
       } else if (normalizedPath.startsWith("music_") || normalizedPath.startsWith("record_")) {
          return DisplayItemStackFactory.displayStack(Items.JUKEBOX);
       } else if (normalizedPath.contains("goat_horn")) {
@@ -754,18 +754,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
       }
 
-      if (this.init_Z_StrArr_Str(parts, "player")) {
+      if (this.containsPart(parts, "player")) {
          return DisplayItemStackFactory.displayStack(Items.PLAYER_HEAD);
-      } else if (this.init_Z_StrArr_Str(parts, "arrow")) {
+      } else if (this.containsPart(parts, "arrow")) {
          return DisplayItemStackFactory.displayStack(Items.ARROW);
-      } else if (this.init_Z_StrArr_Str(parts, "trident")) {
+      } else if (this.containsPart(parts, "trident")) {
          return DisplayItemStackFactory.displayStack(Items.TRIDENT);
-      } else if (this.init_Z_StrArr_Str(parts, "boat")) {
+      } else if (this.containsPart(parts, "boat")) {
          return DisplayItemStackFactory.displayStack(Items.OAK_BOAT);
-      } else if (this.init_Z_StrArr_Str(parts, "minecart")) {
+      } else if (this.containsPart(parts, "minecart")) {
          return DisplayItemStackFactory.displayStack(Items.MINECART);
       } else {
-         return this.init_Z_StrArr_Str(parts, "item") ? DisplayItemStackFactory.displayStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
+         return this.containsPart(parts, "item") ? DisplayItemStackFactory.displayStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
       }
    }
 
@@ -782,7 +782,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private ItemStack load(String[] parts) {
       for (String candidate : this.init_List_StrArr_I(parts, 1)) {
-         ItemStack icon = this.load_ItemStack(candidate);
+         ItemStack icon = this.itemIcon(candidate);
          if (!icon.isEmpty()) {
             return icon;
          }
@@ -801,7 +801,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             }
          }
 
-         ItemStack item = this.load_ItemStack(candidate);
+         ItemStack item = this.itemIcon(candidate);
          if (!item.isEmpty()) {
             return item;
          }
@@ -898,7 +898,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return var10000;
    }
 
-   private boolean init_Z_StrArr_Str(String[] parts, String part) {
+   private boolean containsPart(String[] parts, String part) {
       for (String value : parts) {
          if (part.equals(value)) {
             return true;
@@ -908,7 +908,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return false;
    }
 
-   private ItemStack load_ItemStack(String path) {
+   private ItemStack itemIcon(String path) {
       Item item = BuiltInRegistries.ITEM.getOptional(Identifier.withDefaultNamespace(path)).orElse(Items.AIR);
       return item == Items.AIR ? ItemStack.EMPTY : DisplayItemStackFactory.displayStack(item);
    }
@@ -918,15 +918,15 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.init(block) : ItemStack.EMPTY;
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil load_NodeWalker_DataUti(String id) {
-      return this.init_NodeWalker_DataUti_Str_Str(id, id);
+   private RegistrySelectorScreen.Inner_DataUtil plainEntry(String id) {
+      return this.labeledEntry(id, id);
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil init_NodeWalker_DataUti_Str_Str(String label, String id) {
+   private RegistrySelectorScreen.Inner_DataUtil labeledEntry(String label, String id) {
       return new RegistrySelectorScreen.Inner_DataUtil(id, label, "", ItemStack.EMPTY, false);
    }
 
-   private String init_Str_EntityType(EntityType<?> type) {
+   private String entityGroup(EntityType<?> type) {
       MobCategory category = type.getCategory();
       String var10000;
       switch (category) {
@@ -952,7 +952,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return var10000;
    }
 
-   private String init_Str_Identifier(Identifier id) {
+   private String displayName(Identifier id) {
       if (id == null) {
          return "";
       }
@@ -1001,25 +1001,25 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return id == null ? "" : id.toString().toLowerCase(Locale.ROOT);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_Z(boolean available) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(boolean available) {
+      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
       return this.init(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init(boolean available, int paneX, int listTop, int paneW, int listH) {
-      int contentH = available ? this.init_I_List_3(this.init_List_8()) : this.write();
+      int contentH = available ? this.contentHeight(this.availableEntries()) : this.write();
       int scroll = available ? this.poll : this.push;
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);
    }
 
-   private int init_I_List_3(List<RegistrySelectorScreen.Inner_DataUtil> rows) {
+   private int contentHeight(List<RegistrySelectorScreen.Inner_DataUtil> rows) {
       int rowH = this.poll();
       int groupH = this.push();
       int height = 0;
       String lastGroup = "";
 
       for (RegistrySelectorScreen.Inner_DataUtil entry : rows) {
-         if (this.init_Setting != null && init_Z_Setting(this.init_Setting) && !entry.read.equals(lastGroup)) {
+         if (this.setting != null && isGroupedKind(this.setting) && !entry.read.equals(lastGroup)) {
             height += groupH;
             lastGroup = entry.read;
          }
@@ -1031,7 +1031,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int write() {
-      int size = this.load_List_4().size();
+      int size = this.selectedRows().size();
       return size == 0 ? 0 : size * this.poll() + 2;
    }
 
@@ -1039,29 +1039,29 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int key = this.poll() * 1000 + this.push();
       if (key != this.tick) {
          this.tick = key;
-         this.run = this.init_I_List_3(this.init_List);
+         this.run = this.contentHeight(this.entries);
       }
 
       return Math.max(this.run, this.write());
    }
 
-   private static boolean init_Z_Setting(Setting<?, ?> option) {
+   private static boolean isGroupedKind(Setting<?, ?> option) {
       return option.kind() == Kind.ENTITY_TYPE_LIST || option.kind() == Kind.SOUND_EVENT_LIST || option.kind() == Kind.STORAGE_LIST;
    }
 
-   private boolean init_Z_I_I_2(int mx, int my) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
+   private boolean isOverAvailablePane(int mx, int my) {
+      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
       return mx >= pane.init() && mx < pane.init() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
 
    private boolean load(int mx, int my) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
+      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
       return mx >= pane.load() && mx < pane.load() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
 
-   private RegistrySelectorScreen.Inner_BufferHelper init_NodeWalker_BufferH() {
+   private RegistrySelectorScreen.Inner_BufferHelper availablePane() {
       int panelX = this.pop();
-      int panelY = this.tick_I_11();
+      int panelY = this.panelY();
       int paneY = this.close() + this.flush() + 2;
       int paneH = panelY + this.get() - paneY - 4;
       int paneW = (this.run() - 8 - 4) / 2;
@@ -1081,7 +1081,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int close() {
-      return this.tick_I_11() + this.sync() + 4;
+      return this.panelY() + this.sync() + 4;
    }
 
    private int open() {
@@ -1096,29 +1096,29 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int init_I_I_I_6(int boxY, int boxH) {
-      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+   private int centeredTextY(int boxY, int boxH) {
+      return UiLayoutMath.centerTextY(boxY, boxH, STYLE_THEME.init_I_l(l.read), STYLE_THEME.flush());
    }
 
-   private void read_V_10() {
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).maxScroll());
-      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).maxScroll());
+   private void clampScrolls() {
+      this.poll = this.init(this.poll, 0, this.scrollbarMetrics(true).maxScroll());
+      this.push = this.init(this.push, 0, this.scrollbarMetrics(false).maxScroll());
    }
 
-   private int init_I_I_10(int offset) {
+   private int snapToRow(int offset) {
       int rowH = this.poll();
       return Math.max(0, offset / rowH) * rowH;
    }
 
-   private String load_Str_3() {
-      return this.init_Setting == null ? "Select" : "Select " + this.init_Setting.label();
+   private String titleText() {
+      return this.setting == null ? "Select" : "Select " + this.setting.label();
    }
 
    private int pop() {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.run(), 6);
    }
 
-   private int tick_I_11() {
+   private int panelY() {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.get(), 6);
    }
 
@@ -1144,18 +1144,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private void load(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
       String display = autismclient.gui.f.b.k.init(
-         this.font, text == null ? "" : text, Math.max(0, maxWidth), init_CharEncoder.init_Identifier_l(l.read), color
+         this.font, text == null ? "" : text, Math.max(0, maxWidth), STYLE_THEME.init_Identifier_l(l.read), color
       );
-      autismclient.gui.f.b.k.init(graphics, this.font, display, init_CharEncoder.init_Identifier_l(l.read), color, x, y, false);
+      autismclient.gui.f.b.k.init(graphics, this.font, display, STYLE_THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
-      String display = autismclient.gui.f.b.k.init(this.font, text == null ? "" : text, Math.max(0, w - 4), init_CharEncoder.init_Identifier_l(l.read), color);
-      int tw = autismclient.gui.f.b.k.init(this.font, display, init_CharEncoder.init_Identifier_l(l.read), color);
-      int th = init_CharEncoder.init_I_l(l.read);
+      String display = autismclient.gui.f.b.k.init(this.font, text == null ? "" : text, Math.max(0, w - 4), STYLE_THEME.init_Identifier_l(l.read), color);
+      int tw = autismclient.gui.f.b.k.init(this.font, display, STYLE_THEME.init_Identifier_l(l.read), color);
+      int th = STYLE_THEME.init_I_l(l.read);
       int drawX = x + Math.max(2, (w - tw) / 2);
       int drawY = y + Math.max(1, (h - th + 1) / 2 + 1);
-      autismclient.gui.f.b.k.init(graphics, this.font, display, init_CharEncoder.init_Identifier_l(l.read), color, drawX, drawY, false);
+      autismclient.gui.f.b.k.init(graphics, this.font, display, STYLE_THEME.init_Identifier_l(l.read), color, drawX, drawY, false);
    }
 
    private record Inner_BufferHelper(int init, int load, int read, int write, int update, int sync, int flush) {
@@ -1167,14 +1167,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       CLOSE;
    }
 
-   private record Inner_ConfigStore(String init_Str, RegistrySelectorScreen.Inner_DataUtil init_NodeWalker_DataUti, boolean init_Z) {
+   private record Inner_ConfigStore(String id, RegistrySelectorScreen.Inner_DataUtil entry, boolean init_Z) {
    }
 
-   private record Inner_DataUtil(String init_Str, String load, String read, ItemStack init_ItemStack, boolean init_Z) {
+   private record Inner_DataUtil(String init_Str, String load, String read, ItemStack icon, boolean init_Z) {
       private Inner_DataUtil {
          load = load != null && !load.isBlank() ? load : init_Str;
          read = read == null ? "" : read;
-         init_ItemStack = init_ItemStack == null ? ItemStack.EMPTY : init_ItemStack;
+         icon = icon == null ? ItemStack.EMPTY : icon;
       }
 
       String init_Str_2() {
@@ -1194,9 +1194,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private record Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool init_NodeWalker_CachePo, int init_I, int load, int read, int write, String init_Str) {
+   private record Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool action, int x, int load, int read, int write, String value) {
       boolean init(int mx, int my) {
-         return mx >= this.init_I && mx < this.init_I + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }
 }

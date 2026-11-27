@@ -25,7 +25,7 @@ public final class AiToolsScreen extends Screen {
       "AI silent aim (combat rotations)",
       "Use shield by default (fight)"
    };
-   private final Screen init_Screen;
+   private final Screen parent;
    private final AiToolSettings init_AiToolSettings;
    private boolean init_Z;
    private final autismclient.gui.ui.widgets.DropdownMenu init_RefQueue;
@@ -42,7 +42,7 @@ public final class AiToolsScreen extends Screen {
 
    public AiToolsScreen(Screen parent) {
       super(Component.literal("AI Tools"));
-      this.init_Screen = parent;
+      this.parent = parent;
       this.init_AiToolSettings = AiDirectOps.toolSettings().copy();
       this.init_Z = AiDirectOps.settings().aiSilentAim;
       this.init_RefQueue = new autismclient.gui.ui.widgets.DropdownMenu(
@@ -86,8 +86,8 @@ public final class AiToolsScreen extends Screen {
          );
          autismclient.gui.f.b.BufferHelper.init_V(ctx, panel, title);
          int pad = 4;
-         int rowH = this.init_I();
-         int labelH = this.load_I();
+         int rowH = this.rowHeight();
+         int labelH = this.labelHeight();
          int rowStep = rowH + 2;
          int sectionGap = 4;
          int x = panel.read() + pad;
@@ -186,11 +186,11 @@ public final class AiToolsScreen extends Screen {
       }
    }
 
-   private int init_I() {
+   private int rowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int load_I() {
+   private int labelHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
@@ -199,9 +199,9 @@ public final class AiToolsScreen extends Screen {
    }
 
    private int write() {
-      int rowStep = this.init_I() + 2;
+      int rowStep = this.rowHeight() + 2;
       int sectionGap = 4;
-      int labelH = this.load_I();
+      int labelH = this.labelHeight();
       return 2
          + rowStep * 5
          + sectionGap
@@ -213,7 +213,7 @@ public final class AiToolsScreen extends Screen {
          + labelH
          + 12
          + sectionGap
-         + this.init_I()
+         + this.rowHeight()
          + sectionGap
          + labelH
          + sectionGap
@@ -379,6 +379,6 @@ public final class AiToolsScreen extends Screen {
 
    @Override
    public void onClose() {
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 }

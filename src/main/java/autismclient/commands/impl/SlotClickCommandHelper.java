@@ -76,7 +76,7 @@ final class SlotClickCommandHelper {
       if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
          int requested = Math.max(1, times);
          int completed = 0;
-         if (spec.init_CharEncoder_CacheP() == SlotClickCommandHelper.Inner_CachePool.ITEM) {
+         if (spec.kind() == SlotClickCommandHelper.Inner_CachePool.ITEM) {
             ItemStack stack = mc.player.containerMenu.slots.get(handlerSlot).getItem();
             if (!stack.isEmpty()) {
                int actual = Math.min(requested, stack.getCount());
@@ -84,10 +84,10 @@ final class SlotClickCommandHelper {
                   completed = actual;
                }
             }
-         } else if (spec.init_CharEncoder_CacheP() == SlotClickCommandHelper.Inner_CachePool.STACK) {
+         } else if (spec.kind() == SlotClickCommandHelper.Inner_CachePool.STACK) {
             completed = InventoryDropHelper.init(mc, handlerSlot, 0) > 0 ? 1 : 0;
          } else {
-            for (int i = 0; i < requested && ContainerClickExecutor.init(mc, handlerSlot, spec.init_I(), spec.init_ContainerInput()); i++) {
+            for (int i = 0; i < requested && ContainerClickExecutor.init(mc, handlerSlot, spec.init_I(), spec.input()); i++) {
                completed++;
             }
          }
@@ -95,11 +95,11 @@ final class SlotClickCommandHelper {
          if (completed == 0) {
             AutismClientMessaging.sendPrefixed("§cCould not click §f" + targetLabel + "§c.");
          } else {
-            String repeat = completed > 1 && spec.init_CharEncoder_CacheP() != SlotClickCommandHelper.Inner_CachePool.STACK ? " x" + completed : "";
-            String partial = completed < requested && spec.init_CharEncoder_CacheP() != SlotClickCommandHelper.Inner_CachePool.STACK
+            String repeat = completed > 1 && spec.kind() != SlotClickCommandHelper.Inner_CachePool.STACK ? " x" + completed : "";
+            String partial = completed < requested && spec.kind() != SlotClickCommandHelper.Inner_CachePool.STACK
                ? " §e(" + completed + "/" + requested + ")"
                : "";
-            AutismClientMessaging.sendPrefixed("§a" + spec.init_Str() + " clicked §f" + targetLabel + "§a" + repeat + "." + partial);
+            AutismClientMessaging.sendPrefixed("§a" + spec.label() + " clicked §f" + targetLabel + "§a" + repeat + "." + partial);
          }
 
          return 1;
@@ -141,7 +141,7 @@ final class SlotClickCommandHelper {
       int execute(CommandContext<AutismCommandSource> var1, SlotClickCommandHelper.Inner_StreamUtil var2, int var3);
    }
 
-   record Inner_StreamUtil(String init_Str, ContainerInput init_ContainerInput, int init_I, SlotClickCommandHelper.Inner_CachePool init_CharEncoder_CacheP) {
+   record Inner_StreamUtil(String label, ContainerInput input, int init_I, SlotClickCommandHelper.Inner_CachePool kind) {
       static SlotClickCommandHelper.Inner_StreamUtil init(String label, ContainerInput input, int button) {
          return new SlotClickCommandHelper.Inner_StreamUtil(label, input, button, SlotClickCommandHelper.Inner_CachePool.NONE);
       }

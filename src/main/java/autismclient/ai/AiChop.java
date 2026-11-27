@@ -17,7 +17,7 @@ import net.minecraft.core.Vec3i;
 
 final class AiChop {
    static final int init_I = 64;
-   private static final int[][] init_IArr2 = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {0, 0}};
+   private static final int[][] COLUMN_OFFSETS = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {0, 0}};
    private static final int[][] load = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
    private AiChop() {
@@ -83,7 +83,7 @@ final class AiChop {
       List<BlockPos> candidates = new ArrayList<>();
       Set<Long> seen = new HashSet<>();
 
-      for (int[] column : init_IArr2) {
+      for (int[] column : COLUMN_OFFSETS) {
          init(candidates, seen, new BlockPos(target.getX() + column[0], target.getY() - 1, target.getZ() + column[1]));
       }
 
@@ -164,40 +164,40 @@ final class AiChop {
 
    static final class Inner_DataUtil {
       static final int init_I = 3;
-      private final LinkedList<AiChop.Inner_DataUtil.Inner_CachePool> init_LinkedList = new LinkedList<>();
+      private final LinkedList<AiChop.Inner_DataUtil.Inner_CachePool> queue = new LinkedList<>();
 
       void init(List<BlockPos> ordered) {
          for (BlockPos pos : ordered) {
-            this.init_LinkedList.addLast(new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, 0));
+            this.queue.addLast(new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, 0));
          }
       }
 
       void load(List<AiChop.Inner_DataUtil.Inner_StreamUtil> nearestFirst) {
          for (int i = nearestFirst.size() - 1; i >= 0; i--) {
-            this.init_LinkedList.addFirst(nearestFirst.get(i));
+            this.queue.addFirst(nearestFirst.get(i));
          }
       }
 
-      AiChop.Inner_DataUtil.Inner_CachePool init_RefQueue_DataUtil_() {
-         return this.init_LinkedList.peek();
+      AiChop.Inner_DataUtil.Inner_CachePool peek() {
+         return this.queue.peek();
       }
 
-      AiChop.Inner_DataUtil.Inner_CachePool load_RefQueue_DataUtil_() {
-         return this.init_LinkedList.poll();
+      AiChop.Inner_DataUtil.Inner_CachePool poll() {
+         return this.queue.poll();
       }
 
-      boolean init_Z() {
-         return this.init_LinkedList.isEmpty();
+      boolean isEmpty() {
+         return this.queue.isEmpty();
       }
 
-      int init_I() {
-         return this.init_LinkedList.size();
+      int size() {
+         return this.queue.size();
       }
 
       List<BlockPos> init_List() {
          List<BlockPos> out = new ArrayList<>();
 
-         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.init_LinkedList) {
+         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.queue) {
             if (target instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b) {
                out.add(b.pos());
             }
@@ -207,9 +207,9 @@ final class AiChop {
       }
 
       boolean init_Z(BlockPos pos) {
-         for (int i = 0; i < this.init_LinkedList.size(); i++) {
-            if (this.init_LinkedList.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
-               this.init_LinkedList.remove(i);
+         for (int i = 0; i < this.queue.size(); i++) {
+            if (this.queue.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
+               this.queue.remove(i);
                return true;
             }
          }
@@ -218,14 +218,14 @@ final class AiChop {
       }
 
       int load_I() {
-         AiChop.Inner_DataUtil.Inner_CachePool head = this.init_LinkedList.peek();
+         AiChop.Inner_DataUtil.Inner_CachePool head = this.queue.peek();
          return head instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b ? this.init_I(b.pos()) : -1;
       }
 
       int init_I(BlockPos pos) {
-         for (int i = 0; i < this.init_LinkedList.size(); i++) {
-            if (this.init_LinkedList.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
-               this.init_LinkedList.set(i, new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, b.failures() + 1));
+         for (int i = 0; i < this.queue.size(); i++) {
+            if (this.queue.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
+               this.queue.set(i, new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, b.failures() + 1));
                return b.failures() + 1;
             }
          }
@@ -234,7 +234,7 @@ final class AiChop {
       }
 
       int load(BlockPos pos) {
-         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.init_LinkedList) {
+         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.queue) {
             if (target instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
                return b.failures();
             }

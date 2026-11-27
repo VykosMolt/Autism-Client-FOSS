@@ -61,7 +61,7 @@ final class AiSpeedrun {
    static final int clear = 3;
    static final long load_J = 60000000000L;
    static final int reset = 100;
-   static final Map<String, String> load_Map = Map.of(
+   static final Map<String, String> MOB_DROPS = Map.of(
       "minecraft:cow",
       "minecraft:beef",
       "minecraft:mooshroom",
@@ -1416,7 +1416,7 @@ final class AiSpeedrun {
          }
 
          String type = BuiltInRegistries.ENTITY_TYPE.getKey(best.getType()).toString();
-         String drop = load_Map.get(type);
+         String drop = MOB_DROPS.get(type);
          int herd = 0;
 
          for (Entity e : mc.level.entitiesForRendering()) {
@@ -1848,7 +1848,7 @@ final class AiSpeedrun {
    static boolean init_Z_Minecraft(Minecraft mc, Entity e, double range) {
       if (mc.player != null && e != null && e.isAlive() && !(e.distanceToSqr(mc.player) > range * range)) {
          String id = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString();
-         return load_Map.containsKey(id) && !(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e);
+         return MOB_DROPS.containsKey(id) && !(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e);
       } else {
          return false;
       }
@@ -1936,8 +1936,8 @@ final class AiSpeedrun {
    }
 
    static final class Inner_CachePool {
-      private AiOperation init_AiOperation;
-      private AiOperation.Result init_AiOperation_Result;
+      private AiOperation child;
+      private AiOperation.Result childResult;
       private AiOperation.Result load;
       private boolean init_Z;
 
@@ -1951,8 +1951,8 @@ final class AiSpeedrun {
             );
          }
 
-         this.init_AiOperation = child;
-         this.init_AiOperation_Result = result;
+         this.child = child;
+         this.childResult = result;
          if (result.terminal() && init_Z_AiOperation_Result(result)) {
             this.init(true, result);
          }
@@ -1962,11 +1962,11 @@ final class AiSpeedrun {
 
       void init_V_AiOperation(AiOperation child) {
          if (child != null) {
-            AiOperation.Result actual = this.init_AiOperation == child ? this.init_AiOperation_Result : null;
+            AiOperation.Result actual = this.child == child ? this.childResult : null;
             this.init(child.requiresReconciliationAfterEmergency(), actual);
-            if (this.init_AiOperation != child) {
-               this.init_AiOperation = child;
-               this.init_AiOperation_Result = null;
+            if (this.child != child) {
+               this.child = child;
+               this.childResult = null;
             }
          }
       }
@@ -1974,7 +1974,7 @@ final class AiSpeedrun {
       void init(boolean needsObservation, AiOperation.Result actual) {
          if (needsObservation || init_Z_AiOperation_Result(actual)) {
             this.init_Z = true;
-            if (actual != null && (this.load == null || actual == this.init_AiOperation_Result)) {
+            if (actual != null && (this.load == null || actual == this.childResult)) {
                this.load = actual;
             }
          }
@@ -1998,7 +1998,7 @@ final class AiSpeedrun {
          }
 
          if (actual == null) {
-            actual = this.init_AiOperation_Result != null ? this.init_AiOperation_Result : this.load;
+            actual = this.childResult != null ? this.childResult : this.load;
          }
 
          AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, this.init_Z, actual);

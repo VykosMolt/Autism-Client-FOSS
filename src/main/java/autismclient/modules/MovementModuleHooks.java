@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public final class MovementModuleHooks {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MC = Minecraft.getInstance();
    private static volatile MovementModuleHooks.Inner_StreamUtil init_ai_StreamUtil = MovementModuleHooks.Inner_StreamUtil.init(-1);
    private static volatile MovementModuleHooks.Inner_DataUtil init_ai_DataUtil = MovementModuleHooks.Inner_DataUtil.init(-1);
 
@@ -20,9 +20,9 @@ public final class MovementModuleHooks {
    }
 
    public static boolean init_Z(Entity entity) {
-      return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.AiDirectOps.isRunning()
+      return !AutismLiteVariant.enabled() && MC != null && entity == MC.player && autismclient.ai.AiDirectOps.isRunning()
          ? false
-         : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
+         : init_ai_DataUtil().init_Z() && MC != null && entity == MC.player;
    }
 
    public static float speedTimerMultiplier() {
@@ -173,14 +173,14 @@ public final class MovementModuleHooks {
    public static Vec3 init(Entity entity, MoverType type, Vec3 movement) {
       if (AutismLiteVariant.enabled()
          || !PkgCls_a.init_Z()
-         || init_Minecraft.player == null
-         || entity != init_Minecraft.player && entity != init_Minecraft.player.getVehicle()) {
+         || MC.player == null
+         || entity != MC.player && entity != MC.player.getVehicle()) {
          if (AutoTotemModule.init_Z_6()) {
             return movement;
          }
 
-         if (entity != init_Minecraft.player) {
-            if (init_Minecraft.player != null && entity == init_Minecraft.player.getVehicle() && !aD.init_Z()) {
+         if (entity != MC.player) {
+            if (MC.player != null && entity == MC.player.getVehicle() && !aD.init_Z()) {
                Vec3 adjusted = EntityControlModule.init(entity, type, movement);
                adjusted = BoatFlyModule.init(entity, type, adjusted);
                if (type == MoverType.SELF && adjusted != movement) {
@@ -198,7 +198,7 @@ public final class MovementModuleHooks {
 
             Vec3 adjusted = al.init_Vec3_MoverType_Vec3(type, movement);
             if (type == MoverType.SELF && adjusted != movement) {
-               init_Minecraft.player.setDeltaMovement(adjusted);
+               MC.player.setDeltaMovement(adjusted);
             }
 
             return adjusted;
@@ -211,9 +211,9 @@ public final class MovementModuleHooks {
    public static void afterTravelInFluid(Entity entity) {
       if (AutismLiteVariant.enabled()
          || !PkgCls_a.init_Z()
-         || init_Minecraft.player == null
-         || entity != init_Minecraft.player && entity != init_Minecraft.player.getVehicle()) {
-         if (entity == init_Minecraft.player && !aD.init_Z()) {
+         || MC.player == null
+         || entity != MC.player && entity != MC.player.getVehicle()) {
+         if (entity == MC.player && !aD.init_Z()) {
             MovementModuleHooks.Inner_DataUtil state = init_ai_DataUtil();
             f.Inner_ListPool speed = state.init_f_ListPool();
             if (speed != null) {

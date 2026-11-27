@@ -38,8 +38,8 @@ final class SchematicDocument {
    final int sizeX;
    final int sizeY;
    final int sizeZ;
-   final long read_J;
-   private final Long2ObjectOpenHashMap<SchematicDocument.Inner_CachePool[]> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
+   final long volume;
+   private final Long2ObjectOpenHashMap<SchematicDocument.Inner_CachePool[]> regionsBySection = new Long2ObjectOpenHashMap<>();
    private volatile long write_J = -1L;
 
    static int bitsForPaletteSize(int size) {
@@ -84,13 +84,13 @@ final class SchematicDocument {
          this.sizeY = Math.subtractExact(maxY, minY);
          this.sizeZ = Math.subtractExact(maxZ, minZ);
          if (this.sizeX <= 4096 && this.sizeY <= 4096 && this.sizeZ <= 4096) {
-            this.read_J = volume;
+            this.volume = volume;
             ArrayList<SchematicDocument.Inner_CachePool> normalized = new ArrayList<>();
 
             for (SchematicDocument.Inner_CachePool r : raw) {
                normalized.add(
                   new SchematicDocument.Inner_CachePool(
-                     r.originX - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.palette, r.init_JArr, r.init_IArr
+                     r.originX - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.palette, r.packed, r.values
                   )
                );
             }
@@ -126,7 +126,7 @@ final class SchematicDocument {
                }
             }
 
-            build.forEach((keyx, value) -> this.init_Long2ObjectOpenHas.put(keyx, value.toArray(SchematicDocument.Inner_CachePool[]::new)));
+            build.forEach((keyx, value) -> this.regionsBySection.put(keyx, value.toArray(SchematicDocument.Inner_CachePool[]::new)));
          } else {
             throw new IllegalArgumentException("Schematic span exceeds 4096 blocks");
          }
@@ -136,10 +136,10 @@ final class SchematicDocument {
    }
 
    SchematicDocument.Inner_CachePool regionAt(int x, int y, int z) {
-      SchematicDocument.Inner_CachePool[] candidates = this.init_Long2ObjectOpenHas.get(BlockPos.asLong(x >> 4, y >> 4, z >> 4));
+      SchematicDocument.Inner_CachePool[] candidates = this.regionsBySection.get(BlockPos.asLong(x >> 4, y >> 4, z >> 4));
       if (candidates != null) {
          for (int i = candidates.length - 1; i >= 0; i--) {
-            if (candidates[i].init_Z(x, y, z)) {
+            if (candidates[i].contains(x, y, z)) {
                return candidates[i];
             }
          }
@@ -169,7 +169,7 @@ final class SchematicDocument {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
-               progress.accept((int)(100L * done / Math.max(1L, this.read_J)));
+               progress.accept((int)(100L * done / Math.max(1L, this.volume)));
             }
 
             int y = i / (r.write * r.sync);
@@ -202,7 +202,7 @@ final class SchematicDocument {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
-               progress.accept((int)(100L * done / Math.max(1L, this.read_J)));
+               progress.accept((int)(100L * done / Math.max(1L, this.volume)));
             }
 
             done++;
@@ -343,13 +343,13 @@ final class SchematicDocument {
       TreeMap<String, String> properties = new TreeMap<>();
 
       for (Property<?> p : state.getProperties()) {
-         properties.put(p.getName(), init_Str_BlockState_Property(state, p));
+         properties.put(p.getName(), propertyValue(state, p));
       }
 
       return new AiBuilder.CellSpec(0, 0, 0, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), Map.copyOf(properties));
    }
 
-   private static <T extends Comparable<T>> String init_Str_BlockState_Property(BlockState state, Property<T> property) {
+   private static <T extends Comparable<T>> String propertyValue(BlockState state, Property<T> property) {
       return property.getName(state.getValue(property));
    }
 
@@ -623,8 +623,8 @@ final class SchematicDocument {
       final int sync;
       final int flush;
       final BlockState[] palette;
-      final long[] init_JArr;
-      final int[] init_IArr;
+      final long[] packed;
+      final int[] values;
       final int close;
 
       Inner_CachePool(int x, int y, int z, int width, int height, int length, BlockState[] palette, long[] packed, int[] values) {
@@ -639,8 +639,8 @@ final class SchematicDocument {
             if (volume <= 134217728L && palette.length >= 1 && palette.length <= 65536) {
                this.flush = (int)volume;
                this.palette = palette;
-               this.init_JArr = packed;
-               this.init_IArr = values;
+               this.packed = packed;
+               this.values = values;
                this.close = SchematicDocument.bitsForPaletteSize(palette.length);
                if (values != null && values.length != volume
                   || values == null && (packed == null || packed.length != ((long)this.flush * this.close + 63L) / 64L)) {
@@ -654,24 +654,24 @@ final class SchematicDocument {
          }
       }
 
-      int init_I(int index) {
-         if (this.init_IArr != null) {
-            return this.init_IArr[index];
+      int valueAt(int index) {
+         if (this.values != null) {
+            return this.values[index];
          }
 
          long bit = (long)index * this.close;
          int word = (int)(bit >>> 6);
          int shift = (int)(bit & 63L);
-         long value = this.init_JArr[word] >>> shift;
+         long value = this.packed[word] >>> shift;
          if (shift + this.close > 64) {
-            value |= this.init_JArr[word + 1] << 64 - shift;
+            value |= this.packed[word + 1] << 64 - shift;
          }
 
          return (int)(value & (1L << this.close) - 1L);
       }
 
       BlockState stateAtIndex(int index) {
-         int id = this.init_I(index);
+         int id = this.valueAt(index);
          if (id >= 0 && id < this.palette.length) {
             return this.palette[id];
          } else {
@@ -683,7 +683,7 @@ final class SchematicDocument {
          return this.stateAtIndex(((py - this.load) * this.sync + pz - this.read) * this.write + px - this.originX);
       }
 
-      boolean init_Z(int px, int py, int pz) {
+      boolean contains(int px, int py, int pz) {
          return px >= this.originX
             && px < this.originX + this.write
             && py >= this.load

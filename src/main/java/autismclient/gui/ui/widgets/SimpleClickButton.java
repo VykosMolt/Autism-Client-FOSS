@@ -8,19 +8,19 @@ import autismclient.gui.f.b.CachePool;
 public final class SimpleClickButton {
    private final autismclient.gui.f.NetHelper init_NetHelper;
    private final Component init_Component;
-   private final Runnable init_Runnable;
+   private final Runnable action;
    private final CachePool.Inner_DataUtil init_CachePool_DataUtil;
-   private boolean init_Z = true;
+   private boolean active = true;
 
    public SimpleClickButton(int x, int y, int width, int height, Component label, CachePool.Inner_DataUtil tone, Runnable action) {
       this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, width, height);
       this.init_Component = label == null ? Component.empty() : label;
       this.init_CachePool_DataUtil = tone == null ? CachePool.Inner_DataUtil.init : tone;
-      this.init_Runnable = action;
+      this.action = action;
    }
 
    public SimpleClickButton init(boolean active) {
-      this.init_Z = active;
+      this.active = active;
       return this;
    }
 
@@ -30,15 +30,15 @@ public final class SimpleClickButton {
          this.init_NetHelper,
          this.init_Component.getString(),
          this.init_CachePool_DataUtil,
-         this.init_Z && this.init_NetHelper.init_Z(mouseX, mouseY),
+         this.active && this.init_NetHelper.init_Z(mouseX, mouseY),
          false
       );
    }
 
    public boolean init(double mouseX, double mouseY, int mouseButton) {
-      if (this.init_Z && mouseButton == 0 && this.init_NetHelper.init_Z((int)mouseX, (int)mouseY)) {
-         if (this.init_Runnable != null) {
-            this.init_Runnable.run();
+      if (this.active && mouseButton == 0 && this.init_NetHelper.init_Z((int)mouseX, (int)mouseY)) {
+         if (this.action != null) {
+            this.action.run();
          }
 
          return true;

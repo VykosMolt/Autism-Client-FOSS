@@ -12,14 +12,14 @@ import net.minecraft.server.packs.VanillaPackResources;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 public final class TranslationSnapshot {
-   private static final ThreadLocal<TranslationSnapshot.Inner_DataUtil> init_ThreadLocal = new ThreadLocal<>();
-   private final ResourceManager init_ResourceManager;
-   private final Map<String, TranslationSnapshot.Inner_BufferHelper> init_Map;
+   private static final ThreadLocal<TranslationSnapshot.Inner_DataUtil> ACTIVE_BUILDER = new ThreadLocal<>();
+   private final ResourceManager resourceManager;
+   private final Map<String, TranslationSnapshot.Inner_BufferHelper> entries;
    private final Map<String, String> load;
 
    private TranslationSnapshot(ResourceManager resourceManager, Map<String, TranslationSnapshot.Inner_BufferHelper> entries, Map<String, String> vanillaEntries) {
-      this.init_ResourceManager = resourceManager;
-      this.init_Map = entries;
+      this.resourceManager = resourceManager;
+      this.entries = entries;
       this.load = vanillaEntries;
    }
 
@@ -35,19 +35,19 @@ public final class TranslationSnapshot {
       if (language instanceof TranslationSnapshotDuck access) {
          TranslationSnapshot snapshot = access.autism$getTranslationSnapshot();
          if (snapshot != null) {
-            TranslationSnapshot.Inner_BufferHelper sourced = snapshot.init_Map.get(key);
+            TranslationSnapshot.Inner_BufferHelper sourced = snapshot.entries.get(key);
             if (sourced != null) {
-               TranslationSnapshot.Inner_StreamUtil entry = sourced.init_ClassCache_StreamU();
-               if (entry.init_ClassCache_CachePo() == TranslationSnapshot.Inner_CachePool.VANILLA) {
+               TranslationSnapshot.Inner_StreamUtil entry = sourced.entry();
+               if (entry.origin() == TranslationSnapshot.Inner_CachePool.VANILLA) {
                   return entry.init_Str();
                }
 
-               if (sourced.init_PackResources() != null
+               if (sourced.source() != null
                   && sourced.init_Str() != null
                   && (
                      connectionBound
-                        ? PackTranslationPolicyResolver.init(snapshot.init_ResourceManager, sourced.init_PackResources(), sourced.init_Str(), origin)
-                        : PackTranslationPolicyResolver.init(snapshot.init_ResourceManager, sourced.init_PackResources(), sourced.init_Str())
+                        ? PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str(), origin)
+                        : PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str())
                   )) {
                   return entry.init_Str();
                }
@@ -65,9 +65,9 @@ public final class TranslationSnapshot {
       return fallback != null ? fallback : key;
    }
 
-   private record Inner_BufferHelper(TranslationSnapshot.Inner_StreamUtil init_ClassCache_StreamU, PackResources init_PackResources, String init_Str) {
+   private record Inner_BufferHelper(TranslationSnapshot.Inner_StreamUtil entry, PackResources source, String init_Str) {
       private Inner_BufferHelper {
-         Objects.requireNonNull(init_ClassCache_StreamU, "entry");
+         Objects.requireNonNull(entry, "entry");
       }
    }
 
@@ -78,25 +78,25 @@ public final class TranslationSnapshot {
    }
 
    public static final class Inner_DataUtil implements AutoCloseable {
-      private final ResourceManager init_ResourceManager;
-      private final Map<String, TranslationSnapshot.Inner_BufferHelper> init_Map = new HashMap<>();
+      private final ResourceManager resourceManager;
+      private final Map<String, TranslationSnapshot.Inner_BufferHelper> entries = new HashMap<>();
       private final Map<String, String> load = new HashMap<>();
-      private final TranslationSnapshot.Inner_DataUtil init_ClassCache_DataUti;
-      private boolean init_Z;
+      private final TranslationSnapshot.Inner_DataUtil previous;
+      private boolean closed;
 
       private Inner_DataUtil(ResourceManager resourceManager, TranslationSnapshot.Inner_DataUtil previous) {
-         this.init_ResourceManager = Objects.requireNonNull(resourceManager, "resourceManager");
-         this.init_ClassCache_DataUti = previous;
+         this.resourceManager = Objects.requireNonNull(resourceManager, "resourceManager");
+         this.previous = previous;
       }
 
       public static TranslationSnapshot.Inner_DataUtil begin(ResourceManager resourceManager) {
-         TranslationSnapshot.Inner_DataUtil builder = new TranslationSnapshot.Inner_DataUtil(resourceManager, TranslationSnapshot.init_ThreadLocal.get());
-         TranslationSnapshot.init_ThreadLocal.set(builder);
+         TranslationSnapshot.Inner_DataUtil builder = new TranslationSnapshot.Inner_DataUtil(resourceManager, TranslationSnapshot.ACTIVE_BUILDER.get());
+         TranslationSnapshot.ACTIVE_BUILDER.set(builder);
          return builder;
       }
 
       public static TranslationSnapshot.Inner_DataUtil current() {
-         return TranslationSnapshot.init_ThreadLocal.get();
+         return TranslationSnapshot.ACTIVE_BUILDER.get();
       }
 
       public void init(PackResources source, String sourcePackId, String key, String value) {
@@ -105,7 +105,7 @@ public final class TranslationSnapshot {
          Objects.requireNonNull(value, "value");
          if (source instanceof VanillaPackResources) {
             this.init(TranslationSnapshot.Inner_CachePool.VANILLA, key, value);
-         } else if (PackTranslationPolicyResolver.init(this.init_ResourceManager, source, sourcePackId)) {
+         } else if (PackTranslationPolicyResolver.init(this.resourceManager, source, sourcePackId)) {
             this.init(init_ClassCache_CachePo_PackResources(source), key, value, source, sourcePackId);
          }
       }
@@ -123,13 +123,13 @@ public final class TranslationSnapshot {
          }
 
          if (origin == TranslationSnapshot.Inner_CachePool.MOD) {
-            TranslationSnapshot.Inner_BufferHelper existing = this.init_Map.get(key);
-            if (existing != null && existing.init_ClassCache_StreamU().init_ClassCache_CachePo() == TranslationSnapshot.Inner_CachePool.VANILLA) {
+            TranslationSnapshot.Inner_BufferHelper existing = this.entries.get(key);
+            if (existing != null && existing.entry().origin() == TranslationSnapshot.Inner_CachePool.VANILLA) {
                return;
             }
          }
 
-         this.init_Map.put(key, new TranslationSnapshot.Inner_BufferHelper(new TranslationSnapshot.Inner_StreamUtil(value, origin), source, sourcePackId));
+         this.entries.put(key, new TranslationSnapshot.Inner_BufferHelper(new TranslationSnapshot.Inner_StreamUtil(value, origin), source, sourcePackId));
       }
 
       private static TranslationSnapshot.Inner_CachePool init_ClassCache_CachePo_PackResources(PackResources source) {
@@ -143,7 +143,7 @@ public final class TranslationSnapshot {
 
       public void init(List<String> removed, Map<String, String> renamed) {
          for (String key : removed) {
-            this.init_Map.remove(key);
+            this.entries.remove(key);
             this.load.remove(key);
          }
 
@@ -155,45 +155,45 @@ public final class TranslationSnapshot {
                this.load.put(rename.getValue(), previousVanilla);
             }
 
-            TranslationSnapshot.Inner_BufferHelper previousValue = this.init_Map.remove(rename.getKey());
+            TranslationSnapshot.Inner_BufferHelper previousValue = this.entries.remove(rename.getKey());
             if (previousValue == null) {
-               this.init_Map.remove(rename.getValue());
+               this.entries.remove(rename.getValue());
             } else {
-               this.init_Map.put(rename.getValue(), previousValue);
+               this.entries.put(rename.getValue(), previousValue);
             }
          }
       }
 
       public TranslationSnapshot build() {
-         return new TranslationSnapshot(this.init_ResourceManager, Map.copyOf(this.init_Map), Map.copyOf(this.load));
+         return new TranslationSnapshot(this.resourceManager, Map.copyOf(this.entries), Map.copyOf(this.load));
       }
 
-      TranslationSnapshot.Inner_StreamUtil init_ClassCache_StreamU_Str(String key) {
-         TranslationSnapshot.Inner_BufferHelper entry = this.init_Map.get(key);
-         return entry != null ? entry.init_ClassCache_StreamU() : null;
+      TranslationSnapshot.Inner_StreamUtil lookup(String key) {
+         TranslationSnapshot.Inner_BufferHelper entry = this.entries.get(key);
+         return entry != null ? entry.entry() : null;
       }
 
       @Override
       public void close() {
-         if (!this.init_Z) {
-            this.init_Z = true;
-            if (TranslationSnapshot.init_ThreadLocal.get() != this) {
+         if (!this.closed) {
+            this.closed = true;
+            if (TranslationSnapshot.ACTIVE_BUILDER.get() != this) {
                throw new IllegalStateException("Translation snapshot builders closed out of order");
             }
 
-            if (this.init_ClassCache_DataUti == null) {
-               TranslationSnapshot.init_ThreadLocal.remove();
+            if (this.previous == null) {
+               TranslationSnapshot.ACTIVE_BUILDER.remove();
             } else {
-               TranslationSnapshot.init_ThreadLocal.set(this.init_ClassCache_DataUti);
+               TranslationSnapshot.ACTIVE_BUILDER.set(this.previous);
             }
          }
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, TranslationSnapshot.Inner_CachePool init_ClassCache_CachePo) {
+   public record Inner_StreamUtil(String init_Str, TranslationSnapshot.Inner_CachePool origin) {
       public Inner_StreamUtil {
          Objects.requireNonNull(init_Str, "value");
-         Objects.requireNonNull(init_ClassCache_CachePo, "origin");
+         Objects.requireNonNull(origin, "origin");
       }
    }
 }
