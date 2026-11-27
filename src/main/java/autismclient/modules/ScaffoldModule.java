@@ -1543,7 +1543,7 @@ public final class ScaffoldModule extends Module {
 
                         if (clickRotation != null) {
                            float emittedPitch = clickRotation.pitch();
-                           if (!read_Z_F(emittedPitch)) {
+                           if (!isBelowPitchLimit(emittedPitch)) {
                               this.add_Str = "pveto-" + (int)emittedPitch;
                               this.init_V_Str_aI_TableIndex("pitch-veto", target);
                               return;
@@ -1620,7 +1620,7 @@ public final class ScaffoldModule extends Module {
                               double publishedReach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
                               BlockHitResult publishedRay = publishedEye == null
                                  ? null
-                                 : init_BlockHitResult_Vec3(publishedEye, clickRotation, publishedReach, MC.level, MC.player);
+                                 : raycast(publishedEye, clickRotation, publishedReach, MC.level, MC.player);
                               if (publishedRay != null
                                  && this.init_BlockHitResult != null
                                  && publishedRay.getBlockPos().equals(this.init_BlockHitResult.getBlockPos())
@@ -4162,7 +4162,7 @@ public final class ScaffoldModule extends Module {
    private boolean load_Z_aI_TableIndex_ce_DataUtil(ScaffoldModule.PlannedPlacement target, RotationMath.Rotation clickRotation) {
       if (MC.player != null && MC.level != null && clickRotation != null) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
-         BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), clickRotation, reach, MC.level, MC.player);
+         BlockHitResult ray = raycast(MC.player.getEyePosition(), clickRotation, reach, MC.level, MC.player);
          this.init_BlockHitResult = ray;
          return init_Z_BlockHitResult(ray, target, this.load_Z_BlockHitResult_aI_TableIndex(ray, target));
       } else {
@@ -4183,7 +4183,7 @@ public final class ScaffoldModule extends Module {
 
       if (MC.player != null && MC.level != null && rotation != null) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
-         BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), rotation, reach, MC.level, MC.player);
+         BlockHitResult ray = raycast(MC.player.getEyePosition(), rotation, reach, MC.level, MC.player);
          return ray == null
             ? " miss=no-hit"
             : " miss=hit:"
@@ -4323,7 +4323,7 @@ public final class ScaffoldModule extends Module {
       return Math.min(goal, bound);
    }
 
-   static boolean read_Z_F(float emitted) {
+   static boolean isBelowPitchLimit(float emitted) {
       return emitted <= 89.5F;
    }
 
@@ -4335,14 +4335,14 @@ public final class ScaffoldModule extends Module {
       return Float.isNaN(sentYaw) ? 0.0F : sentYaw - vanillaYaw;
    }
 
-   static float load_F_F_F(float sentYaw, float cameraYaw) {
+   static float yawWrapOffset(float sentYaw, float cameraYaw) {
       return Float.isFinite(sentYaw) && Float.isFinite(cameraYaw) ? 360.0F * Math.round((sentYaw - cameraYaw) / 360.0F) : 0.0F;
    }
 
    private void prev_V() {
       if (MC != null && MC.player != null && autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
          LocalPlayer player = MC.player;
-         float offset = load_F_F_F(f_l_F, player.getYRot());
+         float offset = yawWrapOffset(f_l_F, player.getYRot());
          if (offset != 0.0F && Float.isFinite(offset)) {
             player.setYRot(player.getYRot() + offset);
             player.yRotO += offset;
@@ -6191,7 +6191,7 @@ public final class ScaffoldModule extends Module {
          && this.update_ce_DataUtil != null
          && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
-         BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), this.update_ce_DataUtil, reach, MC.level, MC.player);
+         BlockHitResult ray = raycast(MC.player.getEyePosition(), this.update_ce_DataUtil, reach, MC.level, MC.player);
          if (ray != null) {
             MC.hitResult = ray;
          }
@@ -6932,7 +6932,7 @@ public final class ScaffoldModule extends Module {
             if (!(Math.abs(Mth.wrapDegrees(rotation.yaw() - from.yaw())) > cap)
                && !(Math.abs(rotation.pitch() - from.pitch()) > cap)
                && !(Math.abs(rotation.pitch()) > 89.5)) {
-               BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach, MC.level, MC.player);
+               BlockHitResult ray = raycast(eye, rotation, reach, MC.level, MC.player);
                if (ray != null
                   && ray.getBlockPos().equals(target.init_BlockPos())
                   && ray.getDirection() == target.init_Direction()
@@ -7074,7 +7074,7 @@ public final class ScaffoldModule extends Module {
          && !(reach <= 0.035)
          && Float.isFinite(rotation.yaw())
          && Float.isFinite(rotation.pitch())) {
-         BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach - 0.035, MC.level, MC.player);
+         BlockHitResult ray = raycast(eye, rotation, reach - 0.035, MC.level, MC.player);
          return ray != null && ray.getBlockPos().equals(support) && ray.getDirection() == face && this.init_Z_BlockHitResult_3(ray);
       } else {
          return false;
@@ -7167,7 +7167,7 @@ public final class ScaffoldModule extends Module {
       } else {
          if (!this.count_Z() && !init_Z_BlockPos_AABB_2(target.load(), body)) {
             RotationMath.Rotation current = this.poll_ce_DataUtil();
-            BlockHitResult carried = init_BlockHitResult_Vec3(eye, current, player.blockInteractionRange(), MC.level, player);
+            BlockHitResult carried = raycast(eye, current, player.blockInteractionRange(), MC.level, player);
             if (carried != null
                && carried.getBlockPos().equals(target.init_BlockPos())
                && carried.getDirection() == target.init_Direction()
@@ -7201,7 +7201,7 @@ public final class ScaffoldModule extends Module {
                }
             }
 
-            BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, player.blockInteractionRange(), MC.level, player);
+            BlockHitResult ray = raycast(eye, rotation, player.blockInteractionRange(), MC.level, player);
             return ray != null && ray.getBlockPos().equals(target.init_BlockPos()) && ray.getDirection() == target.init_Direction()
                ? new ScaffoldModule.LivePlacement(
                   new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, rotation, target.init_D()), placement.init_Z()
@@ -7234,7 +7234,7 @@ public final class ScaffoldModule extends Module {
                   return null;
                }
 
-               BlockHitResult ray = init_BlockHitResult_Vec3(eye, fixed, reach, MC.level, player);
+               BlockHitResult ray = raycast(eye, fixed, reach, MC.level, player);
                return new ScaffoldModule.LivePlacement(
                   new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, fixed, target.init_D()), placement.init_Z()
                );
@@ -7260,7 +7260,7 @@ public final class ScaffoldModule extends Module {
                         );
                         if (!(eye.distanceToSqr(point) > reach * reach + 1.0E-7)) {
                            RotationMath.Rotation rotation = RotationMath.lookAt(point, eye);
-                           BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach, MC.level, player);
+                           BlockHitResult ray = raycast(eye, rotation, reach, MC.level, player);
                            if (ray != null && ray.getBlockPos().equals(target.init_BlockPos()) && ray.getDirection() == target.init_Direction()) {
                               double cost = init_D_ce_DataUtil_ce_DataUtil(current, rotation) + Math.abs(offset) * 4.0 + eye.distanceTo(point) * 0.015;
                               if (cost < costs[offsetIndex]) {
@@ -7367,7 +7367,7 @@ public final class ScaffoldModule extends Module {
       RotationMath.Rotation stepped = continuous
          ? RotationMath.stepQuantizedUnwrapped(from, live.init_ce_DataUtil(), cap, cap, RotationMath.gcdStep())
          : load_ce_DataUtil_ce_DataUtil(from, live.init_ce_DataUtil(), cap, cap, RotationMath.gcdStep());
-      BlockHitResult ray = init_BlockHitResult_Vec3(eye, stepped, MC.player.blockInteractionRange(), MC.level, MC.player);
+      BlockHitResult ray = raycast(eye, stepped, MC.player.blockInteractionRange(), MC.level, MC.player);
       if (ray != null && ray.getBlockPos().equals(live.init_BlockPos()) && ray.getDirection() == live.init_Direction() && this.init_Z_BlockHitResult_3(ray)) {
          return new ScaffoldModule.PlannedPlacement(live.init_BlockPos(), live.load(), live.init_Direction(), ray, stepped, live.init_D());
       }
@@ -7404,7 +7404,7 @@ public final class ScaffoldModule extends Module {
       float pitchDelta = Math.abs(candidate.pitch() - from.pitch());
       double countSlack = gcd * 0.501;
       if (!(yawDelta > cap + countSlack) && !(pitchDelta > cap + countSlack)) {
-         BlockHitResult ray = init_BlockHitResult_Vec3(eye, candidate, MC.player.blockInteractionRange(), MC.level, MC.player);
+         BlockHitResult ray = raycast(eye, candidate, MC.player.blockInteractionRange(), MC.level, MC.player);
          return ray != null
                && ray.getBlockPos().equals(live.init_BlockPos())
                && ray.getDirection() == live.init_Direction()
@@ -8496,7 +8496,7 @@ public final class ScaffoldModule extends Module {
       if (!this.stop_Z && this.f_G_I <= 0) {
          ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
          if (wire != null && wire.init_I() < AutismSessionState.getInstance().getClientTick()) {
-            BlockHitResult ray = init_BlockHitResult_Vec3(player.getEyePosition(), wire.load(), player.blockInteractionRange() - 0.035, MC.level, player);
+            BlockHitResult ray = raycast(player.getEyePosition(), wire.load(), player.blockInteractionRange() - 0.035, MC.level, player);
             if (ray != null && this.init_Z_BlockHitResult_3(ray)) {
                BlockPos placed = ray.getBlockPos().relative(ray.getDirection());
                boolean top = optional > 0 && ray.getDirection() == Direction.UP && placed.equals(this.load_BlockPos);
@@ -9526,7 +9526,7 @@ public final class ScaffoldModule extends Module {
 
    private ScaffoldRotationSmoother init_aM() {
       if (this.init_aM == null) {
-         this.init_aM = ScaffoldRotationSmoother.init_aM();
+         this.init_aM = ScaffoldRotationSmoother.create();
       }
 
       return this.init_aM;
@@ -9632,7 +9632,7 @@ public final class ScaffoldModule extends Module {
                player.blockInteractionRange() - 0.035
             );
             if (carry != null && this.init_Z_Vec3(eye, carry, target.init_BlockPos(), target.init_Direction(), player.blockInteractionRange())) {
-               BlockHitResult hit = init_BlockHitResult_Vec3(eye, carry, player.blockInteractionRange(), MC.level, player);
+               BlockHitResult hit = raycast(eye, carry, player.blockInteractionRange(), MC.level, player);
                future = new ScaffoldModule.LivePlacement(
                   new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), hit, carry, target.init_D()), future.init_Z()
                );
@@ -9885,7 +9885,7 @@ public final class ScaffoldModule extends Module {
          for (BlockPos support : this.load_List) {
             if (this.init_Z_LocalPlayer_5(player, support, true)) {
                RotationMath.Rotation current = this.poll_ce_DataUtil();
-               BlockHitResult carried = init_BlockHitResult_Vec3(eye, current, player.blockInteractionRange() - 0.035, MC.level, player);
+               BlockHitResult carried = raycast(eye, current, player.blockInteractionRange() - 0.035, MC.level, player);
                Vec3 point = init_Vec3_AABB(new AABB(support), eye, this.write_Vec3(), this.init_Vec3_Vec3_2(eye));
                boolean holds = carried != null
                   && carried.getBlockPos().equals(support)
@@ -9919,7 +9919,7 @@ public final class ScaffoldModule extends Module {
                   if (this.f_A_I <= 1 && !init_Z_F(this.flags_F, current.yaw(), rotation.yaw(), this.f_I_I, RotationMath.gcdStep())) {
                      deferredPastArc = true;
                   } else {
-                     BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, player.blockInteractionRange() - 0.035, MC.level, player);
+                     BlockHitResult ray = raycast(eye, rotation, player.blockInteractionRange() - 0.035, MC.level, player);
                      if (ray != null && ray.getDirection() == Direction.UP && ray.getBlockPos().equals(support) && this.init_Z_BlockHitResult_3(ray)) {
                         this.load_BlockPos = support.above().immutable();
                         return new ScaffoldModule.LivePlacement(
@@ -10208,7 +10208,7 @@ public final class ScaffoldModule extends Module {
       if (!preparing && this.init_aI_CacheEntry != null) {
          Vec3 motion = player.getDeltaMovement().add(this.read_Vec3().scale(0.0196));
          Vec3 eye = player.getEyePosition().add(this.init_Vec3_LocalPlayer(player, player.getBoundingBox(), motion));
-         BlockHitResult side = init_BlockHitResult_Vec3(
+         BlockHitResult side = raycast(
             eye, this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(), player.blockInteractionRange() - 0.035, MC.level, player
          );
          carried = side != null && side.getBlockPos().equals(support) && side.getDirection() == this.init_Direction() && this.init_Z_BlockHitResult_3(side);
@@ -10477,7 +10477,7 @@ public final class ScaffoldModule extends Module {
       this.read_BlockPos = null;
       this.init_aN.load();
       if (this.init_aM != null) {
-         this.init_aM.init_V();
+         this.init_aM.reset();
       }
 
       this.init_aM_DataUtil = null;
@@ -10548,7 +10548,7 @@ public final class ScaffoldModule extends Module {
    private void chunk_V() {
       this.read_BlockPos = null;
       if (this.init_aM != null) {
-         this.init_aM.init_V();
+         this.init_aM.reset();
       }
 
       this.init_aM_DataUtil = null;
@@ -10625,7 +10625,7 @@ public final class ScaffoldModule extends Module {
       return false;
    }
 
-   public static void read_V_Packet(Packet<?> packet) {
+   public static void onPacketWritten(Packet<?> packet) {
       if (packet instanceof ServerboundPlayerInputPacket input) {
          block_Z = input.input().shift();
       }
@@ -10674,7 +10674,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   public static void update_V_10() {
+   public static void onDisconnect() {
       write_Vec3 = null;
       update_Vec3 = null;
       block_Z = false;
@@ -10742,7 +10742,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   public static void init_V_BlockPos_BlockState_2(BlockPos cell, BlockState state) {
+   public static void onBlockUpdate(BlockPos cell, BlockState state) {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.index_Z() && scaffold.init_aO.init(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.init_aO
@@ -10763,7 +10763,7 @@ public final class ScaffoldModule extends Module {
             autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("Telly-placement-diagnostics", () -> {
                try {
                   Files.createDirectories(directory);
-                  String json = capture.init_Str_2();
+                  String json = capture.toJson();
                   if (capture.init_Z()) {
                      Files.writeString(directory.resolve("telly-rejection-first.json"), json);
                   }
@@ -10877,7 +10877,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   public static void init_V_InteractionHand(InteractionHand hand, BlockHitResult hit, InteractionResult result) {
+   public static void onUseItemOnResult(InteractionHand hand, BlockHitResult hit, InteractionResult result) {
       long generation = autismclient.util.VirtualInputDispatcher.init_J();
       if (generation > 0L && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.frame_Z()) {
          scaffold.init_V_J(generation, hand, hit, result);
@@ -10956,7 +10956,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   public static void init_V_I_8(int sequence) {
+   public static void onBlockChangedAck(int sequence) {
       if (MC != null && MC.level != null && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold) {
          scaffold.c_V();
          scaffold.f_B_I = Math.max(scaffold.f_B_I, sequence);
@@ -11042,7 +11042,7 @@ public final class ScaffoldModule extends Module {
       return f_bO_I == AutismSessionState.getInstance().getClientTick();
    }
 
-   public static Input init_Input_ClientInput_Input_4(ClientInput source, Input original) {
+   public static Input overrideInput(ClientInput source, Input original) {
       if (!AutismLiteVariant.enabled() && ClutchModule.read_Z_20()) {
          return original;
       }
@@ -12416,20 +12416,20 @@ public final class ScaffoldModule extends Module {
       this.fill_F = 0.0F / 0.0F;
    }
 
-   public static float init_F_Entity_F(Entity entity, float vanillaYaw) {
+   public static float velocityYaw(Entity entity, float vanillaYaw) {
       if (entity == null || MC == null || entity != MC.player) {
          return vanillaYaw;
       } else if (f.load()) {
          return vanillaYaw;
       } else if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.table_Z()) {
          RotationMath.Rotation rotation = scaffold.load_ce_DataUtil;
-         return rotation != null && scaffold.f_v_I > 0 ? init_F_LocalPlayer_F(MC.player, vanillaYaw) : vanillaYaw;
+         return rotation != null && scaffold.f_v_I > 0 ? overrideYaw(MC.player, vanillaYaw) : vanillaYaw;
       } else {
          return vanillaYaw;
       }
    }
 
-   public static float init_F_LocalPlayer_F(LocalPlayer player, float vanillaYaw) {
+   public static float overrideYaw(LocalPlayer player, float vanillaYaw) {
       RotationMath.Rotation rotation = load_ce_DataUtil_LocalPlayer(player);
       int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != f_bS_I) {
@@ -12445,7 +12445,7 @@ public final class ScaffoldModule extends Module {
       return previousSentYaw + Mth.wrapDegrees(silentYaw - previousSentYaw);
    }
 
-   public static float load_F_LocalPlayer_F(LocalPlayer player, float vanillaPitch) {
+   public static float overridePitch(LocalPlayer player, float vanillaPitch) {
       RotationMath.Rotation rotation = load_ce_DataUtil_LocalPlayer(player);
       return rotation == null ? vanillaPitch : rotation.pitch();
    }
@@ -12456,7 +12456,7 @@ public final class ScaffoldModule extends Module {
          return vanillaImpulse;
       }
 
-      float sent = MC != null && entity == MC.player ? init_F_LocalPlayer_F(MC.player, rotation.yaw()) : rotation.yaw();
+      float sent = MC != null && entity == MC.player ? overrideYaw(MC.player, rotation.yaw()) : rotation.yaw();
       float yaw = sent * 0.017453292F;
       return new Vec3(-Mth.sin(yaw) * 0.2F, vanillaImpulse.y, Mth.cos(yaw) * 0.2F);
    }
@@ -12513,12 +12513,12 @@ public final class ScaffoldModule extends Module {
       return hitResult instanceof EntityHitResult && flush_Z_5();
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_3() {
+   public static RotationMath.Rotation activeRotation() {
       return MC == null ? null : load_ce_DataUtil_LocalPlayer(MC.player);
    }
 
    public static RotationMath.Rotation load_ce_DataUtil_3() {
-      RotationMath.Rotation active = init_ce_DataUtil_3();
+      RotationMath.Rotation active = activeRotation();
       if (active == null) {
          return null;
       }
@@ -16126,10 +16126,10 @@ public final class ScaffoldModule extends Module {
    }
 
    private BlockHitResult init_BlockHitResult_ce_DataUtil_D(RotationMath.Rotation rotation, double reach) {
-      return rotation == null ? null : init_BlockHitResult_Vec3(MC.player.getEyePosition(), rotation, reach, MC.level, MC.player);
+      return rotation == null ? null : raycast(MC.player.getEyePosition(), rotation, reach, MC.level, MC.player);
    }
 
-   static BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Rotation rotation, double reach, BlockGetter world, Entity entity) {
+   static BlockHitResult raycast(Vec3 eye, RotationMath.Rotation rotation, double reach, BlockGetter world, Entity entity) {
       Vec3 look = init_Vec3_ce_DataUtil(rotation);
       Vec3 end = eye.add(look.scale(reach));
       HitResult result = world.clip(
@@ -16463,7 +16463,7 @@ public final class ScaffoldModule extends Module {
          return false;
       } else {
          Block block = blockItem.getBlock();
-         if (init_Z_Block_3(block) && this.load_Z_Block(block)) {
+         if (isScaffoldBlock(block) && this.load_Z_Block(block)) {
             BlockState state = block.defaultBlockState();
             return state.entityCanStandOnFace(MC.level, BlockPos.ZERO, MC.player, Direction.UP);
          } else {
@@ -16472,7 +16472,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   public static boolean init_Z_Block_3(Block block) {
+   public static boolean isScaffoldBlock(Block block) {
       if (block == null || !(block.asItem() instanceof BlockItem blockItem && blockItem.getBlock() == block)) {
          return false;
       }
@@ -16511,7 +16511,7 @@ public final class ScaffoldModule extends Module {
          Identifier id = Identifier.tryParse(RegistryIdValidator.init(entry));
          if (id != null) {
             BuiltInRegistries.BLOCK.getOptional(id).ifPresent(block -> {
-               if (init_Z_Block_3(block)) {
+               if (isScaffoldBlock(block)) {
                   blocks.add(block);
                }
             });
@@ -17868,13 +17868,13 @@ public final class ScaffoldModule extends Module {
       return !state.isAir() && !state.canBeReplaced() && !state.getCollisionShape(level, pos, context).isEmpty();
    }
 
-   public static void sync_V_6() {
+   public static void onPositionCorrection() {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled()) {
          scaffold.h_V();
       }
    }
 
-   public static void init_V_F_F(float appliedYaw, float appliedPitch) {
+   public static void recordAppliedRotation(float appliedYaw, float appliedPitch) {
       f_l_F = appliedYaw;
       f_bS_I = AutismSessionState.getInstance().getClientTick();
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled()) {

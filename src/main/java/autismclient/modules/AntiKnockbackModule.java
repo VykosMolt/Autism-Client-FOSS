@@ -72,7 +72,7 @@ public final class AntiKnockbackModule extends Module {
          && !MC.player.isFallFlying();
    }
 
-   public static void init_V_ClientboundDamageE(ClientboundDamageEventPacket packet) {
+   public static void onDamageEvent(ClientboundDamageEventPacket packet) {
       AntiKnockbackModule m = init_StateCache();
       if (m != null && m.init_Z_17() && packet.entityId() == MC.player.getId()) {
          DamageSource source = packet.getSource(MC.level);
@@ -85,7 +85,7 @@ public final class AntiKnockbackModule extends Module {
             m.load_Z = !reset || m.bool("counter-movement");
             boolean motionReady = m.init_Z_I_5(m.load_I);
             m.read_Z = reset && projectile && !motionReady;
-            m.init_ab.init_V();
+            m.init_ab.reset();
             if (m.init_Z) {
                if (!m.read_Z) {
                   m.init_ab.init(motionReady ? m.init_Vec3 : Vec3.ZERO, reset, motionReady && m.load_Z, m.integer("counter-ticks"));
@@ -129,7 +129,7 @@ public final class AntiKnockbackModule extends Module {
       return age >= 0 && age <= 2;
    }
 
-   public static Input init_Input_Input(Input original) {
+   public static Input filterInput(Input original) {
       AntiKnockbackModule m = init_StateCache();
       if (m == null || original == null) {
          return original;
@@ -151,7 +151,7 @@ public final class AntiKnockbackModule extends Module {
 
             return result;
          } else {
-            m.init_ab.init_V();
+            m.init_ab.reset();
             m.read_I = -2147483648;
             if (!m.init_Z_I_5(m.init_I)) {
                m.init_I = -2147483648;
@@ -170,7 +170,7 @@ public final class AntiKnockbackModule extends Module {
    }
 
    private void load_V_13() {
-      this.init_ab.init_V();
+      this.init_ab.reset();
       this.init_I = this.load_I = this.read_I = -2147483648;
       this.init_Z = this.load_Z = this.read_Z = false;
    }

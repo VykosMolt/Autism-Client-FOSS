@@ -79,7 +79,7 @@ final class TeamDyeColorResolver {
       DyeColor[] color = new DyeColor[]{null};
       boolean[] ambiguous = new boolean[]{false};
       boolean[] plain = new boolean[]{false};
-      PlayerDisplayNameParser.init_MutableComponent(name, display, null).visit((style, text) -> {
+      PlayerDisplayNameParser.displayName(name, display, null).visit((style, text) -> {
          if (!text.isBlank()) {
             if (style.getColor() == null) {
                plain[0] = true;

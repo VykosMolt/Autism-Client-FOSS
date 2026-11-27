@@ -39,12 +39,12 @@ final class CrosshairVectorPipeline {
    }
 
    static boolean init(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
-      if (!look.init_p_NetHelper().init_Z() || !init()) {
+      if (!look.style().isPreset() || !init()) {
          return false;
       }
 
       if (Float.isFinite(centerX) && Float.isFinite(centerY) && Float.isFinite(pixelsPerGuiUnit) && !(pixelsPerGuiUnit <= 0.0F)) {
-         CrosshairVectorSpec shape = new CrosshairVectorSpec(look.init_p_NetHelper(), look.load_D(), look.read_D());
+         CrosshairVectorSpec shape = new CrosshairVectorSpec(look.style(), look.load_D(), look.read_D());
          double border = look.load_Z() ? look.write_D() : 0.0;
          double span = shape.init(pixelsPerGuiUnit, look.init_D(), border);
          if (Double.isFinite(span) && !(span <= 4.0)) {
@@ -59,12 +59,12 @@ final class CrosshairVectorPipeline {
             float outline = border > 0.0 ? (float)Math.max(1L, Math.round(border * pixelsPerGuiUnit * fit)) : 0.0F;
             float extent = Math.max((float)shape.read() * unit + 1.0F, 7.0F * unit + stroke * 1.25F + 2.0F) + outline + 2.0F;
             Matrix3x2fStack pose = graphics.pose();
-            centerX = init_F_F(centerX, pose.m00(), pose.m20(), pixelsPerGuiUnit, stroke);
-            centerY = init_F_F(centerY, pose.m11(), pose.m21(), pixelsPerGuiUnit, stroke);
+            centerX = snapToPixel(centerX, pose.m00(), pose.m20(), pixelsPerGuiUnit, stroke);
+            centerY = snapToPixel(centerY, pose.m11(), pose.m21(), pixelsPerGuiUnit, stroke);
             boolean inverted = look.init_Z() && target == 0;
             int fill = inverted ? -1 : (target != 0 ? target : look.init_I());
             CrosshairVectorPipeline.Inner_DataUtil key = new CrosshairVectorPipeline.Inner_DataUtil(
-               shape.init_p_NetHelper().ordinal(), stroke, gap, outline, unit, fill, look.load_Z() ? look.load_I() : 0, Math.clamp(look.init_F(), 0.0F, 1.0F)
+               shape.style().ordinal(), stroke, gap, outline, unit, fill, look.load_Z() ? look.load_I() : 0, Math.clamp(look.init_F(), 0.0F, 1.0F)
             );
             CrosshairVectorPipeline.Inner_StreamUtil parameters = init(key);
             float[] quad = init(centerX, centerY, extent);
@@ -104,7 +104,7 @@ final class CrosshairVectorPipeline {
       return new float[]{x - extent, y - extent, x + extent, y + extent, -extent, -extent, extent, extent};
    }
 
-   static float init_F_F(float position, float scale, float offset, float guiScale, int stroke) {
+   static float snapToPixel(float position, float scale, float offset, float guiScale, int stroke) {
       float pixelSize = scale * guiScale;
       if (!(pixelSize > 0.0F)) {
          return position;

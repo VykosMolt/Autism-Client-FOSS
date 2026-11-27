@@ -306,7 +306,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private boolean flush() {
-      return al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled() && aura.init_LivingEntity_3() != null;
+      return al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled() && aura.getTarget() != null;
    }
 
    private boolean close() {
@@ -972,7 +972,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private static boolean init_Z_F(float pitch) {
-      return ScaffoldModule.read_Z_F(Math.abs(pitch));
+      return ScaffoldModule.isBelowPitchLimit(Math.abs(pitch));
    }
 
    private RotationMath.Rotation init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
@@ -1025,7 +1025,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       double reach = this.init_D_3();
-      BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(MC.player.getEyePosition(), wireRotation, reach, MC.level, MC.player);
+      BlockHitResult ray = ScaffoldModule.raycast(MC.player.getEyePosition(), wireRotation, reach, MC.level, MC.player);
       if (!this.init_Z_PathHelper_BufferH_BlockHitResult(plan, ray)) {
          return null;
       }

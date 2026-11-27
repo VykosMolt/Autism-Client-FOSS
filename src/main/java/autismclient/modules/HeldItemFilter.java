@@ -27,16 +27,16 @@ final class HeldItemFilter {
                "minecraft:wooden_sword|minecraft:stone_sword|minecraft:copper_sword|minecraft:iron_sword|minecraft:golden_sword|minecraft:diamond_sword|minecraft:netherite_sword"
             )
             .description("Items that allow it")
-            .visibleWhen(this::init_Z)
+            .visibleWhen(this::isEnabled)
       );
    }
 
-   boolean init_Z() {
+   boolean isEnabled() {
       return Boolean.TRUE.equals(this.init_BoolSetting.get());
    }
 
-   boolean init_Z_ItemStack(ItemStack mainHand) {
-      if (!this.init_Z()) {
+   boolean accepts(ItemStack mainHand) {
+      if (!this.isEnabled()) {
          return true;
       } else {
          return mainHand != null && !mainHand.isEmpty() ? init(this.init_Set(), BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString()) : false;

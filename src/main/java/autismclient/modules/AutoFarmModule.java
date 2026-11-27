@@ -803,7 +803,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    ) {
       int slot = target.init_I();
       if (target.init_Item() != null) {
-         BlockHitResult hit = ScaffoldModule.init_BlockHitResult_Vec3(eye, target.init_ce_DataUtil(), this.init_D_4(), MC.level, MC.player);
+         BlockHitResult hit = ScaffoldModule.raycast(eye, target.init_ce_DataUtil(), this.init_D_4(), MC.level, MC.player);
          if (hit != null && this.init_Z_Item_BlockHitResult(target.init_Item(), hit)) {
             slot = -1;
          }
@@ -1215,7 +1215,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init_Z_ce_DataUtil_Vec3(RotationMath.Rotation goal, Vec3 eye) {
-      BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(eye, goal, this.init_D_4(), MC.level, MC.player);
+      BlockHitResult ray = ScaffoldModule.raycast(eye, goal, this.init_D_4(), MC.level, MC.player);
       if (ray == null) {
          return false;
       }
@@ -1293,7 +1293,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private boolean load(RotationMath.Rotation goal, Vec3 eye) {
-      BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(eye, goal, this.init_D_4(), MC.level, MC.player);
+      BlockHitResult ray = ScaffoldModule.raycast(eye, goal, this.init_D_4(), MC.level, MC.player);
       return ray != null && this.init_Z_BlockPos_3(ray.getBlockPos());
    }
 
@@ -1751,7 +1751,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(MC.player.getEyePosition(), wireRotation, this.init_D_4(), MC.level, MC.player);
+      BlockHitResult ray = ScaffoldModule.raycast(MC.player.getEyePosition(), wireRotation, this.init_D_4(), MC.level, MC.player);
       if (ray == null) {
          return null;
       }
@@ -2292,7 +2292,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private static boolean init_Z_F_2(float pitch) {
-      return ScaffoldModule.read_Z_F(Math.abs(pitch));
+      return ScaffoldModule.isBelowPitchLimit(Math.abs(pitch));
    }
 
    private static boolean init_Z_ce_DataUtil_ce_DataUtil_3(RotationMath.Rotation first, RotationMath.Rotation second) {

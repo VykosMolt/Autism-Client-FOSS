@@ -37,7 +37,7 @@ public final class AutoReconnectController {
       }
    }
 
-   public static ServerData init_ServerData() {
+   public static ServerData lastServer() {
       ServerData last = init_ServerData;
       if (last == null) {
          return null;
@@ -62,14 +62,14 @@ public final class AutoReconnectController {
       return init_ServerData != null && init_ServerAddress != null && init_Minecraft.allowsMultiplayer();
    }
 
-   public static void init_V() {
+   public static void toggle() {
       Module module = al.init_Module_Str("auto-reconnect");
       if (module != null) {
          module.setConfiguredEnabled(!module.isEnabled());
       }
    }
 
-   public static String init_Str() {
+   public static String buttonLabel() {
       if (!load_Z()) {
          return "Auto Reconnect: OFF";
       }
@@ -122,7 +122,7 @@ public final class AutoReconnectController {
       return MacroExecutor.hasRejoiningMacro();
    }
 
-   public static void load_V() {
+   public static void tick() {
       Screen screen = OverlayScreenController.getActualScreen(init_Minecraft);
       if (screen instanceof DisconnectedScreen) {
          Screen parent = screen instanceof autismclient.mixin.duck.DisconnectedScreenDuck access ? access.autism$parent() : screen;

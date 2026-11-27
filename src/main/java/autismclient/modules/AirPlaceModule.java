@@ -135,15 +135,15 @@ public final class AirPlaceModule extends Module {
       }
    }
 
-   public BlockPos init_BlockPos_3() {
+   public BlockPos target() {
       return this.init_BlockPos;
    }
 
-   public boolean init_Z_18() {
+   public boolean fill() {
       return this.bool("fill");
    }
 
-   public int init_I_11() {
+   public int guideColor() {
       try {
          String value = this.value("guide-color").replace("#", "");
          if (value.length() == 6) {

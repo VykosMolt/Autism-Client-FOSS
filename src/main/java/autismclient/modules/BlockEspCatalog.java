@@ -35,7 +35,7 @@ final class BlockEspCatalog {
    private static volatile BlockEspCatalog.Inner_DataUtil init_ad_DataUtil = new BlockEspCatalog.Inner_DataUtil("", Set.of());
    private static volatile String init_Str;
    private static volatile List<String> init_List = List.of();
-   static final int init_I = -855688389;
+   static final int DEFAULT_COLOR = -855688389;
    private static final int load = 2048;
    private static final Set<Block> init_Set = Set.of(Blocks.BARRIER);
    private static final int read = -50373;
@@ -66,20 +66,20 @@ final class BlockEspCatalog {
       return init_List;
    }
 
-   static boolean init_Z(Module module, String blockId) {
+   static boolean isSelected(Module module, String blockId) {
       return blockId != null && init(module).contains(blockId.toLowerCase(Locale.ROOT));
    }
 
-   static int init_I(String blockId) {
-      Block block = init_Block(blockId);
+   static int defaultColor(String blockId) {
+      Block block = resolveBlock(blockId);
       return block == null ? -855688389 : -872415232 | am.init(block);
    }
 
    static int init_I(Module module, String blockId) {
-      return am.init_I_Module(module, "color-" + blockId, init_I(blockId));
+      return am.init_I_Module(module, "color-" + blockId, defaultColor(blockId));
    }
 
-   static Block init_Block(String blockId) {
+   static Block resolveBlock(String blockId) {
       if (blockId != null && !blockId.isBlank()) {
          Identifier parsed = Identifier.tryParse(init_Str(blockId));
          if (parsed == null) {
@@ -109,19 +109,19 @@ final class BlockEspCatalog {
             }
 
             Set<Block> targets = selection.init_Set();
-            if (!AutismLiteVariant.enabled() && BedEspModule.init_Z_3()) {
+            if (!AutismLiteVariant.enabled() && BedEspModule.isActive()) {
                targets = new LinkedHashSet<>(targets);
                targets.removeIf(blockx -> blockx instanceof BedBlock);
                stamp.append("|bed-esp");
             }
 
-            if (!AutismLiteVariant.enabled() && EndPortalModule.init_Z_5()) {
+            if (!AutismLiteVariant.enabled() && EndPortalModule.showsFrames()) {
                targets = new LinkedHashSet<>(targets);
                targets.remove(Blocks.END_PORTAL_FRAME);
                stamp.append("|end-portal");
             }
 
-            init(level, player, targets, stamp.toString(), maxTargets, colors, EspChunkWorker.init_af, boxEmit, traceEmit);
+            init(level, player, targets, stamp.toString(), maxTargets, colors, EspChunkWorker.INSTANCE, boxEmit, traceEmit);
          }
       }
    }
@@ -146,7 +146,7 @@ final class BlockEspCatalog {
    ) {
       int chunkRadius = am.init_I();
       double maxDistSq = 2.0 * (chunkRadius * 16.0 + 16.0) * (chunkRadius * 16.0 + 16.0);
-      EspChunkWorker.init_V_Obj(level);
+      EspChunkWorker.setLevel(level);
       int playerBlockY = player.getBlockY();
       String stamp = stampKey + "|b" + (playerBlockY >> 3);
       long gameTime = level.getGameTime();
@@ -170,7 +170,7 @@ final class BlockEspCatalog {
                         );
                         if (entries.size() > 1) {
                            entries = new ArrayList<>(entries);
-                           entries.sort(Comparator.comparingDouble(e -> init_D_Vec3(playerPos, e.init_Vec3().x, e.init_Vec3().y, e.init_Vec3().z)));
+                           entries.sort(Comparator.comparingDouble(e -> init_D_Vec3(playerPos, e.tracer().x, e.tracer().y, e.tracer().z)));
                         }
 
                         for (EspChunkWorker.EspBox entry : entries) {
@@ -178,14 +178,14 @@ final class BlockEspCatalog {
                               break;
                            }
 
-                           Vec3 trace = entry.init_Vec3();
+                           Vec3 trace = entry.tracer();
                            if (!(init_D_Vec3(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                               if (boxEmit != null) {
-                                 boxEmit.accept(entry.init_AABB(), entry.init_I());
+                                 boxEmit.accept(entry.box(), entry.color());
                               }
 
                               if (traceEmit != null) {
-                                 traceEmit.accept(trace, entry.init_I());
+                                 traceEmit.accept(trace, entry.color());
                               }
 
                               emitted++;

@@ -28,26 +28,26 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         original = AntiKnockbackModule.init_Input_Input(original);
+         original = AntiKnockbackModule.filterInput(original);
       }
 
       if (!AutismLiteVariant.enabled()) {
-         original = ClutchModule.init_Input_Input_3(original);
+         original = ClutchModule.overrideInput(original);
       }
 
-      Input scaffold = ScaffoldModule.init_Input_ClientInput_Input_4(this, original);
+      Input scaffold = ScaffoldModule.overrideInput(this, original);
       Input aura = SilentMovementCoordinator.rewriteMovementInput(this, scaffold);
       if (!AutismLiteVariant.enabled()) {
-         aura = DangerModule.init_Input_Input_4(aura);
+         aura = DangerModule.overrideInput(aura);
       }
 
-      Input bed = BedDefenderModule.init_Input_ClientInput_Input_2(this, aura);
+      Input bed = BedDefenderModule.overrideInput(this, aura);
       Input safe = SafeWalkModule.init(this, bed);
       if (!AutismLiteVariant.enabled()) {
          safe = AiFallGuard.init(this, safe);
       }
 
-      Input totem = AutoTotemModule.init_Input_ClientInput_Input(this, safe);
-      return AutoArmorModule.init_Input_ClientInput_Input_3(this, totem);
+      Input totem = AutoTotemModule.overrideInput(this, safe);
+      return AutoArmorModule.overrideInput(this, totem);
    }
 }

@@ -87,7 +87,7 @@ final class ShieldHitWindowHelper {
       }
    }
 
-   static boolean init_Z_Vec3(Vec3 eye, AABB victim, double minReach, double maxReach, double margin) {
+   static boolean isInReachWindow(Vec3 eye, AABB victim, double minReach, double maxReach, double margin) {
       double near = Math.sqrt(victim.distanceToSqr(eye));
       double far = eye.distanceTo(
          new Vec3(
@@ -100,7 +100,7 @@ final class ShieldHitWindowHelper {
    }
 
    static boolean init(Vec3 eye, Vec3 view, AABB victim, double minReach, double maxReach, double margin) {
-      return init(eye, view, victim) && init_Z_Vec3(eye, victim, minReach, maxReach + 0.5, margin);
+      return init(eye, view, victim) && isInReachWindow(eye, victim, minReach, maxReach + 0.5, margin);
    }
 
    static int init(AABB body, Vec3 motion, ShieldHitWindowHelper.Inner_DataUtil collision) {

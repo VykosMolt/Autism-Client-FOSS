@@ -19,7 +19,7 @@ public class AutismLevelRendererEntityMixin {
       if (state != null) {
          ServerRotationTracker.applyRenderRotation(entity, state, partialTickTime);
          if (am.put()) {
-            int frameOutline = FrameEspCatalog.init_I(entity);
+            int frameOutline = FrameEspCatalog.outlineColor(entity);
             if (frameOutline != 0) {
                state.outlineColor = frameOutline;
             } else {

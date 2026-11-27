@@ -198,7 +198,7 @@ public abstract class AutismMouseHandlerMixin {
          this.accumulatedDX = delta.init_D();
          this.accumulatedDY = delta.load();
       } else if (!delta.init_Z()) {
-         if (this.minecraft.player != null && FreeLookModule.init_I_4() != null) {
+         if (this.minecraft.player != null && FreeLookModule.active() != null) {
             this.autism$simulatedDX = this.autism$simulatedDX + delta.init_D();
             this.autism$simulatedDY = this.autism$simulatedDY + delta.load();
          } else {

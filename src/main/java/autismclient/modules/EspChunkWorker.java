@@ -22,7 +22,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class EspChunkWorker {
-   static final EspChunkWorker init_af = new EspChunkWorker();
+   static final EspChunkWorker INSTANCE = new EspChunkWorker();
    static final EspChunkWorker load = new EspChunkWorker();
    static final EspChunkWorker read = new EspChunkWorker();
    static final EspChunkWorker write = new EspChunkWorker();
@@ -51,7 +51,7 @@ public final class EspChunkWorker {
       }
    }
 
-   public static int init_I() {
+   public static int revision() {
       return init_AtomicInteger.get();
    }
 
@@ -136,14 +136,14 @@ public final class EspChunkWorker {
       }
    }
 
-   static void init_V_Obj(Object level) {
+   static void setLevel(Object level) {
       if (init_Obj != level) {
          init_Obj = level;
          load();
       }
    }
 
-   static void init_V() {
+   static void reset() {
       read.inFlight.clear();
       if (!read.init_ConcurrentHashMap.isEmpty()) {
          read.init_ConcurrentHashMap.clear();
@@ -152,8 +152,8 @@ public final class EspChunkWorker {
    }
 
    static void load() {
-      init_af.init_ConcurrentHashMap.clear();
-      init_af.inFlight.clear();
+      INSTANCE.init_ConcurrentHashMap.clear();
+      INSTANCE.inFlight.clear();
       load.init_ConcurrentHashMap.clear();
       load.inFlight.clear();
       read.init_ConcurrentHashMap.clear();
@@ -171,7 +171,7 @@ public final class EspChunkWorker {
 
    private static void init(int chunkX, int chunkZ) {
       long key = ChunkPos.pack(chunkX, chunkZ);
-      boolean had = init_af.init_ConcurrentHashMap.remove(key) != null;
+      boolean had = INSTANCE.init_ConcurrentHashMap.remove(key) != null;
       had |= load.init_ConcurrentHashMap.remove(key) != null;
       had |= read.init_ConcurrentHashMap.remove(key) != null;
       had |= write.init_ConcurrentHashMap.remove(key) != null;
@@ -184,7 +184,7 @@ public final class EspChunkWorker {
    }
 
    private static boolean hasAnyCachedChunks() {
-      return !init_af.init_ConcurrentHashMap.isEmpty()
+      return !INSTANCE.init_ConcurrentHashMap.isEmpty()
          || !load.init_ConcurrentHashMap.isEmpty()
          || !read.init_ConcurrentHashMap.isEmpty()
          || !write.init_ConcurrentHashMap.isEmpty()
@@ -216,7 +216,7 @@ public final class EspChunkWorker {
       }
    }
 
-   public static void init_V_Packet(Packet<?> packet) {
+   public static void onPacket(Packet<?> packet) {
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
          init(chunkPacket.x(), chunkPacket.z());
          init_AtomicInteger.incrementAndGet();
@@ -241,7 +241,7 @@ public final class EspChunkWorker {
       }
    }
 
-   record EspBox(AABB init_AABB, Vec3 init_Vec3, int init_I) {
+   record EspBox(AABB box, Vec3 tracer, int color) {
    }
 
    private record ChunkResult(String init_Str, long init_J, List<EspChunkWorker.EspBox> init_List) {

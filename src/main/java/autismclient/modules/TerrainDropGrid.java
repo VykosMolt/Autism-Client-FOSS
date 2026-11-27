@@ -160,7 +160,7 @@ final class TerrainDropGrid {
       return state;
    }
 
-   TerrainDropGrid.Inner_CachePool init_V_CachePool_AABB(AABB body, Vec3 motion, boolean grounded, KnockbackThrowPlanner.Inner_SyncManager steer) {
+   TerrainDropGrid.Inner_CachePool simulateFlight(AABB body, Vec3 motion, boolean grounded, KnockbackThrowPlanner.Inner_SyncManager steer) {
       double hw = body.getXsize() / 2.0;
       double hd = body.getZsize() / 2.0;
       double h = body.getYsize();
@@ -177,10 +177,10 @@ final class TerrainDropGrid {
       int crossTick = -1;
       double crossSpeed = 0.0;
       if (steer == null) {
-         steer = KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+         steer = KnockbackThrowPlanner.Inner_SyncManager.NONE;
       }
 
-      boolean countering = steer != KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+      boolean countering = steer != KnockbackThrowPlanner.Inner_SyncManager.NONE;
 
       for (int tick = 1; tick <= 48; tick++) {
          double block = this.init_D_D(x, z, hw, hd);
@@ -580,7 +580,7 @@ final class TerrainDropGrid {
    }
 
    record Inner_CachePool(
-      KnockbackThrowPlanner.Inner_TaskQueue init_W_TaskQueue,
+      KnockbackThrowPlanner.Inner_TaskQueue outcome,
       double init_D,
       int init_I,
       double load_D,
@@ -592,9 +592,9 @@ final class TerrainDropGrid {
       boolean read_Z
    ) {
       boolean init(double minimum, boolean voidOnly) {
-         return this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.VOID
+         return this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.VOID
             || !voidOnly
-               && (this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.LAVA || this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
+               && (this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.LAVA || this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
       }
    }
 

@@ -29,16 +29,16 @@ public final class BedEspOverlayRenderer {
    }
 
    private static List<BedEspModule.Inner_DataUtil> init_List() {
-      BedEspModule esp = BedEspModule.init_ClassCache();
+      BedEspModule esp = BedEspModule.active();
       if (esp != null) {
-         return esp.init_List_2();
+         return esp.beds();
       }
 
       BedEspModule.Inner_DataUtil target = BedNukerModule.init_ClassCache_DataUti();
       return target == null ? List.of() : List.of(target);
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return !AutismLiteVariant.enabled() && !autismclient.e.HashUtil.init()
          ? false
          : init_Minecraft.level != null
@@ -50,16 +50,16 @@ public final class BedEspOverlayRenderer {
    }
 
    public static void init(PoseStack matrices) {
-      if (init_Z()) {
+      if (isActive()) {
          Vec3 camera = WorldProjectionHelper.init();
          AutismBufferSource source = init_c_DataUtil.init();
          List<BedEspModule.Inner_DataUtil> beds = init_List();
-         boolean path = BedEspModule.init_ClassCache_CachePo().load();
+         boolean path = BedEspModule.policy().load();
          VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (BedEspModule.Inner_DataUtil bed : beds) {
-            int rgb = bed.init_DyeColor().getTextureDiffuseColor();
-            WorldLineRenderer.init(matrices.last(), fill, bed.init_AABB().move(camera.scale(-1.0)), init(rgb, 32));
+            int rgb = bed.color().getTextureDiffuseColor();
+            WorldLineRenderer.init(matrices.last(), fill, bed.box().move(camera.scale(-1.0)), init(rgb, 32));
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
                   WorldLineRenderer.init(matrices.last(), fill, new AABB(bed.load_List().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
@@ -71,7 +71,7 @@ public final class BedEspOverlayRenderer {
 
          for (BedEspModule.Inner_DataUtil bed : beds) {
             WorldLineRenderer.init(
-               matrices.last(), lines, bed.init_AABB().inflate(0.004).move(camera.scale(-1.0)), init(bed.init_DyeColor().getTextureDiffuseColor(), 204), 1.5F
+               matrices.last(), lines, bed.box().inflate(0.004).move(camera.scale(-1.0)), init(bed.color().getTextureDiffuseColor(), 204), 1.5F
             );
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
@@ -87,7 +87,7 @@ public final class BedEspOverlayRenderer {
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      if (init_Z() && BedEspModule.init_ClassCache_CachePo().read()) {
+      if (isActive() && BedEspModule.policy().read()) {
          Matrix4f matrix = new Matrix4f();
          if (WorldProjectionHelper.init(matrix)) {
             Vec3 camera = WorldProjectionHelper.init();
@@ -105,24 +105,24 @@ public final class BedEspOverlayRenderer {
             int iconSize = Math.min(12, rowHeight - 2);
 
             for (BedEspModule.Inner_DataUtil bed : init_List()) {
-               double distance = Math.sqrt(bed.init_AABB().distanceToSqr(camera));
+               double distance = Math.sqrt(bed.box().distanceToSqr(camera));
                float alpha = DistanceFadeCurve.init(distance);
                if (!(alpha < 0.005F)) {
-                  float[] point = init(matrix, camera, bed.init_Vec3());
+                  float[] point = init(matrix, camera, bed.labelPos());
                   if (point != null) {
-                     String name = bed.init_DyeColor().getName().replace('_', ' ');
+                     String name = bed.color().getName().replace('_', ' ');
                      name = Character.toUpperCase(name.charAt(0)) + name.substring(1) + " Bed";
-                     String time = bed.init_Str().isEmpty() ? String.format(Locale.ROOT, "%.1fs", bed.init_D() / 20.0) : bed.init_Str();
+                     String time = bed.init_Str().isEmpty() ? String.format(Locale.ROOT, "%.1fs", bed.ticks() / 20.0) : bed.init_Str();
                      int width = ui.init_PoolEntry().measureWidth(name) + 8 + ui.init_PoolEntry().measureWidth(time);
-                     float[] widths = new float[1 + bed.init_List().size()];
+                     float[] widths = new float[1 + bed.materials().size()];
                      widths[0] = width + 4;
 
-                     for (int i = 0; i < bed.init_List().size(); i++) {
-                        BedEspModule.Inner_StreamUtil material = bed.init_List().get(i);
-                        widths[i + 1] = ui.init_PoolEntry().measureWidth(material.init_Str())
+                     for (int i = 0; i < bed.materials().size(); i++) {
+                        BedEspModule.Inner_StreamUtil material = bed.materials().get(i);
+                        widths[i + 1] = ui.init_PoolEntry().measureWidth(material.name())
                            + 3
-                           + ui.init_PoolEntry().measureWidth("x" + material.init_I())
-                           + (material.init_ItemStack().isEmpty() ? 0 : 4 + iconSize)
+                           + ui.init_PoolEntry().measureWidth("x" + material.count())
+                           + (material.icon().isEmpty() ? 0 : 4 + iconSize)
                            + 4;
                      }
 
@@ -147,7 +147,7 @@ public final class BedEspOverlayRenderer {
                               init_Minecraft.font,
                               name,
                               autismclient.gui.f.a.DataUtil.init,
-                              autismclient.gui.f.PacketUtil.init(init(bed.init_DyeColor().getTextureDiffuseColor()), alpha),
+                              autismclient.gui.f.PacketUtil.init(init(bed.color().getTextureDiffuseColor()), alpha),
                               0,
                               y,
                               true
@@ -167,23 +167,23 @@ public final class BedEspOverlayRenderer {
                         }
                         int row = rowHeight;
 
-                        for (BedEspModule.Inner_StreamUtil material : bed.init_List()) {
-                           String amount = "x" + material.init_I();
-                           int rowWidth = ui.init_PoolEntry().measureWidth(material.init_Str())
+                        for (BedEspModule.Inner_StreamUtil material : bed.materials()) {
+                           String amount = "x" + material.count();
+                           int rowWidth = ui.init_PoolEntry().measureWidth(material.name())
                               + 3
                               + ui.init_PoolEntry().measureWidth(amount)
-                              + (material.init_ItemStack().isEmpty() ? 0 : 4 + iconSize);
+                              + (material.icon().isEmpty() ? 0 : 4 + iconSize);
                            graphics.pose().pushMatrix();
                            try {
                               graphics.pose().translate(-rowWidth * 0.5F, 0.0F);
                               int y = ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, row, rowWidth, rowHeight));
-                              autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, material.init_Str(), autismclient.gui.f.a.DataUtil.init, text, 0, y, true);
-                              int x = ui.init_PoolEntry().measureWidth(material.init_Str()) + 3;
+                              autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, material.name(), autismclient.gui.f.a.DataUtil.init, text, 0, y, true);
+                              int x = ui.init_PoolEntry().measureWidth(material.name()) + 3;
                               autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, amount, autismclient.gui.f.a.DataUtil.init, count, x, y, true);
-                              if (!material.init_ItemStack().isEmpty()) {
+                              if (!material.icon().isEmpty()) {
                                  init(
                                     graphics,
-                                    material.init_ItemStack(),
+                                    material.icon(),
                                     x + ui.init_PoolEntry().measureWidth(amount) + 4,
                                     row + (rowHeight - iconSize) / 2,
                                     iconSize,

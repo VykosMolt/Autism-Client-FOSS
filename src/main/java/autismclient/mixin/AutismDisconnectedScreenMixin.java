@@ -51,8 +51,8 @@ public abstract class AutismDisconnectedScreenMixin extends Screen implements Di
                20,
                Component.literal("Auto Reconnect"),
                CachePool.Inner_DataUtil.read,
-               AutoReconnectController::init_Str,
-               button -> AutoReconnectController.init_V()
+               AutoReconnectController::buttonLabel,
+               button -> AutoReconnectController.toggle()
             )
          );
       }

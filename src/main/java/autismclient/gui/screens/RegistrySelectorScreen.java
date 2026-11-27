@@ -588,7 +588,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                      case NONE:
                         break;
                      case PLACEABLE:
-                        if (!ScaffoldModule.init_Z_Block_3(block)) {
+                        if (!ScaffoldModule.isScaffoldBlock(block)) {
                            return;
                         }
                         break;
@@ -650,9 +650,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                );
             break;
          case STORAGE_LIST:
-            for (StorageEspCatalog.Inner_BufferHelper target : StorageEspCatalog.init_List) {
-               ItemStack icon = target.init_ItemStack();
-               out.add(new RegistrySelectorScreen.Inner_DataUtil(target.init_Str, target.load_Str, target.read, icon, icon.isEmpty()));
+            for (StorageEspCatalog.Inner_BufferHelper target : StorageEspCatalog.TARGETS) {
+               ItemStack icon = target.icon();
+               out.add(new RegistrySelectorScreen.Inner_DataUtil(target.id, target.label, target.read, icon, icon.isEmpty()));
             }
       }
 

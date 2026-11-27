@@ -14,12 +14,12 @@ public final class ScopedToggleOverride {
       this.init_Consumer = transition;
    }
 
-   public boolean init_Z() {
+   public boolean isEnabled() {
       return this.init_ArrayList.isEmpty() ? this.init_BooleanSupplier.getAsBoolean() : this.init_ArrayList.getLast().init;
    }
 
-   public ScopedToggleOverride.Inner_StreamUtil init_aP_StreamUtil(boolean enabled) {
-      boolean before = this.init_Z();
+   public ScopedToggleOverride.Inner_StreamUtil push(boolean enabled) {
+      boolean before = this.isEnabled();
       ScopedToggleOverride.Inner_DataUtil entry = new ScopedToggleOverride.Inner_DataUtil(enabled);
       this.init_ArrayList.add(entry);
 
@@ -37,12 +37,12 @@ public final class ScopedToggleOverride {
       }
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_ArrayList.clear();
    }
 
    private void init_V(boolean before) {
-      boolean after = this.init_Z();
+      boolean after = this.isEnabled();
       if (before != after) {
          this.init_Consumer.accept(after);
       }
@@ -57,7 +57,7 @@ public final class ScopedToggleOverride {
 
       @Override
       public void close() {
-         boolean before = ScopedToggleOverride.this.init_Z();
+         boolean before = ScopedToggleOverride.this.isEnabled();
          if (ScopedToggleOverride.this.init_ArrayList.remove(this)) {
             ScopedToggleOverride.this.init_V(before);
          }

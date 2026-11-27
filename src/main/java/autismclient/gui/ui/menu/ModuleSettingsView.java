@@ -159,7 +159,7 @@ final class ModuleSettingsView {
 
          this.init_V_SyncManager(context, listArea, contentHeight, scroll);
          if (preview != null && module instanceof CrosshairModule crosshair) {
-            CrosshairPreviewRenderer.init(context, preview.load(), crosshair.init_q_DataUtil_m(crosshair.init_m()));
+            CrosshairPreviewRenderer.init(context, preview.load(), crosshair.init_q_DataUtil_m(crosshair.art()));
          }
       }
    }

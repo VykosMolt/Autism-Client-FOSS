@@ -12,11 +12,11 @@ public final class CrosshairRenderState {
       init = value;
    }
 
-   static void init_V() {
+   static void clear() {
       init = null;
    }
 
-   public static CrosshairRenderState.Inner_DataUtil init_q_DataUtil() {
+   public static CrosshairRenderState.Inner_DataUtil current() {
       CrosshairRenderState.Inner_DataUtil current = init;
       return current != null && init_Z() ? current : null;
    }
@@ -26,7 +26,7 @@ public final class CrosshairRenderState {
    }
 
    public record Inner_DataUtil(
-      CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper,
+      CrosshairPresetGeometry.Inner_NetHelper style,
       double init_D,
       double load_D,
       double read_D,
@@ -41,7 +41,7 @@ public final class CrosshairRenderState {
       int write_I,
       boolean write_Z,
       double update,
-      CrosshairPixelArt init_m
+      CrosshairPixelArt art
    ) {
    }
 }

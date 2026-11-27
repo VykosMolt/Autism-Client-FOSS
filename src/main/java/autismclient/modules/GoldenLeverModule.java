@@ -37,7 +37,7 @@ public final class GoldenLeverModule extends Module {
       am.init_V();
    }
 
-   public static boolean init_Z_11() {
+   public static boolean isActive() {
       return read();
    }
 
@@ -49,7 +49,7 @@ public final class GoldenLeverModule extends Module {
       return read() && state != null && state.is(Blocks.LEVER);
    }
 
-   public static Component init_Component() {
+   public static Component label() {
       return Component.literal("Golden Lever").withStyle(ChatFormatting.GOLD);
    }
 

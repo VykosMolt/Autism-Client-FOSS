@@ -23,7 +23,7 @@ public final class TrajectoryOffscreenIndicator {
       return init_I;
    }
 
-   static void init_V() {
+   static void reset() {
       init_I = 0;
    }
 
@@ -33,20 +33,20 @@ public final class TrajectoryOffscreenIndicator {
       Module module = al.init_Module_Str("trajectories");
       if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.init(init_Matrix4f)) {
          Vec3 camera = WorldProjectionHelper.init();
-         ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.init_aV_DataUtil();
+         ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
-            init(graphics, mc, remembered.init_Vec3(), camera, -8329771);
+            init(graphics, mc, remembered.position(), camera, -8329771);
          }
 
-         for (TrajectoriesModule.Inner_CachePool path : trajectories.init_List_12()) {
+         for (TrajectoriesModule.Inner_CachePool path : trajectories.paths()) {
             if (init_I >= 3) {
                break;
             }
 
-            if (path.init_HitResult() != null) {
-               Vec3 at = path.load_Vec3() != null ? path.load_Vec3() : path.init_HitResult().getLocation();
-               if (remembered == null || !(remembered.init_Vec3().distanceToSqr(at) < 1.0)) {
-                  int color = path.init_HitResult().getType() == Type.ENTITY ? -44976 : path.init_I();
+            if (path.hit() != null) {
+               Vec3 at = path.load_Vec3() != null ? path.load_Vec3() : path.hit().getLocation();
+               if (remembered == null || !(remembered.position().distanceToSqr(at) < 1.0)) {
+                  int color = path.hit().getType() == Type.ENTITY ? -44976 : path.color();
                   init(graphics, mc, at, camera, color);
                }
             }

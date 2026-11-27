@@ -37,6 +37,6 @@ public abstract class AutismNoRenderFogMixin {
    }
 
    private static boolean autism$fogOff() {
-      return NoRenderState.hideFog() || CustomSkyboxRenderer.init_Z();
+      return NoRenderState.hideFog() || CustomSkyboxRenderer.isActive();
    }
 }

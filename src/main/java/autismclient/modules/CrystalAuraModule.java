@@ -549,7 +549,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return this.init_LivingEntity;
    }
 
-   LivingEntity load_LivingEntity_4() {
+   LivingEntity currentTarget() {
       int age = AutismSessionState.getInstance().getClientTick() - this.reset;
       return this.isEnabled() && age >= 0 && age <= 2 && this.push() ? this.init_LivingEntity : null;
    }
@@ -562,7 +562,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura ? aura.load_J / 1000.0 : 0.0;
    }
 
-   public static List<EspHighlightBox> init_List_18() {
+   public static List<EspHighlightBox> highlightBoxes() {
       if (al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() && aura.bool("preview")) {
          int color = am.init_I_Module(aura, "preview-color", 1728002875);
          List<EspHighlightBox> boxes = new ArrayList<>(2);
@@ -664,12 +664,12 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    @Override
-   public boolean write_Z_10() {
+   public boolean usesMoveFix() {
       return this.bool("move-fix");
    }
 
    @Override
-   public boolean update_Z_9() {
+   public boolean rotatesVisibly() {
       return !this.bool("silent");
    }
 
@@ -1712,7 +1712,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return this.bool("fast-replace") && occupant instanceof EndCrystal && this.init_RenderState.init(occupant, cell, AutismSessionState.getInstance().getClientTick());
    }
 
-   public static List<Entity> init_List_UseOnContext_List(UseOnContext context, List<Entity> occupants) {
+   public static List<Entity> filterPlacementOccupants(UseOnContext context, List<Entity> occupants) {
       if (AutismLiteVariant.enabled()) {
          return occupants;
       }

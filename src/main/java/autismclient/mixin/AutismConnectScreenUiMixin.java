@@ -47,8 +47,8 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
             h,
             Component.literal("Auto Reconnect"),
             CachePool.Inner_DataUtil.read,
-            AutoReconnectController::init_Str,
-            button -> AutoReconnectController.init_V()
+            AutoReconnectController::buttonLabel,
+            button -> AutoReconnectController.toggle()
          );
          this.addRenderableWidget(this.autism$reconnectToggle);
       }

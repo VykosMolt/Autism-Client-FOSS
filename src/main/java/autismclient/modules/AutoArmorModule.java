@@ -413,7 +413,7 @@ public final class AutoArmorModule extends Module {
       return age <= 0 && age > -2;
    }
 
-   public static Input init_Input_ClientInput_Input_3(ClientInput source, Input original) {
+   public static Input overrideInput(ClientInput source, Input original) {
       if (original == null || MC == null || MC.player == null || MC.player.input != source) {
          return original;
       } else if (init_Z_20()) {

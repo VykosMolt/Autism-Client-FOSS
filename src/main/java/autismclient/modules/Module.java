@@ -93,7 +93,7 @@ public abstract class Module implements SettingOwner {
    }
 
    public final boolean isEnabled() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init() ? false : this.temporaryActivation.init_Z();
+      return !AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init() ? false : this.temporaryActivation.isEnabled();
    }
 
    final boolean isEnabledRaw() {
@@ -101,15 +101,15 @@ public abstract class Module implements SettingOwner {
    }
 
    public final ScopedToggleOverride.Inner_StreamUtil borrowEnabled(boolean enabled) {
-      return enabled && aD.load_Z(this) ? () -> {} : this.temporaryActivation.init_aP_StreamUtil(enabled);
+      return enabled && aD.load_Z(this) ? () -> {} : this.temporaryActivation.push(enabled);
    }
 
    public final void setEnabled(boolean enabled) {
       this.controlRevisions.merge("enabled", 1L, Long::sum);
       if (!enabled || !aD.load_Z(this)) {
-         boolean wasEnabled = this.temporaryActivation.init_Z();
+         boolean wasEnabled = this.temporaryActivation.isEnabled();
          boolean configuredChanged = this.state().enabled != enabled;
-         this.temporaryActivation.init_V();
+         this.temporaryActivation.clear();
          if (wasEnabled == enabled && !configuredChanged) {
             this.replacementToggleMessage = null;
          } else {
@@ -140,7 +140,7 @@ public abstract class Module implements SettingOwner {
       if (!enabled || !aD.load_Z(this)) {
          boolean wasEnabled = this.isEnabledRaw();
          boolean configuredChanged = this.state().enabled != enabled;
-         this.temporaryActivation.init_V();
+         this.temporaryActivation.clear();
          if (wasEnabled != enabled || configuredChanged) {
             this.state().enabled = enabled;
             al.init_V_Module_4(this, wasEnabled, enabled);
@@ -153,9 +153,9 @@ public abstract class Module implements SettingOwner {
    protected final void setEnabledSilently(boolean enabled) {
       this.controlRevisions.merge("enabled", 1L, Long::sum);
       if (!enabled || !aD.load_Z(this)) {
-         boolean wasEnabled = this.temporaryActivation.init_Z();
+         boolean wasEnabled = this.temporaryActivation.isEnabled();
          boolean configuredChanged = this.state().enabled != enabled;
-         this.temporaryActivation.init_V();
+         this.temporaryActivation.clear();
          if (wasEnabled != enabled || configuredChanged) {
             this.state().enabled = enabled;
             if (wasEnabled != enabled) {

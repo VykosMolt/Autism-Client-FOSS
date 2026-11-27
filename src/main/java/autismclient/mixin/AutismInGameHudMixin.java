@@ -103,7 +103,7 @@ public abstract class AutismInGameHudMixin {
                boolean esp2dVisible = am.add();
                boolean nametagsVisible = activity.init(128L);
                boolean bedsVisible = activity.init(16384L);
-               boolean antiVanishHudVisible = screen == null && AntiVanishModule.init_Z_19();
+               boolean antiVanishHudVisible = screen == null && AntiVanishModule.isHudVisible();
                boolean mainHudVisible = nativeHudVisible
                   || antiVanishHudVisible
                   || macroRunning
@@ -146,7 +146,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
-                        NetHelper b = EndPortalRenderer.init_NetHelper(context);
+                        NetHelper b = EndPortalRenderer.hudBounds(context);
                         hudOccluders.add(new AutismHudManager.HudElementBounds("end_portal", b.read(), b.write(), b.update(), b.sync()));
                      }
 
@@ -229,11 +229,11 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
-                        EndPortalRenderer.init_V(context);
+                        EndPortalRenderer.renderHud(context);
                      }
 
                      if (esp2dVisible) {
-                        EntityEsp2DRenderer.init_V_GuiGraphicsExtract(context);
+                        EntityEsp2DRenderer.render(context);
                      }
 
                      if (nametagsVisible) {

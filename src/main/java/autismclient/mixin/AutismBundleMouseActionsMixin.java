@@ -16,6 +16,6 @@ public abstract class AutismBundleMouseActionsMixin {
       require = 0
    )
    private int autism$uncapBundleScroll(ItemStack stack) {
-      return InventoryTweaksModule.init_I_ItemStack_I(stack, BundleItem.getNumberOfItemsToShow(stack));
+      return InventoryTweaksModule.bundleItemsToShow(stack, BundleItem.getNumberOfItemsToShow(stack));
    }
 }

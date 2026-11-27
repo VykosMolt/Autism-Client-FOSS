@@ -170,7 +170,7 @@ public final class LagWatchdogReporter {
          return logger == null ? "not created" : logger.load_Str_9();
       });
       init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.init_I());
-      init(sb, "antiVanish", autismclient.modules.AntiVanishModule::load_Str);
+      init(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);
       init(sb, "hud", () -> {
          return "enabledElements=" + AutismHudManager.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();
       });

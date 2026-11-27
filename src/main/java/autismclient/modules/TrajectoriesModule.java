@@ -66,7 +66,7 @@ public final class TrajectoriesModule extends Module {
       );
    }
 
-   public List<TrajectoriesModule.Inner_CachePool> init_List_12() {
+   public List<TrajectoriesModule.Inner_CachePool> paths() {
       return this.load;
    }
 
@@ -98,11 +98,11 @@ public final class TrajectoriesModule extends Module {
       this.init_V_26();
       ar.init_V_List(List.of());
       if (!AutismLiteVariant.enabled()) {
-         TrajectoryStateCache.init_V();
+         TrajectoryStateCache.reset();
       }
    }
 
-   public static void init_V_F_2(float partialTick) {
+   public static void computePaths(float partialTick) {
       if (al.init_Module_Str("trajectories") instanceof TrajectoriesModule trajectories && trajectories.isEnabled()) {
          trajectories.load = trajectories.init_List_F_2(partialTick);
          if (!AutismLiteVariant.enabled()) {
@@ -163,10 +163,10 @@ public final class TrajectoriesModule extends Module {
 
                for (ProjectileBallistics.Inner_BufferHelper shot : ProjectileBallistics.init(player, stack, true, true)) {
                   ProjectileBallistics.Inner_CachePool result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
-                  if (result.init_List().size() > 1) {
+                  if (result.points().size() > 1) {
                      flights.add(
                         new TrajectoriesModule.Inner_ConfigStore(
-                           result, shot.init_aX_DataUtil().init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ROCKET, init(result.init_HitResult(), item, stack)
+                           result, shot.info().kind() == ProjectileBallistics.Inner_StreamUtil.ROCKET, init(result.hit(), item, stack)
                         )
                      );
                   }
@@ -192,15 +192,15 @@ public final class TrajectoriesModule extends Module {
                ProjectileBallistics.Inner_CachePool flight = visual.init_aX_CachePool();
                result.add(
                   new TrajectoriesModule.Inner_CachePool(
-                     flight.init_List(),
-                     flight.init_HitResult(),
+                     flight.points(),
+                     flight.hit(),
                      offset,
                      item,
                      visual.init_Z() ? -13684 : this.init_I,
                      visual.init_Z(),
                      result.isEmpty(),
                      visual.init_aS_BufferHelper(),
-                     item == TrajectoriesModule.Inner_StreamUtil.PEARL && flight.init_HitResult() != null ? init_Vec3_aX_CachePool(flight) : null
+                     item == TrajectoriesModule.Inner_StreamUtil.PEARL && flight.hit() != null ? init_Vec3_aX_CachePool(flight) : null
                   )
                );
             }
@@ -216,7 +216,7 @@ public final class TrajectoriesModule extends Module {
    }
 
    static Vec3 init_Vec3_aX_CachePool(ProjectileBallistics.Inner_CachePool flight) {
-      return flight.init_HitResult() != null && flight.init_List().size() >= 2 ? flight.init_List().get(flight.init_List().size() - 2) : null;
+      return flight.hit() != null && flight.points().size() >= 2 ? flight.points().get(flight.points().size() - 2) : null;
    }
 
    private static TrajectoriesModule.Inner_BufferHelper init(HitResult hit, TrajectoriesModule.Inner_StreamUtil item, ItemStack stack) {
@@ -370,18 +370,18 @@ public final class TrajectoriesModule extends Module {
       return var10000;
    }
 
-   public record Inner_BufferHelper(Vec3 init_Vec3, Vec3 load_Vec3, double init_D, boolean init_Z, boolean load_Z) {
+   public record Inner_BufferHelper(Vec3 point, Vec3 normal, double init_D, boolean init_Z, boolean load_Z) {
    }
 
    public record Inner_CachePool(
-      List<Vec3> init_List,
-      HitResult init_HitResult,
+      List<Vec3> points,
+      HitResult hit,
       Vec3 init_Vec3,
       TrajectoriesModule.Inner_StreamUtil init_aS_StreamUtil,
-      int init_I,
+      int color,
       boolean init_Z,
       boolean load_Z,
-      TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper,
+      TrajectoriesModule.Inner_BufferHelper surface,
       Vec3 load_Vec3
    ) {
    }

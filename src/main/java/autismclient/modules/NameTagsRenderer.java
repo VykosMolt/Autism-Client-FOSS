@@ -95,7 +95,7 @@ public final class NameTagsRenderer {
    public static void init(GuiGraphicsExtractor context) {
       if (!aD.init_Z() && (AutismLiteVariant.enabled() || autismclient.e.PathHelper.init())) {
          if (init_Minecraft == null || init_Minecraft.level == null || init_Minecraft.player == null) {
-            init_V();
+            reset();
          } else if (!init_Minecraft.gui.hud.isHidden()) {
             Module module = al.init_Module_Str("nametags");
             if (module != null && module.isEnabled()) {
@@ -107,13 +107,13 @@ public final class NameTagsRenderer {
                   bK.init("modules.nametags", perf);
                }
             } else {
-               init_V();
+               reset();
             }
          }
       }
    }
 
-   static void init_V() {
+   static void reset() {
       init_Int2ObjectOpenHash.clear();
       init_List.clear();
       load_List.clear();
@@ -126,7 +126,7 @@ public final class NameTagsRenderer {
    private static void init(GuiGraphicsExtractor context, Module module) {
       if (WorldProjectionHelper.init(init_Matrix4f)) {
          if (init_Obj != init_Minecraft.level) {
-            init_V();
+            reset();
             init_Obj = init_Minecraft.level;
          }
 
@@ -167,8 +167,8 @@ public final class NameTagsRenderer {
             for (Entity entity : init_Minecraft.level.entitiesForRendering()) {
                try {
                   if (entity != self && !AntiBotTracker.shouldIgnoreEntity(entity)) {
-                     boolean friend = TeamsModule.init_Z_Entity_5(entity);
-                     if (!friend || TeamsModule.read_Z_Str("nametags")) {
+                     boolean friend = TeamsModule.isFriend(entity);
+                     if (!friend || TeamsModule.option("nametags")) {
                         double x = Mth.lerp(tickDelta, entity.xOld, entity.getX());
                         double y = Mth.lerp(tickDelta, entity.yOld, entity.getY());
                         double z = Mth.lerp(tickDelta, entity.zOld, entity.getZ());
@@ -236,7 +236,7 @@ public final class NameTagsRenderer {
       }
    }
 
-   public static boolean init_Z(Entity entity) {
+   public static boolean overridesNameTag(Entity entity) {
       load();
       if (!write_Z) {
          return false;
@@ -258,7 +258,7 @@ public final class NameTagsRenderer {
          return false;
       }
 
-      if (TeamsModule.init_Z_Entity_5(entity) && !TeamsModule.read_Z_Str("nametags")) {
+      if (TeamsModule.isFriend(entity) && !TeamsModule.option("nametags")) {
          return false;
       }
 
@@ -300,7 +300,7 @@ public final class NameTagsRenderer {
          PlayerInfo info = init_Minecraft.getConnection() == null ? null : init_Minecraft.getConnection().getPlayerInfo(player.getUUID());
          PlayerTeam team = player.getTeam();
          TextColor teamColor = team == null ? null : team.getColor().map(TeamColor::textColor).orElse(null);
-         label = PlayerDisplayNameParser.init_MutableComponent(accountName, info == null ? null : info.getTabListDisplayName(), teamColor);
+         label = PlayerDisplayNameParser.displayName(accountName, info == null ? null : info.getTabListDisplayName(), teamColor);
       } else {
          label = entity.getDisplayName().copy();
       }
@@ -882,7 +882,7 @@ public final class NameTagsRenderer {
          boolean showEnchantments
       ) {
          int meters = showDistance ? (int)dist : -1;
-         int tint = friend ? TeamsModule.init_I_18() : 0;
+         int tint = friend ? TeamsModule.friendColor() : 0;
          boolean fontChanged = this.load_I != epoch || this.init_Z != NameTagsRenderer.init_Z;
          boolean refreshGear = this.init_J != now || this.init_I != settings || fontChanged;
          if (refreshGear || meters != this.read_I || tint != this.update) {

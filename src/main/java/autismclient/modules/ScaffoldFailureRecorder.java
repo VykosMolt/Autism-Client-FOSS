@@ -55,7 +55,7 @@ final class ScaffoldFailureRecorder {
    }
 
    record Inner_DataUtil(boolean init_Z, String init_Str, BlockPos init_BlockPos, int init_I, int load, List<ScaffoldFailureRecorder.Inner_StreamUtil> init_List) {
-      String init_Str_2() {
+      String toJson() {
          return new GsonBuilder().setPrettyPrinting().create().toJson(this);
       }
 

@@ -138,7 +138,7 @@ public final class AntiVanishModule extends Module {
    @Override
    public String info() {
       return this.load_Map.isEmpty()
-         ? (this.write() && !this.init_UiHelper.init_List_J(init_J_5()).isEmpty() ? "Activity" : "")
+         ? (this.write() && !this.init_UiHelper.unexplained(init_J_5()).isEmpty() ? "Activity" : "")
          : Integer.toString(this.load_Map.size());
    }
 
@@ -189,8 +189,8 @@ public final class AntiVanishModule extends Module {
          long at = init_J_5();
          this.init_V_J(at);
          if (this.write()) {
-            this.init_UiHelper.init_V_J(at);
-            List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> readings = this.init_UiHelper.init_List_J(at);
+            this.init_UiHelper.expire(at);
+            List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> readings = this.init_UiHelper.unexplained(at);
             if (!readings.isEmpty() && (this.write_J < 0L || at - this.write_J >= 10000L) && this.bool("chat-alerts")) {
                this.write_J = at;
                AutismClientMessaging.sendPrefixed(
@@ -240,7 +240,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static void init_V_ClientPacketListen_Packet(ClientPacketListener handler, Packet<?> packet) {
+   public static void onPacket(ClientPacketListener handler, Packet<?> packet) {
       AntiVanishModule module = init_SyncManager();
       if (module != null && module.isEnabled() && MC.isSameThread() && handler == MC.getConnection() && module.read()) {
          module.init_V_Packet_J(packet, init_J_5());
@@ -251,7 +251,7 @@ public final class AntiVanishModule extends Module {
       return this.bool("vanish-tracker") && this.bool("world-activity") && !this.bool("player-filter");
    }
 
-   public static void init_V_ClientPacketListen(ClientPacketListener handler, BlockPos pos, BlockState state) {
+   public static void onBlockUpdate(ClientPacketListener handler, BlockPos pos, BlockState state) {
       AntiVanishModule module = init_SyncManager();
       if (module != null && module.isEnabled() && MC.isSameThread() && handler == MC.getConnection() && module.read() && module.write()) {
          long at = init_J_5();
@@ -261,7 +261,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static void init_V_ClientPacketListen_ClientboundSection(ClientPacketListener handler, ClientboundSectionBlocksUpdatePacket packet) {
+   public static void onSectionUpdate(ClientPacketListener handler, ClientboundSectionBlocksUpdatePacket packet) {
       AntiVanishModule module = init_SyncManager();
       if (module != null && module.isEnabled() && MC.isSameThread() && handler == MC.getConnection() && module.read() && module.write()) {
          long at = init_J_5();
@@ -498,7 +498,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static boolean init_Z_ClientPacketListen_ClientboundSystemC(ClientPacketListener handler, ClientboundSystemChatPacket packet) {
+   public static boolean onSystemChat(ClientPacketListener handler, ClientboundSystemChatPacket packet) {
       AntiVanishModule module = init_SyncManager();
       if (module != null
          && module.isEnabled()
@@ -680,12 +680,12 @@ public final class AntiVanishModule extends Module {
       this.init_Z = false;
    }
 
-   public static boolean init_Z_19() {
+   public static boolean isHudVisible() {
       AntiVanishModule module = init_SyncManager();
       return module != null
          && module.isEnabled()
          && module.bool("hud-list")
-         && (!module.load_Map.isEmpty() || module.write() && !module.init_UiHelper.init_List_J(init_J_5()).isEmpty());
+         && (!module.load_Map.isEmpty() || module.write() && !module.init_UiHelper.unexplained(init_J_5()).isEmpty());
    }
 
    private List<AntiVanishModule.Inner_StreamUtil> load_List_2() {
@@ -702,7 +702,7 @@ public final class AntiVanishModule extends Module {
             .toList()
       );
       if (this.write()) {
-         for (autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper reading : this.init_UiHelper.init_List_J(at)) {
+         for (autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper reading : this.init_UiHelper.unexplained(at)) {
             rows.add(new AntiVanishModule.Inner_StreamUtil(init_Str_BlockPos(reading.init_BlockPos()), reading.init_Str(), 0));
          }
       }
@@ -710,7 +710,7 @@ public final class AntiVanishModule extends Module {
       return List.copyOf(rows);
    }
 
-   public static String init_Str_SyncManager_Stream(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String statusLabel(AntiVanishModule.Inner_StreamUtil entry) {
       if (entry == null) {
          return "WATCH";
       }
@@ -762,7 +762,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static String load_Str_SyncManager_Stream(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String roleLabel(AntiVanishModule.Inner_StreamUtil entry) {
       if (entry == null) {
          return "Staff";
       } else if ("CRITICAL".equalsIgnoreCase(entry.init_Str())) {
@@ -784,7 +784,7 @@ public final class AntiVanishModule extends Module {
       return module == null ? "" : module.init_Str;
    }
 
-   public static List<AntiVanishModule.Inner_StreamUtil> init_List_8() {
+   public static List<AntiVanishModule.Inner_StreamUtil> entries() {
       AntiVanishModule module = init_SyncManager();
       return module == null ? List.of() : module.load_List_2();
    }
@@ -844,7 +844,7 @@ public final class AntiVanishModule extends Module {
       return al.init_Module_Str("anti-vanish") instanceof AntiVanishModule watcher ? watcher : null;
    }
 
-   public static String load_Str() {
+   public static String debugSummary() {
       AntiVanishModule module = init_SyncManager();
       return module != null && module.isEnabled()
          ? "known=" + module.init_CachePool.init_I() + " det=" + module.load_Map.size() + " probes=" + module.write_Map.size()

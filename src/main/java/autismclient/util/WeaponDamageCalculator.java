@@ -101,7 +101,7 @@ public final class WeaponDamageCalculator {
          if (friend != mc.player
             && friend.isAlive()
             && !friend.isSpectator()
-            && autismclient.modules.TeamsModule.init_Z_Entity_5(friend)
+            && autismclient.modules.TeamsModule.isFriend(friend)
             && !(friend.distanceToSqr(source) > 4.0F * power * power)) {
             double damage = ExplosionDamageCalculator.calculateDamageCached(friend, source, power, options);
             if (!init_Z_D(damage, maximum, ExplosionDamageCalculator.effectiveHealth(friend))) {

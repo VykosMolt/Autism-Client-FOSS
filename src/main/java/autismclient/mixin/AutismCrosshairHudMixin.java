@@ -26,7 +26,7 @@ public abstract class AutismCrosshairHudMixin {
       GuiGraphicsExtractor graphics, RenderPipeline pipeline, Identifier sprite, int x, int y, int width, int height, Operation<Void> original
    ) {
       if ("hud/crosshair".equals(sprite.getPath())) {
-         KillAuraModule.init_V_GuiGraphicsExtract(graphics);
+         KillAuraModule.renderHud(graphics);
          if (CrosshairRenderer.init(graphics)) {
             return;
          }

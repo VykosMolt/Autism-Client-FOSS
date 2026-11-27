@@ -75,13 +75,13 @@ public final class EndPortalModule extends Module {
       this.add(new BoolSetting("guide", "Guide", true).description("Show the direction icon and label."));
    }
 
-   public static EndPortalModule init_E() {
+   public static EndPortalModule active() {
       Module m = al.init_Module_Str("end-portal");
       return m instanceof EndPortalModule p && m.isEnabled() ? p : null;
    }
 
-   static boolean init_Z_5() {
-      EndPortalModule p = init_E();
+   static boolean showsFrames() {
+      EndPortalModule p = active();
       return p != null && p.bool("frames");
    }
 
@@ -106,7 +106,7 @@ public final class EndPortalModule extends Module {
    public void onDisable() {
       this.init_cR.init(init_J_2());
       this.init_V_4();
-      EspChunkWorker.init_V();
+      EspChunkWorker.reset();
    }
 
    @Override
@@ -177,7 +177,7 @@ public final class EndPortalModule extends Module {
          this.init_V_4();
       } else {
          this.sync++;
-         EspChunkWorker.init_V_Obj(MC.level);
+         EspChunkWorker.setLevel(MC.level);
          this.read_V_2();
          this.write_V();
          if (this.sync % 5 == 0) {
@@ -198,7 +198,7 @@ public final class EndPortalModule extends Module {
 
    public static void init(ClientPacketListener listener, ClientboundAddEntityPacket packet) {
       if (packet.getType() == EntityTypes.EYE_OF_ENDER) {
-         EndPortalModule module = init_E();
+         EndPortalModule module = active();
          if (module != null
             && MC.isSameThread()
             && listener == MC.getConnection()
@@ -287,7 +287,7 @@ public final class EndPortalModule extends Module {
             Set<Long> current = new HashSet<>();
 
             for (EspChunkWorker.EspBox hit : entries) {
-               BlockPos pos = BlockPos.containing(hit.init_Vec3());
+               BlockPos pos = BlockPos.containing(hit.tracer());
                current.add(pos.asLong());
                BlockState state = chunk.getBlockState(pos);
                if (state.is(Blocks.END_PORTAL_FRAME)) {
@@ -371,11 +371,11 @@ public final class EndPortalModule extends Module {
             .orElse(null);
    }
 
-   List<BlockPos> init_List_3() {
+   List<BlockPos> frames() {
       return this.pop() && this.bool("frames") ? this.read_List : List.of();
    }
 
-   int init_I_2() {
+   int color() {
       return this.init_ColorSetting.get();
    }
 
@@ -383,15 +383,15 @@ public final class EndPortalModule extends Module {
       return this.init_DoubleSetting.get().floatValue();
    }
 
-   boolean read_Z_2() {
+   boolean showsCoordinates() {
       return this.init_EnumSetting.get() == EndPortalModule.Inner_DataUtil.COORDINATES;
    }
 
-   boolean write_Z() {
+   boolean showsTracer() {
       return this.bool("tracer");
    }
 
-   boolean update_Z() {
+   boolean showsGuide() {
       return this.bool("guide");
    }
 
@@ -403,7 +403,7 @@ public final class EndPortalModule extends Module {
       return this.pop() && !this.init_Map.isEmpty();
    }
 
-   Vec3 init_Vec3() {
+   Vec3 target() {
       if (this.init_cR_DataUtil == null || MC.player == null || MC.level == null || !this.pop()) {
          return null;
       } else if (this.load_Vec3 != null) {

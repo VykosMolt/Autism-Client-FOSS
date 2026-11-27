@@ -33,7 +33,7 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;jumping:Z", opcode = 180))
    private void autism$airJump(CallbackInfo ci) {
-      if (this.jumping && this.noJumpDelay == 0 && AirJumpModule.init_Z_4()) {
+      if (this.jumping && this.noJumpDelay == 0 && AirJumpModule.canAirJump()) {
          ((LivingEntity)(Object)this).jumpFromGround();
          this.noJumpDelay = 10;
       }
@@ -77,6 +77,6 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "travelInFluid", at = @At("RETURN"))
    private void autism$restoreLiquidSpeed(Vec3 input, CallbackInfo ci) {
-      MovementModuleHooks.init_V((LivingEntity)(Object)this);
+      MovementModuleHooks.afterTravelInFluid((LivingEntity)(Object)this);
    }
 }

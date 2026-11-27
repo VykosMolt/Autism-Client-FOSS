@@ -74,7 +74,7 @@ public final class SilentMovementCoordinator {
          String aimOwner = SilentRotationManager.getActiveOwnerId();
          if ("kill-aura".equals(aimOwner)) {
             if (!AutismLiteVariant.enabled()) {
-               Input course = autismclient.modules.KBDisplacementModule.init_Input_Input(input, mc.player.getYRot(), rotation.yaw());
+               Input course = autismclient.modules.KBDisplacementModule.fixInput(input, mc.player.getYRot(), rotation.yaw());
                if (course != null) {
                   return course;
                }
@@ -115,7 +115,7 @@ public final class SilentMovementCoordinator {
       return rotation == null
             || !(
                autismclient.modules.al.init_Module_Str(SilentRotationManager.getActiveOwnerId()) instanceof SilentMovementCoordinator.Participant owner
-                  && !owner.write_Z_10()
+                  && !owner.usesMoveFix()
                   && !SilentRotationManager.isReturningToPlayer()
                   && !autismclient.modules.FreecamController.isAiControllingBody()
             )
@@ -219,7 +219,7 @@ public final class SilentMovementCoordinator {
          return activeRotation();
       }
 
-      RotationMath.Rotation scaffold = autismclient.modules.ScaffoldModule.init_ce_DataUtil_3();
+      RotationMath.Rotation scaffold = autismclient.modules.ScaffoldModule.activeRotation();
       return scaffold != null ? scaffold : activeRotation();
    }
 
@@ -230,11 +230,11 @@ public final class SilentMovementCoordinator {
    public interface Participant {
       boolean load_Z_23();
 
-      default boolean write_Z_10() {
+      default boolean usesMoveFix() {
          return true;
       }
 
-      default boolean update_Z_9() {
+      default boolean rotatesVisibly() {
          return false;
       }
    }

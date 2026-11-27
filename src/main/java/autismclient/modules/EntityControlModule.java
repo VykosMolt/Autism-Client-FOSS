@@ -247,7 +247,7 @@ public final class EntityControlModule extends Module {
       return init_Z_G(module) && module.bool("lock-yaw") && module.load(MC.player == null ? null : MC.player.getVehicle());
    }
 
-   public static boolean init_Z_Mob(Mob mob) {
+   public static boolean spoofsSaddle(Mob mob) {
       EntityControlModule module = init_G;
       return init_Z_G(module) && module.bool("spoof-saddle") && module.read(mob);
    }

@@ -249,7 +249,7 @@ final class AiRanged {
                   return null;
                }
 
-               autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).init_aX_DataUtil();
+               autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).info();
                Vec3 point = autismclient.ai.engine.AiAim.defaultEntityAimPoint(at);
                Vec3 motion = this.init_Vec3(at);
                if (motion.lengthSqr() >= 0.0025000000000000005) {
@@ -283,7 +283,7 @@ final class AiRanged {
 
             boolean init(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
                autismclient.modules.ProjectileBallistics.Inner_CachePool result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
-               HitResult hit = result.init_HitResult();
+               HitResult hit = result.hit();
                Vec3 motion = this.init_Vec3(at);
                if (motion.lengthSqr() < 0.0025000000000000005) {
                   return hit instanceof EntityHitResult entityHit && (entityHit.getEntity() == at || this.init(entityHit.getEntity(), at));
@@ -298,7 +298,7 @@ final class AiRanged {
                   boxes.add(at.getBoundingBox());
                }
 
-               List<Vec3> points = result.init_List();
+               List<Vec3> points = result.points();
                Vec3 from = new Vec3(mc.player.getX(), mc.player.getEyeY() - 0.1, mc.player.getZ());
 
                for (int i = 0; i < points.size(); i++) {

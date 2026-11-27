@@ -47,7 +47,7 @@ public class GhostBlockCommand extends Command {
                      return 1;
                   }
 
-                  int removed = module.init_I_5();
+                  int removed = module.clearAll();
                   AutismClientMessaging.sendPrefixed(
                      removed == 0
                         ? "§7No ghost blocks to remove."
@@ -72,7 +72,7 @@ public class GhostBlockCommand extends Command {
                   return 1;
                }
 
-               Block armed = module.init_Block();
+               Block armed = module.getArmedBlock();
                AutismClientMessaging.sendPrefixed(armed == null ? "§7No ghost block armed." : "§7Armed ghost block: §f" + BuiltInRegistries.BLOCK.getKey(armed));
                return 1;
             }))
@@ -92,7 +92,7 @@ public class GhostBlockCommand extends Command {
 
       boolean target;
       if (state == null || "toggle".equalsIgnoreCase(state)) {
-         target = !module.init_Z_9();
+         target = !module.isCreativeMode();
       } else if (!"on".equalsIgnoreCase(state) && !"enable".equalsIgnoreCase(state)) {
          if (!"off".equalsIgnoreCase(state) && !"disable".equalsIgnoreCase(state)) {
             AutismClientMessaging.sendPrefixed("§cUnknown state: §f" + state);
@@ -140,7 +140,7 @@ public class GhostBlockCommand extends Command {
          }
 
          AutismClientMessaging.sendPrefixed(
-            "§aGhost block: §f" + BuiltInRegistries.BLOCK.getKey(block) + (module.init_Z_9() ? "" : " §7(switch Mode to Creative to place it)")
+            "§aGhost block: §f" + BuiltInRegistries.BLOCK.getKey(block) + (module.isCreativeMode() ? "" : " §7(switch Mode to Creative to place it)")
          );
          return 1;
       } else {

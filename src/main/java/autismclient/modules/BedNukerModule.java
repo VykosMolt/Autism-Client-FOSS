@@ -63,7 +63,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean write_Z_10() {
+   public boolean usesMoveFix() {
       return this.bool("move-fix");
    }
 
@@ -71,19 +71,19 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       return AutismSessionState.getInstance().getClientTick();
    }
 
-   public static BedNukerModule init_UtilCore() {
+   public static BedNukerModule active() {
       return al.init_Module_Str("bed-nuker") instanceof BedNukerModule m && m.isEnabled() ? m : null;
    }
 
-   static BedBreachRouteSolver.Inner_BufferHelper init_DataPipe_BufferHel_BlockPos(BlockPos pos) {
-      BedNukerModule m = init_UtilCore();
+   static BedBreachRouteSolver.Inner_BufferHelper routeFor(BlockPos pos) {
+      BedNukerModule m = active();
       return m != null && pos.equals(m.init_BlockPos) ? m.init_DataPipe_BufferHel : null;
    }
 
    static BedEspModule.Inner_DataUtil init_ClassCache_DataUti() {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       if (m != null && m.init_DataPipe_BufferHel != null && m.init_BlockPos != null && MC.level != null && MC.player != null) {
-         BedEspModule.Inner_CachePool policy = BedEspModule.init_ClassCache_CachePo();
+         BedEspModule.Inner_CachePool policy = BedEspModule.policy();
          if (!policy.load() && !policy.read()) {
             return null;
          }
@@ -97,7 +97,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             }
 
             box = box.setMaxY(m.init_BlockPos.getY() + 0.5625);
-            List<BlockPos> cuts = m.init_DataPipe_BufferHel.init_List().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::init_BlockPos).toList();
+            List<BlockPos> cuts = m.init_DataPipe_BufferHel.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList();
             return new BedEspModule.Inner_DataUtil(
                m.init_BlockPos,
                var7,
@@ -107,12 +107,12 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                List.of(),
                cuts,
                List.of(),
-               m.init_DataPipe_BufferHel.init_D(),
+               m.init_DataPipe_BufferHel.ticks(),
                "",
                !cuts.isEmpty(),
                List.of(),
                MC.player.getEyePosition(),
-               m.init_DataPipe_BufferHel.init_Vec3()
+               m.init_DataPipe_BufferHel.eye()
             );
          } else {
             return null;
@@ -123,12 +123,12 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    public static boolean init_Z_23() {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       return m != null && m.init_I == m.init_I_14();
    }
 
    public static boolean read_Z_10() {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       return m != null && m.init_Z && autismclient.util.SilentMiningCoordinator.init_Z(m.id());
    }
 
@@ -216,19 +216,19 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    public static boolean close() {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       return m == null || !read_Z_10() || m.write_Z && m.init_ValueSink.init_Z(System.nanoTime());
    }
 
    public static void init_V_BlockPos_3(BlockPos pos) {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       if (m != null && read_Z_10() && pos.equals(m.load_BlockPos)) {
          m.init_ValueSink.init_V(System.nanoTime());
       }
    }
 
    public static float init_F_F_BlockPos(float step, BlockPos pos) {
-      BedNukerModule m = init_UtilCore();
+      BedNukerModule m = active();
       if (m != null && read_Z_10() && pos.equals(m.load_BlockPos)) {
          float damage = ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$getDestroyProgress();
          return !m.read_Z || !m.write_Z && damage + step >= 1.0F ? 0.0F : m.init_ValueSink.init(step, damage, System.nanoTime());
@@ -307,14 +307,14 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             this.sync = this.init_I_14();
          }
 
-         EspChunkWorker.init_V_Obj(MC.level);
+         EspChunkWorker.setLevel(MC.level);
          AutismMultiPlayerGameModeAccessor mining = (AutismMultiPlayerGameModeAccessor)MC.gameMode;
          BlockPos current = this.init_Z && mining.autism$isDestroying() ? mining.autism$getDestroyBlockPos() : null;
          float progress = current == null ? 0.0F : mining.autism$getDestroyProgress();
          BedBreachRouteSolver.Inner_BufferHelper best = null;
          BlockPos selected = null;
          DyeColor own = TeamDyeColorResolver.init();
-         BedEspModule.Inner_CachePool policy = BedEspModule.init_ClassCache_CachePo();
+         BedEspModule.Inner_CachePool policy = BedEspModule.policy();
          Vec3 nextEye = this.init_Vec3_2();
          BedMiningEstimator.Inner_StreamUtil tracking = null;
          if (current != null
@@ -323,20 +323,20 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             && this.init_BlockPos != null
             && MC.level.getBlockState(this.init_BlockPos).getBlock() instanceof BedBlock block
             && this.init_Z_BedBlock_DyeColor(block, own)) {
-            tracking = BedMiningEstimator.init(current, this.init_DataPipe_BufferHel.init_Vec3(), progress, nextEye);
+            tracking = BedMiningEstimator.init(current, this.init_DataPipe_BufferHel.eye(), progress, nextEye);
             if (tracking != null) {
                ArrayList<BedBreachRouteSolver.Inner_DataUtil> cells = new ArrayList<>();
                cells.add(tracking.init_DataPipe_DataUtil());
 
-               for (BedBreachRouteSolver.Inner_DataUtil cell : this.init_DataPipe_BufferHel.init_List().subList(1, this.init_DataPipe_BufferHel.init_List().size())) {
-                  BlockState state = MC.level.getBlockState(cell.init_BlockPos());
+               for (BedBreachRouteSolver.Inner_DataUtil cell : this.init_DataPipe_BufferHel.cells().subList(1, this.init_DataPipe_BufferHel.cells().size())) {
+                  BlockState state = MC.level.getBlockState(cell.pos());
                   if (!state.isAir()) {
                      cells.add(
                         new BedBreachRouteSolver.Inner_DataUtil(
-                           cell.init_BlockPos(),
-                           cell.init_List(),
-                           BedMiningEstimator.init(state, cell.init_BlockPos(), MC.player.getInventory().getItem(cell.init_I())),
-                           cell.init_I(),
+                           cell.pos(),
+                           cell.boxes(),
+                           BedMiningEstimator.init(state, cell.pos(), MC.player.getInventory().getItem(cell.slot())),
+                           cell.slot(),
                            cell.init_Z()
                         )
                      );
@@ -349,8 +349,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                boolean complete = bounds.distanceToSqr(MC.player.getEyePosition()) <= Math.pow(MC.player.blockInteractionRange(), 2.0);
                best = new BedBreachRouteSolver.Inner_BufferHelper(
                   List.copyOf(cells),
-                  tracking.init_Vec3() == null ? this.init_DataPipe_BufferHel.init_Vec3() : tracking.init_Vec3(),
-                  cells.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::init_D).sum() + Math.max(0, cells.size() - 1) * 5,
+                  tracking.init_Vec3() == null ? this.init_DataPipe_BufferHel.eye() : tracking.init_Vec3(),
+                  cells.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::ticks).sum() + Math.max(0, cells.size() - 1) * 5,
                   complete
                );
                selected = this.init_BlockPos;
@@ -372,13 +372,13 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                for (int cz = playerPos.getZ() - radius >> 4; cz <= playerPos.getZ() + radius >> 4; cz++) {
                   LevelChunk chunk = MC.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.EspBox entry : BedEspModule.init_List_LevelChunk(chunk)) {
-                        BlockPos p = BlockPos.containing(entry.init_Vec3());
+                     for (EspChunkWorker.EspBox entry : BedEspModule.scanChunk(chunk)) {
+                        BlockPos p = BlockPos.containing(entry.tracer());
                         if (!(new AABB(p).distanceToSqr(MC.player.getEyePosition()) > (double)radius * radius)) {
                            BlockState state = MC.level.getBlockState(p);
                            if (state.getBlock() instanceof BedBlock block
                               && this.init_Z_BedBlock_DyeColor(block, own)
-                              && !(new AABB(p).distanceToSqr(MC.player.position()) > (double)policy.init_I() * policy.init_I())
+                              && !(new AABB(p).distanceToSqr(MC.player.position()) > (double)policy.range() * policy.range())
                               && (
                                  state.getValue(BedBlock.PART) != BedPart.HEAD
                                     || !MC.level.getBlockState(p.relative(BedBlock.getConnectedDirection(state))).is(block)
@@ -400,7 +400,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                      best == null
                         || candidate.init_Z() && !best.init_Z()
                         || candidate.init_Z() == best.init_Z()
-                           && (candidate.init_D() < best.init_D() - 0.5 || candidate.init_D() <= best.init_D() + 0.5 && p.equals(this.init_BlockPos))
+                           && (candidate.ticks() < best.ticks() - 0.5 || candidate.ticks() <= best.ticks() + 0.5 && p.equals(this.init_BlockPos))
                   )) {
                   best = candidate;
                   selected = p;
@@ -417,27 +417,27 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
             RotationMath.Rotation at = autismclient.util.SilentRotationManager.getCurrentRotation();
             BedMiningEstimator.Inner_StreamUtil follow = tracking == null
-               ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
+               ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.first().pos(), this.init_DataPipe_BufferHel.eye(), 0.0F, nextEye)
                : tracking;
-            Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.init_DataPipe_BufferHel.init_Vec3();
+            Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.init_DataPipe_BufferHel.eye();
             RotationMath.Rotation goal = RotationMath.lookAt(point, nextEye);
             double turn = RotationMath.angularDistance(at == null ? RotationMath.ofPlayer(MC.player) : at, goal);
             double finish = this.init_D_6()
                + Math.ceil(Math.max(0.0, turn - 2.0) / 20.0)
                + Math.max(this.init_ValueSink.load(System.nanoTime()), Math.max(0, mining.autism$getDestroyDelay()));
-            if (this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_I() != MC.player.getInventory().getSelectedSlot()) {
+            if (this.init_DataPipe_BufferHel.first().slot() != MC.player.getInventory().getSelectedSlot()) {
                finish += 2.0;
             }
 
             if (!Double.isFinite(budget) || this.init_DataPipe_BufferHel.init_Z() && BedBreachRouteSolver.init(finish, budget, critical)) {
                this.init_I = this.init_I_14();
-               this.init_Str = this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_Z() ? "Breaking bed" : "Opening bed";
+               this.init_Str = this.init_DataPipe_BufferHel.first().init_Z() ? "Breaking bed" : "Opening bed";
                autismclient.util.SilentRotationManager.requestRotation(this.id(), 12, goal);
                if (!this.open()) {
                   this.read_V_10();
                } else {
                   autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 37.0F, 37.0F);
-                  int slot = this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_I();
+                  int slot = this.init_DataPipe_BufferHel.first().slot();
                   if (slot != MC.player.getInventory().getSelectedSlot()) {
                      this.read_V_10();
                      if (this.read_I != slot) {
@@ -481,7 +481,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                   boolean continuing = current != null && this.init_Z && current.equals(this.load_BlockPos);
                   if (continuing && slot == MC.player.getInventory().getSelectedSlot()) {
                      BlockHitResult visible = this.init_BlockHitResult_ce_DataUtil_2(
-                        RotationMath.lookAt(this.init_DataPipe_BufferHel.init_Vec3(), MC.player.getEyePosition())
+                        RotationMath.lookAt(this.init_DataPipe_BufferHel.eye(), MC.player.getEyePosition())
                      );
                      if (this.init_Z_BlockHitResult_2(visible)) {
                         this.init_BlockHitResult = visible;
@@ -539,7 +539,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init_Z_BlockHitResult_2(BlockHitResult hit) {
-      return hit != null && hit.getType() == Type.BLOCK && this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos().equals(hit.getBlockPos());
+      return hit != null && hit.getType() == Type.BLOCK && this.init_DataPipe_BufferHel.first().pos().equals(hit.getBlockPos());
    }
 
    private void read_V_10() {
@@ -623,7 +623,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    public BlockPos init_BlockPos_4() {
-      return this.init_DataPipe_BufferHel == null ? null : this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos();
+      return this.init_DataPipe_BufferHel == null ? null : this.init_DataPipe_BufferHel.first().pos();
    }
 
    public String init_Str_6() {
@@ -633,7 +633,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    public double init_D_6() {
       return this.init_DataPipe_BufferHel == null
          ? -1.0
-         : this.init_DataPipe_BufferHel.init_D()
-            + Math.max(0.0, this.init_ValueSink.init_D(System.nanoTime()) - this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_D());
+         : this.init_DataPipe_BufferHel.ticks()
+            + Math.max(0.0, this.init_ValueSink.init_D(System.nanoTime()) - this.init_DataPipe_BufferHel.first().ticks());
    }
 }

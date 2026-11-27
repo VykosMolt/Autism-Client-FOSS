@@ -19,7 +19,7 @@ public abstract class AutismScaffoldVelocityMixin {
    )
    private float autism$scaffoldSilentMovementYaw(float vanillaYaw) {
       Entity entity = (Entity)(Object)this;
-      float scaffold = ScaffoldModule.init_F_Entity_F(entity, vanillaYaw);
+      float scaffold = ScaffoldModule.velocityYaw(entity, vanillaYaw);
       float yaw = SilentMovementCoordinator.getEntityYaw(entity, scaffold);
       SilentMovementCoordinator.recordMovementYaw(entity, yaw);
       return yaw;

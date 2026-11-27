@@ -13,9 +13,9 @@ final class ArmorFilterMatcher {
    static final int load_I = 1;
    static final int read_I = 2;
    static final String init_Str = "Any";
-   static final List<String> init_List = List.of("Any", "Empty", "Armor", "Leather", "Chain", "Copper", "Iron", "Gold", "Diamond", "Netherite");
-   static final List<String> load_List = init_List_List_StrArr(init_List, "Turtle", "Pumpkin", "Skull");
-   static final List<String> read_List = init_List_List_StrArr(init_List, "Elytra");
+   static final List<String> BASE_OPTIONS = List.of("Any", "Empty", "Armor", "Leather", "Chain", "Copper", "Iron", "Gold", "Diamond", "Netherite");
+   static final List<String> HEAD_OPTIONS = init_List_List_StrArr(BASE_OPTIONS, "Turtle", "Pumpkin", "Skull");
+   static final List<String> CHEST_OPTIONS = init_List_List_StrArr(BASE_OPTIONS, "Elytra");
 
    private ArmorFilterMatcher() {
    }
@@ -119,7 +119,7 @@ final class ArmorFilterMatcher {
       return List.copyOf(out);
    }
 
-   static boolean init_Z_Str_Str(String rule, String itemPath) {
+   static boolean matches(String rule, String itemPath) {
       if (rule != null && !rule.equals("Any")) {
          String id = itemPath == null ? "" : itemPath;
          boolean empty = id.isEmpty() || id.equals("air");

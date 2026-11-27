@@ -38,7 +38,7 @@ public final class RegistryIdValidator {
    public static boolean init(Kind type, String id) {
       String normalized = init(id);
       if (type == Kind.STORAGE_LIST) {
-         return autismclient.modules.StorageEspCatalog.init_ap_BufferHelper(normalized) != null;
+         return autismclient.modules.StorageEspCatalog.byId(normalized) != null;
       }
 
       Identifier parsed = Identifier.tryParse(normalized);

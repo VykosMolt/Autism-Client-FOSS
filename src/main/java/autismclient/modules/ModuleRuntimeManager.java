@@ -332,7 +332,7 @@ public final class ModuleRuntimeManager {
          }
 
          if (!hidden) {
-            AutoReconnectController.load_V();
+            AutoReconnectController.tick();
          }
 
          this.refreshXCarryActiveState();
@@ -390,7 +390,7 @@ public final class ModuleRuntimeManager {
                || shared.hasEntityCaptureCallback()
                || PayloadStudyTracker.init_Z()
                || am.add()
-               || AntiVanishModule.init_Z_19()
+               || AntiVanishModule.isHudVisible()
                || autismclient.util.bi.init_Z()
                || serverInfo != null && serverInfo.run_Z_5()
          );

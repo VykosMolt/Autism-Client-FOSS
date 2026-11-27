@@ -3,7 +3,7 @@ package autismclient.modules;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public record EspHighlightBox(AABB init_AABB, int init_I, int load_I, Vec3 init_Vec3, Vec3 load_Vec3, float init_F) {
+public record EspHighlightBox(AABB box, int init_I, int load_I, Vec3 init_Vec3, Vec3 load_Vec3, float init_F) {
    public EspHighlightBox(AABB box, int color) {
       this(box, color, color, null, null, 1.5F);
    }

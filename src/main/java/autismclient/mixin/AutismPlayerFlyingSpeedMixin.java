@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismPlayerFlyingSpeedMixin {
    @Inject(method = "getFlyingSpeed", at = @At("HEAD"), cancellable = true)
    private void autism$flightFlyingSpeed(CallbackInfoReturnable<Float> cir) {
-      float speed = MovementModuleHooks.init_F((Player)(Object)this);
+      float speed = MovementModuleHooks.flyingSpeed((Player)(Object)this);
       if (speed != -1.0F) {
          cir.setReturnValue(speed);
       }

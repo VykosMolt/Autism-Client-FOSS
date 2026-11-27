@@ -385,7 +385,7 @@ public final class SilentRotationManager {
             lastSteppedTick = tick;
             RotationMath.Rotation playerRotation = RotationMath.ofPlayer(player);
             if (targetRotation != null && remainingHoldTicks > 0) {
-               boolean visible = autismclient.modules.al.init_Module_Str(ownerId) instanceof SilentMovementCoordinator.Participant aimOwner && aimOwner.update_Z_9();
+               boolean visible = autismclient.modules.al.init_Module_Str(ownerId) instanceof SilentMovementCoordinator.Participant aimOwner && aimOwner.rotatesVisibly();
                if (visible
                   && isVisibleAimActive()
                   && !pinQuiet

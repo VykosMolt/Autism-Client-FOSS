@@ -12,7 +12,7 @@ public final class NoFallPauseTimer {
    private NoFallPauseTimer() {
    }
 
-   public static void init_V() {
+   public static void start() {
       load_J = System.currentTimeMillis() + 3000L;
       load_I = 0;
       init_Z = true;
@@ -35,7 +35,7 @@ public final class NoFallPauseTimer {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return init_Z;
    }
 }

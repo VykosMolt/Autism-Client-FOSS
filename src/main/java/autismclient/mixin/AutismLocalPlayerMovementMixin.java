@@ -57,10 +57,10 @@ public class AutismLocalPlayerMovementMixin {
    private float autism$scaffoldSilentMovementYaw(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.init(player, original);
-      float scaffold = ScaffoldModule.init_F_LocalPlayer_F(player, fastExp);
+      float scaffold = ScaffoldModule.overrideYaw(player, fastExp);
       float yaw = SilentMovementCoordinator.getPlayerYaw(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
-         yaw = LeafDupeModule.init_F_LocalPlayer_F_2(player, yaw);
+         yaw = LeafDupeModule.overrideYaw(player, yaw);
       }
 
       SilentMovementCoordinator.setCameraYaw(yaw);
@@ -71,10 +71,10 @@ public class AutismLocalPlayerMovementMixin {
    private float autism$scaffoldSilentMovementPitch(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.load(player, original);
-      float scaffold = ScaffoldModule.load_F_LocalPlayer_F(player, fastExp);
+      float scaffold = ScaffoldModule.overridePitch(player, fastExp);
       float pitch = SilentMovementCoordinator.getPlayerPitch(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
-         pitch = LeafDupeModule.load_F_LocalPlayer_F_2(player, pitch);
+         pitch = LeafDupeModule.overridePitch(player, pitch);
       }
 
       SilentMovementCoordinator.setCameraPitch(pitch);
@@ -146,7 +146,7 @@ public class AutismLocalPlayerMovementMixin {
    private void autism$networkMovementTickPre(CallbackInfo ci) {
       if ((LocalPlayer)(Object)this == Minecraft.getInstance().player) {
          if (!AutismLiteVariant.enabled()) {
-            LeafDupeModule.init_V_LocalPlayer_2((LocalPlayer)(Object)this);
+            LeafDupeModule.beforeSendPosition((LocalPlayer)(Object)this);
          }
 
          al.close_V();
@@ -157,12 +157,12 @@ public class AutismLocalPlayerMovementMixin {
    private void autism$debugRotationTick(CallbackInfo ci) {
       if ((LocalPlayer)(Object)this == Minecraft.getInstance().player) {
          if (!AutismLiteVariant.enabled()) {
-            LeafDupeModule.load_V_LocalPlayer_2((LocalPlayer)(Object)this);
+            LeafDupeModule.afterSendPosition((LocalPlayer)(Object)this);
          }
 
          SilentMovementCoordinator.captureDebugTelemetry(Minecraft.getInstance());
          if (!AutismLiteVariant.enabled()) {
-            KBDisplacementModule.init_V_21();
+            KBDisplacementModule.afterSendPosition();
          }
       }
    }

@@ -708,7 +708,7 @@ public final class am {
          return false;
       }
 
-      if (TeamsModule.init_Z_Entity_5(entity) && !snapshot.write_Z()) {
+      if (TeamsModule.isFriend(entity) && !snapshot.write_Z()) {
          return false;
       }
 
@@ -914,8 +914,8 @@ public final class am {
             init_I_Module(module, "misc-color", -858993460),
             Boolean.parseBoolean(module.value("distance-color")),
             init_D_Str_D(module.value("color-distance"), 40.0),
-            TeamsModule.read_Z_Str(moduleId),
-            TeamsModule.init_I_18(),
+            TeamsModule.option(moduleId),
+            TeamsModule.friendColor(),
             new ConcurrentHashMap<>()
          );
       } else {
@@ -1043,7 +1043,7 @@ public final class am {
          return fallback;
       }
 
-      if (snapshot.write_Z() && TeamsModule.init_Z_Entity_5(entity)) {
+      if (snapshot.write_Z() && TeamsModule.isFriend(entity)) {
          return snapshot.close();
       }
 

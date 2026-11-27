@@ -20,6 +20,6 @@ public class AutismCrystalPlacementPredictionMixin {
       )
    )
    private List<Entity> autism$ownedReplacement(List<Entity> occupants, UseOnContext context) {
-      return !AutismLiteVariant.enabled() ? CrystalAuraModule.init_List_UseOnContext_List(context, occupants) : occupants;
+      return !AutismLiteVariant.enabled() ? CrystalAuraModule.filterPlacementOccupants(context, occupants) : occupants;
    }
 }

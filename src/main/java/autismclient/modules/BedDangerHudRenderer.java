@@ -12,8 +12,8 @@ public final class BedDangerHudRenderer {
    }
 
    public static boolean init() {
-      DangerModule module = DangerModule.init_z();
-      return module != null && module.isEnabled() && module.bool("bed-warning") && !module.init_List_19().isEmpty();
+      DangerModule module = DangerModule.instance();
+      return module != null && module.isEnabled() && module.bool("bed-warning") && !module.bedProximity().isEmpty();
    }
 
    static void init(GuiGraphicsExtractor graphics, DangerModule module) {
@@ -24,9 +24,9 @@ public final class BedDangerHudRenderer {
    }
 
    private static BedDangerHudRenderer.Inner_DataUtil init_u_DataUtil(Font font) {
-      DangerModule module = DangerModule.init_z();
+      DangerModule module = DangerModule.instance();
       List<Component> lines = init()
-         ? module.init_List_19().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
+         ? module.bedProximity().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
          : List.of(Component.literal("Player  20 m").withColor(16755285));
       float scale = module == null ? 1.0F : (float)module.decimal("bed-warning-scale");
       int available = Math.max(1, (int)(cA.init_I() / scale) - 16);
@@ -36,7 +36,7 @@ public final class BedDangerHudRenderer {
       return new BedDangerHudRenderer.Inner_DataUtil(lines, width, height, scale);
    }
 
-   public static int[] init_IArr(Font font) {
+   public static int[] size(Font font) {
       BedDangerHudRenderer.Inner_DataUtil layout = init_u_DataUtil(font);
       return new int[]{Math.max(1, (int)Math.ceil(layout.init_I * layout.init_F)), Math.max(1, (int)Math.ceil(layout.load * layout.init_F))};
    }

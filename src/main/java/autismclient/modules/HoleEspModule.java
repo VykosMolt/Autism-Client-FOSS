@@ -61,7 +61,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       this.add(new ColorSetting("color-2x2", "2x2", -536805).group("Colors").description("A four-block hole.").build());
    }
 
-   public static void init_V_12() {
+   public static void register() {
       update();
    }
 

@@ -385,7 +385,7 @@ final class AiOracle {
    private static long init_J() {
       if (load_J < 0L) {
          for (int i = 0; i < autismclient.modules.StructureStorageFilter.init.size(); i++) {
-            if ("hide-villages".equals(autismclient.modules.StructureStorageFilter.init.get(i).init_Str())) {
+            if ("hide-villages".equals(autismclient.modules.StructureStorageFilter.init.get(i).id())) {
                load_J = 1L << i;
                break;
             }
@@ -1354,7 +1354,7 @@ final class AiOracle {
          LevelChunkSection section = sections[i];
          if (section != null
             && !section.hasOnlyAir()
-            && autismclient.modules.StructureStorageFilter.init_Z_LevelChunk(chunk, new BlockPos(centerX, chunk.getSectionYFromSectionIndex(i) << 4, centerZ), mask, sectionCache)) {
+            && autismclient.modules.StructureStorageFilter.isInHiddenStructure(chunk, new BlockPos(centerX, chunk.getSectionYFromSectionIndex(i) << 4, centerZ), mask, sectionCache)) {
             return true;
          }
       }

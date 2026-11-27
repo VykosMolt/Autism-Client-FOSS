@@ -27,7 +27,7 @@ public abstract class AutismSodiumBlockRendererMixin {
    @Inject(method = "renderModel", at = @At("HEAD"), cancellable = true)
    private void autism$xraySodiumBlockStart(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
       boolean xrayActive = am.read_Z();
-      boolean goldenLeverActive = GoldenLeverModule.init_Z_11();
+      boolean goldenLeverActive = GoldenLeverModule.isActive();
       boolean darkenActive = am.write_Z();
       if (!xrayActive && !goldenLeverActive && !darkenActive) {
          this.autism$xrayAlpha = -1;

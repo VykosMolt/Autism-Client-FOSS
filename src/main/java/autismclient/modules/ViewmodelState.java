@@ -4,38 +4,38 @@ import autismclient.util.AutismLiteVariant;
 
 public final class ViewmodelState {
    private static volatile boolean close_Z;
-   static volatile boolean init_Z;
-   static volatile float init_F;
-   static volatile float load_F;
-   static volatile float read_F;
-   static volatile float write_F;
-   static volatile float update_F;
-   static volatile float sync_F;
-   static volatile boolean load_Z;
-   static volatile float flush_F;
-   static volatile float close_F;
+   static volatile boolean mainHand;
+   static volatile float mainHandScale;
+   static volatile float mainHandX;
+   static volatile float mainHandY;
+   static volatile float mainHandRotX;
+   static volatile float mainHandRotY;
+   static volatile float mainHandRotZ;
+   static volatile boolean offHand;
+   static volatile float offHandScale;
+   static volatile float offHandX;
    static volatile float open;
    static volatile float poll;
    static volatile float push;
    static volatile float pop;
-   static volatile int init_I = 6;
-   static volatile int load_I;
+   static volatile int swingDuration = 6;
+   static volatile int blockingAnimation;
    static volatile float tick = 0.1F;
    static volatile float run = 0.9F;
-   static volatile boolean read_Z = true;
-   static volatile boolean write_Z = true;
-   static volatile boolean update_Z = true;
-   static volatile boolean sync_Z;
-   static volatile boolean flush_Z;
+   static volatile boolean equipOffset = true;
+   static volatile boolean ignoreBlocking = true;
+   static volatile boolean ignorePlace = true;
+   static volatile boolean ignoreAmount;
+   static volatile boolean airWalker;
 
    private ViewmodelState() {
    }
 
-   static void init_V() {
+   static void activate() {
       close_Z = true;
    }
 
-   static void load_V() {
+   static void deactivate() {
       close_Z = false;
    }
 
@@ -48,43 +48,43 @@ public final class ViewmodelState {
    }
 
    public static boolean load_Z() {
-      return close_Z && open_Z() && init_Z;
+      return close_Z && open_Z() && mainHand;
    }
 
    public static float init_F() {
-      return init_F;
+      return mainHandScale;
    }
 
    public static float load_F() {
-      return load_F;
+      return mainHandX;
    }
 
    public static float read_F() {
-      return read_F;
+      return mainHandY;
    }
 
    public static float write_F() {
-      return write_F;
+      return mainHandRotX;
    }
 
    public static float update_F() {
-      return update_F;
+      return mainHandRotY;
    }
 
    public static float sync_F() {
-      return sync_F;
+      return mainHandRotZ;
    }
 
    public static boolean read_Z() {
-      return close_Z && open_Z() && load_Z;
+      return close_Z && open_Z() && offHand;
    }
 
    public static float flush_F() {
-      return flush_F;
+      return offHandScale;
    }
 
    public static float close_F() {
-      return close_F;
+      return offHandX;
    }
 
    public static float open_F() {
@@ -104,11 +104,11 @@ public final class ViewmodelState {
    }
 
    public static int init_I() {
-      return init_I;
+      return swingDuration;
    }
 
    public static int load_I() {
-      return load_I;
+      return blockingAnimation;
    }
 
    public static float tick() {
@@ -120,22 +120,22 @@ public final class ViewmodelState {
    }
 
    public static boolean write_Z() {
-      return close_Z && open_Z() && read_Z;
+      return close_Z && open_Z() && equipOffset;
    }
 
    public static boolean update_Z() {
-      return write_Z;
+      return ignoreBlocking;
    }
 
    public static boolean sync_Z() {
-      return update_Z;
+      return ignorePlace;
    }
 
    public static boolean flush_Z() {
-      return sync_Z;
+      return ignoreAmount;
    }
 
-   public static boolean close_Z() {
-      return close_Z && open_Z() && flush_Z;
+   public static boolean airWalkerActive() {
+      return close_Z && open_Z() && airWalker;
    }
 }

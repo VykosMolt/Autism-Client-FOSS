@@ -109,30 +109,30 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                new BoolSetting("auto-return", "Auto Return", true)
                   .group(kind.load())
                   .description("Rotate smoothly and hit incoming redirectable fireballs")
-                  .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+                  .visibleWhen(() -> this.isKindEnabled(kind))
             );
             this.add(
                new EnumSetting<>("rotation", "Rotation", DangerModule.Inner_StreamUtil.SILENT, DangerModule.Inner_StreamUtil.values())
                   .group(kind.load())
-                  .visibleWhen(() -> this.init_Z_A_StreamUtil(kind) && this.bool("auto-return"))
+                  .visibleWhen(() -> this.isKindEnabled(kind) && this.bool("auto-return"))
             );
             this.add(
                new BoolSetting("fireball-blast-blocks", "Blast Block Highlights", false)
                   .group(kind.load())
                   .description("Red blocks at risk from incoming fireballs and your own shots; dimmer edges are less likely")
-                  .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+                  .visibleWhen(() -> this.isKindEnabled(kind))
             );
          } else if (kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL) {
             this.add(
                new BoolSetting("pearl-ghost", "Landing Ghost", true)
                   .group(kind.load())
                   .description("Textureless ghost at every known teleport landing, white or name-colored; independent of Warning Radius")
-                  .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+                  .visibleWhen(() -> this.isKindEnabled(kind))
             );
             this.add(
                new DoubleSetting("ghost-opacity", "Ghost Opacity", 0.35, 0.1, 0.8, 0.05)
                   .group(kind.load())
-                  .visibleWhen(() -> this.init_Z_A_StreamUtil(kind) && this.bool("pearl-ghost"))
+                  .visibleWhen(() -> this.isKindEnabled(kind) && this.bool("pearl-ghost"))
             );
          }
       }
@@ -181,7 +181,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             .visibleWhen(() -> this.bool("bed-warning") && this.bool("bed-warning-sound"))
       );
       this.add(
-         new ActionSetting("bed-sound-preview", "Preview Sound", this::init_V_52)
+         new ActionSetting("bed-sound-preview", "Preview Sound", this::playBedSound)
             .buttonLabel("Play")
             .availableOffline()
             .group("Bed Danger")
@@ -189,15 +189,15 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       );
    }
 
-   public float init_F_10() {
+   public float warningScale() {
       return (float)Math.max(0.5, Math.min(4.0, this.decimal("warning-scale")));
    }
 
-   List<BedProximityTracker.Inner_DataUtil> init_List_19() {
-      return this.init_v.init_List();
+   List<BedProximityTracker.Inner_DataUtil> bedProximity() {
+      return this.init_v.entries();
    }
 
-   void init_V_52() {
+   void playBedSound() {
       if (MC != null && !(this.decimal("bed-sound-volume") <= 0.0)) {
          Reference var10000;
          switch (this.choice("bed-sound")) {
@@ -217,13 +217,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    public static boolean init_Z_52() {
-      DangerModule danger = init_z();
+      DangerModule danger = instance();
       return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.isWithinTickWindow(AutismSessionState.getInstance().getClientTick(), danger.poll, 1);
    }
 
    private boolean pop() {
       for (IncomingProjectileScanner.Inner_StreamUtil kind : IncomingProjectileScanner.Inner_StreamUtil.values()) {
-         if (this.init_Z_A_StreamUtil_Str(kind, "hud")) {
+         if (this.isKindOptionEnabled(kind, "hud")) {
             return true;
          }
       }
@@ -232,42 +232,42 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void init_V_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
-      String key = kind.init_Str() + "-";
+      String key = kind.id() + "-";
       String group = kind.load();
       this.add(new BoolSetting(key + "enabled", "Enabled", true).group(group));
       this.add(
          new BoolSetting(key + "hud", "Directional Warning", true)
             .group(group)
             .description("Compact projectile icon and direction arrow, colored green to red by distance")
-            .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+            .visibleWhen(() -> this.isKindEnabled(kind))
       );
       int multiplier = kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 2 : 1;
       this.add(
          new DoubleSetting(key + "radius", "Warning Radius", 15 * multiplier, multiplier, 30 * multiplier, 1.0)
             .group(group)
             .description("Only warn about predicted landings or passing paths within this many blocks")
-            .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+            .visibleWhen(() -> this.isKindEnabled(kind))
       );
       this.add(
          new BoolSetting(key + "trajectory", "Show Trajectory", true)
             .group(group)
             .description("Draw the flight path and its landing marker through walls")
-            .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+            .visibleWhen(() -> this.isKindEnabled(kind))
       );
       this.add(
          new BoolSetting(key + "aim-preview", "Enemy Aim Preview", false)
             .group(group)
             .description("Preview this projectile while an enemy holds it, before firing or throwing")
-            .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
+            .visibleWhen(() -> this.isKindEnabled(kind))
       );
    }
 
-   public static DangerModule init_z() {
+   public static DangerModule instance() {
       return al.init_Module_Str("danger") instanceof DangerModule danger ? danger : null;
    }
 
    public static boolean read_Z_22() {
-      DangerModule danger = init_z();
+      DangerModule danger = instance();
       return danger != null
          && danger.init_Z
          && !aD.init_Z()
@@ -277,12 +277,12 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    public static boolean sync_Z_12() {
-      DangerModule danger = init_z();
+      DangerModule danger = instance();
       return danger != null && danger.init_Z && !danger.load_Z && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean flush_Z_10() {
-      DangerModule danger = init_z();
+      DangerModule danger = instance();
       return danger != null && danger.init_Z && !aD.init_Z() && !FreecamController.isActive();
    }
 
@@ -310,38 +310,38 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return this.read_List;
    }
 
-   public List<FireballBlastPredictor.Inner_DataUtil> update_List() {
+   public List<FireballBlastPredictor.Inner_DataUtil> blastPredictions() {
       return this.write_List;
    }
 
-   public boolean init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
-      return this.bool(kind.init_Str() + "-enabled");
+   public boolean isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil kind) {
+      return this.bool(kind.id() + "-enabled");
    }
 
-   public boolean init_Z_A_StreamUtil_Str(IncomingProjectileScanner.Inner_StreamUtil kind, String option) {
-      return this.init_Z_A_StreamUtil(kind) && this.bool(kind.init_Str() + "-" + option);
+   public boolean isKindOptionEnabled(IncomingProjectileScanner.Inner_StreamUtil kind, String option) {
+      return this.isKindEnabled(kind) && this.bool(kind.id() + "-" + option);
    }
 
    public double init_D_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
-      return this.decimal(kind.init_Str() + "-radius");
+      return this.decimal(kind.id() + "-radius");
    }
 
    public boolean close_Z_9() {
-      return this.isEnabled() && this.load_List.stream().anyMatch(w -> this.init_Z_A_StreamUtil_Str(w.init_A_StreamUtil(), "hud"));
+      return this.isEnabled() && this.load_List.stream().anyMatch(w -> this.isKindOptionEnabled(w.kind(), "hud"));
    }
 
    public boolean open_Z_6() {
       return !this.write_List.isEmpty()
-         || this.load_List.stream().anyMatch(w -> this.init_Z_A_StreamUtil_Str(w.init_A_StreamUtil(), "trajectory"))
-         || this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
+         || this.load_List.stream().anyMatch(w -> this.isKindOptionEnabled(w.kind(), "trajectory"))
+         || this.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
    }
 
-   public int init_I_A_BufferHelper(IncomingProjectileScanner.Inner_BufferHelper warning) {
+   public int warningColor(IncomingProjectileScanner.Inner_BufferHelper warning) {
       if (warning.init_Z()) {
          return -9720065;
       }
 
-      double distance = MC.player.position().distanceTo(warning.init_Entity().position());
+      double distance = MC.player.position().distanceTo(warning.entity().position());
       return am.init_I_D_D(Math.max(0.0, distance - 3.0), 17.0);
    }
 
@@ -358,7 +358,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    @Override
    public void tick() {
       if (this.isEnabled()) {
-         this.init_v.init_V_Minecraft_z(MC, this);
+         this.init_v.tick(MC, this);
       }
 
       if (!this.isEnabled() && this.init_Z) {
@@ -403,7 +403,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
          this.write_V_22();
          this.read_V_23();
-         if (this.isEnabled() && this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return") && this.set()) {
+         if (this.isEnabled() && this.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return") && this.set()) {
             DangerModule.Inner_CachePool best = null;
             boolean landingPriority = false;
 
@@ -517,7 +517,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void read_V_23() {
-      if (this.isEnabled() && this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return")) {
+      if (this.isEnabled() && this.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return")) {
          for (DangerModule.Inner_CachePool threat : this.init_List) {
             if (threat.init_Z && threat.load_Z) {
                DangerModule.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
@@ -709,7 +709,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       if (this.isEnabled() && !aD.init_Z()) {
          double range = 64.0;
          List<IncomingProjectileScanner.Inner_BufferHelper> result = new ArrayList<>();
-         boolean showPearlGhosts = this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost");
+         boolean showPearlGhosts = this.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost");
          HashMap<UUID, IncomingProjectileScanner.Inner_BufferHelper> landingModels = new HashMap<>();
          HashSet<UUID> predictedPearls = new HashSet<>();
          List<Projectile> candidates = MC.level
@@ -717,12 +717,12 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                Projectile.class,
                MC.player.getBoundingBox().inflate(range),
                ballx -> IncomingProjectileScanner.init(ballx) != null
-                  && this.init_Z_A_StreamUtil(IncomingProjectileScanner.init(ballx))
+                  && this.isKindEnabled(IncomingProjectileScanner.init(ballx))
                   && ballx.isAlive()
                   && !ballx.isRemoved()
                   && ballx.getOwner() != MC.player
                   && ballx.getDeltaMovement().lengthSqr() > 1.0E-7
-                  && (ballx.getOwner() == null || !TeamsModule.init_Z_Entity_5(ballx.getOwner()))
+                  && (ballx.getOwner() == null || !TeamsModule.isFriend(ballx.getOwner()))
                   && ballx.distanceToSqr(MC.player) <= range * range
                   && (!(ballx instanceof AbstractArrow) || !((AutismDangerArrowAccessor)ballx).autism$inGround())
             );
@@ -760,7 +760,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   && pearl.getOwner() instanceof AbstractClientPlayer owner
                   && owner != MC.player
                   && owner.isAlive()
-                  && !TeamsModule.init_Z_Entity_5(owner)) {
+                  && !TeamsModule.isFriend(owner)) {
                   distantPearls.add(pearl);
                }
             }
@@ -782,14 +782,14 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             }
          }
 
-         if (Arrays.stream(IncomingProjectileScanner.Inner_StreamUtil.values()).anyMatch(kindx -> this.init_Z_A_StreamUtil_Str(kindx, "aim-preview"))) {
+         if (Arrays.stream(IncomingProjectileScanner.Inner_StreamUtil.values()).anyMatch(kindx -> this.isKindOptionEnabled(kindx, "aim-preview"))) {
             ArrayList<AbstractClientPlayer> players = new ArrayList<>(MC.level.players());
             players.removeIf(
                player -> player == MC.player
                   || !player.isAlive()
                   || player.isSpectator()
                   || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != IncomingProjectileScanner.Inner_StreamUtil.PEARL)
-                  || TeamsModule.init_Z_Entity_5(player)
+                  || TeamsModule.isFriend(player)
                   || !this.init_Z_Player_3(player)
                   || AntiBotTracker.isBot(player)
             );
@@ -805,11 +805,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      List<ProjectileBallistics.Inner_BufferHelper> shots = ProjectileBallistics.init(owner, stack, true, true);
 
                      for (ProjectileBallistics.Inner_BufferHelper shot : shots) {
-                        if (!this.init_Z_A_StreamUtil_Str(kind, "aim-preview")) {
+                        if (!this.isKindOptionEnabled(kind, "aim-preview")) {
                            break;
                         }
 
-                        if (kind != IncomingProjectileScanner.Inner_StreamUtil.ARROW || shot.init_aX_DataUtil().init_D() != 0.0) {
+                        if (kind != IncomingProjectileScanner.Inner_StreamUtil.ARROW || shot.info().init_D() != 0.0) {
                            IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, owner, kind, shot);
                            IncomingProjectileScanner.Inner_BufferHelper warning = new IncomingProjectileScanner.Inner_BufferHelper(owner, owner, kind, true, flight, this.init_I_Player(owner));
                            if (showPearlGhosts && IncomingProjectileScanner.init(warning)) {
@@ -838,7 +838,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                .thenComparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(MC.player.position()))
          );
          this.read_List = List.copyOf(models);
-         if (this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("fireball-blast-blocks")) {
+         if (this.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("fireball-blast-blocks")) {
             ArrayList<IncomingProjectileScanner.Inner_BufferHelper> blastSources = new ArrayList<>(this.load_List);
             List<LargeFireball> own = MC.level
                .getEntitiesOfClass(
@@ -861,7 +861,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             }
 
             blastSources.sort(Comparator.comparingDouble(source -> source.init_A_DataUtil().init_D()));
-            this.write_List = this.init_x.init_List_Level_List(MC.level, blastSources);
+            this.write_List = this.init_x.predict(MC.level, blastSources);
          } else {
             this.open_V_6();
          }
@@ -873,7 +873,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    private boolean init_Z_Player_3(Player player) {
       IncomingProjectileScanner.Inner_StreamUtil kind = init_A_StreamUtil_Player(player);
-      return kind != null && this.init_Z_A_StreamUtil_Str(kind, "aim-preview");
+      return kind != null && this.isKindOptionEnabled(kind, "aim-preview");
    }
 
    private static IncomingProjectileScanner.Inner_StreamUtil init_A_StreamUtil_Player(Player player) {
@@ -909,8 +909,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return false;
    }
 
-   public static void init_V_Packet_3(Packet<?> packet) {
-      DangerModule danger = init_z();
+   public static void forwardPacket(Packet<?> packet) {
+      DangerModule danger = instance();
       if (danger != null) {
          danger.onPacketReceive(packet);
       }
@@ -1039,7 +1039,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    public static RotationMath.Rotation init_ce_DataUtil_F_2(float partialTick) {
-      DangerModule danger = init_z();
+      DangerModule danger = instance();
       if (danger == null
          || !"Visible".equalsIgnoreCase(danger.value("rotation"))
          || MC == null
@@ -1080,7 +1080,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    @Override
    public void onDisable() {
-      this.init_v.init_V();
+      this.init_v.reset();
       this.load_List = this.read_List = List.of();
       this.open_V_6();
       this.flush_V_10();
@@ -1096,7 +1096,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return read_Z_22();
    }
 
-   public static Input init_Input_Input_4(Input input) {
+   public static Input overrideInput(Input input) {
       if (input != null
          && flush_Z_10()
          && MC != null
@@ -1127,11 +1127,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    private void open_V_6() {
       this.write_List = List.of();
-      this.init_x.init_V();
+      this.init_x.reset();
    }
 
    private void poll_V_6() {
-      this.init_v.init_V();
+      this.init_v.reset();
       this.open_V_6();
       if ("danger".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          autismclient.util.SilentRotationManager.resetAll();

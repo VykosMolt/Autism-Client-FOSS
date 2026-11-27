@@ -147,7 +147,7 @@ public class AutismMinecraftClientMixin {
 
    @Inject(method = "shouldEntityAppearGlowing", at = @At("RETURN"), cancellable = true)
    private void autism$frameEspGlow(Entity entity, CallbackInfoReturnable<Boolean> cir) {
-      if (!cir.getReturnValueZ() && FrameEspCatalog.init_Z(entity)) {
+      if (!cir.getReturnValueZ() && FrameEspCatalog.hasOutline(entity)) {
          cir.setReturnValue(true);
       }
    }
@@ -192,7 +192,7 @@ public class AutismMinecraftClientMixin {
          LateRegisterSynthesizer.init((Minecraft)(Object)this);
          MovementModuleHooks.init_V();
          if (!AutismLiteVariant.enabled()) {
-            KBDisplacementModule.load_V_17();
+            KBDisplacementModule.onTickHead();
          }
 
          MacroExecutor.onClientTick();
@@ -575,7 +575,7 @@ public class AutismMinecraftClientMixin {
       }
 
       if (!aD.read_Z() && ((Minecraft)(Object)this).player != null) {
-         float multiplier = MovementModuleHooks.init_F();
+         float multiplier = MovementModuleHooks.speedTimerMultiplier();
          if (multiplier != 1.0F) {
             cir.setReturnValue(cir.getReturnValue() / multiplier);
          }

@@ -73,7 +73,7 @@ public final class ViewmodelModule extends Module {
 
    @Override
    public void onDisable() {
-      ViewmodelState.load_V();
+      ViewmodelState.deactivate();
    }
 
    @Override
@@ -94,29 +94,29 @@ public final class ViewmodelModule extends Module {
    }
 
    private void init() {
-      ViewmodelState.init_Z = this.bool("main-hand");
-      ViewmodelState.init_F = (float)this.decimal("main-hand-scale");
-      ViewmodelState.load_F = (float)this.decimal("main-hand-x");
-      ViewmodelState.read_F = (float)this.decimal("main-hand-y");
-      ViewmodelState.write_F = (float)this.decimal("main-hand-rot-x");
-      ViewmodelState.update_F = (float)this.decimal("main-hand-rot-y");
-      ViewmodelState.sync_F = (float)this.decimal("main-hand-rot-z");
-      ViewmodelState.load_Z = this.bool("off-hand");
-      ViewmodelState.flush_F = (float)this.decimal("off-hand-scale");
-      ViewmodelState.close_F = (float)this.decimal("off-hand-x");
+      ViewmodelState.mainHand = this.bool("main-hand");
+      ViewmodelState.mainHandScale = (float)this.decimal("main-hand-scale");
+      ViewmodelState.mainHandX = (float)this.decimal("main-hand-x");
+      ViewmodelState.mainHandY = (float)this.decimal("main-hand-y");
+      ViewmodelState.mainHandRotX = (float)this.decimal("main-hand-rot-x");
+      ViewmodelState.mainHandRotY = (float)this.decimal("main-hand-rot-y");
+      ViewmodelState.mainHandRotZ = (float)this.decimal("main-hand-rot-z");
+      ViewmodelState.offHand = this.bool("off-hand");
+      ViewmodelState.offHandScale = (float)this.decimal("off-hand-scale");
+      ViewmodelState.offHandX = (float)this.decimal("off-hand-x");
       ViewmodelState.open = (float)this.decimal("off-hand-y");
       ViewmodelState.poll = (float)this.decimal("off-hand-rot-x");
       ViewmodelState.push = (float)this.decimal("off-hand-rot-y");
       ViewmodelState.pop = (float)this.decimal("off-hand-rot-z");
-      ViewmodelState.init_I = this.integer("swing-duration");
-      ViewmodelState.load_I = "Pushdown".equals(this.choice("blocking-animation")) ? 1 : 0;
+      ViewmodelState.swingDuration = this.integer("swing-duration");
+      ViewmodelState.blockingAnimation = "Pushdown".equals(this.choice("blocking-animation")) ? 1 : 0;
       ViewmodelState.tick = (float)this.decimal("one-seven-y");
       ViewmodelState.run = (float)this.decimal("one-seven-swing-scale");
-      ViewmodelState.read_Z = this.bool("equip-offset");
-      ViewmodelState.write_Z = this.bool("ignore-blocking");
-      ViewmodelState.update_Z = this.bool("ignore-place");
-      ViewmodelState.sync_Z = this.bool("ignore-amount");
-      ViewmodelState.flush_Z = this.bool("air-walker");
-      ViewmodelState.init_V();
+      ViewmodelState.equipOffset = this.bool("equip-offset");
+      ViewmodelState.ignoreBlocking = this.bool("ignore-blocking");
+      ViewmodelState.ignorePlace = this.bool("ignore-place");
+      ViewmodelState.ignoreAmount = this.bool("ignore-amount");
+      ViewmodelState.airWalker = this.bool("air-walker");
+      ViewmodelState.activate();
    }
 }

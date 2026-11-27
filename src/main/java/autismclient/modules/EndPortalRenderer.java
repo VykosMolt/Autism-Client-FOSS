@@ -34,7 +34,7 @@ public final class EndPortalRenderer {
          return null;
       } else {
          return init_Minecraft.level != null && init_Minecraft.player != null && !init_Minecraft.gui.hud.isHidden() && !aD.init_Z() && !am.clear()
-            ? EndPortalModule.init_E()
+            ? EndPortalModule.active()
             : null;
       }
    }
@@ -45,8 +45,8 @@ public final class EndPortalRenderer {
          return false;
       }
 
-      Vec3 target = m.init_Vec3();
-      return !m.init_List_3().isEmpty() || m.write_Z() && target != null || init(m, target, WorldProjectionHelper.init());
+      Vec3 target = m.target();
+      return !m.frames().isEmpty() || m.showsTracer() && target != null || init(m, target, WorldProjectionHelper.init());
    }
 
    private static boolean init(EndPortalModule module, Vec3 target, Vec3 camera) {
@@ -61,20 +61,20 @@ public final class EndPortalRenderer {
 
    public static boolean load() {
       EndPortalModule m = init_E();
-      return m != null && m.update_Z() && init_Minecraft.gui.screen() == null;
+      return m != null && m.showsGuide() && init_Minecraft.gui.screen() == null;
    }
 
    public static void init(PoseStack matrices) {
       EndPortalModule module = init_E();
       if (module != null) {
          Vec3 camera = WorldProjectionHelper.init();
-         Vec3 target = module.init_Vec3();
+         Vec3 target = module.target();
          AutismBufferSource source = init_c_DataUtil.init();
-         int color = module.init_I_2();
-         if (!module.init_List_3().isEmpty()) {
+         int color = module.color();
+         if (!module.frames().isEmpty()) {
             VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
-            for (BlockPos pos : module.init_List_3()) {
+            for (BlockPos pos : module.frames()) {
                WorldLineRenderer.init(matrices.last(), fill, init(pos).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 32));
             }
          }
@@ -88,11 +88,11 @@ public final class EndPortalRenderer {
 
          VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
-         for (BlockPos pos : module.init_List_3()) {
+         for (BlockPos pos : module.frames()) {
             WorldLineRenderer.init(matrices.last(), lines, init(pos).inflate(0.003).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 221), 1.5F);
          }
 
-         if (module.write_Z() && target != null) {
+         if (module.showsTracer() && target != null) {
             Vec3 relative = target.subtract(camera);
             if (relative.lengthSqr() > 36864.0) {
                relative = relative.normalize().scale(192.0);
@@ -129,9 +129,9 @@ public final class EndPortalRenderer {
 
    private static EndPortalRenderer.Inner_DataUtil init(GuiGraphicsExtractor graphics, EndPortalModule module) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, init_Minecraft.font, 0, 0);
-      Vec3 target = module.init_Vec3();
+      Vec3 target = module.target();
       float scale = module.init_F();
-      String label = module.read_Z_2()
+      String label = module.showsCoordinates()
          ? EndPortalDisplayHelper.init(target, module.close(), module.open())
          : EndPortalDisplayHelper.init(init_Minecraft.player.position(), target, module.close(), module.open());
       String prompt = EndPortalDisplayHelper.init(target != null, EndPortalModule.load_Z(), module.flush());
@@ -161,10 +161,10 @@ public final class EndPortalRenderer {
          );
       }
 
-      return placement == null ? null : new EndPortalRenderer.Inner_DataUtil(placement, size, label, target != null, scale, module.init_I_2());
+      return placement == null ? null : new EndPortalRenderer.Inner_DataUtil(placement, size, label, target != null, scale, module.color());
    }
 
-   public static autismclient.gui.f.NetHelper init_NetHelper(GuiGraphicsExtractor graphics) {
+   public static autismclient.gui.f.NetHelper hudBounds(GuiGraphicsExtractor graphics) {
       EndPortalModule module = init_E();
       if (module == null) {
          return autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
@@ -176,9 +176,9 @@ public final class EndPortalRenderer {
          : autismclient.gui.ui.widgets.WorldIndicatorBadge.init(marker.init_TaskTimer_DataUtil, marker.init_TaskTimer_StreamUt, marker.init_F);
    }
 
-   public static void init_V(GuiGraphicsExtractor graphics) {
+   public static void renderHud(GuiGraphicsExtractor graphics) {
       EndPortalModule module = init_E();
-      if (module != null && module.update_Z() && init_Minecraft.gui.screen() == null) {
+      if (module != null && module.showsGuide() && init_Minecraft.gui.screen() == null) {
          EndPortalRenderer.Inner_DataUtil marker = init(graphics, module);
          if (marker != null) {
             autismclient.gui.ui.widgets.WorldIndicatorBadge.init(

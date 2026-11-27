@@ -49,7 +49,7 @@ final class PlayerDisplayNameParser {
       }
    }
 
-   static MutableComponent init_MutableComponent(String accountName, Component serverDisplay, TextColor fallbackColor) {
+   static MutableComponent displayName(String accountName, Component serverDisplay, TextColor fallbackColor) {
       if (!init(accountName)) {
          return Component.empty();
       }
@@ -78,7 +78,7 @@ final class PlayerDisplayNameParser {
 
    static int init_I(String accountName, Component display, TextColor fallback) {
       long[] sum = new long[4];
-      init_MutableComponent(accountName, display, fallback).visit((style, text) -> {
+      displayName(accountName, display, fallback).visit((style, text) -> {
          int rgb = style.getColor() == null ? 16777215 : style.getColor().getValue();
          int weight = text.length();
          sum[0] += (rgb >> 16 & 0xFF) * weight;

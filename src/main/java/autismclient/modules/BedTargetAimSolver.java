@@ -25,7 +25,7 @@ final class BedTargetAimSolver {
       return boxes.stream().anyMatch(box -> box.distanceToSqr(eye) <= reach * reach);
    }
 
-   static Vec3 init_Vec3(List<AABB> boxes, List<AABB> blockers, Vec3 eye, double reach, Vec3 preferred) {
+   static Vec3 visibleAimPoint(List<AABB> boxes, List<AABB> blockers, Vec3 eye, double reach, Vec3 preferred) {
       for (AABB box : boxes) {
          if (init_Z(boxes, blockers, eye, reach, box.getCenter())) {
             return box.getCenter();

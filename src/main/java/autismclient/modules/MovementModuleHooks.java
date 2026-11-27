@@ -25,7 +25,7 @@ public final class MovementModuleHooks {
          : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
    }
 
-   public static float init_F() {
+   public static float speedTimerMultiplier() {
       float multiplier = 1.0F;
 
       for (Module module : al.load_List()) {
@@ -37,7 +37,7 @@ public final class MovementModuleHooks {
       return Math.max(0.01F, Math.min(10.0F, multiplier));
    }
 
-   public static float init_F(Player player) {
+   public static float flyingSpeed(Player player) {
       f.Inner_FileCache flight = init_ai_DataUtil().init_f_FileCache();
       return flight != null ? flight.init_F_7() : -1.0F;
    }
@@ -64,7 +64,7 @@ public final class MovementModuleHooks {
    }
 
    public static boolean init(boolean original, boolean movementTick) {
-      if (!AutismLiteVariant.enabled() && WTappingModule.init_Z_36()) {
+      if (!AutismLiteVariant.enabled() && WTappingModule.isTapping()) {
          return false;
       } else if (!AutismLiteVariant.enabled() && ClutchModule.flush_Z_9()) {
          return false;
@@ -78,7 +78,7 @@ public final class MovementModuleHooks {
    }
 
    public static boolean update() {
-      if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || autismclient.ai.engine.AiMotionSafety.isSprintSuppressed())) {
+      if (!AutismLiteVariant.enabled() && (WTappingModule.isTapping() || autismclient.ai.engine.AiMotionSafety.isSprintSuppressed())) {
          return true;
       } else {
          return ScaffoldModule.open_Z_3() ? false : al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.init();
@@ -208,7 +208,7 @@ public final class MovementModuleHooks {
       }
    }
 
-   public static void init_V(Entity entity) {
+   public static void afterTravelInFluid(Entity entity) {
       if (AutismLiteVariant.enabled()
          || !PkgCls_a.init_Z()
          || init_Minecraft.player == null

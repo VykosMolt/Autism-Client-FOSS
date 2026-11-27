@@ -63,8 +63,8 @@ public final class CrosshairPresetGeometry {
       return init_p_CachePool_List(shapes, s0, Math.max(0, outlinePx), Math.max(0, pad));
    }
 
-   public static CrosshairPresetGeometry.Inner_CachePool init_p_CachePool_m(CrosshairPixelArt art, double unit, int outlinePx, int pad) {
-      int n = art.init_I();
+   public static CrosshairPresetGeometry.Inner_CachePool rasterize(CrosshairPixelArt art, double unit, int outlinePx, int pad) {
+      int n = art.size();
       int s0 = Math.max(1, (int)Math.round(16.0 * Math.max(0.05, unit)));
       pad = Math.max(0, pad);
       outlinePx = Math.max(0, outlinePx);
@@ -104,8 +104,8 @@ public final class CrosshairPresetGeometry {
 
    private static int init_I_m(CrosshairPixelArt art, int x, int y, double unit) {
       int p = 0;
-      int x1 = Math.min(art.init_I(), (int)Math.ceil((x + 1) * unit));
-      int y1 = Math.min(art.init_I(), (int)Math.ceil((y + 1) * unit));
+      int x1 = Math.min(art.size(), (int)Math.ceil((x + 1) * unit));
+      int y1 = Math.min(art.size(), (int)Math.ceil((y + 1) * unit));
 
       for (int dy = (int)(y * unit); dy < y1; dy++) {
          for (int dx = (int)(x * unit); dx < x1; dx++) {
@@ -124,19 +124,19 @@ public final class CrosshairPresetGeometry {
    }
 
    public static CrosshairPixelArt init(CrosshairPresetGeometry.Inner_NetHelper style, int size, double thickness, double gap, int argb) {
-      int n = CrosshairPixelArt.init_Z(size) ? size : 16;
-      CrosshairPresetGeometry.Inner_CachePool raster = init(style.init_Z() ? style : CrosshairPresetGeometry.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
+      int n = CrosshairPixelArt.isValidSize(size) ? size : 16;
+      CrosshairPresetGeometry.Inner_CachePool raster = init(style.isPreset() ? style : CrosshairPresetGeometry.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
       int[] pixels = new int[n * n];
-      int offset = (n - raster.init_I()) / 2;
+      int offset = (n - raster.pixelCount()) / 2;
       int baseAlpha = argb >>> 24;
 
-      for (int y = 0; y < raster.init_I(); y++) {
+      for (int y = 0; y < raster.pixelCount(); y++) {
          int ty = y + offset;
          if (ty >= 0 && ty < n) {
-            for (int x = 0; x < raster.init_I(); x++) {
+            for (int x = 0; x < raster.pixelCount(); x++) {
                int tx = x + offset;
                if (tx >= 0 && tx < n) {
-                  float cover = raster.init_FArr()[y * raster.init_I() + x];
+                  float cover = raster.coverage()[y * raster.pixelCount() + x];
                   if (!(cover <= 0.0F)) {
                      int a = Math.round(baseAlpha * cover);
                      if (a > 0) {
@@ -223,7 +223,7 @@ public final class CrosshairPresetGeometry {
       }
    }
 
-   public record Inner_CachePool(int init_I, float[] init_FArr, int[] init_IArr, float[] load) {
+   public record Inner_CachePool(int pixelCount, float[] coverage, int[] init_IArr, float[] load) {
       public int init(int index) {
          return this.init_IArr == null ? -1 : this.init_IArr[index];
       }
@@ -255,7 +255,7 @@ public final class CrosshairPresetGeometry {
          this.init_Str = label;
       }
 
-      public boolean init_Z() {
+      public boolean isPreset() {
          return this != CUSTOM;
       }
 
@@ -271,7 +271,7 @@ public final class CrosshairPresetGeometry {
          return CROSS;
       }
 
-      public static String[] init_StrArr() {
+      public static String[] ids() {
          CrosshairPresetGeometry.Inner_NetHelper[] all = values();
          String[] out = new String[all.length];
 

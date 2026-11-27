@@ -259,13 +259,13 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             .description("Delay after full charge")
             .build()
       );
-      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.init_BufferHelper, () -> true, ClickerSettingsGroup.init_ValueRange);
+      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.DEFAULT_TECHNIQUE, () -> true, ClickerSettingsGroup.DEFAULT_CPS);
       this.add(
          new RangeSetting("pre-reach", "Pre-Reach", read_ValueRange, 0.0, 1.5, 0.05).group("1.8 Combat").description("Swing before reach, blocks").build()
       );
       this.add(new BoolSetting("criticals", "Criticals", false).description("Smart critical hits").build());
       this.init_O = new HeldItemFilter(this);
-      this.add(new BoolSetting("auto-sword", "Auto Sword", true).visibleWhen(() -> !this.init_O.init_Z()).build());
+      this.add(new BoolSetting("auto-sword", "Auto Sword", true).visibleWhen(() -> !this.init_O.isEnabled()).build());
       this.add(new BoolSetting("shield-break", "Shield Break", true).build());
       AutismConfig.ModuleState saved = AutismConfig.getGlobal().modules.get(this.id());
       if (saved != null && !saved.settings.containsKey("block-hit")) {
@@ -282,11 +282,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             .visibleWhen(() -> this.bool("block-hit"))
             .build()
       );
-      this.add(new BoolSetting("switch-back", "Switch Back", false).visibleWhen(() -> this.bool("auto-sword") && !this.init_O.init_Z()).build());
+      this.add(new BoolSetting("switch-back", "Switch Back", false).visibleWhen(() -> this.bool("auto-sword") && !this.init_O.isEnabled()).build());
       this.add(new ChoiceSetting("throwables", "Throwables", "MainHand", "MainHand", "BothHands").description("Hands checked for throwables").build());
       this.add(new BoolSetting("hit-marker", "Render", true).build());
       this.add(new BoolSetting("hitsound", "Hitsound", true).build());
-      this.init_h.init_V();
+      this.init_h.registerSections();
    }
 
    static boolean init_Z_Map(Map<String, String> settings) {
@@ -380,7 +380,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          this.read_Str = null;
       }
 
-      if ("auto-sword".equals(settingId) && !this.bool("auto-sword") || "held-items-only".equals(settingId) && this.init_O != null && this.init_O.init_Z()) {
+      if ("auto-sword".equals(settingId) && !this.bool("auto-sword") || "held-items-only".equals(settingId) && this.init_O != null && this.init_O.isEnabled()) {
          if (this.clear_I >= 0
             && MC != null
             && MC.player != null
@@ -1262,7 +1262,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             Vec3 view = load_Vec3_LivingEntity(enemy);
             double[] reach = init_DArr_LivingEntity(enemy);
             double distance = body.distanceToSqr(eye);
-            if (ShieldHitWindowHelper.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])
+            if (ShieldHitWindowHelper.isInReachWindow(eye, body, reach[0], reach[1] + 0.5, reach[2])
                && ShieldHitWindowHelper.init(eye, view, body)
                && this.init_Z_LivingEntity(enemy, eye, body)
                && this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, AutismSessionState.getInstance().getClientTick(), this.bool("block-hit-after-hit"))
@@ -1310,7 +1310,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private double load_D_2() {
-      double clientTickMs = MC.level.tickRateManager().millisecondsPerTick() / Math.max(0.05, MovementModuleHooks.init_F());
+      double clientTickMs = MC.level.tickRateManager().millisecondsPerTick() / Math.max(0.05, MovementModuleHooks.speedTimerMultiplier());
       return ShieldHitWindowHelper.load(clientTickMs);
    }
 
@@ -1409,21 +1409,21 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean set_Z_2() {
-      if (MC.player != null && this.init_O.init_Z()) {
+      if (MC.player != null && this.init_O.isEnabled()) {
          return this.clear_I >= 0 && this.reset_I == MC.player.getInventory().getSelectedSlot()
             ? true
-            : this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
+            : this.init_O.accepts(MC.player.getMainHandItem());
       } else {
          return true;
       }
    }
 
    private boolean put_Z_2() {
-      return this.bool("auto-sword") && !this.init_O.init_Z();
+      return this.bool("auto-sword") && !this.init_O.isEnabled();
    }
 
    private boolean add_Z_2() {
-      return this.init_O.init_Z() ? this.bool("shield-break") : this.bool("switch-back");
+      return this.init_O.isEnabled() ? this.bool("shield-break") : this.bool("switch-back");
    }
 
    private boolean clear_Z_2() {
@@ -1499,16 +1499,16 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    @Override
-   public boolean write_Z_10() {
+   public boolean usesMoveFix() {
       return flush_Z_7();
    }
 
    @Override
-   public boolean update_Z_9() {
+   public boolean rotatesVisibly() {
       return this.isEnabled() && !this.bool("silent");
    }
 
-   public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics) {
+   public static void renderHud(GuiGraphicsExtractor graphics) {
       if (!AutismLiteVariant.enabled()) {
          KillAuraModule aura = init_aa();
          if (aura != null && aura.bool("fov-circle") && MC.player != null && !MC.player.isSpectator() && autismclient.e.HashUtil.init()) {
@@ -1546,11 +1546,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       return al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled() ? aura : null;
    }
 
-   public LivingEntity init_LivingEntity_3() {
+   public LivingEntity getTarget() {
       return this.init_LivingEntity;
    }
 
-   LivingEntity load_LivingEntity_3() {
+   LivingEntity activeTarget() {
       return this.isEnabled() && this.clear_Z_2() ? this.init_LivingEntity : null;
    }
 
@@ -1709,7 +1709,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean next() {
-      return AutismLiteVariant.enabled() ? this.set_Z_2() : !this.init_O.init_Z() || this.set_Z_2() || this.init_O.init_Z_ItemStack(BedNukerModule.init_ItemStack());
+      return AutismLiteVariant.enabled() ? this.set_Z_2() : !this.init_O.isEnabled() || this.set_Z_2() || this.init_O.accepts(BedNukerModule.init_ItemStack());
    }
 
    static boolean init_Z_Z_J(boolean relevant, long ticksSinceSeen) {
@@ -3391,7 +3391,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       void init_V_J(long now) {
          if (KillAuraModule.this.init_h != null) {
             this.init_DataUtil.init_V_DataUtil_ConfigSto(KillAuraModule.this.init_h.init_DataUtil_ConfigSto());
-            autismclient.util.clicker.ClickProfile profile = KillAuraModule.this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = KillAuraModule.this.init_h.profile();
             this.init_aa_TaskQueue.init_I = (profile.read > 20.000000001 ? 2 : 1) + (KillAuraModule.this.pop_Z_2() ? 1 : 0);
             if (KillAuraModule.this.pop_Z_2()) {
                this.init_aa_BufferHelper.init(this.init_DataUtil, now, this.init_Z, profile, this.init_aa_TaskQueue);

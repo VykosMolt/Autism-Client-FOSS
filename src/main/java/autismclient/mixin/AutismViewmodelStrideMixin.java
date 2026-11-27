@@ -16,7 +16,7 @@ public abstract class AutismViewmodelStrideMixin {
 
    @Inject(method = "updateBob", at = @At("RETURN"), require = 0)
    private void autism$airWalker(float movement, CallbackInfo ci) {
-      if (ViewmodelState.close_Z()) {
+      if (ViewmodelState.airWalkerActive()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.player != null && mc.player.avatarState() == (Object)this) {
             this.bob = (float)Math.min(0.1, mc.player.getDeltaMovement().horizontalDistance());

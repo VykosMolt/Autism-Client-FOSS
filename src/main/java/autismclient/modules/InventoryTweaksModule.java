@@ -206,7 +206,7 @@ public final class InventoryTweaksModule extends Module {
       return module != null && module.isEnabled() && module.bool("shulker-preview");
    }
 
-   public static boolean read_Z_7() {
+   public static boolean isMapPreviewEnabled() {
       InventoryTweaksModule module = init_R();
       return module != null && module.isEnabled() && module.bool("map-preview");
    }
@@ -216,7 +216,7 @@ public final class InventoryTweaksModule extends Module {
       return module != null && module.isEnabled() && (module.bool("auto-steal") || module.bool("auto-dump"));
    }
 
-   public static int init_I_ItemStack_I(ItemStack stack, int vanillaLimit) {
+   public static int bundleItemsToShow(ItemStack stack, int vanillaLimit) {
       InventoryTweaksModule module = init_R();
       if (module != null && module.isEnabled() && module.bool("uncap-bundle-scrolling")) {
          BundleContents contents = stack == null ? null : stack.get(DataComponents.BUNDLE_CONTENTS);

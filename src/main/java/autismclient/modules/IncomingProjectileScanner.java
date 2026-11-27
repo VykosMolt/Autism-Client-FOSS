@@ -82,7 +82,7 @@ public final class IncomingProjectileScanner {
    }
 
    static IncomingProjectileScanner.Inner_DataUtil init(Level level, Player owner, IncomingProjectileScanner.Inner_StreamUtil kind, ProjectileBallistics.Inner_BufferHelper shot) {
-      ProjectileBallistics.Inner_DataUtil info = shot.init_aX_DataUtil();
+      ProjectileBallistics.Inner_DataUtil info = shot.info();
       Vec3 velocity = ProjectileBallistics.init(owner.getYRot(), owner.getXRot(), shot);
       if (info.init_Z()) {
          Vec3 inherited = ProjectileBallistics.init(owner);
@@ -223,8 +223,8 @@ public final class IncomingProjectileScanner {
          return true;
       }
 
-      if (kind != IncomingProjectileScanner.Inner_StreamUtil.PEARL && flight.init_List().size() >= 2) {
-         List<Vec3> points = flight.init_List();
+      if (kind != IncomingProjectileScanner.Inner_StreamUtil.PEARL && flight.points().size() >= 2) {
+         List<Vec3> points = flight.points();
          double initial = points.getFirst().distanceToSqr(player);
 
          for (int i = 1; i < points.size(); i++) {
@@ -245,11 +245,11 @@ public final class IncomingProjectileScanner {
 
    static boolean init(IncomingProjectileScanner.Inner_BufferHelper warning) {
       return warning != null
-         && warning.init_A_StreamUtil() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
+         && warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
          && init(warning.init_A_DataUtil())
-         && warning.init_Player() != null
-         && warning.init_Player().isAlive()
-         && !warning.init_Entity().isRemoved();
+         && warning.shooter() != null
+         && warning.shooter().isAlive()
+         && !warning.entity().isRemoved();
    }
 
    static boolean init(IncomingProjectileScanner.Inner_DataUtil flight) {
@@ -261,10 +261,10 @@ public final class IncomingProjectileScanner {
    }
 
    public record Inner_BufferHelper(
-      Entity init_Entity, Player init_Player, IncomingProjectileScanner.Inner_StreamUtil init_A_StreamUtil, boolean init_Z, IncomingProjectileScanner.Inner_DataUtil init_A_DataUtil, int init_I
+      Entity entity, Player shooter, IncomingProjectileScanner.Inner_StreamUtil kind, boolean init_Z, IncomingProjectileScanner.Inner_DataUtil init_A_DataUtil, int init_I
    ) {
       Vec3 init_Vec3() {
-         return this.init_Entity.position().add(0.0, this.init_Z ? this.init_Entity.getEyeHeight() : this.init_Entity.getBbHeight() * 0.5, 0.0);
+         return this.entity.position().add(0.0, this.init_Z ? this.entity.getEyeHeight() : this.entity.getBbHeight() * 0.5, 0.0);
       }
    }
 
@@ -279,7 +279,7 @@ public final class IncomingProjectileScanner {
       HitResult init(Vec3 var1, Vec3 var2, int var3);
    }
 
-   public record Inner_DataUtil(List<Vec3> init_List, HitResult init_HitResult, Vec3 init_Vec3, double init_D) {
+   public record Inner_DataUtil(List<Vec3> points, HitResult init_HitResult, Vec3 init_Vec3, double init_D) {
       public Vec3 init_Vec3() {
          return this.init_HitResult == null ? null : this.init_HitResult.getLocation();
       }
@@ -304,7 +304,7 @@ public final class IncomingProjectileScanner {
          this.load_Str = group;
       }
 
-      public String init_Str() {
+      public String id() {
          return this.init_Str;
       }
 
@@ -312,7 +312,7 @@ public final class IncomingProjectileScanner {
          return this.load_Str;
       }
 
-      ItemStack init_ItemStack() {
+      ItemStack icon() {
          if (this.init_ItemStack == null) {
             Item var10003;
             switch (this) {

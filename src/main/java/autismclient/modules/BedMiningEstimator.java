@@ -48,8 +48,8 @@ final class BedMiningEstimator {
          init_Obj = init_Minecraft.level;
       }
 
-      boolean ideal = !BedEspModule.init_ClassCache_CachePo().init_Z();
-      List<ItemStack> recommended = ideal ? BedEspModule.load_List() : List.of();
+      boolean ideal = !BedEspModule.policy().init_Z();
+      List<ItemStack> recommended = ideal ? BedEspModule.recommendedTools() : List.of();
       Map<BlockPos, Double> actualCosts = ideal ? new HashMap<>() : null;
       Map<BlockState, Double> idealCosts = ideal ? new HashMap<>() : null;
       BlockState state = init_Minecraft.level.getBlockState(bed);
@@ -101,8 +101,8 @@ final class BedMiningEstimator {
                         costs.put(block, cost);
                      }
 
-                     ticks = cost.init_D();
-                     slot = cost.init_I();
+                     ticks = cost.ticks();
+                     slot = cost.slot();
                   }
 
                   if (ideal && breakable) {
@@ -120,7 +120,7 @@ final class BedMiningEstimator {
       Vec3 preferred = eye.add(Vec3.directionFromRotation(init_Minecraft.player.getXRot(), init_Minecraft.player.getYRot()).scale(reach));
       BedMiningEstimator.Inner_DataUtil cached = init_Map.get(bed);
       if (cached == null || !eye.equals(cached.init_Vec3) || reach != cached.init_D || !cells.equals(cached.init_List)) {
-         cached = new BedMiningEstimator.Inner_DataUtil(eye, reach, List.copyOf(cells), BedBreachRouteSolver.init_DataPipe_CachePool(cells, eye, reach, preferred));
+         cached = new BedMiningEstimator.Inner_DataUtil(eye, reach, List.copyOf(cells), BedBreachRouteSolver.solve(cells, eye, reach, preferred));
          if (init_Map.size() >= 16 && !init_Map.containsKey(bed)) {
             init_Map.remove(init_Map.keySet().iterator().next());
          }
@@ -130,16 +130,16 @@ final class BedMiningEstimator {
 
       BedBreachRouteSolver.Inner_BufferHelper route = cached.init_DataPipe_CachePool.init(mining, progress, preferred);
       if (ideal && route != null) {
-         List<BedBreachRouteSolver.Inner_DataUtil> actual = route.init_List().stream().map(c -> {
-            double ticksx = actualCosts.get(c.init_BlockPos());
-            if (c.init_BlockPos().equals(mining)) {
+         List<BedBreachRouteSolver.Inner_DataUtil> actual = route.cells().stream().map(c -> {
+            double ticksx = actualCosts.get(c.pos());
+            if (c.pos().equals(mining)) {
                ticksx = Math.max(1.0, Math.ceil(ticksx * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
             }
 
-            return new BedBreachRouteSolver.Inner_DataUtil(c.init_BlockPos(), c.init_List(), ticksx, c.init_I(), c.init_Z());
+            return new BedBreachRouteSolver.Inner_DataUtil(c.pos(), c.boxes(), ticksx, c.slot(), c.init_Z());
          }).toList();
          return new BedBreachRouteSolver.Inner_BufferHelper(
-            actual, route.init_Vec3(), actual.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::init_D).sum() + Math.max(0, actual.size() - 1) * 5, route.init_Z()
+            actual, route.eye(), actual.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::ticks).sum() + Math.max(0, actual.size() - 1) * 5, route.init_Z()
          );
       } else {
          return route;
@@ -185,8 +185,8 @@ final class BedMiningEstimator {
          }
 
          double remaining = Math.max(1.0, Math.ceil(init(state, pos, init_Minecraft.player.getMainHandItem()) * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
-         Vec3 visible = BedTargetAimSolver.init_Vec3(boxes, blockers, eye, reach, preferred);
-         Vec3 future = BedTargetAimSolver.init_Vec3(boxes, blockers, nextEye, reach, preferred);
+         Vec3 visible = BedTargetAimSolver.visibleAimPoint(boxes, blockers, eye, reach, preferred);
+         Vec3 future = BedTargetAimSolver.visibleAimPoint(boxes, blockers, nextEye, reach, preferred);
          return new BedMiningEstimator.Inner_StreamUtil(
             new BedBreachRouteSolver.Inner_DataUtil(pos, boxes, remaining, init_Minecraft.player.getInventory().getSelectedSlot(), state.getBlock() instanceof BedBlock),
             future == null ? visible : future,

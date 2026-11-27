@@ -145,7 +145,7 @@ public final class AutismClientMod implements ClientModInitializer {
       }
 
       KillAuraHitMarkerRenderer.init_V();
-      HoleEspModule.init_V_12();
+      HoleEspModule.register();
       autismclient.commands.CommandManager.initialize();
       if (!AutismLiteVariant.enabled()) {
          AiDirectOps.reloadToolSettings();
@@ -294,7 +294,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("join.clientInfo", AuditJoinSend.create(client, handler));
          runSafe("join.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
          runSafe("join.pacedTp", () -> PacedTpJobManager.init("connection changed"));
-         runSafe("join.movementGrace", NoFallPauseTimer::init_V);
+         runSafe("join.movementGrace", NoFallPauseTimer::start);
          runSafe("join.hideMenuOverlays", () -> ModuleRuntimeManager.getInstance().hideProfilesOverlayIfUnretained());
          runSafe("join.remember", () -> AutoReconnectController.init(client.getCurrentServer()));
          runSafe("join.onGameJoin", () -> ModuleRuntimeManager.getInstance().onGameJoin());

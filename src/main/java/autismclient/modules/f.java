@@ -349,7 +349,7 @@ public final class f {
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw translucent filled boxes."));
          this.add(new BoolSetting("meshing", "Meshing", true).group("General").description("Merge adjacent storage."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each target"));
-         this.add(RegistryListSetting.storages("storage-list", "Storage", StorageEspCatalog.init_Str).group("Storage").description("Blocks and entities"));
+         this.add(RegistryListSetting.storages("storage-list", "Storage", StorageEspCatalog.DEFAULT_IDS).group("Storage").description("Blocks and entities"));
          this.add(new ColorSetting("chest-color", "Chest", -855662592).group("Colors").description("Chest + chest minecart/boat."));
          this.add(new ColorSetting("trapped-chest-color", "Trapped Chest", -855695328).group("Colors"));
          this.add(new ColorSetting("ender-chest-color", "Ender Chest", -864550657).group("Colors"));
@@ -362,7 +362,7 @@ public final class f {
          this.add(new ColorSetting("other-color", "Other", -7566196).group("Colors").description("Fallback."));
 
          for (StructureStorageFilter.Inner_DataUtil structure : StructureStorageFilter.init) {
-            this.add(new BoolSetting(structure.init_Str(), structure.load(), false).group("Ignore Structures"));
+            this.add(new BoolSetting(structure.id(), structure.load(), false).group("Ignore Structures"));
          }
       }
    }
@@ -412,7 +412,7 @@ public final class f {
 
       @Override
       public void tick() {
-         if (!NoFallPauseTimer.init_Z()
+         if (!NoFallPauseTimer.isActive()
             && MC.player != null
             && MC.gameMode != null
             && !"Packet".equals(this.choice("mode"))
@@ -447,7 +447,7 @@ public final class f {
       }
 
       private boolean init_Z_37() {
-         if (NoFallPauseTimer.init_Z()) {
+         if (NoFallPauseTimer.isActive()) {
             return false;
          }
 
@@ -1993,8 +1993,8 @@ public final class f {
          this.init_O = new HeldItemFilter(this);
          this.add(new BoolSetting("break-blocks", "Break Blocks", true));
          this.add(new RangeSetting("break-delay", "Break Delay", init_ValueRange, 0.0, 250.0, 5.0).unit("ms").visibleWhen(() -> this.bool("break-blocks")));
-         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.init_BufferHelper, () -> !"Hold".equals(this.value("mode")), ClickerSettingsGroup.init_ValueRange);
-         this.init_h.init_V();
+         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.DEFAULT_TECHNIQUE, () -> !"Hold".equals(this.value("mode")), ClickerSettingsGroup.DEFAULT_CPS);
+         this.init_h.registerSections();
       }
 
       @Override
@@ -2046,7 +2046,7 @@ public final class f {
          if (!this.load_Z_18() && !"Hold".equals(this.choice("mode"))) {
             boolean holdDown = "Hold Down".equals(this.choice("mode"));
             boolean physical = output.load_Z();
-            autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             output.init_V_Z(holdDown && physical);
             if (physical && !this.init_Z) {
@@ -2121,7 +2121,7 @@ public final class f {
             || SilentMovementCoordinator.activeRotation() != null
             || ScaffoldModule.flush_Z_5()
             || AutoTotemModule.init_Z_6()
-            || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
+            || !this.init_O.accepts(MC.player.getMainHandItem());
       }
 
       private void load_V_26() {
@@ -4506,8 +4506,8 @@ public final class f {
                .description("How long right-click is held before the clicks start")
                .visibleWhen(() -> this.bool("exp") || this.bool("blocks"))
          );
-         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.init_BufferHelper, () -> this.bool("exp") || this.bool("blocks"), 12.0);
-         this.init_h.init_V();
+         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.DEFAULT_TECHNIQUE, () -> this.bool("exp") || this.bool("blocks"), 12.0);
+         this.init_h.registerSections();
       }
 
       @Override
@@ -4532,7 +4532,7 @@ public final class f {
             this.init_Z = false;
             this.init_J = -9223372036854775808L;
          } else {
-            autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             if (!this.init_Z) {
                this.init_DataUtil.init_V_J_2(now, profile, this.init_f_EventBus_DataUti);
@@ -4966,7 +4966,7 @@ public final class f {
          if (MC.player != null
             && MC.gameMode != null
             && !MC.player.isSpectator()) {
-            if (NoFallPauseTimer.init_Z()) {
+            if (NoFallPauseTimer.isActive()) {
                if (this.init_Z) {
                   this.load_V_29();
                }
@@ -5061,7 +5061,7 @@ public final class f {
             return false;
          }
 
-         if (NoFallPauseTimer.init_Z()) {
+         if (NoFallPauseTimer.isActive()) {
             return false;
          }
 
@@ -5123,7 +5123,7 @@ public final class f {
       }
 
       float init_F_7() {
-         if (NoFallPauseTimer.init_Z()) {
+         if (NoFallPauseTimer.isActive()) {
             return -1.0F;
          }
 
@@ -5138,7 +5138,7 @@ public final class f {
       }
 
       boolean load_Z_21() {
-         if (NoFallPauseTimer.init_Z()) {
+         if (NoFallPauseTimer.isActive()) {
             return false;
          }
 
@@ -5510,12 +5510,12 @@ public final class f {
          boolean carry = legacy != -855688389;
 
          for (String id : BlockEspCatalog.init(this)) {
-            if (BlockEspCatalog.init_Block(id) != null) {
+            if (BlockEspCatalog.resolveBlock(id) != null) {
                String key = "color-" + id;
                boolean fresh = this.value(key) == null;
                if (this.setting(key) == null) {
                   String label = RegistryDisplayNameCache.load(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, BlockEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> BlockEspCatalog.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, BlockEspCatalog.defaultColor(id)).group("Colors").visibleWhen(() -> BlockEspCatalog.isSelected(this, id)));
                }
 
                if (carry && fresh) {
@@ -5666,7 +5666,7 @@ public final class f {
 
       @Override
       public String info() {
-         return OreSimEspScanner.init_Str(this);
+         return OreSimEspScanner.statusLine(this);
       }
 
       private static String init_Str_12() {
@@ -6564,11 +6564,11 @@ public final class f {
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw translucent filled boxes."));
          this.add(new BoolSetting("meshing", "Meshing", true).group("General").description("Merge adjacent spawners."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each spawner"));
-         this.add(RegistryListSetting.entityTypes("spawner-list", "Spawners", SpawnerEspCatalog.init_Str).group("Spawners").description("Mobs to highlight."));
+         this.add(RegistryListSetting.entityTypes("spawner-list", "Spawners", SpawnerEspCatalog.DEFAULT_IDS).group("Spawners").description("Mobs to highlight."));
 
-         for (SpawnerEspCatalog.Inner_DataUtil target : SpawnerEspCatalog.init_List) {
-            String id = target.init_Str();
-            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> SpawnerEspCatalog.init_Z(this, id)));
+         for (SpawnerEspCatalog.Inner_DataUtil target : SpawnerEspCatalog.TARGETS) {
+            String id = target.id();
+            this.add(new ColorSetting("color-" + id, target.load(), target.defaultColor()).group("Colors").visibleWhen(() -> SpawnerEspCatalog.isSelected(this, id)));
          }
       }
 
@@ -6585,7 +6585,7 @@ public final class f {
                String key = "color-" + id;
                if (this.setting(key) == null) {
                   String label = RegistryDisplayNameCache.read(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> SpawnerEspCatalog.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> SpawnerEspCatalog.isSelected(this, id)));
                }
             }
          }
@@ -7218,7 +7218,7 @@ public final class f {
             && !AutoTotemModule.init_Z_6()
             && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
             && !autismclient.util.ManualInteractionYield.init()
-            && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
+            && this.init_O.accepts(MC.player.getMainHandItem())
             && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, AutismSessionState.getInstance().getClientTick()))) {
             LivingEntity target = this.init_LivingEntity_4();
             if (target == null) {
@@ -8392,15 +8392,15 @@ public final class f {
          );
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw a translucent plate over each frame."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each frame"));
-         this.add(RegistryListSetting.items("item-list", "Items", FrameEspCatalog.load_Str).group("Items").description("Items to highlight; each gets its own color."));
+         this.add(RegistryListSetting.items("item-list", "Items", FrameEspCatalog.DEFAULT_IDS).group("Items").description("Items to highlight; each gets its own color."));
          this.add(
             new BoolSetting("other-frames", "Other Frames", false).group("Items").description("Also highlight frames holding an item that is not on the list.")
          );
          this.add(new BoolSetting("empty-frames", "Empty Frames", false).group("Items").description("Also highlight empty frames."));
 
-         for (FrameEspCatalog.Inner_StreamUtil target : FrameEspCatalog.init_List) {
-            String id = target.init_Str();
-            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> FrameEspCatalog.init_Z(this, id)));
+         for (FrameEspCatalog.Inner_StreamUtil target : FrameEspCatalog.TARGETS) {
+            String id = target.id();
+            this.add(new ColorSetting("color-" + id, target.load(), target.defaultColor()).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
          }
 
          this.add(
@@ -8420,11 +8420,11 @@ public final class f {
 
       private void init() {
          for (String id : FrameEspCatalog.init(this)) {
-            if (!FrameEspCatalog.init_Z(id)) {
+            if (!FrameEspCatalog.isKnown(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
                   String label = RegistryDisplayNameCache.init(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, FrameEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> FrameEspCatalog.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, FrameEspCatalog.defaultColor(id)).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
                }
             }
          }

@@ -69,7 +69,7 @@ public final class FreeLookModule extends Module {
       return al.init_Module_Str("free-look") instanceof FreeLookModule freeLook && freeLook.isEnabled() ? freeLook : null;
    }
 
-   public static FreeLookModule init_I_4() {
+   public static FreeLookModule active() {
       return MC != null && MC.player != null ? load_I_3() : null;
    }
 

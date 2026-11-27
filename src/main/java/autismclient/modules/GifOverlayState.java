@@ -18,12 +18,12 @@ public final class GifOverlayState {
       return AutismLiteVariant.enabled() || autismclient.e.RenderState.init();
    }
 
-   public static boolean init_Z() {
+   public static boolean isCapeActive() {
       GifOverlayState.Inner_DataUtil s = init;
       return s.init_Z() && s.load_Z() && (!s.init_Str().isBlank() || !s.init_Map().isEmpty()) && update();
    }
 
-   public static boolean load_Z() {
+   public static boolean isShieldActive() {
       GifOverlayState.Inner_DataUtil s = init;
       return s.init_Z() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
    }

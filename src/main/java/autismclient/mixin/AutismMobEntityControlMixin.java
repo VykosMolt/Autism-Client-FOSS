@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismMobEntityControlMixin {
    @ModifyReturnValue(method = "isSaddled", at = @At("RETURN"))
    private boolean autism$entityControlSaddle(boolean original) {
-      return original || EntityControlModule.init_Z_Mob((Mob)(Object)this);
+      return original || EntityControlModule.spoofsSaddle((Mob)(Object)this);
    }
 }

@@ -20,7 +20,7 @@ public final class ServerRotationTracker {
 
    public static void onOutgoingPacket(Packet<?> packet) {
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.init_V_Packet_2(packet);
+         ClutchModule.onMovePacket(packet);
       }
 
       if (packet instanceof ServerboundMovePlayerPacket movement) {

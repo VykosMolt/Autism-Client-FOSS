@@ -378,8 +378,8 @@ public final class BacktrackModule extends Module {
             Module module = al.init_Module_Str(id);
             if (module != null && module.isEnabled()) {
                LivingEntity enemy = module instanceof KillAuraModule aura
-                  ? aura.load_LivingEntity_3()
-                  : (module instanceof CrystalAuraModule aura ? aura.load_LivingEntity_4() : (module instanceof AnchorAuraModule aura ? aura.load_LivingEntity() : null));
+                  ? aura.activeTarget()
+                  : (module instanceof CrystalAuraModule aura ? aura.currentTarget() : (module instanceof AnchorAuraModule aura ? aura.currentTarget() : null));
                if (enemy != null && this.init_Z_LivingEntity(enemy)) {
                   return this.init_LivingEntity_LivingEntity_Str(enemy, id);
                }
@@ -431,7 +431,7 @@ public final class BacktrackModule extends Module {
                if (this.init_LivingEntity != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.close, hold)) {
                   int lookahead = hold + Math.min(100, ping / 2);
                   if (auraIntent && al.init_Module_Str("kill-aura") instanceof KillAuraModule aura) {
-                     if (aura.load_LivingEntity_3() == this.init_LivingEntity && aura.init_Z_I_7(lookahead)) {
+                     if (aura.activeTarget() == this.init_LivingEntity && aura.init_Z_I_7(lookahead)) {
                         return true;
                      }
                   } else if (autismclient.util.LegacyCombatDetector.init(this.init_LocalPlayer)
@@ -830,7 +830,7 @@ public final class BacktrackModule extends Module {
       this.read_J++;
    }
 
-   public static Vec3 init_Vec3_LivingEntity(LivingEntity entity) {
+   public static Vec3 backtrackedPosition(LivingEntity entity) {
       BacktrackModule module = init_TaskTimer;
       return module != null && module.init_LivingEntity == entity && module.init_Z_21() && module.init_ClientLevel.getEntity(entity.getId()) == entity
          ? module.init_cO.init()
@@ -887,7 +887,7 @@ public final class BacktrackModule extends Module {
       );
    }
 
-   public static List<EspHighlightBox> init_List_9() {
+   public static List<EspHighlightBox> highlightBoxes() {
       BacktrackModule module = init_TaskTimer;
       if (module == null) {
          return List.of();

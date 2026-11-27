@@ -43,13 +43,13 @@ public final class CrosshairRenderer {
    }
 
    public static boolean init(GuiGraphicsExtractor graphics) {
-      CrosshairRenderState.Inner_DataUtil look = CrosshairRenderState.init_q_DataUtil();
+      CrosshairRenderState.Inner_DataUtil look = CrosshairRenderState.current();
       if (look == null) {
          return false;
       }
 
       int guiScale = Math.max(1, init_Minecraft.getWindow().getGuiScale());
-      if (look.init_p_NetHelper().init_Z()) {
+      if (look.style().isPreset()) {
          graphics.pose().pushMatrix();
 
          try {
@@ -82,15 +82,15 @@ public final class CrosshairRenderer {
    }
 
    public static void init(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, double centerX, double centerY, float pixelsPerUnit) {
-      init_V_GuiGraphicsExtract_2(graphics, look, centerX, centerY, pixelsPerUnit, 0);
+      render(graphics, look, centerX, centerY, pixelsPerUnit, 0);
    }
 
-   public static void init_V_GuiGraphicsExtract_2(
+   public static void render(
       GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, double centerX, double centerY, float pixelsPerUnit, int maxPixels
    ) {
       if (look != null && !(pixelsPerUnit <= 0.0F)) {
          int guiScale = Math.max(1, init_Minecraft.getWindow().getGuiScale());
-         if (look.init_p_NetHelper().init_Z()) {
+         if (look.style().isPreset()) {
             graphics.pose().pushMatrix();
 
             try {
@@ -112,7 +112,7 @@ public final class CrosshairRenderer {
             try {
                graphics.pose().scale(1.0F / pixelsPerUnit, 1.0F / pixelsPerUnit);
                Matrix3x2fStack pose = graphics.pose();
-               pose.translate(CrosshairVectorPipeline.init_F_F(x, pose.m00(), pose.m20(), guiScale, 0) - x, CrosshairVectorPipeline.init_F_F(y, pose.m11(), pose.m21(), guiScale, 0) - y);
+               pose.translate(CrosshairVectorPipeline.snapToPixel(x, pose.m00(), pose.m20(), guiScale, 0) - x, CrosshairVectorPipeline.snapToPixel(y, pose.m11(), pose.m21(), guiScale, 0) - y);
                init_V_GuiGraphicsExtract(graphics, entry, look, x, y, 0);
             } finally {
                graphics.pose().popMatrix();
@@ -141,7 +141,7 @@ public final class CrosshairRenderer {
 
          int level = Math.round(255.0F * opacity);
          init(graphics, RenderPipelines.CROSSHAIR, entry, 2, x, y, 0xFF000000 | level << 16 | level << 8 | level);
-      } else if (look.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM) {
+      } else if (look.style() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM) {
          init(graphics, RenderPipelines.GUI_TEXTURED, entry, 0, x, y, init(-1, opacity));
       } else {
          init(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, init(look.init_I(), opacity));
@@ -194,7 +194,7 @@ public final class CrosshairRenderer {
                   return 0;
                } else {
                   boolean inReach = from.distanceTo(hit.getLocation()) <= reach;
-                  if (TeamsModule.init_Z_Entity_5(entity)) {
+                  if (TeamsModule.isFriend(entity)) {
                      return inReach ? look.write_I() : 0;
                   } else if (!(entity instanceof Enemy) && !(entity instanceof Player)) {
                      return inReach ? look.write_I() : 0;
@@ -223,17 +223,17 @@ public final class CrosshairRenderer {
       }
 
       CrosshairRenderer.Inner_DataUtil init(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
-         boolean custom = look.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
+         boolean custom = look.style() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
          int outlinePx = look.load_Z() ? Math.max(1, (int)Math.round(look.write_D() * guiScale)) : 0;
          CrosshairRenderer.Inner_StreamUtil key = new CrosshairRenderer.Inner_StreamUtil(
-            look.init_p_NetHelper(),
+            look.style(),
             look.init_D(),
             custom ? 0.0 : look.load_D(),
-            look.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL ? look.read_D() : 0.0,
+            look.style() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL ? look.read_D() : 0.0,
             outlinePx,
             guiScale,
             maxPixels,
-            custom ? look.init_m() : null
+            custom ? look.art() : null
          );
          if (this.init_o_DataUtil != null && this.init_o_DataUtil.init_o_StreamUtil().equals(key)) {
             return this.init_o_DataUtil;
@@ -244,7 +244,7 @@ public final class CrosshairRenderer {
             return this.init_o_DataUtil;
          }
 
-         if (custom && look.init_m() == null) {
+         if (custom && look.art() == null) {
             return this.init_o_DataUtil;
          }
 
@@ -255,9 +255,9 @@ public final class CrosshairRenderer {
             int border = look.load_Z() ? Math.max(1, (int)Math.round(look.write_D() * density)) : 0;
             double unit = density * look.init_D();
             CrosshairPresetGeometry.Inner_CachePool raster = custom
-               ? CrosshairPresetGeometry.init_p_CachePool_m(look.init_m(), unit, border, border + 1)
-               : CrosshairPresetGeometry.init(look.init_p_NetHelper(), unit, look.load_D(), look.read_D(), border, border + 1);
-            if (maxPixels <= 0 || raster.init_I() <= maxPixels || attempt == 3) {
+               ? CrosshairPresetGeometry.rasterize(look.art(), unit, border, border + 1)
+               : CrosshairPresetGeometry.init(look.style(), unit, look.load_D(), look.read_D(), border, border + 1);
+            if (maxPixels <= 0 || raster.pixelCount() <= maxPixels || attempt == 3) {
                CrosshairRenderer.Inner_DataUtil built = this.init(key, raster);
                if (built == null) {
                   return this.init_o_DataUtil;
@@ -269,13 +269,13 @@ public final class CrosshairRenderer {
                return this.init_o_DataUtil;
             }
 
-            density *= Math.max(0.05, (maxPixels - 4.0) / raster.init_I());
+            density *= Math.max(0.05, (maxPixels - 4.0) / raster.pixelCount());
             attempt++;
          }
       }
 
       private CrosshairRenderer.Inner_DataUtil init(CrosshairRenderer.Inner_StreamUtil key, CrosshairPresetGeometry.Inner_CachePool raster) {
-         int size = raster.init_I();
+         int size = raster.pixelCount();
          int stride = size + 2;
          int width = stride * 4;
          int height = stride;
@@ -285,7 +285,7 @@ public final class CrosshairRenderer {
             for (int y = 0; y < size; y++) {
                for (int x = 0; x < size; x++) {
                   int i = y * size + x;
-                  int fill = Math.round(raster.init_FArr()[i] * 255.0F);
+                  int fill = Math.round(raster.coverage()[i] * 255.0F);
                   int outline = Math.round(raster.load()[i] * 255.0F);
                   if (fill > 0) {
                      image.setPixel(0 * stride + 1 + x, 1 + y, fill << 24 | raster.init(i) & 16777215);

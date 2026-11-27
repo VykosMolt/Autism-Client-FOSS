@@ -46,7 +46,7 @@ public final class TpClickModule extends Module {
       return al.init_Module_Str("tp-click") instanceof TpClickModule tpClick && tpClick.isEnabled() && tpClick.bool("block-movement");
    }
 
-   public static boolean load_Z_12() {
+   public static boolean hasNoFall() {
       return al.init_Module_Str("tp-click") instanceof TpClickModule tpClick && tpClick.bool("no-fall");
    }
 
@@ -100,11 +100,11 @@ public final class TpClickModule extends Module {
          : this.load_I_9() == autismclient.util.ValueSink.init_I(1) && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
    }
 
-   public AABB init_AABB_2() {
+   public AABB targetBox() {
       return this.init_j_StreamUtil == null ? null : this.init_j_StreamUtil.box();
    }
 
-   public int init_I_19() {
+   public int targetColor() {
       return this.init_j_StreamUtil == null ? 0 : this.init_j_StreamUtil.color();
    }
 }

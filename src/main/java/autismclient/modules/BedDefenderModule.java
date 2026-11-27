@@ -177,11 +177,11 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return false;
    }
 
-   public List<BedDefenderModule.Inner_CachePool> init_List_5() {
+   public List<BedDefenderModule.Inner_CachePool> ghostCells() {
       return this.init_List;
    }
 
-   public int init_I_6() {
+   public int ghostTint() {
       return this.init_ColorSetting.get();
    }
 
@@ -289,7 +289,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
-   public static Input init_Input_ClientInput_Input_2(ClientInput source, Input original) {
+   public static Input overrideInput(ClientInput source, Input original) {
       if (original != null && MC != null && MC.player != null && MC.player.input == source) {
          if (al.init_Module_Str("bed-defender") instanceof BedDefenderModule bed && bed.isEnabled()) {
             return bed.read_Z_5() && !original.shift()
@@ -714,8 +714,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             this.init_List = List.copyOf(ghosts);
             this.init_I = ghosts.stream()
-               .filter(cell -> !repairing || this.init_a.init(cell.init_BlockPos()))
-               .mapToInt(BedDefenderModule.Inner_CachePool::init_I)
+               .filter(cell -> !repairing || this.init_a.init(cell.pos()))
+               .mapToInt(BedDefenderModule.Inner_CachePool::layer)
                .min()
                .orElse(0);
             if (repairing && this.init_I > 0) {
@@ -1862,7 +1862,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private record Inner_BufferHelper(BlockPos init_BlockPos, int init_I, boolean init_Z, boolean load_Z, int load_I, boolean read, double init_D) {
    }
 
-   public record Inner_CachePool(BlockPos init_BlockPos, BlockState init_BlockState, int init_I, boolean init_Z) {
+   public record Inner_CachePool(BlockPos pos, BlockState state, int layer, boolean init_Z) {
    }
 
    private record Inner_ConfigStore(BlockPos init_BlockPos, Direction init_Direction, int init_I, boolean init_Z) {

@@ -31,7 +31,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class SpawnerEspCatalog {
    private static final int init_I = 512;
-   public static final List<SpawnerEspCatalog.Inner_DataUtil> init_List = List.of(
+   public static final List<SpawnerEspCatalog.Inner_DataUtil> TARGETS = List.of(
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:zombie", "Zombie", -865361062),
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:skeleton", "Skeleton", -857151256),
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:spider", "Spider", -863290822),
@@ -44,7 +44,7 @@ public final class SpawnerEspCatalog {
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:bogged", "Bogged", -866222769),
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:slime", "Slime", -864299446)
    );
-   public static final String init_Str;
+   public static final String DEFAULT_IDS;
    private static final Map<String, SpawnerEspCatalog.Inner_DataUtil> init_Map = new LinkedHashMap<>();
    private static volatile String load_Str;
    private static volatile List<String> load_List = List.of();
@@ -53,7 +53,7 @@ public final class SpawnerEspCatalog {
    private SpawnerEspCatalog() {
    }
 
-   public static boolean init_Z(Module module, String entityId) {
+   public static boolean isSelected(Module module, String entityId) {
       return entityId == null ? false : init(module).contains(entityId.toLowerCase(Locale.ROOT));
    }
 
@@ -92,7 +92,7 @@ public final class SpawnerEspCatalog {
       }
 
       SpawnerEspCatalog.Inner_DataUtil natural = init_Map.get(entityId);
-      return natural != null ? natural.init_I() : -855688389;
+      return natural != null ? natural.defaultColor() : -855688389;
    }
 
    static void init(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
@@ -104,7 +104,7 @@ public final class SpawnerEspCatalog {
             Vec3 playerPos = player.position();
             int playerChunkX = player.chunkPosition().x();
             int playerChunkZ = player.chunkPosition().z();
-            EspChunkWorker.init_V_Obj(level);
+            EspChunkWorker.setLevel(level);
             String stamp = "spawner|" + listValue + "|" + init_Str(module, listValue);
             long gameTime = level.getGameTime();
             ClientChunkCache chunks = level.getChunkSource();
@@ -114,14 +114,14 @@ public final class SpawnerEspCatalog {
                   LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                   if (chunk != null) {
                      for (EspChunkWorker.EspBox entry : EspChunkWorker.sync.init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
-                        Vec3 trace = entry.init_Vec3();
+                        Vec3 trace = entry.tracer();
                         if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                            if (boxEmit != null) {
-                              boxEmit.accept(entry.init_AABB(), entry.init_I());
+                              boxEmit.accept(entry.box(), entry.color());
                            }
 
                            if (traceEmit != null) {
-                              traceEmit.accept(trace, entry.init_I());
+                              traceEmit.accept(trace, entry.color());
                            }
                         }
                      }
@@ -152,7 +152,7 @@ public final class SpawnerEspCatalog {
                mobId = init(trialSpawner);
             }
 
-            if (mobId != null && init_Z(module, mobId)) {
+            if (mobId != null && isSelected(module, mobId)) {
                out.add(new EspChunkWorker.EspBox(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init_I(module, mobId)));
             }
          }
@@ -227,18 +227,18 @@ public final class SpawnerEspCatalog {
    static {
       StringBuilder def = new StringBuilder();
 
-      for (SpawnerEspCatalog.Inner_DataUtil target : init_List) {
-         init_Map.put(target.init_Str(), target);
+      for (SpawnerEspCatalog.Inner_DataUtil target : TARGETS) {
+         init_Map.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
          }
 
-         def.append(target.init_Str());
+         def.append(target.id());
       }
 
-      init_Str = def.toString();
+      DEFAULT_IDS = def.toString();
    }
 
-   public record Inner_DataUtil(String init_Str, String load, int init_I) {
+   public record Inner_DataUtil(String id, String load, int defaultColor) {
    }
 }

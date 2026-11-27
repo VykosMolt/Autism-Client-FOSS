@@ -24,7 +24,7 @@ final class ThrownPearlTracker {
    private final Set<UUID> init_Set = new HashSet<>();
    private static final int init_I = 32;
 
-   ThrownPearlTracker.Inner_DataUtil init_aV_DataUtil() {
+   ThrownPearlTracker.Inner_DataUtil remembered() {
       return this.init_aV_DataUtil;
    }
 
@@ -32,7 +32,7 @@ final class ThrownPearlTracker {
       return this.init_D;
    }
 
-   void init_V() {
+   void reset() {
       this.init_Obj = this.load = null;
       this.init_J = -9223372036854775808L;
       this.init_aV_DataUtil = null;
@@ -42,10 +42,10 @@ final class ThrownPearlTracker {
       this.init_Set.clear();
    }
 
-   void init_V_Minecraft_Z(Minecraft mc, boolean enabled) {
+   void tick(Minecraft mc, boolean enabled) {
       if (enabled && mc != null && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
          if (this.init_Obj != mc.level || this.load != mc.player) {
-            this.init_V();
+            this.reset();
          }
 
          this.init_Obj = mc.level;
@@ -85,23 +85,23 @@ final class ThrownPearlTracker {
             this.init_D = (System.nanoTime() - started) / 1000000.0;
          }
       } else {
-         this.init_V();
+         this.reset();
       }
    }
 
    static ThrownPearlTracker.Inner_DataUtil init_aV_DataUtil_aV_DataUtil_aV_DataUtil(ThrownPearlTracker.Inner_DataUtil a, ThrownPearlTracker.Inner_DataUtil b) {
       if (b != null
-         && b.init_Vec3() != null
+         && b.position() != null
          && Double.isFinite(b.init_D())
-         && Double.isFinite(b.init_Vec3().x)
-         && Double.isFinite(b.init_Vec3().y)
-         && Double.isFinite(b.init_Vec3().z)) {
+         && Double.isFinite(b.position().x)
+         && Double.isFinite(b.position().y)
+         && Double.isFinite(b.position().z)) {
          return a == null || b.init_D() > a.init_D() || b.init_D() == a.init_D() && b.init_I() > a.init_I() ? b : a;
       } else {
          return a;
       }
    }
 
-   record Inner_DataUtil(UUID init_UUID, int init_I, Vec3 init_Vec3, double init_D) {
+   record Inner_DataUtil(UUID init_UUID, int init_I, Vec3 position, double init_D) {
    }
 }

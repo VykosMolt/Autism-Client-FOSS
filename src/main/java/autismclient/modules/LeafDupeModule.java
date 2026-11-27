@@ -710,7 +710,7 @@ public final class LeafDupeModule extends Module {
       return new autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool(owner, MC.player.getEyePosition(), this.init_Vec3_5());
    }
 
-   public static boolean init_Z_Connection_Packet(Connection connection, Packet<?> packet) {
+   public static boolean allowSend(Connection connection, Packet<?> packet) {
       autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil receipt = autismclient.util.leafdupe.LeafDupePacketTracker.init_DataUtil_StreamUti(packet);
       if (receipt == null) {
          return true;
@@ -1294,7 +1294,7 @@ public final class LeafDupeModule extends Module {
       sync = -2147483648;
    }
 
-   public static void init_V_LocalPlayer_2(LocalPlayer player) {
+   public static void beforeSendPosition(LocalPlayer player) {
       LeafDupeModule module = init_ac;
       if (module != null && player == MC.player) {
          if (!init_Z && !module.write_Z && !module.read_Z && module.init_ac_CachePool == null) {
@@ -1332,15 +1332,15 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   public static float init_F_LocalPlayer_F_2(LocalPlayer player, float original) {
+   public static float overrideYaw(LocalPlayer player, float original) {
       return player == MC.player && load_Z ? read_F : original;
    }
 
-   public static float load_F_LocalPlayer_F_2(LocalPlayer player, float original) {
+   public static float overridePitch(LocalPlayer player, float original) {
       return player == MC.player && load_Z ? write_F : original;
    }
 
-   public static void load_V_LocalPlayer_2(LocalPlayer player) {
+   public static void afterSendPosition(LocalPlayer player) {
       load_Z = false;
       LeafDupeModule module = init_ac;
       if (module != null && player == MC.player && module.update_Z) {
@@ -1350,7 +1350,7 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   public static void init_V_28() {
+   public static void onLogin() {
       flush();
       if (init_ac != null) {
          init_ac.close();
@@ -1360,7 +1360,7 @@ public final class LeafDupeModule extends Module {
       autismclient.util.leafdupe.LeafDupePacketTracker.init(0);
    }
 
-   public static void load_V_21() {
+   public static void onDisconnect() {
       flush();
       if (init_ac != null) {
          init_ac.close();

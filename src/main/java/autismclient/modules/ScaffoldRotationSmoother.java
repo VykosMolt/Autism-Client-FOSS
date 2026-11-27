@@ -32,12 +32,12 @@ final class ScaffoldRotationSmoother {
       this.init_Random = random;
    }
 
-   static ScaffoldRotationSmoother init_aM() {
+   static ScaffoldRotationSmoother create() {
       Random random = new Random();
       return new ScaffoldRotationSmoother(autismclient.util.HumanHandProfile.init_am().init_am_Random(random), random);
    }
 
-   void init_V() {
+   void reset() {
       this.init_Z = this.load_Z = this.write_Z = false;
       this.init_ce_DataUtil = this.load_ce_DataUtil = this.read_ce_DataUtil = null;
       this.init_I = this.load_I = -2147483648;
@@ -58,7 +58,7 @@ final class ScaffoldRotationSmoother {
    }
 
    void init(ScaffoldRotationSmoother.Inner_DataUtil selected, boolean efficient) {
-      this.init_V();
+      this.reset();
       this.init_D = selected.init_D();
       this.load_D = selected.load_D();
       this.update_Z = efficient;

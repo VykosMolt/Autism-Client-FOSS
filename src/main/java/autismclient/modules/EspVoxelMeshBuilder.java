@@ -17,18 +17,18 @@ final class EspVoxelMeshBuilder {
    private EspVoxelMeshBuilder() {
    }
 
-   static EspVoxelMeshBuilder.Inner_CachePool init_ag_CachePool(List<EspVoxelMeshBuilder.Inner_DataUtil> input) {
+   static EspVoxelMeshBuilder.Inner_CachePool build(List<EspVoxelMeshBuilder.Inner_DataUtil> input) {
       if (input != null && !input.isEmpty()) {
          Map<Integer, LongOpenHashSet> voxelsByColor = new HashMap<>();
          List<EspVoxelMeshBuilder.Inner_DataUtil> partial = new ArrayList<>();
 
          for (EspVoxelMeshBuilder.Inner_DataUtil target : input) {
-            if (target != null && target.init_AABB() != null) {
-               int[] voxel = init_IArr(target.init_AABB());
+            if (target != null && target.box() != null) {
+               int[] voxel = init_IArr(target.box());
                if (voxel == null) {
                   partial.add(target);
                } else {
-                  voxelsByColor.computeIfAbsent(target.init_I(), ignored -> new LongOpenHashSet()).add(BlockPos.asLong(voxel[0], voxel[1], voxel[2]));
+                  voxelsByColor.computeIfAbsent(target.color(), ignored -> new LongOpenHashSet()).add(BlockPos.asLong(voxel[0], voxel[1], voxel[2]));
                }
             }
          }
@@ -41,7 +41,7 @@ final class EspVoxelMeshBuilder {
          }
 
          for (EspVoxelMeshBuilder.Inner_DataUtil box : init_List(partial)) {
-            init(box.init_AABB(), box.init_I(), quads, edges);
+            init(box.box(), box.color(), quads, edges);
          }
 
          return new EspVoxelMeshBuilder.Inner_CachePool(List.copyOf(quads), List.copyOf(edges));
@@ -270,8 +270,8 @@ final class EspVoxelMeshBuilder {
 
       for (int i = 1; i < sorted.size(); i++) {
          EspVoxelMeshBuilder.Inner_DataUtil next = sorted.get(i);
-         if (init(current, next, axis) && init_D_AABB_I(next.init_AABB(), axis) <= load(current.init_AABB(), axis) + 1.0E-7) {
-            current = new EspVoxelMeshBuilder.Inner_DataUtil(init(current.init_AABB(), next.init_AABB(), axis), current.init_I());
+         if (init(current, next, axis) && init_D_AABB_I(next.box(), axis) <= load(current.box(), axis) + 1.0E-7) {
+            current = new EspVoxelMeshBuilder.Inner_DataUtil(init(current.box(), next.box(), axis), current.color());
          } else {
             output.add(current);
             current = next;
@@ -284,13 +284,13 @@ final class EspVoxelMeshBuilder {
 
    private static Comparator<EspVoxelMeshBuilder.Inner_DataUtil> init(int axis) {
       return (left, right) -> {
-         int compared = Integer.compare(left.init_I(), right.init_I());
+         int compared = Integer.compare(left.color(), right.color());
          if (compared != 0) {
             return compared;
          }
 
-         AABB a = left.init_AABB();
-         AABB b = right.init_AABB();
+         AABB a = left.box();
+         AABB b = right.box();
 
          for (int candidate = 0; candidate < 3; candidate++) {
             if (candidate != axis) {
@@ -312,15 +312,15 @@ final class EspVoxelMeshBuilder {
    }
 
    private static boolean init(EspVoxelMeshBuilder.Inner_DataUtil left, EspVoxelMeshBuilder.Inner_DataUtil right, int axis) {
-      if (left.init_I() != right.init_I()) {
+      if (left.color() != right.color()) {
          return false;
       }
 
       for (int candidate = 0; candidate < 3; candidate++) {
          if (candidate != axis
             && (
-               !init_Z_D_D(init_D_AABB_I(left.init_AABB(), candidate), init_D_AABB_I(right.init_AABB(), candidate))
-                  || !init_Z_D_D(load(left.init_AABB(), candidate), load(right.init_AABB(), candidate))
+               !init_Z_D_D(init_D_AABB_I(left.box(), candidate), init_D_AABB_I(right.box(), candidate))
+                  || !init_Z_D_D(load(left.box(), candidate), load(right.box(), candidate))
             )) {
             return false;
          }
@@ -407,7 +407,7 @@ final class EspVoxelMeshBuilder {
    private record Inner_BufferHelper(int init, int load, int read, int write, int update) {
    }
 
-   record Inner_CachePool(List<EspVoxelMeshBuilder.Inner_ConfigStore> init_List, List<EspVoxelMeshBuilder.Inner_StreamUtil> load) {
+   record Inner_CachePool(List<EspVoxelMeshBuilder.Inner_ConfigStore> faces, List<EspVoxelMeshBuilder.Inner_StreamUtil> load) {
       private static final EspVoxelMeshBuilder.Inner_CachePool init_ag_CachePool = new EspVoxelMeshBuilder.Inner_CachePool(List.of(), List.of());
    }
 
@@ -424,13 +424,13 @@ final class EspVoxelMeshBuilder {
       double poll,
       double push,
       double pop,
-      int init_I
+      int color
    ) {
    }
 
-   record Inner_DataUtil(AABB init_AABB, int init_I) {
+   record Inner_DataUtil(AABB box, int color) {
    }
 
-   record Inner_StreamUtil(double init_D, double load, double read, double write, double update, double sync, int init_I) {
+   record Inner_StreamUtil(double init_D, double load, double read, double write, double update, double sync, int color) {
    }
 }

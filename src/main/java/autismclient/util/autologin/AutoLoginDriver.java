@@ -102,7 +102,7 @@ public final class AutoLoginDriver {
    }
 
    private boolean init_Z(long now) {
-      CustomMenuSnapshot snapshot = this.init_BufferHelper.init_CustomMenuSnapshot();
+      CustomMenuSnapshot snapshot = this.init_BufferHelper.currentMenu();
       if (snapshot == null) {
          this.close = -9223372036854775808L;
          return false;
@@ -129,7 +129,7 @@ public final class AutoLoginDriver {
          }
       }
 
-      String password = this.init_BufferHelper.init_Str();
+      String password = this.init_BufferHelper.password();
       if (hasText && password.isEmpty()) {
          this.load(snapshot.title());
          return true;
@@ -170,7 +170,7 @@ public final class AutoLoginDriver {
    }
 
    private void read(long now) {
-      if (!this.init_BufferHelper.init_Z()) {
+      if (!this.init_BufferHelper.isConnected()) {
          this.read_J = 0L;
       } else {
          if (this.read_J == 0L) {
@@ -184,12 +184,12 @@ public final class AutoLoginDriver {
                   if (this.init_I >= this.init_StreamUtil.init_I()) {
                      this.load();
                   } else {
-                     String password = this.init_BufferHelper.init_Str();
+                     String password = this.init_BufferHelper.password();
                      if (password.isEmpty()) {
                         this.load("AuthMe login");
                      } else if (this.init_BufferHelper.load()) {
                         this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
-                        if (!this.init_BufferHelper.init_Z(detection.init(password))) {
+                        if (!this.init_BufferHelper.sendCommand(detection.init(password))) {
                            this.init_DataUtil_DataUtil = detection;
                            this.write = now + 250L;
                         } else {
@@ -224,10 +224,10 @@ public final class AutoLoginDriver {
       if (this.init_I >= this.init_StreamUtil.init_I()) {
          this.load();
       } else {
-         String password = this.init_BufferHelper.init_Str();
+         String password = this.init_BufferHelper.password();
          if (!password.isEmpty() && this.init_BufferHelper.load()) {
             String token = AuthPromptParser.init(this.init_Str, this.load_Str);
-            if (!this.init_BufferHelper.init_Z(token + " " + password)) {
+            if (!this.init_BufferHelper.sendCommand(token + " " + password)) {
                this.init_Z = true;
                this.flush = now + 250L;
             } else {
@@ -243,7 +243,7 @@ public final class AutoLoginDriver {
    private void load() {
       if (!this.load_Z) {
          this.load_Z = true;
-         this.init_BufferHelper.init_V("Auto login failed after " + this.init_StreamUtil.init_I() + " attempts - check the password.");
+         this.init_BufferHelper.report("Auto login failed after " + this.init_StreamUtil.init_I() + " attempts - check the password.");
       }
 
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;

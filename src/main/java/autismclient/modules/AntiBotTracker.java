@@ -199,30 +199,30 @@ public final class AntiBotTracker {
          return "duplicate name";
       }
 
-      if (m.init_Z(m.init_BoolSetting) && airGroundViolationByEntityId.getOrDefault(id, 0) >= m.init_I_8()) {
+      if (m.isCheckEnabled(m.floatingGround) && airGroundViolationByEntityId.getOrDefault(id, 0) >= m.minAgeTicks()) {
          return "on ground over air";
       }
 
       boolean watched = isWatchedEntity(id);
       UUID uuid = player.getUUID();
-      if (m.init_Z(m.load_BoolSetting) && watched && player.tickCount >= 40 && !receivedAttributesEntityIds.contains(id) && !receivedAttributesUuids.contains(uuid)) {
+      if (m.isCheckEnabled(m.noAttributes) && watched && player.tickCount >= 40 && !receivedAttributesEntityIds.contains(id) && !receivedAttributesUuids.contains(uuid)) {
          return "no attributes";
       }
 
-      if (m.init_Z(m.read_BoolSetting) && player.tickCount >= 40 && addedPlayerInfoUuids.contains(uuid) && !receivedGameModeUuids.contains(uuid)) {
+      if (m.isCheckEnabled(m.noGameMode) && player.tickCount >= 40 && addedPlayerInfoUuids.contains(uuid) && !receivedGameModeUuids.contains(uuid)) {
          return "no game mode";
       }
 
-      if (!m.init_Z_13()) {
+      if (!m.isCustomMode()) {
          return null;
       }
 
-      if (m.write_BoolSetting.get() && player.tickCount < m.load_IntSetting.get()) {
+      if (m.minAge.get() && player.tickCount < m.ageTicks.get()) {
          return "too young";
       }
 
-      if (m.update_BoolSetting.get() && watched) {
-         double range = m.init_DoubleSetting.get();
+      if (m.alwaysNear.get() && watched) {
+         double range = m.nearRange.get();
          if (maxDistanceSqByEntityId.getOrDefault(id, 1.7976931348623157E308) <= range * range) {
             return "always near";
          }
@@ -242,10 +242,10 @@ public final class AntiBotTracker {
    }
 
    private static boolean matchesArmorFilter(Player player, AntiBotModule m) {
-      return ArmorFilterMatcher.init_Z_Str_Str(m.load_ChoiceSetting.get(), getItemPath(player.getItemBySlot(EquipmentSlot.HEAD)))
-         && ArmorFilterMatcher.init_Z_Str_Str(m.read_ChoiceSetting.get(), getItemPath(player.getItemBySlot(EquipmentSlot.CHEST)))
-         && ArmorFilterMatcher.init_Z_Str_Str(m.write_ChoiceSetting.get(), getItemPath(player.getItemBySlot(EquipmentSlot.LEGS)))
-         && ArmorFilterMatcher.init_Z_Str_Str(m.update_ChoiceSetting.get(), getItemPath(player.getItemBySlot(EquipmentSlot.FEET)));
+      return ArmorFilterMatcher.matches(m.armorHead.get(), getItemPath(player.getItemBySlot(EquipmentSlot.HEAD)))
+         && ArmorFilterMatcher.matches(m.armorChest.get(), getItemPath(player.getItemBySlot(EquipmentSlot.CHEST)))
+         && ArmorFilterMatcher.matches(m.armorLegs.get(), getItemPath(player.getItemBySlot(EquipmentSlot.LEGS)))
+         && ArmorFilterMatcher.matches(m.armorFeet.get(), getItemPath(player.getItemBySlot(EquipmentSlot.FEET)));
    }
 
    private static String getItemPath(ItemStack stack) {
@@ -413,7 +413,7 @@ public final class AntiBotTracker {
    public static void onEntityMovePacket(Entity entity) {
       AntiBotModule m = getActiveModule();
       if (m != null
-         && m.init_Z(m.init_BoolSetting)
+         && m.isCheckEnabled(m.floatingGround)
          && MC.level != null
          && entity instanceof Player p
          && p != MC.player

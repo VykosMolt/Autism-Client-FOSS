@@ -40,11 +40,11 @@ final class BedProximityTracker {
    private int load = -60;
    private List<BedProximityTracker.Inner_DataUtil> init_List = List.of();
 
-   List<BedProximityTracker.Inner_DataUtil> init_List() {
+   List<BedProximityTracker.Inner_DataUtil> entries() {
       return this.init_List;
    }
 
-   void init_V() {
+   void reset() {
       this.init_Obj = null;
       this.init_DyeColor = null;
       this.init_Str = null;
@@ -79,7 +79,7 @@ final class BedProximityTracker {
       return List.copyOf(result);
    }
 
-   void init_V_Minecraft_z(Minecraft mc, DangerModule module) {
+   void tick(Minecraft mc, DangerModule module) {
       if (module.bool("bed-warning") && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
          PlayerTeam ownTeam = mc.player.getTeam();
          TextColor ownRgb = ownTeam == null ? null : ownTeam.getColor().map(TeamColor::textColor).orElse(null);
@@ -92,7 +92,7 @@ final class BedProximityTracker {
          );
          String teamName = ownTeam == null ? null : ownTeam.getName();
          if (this.init_Obj != mc.level || this.init_DyeColor != own || !Objects.equals(this.init_Str, teamName)) {
-            this.init_V();
+            this.reset();
             this.init_Obj = mc.level;
             this.init_DyeColor = own;
             this.init_Str = teamName;
@@ -135,12 +135,12 @@ final class BedProximityTracker {
                      DyeColor dye = TeamDyeColorResolver.load(account, display, player.getDisplayName(), fallback == null ? null : fallback.getValue());
                      if (this.init_v_CachePool.init(player.getUUID(), team == null ? null : team.getName(), dye, this.init_I, 20)
                         && (module.bool("bed-include-team") || dye != own && (team == null || team != mc.player.getTeam()))
-                        && (module.bool("bed-include-friends") || !TeamsModule.init_Z_Entity_5(player) || dye == own)) {
+                        && (module.bool("bed-include-friends") || !TeamsModule.isFriend(player) || dye == own)) {
                         int tint = PlayerDisplayNameParser.init_I(account, display, fallback);
                         String key = dye != null ? "color:" + dye.getName() : (team != null ? "team:" + team.getName() : "player:" + player.getUUID());
                         people.add(
                            new BedProximityTracker.Inner_StreamUtil(
-                              player.getUUID(), key, PlayerDisplayNameParser.init_MutableComponent(account, display, fallback), tint, player.position().distanceTo(center)
+                              player.getUUID(), key, PlayerDisplayNameParser.displayName(account, display, fallback), tint, player.position().distanceTo(center)
                            )
                         );
                      }
@@ -149,7 +149,7 @@ final class BedProximityTracker {
 
                List<BedProximityTracker.Inner_DataUtil> next = init_List_List_D(people, module.decimal("bed-warning-radius"));
                if (module.bool("bed-warning-sound") && this.init_I - this.load >= 60 && init_Z_List_List(this.init_List, next)) {
-                  module.init_V_52();
+                  module.playBedSound();
                   this.load = this.init_I;
                }
 
@@ -157,7 +157,7 @@ final class BedProximityTracker {
             }
          }
       } else {
-         this.init_V();
+         this.reset();
       }
    }
 
@@ -166,7 +166,7 @@ final class BedProximityTracker {
    }
 
    private void init_V_Minecraft_I(Minecraft mc, int range) {
-      EspChunkWorker.init_V_Obj(mc.level);
+      EspChunkWorker.setLevel(mc.level);
       if (this.init_BlockPos == null) {
          int radius = Math.min(am.init_I(), (range + 15) / 16);
          int cx = mc.player.chunkPosition().x();
@@ -178,7 +178,7 @@ final class BedProximityTracker {
                LevelChunk chunk = mc.level.getChunkSource().getChunk(cx + dx, cz + dz, ChunkStatus.FULL, false);
                if (chunk != null) {
                   for (EspChunkWorker.EspBox entry : init_List_LevelChunk_J(chunk, mc.level.getGameTime())) {
-                     BlockPos at = BlockPos.containing(entry.init_Vec3());
+                     BlockPos at = BlockPos.containing(entry.tracer());
                      BlockState state = mc.level.getBlockState(at);
                      if (state.getBlock() instanceof BedBlock block && block.getColor() == this.init_DyeColor) {
                         double distance = at.distToCenterSqr(mc.player.position());

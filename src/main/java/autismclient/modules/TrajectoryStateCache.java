@@ -27,12 +27,12 @@ final class TrajectoryStateCache {
          Vec3 explosion = null;
 
          for (TrajectoriesModule.Inner_CachePool path : paths) {
-            if (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.FIRE && path.init_HitResult() != null) {
-               explosion = path.init_HitResult().getLocation();
+            if (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.FIRE && path.hit() != null) {
+               explosion = path.hit().getLocation();
             }
          }
 
-         load = init_x.init_List_Level_Vec3(init_Level, explosion);
+         load = init_x.predictAt(init_Level, explosion);
          Module module = al.init_Module_Str("trajectories");
          double threshold = module == null ? 50.0 : module.integer("pearl-warning-damage");
          if (init_I != mc.player.tickCount || init_D != threshold) {
@@ -45,9 +45,9 @@ final class TrajectoryStateCache {
             init_Map.clear();
          }
 
-         ThrownPearlTracker.Inner_DataUtil remembered = init_aV.init_aV_DataUtil();
+         ThrownPearlTracker.Inner_DataUtil remembered = init_aV.remembered();
          if (remembered != null) {
-            init(mc, remembered.init_Vec3(), threshold);
+            init(mc, remembered.position(), threshold);
          }
 
          for (TrajectoriesModule.Inner_CachePool path : paths) {
@@ -56,8 +56,8 @@ final class TrajectoryStateCache {
             }
          }
 
-         if (paths.isEmpty() && init_aV.init_aV_DataUtil() == null) {
-            TrajectoryWorldRenderer.load_V();
+         if (paths.isEmpty() && init_aV.remembered() == null) {
+            TrajectoryWorldRenderer.resetCounters();
          }
       }
    }
@@ -78,35 +78,35 @@ final class TrajectoryStateCache {
       return init_aV.init_D();
    }
 
-   static ThrownPearlTracker.Inner_DataUtil init_aV_DataUtil() {
+   static ThrownPearlTracker.Inner_DataUtil rememberedPearl() {
       Minecraft mc = Minecraft.getInstance();
-      return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? init_aV.init_aV_DataUtil() : null;
+      return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? init_aV.remembered() : null;
    }
 
    static void init(Minecraft mc, boolean enabled) {
       if (init(mc)) {
-         init_aV.init_V_Minecraft_Z(mc, enabled);
+         init_aV.tick(mc, enabled);
       }
    }
 
    private static boolean init(Minecraft mc) {
       if (mc != null && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
          if (mc.level != init_Level || mc.player != init_Obj) {
-            init_V();
+            reset();
          }
 
          init_Level = mc.level;
          init_Obj = mc.player;
          return true;
       } else {
-         init_V();
+         reset();
          return false;
       }
    }
 
-   static void init_V() {
-      init_x.init_V();
-      init_aV.init_V();
+   static void reset() {
+      init_x.reset();
+      init_aV.reset();
       init_List = List.of();
       load = List.of();
       init_Level = null;
@@ -114,7 +114,7 @@ final class TrajectoryStateCache {
       init_Map.clear();
       init_I = -2147483648;
       init_D = 0.0 / 0.0;
-      TrajectoryWorldRenderer.load_V();
-      TrajectoryOffscreenIndicator.init_V();
+      TrajectoryWorldRenderer.resetCounters();
+      TrajectoryOffscreenIndicator.reset();
    }
 }

@@ -73,7 +73,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private int next;
 
    public CrosshairEditorScreen(Screen parent, CrosshairModule module) {
-      this(parent, module, module.init_m());
+      this(parent, module, module.art());
    }
 
    public CrosshairEditorScreen(Screen parent, CrosshairModule module, CrosshairPixelArt start) {
@@ -90,9 +90,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       this.next = -1;
       this.init_Screen = parent;
       this.init_n = module;
-      this.init_m = module.init_m();
-      this.open = start.init_I();
-      this.load_IArr = start.init_IArr();
+      this.init_m = module.art();
+      this.open = start.size();
+      this.load_IArr = start.pixels();
    }
 
    @Override
@@ -125,7 +125,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int rowY = y + header + 6;
       int cx = x + 6 + this.init_I_Str_13("Resolution") + 4;
 
-      for (int option : CrosshairPixelArt.init_IArr) {
+      for (int option : CrosshairPixelArt.SIZES) {
          int chipW = this.init_I_Str_13(Integer.toString(option)) + 12;
          this.init_List
             .add(
@@ -559,7 +559,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          0,
          false,
          0.0,
-         look.init_m()
+         look.art()
       );
       autismclient.gui.ui.widgets.CrosshairPreviewRenderer.load(context, box, shown);
    }
@@ -1114,9 +1114,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void load(int newSize) {
-      if (newSize != this.open && CrosshairPixelArt.init_Z(newSize)) {
+      if (newSize != this.open && CrosshairPixelArt.isValidSize(newSize)) {
          this.init_V_NetHelper_BufferHe(new CrosshairEditorScreen.Inner_BufferHelper(this.open, (int[])this.load_IArr.clone()));
-         this.load_IArr = new CrosshairPixelArt(this.open, this.load_IArr).load(newSize).init_IArr();
+         this.load_IArr = new CrosshairPixelArt(this.open, this.load_IArr).load(newSize).pixels();
          this.open = newSize;
          this.push();
       }
@@ -1124,7 +1124,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void init_V_p_NetHelper(CrosshairPresetGeometry.Inner_NetHelper style) {
       this.init_V_NetHelper_BufferHe(new CrosshairEditorScreen.Inner_BufferHelper(this.open, (int[])this.load_IArr.clone()));
-      this.load_IArr = CrosshairPresetGeometry.init(style, this.open, this.init_n.init_D_14(), this.init_n.load_D_5(), this.read_I_9()).init_IArr();
+      this.load_IArr = CrosshairPresetGeometry.init(style, this.open, this.init_n.thickness(), this.init_n.gap(), this.read_I_9()).pixels();
       this.push();
    }
 
@@ -1194,7 +1194,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
       CrosshairPixelArt drawn = this.init_m();
       if (!drawn.equals(this.init_m)) {
-         this.init_n.init_V_m(drawn);
+         this.init_n.setArt(drawn);
       }
 
       this.minecraft.gui.setScreen(this.init_Screen);

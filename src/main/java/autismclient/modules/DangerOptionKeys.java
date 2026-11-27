@@ -12,27 +12,27 @@ final class DangerOptionKeys {
 
       for (IncomingProjectileScanner.Inner_StreamUtil kind : IncomingProjectileScanner.Inner_StreamUtil.values()) {
          for (String option : new String[]{"hud", "aim-preview"}) {
-            String key = kind.init_Str() + "-" + option;
+            String key = kind.id() + "-" + option;
             if (!saved.containsKey(key) && saved.containsKey(option)) {
                result.put(key, saved.get(option));
             }
          }
 
-         String trajectory = kind.init_Str() + "-trajectory";
+         String trajectory = kind.id() + "-trajectory";
          if (!saved.containsKey(trajectory)
             && (
-               saved.containsKey(kind.init_Str() + "-trajectories")
-                  || saved.containsKey(kind.init_Str() + "-landings")
+               saved.containsKey(kind.id() + "-trajectories")
+                  || saved.containsKey(kind.id() + "-landings")
                   || saved.containsKey("trajectories")
                   || saved.containsKey("landings")
             )) {
             result.put(
                trajectory,
-               Boolean.toString(init(saved, kind.init_Str() + "-trajectories", "trajectories") || init(saved, kind.init_Str() + "-landings", "landings"))
+               Boolean.toString(init(saved, kind.id() + "-trajectories", "trajectories") || init(saved, kind.id() + "-landings", "landings"))
             );
          }
 
-         String key = kind.init_Str() + "-radius";
+         String key = kind.id() + "-radius";
          if (!saved.containsKey(key) && saved.containsKey("relevance-radius")) {
             try {
                double radius = Double.parseDouble(saved.get("relevance-radius"));

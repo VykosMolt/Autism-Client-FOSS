@@ -158,9 +158,9 @@ public abstract class AutismClientConnectionMixin {
       PacketCaptureState.read();
       if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
          ServerRotationTracker.reset();
-         ScaffoldModule.update_V_10();
+         ScaffoldModule.onDisconnect();
          if (!AutismLiteVariant.enabled()) {
-            LeafDupeModule.load_V_21();
+            LeafDupeModule.onDisconnect();
          }
 
          ServerPackSelectionRegistry.load();
@@ -180,7 +180,7 @@ public abstract class AutismClientConnectionMixin {
       if (!OutboundPacketFilterHandler.init((Connection)(Object)this, channel, packet, listener, flush)) {
          ci.cancel();
       } else {
-         if (!AutismLiteVariant.enabled() && !LeafDupeModule.init_Z_Connection_Packet((Connection)(Object)this, packet)) {
+         if (!AutismLiteVariant.enabled() && !LeafDupeModule.allowSend((Connection)(Object)this, packet)) {
             ci.cancel();
             return;
          }
@@ -194,7 +194,7 @@ public abstract class AutismClientConnectionMixin {
             LeafDupePacketTracker.init((Connection)(Object)this, packet);
          }
 
-         ScaffoldModule.read_V_Packet(packet);
+         ScaffoldModule.onPacketWritten(packet);
          if (!AutismLiteVariant.enabled()) {
             AiMenuClose.init(packet);
          }
@@ -572,7 +572,7 @@ public abstract class AutismClientConnectionMixin {
 
                if (!AutismLiteVariant.enabled()
                   && (packet instanceof ClientboundSetEntityMotionPacket || packet instanceof ClientboundEntityPositionSyncPacket)) {
-                  DangerModule.init_V_Packet_3(packet);
+                  DangerModule.forwardPacket(packet);
                }
 
                if (normalLoggerPath) {

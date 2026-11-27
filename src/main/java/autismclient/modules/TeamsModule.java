@@ -109,7 +109,7 @@ public final class TeamsModule extends Module {
       }
    }
 
-   public static boolean init_Z_Str_2(String name) {
+   public static boolean addFriend(String name) {
       TeamsModule module = init_aL;
       if (module != null && name != null && !name.isBlank()) {
          List<String> friends = new ArrayList<>(module.list("friends"));
@@ -131,7 +131,7 @@ public final class TeamsModule extends Module {
       }
    }
 
-   public static boolean load_Z_Str(String name) {
+   public static boolean removeFriend(String name) {
       TeamsModule module = init_aL;
       if (module != null && name != null && !name.isBlank()) {
          List<String> friends = new ArrayList<>(module.list("friends"));
@@ -153,7 +153,7 @@ public final class TeamsModule extends Module {
       }
    }
 
-   public static boolean init_Z_28() {
+   public static boolean clearFriends() {
       TeamsModule module = init_aL;
       if (module == null) {
          AutismClientMessaging.sendPrefixed("§cTeams module unavailable.");
@@ -171,7 +171,7 @@ public final class TeamsModule extends Module {
       }
    }
 
-   public static List<String> init_List_11() {
+   public static List<String> friends() {
       TeamsModule module = init_aL;
       return module == null ? List.of() : module.list("friends");
    }
@@ -181,7 +181,7 @@ public final class TeamsModule extends Module {
       return module != null && module.isEnabled() ? module : null;
    }
 
-   public static boolean init_Z_Entity_5(Entity entity) {
+   public static boolean isFriend(Entity entity) {
       TeamsModule module = init_aL();
       return module != null && entity instanceof Player player && entity != MC.player
          ? module.init_Z_Player_2(player)
@@ -194,16 +194,16 @@ public final class TeamsModule extends Module {
       if (module == null) {
          return false;
       } else {
-         return module.bool(option) ? false : init_Z_Entity_5(entity);
+         return module.bool(option) ? false : isFriend(entity);
       }
    }
 
-   public static boolean read_Z_Str(String option) {
+   public static boolean option(String option) {
       TeamsModule module = init_aL();
       return module != null && module.bool(option);
    }
 
-   public static int init_I_18() {
+   public static int friendColor() {
       TeamsModule module = init_aL();
       return module == null ? -866779137 : am.init_I_Module(module, "friends-color", -866779137);
    }
@@ -303,7 +303,7 @@ public final class TeamsModule extends Module {
       Integer[] rgb = new Integer[]{null};
       boolean[] plain = new boolean[]{false};
       boolean[] conflict = new boolean[]{false};
-      PlayerDisplayNameParser.init_MutableComponent(name, display, null).visit((style, text) -> {
+      PlayerDisplayNameParser.displayName(name, display, null).visit((style, text) -> {
          if (!text.isBlank()) {
             TextColor color = style.getColor();
             if (color == null) {

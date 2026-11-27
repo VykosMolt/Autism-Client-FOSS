@@ -627,7 +627,7 @@ public final class AutismHudManager {
             AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
             if (state.enabled
                && (editor || !"bed_danger".equals(id))
-               && (editor || !"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())
+               && (editor || !"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.isHudVisible())
                && !flush_Z(id)) {
                AutismHudManager.CachedElementLayout cached = init_al_CachePool_Str_Font(id, font);
                AutismHudManager.HudElementBounds bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
@@ -675,7 +675,7 @@ public final class AutismHudManager {
       if (context != null && font != null && id != null && !autismclient.modules.aD.init_Z()) {
          init_V();
          AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
-         if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())) {
+         if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.isHudVisible())) {
             autismclient.gui.sdf.MsdfTextRenderer.setForceVanilla(!init_Z());
             init_V_Font_Z(font, false);
 
@@ -706,7 +706,7 @@ public final class AutismHudManager {
       int width;
       int height;
       if ("bed_danger".equals(id) && !AutismLiteVariant.enabled()) {
-         int[] size = autismclient.modules.BedDangerHudRenderer.init_IArr(font);
+         int[] size = autismclient.modules.BedDangerHudRenderer.size(font);
          width = size[0];
          height = size[1];
       } else if ("watermark".equals(id)) {
@@ -1290,12 +1290,12 @@ public final class AutismHudManager {
    }
 
    private static void load(List<AutismHudManager.ColoredTextLine> lines) {
-      for (autismclient.modules.AntiVanishModule.Inner_StreamUtil entry : autismclient.modules.AntiVanishModule.init_List_8()) {
+      for (autismclient.modules.AntiVanishModule.Inner_StreamUtil entry : autismclient.modules.AntiVanishModule.entries()) {
          lines.add(
             init_al_NetHelper_Str(
                "anti_vanish",
-               autismclient.modules.AntiVanishModule.init_Str_SyncManager_Stream(entry),
-               autismclient.modules.AntiVanishModule.load_Str_SyncManager_Stream(entry)
+               autismclient.modules.AntiVanishModule.statusLabel(entry),
+               autismclient.modules.AntiVanishModule.roleLabel(entry)
             )
          );
       }

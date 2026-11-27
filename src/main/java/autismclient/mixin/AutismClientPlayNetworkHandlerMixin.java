@@ -124,7 +124,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleLogin", at = @At("RETURN"))
    private void autism$leafDupeSessionStarted(ClientboundLoginPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         LeafDupeModule.init_V_28();
+         LeafDupeModule.onLogin();
       }
    }
 
@@ -136,7 +136,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleAnimate", at = @At("RETURN"))
    private void autism$combatAnimation(ClientboundAnimatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
@@ -146,7 +146,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       cancellable = true
    )
    private void autism$vanishRoster(ClientboundSystemChatPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && AntiVanishModule.init_Z_ClientPacketListen_ClientboundSystemC((ClientPacketListener)(Object)this, packet)) {
+      if (!AutismLiteVariant.enabled() && AntiVanishModule.onSystemChat((ClientPacketListener)(Object)this, packet)) {
          ci.cancel();
       }
    }
@@ -154,7 +154,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSystemChat", at = @At("RETURN"))
    private void autism$aiSystemMessage(ClientboundSystemChatPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
 
       if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
@@ -180,17 +180,17 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleLogin", at = @At("RETURN"))
    private void autism$espLoginApplied(ClientboundLoginPacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
    }
 
    @Inject(method = "handleRespawn", at = @At("RETURN"))
    private void autism$espRespawnApplied(ClientboundRespawnPacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
    }
 
    @Inject(method = "handleBlockEntityData", at = @At("RETURN"), require = 0)
    private void autism$espBlockEntityDataApplied(ClientboundBlockEntityDataPacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
    }
 
    @Inject(
@@ -202,7 +202,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    )
    private void autism$vanishBlockBefore(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen((ClientPacketListener)(Object)this, packet.getPos(), packet.getBlockState());
+         AntiVanishModule.onBlockUpdate((ClientPacketListener)(Object)this, packet.getPos(), packet.getBlockState());
       }
    }
 
@@ -215,28 +215,28 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    )
    private void autism$vanishSectionBefore(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_ClientboundSection((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onSectionUpdate((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handleBlockEvent", at = @At("RETURN"))
    private void autism$vanishMechanism(ClientboundBlockEventPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handleLevelEvent", at = @At("RETURN"))
    private void autism$vanishWorldEffect(ClientboundLevelEventPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handleExplosion", at = @At("RETURN"))
    private void autism$vanishExplosion(ClientboundExplodePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
@@ -256,10 +256,10 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleBlockUpdate", at = @At("RETURN"))
    private void autism$aiBlockApplied(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
       if (!AutismLiteVariant.enabled()) {
-         ScaffoldModule.init_V_BlockPos_BlockState_2(packet.getPos(), packet.getBlockState());
-         AnchorAuraModule.init_V_BlockPos_BlockState(packet.getPos(), packet.getBlockState());
+         ScaffoldModule.onBlockUpdate(packet.getPos(), packet.getBlockState());
+         AnchorAuraModule.onBlockUpdate(packet.getPos(), packet.getBlockState());
          AiServerEvidence.recordBlockStateUpdate(packet.getPos(), packet.getBlockState());
          AiGridRevisions.init(packet.getPos());
          AiScaffold.init(packet.getPos(), packet.getBlockState());
@@ -268,12 +268,12 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleChunkBlocksUpdate", at = @At("RETURN"))
    private void autism$aiGridSectionApplied(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
       if (!AutismLiteVariant.enabled()) {
          boolean[] bumped = new boolean[]{false};
          packet.runUpdates((pos, state) -> {
-            ScaffoldModule.init_V_BlockPos_BlockState_2(pos, state);
-            AnchorAuraModule.init_V_BlockPos_BlockState(pos, state);
+            ScaffoldModule.onBlockUpdate(pos, state);
+            AnchorAuraModule.onBlockUpdate(pos, state);
             AiServerEvidence.recordBlockStateUpdate(pos, state);
             AiScaffold.init(pos, state);
             if (!bumped[0]) {
@@ -286,9 +286,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleForgetLevelChunk", at = @At("RETURN"))
    private void autism$aiGridChunkUnloaded(ClientboundForgetLevelChunkPacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -299,9 +299,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
    private void autism$aiFullChunkApplied(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {
-      EspChunkWorker.init_V_Packet(packet);
+      EspChunkWorker.onPacket(packet);
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -371,10 +371,10 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleDamageEvent", at = @At("RETURN"))
    private void autism$aiPlayerDamageApplied(ClientboundDamageEventPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.init_V_ClientboundDamageE_3(packet);
-         AntiKnockbackModule.init_V_ClientboundDamageE(packet);
+         ClutchModule.onDamageEvent(packet);
+         AntiKnockbackModule.onDamageEvent(packet);
          WTappingModule.init(packet);
-         KBDisplacementModule.init_V_ClientboundDamageE_2(packet);
+         KBDisplacementModule.onDamageEvent(packet);
          Minecraft mc = Minecraft.getInstance();
          LocalPlayer player = mc.player;
          if (player != null && mc.level != null && packet.entityId() == player.getId() && mc.level.getEntity(packet.entityId()) == player) {
@@ -386,7 +386,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleExplosion", at = @At("RETURN"))
    private void autism$clutchExplosion(ClientboundExplodePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.init_V_ClientboundExplode(packet);
+         ClutchModule.onExplosion(packet);
       }
    }
 
@@ -416,9 +416,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleBlockChangedAck", at = @At("RETURN"))
    private void autism$onBlockPredictionAckApplied(ClientboundBlockChangedAckPacket packet, CallbackInfo ci) {
-      ScaffoldModule.init_V_I_8(packet.sequence());
+      ScaffoldModule.onBlockChangedAck(packet.sequence());
       if (!AutismLiteVariant.enabled()) {
-         AnchorAuraModule.init_V_I(packet.sequence());
+         AnchorAuraModule.onBlockChangedAck(packet.sequence());
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -431,28 +431,28 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))
    private void autism$vanishPlayerInfo(ClientboundPlayerInfoUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handlePlayerInfoRemove", at = @At("RETURN"))
    private void autism$vanishPlayerRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handleBlockDestruction", at = @At("RETURN"))
    private void autism$vanishPlayerDig(ClientboundBlockDestructionPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
    @Inject(method = "handleCommandSuggestions", at = @At("RETURN"))
    private void autism$vanishCompletion(ClientboundCommandSuggestionsPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
+         AntiVanishModule.onPacket((ClientPacketListener)(Object)this, packet);
       }
    }
 
@@ -478,7 +478,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (this.autism$viewCaptured) {
          this.autism$viewCaptured = false;
          if (mc.player != null) {
-            ScaffoldModule.init_V_F_F(mc.player.getYRot(), mc.player.getXRot());
+            ScaffoldModule.recordAppliedRotation(mc.player.getYRot(), mc.player.getXRot());
             mc.player.setYRot(this.autism$viewYaw);
             mc.player.setXRot(this.autism$viewPitch);
             mc.player.yRotO = this.autism$viewYawO;
@@ -533,7 +533,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
          this.autism$clutchCorrectionFrom = null;
          PkgCls_a.init_V_J_Vec3(correctionToken, mc.player.position());
-         ScaffoldModule.sync_V_6();
+         ScaffoldModule.onPositionCorrection();
       }
    }
 

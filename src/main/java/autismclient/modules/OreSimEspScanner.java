@@ -222,16 +222,16 @@ public final class OreSimEspScanner {
       return parsed.init_Long();
    }
 
-   public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil init_BufferHelper_Strea(Module xray) {
+   public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedInfo(Module xray) {
       init_Long(xray);
       return init_BufferHelper_DataU.init_BufferHelper_Strea();
    }
 
-   public static Long load_Long(Module xray) {
+   public static Long seed(Module xray) {
       return init_Long(xray);
    }
 
-   public static int load_I(Module xray) {
+   public static int targetCount(Module xray) {
       return init_ak_StreamUtil(xray).init_Set().size();
    }
 
@@ -323,7 +323,7 @@ public final class OreSimEspScanner {
    }
 
    static long init(Module xray, ClientLevel level) {
-      return init_Z(xray) ? (long)autismclient.util.oresim.OreSimEngine.read_I() << 1 | 1L : (long)EspChunkWorker.init_I() << 1;
+      return init_Z(xray) ? (long)autismclient.util.oresim.OreSimEngine.read_I() << 1 | 1L : (long)EspChunkWorker.revision() << 1;
    }
 
    private static boolean init(OreSimEspScanner.Inner_StreamUtil selection, int stateId) {
@@ -399,7 +399,7 @@ public final class OreSimEspScanner {
    private static void load(Module xray, ClientLevel level, Player player, BiConsumer<AABB, Integer> emit) {
       OreSimEspScanner.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
       if (!selection.init_Set().isEmpty()) {
-         EspChunkWorker.init_V_Obj(level);
+         EspChunkWorker.setLevel(level);
          Object2IntMap<Block> colors = new Object2IntOpenHashMap<>();
          colors.defaultReturnValue(-3355444);
          int colorsHash = 0;
@@ -437,7 +437,7 @@ public final class OreSimEspScanner {
                      if (chunk != null) {
                         for (EspChunkWorker.EspBox entry : EspChunkWorker.flush
                            .initAsync(chunk, gameTime, stamp, (scanned, out) -> init(scanned, selection, colors, playerBlockY, out))) {
-                           Vec3 center = entry.init_Vec3();
+                           Vec3 center = entry.tracer();
                            double px = center.x - eyes.x;
                            double py = center.y - eyes.y;
                            double pz = center.z - eyes.z;
@@ -459,7 +459,7 @@ public final class OreSimEspScanner {
          }
 
          for (int i = 0; i < size; i++) {
-            emit.accept(heapEntry[i].init_AABB(), heapEntry[i].init_I());
+            emit.accept(heapEntry[i].box(), heapEntry[i].color());
             heapEntry[i] = null;
          }
       }
@@ -635,7 +635,7 @@ public final class OreSimEspScanner {
       }
    }
 
-   public static String init_Str() {
+   public static String debugCounters() {
       return "matched=" + tick + " touchingAir=" + run + " alreadyPredicted=" + get + " drawn=" + set;
    }
 
@@ -690,7 +690,7 @@ public final class OreSimEspScanner {
       return new AABB(new BlockPos(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed)));
    }
 
-   static String init_Str(Module xray) {
+   static String statusLine(Module xray) {
       if (xray != null && xray.isEnabled() && init_Z(xray)) {
          boolean shaderCullMode = !load_Z(xray) && am.pop();
          Long parsedSeed = init_Long(xray);

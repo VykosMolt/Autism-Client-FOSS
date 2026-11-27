@@ -14,8 +14,8 @@ final class KnockbackThrowPlanner {
    static final double init_D = 2.5;
    static final int load_I = 8;
    static final long init_J = 4000000L;
-   static volatile boolean init_Z;
-   static volatile String init_Str = "";
+   static volatile boolean lastStrafe;
+   static volatile String lastStatus = "";
    static final double load_D = 0.25;
    static final double read = 10.0;
    static final double write = 30.0;
@@ -46,7 +46,7 @@ final class KnockbackThrowPlanner {
    private KnockbackThrowPlanner() {
    }
 
-   static double init_D_D(double attribute, int knockbackLevel, boolean serverSprint, double charge, boolean legacy) {
+   static double knockbackStrength(double attribute, int knockbackLevel, boolean serverSprint, double charge, boolean legacy) {
       return Double.isFinite(attribute) && Double.isFinite(charge) && !(attribute < 0.0) && knockbackLevel >= 0
          ? attribute / 2.0 + knockbackLevel * 0.5 + (serverSprint && (legacy || charge > 0.9) ? 0.5 : 0.0)
          : 0.0;
@@ -89,7 +89,7 @@ final class KnockbackThrowPlanner {
    static KnockbackThrowPlanner.Inner_NetHelper init(
       KnockbackThrowPlanner.Inner_ConfigStore input, float yaw, double quantum, KnockbackThrowPlanner.Inner_StateCache settings, KnockbackThrowPlanner.Inner_BufferHelper hypotheses, KnockbackThrowPlanner.Inner_UiHelper world
    ) {
-      init_Str = input != null && Double.isFinite(input.load_D) && input.load_D <= 0.0 ? "no-extra-push" : "invalid";
+      lastStatus = input != null && Double.isFinite(input.load_D) && input.load_D <= 0.0 ? "no-extra-push" : "invalid";
       if (init(input) && world != null && settings != null && Float.isFinite(yaw)) {
          double maximumTurn = settings.init_D();
          double minimum = settings.load();
@@ -113,15 +113,15 @@ final class KnockbackThrowPlanner {
 
             long deadline = System.nanoTime() + 4000000L;
             TerrainDropGrid grid = new TerrainDropGrid(world, input.init_AABB, input.read, radius, minimum, voidOnly);
-            init_Str = "no-edge";
+            lastStatus = "no-edge";
             if (!grid.init()) {
                return null;
             }
 
             KnockbackThrowPlanner.Inner_ConfigStore unturned = world.init_W_ConfigStore_W_ConfigStore_F(input, yaw);
             KnockbackThrowPlanner.Inner_JsonUtil original = init(unturned, yaw, world);
-            init_Str = original.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN ? "unknown-terrain" : "already-falls";
-            if (original.init_W_TaskQueue != KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN && !original.init(minimum, voidOnly)) {
+            lastStatus = original.outcome == KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN ? "unknown-terrain" : "already-falls";
+            if (original.outcome != KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN && !original.init(minimum, voidOnly)) {
                double[] turns = init(maximumTurn);
                ArrayList<KnockbackThrowPlanner.Inner_StreamUtil> candidates = new ArrayList<>(turns.length * 2);
                HashSet<Float> seen = new HashSet<>();
@@ -137,10 +137,10 @@ final class KnockbackThrowPlanner {
                         if (!(turn < 0.01)) {
                            float candidate = yaw + (float)(sign * turn);
                            if (seen.add(candidate) && world.init_Z_F(candidate)) {
-                              TerrainDropGrid.Inner_CachePool flight = grid.init_V_CachePool_AABB(
-                                 input.init_AABB, init(unturned, candidate), input.init_Z, KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager
+                              TerrainDropGrid.Inner_CachePool flight = grid.simulateFlight(
+                                 input.init_AABB, init(unturned, candidate), input.init_Z, KnockbackThrowPlanner.Inner_SyncManager.NONE
                               );
-                              if (flight.init_W_TaskQueue() != KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN) {
+                              if (flight.outcome() != KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN) {
                                  candidates.add(new KnockbackThrowPlanner.Inner_StreamUtil(candidate, turn, flight));
                               }
                            }
@@ -149,7 +149,7 @@ final class KnockbackThrowPlanner {
                   }
                }
 
-               init_Str = "no-hittable-turn";
+               lastStatus = "no-hittable-turn";
                if (candidates.isEmpty()) {
                   return null;
                }
@@ -162,13 +162,13 @@ final class KnockbackThrowPlanner {
                   }
                }
 
-               boolean modelCounter = hypotheses.init_W_SyncManager() != null && hypotheses.init_W_SyncManager() != KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+               boolean modelCounter = hypotheses.init_W_SyncManager() != null && hypotheses.init_W_SyncManager() != KnockbackThrowPlanner.Inner_SyncManager.NONE;
                Map<KnockbackThrowPlanner.Inner_StreamUtil, Boolean> robust = new IdentityHashMap<>();
 
                for (KnockbackThrowPlanner.Inner_StreamUtil c : throwsFound) {
                   boolean holds = !modelCounter;
                   if (modelCounter) {
-                     TerrainDropGrid.Inner_CachePool countered = grid.init_V_CachePool_AABB(
+                     TerrainDropGrid.Inner_CachePool countered = grid.simulateFlight(
                         input.init_AABB, init(unturned, c.init_F), input.init_Z, hypotheses.init_W_SyncManager()
                      );
                      holds = countered.init_Z() && countered.init(minimum, voidOnly);
@@ -184,7 +184,7 @@ final class KnockbackThrowPlanner {
                   KnockbackThrowPlanner.Inner_SyncManager strafe = init(unturned, pushed, hypotheses);
                   boolean holds = strafe == null ? robust.get(c) : false;
                   if (strafe != null) {
-                     TerrainDropGrid.Inner_CachePool strafed = grid.init_V_CachePool_AABB(input.init_AABB, pushed, input.init_Z, strafe);
+                     TerrainDropGrid.Inner_CachePool strafed = grid.simulateFlight(input.init_AABB, pushed, input.init_Z, strafe);
                      holds = strafed.init_Z() && strafed.init(minimum, voidOnly);
                   }
 
@@ -195,10 +195,10 @@ final class KnockbackThrowPlanner {
                   Comparator.<KnockbackThrowPlanner.Inner_StreamUtil, Boolean>comparing(c -> !strafeHolds.get(c))
                      .thenComparing(c -> !robust.get(c))
                      .thenComparing(c -> c.init_V_CachePool.read_Z())
-                     .thenComparing(c -> c.init_V_CachePool.init_W_TaskQueue() != KnockbackThrowPlanner.Inner_TaskQueue.VOID)
+                     .thenComparing(c -> c.init_V_CachePool.outcome() != KnockbackThrowPlanner.Inner_TaskQueue.VOID)
                      .thenComparingDouble(c -> c.init_D * 0.01 + c.init_V_CachePool.load_I() * 0.03)
                );
-               init_Str = throwsFound.isEmpty() ? "no-throw" : "unconfirmed";
+               lastStatus = throwsFound.isEmpty() ? "no-throw" : "unconfirmed";
                int confirmations = 0;
 
                label183:
@@ -222,11 +222,11 @@ final class KnockbackThrowPlanner {
                   if (world.load_Z_F(c.init_F)) {
                      KnockbackThrowPlanner.Inner_ConfigStore at = world.init_W_ConfigStore_W_ConfigStore_F(input, c.init_F);
                      if (init(at)) {
-                        TerrainDropGrid.Inner_CachePool actualFlight = grid.init_V_CachePool_AABB(
-                           at.init_AABB, init(at, c.init_F), at.init_Z, KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager
+                        TerrainDropGrid.Inner_CachePool actualFlight = grid.simulateFlight(
+                           at.init_AABB, init(at, c.init_F), at.init_Z, KnockbackThrowPlanner.Inner_SyncManager.NONE
                         );
                         if (actualFlight.init_Z() && actualFlight.init(minimum, voidOnly)) {
-                           KnockbackThrowPlanner.Inner_JsonUtil result = init(at, c.init_F, world, KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager);
+                           KnockbackThrowPlanner.Inner_JsonUtil result = init(at, c.init_F, world, KnockbackThrowPlanner.Inner_SyncManager.NONE);
                            confirmations++;
                            if (result.init(minimum, voidOnly)) {
                               boolean every = true;
@@ -234,7 +234,7 @@ final class KnockbackThrowPlanner {
                               for (Vec3 velocity : hypotheses.init_Vec3Arr()) {
                                  if (velocity != null) {
                                     confirmations++;
-                                    if (!init(at.load(velocity), c.init_F, world, KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager).init(minimum, voidOnly)) {
+                                    if (!init(at.load(velocity), c.init_F, world, KnockbackThrowPlanner.Inner_SyncManager.NONE).init(minimum, voidOnly)) {
                                        every = false;
                                        if (every) {
                                           boolean holds = !modelCounter;
@@ -243,8 +243,8 @@ final class KnockbackThrowPlanner {
                                              holds = init(at, c.init_F, world, hypotheses.init_W_SyncManager()).init(minimum, voidOnly);
                                           }
 
-                                          init_Str = "planned";
-                                          init_Z = strafeHolds.get(c);
+                                          lastStatus = "planned";
+                                          lastStrafe = strafeHolds.get(c);
                                           return new KnockbackThrowPlanner.Inner_NetHelper(c.init_F, result, original, false, holds, 0.0);
                                        }
                                        continue label183;
@@ -295,7 +295,7 @@ final class KnockbackThrowPlanner {
       return turns;
    }
 
-   static KnockbackThrowPlanner.Inner_DataUtil init_W_DataUtil_AABB(AABB body, Vec3 motion, boolean grounded, int ticks, KnockbackThrowPlanner.Inner_UiHelper world) {
+   static KnockbackThrowPlanner.Inner_DataUtil simulate(AABB body, Vec3 motion, boolean grounded, int ticks, KnockbackThrowPlanner.Inner_UiHelper world) {
       if (body != null && init(motion) && world != null) {
          double vx = motion.x;
          double vy = grounded ? 0.0 : motion.y;
@@ -350,19 +350,19 @@ final class KnockbackThrowPlanner {
    }
 
    static KnockbackThrowPlanner.Inner_JsonUtil init(KnockbackThrowPlanner.Inner_ConfigStore input, float yaw, KnockbackThrowPlanner.Inner_UiHelper world) {
-      return init(input, yaw, world, KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager);
+      return init(input, yaw, world, KnockbackThrowPlanner.Inner_SyncManager.NONE);
    }
 
    static KnockbackThrowPlanner.Inner_JsonUtil init(KnockbackThrowPlanner.Inner_ConfigStore input, float yaw, KnockbackThrowPlanner.Inner_UiHelper world, KnockbackThrowPlanner.Inner_SyncManager steer) {
       if (init(input) && Float.isFinite(yaw) && world != null) {
          if (steer == null) {
-            steer = KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+            steer = KnockbackThrowPlanner.Inner_SyncManager.NONE;
          }
 
          AABB body = input.init_AABB;
          Vec3 motion = init(input, yaw);
          boolean ground = input.init_Z;
-         boolean countering = steer != KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+         boolean countering = steer != KnockbackThrowPlanner.Inner_SyncManager.NONE;
          int tick = 1;
 
          while (tick <= 64) {
@@ -414,10 +414,10 @@ final class KnockbackThrowPlanner {
 
                if (!ground && motion.y < 0.0 && body.minY < input.read - 0.5) {
                   double speed = motion.horizontalDistance();
-                  double drift = speed / 0.09 + 0.05 + (steer == KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager ? 0 : 1);
+                  double drift = speed / 0.09 + 0.05 + (steer == KnockbackThrowPlanner.Inner_SyncManager.NONE ? 0 : 1);
                   Vec3 reach = speed > 1.0E-9 ? new Vec3(motion.x / speed * drift, 0.0, motion.z / speed * drift) : Vec3.ZERO;
                   AABB region = body.expandTowards(reach);
-                  if (steer != KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager) {
+                  if (steer != KnockbackThrowPlanner.Inner_SyncManager.NONE) {
                      region = region.inflate(1.0, 0.0, 1.0);
                   }
 
@@ -450,7 +450,7 @@ final class KnockbackThrowPlanner {
                      return new KnockbackThrowPlanner.Inner_JsonUtil(KnockbackThrowPlanner.Inner_TaskQueue.VOID, 1.0 / 0.0, tick);
                   }
 
-                  double drop = Math.max(0.0, input.read - floor.init_D);
+                  double drop = Math.max(0.0, input.read - floor.floorY);
                   return new KnockbackThrowPlanner.Inner_JsonUtil(drop > 1.0E-6 ? KnockbackThrowPlanner.Inner_TaskQueue.DROP : KnockbackThrowPlanner.Inner_TaskQueue.SAFE, drop, tick);
                }
 
@@ -516,14 +516,14 @@ final class KnockbackThrowPlanner {
    }
 
    record Inner_BufferHelper(KnockbackThrowPlanner.Inner_SyncManager init_W_SyncManager, Vec3[] init_Vec3Arr, double init_D) {
-      static final KnockbackThrowPlanner.Inner_BufferHelper init_W_BufferHelper = new KnockbackThrowPlanner.Inner_BufferHelper(KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager, new Vec3[0]);
+      static final KnockbackThrowPlanner.Inner_BufferHelper init_W_BufferHelper = new KnockbackThrowPlanner.Inner_BufferHelper(KnockbackThrowPlanner.Inner_SyncManager.NONE, new Vec3[0]);
 
       Inner_BufferHelper(KnockbackThrowPlanner.Inner_SyncManager counter, Vec3[] velocities) {
-         this(counter, velocities, counter != null && counter != KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager ? counter.read() / 0.98 : 0.0);
+         this(counter, velocities, counter != null && counter != KnockbackThrowPlanner.Inner_SyncManager.NONE ? counter.read() / 0.98 : 0.0);
       }
    }
 
-   record Inner_CachePool(double init_D, boolean init_Z, boolean load, boolean read, boolean write) {
+   record Inner_CachePool(double floorY, boolean init_Z, boolean load, boolean read, boolean write) {
       Inner_CachePool(double y, boolean voidColumn, boolean caught, boolean known) {
          this(y, voidColumn, caught, known, false);
       }
@@ -543,18 +543,18 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   record Inner_DataUtil(AABB init_AABB, boolean init_Z, Vec3 init_Vec3, int init_I) {
+   record Inner_DataUtil(AABB body, boolean init_Z, Vec3 motion, int ticks) {
    }
 
-   record Inner_JsonUtil(KnockbackThrowPlanner.Inner_TaskQueue init_W_TaskQueue, double init_D, int init_I) {
+   record Inner_JsonUtil(KnockbackThrowPlanner.Inner_TaskQueue outcome, double init_D, int init_I) {
       boolean init(double minimum, boolean voidOnly) {
-         return this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.VOID
+         return this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.VOID
             || !voidOnly
-               && (this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.LAVA || this.init_W_TaskQueue == KnockbackThrowPlanner.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
+               && (this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.LAVA || this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
       }
    }
 
-   record Inner_NetHelper(float init_F, KnockbackThrowPlanner.Inner_JsonUtil init_W_JsonUtil, KnockbackThrowPlanner.Inner_JsonUtil load_W_JsonUtil, boolean init_Z, boolean load_Z, double init_D) {
+   record Inner_NetHelper(float yaw, KnockbackThrowPlanner.Inner_JsonUtil init_W_JsonUtil, KnockbackThrowPlanner.Inner_JsonUtil load_W_JsonUtil, boolean steer, boolean robust, double init_D) {
       Inner_NetHelper(float yaw, KnockbackThrowPlanner.Inner_JsonUtil result, KnockbackThrowPlanner.Inner_JsonUtil original) {
          this(yaw, result, original, false, false, 0.0);
       }
@@ -567,7 +567,7 @@ final class KnockbackThrowPlanner {
    }
 
    record Inner_SyncManager(double init_D, double load, double read, double write, boolean init_Z) {
-      static final KnockbackThrowPlanner.Inner_SyncManager init_W_SyncManager = new KnockbackThrowPlanner.Inner_SyncManager(0.0, 0.0, 0.0, 0.0);
+      static final KnockbackThrowPlanner.Inner_SyncManager NONE = new KnockbackThrowPlanner.Inner_SyncManager(0.0, 0.0, 0.0, 0.0);
 
       Inner_SyncManager(double x, double z, double speed, double air) {
          this(x, z, speed, air, false);
@@ -582,7 +582,7 @@ final class KnockbackThrowPlanner {
             double a = Math.toRadians(yaw);
             return new KnockbackThrowPlanner.Inner_SyncManager(-Math.sin(a), Math.cos(a), Math.max(0.0, Math.min(1.0, speed)) * 0.98, Math.max(0.0, Math.min(0.2, air)) * 0.98);
          } else {
-            return init_W_SyncManager;
+            return NONE;
          }
       }
    }

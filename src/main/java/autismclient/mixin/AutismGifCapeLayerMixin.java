@@ -42,7 +42,7 @@ public abstract class AutismGifCapeLayerMixin {
    private void autism$gifCape(
       PoseStack poseStack, SubmitNodeCollector collector, int lightCoords, AvatarRenderState state, float yRot, float xRot, CallbackInfo ci
    ) {
-      if (GifOverlayState.init_Z()) {
+      if (GifOverlayState.isCapeActive()) {
          String name = autism$owner(state);
          if (name != null && !name.isEmpty()) {
             String path = GifOverlayState.init(name);

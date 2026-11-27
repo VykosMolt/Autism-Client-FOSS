@@ -30,7 +30,7 @@ public final class CrosshairPreviewRenderer {
          cA.init(graphics, box.read(), box.write(), box.init(), box.load());
 
          try {
-            CrosshairRenderer.init_V_GuiGraphicsExtract_2(
+            CrosshairRenderer.render(
                graphics,
                look,
                box.read() + half,

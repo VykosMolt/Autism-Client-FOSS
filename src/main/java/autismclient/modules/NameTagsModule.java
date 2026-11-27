@@ -68,12 +68,12 @@ public final class NameTagsModule extends Module {
 
    @Override
    public void onDisable() {
-      NameTagsRenderer.init_V();
+      NameTagsRenderer.reset();
    }
 
    @Override
    public void onGameLeft() {
-      NameTagsRenderer.init_V();
+      NameTagsRenderer.reset();
    }
 
    public enum Inner_DataUtil {

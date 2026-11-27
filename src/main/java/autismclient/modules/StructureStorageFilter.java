@@ -67,7 +67,7 @@ public final class StructureStorageFilter {
    private StructureStorageFilter() {
    }
 
-   public static long init_J_Module(Module module) {
+   public static long hideMask(Module module) {
       if (module == null) {
          return 0L;
       }
@@ -75,7 +75,7 @@ public final class StructureStorageFilter {
       long mask = 0L;
 
       for (int i = 0; i < init.size(); i++) {
-         if (module.value(init.get(i).init_Str()).equals("true")) {
+         if (module.value(init.get(i).id()).equals("true")) {
             mask |= 1L << i;
          }
       }
@@ -83,7 +83,7 @@ public final class StructureStorageFilter {
       return mask;
    }
 
-   public static boolean init_Z_LevelChunk(LevelChunk chunk, BlockPos pos, long mask, Map<Integer, Long> sectionCache) {
+   public static boolean isInHiddenStructure(LevelChunk chunk, BlockPos pos, long mask, Map<Integer, Long> sectionCache) {
       if (mask != 0L && chunk != null && pos != null) {
          int index = chunk.getSectionIndex(pos.getY());
          Long cached = sectionCache.get(index);
@@ -133,6 +133,6 @@ public final class StructureStorageFilter {
       return state != null && markers.contains(state.getBlock());
    }
 
-   public record Inner_DataUtil(String init_Str, String load, Set<Block> init_Set) {
+   public record Inner_DataUtil(String id, String load, Set<Block> init_Set) {
    }
 }

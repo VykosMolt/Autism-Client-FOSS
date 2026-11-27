@@ -14,8 +14,8 @@ import java.util.function.BooleanSupplier;
 
 final class ClickerSettingsGroup {
    static final String init_Str = "technique";
-   static final autismclient.util.clicker.ClickTechnique init_BufferHelper = autismclient.util.clicker.ClickTechnique.BUTTERFLY;
-   static final ValueRange init_ValueRange = new ValueRange(12.0, 14.5);
+   static final autismclient.util.clicker.ClickTechnique DEFAULT_TECHNIQUE = autismclient.util.clicker.ClickTechnique.BUTTERFLY;
+   static final ValueRange DEFAULT_CPS = new ValueRange(12.0, 14.5);
    private static final String load_Str = "Free Spin";
    private static final double init_D = 300.0;
    private final Module init_Module;
@@ -85,19 +85,19 @@ final class ClickerSettingsGroup {
       return new ValueRange(low, high);
    }
 
-   void init_V() {
+   void registerSections() {
       for (autismclient.util.clicker.ClickTechnique each : autismclient.util.clicker.ClickTechnique.values()) {
          this.init_Map.put(each, new ClickerSettingsGroup.Inner_DataUtil(each));
       }
    }
 
-   autismclient.util.clicker.ClickTechnique init_BufferHelper() {
+   autismclient.util.clicker.ClickTechnique technique() {
       return autismclient.util.clicker.ClickTechnique.init(this.init_ChoiceSetting.get());
    }
 
-   autismclient.util.clicker.ClickProfile init_CachePool() {
-      ClickerSettingsGroup.Inner_DataUtil section = this.init_Map.get(this.init_BufferHelper());
-      return section == null ? autismclient.util.clicker.ClickProfile.init_CachePool(this.init_BufferHelper()) : section.init_CachePool();
+   autismclient.util.clicker.ClickProfile profile() {
+      ClickerSettingsGroup.Inner_DataUtil section = this.init_Map.get(this.technique());
+      return section == null ? autismclient.util.clicker.ClickProfile.init_CachePool(this.technique()) : section.init_CachePool();
    }
 
    autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
@@ -180,7 +180,7 @@ final class ClickerSettingsGroup {
          this.init_Str = kind.init_Str + " Clicking";
          this.load_Str = key + "-cps";
          this.read_Str = key + "-interval";
-         this.init_BooleanSupplier = () -> ClickerSettingsGroup.this.init_BooleanSupplier.getAsBoolean() && ClickerSettingsGroup.this.init_BufferHelper() == kind;
+         this.init_BooleanSupplier = () -> ClickerSettingsGroup.this.init_BooleanSupplier.getAsBoolean() && ClickerSettingsGroup.this.technique() == kind;
          if (kind == autismclient.util.clicker.ClickTechnique.RAGE) {
             double rate = ClickerSettingsGroup.this.init_ValueRange_BufferHelper(kind).max();
             this.init_DoubleSetting = this.init(

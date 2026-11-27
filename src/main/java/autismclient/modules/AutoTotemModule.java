@@ -947,7 +947,7 @@ public final class AutoTotemModule extends Module {
       return age <= 0 && age > -2;
    }
 
-   public static Input init_Input_ClientInput_Input(ClientInput source, Input original) {
+   public static Input overrideInput(ClientInput source, Input original) {
       if (autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.totem)) {
          return original;
       } else if (original == null || MC == null || MC.player == null || MC.player.input != source) {

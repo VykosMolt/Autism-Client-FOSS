@@ -43,7 +43,7 @@ final class KnockbackCounterStrafe {
       return jump ? new Input(input.forward(), input.backward(), input.left(), input.right(), true, input.shift(), input.sprint()) : input;
    }
 
-   void init_V() {
+   void reset() {
       this.init_I = 0;
       this.init_Z = false;
       this.init_Vec3 = Vec3.ZERO;

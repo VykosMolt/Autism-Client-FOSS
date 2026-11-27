@@ -46,7 +46,7 @@ public class AutismMultiPlayerGameModeMixin {
             return;
          }
 
-         KBDisplacementModule.init_V_Player(player, target, () -> original.call(player, target));
+         KBDisplacementModule.wrapAttack(player, target, () -> original.call(player, target));
       } else {
          original.call(player, target);
       }
@@ -108,9 +108,9 @@ public class AutismMultiPlayerGameModeMixin {
    private void autism$observeVanillaUseItemOnResult(
       LocalPlayer player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir
    ) {
-      ScaffoldModule.init_V_InteractionHand(hand, hit, cir.getReturnValue());
+      ScaffoldModule.onUseItemOnResult(hand, hit, cir.getReturnValue());
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.init_V_InteractionHand_2(hand, hit, cir.getReturnValue());
+         ClutchModule.onUseItemOnResult(hand, hit, cir.getReturnValue());
       }
 
       if (hit != null && cir.getReturnValue() != null && cir.getReturnValue().consumesAction()) {

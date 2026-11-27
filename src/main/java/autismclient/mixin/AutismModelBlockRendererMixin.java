@@ -50,7 +50,7 @@ public class AutismModelBlockRendererMixin {
    ) {
       boolean xrayActive = am.read_Z();
       boolean darkenActive = am.write_Z();
-      if (xrayActive || GoldenLeverModule.init_Z_11() || darkenActive) {
+      if (xrayActive || GoldenLeverModule.isActive() || darkenActive) {
          int alpha = xrayActive ? am.init_I_BlockAndTintGetter(level, pos, state) : -1;
          if (alpha == 0) {
             PACKUTIL_XRAY_ALPHA.set(-1);
@@ -75,7 +75,7 @@ public class AutismModelBlockRendererMixin {
       BlockPos pos,
       CallbackInfo ci
    ) {
-      if (am.read_Z() || GoldenLeverModule.init_Z_11() || am.write_Z()) {
+      if (am.read_Z() || GoldenLeverModule.isActive() || am.write_Z()) {
          PACKUTIL_XRAY_ALPHA.set(-1);
          PACKUTIL_DARKEN_TINT.set(-1);
       }
@@ -86,7 +86,7 @@ public class AutismModelBlockRendererMixin {
       BlockQuadOutput output, float x, float y, float z, BlockAndTintGetter level, BlockState state, BlockPos pos, BakedQuad quad, CallbackInfo ci
    ) {
       boolean xray = am.read_Z();
-      boolean golden = GoldenLeverModule.init_Z_11();
+      boolean golden = GoldenLeverModule.isActive();
       boolean darken = am.write_Z();
       if (xray || golden || darken) {
          if (xray) {

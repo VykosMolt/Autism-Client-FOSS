@@ -290,7 +290,7 @@ final class VanishActivityDetector {
       this.init_DataUtil.init(pos, 0.0, at + 30000L);
    }
 
-   void init_V_J(long at) {
+   void expire(long at) {
       this.init_Map.values().removeIf(until -> until <= at);
       this.load_Map.values().removeIf(w -> w.init_J <= at);
 
@@ -520,7 +520,7 @@ final class VanishActivityDetector {
       return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
    }
 
-   List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> init_List_J(long at) {
+   List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> unexplained(long at) {
       return this.init_DataUtil.init_List_J(at);
    }
 

@@ -196,7 +196,7 @@ public final class ProjectileBallistics {
    static Vec3 init(float yaw, float pitch, ProjectileBallistics.Inner_DataUtil info) {
       float yr = yaw * 0.017453292F;
       float pr = pitch * 0.017453292F;
-      if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
+      if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
          Vec3 direction = new Vec3(-Mth.sin(yr), Mth.clamp(-Math.tan(pr), -5.0, 5.0), Mth.cos(yr));
          return direction.scale(0.6 / direction.length() + 0.5);
       } else {
@@ -207,7 +207,7 @@ public final class ProjectileBallistics {
    }
 
    static Vec3 init(float yaw, float pitch, ProjectileBallistics.Inner_BufferHelper shot) {
-      Vec3 velocity = init(yaw, pitch, shot.init_aX_DataUtil());
+      Vec3 velocity = init(yaw, pitch, shot.info());
       if (shot.init_F() == 0.0F) {
          return velocity;
       }
@@ -218,23 +218,23 @@ public final class ProjectileBallistics {
    }
 
    static Vec3 init(Entity owner, float yaw, ProjectileBallistics.Inner_DataUtil info) {
-      if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
+      if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
          double angle = yaw * 0.017453292F;
          return new Vec3(owner.getX() - Math.sin(angle) * 0.3, owner.getEyeY(), owner.getZ() + Math.cos(angle) * 0.3);
       } else {
-         double offset = info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.WIND
+         double offset = info.kind() == ProjectileBallistics.Inner_StreamUtil.WIND
             ? 0.0
-            : (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ROCKET ? 0.15000000596046448 : 0.10000000149011612);
+            : (info.kind() == ProjectileBallistics.Inner_StreamUtil.ROCKET ? 0.15000000596046448 : 0.10000000149011612);
          return new Vec3(owner.getX(), owner.getEyeY() - offset, owner.getZ());
       }
    }
 
    static Vec3 init(Vec3 velocity, ProjectileBallistics.Inner_DataUtil info, boolean water) {
       double drag = water ? info.update() : info.write();
-      if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.FIREBALL) {
+      if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FIREBALL) {
          return velocity.add(velocity.normalize().scale(0.1)).scale(drag);
       } else {
-         return info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ARROW
+         return info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW
             ? velocity.scale(drag).add(0.0, -info.init_D(), 0.0)
             : velocity.add(0.0, -info.init_D(), 0.0).scale(drag);
       }
@@ -247,11 +247,11 @@ public final class ProjectileBallistics {
    public static ProjectileBallistics.Inner_CachePool init(Level level, Entity owner, ProjectileBallistics.Inner_BufferHelper shot, float yaw, float pitch, Vec3 inherited) {
       if (level != null && owner != null) {
          Vec3 velocity = init(yaw, pitch, shot);
-         if (shot.init_aX_DataUtil().init_Z() && inherited != null) {
+         if (shot.info().init_Z() && inherited != null) {
             velocity = velocity.add(inherited);
          }
 
-         return init(init(level, owner, shot.init_aX_DataUtil()), init(owner, yaw, shot.init_aX_DataUtil()), velocity, shot.init_aX_DataUtil(), shot.init_I());
+         return init(init(level, owner, shot.info()), init(owner, yaw, shot.info()), velocity, shot.info(), shot.init_I());
       } else {
          return new ProjectileBallistics.Inner_CachePool(List.of(), null);
       }
@@ -266,18 +266,18 @@ public final class ProjectileBallistics {
          for (int tick = 0; tick < Math.min(240, maxTicks); tick++) {
             boolean water = world.load(pos);
             Vec3 collisionVelocity = velocity;
-            if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
+            if (info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
                if (water) {
                   velocity = velocity.scale(info.update());
                }
-            } else if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
+            } else if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
             } else {
                velocity = init(velocity, info, water);
                collisionVelocity = velocity;
             }
 
-            Vec3 next = pos.add(info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ARROW ? collisionVelocity : velocity);
+            Vec3 next = pos.add(info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW ? collisionVelocity : velocity);
             if (!init(next) || !world.init(next)) {
                break;
             }
@@ -290,13 +290,13 @@ public final class ProjectileBallistics {
 
             points.add(next);
             pos = next;
-            if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
+            if (info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
                if (!world.load(pos)) {
                   velocity = velocity.scale(info.write());
                }
 
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
-            } else if (info.init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
+            } else if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
                velocity = velocity.scale(info.write());
             }
          }
@@ -351,13 +351,13 @@ public final class ProjectileBallistics {
       return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
    }
 
-   public record Inner_BufferHelper(ProjectileBallistics.Inner_DataUtil init_aX_DataUtil, float init_F, int init_I) {
+   public record Inner_BufferHelper(ProjectileBallistics.Inner_DataUtil info, float init_F, int init_I) {
       public Inner_BufferHelper(ProjectileBallistics.Inner_DataUtil info, float offset) {
          this(info, offset, 240);
       }
    }
 
-   public record Inner_CachePool(List<Vec3> init_List, HitResult init_HitResult) {
+   public record Inner_CachePool(List<Vec3> points, HitResult hit) {
    }
 
    interface Inner_ConfigStore {
@@ -378,7 +378,7 @@ public final class ProjectileBallistics {
       boolean init_Z,
       boolean load_Z,
       boolean read_Z,
-      ProjectileBallistics.Inner_StreamUtil init_aX_StreamUtil
+      ProjectileBallistics.Inner_StreamUtil kind
    ) {
       public Inner_DataUtil(
          double gravity,
@@ -407,7 +407,7 @@ public final class ProjectileBallistics {
 
       ProjectileBallistics.Inner_DataUtil init(double velocity) {
          return new ProjectileBallistics.Inner_DataUtil(
-            this.init_D, this.load_D, velocity, this.write, this.update, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.init_aX_StreamUtil
+            this.init_D, this.load_D, velocity, this.write, this.update, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.kind
          );
       }
    }

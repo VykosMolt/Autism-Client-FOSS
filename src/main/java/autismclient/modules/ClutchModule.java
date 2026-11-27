@@ -348,7 +348,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.isReturningToPlayer();
    }
 
-   public static void init_V_ClientboundDamageE_3(ClientboundDamageEventPacket packet) {
+   public static void onDamageEvent(ClientboundDamageEventPacket packet) {
       ClutchModule clutch = init_j();
       if (clutch != null && clutch.isEnabled() && MC.player != null && MC.level != null && packet.entityId() == MC.player.getId()) {
          clutch.flush_V_9();
@@ -496,7 +496,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   public static void init_V_ClientboundExplode(ClientboundExplodePacket packet) {
+   public static void onExplosion(ClientboundExplodePacket packet) {
       ClutchModule clutch = init_j();
       if (clutch != null && clutch.isEnabled() && MC.player != null) {
          clutch.flush_V_9();
@@ -777,7 +777,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return false;
    }
 
-   public static void init_V_InteractionHand_2(InteractionHand hand, BlockHitResult hit, InteractionResult result) {
+   public static void onUseItemOnResult(InteractionHand hand, BlockHitResult hit, InteractionResult result) {
       ClutchModule clutch = init_j();
       if (clutch != null
          && hit != null
@@ -2723,7 +2723,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   public static Input init_Input_Input_3(Input input) {
+   public static Input overrideInput(Input input) {
       ClutchModule clutch = init_j();
       if (input != null && clutch != null && MC.player != null && MC.level != null) {
          Input result = init_Input_j_Input(clutch, input);
@@ -2776,7 +2776,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   public static void init_V_Packet_2(Packet<?> packet) {
+   public static void onMovePacket(Packet<?> packet) {
       if (packet instanceof ServerboundMovePlayerPacket move) {
          ClutchModule clutch = init_j();
          if (clutch != null && MC.player != null && (clutch.isEnabled() || clutch.init_Z)) {
@@ -2861,7 +2861,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
       if (bridge && end != null) {
          if (ours) {
-            float offset = ScaffoldModule.load_F_F_F(end.yaw(), MC.player.getYRot());
+            float offset = ScaffoldModule.yawWrapOffset(end.yaw(), MC.player.getYRot());
             if (offset != 0.0F && Float.isFinite(offset)) {
                MC.player.setYRot(MC.player.getYRot() + offset);
                MC.player.yRotO += offset;

@@ -39,8 +39,8 @@ public class OreSimCommand extends Command {
          AutismClientMessaging.sendPrefixed(
             "§7enabled: §f" + xray.isEnabled() + "§7  mode: §f" + xray.value("mode") + "§7  style: §f" + xray.value("render-style")
          );
-         Long seed = OreSimEspScanner.load_Long(xray);
-         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = OreSimEspScanner.init_BufferHelper_Strea(xray);
+         Long seed = OreSimEspScanner.seed(xray);
+         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = OreSimEspScanner.seedInfo(xray);
          AutismClientMessaging.sendPrefixed(
             "§7seed: "
                + (
@@ -55,7 +55,7 @@ public class OreSimCommand extends Command {
                + AutismWaypoints.init_Str_Minecraft(Minecraft.getInstance())
                + "§7; the same world/server scoping as waypoints. No world or server seed is read."
          );
-         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.load_I(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.read_I(xray)));
+         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.targetCount(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.read_I(xray)));
          String worldgen = autismclient.util.oresim.OreSimEngine.read_Z()
             ? "§cFAILED"
             : (
@@ -79,7 +79,7 @@ public class OreSimCommand extends Command {
          AutismClientMessaging.sendPrefixed(
             "§7generation source: §flocal vanilla registries + terrain + carvers + biome decoration§7; received server chunks are not inputs."
          );
-         AutismClientMessaging.sendPrefixed("§7nearby real ore: §f" + OreSimEspScanner.init_Str());
+         AutismClientMessaging.sendPrefixed("§7nearby real ore: §f" + OreSimEspScanner.debugCounters());
          AutismClientMessaging.sendPrefixed("§7matched = real ore within 5 blocks; touchingAir = of those, exposed; drawn = also in line of sight.");
       }
    }

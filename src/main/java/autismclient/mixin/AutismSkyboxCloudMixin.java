@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismSkyboxCloudMixin {
    @Inject(method = "render", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$skyboxNoClouds(CallbackInfo ci) {
-      if (CustomSkyboxRenderer.init_Z()) {
+      if (CustomSkyboxRenderer.isActive()) {
          ci.cancel();
       }
    }

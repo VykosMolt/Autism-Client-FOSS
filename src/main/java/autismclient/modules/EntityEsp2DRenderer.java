@@ -30,7 +30,7 @@ public final class EntityEsp2DRenderer {
    private EntityEsp2DRenderer() {
    }
 
-   public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context) {
+   public static void render(GuiGraphicsExtractor context) {
       if (!aD.init_Z()
          && (AutismLiteVariant.enabled() || autismclient.e.ListPool.init())
          && init_Minecraft != null

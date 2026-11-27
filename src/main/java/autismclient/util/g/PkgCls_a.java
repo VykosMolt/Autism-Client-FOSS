@@ -1112,7 +1112,7 @@ public final class PkgCls_a {
    private static boolean load(PkgCls_a.Inner_ConfigStore job, PkgCls_a.Inner_TaskQueue frame) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.getConnection() != null && mc.player != null) {
-         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.load_Z_12();
+         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.hasNoFall();
          boolean previousOwnedSend = write();
 
          try {

@@ -311,27 +311,27 @@ public final class ar {
                      boolean storageEnabled = storage != null && storage.isEnabled();
                      boolean blockEnabled = blockEsp != null && blockEsp.isEnabled();
                      boolean spawnerEnabled = spawnerEsp != null && spawnerEsp.isEnabled();
-                     FrameEspCatalog.Inner_CachePool frameEsp = FrameEspCatalog.init_ah_CachePool();
+                     FrameEspCatalog.Inner_CachePool frameEsp = FrameEspCatalog.snapshot();
                      boolean frameEnabled = FrameEspCatalog.init(frameEsp);
                      boolean xrayBoxes = OreSimEspScanner.read_Z(xray);
                      boolean xrayGhosts = OreSimEspScanner.write_Z(xray);
                      boolean waypointsEnabled = waypoints != null && waypoints.isEnabled();
                      Module trajectories = read_Module();
                      boolean trajectoriesEnabled = trajectories != null && trajectories.isEnabled();
-                     BlockPos airTarget = airPlace != null && airPlace.isEnabled() ? airPlace.init_BlockPos_3() : null;
+                     BlockPos airTarget = airPlace != null && airPlace.isEnabled() ? airPlace.target() : null;
                      boolean airGuide = airTarget != null;
                      GhostBlockModule ghostBlock = init_J();
                      List<AABB> ghostBoxes = List.of();
                      if (ghostBlock != null) {
-                        List<AABB> boxes = ghostBlock.init_List_4();
-                        if (!boxes.isEmpty() && ghostBlock.load_Z_5()) {
+                        List<AABB> boxes = ghostBlock.highlightBoxes();
+                        if (!boxes.isEmpty() && ghostBlock.highlight()) {
                            ghostBoxes = boxes;
                         }
                      }
 
                      TpClickModule tpClick = init_aR();
-                     AABB tpClickBox = tpClick != null && tpClick.isEnabled() ? tpClick.init_AABB_2() : null;
-                     int tpClickColor = tpClickBox != null ? tpClick.init_I_19() : 0;
+                     AABB tpClickBox = tpClick != null && tpClick.isEnabled() ? tpClick.targetBox() : null;
+                     int tpClickColor = tpClickBox != null ? tpClick.targetColor() : 0;
                      if (!AutismLiteVariant.enabled()) {
                         autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil destination = autismclient.ai.aP.init_j_StreamUtil();
                         if (destination != null) {
@@ -344,9 +344,9 @@ public final class ar {
                      List<ar.Inner_NetHelper> waypointBoxes = waypointFrame.init_List();
                      List<EspHighlightBox> auraPreviewBoxes = List.of();
                      if (!AutismLiteVariant.enabled()) {
-                        List<EspHighlightBox> a1 = CrystalAuraModule.init_List_18();
-                        List<EspHighlightBox> a2 = AnchorAuraModule.init_List();
-                        List<EspHighlightBox> a3 = BacktrackModule.init_List_9();
+                        List<EspHighlightBox> a1 = CrystalAuraModule.highlightBoxes();
+                        List<EspHighlightBox> a2 = AnchorAuraModule.highlightBoxes();
+                        List<EspHighlightBox> a3 = BacktrackModule.highlightBoxes();
                         if (!a1.isEmpty() || !a2.isEmpty() || !a3.isEmpty()) {
                            auraPreviewBoxes = new ArrayList<>(a1.size() + a2.size() + a3.size());
                            auraPreviewBoxes.addAll(a1);
@@ -388,7 +388,7 @@ public final class ar {
                         boolean frameTrace = frameEnabled && frameEsp.sync();
                         boolean xrayFill = xrayBoxes && cache;
                         boolean xrayWire = xrayBoxes;
-                        boolean airFill = airGuide && airPlace.init_Z_18();
+                        boolean airFill = airGuide && airPlace.fill();
                         if (drawTracers
                            || storageFill
                            || storageWire
@@ -434,7 +434,7 @@ public final class ar {
                            ar.Inner_CachePool xrayNearFrame = xrayBoxes ? write(xray, mc.level, mc.player) : ar.Inner_CachePool.init_ar_CachePool();
                            tick_I = xrayGhosts ? init_I_Module(xray, mc.level, mc.player, camera) : 0;
                            AABB airBox = airGuide ? new AABB(airTarget).inflate(0.002) : null;
-                           int airColor = airGuide ? airPlace.init_I_11() : 0;
+                           int airColor = airGuide ? airPlace.guideColor() : 0;
                            init_ArrayList.clear();
                            List<ar.Inner_ConfigStore> tracerLines = init_ArrayList;
                            if (drawTracers) {
@@ -501,14 +501,14 @@ public final class ar {
                            load_AABB = tpClickBox;
                            sync_I = tpClickColor;
                            sync_Z = !ghostBoxes.isEmpty();
-                           update_Z = sync_Z && ghostBlock.read_Z_4();
+                           update_Z = sync_Z && ghostBlock.highlightFill();
                            write_List = ghostBoxes;
-                           update_I = sync_Z ? ghostBlock.read_I_3() : 0;
+                           update_I = sync_Z ? ghostBlock.highlightColor() : 0;
                            update_List = auraPreviewBoxes;
                            write_Vec3 = camera;
 
                            try {
-                              TrajectoriesModule.init_V_F_2(tickDelta);
+                              TrajectoriesModule.computePaths(tickDelta);
                            } catch (Throwable error) {
                               init_V_List(List.of());
                               AutismClientAddon.LOG.debug("Trajectory collect failed", error);
@@ -567,7 +567,7 @@ public final class ar {
       if (!update_List.isEmpty()) {
          return true;
       } else {
-         return !AutismLiteVariant.enabled() && TrajectoryStateCache.init_aV_DataUtil() != null
+         return !AutismLiteVariant.enabled() && TrajectoryStateCache.rememberedPearl() != null
             ? true
             : open_Z
                || poll_Z
@@ -740,13 +740,13 @@ public final class ar {
          }
 
          for (EspHighlightBox preview : auraPreviewBoxes) {
-            if (preview.init_AABB() != null) {
-               load(pose, buffer, preview.init_AABB().move(-cam.x, -cam.y, -cam.z), preview.init_I());
+            if (preview.box() != null) {
+               load(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.init_I());
             }
          }
       }
 
-      if (!AutismLiteVariant.enabled() && (!trajectories.isEmpty() || TrajectoryStateCache.init_aV_DataUtil() != null)) {
+      if (!AutismLiteVariant.enabled() && (!trajectories.isEmpty() || TrajectoryStateCache.rememberedPearl() != null)) {
          TrajectoryWorldRenderer.init(matrices, bufferSource, cam, trajectories);
       }
 
@@ -795,8 +795,8 @@ public final class ar {
          }
 
          for (EspHighlightBox preview : auraPreviewBoxes) {
-            if (preview.init_AABB() != null) {
-               init(pose, buffer, preview.init_AABB().move(-cam.x, -cam.y, -cam.z), preview.load_I(), preview.init_F());
+            if (preview.box() != null) {
+               init(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.load_I(), preview.init_F());
             } else if (preview.init_Vec3() != null && preview.load_Vec3() != null) {
                Vec3 from = preview.init_Vec3().subtract(cam);
                Vec3 to = preview.load_Vec3().subtract(cam);
@@ -1257,7 +1257,7 @@ public final class ar {
 
    private static ar.Inner_CachePool init_ar_CachePool_Module(Module module, ClientLevel level, Player player, float tickDelta) {
       if (module != null && level != null && player != null) {
-         long scanKey = EspChunkWorker.init_I();
+         long scanKey = EspChunkWorker.revision();
          int revision = al.init_I();
          int chunkX = player.chunkPosition().x();
          int chunkZ = player.chunkPosition().z();
@@ -1314,7 +1314,7 @@ public final class ar {
 
    private static ar.Inner_CachePool init(Module module, ClientLevel level, Player player) {
       if (module != null && level != null && player != null) {
-         long scanKey = EspChunkWorker.init_I();
+         long scanKey = EspChunkWorker.revision();
          int revision = al.init_I();
          int chunkX = player.chunkPosition().x();
          int chunkZ = player.chunkPosition().z();
@@ -1346,7 +1346,7 @@ public final class ar {
 
    private static ar.Inner_CachePool load(Module module, ClientLevel level, Player player) {
       if (module != null && level != null && player != null) {
-         long scanKey = EspChunkWorker.init_I();
+         long scanKey = EspChunkWorker.revision();
          int revision = al.init_I();
          int chunkX = player.chunkPosition().x();
          int chunkZ = player.chunkPosition().z();
@@ -1606,7 +1606,7 @@ public final class ar {
 
    private static ar.Inner_CachePool update(Module module, ClientLevel level, Player player) {
       if (module != null && level != null && player != null) {
-         long scanKey = EspChunkWorker.init_I();
+         long scanKey = EspChunkWorker.revision();
          int revision = al.init_I();
          int chunkX = player.chunkPosition().x();
          int chunkZ = player.chunkPosition().z();
@@ -1890,7 +1890,7 @@ public final class ar {
       long read_J
    ) {
       private static long write_J = 1L;
-      private static final AtomicReference<EspVoxelMeshBuilder.Inner_CachePool> EMPTY_MESH = new AtomicReference<>(EspVoxelMeshBuilder.init_ag_CachePool(List.of()));
+      private static final AtomicReference<EspVoxelMeshBuilder.Inner_CachePool> EMPTY_MESH = new AtomicReference<>(EspVoxelMeshBuilder.build(List.of()));
       private static final ar.Inner_CachePool init_ar_CachePool = new ar.Inner_CachePool(
          -9223372036854775808L, -1, -2147483648, -2147483648, 0L, List.of(), List.of(), false, List.of(), List.of(), EMPTY_MESH, -9223372036854775808L
       );
@@ -1942,12 +1942,12 @@ public final class ar {
          if (same) {
             geometryRef = previous.init_ag_CachePool();
          } else if (frozenSource.size() <= 48) {
-            geometryRef = new AtomicReference<>(EspVoxelMeshBuilder.init_ag_CachePool(frozenSource));
+            geometryRef = new AtomicReference<>(EspVoxelMeshBuilder.build(frozenSource));
          } else {
             geometryRef = new AtomicReference<>(null);
             EspChunkWorker.submitEspWork(() -> {
                try {
-                  geometryRef.set(EspVoxelMeshBuilder.init_ag_CachePool(frozenSource));
+                  geometryRef.set(EspVoxelMeshBuilder.build(frozenSource));
                } catch (Throwable var3x) {
                }
             });
@@ -1959,18 +1959,18 @@ public final class ar {
       }
 
       private static int init(EspVoxelMeshBuilder.Inner_DataUtil left, EspVoxelMeshBuilder.Inner_DataUtil right) {
-         int compared = Integer.compare(left.init_I(), right.init_I());
+         int compared = Integer.compare(left.color(), right.color());
          if (compared != 0) {
             return compared;
          }
 
-         compared = Double.compare(left.init_AABB().minX, right.init_AABB().minX);
+         compared = Double.compare(left.box().minX, right.box().minX);
          if (compared != 0) {
             return compared;
          }
 
-         compared = Double.compare(left.init_AABB().minY, right.init_AABB().minY);
-         return compared != 0 ? compared : Double.compare(left.init_AABB().minZ, right.init_AABB().minZ);
+         compared = Double.compare(left.box().minY, right.box().minY);
+         return compared != 0 ? compared : Double.compare(left.box().minZ, right.box().minZ);
       }
 
       private boolean init(long scanKey, int revision, int chunkX, int chunkZ, long gameTime) {
@@ -2006,7 +2006,7 @@ public final class ar {
                ar.load(pose, buffer, target.init_AABB().move(-camera.x, -camera.y, -camera.z), ar.init_I_I_F(target.init_I(), opacity));
             }
          } else {
-            for (EspVoxelMeshBuilder.Inner_ConfigStore face : geometry.init_List()) {
+            for (EspVoxelMeshBuilder.Inner_ConfigStore face : geometry.faces()) {
                ar.init(
                   pose,
                   buffer,
@@ -2022,7 +2022,7 @@ public final class ar {
                   face.poll() - camera.x,
                   face.push() - camera.y,
                   face.pop() - camera.z,
-                  ar.init_I_I_F(face.init_I(), opacity)
+                  ar.init_I_I_F(face.color(), opacity)
                );
             }
 
@@ -2049,7 +2049,7 @@ public final class ar {
                   edge.write() - camera.x,
                   edge.update() - camera.y,
                   edge.sync() - camera.z,
-                  edge.init_I(),
+                  edge.color(),
                   width
                );
             }

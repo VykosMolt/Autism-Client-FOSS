@@ -39,7 +39,7 @@ public final class CustomSkyboxRenderer {
    private CustomSkyboxRenderer() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       if (aD.init_Z()) {
          return false;
       }

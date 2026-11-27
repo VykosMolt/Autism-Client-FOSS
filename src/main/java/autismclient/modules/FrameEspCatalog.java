@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 public final class FrameEspCatalog {
    public static final String init_Str = "frame-esp";
    private static final int load_I = 1024;
-   public static final List<FrameEspCatalog.Inner_StreamUtil> init_List = List.of(
+   public static final List<FrameEspCatalog.Inner_StreamUtil> TARGETS = List.of(
       new FrameEspCatalog.Inner_StreamUtil("minecraft:elytra", "Elytra", -865100801),
       new FrameEspCatalog.Inner_StreamUtil("minecraft:totem_of_undying", "Totem of Undying", -855649729),
       new FrameEspCatalog.Inner_StreamUtil("minecraft:enchanted_golden_apple", "Enchanted Golden Apple", -855679797),
@@ -31,8 +31,8 @@ public final class FrameEspCatalog {
       new FrameEspCatalog.Inner_StreamUtil("minecraft:nether_star", "Nether Star", -856493326),
       new FrameEspCatalog.Inner_StreamUtil("minecraft:shulker_box", "Shulker Box", -860656641)
    );
-   public static final String load_Str;
-   public static final int init_I = -859848769;
+   public static final String DEFAULT_IDS;
+   public static final int DEFAULT_COLOR = -859848769;
    private static final Map<String, FrameEspCatalog.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
    private static volatile String read;
    private static volatile List<String> load_List = List.of();
@@ -64,18 +64,18 @@ public final class FrameEspCatalog {
       return load_List;
    }
 
-   public static boolean init_Z(Module module, String itemId) {
+   public static boolean isSelected(Module module, String itemId) {
       return itemId != null && init(module).contains(itemId.toLowerCase(Locale.ROOT));
    }
 
-   public static boolean init_Z(String itemId) {
+   public static boolean isKnown(String itemId) {
       return itemId != null && init_Map.containsKey(itemId.toLowerCase(Locale.ROOT));
    }
 
-   public static int init_I(String itemId) {
+   public static int defaultColor(String itemId) {
       FrameEspCatalog.Inner_StreamUtil target = itemId == null ? null : init_Map.get(itemId.toLowerCase(Locale.ROOT));
       if (target != null) {
-         return target.init_I();
+         return target.defaultColor();
       }
 
       Item item = init_Item(itemId);
@@ -85,7 +85,7 @@ public final class FrameEspCatalog {
    public static int init_I(Module module, String itemId) {
       String key = "color-" + itemId;
       String stored = module == null ? "" : module.value(key);
-      int fallback = init_I(itemId);
+      int fallback = defaultColor(itemId);
       return stored != null && !stored.isBlank() ? am.init_I_Module(module, key, fallback) : fallback;
    }
 
@@ -98,7 +98,7 @@ public final class FrameEspCatalog {
       }
    }
 
-   static FrameEspCatalog.Inner_CachePool init_ah_CachePool() {
+   static FrameEspCatalog.Inner_CachePool snapshot() {
       FrameEspCatalog.Inner_CachePool current = init_ah_CachePool;
       int revision = al.init_I();
       boolean hidden = am.init_Z();
@@ -168,13 +168,13 @@ public final class FrameEspCatalog {
    }
 
    public static boolean init_Z() {
-      FrameEspCatalog.Inner_CachePool current = init_ah_CachePool();
+      FrameEspCatalog.Inner_CachePool current = snapshot();
       return current.load_Z() && current.read();
    }
 
-   public static int init_I(Entity entity) {
+   public static int outlineColor(Entity entity) {
       if (entity instanceof ItemFrame frame) {
-         FrameEspCatalog.Inner_CachePool current = init_ah_CachePool();
+         FrameEspCatalog.Inner_CachePool current = snapshot();
          if (!current.load_Z() || !current.read()) {
             return 0;
          }
@@ -190,8 +190,8 @@ public final class FrameEspCatalog {
       }
    }
 
-   public static boolean init_Z(Entity entity) {
-      return init_I(entity) != 0;
+   public static boolean hasOutline(Entity entity) {
+      return outlineColor(entity) != 0;
    }
 
    static boolean init(FrameEspCatalog.Inner_CachePool current) {
@@ -242,16 +242,16 @@ public final class FrameEspCatalog {
    static {
       StringBuilder def = new StringBuilder();
 
-      for (FrameEspCatalog.Inner_StreamUtil target : init_List) {
-         init_Map.put(target.init_Str(), target);
+      for (FrameEspCatalog.Inner_StreamUtil target : TARGETS) {
+         init_Map.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
          }
 
-         def.append(target.init_Str());
+         def.append(target.id());
       }
 
-      load_Str = def.toString();
+      DEFAULT_IDS = def.toString();
       init_ah_CachePool = FrameEspCatalog.Inner_CachePool.init(-2147483648, false);
    }
 
@@ -273,6 +273,6 @@ public final class FrameEspCatalog {
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, String load, int init_I) {
+   public record Inner_StreamUtil(String id, String load, int defaultColor) {
    }
 }

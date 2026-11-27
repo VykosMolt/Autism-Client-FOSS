@@ -139,7 +139,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.update_J++;
       this.sync_J += nanos;
       this.flush = Math.max(this.flush, nanos);
-      this.init_Str = plan == null ? "none" : (plan.init_Z() ? "steer" : (plan.load_Z() ? "throw-robust" : "throw"));
+      this.init_Str = plan == null ? "none" : (plan.steer() ? "steer" : (plan.robust() ? "throw-robust" : "throw"));
    }
 
    public static String init_Str_7() {
@@ -174,7 +174,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
    }
 
-   static WTapController init_bf() {
+   static WTapController wTapController() {
       return al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.isEnabled() && m.bool("w-tap") ? m.init_bf : null;
    }
 
@@ -207,7 +207,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       );
    }
 
-   public static void init_V_Player(Player player, Entity entity, Runnable attack) {
+   public static void wrapAttack(Player player, Entity entity, Runnable attack) {
       if (al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.isEnabled() && !m.init_Z && player == MC.player && entity instanceof LivingEntity target) {
          Runnable plain = () -> {
             attack.run();
@@ -216,7 +216,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          ClientLevel level = MC.level;
          if (level != null && m.init_Z_LivingEntity_2(target)) {
             int tick = AutismSessionState.getInstance().getClientTick();
-            if (m.init_T.init_Z()) {
+            if (m.init_T.hasQueued()) {
                Runnable receipt = autismclient.util.CombatAttackDispatcher.init_Runnable(target);
                if (!m.init_T.init(target, attack, receipt)) {
                   m.init_V_Z_5(false);
@@ -291,14 +291,14 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                         }
 
                         if (plan == null) {
-                           m.init_V_Str_2("plan:" + KnockbackThrowPlanner.init_Str);
+                           m.init_V_Str_2("plan:" + KnockbackThrowPlanner.lastStatus);
                            plain.run();
                         } else {
                            double reach = autismclient.util.AttackReachHelper.init_D(MC.player) - 0.06;
-                           Vec3 nextEye = terrain.init_Vec3_F(plan.init_F()).add(0.0, MC.player.getEyeHeight(), 0.0);
+                           Vec3 nextEye = terrain.init_Vec3_F(plan.yaw()).add(0.0, MC.player.getEyeHeight(), 0.0);
                            float inputYaw = SilentMovementCoordinator.getMovementYaw(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
-                              && autismclient.util.SilentRotationManager.snapKbDisplacementRotation(new RotationMath.Rotation(plan.init_F(), terrain.init_F))) {
+                              && autismclient.util.SilentRotationManager.snapKbDisplacementRotation(new RotationMath.Rotation(plan.yaw(), terrain.init_F))) {
                               m.init_V_Str_2("redirect");
                               m.load_ClientLevel = level;
                               m.init_ClientPacketListen = MC.getConnection();
@@ -307,17 +307,17 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                               m.read_I = tick;
                               m.init_Item = MC.player.getMainHandItem().getItem();
                               m.init_F = inputYaw;
-                              m.load_F = plan.init_F();
+                              m.load_F = plan.yaw();
                               m.read_F = terrain.init_F;
                               m.init_LivingEntity = target;
-                              m.load_Z = plan.init_Z();
-                              m.read_Z = !terrain.read(plan.init_F());
+                              m.load_Z = plan.steer();
+                              m.read_Z = !terrain.read(plan.yaw());
                               m.update_F = yaw;
                               m.sync_F = pitch;
-                              m.write_F = Mth.wrapDegrees(plan.init_F() - yaw);
-                              m.read_Str = plan.init_W_JsonUtil().init_W_TaskQueue()
-                                 + (plan.load_Z() ? " robust" : "")
-                                 + (KnockbackThrowPlanner.init_Z ? " strafe" : "")
+                              m.write_F = Mth.wrapDegrees(plan.yaw() - yaw);
+                              m.read_Str = plan.init_W_JsonUtil().outcome()
+                                 + (plan.robust() ? " robust" : "")
+                                 + (KnockbackThrowPlanner.lastStrafe ? " strafe" : "")
                                  + " ticks="
                                  + plan.init_W_JsonUtil().init_I()
                                  + " lead="
@@ -382,11 +382,11 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       int age = Math.max(0, Math.min(4, tick - track.init_I()));
       int toServer = Math.max(0, Math.min(12, roundTrip + 1 + age));
       int toClient = Math.max(0, Math.min(12 - toServer, Math.round(init_I_LivingEntity(target) / 50.0F)));
-      KnockbackThrowPlanner.Inner_DataUtil atServer = KnockbackThrowPlanner.init_W_DataUtil_AABB(body, motion, grounded, toServer, terrain);
-      KnockbackThrowPlanner.Inner_DataUtil atClient = KnockbackThrowPlanner.init_W_DataUtil_AABB(atServer.init_AABB(), atServer.init_Vec3(), atServer.init_Z(), toClient, terrain);
-      Vec3 shift = atClient.init_AABB().getCenter().subtract(atServer.init_AABB().getCenter());
-      this.init_Vec3 = atClient.init_AABB().getCenter().subtract(body.getCenter());
-      return new KBDisplacementModule.Inner_StreamUtil(atClient.init_AABB(), atServer.init_Z(), grounded ? atServer.init_I() : toServer, new Vec3(shift.x, 0.0, shift.z));
+      KnockbackThrowPlanner.Inner_DataUtil atServer = KnockbackThrowPlanner.simulate(body, motion, grounded, toServer, terrain);
+      KnockbackThrowPlanner.Inner_DataUtil atClient = KnockbackThrowPlanner.simulate(atServer.body(), atServer.motion(), atServer.init_Z(), toClient, terrain);
+      Vec3 shift = atClient.body().getCenter().subtract(atServer.body().getCenter());
+      this.init_Vec3 = atClient.body().getCenter().subtract(body.getCenter());
+      return new KBDisplacementModule.Inner_StreamUtil(atClient.body(), atServer.init_Z(), grounded ? atServer.ticks() : toServer, new Vec3(shift.x, 0.0, shift.z));
    }
 
    private static int init_I_LivingEntity(LivingEntity target) {
@@ -426,7 +426,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          alternatives = new Vec3[]{new Vec3(server.x, Math.max(-3.0, Math.min(3.0, seen.y)), server.z), new Vec3(server.x, -0.0784, server.z)};
       }
 
-      KnockbackThrowPlanner.Inner_SyncManager counter = KnockbackThrowPlanner.Inner_SyncManager.init_W_SyncManager;
+      KnockbackThrowPlanner.Inner_SyncManager counter = KnockbackThrowPlanner.Inner_SyncManager.NONE;
       double strafe = 0.0;
       if (target instanceof Player) {
          double speed = target.getAttributeValue(Attributes.MOVEMENT_SPEED);
@@ -483,7 +483,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    public static boolean init_Z_24() {
-      return read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.init_T.init_Z();
+      return read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.init_T.hasQueued();
    }
 
    public static boolean init_Z_Player(Player player, InteractionHand hand, Runnable swing) {
@@ -492,14 +492,14 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          && player == m.init_Player
          && MC.level == m.load_ClientLevel
          && hand == InteractionHand.MAIN_HAND
-         && m.init_T.init_Z_Runnable(swing);
+         && m.init_T.enqueue(swing);
    }
 
    public static float init_F_F_2(float camera) {
-      return al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.init_T.init_Z() ? m.init_F : camera;
+      return al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && m.init_T.hasQueued() ? m.init_F : camera;
    }
 
-   public static void init_V_21() {
+   public static void afterSendPosition() {
       if (al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m) {
          m.write_I = AutismSessionState.getInstance().getClientTick();
       }
@@ -507,8 +507,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    @Override
    public void preMovementTick() {
-      if (WTappingModule.init_bf_2() == this.init_bf) {
-         this.init_bf.init_V();
+      if (WTappingModule.wTapController() == this.init_bf) {
+         this.init_bf.tick();
       } else {
          this.init_bf.load_V();
       }
@@ -518,11 +518,11 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          autismclient.util.SilentRotationManager.resetAll();
       } else {
          int tick = AutismSessionState.getInstance().getClientTick();
-         if (this.init_T.init_Z() && tick != this.read_I) {
+         if (this.init_T.hasQueued() && tick != this.read_I) {
             this.init_V_Z_5(tick == this.read_I + 1 && this.write_I == this.read_I);
          }
 
-         if (!this.init_T.init_Z() && this.update_I != tick) {
+         if (!this.init_T.hasQueued() && this.update_I != tick) {
             if (read_Z_11() && !autismclient.util.SilentRotationManager.isReturningToPlayer()) {
                autismclient.util.SilentRotationManager.releaseOwner(this.id());
             }
@@ -532,8 +532,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
    }
 
-   public static void load_V_17() {
-      if (read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && !m.init_T.init_Z()) {
+   public static void onTickHead() {
+      if (read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && !m.init_T.hasQueued()) {
          autismclient.util.SilentRotationManager.tick(m.id(), MC.player);
       }
    }
@@ -551,7 +551,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       float yaw = wireYaw;
       float pitch = wirePitch;
       this.init_Z = true;
-      int queued = this.init_T.init_I();
+      int queued = this.init_T.size();
 
       try {
          boolean flank = this.read_Z;
@@ -609,7 +609,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    @Override
    public boolean load_Z_23() {
-      return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.init_Z() || this.update_I == AutismSessionState.getInstance().getClientTick() || autismclient.util.SilentRotationManager.isReturningToPlayer());
+      return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.hasQueued() || this.update_I == AutismSessionState.getInstance().getClientTick() || autismclient.util.SilentRotationManager.isReturningToPlayer());
    }
 
    private boolean sync_Z_5() {
@@ -630,7 +630,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.load_Z = false;
    }
 
-   public static void init_V_ClientboundDamageE_2(ClientboundDamageEventPacket packet) {
+   public static void onDamageEvent(ClientboundDamageEventPacket packet) {
       if (al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m
          && m.isEnabled()
          && MC.level != null
@@ -644,7 +644,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player));
    }
 
-   public static Input init_Input_Input(Input input, float camera, float yaw) {
+   public static Input fixInput(Input input, float camera, float yaw) {
       if (al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m
          && m.isEnabled()
          && MC.player != null
@@ -779,7 +779,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          || target.hasEffect(MobEffects.LEVITATION)
          || target.hasEffect(MobEffects.SLOW_FALLING)
          || MC.player.getMainHandItem().has(DataComponents.PIERCING_WEAPON)
-         || TeamsModule.init_Z_Entity_5(target)
+         || TeamsModule.isFriend(target)
          || AntiBotTracker.isBot(target)) {
          return false;
       }
@@ -806,7 +806,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       int level = EnchantmentHelper.getItemEnchantmentLevel(
          MC.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.KNOCKBACK), MC.player.getMainHandItem()
       );
-      return KnockbackThrowPlanner.init_D_D(
+      return KnockbackThrowPlanner.knockbackStrength(
          MC.player.getAttributeValue(Attributes.ATTACK_KNOCKBACK),
          level,
          SprintStateTracker.init_Z(MC.player.isSprinting()),
@@ -833,7 +833,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private void sync_V_5() {
-      this.init_T.init_V();
+      this.init_T.clear();
       this.write_V_11();
       this.init_ArrayDeque.clear();
       this.init_U.init();
@@ -1306,8 +1306,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
       double load_D_AABB(AABB body) {
          KnockbackThrowPlanner.Inner_CachePool below = this.init_W_CachePool_AABB(body);
-         return below.read() && !below.init_Z() && !below.load() && !below.write() && below.init_D() >= body.minY - 3.0 && below.init_D() <= body.minY + 1.0E-6
-            ? below.init_D()
+         return below.read() && !below.init_Z() && !below.load() && !below.write() && below.floorY() >= body.minY - 3.0 && below.floorY() <= body.minY + 1.0E-6
+            ? below.floorY()
             : body.minY;
       }
 

@@ -27,7 +27,7 @@ public final class AirJumpModule extends Module {
       return "JumpFreely".equals(this.choice("mode")) || "DoubleJump".equals(this.choice("mode")) && this.init_Z;
    }
 
-   public static boolean init_Z_4() {
+   public static boolean canAirJump() {
       return al.init_Module_Str("air-jump") instanceof AirJumpModule airJump && airJump.isEnabled() && airJump.read();
    }
 

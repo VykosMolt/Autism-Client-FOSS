@@ -18,7 +18,7 @@ final class QueuedAttackBuffer {
       return true;
    }
 
-   boolean init_Z_Runnable(Runnable swing) {
+   boolean enqueue(Runnable swing) {
       QueuedAttackBuffer.Inner_DataUtil last = this.init.peekLast();
       if (last != null && last.read == null) {
          this.init.removeLast();
@@ -29,11 +29,11 @@ final class QueuedAttackBuffer {
       }
    }
 
-   boolean init_Z() {
+   boolean hasQueued() {
       return !this.init.isEmpty();
    }
 
-   int init_I() {
+   int size() {
       return this.init.size();
    }
 
@@ -62,7 +62,7 @@ final class QueuedAttackBuffer {
       return count;
    }
 
-   void init_V() {
+   void clear() {
       this.init.clear();
    }
 

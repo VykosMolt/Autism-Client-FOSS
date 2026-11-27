@@ -51,7 +51,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class StorageEspCatalog {
-   public static final List<StorageEspCatalog.Inner_BufferHelper> init_List = List.of(
+   public static final List<StorageEspCatalog.Inner_BufferHelper> TARGETS = List.of(
       init("minecraft:chest", "Chest", () -> Blocks.CHEST.asItem().getDefaultInstance(), ChestBlockEntity.class),
       init("minecraft:trapped_chest", "Trapped Chest", () -> Blocks.TRAPPED_CHEST.asItem().getDefaultInstance(), TrappedChestBlockEntity.class),
       init("minecraft:ender_chest", "Ender Chest", () -> Blocks.ENDER_CHEST.asItem().getDefaultInstance(), EnderChestBlockEntity.class),
@@ -79,10 +79,10 @@ public final class StorageEspCatalog {
       load("minecraft:chest_boat", "Chest Boat", () -> Items.OAK_CHEST_BOAT.getDefaultInstance(), AbstractChestBoat.class)
    );
    private static final Map<String, StorageEspCatalog.Inner_BufferHelper> init_Map;
-   public static final String init_Str;
+   public static final String DEFAULT_IDS;
    private static volatile StorageEspCatalog.Inner_ConfigStore init_ap_ConfigStore = new StorageEspCatalog.Inner_ConfigStore("", List.of(), List.of());
 
-   public static StorageEspCatalog.Inner_BufferHelper init_ap_BufferHelper(String id) {
+   public static StorageEspCatalog.Inner_BufferHelper byId(String id) {
       return id == null ? null : init_Map.get(id.toLowerCase(Locale.ROOT));
    }
 
@@ -126,8 +126,8 @@ public final class StorageEspCatalog {
             int playerChunkX = player.chunkPosition().x();
             int playerChunkZ = player.chunkPosition().z();
             if (!blockTargets.isEmpty()) {
-               EspChunkWorker.init_V_Obj(level);
-               long hideMask = StructureStorageFilter.init_J_Module(module);
+               EspChunkWorker.setLevel(level);
+               long hideMask = StructureStorageFilter.hideMask(module);
                String stamp = module.value("storage-list") + "|" + colors + "|" + hideMask;
                long gameTime = level.getGameTime();
                ClientChunkCache chunks = level.getChunkSource();
@@ -138,14 +138,14 @@ public final class StorageEspCatalog {
                      if (chunk != null) {
                         for (EspChunkWorker.EspBox entry : EspChunkWorker.write
                            .init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, blockTargets, colors, hideMask, out))) {
-                           Vec3 trace = entry.init_Vec3();
+                           Vec3 trace = entry.tracer();
                            if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                               if (boxEmit != null) {
-                                 boxEmit.accept(entry.init_AABB(), entry.init_I(), true);
+                                 boxEmit.accept(entry.box(), entry.color(), true);
                               }
 
                               if (traceEmit != null) {
-                                 traceEmit.accept(trace, entry.init_I());
+                                 traceEmit.accept(trace, entry.color());
                               }
                            }
                         }
@@ -184,7 +184,7 @@ public final class StorageEspCatalog {
       for (Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
          BlockPos pos = entry.getKey();
          BlockEntity be = entry.getValue();
-         if (pos != null && be != null && init(be, blockTargets) != null && !StructureStorageFilter.init_Z_LevelChunk(chunk, pos, hideMask, sectionStructures)) {
+         if (pos != null && be != null && init(be, blockTargets) != null && !StructureStorageFilter.isInHiddenStructure(chunk, pos, hideMask, sectionStructures)) {
             out.add(new EspChunkWorker.EspBox(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init(colors, be)));
          }
       }
@@ -317,7 +317,7 @@ public final class StorageEspCatalog {
       for (String raw : safe.split("\\|")) {
          String token = raw.trim();
          if (!token.isEmpty()) {
-            StorageEspCatalog.Inner_BufferHelper target = init_ap_BufferHelper(token);
+            StorageEspCatalog.Inner_BufferHelper target = byId(token);
             if (target != null) {
                if (target.init_Z()) {
                   blockTargets.add(target);
@@ -356,22 +356,22 @@ public final class StorageEspCatalog {
       Map<String, StorageEspCatalog.Inner_BufferHelper> map = new LinkedHashMap<>();
       StringBuilder def = new StringBuilder();
 
-      for (StorageEspCatalog.Inner_BufferHelper target : init_List) {
-         map.put(target.init_Str, target);
+      for (StorageEspCatalog.Inner_BufferHelper target : TARGETS) {
+         map.put(target.id, target);
          if (def.length() > 0) {
             def.append('|');
          }
 
-         def.append(target.init_Str);
+         def.append(target.id);
       }
 
       init_Map = Map.copyOf(map);
-      init_Str = def.toString();
+      DEFAULT_IDS = def.toString();
    }
 
    public static final class Inner_BufferHelper {
-      public final String init_Str;
-      public final String load_Str;
+      public final String id;
+      public final String label;
       public final String read;
       private final Supplier<ItemStack> init_Supplier;
       private final boolean init_Z;
@@ -381,8 +381,8 @@ public final class StorageEspCatalog {
       private Inner_BufferHelper(
          String id, String label, String group, Supplier<ItemStack> iconSupplier, Class<? extends BlockEntity> beClass, Class<? extends Entity> entityClass
       ) {
-         this.init_Str = id;
-         this.load_Str = label;
+         this.id = id;
+         this.label = label;
          this.read = group;
          this.init_Supplier = iconSupplier;
          this.init_Z = beClass != null;
@@ -390,7 +390,7 @@ public final class StorageEspCatalog {
          this.load_Class = entityClass;
       }
 
-      public ItemStack init_ItemStack() {
+      public ItemStack icon() {
          try {
             ItemStack stack = this.init_Supplier.get();
             return stack == null ? ItemStack.EMPTY : stack;

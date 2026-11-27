@@ -56,7 +56,7 @@ public abstract class AutismCameraMixin {
             && mc.gui.screen() == null
             && !mc.player.isPassenger()
             && !FreecamController.isActive()
-            && FreeLookModule.init_I_4() == null) {
+            && FreeLookModule.active() == null) {
             rotation = AiCameraTurn.putAt(mc.player);
          } else {
             AiCameraTurn.putAt(null);
@@ -104,7 +104,7 @@ public abstract class AutismCameraMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;alignWithEntity(F)V", shift = Shift.AFTER)
    )
    private void autism$freeLookCamera(DeltaTracker deltaTracker, CallbackInfo ci) {
-      FreeLookModule freeLook = FreeLookModule.init_I_4();
+      FreeLookModule freeLook = FreeLookModule.active();
       if (freeLook != null && !FreecamController.isActive()) {
          float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(true);
          this.detached = true;

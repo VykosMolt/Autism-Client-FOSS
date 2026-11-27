@@ -28,10 +28,10 @@ final class BedCoverPathSolver {
    private static final int[] init_IArr = new int[]{0, 1, -1};
 
    static BedCoverPathSolver.Inner_NetHelper init_RefQueue_NetHelper_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach) {
-      return init_RefQueue_NetHelper_RefQueue_ConfigSto(g, observer, reach, init_RefQueue_CachePool(g));
+      return plan(g, observer, reach, minimalCover(g));
    }
 
-   static BedCoverPathSolver.Inner_NetHelper init_RefQueue_NetHelper_RefQueue_ConfigSto(
+   static BedCoverPathSolver.Inner_NetHelper plan(
       BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach, BedCoverPathSolver.Inner_CachePool cover
    ) {
       double[] distance = new double[g.write];
@@ -51,7 +51,7 @@ final class BedCoverPathSolver {
       } else {
          for (int i = 0; i < g.write; i++) {
             if (g.init(i, false) && (g.init_I(i) == 0 || g.init_I(i) == g.init_I - 1 || g.read_I(i) == 0 || g.read_I(i) == g.read - 1)) {
-               double d = g.init_BlockPos(i).distToCenterSqr(observer);
+               double d = g.posAt(i).distToCenterSqr(observer);
                if (d < nearest) {
                   nearest = d;
                   seed = i;
@@ -68,7 +68,7 @@ final class BedCoverPathSolver {
       List<Vec3> targets = new ArrayList<>();
 
       for (int bed : g.init_List) {
-         targets.addAll(init(g.init_BlockPos(bed)));
+         targets.addAll(init(g.posAt(bed)));
       }
 
       double best = 1.0 / 0.0;
@@ -80,7 +80,7 @@ final class BedCoverPathSolver {
          Inner_DataUtil visit = queue.remove();
          int i = visit.init_I;
          if (visit.init_D == distance[i] && !(visit.init_D >= best)) {
-            BlockPos feet = g.init_BlockPos(i);
+            BlockPos feet = g.posAt(i);
 
             for (double height : init_DArr) {
                Vec3 eye = new Vec3(feet.getX() + 0.5, feet.getY() + height, feet.getZ() + 0.5);
@@ -105,7 +105,7 @@ final class BedCoverPathSolver {
                                  for (int block : remaining) {
                                     if (!proof.init_BitSet.get(block)) {
                                        proof.init_BitSet.set(block);
-                                       proof.init_LinkedHashSet.add(g.init_BlockPos(block));
+                                       proof.init_LinkedHashSet.add(g.posAt(block));
                                     }
                                  }
 
@@ -155,13 +155,13 @@ final class BedCoverPathSolver {
       }
 
       if (winner == null) {
-         return new BedCoverPathSolver.Inner_NetHelper(cover.init_Set, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
+         return new BedCoverPathSolver.Inner_NetHelper(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
       }
 
       double ticks = winner.init_LinkedHashSet.stream().mapToDouble(p -> g.init_RefQueue_StreamUti(g.init(p)).init_D).sum()
          + Math.max(0, winner.init_LinkedHashSet.size() - 1) * 5;
       return new BedCoverPathSolver.Inner_NetHelper(
-         cover.init_Set, List.copyOf(winner.init_LinkedHashSet), List.copyOf(winner.init_List), ticks, true, cover.init_I, winnerEye, winnerAim
+         cover.cells, List.copyOf(winner.init_LinkedHashSet), List.copyOf(winner.init_List), ticks, true, cover.init_I, winnerEye, winnerAim
       );
    }
 
@@ -224,7 +224,7 @@ final class BedCoverPathSolver {
                }
 
                proof.init_BitSet.set(selected);
-               proof.init_LinkedHashSet.add(g.init_BlockPos(selected));
+               proof.init_LinkedHashSet.add(g.posAt(selected));
                pending.remove(Integer.valueOf(selected));
             }
          }
@@ -233,15 +233,15 @@ final class BedCoverPathSolver {
             return null;
          }
 
-         proof.init_List.add(g.init_BlockPos(ix));
+         proof.init_List.add(g.posAt(ix));
       }
 
       return proof;
    }
 
    private static boolean init_Z_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, int stance, int block, double reach, BitSet removed) {
-      BlockPos feet = g.init_BlockPos(stance);
-      BlockPos target = g.init_BlockPos(block);
+      BlockPos feet = g.posAt(stance);
+      BlockPos target = g.posAt(block);
 
       for (double height : init_DArr) {
          Vec3 eye = new Vec3(feet.getX() + 0.5, feet.getY() + height, feet.getZ() + 0.5);
@@ -361,10 +361,10 @@ final class BedCoverPathSolver {
    }
 
    static Set<BlockPos> init_Set(BedCoverPathSolver.Inner_ConfigStore g) {
-      return init_RefQueue_CachePool(g).init_Set;
+      return minimalCover(g).cells;
    }
 
-   static BedCoverPathSolver.Inner_CachePool init_RefQueue_CachePool(BedCoverPathSolver.Inner_ConfigStore g) {
+   static BedCoverPathSolver.Inner_CachePool minimalCover(BedCoverPathSolver.Inner_ConfigStore g) {
       BitSet removed = new BitSet(g.write);
       Set<BlockPos> result = new LinkedHashSet<>();
       int layers = 0;
@@ -406,7 +406,7 @@ final class BedCoverPathSolver {
          for (int i = 0; i < g.write; i++) {
             if (g.init_RefQueue_StreamUti(i).init_I == 2 && reachable[i * 2] && !reachable[i * 2 + 1] && !removed.get(i)) {
                removed.set(i);
-               result.add(g.init_BlockPos(i));
+               result.add(g.posAt(i));
                added++;
             }
          }
@@ -536,7 +536,7 @@ final class BedCoverPathSolver {
       }
    }
 
-   record Inner_CachePool(Set<BlockPos> init_Set, int init_I) {
+   record Inner_CachePool(Set<BlockPos> cells, int init_I) {
    }
 
    static final class Inner_ConfigStore {
@@ -545,7 +545,7 @@ final class BedCoverPathSolver {
       final int load;
       final int read;
       final int write;
-      final BedCoverPathSolver.Inner_StreamUtil[] init_RefQueue_StreamUtiArr;
+      final BedCoverPathSolver.Inner_StreamUtil[] nodes;
       final List<Integer> init_List = new ArrayList<>();
 
       Inner_ConfigStore(BlockPos origin, int sx, int sy, int sz) {
@@ -554,8 +554,8 @@ final class BedCoverPathSolver {
          this.load = sy;
          this.read = sz;
          this.write = sx * sy * sz;
-         this.init_RefQueue_StreamUtiArr = new BedCoverPathSolver.Inner_StreamUtil[this.write];
-         Arrays.fill(this.init_RefQueue_StreamUtiArr, BedCoverPathSolver.init_RefQueue_StreamUti);
+         this.nodes = new BedCoverPathSolver.Inner_StreamUtil[this.write];
+         Arrays.fill(this.nodes, BedCoverPathSolver.init_RefQueue_StreamUti);
       }
 
       int init(int x, int y, int z) {
@@ -578,7 +578,7 @@ final class BedCoverPathSolver {
          return i / this.init_I % this.read;
       }
 
-      BlockPos init_BlockPos(int i) {
+      BlockPos posAt(int i) {
          return this.init_BlockPos.offset(this.init_I(i), this.load_I(i), this.read_I(i));
       }
 
@@ -596,15 +596,15 @@ final class BedCoverPathSolver {
       }
 
       BedCoverPathSolver.Inner_StreamUtil init_RefQueue_StreamUti(int i) {
-         return i < 0 ? BedCoverPathSolver.init_RefQueue_StreamUti : this.init_RefQueue_StreamUtiArr[i];
+         return i < 0 ? BedCoverPathSolver.init_RefQueue_StreamUti : this.nodes[i];
       }
 
       boolean load_Z(int i) {
-         return i >= 0 && (this.init_RefQueue_StreamUtiArr[i].init_I == 0 || this.init_RefQueue_StreamUtiArr[i].init_I == 3);
+         return i >= 0 && (this.nodes[i].init_I == 0 || this.nodes[i].init_I == 3);
       }
 
       boolean read_Z(int i) {
-         return i >= 0 && this.init_RefQueue_StreamUtiArr[i].init_I != 1 && Double.isFinite(this.init_RefQueue_StreamUtiArr[i].init_D);
+         return i >= 0 && this.nodes[i].init_I != 1 && Double.isFinite(this.nodes[i].init_D);
       }
 
       boolean init(int i, boolean dig) {
@@ -621,10 +621,10 @@ final class BedCoverPathSolver {
    }
 
    record Inner_NetHelper(
-      Set<BlockPos> init_Set, List<BlockPos> init_List, List<BlockPos> load_List, double init_D, boolean init_Z, int init_I, Vec3 init_Vec3, Vec3 load_Vec3
+      Set<BlockPos> init_Set, List<BlockPos> path, List<BlockPos> load_List, double init_D, boolean init_Z, int init_I, Vec3 init_Vec3, Vec3 load_Vec3
    ) {
       boolean init_Z_2() {
-         return this.init_Z && this.init_I > 1 && this.init_List.size() > 1;
+         return this.init_Z && this.init_I > 1 && this.path.size() > 1;
       }
 
       public boolean load_Z() {

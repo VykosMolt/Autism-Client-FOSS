@@ -29,7 +29,7 @@ public final class FriendCommand extends Command {
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.word())
                   .suggests(FriendCommand::init)
-                  .executes(ctx -> TeamsModule.init_Z_Str_2(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
+                  .executes(ctx -> TeamsModule.addFriend(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
             )
       );
       root.then(
@@ -37,14 +37,14 @@ public final class FriendCommand extends Command {
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.word())
                   .suggests(FriendCommand::load)
-                  .executes(ctx -> TeamsModule.load_Z_Str(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
+                  .executes(ctx -> TeamsModule.removeFriend(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
             )
       );
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("clear").executes(ctx -> TeamsModule.init_Z_28() ? 1 : 0));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("clear").executes(ctx -> TeamsModule.clearFriends() ? 1 : 0));
    }
 
    private static int init() {
-      List<String> friends = TeamsModule.init_List_11();
+      List<String> friends = TeamsModule.friends();
       if (friends.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§7Friend list is empty.");
          return 1;
@@ -70,7 +70,7 @@ public final class FriendCommand extends Command {
    private static CompletableFuture<Suggestions> load(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (String name : TeamsModule.init_List_11()) {
+      for (String name : TeamsModule.friends()) {
          if (name != null && name.toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(name);
          }

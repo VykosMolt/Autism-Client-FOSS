@@ -53,7 +53,7 @@ final class WTapController {
          && target.level() == init_Minecraft.level
          && !target.isSpectator()
          && (!this.init_bf_DataUtil.init_Z() || target instanceof Player)
-         && !TeamsModule.init_Z_Entity_5(target)
+         && !TeamsModule.isFriend(target)
          && !AntiBotTracker.isBot(target)) {
          long now = System.nanoTime();
          int chance = this.init_bf_DataUtil.init_I();
@@ -71,8 +71,8 @@ final class WTapController {
       }
    }
 
-   void init_V_ClientboundDamageE(ClientboundDamageEventPacket packet) {
-      if (this.init_be.init_Z() && packet.entityId() == this.init_I && this.read_Z()) {
+   void onDamageEvent(ClientboundDamageEventPacket packet) {
+      if (this.init_be.isActive() && packet.entityId() == this.init_I && this.read_Z()) {
          Entity target = init_Minecraft.level.getEntity(this.init_I);
          if (target != null && target.getUUID().equals(this.init_UUID) && packet.getSource(init_Minecraft.level).getEntity() == init_Minecraft.player) {
             this.init_be.init_Z(System.nanoTime());
@@ -80,8 +80,8 @@ final class WTapController {
       }
    }
 
-   Input init_Input_Input(Input original) {
-      if (!this.init_be.init_Z()) {
+   Input filterInput(Input original) {
+      if (!this.init_be.isActive()) {
          return original;
       }
 
@@ -93,7 +93,7 @@ final class WTapController {
          && !original.shift()
          && this.write_Z();
       boolean release = this.init_be.init(System.nanoTime(), init_I(), valid);
-      if (!this.init_be.init_Z()) {
+      if (!this.init_be.isActive()) {
          this.write_V();
       }
 
@@ -118,16 +118,16 @@ final class WTapController {
       return footing.ticks(camera - side) < full && footing.ticks(camera - whole) >= full;
    }
 
-   boolean init_Z() {
-      return this.init_be.load_Z() && this.read_Z() && this.update();
+   boolean isTapping() {
+      return this.init_be.isReleasing() && this.read_Z() && this.update();
    }
 
    boolean load_Z() {
-      this.init_V();
-      return this.init_be.init_Z();
+      this.tick();
+      return this.init_be.isActive();
    }
 
-   void init_V() {
+   void tick() {
       if (!this.init_be.load(System.nanoTime())) {
          this.write_V();
       } else if (this.read_Z()
@@ -142,31 +142,31 @@ final class WTapController {
             target instanceof LivingEntity living
                && living.isAlive()
                && target.getUUID().equals(this.init_UUID)
-               && !TeamsModule.init_Z_Entity_5(living)
+               && !TeamsModule.isFriend(living)
                && !AntiBotTracker.isBot(living)
          )) {
-            this.init_be.init_V();
+            this.init_be.reset();
             this.write_V();
          }
       } else {
-         this.init_be.init_V();
+         this.init_be.reset();
          this.write_V();
       }
    }
 
    void load_V() {
-      if (this.init_be.init_Z()) {
-         this.init_be.init_V();
+      if (this.init_be.isActive()) {
+         this.init_be.reset();
          this.write_V();
       }
    }
 
-   long init_J() {
+   long tapCount() {
       return this.init_be.init_J();
    }
 
    void read_V() {
-      this.init_be.load_V();
+      this.init_be.resetAll();
       this.write_V();
    }
 

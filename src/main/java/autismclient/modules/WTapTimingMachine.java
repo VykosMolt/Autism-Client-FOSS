@@ -46,14 +46,14 @@ final class WTapTimingMachine {
 
    boolean init(long now, int tick, boolean eligible) {
       if (!eligible) {
-         this.init_V();
+         this.reset();
          return false;
       }
 
       this.init_V(now);
       if (this.init_be_DataUtil == WTapTimingMachine.Inner_DataUtil.DELAY && now >= this.write) {
          if (now - this.write > 250000000L) {
-            this.init_V();
+            this.reset();
             return false;
          }
 
@@ -67,7 +67,7 @@ final class WTapTimingMachine {
       if (this.init_be_DataUtil != WTapTimingMachine.Inner_DataUtil.RELEASE) {
          return false;
       } else if (tick != this.init_I && (now >= this.sync || tick - this.init_I >= this.load_I)) {
-         this.init_V();
+         this.reset();
          this.read_I = tick;
          return false;
       } else {
@@ -77,20 +77,20 @@ final class WTapTimingMachine {
 
    private void init_V(long now) {
       if (this.init_be_DataUtil == WTapTimingMachine.Inner_DataUtil.HIT && now > this.read_J) {
-         this.init_V();
+         this.reset();
       }
    }
 
-   boolean init_Z() {
+   boolean isActive() {
       return this.init_be_DataUtil != WTapTimingMachine.Inner_DataUtil.IDLE;
    }
 
    boolean load(long now) {
       this.init_V(now);
-      return this.init_Z();
+      return this.isActive();
    }
 
-   boolean load_Z() {
+   boolean isReleasing() {
       return this.init_be_DataUtil == WTapTimingMachine.Inner_DataUtil.RELEASE;
    }
 
@@ -98,13 +98,13 @@ final class WTapTimingMachine {
       return this.close;
    }
 
-   void init_V() {
+   void reset() {
       this.init_be_DataUtil = WTapTimingMachine.Inner_DataUtil.IDLE;
       this.read_J = this.write = this.update = this.sync = 0L;
    }
 
-   void load_V() {
-      this.init_V();
+   void resetAll() {
+      this.reset();
       this.read_I = -2147483648;
       this.close = 0L;
    }

@@ -54,8 +54,8 @@ public final class WTappingModule extends Module {
       this.add(new BoolSetting("ground-only", "Ground Only", false).description("Only tap while standing on the ground."));
    }
 
-   static WTapController init_bf_2() {
-      WTapController built = KBDisplacementModule.init_bf();
+   static WTapController wTapController() {
+      WTapController built = KBDisplacementModule.wTapController();
       if (al.init_Module_Str("w-tapping") instanceof WTappingModule m && m.isEnabled()) {
          if (built != null) {
             built.load_V();
@@ -68,37 +68,37 @@ public final class WTappingModule extends Module {
    }
 
    public static void init(Player attacker, Entity entity) {
-      WTapController tapper = init_bf_2();
+      WTapController tapper = wTapController();
       if (tapper != null) {
          tapper.init(attacker, entity);
       }
    }
 
    public static void init(ClientboundDamageEventPacket packet) {
-      WTapController tapper = init_bf_2();
+      WTapController tapper = wTapController();
       if (tapper != null) {
-         tapper.init_V_ClientboundDamageE(packet);
+         tapper.onDamageEvent(packet);
       }
    }
 
    public static Input init(Input original) {
-      WTapController tapper = init_bf_2();
-      return tapper == null ? original : tapper.init_Input_Input(original);
+      WTapController tapper = wTapController();
+      return tapper == null ? original : tapper.filterInput(original);
    }
 
-   public static boolean init_Z_36() {
-      WTapController tapper = init_bf_2();
-      return tapper != null && tapper.init_Z();
+   public static boolean isTapping() {
+      WTapController tapper = wTapController();
+      return tapper != null && tapper.isTapping();
    }
 
    public static boolean load() {
-      WTapController tapper = init_bf_2();
+      WTapController tapper = wTapController();
       return tapper != null && tapper.load_Z();
    }
 
    @Override
    public void preMovementTick() {
-      this.init.init_V();
+      this.init.tick();
    }
 
    @Override
@@ -123,6 +123,6 @@ public final class WTappingModule extends Module {
 
    @Override
    public String info() {
-      return this.init.init_J() == 0L ? "Ready" : this.init.init_J() + " taps";
+      return this.init.tapCount() == 0L ? "Ready" : this.init.tapCount() + " taps";
    }
 }

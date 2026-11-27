@@ -130,19 +130,19 @@ final class TriggerBotModule extends Module {
             .visibleWhen(() -> this.bool("respect-cooldown"))
             .build()
       );
-      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.init_BufferHelper, () -> true, ClickerSettingsGroup.init_ValueRange);
+      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.DEFAULT_TECHNIQUE, () -> true, ClickerSettingsGroup.DEFAULT_CPS);
       this.add(
          new RangeSetting("legacy-reaction", "Reaction", init_ValueRange, 0.0, 400.0, 5.0)
             .unit("ms")
             .group("1.8 Combat")
             .description("Delay on a new target")
-            .visibleWhen(() -> this.init_h.init_BufferHelper().init_Z())
+            .visibleWhen(() -> this.init_h.technique().init_Z())
             .build()
       );
       this.add(
          new RangeSetting("pre-reach", "Pre-Reach", update_ValueRange, 0.0, 1.5, 0.05).group("1.8 Combat").description("Swing before reach, blocks").build()
       );
-      this.init_h.init_V();
+      this.init_h.registerSections();
    }
 
    @Override
@@ -179,7 +179,7 @@ final class TriggerBotModule extends Module {
       } else {
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
          boolean timed = !noCooldown && this.bool("respect-cooldown");
-         boolean rage = !timed && this.init_h.init_BufferHelper() == autismclient.util.clicker.ClickTechnique.RAGE;
+         boolean rage = !timed && this.init_h.technique() == autismclient.util.clicker.ClickTechnique.RAGE;
          boolean flinched = this.load_Z_15();
          boolean physical = this.init_StreamUtil.load_Z();
          if (physical && !this.load_Z && !timed) {
@@ -187,7 +187,7 @@ final class TriggerBotModule extends Module {
          }
 
          this.load_Z = physical;
-         autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
+         autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
          this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
          LivingEntity target = this.init(now, noCooldown, rage);
          boolean engaged = false;
@@ -272,7 +272,7 @@ final class TriggerBotModule extends Module {
          || ScaffoldModule.flush_Z_5()
          || f.load()
          || AutoTotemModule.init_Z_6()
-         || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
+         || !this.init_O.accepts(MC.player.getMainHandItem());
    }
 
    private LivingEntity init(long now, boolean noCooldown, boolean rage) {
@@ -425,7 +425,7 @@ final class TriggerBotModule extends Module {
 
    private static double init_D_10() {
       double ms = MC.level == null ? 50.0 : Math.max(50.0, MC.level.tickRateManager().millisecondsPerTick());
-      return ms / Math.max(0.05, MovementModuleHooks.init_F());
+      return ms / Math.max(0.05, MovementModuleHooks.speedTimerMultiplier());
    }
 
    private boolean load_Z_15() {

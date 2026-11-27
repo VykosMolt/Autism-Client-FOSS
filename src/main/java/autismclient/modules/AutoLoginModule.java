@@ -68,7 +68,7 @@ public final class AutoLoginModule extends Module {
 
    private final class Inner_DataUtil implements autismclient.util.autologin.AutoLoginBackend {
       @Override
-      public String init_Str() {
+      public String password() {
          String configured = AutoLoginModule.this.text("password");
          if (configured != null && !configured.isBlank()) {
             return configured;
@@ -86,7 +86,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public boolean init_Z() {
+      public boolean isConnected() {
          return Module.MC != null && Module.MC.getConnection() != null && Module.MC.player != null && Module.MC.level != null;
       }
 
@@ -96,7 +96,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public CustomMenuSnapshot init_CustomMenuSnapshot() {
+      public CustomMenuSnapshot currentMenu() {
          return autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
       }
 
@@ -126,7 +126,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public boolean init_Z(String line) {
+      public boolean sendCommand(String line) {
          if (!this.load()) {
             return false;
          }
@@ -141,7 +141,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public void init_V(String message) {
+      public void report(String message) {
          AutismClientMessaging.sendPrefixed("§c" + message);
       }
 

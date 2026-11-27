@@ -8,14 +8,14 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 public final class CrosshairPixelArt {
-   public static final int[] init_IArr = new int[]{8, 16, 32, 64};
+   public static final int[] SIZES = new int[]{8, 16, 32, 64};
    private static final String init_Str = "1";
    private final int init_I;
    private final int[] load_IArr;
    private final int load_I;
 
    public CrosshairPixelArt(int size, int[] pixels) {
-      this.init_I = init_Z(size) ? size : 16;
+      this.init_I = isValidSize(size) ? size : 16;
       int[] copy = new int[this.init_I * this.init_I];
       if (pixels != null) {
          System.arraycopy(pixels, 0, copy, 0, Math.min(pixels.length, copy.length));
@@ -25,8 +25,8 @@ public final class CrosshairPixelArt {
       this.load_I = 31 * this.init_I + Arrays.hashCode(copy);
    }
 
-   public static boolean init_Z(int size) {
-      for (int s : init_IArr) {
+   public static boolean isValidSize(int size) {
+      for (int s : SIZES) {
          if (s == size) {
             return true;
          }
@@ -39,7 +39,7 @@ public final class CrosshairPixelArt {
       return new CrosshairPixelArt(size, null);
    }
 
-   public int init_I() {
+   public int size() {
       return this.init_I;
    }
 
@@ -47,7 +47,7 @@ public final class CrosshairPixelArt {
       return x >= 0 && y >= 0 && x < this.init_I && y < this.init_I ? this.load_IArr[y * this.init_I + x] : 0;
    }
 
-   public int[] init_IArr() {
+   public int[] pixels() {
       return (int[])this.load_IArr.clone();
    }
 
@@ -62,7 +62,7 @@ public final class CrosshairPixelArt {
    }
 
    public CrosshairPixelArt load(int newSize) {
-      if (init_Z(newSize) && newSize != this.init_I) {
+      if (isValidSize(newSize) && newSize != this.init_I) {
          int[] out = new int[newSize * newSize];
 
          for (int y = 0; y < newSize; y++) {
@@ -80,7 +80,7 @@ public final class CrosshairPixelArt {
       }
    }
 
-   public String init_Str() {
+   public String encode() {
       byte[] raw = new byte[this.load_IArr.length * 4];
 
       for (int i = 0; i < this.load_IArr.length; i++) {
@@ -123,7 +123,7 @@ public final class CrosshairPixelArt {
             return null;
          }
 
-         if (!init_Z(size)) {
+         if (!isValidSize(size)) {
             return null;
          }
 

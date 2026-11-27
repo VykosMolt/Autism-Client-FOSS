@@ -46,7 +46,7 @@ public final class PearlGhostRenderer {
    }
 
    public static boolean init() {
-      DangerModule danger = DangerModule.init_z();
+      DangerModule danger = DangerModule.instance();
       return danger != null && danger.isEnabled() && !aD.init_Z() && danger.open_Z_6();
    }
 
@@ -54,18 +54,18 @@ public final class PearlGhostRenderer {
       if (init()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
-            DangerModule danger = DangerModule.init_z();
+            DangerModule danger = DangerModule.instance();
             Vec3 camera = WorldProjectionHelper.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             AutismBufferSource buffers = init_c_DataUtil.init();
             VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (IncomingProjectileScanner.Inner_BufferHelper warning : danger.read_List_2()) {
-               if (!warning.init_Entity().isRemoved()) {
-                  int color = danger.init_I_A_BufferHelper(warning);
-                  List<Vec3> points = warning.init_A_DataUtil().init_List();
-                  if (danger.init_Z_A_StreamUtil_Str(warning.init_A_StreamUtil(), "trajectory") && points.size() > 1) {
-                     Entity source = warning.init_Entity();
+               if (!warning.entity().isRemoved()) {
+                  int color = danger.warningColor(warning);
+                  List<Vec3> points = warning.init_A_DataUtil().points();
+                  if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && points.size() > 1) {
+                     Entity source = warning.entity();
                      Vec3 offset = new Vec3(
                         Mth.lerp(partial, source.xOld, source.getX()) - source.getX(),
                         Mth.lerp(partial, source.yOld, source.getY()) - source.getY(),
@@ -87,28 +87,28 @@ public final class PearlGhostRenderer {
                      }
                   }
 
-                  if (danger.init_Z_A_StreamUtil_Str(warning.init_A_StreamUtil(), "trajectory") && warning.init_A_DataUtil().init_Vec3() != null) {
-                     Vec3 at = warning.init_A_StreamUtil() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
+                  if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && warning.init_A_DataUtil().init_Vec3() != null) {
+                     Vec3 at = warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
                         ? warning.init_A_DataUtil().load()
                         : warning.init_A_DataUtil().init_Vec3();
-                     init(pose, lines, at.add(0.0, 0.025, 0.0), warning.init_A_StreamUtil() == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
+                     init(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
                   }
                }
             }
 
-            init(pose.last(), lines, danger.update_List(), camera);
-            if (!danger.update_List().isEmpty()) {
+            init(pose.last(), lines, danger.blastPredictions(), camera);
+            if (!danger.blastPredictions().isEmpty()) {
                VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
-               load(pose.last(), fill, danger.update_List(), camera);
+               load(pose.last(), fill, danger.blastPredictions(), camera);
             }
 
-            if (danger.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && danger.bool("pearl-ghost")) {
+            if (danger.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && danger.bool("pearl-ghost")) {
                ArrayList<IncomingProjectileScanner.Inner_BufferHelper> ghosts = new ArrayList<>(danger.write_List());
                ghosts.removeIf(
                   warningx -> warningx.init_A_DataUtil().load() == null
-                     || !(warningx.init_Player() instanceof AbstractClientPlayer)
-                     || !warningx.init_Player().isAlive()
-                     || warningx.init_Entity().isRemoved()
+                     || !(warningx.shooter() instanceof AbstractClientPlayer)
+                     || !warningx.shooter().isAlive()
+                     || warningx.entity().isRemoved()
                );
                ghosts.sort(Comparator.<IncomingProjectileScanner.Inner_BufferHelper>comparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(camera)).reversed());
 
@@ -129,7 +129,7 @@ public final class PearlGhostRenderer {
          mc,
          pose,
          buffers,
-         (AbstractClientPlayer)warning.init_Player(),
+         (AbstractClientPlayer)warning.shooter(),
          warning.init_A_DataUtil().load(),
          camera,
          partial,
@@ -141,7 +141,7 @@ public final class PearlGhostRenderer {
 
    static void init(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.Inner_DataUtil> blocks, Vec3 camera) {
       for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
-         AABB box = new AABB(block.init_BlockPos()).inflate(0.002).move(camera.scale(-1.0));
+         AABB box = new AABB(block.pos()).inflate(0.002).move(camera.scale(-1.0));
          int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
          WorldLineRenderer.init(pose, lines, box, 16729413 | alpha << 24, 1.5F);
       }
@@ -149,7 +149,7 @@ public final class PearlGhostRenderer {
 
    static void load(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.Inner_DataUtil> blocks, Vec3 camera) {
       for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
-         AABB box = new AABB(block.init_BlockPos()).inflate(0.001).move(camera.scale(-1.0));
+         AABB box = new AABB(block.pos()).inflate(0.001).move(camera.scale(-1.0));
          int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
          WorldLineRenderer.init(pose, fill, box, 16729413 | alpha << 24);
       }

@@ -4,23 +4,23 @@ import autismclient.api.custommenu.CustomMenuSnapshot;
 import autismclient.api.custommenu.CustomMenuSubmission;
 
 public interface AutoLoginBackend {
-   String init_Str();
+   String password();
 
-   boolean init_Z();
+   boolean isConnected();
 
    boolean load();
 
-   CustomMenuSnapshot init_CustomMenuSnapshot();
+   CustomMenuSnapshot currentMenu();
 
    boolean init(CustomMenuSnapshot var1, CustomMenuSubmission var2);
 
-   boolean init_Z(String var1);
+   boolean sendCommand(String var1);
 
    default boolean read() {
       return false;
    }
 
-   default void init_V(String message) {
+   default void report(String message) {
    }
 
    default void load(String context) {

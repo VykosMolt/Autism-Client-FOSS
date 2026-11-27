@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AutismEntityNameTagMixin {
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$suppressVanillaNameTag(Entity entity, EntityRenderState state, float partialTick, CallbackInfo ci) {
-      if (state != null && state.nameTag != null && NameTagsRenderer.init_Z(entity)) {
+      if (state != null && state.nameTag != null && NameTagsRenderer.overridesNameTag(entity)) {
          state.nameTag = null;
       }
    }

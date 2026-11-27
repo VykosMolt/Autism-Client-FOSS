@@ -109,7 +109,7 @@ public final class GhostBlockModule extends Module {
    @Override
    public void onDisable() {
       if (this.bool("clear-on-disable")) {
-         this.init_I_5();
+         this.clearAll();
       }
 
       this.load_V_6();
@@ -134,7 +134,7 @@ public final class GhostBlockModule extends Module {
 
    private void init_V_7() {
       if (this.isEnabled() && MC != null && MC.player != null && MC.gameMode != null) {
-         if (!this.init_Z_9()) {
+         if (!this.isCreativeMode()) {
             this.load_V_6();
          } else if (!this.load_Z || autismclient.util.FakeGamemodeManager.init_W_StreamUtil().load_GameType() != GameType.CREATIVE) {
             this.load_Z = autismclient.util.FakeGamemodeManager.init_W_DataUtil(GameType.CREATIVE).init_Z();
@@ -187,7 +187,7 @@ public final class GhostBlockModule extends Module {
       int bind = this.write_I_3();
       boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
       if (down && !this.init_Z && MC.gui.screen() == null) {
-         int removed = this.init_I_5();
+         int removed = this.clearAll();
          if (removed > 0) {
             AutismClientMessaging.sendPrefixed("§aCleared §f" + removed + "§a ghost block" + (removed == 1 ? "" : "s") + ".");
          }
@@ -283,7 +283,7 @@ public final class GhostBlockModule extends Module {
 
             boolean fromHand = stack.getItem() instanceof BlockItem;
             if (!fromHand) {
-               if (!this.init_Z_9() || this.init_Block == null) {
+               if (!this.isCreativeMode() || this.init_Block == null) {
                   return false;
                }
 
@@ -375,7 +375,7 @@ public final class GhostBlockModule extends Module {
          }
 
          return true;
-      } else if (!this.init_Z_9()) {
+      } else if (!this.isCreativeMode()) {
          return false;
       } else {
          BlockState state = MC.level.getBlockState(pos);
@@ -393,7 +393,7 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public boolean onPacketSend(Packet<?> packet) {
-      if (!this.init_Z_9()) {
+      if (!this.isCreativeMode()) {
          return false;
       }
 
@@ -510,7 +510,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   public int init_I_5() {
+   public int clearAll() {
       List<BlockPos> positions;
       synchronized (this.init_Map) {
          positions = new ArrayList<>(this.init_Map.keySet());
@@ -535,7 +535,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   public boolean init_Z_9() {
+   public boolean isCreativeMode() {
       return "Creative".equals(this.choice("mode"));
    }
 
@@ -543,19 +543,19 @@ public final class GhostBlockModule extends Module {
       this.setValue("mode", creative ? "Creative" : "Survival");
    }
 
-   public Block init_Block() {
+   public Block getArmedBlock() {
       return this.init_Block;
    }
 
-   public boolean load_Z_5() {
+   public boolean highlight() {
       return this.bool("highlight");
    }
 
-   public boolean read_Z_4() {
+   public boolean highlightFill() {
       return this.bool("highlight-fill");
    }
 
-   public int read_I_3() {
+   public int highlightColor() {
       try {
          String value = this.value("highlight-color").replace("#", "");
          if (value.length() == 6) {
@@ -568,7 +568,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   public List<AABB> init_List_4() {
+   public List<AABB> highlightBoxes() {
       if (this.read_Z) {
          synchronized (this.init_Map) {
             List<AABB> boxes = new ArrayList<>(this.init_Map.size());

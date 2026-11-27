@@ -381,7 +381,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return this.init_LivingEntity;
    }
 
-   LivingEntity load_LivingEntity() {
+   LivingEntity currentTarget() {
       int age = AutismSessionState.getInstance().getClientTick() - this.add;
       return this.isEnabled() && age >= 0 && age <= 2 && this.flush() ? this.init_LivingEntity : null;
    }
@@ -394,7 +394,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura ? aura.load_J / 1000.0 : 0.0;
    }
 
-   public static List<EspHighlightBox> init_List() {
+   public static List<EspHighlightBox> highlightBoxes() {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() && aura.bool("preview")) {
          int color = am.init_I_Module(aura, "preview-color", 1728031283);
          List<EspHighlightBox> boxes = new ArrayList<>(3);
@@ -459,12 +459,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    @Override
-   public boolean write_Z_10() {
+   public boolean usesMoveFix() {
       return this.bool("move-fix");
    }
 
    @Override
-   public boolean update_Z_9() {
+   public boolean rotatesVisibly() {
       return !this.bool("silent");
    }
 
@@ -1581,13 +1581,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   public static void init_V_BlockPos_BlockState(BlockPos cell, BlockState state) {
+   public static void onBlockUpdate(BlockPos cell, BlockState state) {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() && cell.equals(aura.load_BlockPos)) {
          aura.init_TextFormat.init(MC.level, state.getBlock() instanceof RespawnAnchorBlock);
       }
    }
 
-   public static void init_V_I(int sequence) {
+   public static void onBlockChangedAck(int sequence) {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled()) {
          aura.init_TextFormat.load(MC.level, sequence);
       }

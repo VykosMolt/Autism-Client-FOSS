@@ -22,7 +22,7 @@ public final class DangerHudRenderer {
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      DangerModule danger = DangerModule.init_z();
+      DangerModule danger = DangerModule.instance();
       Minecraft mc = Minecraft.getInstance();
       if (danger != null) {
          BedDangerHudRenderer.init(graphics, danger);
@@ -33,7 +33,7 @@ public final class DangerHudRenderer {
          if (WorldProjectionHelper.init(init_Matrix4f)) {
             Vec3 camera = WorldProjectionHelper.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-            float scale = danger.init_F_10();
+            float scale = danger.warningScale();
             Arrays.fill(init_FArr, 0.0F / 0.0F);
             Arrays.fill(load, 0.0F / 0.0F);
             int drawn = 0;
@@ -43,8 +43,8 @@ public final class DangerHudRenderer {
                   break;
                }
 
-               Entity entity = warning.init_Entity();
-               if (!entity.isRemoved() && danger.init_Z_A_StreamUtil_Str(warning.init_A_StreamUtil(), "hud")) {
+               Entity entity = warning.entity();
+               if (!entity.isRemoved() && danger.isKindOptionEnabled(warning.kind(), "hud")) {
                   boolean duplicate = false;
 
                   for (int j = 0; j < drawn; j++) {
@@ -59,7 +59,7 @@ public final class DangerHudRenderer {
                      double x = Mth.lerp(partial, entity.xOld, entity.getX());
                      double y = Mth.lerp(partial, entity.yOld, entity.getY()) + (warning.init_Z() ? entity.getEyeHeight() : entity.getBbHeight() * 0.5);
                      double z = Mth.lerp(partial, entity.zOld, entity.getZ());
-                     int color = danger.init_I_A_BufferHelper(warning);
+                     int color = danger.warningColor(warning);
                      init_Vector4f.set((float)(x - camera.x), (float)(y - camera.y), (float)(z - camera.z), 1.0F);
                      init_Matrix4f.transform(init_Vector4f);
                      int screenW = cA.init_I();
@@ -98,7 +98,7 @@ public final class DangerHudRenderer {
                         new autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil(markerX, markerY, angle),
                         init_TaskTimer_StreamUt,
                         scale,
-                        warning.init_A_StreamUtil().init_ItemStack(),
+                        warning.kind().icon(),
                         null,
                         color,
                         true

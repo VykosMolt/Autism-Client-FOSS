@@ -1,9 +1,9 @@
 package autismclient.modules;
 
-public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper, double init_D, double load) {
-   public CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper, double init_D, double load) {
-      if (init_p_NetHelper != null && init_p_NetHelper.init_Z() && Double.isFinite(init_D) && !(init_D <= 0.0) && Double.isFinite(load) && !(load < 0.0)) {
-         this.init_p_NetHelper = init_p_NetHelper;
+public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style, double init_D, double load) {
+   public CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style, double init_D, double load) {
+      if (style != null && style.isPreset() && Double.isFinite(init_D) && !(init_D <= 0.0) && Double.isFinite(load) && !(load < 0.0)) {
+         this.style = style;
          this.init_D = init_D;
          this.load = load;
       } else {
@@ -21,7 +21,7 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper init_p
 
    public double read() {
       double var10000;
-      switch (this.init_p_NetHelper) {
+      switch (this.style) {
          case CROSS:
             var10000 = 7.0 + this.init_D / 2.0;
             break;
@@ -44,7 +44,7 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper init_p
    public double init(double x, double y) {
       double half = this.init_D / 2.0;
       double var10000;
-      switch (this.init_p_NetHelper) {
+      switch (this.style) {
          case CROSS:
             var10000 = Math.min(init(x, y, 7.0 + half, half), init(x, y, half, 7.0 + half));
             break;
