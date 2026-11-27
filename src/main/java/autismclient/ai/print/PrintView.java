@@ -1511,7 +1511,7 @@ public final class PrintView implements SignalGetter {
       return new AiPhysics.PhysicsWorld() {
          private final Long2ObjectOpenHashMap<List<AABB>> init = new Long2ObjectOpenHashMap<>();
 
-         private List<AABB> init_List_2(int x, int y, int z) {
+         private List<AABB> cellBoxes(int x, int y, int z) {
             return this.init.computeIfAbsent(BlockPos.asLong(x, y, z), key -> {
                BlockPos at = BlockPos.of(key);
                BlockState state = view.getBlockState(at);
@@ -1526,7 +1526,7 @@ public final class PrintView implements SignalGetter {
             for (int x = PrintView.floorInt(query.minX); x <= PrintView.floorInt(query.maxX); x++) {
                for (int y = PrintView.floorInt(query.minY) - 1; y <= PrintView.floorInt(query.maxY); y++) {
                   for (int z = PrintView.floorInt(query.minZ); z <= PrintView.floorInt(query.maxZ); z++) {
-                     for (AABB box : this.init_List_2(x, y, z)) {
+                     for (AABB box : this.cellBoxes(x, y, z)) {
                         if (box.intersects(query)) {
                            out.add(box);
                         }

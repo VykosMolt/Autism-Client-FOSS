@@ -59,11 +59,11 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class GhostBlockModule extends Module {
-   static final String init_Str = "Places blocks that only exist for you. Creative mode fakes a creative gamemode so anything you place becomes a ghost; right-click places, left-click removes, sneak keeps it real.";
-   static final String load_Str = "Creative fakes your gamemode";
-   static final String read_Str = "Ticks between placements";
-   static final String write_Str = "Click ghosts to remove";
-   static final String update_Str = "Sneak places real blocks";
+   static final String DESCRIPTION = "Places blocks that only exist for you. Creative mode fakes a creative gamemode so anything you place becomes a ghost; right-click places, left-click removes, sneak keeps it real.";
+   static final String CREATIVE_HINT = "Creative fakes your gamemode";
+   static final String DELAY_HINT = "Ticks between placements";
+   static final String CLICK_REMOVE_HINT = "Click ghosts to remove";
+   static final String SNEAK_REAL_HINT = "Sneak places real blocks";
    static final String sync = "Clear ghosts on disable";
    static final String flush = "Key clears all ghosts";
    static final String close = "Outline ghost blocks";
@@ -73,14 +73,14 @@ public final class GhostBlockModule extends Module {
    private static final int load_I = 2001;
    private static final int read_I = 20;
    private static final int write_I = -6381922;
-   private final Map<BlockPos, BlockState> init_Map = new LinkedHashMap<>();
-   private final Map<BlockPos, BlockState> load_Map = new LinkedHashMap<>();
-   private Block init_Block;
-   private ClientLevel init_ClientLevel;
-   private boolean init_Z;
-   private boolean load_Z;
-   private int update_I;
-   private volatile List<AABB> init_List = List.of();
+   private final Map<BlockPos, BlockState> ghosts = new LinkedHashMap<>();
+   private final Map<BlockPos, BlockState> realStates = new LinkedHashMap<>();
+   private Block creativeBlock;
+   private ClientLevel lastLevel;
+   private boolean clearKeyDown;
+   private boolean fakeCreative;
+   private int tickCounter;
+   private volatile List<AABB> ghostBoxes = List.of();
    private volatile boolean read_Z;
 
    GhostBlockModule() {
@@ -103,7 +103,7 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_V_7();
+      this.syncFakeGamemode();
    }
 
    @Override
@@ -112,7 +112,7 @@ public final class GhostBlockModule extends Module {
          this.clearAll();
       }
 
-      this.load_V_6();
+      this.stopFakeCreative();
    }
 
    @Override
@@ -122,81 +122,81 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public boolean hasDisabledTickWork() {
-      return this.load_I_4() > 0;
+      return this.ghostCount() > 0;
    }
 
    @Override
    protected void onOptionValueChanged(String settingId) {
       if ("mode".equals(settingId)) {
-         this.init_V_7();
+         this.syncFakeGamemode();
       }
    }
 
-   private void init_V_7() {
+   private void syncFakeGamemode() {
       if (this.isEnabled() && MC != null && MC.player != null && MC.gameMode != null) {
          if (!this.isCreativeMode()) {
-            this.load_V_6();
-         } else if (!this.load_Z || autismclient.util.FakeGamemodeManager.snapshot().displayedMode() != GameType.CREATIVE) {
-            this.load_Z = autismclient.util.FakeGamemodeManager.applyFake(GameType.CREATIVE).success();
+            this.stopFakeCreative();
+         } else if (!this.fakeCreative || autismclient.util.FakeGamemodeManager.snapshot().displayedMode() != GameType.CREATIVE) {
+            this.fakeCreative = autismclient.util.FakeGamemodeManager.applyFake(GameType.CREATIVE).success();
          }
       }
    }
 
-   private void load_V_6() {
-      if (this.load_Z) {
-         this.load_Z = false;
+   private void stopFakeCreative() {
+      if (this.fakeCreative) {
+         this.fakeCreative = false;
          autismclient.util.FakeGamemodeManager.clearFake();
       }
    }
 
    @Override
    public void onGameJoin() {
-      this.init_V_7();
+      this.syncFakeGamemode();
    }
 
    @Override
    public void onGameLeft() {
       this.sync();
-      this.load_V_6();
-      this.init_ClientLevel = null;
-      this.init_Z = false;
+      this.stopFakeCreative();
+      this.lastLevel = null;
+      this.clearKeyDown = false;
    }
 
    @Override
    public void tick() {
       if (MC != null && MC.level != null && MC.player != null) {
-         if (MC.level != this.init_ClientLevel) {
+         if (MC.level != this.lastLevel) {
             this.sync();
-            this.init_ClientLevel = MC.level;
+            this.lastLevel = MC.level;
          }
 
-         this.read_V_4();
+         this.pollClearKey();
          if (!this.isEnabled()) {
             this.update();
          } else {
             this.write_V_4();
-            if (++this.update_I >= 20) {
-               this.update_I = 0;
-               this.init_V_7();
+            if (++this.tickCounter >= 20) {
+               this.tickCounter = 0;
+               this.syncFakeGamemode();
             }
          }
       }
    }
 
-   private void read_V_4() {
-      int bind = this.write_I_3();
+   private void pollClearKey() {
+      int bind = this.clearKeyCode();
       boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
-      if (down && !this.init_Z && MC.gui.screen() == null) {
+      if (down && !this.clearKeyDown && MC.gui.screen() == null) {
          int removed = this.clearAll();
          if (removed > 0) {
             AutismClientMessaging.sendPrefixed("§aCleared §f" + removed + "§a ghost block" + (removed == 1 ? "" : "s") + ".");
          }
       }
 
-      this.init_Z = down;
+      this.clearKeyDown = down;
    }
 
-   private int write_I_3() {
+   private int clearKeyCode() {
       try {
          return Integer.parseInt(this.value("clear-key"));
       } catch (NumberFormatException ignored) {
@@ -206,12 +206,12 @@ public final class GhostBlockModule extends Module {
 
    private void write_V_4() {
       List<Entry<BlockPos, BlockState>> snapshot;
-      synchronized (this.init_Map) {
-         if (this.init_Map.isEmpty()) {
+      synchronized (this.ghosts) {
+         if (this.ghosts.isEmpty()) {
             return;
          }
 
-         snapshot = new ArrayList<>(this.init_Map.entrySet());
+         snapshot = new ArrayList<>(this.ghosts.entrySet());
       }
 
       for (Entry<BlockPos, BlockState> entry : snapshot) {
@@ -224,12 +224,12 @@ public final class GhostBlockModule extends Module {
 
    private void update() {
       List<Entry<BlockPos, BlockState>> snapshot;
-      synchronized (this.init_Map) {
-         if (this.init_Map.isEmpty()) {
+      synchronized (this.ghosts) {
+         if (this.ghosts.isEmpty()) {
             return;
          }
 
-         snapshot = new ArrayList<>(this.init_Map.entrySet());
+         snapshot = new ArrayList<>(this.ghosts.entrySet());
       }
 
       List<BlockPos> lost = null;
@@ -246,10 +246,10 @@ public final class GhostBlockModule extends Module {
       }
 
       if (lost != null) {
-         synchronized (this.init_Map) {
+         synchronized (this.ghosts) {
             for (BlockPos pos : lost) {
-               this.init_Map.remove(pos);
-               this.load_Map.remove(pos);
+               this.ghosts.remove(pos);
+               this.realStates.remove(pos);
             }
 
             this.read_Z = true;
@@ -283,12 +283,12 @@ public final class GhostBlockModule extends Module {
 
             boolean fromHand = stack.getItem() instanceof BlockItem;
             if (!fromHand) {
-               if (!this.isCreativeMode() || this.init_Block == null) {
+               if (!this.isCreativeMode() || this.creativeBlock == null) {
                   return false;
                }
 
                hand = InteractionHand.MAIN_HAND;
-               stack = new ItemStack(this.init_Block);
+               stack = new ItemStack(this.creativeBlock);
             }
 
             if (stack.getItem() instanceof BlockItem blockItem) {
@@ -369,7 +369,7 @@ public final class GhostBlockModule extends Module {
          return false;
       }
 
-      if (this.init_Z(pos)) {
+      if (this.isGhost(pos)) {
          if (this.bool("break-ghosts")) {
             this.load(pos, true);
          }
@@ -440,12 +440,12 @@ public final class GhostBlockModule extends Module {
       }
 
       if (packet instanceof ClientboundBlockUpdatePacket update) {
-         synchronized (this.init_Map) {
-            if (!this.init_Map.containsKey(update.getPos())) {
+         synchronized (this.ghosts) {
+            if (!this.ghosts.containsKey(update.getPos())) {
                return false;
             }
 
-            this.load_Map.put(update.getPos(), update.getBlockState());
+            this.realStates.put(update.getPos(), update.getBlockState());
             return true;
          }
       } else {
@@ -458,19 +458,19 @@ public final class GhostBlockModule extends Module {
    }
 
    private void init(BlockPos pos, BlockState original) {
-      synchronized (this.init_Map) {
-         this.load_Map.putIfAbsent(pos.immutable(), original);
+      synchronized (this.ghosts) {
+         this.realStates.putIfAbsent(pos.immutable(), original);
       }
    }
 
    private void load(BlockPos pos, BlockState state) {
-      synchronized (this.init_Map) {
-         this.init_Map.put(pos.immutable(), state);
+      synchronized (this.ghosts) {
+         this.ghosts.put(pos.immutable(), state);
 
-         while (this.init_Map.size() > 4096) {
-            BlockPos eldest = this.init_Map.keySet().iterator().next();
-            this.init_Map.remove(eldest);
-            BlockState original = this.load_Map.remove(eldest);
+         while (this.ghosts.size() > 4096) {
+            BlockPos eldest = this.ghosts.keySet().iterator().next();
+            this.ghosts.remove(eldest);
+            BlockState original = this.realStates.remove(eldest);
             if (original != null && this.read(eldest)) {
                MC.level.setBlock(eldest, original, 3);
             }
@@ -481,9 +481,9 @@ public final class GhostBlockModule extends Module {
    }
 
    private void sync() {
-      synchronized (this.init_Map) {
-         this.init_Map.clear();
-         this.load_Map.clear();
+      synchronized (this.ghosts) {
+         this.ghosts.clear();
+         this.realStates.clear();
          this.read_Z = true;
       }
    }
@@ -491,9 +491,9 @@ public final class GhostBlockModule extends Module {
    private void load(BlockPos pos, boolean effects) {
       BlockState ghost;
       BlockState original;
-      synchronized (this.init_Map) {
-         ghost = this.init_Map.remove(pos);
-         original = this.load_Map.remove(pos);
+      synchronized (this.ghosts) {
+         ghost = this.ghosts.remove(pos);
+         original = this.realStates.remove(pos);
          if (ghost != null) {
             this.read_Z = true;
          }
@@ -512,8 +512,8 @@ public final class GhostBlockModule extends Module {
 
    public int clearAll() {
       List<BlockPos> positions;
-      synchronized (this.init_Map) {
-         positions = new ArrayList<>(this.init_Map.keySet());
+      synchronized (this.ghosts) {
+         positions = new ArrayList<>(this.ghosts.keySet());
       }
 
       for (BlockPos pos : positions) {
@@ -523,15 +523,15 @@ public final class GhostBlockModule extends Module {
       return positions.size();
    }
 
-   public boolean init_Z(BlockPos pos) {
-      synchronized (this.init_Map) {
-         return this.init_Map.containsKey(pos);
+   public boolean isGhost(BlockPos pos) {
+      synchronized (this.ghosts) {
+         return this.ghosts.containsKey(pos);
       }
    }
 
-   public int load_I_4() {
-      synchronized (this.init_Map) {
-         return this.init_Map.size();
+   public int ghostCount() {
+      synchronized (this.ghosts) {
+         return this.ghosts.size();
       }
    }
 
@@ -544,7 +544,7 @@ public final class GhostBlockModule extends Module {
    }
 
    public Block getArmedBlock() {
-      return this.init_Block;
+      return this.creativeBlock;
    }
 
    public boolean highlight() {
@@ -570,23 +570,23 @@ public final class GhostBlockModule extends Module {
 
    public List<AABB> highlightBoxes() {
       if (this.read_Z) {
-         synchronized (this.init_Map) {
-            List<AABB> boxes = new ArrayList<>(this.init_Map.size());
+         synchronized (this.ghosts) {
+            List<AABB> boxes = new ArrayList<>(this.ghosts.size());
 
-            for (BlockPos pos : this.init_Map.keySet()) {
+            for (BlockPos pos : this.ghosts.keySet()) {
                boxes.add(new AABB(pos).inflate(0.002));
             }
 
-            this.init_List = Collections.unmodifiableList(boxes);
+            this.ghostBoxes = Collections.unmodifiableList(boxes);
             this.read_Z = false;
          }
       }
 
-      return this.init_List;
+      return this.ghostBoxes;
    }
 
    public void init(Block block, boolean announce) {
-      this.init_Block = block;
+      this.creativeBlock = block;
       if (announce) {
          AutismClientMessaging.sendPrefixed(block == null ? "§7Ghost block disarmed." : "§aGhost block: §f" + BuiltInRegistries.BLOCK.getKey(block));
       }
@@ -621,11 +621,11 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public String info() {
-      int count = this.load_I_4();
+      int count = this.ghostCount();
       if (count > 0) {
          return Integer.toString(count);
       } else {
-         return this.init_Block == null ? "" : BuiltInRegistries.BLOCK.getKey(this.init_Block).getPath();
+         return this.creativeBlock == null ? "" : BuiltInRegistries.BLOCK.getKey(this.creativeBlock).getPath();
       }
    }
 }

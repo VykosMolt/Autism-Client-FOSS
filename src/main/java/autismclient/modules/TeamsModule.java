@@ -30,16 +30,16 @@ import net.minecraft.world.phys.EntityHitResult;
 public final class TeamsModule extends Module {
    public static final int init_I = -866779137;
    static final int load_I = 100;
-   private static TeamsModule init_aL;
-   private String init_Str;
-   private Set<String> init_Set = Set.of();
+   private static TeamsModule INSTANCE;
+   private String friendsCacheKey;
+   private Set<String> friendsCache = Set.of();
    private boolean init_Z;
    private final Set<UUID> read = new HashSet<>();
    private Object init_Obj;
 
    public TeamsModule() {
       super("teams", "Teams", ae.write, "Friends and team detection.");
-      init_aL = this;
+      INSTANCE = this;
       this.add(new StringListSetting("friends", "Friends", "").playerNameList().build());
       this.add(new BoolSetting("auto-teams", "Auto Teams", false).description("Detect teammates automatically.").build());
       this.add(new BoolSetting("quick-add", "Quick Add", true).description("Add/remove with key.").build());
@@ -60,7 +60,7 @@ public final class TeamsModule extends Module {
    @Override
    public void onOptionValueChanged(String settingId) {
       if ("friends".equals(settingId)) {
-         this.init_Str = null;
+         this.friendsCacheKey = null;
       }
    }
 
@@ -110,7 +110,7 @@ public final class TeamsModule extends Module {
    }
 
    public static boolean addFriend(String name) {
-      TeamsModule module = init_aL;
+      TeamsModule module = INSTANCE;
       if (module != null && name != null && !name.isBlank()) {
          List<String> friends = new ArrayList<>(module.list("friends"));
 
@@ -132,7 +132,7 @@ public final class TeamsModule extends Module {
    }
 
    public static boolean removeFriend(String name) {
-      TeamsModule module = init_aL;
+      TeamsModule module = INSTANCE;
       if (module != null && name != null && !name.isBlank()) {
          List<String> friends = new ArrayList<>(module.list("friends"));
 
@@ -154,7 +154,7 @@ public final class TeamsModule extends Module {
    }
 
    public static boolean clearFriends() {
-      TeamsModule module = init_aL;
+      TeamsModule module = INSTANCE;
       if (module == null) {
          AutismClientMessaging.sendPrefixed("§cTeams module unavailable.");
          return false;
@@ -172,25 +172,25 @@ public final class TeamsModule extends Module {
    }
 
    public static List<String> friends() {
-      TeamsModule module = init_aL;
+      TeamsModule module = INSTANCE;
       return module == null ? List.of() : module.list("friends");
    }
 
-   private static TeamsModule init_aL() {
-      TeamsModule module = init_aL;
+   private static TeamsModule activeInstance() {
+      TeamsModule module = INSTANCE;
       return module != null && module.isEnabled() ? module : null;
    }
 
    public static boolean isFriend(Entity entity) {
-      TeamsModule module = init_aL();
+      TeamsModule module = activeInstance();
       return module != null && entity instanceof Player player && entity != MC.player
-         ? module.init_Z_Player_2(player)
+         ? module.isListedFriend(player)
             || module.bool("auto-teams") && module.read_Z_Player(player)
          : false;
    }
 
    public static boolean init(Entity entity, String option) {
-      TeamsModule module = init_aL();
+      TeamsModule module = activeInstance();
       if (module == null) {
          return false;
       } else {
@@ -199,25 +199,25 @@ public final class TeamsModule extends Module {
    }
 
    public static boolean option(String option) {
-      TeamsModule module = init_aL();
+      TeamsModule module = activeInstance();
       return module != null && module.bool(option);
    }
 
    public static int friendColor() {
-      TeamsModule module = init_aL();
+      TeamsModule module = activeInstance();
       return module == null ? -866779137 : am.init_I_Module(module, "friends-color", -866779137);
    }
 
-   private boolean init_Z_Player_2(Player player) {
+   private boolean isListedFriend(Player player) {
       String name = player.getScoreboardName();
-      return name != null && !name.isBlank() ? this.init_Set_8().contains(name.toLowerCase(Locale.ROOT)) : false;
+      return name != null && !name.isBlank() ? this.friendNames().contains(name.toLowerCase(Locale.ROOT)) : false;
    }
 
-   private Set<String> init_Set_8() {
+   private Set<String> friendNames() {
       List<String> entries = this.list("friends");
       String source = String.join("|", entries);
-      if (source.equals(this.init_Str)) {
-         return this.init_Set;
+      if (source.equals(this.friendsCacheKey)) {
+         return this.friendsCache;
       }
 
       Set<String> names = new LinkedHashSet<>();
@@ -231,9 +231,9 @@ public final class TeamsModule extends Module {
          }
       }
 
-      this.init_Str = source;
-      this.init_Set = Set.copyOf(names);
-      return this.init_Set;
+      this.friendsCacheKey = source;
+      this.friendsCache = Set.copyOf(names);
+      return this.friendsCache;
    }
 
    private boolean read_Z_Player(Player suspected) {

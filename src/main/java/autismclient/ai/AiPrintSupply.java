@@ -53,15 +53,15 @@ import net.minecraft.world.phys.Vec3;
 final class AiPrintSupply {
    private static final Direction[] DIRECTIONS = Direction.values();
    private final Minecraft mc = Minecraft.getInstance();
-   private final AiPrintSupply.Inner_CachePool init_bj_CachePool;
+   private final AiPrintSupply.Inner_CachePool prep;
    private final Map<Long, AiBuilder.CellSpec> cells;
-   private final AiPrintSupply.Inner_TaskQueue init_bj_TaskQueue = new AiPrintSupply.Inner_TaskQueue();
-   private List<BlockPos> init_List;
+   private final AiPrintSupply.Inner_TaskQueue shortage = new AiPrintSupply.Inner_TaskQueue();
+   private List<BlockPos> terrainCells;
    private int read;
-   private AiPrintSupply.Inner_BufferHelper init_bj_BufferHelper;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
-   private ItemStack load_ItemStack = ItemStack.EMPTY;
-   private final List<ItemStack> load_List = new ArrayList<>();
+   private AiPrintSupply.Inner_BufferHelper stockScan;
+   private ItemStack carriedBox = ItemStack.EMPTY;
+   private ItemStack contentsWanted = ItemStack.EMPTY;
+   private final List<ItemStack> triedBoxes = new ArrayList<>();
    int shulkerRefills;
    int terrainCleared;
    private int write = 1;
@@ -82,62 +82,62 @@ final class AiPrintSupply {
 
    AiPrintSupply(AiBuilder.Blueprint blueprint, boolean clearTerrain) {
       ClientLevel world = this.mc.level;
-      this.init_bj_CachePool = new AiPrintSupply.Inner_CachePool(
+      this.prep = new AiPrintSupply.Inner_CachePool(
          blueprint,
          world,
          p -> AiTerrain.isLoaded(world, p),
          this.mc.player == null ? BlockPos.ZERO : this.mc.player.blockPosition(),
          clearTerrain
       );
-      this.cells = this.init_bj_CachePool.cells;
-      this.init_List = this.init_bj_CachePool.init_List;
+      this.cells = this.prep.cells;
+      this.terrainCells = this.prep.terrainCells;
    }
 
    boolean prepare(int workBudget) {
-      this.init_bj_CachePool.init_V_I(workBudget);
-      return this.init_Z();
+      this.prep.step(workBudget);
+      return this.preparationSettled();
    }
 
    void notifyBlockChanged(BlockPos position) {
-      this.init_bj_CachePool.init_V_BlockPos(position);
+      this.prep.noteChanged(position);
    }
 
-   boolean init_Z() {
-      return this.init_bj_CachePool.init_Z();
+   boolean preparationSettled() {
+      return this.prep.settled();
    }
 
    boolean isPrepared() {
-      return this.init_bj_CachePool.load_Z;
+      return this.prep.prepared;
    }
 
    long preparationDone() {
-      return this.init_bj_CachePool.load_I
-         + 6L * this.init_bj_CachePool.read_I
-         + this.init_bj_CachePool.write_I
-         + this.init_bj_CachePool.init_bj_DataUtil.load
-         + this.init_bj_CachePool.init_J;
+      return this.prep.indexed
+         + 6L * this.prep.supportCursor
+         + this.prep.supportSide
+         + this.prep.depotScan.load
+         + this.prep.terrainCursor;
    }
 
    long preparationTotal() {
-      return 7L * this.init_bj_CachePool.init_TableIndex_DataUti.cells().size()
-         + this.init_bj_CachePool.init_bj_DataUtil.total
+      return 7L * this.prep.blueprint.cells().size()
+         + this.prep.depotScan.total
          + (
-            this.init_bj_CachePool.init_Z && this.init_bj_CachePool.load_I == this.init_bj_CachePool.init_TableIndex_DataUti.cells().size()
-               ? this.init_bj_CachePool.init_J()
+            this.prep.clearTerrain && this.prep.indexed == this.prep.blueprint.cells().size()
+               ? this.prep.boxVolume()
                : 0L
          );
    }
 
    String getStatus() {
-      return this.init_bj_CachePool.init_Str();
+      return this.prep.status();
    }
 
    void load(BlockPos pos) {
-      this.init_bj_CachePool.load(pos);
+      this.prep.load(pos);
    }
 
    void notifyChunkChanged(long key) {
-      this.init_bj_CachePool.init_V_J(key);
+      this.prep.noteChunkChanged(key);
    }
 
    static int init(Inventory inventory, Item item) {
@@ -159,48 +159,48 @@ final class AiPrintSupply {
    }
 
    boolean canSupply(Item item) {
-      return this.init_bj_TaskQueue.init(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
+      return this.shortage.init(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
    }
 
    Item getMissingItem() {
-      return this.init_bj_TaskQueue.init_Item;
+      return this.shortage.item;
    }
 
    boolean hasPortableStock() {
-      return this.init_bj_TaskQueue.init_Item != null
-         && !AiCarriedShulker.init(this.mc.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true).isEmpty();
+      return this.shortage.item != null
+         && !AiCarriedShulker.init(this.mc.player.getInventory(), this.shortage.item, this.shortage.triedBoxes, true).isEmpty();
    }
 
    void completeRefill() {
-      this.init_bj_TaskQueue.init();
-      this.init_bj_BufferHelper = null;
-      this.init_ItemStack = ItemStack.EMPTY;
+      this.shortage.init();
+      this.stockScan = null;
+      this.carriedBox = ItemStack.EMPTY;
       this.shulkerRefills++;
    }
 
    void resetRefill() {
-      this.init_bj_TaskQueue.init();
-      this.init_bj_BufferHelper = null;
-      this.init_ItemStack = ItemStack.EMPTY;
+      this.shortage.init();
+      this.stockScan = null;
+      this.carriedBox = ItemStack.EMPTY;
    }
 
    AiOperation refillOperation(ItemStack wanted, int additional, Set<Long> owned) {
       if (!wanted.isEmpty() && additional > 0 && this.mc.player != null && !this.mc.player.hasInfiniteMaterials()) {
-         if (!ItemStack.isSameItemSameComponents(this.load_ItemStack, wanted)) {
+         if (!ItemStack.isSameItemSameComponents(this.contentsWanted, wanted)) {
             this.clearContentsRequest();
-            this.load_ItemStack = wanted.copyWithCount(1);
+            this.contentsWanted = wanted.copyWithCount(1);
          }
 
-         if (this.load_List.size() >= 37) {
+         if (this.triedBoxes.size() >= 37) {
             return null;
          }
 
-         ItemStack box = AiCarriedShulker.init(this.mc.player.getInventory(), wanted, this.load_List);
+         ItemStack box = AiCarriedShulker.init(this.mc.player.getInventory(), wanted, this.triedBoxes);
          if (box.isEmpty()) {
             return null;
          }
 
-         this.load_List.add(box.copy());
+         this.triedBoxes.add(box.copy());
          return new AiCarriedShulker(box, wanted, additional, init(this.ownedCells(), owned));
       } else {
          return null;
@@ -212,15 +212,15 @@ final class AiPrintSupply {
    }
 
    void clearContentsRequest() {
-      this.load_ItemStack = ItemStack.EMPTY;
-      this.load_List.clear();
+      this.contentsWanted = ItemStack.EMPTY;
+      this.triedBoxes.clear();
    }
 
    Set<Long> ownedCells() {
       if (!this.isPrepared()) {
          throw new IllegalStateException("Schematic supply preparation is still running");
       } else {
-         return this.init_bj_CachePool.update_Set;
+         return this.prep.ownedCells;
       }
    }
 
@@ -229,80 +229,80 @@ final class AiPrintSupply {
          return false;
       }
 
-      if (this.init_bj_TaskQueue.init_Item == null) {
-         this.init_bj_BufferHelper = null;
-         this.init_ItemStack = ItemStack.EMPTY;
+      if (this.shortage.item == null) {
+         this.stockScan = null;
+         this.carriedBox = ItemStack.EMPTY;
          return true;
       }
 
-      if (this.init_bj_BufferHelper == null || this.init_bj_BufferHelper.init_Item != this.init_bj_TaskQueue.init_Item) {
-         this.init_ItemStack = AiCarriedShulker.init(
-            this.mc.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true
+      if (this.stockScan == null || this.stockScan.item != this.shortage.item) {
+         this.carriedBox = AiCarriedShulker.init(
+            this.mc.player.getInventory(), this.shortage.item, this.shortage.triedBoxes, true
          );
-         if (this.init_ItemStack.isEmpty() && this.init_bj_TaskQueue.init_Set.size() >= 3) {
+         if (this.carriedBox.isEmpty() && this.shortage.triedSources.size() >= 3) {
             return true;
          }
 
-         this.init_bj_BufferHelper = new AiPrintSupply.Inner_BufferHelper(
-            this.init_bj_CachePool,
-            this.init_bj_TaskQueue.init_Item,
-            this.init_bj_TaskQueue.init_Set,
+         this.stockScan = new AiPrintSupply.Inner_BufferHelper(
+            this.prep,
+            this.shortage.item,
+            this.shortage.triedSources,
             this.mc.player.blockPosition(),
             this.mc.player.position()
          );
-         if (!this.init_ItemStack.isEmpty()) {
-            this.init_bj_BufferHelper.init_V();
+         if (!this.carriedBox.isEmpty()) {
+            this.stockScan.skipDepotScan();
          }
       }
 
-      this.init_bj_BufferHelper.init(workBudget);
-      if (this.init_bj_BufferHelper.load_Z
-         && !this.init_ItemStack.isEmpty()
-         && AiCarriedShulker.init(this.mc.player.getInventory(), this.init_ItemStack, this.init_bj_TaskQueue.init_Item) == null) {
-         this.init_bj_BufferHelper = null;
-         this.init_ItemStack = ItemStack.EMPTY;
+      this.stockScan.init(workBudget);
+      if (this.stockScan.finished
+         && !this.carriedBox.isEmpty()
+         && AiCarriedShulker.init(this.mc.player.getInventory(), this.carriedBox, this.shortage.item) == null) {
+         this.stockScan = null;
+         this.carriedBox = ItemStack.EMPTY;
          return false;
-      } else if (this.init_bj_BufferHelper.load_Z
-         && this.init_bj_BufferHelper.init_BlockPos != null
-         && AiTerrain.isLoaded(this.mc.level, this.init_bj_BufferHelper.init_BlockPos)
-         && !(this.mc.level.getBlockState(this.init_bj_BufferHelper.init_BlockPos).getBlock() instanceof ShulkerBoxBlock)) {
-         this.init_bj_TaskQueue.init(this.init_bj_BufferHelper.init_BlockPos.asLong());
-         this.init_bj_BufferHelper = null;
+      } else if (this.stockScan.finished
+         && this.stockScan.bestSource != null
+         && AiTerrain.isLoaded(this.mc.level, this.stockScan.bestSource)
+         && !(this.mc.level.getBlockState(this.stockScan.bestSource).getBlock() instanceof ShulkerBoxBlock)) {
+         this.shortage.init(this.stockScan.bestSource.asLong());
+         this.stockScan = null;
          return false;
       } else {
-         return this.init_bj_BufferHelper.load_Z;
+         return this.stockScan.finished;
       }
    }
 
    AiOperation stockRefillOperation(Set<Long> owned) {
-      if (this.init_bj_TaskQueue.init_Item != null && (!this.init_ItemStack.isEmpty() || this.init_bj_TaskQueue.init_Set.size() < 3)) {
-         if (this.init_bj_BufferHelper != null && this.init_bj_BufferHelper.load_Z && this.init_bj_BufferHelper.init_Item == this.init_bj_TaskQueue.init_Item) {
-            BlockPos source = this.init_bj_BufferHelper.init_BlockPos;
-            int need = this.init_bj_BufferHelper.load();
-            this.write = this.init_bj_BufferHelper.init_I();
-            this.init_bj_BufferHelper = null;
+      if (this.shortage.item != null && (!this.carriedBox.isEmpty() || this.shortage.triedSources.size() < 3)) {
+         if (this.stockScan != null && this.stockScan.finished && this.stockScan.item == this.shortage.item) {
+            BlockPos source = this.stockScan.bestSource;
+            int need = this.stockScan.load();
+            this.write = this.stockScan.neededCount();
+            this.stockScan = null;
             Set<Long> keep = init(this.ownedCells(), owned);
-            if (!this.init_ItemStack.isEmpty()) {
-               ItemStack selected = this.init_ItemStack;
-               this.init_ItemStack = ItemStack.EMPTY;
-               Item supplied = AiCarriedShulker.init(this.mc.player.getInventory(), selected, this.init_bj_TaskQueue.init_Item);
+            if (!this.carriedBox.isEmpty()) {
+               ItemStack selected = this.carriedBox;
+               this.carriedBox = ItemStack.EMPTY;
+               Item supplied = AiCarriedShulker.init(this.mc.player.getInventory(), selected, this.shortage.item);
                if (supplied == null) {
                   return null;
                }
 
-               this.init_bj_TaskQueue.init_List.add(selected.copy());
+               this.shortage.triedBoxes.add(selected.copy());
                return new AiCarriedShulker(selected, supplied, need, keep);
             } else {
                if (source == null) {
                   return null;
                }
 
-               if (!this.init_bj_TaskQueue.init(source.asLong())) {
+               if (!this.shortage.init(source.asLong())) {
                   return null;
                }
 
                JsonArray items = new JsonArray();
-               items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
+               items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(this.shortage.item).toString(), "count", need));
                AiOperation approach = AiTerrain.isLoaded(this.mc.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, source) != null
                   ? null
                   : AiContainer.init(AiGoto.approachBlockToInteractCompat(source, 60, keep, false));
@@ -350,15 +350,15 @@ final class AiPrintSupply {
          throw new IllegalStateException("Schematic terrain preparation is still running");
       }
 
-      for (int checked = 0; this.read < this.init_List.size() && checked < 64; checked++) {
-         BlockPos p = this.init_List.get(this.read++);
+      for (int checked = 0; this.read < this.terrainCells.size() && checked < 64; checked++) {
+         BlockPos p = this.terrainCells.get(this.read++);
          if (!AiTerrain.isLoaded(this.mc.level, p)) {
             throw new IllegalStateException("Terrain is not loaded at " + p.toShortString());
          }
 
          if (AiSchematicActions.init(this.mc.level.getBlockState(p))
-            && !this.init_bj_CachePool.update_Set.contains(p.asLong())
-            && !this.init_bj_CachePool.init_Z_BlockPos(p)) {
+            && !this.prep.ownedCells.contains(p.asLong())
+            && !this.prep.init_Z_BlockPos(p)) {
             if (!AiSchematicActions.init(this.mc.level, p)) {
                throw new IllegalStateException("Clearing terrain would release fluid at " + p.toShortString());
             }
@@ -371,10 +371,10 @@ final class AiPrintSupply {
    }
 
    boolean isTerrainCleared() {
-      return this.isPrepared() && this.read >= this.init_List.size();
+      return this.isPrepared() && this.read >= this.terrainCells.size();
    }
 
-   private static Set<Long> load_Set() {
+   private static Set<Long> newCellSet() {
       return Collections.newSetFromMap(new AiPrintSupply.Inner_ConfigStore<>());
    }
 
@@ -441,155 +441,155 @@ final class AiPrintSupply {
    }
 
    static final class Inner_BufferHelper {
-      final AiPrintSupply.Inner_CachePool init_bj_CachePool;
-      final Item init_Item;
-      final Set<Long> init_Set;
-      final Vec3 init_Vec3;
-      final AiPrintSupply.Inner_DataUtil init_bj_DataUtil;
-      Iterator<Long> init_Iterator;
-      BlockPos init_BlockPos;
-      double init_D = 1.0 / 0.0;
-      int init_I;
-      int load_I;
+      final AiPrintSupply.Inner_CachePool prep;
+      final Item item;
+      final Set<Long> triedSources;
+      final Vec3 scanOrigin;
+      final AiPrintSupply.Inner_DataUtil depotScan;
+      Iterator<Long> stockIterator;
+      BlockPos bestSource;
+      double bestDistSq = 1.0 / 0.0;
+      int cellCursor;
+      int consumeCount;
       int read;
       int write;
-      boolean init_Z;
-      boolean load_Z;
+      boolean stockScanned;
+      boolean finished;
 
       Inner_BufferHelper(AiPrintSupply.Inner_CachePool prep, Item item, Set<Long> tried, BlockPos center, Vec3 from) {
-         this.init_bj_CachePool = prep;
-         this.init_Item = item;
-         this.init_Set = tried;
-         this.init_Vec3 = from;
-         this.init_bj_DataUtil = new AiPrintSupply.Inner_DataUtil(center, prep.init_LevelReader);
+         this.prep = prep;
+         this.item = item;
+         this.triedSources = tried;
+         this.scanOrigin = from;
+         this.depotScan = new AiPrintSupply.Inner_DataUtil(center, prep.world);
       }
 
-      void init_V() {
-         this.init_bj_DataUtil.load = this.init_bj_DataUtil.total;
-         this.init_Z = true;
+      void skipDepotScan() {
+         this.depotScan.load = this.depotScan.total;
+         this.stockScanned = true;
       }
 
       void init(int budget) {
          this.write = 0;
-         this.init_bj_CachePool.pop = 0;
+         this.prep.pop = 0;
          long deadline = System.nanoTime() + 2000000L;
 
          while (
             this.write < Math.max(0, budget)
-               && !this.load_Z
-               && (this.write <= 0 || this.init_bj_CachePool.pop < 4096 && ((this.write & 31) != 0 || System.nanoTime() < deadline))
+               && !this.finished
+               && (this.write <= 0 || this.prep.pop < 4096 && ((this.write & 31) != 0 || System.nanoTime() < deadline))
          ) {
             this.write++;
-            if (!this.init_bj_DataUtil.init()) {
-               this.init_bj_DataUtil.init(this.init_bj_CachePool);
-            } else if (!this.init_Z) {
-               if (this.init_Iterator == null) {
-                  this.init_Iterator = this.init_bj_CachePool.init_Set.iterator();
+            if (!this.depotScan.init()) {
+               this.depotScan.init(this.prep);
+            } else if (!this.stockScanned) {
+               if (this.stockIterator == null) {
+                  this.stockIterator = this.prep.stockCells.iterator();
                }
 
-               if (this.init_Iterator.hasNext()) {
-                  long key = this.init_Iterator.next();
+               if (this.stockIterator.hasNext()) {
+                  long key = this.stockIterator.next();
                   BlockPos p = BlockPos.of(key);
-                  if (!this.init_Set.contains(key)
+                  if (!this.triedSources.contains(key)
                      && (
-                        !this.init_bj_CachePool.init_Predicate.test(p)
-                           || this.init_bj_CachePool.init_BlockState_BlockPos(p).getBlock() instanceof ShulkerBoxBlock
+                        !this.prep.loaded.test(p)
+                           || this.prep.readState(p).getBlock() instanceof ShulkerBoxBlock
                      )) {
-                     double d = p.distToCenterSqr(this.init_Vec3);
-                     if (d < this.init_D || d == this.init_D && (this.init_BlockPos == null || key < this.init_BlockPos.asLong())) {
-                        this.init_BlockPos = p;
-                        this.init_D = d;
+                     double d = p.distToCenterSqr(this.scanOrigin);
+                     if (d < this.bestDistSq || d == this.bestDistSq && (this.bestSource == null || key < this.bestSource.asLong())) {
+                        this.bestSource = p;
+                        this.bestDistSq = d;
                      }
                   }
                } else {
-                  this.init_Z = true;
+                  this.stockScanned = true;
                }
-            } else if (this.init_I < this.init_bj_CachePool.init_TableIndex_DataUti.cells().size() && this.load_I + this.read < 576) {
-               AiBuilder.CellSpec cell = this.init_bj_CachePool.init_TableIndex_DataUti.cells().get(this.init_I++);
-               BlockPos p = this.init_bj_CachePool.init_BlockPos_TableIndex_StreamU(cell);
-               BlockState live = this.init_bj_CachePool.init_Predicate.test(p) ? this.init_bj_CachePool.init_BlockState_BlockPos(p) : null;
+            } else if (this.cellCursor < this.prep.blueprint.cells().size() && this.consumeCount + this.read < 576) {
+               AiBuilder.CellSpec cell = this.prep.blueprint.cells().get(this.cellCursor++);
+               BlockPos p = this.prep.worldPos(cell);
+               BlockState live = this.prep.loaded.test(p) ? this.prep.readState(p) : null;
                if (live == null || !AiBuilder.matchesSchematicCell(cell, live)) {
                   for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, false)) {
-                     if (requirement.item() == this.init_Item) {
+                     if (requirement.item() == this.item) {
                         if (requirement.use() == AiCellMaterials.Inner_BufferHelper.REUSE) {
                            this.read = Math.max(this.read, requirement.count());
                         } else {
-                           this.load_I = Math.min(576, this.load_I + requirement.count());
+                           this.consumeCount = Math.min(576, this.consumeCount + requirement.count());
                         }
                      }
                   }
                }
             } else {
-               this.load_Z = true;
+               this.finished = true;
             }
          }
       }
 
-      int init_I() {
-         return Math.max(1, Math.min(Math.max(1, this.load_I + this.read), 576));
+      int neededCount() {
+         return Math.max(1, Math.min(Math.max(1, this.consumeCount + this.read), 576));
       }
 
       int load() {
-         int total = this.load_I + this.read;
-         return Math.max(1, Math.min(total == 0 ? this.init_Item.getDefaultMaxStackSize() : total, 576));
+         int total = this.consumeCount + this.read;
+         return Math.max(1, Math.min(total == 0 ? this.item.getDefaultMaxStackSize() : total, 576));
       }
    }
 
    static final class Inner_CachePool {
-      static final int init_I = 32;
-      final AiBuilder.Blueprint init_TableIndex_DataUti;
-      final LevelReader init_LevelReader;
-      final Predicate<BlockPos> init_Predicate;
+      static final int MAX_PROBE_READS = 32;
+      final AiBuilder.Blueprint blueprint;
+      final LevelReader world;
+      final Predicate<BlockPos> loaded;
       final Map<Long, AiBuilder.CellSpec> cells = new AiPrintSupply.Inner_ConfigStore<>();
-      final Set<Long> init_Set = AiPrintSupply.load_Set();
-      final Set<Long> load_Set = AiPrintSupply.load_Set();
-      final Set<Long> read_Set = AiPrintSupply.load_Set();
-      final Set<Long> write_Set = ConcurrentHashMap.newKeySet();
+      final Set<Long> stockCells = AiPrintSupply.newCellSet();
+      final Set<Long> protectedCells = AiPrintSupply.newCellSet();
+      final Set<Long> supportCandidates = AiPrintSupply.newCellSet();
+      final Set<Long> dirtyChunks = ConcurrentHashMap.newKeySet();
       final Map<Long, Set<Long>> chunksByCell = new AiPrintSupply.Inner_ConfigStore<>();
-      final Set<Long> update_Set = Collections.unmodifiableSet(
+      final Set<Long> ownedCells = Collections.unmodifiableSet(
          new AbstractSet<Long>() {
             @Override
             public boolean isEmpty() {
-               return Inner_CachePool.this.load_Set.isEmpty() && !this.iterator().hasNext();
+               return Inner_CachePool.this.protectedCells.isEmpty() && !this.iterator().hasNext();
             }
 
             @Override
             public boolean contains(Object key) {
-               if (Inner_CachePool.this.load_Set.contains(key)) {
+               if (Inner_CachePool.this.protectedCells.contains(key)) {
                   return true;
                }
 
                Set<Long> chunks = Inner_CachePool.this.chunksByCell.get(key);
                if (chunks != null) {
                   for (long chunk : chunks) {
-                     if (Inner_CachePool.this.write_Set.contains(chunk)) {
+                     if (Inner_CachePool.this.dirtyChunks.contains(chunk)) {
                         return true;
                      }
                   }
                }
 
-               return Inner_CachePool.this.load_Set.contains(key);
+               return Inner_CachePool.this.protectedCells.contains(key);
             }
 
             @Override
             public Iterator<Long> iterator() {
                return Stream.concat(
-                     Inner_CachePool.this.load_Set.stream(),
-                     Inner_CachePool.this.read_Set.stream().filter(key -> !Inner_CachePool.this.load_Set.contains(key) && this.contains(key))
+                     Inner_CachePool.this.protectedCells.stream(),
+                     Inner_CachePool.this.supportCandidates.stream().filter(key -> !Inner_CachePool.this.protectedCells.contains(key) && this.contains(key))
                   )
                   .iterator();
             }
 
             @Override
             public int size() {
-               if (Inner_CachePool.this.write_Set.isEmpty()) {
-                  return Inner_CachePool.this.load_Set.size();
+               if (Inner_CachePool.this.dirtyChunks.isEmpty()) {
+                  return Inner_CachePool.this.protectedCells.size();
                }
 
-               int n = Inner_CachePool.this.load_Set.size();
+               int n = Inner_CachePool.this.protectedCells.size();
 
-               for (long key : Inner_CachePool.this.read_Set) {
-                  if (!Inner_CachePool.this.load_Set.contains(key) && this.contains(key)) {
+               for (long key : Inner_CachePool.this.supportCandidates) {
+                  if (!Inner_CachePool.this.protectedCells.contains(key) && this.contains(key)) {
                      n++;
                   }
                }
@@ -598,139 +598,139 @@ final class AiPrintSupply {
             }
          }
       );
-      final List<BlockPos> init_List = new AiPrintSupply.Inner_JsonUtil();
+      final List<BlockPos> terrainCells = new AiPrintSupply.Inner_JsonUtil();
       final Map<Long, Set<Long>> readsByCell = new AiPrintSupply.Inner_ConfigStore<>();
       final Map<Long, Set<Long>> ownersByChunk = new AiPrintSupply.Inner_ConfigStore<>();
-      private final LinkedHashMap<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> init_LinkedHashMap = new LinkedHashMap<>();
-      private Iterator<Long> init_Iterator;
-      final AiPrintSupply.Inner_DataUtil init_bj_DataUtil;
-      final boolean init_Z;
-      int load_I;
-      int read_I;
-      int write_I;
-      int update_I;
+      private final LinkedHashMap<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> pendingChanges = new LinkedHashMap<>();
+      private Iterator<Long> fullRecheck;
+      final AiPrintSupply.Inner_DataUtil depotScan;
+      final boolean clearTerrain;
+      int indexed;
+      int supportCursor;
+      int supportSide;
+      int minDx;
       int sync;
       int flush;
       int close = -2147483648;
       int open = -2147483648;
       int poll = -2147483648;
-      long init_J;
+      long terrainCursor;
       int push;
       int pop;
-      boolean load_Z;
-      private BlockPos init_BlockPos;
+      boolean prepared;
+      private BlockPos changedStock;
       private AuditBuilderHull auditHull;
 
       Inner_CachePool(AiBuilder.Blueprint blueprint, LevelReader world, Predicate<BlockPos> loaded, BlockPos initialCenter, boolean clearTerrain) {
-         this.init_TableIndex_DataUti = blueprint;
-         this.init_LevelReader = world;
-         this.init_Predicate = loaded;
-         this.init_Z = clearTerrain;
-         this.init_bj_DataUtil = new AiPrintSupply.Inner_DataUtil(initialCenter, world);
+         this.blueprint = blueprint;
+         this.world = world;
+         this.loaded = loaded;
+         this.clearTerrain = clearTerrain;
+         this.depotScan = new AiPrintSupply.Inner_DataUtil(initialCenter, world);
       }
 
-      boolean init_Z() {
-         return this.load_Z && this.init_BlockPos == null && this.init_LinkedHashMap.isEmpty() && this.init_Iterator == null;
+      boolean settled() {
+         return this.prepared && this.changedStock == null && this.pendingChanges.isEmpty() && this.fullRecheck == null;
       }
 
-      void init_V_BlockPos(BlockPos position) {
-         this.init_BlockPos = position.immutable();
+      void noteChanged(BlockPos position) {
+         this.changedStock = position.immutable();
       }
 
-      String init_Str() {
-         if (this.init_LinkedHashMap.isEmpty() && this.init_Iterator == null) {
-            if (this.load_I < this.init_TableIndex_DataUti.cells().size()) {
-               return "Indexing schematic stock (" + this.load_I + "/" + this.init_TableIndex_DataUti.cells().size() + ")";
-            } else if (this.read_I < this.init_TableIndex_DataUti.cells().size()) {
-               return "Checking source supports (" + this.read_I + "/" + this.init_TableIndex_DataUti.cells().size() + ")";
-            } else if (!this.init_bj_DataUtil.init()) {
-               return "Scanning original stock depot (" + this.init_bj_DataUtil.load + "/" + this.init_bj_DataUtil.total + ")";
+      String status() {
+         if (this.pendingChanges.isEmpty() && this.fullRecheck == null) {
+            if (this.indexed < this.blueprint.cells().size()) {
+               return "Indexing schematic stock (" + this.indexed + "/" + this.blueprint.cells().size() + ")";
+            } else if (this.supportCursor < this.blueprint.cells().size()) {
+               return "Checking source supports (" + this.supportCursor + "/" + this.blueprint.cells().size() + ")";
+            } else if (!this.depotScan.init()) {
+               return "Scanning original stock depot (" + this.depotScan.load + "/" + this.depotScan.total + ")";
             } else {
-               return this.load_Z ? "Schematic stock prepared" : "Checking terrain (" + this.init_J + " cells)";
+               return this.prepared ? "Schematic stock prepared" : "Checking terrain (" + this.terrainCursor + " cells)";
             }
          } else {
             return "Protecting changed source supports";
          }
       }
 
-      void init_V_I(int budget) {
+      void step(int budget) {
          this.push = this.pop = 0;
          long deadline = System.nanoTime() + 2000000L;
 
          while (
-            this.push < Math.max(0, budget) && !this.init_Z() && (this.push <= 0 || this.pop < 4096 && ((this.push & 31) != 0 || System.nanoTime() < deadline))
+            this.push < Math.max(0, budget) && !this.settled() && (this.push <= 0 || this.pop < 4096 && ((this.push & 31) != 0 || System.nanoTime() < deadline))
          ) {
             this.push++;
             if (!this.load()) {
-               if (this.load_I < this.init_TableIndex_DataUti.cells().size()) {
-                  AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.load_I++);
-                  BlockPos p = this.init_BlockPos_TableIndex_StreamU(cell);
+               if (this.indexed < this.blueprint.cells().size()) {
+                  AiBuilder.CellSpec cell = this.blueprint.cells().get(this.indexed++);
+                  BlockPos p = this.worldPos(cell);
                   this.cells.put(p.asLong(), cell);
-                  this.load_Set.add(p.asLong());
-                  this.update_I = Math.min(this.update_I, cell.dx());
+                  this.protectedCells.add(p.asLong());
+                  this.minDx = Math.min(this.minDx, cell.dx());
                   this.close = Math.max(this.close, cell.dx());
                   this.sync = Math.min(this.sync, cell.dy());
                   this.open = Math.max(this.open, cell.dy());
                   this.flush = Math.min(this.flush, cell.dz());
                   this.poll = Math.max(this.poll, cell.dz());
-               } else if (this.init_BlockPos != null) {
-                  BlockPos stock = this.init_BlockPos;
-                  this.init_BlockPos = null;
+               } else if (this.changedStock != null) {
+                  BlockPos stock = this.changedStock;
+                  this.changedStock = null;
                   if (!this.cells.containsKey(stock.asLong())
-                     && this.init_Predicate.test(stock)
-                     && this.init_BlockState_BlockPos(stock).getBlock() instanceof ShulkerBoxBlock) {
-                     this.init_Set.add(stock.asLong());
+                     && this.loaded.test(stock)
+                     && this.readState(stock).getBlock() instanceof ShulkerBoxBlock) {
+                     this.stockCells.add(stock.asLong());
                   }
-               } else if (this.read_I < this.init_TableIndex_DataUti.cells().size()) {
-                  BlockPos p = this.init_BlockPos_TableIndex_StreamU(this.init_TableIndex_DataUti.cells().get(this.read_I))
-                     .relative(AiPrintSupply.DIRECTIONS[this.write_I++]);
-                  if (this.write_I == 6) {
-                     this.write_I = 0;
-                     this.read_I++;
+               } else if (this.supportCursor < this.blueprint.cells().size()) {
+                  BlockPos p = this.worldPos(this.blueprint.cells().get(this.supportCursor))
+                     .relative(AiPrintSupply.DIRECTIONS[this.supportSide++]);
+                  if (this.supportSide == 6) {
+                     this.supportSide = 0;
+                     this.supportCursor++;
                   }
 
-                  if (!this.cells.containsKey(p.asLong()) && this.read_Set.add(p.asLong()) && this.init_Z_BlockPos(p)) {
-                     this.load_Set.add(p.asLong());
+                  if (!this.cells.containsKey(p.asLong()) && this.supportCandidates.add(p.asLong()) && this.init_Z_BlockPos(p)) {
+                     this.protectedCells.add(p.asLong());
                   }
-               } else if (!this.init_bj_DataUtil.init()) {
-                  this.init_bj_DataUtil.init(this);
-               } else if (this.init_Z && this.init_J < this.init_J()) {
-                  this.init_V();
+               } else if (!this.depotScan.init()) {
+                  this.depotScan.init(this);
+               } else if (this.clearTerrain && this.terrainCursor < this.boxVolume()) {
+                  this.checkTerrainCell();
                } else {
-                  this.load_Z = true;
+                  this.prepared = true;
                }
             }
          }
       }
 
-      BlockPos init_BlockPos_TableIndex_StreamU(AiBuilder.CellSpec cell) {
-         return this.init_TableIndex_DataUti.origin().offset(cell.dx(), cell.dy(), cell.dz());
+      BlockPos worldPos(AiBuilder.CellSpec cell) {
+         return this.blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
       }
 
-      BlockState init_BlockState_BlockPos(BlockPos p) {
+      BlockState readState(BlockPos p) {
          this.pop++;
-         return this.init_LevelReader.getBlockState(p);
+         return this.world.getBlockState(p);
       }
 
-      private long init_J() {
-         return this.init_TableIndex_DataUti.cells().isEmpty()
+      private long boxVolume() {
+         return this.blueprint.cells().isEmpty()
             ? 0L
-            : ((long)this.close - this.update_I + 1L) * ((long)this.open - this.sync + 1L) * ((long)this.poll - this.flush + 1L);
+            : ((long)this.close - this.minDx + 1L) * ((long)this.open - this.sync + 1L) * ((long)this.poll - this.flush + 1L);
       }
 
-      private void init_V() {
-         long width = (long)this.close - this.update_I + 1L;
+      private void checkTerrainCell() {
+         long width = (long)this.close - this.minDx + 1L;
          long depth = (long)this.poll - this.flush + 1L;
-         long i = this.init_J++;
+         long i = this.terrainCursor++;
          int y = this.open - (int)(i / (width * depth));
          long row = i % (width * depth);
-         BlockPos p = this.init_TableIndex_DataUti.origin().offset(this.update_I + (int)(row / depth), y, this.flush + (int)(row % depth));
+         BlockPos p = this.blueprint.origin().offset(this.minDx + (int)(row / depth), y, this.flush + (int)(row % depth));
          if (!this.cells.containsKey(p.asLong())) {
-            if (!this.init_Predicate.test(p)) {
+            if (!this.loaded.test(p)) {
                throw new IllegalStateException("Terrain must be loaded before clearing at " + p.toShortString());
             }
 
-            BlockState state = this.init_BlockState_BlockPos(p);
+            BlockState state = this.readState(p);
             if (AiSchematicActions.init(state)
                && (
                   !state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
@@ -742,7 +742,7 @@ final class AiPrintSupply {
                }
 
                if (this.auditHull.encloses(p.getX(), p.getY(), p.getZ())) {
-                  this.init_List.add(p);
+                  this.terrainCells.add(p);
                }
             }
          }
@@ -756,57 +756,57 @@ final class AiPrintSupply {
          }
 
          if (relevant) {
-            this.load_Set.add(pos.asLong());
+            this.protectedCells.add(pos.asLong());
 
             for (Direction d : AiPrintSupply.DIRECTIONS) {
-               this.load_Set.add(pos.relative(d).asLong());
+               this.protectedCells.add(pos.relative(d).asLong());
             }
 
-            this.init_V_J((long)(pos.getX() >> 4) << 32 | pos.getZ() >> 4 & 4294967295L);
+            this.noteChunkChanged((long)(pos.getX() >> 4) << 32 | pos.getZ() >> 4 & 4294967295L);
          }
       }
 
-      void init_V_J(long key) {
+      void noteChunkChanged(long key) {
          Set<Long> owners = this.ownersByChunk.get(key);
          if (owners != null && !owners.isEmpty()) {
-            this.write_Set.add(key);
+            this.dirtyChunks.add(key);
             this.init(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, key), owners);
          }
       }
 
       private void init(AiPrintSupply.Inner_CachePool.Inner_DataUtil change, Set<Long> owners) {
-         if (owners != null && !owners.isEmpty() && this.init_Iterator == null && !this.init_LinkedHashMap.containsKey(change)) {
-            if (this.init_LinkedHashMap.size() >= 128) {
-               this.init_LinkedHashMap.clear();
-               this.init_Iterator = this.read_Set.iterator();
+         if (owners != null && !owners.isEmpty() && this.fullRecheck == null && !this.pendingChanges.containsKey(change)) {
+            if (this.pendingChanges.size() >= 128) {
+               this.pendingChanges.clear();
+               this.fullRecheck = this.supportCandidates.iterator();
             } else {
-               this.init_LinkedHashMap.put(change, owners.iterator());
+               this.pendingChanges.put(change, owners.iterator());
             }
          }
       }
 
       private boolean load() {
-         if (this.init_Iterator != null) {
-            if (this.init_Iterator.hasNext()) {
-               this.load_Set.add(this.init_Iterator.next());
+         if (this.fullRecheck != null) {
+            if (this.fullRecheck.hasNext()) {
+               this.protectedCells.add(this.fullRecheck.next());
             } else {
-               this.init_Iterator = null;
-               this.write_Set.clear();
+               this.fullRecheck = null;
+               this.dirtyChunks.clear();
             }
 
             return true;
          } else {
-            if (this.init_LinkedHashMap.isEmpty()) {
+            if (this.pendingChanges.isEmpty()) {
                return false;
             }
 
-            Entry<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> entry = this.init_LinkedHashMap.entrySet().iterator().next();
+            Entry<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> entry = this.pendingChanges.entrySet().iterator().next();
             if (entry.getValue().hasNext()) {
-               this.load_Set.add(entry.getValue().next());
+               this.protectedCells.add(entry.getValue().next());
             } else {
-               this.init_LinkedHashMap.remove(entry.getKey());
+               this.pendingChanges.remove(entry.getKey());
                if (entry.getKey().chunk()) {
-                  this.write_Set.remove(entry.getKey().key());
+                  this.dirtyChunks.remove(entry.getKey().key());
                }
             }
 
@@ -815,7 +815,7 @@ final class AiPrintSupply {
       }
 
       boolean init_Z_BlockPos(BlockPos candidate) {
-         if (!this.init_Predicate.test(candidate)) {
+         if (!this.loaded.test(candidate)) {
             return true;
          }
 
@@ -830,27 +830,27 @@ final class AiPrintSupply {
                   || args.length <= 0
                   || !(args[0] instanceof BlockPos p && (name.equals("getBlockState") || name.equals("getFluidState") || name.equals("isEmptyBlock")))) {
                   if (name.equals("getMinY")) {
-                     return this.init_LevelReader.getMinY();
+                     return this.world.getMinY();
                   } else if (name.equals("getHeight")) {
-                     return this.init_LevelReader.getHeight();
+                     return this.world.getHeight();
                   } else if (method.isDefault()) {
                      return InvocationHandler.invokeDefault(proxy, method, args);
                   } else {
                      throw AiPrintSupply.Inner_CachePool.Inner_StreamUtil.init;
                   }
-               } else if (++queries[0] <= 32 && this.init_Predicate.test(p)) {
+               } else if (++queries[0] <= 32 && this.loaded.test(p)) {
                   this.pop++;
                   reads.add(p.asLong());
                   Object var10000;
                   switch (name) {
                      case "getBlockState":
-                        var10000 = this.init_LevelReader.getBlockState(p);
+                        var10000 = this.world.getBlockState(p);
                         break;
                      case "getFluidState":
-                        var10000 = this.init_LevelReader.getFluidState(p);
+                        var10000 = this.world.getFluidState(p);
                         break;
                      default:
-                        var10000 = this.init_LevelReader.getBlockState(p).isAir();
+                        var10000 = this.world.getBlockState(p).isAir();
                   }
 
                   return var10000;
@@ -872,13 +872,13 @@ final class AiPrintSupply {
                   break;
                } else {
                   long key = (Long)var15.next();
-                  this.readsByCell.computeIfAbsent(key, ignored -> AiPrintSupply.load_Set()).add(candidate.asLong());
+                  this.readsByCell.computeIfAbsent(key, ignored -> AiPrintSupply.newCellSet()).add(candidate.asLong());
                   long chunk = (long)(BlockPos.getX(key) >> 4) << 32 | BlockPos.getZ(key) >> 4 & 4294967295L;
-                  Set<Long> owners = this.ownersByChunk.computeIfAbsent(chunk, ignored -> AiPrintSupply.load_Set());
+                  Set<Long> owners = this.ownersByChunk.computeIfAbsent(chunk, ignored -> AiPrintSupply.newCellSet());
                   boolean added = owners.add(candidate.asLong());
                   this.chunksByCell.computeIfAbsent(candidate.asLong(), ignored -> ConcurrentHashMap.newKeySet()).add(chunk);
-                  if (added && this.write_Set.contains(chunk) && this.init_Iterator == null) {
-                     this.init_LinkedHashMap.put(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, chunk), owners.iterator());
+                  if (added && this.dirtyChunks.contains(chunk) && this.fullRecheck == null) {
+                     this.pendingChanges.put(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, chunk), owners.iterator());
                   }
                }
             }
@@ -898,7 +898,7 @@ final class AiPrintSupply {
    }
 
    static final class Inner_ConfigStore<V> extends AbstractMap<Long, V> {
-      private final ConcurrentSkipListMap<Long, Map<Long, V>> init_ConcurrentSkipList = new ConcurrentSkipListMap<>();
+      private final ConcurrentSkipListMap<Long, Map<Long, V>> bySection = new ConcurrentSkipListMap<>();
       private final AtomicInteger size = new AtomicInteger();
 
       private static long init(long key) {
@@ -906,7 +906,7 @@ final class AiPrintSupply {
       }
 
       public V init(Long key, V value) {
-         Map<Long, V> map = this.init_ConcurrentSkipList.computeIfAbsent(init(key), ignored -> new ConcurrentHashMap<>());
+         Map<Long, V> map = this.bySection.computeIfAbsent(init(key), ignored -> new ConcurrentHashMap<>());
          V before = map.put(key, value);
          if (before == null) {
             this.size.incrementAndGet();
@@ -923,7 +923,7 @@ final class AiPrintSupply {
       @Override
       public V get(Object key) {
          if (key instanceof Long value) {
-            Map<Long, V> map = this.init_ConcurrentSkipList.get(init(value));
+            Map<Long, V> map = this.bySection.get(init(value));
             return map == null ? null : map.get(value);
          } else {
             return null;
@@ -950,7 +950,7 @@ final class AiPrintSupply {
 
             @Override
             public Iterator<Entry<Long, V>> iterator() {
-               final Iterator<Map<Long, V>> outer = Inner_ConfigStore.this.init_ConcurrentSkipList.values().iterator();
+               final Iterator<Map<Long, V>> outer = Inner_ConfigStore.this.bySection.values().iterator();
                return new Iterator<Entry<Long, V>>() {
                   Iterator<Entry<Long, V>> init = Collections.emptyIterator();
 
@@ -981,9 +981,9 @@ final class AiPrintSupply {
    }
 
    static final class Inner_DataUtil {
-      static final int init_I = 40817;
+      static final int CUBE_CELLS = 40817;
       private static final int RADIUS = 24;
-      final BlockPos init_BlockPos;
+      final BlockPos center;
       final ClientLevel level;
       final int minChunkX;
       final int minChunkZ;
@@ -993,13 +993,13 @@ final class AiPrintSupply {
       int load;
 
       Inner_DataUtil(BlockPos center, LevelReader world) {
-         this.init_BlockPos = center.immutable();
+         this.center = center.immutable();
          this.level = world instanceof ClientLevel clientLevel ? clientLevel : null;
          this.minChunkX = center.getX() - RADIUS >> 4;
          this.minChunkZ = center.getZ() - RADIUS >> 4;
          this.chunkWidth = (center.getX() + RADIUS >> 4) - this.minChunkX + 1;
          int chunkDepth = (center.getZ() + RADIUS >> 4) - this.minChunkZ + 1;
-         this.total = this.level == null ? init_I : this.chunkWidth * chunkDepth;
+         this.total = this.level == null ? CUBE_CELLS : this.chunkWidth * chunkDepth;
       }
 
       boolean init() {
@@ -1028,16 +1028,16 @@ final class AiPrintSupply {
             }
 
             p = this.pending.next();
-            if (Math.abs(p.getX() - this.init_BlockPos.getX()) > RADIUS || Math.abs(p.getZ() - this.init_BlockPos.getZ()) > RADIUS) {
+            if (Math.abs(p.getX() - this.center.getX()) > RADIUS || Math.abs(p.getZ() - this.center.getZ()) > RADIUS) {
                return;
             }
          } else {
             int i = this.load++;
-            p = this.init_BlockPos.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
+            p = this.center.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
          }
 
-         if (!prep.cells.containsKey(p.asLong()) && prep.init_Predicate.test(p) && prep.init_BlockState_BlockPos(p).getBlock() instanceof ShulkerBoxBlock) {
-            prep.init_Set.add(p.asLong());
+         if (!prep.cells.containsKey(p.asLong()) && prep.loaded.test(p) && prep.readState(p).getBlock() instanceof ShulkerBoxBlock) {
+            prep.stockCells.add(p.asLong());
          }
       }
    }
@@ -1186,19 +1186,19 @@ final class AiPrintSupply {
    }
 
    static final class Inner_TaskQueue {
-      Item init_Item;
-      int init_I;
-      final Set<Long> init_Set = new HashSet<>();
-      final List<ItemStack> init_List = new ArrayList<>();
+      Item item;
+      int misses;
+      final Set<Long> triedSources = new HashSet<>();
+      final List<ItemStack> triedBoxes = new ArrayList<>();
 
       boolean init(Item wanted, int available) {
          if (wanted != null && wanted != Items.AIR && available <= 0) {
-            if (this.init_Item != wanted) {
+            if (this.item != wanted) {
                this.init();
-               this.init_Item = wanted;
+               this.item = wanted;
             }
 
-            return ++this.init_I >= 10;
+            return ++this.misses >= 10;
          } else {
             this.init();
             return false;
@@ -1206,14 +1206,14 @@ final class AiPrintSupply {
       }
 
       boolean init(long key) {
-         return this.init_Set.size() < 3 && this.init_Set.add(key);
+         return this.triedSources.size() < 3 && this.triedSources.add(key);
       }
 
       void init() {
-         this.init_Item = null;
-         this.init_I = 0;
-         this.init_Set.clear();
-         this.init_List.clear();
+         this.item = null;
+         this.misses = 0;
+         this.triedSources.clear();
+         this.triedBoxes.clear();
       }
    }
 }

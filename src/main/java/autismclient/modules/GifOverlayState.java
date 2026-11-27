@@ -5,13 +5,13 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class GifOverlayState {
-   private static volatile GifOverlayState.Inner_DataUtil init = GifOverlayState.Inner_DataUtil.init_L_DataUtil;
+   private static volatile GifOverlayState.Inner_DataUtil init = GifOverlayState.Inner_DataUtil.DEFAULTS;
 
    private GifOverlayState() {
    }
 
    static void init(GifOverlayState.Inner_DataUtil snapshot) {
-      init = snapshot == null ? GifOverlayState.Inner_DataUtil.init_L_DataUtil : snapshot;
+      init = snapshot == null ? GifOverlayState.Inner_DataUtil.DEFAULTS : snapshot;
    }
 
    private static boolean update() {
@@ -20,12 +20,12 @@ public final class GifOverlayState {
 
    public static boolean isCapeActive() {
       GifOverlayState.Inner_DataUtil s = init;
-      return s.init_Z() && s.load_Z() && (!s.init_Str().isBlank() || !s.init_Map().isEmpty()) && update();
+      return s.enabled() && s.capeEnabled() && (!s.capePath().isBlank() || !s.capeOverrides().isEmpty()) && update();
    }
 
    public static boolean isShieldActive() {
       GifOverlayState.Inner_DataUtil s = init;
-      return s.init_Z() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
+      return s.enabled() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
    }
 
    public static String init(String playerName) {
@@ -38,12 +38,12 @@ public final class GifOverlayState {
 
    private static String init(GifOverlayState.Inner_DataUtil s, String playerName, boolean cape) {
       if (playerName != null && !playerName.isBlank()) {
-         if (s.init_Z() && (cape ? s.load_Z() : s.read_Z()) && update()) {
-            String custom = (cape ? s.init_Map() : s.load_Map()).get(playerName.trim().toLowerCase(Locale.ROOT));
+         if (s.enabled() && (cape ? s.capeEnabled() : s.read_Z()) && update()) {
+            String custom = (cape ? s.capeOverrides() : s.load_Map()).get(playerName.trim().toLowerCase(Locale.ROOT));
             if (custom != null && !custom.isBlank()) {
                return custom;
             } else {
-               String path = cape ? s.init_Str() : s.load_Str();
+               String path = cape ? s.capePath() : s.load_Str();
                if (path.isBlank()) {
                   return null;
                } else {
@@ -96,10 +96,10 @@ public final class GifOverlayState {
    }
 
    record Inner_DataUtil(
-      boolean init_Z,
-      boolean load_Z,
+      boolean enabled,
+      boolean capeEnabled,
       boolean read_Z,
-      String init_Str,
+      String capePath,
       String load_Str,
       String read_Str,
       String write_Str,
@@ -109,11 +109,11 @@ public final class GifOverlayState {
       boolean update_Z,
       double read_D,
       double write_D,
-      Map<String, String> init_Map,
+      Map<String, String> capeOverrides,
       Map<String, String> load_Map,
       String update_Str
    ) {
-      private static final GifOverlayState.Inner_DataUtil init_L_DataUtil = new GifOverlayState.Inner_DataUtil(
+      private static final GifOverlayState.Inner_DataUtil DEFAULTS = new GifOverlayState.Inner_DataUtil(
          false, false, false, "", "", "Self", "Self", 0.0, 0.0, false, false, 1.0, 1.0, Map.of(), Map.of(), ""
       );
    }

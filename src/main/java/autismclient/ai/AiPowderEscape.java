@@ -55,10 +55,10 @@ final class AiPowderEscape {
    static AiOperation init() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final long init_J = System.nanoTime() + 10000000000L;
-         BlockPos init_BlockPos;
-         int init_I;
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         final long deadline = System.nanoTime() + 10000000000L;
+         BlockPos exitTarget;
+         int retargetTicks;
 
          @Override
          public AiOperation.Result tick() {
@@ -70,26 +70,26 @@ final class AiPowderEscape {
                return this.init(AiOperation.Status.SUCCEEDED, "Out of the powder snow");
             }
 
-            if (System.nanoTime() > this.init_J) {
+            if (System.nanoTime() > this.deadline) {
                return this.init(AiOperation.Status.FAILED, "Still in powder snow");
             }
 
-            if (--this.init_I <= 0) {
-               this.init_BlockPos = AiPowderEscape.init_BlockPos(mc);
-               this.init_I = 10;
+            if (--this.retargetTicks <= 0) {
+               this.exitTarget = AiPowderEscape.init_BlockPos(mc);
+               this.retargetTicks = 10;
             }
 
-            if (this.init_BlockPos != null) {
-               this.init_DataUtil.aimAt(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.5, this.init_BlockPos.getZ() + 0.5));
-               this.init_DataUtil.tick();
+            if (this.exitTarget != null) {
+               this.aim.aimAt(new Vec3(this.exitTarget.getX() + 0.5, this.exitTarget.getY() + 0.5, this.exitTarget.getZ() + 0.5));
+               this.aim.tick();
             }
 
-            mc.options.keyUp.setDown(this.init_BlockPos != null);
+            mc.options.keyUp.setDown(this.exitTarget != null);
             mc.options.keyJump.setDown(true);
             mc.options.keyShift.setDown(false);
             return AiGameOperations.result(
                AiOperation.Status.RUNNING,
-               "Climbing out of powder snow" + (this.init_BlockPos == null ? "" : " to " + this.init_BlockPos.toShortString()),
+               "Climbing out of powder snow" + (this.exitTarget == null ? "" : " to " + this.exitTarget.toShortString()),
                new JsonObject()
             );
          }
@@ -102,7 +102,7 @@ final class AiPowderEscape {
          void init() {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
-            this.init_DataUtil.clear();
+            this.aim.clear();
          }
 
          @Override

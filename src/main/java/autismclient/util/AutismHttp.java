@@ -17,10 +17,10 @@ public final class AutismHttp {
    }
 
    public static JsonObject getJson(String url, String bearerToken) {
-      return init_JsonObject(url, bearerToken, Map.of());
+      return getJsonWithHeaders(url, bearerToken, Map.of());
    }
 
-   public static JsonObject load_JsonObject(String url, String bearerToken) {
+   public static JsonObject getJsonWithBearer(String url, String bearerToken) {
       HttpURLConnection connection = null;
       try {
          connection = load(url, 15000);
@@ -40,7 +40,7 @@ public final class AutismHttp {
       }
    }
 
-   public static JsonObject init_JsonObject(String url, String bearerToken, Map<String, String> headers) {
+   public static JsonObject getJsonWithHeaders(String url, String bearerToken, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = init(url);
@@ -61,11 +61,11 @@ public final class AutismHttp {
       }
    }
 
-   public static AutismHttp.Inner_DataUtil init_AutismHttp_DataUti(String url, String bearerToken) {
-      return init_AutismHttp_DataUti(url, bearerToken, Map.of());
+   public static AutismHttp.Inner_DataUtil getResponse(String url, String bearerToken) {
+      return getResponse(url, bearerToken, Map.of());
    }
 
-   public static AutismHttp.Inner_DataUtil init_AutismHttp_DataUti(String url, String bearerToken, Map<String, String> headers) {
+   public static AutismHttp.Inner_DataUtil getResponse(String url, String bearerToken, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = init(url);
@@ -77,7 +77,7 @@ public final class AutismHttp {
          init(connection, headers);
          connection.setRequestProperty("Accept", "application/json");
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, init_JsonObject(connection, code));
+         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
       } catch (Exception e) {
          return new AutismHttp.Inner_DataUtil(-1, null);
       } finally {
@@ -87,7 +87,7 @@ public final class AutismHttp {
       }
    }
 
-   public static JsonObject read_JsonObject(String url, String body) {
+   public static JsonObject postJson(String url, String body) {
       HttpURLConnection connection = null;
       try {
          connection = init(url);
@@ -105,7 +105,7 @@ public final class AutismHttp {
       }
    }
 
-   public static AutismHttp.Inner_DataUtil load_AutismHttp_DataUti(String url, String body) {
+   public static AutismHttp.Inner_DataUtil postResponse(String url, String body) {
       return init(url, body, 15000, Map.of());
    }
 
@@ -128,7 +128,7 @@ public final class AutismHttp {
          connection.setDoOutput(true);
          init(connection, body);
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, init_JsonObject(connection, code));
+         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
       } catch (Exception e) {
          return new AutismHttp.Inner_DataUtil(-1, null);
       } finally {
@@ -147,7 +147,7 @@ public final class AutismHttp {
       return chunk;
    }
 
-   private static JsonObject init_JsonObject(HttpURLConnection connection, int code) {
+   private static JsonObject readJsonBody(HttpURLConnection connection, int code) {
       try (InputStream input = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream()) {
          if (input == null) {
             return null;
@@ -198,7 +198,7 @@ public final class AutismHttp {
          connection.setDoOutput(true);
          init(connection, body);
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, init_JsonObject(connection, code));
+         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
       } catch (Exception e) {
          return new AutismHttp.Inner_DataUtil(-1, null);
       } finally {
@@ -216,17 +216,17 @@ public final class AutismHttp {
       Minecraft mc = Minecraft.getInstance();
       java.net.Proxy proxy = mc == null ? java.net.Proxy.NO_PROXY : mc.getProxy();
       HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(proxy);
-      init_V(connection, timeoutMs);
+      applyTimeouts(connection, timeoutMs);
       return connection;
    }
 
    private static HttpURLConnection load(String url, int timeoutMs) throws IOException {
       HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MinecraftProxySelector.currentProxy());
-      init_V(connection, timeoutMs);
+      applyTimeouts(connection, timeoutMs);
       return connection;
    }
 
-   private static void init_V(HttpURLConnection connection, int timeoutMs) {
+   private static void applyTimeouts(HttpURLConnection connection, int timeoutMs) {
       connection.setConnectTimeout(timeoutMs);
       connection.setReadTimeout(timeoutMs);
       connection.setRequestProperty(
@@ -272,11 +272,11 @@ public final class AutismHttp {
    }
 
    public record Inner_DataUtil(int status, JsonObject body) {
-      public boolean init_Z() {
+      public boolean isSuccess() {
          return this.status >= 200 && this.status < 300;
       }
 
-      public String init_Str() {
+      public String errorMessage() {
          try {
             return this.body != null && this.body.has("error") ? this.body.get("error").getAsString() : "";
          } catch (Exception e) {

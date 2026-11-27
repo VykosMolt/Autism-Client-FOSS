@@ -18,7 +18,7 @@ import org.joml.Vector3f;
 
 public final class TrajectoryWorldRenderer {
    private static final int init_I = -44976;
-   private static final long[] init_JArr = new long[64];
+   private static final long[] frameNanos = new long[64];
    private static int load;
    private static int read;
    private static int write;
@@ -37,7 +37,7 @@ public final class TrajectoryWorldRenderer {
    private TrajectoryWorldRenderer() {
    }
 
-   public static void init_V() {
+   public static void resetStats() {
       open = 0;
       close = 0;
       flush = 0;
@@ -48,11 +48,11 @@ public final class TrajectoryWorldRenderer {
       load = 0;
    }
 
-   public static double init_D() {
+   public static double averageFrameMs() {
       long sum = 0L;
 
       for (int i = 0; i < read; i++) {
-         sum += init_JArr[i];
+         sum += frameNanos[i];
       }
 
       return read == 0 ? 0.0 : sum / (read * 1000000.0);
@@ -208,9 +208,9 @@ public final class TrajectoryWorldRenderer {
             PearlGhostRenderer.init(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.68, 1);
          }
 
-         init_JArr[load] = System.nanoTime() - start;
-         load = (load + 1) % init_JArr.length;
-         read = Math.min(read + 1, init_JArr.length);
+         frameNanos[load] = System.nanoTime() - start;
+         load = (load + 1) % frameNanos.length;
+         read = Math.min(read + 1, frameNanos.length);
       }
    }
 

@@ -10,12 +10,12 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.protocol.Packet;
 
 public final class ProtectorFeatureFlags {
-   private static final String init_Str = "opsec";
-   private static final String load_Str = "exploitpreventer";
+   private static final String OPSEC_ID = "opsec";
+   private static final String EXPLOIT_PREVENTER_ID = "exploitpreventer";
    private static final boolean init_Z;
    private static final boolean load_Z;
-   private static final int init_I = 1;
-   private static final int load_I = 4;
+   private static final int FLAG_ENABLED = 1;
+   private static final int FLAG_FILTER_CHANNELS = 4;
    private static final int read = 8;
    private static final int write = 16;
    private static final int update = 32;
@@ -23,8 +23,8 @@ public final class ProtectorFeatureFlags {
    private static final int flush = 128;
    private static final int close = 256;
    private static final int open = 512;
-   private static final ProtectorFeatureFlags.Inner_DataUtil init_HashUtil_DataUtil = new ProtectorFeatureFlags.Inner_DataUtil(false, null, 0, 0);
-   private static volatile ProtectorFeatureFlags.Inner_DataUtil load_HashUtil_DataUtil = init_HashUtil_DataUtil;
+   private static final ProtectorFeatureFlags.Inner_DataUtil EMPTY_STATE = new ProtectorFeatureFlags.Inner_DataUtil(false, null, 0, 0);
+   private static volatile ProtectorFeatureFlags.Inner_DataUtil cachedState = EMPTY_STATE;
    private static final int poll = 1024;
    private static final Map<Object, Boolean> init_Map;
 
@@ -93,31 +93,31 @@ public final class ProtectorFeatureFlags {
 
    public static void refresh(AutismConfig config) {
       if (config == null) {
-         load_HashUtil_DataUtil = init_HashUtil_DataUtil;
+         cachedState = EMPTY_STATE;
       } else {
-         int sourceFlags = init_I(config);
-         ProtectorFeatureFlags.Inner_DataUtil current = load_HashUtil_DataUtil;
-         if (!current.init_Z || current.init_AutismConfig != config || current.init_I != sourceFlags) {
-            load_HashUtil_DataUtil = new ProtectorFeatureFlags.Inner_DataUtil(true, config, sourceFlags, init(sourceFlags, init_Z, read()));
+         int sourceFlags = flagsOf(config);
+         ProtectorFeatureFlags.Inner_DataUtil current = cachedState;
+         if (!current.init_Z || current.config != config || current.flags != sourceFlags) {
+            cachedState = new ProtectorFeatureFlags.Inner_DataUtil(true, config, sourceFlags, init(sourceFlags, init_Z, read()));
          }
       }
    }
 
    private static boolean init(int flag) {
-      return (init_HashUtil_DataUtil().load & flag) != 0;
+      return (currentState().load & flag) != 0;
    }
 
-   private static ProtectorFeatureFlags.Inner_DataUtil init_HashUtil_DataUtil() {
-      ProtectorFeatureFlags.Inner_DataUtil state = load_HashUtil_DataUtil;
+   private static ProtectorFeatureFlags.Inner_DataUtil currentState() {
+      ProtectorFeatureFlags.Inner_DataUtil state = cachedState;
       if (state.init_Z) {
          return state;
       }
 
       refresh(AutismConfig.getGlobal());
-      return load_HashUtil_DataUtil;
+      return cachedState;
    }
 
-   static int init_I(AutismConfig config) {
+   static int flagsOf(AutismConfig config) {
       int flags = 0;
       if (config.protectorEnabled) {
          flags |= 1;
@@ -172,7 +172,7 @@ public final class ProtectorFeatureFlags {
    }
 
    static Object identity() {
-      return load_HashUtil_DataUtil;
+      return cachedState;
    }
 
    public static void markDirect(Packet<?> packet) {
@@ -217,6 +217,6 @@ public final class ProtectorFeatureFlags {
       init_Map = Collections.synchronizedMap(new IdentityHashMap<>());
    }
 
-   private record Inner_DataUtil(boolean init_Z, AutismConfig init_AutismConfig, int init_I, int load) {
+   private record Inner_DataUtil(boolean init_Z, AutismConfig config, int flags, int load) {
    }
 }

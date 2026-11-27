@@ -747,38 +747,38 @@ public final class AiAddons {
 
       final AiAddons.Inner_ConfigStore meta = init(id, dir);
       return new AiOperation() {
-         final long init_J;
-         final AtomicReference<Process> init_AtomicReference;
-         final AtomicBoolean init_AtomicBoolean;
-         volatile AiAddons.Inner_DataUtil init_CachePool_DataUtil;
-         Thread init_Thread;
+         final long buildDeadline;
+         final AtomicReference<Process> compilerProcess;
+         final AtomicBoolean cancelRequested;
+         volatile AiAddons.Inner_DataUtil outcome;
+         Thread worker;
 
          {
-            this.init_J = System.nanoTime() + AiAddons.BUILD_TIMEOUT_NANOS;
-            this.init_AtomicReference = new AtomicReference<>();
-            this.init_AtomicBoolean = new AtomicBoolean();
+            this.buildDeadline = System.nanoTime() + AiAddons.BUILD_TIMEOUT_NANOS;
+            this.compilerProcess = new AtomicReference<>();
+            this.cancelRequested = new AtomicBoolean();
          }
 
          @Override
          public AiOperation.Result tick() {
-            if (this.init_AtomicBoolean.get()) {
+            if (this.cancelRequested.get()) {
                return AiAddons.result(AiOperation.Status.CANCELLED, "Addon build cancelled", AiJson.objectOf("id", id));
             }
 
-            if (this.init_Thread == null) {
-               this.init_Thread = new Thread(
-                  () -> this.init_CachePool_DataUtil = AiAddons.init(
-                     dir, meta, sources, locator.find(), classpath.get(), this.init_AtomicReference, this.init_AtomicBoolean::get
+            if (this.worker == null) {
+               this.worker = new Thread(
+                  () -> this.outcome = AiAddons.init(
+                     dir, meta, sources, locator.find(), classpath.get(), this.compilerProcess, this.cancelRequested::get
                   ),
                   "ai-addon-build-" + id
                );
-               this.init_Thread.setDaemon(true);
-               this.init_Thread.start();
+               this.worker.setDaemon(true);
+               this.worker.start();
             }
 
-            AiAddons.Inner_DataUtil done = this.init_CachePool_DataUtil;
+            AiAddons.Inner_DataUtil done = this.outcome;
             if (done == null) {
-               if (System.nanoTime() > this.init_J) {
+               if (System.nanoTime() > this.buildDeadline) {
                   this.cancel();
                   return AiAddons.result(AiOperation.Status.TIMED_OUT, "Addon build exceeded 120s", AiJson.objectOf("id", id));
                } else {
@@ -810,8 +810,8 @@ public final class AiAddons {
 
          @Override
          public void cancel() {
-            this.init_AtomicBoolean.set(true);
-            Process process = this.init_AtomicReference.get();
+            this.cancelRequested.set(true);
+            Process process = this.compilerProcess.get();
             if (process != null && process.isAlive()) {
                long self = ProcessHandle.current().pid();
 
@@ -833,7 +833,7 @@ public final class AiAddons {
                }
             }
 
-            Thread w = this.init_Thread;
+            Thread w = this.worker;
             if (w != null) {
                w.interrupt();
             }

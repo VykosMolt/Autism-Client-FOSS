@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 import net.minecraft.world.phys.Vec3;
 
 public final class EntityControlModule extends Module {
-   private static final String[] init_StrArr = new String[]{
+   private static final String[] DEFAULT_ENTITIES = new String[]{
       "minecraft:pig",
       "minecraft:strider",
       "minecraft:horse",
@@ -51,18 +51,18 @@ public final class EntityControlModule extends Module {
       "minecraft:mangrove_chest_boat",
       "minecraft:bamboo_chest_raft"
    };
-   private static EntityControlModule init_G;
-   private final Set<String> init_Set = new HashSet<>();
-   private String init_Str = "";
-   private int init_I;
+   private static EntityControlModule INSTANCE;
+   private final Set<String> allowedEntities = new HashSet<>();
+   private String lastEntitiesValue = "";
+   private int antiKickDelay;
    private double init_D = 1.7976931348623157E308;
    private boolean init_Z;
    private boolean load;
 
    public EntityControlModule() {
       super("entity-control", "EntityControl", ae.load_ae, "Controls selected rideable entities.");
-      init_G = this;
-      this.add(RegistryListSetting.entityTypes("entities", "Entities", init_Str_2()).group("Control").description("Choose controlled mounts.").build());
+      INSTANCE = this;
+      this.add(RegistryListSetting.entityTypes("entities", "Entities", defaultEntitiesValue()).group("Control").description("Choose controlled mounts.").build());
       this.add(new BoolSetting("spoof-saddle", "Spoof Saddle", true).group("Control").description("Control without saddles.").build());
       this.add(new BoolSetting("max-jump", "Max Jump", true).group("Control").description("Always charge fully.").build());
       this.add(new BoolSetting("lock-yaw", "Lock Yaw", true).group("Control").description("Match your view.").build());
@@ -113,35 +113,35 @@ public final class EntityControlModule extends Module {
 
    @Override
    public void onEnable() {
-      this.load_V_5();
-      this.init_V_6();
+      this.resetAntiKick();
+      this.refreshEntityFilter();
    }
 
    @Override
    public void onDisable() {
-      this.load_V_5();
+      this.resetAntiKick();
    }
 
    @Override
    public void onGameLeft() {
-      this.load_V_5();
+      this.resetAntiKick();
    }
 
    @Override
    protected void onOptionValueChanged(String optionId) {
       if ("entities".equals(optionId)) {
-         this.init_V_6();
+         this.refreshEntityFilter();
       }
 
       if ("anti-kick-delay".equals(optionId)) {
-         this.init_I = this.integer("anti-kick-delay");
+         this.antiKickDelay = this.integer("anti-kick-delay");
       }
    }
 
    @Override
    protected void onSettingsReset() {
-      this.init_V_6();
-      this.load_V_5();
+      this.refreshEntityFilter();
+      this.resetAntiKick();
    }
 
    @Override
@@ -160,8 +160,8 @@ public final class EntityControlModule extends Module {
             this.init_Z = false;
          }
 
-         if (this.init_I > 0) {
-            this.init_I--;
+         if (this.antiKickDelay > 0) {
+            this.antiKickDelay--;
          }
       }
    }
@@ -176,7 +176,7 @@ public final class EntityControlModule extends Module {
          Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
          if (this.load(vehicle) && !vehicle.isFlyingVehicle() && write(vehicle)) {
             double currentY = Compat263.sbMoveVehiclePos(movePacket).y;
-            if (this.init_I <= 0 && !this.init_Z && this.init_Z_D(currentY)) {
+            if (this.antiKickDelay <= 0 && !this.init_Z && this.init_Z_D(currentY)) {
                double baseline = this.init_D == 1.7976931348623157E308 ? currentY : this.init_D;
                ServerboundMoveVehiclePacket lowered = Compat263.newServerboundMoveVehiclePacket(
                   new Vec3(Compat263.sbMoveVehiclePos(movePacket).x, baseline - 0.0313, Compat263.sbMoveVehiclePos(movePacket).z),
@@ -186,7 +186,7 @@ public final class EntityControlModule extends Module {
                );
                this.init_V_ServerboundMoveVeh(lowered);
                this.init_Z = true;
-               this.init_I = this.integer("anti-kick-delay");
+               this.antiKickDelay = this.integer("anti-kick-delay");
                this.init_D = currentY;
                return true;
             } else {
@@ -208,8 +208,8 @@ public final class EntityControlModule extends Module {
    }
 
    static Vec3 init(Entity vehicle, MoverType type, Vec3 movement) {
-      EntityControlModule module = init_G;
-      if (init_Z_G(module) && type == MoverType.SELF && module.load(vehicle)) {
+      EntityControlModule module = INSTANCE;
+      if (isActiveFor(module) && type == MoverType.SELF && module.load(vehicle)) {
          double velocityX = movement.x;
          double velocityY = movement.y;
          double velocityZ = movement.z;
@@ -220,7 +220,7 @@ public final class EntityControlModule extends Module {
          if (module.bool("speed")
             && (!module.bool("only-on-ground") || vehicle.onGround() || vehicle.isFlyingVehicle())
             && (module.bool("in-water") || !vehicle.isInWater())) {
-            Vec3 horizontal = init_Vec3_D(module.decimal("horizontal-speed"));
+            Vec3 horizontal = inputVelocity(module.decimal("horizontal-speed"));
             velocityX = horizontal.x;
             velocityZ = horizontal.z;
          }
@@ -243,30 +243,30 @@ public final class EntityControlModule extends Module {
    }
 
    public static boolean init_Z_7() {
-      EntityControlModule module = init_G;
-      return init_Z_G(module) && module.bool("lock-yaw") && module.load(MC.player == null ? null : MC.player.getVehicle());
+      EntityControlModule module = INSTANCE;
+      return isActiveFor(module) && module.bool("lock-yaw") && module.load(MC.player == null ? null : MC.player.getVehicle());
    }
 
    public static boolean spoofsSaddle(Mob mob) {
-      EntityControlModule module = init_G;
-      return init_Z_G(module) && module.bool("spoof-saddle") && module.read(mob);
+      EntityControlModule module = INSTANCE;
+      return isActiveFor(module) && module.bool("spoof-saddle") && module.read(mob);
    }
 
    public static boolean load_Z_3() {
-      EntityControlModule module = init_G;
+      EntityControlModule module = INSTANCE;
       Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
-      return init_Z_G(module) && module.bool("max-jump") && module.load(vehicle);
+      return isActiveFor(module) && module.bool("max-jump") && module.load(vehicle);
    }
 
    public static boolean read() {
-      EntityControlModule module = init_G;
+      EntityControlModule module = INSTANCE;
       Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
-      return init_Z_G(module) && module.bool("fly") && vehicle instanceof PlayerRideableJumping && module.load(vehicle);
+      return isActiveFor(module) && module.bool("fly") && vehicle instanceof PlayerRideableJumping && module.load(vehicle);
    }
 
    public static boolean init_Z_Entity_2(Entity entity) {
-      EntityControlModule module = init_G;
-      return init_Z_G(module)
+      EntityControlModule module = INSTANCE;
+      return isActiveFor(module)
          && entity != null
          && MC.player != null
          && MC.player.getVehicle() == entity
@@ -274,10 +274,10 @@ public final class EntityControlModule extends Module {
          && module.read(entity);
    }
 
-   private static String init_Str_2() {
+   private static String defaultEntitiesValue() {
       StringBuilder out = new StringBuilder();
 
-      for (String id : init_StrArr) {
+      for (String id : DEFAULT_ENTITIES) {
          Identifier parsed = Identifier.tryParse(id);
          if (parsed != null && BuiltInRegistries.ENTITY_TYPE.getOptional(parsed).isPresent()) {
             if (!out.isEmpty()) {
@@ -291,7 +291,7 @@ public final class EntityControlModule extends Module {
       return out.toString();
    }
 
-   private static boolean init_Z_G(EntityControlModule module) {
+   private static boolean isActiveFor(EntityControlModule module) {
       return module != null && module.isEnabled() && !aD.read_Z() && MC.player != null;
    }
 
@@ -304,22 +304,22 @@ public final class EntityControlModule extends Module {
          return false;
       }
 
-      this.init_V_6();
+      this.refreshEntityFilter();
       Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-      return id != null && this.init_Set.contains(id.toString());
+      return id != null && this.allowedEntities.contains(id.toString());
    }
 
-   private void init_V_6() {
+   private void refreshEntityFilter() {
       String current = this.value("entities");
-      if (!current.equals(this.init_Str)) {
-         this.init_Str = current;
-         this.init_Set.clear();
-         this.init_Set.addAll(this.list("entities"));
+      if (!current.equals(this.lastEntitiesValue)) {
+         this.lastEntitiesValue = current;
+         this.allowedEntities.clear();
+         this.allowedEntities.addAll(this.list("entities"));
       }
    }
 
-   private void load_V_5() {
-      this.init_I = this.integer("anti-kick-delay");
+   private void resetAntiKick() {
+      this.antiKickDelay = this.integer("anti-kick-delay");
       this.init_D = 1.7976931348623157E308;
       this.init_Z = false;
       this.load = false;
@@ -345,7 +345,7 @@ public final class EntityControlModule extends Module {
       return entity.level().getBlockStates(entity.getBoundingBox().inflate(0.0625).expandTowards(0.0, -0.55, 0.0)).allMatch(BlockStateBase::isAir);
    }
 
-   private static Vec3 init_Vec3_D(double blocksPerSecond) {
+   private static Vec3 inputVelocity(double blocksPerSecond) {
       double speed = blocksPerSecond / 20.0;
       float forward = 0.0F;
       float sideways = 0.0F;

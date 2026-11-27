@@ -16,56 +16,56 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public class ProxyConfigScreen extends VirtualScaledScreen {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 380;
    private static final int load_I = 8;
    private static final int read_I = 6;
-   private static final int[] init_IArr = new int[]{1000, 1500, 2000, 2500, 3000, 5000, 7500, 10000, 15000};
-   private static final int[] load_IArr = new int[]{1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256};
-   private static final int[] read_IArr = new int[]{0, 1, 2, 3, 5};
-   private static final int[] write_IArr = new int[]{0, 500, 1000, 1500, 2000, 3000, 5000, 10000};
-   private static final int[] update_IArr = new int[]{0, 25, 50, 100, 250, 500, 1000};
-   private final Screen init_Screen;
-   private final List<autismclient.gui.ui.widgets.OverlayActionButton> init_List = new ArrayList<>();
-   private final List<autismclient.gui.ui.widgets.DropdownWidget> load_List = new ArrayList<>();
-   private final List<ProxyConfigScreen.Inner_StreamUtil> read_List = new ArrayList<>();
-   private int write_I;
-   private int update_I = 380;
+   private static final int[] TIMEOUT_CHOICES = new int[]{1000, 1500, 2000, 2500, 3000, 5000, 7500, 10000, 15000};
+   private static final int[] THREAD_CHOICES = new int[]{1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256};
+   private static final int[] RETRY_CHOICES = new int[]{0, 1, 2, 3, 5};
+   private static final int[] PRUNE_LATENCY_CHOICES = new int[]{0, 500, 1000, 1500, 2000, 3000, 5000, 10000};
+   private static final int[] PRUNE_LIMIT_CHOICES = new int[]{0, 25, 50, 100, 250, 500, 1000};
+   private final Screen parent;
+   private final List<autismclient.gui.ui.widgets.OverlayActionButton> buttons = new ArrayList<>();
+   private final List<autismclient.gui.ui.widgets.DropdownWidget> dropdowns = new ArrayList<>();
+   private final List<ProxyConfigScreen.Inner_StreamUtil> rows = new ArrayList<>();
+   private int scroll;
+   private int panelWidth = 380;
    private int sync;
    private int flush;
 
    public ProxyConfigScreen(Screen parent) {
       super(Component.literal("Proxy Config"));
-      this.init_Screen = parent;
+      this.parent = parent;
    }
 
    @Override
    protected void init() {
-      this.load_V_7();
+      this.rebuildProxyWidgets();
    }
 
-   private void load_V_7() {
-      this.init_List.clear();
-      this.load_List.clear();
-      this.read_List.clear();
-      this.write_I = Math.max(0, Math.min(this.stop(), this.write_I));
+   private void rebuildProxyWidgets() {
+      this.buttons.clear();
+      this.dropdowns.clear();
+      this.rows.clear();
+      this.scroll = Math.max(0, Math.min(this.stop(), this.scroll));
       int panelX = this.close();
       int panelW = this.open();
-      int y = this.add() - this.write_I;
+      int y = this.add() - this.scroll;
       ProxyListManager mgr = ProxyListManager.getInstance();
-      this.init("Timeout", "How long each proxy check can take.", mgr.getTimeoutMs(), mgr::setTimeoutMs, init_IArr, this::init_Str_I, panelX, panelW, y);
+      this.init("Timeout", "How long each proxy check can take.", mgr.getTimeoutMs(), mgr::setTimeoutMs, TIMEOUT_CHOICES, this::formatSeconds, panelX, panelW, y);
       y += this.flush();
-      this.init("Threads", "How many proxies can be checked at once.", mgr.getWorkerThreads(), mgr::setWorkerThreads, load_IArr, Integer::toString, panelX, panelW, y);
+      this.init("Threads", "How many proxies can be checked at once.", mgr.getWorkerThreads(), mgr::setWorkerThreads, THREAD_CHOICES, Integer::toString, panelX, panelW, y);
       y += this.flush();
-      this.init("Retries", "Extra attempts when a proxy check times out.", mgr.getRetryCount(), mgr::setRetryCount, read_IArr, Integer::toString, panelX, panelW, y);
+      this.init("Retries", "Extra attempts when a proxy check times out.", mgr.getRetryCount(), mgr::setRetryCount, RETRY_CHOICES, Integer::toString, panelX, panelW, y);
       y += this.flush();
       this.init(
          "Prune latency",
          "Cleanup removes alive proxies slower than this.",
          mgr.getPruneLatencyMs(),
          mgr::setPruneLatencyMs,
-         write_IArr,
-         value -> value <= 0 ? "Off" : this.init_Str_I(value),
+         PRUNE_LATENCY_CHOICES,
+         value -> value <= 0 ? "Off" : this.formatSeconds(value),
          panelX,
          panelW,
          y
@@ -76,7 +76,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          "Cleanup keeps only the fastest proxies when enabled.",
          mgr.getPruneToCount(),
          mgr::setPruneToCount,
-         update_IArr,
+         PRUNE_LIMIT_CHOICES,
          value -> value <= 0 ? "No limit" : Integer.toString(value),
          panelX,
          panelW,
@@ -89,26 +89,26 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       y += this.flush();
       this.init("Location lookup", mgr.auditGeoLookup(), "Sends proxy IPs to api.country.is to show their country.", value -> mgr.auditSetGeoLookup(value), panelX, panelW, y);
       int wanted = this.poll();
-      if (wanted != this.update_I) {
-         this.update_I = wanted;
-         this.load_V_7();
+      if (wanted != this.panelWidth) {
+         this.panelWidth = wanted;
+         this.rebuildProxyWidgets();
       } else {
-         if (!this.init_Z_3()) {
+         if (!this.isCompactLayout()) {
             int ctl = this.write();
             int footerY = this.clear();
-            int backWidth = this.init_I_Str_6("Back");
-            this.init_List
+            int backWidth = this.buttonWidthFor("Back");
+            this.buttons
                .add(
                   autismclient.gui.ui.widgets.OverlayActionButton.create(
-                        panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
+                        panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.parent)
                      )
                      .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
-            int defaultsWidth = this.init_I_Str_6("Defaults");
-            this.init_List
+            int defaultsWidth = this.buttonWidthFor("Defaults");
+            this.buttons
                .add(
                   autismclient.gui.ui.widgets.OverlayActionButton.create(
-                        panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.read_V_5()
+                        panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.resetDefaults()
                      )
                      .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
@@ -123,16 +123,16 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       String label, String hint, int current, IntConsumer setter, int[] options, ProxyConfigScreen.Inner_CachePool formatter, int panelX, int panelW, int y
    ) {
       List<String> labels = this.init(options, formatter);
-      int controlW = this.init_I_List_2(labels);
-      this.read_List.add(new ProxyConfigScreen.Inner_StreamUtil(label, "", hint, y, false, false, controlW));
-      if (this.init_Z_I_2(y)) {
-         this.load_List
+      int controlW = this.widestOption(labels);
+      this.rows.add(new ProxyConfigScreen.Inner_StreamUtil(label, "", hint, y, false, false, controlW));
+      if (this.isRowVisible(y)) {
+         this.dropdowns
             .add(
                new autismclient.gui.ui.widgets.DropdownWidget(
                   this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), labels, this.init(current, options), index -> {
                      if (index >= 0 && index < options.length) {
                         setter.accept(options[index]);
-                        this.load_V_7();
+                        this.rebuildProxyWidgets();
                      }
                   }
                )
@@ -141,15 +141,15 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private void init(String label, boolean enabled, String hint, ProxyConfigScreen.Inner_DataUtil setter, int panelX, int panelW, int y) {
-      int controlW = Math.max(this.init_I_Str_6("Enabled"), this.init_I_Str_6("Disabled"));
-      this.read_List.add(new ProxyConfigScreen.Inner_StreamUtil(label, enabled ? "Enabled" : "Disabled", hint, y, true, enabled, controlW));
-      if (this.init_Z_I_2(y)) {
-         this.init_List
+      int controlW = Math.max(this.buttonWidthFor("Enabled"), this.buttonWidthFor("Disabled"));
+      this.rows.add(new ProxyConfigScreen.Inner_StreamUtil(label, enabled ? "Enabled" : "Disabled", hint, y, true, enabled, controlW));
+      if (this.isRowVisible(y)) {
+         this.buttons
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.create(
                      this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), Component.literal(enabled ? "Enabled" : "Disabled"), b -> {
                         setter.accept(!enabled);
-                        this.load_V_7();
+                        this.rebuildProxyWidgets();
                      }
                   )
                   .setTone(
@@ -161,7 +161,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private void read_V_5() {
+   private void resetDefaults() {
       ProxyListManager mgr = ProxyListManager.getInstance();
       mgr.setTimeoutMs(3000);
       mgr.setWorkerThreads(64);
@@ -171,7 +171,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       mgr.setSortByLatency(true);
       mgr.setPruneDead(true);
       mgr.auditSetGeoLookup(false);
-      this.load_V_7();
+      this.rebuildProxyWidgets();
    }
 
    private int init(int current, int[] options) {
@@ -211,7 +211,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
       try {
          if (this.sync != this.virtualWidth() || this.flush != this.virtualHeight()) {
-            this.load_V_7();
+            this.rebuildProxyWidgets();
          }
 
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
@@ -232,25 +232,25 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
             -1206840035
          );
          boolean suppressUnderlyingPointer = autismclient.gui.ui.widgets.DropdownWidget.isAnyMenuActive();
-         boolean dropdownMenuHovered = autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.load_List, virtualMouseX, virtualMouseY);
+         boolean dropdownMenuHovered = autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.dropdowns, virtualMouseX, virtualMouseY);
          int buttonMouseX = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseX : -2147483648;
          int buttonMouseY = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseY : -2147483648;
-         if (this.init_Z_3()) {
-            this.init(graphics, "Window too small.", this.init_I_I_5(panelX), this.init_I_2(this.put(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
+         if (this.isCompactLayout()) {
+            this.init(graphics, "Window too small.", this.init_I_I_5(panelX), this.centerTextY(this.put(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
             return;
          }
 
-         for (ProxyConfigScreen.Inner_StreamUtil row : this.read_List) {
+         for (ProxyConfigScreen.Inner_StreamUtil row : this.rows) {
             this.init(graphics, row, panelX, panelW);
          }
 
-         for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
+         for (autismclient.gui.ui.widgets.OverlayActionButton button : this.buttons) {
             autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, button, buttonMouseX, buttonMouseY);
          }
 
-         autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
-         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.load_List)) {
-            autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(graphics, this.font, this.dropdowns, virtualMouseX, virtualMouseY);
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns)) {
+            autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.dropdowns, virtualMouseX, virtualMouseY);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -258,21 +258,21 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, ProxyConfigScreen.Inner_StreamUtil row, int panelX, int panelW) {
-      if (this.init_Z_I_2(row.init_I())) {
+      if (this.isRowVisible(row.y())) {
          int x = this.init_I_I_5(panelX);
-         int y = row.init_I();
+         int y = row.y();
          int w = this.load(panelW);
          int h = this.sync();
          int line = this.update();
-         int fill = row.init_Z() && row.load_Z() ? 571483674 : 403771667;
+         int fill = row.toggle() && row.enabled() ? 571483674 : 403771667;
          autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), 4, fill);
-         if (row.init_Z() && row.load_Z()) {
+         if (row.toggle() && row.enabled()) {
             autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y + 2, 2, h - 4), 1, GuiColorPalette.open);
          }
 
-         int textMaxWidth = Math.max(1, this.init(panelX, panelW, row.load_I()) - 4 - (x + 6));
-         this.init(graphics, row.init_Str(), x + 6, this.init_I_2(y, line), GuiColorPalette.flush, false, textMaxWidth);
-         this.init(graphics, row.read(), x + 6, this.init_I_2(y + line, line), GuiColorPalette.close, false, textMaxWidth);
+         int textMaxWidth = Math.max(1, this.init(panelX, panelW, row.controlWidth()) - 4 - (x + 6));
+         this.init(graphics, row.label(), x + 6, this.centerTextY(y, line), GuiColorPalette.flush, false, textMaxWidth);
+         this.init(graphics, row.read(), x + 6, this.centerTextY(y + line, line), GuiColorPalette.close, false, textMaxWidth);
       }
    }
 
@@ -286,11 +286,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
             (int)virtualEvent.x(),
             (int)virtualEvent.y()
          )) {
-         this.minecraft.gui.setScreen(this.init_Screen);
+         this.minecraft.gui.setScreen(this.parent);
          return true;
       }
 
-      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.load_List, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.dropdowns, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
          return true;
       }
 
@@ -298,7 +298,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          return super.mouseClicked(virtualEvent, doubleClick);
       }
 
-      for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
+      for (autismclient.gui.ui.widgets.OverlayActionButton button : this.buttons) {
          if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
             return true;
          }
@@ -311,11 +311,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       double virtualX = cA.init_D_D(mouseX);
       double virtualY = cA.init_D_D(mouseY);
-      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.load_List, virtualX, virtualY, scrollY)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.dropdowns, virtualX, virtualY, scrollY)) {
          return true;
       } else if (!(virtualX < this.close()) && !(virtualX > this.close() + this.open()) && !(virtualY < this.add()) && !(virtualY > this.reset())) {
-         this.write_I = Math.max(0, Math.min(this.stop(), this.write_I + (scrollY < 0.0 ? this.flush() : -this.flush())));
-         this.load_V_7();
+         this.scroll = Math.max(0, Math.min(this.stop(), this.scroll + (scrollY < 0.0 ? this.flush() : -this.flush())));
+         this.rebuildProxyWidgets();
          return true;
       } else {
          return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
@@ -324,7 +324,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
    @Override
    public void onClose() {
-      this.minecraft.gui.setScreen(this.init_Screen);
+      this.minecraft.gui.setScreen(this.parent);
    }
 
    private int read_I_5() {
@@ -363,7 +363,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return rowY + (this.sync() - this.write()) / 2;
    }
 
-   private int init_I_2(int top, int height) {
+   private int centerTextY(int top, int height) {
       return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
@@ -372,16 +372,16 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int open() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, Math.min(380, this.update_I));
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, Math.min(380, this.panelWidth));
    }
 
    private int poll() {
       int text = 0;
       int control = 0;
 
-      for (ProxyConfigScreen.Inner_StreamUtil row : this.read_List) {
-         text = Math.max(text, Math.max(this.load(row.init_Str()), this.load(row.read())));
-         control = Math.max(control, row.load_I());
+      for (ProxyConfigScreen.Inner_StreamUtil row : this.rows) {
+         text = Math.max(text, Math.max(this.load(row.label()), this.load(row.read())));
+         control = Math.max(control, row.controlWidth());
       }
 
       return 14 + text + 4 + control + 4 + 8;
@@ -395,13 +395,13 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return this.read_I_5() + 4 + 4 + 4 + 4 + this.write() + 4;
    }
 
-   private int tick_I_6() {
+   private int visibleRowCount() {
       int available = this.virtualHeight() - 12 - this.pop();
       return Math.max(0, Math.min(8, (available + 2) / this.flush()));
    }
 
    private int run() {
-      int shown = this.tick_I_6();
+      int shown = this.visibleRowCount();
       return shown <= 0 ? 0 : shown * this.flush() - 2;
    }
 
@@ -437,27 +437,27 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return Math.max(0, this.start() - Math.max(0, this.reset() - this.add()));
    }
 
-   private boolean init_Z_I_2(int y) {
+   private boolean isRowVisible(int y) {
       return y >= this.add() && y + this.sync() <= this.reset();
    }
 
-   private boolean init_Z_3() {
+   private boolean isCompactLayout() {
       return this.open() < 220 || this.reset() - this.add() < this.sync();
    }
 
-   private int init_I_Str_6(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+   private int buttonWidthFor(String label) {
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, THEME.init_Identifier_l(l.read), 0));
    }
 
    private int load(String text) {
-      return k.init(this.font, text, init_CharEncoder.init_Identifier_l(l.read), 0);
+      return k.init(this.font, text, THEME.init_Identifier_l(l.read), 0);
    }
 
-   private int init_I_List_2(List<String> options) {
+   private int widestOption(List<String> options) {
       int widest = 0;
 
       for (String option : options) {
-         widest = Math.max(widest, k.init(this.font, option, init_CharEncoder.init_Identifier_l(l.read), 0));
+         widest = Math.max(widest, k.init(this.font, option, THEME.init_Identifier_l(l.read), 0));
       }
 
       return Math.max(56, widest + 26);
@@ -469,7 +469,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean right, int maxWidth) {
       Font renderer = this.font;
-      Identifier font = init_CharEncoder.init_Identifier_l(l.read);
+      Identifier font = THEME.init_Identifier_l(l.read);
       if (maxWidth != 2147483647 && !right) {
          k.init(graphics, renderer, text, font, color, x, y, Math.max(1, maxWidth), false);
       } else {
@@ -480,7 +480,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private String init_Str_I(int value) {
+   private String formatSeconds(int value) {
       return value % 1000 == 0 ? value / 1000 + "s" : value / 1000.0 + "s";
    }
 
@@ -494,6 +494,6 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       void accept(boolean var1);
    }
 
-   private record Inner_StreamUtil(String init_Str, String load_Str, String read, int init_I, boolean init_Z, boolean load_Z, int load_I) {
+   private record Inner_StreamUtil(String label, String value, String read, int y, boolean toggle, boolean enabled, int controlWidth) {
    }
 }

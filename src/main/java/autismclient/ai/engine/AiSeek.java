@@ -20,8 +20,8 @@ public final class AiSeek {
    private static final int read = 56;
    private static final int write = 12;
    private static final int update = 64;
-   private static final int[][] init_IArr2 = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-   private static final ItemStack[] init_ItemStackArr = new ItemStack[9];
+   private static final int[][] NEIGHBOR_OFFSETS = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+   private static final ItemStack[] EMPTY_HOTBAR = new ItemStack[9];
 
    private AiSeek() {
    }
@@ -59,7 +59,7 @@ public final class AiSeek {
             if (visited.add(cell.asLong())) {
                count++;
 
-               for (int[] d : init_IArr2) {
+               for (int[] d : NEIGHBOR_OFFSETS) {
                   int nx = cell.getX() + d[0];
                   int ny = cell.getY() + d[1];
                   int nz = cell.getZ() + d[2];
@@ -79,43 +79,43 @@ public final class AiSeek {
       }
    }
 
-   private static AiPathfinder.CellInfo init_ClassCache_FileCac(Minecraft mc, BlockPos p) {
-      return AiPathfinder.LiveGridView.classifyCellCompat(mc, mc.level, p, init_ItemStackArr);
+   private static AiPathfinder.CellInfo classifyCell(Minecraft mc, BlockPos p) {
+      return AiPathfinder.LiveGridView.classifyCellCompat(mc, mc.level, p, EMPTY_HOTBAR);
    }
 
-   private static boolean init_Z(Minecraft mc, BlockPos feet) {
+   private static boolean isStandableAt(Minecraft mc, BlockPos feet) {
       return AiPathfinder.MoveGenerator.isStandableCompat(
-         init_ClassCache_FileCac(mc, feet), init_ClassCache_FileCac(mc, feet.above()), init_ClassCache_FileCac(mc, feet.below())
+         classifyCell(mc, feet), classifyCell(mc, feet.above()), classifyCell(mc, feet.below())
       );
    }
 
    private abstract static class Inner_BufferHelper implements AiOperation {
-      final Minecraft init_Minecraft = Minecraft.getInstance();
-      final long init_J;
-      final AiPathfinder.RouteStrategy init_ClassCache_IoWorke;
-      final AiSeek.Inner_CachePool init_d_CachePool;
-      final int init_I;
-      BlockPos init_BlockPos;
-      AiOperation init_AiOperation;
+      final Minecraft client = Minecraft.getInstance();
+      final long deadlineNanos;
+      final AiPathfinder.RouteStrategy strategy;
+      final AiSeek.Inner_CachePool columnSearch;
+      final int columnsPerTick;
+      BlockPos candidate;
+      AiOperation travel;
       int load;
       int read;
       boolean init_Z;
       static final int write = 3;
 
       Inner_BufferHelper(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, int maxRadius, int columnsPerTick) {
-         this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         this.init_ClassCache_IoWorke = strategy;
-         this.init_d_CachePool = new AiSeek.Inner_CachePool(this.init_Minecraft.player.blockPosition(), maxRadius);
-         this.init_I = columnsPerTick;
+         this.deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
+         this.strategy = strategy;
+         this.columnSearch = new AiSeek.Inner_CachePool(this.client.player.blockPosition(), maxRadius);
+         this.columnsPerTick = columnsPerTick;
       }
 
       abstract BlockPos init(BlockPos var1);
 
-      boolean init_Z_14() {
+      boolean isNearSurface() {
          return false;
       }
 
-      abstract String init_Str_10();
+      abstract String travelLabel();
 
       abstract String load();
 
@@ -123,42 +123,42 @@ public final class AiSeek {
 
       @Override
       public AiOperation.Result tick() {
-         if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (System.nanoTime() > this.init_J) {
-               return this.init(AiOperation.Status.TIMED_OUT, this.init_Str_10() + " deadline reached");
+         if (!this.init_Z && this.client.player != null && this.client.level != null) {
+            if (System.nanoTime() > this.deadlineNanos) {
+               return this.init(AiOperation.Status.TIMED_OUT, this.travelLabel() + " deadline reached");
             }
 
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
+            if (this.client.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                return this.init(
                   AiOperation.Status.FAILED,
                   AiFailure.LOW_HEALTH,
-                  AiLowHealth.init("travel", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                  AiLowHealth.init("travel", this.client.player.getHealth(), this.client.player.getMaxHealth())
                );
             }
 
-            if (this.init_BlockPos == null) {
-               for (int budget = 0; budget < this.init_I && this.init_BlockPos == null; budget++) {
-                  BlockPos column = this.init_d_CachePool.init_BlockPos();
+            if (this.candidate == null) {
+               for (int budget = 0; budget < this.columnsPerTick && this.candidate == null; budget++) {
+                  BlockPos column = this.columnSearch.nextColumn();
                   if (column == null) {
                      return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.load());
                   }
 
-                  this.init_BlockPos = this.init(column);
+                  this.candidate = this.init(column);
                }
 
-               if (this.init_BlockPos == null) {
-                  return this.init("Scanning (radius " + this.init_d_CachePool.init_I() + ")");
+               if (this.candidate == null) {
+                  return this.init("Scanning (radius " + this.columnSearch.currentRadius() + ")");
                }
             }
 
-            if (this.init_AiOperation != null) {
-               AiOperation.Result r = this.init_AiOperation.tick();
+            if (this.travel != null) {
+               AiOperation.Result r = this.travel.tick();
                if (!r.terminal()) {
-                  return this.init("Travelling to " + this.init_BlockPos.toShortString());
+                  return this.init("Travelling to " + this.candidate.toShortString());
                }
 
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+               this.travel.cancel();
+               this.travel = null;
                if (r.status() == AiOperation.Status.SUCCEEDED) {
                   return this.init(AiOperation.Status.SUCCEEDED, this.read());
                }
@@ -169,50 +169,50 @@ public final class AiSeek {
 
                if (++this.load > 1) {
                   if (++this.read < 3) {
-                     this.init_BlockPos = null;
+                     this.candidate = null;
                      this.load = 0;
                      return this.init("No way to that column; scanning on");
                   } else {
                      return this.init(
-                        AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.init_BlockPos.toShortString() + " unreachable even with digging (" + r.message() + ")"
+                        AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.candidate.toShortString() + " unreachable even with digging (" + r.message() + ")"
                      );
                   }
                } else {
                   return this.init("Walk-only route failed; retrying with digging allowed");
                }
             } else {
-               this.init_AiOperation = AiGoto.travelToCompat(
-                  this.init_BlockPos, 2.0, this.load > 0 || this.init_Z_14(), false, false, this.init_I_16(), this.init_ClassCache_IoWorke
+               this.travel = AiGoto.travelToCompat(
+                  this.candidate, 2.0, this.load > 0 || this.isNearSurface(), false, false, this.remainingSeconds(), this.strategy
                );
-               return this.init(this.load == 0 ? "Travelling to " + this.init_BlockPos.toShortString() : "Retrying with digging allowed");
+               return this.init(this.load == 0 ? "Travelling to " + this.candidate.toShortString() : "Retrying with digging allowed");
             }
          } else {
-            return this.init(AiOperation.Status.CANCELLED, this.init_Str_10() + " cancelled");
+            return this.init(AiOperation.Status.CANCELLED, this.travelLabel() + " cancelled");
          }
       }
 
-      int init_I_16() {
-         return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+      int remainingSeconds() {
+         return (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
       }
 
       AiOperation.Result init(String message) {
-         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_29().toString(), List.of());
+         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressData().toString(), List.of());
       }
 
       AiOperation.Result init(AiOperation.Status status, String message) {
          this.cancel();
-         return new AiOperation.Result(status, message, this.init_JsonObject_29().toString(), List.of());
+         return new AiOperation.Result(status, message, this.progressData().toString(), List.of());
       }
 
       AiOperation.Result init(AiOperation.Status status, AiFailure code, String message) {
          this.cancel();
-         return AiOperation.Result.failed(code, message, this.init_JsonObject_29().toString());
+         return AiOperation.Result.failed(code, message, this.progressData().toString());
       }
 
-      JsonObject init_JsonObject_29() {
+      JsonObject progressData() {
          JsonObject out = new JsonObject();
-         if (this.init_BlockPos != null) {
-            out.add("candidate", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+         if (this.candidate != null) {
+            out.add("candidate", AiJson.objectOf("x", this.candidate.getX(), "y", this.candidate.getY(), "z", this.candidate.getZ()));
          }
 
          out.addProperty("attempt", this.load + 1);
@@ -223,48 +223,48 @@ public final class AiSeek {
       public void cancel() {
          if (!this.init_Z) {
             this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+            if (this.travel != null) {
+               this.travel.cancel();
+               this.travel = null;
             }
          }
       }
    }
 
    private static final class Inner_CachePool {
-      final BlockPos init_BlockPos;
-      private final int init_I;
-      private List<BlockPos> init_List = List.of();
+      final BlockPos origin;
+      private final int maxRadius;
+      private List<BlockPos> ring = List.of();
       private int load;
       private int read = 24;
-      private boolean init_Z = true;
+      private boolean first = true;
 
       Inner_CachePool(BlockPos origin, int maxRadius) {
-         this.init_BlockPos = origin;
-         this.init_I = maxRadius;
+         this.origin = origin;
+         this.maxRadius = maxRadius;
       }
 
-      BlockPos init_BlockPos() {
-         if (this.init_Z) {
-            this.init_Z = false;
-            return this.init_BlockPos;
+      BlockPos nextColumn() {
+         if (this.first) {
+            this.first = false;
+            return this.origin;
          }
 
-         if (this.load >= this.init_List.size()) {
-            if (this.read > this.init_I) {
+         if (this.load >= this.ring.size()) {
+            if (this.read > this.maxRadius) {
                return null;
             }
 
-            this.init_List = init(this.init_BlockPos, this.read);
+            this.ring = init(this.origin, this.read);
             this.read += 24;
             this.load = 0;
          }
 
-         return this.init_List.get(this.load++);
+         return this.ring.get(this.load++);
       }
 
-      int init_I() {
-         return Math.min(this.read, this.init_I);
+      int currentRadius() {
+         return Math.min(this.read, this.maxRadius);
       }
 
       private static List<BlockPos> init(BlockPos origin, int radius) {
@@ -293,33 +293,33 @@ public final class AiSeek {
    private static final class Inner_ConfigStore extends AiSeek.Inner_BufferHelper {
       static final int update = 12;
       static final int sync = 16;
-      final boolean load_Z;
+      final boolean nearSurface;
 
       Inner_ConfigStore(int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
          super(timeoutSeconds, strategy, 96, 256);
-         BlockPos origin = this.init_d_CachePool.init_BlockPos;
-         this.load_Z = this.init_Minecraft.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() <= 12;
+         BlockPos origin = this.columnSearch.origin;
+         this.nearSurface = this.client.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() <= 12;
       }
 
       @Override
       BlockPos init(BlockPos column) {
-         int topY = this.init_Minecraft.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
+         int topY = this.client.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
          BlockPos feet = new BlockPos(column.getX(), topY, column.getZ());
-         if (!AiSeek.init_Z(this.init_Minecraft, feet)) {
+         if (!AiSeek.isStandableAt(this.client, feet)) {
             return null;
          } else {
-            return this.load_Z && topY > this.init_d_CachePool.init_BlockPos.getY() + 3 && this.init_d_CachePool.init_I() <= 16 ? null : feet;
+            return this.nearSurface && topY > this.columnSearch.origin.getY() + 3 && this.columnSearch.currentRadius() <= 16 ? null : feet;
          }
       }
 
       @Override
-      boolean init_Z_14() {
-         BlockPos origin = this.init_d_CachePool.init_BlockPos;
-         return this.init_Minecraft.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() > 8;
+      boolean isNearSurface() {
+         BlockPos origin = this.columnSearch.origin;
+         return this.client.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() > 8;
       }
 
       @Override
-      String init_Str_10() {
+      String travelLabel() {
          return "Surface travel";
       }
 
@@ -343,25 +343,25 @@ public final class AiSeek {
 
       Inner_StreamUtil(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, Integer maxY) {
          super(timeoutSeconds, strategy, 64, 8);
-         this.update = maxY != null ? maxY : this.init_d_CachePool.init_BlockPos.getY() + 8;
+         this.update = maxY != null ? maxY : this.columnSearch.origin.getY() + 8;
       }
 
       @Override
       BlockPos init(BlockPos column) {
-         int topY = this.init_Minecraft.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
+         int topY = this.client.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
          int yTop = Math.min(this.update, topY - 2);
-         int yBottom = Math.max(this.init_Minecraft.level.getMinY(), yTop - 56);
+         int yBottom = Math.max(this.client.level.getMinY(), yTop - 56);
 
          for (int y = yTop; y >= yBottom; y--) {
             BlockPos cell = new BlockPos(column.getX(), y, column.getZ());
-            AiPathfinder.CellInfo feet = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell);
+            AiPathfinder.CellInfo feet = AiSeek.classifyCell(this.client, cell);
             if (feet.loaded()
                && feet.passable()
                && !feet.water()
                && !feet.lava()
                && !feet.hazardFeet()
-               && AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell.above()).passable()) {
-               AiPathfinder.CellInfo floor = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell.below());
+               && AiSeek.classifyCell(this.client, cell.above()).passable()) {
+               AiPathfinder.CellInfo floor = AiSeek.classifyCell(this.client, cell.below());
                if (!floor.passable()
                   && !floor.hazardFloor()
                   && !floor.lava()
@@ -388,12 +388,12 @@ public final class AiSeek {
       }
 
       boolean init(int x, int y, int z) {
-         AiPathfinder.CellInfo probe = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, new BlockPos(x, y, z));
+         AiPathfinder.CellInfo probe = AiSeek.classifyCell(this.client, new BlockPos(x, y, z));
          return probe.loaded() && probe.passable() && !probe.water() && !probe.lava();
       }
 
       @Override
-      String init_Str_10() {
+      String travelLabel() {
          return "Cave travel";
       }
 

@@ -174,15 +174,15 @@ final class AiModels {
       for (int page = 0; page < 32; page++) {
          String query = anthropic ? "?limit=100" : "";
          if (!after.isEmpty()) {
-            query = query + (query.isEmpty() ? "?" : "&") + (anthropic ? "after_id=" : "after=") + init_Str(after);
+            query = query + (query.isEmpty() ? "?" : "&") + (anthropic ? "after_id=" : "after=") + urlEncode(after);
          }
 
          JsonObject root = fetch.get(base + "/models" + query, provider, key);
          String last = "";
 
-         for (JsonElement entry : init_JsonArray(root, "data")) {
+         for (JsonElement entry : arrayField(root, "data")) {
             if (entry.isJsonObject()) {
-               String id = init_Str(entry.getAsJsonObject(), "id");
+               String id = stringField(entry.getAsJsonObject(), "id");
                if (!id.isEmpty()) {
                   last = id;
                   if (load_Z(id)) {
@@ -192,11 +192,11 @@ final class AiModels {
             }
          }
 
-         if (!init_Z(root, "has_more")) {
+         if (!booleanField(root, "has_more")) {
             return;
          }
 
-         String cursor = init_Str(root, "last_id");
+         String cursor = stringField(root, "last_id");
          if (cursor.isEmpty()) {
             cursor = last;
          }
@@ -216,20 +216,20 @@ final class AiModels {
       Set<String> seen = new HashSet<>();
 
       for (int page = 0; page < 32; page++) {
-         String url = base + "/models?pageSize=1000" + (token.isEmpty() ? "" : "&pageToken=" + init_Str(token));
+         String url = base + "/models?pageSize=1000" + (token.isEmpty() ? "" : "&pageToken=" + urlEncode(token));
          JsonObject root = fetch.get(url, AiSettings.Provider.GEMINI, key);
 
-         for (JsonElement entry : init_JsonArray(root, "models")) {
+         for (JsonElement entry : arrayField(root, "models")) {
             if (entry.isJsonObject()) {
                JsonObject model = entry.getAsJsonObject();
-               String id = init_Str(model, "name").replaceFirst("^models/", "");
+               String id = stringField(model, "name").replaceFirst("^models/", "");
                if (!id.isEmpty() && init(model, "supportedGenerationMethods", "generateContent") && load_Z(id)) {
                   out.add(id);
                }
             }
          }
 
-         token = init_Str(root, "nextPageToken");
+         token = stringField(root, "nextPageToken");
          if (token.isEmpty()) {
             return;
          }
@@ -265,14 +265,14 @@ final class AiModels {
          JsonObject root = fetch.get(
             base + "/models?page_no=" + page + "&page_size=100&capabilities=TG&capabilities=Reasoning", AiSettings.Provider.DASHSCOPE, key
          );
-         if (root.has("success") && !init_Z(root, "success")) {
+         if (root.has("success") && !booleanField(root, "success")) {
             throw new IllegalStateException("Provider rejected the model list request");
          }
 
          JsonElement output = root.get("output");
          if (output != null && output.isJsonObject()) {
             JsonObject data = output.getAsJsonObject();
-            JsonArray entries = init_JsonArray(data, "models");
+            JsonArray entries = arrayField(data, "models");
             if (!pages.add(entries.toString())) {
                throw new IllegalStateException("Model list pagination did not advance");
             }
@@ -280,7 +280,7 @@ final class AiModels {
             for (JsonElement entry : entries) {
                if (entry.isJsonObject()) {
                   JsonObject model = entry.getAsJsonObject();
-                  String id = init_Str(model, "model");
+                  String id = stringField(model, "model");
                   JsonElement metadata = model.get("inference_metadata");
                   boolean textOutput = metadata == null
                      || !metadata.isJsonObject()
@@ -339,7 +339,7 @@ final class AiModels {
       }
    }
 
-   private static JsonArray init_JsonArray(JsonObject root, String field) {
+   private static JsonArray arrayField(JsonObject root, String field) {
       if (root.has(field) && root.get(field).isJsonArray()) {
          return root.getAsJsonArray(field);
       } else {
@@ -347,7 +347,7 @@ final class AiModels {
       }
    }
 
-   private static String init_Str(JsonObject object, String field) {
+   private static String stringField(JsonObject object, String field) {
       JsonElement value = object.get(field);
       if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
          String text = value.getAsString().trim();
@@ -357,7 +357,7 @@ final class AiModels {
       }
    }
 
-   private static boolean init_Z(JsonObject object, String field) {
+   private static boolean booleanField(JsonObject object, String field) {
       JsonElement value = object.get(field);
       return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && value.getAsBoolean();
    }
@@ -377,7 +377,7 @@ final class AiModels {
       }
    }
 
-   private static String init_Str(String value) {
+   private static String urlEncode(String value) {
       return URLEncoder.encode(value, StandardCharsets.UTF_8);
    }
 
@@ -387,7 +387,7 @@ final class AiModels {
          if (parsed.isJsonObject()) {
             JsonObject root = parsed.getAsJsonObject();
             JsonElement error = root.get("error");
-            String text = error != null && error.isJsonObject() ? init_Str(error.getAsJsonObject(), "message") : init_Str(root, "message");
+            String text = error != null && error.isJsonObject() ? stringField(error.getAsJsonObject(), "message") : stringField(root, "message");
             if (!text.isBlank()) {
                return text;
             }

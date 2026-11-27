@@ -21,18 +21,18 @@ public final class AiDecisionAudit {
    private static final int update_I = 10;
    private static final int sync_I = 60;
    private static final int flush = 600;
-   private static BlockPos init_BlockPos;
-   private static BlockState init_BlockState;
-   private static float read_F;
-   private static float write_F;
+   private static BlockPos breakPos;
+   private static BlockState breakState;
+   private static float maxProgress;
+   private static float lastProgress;
    private static int close;
-   private static String init_Str = "";
-   private static BlockPos load_BlockPos;
+   private static String breakStep = "";
+   private static BlockPos lookPos;
    private static int open;
-   private static String load_Str = "";
-   private static float update_F;
-   private static float sync_F;
-   private static Vec3 init_Vec3;
+   private static String lookStep = "";
+   private static float startYaw;
+   private static float startPitch;
+   private static Vec3 startPosition;
    private static final ArrayDeque<AiDecisionAudit.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
    private static int poll;
    private static int push = -1000;
@@ -84,9 +84,9 @@ public final class AiDecisionAudit {
          init(player.getYRot(), player.getXRot(), step);
          read(mc, step);
          init(player.position(), step);
-         update_F = player.getYRot();
-         sync_F = player.getXRot();
-         init_Vec3 = player.position();
+         startYaw = player.getYRot();
+         startPitch = player.getXRot();
+         startPosition = player.position();
       }
    }
 
@@ -101,36 +101,36 @@ public final class AiDecisionAudit {
          progress = dig.autism$getDestroyProgress();
       }
 
-      if (init_BlockPos != null) {
-         BlockState there = mc.level.getBlockState(init_BlockPos);
-         boolean gone = there.isAir() || there.getBlock() != init_BlockState.getBlock();
+      if (breakPos != null) {
+         BlockState there = mc.level.getBlockState(breakPos);
+         boolean gone = there.isAir() || there.getBlock() != breakState.getBlock();
          if (gone) {
             pop++;
-            load(String.format(Locale.ROOT, "break %s at %s in %d ticks during '%s'", init(init_BlockState), init_BlockPos.toShortString(), close, init_Str));
+            load(String.format(Locale.ROOT, "break %s at %s in %d ticks during '%s'", init(breakState), breakPos.toShortString(), close, breakStep));
             clear = poll;
-            read_Str = init(init_BlockState) + " " + init_BlockPos.toShortString();
+            read_Str = init(breakState) + " " + breakPos.toShortString();
             init_LinkedHashSet.clear();
-            init_BlockPos = null;
-         } else if (now == null || !now.equals(init_BlockPos)) {
-            if (read_F >= 0.05F) {
+            breakPos = null;
+         } else if (now == null || !now.equals(breakPos)) {
+            if (maxProgress >= 0.05F) {
                tick++;
                run = run + close;
                load(
                   String.format(
                      Locale.ROOT,
                      "abandoned %s at %s at %.0f%% after %d ticks during '%s', now '%s'%s",
-                     init(init_BlockState),
-                     init_BlockPos.toShortString(),
-                     read_F * 100.0F,
+                     init(breakState),
+                     breakPos.toShortString(),
+                     maxProgress * 100.0F,
                      close,
-                     init_Str,
+                     breakStep,
                      step,
                      now == null ? "" : " digging " + now.toShortString()
                   )
                );
             }
 
-            init_BlockPos = null;
+            breakPos = null;
          }
       }
 
@@ -143,7 +143,7 @@ public final class AiDecisionAudit {
       }
 
       if (now != null) {
-         if (init_BlockPos == null && clear >= 0) {
+         if (breakPos == null && clear >= 0) {
             int gap = poll - clear;
             if (gap - 7 >= 3) {
                reset++;
@@ -165,20 +165,20 @@ public final class AiDecisionAudit {
             clear = -1;
          }
 
-         if (init_BlockPos == null) {
-            init_BlockPos = now;
-            init_BlockState = mc.level.getBlockState(now);
-            read_F = 0.0F;
+         if (breakPos == null) {
+            breakPos = now;
+            breakState = mc.level.getBlockState(now);
+            maxProgress = 0.0F;
             close = 0;
-            init_Str = step;
+            breakStep = step;
          }
 
-         if (progress != write_F || close == 0) {
+         if (progress != lastProgress || close == 0) {
             close++;
          }
 
-         write_F = progress;
-         read_F = Math.max(read_F, progress);
+         lastProgress = progress;
+         maxProgress = Math.max(maxProgress, progress);
       }
    }
 
@@ -255,23 +255,23 @@ public final class AiDecisionAudit {
 
    private static void read(Minecraft mc, String step) {
       LocalPlayer player = mc.player;
-      boolean still = init_Vec3 != null
-         && player.position().distanceToSqr(init_Vec3) < 1.0E-4
-         && Math.abs(Mth.wrapDegrees(player.getYRot() - update_F)) < 1.0F
-         && Math.abs(player.getXRot() - sync_F) < 1.0F;
+      boolean still = startPosition != null
+         && player.position().distanceToSqr(startPosition) < 1.0E-4
+         && Math.abs(Mth.wrapDegrees(player.getYRot() - startYaw)) < 1.0F
+         && Math.abs(player.getXRot() - startPitch) < 1.0F;
       BlockPos looked = null;
       if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == Type.BLOCK && !mc.level.getBlockState(hit.getBlockPos()).isAir()) {
          looked = hit.getBlockPos().immutable();
       }
 
-      boolean digging = init_BlockPos != null
+      boolean digging = breakPos != null
          || mc.gameMode != null && mc.gameMode.isDestroying()
          || mc.gameMode instanceof AutismMultiPlayerGameModeAccessor dig && dig.autism$getDestroyDelay() > 0;
       if (still && looked != null && !digging && mc.gui.screen() == null) {
-         if (load_BlockPos == null || !load_BlockPos.equals(looked)) {
+         if (lookPos == null || !lookPos.equals(looked)) {
             init_V(mc);
-            load_BlockPos = looked;
-            load_Str = step;
+            lookPos = looked;
+            lookStep = step;
          }
 
          open++;
@@ -281,22 +281,22 @@ public final class AiDecisionAudit {
    }
 
    private static void init_V(Minecraft mc) {
-      if (load_BlockPos != null && open >= 10) {
+      if (lookPos != null && open >= 10) {
          get++;
          set = set + open;
          load(
             String.format(
                Locale.ROOT,
                "stare %s at %s for %d ticks during '%s'",
-               mc.level == null ? "?" : init(mc.level.getBlockState(load_BlockPos)),
-               load_BlockPos.toShortString(),
+               mc.level == null ? "?" : init(mc.level.getBlockState(lookPos)),
+               lookPos.toShortString(),
                open,
-               load_Str
+               lookStep
             )
          );
       }
 
-      load_BlockPos = null;
+      lookPos = null;
       open = 0;
    }
 
@@ -371,11 +371,11 @@ public final class AiDecisionAudit {
          init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(pop, tick, get, put, reset, start, prev);
       }
 
-      init_BlockPos = null;
-      load_BlockPos = null;
+      breakPos = null;
+      lookPos = null;
       open = 0;
       init_ArrayDeque.clear();
-      init_Vec3 = null;
+      startPosition = null;
       add = 0;
       put = 0;
       set = 0;

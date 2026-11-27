@@ -5,8 +5,8 @@ import autismclient.util.RotationMath;
 import java.util.Random;
 
 final class ScaffoldRotationSmoother {
-   private final Random init_Random;
-   private final autismclient.util.HumanHandProfile init_am;
+   private final Random random;
+   private final autismclient.util.HumanHandProfile hand;
    private double init_D;
    private double load_D;
    private boolean init_Z;
@@ -28,8 +28,8 @@ final class ScaffoldRotationSmoother {
    private boolean update_Z;
 
    ScaffoldRotationSmoother(autismclient.util.HumanHandProfile hand, Random random) {
-      this.init_am = hand;
-      this.init_Random = random;
+      this.hand = hand;
+      this.random = random;
    }
 
    static ScaffoldRotationSmoother create() {
@@ -50,7 +50,7 @@ final class ScaffoldRotationSmoother {
 
    ScaffoldRotationSmoother.Inner_DataUtil init_aM_DataUtil_ValueRange(ValueRange band) {
       ValueRange safe = band.clamp(0.0, 100.0);
-      return new ScaffoldRotationSmoother.Inner_DataUtil(safe.random(this.init_Random), safe.random(this.init_Random));
+      return new ScaffoldRotationSmoother.Inner_DataUtil(safe.random(this.random), safe.random(this.random));
    }
 
    void init_V_aM_DataUtil(ScaffoldRotationSmoother.Inner_DataUtil selected) {
@@ -161,8 +161,8 @@ final class ScaffoldRotationSmoother {
          this.open = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.yaw() + RotationMath.angleDelta(target.yaw(), from.yaw());
          this.read_D = 0.0;
          this.write_D = init_D_D(isReturn ? this.load_D : this.init_D);
-         this.update_D = Math.max(0.84, Math.min(1.08, this.init_am.close() + 0.06 * this.init_Random.nextGaussian()));
-         this.sync = Math.max(-0.012, Math.min(0.012, this.init_am.sync() * 0.25 + this.init_am.flush() * 0.2 * this.init_Random.nextGaussian()));
+         this.update_D = Math.max(0.84, Math.min(1.08, this.hand.close() + 0.06 * this.random.nextGaussian()));
+         this.sync = Math.max(-0.012, Math.min(0.012, this.hand.sync() * 0.25 + this.hand.flush() * 0.2 * this.random.nextGaussian()));
       }
 
       if (isReturn && this.write_Z) {

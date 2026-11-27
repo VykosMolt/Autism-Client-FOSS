@@ -41,75 +41,75 @@ final class AiPrintPreparation implements AiOperation {
    static final int init_I = 4096;
    static final int load_I = 4096;
    static final long init_J = 2000000L;
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final AiPrintPreparation.Inner_TaskQueue init_bg_TaskQueue = new AiPrintPreparation.Inner_TaskQueue(this.init_Minecraft.level, this.init_Minecraft.player);
-   private final Provider init_HolderLookup_Provi = this.init_Minecraft.level.registryAccess();
-   private final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition().immutable();
-   private final Path init_Path;
-   private final BlockPos load_BlockPos;
-   private final AiBuilder.BuildOptions init_TableIndex_ConfigS;
-   private final boolean init_Z;
-   private final boolean load_Z;
-   private final long load_J;
-   private final long read_J = System.nanoTime();
-   private final AiPrintPreparation.Inner_SyncManager init_bg_SyncManager = new AiPrintPreparation.Inner_SyncManager();
-   private Future<?> init_Future;
-   private AiPrintPreparation.Inner_BufferHelper init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.DECODE;
-   private AiPrintPreparation.Inner_DataUtil init_bg_DataUtil;
-   private AiPrintPreparation.Inner_ConfigStore init_bg_ConfigStore;
-   private AiPrintPreparation.Inner_StreamUtil init_bg_StreamUtil;
-   private AiPrintPreparation.Inner_CachePool init_bg_CachePool;
-   private AiPrintPreparation.Inner_NetHelper init_bg_NetHelper;
-   private JsonObject init_JsonObject;
-   private boolean read_Z;
-   private boolean write_Z;
-   private AiOperation init_AiOperation;
-   private AiOperation.Result init_AiOperation_Result;
-   private long write_J;
+   private final Minecraft client = Minecraft.getInstance();
+   private final AiPrintPreparation.Inner_TaskQueue worldGuard = new AiPrintPreparation.Inner_TaskQueue(this.client.level, this.client.player);
+   private final Provider registries = this.client.level.registryAccess();
+   private final BlockPos startPos = this.client.player.blockPosition().immutable();
+   private final Path schematicPath;
+   private final BlockPos origin;
+   private final AiBuilder.BuildOptions options;
+   private final boolean skipUnknown;
+   private final boolean verify;
+   private final long deadlineNanos;
+   private final long startedNanos = System.nanoTime();
+   private final AiPrintPreparation.Inner_SyncManager worker = new AiPrintPreparation.Inner_SyncManager();
+   private Future<?> pendingTask;
+   private AiPrintPreparation.Inner_BufferHelper phase = AiPrintPreparation.Inner_BufferHelper.DECODE;
+   private AiPrintPreparation.Inner_DataUtil decoded;
+   private AiPrintPreparation.Inner_ConfigStore normalized;
+   private AiPrintPreparation.Inner_StreamUtil leafScan;
+   private AiPrintPreparation.Inner_CachePool materialPlan;
+   private AiPrintPreparation.Inner_NetHelper worldScan;
+   private JsonObject missingMaterials;
+   private boolean materialsChecked;
+   private boolean cancelled;
+   private AiOperation printOperation;
+   private AiOperation.Result finalResult;
+   private long progressSteps;
    private long update = 1L;
    private long sync;
    private long flush;
-   private int read_I;
-   private int write_I;
-   private JsonArray init_JsonArray = new JsonArray();
+   private int cellCount;
+   private int skippedCells;
+   private JsonArray preflightIssues = new JsonArray();
 
    AiPrintPreparation(JsonObject args, AiBuilder.BuildOptions power) {
       if (!args.has("blocks") && !args.has("blueprint")) {
          AiPrintSupply.validateOptions(power);
-         this.init_TableIndex_ConfigS = power;
-         this.load_BlockPos = AiBuilder.auditOrigin(args, this.init_BlockPos);
-         this.init_Path = AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
-         this.init_Z = AiJson.getBoolean(args, "skipUnknown", false);
-         this.load_Z = AiJson.getBoolean(args, "verify", true);
+         this.options = power;
+         this.origin = AiBuilder.auditOrigin(args, this.startPos);
+         this.schematicPath = AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
+         this.skipUnknown = AiJson.getBoolean(args, "skipUnknown", false);
+         this.verify = AiJson.getBoolean(args, "verify", true);
          int seconds = args.has("timeoutSeconds") ? AiJson.getInt(args, "timeoutSeconds", 0) : 0;
-         this.load_J = seconds > 0 ? System.nanoTime() + seconds * 1000000000L : 0L;
-         this.init_Future = this.init_bg_SyncManager.init(this::init_bg_DataUtil);
+         this.deadlineNanos = seconds > 0 ? System.nanoTime() + seconds * 1000000000L : 0L;
+         this.pendingTask = this.worker.init(this::decodeSchematic);
       } else {
          throw new IllegalArgumentException("schematic is mutually exclusive with blocks/blueprint; pass one source");
       }
    }
 
-   private AiPrintPreparation.Inner_DataUtil init_bg_DataUtil() throws IOException {
-      AiPrintPreparation.Inner_StateCache stamp = AiPrintPreparation.Inner_StateCache.read(this.init_Path);
+   private AiPrintPreparation.Inner_DataUtil decodeSchematic() throws IOException {
+      AiPrintPreparation.Inner_StateCache stamp = AiPrintPreparation.Inner_StateCache.read(this.schematicPath);
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(
-         this.init_Path, this.load_BlockPos, this.init_TableIndex_ConfigS.rotation(), this.init_TableIndex_ConfigS.mirror(), this.init_Z, 2097152
+         this.schematicPath, this.origin, this.options.rotation(), this.options.mirror(), this.skipUnknown, 2097152
       );
       AiBuilder.checkNotCancelled();
-      AiBuilder.Blueprint blueprint = this.init_TableIndex_ConfigS.layers()
+      AiBuilder.Blueprint blueprint = this.options.layers()
          ? AiBuilder.sliceLayerBand(
-            loaded.blueprint(), this.init_TableIndex_ConfigS.layerStart(), this.init_TableIndex_ConfigS.layerHeight()
+            loaded.blueprint(), this.options.layerStart(), this.options.layerHeight()
          )
          : loaded.blueprint();
-      init_V_TableIndex_DataUti(blueprint);
+      requireBuildableCells(blueprint);
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.collectLeafNeighborPositions(blueprint));
       neighbors.addAll(AiSchematicReadiness.read(blueprint));
       neighbors.addAll(AiSchematicReadiness.load(blueprint));
-      if (!stamp.equals(AiPrintPreparation.Inner_StateCache.read(this.init_Path))) {
+      if (!stamp.equals(AiPrintPreparation.Inner_StateCache.read(this.schematicPath))) {
          throw new IOException("Schematic changed while it was being read; start the build again");
       } else {
          return new AiPrintPreparation.Inner_DataUtil(
             blueprint,
-            this.init_TableIndex_ConfigS.withSignText(loaded.signText()).withMachine(AiSchematicMachinePlan.fromSchematic(loaded, blueprint)),
+            this.options.withSignText(loaded.signText()).withMachine(AiSchematicMachinePlan.fromSchematic(loaded, blueprint)),
             List.copyOf(neighbors),
             stamp
          );
@@ -118,7 +118,7 @@ final class AiPrintPreparation implements AiOperation {
 
    private AiPrintPreparation.Inner_ConfigStore init(AiPrintPreparation.Inner_DataUtil input, Map<Long, BlockState> snapshot) throws IOException {
       AiBuilder.Blueprint blueprint = AiBuilder.normalizeSchematicBlueprint(input.blueprint(), snapshot);
-      init_V_TableIndex_DataUti(blueprint);
+      requireBuildableCells(blueprint);
       AiBuilder.checkNotCancelled();
       AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.assessBuildable(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
@@ -128,7 +128,7 @@ final class AiPrintPreparation implements AiOperation {
       AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
       AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
-      if (!input.stamp().equals(AiPrintPreparation.Inner_StateCache.read(this.init_Path))) {
+      if (!input.stamp().equals(AiPrintPreparation.Inner_StateCache.read(this.schematicPath))) {
          throw new IOException("Schematic changed during preparation; start the build again");
       }
 
@@ -141,12 +141,12 @@ final class AiPrintPreparation implements AiOperation {
          buildable.skipped(),
          targets,
          source,
-         power.machine().machineSpec(blueprint.origin(), this.init_HolderLookup_Provi),
+         power.machine().machineSpec(blueprint.origin(), this.registries),
          geometry
       );
    }
 
-   static void init_V_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
+   static void requireBuildableCells(AiBuilder.Blueprint blueprint) {
       if (blueprint.cells().isEmpty()) {
          throw new IllegalArgumentException("The selected schematic layers contain no buildable cells");
       }
@@ -154,9 +154,9 @@ final class AiPrintPreparation implements AiOperation {
 
    @Override
    public AiOperation.Result tick() {
-      boolean preparing = this.init_AiOperation == null;
+      boolean preparing = this.printOperation == null;
       long started = System.nanoTime();
-      AiOperation.Result result = this.init_AiOperation_Result_26();
+      AiOperation.Result result = this.tickPreparation();
       if (preparing) {
          this.sync = Math.max(this.sync, System.nanoTime() - started);
       }
@@ -166,102 +166,102 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       JsonObject data = JsonParser.parseString(result.dataJson()).getAsJsonObject();
-      data.addProperty("preparationDone", this.write_J);
+      data.addProperty("preparationDone", this.progressSteps);
       data.addProperty("preparationTotal", this.update);
-      data.addProperty("filePreparationDone", this.write_J);
+      data.addProperty("filePreparationDone", this.progressSteps);
       data.addProperty("maxPreparationTickMs", this.sync / 1000000.0);
-      data.addProperty("preparationWallMs", ((this.flush == 0L ? System.nanoTime() : this.flush) - this.read_J) / 1000000L);
+      data.addProperty("preparationWallMs", ((this.flush == 0L ? System.nanoTime() : this.flush) - this.startedNanos) / 1000000L);
       String message = result.message();
-      if (this.write_I > 0) {
-         data.addProperty("preflightSkippedCells", this.write_I);
-         data.add("preflightIssues", this.init_JsonArray.deepCopy());
+      if (this.skippedCells > 0) {
+         data.addProperty("preflightSkippedCells", this.skippedCells);
+         data.add("preflightIssues", this.preflightIssues.deepCopy());
          data.addProperty("sourceComplete", false);
          data.addProperty("machineComplete", false);
          if (result.status() == AiOperation.Status.SUCCEEDED) {
-            message = message + ". Skipped " + this.write_I + (this.write_I == 1 ? " cell" : " cells") + " that could not be placed as saved.";
+            message = message + ". Skipped " + this.skippedCells + (this.skippedCells == 1 ? " cell" : " cells") + " that could not be placed as saved.";
          }
       }
 
       return new AiOperation.Result(result.status(), message, data.toString(), result.evidence(), result.failure());
    }
 
-   private AiOperation.Result init_AiOperation_Result_26() {
-      if (this.init_AiOperation_Result != null) {
-         return this.init_AiOperation_Result;
+   private AiOperation.Result tickPreparation() {
+      if (this.finalResult != null) {
+         return this.finalResult;
       }
 
-      if (this.write_Z) {
+      if (this.cancelled) {
          return this.init(AiOperation.Status.CANCELLED, "Build cancelled", AiFailure.CANCELLED);
       }
 
-      if (!this.init_bg_TaskQueue.matches(this.init_Minecraft.level, this.init_Minecraft.player)) {
+      if (!this.worldGuard.matches(this.client.level, this.client.player)) {
          return this.init(AiOperation.Status.CANCELLED, "World or player changed", AiFailure.CANCELLED);
       }
 
-      if (!this.init_Minecraft.player.isAlive()) {
+      if (!this.client.player.isAlive()) {
          return this.init(AiOperation.Status.FAILED, "The player died", AiFailure.EXECUTION_FAILED);
       }
 
-      if (this.load_J != 0L && System.nanoTime() >= this.load_J) {
+      if (this.deadlineNanos != 0L && System.nanoTime() >= this.deadlineNanos) {
          return this.init(AiOperation.Status.TIMED_OUT, "Requested build deadline reached", AiFailure.TIMEOUT);
       }
 
-      if (this.init_AiOperation != null) {
-         AiOperation.Result result = this.init_AiOperation.tick();
+      if (this.printOperation != null) {
+         AiOperation.Result result = this.printOperation.tick();
          if (result.terminal()) {
-            this.init_AiOperation_Result = result;
-            this.init_bg_SyncManager.close();
+            this.finalResult = result;
+            this.worker.close();
          }
 
          return result;
       } else {
          try {
             label216: {
-               switch (this.init_bg_BufferHelper) {
+               switch (this.phase) {
                   case DECODE:
-                     if (!this.init_Future.isDone()) {
-                        return this.init_AiOperation_Result_Str_10("Reading schematic");
+                     if (!this.pendingTask.isDone()) {
+                        return this.runningResult("Reading schematic");
                      }
 
-                     this.init_bg_DataUtil = (AiPrintPreparation.Inner_DataUtil)this.init_Future.get();
-                     this.init_Future = null;
-                     this.write_J++;
-                     this.read_I = this.init_bg_DataUtil.blueprint().cells().size();
-                     this.update = this.write_J + this.init_bg_DataUtil.leafNeighbors().size() + this.read_I + 2L;
-                     this.init_bg_StreamUtil = new AiPrintPreparation.Inner_StreamUtil(this.init_bg_DataUtil.leafNeighbors());
-                     this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.LEAVES;
+                     this.decoded = (AiPrintPreparation.Inner_DataUtil)this.pendingTask.get();
+                     this.pendingTask = null;
+                     this.progressSteps++;
+                     this.cellCount = this.decoded.blueprint().cells().size();
+                     this.update = this.progressSteps + this.decoded.leafNeighbors().size() + this.cellCount + 2L;
+                     this.leafScan = new AiPrintPreparation.Inner_StreamUtil(this.decoded.leafNeighbors());
+                     this.phase = AiPrintPreparation.Inner_BufferHelper.LEAVES;
                      break;
                   case LEAVES:
-                     int before = this.init_bg_StreamUtil.init_I;
-                     this.init_bg_StreamUtil
+                     int before = this.leafScan.nextIndex;
+                     this.leafScan
                         .init(
                            4096,
                            System.nanoTime() + 2000000L,
-                           pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos) ? this.init_Minecraft.level.getBlockState(pos) : Blocks.AIR.defaultBlockState()
+                           pos -> AiTerrain.isLoaded(this.client.level, pos) ? this.client.level.getBlockState(pos) : Blocks.AIR.defaultBlockState()
                         );
-                     this.write_J = this.write_J + (this.init_bg_StreamUtil.init_I - before);
-                     if (this.init_bg_StreamUtil.init_Z()) {
-                        Map<Long, BlockState> snapshot = this.init_bg_StreamUtil.init_Map();
-                        AiPrintPreparation.Inner_DataUtil input = this.init_bg_DataUtil;
-                        this.init_Future = this.init_bg_SyncManager.init(() -> this.init(input, snapshot));
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.NORMALIZE;
+                     this.progressSteps = this.progressSteps + (this.leafScan.nextIndex - before);
+                     if (this.leafScan.isComplete()) {
+                        Map<Long, BlockState> snapshot = this.leafScan.snapshot();
+                        AiPrintPreparation.Inner_DataUtil input = this.decoded;
+                        this.pendingTask = this.worker.init(() -> this.init(input, snapshot));
+                        this.phase = AiPrintPreparation.Inner_BufferHelper.NORMALIZE;
                      }
                      break;
                   case NORMALIZE:
-                     if (!this.init_Future.isDone()) {
-                        return this.init_AiOperation_Result_Str_10("Preparing schematic rules and targets");
+                     if (!this.pendingTask.isDone()) {
+                        return this.runningResult("Preparing schematic rules and targets");
                      }
 
-                     this.init_bg_ConfigStore = (AiPrintPreparation.Inner_ConfigStore)this.init_Future.get();
-                     this.init_Future = null;
-                     this.write_J++;
-                     this.read_I = this.init_bg_ConfigStore.blueprint().cells().size();
-                     this.init_bg_SyncManager.close();
-                     this.write_I = this.init_bg_ConfigStore.skipped();
+                     this.normalized = (AiPrintPreparation.Inner_ConfigStore)this.pendingTask.get();
+                     this.pendingTask = null;
+                     this.progressSteps++;
+                     this.cellCount = this.normalized.blueprint().cells().size();
+                     this.worker.close();
+                     this.skippedCells = this.normalized.skipped();
 
-                     for (AiSchematicReadiness.Inner_StreamUtil issue : this.init_bg_ConfigStore.audit().issues()) {
+                     for (AiSchematicReadiness.Inner_StreamUtil issue : this.normalized.audit().issues()) {
                         AiBuilder.CellSpec cell = issue.cell();
-                        this.init_JsonArray
+                        this.preflightIssues
                            .add(
                               AiJson.objectOf(
                                  "kind",
@@ -280,87 +280,87 @@ final class AiPrintPreparation implements AiOperation {
                            );
                      }
 
-                     if (this.read_I == 0) {
+                     if (this.cellCount == 0) {
                         this.flush = System.nanoTime();
                         return this.init(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.PLACEMENT_IMPOSSIBLE);
                      }
 
-                     this.init_bg_CachePool = new AiPrintPreparation.Inner_CachePool(this.init_bg_ConfigStore.stockPlan(), this.init_bg_ConfigStore.source().keys());
-                     this.init_bg_BufferHelper = this.init_Z_22() ? AiPrintPreparation.Inner_BufferHelper.HANDOFF : AiPrintPreparation.Inner_BufferHelper.MATERIALS;
+                     this.materialPlan = new AiPrintPreparation.Inner_CachePool(this.normalized.stockPlan(), this.normalized.source().keys());
+                     this.phase = this.isCreativeInstabuild() ? AiPrintPreparation.Inner_BufferHelper.HANDOFF : AiPrintPreparation.Inner_BufferHelper.MATERIALS;
                      break;
                   case MATERIALS:
-                     if (this.init_Z_22()) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                     if (this.isCreativeInstabuild()) {
+                        this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                      } else {
-                        int beforeWrite = this.init_bg_CachePool.init_I;
-                        this.init_bg_CachePool.init(4096, System.nanoTime() + 2000000L, this.init_Minecraft.level);
-                        this.write_J = this.write_J + (this.init_bg_CachePool.init_I - beforeWrite);
-                        if (this.init_bg_CachePool.isDone()) {
-                           this.init_JsonObject = this.init_JsonObject_43();
-                           this.read_Z = true;
-                           if (this.init_JsonObject.isEmpty()) {
-                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                        int beforeWrite = this.materialPlan.nextCell;
+                        this.materialPlan.init(4096, System.nanoTime() + 2000000L, this.client.level);
+                        this.progressSteps = this.progressSteps + (this.materialPlan.nextCell - beforeWrite);
+                        if (this.materialPlan.isDone()) {
+                           this.missingMaterials = this.computeMissingMaterials();
+                           this.materialsChecked = true;
+                           if (this.missingMaterials.isEmpty()) {
+                              this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                            } else {
-                              if (!this.init_bg_ConfigStore.power().shulkerStock()) {
+                              if (!this.normalized.power().shulkerStock()) {
                                  return this.load();
                               }
 
-                              this.init_bg_NetHelper = new AiPrintPreparation.Inner_NetHelper(
-                                 this.init_BlockPos, this.init_bg_ConfigStore.blueprint().origin(), this.init_bg_ConfigStore.source()
+                              this.worldScan = new AiPrintPreparation.Inner_NetHelper(
+                                 this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                               );
-                              this.update = Math.max(this.update, this.write_J + this.init_bg_NetHelper.init_J() + 1L);
-                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.STOCK;
+                              this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
+                              this.phase = AiPrintPreparation.Inner_BufferHelper.STOCK;
                            }
                         }
                      }
                      break;
                   case STOCK:
-                     if (this.init_Z_22()) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                     if (this.isCreativeInstabuild()) {
+                        this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                      } else {
-                        long beforeUpdate = this.init_bg_NetHelper.init_J;
-                        this.init_bg_NetHelper
-                           .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
-                        this.write_J = this.write_J + (this.init_bg_NetHelper.init_J - beforeUpdate);
-                        if (this.init_bg_NetHelper.done) {
-                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
-                        } else if (this.init_bg_NetHelper.isDone()) {
-                           this.init_JsonObject = this.init_JsonObject_43();
-                           if (!this.init_JsonObject.isEmpty()) {
+                        long beforeUpdate = this.worldScan.scannedBlocks;
+                        this.worldScan
+                           .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.client.level, pos), this.client.level::getBlockState);
+                        this.progressSteps = this.progressSteps + (this.worldScan.scannedBlocks - beforeUpdate);
+                        if (this.worldScan.done) {
+                           this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                        } else if (this.worldScan.isDone()) {
+                           this.missingMaterials = this.computeMissingMaterials();
+                           if (!this.missingMaterials.isEmpty()) {
                               return this.load();
                            }
 
-                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                           this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                         }
                      }
                      break;
                   case HANDOFF:
-                     if (!this.init_Z_22() && !this.read_Z) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.MATERIALS;
+                     if (!this.isCreativeInstabuild() && !this.materialsChecked) {
+                        this.phase = AiPrintPreparation.Inner_BufferHelper.MATERIALS;
                      } else {
-                        if (this.init_Z_22() || this.init_bg_NetHelper != null && this.init_bg_NetHelper.done) {
+                        if (this.isCreativeInstabuild() || this.worldScan != null && this.worldScan.done) {
                            break label216;
                         }
 
-                        this.init_JsonObject = this.init_JsonObject_43();
-                        if (this.init_JsonObject.isEmpty()) {
+                        this.missingMaterials = this.computeMissingMaterials();
+                        if (this.missingMaterials.isEmpty()) {
                            break label216;
                         }
 
-                        if (!this.init_bg_ConfigStore.power().shulkerStock()) {
+                        if (!this.normalized.power().shulkerStock()) {
                            return this.load();
                         }
 
-                        this.init_bg_NetHelper = new AiPrintPreparation.Inner_NetHelper(
-                           this.init_BlockPos, this.init_bg_ConfigStore.blueprint().origin(), this.init_bg_ConfigStore.source()
+                        this.worldScan = new AiPrintPreparation.Inner_NetHelper(
+                           this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                         );
-                        this.update = Math.max(this.update, this.write_J + this.init_bg_NetHelper.init_J() + 1L);
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.STOCK;
+                        this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
+                        this.phase = AiPrintPreparation.Inner_BufferHelper.STOCK;
                      }
                }
 
                String var10001;
-               switch (this.init_bg_BufferHelper) {
+               switch (this.phase) {
                   case DECODE:
                      var10001 = "Reading schematic";
                      break;
@@ -383,49 +383,49 @@ final class AiPrintPreparation implements AiOperation {
                      throw new MatchException(null, null);
                }
 
-               return this.init_AiOperation_Result_Str_10(var10001);
+               return this.runningResult(var10001);
             }
 
-            int seconds = this.load_J == 0L ? 0 : (int)Math.max(1L, (this.load_J - System.nanoTime() + 999999999L) / 1000000000L);
-            if (this.init_bg_ConfigStore.power().repeat() != null) {
-               this.init_AiOperation = new AiPrintRepeat(
-                  this.init_bg_ConfigStore.blueprint(),
-                  this.init_bg_ConfigStore.power(),
-                  this.load_Z,
+            int seconds = this.deadlineNanos == 0L ? 0 : (int)Math.max(1L, (this.deadlineNanos - System.nanoTime() + 999999999L) / 1000000000L);
+            if (this.normalized.power().repeat() != null) {
+               this.printOperation = new AiPrintRepeat(
+                  this.normalized.blueprint(),
+                  this.normalized.power(),
+                  this.verify,
                   seconds,
-                  this.init_bg_ConfigStore.targets(),
-                  this.init_bg_NetHelper == null ? null : this.init_bg_NetHelper.stockPos,
-                  this.init_bg_ConfigStore.nativeActions(),
-                  this.init_bg_ConfigStore.geometry()
+                  this.normalized.targets(),
+                  this.worldScan == null ? null : this.worldScan.stockPos,
+                  this.normalized.nativeActions(),
+                  this.normalized.geometry()
                );
             } else {
                AiPrintOp operation = new AiPrintOp(
-                  this.init_bg_ConfigStore.blueprint(),
+                  this.normalized.blueprint(),
                   seconds,
-                  this.init_bg_ConfigStore.power(),
-                  this.init_bg_ConfigStore.targets(),
-                  this.init_bg_ConfigStore.nativeActions(),
-                  this.init_bg_ConfigStore.geometry()
+                  this.normalized.power(),
+                  this.normalized.targets(),
+                  this.normalized.nativeActions(),
+                  this.normalized.geometry()
                );
-               if (this.init_bg_NetHelper != null && this.init_bg_NetHelper.stockPos != null) {
-                  operation.notifyBlockChanged(this.init_bg_NetHelper.stockPos);
+               if (this.worldScan != null && this.worldScan.stockPos != null) {
+                  operation.notifyBlockChanged(this.worldScan.stockPos);
                }
 
-               this.init_AiOperation = operation;
+               this.printOperation = operation;
             }
 
-            this.write_J = this.update = Math.max(this.write_J, this.update);
+            this.progressSteps = this.update = Math.max(this.progressSteps, this.update);
             this.flush = System.nanoTime();
-            this.init_bg_DataUtil = null;
-            this.init_bg_ConfigStore = null;
-            this.init_bg_StreamUtil = null;
-            this.init_bg_CachePool = null;
-            this.init_bg_NetHelper = null;
-            this.init_JsonObject = null;
-            return this.init_AiOperation_Result_Str_10(
-               this.write_I == 0
+            this.decoded = null;
+            this.normalized = null;
+            this.leafScan = null;
+            this.materialPlan = null;
+            this.worldScan = null;
+            this.missingMaterials = null;
+            return this.runningResult(
+               this.skippedCells == 0
                   ? "Schematic prepared; starting construction"
-                  : "Starting construction. Skipping " + this.write_I + (this.write_I == 1 ? " cell" : " cells") + " that cannot be placed as saved."
+                  : "Starting construction. Skipping " + this.skippedCells + (this.skippedCells == 1 ? " cell" : " cells") + " that cannot be placed as saved."
             );
          } catch (InterruptedException failure) {
             return this.init(AiOperation.Status.CANCELLED, "Schematic preparation interrupted", AiFailure.CANCELLED);
@@ -440,34 +440,34 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   private boolean init_Z_22() {
-      return this.init_Minecraft.gameMode != null
-         && this.init_Minecraft.gameMode.getPlayerMode() == GameType.CREATIVE
-         && this.init_Minecraft.player.getAbilities().instabuild;
+   private boolean isCreativeInstabuild() {
+      return this.client.gameMode != null
+         && this.client.gameMode.getPlayerMode() == GameType.CREATIVE
+         && this.client.player.getAbilities().instabuild;
    }
 
-   private JsonObject init_JsonObject_43() {
+   private JsonObject computeMissingMaterials() {
       return AiBuilder.missingMaterialsForContainer(
-         this.init_bg_CachePool.requirements(), this.init_Minecraft.player.getInventory(), this.init_bg_ConfigStore.power().shulkerStock()
+         this.materialPlan.requirements(), this.client.player.getInventory(), this.normalized.power().shulkerStock()
       );
    }
 
    private AiOperation.Result load() {
-      this.init_bg_SyncManager.close();
+      this.worker.close();
       this.flush = System.nanoTime();
-      this.init_AiOperation_Result = AiOperation.Result.failed(
+      this.finalResult = AiOperation.Result.failed(
          AiFailure.MISSING_MATERIALS,
          "Missing materials for the schematic; "
             + (
-               this.init_bg_ConfigStore.power().shulkerStock()
+               this.normalized.power().shulkerStock()
                   ? "carried stock is insufficient and no nearby external shulker was found"
                   : "shulker stock is disabled"
             )
             + ": "
-            + this.init_JsonObject,
+            + this.missingMaterials,
          AiJson.objectOf(
                "missing",
-               this.init_JsonObject,
+               this.missingMaterials,
                "placed",
                0,
                "skipped",
@@ -477,19 +477,19 @@ final class AiPrintPreparation implements AiOperation {
                "shulkerStock",
                false,
                "cells",
-               this.init_bg_ConfigStore.blueprint().cells().size()
+               this.normalized.blueprint().cells().size()
             )
             .toString()
       );
-      return this.init_AiOperation_Result;
+      return this.finalResult;
    }
 
-   private AiOperation.Result init_AiOperation_Result_Str_10(String message) {
+   private AiOperation.Result runningResult(String message) {
       return new AiOperation.Result(
          AiOperation.Status.RUNNING,
          message,
          AiJson.objectOf(
-               "preparing", this.init_AiOperation == null, "stage", "prepare", "phase", this.init_bg_BufferHelper.name(), "cells", this.read_I
+               "preparing", this.printOperation == null, "stage", "prepare", "phase", this.phase.name(), "cells", this.cellCount
             )
             .toString(),
          List.of()
@@ -497,36 +497,36 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    private AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
-      this.init_bg_SyncManager.close();
+      this.worker.close();
       if (this.flush == 0L) {
          this.flush = System.nanoTime();
       }
 
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
+      if (this.printOperation != null) {
+         this.printOperation.cancel();
       }
 
-      this.init_AiOperation_Result = new AiOperation.Result(status, message, "{}", List.of(), failure);
-      return this.init_AiOperation_Result;
+      this.finalResult = new AiOperation.Result(status, message, "{}", List.of(), failure);
+      return this.finalResult;
    }
 
    @Override
    public void cancel() {
-      this.write_Z = true;
-      this.init_bg_SyncManager.close();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
+      this.cancelled = true;
+      this.worker.close();
+      if (this.printOperation != null) {
+         this.printOperation.cancel();
       }
    }
 
    @Override
    public boolean canInterruptNow() {
-      return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+      return this.printOperation == null || this.printOperation.canInterruptNow();
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+      return this.printOperation != null && this.printOperation.requiresReconciliationAfterEmergency();
    }
 
    private enum Inner_BufferHelper {
@@ -539,15 +539,15 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    static final class Inner_CachePool {
-      final AiBuilder.Blueprint init_TableIndex_DataUti;
-      final Set<Long> init_Set;
+      final AiBuilder.Blueprint blueprint;
+      final Set<Long> sourceKeys;
       final Set<BlockPos> load = new HashSet<>();
-      private final Map<AiPrintPreparation.Inner_CachePool.Inner_DataUtil, AiCellMaterials.Inner_CachePool> init_Map = new LinkedHashMap<>();
-      int init_I;
+      private final Map<AiPrintPreparation.Inner_CachePool.Inner_DataUtil, AiCellMaterials.Inner_CachePool> requirementsByKey = new LinkedHashMap<>();
+      int nextCell;
 
       Inner_CachePool(AiBuilder.Blueprint blueprint, Set<Long> source) {
-         this.init_TableIndex_DataUti = blueprint;
-         this.init_Set = source;
+         this.blueprint = blueprint;
+         this.sourceKeys = source;
       }
 
       void init(int limit, LevelReader world) {
@@ -555,20 +555,20 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       void init(int limit, long deadline, LevelReader world) {
-         int first = this.init_I;
-         int end = Math.min(this.init_TableIndex_DataUti.cells().size(), this.init_I + Math.max(1, limit));
+         int first = this.nextCell;
+         int end = Math.min(this.blueprint.cells().size(), this.nextCell + Math.max(1, limit));
 
-         while (this.init_I < end && (this.init_I == first || System.nanoTime() < deadline)) {
-            AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.init_I++);
+         while (this.nextCell < end && (this.nextCell == first || System.nanoTime() < deadline)) {
+            AiBuilder.CellSpec cell = this.blueprint.cells().get(this.nextCell++);
             if (!AiBuilder.isTransientPistonCell(cell)) {
-               BlockPos at = this.init_TableIndex_DataUti.origin().offset(cell.dx(), cell.dy(), cell.dz());
+               BlockPos at = this.blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                BlockState live = world.getBlockState(at);
                if (!AiBuilder.matchesSchematicCell(cell, live)) {
                   for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
                      this.init(requirement);
                   }
 
-                  BlockPos foundation = AiSchematicActions.foundationFor(cell, at, world, this.init_Set);
+                  BlockPos foundation = AiSchematicActions.foundationFor(cell, at, world, this.sourceKeys);
                   if (foundation != null && this.load.add(foundation)) {
                      this.init(
                         new AiCellMaterials.Inner_CachePool(AiCellMaterials.Inner_DataUtil.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME)
@@ -581,11 +581,11 @@ final class AiPrintPreparation implements AiOperation {
 
       private void init(AiCellMaterials.Inner_CachePool requirement) {
          AiPrintPreparation.Inner_CachePool.Inner_DataUtil key = new AiPrintPreparation.Inner_CachePool.Inner_DataUtil(requirement.itemSpec(), requirement.use());
-         AiCellMaterials.Inner_CachePool previous = this.init_Map.get(key);
+         AiCellMaterials.Inner_CachePool previous = this.requirementsByKey.get(key);
          if (previous == null) {
-            this.init_Map.put(key, requirement);
+            this.requirementsByKey.put(key, requirement);
          } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.CONSUME) {
-            this.init_Map
+            this.requirementsByKey
                .put(
                   key,
                   new AiCellMaterials.Inner_CachePool(
@@ -596,11 +596,11 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       boolean isDone() {
-         return this.init_I == this.init_TableIndex_DataUti.cells().size();
+         return this.nextCell == this.blueprint.cells().size();
       }
 
       List<AiCellMaterials.Inner_CachePool> requirements() {
-         return List.copyOf(this.init_Map.values());
+         return List.copyOf(this.requirementsByKey.values());
       }
 
       private record Inner_DataUtil(String spec, AiCellMaterials.Inner_BufferHelper use) {
@@ -646,21 +646,21 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    static final class Inner_NetHelper {
-      private final List<AiPrintPreparation.Inner_NetHelper.Inner_DataUtil> init_List = new ArrayList<>(2);
-      private final Set<Long> init_Set;
-      int init_I;
+      private final List<AiPrintPreparation.Inner_NetHelper.Inner_DataUtil> regions = new ArrayList<>(2);
+      private final Set<Long> sourceKeys;
+      int regionIndex;
       int load;
       int read;
       int write;
-      long init_J;
+      long scannedBlocks;
       boolean done;
       BlockPos stockPos;
 
       Inner_NetHelper(BlockPos player, BlockPos origin, AiPrintPreparation.Inner_JsonUtil index) {
-         this.init_Set = index.keys();
-         this.init_List.add(new AiPrintPreparation.Inner_NetHelper.Inner_DataUtil(player.offset(-24, -8, -24), player.offset(24, 8, 24)));
+         this.sourceKeys = index.keys();
+         this.regions.add(new AiPrintPreparation.Inner_NetHelper.Inner_DataUtil(player.offset(-24, -8, -24), player.offset(24, 8, 24)));
          if (index.minX() <= index.maxX()) {
-            this.init_List
+            this.regions
                .add(
                   new AiPrintPreparation.Inner_NetHelper.Inner_DataUtil(
                      new BlockPos(index.minX() - 24, origin.getY() - 8, index.minZ() - 24),
@@ -669,9 +669,9 @@ final class AiPrintPreparation implements AiOperation {
                );
          }
 
-         this.init_V();
+         this.resetCursorToRegion();
          BlockPos anyHeightStock = AuditBuilderShulkerStock.findExternalStock(
-            player, index.minX(), index.maxX(), index.minZ(), index.maxZ(), this.init_Set
+            player, index.minX(), index.maxX(), index.minZ(), index.maxZ(), this.sourceKeys
          );
          if (anyHeightStock != null) {
             this.done = true;
@@ -679,9 +679,9 @@ final class AiPrintPreparation implements AiOperation {
          }
       }
 
-      private void init_V() {
-         if (this.init_I < this.init_List.size()) {
-            BlockPos min = this.init_List.get(this.init_I).min();
+      private void resetCursorToRegion() {
+         if (this.regionIndex < this.regions.size()) {
+            BlockPos min = this.regions.get(this.regionIndex).min();
             this.load = min.getX();
             this.read = min.getY();
             this.write = min.getZ();
@@ -694,31 +694,31 @@ final class AiPrintPreparation implements AiOperation {
 
       void init(int limit, long deadline, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
          for (int inSlice = 0; inSlice < Math.max(1, limit) && !this.isDone() && (inSlice == 0 || System.nanoTime() < deadline); inSlice++) {
-            this.init_J++;
+            this.scannedBlocks++;
             BlockPos at = new BlockPos(this.load, this.read, this.write);
-            BlockPos max = this.init_List.get(this.init_I).max();
+            BlockPos max = this.regions.get(this.regionIndex).max();
             if (++this.load > max.getX()) {
-               this.load = this.init_List.get(this.init_I).min().getX();
+               this.load = this.regions.get(this.regionIndex).min().getX();
                if (++this.read > max.getY()) {
-                  this.read = this.init_List.get(this.init_I).min().getY();
+                  this.read = this.regions.get(this.regionIndex).min().getY();
                   if (++this.write > max.getZ()) {
-                     this.init_I++;
-                     this.init_V();
+                     this.regionIndex++;
+                     this.resetCursorToRegion();
                   }
                }
             }
 
-            if (!this.init_Set.contains(at.asLong()) && loaded.test(at) && state.apply(at).getBlock() instanceof ShulkerBoxBlock) {
+            if (!this.sourceKeys.contains(at.asLong()) && loaded.test(at) && state.apply(at).getBlock() instanceof ShulkerBoxBlock) {
                this.done = true;
                this.stockPos = at;
             }
          }
       }
 
-      long init_J() {
+      long totalVolume() {
          long total = 0L;
 
-         for (AiPrintPreparation.Inner_NetHelper.Inner_DataUtil region : this.init_List) {
+         for (AiPrintPreparation.Inner_NetHelper.Inner_DataUtil region : this.regions) {
             total += ((long)region.max().getX() - region.min().getX() + 1L)
                * ((long)region.max().getY() - region.min().getY() + 1L)
                * ((long)region.max().getZ() - region.min().getZ() + 1L);
@@ -728,7 +728,7 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       boolean isDone() {
-         return this.done || this.init_I >= this.init_List.size();
+         return this.done || this.regionIndex >= this.regions.size();
       }
 
       private record Inner_DataUtil(BlockPos min, BlockPos max) {
@@ -743,12 +743,12 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    static final class Inner_StreamUtil {
-      final List<BlockPos> init_List;
-      private final Map<Long, BlockState> init_Map = new HashMap<>();
-      int init_I;
+      final List<BlockPos> positions;
+      private final Map<Long, BlockState> statesByPos = new HashMap<>();
+      int nextIndex;
 
       Inner_StreamUtil(List<BlockPos> positions) {
-         this.init_List = positions;
+         this.positions = positions;
       }
 
       void init(int limit, Function<BlockPos, BlockState> state) {
@@ -756,62 +756,62 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       void init(int limit, long deadline, Function<BlockPos, BlockState> state) {
-         int first = this.init_I;
-         int end = Math.min(this.init_List.size(), this.init_I + Math.max(1, limit));
+         int first = this.nextIndex;
+         int end = Math.min(this.positions.size(), this.nextIndex + Math.max(1, limit));
 
-         while (this.init_I < end && (this.init_I == first || System.nanoTime() < deadline)) {
-            BlockPos at = this.init_List.get(this.init_I++);
-            this.init_Map.put(at.asLong(), state.apply(at));
+         while (this.nextIndex < end && (this.nextIndex == first || System.nanoTime() < deadline)) {
+            BlockPos at = this.positions.get(this.nextIndex++);
+            this.statesByPos.put(at.asLong(), state.apply(at));
          }
       }
 
-      boolean init_Z() {
-         return this.init_I == this.init_List.size();
+      boolean isComplete() {
+         return this.nextIndex == this.positions.size();
       }
 
-      Map<Long, BlockState> init_Map() {
-         if (!this.init_Z()) {
+      Map<Long, BlockState> snapshot() {
+         if (!this.isComplete()) {
             throw new IllegalStateException("Leaf snapshot is incomplete");
          } else {
-            return Collections.unmodifiableMap(this.init_Map);
+            return Collections.unmodifiableMap(this.statesByPos);
          }
       }
    }
 
    static final class Inner_SyncManager implements AutoCloseable {
-      private final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(task -> {
+      private final ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
          Thread thread = new Thread(task, "schematic-preparation");
          thread.setDaemon(true);
          return thread;
       });
-      private Future<?> init_Future;
-      private boolean init_Z;
+      private Future<?> current;
+      private boolean closed;
 
       synchronized <T> Future<T> init(Callable<T> action) {
-         if (this.init_Z) {
+         if (this.closed) {
             throw new CancellationException("Schematic preparation cancelled");
          }
 
-         Future<T> next = this.init_ExecutorService.submit(() -> {
+         Future<T> next = this.executor.submit(() -> {
             AiBuilder.checkNotCancelled();
             T result = action.call();
             AiBuilder.checkNotCancelled();
             return result;
          });
-         this.init_Future = next;
+         this.current = next;
          return next;
       }
 
       @Override
       public synchronized void close() {
-         if (!this.init_Z) {
-            this.init_Z = true;
-            if (this.init_Future != null) {
-               this.init_Future.cancel(true);
+         if (!this.closed) {
+            this.closed = true;
+            if (this.current != null) {
+               this.current.cancel(true);
             }
 
-            this.init_Future = null;
-            this.init_ExecutorService.shutdownNow();
+            this.current = null;
+            this.executor.shutdownNow();
          }
       }
    }

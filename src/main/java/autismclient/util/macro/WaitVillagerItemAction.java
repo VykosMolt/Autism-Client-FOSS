@@ -12,7 +12,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
    public boolean traders = true;
    public boolean holdEmerald = true;
    public int timeoutTicks = 0;
-   private boolean init_Z = true;
+   private boolean enabled = true;
 
    @Override
    public void run(MacroExecutionContext ctx) {
@@ -44,7 +44,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       tag.putBoolean("traders", this.traders);
       tag.putBoolean("holdEmerald", this.holdEmerald);
       tag.putInt("timeoutTicks", init(this.timeoutTicks, 0, 1200));
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -54,7 +54,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       this.traders = tag.getBooleanOr("traders", true);
       this.holdEmerald = tag.getBooleanOr("holdEmerald", true);
       this.timeoutTicks = init(tag.getIntOr("timeoutTicks", 0), 0, 1200);
-      this.init_Z = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    @Override
@@ -74,12 +74,12 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean value) {
-      this.init_Z = value;
+      this.enabled = value;
    }
 
    private static int init(int n, int min, int max) {
@@ -87,12 +87,12 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
    }
 
    private final class Inner_DataUtil {
-      private final MacroExecutionContext init_MacroExecutionCont;
-      private final autismclient.util.villagerdupe.VillagerDupeDriver init_DataUtil = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance();
-      private final autismclient.util.villagerdupe.VillagerDupeDriver.CachePool init_DataUtil_CachePool = new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
+      private final MacroExecutionContext context;
+      private final autismclient.util.villagerdupe.VillagerDupeDriver driver = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance();
+      private final autismclient.util.villagerdupe.VillagerDupeDriver.CachePool driverOptions = new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
          WaitVillagerItemAction.this.filter, WaitVillagerItemAction.this.traders, true, false, true, false, false, 1
       );
-      private final autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil init_DataUtil_DataUtil = WaitVillagerItemAction.this.filter;
+      private final autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil itemFilter = WaitVillagerItemAction.this.filter;
       private final boolean read = WaitVillagerItemAction.this.traders;
       private final boolean write = WaitVillagerItemAction.this.holdEmerald;
       final int init_I;
@@ -103,20 +103,20 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
 
       Inner_DataUtil(MacroExecutionContext ctx, int timeout) {
-         this.init_MacroExecutionCont = ctx;
+         this.context = ctx;
          this.init_I = timeout;
       }
 
       boolean init(Minecraft mc) {
-         if (!this.init_MacroExecutionCont.isActive()) {
+         if (!this.context.isActive()) {
             return this.init_Z();
          }
 
          autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next = (this.write
-               ? this.init_DataUtil.load(mc, this.init_DataUtil_CachePool)
-               : this.init_DataUtil.read(mc, this.init_DataUtil_CachePool))
+               ? this.driver.load(mc, this.driverOptions)
+               : this.driver.read(mc, this.driverOptions))
             .status();
-         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.init_Z_Minecraft(mc, this.init_DataUtil_DataUtil, this.read);
+         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.init_Z_Minecraft(mc, this.itemFilter, this.read);
          this.load_I++;
          if (!this.init_Z && (this.init_I <= 0 || this.load_I < this.init_I)) {
             if (next != this.init_DataUtil_ConfigSto) {

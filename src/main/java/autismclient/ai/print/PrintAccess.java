@@ -37,23 +37,23 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class PrintAccess {
-   static final double init_D = 12.0;
+   static final double PILLAR_COST = 12.0;
    static final double load_D = 16.0;
-   static final double read_D = 15.0;
-   static final double write_D = 200.0;
+   static final double DIG_DOWN_COST = 15.0;
+   static final double DIG_BUILD_COST = 200.0;
    boolean mayDigBuild;
-   static final double update_D = 3.033333333333333;
-   static final int init_I = 12;
-   private static final int read_I = 1024;
-   static final double sync_D = 60.0;
+   static final double DESCENT_COST_PER_BLOCK = 3.033333333333333;
+   static final int MAX_GOALS_PER_STANCE = 12;
+   private static final int MAX_CURSOR_STEPS = 1024;
+   static final double BURY_COST = 60.0;
    static final double flush_D = 2.0;
    boolean allowBury;
-   double close_D = 1.0;
+   double heuristicWeight = 1.0;
    boolean alternateGuide;
    boolean write_Z;
-   private boolean open_Z;
-   private double open_D = -1.0 / 0.0;
-   private double poll_D = 1.0 / 0.0;
+   private boolean columnReachSearch;
+   private double bandMinFeet = -1.0 / 0.0;
+   private double bandMaxFeet = 1.0 / 0.0;
    private final Int2IntOpenHashMap neighborCountCache = new Int2IntOpenHashMap();
    boolean update_Z;
    boolean freshClickRetry;
@@ -62,30 +62,30 @@ final class PrintAccess {
    private final PrintView view;
    private final double tempCost;
    private PrintNav.Inner_DataUtil bounds;
-   private final Long2BooleanOpenHashMap init_Long2BooleanOpenHa = new Long2BooleanOpenHashMap();
+   private final Long2BooleanOpenHashMap enclosedCellCache = new Long2BooleanOpenHashMap();
    private long rootKey;
    private Boolean rootCanEscape;
-   private Boolean load_Boolean;
+   private Boolean rootCanEscapeDown;
    String failureDetail = "";
-   long init_J = 20000000L;
-   static final long load_J = 20000000L;
-   boolean flush_Z;
-   private boolean poll_Z;
-   private boolean push_Z;
+   long workBudget = 20000000L;
+   static final long DEFAULT_WORK_BUDGET = 20000000L;
+   boolean goallessSearch;
+   private boolean exitMode;
+   private boolean groundOnly;
    private boolean pop;
-   private int write_I = 2147483647;
-   LongArrayList init_LongArrayList;
+   private int maxTemps = 2147483647;
+   LongArrayList removalTemps;
    long foundGoalKey = -9223372036854775808L;
-   LongOpenHashSet init_LongOpenHashSet;
-   LongArrayList load_LongArrayList;
-   private BlockState init_BlockState;
-   private Item init_Item;
-   private PrintClicks.Inner_StreamUtil init_ConfigStore_Stream;
+   LongOpenHashSet targetStances;
+   LongArrayList placeCells;
+   private BlockState placeState;
+   private Item placeItem;
+   private PrintClicks.Inner_StreamUtil unusedPlaceClick;
    private boolean tick;
    private boolean run;
-   private LongOpenHashSet load_LongOpenHashSet;
+   private LongOpenHashSet standingTemps;
    private long avoidSwap = -9223372036854775808L;
-   private PrintClicks.Inner_StreamUtil load_ConfigStore_Stream;
+   private PrintClicks.Inner_StreamUtil removalClick;
    boolean retrying;
    private IntArrayList indexedGoals;
    private PrintSpatialIndex goalIndex;
@@ -95,23 +95,23 @@ final class PrintAccess {
    private boolean get;
    int lowestGoalY = -2147483648;
 
-   private boolean init_Z_BlockPos_BlockState(BlockPos cell, BlockState material) {
+   private boolean canPlaceTemp(BlockPos cell, BlockState material) {
       if (this.core.sync_Z_J(cell.asLong()) || !this.core.load_Z_BlockPos_BlockState(cell, material)) {
          return false;
       }
 
-      if (!this.flush_Z && this.init_LongArrayList == null) {
+      if (!this.goallessSearch && this.removalTemps == null) {
          long key = cell.asLong();
          int i = this.core.cellIndexByPos.get(key);
          if (this.core.phase != PrintCore.J.FLUIDS
             || i < 0
             || this.core.targets[i].kind() != PrintTarget.Inner_DataUtil.FLUID
                && this.core.targets[i].kind() != PrintTarget.Inner_DataUtil.FLOW) {
-            if (!this.init_Long2BooleanOpenHa.containsKey(key)) {
-               this.init_Long2BooleanOpenHa.put(key, this.core.read_Z_BlockPos_BlockPos(cell, null));
+            if (!this.enclosedCellCache.containsKey(key)) {
+               this.enclosedCellCache.put(key, this.core.read_Z_BlockPos_BlockPos(cell, null));
             }
 
-            return !this.init_Long2BooleanOpenHa.get(key) || this.core.close_Z_BlockPos(cell);
+            return !this.enclosedCellCache.get(key) || this.core.close_Z_BlockPos(cell);
          } else {
             return false;
          }
@@ -127,17 +127,17 @@ final class PrintAccess {
       this.bounds = core.bounds;
    }
 
-   private boolean init_Z_StreamUtil_CachePo(PrintAccess.Inner_CachePool node) {
-      return this.poll_Z
-         && !this.push_Z
+   private boolean isExitStance(PrintAccess.Inner_CachePool node) {
+      return this.exitMode
+         && !this.groundOnly
          && (
             this.update_Z
                ? this.core.init_Z_BlockPos(BlockPos.of(node.key), node.feet, node.temps)
-               : this.core.init_Z_BlockPos(BlockPos.of(node.key), node.feet, node.temps, this.write_I)
+               : this.core.init_Z_BlockPos(BlockPos.of(node.key), node.feet, node.temps, this.maxTemps)
          );
    }
 
-   private int init_I_I(int a, int b, double x, double y, double z) {
+   private int compareGoals(int a, int b, double x, double y, double z) {
       if (this.write_Z) {
          int load = Integer.compare(
             this.neighborCountCache.computeIfAbsent(a, this.core::neighborCount),
@@ -153,7 +153,7 @@ final class PrintAccess {
       );
    }
 
-   private long init_J_LongArrayList_BlockPos(LongArrayList assumed, BlockPos goal) {
+   private long nearbyAssumedHash(LongArrayList assumed, BlockPos goal) {
       if (assumed != null && !assumed.isEmpty()) {
          long h = 17L;
 
@@ -178,16 +178,16 @@ final class PrintAccess {
    }
 
    PrintAccess.Inner_ConfigStore startFocusedSearch(BlockPos start, double feet, IntArrayList goals) {
-      this.push_Z = true;
+      this.groundOnly = true;
       this.write_Z = true;
       return this.startSearch(start, feet, goals, null);
    }
 
    PrintAccess.Inner_ConfigStore startBandSearch(BlockPos start, double feet, int goal, BlockState temporary) {
       int height = this.core.targets[goal].pos().getY();
-      this.open_D = height - 8;
-      this.poll_D = height + 8;
-      this.close_D = 2.0;
+      this.bandMinFeet = height - 8;
+      this.bandMaxFeet = height + 8;
+      this.heuristicWeight = 2.0;
       return this.startSearch(start, feet, IntArrayList.of(goal), temporary);
    }
 
@@ -198,7 +198,7 @@ final class PrintAccess {
          throw new IllegalArgumentException("Column reach starts elsewhere");
       }
 
-      this.open_Z = true;
+      this.columnReachSearch = true;
       this.alternateGuide = true;
       this.write_Z = true;
       PrintAccess.Inner_ConfigStore session = this.startSearch(start, feet, goals, tempState);
@@ -210,28 +210,28 @@ final class PrintAccess {
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos_D(BlockPos start, double feet) {
-      this.flush_Z = true;
-      this.push_Z = true;
+      this.goallessSearch = true;
+      this.groundOnly = true;
       this.pop = true;
-      this.write_I = 0;
+      this.maxTemps = 0;
       return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), null, this.view::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore startExitSearch(BlockPos start, double feet, BlockState tempState, boolean groundOnly, int maxTemps) {
-      this.flush_Z = true;
-      this.poll_Z = true;
-      this.push_Z = groundOnly;
-      this.write_I = maxTemps;
+      this.goallessSearch = true;
+      this.exitMode = true;
+      this.groundOnly = groundOnly;
+      this.maxTemps = maxTemps;
       return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.view::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore startRemovalSearch(
       BlockPos start, double feet, LongArrayList temps, BlockState tempState, boolean standOn, long avoidSwap
    ) {
-      this.init_LongArrayList = new LongArrayList(temps);
+      this.removalTemps = new LongArrayList(temps);
       this.tick = standOn;
       this.run = false;
-      this.load_LongOpenHashSet = standOn ? new LongOpenHashSet(temps) : null;
+      this.standingTemps = standOn ? new LongOpenHashSet(temps) : null;
       this.avoidSwap = avoidSwap;
       return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.view::workUnits);
    }
@@ -239,17 +239,17 @@ final class PrintAccess {
    PrintAccess.Inner_ConfigStore startStandingRemovalSearch(
       BlockPos start, double feet, LongArrayList temps, LongArrayList standingTemps, BlockState tempState, long avoidSwap
    ) {
-      this.init_LongArrayList = new LongArrayList(temps);
-      this.load_LongOpenHashSet = new LongOpenHashSet(standingTemps);
+      this.removalTemps = new LongArrayList(temps);
+      this.standingTemps = new LongOpenHashSet(standingTemps);
       this.tick = false;
       this.run = true;
       this.avoidSwap = avoidSwap;
       return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.view::workUnits);
    }
 
-   PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH_BlockPos(BlockPos start, double startFeet, IntArrayList goals, BlockState tempState, int maxNodes) {
+   PrintAccess.Inner_BufferHelper planToGoals(BlockPos start, double startFeet, IntArrayList goals, BlockState tempState, int maxNodes) {
       this.resetSearchCaches();
-      if (goals.isEmpty() && !this.flush_Z && this.init_LongArrayList == null && this.load_LongArrayList == null && this.init_LongOpenHashSet == null) {
+      if (goals.isEmpty() && !this.goallessSearch && this.removalTemps == null && this.placeCells == null && this.targetStances == null) {
          return null;
       }
 
@@ -266,19 +266,19 @@ final class PrintAccess {
       PrintAccess.Inner_CachePool root = new PrintAccess.Inner_CachePool(start.asLong(), startFeet, 0.0, null, null, 0);
       this.rootKey = root.key;
       this.rootCanEscape = null;
-      this.load_Boolean = null;
+      this.rootCanEscapeDown = null;
       best.put(root.key, 0.0);
-      open.add(new Object[]{this.close_D * this.init_D_J_IntArrayList(root.key, goals), root});
+      open.add(new Object[]{this.heuristicWeight * this.estimateCost(root.key, goals), root});
       PrintClicks.Inner_DataUtil budget = new PrintClicks.Inner_DataUtil(120000);
       int expanded = 0;
       PrintAccess.Inner_CachePool closest = root;
-      double closestH = this.init_D_J_IntArrayList(root.key, goals);
+      double closestH = this.estimateCost(root.key, goals);
       long work0 = this.view.workUnits();
 
       while (!open.isEmpty()) {
          PrintAccess.Inner_CachePool n = (PrintAccess.Inner_CachePool)open.poll()[1];
          if (!(n.g > best.get(n.key) + 1.0E-9)) {
-            if (!this.poll_Z && this.view.workUnits() - work0 > this.init_J) {
+            if (!this.exitMode && this.view.workUnits() - work0 > this.workBudget) {
                this.failureDetail = "work budget after " + expanded + " nodes, closest " + BlockPos.of(closest.key).toShortString() + " h " + (int)closestH;
                return null;
             }
@@ -294,48 +294,48 @@ final class PrintAccess {
                return null;
             }
 
-            double nh = this.init_D_J_IntArrayList(n.key, goals);
+            double nh = this.estimateCost(n.key, goals);
             if (nh < closestH) {
                closestH = nh;
                closest = n;
             }
 
-            if (n.parent != null || this.poll_Z || this.init_LongArrayList != null && this.freshClickRetry) {
-               if (this.init_LongArrayList != null) {
+            if (n.parent != null || this.exitMode || this.removalTemps != null && this.freshClickRetry) {
+               if (this.removalTemps != null) {
                   long t = this.load(n, budget);
-                  if (t != -9223372036854775808L && this.init_Z_StreamUtil_CachePo_D(n, startFeet)) {
+                  if (t != -9223372036854775808L && this.keepsWayOut(n, startFeet)) {
                      this.foundGoalKey = t;
-                     return this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(n, -1);
+                     return this.toPlan(n, -1);
                   }
-               } else if (this.load_LongArrayList != null) {
-                  long t = this.init_J_StreamUtil_CachePo_ConfigStore_DataUt(n, budget);
+               } else if (this.placeCells != null) {
+                  long t = this.findPlaceCell(n, budget);
                   if (t != -9223372036854775808L) {
                      this.foundGoalKey = t;
-                     return this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(n, -1);
+                     return this.toPlan(n, -1);
                   }
-               } else if (this.init_LongOpenHashSet != null) {
-                  if (this.init_LongOpenHashSet.contains(n.key) && this.init_Z_StreamUtil_CachePo_D(n, startFeet)) {
+               } else if (this.targetStances != null) {
+                  if (this.targetStances.contains(n.key) && this.keepsWayOut(n, startFeet)) {
                      this.foundGoalKey = n.key;
-                     return this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(n, -1);
+                     return this.toPlan(n, -1);
                   }
-               } else if (this.flush_Z) {
+               } else if (this.goallessSearch) {
                   int x = BlockPos.getX(n.key);
                   int y = BlockPos.getY(n.key);
                   int z = BlockPos.getZ(n.key);
-                  if (this.push_Z
+                  if (this.groundOnly
                      ? this.read(n)
-                     : this.core.isWithinFootprint(x, z) && this.read(n) || y > this.core.maxTargetY() || this.init_Z_StreamUtil_CachePo(n)) {
-                     return this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(n, -1);
+                     : this.core.isWithinFootprint(x, z) && this.read(n) || y > this.core.maxTargetY() || this.isExitStance(n)) {
+                     return this.toPlan(n, -1);
                   }
                } else {
-                  int g = this.init_I_StreamUtil_CachePo(n, goals, goalCache, budget);
-                  if (g >= 0 && this.init_Z_StreamUtil_CachePo_D(n, startFeet)) {
-                     return this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(n, g);
+                  int g = this.findGoalAt(n, goals, goalCache, budget);
+                  if (g >= 0 && this.keepsWayOut(n, startFeet)) {
+                     return this.toPlan(n, g);
                   }
                }
             }
 
-            this.init_V_StreamUtil_CachePo(n, goals, tempState, open, best);
+            this.expand(n, goals, tempState, open, best);
          }
       }
 
@@ -346,58 +346,58 @@ final class PrintAccess {
    PrintAccess.Inner_BufferHelper planExit(
       BlockPos start, double feet, BlockState tempState, int maxNodes, boolean groundOnly, int maxTemps
    ) {
-      this.flush_Z = true;
-      this.poll_Z = true;
-      this.push_Z = groundOnly;
-      this.write_I = maxTemps;
+      this.goallessSearch = true;
+      this.exitMode = true;
+      this.groundOnly = groundOnly;
+      this.maxTemps = maxTemps;
 
       try {
-         return this.init_StreamUtil_BufferH_BlockPos(start, feet, new IntArrayList(), tempState, maxNodes);
+         return this.planToGoals(start, feet, new IntArrayList(), tempState, maxNodes);
       } finally {
-         this.flush_Z = false;
-         this.poll_Z = false;
-         this.push_Z = false;
-         this.write_I = 2147483647;
+         this.goallessSearch = false;
+         this.exitMode = false;
+         this.groundOnly = false;
+         this.maxTemps = 2147483647;
       }
    }
 
    PrintAccess.Inner_BufferHelper planAccess(BlockPos start, double startFeet, BlockState tempState, int maxNodes) {
-      this.flush_Z = true;
+      this.goallessSearch = true;
 
       try {
-         return this.init_StreamUtil_BufferH_BlockPos(start, startFeet, new IntArrayList(), tempState, maxNodes);
+         return this.planToGoals(start, startFeet, new IntArrayList(), tempState, maxNodes);
       } finally {
-         this.flush_Z = false;
+         this.goallessSearch = false;
       }
    }
 
-   PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH_BlockPos(
+   PrintAccess.Inner_BufferHelper planRemoval(
       BlockPos start, double startFeet, LongArrayList temps, BlockState tempState, int maxNodes, boolean standOn
    ) {
-      this.init_LongArrayList = temps;
+      this.removalTemps = temps;
       this.tick = standOn;
       this.run = false;
       if (standOn) {
-         this.load_LongOpenHashSet = new LongOpenHashSet(temps);
+         this.standingTemps = new LongOpenHashSet(temps);
       }
 
       try {
-         return this.init_StreamUtil_BufferH_BlockPos(start, startFeet, new IntArrayList(), tempState, maxNodes);
+         return this.planToGoals(start, startFeet, new IntArrayList(), tempState, maxNodes);
       } finally {
-         this.init_LongArrayList = null;
-         this.load_LongOpenHashSet = null;
+         this.removalTemps = null;
+         this.standingTemps = null;
       }
    }
 
    PrintAccess.Inner_BufferHelper planToStances(
       BlockPos start, double startFeet, LongOpenHashSet stances, BlockState tempState, int maxNodes
    ) {
-      this.init_LongOpenHashSet = stances;
+      this.targetStances = stances;
 
       try {
-         return this.init_StreamUtil_BufferH_BlockPos(start, startFeet, new IntArrayList(), tempState, maxNodes);
+         return this.planToGoals(start, startFeet, new IntArrayList(), tempState, maxNodes);
       } finally {
-         this.init_LongOpenHashSet = null;
+         this.targetStances = null;
       }
    }
 
@@ -408,9 +408,9 @@ final class PrintAccess {
    PrintAccess.Inner_ConfigStore startCellSearch(
       BlockPos start, double feet, LongArrayList cells, BlockState state, Item item, BlockState pathState
    ) {
-      this.load_LongArrayList = new LongArrayList(cells);
-      this.init_BlockState = state;
-      this.init_Item = item;
+      this.placeCells = new LongArrayList(cells);
+      this.placeState = state;
+      this.placeItem = item;
       return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), pathState, this.view::workUnits);
    }
 
@@ -421,36 +421,36 @@ final class PrintAccess {
    }
 
    PrintAccess.Inner_BufferHelper init(BlockPos start, double startFeet, LongArrayList cells, BlockState tempState, Item item, BlockState pathTemp, int maxNodes) {
-      this.load_LongArrayList = cells;
-      this.init_BlockState = tempState;
-      this.init_Item = item;
+      this.placeCells = cells;
+      this.placeState = tempState;
+      this.placeItem = item;
 
       try {
-         return this.init_StreamUtil_BufferH_BlockPos(start, startFeet, new IntArrayList(), pathTemp, maxNodes);
+         return this.planToGoals(start, startFeet, new IntArrayList(), pathTemp, maxNodes);
       } finally {
-         this.load_LongArrayList = null;
+         this.placeCells = null;
       }
    }
 
-   private long init_J_StreamUtil_CachePo_ConfigStore_DataUt(PrintAccess.Inner_CachePool n, PrintClicks.Inner_DataUtil budget) {
-      this.init_ConfigStore_Stream = null;
+   private long findPlaceCell(PrintAccess.Inner_CachePool n, PrintClicks.Inner_DataUtil budget) {
+      this.unusedPlaceClick = null;
       long started = this.view.workUnits();
       int x = BlockPos.getX(n.key);
       int y = BlockPos.getY(n.key);
       int z = BlockPos.getZ(n.key);
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
          List<Vec3> points = PrintClicks.getCandidateFeetPositions(this.view, n.key, n.feet);
 
-         for (long t : this.load_LongArrayList) {
+         for (long t : this.placeCells) {
             int tx = BlockPos.getX(t);
             int ty = BlockPos.getY(t);
             int tz = BlockPos.getZ(t);
             if (Math.abs(tx - x) <= 4 && Math.abs(tz - z) <= 4 && ty - y <= 4 && y - ty <= 5 && (tx != x || tz != z || ty != y && ty != y + 1)) {
                BlockPos p = BlockPos.of(t);
                if (this.view.getBlockState(p).canBeReplaced()) {
-                  PrintTarget probe = new PrintTarget(-1, p, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
+                  PrintTarget probe = new PrintTarget(-1, p, this.placeState, PrintTarget.Inner_DataUtil.PLACE, this.placeItem, null);
 
                   for (Vec3 feet : points) {
                      PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
@@ -458,7 +458,7 @@ final class PrintAccess {
                         this.core.env,
                         this.core.rules,
                         probe,
-                        this.init_Item,
+                        this.placeItem,
                         PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         true,
@@ -469,7 +469,7 @@ final class PrintAccess {
                      if (click != null) {
                         PrintCore.P proof = this.core.new P(click, this.core.reachable);
 
-                        while (!proof.complete && this.view.workUnits() - started <= this.init_J && !budget.isExhausted()) {
+                        while (!proof.complete && this.view.workUnits() - started <= this.workBudget && !budget.isExhausted()) {
                            proof.init(1L);
                         }
 
@@ -478,7 +478,7 @@ final class PrintAccess {
                         }
 
                         if (!proof.load) {
-                           this.init_ConfigStore_Stream = click;
+                           this.unusedPlaceClick = click;
                            return t;
                         }
 
@@ -497,12 +497,12 @@ final class PrintAccess {
       }
    }
 
-   PrintClicks.Inner_StreamUtil init_ConfigStore_Stream() {
-      return this.load_ConfigStore_Stream;
+   PrintClicks.Inner_StreamUtil lastRemovalClick() {
+      return this.removalClick;
    }
 
    private long load(PrintAccess.Inner_CachePool n, PrintClicks.Inner_DataUtil budget) {
-      this.load_ConfigStore_Stream = null;
+      this.removalClick = null;
       if (this.retrying && n.key == this.rootKey) {
          return -9223372036854775808L;
       }
@@ -515,7 +515,7 @@ final class PrintAccess {
          BlockPos under = BlockPos.of(floor);
          if ((n.temps <= 0 || floor != this.avoidSwap)
             && n.feet == y
-            && this.load_LongOpenHashSet.contains(floor)
+            && this.standingTemps.contains(floor)
             && !this.core.temporaryBlocks.containsKey(BlockPos.asLong(x, y - 2, z))
             && n.via != null
             && n.via.kind == PrintAccess.Inner_StreamUtil.WALK
@@ -530,10 +530,10 @@ final class PrintAccess {
          }
       }
 
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
-         for (long t : this.init_LongArrayList) {
+         for (long t : this.removalTemps) {
             int tx = BlockPos.getX(t);
             int ty = BlockPos.getY(t);
             int tz = BlockPos.getZ(t);
@@ -550,7 +550,7 @@ final class PrintAccess {
                   PrintTarget probe = new PrintTarget(-1, p, this.view.getBlockState(p), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
                   PrintClicks.Inner_StreamUtil click = this.core.findClickFrom(n.key, n.feet, probe, budget, n.key == this.rootKey);
                   if (click != null && this.core.write_Z_BlockPos_BlockPos(BlockPos.of(n.key), p)) {
-                     this.load_ConfigStore_Stream = click;
+                     this.removalClick = click;
                      return t;
                   }
                }
@@ -587,18 +587,18 @@ final class PrintAccess {
       return this.cellIndex;
    }
 
-   private double init_D_J_IntArrayList(long key, IntArrayList goals) {
-      if (this.init_LongOpenHashSet != null) {
+   private double estimateCost(long key, IntArrayList goals) {
+      if (this.targetStances != null) {
          int x = BlockPos.getX(key);
          int y = BlockPos.getY(key);
          int z = BlockPos.getZ(key);
-         if (this.init_LongOpenHashSet.size() >= 32) {
-            return this.cellSpatialIndex(this.init_LongOpenHashSet).init(x, y, z, (dx, dy, dz) -> init(0, 0, 0, dx, dy, dz, 0.0, 1.0));
+         if (this.targetStances.size() >= 32) {
+            return this.cellSpatialIndex(this.targetStances).init(x, y, z, (dx, dy, dz) -> init(0, 0, 0, dx, dy, dz, 0.0, 1.0));
          }
 
          double best = 1.0 / 0.0;
 
-         for (long t : this.init_LongOpenHashSet) {
+         for (long t : this.targetStances) {
             best = Math.min(best, init(x, y, z, BlockPos.getX(t), BlockPos.getY(t), BlockPos.getZ(t), 0.0, 1.0));
             if (best == 0.0) {
                return 0.0;
@@ -606,12 +606,12 @@ final class PrintAccess {
          }
 
          return best;
-      } else if (this.init_LongArrayList == null && this.load_LongArrayList == null) {
-         if (this.flush_Z) {
+      } else if (this.removalTemps == null && this.placeCells == null) {
+         if (this.goallessSearch) {
             int x = BlockPos.getX(key);
             int y = BlockPos.getY(key);
             int z = BlockPos.getZ(key);
-            if (this.push_Z) {
+            if (this.groundOnly) {
                return Math.max(0, y - this.core.baseY) * 3.033333333333333;
             }
 
@@ -631,13 +631,13 @@ final class PrintAccess {
                   this.goalIndex = new PrintSpatialIndex(goals, i -> this.core.targets[i].pos());
                }
 
-               return this.goalIndex.init(x, y, z, (dx, dy, dz) -> this.init_D_I(0, 0, 0, dx, dy, dz));
+               return this.goalIndex.init(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz));
             } else {
                double best = 1.0 / 0.0;
 
                for (int g : goals) {
                   BlockPos p = this.core.targets[g].pos();
-                  best = Math.min(best, this.init_D_I(x, y, z, p.getX(), p.getY(), p.getZ()));
+                  best = Math.min(best, this.goalEstimate(x, y, z, p.getX(), p.getY(), p.getZ()));
                   if (best == 0.0) {
                      return 0.0;
                   }
@@ -650,21 +650,21 @@ final class PrintAccess {
          int x = BlockPos.getX(key);
          int y = BlockPos.getY(key);
          int z = BlockPos.getZ(key);
-         LongArrayList cells = this.init_LongArrayList != null ? this.init_LongArrayList : this.load_LongArrayList;
+         LongArrayList cells = this.removalTemps != null ? this.removalTemps : this.placeCells;
          if (cells.size() >= 32) {
             PrintSpatialIndex geometry = this.cellSpatialIndex(cells);
-            if (this.tick && this.init_LongArrayList != null) {
+            if (this.tick && this.removalTemps != null) {
                return geometry.init(x, y - 1, z, (dx, dy, dz) -> init(0, 0, 0, dx, dy, dz, 1.0, 1.0));
             } else {
-               return this.alternateGuide && this.init_LongArrayList != null
-                  ? geometry.init(x, y, z, (dx, dy, dz) -> this.init_D_I(0, 0, 0, dx, dy, dz))
+               return this.alternateGuide && this.removalTemps != null
+                  ? geometry.init(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz))
                   : geometry.init(x, y, z, (dx, dy, dz) -> load(0, 0, 0, dx, dy, dz));
             }
          } else {
             double best = 1.0 / 0.0;
 
             for (long t : cells) {
-               if (this.tick && this.init_LongArrayList != null) {
+               if (this.tick && this.removalTemps != null) {
                   best = Math.min(best, init(x, y, z, BlockPos.getX(t), BlockPos.getY(t) + 1, BlockPos.getZ(t), 1.0, 1.0));
                   if (best == 0.0) {
                      return 0.0;
@@ -672,9 +672,9 @@ final class PrintAccess {
                } else {
                   best = Math.min(
                      best,
-                     this.alternateGuide && this.init_LongArrayList != null
-                        ? this.init_D_I(x, y, z, BlockPos.getX(t), BlockPos.getY(t), BlockPos.getZ(t))
-                        : init_D_I(x, y, z, BlockPos.of(t))
+                     this.alternateGuide && this.removalTemps != null
+                        ? this.goalEstimate(x, y, z, BlockPos.getX(t), BlockPos.getY(t), BlockPos.getZ(t))
+                        : cellEstimate(x, y, z, BlockPos.of(t))
                   );
                   if (best == 0.0) {
                      return 0.0;
@@ -687,12 +687,12 @@ final class PrintAccess {
       }
    }
 
-   private double init_D_I(int x, int y, int z, int tx, int ty, int tz) {
+   private double goalEstimate(int x, int y, int z, int tx, int ty, int tz) {
       double relaxed = init(x, y, z, tx, ty, tz, 6.4 + Math.sqrt(2.0) * 0.75, 8.02);
       return this.alternateGuide ? Math.max(relaxed, Math.max(0, ty - y - 3) * (12.0 + this.tempCost)) : relaxed;
    }
 
-   private static double init_D_I(int x, int y, int z, BlockPos target) {
+   private static double cellEstimate(int x, int y, int z, BlockPos target) {
       return load(x, y, z, target.getX(), target.getY(), target.getZ());
    }
 
@@ -709,7 +709,7 @@ final class PrintAccess {
       return Math.max(across, Math.max(up, down));
    }
 
-   private PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH_StreamUtil_CachePo_I(PrintAccess.Inner_CachePool n, int goal) {
+   private PrintAccess.Inner_BufferHelper toPlan(PrintAccess.Inner_CachePool n, int goal) {
       List<PrintAccess.Inner_NetHelper> steps = new ArrayList<>();
       double cost = n.g;
       int temps = n.temps;
@@ -722,7 +722,7 @@ final class PrintAccess {
       return new PrintAccess.Inner_BufferHelper(steps, cost, temps, goal);
    }
 
-   private LongArrayList init_LongArrayList_StreamUtil_CachePo(PrintAccess.Inner_CachePool n) {
+   private LongArrayList pushPathHypotheses(PrintAccess.Inner_CachePool n) {
       ArrayDeque<PrintAccess.Inner_NetHelper> steps = new ArrayDeque<>();
 
       for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null; at = at.parent) {
@@ -762,21 +762,21 @@ final class PrintAccess {
       }
    }
 
-   private boolean init_Z_StreamUtil_CachePo_D(PrintAccess.Inner_CachePool n, double startFeet) {
+   private boolean keepsWayOut(PrintAccess.Inner_CachePool n, double startFeet) {
       Boolean back = null;
-      if (!this.flush_Z
+      if (!this.goallessSearch
          && (
-            this.init_LongArrayList != null
+            this.removalTemps != null
                || this.core.phase == PrintCore.J.TEARDOWN
                || this.core.isAboveBase(BlockPos.of(n.key))
                || this.core.push_Z() && this.core.isAboveBase(BlockPos.of(this.rootKey))
          )) {
-         if (this.load_Boolean == null) {
-            this.load_Boolean = this.core.canEscape(BlockPos.of(this.rootKey), null, null, true);
+         if (this.rootCanEscapeDown == null) {
+            this.rootCanEscapeDown = this.core.canEscape(BlockPos.of(this.rootKey), null, null, true);
          }
 
-         if (this.load_Boolean && !(back = this.load(n))) {
-            LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+         if (this.rootCanEscapeDown && !(back = this.load(n))) {
+            LongArrayList assumed = this.pushPathHypotheses(n);
 
             try {
                if (!this.core.canEscape(BlockPos.of(n.key), null, null, true)) {
@@ -816,7 +816,7 @@ final class PrintAccess {
          return true;
       }
 
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
          return this.core.canEscape(BlockPos.of(n.key), null, null);
@@ -826,7 +826,7 @@ final class PrintAccess {
    }
 
    private boolean load(PrintAccess.Inner_CachePool n) {
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
          for (PrintAccess.Inner_CachePool at = n; at != null && at.parent != null; at = at.parent) {
@@ -876,7 +876,7 @@ final class PrintAccess {
       return this.core.pop_Z_BlockPos(BlockPos.of(floor));
    }
 
-   private static boolean init_Z_StreamUtil_CachePo_BlockPos(PrintAccess.Inner_CachePool n, BlockPos cell) {
+   private static boolean hasTempPillarBelow(PrintAccess.Inner_CachePool n, BlockPos cell) {
       int k = 0;
 
       for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null && k < 64; k++) {
@@ -898,7 +898,7 @@ final class PrintAccess {
       return this.tempState;
    }
 
-   private int init_I_StreamUtil_CachePo(
+   private int findGoalAt(
       PrintAccess.Inner_CachePool n, IntArrayList goals, Long2ObjectOpenHashMap<Boolean> cache, PrintClicks.Inner_DataUtil budget
    ) {
       int x = BlockPos.getX(n.key);
@@ -947,12 +947,12 @@ final class PrintAccess {
          return -1;
       }
 
-      inReach.sort((a1, b1) -> this.init_I_I(a1, b1, ex, ey, ez));
+      inReach.sort((a1, b1) -> this.compareGoals(a1, b1, ex, ey, ez));
       if (inReach.size() > 12) {
          inReach.size(12);
       }
 
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
          for (int g : inReach) {
@@ -996,7 +996,7 @@ final class PrintAccess {
                   }
                }
 
-               if (!pour && !waterlog && this.init_Z_ListPool(tg, p, points, budget)) {
+               if (!pour && !waterlog && this.reachableWithSupport(tg, p, points, budget)) {
                   return g;
                }
             }
@@ -1008,7 +1008,7 @@ final class PrintAccess {
       }
    }
 
-   private boolean init_Z_ListPool(PrintTarget tg, BlockPos p, List<Vec3> points, PrintClicks.Inner_DataUtil budget) {
+   private boolean reachableWithSupport(PrintTarget tg, BlockPos p, List<Vec3> points, PrintClicks.Inner_DataUtil budget) {
       if (!this.get) {
          return false;
       }
@@ -1095,7 +1095,7 @@ final class PrintAccess {
       return false;
    }
 
-   private boolean init_Z_StreamUtil_CachePo_IntArrayList(PrintAccess.Inner_CachePool node, IntArrayList goals) {
+   private boolean nearAnyGoal(PrintAccess.Inner_CachePool node, IntArrayList goals) {
       double eye = node.feet + 1.62;
       int x = BlockPos.getX(node.key);
       int z = BlockPos.getZ(node.key);
@@ -1111,7 +1111,7 @@ final class PrintAccess {
       return false;
    }
 
-   private void init_V_StreamUtil_CachePo(
+   private void expand(
       PrintAccess.Inner_CachePool n, IntArrayList goals, BlockState tempState, PriorityQueue<Object[]> open, Long2DoubleOpenHashMap best
    ) {
       int x = BlockPos.getX(n.key);
@@ -1119,12 +1119,12 @@ final class PrintAccess {
       int z = BlockPos.getZ(n.key);
       double h = n.feet;
       PrintNav.Inner_DataUtil bounds = this.bounds;
-      LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
+      LongArrayList assumed = this.pushPathHypotheses(n);
 
       try {
          int highestWalk = PrintNav.maxReachableStepY(this.view, x, z, h);
          int lowestWalk = PrintView.floorInt(h - 3.0);
-         if (!this.open_Z || this.init_Z_StreamUtil_CachePo_IntArrayList(n, goals)) {
+         if (!this.columnReachSearch || this.nearAnyGoal(n, goals)) {
             for (int[] d : NEIGHBOR_OFFSETS_8) {
                int nx = x + d[0];
                int nz = z + d[1];
@@ -1135,7 +1135,7 @@ final class PrintAccess {
                      if (!Double.isNaN(h2)) {
                         double step = PrintNav.stepCost(this.view, x, z, h, nx, nz, h2, d[0] != 0 && d[1] != 0);
                         if (!Double.isNaN(step)) {
-                           this.init_V_StreamUtil_CachePo(
+                           this.offer(
                               new PrintAccess.Inner_CachePool(
                                  BlockPos.asLong(nx, ny, nz),
                                  h2,
@@ -1158,7 +1158,7 @@ final class PrintAccess {
             }
          }
 
-         boolean canConstruct = !this.push_Z && h >= this.open_D && h <= this.poll_D;
+         boolean canConstruct = !this.groundOnly && h >= this.bandMinFeet && h <= this.bandMaxFeet;
          boolean fullFloor = canConstruct
             && h == y
             && this.view.getBlockState(new BlockPos(x, y - 1, z)).isFaceSturdy(this.view, new BlockPos(x, y - 1, z), Direction.UP);
@@ -1172,20 +1172,20 @@ final class PrintAccess {
             && !this.core.refusedPillarCells.contains(feetCell.asLong())) {
             int i = this.core.cellIndexByPos.get(feetCell.asLong());
             boolean own = i >= 0
-               && this.core.init_Z_BlockPos_IntSet(feetCell, this.init_IntSet_StreamUtil_CachePo(n))
-               && !init_Z_StreamUtil_CachePo_BlockPos(n, feetCell);
-            boolean buries = !own && !this.init_Z_BlockPos(feetCell);
+               && this.core.init_Z_BlockPos_IntSet(feetCell, this.ownPlacedOnPath(n))
+               && !hasTempPillarBelow(n, feetCell);
+            boolean buries = !own && !this.clearOfTargetsAbove(feetCell);
             boolean temp = !own
-               && n.temps < this.write_I
+               && n.temps < this.maxTemps
                && this.core.pop_Z_I(i)
                && tempState != null
                && (this.allowBury || !buries)
                && !this.load(n, feetCell)
-               && !this.init_Z_BlockPos_Z(feetCell, false)
-               && this.init_Z_BlockPos_BlockState(feetCell, tempState);
+               && !this.underOpenGoalColumn(feetCell, false)
+               && this.canPlaceTemp(feetCell, tempState);
             double bury = temp && buries ? 60.0 : 0.0;
             if (own || temp) {
-               this.init_V_StreamUtil_CachePo(
+               this.offer(
                   new PrintAccess.Inner_CachePool(
                      BlockPos.asLong(x, py + 1, z),
                      py + 1,
@@ -1203,7 +1203,7 @@ final class PrintAccess {
             }
          }
 
-         if (!this.open_Z || this.init_Z_StreamUtil_CachePo_IntArrayList(n, goals)) {
+         if (!this.columnReachSearch || this.nearAnyGoal(n, goals)) {
             BlockPos floor = new BlockPos(x, y - 1, z);
             if (fullFloor) {
                for (Direction d : Plane.HORIZONTAL) {
@@ -1220,20 +1220,20 @@ final class PrintAccess {
                            AABB lean = PrintGeometry.init(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off, true);
                            if (this.view.isBoxClear(lean)) {
                               int i = this.core.cellIndexByPos.get(cell.asLong());
-                              boolean own = i >= 0 && this.core.cellStates[i] == 0 && this.init_Z_I_Direction(i, d) && this.core.read_Z_I(i);
-                              boolean buries = !own && !this.init_Z_BlockPos(cell);
+                              boolean own = i >= 0 && this.core.cellStates[i] == 0 && this.placeableAsBridge(i, d) && this.core.read_Z_I(i);
+                              boolean buries = !own && !this.clearOfTargetsAbove(cell);
                               if (own || !this.init_Z_I(x, y, z)) {
                                  boolean temp = !own
-                                    && n.temps < this.write_I
+                                    && n.temps < this.maxTemps
                                     && this.core.pop_Z_I(i)
                                     && tempState != null
                                     && (this.allowBury || !buries)
                                     && !this.load(n, cell)
-                                    && !this.init_Z_BlockPos_Z(cell, true)
-                                    && this.init_Z_BlockPos_BlockState(cell, tempState);
+                                    && !this.underOpenGoalColumn(cell, true)
+                                    && this.canPlaceTemp(cell, tempState);
                                  double bury = temp && buries ? 60.0 : 0.0;
                                  if (own || temp) {
-                                    this.init_V_StreamUtil_CachePo(
+                                    this.offer(
                                        new PrintAccess.Inner_CachePool(
                                           stand.asLong(),
                                           stand.getY(),
@@ -1257,7 +1257,7 @@ final class PrintAccess {
                }
             }
 
-            if (canConstruct && tempState != null && n.temps < this.write_I && this.view.supportAreaAtCell(x, z, h) >= 0.3) {
+            if (canConstruct && tempState != null && n.temps < this.maxTemps && this.view.supportAreaAtCell(x, z, h) >= 0.3) {
                for (Direction d : Plane.HORIZONTAL) {
                   BlockPos cell = new BlockPos(x, PrintView.floorInt(h - 0.001) - 1, z).relative(d);
                   BlockPos stand = cell.above();
@@ -1268,9 +1268,9 @@ final class PrintAccess {
                      && this.view.getBlockState(cell).isAir()
                      && this.view.isPassableCell(stand)
                      && this.view.isPassableCell(stand.above())
-                     && this.init_Z_BlockPos(cell)
-                     && !this.init_Z_BlockPos_Z(cell, true)
-                     && this.init_Z_BlockPos_BlockState(cell, tempState)) {
+                     && this.clearOfTargetsAbove(cell)
+                     && !this.underOpenGoalColumn(cell, true)
+                     && this.canPlaceTemp(cell, tempState)) {
                      double off = 0.75;
                      Vec3 lean = new Vec3(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off);
                      PrintTarget probe = new PrintTarget(-1, cell, tempState, PrintTarget.Inner_DataUtil.PLACE, tempState.getBlock().asItem(), null);
@@ -1288,7 +1288,7 @@ final class PrintAccess {
                            4.1000000000000005
                         )
                         != null) {
-                        this.init_V_StreamUtil_CachePo(
+                        this.offer(
                            new PrintAccess.Inner_CachePool(
                               stand.asLong(),
                               stand.getY(),
@@ -1309,7 +1309,7 @@ final class PrintAccess {
             long under = BlockPos.asLong(x, y - 1, z);
             if (h == y
                && (this.core.temporaryBlocks.containsKey(under) || this.view.isOwnedTemporaryAt(BlockPos.of(under)))
-               && (this.poll_Z || !this.core.isFailedDig(under, n.key))
+               && (this.exitMode || !this.core.isFailedDig(under, n.key))
                && !this.core.sync_Z_J(under)
                && (!this.pop || this.core.init_Z_BlockPos(BlockPos.of(under)))
                && this.core.floorBelow(BlockPos.of(under)) != null) {
@@ -1321,7 +1321,7 @@ final class PrintAccess {
                      if (!Double.isNaN(landing)) {
                         if (!(h - landing > 3.000001)) {
                            long to = BlockPos.asLong(x, ny, z);
-                           this.init_V_StreamUtil_CachePo(
+                           this.offer(
                               new PrintAccess.Inner_CachePool(
                                  to,
                                  landing,
@@ -1382,7 +1382,7 @@ final class PrintAccess {
                   if (!Double.isNaN(h2) && !(Math.abs(h2 - h) > 0.6)) {
                      double step = PrintNav.stepCost(this.view, x, z, h, f.getX(), f.getZ(), h2, false);
                      if (!Double.isNaN(step)) {
-                        this.init_V_StreamUtil_CachePo(
+                        this.offer(
                            new PrintAccess.Inner_CachePool(
                               f.asLong(),
                               h2,
@@ -1410,7 +1410,7 @@ final class PrintAccess {
          && !this.core.temporaryBlocks.containsKey(under.asLong())
          && !this.view.isOwnedTemporaryAt(under)
          && this.core.open_Z_BlockPos(under)
-         && (this.poll_Z || !this.core.isFailedDig(under.asLong(), n.key))) {
+         && (this.exitMode || !this.core.isFailedDig(under.asLong(), n.key))) {
          this.view.pushHypothesis(under, air);
 
          try {
@@ -1418,7 +1418,7 @@ final class PrintAccess {
                double h2 = this.view.standingHeightAt(x, yy, z);
                if (!Double.isNaN(h2)) {
                   if (!(h - h2 > 3.000001)) {
-                     this.init_V_StreamUtil_CachePo(
+                     this.offer(
                         new PrintAccess.Inner_CachePool(
                            BlockPos.asLong(x, yy, z),
                            h2,
@@ -1472,7 +1472,7 @@ final class PrintAccess {
       }
    }
 
-   private IntSet init_IntSet_StreamUtil_CachePo(PrintAccess.Inner_CachePool node) {
+   private IntSet ownPlacedOnPath(PrintAccess.Inner_CachePool node) {
       IntOpenHashSet completed = new IntOpenHashSet();
 
       for (PrintAccess.Inner_CachePool at = node; at != null && at.via != null; at = at.parent) {
@@ -1488,7 +1488,7 @@ final class PrintAccess {
    }
 
    private boolean load(PrintAccess.Inner_CachePool n, BlockPos cell) {
-      if (!this.flush_Z && !this.core.confirmedAirCells.contains(cell.asLong())) {
+      if (!this.goallessSearch && !this.core.confirmedAirCells.contains(cell.asLong())) {
          boolean floorAbove = false;
 
          for (int k = 1; k <= 10; k++) {
@@ -1513,7 +1513,7 @@ final class PrintAccess {
 
          for (int d = 1; d <= 3; d++) {
             BlockPos q = cell.below(d);
-            if (!this.view.getCollisionShape(q).isEmpty() || init_Z_StreamUtil_CachePo_BlockPos(n, cell) && read(n, q)) {
+            if (!this.view.getCollisionShape(q).isEmpty() || hasTempPillarBelow(n, cell) && read(n, q)) {
                return false;
             }
          }
@@ -1537,8 +1537,8 @@ final class PrintAccess {
       return y == 2147483647 ? -2147483648 : y;
    }
 
-   private boolean init_Z_BlockPos_Z(BlockPos cell, boolean bridge) {
-      if (!this.flush_Z && !this.core.confirmedAirCells.contains(cell.asLong())) {
+   private boolean underOpenGoalColumn(BlockPos cell, boolean bridge) {
+      if (!this.goallessSearch && !this.core.confirmedAirCells.contains(cell.asLong())) {
          if (this.lowestGoalY == -2147483648) {
             int top = this.core.columnTop(cell);
             if (top == -2147483648) {
@@ -1597,8 +1597,8 @@ final class PrintAccess {
       return false;
    }
 
-   boolean init_Z_BlockPos(BlockPos cell) {
-      if (!this.flush_Z && !this.core.confirmedAirCells.contains(cell.asLong())) {
+   boolean clearOfTargetsAbove(BlockPos cell) {
+      if (!this.goallessSearch && !this.core.confirmedAirCells.contains(cell.asLong())) {
          for (int k = 1; k <= 3; k++) {
             if (this.core.isOpenTargetCell(cell.above(k))) {
                return false;
@@ -1611,7 +1611,7 @@ final class PrintAccess {
       }
    }
 
-   boolean init_Z_I_Direction(int i, Direction d) {
+   boolean placeableAsBridge(int i, Direction d) {
       if (!this.core.push_Z_I(i)) {
          return false;
       }
@@ -1630,10 +1630,10 @@ final class PrintAccess {
       return true;
    }
 
-   private void init_V_StreamUtil_CachePo(PrintAccess.Inner_CachePool node, IntArrayList goals, PriorityQueue<Object[]> open, Long2DoubleOpenHashMap best) {
+   private void offer(PrintAccess.Inner_CachePool node, IntArrayList goals, PriorityQueue<Object[]> open, Long2DoubleOpenHashMap best) {
       if (!(node.g >= best.get(node.key) - 1.0E-9)
          && (
-            this.flush_Z
+            this.goallessSearch
                || node.parent == null
                || node.via == null
                || node.via.kind != PrintAccess.Inner_StreamUtil.WALK
@@ -1641,7 +1641,7 @@ final class PrintAccess {
          )
          && !this.core.failedWalkStances.contains(node.key)) {
          best.put(node.key, node.g);
-         open.add(new Object[]{node.g + this.close_D * this.init_D_J_IntArrayList(node.key, goals), node});
+         open.add(new Object[]{node.g + this.heuristicWeight * this.estimateCost(node.key, goals), node});
       }
    }
 
@@ -1658,7 +1658,7 @@ final class PrintAccess {
    final class Inner_ConfigStore {
       private final IntArrayList goals;
       private final IntOpenHashSet goalSet;
-      private final BlockState init_BlockState;
+      private final BlockState sessionTempState;
       private final double startFeet;
       private final long update;
       private final LongSupplier clock;
@@ -1671,37 +1671,37 @@ final class PrintAccess {
                : priority;
          }
       );
-      private PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
-      private PrintAccess.Inner_ConfigStore.Inner_StreamUtil init_StreamUtil_ConfigS_2;
+      private PrintAccess.Inner_CachePool currentNode;
+      private PrintAccess.Inner_ConfigStore.Inner_StreamUtil nodeEval;
       private PrintAccess.Inner_TaskQueue status = PrintAccess.Inner_TaskQueue.SEARCHING;
       private PrintAccess.Inner_BufferHelper result;
       private PrintAccess.Inner_BufferHelper bestCandidate;
       private long sync;
-      private PrintCore.b init_UiHelper_b;
-      private PrintCore.e init_UiHelper_e;
-      private PrintCore.e load_UiHelper_e;
-      private PrintAccess.Inner_ConfigStore.Inner_TaskQueue init_StreamUtil_ConfigS_3;
-      private PrintAccess.Inner_ConfigStore.Inner_TaskQueue load_StreamUtil_ConfigS;
-      private PrintAccess.Inner_ConfigStore.Inner_ConfigStore_2 init_StreamUtil_ConfigS;
+      private PrintCore.b wayOutSupport;
+      private PrintCore.e rootDownEscape;
+      private PrintCore.e rootEscape;
+      private PrintAccess.Inner_ConfigStore.Inner_TaskQueue wayOutProof;
+      private PrintAccess.Inner_ConfigStore.Inner_TaskQueue bestWayOutProof;
+      private PrintAccess.Inner_ConfigStore.Inner_ConfigStore_2 bestProof;
       PrintClicks.Inner_StreamUtil click;
       long stanceKey;
       boolean init_Z;
       long expandedNodes;
       long read;
-      final long[] init_JArr = new long[6];
-      private final Int2BooleanOpenHashMap init_Int2BooleanOpenHas = new Int2BooleanOpenHashMap();
+      final long[] phaseWork = new long[6];
+      private final Int2BooleanOpenHashMap walkSkipByGoal = new Int2BooleanOpenHashMap();
       long write;
       private PrintNav.Inner_TaskQueue reach;
       private LongIterator reachCells;
       private List<Long> reachPath;
       private int reachPathIndex;
-      private PrintAccess.Inner_CachePool load_StreamUtil_CachePo;
+      private PrintAccess.Inner_CachePool reachNode;
 
       Inner_ConfigStore(BlockPos start, double feet, IntArrayList goals, BlockState tempState, LongSupplier clock) {
          PrintAccess.this.resetSearchCaches();
          this.goals = new IntArrayList(goals);
          this.goalSet = new IntOpenHashSet(goals);
-         this.init_BlockState = tempState;
+         this.sessionTempState = tempState;
          this.startFeet = feet;
          this.clock = clock;
          PrintNav.Inner_DataUtil b = PrintAccess.this.core.bounds;
@@ -1723,10 +1723,10 @@ final class PrintAccess {
          PrintAccess.Inner_CachePool root = new PrintAccess.Inner_CachePool(start.asLong(), feet, 0.0, null, null, 0);
          PrintAccess.this.rootKey = root.key;
          PrintAccess.this.rootCanEscape = null;
-         PrintAccess.this.load_Boolean = null;
+         PrintAccess.this.rootCanEscapeDown = null;
          this.bestCost.defaultReturnValue(1.0 / 0.0);
          this.bestCost.put(root.key, 0.0);
-         this.openQueue.add(new Object[]{PrintAccess.this.init_D_J_IntArrayList(root.key, this.goals), root});
+         this.openQueue.add(new Object[]{PrintAccess.this.estimateCost(root.key, this.goals), root});
       }
 
       PrintAccess.Inner_TaskQueue getStatus() {
@@ -1753,11 +1753,11 @@ final class PrintAccess {
       }
 
       int pendingNodes() {
-         return this.openQueue.size() + (this.init_StreamUtil_CachePo == null ? 0 : 1);
+         return this.openQueue.size() + (this.currentNode == null ? 0 : 1);
       }
 
-      boolean init_Z() {
-         return this.init_StreamUtil_ConfigS_3 != null;
+      boolean provingWayOut() {
+         return this.wayOutProof != null;
       }
 
       String describe() {
@@ -1766,35 +1766,35 @@ final class PrintAccess {
             .append(" queued=")
             .append(this.pendingNodes())
             .append(" work=")
-            .append(Arrays.toString(this.init_JArr))
+            .append(Arrays.toString(this.phaseWork))
             .append(" walkSkips=")
             .append(this.write);
-         if (this.init_StreamUtil_CachePo != null) {
+         if (this.currentNode != null) {
             out.append(" node=")
-               .append(BlockPos.of(this.init_StreamUtil_CachePo.key).toShortString())
+               .append(BlockPos.of(this.currentNode.key).toShortString())
                .append(" feet=")
-               .append(this.init_StreamUtil_CachePo.feet);
+               .append(this.currentNode.feet);
          }
 
-         if (this.init_StreamUtil_ConfigS_3 != null) {
-            out.append(" wayOutStage=").append(this.init_StreamUtil_ConfigS_3.init_I);
+         if (this.wayOutProof != null) {
+            out.append(" wayOutStage=").append(this.wayOutProof.wayOutStage);
          }
 
-         if (this.init_StreamUtil_ConfigS_2 != null) {
-            out.append(" candidate=").append(this.init_StreamUtil_ConfigS_2.init_I).append('/').append(this.init_StreamUtil_ConfigS_2.init_IntArrayList.size());
-            PrintAccess.Inner_ConfigStore.Inner_BufferHelper placement = this.init_StreamUtil_ConfigS_2.init_StreamUtil_ConfigS;
-            if (placement == null && this.init_StreamUtil_ConfigS_2.init_StreamUtil_ConfigS_3 != null) {
-               placement = this.init_StreamUtil_ConfigS_2.init_StreamUtil_ConfigS_3.init_StreamUtil_ConfigS;
+         if (this.nodeEval != null) {
+            out.append(" candidate=").append(this.nodeEval.candidateCursor).append('/').append(this.nodeEval.goalsInReach.size());
+            PrintAccess.Inner_ConfigStore.Inner_BufferHelper placement = this.nodeEval.nodePlacement;
+            if (placement == null && this.nodeEval.supportProbe != null) {
+               placement = this.nodeEval.supportProbe.supportPlacement;
             }
 
             if (placement != null) {
                out.append(" placing=").append(placement.click.target().pos().toShortString());
                out.append(" pose=").append(placement.click.feet());
-               if (placement.init_UiHelper_aI != null) {
-                  out.append(' ').append(PrintAccess.this.core.describeTrap(placement.init_UiHelper_aI));
+               if (placement.trapProof != null) {
+                  out.append(' ').append(PrintAccess.this.core.describeTrap(placement.trapProof));
                }
 
-               out.append(" neighbor=").append(placement.init_UiHelper_D.update).append('/').append(placement.init_UiHelper_D.neighbors.size());
+               out.append(" neighbor=").append(placement.neighborProof.update).append('/').append(placement.neighborProof.neighbors.size());
             }
          }
 
@@ -1810,7 +1810,7 @@ final class PrintAccess {
             return this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
-         if (this.init_UiHelper_b != null && !this.init_UiHelper_b.init()) {
+         if (this.wayOutSupport != null && !this.wayOutSupport.init()) {
             return this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
@@ -1821,14 +1821,14 @@ final class PrintAccess {
          while (!worked || cursorSteps < 1024 && this.clock.getAsLong() - started < Math.max(1L, allowanceWork)) {
             cursorSteps++;
             if (this.reachCells != null) {
-               this.init_V();
+               this.stepReachReplay();
                worked = true;
             } else {
-               if (this.init_StreamUtil_CachePo == null) {
+               if (this.currentNode == null) {
                   if (this.bestCandidate != null
                      && (this.openQueue.isEmpty() || (Double)this.openQueue.peek()[0] >= this.bestCandidate.cost())) {
-                     if (this.load_StreamUtil_ConfigS != null && !this.load_StreamUtil_ConfigS.init_Z()
-                        || this.init_StreamUtil_ConfigS != null && !this.init_StreamUtil_ConfigS.init()) {
+                     if (this.bestWayOutProof != null && !this.bestWayOutProof.supportStillValid()
+                        || this.bestProof != null && !this.bestProof.init()) {
                         return this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      }
 
@@ -1841,19 +1841,19 @@ final class PrintAccess {
                   while (!this.openQueue.isEmpty()) {
                      PrintAccess.Inner_CachePool next = (PrintAccess.Inner_CachePool)this.openQueue.poll()[1];
                      if (next.g <= this.bestCost.get(next.key) + 1.0E-9) {
-                        this.init_StreamUtil_CachePo = next;
+                        this.currentNode = next;
                         break;
                      }
                   }
 
-                  if (this.init_StreamUtil_CachePo == null) {
+                  if (this.currentNode == null) {
                      if (this.bestCandidate == null) {
                         PrintAccess.this.failureDetail = "exhausted after " + this.expandedNodes + " nodes";
                         return this.status = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                      }
 
-                     if (this.load_StreamUtil_ConfigS != null && !this.load_StreamUtil_ConfigS.init_Z()
-                        || this.init_StreamUtil_ConfigS != null && !this.init_StreamUtil_ConfigS.init()) {
+                     if (this.bestWayOutProof != null && !this.bestWayOutProof.supportStillValid()
+                        || this.bestProof != null && !this.bestProof.init()) {
                         return this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      }
 
@@ -1863,30 +1863,30 @@ final class PrintAccess {
                      return this.status = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
-                  this.init_StreamUtil_ConfigS_2 = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil(this.init_StreamUtil_CachePo);
+                  this.nodeEval = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil(this.currentNode);
                }
 
-               if (this.init_StreamUtil_ConfigS_3 == null) {
+               if (this.wayOutProof == null) {
                   long w0 = PrintAccess.this.view.workUnits();
-                  if (PrintAccess.this.init_LongArrayList != null) {
-                     this.init_StreamUtil_ConfigS_2.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
+                  if (PrintAccess.this.removalTemps != null) {
+                     this.nodeEval.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
                      this.read++;
                   } else {
-                     LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
-                     this.init_StreamUtil_ConfigS_2.init_LongArrayList = assumed;
+                     LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.currentNode);
+                     this.nodeEval.pathAssumed = assumed;
 
                      try {
-                        this.init_StreamUtil_ConfigS_2.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
+                        this.nodeEval.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
                         this.read++;
                      } finally {
                         PrintAccess.this.popHypotheses(assumed);
                      }
                   }
 
-                  this.init_JArr[this.init_StreamUtil_ConfigS_2.read_I] = this.init_JArr[this.init_StreamUtil_ConfigS_2.read_I]
+                  this.phaseWork[this.nodeEval.workSlot] = this.phaseWork[this.nodeEval.workSlot]
                      + (PrintAccess.this.view.workUnits() - w0);
-                  PrintAccess.this.core.accessPhaseWork[this.init_StreamUtil_ConfigS_2.read_I] = PrintAccess.this.core.accessPhaseWork[this.init_StreamUtil_ConfigS_2
-                        .read_I]
+                  PrintAccess.this.core.accessPhaseWork[this.nodeEval.workSlot] = PrintAccess.this.core.accessPhaseWork[this.nodeEval
+                        .workSlot]
                      + (PrintAccess.this.view.workUnits() - w0);
                }
 
@@ -1895,24 +1895,24 @@ final class PrintAccess {
                   return this.status;
                }
 
-               boolean safe = PrintAccess.this.flush_Z;
-               if (this.init_StreamUtil_ConfigS_2.load_I >= 0 && !PrintAccess.this.flush_Z) {
-                  if (!this.init_StreamUtil_ConfigS_2.init_Z()) {
+               boolean safe = PrintAccess.this.goallessSearch;
+               if (this.nodeEval.foundGoal >= 0 && !PrintAccess.this.goallessSearch) {
+                  if (!this.nodeEval.proofStillValid()) {
                      return this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
 
-                  if (this.init_StreamUtil_ConfigS_3 == null) {
-                     this.init_StreamUtil_ConfigS_3 = new PrintAccess.Inner_ConfigStore.Inner_TaskQueue(this.init_StreamUtil_CachePo);
+                  if (this.wayOutProof == null) {
+                     this.wayOutProof = new PrintAccess.Inner_ConfigStore.Inner_TaskQueue(this.currentNode);
                   }
 
-                  if (this.init_UiHelper_b == null && (this.init_StreamUtil_ConfigS_3.init_Z || this.init_StreamUtil_ConfigS_3.load_Z)) {
-                     this.init_UiHelper_b = PrintAccess.this.core.new b();
+                  if (this.wayOutSupport == null && (this.wayOutProof.needsWayOut || this.wayOutProof.lowered)) {
+                     this.wayOutSupport = PrintAccess.this.core.new b();
                   }
 
                   long w1 = PrintAccess.this.view.workUnits();
-                  PrintAccess.Inner_TaskQueue proof = this.init_StreamUtil_ConfigS_3
+                  PrintAccess.Inner_TaskQueue proof = this.wayOutProof
                      .init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
-                  this.init_JArr[4] = this.init_JArr[4] + (PrintAccess.this.view.workUnits() - w1);
+                  this.phaseWork[4] = this.phaseWork[4] + (PrintAccess.this.view.workUnits() - w1);
                   PrintAccess.this.core.accessPhaseWork[4] = PrintAccess.this.core.accessPhaseWork[4] + (PrintAccess.this.view.workUnits() - w1);
                   if (proof == PrintAccess.Inner_TaskQueue.SEARCHING) {
                      return this.status;
@@ -1925,17 +1925,17 @@ final class PrintAccess {
                   safe = proof == PrintAccess.Inner_TaskQueue.FOUND;
                }
 
-               if (this.init_StreamUtil_ConfigS_2.load_I >= 0 && safe) {
-                  PrintAccess.Inner_BufferHelper candidate = PrintAccess.this.init_StreamUtil_BufferH_StreamUtil_CachePo_I(
-                     this.init_StreamUtil_CachePo,
-                     PrintAccess.this.init_LongArrayList == null && PrintAccess.this.load_LongArrayList == null && !PrintAccess.this.flush_Z
-                        ? this.init_StreamUtil_ConfigS_2.load_I
+               if (this.nodeEval.foundGoal >= 0 && safe) {
+                  PrintAccess.Inner_BufferHelper candidate = PrintAccess.this.toPlan(
+                     this.currentNode,
+                     PrintAccess.this.removalTemps == null && PrintAccess.this.placeCells == null && !PrintAccess.this.goallessSearch
+                        ? this.nodeEval.foundGoal
                         : -1
                   );
-                  if (!this.init_StreamUtil_ConfigS_2.load_Z) {
+                  if (!this.nodeEval.viaTempSupport) {
                      this.result = candidate;
-                     this.click = this.init_StreamUtil_ConfigS_2.init_ConfigStore_Stream;
-                     this.stanceKey = this.init_StreamUtil_CachePo.key;
+                     this.click = this.nodeEval.nodeClick;
+                     this.stanceKey = this.currentNode.key;
                      return this.status = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
@@ -1944,30 +1944,30 @@ final class PrintAccess {
                   );
                   if (this.bestCandidate == null || candidate.cost() < this.bestCandidate.cost()) {
                      this.bestCandidate = candidate;
-                     this.sync = this.init_StreamUtil_CachePo.key;
-                     this.load_StreamUtil_ConfigS = this.init_StreamUtil_ConfigS_3;
-                     this.init_StreamUtil_ConfigS = this.init_StreamUtil_ConfigS_2.init_StreamUtil_ConfigS();
+                     this.sync = this.currentNode.key;
+                     this.bestWayOutProof = this.wayOutProof;
+                     this.bestProof = this.nodeEval.snapshotProof();
                   }
 
-                  this.init_StreamUtil_ConfigS_2.load_I = -1;
-                  this.init_StreamUtil_ConfigS_2.load_Z = false;
-                  this.init_StreamUtil_ConfigS_2.init_UiHelper_b = null;
-                  this.init_StreamUtil_ConfigS_2.init_StreamUtil_ConfigS = null;
-                  this.init_StreamUtil_ConfigS_2.init_ConfigStore_Stream = null;
-                  this.init_StreamUtil_ConfigS_3 = null;
+                  this.nodeEval.foundGoal = -1;
+                  this.nodeEval.viaTempSupport = false;
+                  this.nodeEval.nodeSupport = null;
+                  this.nodeEval.nodePlacement = null;
+                  this.nodeEval.nodeClick = null;
+                  this.wayOutProof = null;
                }
 
-               if (this.init_StreamUtil_ConfigS_2.load_I >= 0 || this.init_StreamUtil_ConfigS_2.init_Z) {
+               if (this.nodeEval.foundGoal >= 0 || this.nodeEval.finished) {
                   long w2 = PrintAccess.this.view.workUnits();
-                  PrintAccess.this.init_V_StreamUtil_CachePo(
-                     this.init_StreamUtil_CachePo, this.goals, this.init_BlockState, this.openQueue, this.bestCost
+                  PrintAccess.this.expand(
+                     this.currentNode, this.goals, this.sessionTempState, this.openQueue, this.bestCost
                   );
-                  this.init_JArr[0] = this.init_JArr[0] + (PrintAccess.this.view.workUnits() - w2);
+                  this.phaseWork[0] = this.phaseWork[0] + (PrintAccess.this.view.workUnits() - w2);
                   PrintAccess.this.core.accessPhaseWork[0] = PrintAccess.this.core.accessPhaseWork[0] + (PrintAccess.this.view.workUnits() - w2);
                   this.expandedNodes++;
-                  this.init_StreamUtil_CachePo = null;
-                  this.init_StreamUtil_ConfigS_2 = null;
-                  this.init_StreamUtil_ConfigS_3 = null;
+                  this.currentNode = null;
+                  this.nodeEval = null;
+                  this.wayOutProof = null;
                }
             }
          }
@@ -1975,7 +1975,7 @@ final class PrintAccess {
          return this.status;
       }
 
-      private void init_V() {
+      private void stepReachReplay() {
          if (this.reachPath == null) {
             if (!this.reachCells.hasNext()) {
                this.reachCells = null;
@@ -2012,20 +2012,20 @@ final class PrintAccess {
 
                this.reachPath = this.reach.reconstructPath(key);
                this.reachPathIndex = 0;
-               this.load_StreamUtil_CachePo = new PrintAccess.Inner_CachePool(PrintAccess.this.rootKey, this.startFeet, 0.0, null, null, 0);
+               this.reachNode = new PrintAccess.Inner_CachePool(PrintAccess.this.rootKey, this.startFeet, 0.0, null, null, 0);
                break;
             }
          }
 
          if (this.reachPathIndex == this.reachPath.size()) {
-            PrintAccess.this.init_V_StreamUtil_CachePo(
-               this.load_StreamUtil_CachePo, this.goals, this.openQueue, this.bestCost
+            PrintAccess.this.offer(
+               this.reachNode, this.goals, this.openQueue, this.bestCost
             );
             this.reachPath = null;
          } else {
             long to = this.reachPath.get(this.reachPathIndex++);
-            int x = BlockPos.getX(this.load_StreamUtil_CachePo.key);
-            int z = BlockPos.getZ(this.load_StreamUtil_CachePo.key);
+            int x = BlockPos.getX(this.reachNode.key);
+            int z = BlockPos.getZ(this.reachNode.key);
             int nx = BlockPos.getX(to);
             int ny = BlockPos.getY(to);
             int nz = BlockPos.getZ(to);
@@ -2036,22 +2036,22 @@ final class PrintAccess {
                && PrintAccess.this.bounds.contains(nx, ny, nz)
                && !Double.isNaN(height)
                && !(Math.abs(height - this.reach.feetYOf(to)) > 1.0E-6)
-               && !PrintAccess.this.core.isFailedWalk(this.load_StreamUtil_CachePo.key, this.load_StreamUtil_CachePo.feet, to, height)
+               && !PrintAccess.this.core.isFailedWalk(this.reachNode.key, this.reachNode.feet, to, height)
                && !PrintAccess.this.core.failedWalkStances.contains(to)) {
                double cost = PrintNav.stepCost(
-                  PrintAccess.this.view, x, z, this.load_StreamUtil_CachePo.feet, nx, nz, height, nx != x && nz != z
+                  PrintAccess.this.view, x, z, this.reachNode.feet, nx, nz, height, nx != x && nz != z
                );
                if (Double.isNaN(cost)) {
                   this.reachPath = null;
                } else {
-                  this.load_StreamUtil_CachePo = new PrintAccess.Inner_CachePool(
+                  this.reachNode = new PrintAccess.Inner_CachePool(
                      to,
                      height,
-                     this.load_StreamUtil_CachePo.g + cost,
+                     this.reachNode.g + cost,
                      new PrintAccess.Inner_NetHelper(
-                        PrintAccess.Inner_StreamUtil.WALK, this.load_StreamUtil_CachePo.key, to, height, -9223372036854775808L, false, null
+                        PrintAccess.Inner_StreamUtil.WALK, this.reachNode.key, to, height, -9223372036854775808L, false, null
                      ),
-                     this.load_StreamUtil_CachePo,
+                     this.reachNode,
                      0
                   );
                }
@@ -2064,10 +2064,10 @@ final class PrintAccess {
       private final class Inner_BufferHelper {
          final PrintClicks.Inner_StreamUtil click;
          final BlockPos support;
-         final BlockState init_BlockState;
-         final PrintCore.D init_UiHelper_D;
-         final PrintCore.aI init_UiHelper_aI;
-         boolean init_Z;
+         final BlockState supportState;
+         final PrintCore.D neighborProof;
+         final PrintCore.aI trapProof;
+         boolean settled;
          boolean load;
          boolean read;
          boolean write;
@@ -2079,19 +2079,19 @@ final class PrintAccess {
          Inner_BufferHelper(PrintClicks.Inner_StreamUtil click, BlockPos support, PrintCore.f starts) {
             this.click = click;
             this.support = support;
-            this.init_BlockState = support == null ? null : PrintAccess.this.tempState();
+            this.supportState = support == null ? null : PrintAccess.this.tempState();
             if (support != null) {
-               PrintAccess.this.view.pushTemporaryHypothesis(support, this.init_BlockState);
+               PrintAccess.this.view.pushTemporaryHypothesis(support, this.supportState);
             }
 
             try {
                BlockState proposed = click.predicted() == null ? click.target().wanted() : click.predicted();
-               this.init_UiHelper_aI = PrintAccess.this.core.env.canUseFlight()
+               this.trapProof = PrintAccess.this.core.env.canUseFlight()
                   ? null
                   : PrintAccess.this.core.new aI(
                      click.feet(), PrintAccess.this.core.reachable, click.target().pos(), proposed, starts
                   );
-               this.init_UiHelper_D = PrintAccess.this.core.new D(click.target().pos(), proposed);
+               this.neighborProof = PrintAccess.this.core.new D(click.target().pos(), proposed);
             } finally {
                if (support != null) {
                   PrintAccess.this.view.popHypothesis(support);
@@ -2105,11 +2105,11 @@ final class PrintAccess {
             }
 
             if (this.support != null) {
-               PrintAccess.this.view.pushTemporaryHypothesis(this.support, this.init_BlockState);
+               PrintAccess.this.view.pushTemporaryHypothesis(this.support, this.supportState);
             }
 
             try {
-               return (this.init_UiHelper_aI == null || this.init_UiHelper_aI.init()) && this.init_UiHelper_D.init();
+               return (this.trapProof == null || this.trapProof.init()) && this.neighborProof.init();
             } finally {
                if (this.support != null) {
                   PrintAccess.this.view.popHypothesis(this.support);
@@ -2119,43 +2119,43 @@ final class PrintAccess {
 
          void init(long allowance) {
             if (!this.init()) {
-               this.read = this.init_Z = true;
-            } else if (!this.init_Z) {
+               this.read = this.settled = true;
+            } else if (!this.settled) {
                long started = PrintAccess.this.view.workUnits();
                if (this.support != null) {
-                  PrintAccess.this.view.pushTemporaryHypothesis(this.support, this.init_BlockState);
+                  PrintAccess.this.view.pushTemporaryHypothesis(this.support, this.supportState);
                }
 
                try {
-                  if (this.init_UiHelper_aI != null) {
-                     if (!this.init_UiHelper_aI.complete) {
-                        this.init_UiHelper_aI.init(allowance);
+                  if (this.trapProof != null) {
+                     if (!this.trapProof.complete) {
+                        this.trapProof.init(allowance);
                      }
 
-                     if (this.init_UiHelper_aI.invalidated) {
-                        this.read = this.init_Z = true;
+                     if (this.trapProof.invalidated) {
+                        this.read = this.settled = true;
                         return;
                      }
 
-                     if (!this.init_UiHelper_aI.complete) {
+                     if (!this.trapProof.complete) {
                         return;
                      }
 
-                     if (this.init_UiHelper_aI.blocked) {
-                        this.write = this.load = this.init_Z = true;
+                     if (this.trapProof.blocked) {
+                        this.write = this.load = this.settled = true;
                         return;
                      }
                   }
 
-                  this.init_UiHelper_D.init(Math.max(1L, allowance - (PrintAccess.this.view.workUnits() - started)));
-                  if (!this.init_UiHelper_D.invalidated) {
-                     if (this.init_UiHelper_D.complete) {
-                        this.load = this.init_UiHelper_D.blocked;
-                        this.init_Z = true;
+                  this.neighborProof.init(Math.max(1L, allowance - (PrintAccess.this.view.workUnits() - started)));
+                  if (!this.neighborProof.invalidated) {
+                     if (this.neighborProof.complete) {
+                        this.load = this.neighborProof.blocked;
+                        this.settled = true;
                         return;
                      }
                   } else {
-                     this.read = this.init_Z = true;
+                     this.read = this.settled = true;
                   }
 
                   return;
@@ -2169,68 +2169,68 @@ final class PrintAccess {
       }
 
       private final class Inner_CachePool {
-         final PrintAccess.Inner_ConfigStore.Inner_DataUtil init_StreamUtil_ConfigS;
-         final long init_J;
-         final BlockPos init_BlockPos;
-         final BlockState init_BlockState;
-         final PrintCore.b init_UiHelper_b = PrintAccess.this.core.new b();
-         PrintCore.e init_UiHelper_e;
-         int init_I;
-         PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
+         final PrintAccess.Inner_ConfigStore.Inner_DataUtil escapeKind;
+         final long escapeStance;
+         final BlockPos changedCell;
+         final BlockState placedState;
+         final PrintCore.b escapeSupport = PrintAccess.this.core.new b();
+         PrintCore.e escapeSearch;
+         int escapeStage;
+         PrintAccess.Inner_TaskQueue escapeStatus = PrintAccess.Inner_TaskQueue.SEARCHING;
 
          Inner_CachePool(PrintAccess.Inner_ConfigStore.Inner_DataUtil kind, long stance, BlockPos changed, BlockState placed) {
-            this.init_StreamUtil_ConfigS = kind;
-            this.init_J = stance;
-            this.init_BlockPos = changed;
-            this.init_BlockState = placed;
-            this.init_I = kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.GENERAL ? 2 : (kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.DESCENT_AFTER ? 1 : 0);
+            this.escapeKind = kind;
+            this.escapeStance = stance;
+            this.changedCell = changed;
+            this.placedState = placed;
+            this.escapeStage = kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.GENERAL ? 2 : (kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.DESCENT_AFTER ? 1 : 0);
          }
 
          PrintAccess.Inner_TaskQueue init() {
-            if (!this.init_UiHelper_b.init()) {
-               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
+            if (!this.escapeSupport.init()) {
+               return this.escapeStatus = PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
-            if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
-               return this.init_StreamUtil_TaskQue;
+            if (this.escapeStatus != PrintAccess.Inner_TaskQueue.SEARCHING) {
+               return this.escapeStatus;
             }
 
-            if (this.init_UiHelper_e == null) {
-               this.init_UiHelper_e = PrintAccess.this.core.new e(
-                  this.init_UiHelper_b,
-                  this.init_J,
-                  this.init_I < 2,
-                  (this.init_I & 1) == 1 ? this.init_BlockPos : null,
-                  (this.init_I & 1) == 1 ? this.init_BlockState : null
+            if (this.escapeSearch == null) {
+               this.escapeSearch = PrintAccess.this.core.new e(
+                  this.escapeSupport,
+                  this.escapeStance,
+                  this.escapeStage < 2,
+                  (this.escapeStage & 1) == 1 ? this.changedCell : null,
+                  (this.escapeStage & 1) == 1 ? this.placedState : null
                );
             }
 
-            PrintAccess.Inner_TaskQueue result = this.init_UiHelper_e.init(1L);
+            PrintAccess.Inner_TaskQueue result = this.escapeSearch.init(1L);
             if (result != PrintAccess.Inner_TaskQueue.SEARCHING && result != PrintAccess.Inner_TaskQueue.INVALIDATED) {
-               if ((this.init_I & 1) == 1) {
-                  return this.init_StreamUtil_TaskQue = result;
+               if ((this.escapeStage & 1) == 1) {
+                  return this.escapeStatus = result;
                }
 
-               if (this.init_I == 2 && result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
-                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
+               if (this.escapeStage == 2 && result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
+                  return this.escapeStatus = PrintAccess.Inner_TaskQueue.FOUND;
                }
 
-               this.init_I = this.init_I == 0 ? (result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 2) : 3;
-               this.init_UiHelper_e = null;
-               return this.init_StreamUtil_TaskQue;
+               this.escapeStage = this.escapeStage == 0 ? (result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 2) : 3;
+               this.escapeSearch = null;
+               return this.escapeStatus;
             } else {
-               return this.init_StreamUtil_TaskQue = result;
+               return this.escapeStatus = result;
             }
          }
       }
 
       private final class Inner_ConfigStore_2 {
-         final PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
-         final boolean init_Z;
-         final PrintAccess.Inner_ConfigStore.Inner_CachePool init_StreamUtil_ConfigS_2;
-         final PrintCore.b init_UiHelper_b;
-         final PrintAccess.Inner_ConfigStore.Inner_BufferHelper init_StreamUtil_ConfigS;
-         final PrintClicks.Inner_StreamUtil init_ConfigStore_Stream;
+         final PrintAccess.Inner_CachePool candidateNode;
+         final boolean withoutPath;
+         final PrintAccess.Inner_ConfigStore.Inner_CachePool candidateEscape;
+         final PrintCore.b candidateSupport;
+         final PrintAccess.Inner_ConfigStore.Inner_BufferHelper candidatePlacement;
+         final PrintClicks.Inner_StreamUtil candidateDig;
 
          Inner_ConfigStore_2(
             PrintAccess.Inner_CachePool node,
@@ -2240,34 +2240,34 @@ final class PrintAccess {
             PrintAccess.Inner_ConfigStore.Inner_BufferHelper placement,
             PrintClicks.Inner_StreamUtil dig
          ) {
-            this.init_StreamUtil_CachePo = node;
-            this.init_Z = withoutPath;
-            this.init_StreamUtil_ConfigS_2 = escape;
-            this.init_UiHelper_b = support;
-            this.init_StreamUtil_ConfigS = placement;
-            this.init_ConfigStore_Stream = dig;
+            this.candidateNode = node;
+            this.withoutPath = withoutPath;
+            this.candidateEscape = escape;
+            this.candidateSupport = support;
+            this.candidatePlacement = placement;
+            this.candidateDig = dig;
          }
 
          boolean init() {
-            LongArrayList path = this.init_Z ? null : PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
+            LongArrayList path = this.withoutPath ? null : PrintAccess.this.pushPathHypotheses(this.candidateNode);
 
             try {
-               if (this.init_StreamUtil_ConfigS_2 != null && this.init_StreamUtil_ConfigS_2.init() != PrintAccess.Inner_TaskQueue.FOUND) {
+               if (this.candidateEscape != null && this.candidateEscape.init() != PrintAccess.Inner_TaskQueue.FOUND) {
                   return false;
-               } else if (this.init_UiHelper_b != null && !this.init_UiHelper_b.init()) {
+               } else if (this.candidateSupport != null && !this.candidateSupport.init()) {
                   return false;
                } else {
-                  return this.init_StreamUtil_ConfigS == null
-                        || this.init_StreamUtil_ConfigS.init() && this.init_StreamUtil_ConfigS.init_Z && !this.init_StreamUtil_ConfigS.load
-                     ? this.init_ConfigStore_Stream == null
+                  return this.candidatePlacement == null
+                        || this.candidatePlacement.init() && this.candidatePlacement.settled && !this.candidatePlacement.load
+                     ? this.candidateDig == null
                         || !PrintAccess.this.core
                            .failedClicks
                            .contains(
                               new PrintCore.a(
-                                 this.init_ConfigStore_Stream.target().pos().asLong(),
-                                 this.init_StreamUtil_CachePo.key,
-                                 this.init_ConfigStore_Stream.feet(),
-                                 this.init_ConfigStore_Stream.crouch()
+                                 this.candidateDig.target().pos().asLong(),
+                                 this.candidateNode.key,
+                                 this.candidateDig.feet(),
+                                 this.candidateDig.crouch()
                               )
                            )
                      : false;
@@ -2287,64 +2287,64 @@ final class PrintAccess {
       }
 
       private final class Inner_StreamUtil {
-         final PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
-         final IntArrayList init_IntArrayList = new IntArrayList();
-         int init_I;
-         int load_I = -1;
-         boolean init_Z;
-         boolean load_Z;
-         PrintClicks.Inner_StreamUtil init_ConfigStore_Stream;
-         List<Vec3> init_List;
-         List<Vec3> load_List;
-         List<Vec3> read_List;
-         final PrintClicks.Inner_DataUtil init_ConfigStore_DataUt = new PrintClicks.Inner_DataUtil();
-         Iterator<Vec3> init_Iterator;
-         LongArrayList init_LongArrayList;
-         long init_J;
-         boolean read_Z;
-         int read_I = 1;
-         PrintAccess.Inner_ConfigStore.Inner_BufferHelper init_StreamUtil_ConfigS;
-         PrintCore.f init_UiHelper_f;
-         PrintAccess.Inner_ConfigStore.Inner_CachePool init_StreamUtil_ConfigS_2;
-         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_DataUtil init_StreamUtil_ConfigS_4;
-         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_StreamUtil_2 init_StreamUtil_ConfigS_5;
-         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_CachePool init_StreamUtil_ConfigS_3;
-         PrintAccess.Inner_ConfigStore.Inner_CachePool load_StreamUtil_ConfigS;
-         PrintCore.b init_UiHelper_b;
+         final PrintAccess.Inner_CachePool evalNode;
+         final IntArrayList goalsInReach = new IntArrayList();
+         int candidateCursor;
+         int foundGoal = -1;
+         boolean finished;
+         boolean viaTempSupport;
+         PrintClicks.Inner_StreamUtil nodeClick;
+         List<Vec3> poses;
+         List<Vec3> orientedPoses;
+         List<Vec3> plainPoses;
+         final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil();
+         Iterator<Vec3> poseIterator;
+         LongArrayList pathAssumed;
+         long contextHash;
+         boolean refusedStance;
+         int workSlot = 1;
+         PrintAccess.Inner_ConfigStore.Inner_BufferHelper nodePlacement;
+         PrintCore.f nodeTrapStarts;
+         PrintAccess.Inner_ConfigStore.Inner_CachePool pourEscape;
+         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_DataUtil removalProbe;
+         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_StreamUtil_2 cellProbe;
+         PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_CachePool supportProbe;
+         PrintAccess.Inner_ConfigStore.Inner_CachePool foundEscape;
+         PrintCore.b nodeSupport;
          boolean write;
          final boolean update;
 
          private PrintAccess.Inner_ConfigStore.Inner_BufferHelper init(PrintClicks.Inner_StreamUtil click) {
-            if (this.init_UiHelper_f == null) {
-               this.init_UiHelper_f = PrintAccess.this.core.new f();
+            if (this.nodeTrapStarts == null) {
+               this.nodeTrapStarts = PrintAccess.this.core.new f();
             }
 
-            return Inner_ConfigStore.this.new Inner_BufferHelper(click, null, this.init_UiHelper_f);
+            return Inner_ConfigStore.this.new Inner_BufferHelper(click, null, this.nodeTrapStarts);
          }
 
-         boolean init_Z() {
-            return this.init_StreamUtil_ConfigS().init();
+         boolean proofStillValid() {
+            return this.snapshotProof().init();
          }
 
-         PrintAccess.Inner_ConfigStore.Inner_ConfigStore_2 init_StreamUtil_ConfigS() {
+         PrintAccess.Inner_ConfigStore.Inner_ConfigStore_2 snapshotProof() {
             return Inner_ConfigStore.this.new Inner_ConfigStore_2(
-               this.init_StreamUtil_CachePo,
+               this.evalNode,
                this.write,
-               this.load_StreamUtil_ConfigS,
-               this.init_UiHelper_b,
-               this.init_StreamUtil_ConfigS,
-               this.init_StreamUtil_ConfigS_4 == null ? null : this.init_ConfigStore_Stream
+               this.foundEscape,
+               this.nodeSupport,
+               this.nodePlacement,
+               this.removalProbe == null ? null : this.nodeClick
             );
          }
 
          Inner_StreamUtil(PrintAccess.Inner_CachePool node) {
-            this.init_StreamUtil_CachePo = node;
+            this.evalNode = node;
             this.update = Inner_ConfigStore.this.init(node);
-            if (PrintAccess.this.init_LongArrayList == null && PrintAccess.this.load_LongArrayList == null && !PrintAccess.this.flush_Z) {
+            if (PrintAccess.this.removalTemps == null && PrintAccess.this.placeCells == null && !PrintAccess.this.goallessSearch) {
                if (node.via != null && node.via.own) {
                   int i = PrintAccess.this.core.cellIndexByPos.get(node.via.block);
                   if (Inner_ConfigStore.this.goalSet.contains(i)) {
-                     this.load_I = i;
+                     this.foundGoal = i;
                      return;
                   }
                }
@@ -2373,90 +2373,90 @@ final class PrintAccess {
                   }
                }
 
-               this.init_IntArrayList.sort((a, b) -> PrintAccess.this.init_I_I(a, b, ex, ey, ez));
+               this.goalsInReach.sort((a, b) -> PrintAccess.this.compareGoals(a, b, ex, ey, ez));
             }
          }
 
          private void init(int g, double x, double y, double z) {
-            if (this.update && Inner_ConfigStore.this.init_Int2BooleanOpenHas.computeIfAbsent(g, PrintAccess.this.core::close_Z_I)) {
+            if (this.update && Inner_ConfigStore.this.walkSkipByGoal.computeIfAbsent(g, PrintAccess.this.core::close_Z_I)) {
                Inner_ConfigStore.this.write++;
-            } else if (!PrintAccess.this.core.init_Z_I(g, this.init_StreamUtil_CachePo.feet, this.init_StreamUtil_CachePo.key)
+            } else if (!PrintAccess.this.core.init_Z_I(g, this.evalNode.feet, this.evalNode.key)
                && PrintAccess.this.core.targets[g].pos().distToCenterSqr(x, y, z) <= PrintAccess.square(5.8500000000000005)) {
-               this.init_IntArrayList.add(g);
+               this.goalsInReach.add(g);
             }
          }
 
          void init(long allowance) {
-            this.read_I = PrintAccess.this.init_LongArrayList == null && PrintAccess.this.load_LongArrayList == null && this.init_StreamUtil_ConfigS_2 == null
-               ? (this.init_StreamUtil_ConfigS != null ? 2 : (this.init_StreamUtil_ConfigS_3 != null ? 3 : 1))
+            this.workSlot = PrintAccess.this.removalTemps == null && PrintAccess.this.placeCells == null && this.pourEscape == null
+               ? (this.nodePlacement != null ? 2 : (this.supportProbe != null ? 3 : 1))
                : 5;
-            if (this.load_I < 0 && !this.init_Z) {
-               if (PrintAccess.this.flush_Z) {
-                  int x = BlockPos.getX(this.init_StreamUtil_CachePo.key);
-                  int y = BlockPos.getY(this.init_StreamUtil_CachePo.key);
-                  int z = BlockPos.getZ(this.init_StreamUtil_CachePo.key);
-                  if (PrintAccess.this.push_Z
-                     ? PrintAccess.this.read(this.init_StreamUtil_CachePo)
-                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.init_StreamUtil_CachePo)
+            if (this.foundGoal < 0 && !this.finished) {
+               if (PrintAccess.this.goallessSearch) {
+                  int x = BlockPos.getX(this.evalNode.key);
+                  int y = BlockPos.getY(this.evalNode.key);
+                  int z = BlockPos.getZ(this.evalNode.key);
+                  if (PrintAccess.this.groundOnly
+                     ? PrintAccess.this.read(this.evalNode)
+                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.evalNode)
                         || y > PrintAccess.this.core.maxTargetY()
-                        || PrintAccess.this.init_Z_StreamUtil_CachePo(this.init_StreamUtil_CachePo)) {
-                     this.load_I = 0;
+                        || PrintAccess.this.isExitStance(this.evalNode)) {
+                     this.foundGoal = 0;
                   }
 
-                  this.init_Z = true;
-               } else if (PrintAccess.this.init_LongArrayList != null) {
-                  if (this.init_StreamUtil_CachePo.parent == null && !PrintAccess.this.freshClickRetry) {
-                     this.init_Z = true;
+                  this.finished = true;
+               } else if (PrintAccess.this.removalTemps != null) {
+                  if (this.evalNode.parent == null && !PrintAccess.this.freshClickRetry) {
+                     this.finished = true;
                   } else {
-                     if (this.init_StreamUtil_ConfigS_4 == null) {
-                        this.init_StreamUtil_ConfigS_4 = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_DataUtil();
+                     if (this.removalProbe == null) {
+                        this.removalProbe = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_DataUtil();
                      }
 
-                     this.init_StreamUtil_ConfigS_4.init();
+                     this.removalProbe.init();
                   }
-               } else if (PrintAccess.this.load_LongArrayList != null) {
-                  if (this.init_StreamUtil_ConfigS_5 == null) {
-                     this.init_StreamUtil_ConfigS_5 = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_StreamUtil_2();
+               } else if (PrintAccess.this.placeCells != null) {
+                  if (this.cellProbe == null) {
+                     this.cellProbe = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_StreamUtil_2();
                   }
 
-                  this.init_StreamUtil_ConfigS_5.init(allowance);
-               } else if (this.init_I >= this.init_IntArrayList.size()) {
-                  this.init_Z = true;
+                  this.cellProbe.init(allowance);
+               } else if (this.candidateCursor >= this.goalsInReach.size()) {
+                  this.finished = true;
                } else {
-                  int g = this.init_IntArrayList.getInt(this.init_I);
+                  int g = this.goalsInReach.getInt(this.candidateCursor);
                   PrintTarget target = PrintAccess.this.core.targets[g];
-                  if (this.init_StreamUtil_ConfigS_2 != null) {
-                     PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS_2.init();
+                  if (this.pourEscape != null) {
+                     PrintAccess.Inner_TaskQueue result = this.pourEscape.init();
                      if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         Inner_ConfigStore.this.status = result;
                      } else if (result != PrintAccess.Inner_TaskQueue.SEARCHING) {
                         if (result == PrintAccess.Inner_TaskQueue.FOUND) {
-                           this.load_StreamUtil_ConfigS = this.init_StreamUtil_ConfigS_2;
-                           this.load_I = g;
+                           this.foundEscape = this.pourEscape;
+                           this.foundGoal = g;
                         } else {
-                           this.init_StreamUtil_ConfigS_2 = null;
-                           this.init_ConfigStore_Stream = null;
-                           this.init_I++;
-                           this.init_Iterator = null;
-                           this.init_List = null;
+                           this.pourEscape = null;
+                           this.nodeClick = null;
+                           this.candidateCursor++;
+                           this.poseIterator = null;
+                           this.poses = null;
                         }
                      }
-                  } else if (this.init_StreamUtil_ConfigS != null) {
-                     this.init_StreamUtil_ConfigS.init(allowance);
-                     if (this.init_StreamUtil_ConfigS.read) {
+                  } else if (this.nodePlacement != null) {
+                     this.nodePlacement.init(allowance);
+                     if (this.nodePlacement.read) {
                         Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
-                     } else if (this.init_StreamUtil_ConfigS.init_Z) {
-                        if (!this.init_StreamUtil_ConfigS.load) {
-                           this.load_I = g;
+                     } else if (this.nodePlacement.settled) {
+                        if (!this.nodePlacement.load) {
+                           this.foundGoal = g;
                         } else {
-                           boolean anotherPose = this.init_StreamUtil_ConfigS.write;
-                           this.read_Z = true;
-                           this.init_StreamUtil_ConfigS = null;
-                           this.init_ConfigStore_Stream = null;
+                           boolean anotherPose = this.nodePlacement.write;
+                           this.refusedStance = true;
+                           this.nodePlacement = null;
+                           this.nodeClick = null;
                            if (!anotherPose) {
-                              this.init_I++;
-                              this.init_Iterator = null;
-                              this.init_List = null;
+                              this.candidateCursor++;
+                              this.poseIterator = null;
+                              this.poses = null;
                            }
                         }
                      }
@@ -2467,42 +2467,42 @@ final class PrintAccess {
                         && PrintAccess.this.core
                            .rules
                            .isWaterlogMissing(target, PrintAccess.this.view.getBlockState(target.pos()));
-                     if (this.init_Iterator == null) {
-                        this.init_J = PrintAccess.this.init_J_LongArrayList_BlockPos(this.init_LongArrayList, target.pos());
-                        if (this.init_StreamUtil_CachePo.parent != null && !PrintAccess.this.get && !pour && !waterlog) {
-                           this.init_J ^= 4423348608673777095L;
+                     if (this.poseIterator == null) {
+                        this.contextHash = PrintAccess.this.nearbyAssumedHash(this.pathAssumed, target.pos());
+                        if (this.evalNode.parent != null && !PrintAccess.this.get && !pour && !waterlog) {
+                           this.contextHash ^= 4423348608673777095L;
                         }
 
                         if (PrintAccess.this.core.machineJobAt(g) == null
                            && PrintAccess.this.core
                               .init_Z_J(
-                                 this.init_StreamUtil_CachePo.key,
-                                 this.init_StreamUtil_CachePo.feet,
+                                 this.evalNode.key,
+                                 this.evalNode.feet,
                                  g,
-                                 this.init_StreamUtil_CachePo.parent != null,
-                                 this.init_J
+                                 this.evalNode.parent != null,
+                                 this.contextHash
                               )) {
-                           this.init_I++;
+                           this.candidateCursor++;
                            return;
                         }
 
-                        this.read_Z = false;
+                        this.refusedStance = false;
                         if (PrintClicks.isOrientationSensitive(target, PrintAccess.this.core.constraintFor(g))) {
-                           if (this.load_List == null) {
-                              this.load_List = PrintClicks.getCandidateFeetPositions(
-                                 PrintAccess.this.view, this.init_StreamUtil_CachePo.key, this.init_StreamUtil_CachePo.feet, true
+                           if (this.orientedPoses == null) {
+                              this.orientedPoses = PrintClicks.getCandidateFeetPositions(
+                                 PrintAccess.this.view, this.evalNode.key, this.evalNode.feet, true
                               );
                            }
 
-                           this.init_List = this.load_List;
+                           this.poses = this.orientedPoses;
                         } else {
-                           if (this.read_List == null) {
-                              this.read_List = PrintClicks.getCandidateFeetPositions(
-                                 PrintAccess.this.view, this.init_StreamUtil_CachePo.key, this.init_StreamUtil_CachePo.feet, false
+                           if (this.plainPoses == null) {
+                              this.plainPoses = PrintClicks.getCandidateFeetPositions(
+                                 PrintAccess.this.view, this.evalNode.key, this.evalNode.feet, false
                               );
                            }
 
-                           this.init_List = this.read_List;
+                           this.poses = this.plainPoses;
                         }
 
                         PrintMachineJob job = PrintAccess.this.core.machineJobAt(g);
@@ -2523,17 +2523,17 @@ final class PrintAccess {
                               PrintAccess.this.view.hasNoHypothesisInNeighborhood(target.pos()) ? null : PrintAccess.this.core.constraintFor(g),
                               null
                            )) {
-                           long pair = PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key);
-                           this.read_Z = PrintAccess.this.core.refusedCellStances.contains(pair)
+                           long pair = PrintCore.cellStanceKey(g, this.evalNode.key);
+                           this.refusedStance = PrintAccess.this.core.refusedCellStances.contains(pair)
                               || PrintAccess.this.core.open_LongOpenHashSet.contains(pair);
-                           this.init_Iterator = Collections.emptyIterator();
+                           this.poseIterator = Collections.emptyIterator();
                         } else {
-                           this.init_Iterator = this.init_List.iterator();
+                           this.poseIterator = this.poses.iterator();
                         }
                      }
 
-                     if (this.init_Iterator.hasNext()) {
-                        Vec3 position = this.init_Iterator.next();
+                     if (this.poseIterator.hasNext()) {
+                        Vec3 position = this.poseIterator.next();
                         if (!pour && !waterlog) {
                            boolean exact = PrintAccess.this.view.hasNoHypothesisInNeighborhood(target.pos());
                            PrintMachineJob job = PrintAccess.this.core.machineJobAt(g);
@@ -2547,19 +2547,19 @@ final class PrintAccess {
                                     : null
                               );
                            if (interaction != null) {
-                              if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.init_ConfigStore_Stream = PrintAccess.this.core
-                                    .findInteractionClick(target, interaction, position, this.init_ConfigStore_DataUt);
+                              if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                                 this.nodeClick = PrintAccess.this.core
+                                    .findInteractionClick(target, interaction, position, this.clickBudget);
                               } else {
-                                 this.read_Z = true;
+                                 this.refusedStance = true;
                               }
 
-                              if (this.init_ConfigStore_Stream != null) {
-                                 this.load_I = g;
+                              if (this.nodeClick != null) {
+                                 this.foundGoal = g;
                               }
                            } else {
-                              if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.init_ConfigStore_Stream = PrintClicks.findClick(
+                              if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                                 this.nodeClick = PrintClicks.findClick(
                                     PrintAccess.this.view,
                                     PrintAccess.this.core.env,
                                     PrintAccess.this.core.rules,
@@ -2569,21 +2569,21 @@ final class PrintAccess {
                                     position,
                                     true,
                                     exact,
-                                    this.init_ConfigStore_DataUt,
+                                    this.clickBudget,
                                     4.1000000000000005,
                                     PrintAccess.this.core.constraintFor(g)
                                  );
                               } else {
-                                 this.read_Z = true;
+                                 this.refusedStance = true;
                               }
 
-                              if (PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.read_Z = true;
+                              if (PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                                 this.refusedStance = true;
                               }
 
-                              if (this.init_ConfigStore_Stream == null
-                                 && !PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key))) {
-                                 this.init_ConfigStore_Stream = PrintClicks.findClick(
+                              if (this.nodeClick == null
+                                 && !PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                                 this.nodeClick = PrintClicks.findClick(
                                     PrintAccess.this.view,
                                     PrintAccess.this.core.env,
                                     PrintAccess.this.core.rules,
@@ -2593,18 +2593,18 @@ final class PrintAccess {
                                     position,
                                     false,
                                     exact,
-                                    this.init_ConfigStore_DataUt,
+                                    this.clickBudget,
                                     4.1000000000000005,
                                     PrintAccess.this.core.constraintFor(g)
                                  );
                               }
 
-                              if (this.init_ConfigStore_Stream != null) {
-                                 this.init_StreamUtil_ConfigS = this.init(this.init_ConfigStore_Stream);
+                              if (this.nodeClick != null) {
+                                 this.nodePlacement = this.init(this.nodeClick);
                               }
                            }
-                        } else if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.init_StreamUtil_CachePo.key))) {
-                           this.init_ConfigStore_Stream = PrintClicks.findClick(
+                        } else if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                           this.nodeClick = PrintClicks.findClick(
                               PrintAccess.this.view,
                               PrintAccess.this.core.env,
                               PrintAccess.this.core.rules,
@@ -2614,65 +2614,65 @@ final class PrintAccess {
                               position,
                               !waterlog,
                               false,
-                              this.init_ConfigStore_DataUt,
+                              this.clickBudget,
                               4.1000000000000005
                            );
-                           if (this.init_ConfigStore_Stream != null
-                              && !PrintAccess.this.core.push_Z_BlockPos(BlockPos.of(this.init_StreamUtil_CachePo.key))) {
+                           if (this.nodeClick != null
+                              && !PrintAccess.this.core.push_Z_BlockPos(BlockPos.of(this.evalNode.key))) {
                               if (target.kind() != PrintTarget.Inner_DataUtil.FLUID) {
-                                 this.load_I = g;
+                                 this.foundGoal = g;
                               } else {
-                                 this.init_StreamUtil_ConfigS_2 = Inner_ConfigStore.this.new Inner_CachePool(
+                                 this.pourEscape = Inner_ConfigStore.this.new Inner_CachePool(
                                     PrintAccess.Inner_ConfigStore.Inner_DataUtil.GENERAL,
-                                    this.init_StreamUtil_CachePo.key,
+                                    this.evalNode.key,
                                     target.pos(),
                                     target.wanted().getFluidState().createLegacyBlock()
                                  );
                               }
                            }
                         } else {
-                           this.read_Z = true;
+                           this.refusedStance = true;
                         }
                      } else {
                         if (!pour
                            && !waterlog
                            && PrintAccess.this.core.machineJobAt(g) == null
-                           && this.init_StreamUtil_CachePo.parent != null
+                           && this.evalNode.parent != null
                            && PrintAccess.this.get) {
-                           if (this.init_StreamUtil_ConfigS_3 == null) {
-                              this.init_StreamUtil_ConfigS_3 = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_CachePool(target, this.init_List);
+                           if (this.supportProbe == null) {
+                              this.supportProbe = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil.Inner_CachePool(target, this.poses);
                            }
 
-                           this.init_StreamUtil_ConfigS_3.init(allowance);
-                           if (Inner_ConfigStore.this.status != PrintAccess.Inner_TaskQueue.SEARCHING || !this.init_StreamUtil_ConfigS_3.init_Z) {
+                           this.supportProbe.init(allowance);
+                           if (Inner_ConfigStore.this.status != PrintAccess.Inner_TaskQueue.SEARCHING || !this.supportProbe.supportDone) {
                               return;
                            }
 
-                           if (this.init_StreamUtil_ConfigS_3.load_Z) {
-                              this.init_UiHelper_b = this.init_StreamUtil_ConfigS_3.init_UiHelper_b;
-                              this.init_StreamUtil_ConfigS = this.init_StreamUtil_ConfigS_3.init_StreamUtil_ConfigS;
-                              this.init_ConfigStore_Stream = this.init_StreamUtil_ConfigS.click;
-                              this.load_I = g;
-                              this.load_Z = true;
-                           } else if (!this.read_Z) {
-                              PrintAccess.this.core.init_V_J(this.init_StreamUtil_CachePo.key, this.init_StreamUtil_CachePo.feet, g, true, this.init_J);
+                           if (this.supportProbe.supportFound) {
+                              this.nodeSupport = this.supportProbe.supportGuard;
+                              this.nodePlacement = this.supportProbe.supportPlacement;
+                              this.nodeClick = this.nodePlacement.click;
+                              this.foundGoal = g;
+                              this.viaTempSupport = true;
+                           } else if (!this.refusedStance) {
+                              PrintAccess.this.core.init_V_J(this.evalNode.key, this.evalNode.feet, g, true, this.contextHash);
                            }
 
-                           this.init_StreamUtil_ConfigS_3 = null;
-                        } else if (!this.read_Z && PrintAccess.this.core.machineJobAt(g) == null) {
+                           this.supportProbe = null;
+                        } else if (!this.refusedStance && PrintAccess.this.core.machineJobAt(g) == null) {
                            PrintAccess.this.core
                               .init_V_J(
-                                 this.init_StreamUtil_CachePo.key,
-                                 this.init_StreamUtil_CachePo.feet,
+                                 this.evalNode.key,
+                                 this.evalNode.feet,
                                  g,
-                                 this.init_StreamUtil_CachePo.parent != null,
-                                 this.init_J
+                                 this.evalNode.parent != null,
+                                 this.contextHash
                               );
                         }
 
-                        this.init_I++;
-                        this.init_Iterator = null;
-                        this.init_List = null;
+                        this.candidateCursor++;
+                        this.poseIterator = null;
+                        this.poses = null;
                      }
                   }
                }
@@ -2680,104 +2680,104 @@ final class PrintAccess {
          }
 
          private final class Inner_CachePool {
-            final PrintTarget init_ListPool;
-            final List<Vec3> init_List;
-            final PrintCore.b init_UiHelper_b = PrintAccess.this.core.new b();
-            final BlockState init_BlockState = PrintAccess.this.tempState();
-            final Item init_Item = this.init_BlockState == null ? null : this.init_BlockState.getBlock().asItem();
-            int init_I;
-            int load_I;
-            BlockPos init_BlockPos;
-            PrintAccess.Inner_ConfigStore.Inner_BufferHelper init_StreamUtil_ConfigS;
-            PrintCore.f init_UiHelper_f;
-            final IdentityHashMap<BlockState, PrintCore.D> init_IdentityHashMap = new IdentityHashMap<>();
-            boolean init_Z;
-            boolean load_Z;
+            final PrintTarget supportTarget;
+            final List<Vec3> supportPoses;
+            final PrintCore.b supportGuard = PrintAccess.this.core.new b();
+            final BlockState tempSupportState = PrintAccess.this.tempState();
+            final Item tempSupportItem = this.tempSupportState == null ? null : this.tempSupportState.getBlock().asItem();
+            int sideCursor;
+            int poseCursor;
+            BlockPos supportCell;
+            PrintAccess.Inner_ConfigStore.Inner_BufferHelper supportPlacement;
+            PrintCore.f supportTrapStarts;
+            final IdentityHashMap<BlockState, PrintCore.D> blockedNeighborProofs = new IdentityHashMap<>();
+            boolean supportDone;
+            boolean supportFound;
 
             Inner_CachePool(PrintTarget target, List<Vec3> points) {
-               this.init_ListPool = target;
-               this.init_List = points;
+               this.supportTarget = target;
+               this.supportPoses = points;
             }
 
             void init(long allowance) {
-               if (!this.init_UiHelper_b.init()) {
+               if (!this.supportGuard.init()) {
                   Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                } else {
-                  if (this.init_StreamUtil_ConfigS != null) {
-                     this.init_StreamUtil_ConfigS.init(allowance);
-                     if (this.init_StreamUtil_ConfigS.read) {
+                  if (this.supportPlacement != null) {
+                     this.supportPlacement.init(allowance);
+                     if (this.supportPlacement.read) {
                         Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                         return;
                      }
 
-                     if (!this.init_StreamUtil_ConfigS.init_Z) {
+                     if (!this.supportPlacement.settled) {
                         return;
                      }
 
-                     if (!this.init_StreamUtil_ConfigS.load) {
-                        this.load_Z = this.init_Z = true;
+                     if (!this.supportPlacement.load) {
+                        this.supportFound = this.supportDone = true;
                         return;
                      }
 
-                     Inner_StreamUtil.this.read_Z = true;
-                     if (!this.init_StreamUtil_ConfigS.write
-                        && this.init_StreamUtil_ConfigS.init_UiHelper_D.complete
-                        && this.init_StreamUtil_ConfigS.init_UiHelper_D.blocked) {
-                        if (this.init_IdentityHashMap.size() >= 16) {
-                           this.init_IdentityHashMap.clear();
+                     Inner_StreamUtil.this.refusedStance = true;
+                     if (!this.supportPlacement.write
+                        && this.supportPlacement.neighborProof.complete
+                        && this.supportPlacement.neighborProof.blocked) {
+                        if (this.blockedNeighborProofs.size() >= 16) {
+                           this.blockedNeighborProofs.clear();
                         }
 
-                        this.init_IdentityHashMap
-                           .put(this.init_StreamUtil_ConfigS.init_UiHelper_D.state, this.init_StreamUtil_ConfigS.init_UiHelper_D);
+                        this.blockedNeighborProofs
+                           .put(this.supportPlacement.neighborProof.state, this.supportPlacement.neighborProof);
                      }
 
-                     this.init_StreamUtil_ConfigS = null;
+                     this.supportPlacement = null;
                   }
 
-                  try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_UiHelper_b.geometry.attach()) {
-                     if (this.init_BlockPos == null) {
-                        if (this.init_I == Direction.values().length) {
-                           this.init_Z = true;
+                  try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.supportGuard.geometry.attach()) {
+                     if (this.supportCell == null) {
+                        if (this.sideCursor == Direction.values().length) {
+                           this.supportDone = true;
                            return;
                         }
 
-                        BlockPos next = this.init_ListPool.pos().relative(Direction.values()[this.init_I++]);
-                        if (!PrintAccess.this.core.init_Z_BlockPos_BlockPos(next, this.init_ListPool.pos())) {
+                        BlockPos next = this.supportTarget.pos().relative(Direction.values()[this.sideCursor++]);
+                        if (!PrintAccess.this.core.init_Z_BlockPos_BlockPos(next, this.supportTarget.pos())) {
                            return;
                         }
 
-                        this.init_BlockPos = next;
-                        this.load_I = 0;
-                        this.init_UiHelper_f = null;
-                        this.init_IdentityHashMap.clear();
+                        this.supportCell = next;
+                        this.poseCursor = 0;
+                        this.supportTrapStarts = null;
+                        this.blockedNeighborProofs.clear();
                         return;
                      }
 
-                     if (this.load_I == this.init_List.size()) {
-                        this.init_BlockPos = null;
+                     if (this.poseCursor == this.supportPoses.size()) {
+                        this.supportCell = null;
                         return;
                      }
 
-                     Vec3 feet = this.init_List.get(this.load_I++);
-                     PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
+                     Vec3 feet = this.supportPoses.get(this.poseCursor++);
+                     PrintTarget probe = new PrintTarget(-1, this.supportCell, this.tempSupportState, PrintTarget.Inner_DataUtil.PLACE, this.tempSupportItem, null);
                      if (PrintClicks.findClick(
                            PrintAccess.this.view,
                            PrintAccess.this.core.env,
                            PrintAccess.this.core.rules,
                            probe,
-                           this.init_Item,
+                           this.tempSupportItem,
                            PrintClicks.Inner_CachePool.PLACE,
                            feet,
                            true,
                            false,
-                           Inner_StreamUtil.this.init_ConfigStore_DataUt,
+                           Inner_StreamUtil.this.clickBudget,
                            4.1000000000000005
                         )
                         == null) {
                         return;
                      }
 
-                     PrintAccess.this.view.pushTemporaryHypothesis(this.init_BlockPos, this.init_BlockState);
+                     PrintAccess.this.view.pushTemporaryHypothesis(this.supportCell, this.tempSupportState);
 
                      PrintClicks.Inner_StreamUtil sourceClick;
                      try {
@@ -2785,17 +2785,17 @@ final class PrintAccess {
                            PrintAccess.this.view,
                            PrintAccess.this.core.env,
                            PrintAccess.this.core.rules,
-                           this.init_ListPool,
+                           this.supportTarget,
                            feet,
                            false,
-                           Inner_StreamUtil.this.init_ConfigStore_DataUt,
+                           Inner_StreamUtil.this.clickBudget,
                            4.1000000000000005,
-                           PrintAccess.this.core.constraintFor(this.init_ListPool.index()),
-                           this.init_BlockPos
+                           PrintAccess.this.core.constraintFor(this.supportTarget.index()),
+                           this.supportCell
                         );
                         if (sourceClick != null) {
-                           BlockState predicted = sourceClick.predicted() == null ? this.init_ListPool.wanted() : sourceClick.predicted();
-                           PrintCore.D prior = this.init_IdentityHashMap.get(predicted);
+                           BlockState predicted = sourceClick.predicted() == null ? this.supportTarget.wanted() : sourceClick.predicted();
+                           PrintCore.D prior = this.blockedNeighborProofs.get(predicted);
                            if (prior != null) {
                               if (!prior.init()) {
                                  Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
@@ -2804,20 +2804,20 @@ final class PrintAccess {
                               return;
                            }
 
-                           if (this.init_UiHelper_f == null) {
-                              this.init_UiHelper_f = PrintAccess.this.core.new f();
+                           if (this.supportTrapStarts == null) {
+                              this.supportTrapStarts = PrintAccess.this.core.new f();
                            }
                         }
                      } finally {
-                        PrintAccess.this.view.popHypothesis(this.init_BlockPos);
+                        PrintAccess.this.view.popHypothesis(this.supportCell);
                      }
 
                      if (sourceClick != null) {
-                        this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_BufferHelper(sourceClick, this.init_BlockPos, this.init_UiHelper_f);
+                        this.supportPlacement = Inner_ConfigStore.this.new Inner_BufferHelper(sourceClick, this.supportCell, this.supportTrapStarts);
                      }
                   }
 
-                  if (!this.init_UiHelper_b.geometry.verifyStillValid()) {
+                  if (!this.supportGuard.geometry.verifyStillValid()) {
                      Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
                }
@@ -2825,62 +2825,62 @@ final class PrintAccess {
          }
 
          private final class Inner_DataUtil {
-            int init_I;
-            int load_I;
-            boolean init_Z;
-            boolean load_Z;
-            long init_J = -9223372036854775808L;
-            PrintClicks.Inner_StreamUtil init_ConfigStore_Stream;
-            PrintAccess.Inner_ConfigStore.Inner_CachePool init_StreamUtil_ConfigS;
+            int removalCursor;
+            int removalStage;
+            boolean removalStarted;
+            boolean standingRemoval;
+            long removalCell = -9223372036854775808L;
+            PrintClicks.Inner_StreamUtil probeRemovalClick;
+            PrintAccess.Inner_ConfigStore.Inner_CachePool removalEscape;
 
             void init() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
-                  int x = BlockPos.getX(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                  int y = BlockPos.getY(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                  int z = BlockPos.getZ(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
+               if (!this.removalStarted) {
+                  this.removalStarted = true;
+                  int x = BlockPos.getX(Inner_StreamUtil.this.evalNode.key);
+                  int y = BlockPos.getY(Inner_StreamUtil.this.evalNode.key);
+                  int z = BlockPos.getZ(Inner_StreamUtil.this.evalNode.key);
                   long floor = BlockPos.asLong(x, y - 1, z);
                   if ((PrintAccess.this.tick || PrintAccess.this.run)
-                     && (Inner_StreamUtil.this.init_StreamUtil_CachePo.temps <= 0 || floor != PrintAccess.this.avoidSwap)
-                     && Inner_StreamUtil.this.init_StreamUtil_CachePo.feet == y
-                     && PrintAccess.this.load_LongOpenHashSet.contains(floor)
+                     && (Inner_StreamUtil.this.evalNode.temps <= 0 || floor != PrintAccess.this.avoidSwap)
+                     && Inner_StreamUtil.this.evalNode.feet == y
+                     && PrintAccess.this.standingTemps.contains(floor)
                      && !PrintAccess.this.core.temporaryBlocks.containsKey(BlockPos.asLong(x, y - 2, z))
-                     && Inner_StreamUtil.this.init_StreamUtil_CachePo.via != null
-                     && Inner_StreamUtil.this.init_StreamUtil_CachePo.via.kind == PrintAccess.Inner_StreamUtil.WALK
+                     && Inner_StreamUtil.this.evalNode.via != null
+                     && Inner_StreamUtil.this.evalNode.via.kind == PrintAccess.Inner_StreamUtil.WALK
                      && !PrintAccess.this.core.sync_Z_J(floor)
                      && PrintAccess.this.core.update_Z_BlockPos(BlockPos.of(floor))) {
-                     this.init_J = floor;
-                     this.load_Z = true;
-                     this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
+                     this.removalCell = floor;
+                     this.standingRemoval = true;
+                     this.removalEscape = Inner_ConfigStore.this.new Inner_CachePool(
                         PrintAccess.Inner_ConfigStore.Inner_DataUtil.REMOVAL, floor, BlockPos.of(floor), Blocks.AIR.defaultBlockState()
                      );
                      return;
                   }
 
                   if (PrintAccess.this.tick) {
-                     Inner_StreamUtil.this.init_Z = true;
+                     Inner_StreamUtil.this.finished = true;
                      return;
                   }
                }
 
-               if (this.load_Z) {
-                  PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS.init();
+               if (this.standingRemoval) {
+                  PrintAccess.Inner_TaskQueue result = this.removalEscape.init();
                   if (result != PrintAccess.Inner_TaskQueue.SEARCHING) {
                      if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         Inner_ConfigStore.this.status = result;
                      } else if (result == PrintAccess.Inner_TaskQueue.FOUND) {
-                        this.init(this.init_StreamUtil_ConfigS, true);
+                        this.init(this.removalEscape, true);
                      } else {
-                        this.load_Z = false;
-                        this.init_StreamUtil_ConfigS = null;
-                        this.init_J = -9223372036854775808L;
+                        this.standingRemoval = false;
+                        this.removalEscape = null;
+                        this.removalCell = -9223372036854775808L;
                         if (PrintAccess.this.tick) {
-                           Inner_StreamUtil.this.init_Z = true;
+                           Inner_StreamUtil.this.finished = true;
                         }
                      }
                   }
                } else {
-                  LongArrayList path = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(Inner_StreamUtil.this.init_StreamUtil_CachePo);
+                  LongArrayList path = PrintAccess.this.pushPathHypotheses(Inner_StreamUtil.this.evalNode);
 
                   try {
                      this.load();
@@ -2891,8 +2891,8 @@ final class PrintAccess {
             }
 
             private void load() {
-               if (this.init_StreamUtil_ConfigS != null) {
-                  PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS.init();
+               if (this.removalEscape != null) {
+                  PrintAccess.Inner_TaskQueue result = this.removalEscape.init();
                   if (result == PrintAccess.Inner_TaskQueue.SEARCHING) {
                      return;
                   }
@@ -2902,32 +2902,32 @@ final class PrintAccess {
                      return;
                   }
 
-                  PrintAccess.Inner_ConfigStore.Inner_CachePool completed = this.init_StreamUtil_ConfigS;
-                  this.init_StreamUtil_ConfigS = null;
+                  PrintAccess.Inner_ConfigStore.Inner_CachePool completed = this.removalEscape;
+                  this.removalEscape = null;
                   if (result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
-                     this.init_J = -9223372036854775808L;
-                     this.init_ConfigStore_Stream = null;
+                     this.removalCell = -9223372036854775808L;
+                     this.probeRemovalClick = null;
                      return;
                   }
 
-                  if (this.load_I == 3) {
+                  if (this.removalStage == 3) {
                      this.init(completed, false);
                      return;
                   }
 
-                  this.load_I = 2;
+                  this.removalStage = 2;
                }
 
-               if (this.init_J == -9223372036854775808L) {
-                  if (this.init_I == PrintAccess.this.init_LongArrayList.size()) {
-                     Inner_StreamUtil.this.init_Z = true;
+               if (this.removalCell == -9223372036854775808L) {
+                  if (this.removalCursor == PrintAccess.this.removalTemps.size()) {
+                     Inner_StreamUtil.this.finished = true;
                      return;
                   }
 
-                  long candidate = PrintAccess.this.init_LongArrayList.getLong(this.init_I++);
-                  int x = BlockPos.getX(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                  int y = BlockPos.getY(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                  int z = BlockPos.getZ(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
+                  long candidate = PrintAccess.this.removalTemps.getLong(this.removalCursor++);
+                  int x = BlockPos.getX(Inner_StreamUtil.this.evalNode.key);
+                  int y = BlockPos.getY(Inner_StreamUtil.this.evalNode.key);
+                  int z = BlockPos.getZ(Inner_StreamUtil.this.evalNode.key);
                   int tx = BlockPos.getX(candidate);
                   int ty = BlockPos.getY(candidate);
                   int tz = BlockPos.getZ(candidate);
@@ -2939,7 +2939,7 @@ final class PrintAccess {
                      || tx == x && tz == z && ty == y - 1
                      || PrintAccess.this.core
                         .failedDigStances
-                        .contains(PrintCore.cellStanceKey((int)(candidate & 2147483647L), Inner_StreamUtil.this.init_StreamUtil_CachePo.key))) {
+                        .contains(PrintCore.cellStanceKey((int)(candidate & 2147483647L), Inner_StreamUtil.this.evalNode.key))) {
                      return;
                   }
 
@@ -2948,153 +2948,153 @@ final class PrintAccess {
                      return;
                   }
 
-                  this.init_J = candidate;
-                  if (Inner_StreamUtil.this.init_StreamUtil_CachePo.temps > 0 && candidate == PrintAccess.this.avoidSwap) {
-                     this.load_I = 1;
-                     this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
+                  this.removalCell = candidate;
+                  if (Inner_StreamUtil.this.evalNode.temps > 0 && candidate == PrintAccess.this.avoidSwap) {
+                     this.removalStage = 1;
+                     this.removalEscape = Inner_ConfigStore.this.new Inner_CachePool(
                         PrintAccess.Inner_ConfigStore.Inner_DataUtil.DESCENT_AFTER,
-                        Inner_StreamUtil.this.init_StreamUtil_CachePo.key,
+                        Inner_StreamUtil.this.evalNode.key,
                         pos,
                         Blocks.AIR.defaultBlockState()
                      );
                      return;
                   }
 
-                  this.load_I = 2;
+                  this.removalStage = 2;
                }
 
-               BlockPos pos = BlockPos.of(this.init_J);
+               BlockPos pos = BlockPos.of(this.removalCell);
                BlockState targetState = PrintAccess.this.view.getBlockState(pos);
                PrintTarget probe = new PrintTarget(-1, pos, targetState, PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
-               this.init_ConfigStore_Stream = PrintAccess.this.core
+               this.probeRemovalClick = PrintAccess.this.core
                   .findClickFrom(
-                     Inner_StreamUtil.this.init_StreamUtil_CachePo.key,
-                     Inner_StreamUtil.this.init_StreamUtil_CachePo.feet,
+                     Inner_StreamUtil.this.evalNode.key,
+                     Inner_StreamUtil.this.evalNode.feet,
                      probe,
-                     Inner_StreamUtil.this.init_ConfigStore_DataUt,
-                     Inner_StreamUtil.this.init_StreamUtil_CachePo.key == PrintAccess.this.rootKey
+                     Inner_StreamUtil.this.clickBudget,
+                     Inner_StreamUtil.this.evalNode.key == PrintAccess.this.rootKey
                   );
-               if (this.init_ConfigStore_Stream == null) {
-                  this.init_J = -9223372036854775808L;
+               if (this.probeRemovalClick == null) {
+                  this.removalCell = -9223372036854775808L;
                } else {
-                  this.load_I = 3;
-                  this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
-                     PrintAccess.Inner_ConfigStore.Inner_DataUtil.REMOVAL, Inner_StreamUtil.this.init_StreamUtil_CachePo.key, pos, Blocks.AIR.defaultBlockState()
+                  this.removalStage = 3;
+                  this.removalEscape = Inner_ConfigStore.this.new Inner_CachePool(
+                     PrintAccess.Inner_ConfigStore.Inner_DataUtil.REMOVAL, Inner_StreamUtil.this.evalNode.key, pos, Blocks.AIR.defaultBlockState()
                   );
                }
             }
 
             private void init(PrintAccess.Inner_ConfigStore.Inner_CachePool proof, boolean withoutPath) {
-               Inner_StreamUtil.this.load_StreamUtil_ConfigS = proof;
+               Inner_StreamUtil.this.foundEscape = proof;
                Inner_StreamUtil.this.write = withoutPath;
-               PrintAccess.this.foundGoalKey = this.init_J;
-               PrintAccess.this.load_ConfigStore_Stream = this.init_ConfigStore_Stream;
-               Inner_StreamUtil.this.init_ConfigStore_Stream = this.init_ConfigStore_Stream;
-               Inner_StreamUtil.this.load_I = 0;
+               PrintAccess.this.foundGoalKey = this.removalCell;
+               PrintAccess.this.removalClick = this.probeRemovalClick;
+               Inner_StreamUtil.this.nodeClick = this.probeRemovalClick;
+               Inner_StreamUtil.this.foundGoal = 0;
             }
          }
 
          private final class Inner_StreamUtil_2 {
-            int init_I;
+            int cellCursor;
             int load;
-            long init_J;
-            PrintTarget init_ListPool;
-            List<Vec3> init_List;
+            long probedCell;
+            PrintTarget cellTarget;
+            List<Vec3> cellPoses;
 
             void init(long allowance) {
-               if (Inner_StreamUtil.this.init_StreamUtil_ConfigS != null) {
-                  Inner_StreamUtil.this.init_StreamUtil_ConfigS.init(allowance);
-                  if (Inner_StreamUtil.this.init_StreamUtil_ConfigS.read) {
+               if (Inner_StreamUtil.this.nodePlacement != null) {
+                  Inner_StreamUtil.this.nodePlacement.init(allowance);
+                  if (Inner_StreamUtil.this.nodePlacement.read) {
                      Inner_ConfigStore.this.status = PrintAccess.Inner_TaskQueue.INVALIDATED;
-                  } else if (Inner_StreamUtil.this.init_StreamUtil_ConfigS.init_Z) {
-                     if (!Inner_StreamUtil.this.init_StreamUtil_ConfigS.load) {
-                        PrintAccess.this.foundGoalKey = this.init_J;
-                        PrintAccess.this.init_ConfigStore_Stream = Inner_StreamUtil.this.init_ConfigStore_Stream;
-                        Inner_StreamUtil.this.load_I = 0;
+                  } else if (Inner_StreamUtil.this.nodePlacement.settled) {
+                     if (!Inner_StreamUtil.this.nodePlacement.load) {
+                        PrintAccess.this.foundGoalKey = this.probedCell;
+                        PrintAccess.this.unusedPlaceClick = Inner_StreamUtil.this.nodeClick;
+                        Inner_StreamUtil.this.foundGoal = 0;
                      } else {
-                        boolean anotherPose = Inner_StreamUtil.this.init_StreamUtil_ConfigS.write;
-                        Inner_StreamUtil.this.init_StreamUtil_ConfigS = null;
-                        Inner_StreamUtil.this.init_ConfigStore_Stream = null;
+                        boolean anotherPose = Inner_StreamUtil.this.nodePlacement.write;
+                        Inner_StreamUtil.this.nodePlacement = null;
+                        Inner_StreamUtil.this.nodeClick = null;
                         if (!anotherPose) {
-                           this.init_I++;
+                           this.cellCursor++;
                            this.load = 0;
-                           this.init_ListPool = null;
+                           this.cellTarget = null;
                         }
                      }
                   }
-               } else if (this.init_I != PrintAccess.this.load_LongArrayList.size() && !Inner_StreamUtil.this.init_ConfigStore_DataUt.isExhausted()) {
-                  if (this.init_List == null) {
-                     this.init_List = PrintClicks.getCandidateFeetPositions(
-                        PrintAccess.this.view, Inner_StreamUtil.this.init_StreamUtil_CachePo.key, Inner_StreamUtil.this.init_StreamUtil_CachePo.feet
+               } else if (this.cellCursor != PrintAccess.this.placeCells.size() && !Inner_StreamUtil.this.clickBudget.isExhausted()) {
+                  if (this.cellPoses == null) {
+                     this.cellPoses = PrintClicks.getCandidateFeetPositions(
+                        PrintAccess.this.view, Inner_StreamUtil.this.evalNode.key, Inner_StreamUtil.this.evalNode.feet
                      );
                   }
 
-                  if (this.init_ListPool == null) {
-                     this.init_J = PrintAccess.this.load_LongArrayList.getLong(this.init_I);
-                     int x = BlockPos.getX(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                     int y = BlockPos.getY(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                     int z = BlockPos.getZ(Inner_StreamUtil.this.init_StreamUtil_CachePo.key);
-                     int tx = BlockPos.getX(this.init_J);
-                     int ty = BlockPos.getY(this.init_J);
-                     int tz = BlockPos.getZ(this.init_J);
+                  if (this.cellTarget == null) {
+                     this.probedCell = PrintAccess.this.placeCells.getLong(this.cellCursor);
+                     int x = BlockPos.getX(Inner_StreamUtil.this.evalNode.key);
+                     int y = BlockPos.getY(Inner_StreamUtil.this.evalNode.key);
+                     int z = BlockPos.getZ(Inner_StreamUtil.this.evalNode.key);
+                     int tx = BlockPos.getX(this.probedCell);
+                     int ty = BlockPos.getY(this.probedCell);
+                     int tz = BlockPos.getZ(this.probedCell);
                      if (Math.abs(tx - x) > 4
                         || Math.abs(tz - z) > 4
                         || ty - y > 4
                         || y - ty > 5
                         || tx == x && tz == z && (ty == y || ty == y + 1)
-                        || !PrintAccess.this.view.getBlockState(BlockPos.of(this.init_J)).canBeReplaced()) {
-                        this.init_I++;
+                        || !PrintAccess.this.view.getBlockState(BlockPos.of(this.probedCell)).canBeReplaced()) {
+                        this.cellCursor++;
                         return;
                      }
 
-                     this.init_ListPool = new PrintTarget(
-                        -1, BlockPos.of(this.init_J), PrintAccess.this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, PrintAccess.this.init_Item, null
+                     this.cellTarget = new PrintTarget(
+                        -1, BlockPos.of(this.probedCell), PrintAccess.this.placeState, PrintTarget.Inner_DataUtil.PLACE, PrintAccess.this.placeItem, null
                      );
                   }
 
-                  if (this.load == this.init_List.size()) {
-                     this.init_I++;
+                  if (this.load == this.cellPoses.size()) {
+                     this.cellCursor++;
                      this.load = 0;
-                     this.init_ListPool = null;
+                     this.cellTarget = null;
                   } else {
-                     Inner_StreamUtil.this.init_ConfigStore_Stream = PrintClicks.findClick(
+                     Inner_StreamUtil.this.nodeClick = PrintClicks.findClick(
                         PrintAccess.this.view,
                         PrintAccess.this.core.env,
                         PrintAccess.this.core.rules,
-                        this.init_ListPool,
-                        PrintAccess.this.init_Item,
+                        this.cellTarget,
+                        PrintAccess.this.placeItem,
                         PrintClicks.Inner_CachePool.PLACE,
-                        this.init_List.get(this.load++),
+                        this.cellPoses.get(this.load++),
                         true,
                         false,
-                        Inner_StreamUtil.this.init_ConfigStore_DataUt,
+                        Inner_StreamUtil.this.clickBudget,
                         4.1000000000000005
                      );
-                     if (Inner_StreamUtil.this.init_ConfigStore_Stream != null) {
-                        Inner_StreamUtil.this.init_StreamUtil_ConfigS = Inner_StreamUtil.this.init(Inner_StreamUtil.this.init_ConfigStore_Stream);
+                     if (Inner_StreamUtil.this.nodeClick != null) {
+                        Inner_StreamUtil.this.nodePlacement = Inner_StreamUtil.this.init(Inner_StreamUtil.this.nodeClick);
                      }
                   }
                } else {
-                  Inner_StreamUtil.this.init_Z = true;
+                  Inner_StreamUtil.this.finished = true;
                }
             }
          }
       }
 
       private final class Inner_TaskQueue {
-         final PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
-         final boolean init_Z;
-         final boolean load_Z;
-         PrintCore.b init_UiHelper_b;
-         PrintCore.e init_UiHelper_e;
-         PrintCore.e load_UiHelper_e;
-         PrintAccess.Inner_CachePool load_StreamUtil_CachePo;
-         Boolean init_Boolean;
-         int init_I;
+         final PrintAccess.Inner_CachePool proofNode;
+         final boolean needsWayOut;
+         final boolean lowered;
+         PrintCore.b pathSupport;
+         PrintCore.e nodeDownEscape;
+         PrintCore.e nodeEscape;
+         PrintAccess.Inner_CachePool walkBackNode;
+         Boolean walksBack;
+         int wayOutStage;
 
          Inner_TaskQueue(PrintAccess.Inner_CachePool node) {
-            this.init_StreamUtil_CachePo = node;
-            this.init_Z = PrintAccess.this.init_LongArrayList != null
+            this.proofNode = node;
+            this.needsWayOut = PrintAccess.this.removalTemps != null
                || PrintAccess.this.core.phase == PrintCore.J.TEARDOWN
                || PrintAccess.this.core.isAboveBase(BlockPos.of(node.key))
                || PrintAccess.this.core.push_Z() && PrintAccess.this.core.isAboveBase(BlockPos.of(PrintAccess.this.rootKey));
@@ -3106,30 +3106,30 @@ final class PrintAccess {
                }
             }
 
-            this.load_Z = lowered;
-            this.load_StreamUtil_CachePo = node;
+            this.lowered = lowered;
+            this.walkBackNode = node;
          }
 
-         boolean init_Z() {
-            if (Inner_ConfigStore.this.init_UiHelper_b != null && !Inner_ConfigStore.this.init_UiHelper_b.init()) {
+         boolean supportStillValid() {
+            if (Inner_ConfigStore.this.wayOutSupport != null && !Inner_ConfigStore.this.wayOutSupport.init()) {
                return false;
             }
 
-            if (this.init_UiHelper_b == null) {
+            if (this.pathSupport == null) {
                return true;
             }
 
-            LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
+            LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.proofNode);
 
             try {
-               return this.init_UiHelper_b.init();
+               return this.pathSupport.init();
             } finally {
                PrintAccess.this.popHypotheses(assumed);
             }
          }
 
          PrintAccess.Inner_TaskQueue init(long allowance) {
-            if (!this.init_Z()) {
+            if (!this.supportStillValid()) {
                return PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
@@ -3137,36 +3137,36 @@ final class PrintAccess {
 
             do {
                long left = Math.max(1L, allowance - (PrintAccess.this.view.workUnits() - started));
-               if (this.init_I == 0) {
-                  if (!this.init_Z) {
-                     this.init_I = 3;
+               if (this.wayOutStage == 0) {
+                  if (!this.needsWayOut) {
+                     this.wayOutStage = 3;
                   } else {
-                     if (Inner_ConfigStore.this.init_UiHelper_e == null) {
-                        Inner_ConfigStore.this.init_UiHelper_e = PrintAccess.this.core.new e(
-                           Inner_ConfigStore.this.init_UiHelper_b, PrintAccess.this.rootKey, true
+                     if (Inner_ConfigStore.this.rootDownEscape == null) {
+                        Inner_ConfigStore.this.rootDownEscape = PrintAccess.this.core.new e(
+                           Inner_ConfigStore.this.wayOutSupport, PrintAccess.this.rootKey, true
                         );
                      }
 
-                     PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.init_UiHelper_e.init(left);
+                     PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.rootDownEscape.init(left);
                      if (result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         return result;
                      }
 
-                     this.init_I = result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 3;
+                     this.wayOutStage = result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 3;
                   }
-               } else if (this.init_I != 1 && this.init_I != 4) {
-                  if (this.init_I != 2 && this.init_I != 5) {
-                     if (!this.load_Z) {
+               } else if (this.wayOutStage != 1 && this.wayOutStage != 4) {
+                  if (this.wayOutStage != 2 && this.wayOutStage != 5) {
+                     if (!this.lowered) {
                         return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
-                     if (Inner_ConfigStore.this.load_UiHelper_e == null) {
-                        Inner_ConfigStore.this.load_UiHelper_e = PrintAccess.this.core.new e(
-                           Inner_ConfigStore.this.init_UiHelper_b, PrintAccess.this.rootKey, false
+                     if (Inner_ConfigStore.this.rootEscape == null) {
+                        Inner_ConfigStore.this.rootEscape = PrintAccess.this.core.new e(
+                           Inner_ConfigStore.this.wayOutSupport, PrintAccess.this.rootKey, false
                         );
                      }
 
-                     PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.load_UiHelper_e.init(left);
+                     PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.rootEscape.init(left);
                      if (result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         return result;
                      }
@@ -3175,37 +3175,37 @@ final class PrintAccess {
                         return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
-                     this.init_I = 4;
+                     this.wayOutStage = 4;
                   } else {
-                     PrintAccess.Inner_TaskQueue result = this.init(this.init_I == 2, left);
+                     PrintAccess.Inner_TaskQueue result = this.init(this.wayOutStage == 2, left);
                      if (result != PrintAccess.Inner_TaskQueue.FOUND) {
                         return result;
                      }
 
-                     if (this.init_I == 5) {
+                     if (this.wayOutStage == 5) {
                         return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
-                     this.init_I = 3;
+                     this.wayOutStage = 3;
                   }
                } else {
-                  if (this.init_Boolean == null) {
-                     this.init_V();
+                  if (this.walksBack == null) {
+                     this.stepWalkBack();
                   }
 
-                  if (!Inner_ConfigStore.this.init_UiHelper_b.init()) {
+                  if (!Inner_ConfigStore.this.wayOutSupport.init()) {
                      return PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
 
-                  if (this.init_Boolean != null) {
-                     if (this.init_I == 1) {
-                        this.init_I = this.init_Boolean ? 3 : 2;
+                  if (this.walksBack != null) {
+                     if (this.wayOutStage == 1) {
+                        this.wayOutStage = this.walksBack ? 3 : 2;
                      } else {
-                        if (this.init_Boolean) {
+                        if (this.walksBack) {
                            return PrintAccess.Inner_TaskQueue.FOUND;
                         }
 
-                        this.init_I = 5;
+                        this.wayOutStage = 5;
                      }
                   }
                }
@@ -3215,73 +3215,73 @@ final class PrintAccess {
          }
 
          private PrintAccess.Inner_TaskQueue init(boolean down, long allowance) {
-            LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
+            LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.proofNode);
 
             try {
-               if (this.init_UiHelper_b == null) {
-                  this.init_UiHelper_b = PrintAccess.this.core.new b();
+               if (this.pathSupport == null) {
+                  this.pathSupport = PrintAccess.this.core.new b();
                }
 
                if (down) {
-                  if (this.init_UiHelper_e == null) {
-                     this.init_UiHelper_e = PrintAccess.this.core.new e(this.init_UiHelper_b, this.init_StreamUtil_CachePo.key, true);
+                  if (this.nodeDownEscape == null) {
+                     this.nodeDownEscape = PrintAccess.this.core.new e(this.pathSupport, this.proofNode.key, true);
                   }
 
-                  return this.init_UiHelper_e.init(allowance);
+                  return this.nodeDownEscape.init(allowance);
                } else {
-                  if (this.load_UiHelper_e == null) {
-                     this.load_UiHelper_e = PrintAccess.this.core.new e(this.init_UiHelper_b, this.init_StreamUtil_CachePo.key, false);
+                  if (this.nodeEscape == null) {
+                     this.nodeEscape = PrintAccess.this.core.new e(this.pathSupport, this.proofNode.key, false);
                   }
 
-                  return this.load_UiHelper_e.init(allowance);
+                  return this.nodeEscape.init(allowance);
                }
             } finally {
                PrintAccess.this.popHypotheses(assumed);
             }
          }
 
-         private void init_V() {
-            if (this.load_StreamUtil_CachePo.parent == null) {
-               this.init_Boolean = true;
+         private void stepWalkBack() {
+            if (this.walkBackNode.parent == null) {
+               this.walksBack = true;
             } else {
-               LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.load_StreamUtil_CachePo);
+               LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.walkBackNode);
 
-               try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = Inner_ConfigStore.this.init_UiHelper_b
+               try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = Inner_ConfigStore.this.wayOutSupport
                      .geometry
                      .attach()) {
-                  PrintAccess.Inner_NetHelper step = this.load_StreamUtil_CachePo.via;
-                  PrintAccess.Inner_CachePool from = this.load_StreamUtil_CachePo.parent;
+                  PrintAccess.Inner_NetHelper step = this.walkBackNode.via;
+                  PrintAccess.Inner_CachePool from = this.walkBackNode.parent;
                   int fx = BlockPos.getX(from.key);
                   int fy = BlockPos.getY(from.key);
                   int fz = BlockPos.getZ(from.key);
                   if (step.kind != PrintAccess.Inner_StreamUtil.WALK) {
                      if (step.kind != PrintAccess.Inner_StreamUtil.PILLAR || step.own || assumed.isEmpty() || assumed.getLong(assumed.size() - 1) != step.block) {
-                        this.init_Boolean = false;
+                        this.walksBack = false;
                         return;
                      }
 
                      PrintAccess.this.view.popHypothesis(BlockPos.of(assumed.removeLong(assumed.size() - 1)));
                   } else {
-                     int tx = BlockPos.getX(this.load_StreamUtil_CachePo.key);
-                     int tz = BlockPos.getZ(this.load_StreamUtil_CachePo.key);
+                     int tx = BlockPos.getX(this.walkBackNode.key);
+                     int tz = BlockPos.getZ(this.walkBackNode.key);
                      if (Double.isNaN(
                         PrintNav.stepCost(
-                           PrintAccess.this.view, tx, tz, this.load_StreamUtil_CachePo.feet, fx, fz, from.feet, tx != fx && tz != fz
+                           PrintAccess.this.view, tx, tz, this.walkBackNode.feet, fx, fz, from.feet, tx != fx && tz != fz
                         )
                      )) {
-                        this.init_Boolean = false;
+                        this.walksBack = false;
                         return;
                      }
                   }
 
                   double height = PrintAccess.this.view.standingHeightAt(fx, fy, fz);
                   if (!Double.isNaN(height) && !(Math.abs(height - from.feet) > 0.001)) {
-                     this.load_StreamUtil_CachePo = from;
-                     if (this.load_StreamUtil_CachePo.parent == null) {
-                        this.init_Boolean = true;
+                     this.walkBackNode = from;
+                     if (this.walkBackNode.parent == null) {
+                        this.walksBack = true;
                      }
                   } else {
-                     this.init_Boolean = false;
+                     this.walksBack = false;
                   }
                } finally {
                   PrintAccess.this.popHypotheses(assumed);
@@ -3292,35 +3292,35 @@ final class PrintAccess {
    }
 
    final class Inner_DataUtil {
-      final PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH;
-      final BlockState init_BlockState;
-      PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
-      int init_I;
+      final PrintAccess.Inner_BufferHelper replayPlan;
+      final BlockState replayTemp;
+      PrintAccess.Inner_CachePool replayNode;
+      int replayStep;
       boolean done;
       boolean load;
 
       Inner_DataUtil(BlockPos start, double feet, PrintAccess.Inner_BufferHelper plan, BlockState temporary) {
-         this.init_StreamUtil_BufferH = plan;
-         this.init_BlockState = temporary;
-         this.init_StreamUtil_CachePo = new PrintAccess.Inner_CachePool(start.asLong(), feet, 0.0, null, null, 0);
+         this.replayPlan = plan;
+         this.replayTemp = temporary;
+         this.replayNode = new PrintAccess.Inner_CachePool(start.asLong(), feet, 0.0, null, null, 0);
       }
 
       void init(long allowance) {
          long started = PrintAccess.this.view.workUnits();
 
          while (!this.done && PrintAccess.this.view.workUnits() - started < allowance) {
-            if (this.init_I == this.init_StreamUtil_BufferH.steps().size()) {
-               LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
+            if (this.replayStep == this.replayPlan.steps().size()) {
+               LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.replayNode);
 
                try {
-                  int x = BlockPos.getX(this.init_StreamUtil_CachePo.key);
-                  int y = BlockPos.getY(this.init_StreamUtil_CachePo.key);
-                  int z = BlockPos.getZ(this.init_StreamUtil_CachePo.key);
-                  this.load = PrintAccess.this.push_Z
-                     ? PrintAccess.this.read(this.init_StreamUtil_CachePo)
-                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.init_StreamUtil_CachePo)
+                  int x = BlockPos.getX(this.replayNode.key);
+                  int y = BlockPos.getY(this.replayNode.key);
+                  int z = BlockPos.getZ(this.replayNode.key);
+                  this.load = PrintAccess.this.groundOnly
+                     ? PrintAccess.this.read(this.replayNode)
+                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.replayNode)
                         || y > PrintAccess.this.core.maxTargetY()
-                        || PrintAccess.this.init_Z_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
+                        || PrintAccess.this.isExitStance(this.replayNode);
                } finally {
                   PrintAccess.this.popHypotheses(assumed);
                }
@@ -3329,11 +3329,11 @@ final class PrintAccess {
                return;
             }
 
-            PrintAccess.Inner_NetHelper expected = this.init_StreamUtil_BufferH.steps().get(this.init_I++);
+            PrintAccess.Inner_NetHelper expected = this.replayPlan.steps().get(this.replayStep++);
             PriorityQueue<Object[]> next = new PriorityQueue<>((a, b) -> Double.compare((Double)a[0], (Double)b[0]));
             Long2DoubleOpenHashMap costs = new Long2DoubleOpenHashMap();
             costs.defaultReturnValue(1.0 / 0.0);
-            PrintAccess.this.init_V_StreamUtil_CachePo(this.init_StreamUtil_CachePo, new IntArrayList(), this.init_BlockState, next, costs);
+            PrintAccess.this.expand(this.replayNode, new IntArrayList(), this.replayTemp, next, costs);
             PrintAccess.Inner_CachePool found = null;
             Iterator var9 = next.iterator();
 
@@ -3353,7 +3353,7 @@ final class PrintAccess {
                   return;
                }
 
-               this.init_StreamUtil_CachePo = found;
+               this.replayNode = found;
                break;
             }
          }

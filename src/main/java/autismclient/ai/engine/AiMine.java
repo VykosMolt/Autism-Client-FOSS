@@ -42,12 +42,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiMine {
-   private static final int init_I = 24;
-   private static final int load_I = 512;
+   private static final int SCAN_HALF_HEIGHT = 24;
+   private static final int MAX_CANDIDATES = 512;
    private static final int read = 2;
    private static final int write = 8;
-   private static final double init_D = 64.0;
-   private static final double load_D = 2.25;
+   private static final double DROP_SEARCH_RADIUS_SQ = 64.0;
+   private static final double PICKUP_DISTANCE_SQ = 2.25;
    private static final int update = 10;
    private static final int sync = 16;
 
@@ -68,53 +68,53 @@ public final class AiMine {
          final boolean backfill = AiJson.getBoolean(args, "backfill", false);
          final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300))) * 1000000000L;
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            final int init_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
-            final List<BlockPos> init_List = new ArrayList<>();
-            final Set<Long> init_Set = new HashSet<>();
-            final Set<Long> load_Set = new HashSet<>();
-            final Map<Long, Integer> init_Map = new HashMap<>();
-            final Map<Block, Boolean> load_Map = new HashMap<>();
-            final Map<Long, String> read_Map = new HashMap<>();
-            final Map<AiMine.Inner_DataUtil, Double> write_Map = new HashMap<>();
-            long init_J = -1L;
-            final JsonArray init_JsonArray = new JsonArray();
-            final AiAim init_DataUtil = new AiAim();
+            final Minecraft mc = Minecraft.getInstance();
+            final int originalSlot = this.mc.player.getInventory().getSelectedSlot();
+            final List<BlockPos> candidates = new ArrayList<>();
+            final Set<Long> candidateCells = new HashSet<>();
+            final Set<Long> blacklistedCells = new HashSet<>();
+            final Map<Long, Integer> strikesByCell = new HashMap<>();
+            final Map<Block, Boolean> blockMatchCache = new HashMap<>();
+            final Map<Long, String> blockIdByCell = new HashMap<>();
+            final Map<AiMine.Inner_DataUtil, Double> breakTicksCache = new HashMap<>();
+            long breakTicksInventoryRevision = -1L;
+            final JsonArray blacklistJson = new JsonArray();
+            final AiAim aim = new AiAim();
             final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
-               this.init_Minecraft, this::init_V, this.init_DataUtil::aimAt, true, true, this.init_DataUtil::tick
+               this.mc, this::selectSlot, this.aim::aimAt, true, true, this.aim::tick
             );
-            final AiBackfill init_StreamUtil = backfill ? new AiBackfill(this.init_Minecraft) : null;
-            final int load_I = this.load_I_9();
-            final AiPathfinder.LiveGridView init_ClassCache_StreamU = new AiPathfinder.LiveGridView(
-               this.init_Minecraft,
-               this.init_Minecraft.player.blockPosition(),
-               this.init_Minecraft.player.blockPosition(),
-               this.init_ItemStackArr_2(),
+            final AiBackfill backfiller = backfill ? new AiBackfill(this.mc) : null;
+            final int heldAtStart = this.heldDrops();
+            final AiPathfinder.LiveGridView grid = new AiPathfinder.LiveGridView(
+               this.mc,
+               this.mc.player.blockPosition(),
+               this.mc.player.blockPosition(),
+               this.inventorySnapshot(),
                AiChunkMemory.getInstance()
             );
-            FutureTask<MiningTargetSearch.Inner_StreamUtil> init_FutureTask;
-            long load_J = -1L;
-            long read_J;
-            boolean init_Z;
-            boolean load_Z;
-            final Object init_Obj = this.init_Minecraft.level;
-            BlockPos init_BlockPos;
-            int read_I;
-            final IdentityHashMap<LevelChunkSection, Boolean> init_IdentityHashMap = new IdentityHashMap<>();
-            final List<Long> load_List = new ArrayList<>();
-            long write_J = -1L;
-            int write_I;
-            int update_I = radius + 15 >> 4;
+            FutureTask<MiningTargetSearch.Inner_StreamUtil> routeSearch;
+            long routeSearchVersion = -1L;
+            long routeSearchDeadline;
+            boolean routeSearchPending;
+            boolean routeBudgetExhausted;
+            final Object startLevel = this.mc.level;
+            BlockPos scanOrigin;
+            int columnCursor;
+            final IdentityHashMap<LevelChunkSection, Boolean> sectionMatchCache = new IdentityHashMap<>();
+            final List<Long> scanChunks = new ArrayList<>();
+            long sectionCacheRevision = -1L;
+            int chunkCursor;
+            int scanChunkRadius = radius + 15 >> 4;
             int sync;
             int flush;
-            boolean read_Z;
-            boolean write_Z;
-            boolean update_Z;
-            Inner_DataUtil init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
-            AiOperation init_AiOperation;
-            BlockPos load_BlockPos;
-            BlockPos read_BlockPos;
-            List<ItemEntity> read_List = new ArrayList<>();
+            boolean scanComplete;
+            boolean cancelled;
+            boolean rescanned;
+            Inner_DataUtil phase = Inner_DataUtil.TRAVEL;
+            AiOperation travel;
+            BlockPos target;
+            BlockPos lastBroken;
+            List<ItemEntity> drops = new ArrayList<>();
             int close;
             int open;
             int poll;
@@ -122,19 +122,19 @@ public final class AiMine {
 
             @Override
             public AiOperation.Result tick() {
-               if (this.write_Z || this.init_Minecraft.player == null || this.init_Minecraft.level == null) {
+               if (this.cancelled || this.mc.player == null || this.mc.level == null) {
                   return this.init(AiOperation.Status.CANCELLED, "Mine cancelled");
                }
 
-               if (this.init_Minecraft.level != this.init_Obj) {
+               if (this.mc.level != this.startLevel) {
                   return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during mining");
                }
 
-               if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
+               if (this.mc.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      AiFailure.LOW_HEALTH,
-                     AiLowHealth.init("mining", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                     AiLowHealth.init("mining", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
                   );
                }
 
@@ -142,25 +142,25 @@ public final class AiMine {
                   return this.init(AiOperation.Status.TIMED_OUT, "Mine deadline reached");
                }
 
-               if (!this.read_Z) {
-                  this.init_V_16();
+               if (!this.scanComplete) {
+                  this.scanStep();
                }
 
-               this.init_ClassCache_StreamU.scanStepCompat();
+               this.grid.scanStepCompat();
                if ((quota == null ? this.close >= count : quota.isMet())
-                  && this.init_AiOperation == null
-                  && this.init_TokenStore_1_DataU != Inner_DataUtil.COLLECT) {
+                  && this.travel == null
+                  && this.phase != Inner_DataUtil.COLLECT) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.travel != null) {
+                  AiOperation.Result r = this.travel.tick();
                   if (!r.terminal()) {
-                     return this.init_AiOperation_Result_7(r.message());
+                     return this.running(r.message());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.travel.cancel();
+                  this.travel = null;
                   if (r.status() == AiOperation.Status.CANCELLED) {
                      return this.init(AiOperation.Status.CANCELLED, "Mine cancelled");
                   }
@@ -175,19 +175,19 @@ public final class AiMine {
 
                      this.cancel();
                      return new AiOperation.Result(r.status(), r.message(), data.toString(), r.evidence(), r.failure());
-                  } else if (this.init_TokenStore_1_DataU == Inner_DataUtil.COLLECT) {
-                     if (!this.read_List.isEmpty()) {
-                        this.read_List.remove(0);
+                  } else if (this.phase == Inner_DataUtil.COLLECT) {
+                     if (!this.drops.isEmpty()) {
+                        this.drops.remove(0);
                      }
 
                      this.open = 0;
-                     return this.init_AiOperation_Result_7("Drop collection finished; continuing");
+                     return this.running("Drop collection finished; continuing");
                   } else {
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
-                        this.init_TokenStore_1_DataU = Inner_DataUtil.EXTRACT;
-                        this.load_V_9();
-                        return this.init_AiOperation_Result_7(
-                           "Arrived; extracting " + (this.load_BlockPos == null ? "source" : this.load_BlockPos.toShortString())
+                        this.phase = Inner_DataUtil.EXTRACT;
+                        this.startRouteSearch();
+                        return this.running(
+                           "Arrived; extracting " + (this.target == null ? "source" : this.target.toShortString())
                         );
                      }
 
@@ -195,171 +195,171 @@ public final class AiMine {
                         return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, r.message());
                      }
 
-                     this.init_V_3("travel failed: " + r.message());
-                     return this.init_AiOperation_Result_7("Source unreachable; trying another");
+                     this.failTarget("travel failed: " + r.message());
+                     return this.running("Source unreachable; trying another");
                   }
                } else {
-                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.EXTRACT && this.load_BlockPos != null) {
-                     AiOperation.Result toolFail = this.init_AiOperation_Result_14();
+                  if (this.phase == Inner_DataUtil.EXTRACT && this.target != null) {
+                     AiOperation.Result toolFail = this.checkTool();
                      if (toolFail != null) {
                         return toolFail;
                      }
 
-                     if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.load_BlockPos)) {
-                        if (!this.init_Z_6(this.load_BlockPos)) {
-                           this.load_BlockPos = null;
-                           this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
-                           return this.init_AiOperation_Result_7("Source changed; re-evaluating");
+                     if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.target)) {
+                        if (!this.isWanted(this.target)) {
+                           this.target = null;
+                           this.phase = Inner_DataUtil.TRAVEL;
+                           return this.running("Source changed; re-evaluating");
                         }
 
-                        if (!this.read(this.load_BlockPos) || !this.write(this.load_BlockPos)) {
-                           this.init_V_3("no line of sight after arrival");
-                           return this.init_AiOperation_Result_7("No line of sight; trying another");
+                        if (!this.read(this.target) || !this.write(this.target)) {
+                           this.failTarget("no line of sight after arrival");
+                           return this.running("No line of sight; trying another");
                         }
                      }
 
-                     BlockHitResult interactionHit = AiBlockInteraction.findReachableHit(this.init_Minecraft, this.load_BlockPos);
+                     BlockHitResult interactionHit = AiBlockInteraction.findReachableHit(this.mc, this.target);
                      if (interactionHit != null) {
                         this.init(interactionHit.getLocation());
                      }
 
-                     this.init_DataUtil.tick();
-                     switch (this.init_RefQueue_DataUtil.digCompat(this.load_BlockPos)) {
+                     this.aim.tick();
+                     switch (this.init_RefQueue_DataUtil.digCompat(this.target)) {
                         case init:
-                           if (this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.load_BlockPos)
-                              && !this.init_Minecraft.level.getBlockState(this.load_BlockPos).isAir()
-                              && (!this.read(this.load_BlockPos) || !this.write(this.load_BlockPos))) {
+                           if (this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.target)
+                              && !this.mc.level.getBlockState(this.target).isAir()
+                              && (!this.read(this.target) || !this.write(this.target))) {
                               this.init_RefQueue_DataUtil.stopCompat();
-                              this.init_V_3("lost line of sight mid-dig");
-                              return this.init_AiOperation_Result_7("Lost line of sight; trying another");
+                              this.failTarget("lost line of sight mid-dig");
+                              return this.running("Lost line of sight; trying another");
                            }
 
-                           return this.init_AiOperation_Result_7("Extracting " + this.load_BlockPos.toShortString());
+                           return this.running("Extracting " + this.target.toShortString());
                         case read:
                            this.init_RefQueue_DataUtil.stopCompat();
-                           this.init_V_3("break failed");
-                           return this.init_AiOperation_Result_7("Break failed; trying another");
+                           this.failTarget("break failed");
+                           return this.running("Break failed; trying another");
                         case load:
                            this.init_RefQueue_DataUtil.stopCompat();
-                           if (quota == null || quota.load(this.read_Map.get(this.load_BlockPos.asLong()))) {
+                           if (quota == null || quota.load(this.blockIdByCell.get(this.target.asLong()))) {
                               this.close++;
                            }
 
-                           if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.recordDugCell(this.load_BlockPos);
+                           if (this.backfiller != null) {
+                              this.backfiller.recordDugCell(this.target);
                            }
 
-                           this.init_V_5(this.load_BlockPos);
-                           this.load_BlockPos = null;
-                           return this.init_AiOperation_Result_7("Mined " + this.close + "/" + count);
+                           this.onBroken(this.target);
+                           this.target = null;
+                           return this.running("Mined " + this.close + "/" + count);
                      }
                   }
 
-                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.COLLECT) {
-                     if (!this.read_List.isEmpty()) {
-                        ItemEntity drop = this.read_List.get(0);
+                  if (this.phase == Inner_DataUtil.COLLECT) {
+                     if (!this.drops.isEmpty()) {
+                        ItemEntity drop = this.drops.get(0);
                         if (!drop.isAlive()) {
-                           this.read_List.remove(0);
+                           this.drops.remove(0);
                            this.open = 0;
-                           this.init_Minecraft.options.keyUp.setDown(false);
-                           return this.init_AiOperation_Result_7("Collecting drops");
+                           this.mc.options.keyUp.setDown(false);
+                           return this.running("Collecting drops");
                         }
 
-                        if (this.init_Minecraft.player.distanceToSqr(drop) <= 2.25) {
-                           this.init_Minecraft.options.keyUp.setDown(false);
-                           if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.tick();
+                        if (this.mc.player.distanceToSqr(drop) <= 2.25) {
+                           this.mc.options.keyUp.setDown(false);
+                           if (this.backfiller != null) {
+                              this.backfiller.tick();
                            }
 
                            if (++this.open > 10) {
-                              this.read_List.remove(0);
+                              this.drops.remove(0);
                               this.open = 0;
                            }
 
-                           return this.init_AiOperation_Result_7("Waiting for drop pickup; check inventory space");
+                           return this.running("Waiting for drop pickup; check inventory space");
                         }
 
                         this.open = 0;
-                        if (this.init_Minecraft.player.distanceToSqr(drop) <= 9.0
+                        if (this.mc.player.distanceToSqr(drop) <= 9.0
                            && this.write(BlockPos.containing(drop.position()))
                            && this.update(drop.blockPosition())) {
                            this.init(Vec3.atCenterOf(drop.blockPosition()));
-                           this.init_DataUtil.tick();
-                           this.init_Minecraft.options.keyUp.setDown(true);
-                           return this.init_AiOperation_Result_7("Collecting drops");
+                           this.aim.tick();
+                           this.mc.options.keyUp.setDown(true);
+                           return this.running("Collecting drops");
                         }
 
-                        this.init_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.0, true, true, true, this.init_I(25));
-                        return this.init_AiOperation_Result_7("Collecting drops");
+                        this.travel = AiGoto.travelToCompat(drop.blockPosition(), 1.0, true, true, true, this.secondsLeft(25));
+                        return this.running("Collecting drops");
                      }
 
-                     this.init_Minecraft.options.keyUp.setDown(false);
-                     if (this.read_BlockPos != null && ++this.poll <= 8) {
-                        this.load_V_3(this.read_BlockPos);
-                        if (this.init_StreamUtil != null) {
-                           this.init_StreamUtil.tick();
+                     this.mc.options.keyUp.setDown(false);
+                     if (this.lastBroken != null && ++this.poll <= 8) {
+                        this.gatherDropsNear(this.lastBroken);
+                        if (this.backfiller != null) {
+                           this.backfiller.tick();
                         }
 
-                        return this.init_AiOperation_Result_7("Waiting for drops");
+                        return this.running("Waiting for drops");
                      }
 
                      this.poll = 0;
-                     this.read_BlockPos = null;
-                     this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
+                     this.lastBroken = null;
+                     this.phase = Inner_DataUtil.TRAVEL;
                   }
 
-                  if (this.load_BlockPos == null) {
+                  if (this.target == null) {
                      if (quota == null ? this.close >= count : quota.isMet()) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
                      }
 
-                     if (!this.read_Z) {
-                        return this.init_AiOperation_Result_7("Discovering loaded sources");
+                     if (!this.scanComplete) {
+                        return this.running("Discovering loaded sources");
                      }
 
-                     this.load_BlockPos = this.init_BlockPos_7();
-                     if (this.load_BlockPos != null) {
+                     this.target = this.nextTarget();
+                     if (this.target != null) {
                         AutismClientAddon.LOG
                            .info(
                               "[AI] mine {}: target {} ({} blocks away, {} candidates)",
                               blockArg,
-                              this.load_BlockPos.toShortString(),
-                              (int)Math.sqrt(this.load_BlockPos.distSqr(this.init_Minecraft.player.blockPosition())),
-                              this.init_List.size()
+                              this.target.toShortString(),
+                              (int)Math.sqrt(this.target.distSqr(this.mc.player.blockPosition())),
+                              this.candidates.size()
                            );
                      }
 
-                     if (this.init_FutureTask != null || this.init_Z) {
-                        return this.init_AiOperation_Result_7("Comparing source routes");
+                     if (this.routeSearch != null || this.routeSearchPending) {
+                        return this.running("Comparing source routes");
                      }
 
-                     if (this.load_BlockPos == null) {
-                        if (this.load_Z) {
+                     if (this.target == null) {
+                        if (this.routeBudgetExhausted) {
                            return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Source route calculation budget exhausted");
                         }
 
-                        if (!this.read_Z) {
-                           if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.tick();
+                        if (!this.scanComplete) {
+                           if (this.backfiller != null) {
+                              this.backfiller.tick();
                            }
 
-                           return this.init_AiOperation_Result_7("Scanning for sources");
+                           return this.running("Scanning for sources");
                         }
 
-                        if (this.close < count && this.init_BlockPos != null && this.init_BlockPos.distSqr(this.init_Minecraft.player.blockPosition()) > 576.0) {
-                           this.read_Z = false;
-                           this.init_BlockPos = null;
-                           this.write_I = this.read_I = 0;
-                           return this.init_AiOperation_Result_7("Sources exhausted; rescanning near the new position");
+                        if (this.close < count && this.scanOrigin != null && this.scanOrigin.distSqr(this.mc.player.blockPosition()) > 576.0) {
+                           this.scanComplete = false;
+                           this.scanOrigin = null;
+                           this.chunkCursor = this.columnCursor = 0;
+                           return this.running("Sources exhausted; rescanning near the new position");
                         }
 
-                        if (this.close <= 0 && this.load_Set.isEmpty()) {
-                           if (!this.update_Z) {
-                              this.update_Z = true;
-                              this.read_Z = false;
-                              this.init_BlockPos = null;
-                              this.write_I = this.read_I = 0;
-                              return this.init_AiOperation_Result_7("Re-scanning before declaring no sources");
+                        if (this.close <= 0 && this.blacklistedCells.isEmpty()) {
+                           if (!this.rescanned) {
+                              this.rescanned = true;
+                              this.scanComplete = false;
+                              this.scanOrigin = null;
+                              this.chunkCursor = this.columnCursor = 0;
+                              return this.running("Re-scanning before declaring no sources");
                            }
 
                            return this.init(AiOperation.Status.FAILED, AiFailure.TARGET_NOT_FOUND, "No matching sources in known terrain (0 of " + count + ")");
@@ -368,156 +368,156 @@ public final class AiMine {
                         return this.init(AiOperation.Status.FAILED, "No more reachable sources (" + this.close + " of " + count + ")");
                      }
 
-                     this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
+                     this.phase = Inner_DataUtil.TRAVEL;
                   }
 
-                  this.init_AiOperation = AiGoto.approachBlockCompat(this.load_BlockPos, this.init_I(120));
-                  return this.init_AiOperation_Result_7("Travelling to " + this.load_BlockPos.toShortString());
+                  this.travel = AiGoto.approachBlockCompat(this.target, this.secondsLeft(120));
+                  return this.running("Travelling to " + this.target.toShortString());
                }
             }
 
-            void init_V_16() {
-               if (this.init_BlockPos == null || this.init_BlockPos.distSqr(this.init_Minecraft.player.blockPosition()) > 576.0) {
-                  this.init_BlockPos = this.init_Minecraft.player.blockPosition();
-                  this.write_I = this.read_I = 0;
-                  this.sync = Math.max(this.init_Minecraft.level.getMinY(), this.init_BlockPos.getY() - 24);
-                  this.flush = Math.min(this.init_Minecraft.level.getMaxY() - 1, this.init_BlockPos.getY() + 24);
-                  this.load_List.clear();
-                  int ox = this.init_BlockPos.getX() >> 4;
-                  int oz = this.init_BlockPos.getZ() >> 4;
+            void scanStep() {
+               if (this.scanOrigin == null || this.scanOrigin.distSqr(this.mc.player.blockPosition()) > 576.0) {
+                  this.scanOrigin = this.mc.player.blockPosition();
+                  this.chunkCursor = this.columnCursor = 0;
+                  this.sync = Math.max(this.mc.level.getMinY(), this.scanOrigin.getY() - 24);
+                  this.flush = Math.min(this.mc.level.getMaxY() - 1, this.scanOrigin.getY() + 24);
+                  this.scanChunks.clear();
+                  int ox = this.scanOrigin.getX() >> 4;
+                  int oz = this.scanOrigin.getZ() >> 4;
 
-                  for (int dx = -this.update_I; dx <= this.update_I; dx++) {
-                     for (int dz = -this.update_I; dz <= this.update_I; dz++) {
-                        this.load_List.add(AiGridRevisions.chunkKey(ox + dx, oz + dz));
+                  for (int dx = -this.scanChunkRadius; dx <= this.scanChunkRadius; dx++) {
+                     for (int dz = -this.scanChunkRadius; dz <= this.scanChunkRadius; dz++) {
+                        this.scanChunks.add(AiGridRevisions.chunkKey(ox + dx, oz + dz));
                      }
                   }
 
-                  this.load_List.sort(Comparator.comparingDouble(k -> {
-                     double dx = (int)(k >> 32) * 16 + 8 - this.init_BlockPos.getX();
-                     double dzx = (int)k.longValue() * 16 + 8 - this.init_BlockPos.getZ();
+                  this.scanChunks.sort(Comparator.comparingDouble(k -> {
+                     double dx = (int)(k >> 32) * 16 + 8 - this.scanOrigin.getX();
+                     double dzx = (int)k.longValue() * 16 + 8 - this.scanOrigin.getZ();
                      return dx * dx + dzx * dzx;
                   }));
                }
 
                long revision = AiGridRevisions.globalRevision();
-               if (this.write_J != revision) {
-                  this.init_IdentityHashMap.clear();
-                  this.write_J = revision;
+               if (this.sectionCacheRevision != revision) {
+                  this.sectionMatchCache.clear();
+                  this.sectionCacheRevision = revision;
                }
 
                long stop = System.nanoTime() + 750000L;
                int height = this.flush - this.sync + 1;
 
-               for (int checked = 0; checked < 4096 && this.write_I < this.load_List.size(); checked++) {
+               for (int checked = 0; checked < 4096 && this.chunkCursor < this.scanChunks.size(); checked++) {
                   if ((checked & 63) == 0 && System.nanoTime() >= stop) {
                      return;
                   }
 
-                  long key = this.load_List.get(this.write_I);
+                  long key = this.scanChunks.get(this.chunkCursor);
                   int cx = (int)(key >> 32);
                   int cz = (int)key;
-                  LevelChunk chunk = this.init_Minecraft.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
-                  if (chunk != null && this.read_I < 256 * height) {
-                     int column = this.read_I / height;
-                     int y = this.sync + this.read_I % height;
+                  LevelChunk chunk = this.mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
+                  if (chunk != null && this.columnCursor < 256 * height) {
+                     int column = this.columnCursor / height;
+                     int y = this.sync + this.columnCursor % height;
                      int x = (cx << 4) + column / 16;
                      int z = (cz << 4) + column % 16;
-                     if (Math.abs(x - this.init_BlockPos.getX()) <= radius && Math.abs(z - this.init_BlockPos.getZ()) <= radius) {
-                        LevelChunkSection section = chunk.getSections()[this.init_Minecraft.level.getSectionIndex(y)];
-                        boolean contains = this.init_IdentityHashMap
+                     if (Math.abs(x - this.scanOrigin.getX()) <= radius && Math.abs(z - this.scanOrigin.getZ()) <= radius) {
+                        LevelChunkSection section = chunk.getSections()[this.mc.level.getSectionIndex(y)];
+                        boolean contains = this.sectionMatchCache
                            .computeIfAbsent(section, part -> !part.hasOnlyAir() && part.maybeHas(statex -> this.init(statex.getBlock())));
                         if (!contains) {
-                           this.read_I = this.read_I + (Math.min(this.flush + 1, (y >> 4) + 1 << 4) - y);
+                           this.columnCursor = this.columnCursor + (Math.min(this.flush + 1, (y >> 4) + 1 << 4) - y);
                         } else {
-                           this.read_I++;
+                           this.columnCursor++;
                            BlockState state = section.getBlockState(x & 15, y & 15, z & 15);
-                           if (this.init(state.getBlock()) && this.init_List.size() < 512) {
+                           if (this.init(state.getBlock()) && this.candidates.size() < 512) {
                               long cell = BlockPos.asLong(x, y, z);
-                              if (!this.load_Set.contains(cell) && this.init_Set.add(cell)) {
-                                 this.init_List.add(new BlockPos(x, y, z));
+                              if (!this.blacklistedCells.contains(cell) && this.candidateCells.add(cell)) {
+                                 this.candidates.add(new BlockPos(x, y, z));
                               }
                            }
                         }
                      } else {
-                        this.read_I = (column + 1) * height;
+                        this.columnCursor = (column + 1) * height;
                      }
                   } else {
-                     this.write_I++;
-                     this.read_I = 0;
+                     this.chunkCursor++;
+                     this.columnCursor = 0;
                   }
                }
 
-               if (this.write_I >= this.load_List.size()) {
-                  this.read_Z = true;
+               if (this.chunkCursor >= this.scanChunks.size()) {
+                  this.scanComplete = true;
                }
             }
 
             boolean init(Block block) {
-               return this.load_Map.computeIfAbsent(block, b -> AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
+               return this.blockMatchCache.computeIfAbsent(block, b -> AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
                   && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(block).toString()));
             }
 
-            ItemStack[] init_ItemStackArr_2() {
+            ItemStack[] inventorySnapshot() {
                ItemStack[] items = new ItemStack[36];
 
                for (int i = 0; i < items.length; i++) {
-                  items[i] = this.init_Minecraft.player.getInventory().getItem(i).copy();
+                  items[i] = this.mc.player.getInventory().getItem(i).copy();
                }
 
                return items;
             }
 
-            BlockPos init_BlockPos_7() {
-               if (this.init_FutureTask == null) {
-                  if (this.load_J == this.init_ClassCache_StreamU.changeVersionCompat()) {
-                     if (System.nanoTime() >= this.read_J) {
-                        this.init_Z = false;
-                        this.load_Z = true;
-                        this.load_J = -1L;
+            BlockPos nextTarget() {
+               if (this.routeSearch == null) {
+                  if (this.routeSearchVersion == this.grid.changeVersionCompat()) {
+                     if (System.nanoTime() >= this.routeSearchDeadline) {
+                        this.routeSearchPending = false;
+                        this.routeBudgetExhausted = true;
+                        this.routeSearchVersion = -1L;
                      }
 
                      return null;
                   } else {
-                     this.load_V_9();
+                     this.startRouteSearch();
                      return null;
                   }
                } else {
-                  if (!this.init_FutureTask.isDone()) {
+                  if (!this.routeSearch.isDone()) {
                      return null;
                   }
 
                   MiningTargetSearch.Inner_StreamUtil choice;
                   try {
-                     choice = this.init_FutureTask.get();
+                     choice = this.routeSearch.get();
                   } catch (Exception e) {
-                     this.init_FutureTask = null;
+                     this.routeSearch = null;
                      throw new IllegalStateException("Target route calculation failed", e);
                   }
 
-                  this.init_FutureTask = null;
-                  this.load_Z = choice.timedOut() && choice.target() == null;
-                  if (this.load_Z && !this.init_List.isEmpty()) {
-                     BlockPos feet = this.init_Minecraft.player.blockPosition();
-                     BlockPos nearest = this.init_List.stream().filter(this::init_Z_6).min(Comparator.comparingDouble(p -> p.distSqr(feet))).orElse(null);
+                  this.routeSearch = null;
+                  this.routeBudgetExhausted = choice.timedOut() && choice.target() == null;
+                  if (this.routeBudgetExhausted && !this.candidates.isEmpty()) {
+                     BlockPos feet = this.mc.player.blockPosition();
+                     BlockPos nearest = this.candidates.stream().filter(this::isWanted).min(Comparator.comparingDouble(p -> p.distSqr(feet))).orElse(null);
                      if (nearest != null) {
-                        this.load_Z = false;
-                        this.init_Z = false;
-                        this.load_J = -1L;
-                        this.init_List.remove(nearest);
-                        this.init_Set.remove(nearest.asLong());
+                        this.routeBudgetExhausted = false;
+                        this.routeSearchPending = false;
+                        this.routeSearchVersion = -1L;
+                        this.candidates.remove(nearest);
+                        this.candidateCells.remove(nearest.asLong());
                         return nearest;
                      }
                   }
 
-                  this.init_Z = choice.pending() && choice.target() == null && System.nanoTime() < this.read_J;
-                  if (choice.pending() && choice.target() == null && System.nanoTime() < this.read_J) {
+                  this.routeSearchPending = choice.pending() && choice.target() == null && System.nanoTime() < this.routeSearchDeadline;
+                  if (choice.pending() && choice.target() == null && System.nanoTime() < this.routeSearchDeadline) {
                      return null;
                   } else {
-                     this.init_Z = false;
-                     this.load_J = -1L;
-                     if (choice.target() != null && this.init_Z_6(choice.target())) {
-                        this.init_List.remove(choice.target());
-                        this.init_Set.remove(choice.target().asLong());
+                     this.routeSearchPending = false;
+                     this.routeSearchVersion = -1L;
+                     if (choice.target() != null && this.isWanted(choice.target())) {
+                        this.candidates.remove(choice.target());
+                        this.candidateCells.remove(choice.target().asLong());
                         return choice.target();
                      } else {
                         return null;
@@ -526,45 +526,45 @@ public final class AiMine {
                }
             }
 
-            void load_V_9() {
-               if (this.init_FutureTask == null) {
-                  if (this.load_J < 0L) {
-                     this.read_J = Math.min(deadline, System.nanoTime() + 3000000000L);
+            void startRouteSearch() {
+               if (this.routeSearch == null) {
+                  if (this.routeSearchVersion < 0L) {
+                     this.routeSearchDeadline = Math.min(deadline, System.nanoTime() + 3000000000L);
                   }
 
-                  this.init_List.removeIf(p -> {
-                     boolean remove = this.load_Set.contains(p.asLong()) || !this.init_Z_6(p);
+                  this.candidates.removeIf(p -> {
+                     boolean remove = this.blacklistedCells.contains(p.asLong()) || !this.isWanted(p);
                      if (remove) {
-                        this.init_Set.remove(p.asLong());
+                        this.candidateCells.remove(p.asLong());
                      }
 
                      return remove;
                   });
-                  if (this.init_List.isEmpty()) {
-                     this.init_Z = false;
-                     this.load_J = -1L;
+                  if (this.candidates.isEmpty()) {
+                     this.routeSearchPending = false;
+                     this.routeSearchVersion = -1L;
                   } else {
                      ArrayList<MiningTargetSearch.Inner_DataUtil> choices = new ArrayList<>();
-                     ItemStack[] tools = this.init_ItemStackArr_2();
-                     this.init_ClassCache_StreamU.updateHotbarCompat(tools);
+                     ItemStack[] tools = this.inventorySnapshot();
+                     this.grid.updateHotbarCompat(tools);
                      long inventoryRevision = AiServerEvidence.inventoryRevision();
-                     if (this.init_J != inventoryRevision) {
-                        this.write_Map.clear();
-                        this.init_J = inventoryRevision;
+                     if (this.breakTicksInventoryRevision != inventoryRevision) {
+                        this.breakTicksCache.clear();
+                        this.breakTicksInventoryRevision = inventoryRevision;
                      }
 
-                     for (BlockPos candidate : this.init_List) {
-                        BlockState state = this.init_Minecraft.level.getBlockState(candidate);
+                     for (BlockPos candidate : this.candidates) {
+                        BlockState state = this.mc.level.getBlockState(candidate);
                         double cost = 1.0 / 0.0;
 
                         for (ItemStack stack : tools) {
                            AiMine.Inner_DataUtil key = new AiMine.Inner_DataUtil(state.getBlock(), stack.getItem());
-                           Double memoized = this.write_Map.get(key);
+                           Double memoized = this.breakTicksCache.get(key);
                            if (memoized == null) {
                               memoized = state.requiresCorrectToolForDrops() && !stack.isCorrectToolForDrops(state)
                                  ? 1.0 / 0.0
-                                 : MiningCost.breakTicks(this.init_Minecraft, stack, state, state.getDestroySpeed(this.init_Minecraft.level, candidate));
-                              this.write_Map.put(key, memoized);
+                                 : MiningCost.breakTicks(this.mc, stack, state, state.getDestroySpeed(this.mc.level, candidate));
+                              this.breakTicksCache.put(key, memoized);
                            }
 
                            cost = Math.min(cost, memoized);
@@ -575,13 +575,13 @@ public final class AiMine {
                         }
                      }
 
-                     BlockPos from = this.init_Minecraft.player.blockPosition();
-                     double reach = this.init_Minecraft.player.blockInteractionRange() - 0.25;
-                     double eye = this.init_Minecraft.player.getEyeHeight();
-                     this.init_ClassCache_StreamU.setFocusCompat(from);
-                     this.init_Z = true;
-                     this.load_J = this.init_ClassCache_StreamU.changeVersionCompat();
-                     boolean sprint = this.init_Minecraft.player.getFoodData().getFoodLevel() > 6;
+                     BlockPos from = this.mc.player.blockPosition();
+                     double reach = this.mc.player.blockInteractionRange() - 0.25;
+                     double eye = this.mc.player.getEyeHeight();
+                     this.grid.setFocusCompat(from);
+                     this.routeSearchPending = true;
+                     this.routeSearchVersion = this.grid.changeVersionCompat();
+                     boolean sprint = this.mc.player.getFoodData().getFoodLevel() > 6;
                      int constructionBlocks = 0;
 
                      for (ItemStack stack : tools) {
@@ -592,87 +592,87 @@ public final class AiMine {
 
                      AiPathfinder.PathOptions routeCapabilities = new AiPathfinder.PathOptions(true, true, true, sprint, constructionBlocks > 0)
                         .withConstructionBlocks(constructionBlocks);
-                     this.init_FutureTask = new FutureTask<>(
-                        () -> MiningTargetSearch.init(this.init_ClassCache_StreamU, from, choices, routeCapabilities, reach, eye, this.read_J)
+                     this.routeSearch = new FutureTask<>(
+                        () -> MiningTargetSearch.init(this.grid, from, choices, routeCapabilities, reach, eye, this.routeSearchDeadline)
                      );
-                     Thread.ofVirtual().name("mining-target-routes").start(this.init_FutureTask);
+                     Thread.ofVirtual().name("mining-target-routes").start(this.routeSearch);
                   }
                }
             }
 
-            void init_V_3(String reason) {
-               if (this.load_BlockPos == null) {
-                  this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
+            void failTarget(String reason) {
+               if (this.target == null) {
+                  this.phase = Inner_DataUtil.TRAVEL;
                } else {
-                  int strikes = this.init_Map.merge(this.load_BlockPos.asLong(), 1, Integer::sum);
-                  AutismClientAddon.LOG.info("[AI] mine {}: target {} failed ({}/{}): {}", blockArg, this.load_BlockPos.toShortString(), strikes, 2, reason);
+                  int strikes = this.strikesByCell.merge(this.target.asLong(), 1, Integer::sum);
+                  AutismClientAddon.LOG.info("[AI] mine {}: target {} failed ({}/{}): {}", blockArg, this.target.toShortString(), strikes, 2, reason);
                   if (strikes >= 2) {
-                     this.load_Set.add(this.load_BlockPos.asLong());
-                     this.init_List.remove(this.load_BlockPos);
-                     this.init_Set.remove(this.load_BlockPos.asLong());
-                     if (this.init_JsonArray.size() < 16) {
-                        this.init_JsonArray
+                     this.blacklistedCells.add(this.target.asLong());
+                     this.candidates.remove(this.target);
+                     this.candidateCells.remove(this.target.asLong());
+                     if (this.blacklistJson.size() < 16) {
+                        this.blacklistJson
                            .add(
                               AiJson.objectOf(
-                                 "x", this.load_BlockPos.getX(), "y", this.load_BlockPos.getY(), "z", this.load_BlockPos.getZ(), "reason", reason
+                                 "x", this.target.getX(), "y", this.target.getY(), "z", this.target.getZ(), "reason", reason
                               )
                            );
                      }
                   } else {
-                     this.init_List.add(this.load_BlockPos);
-                     this.init_Set.add(this.load_BlockPos.asLong());
+                     this.candidates.add(this.target);
+                     this.candidateCells.add(this.target.asLong());
                   }
 
-                  this.load_BlockPos = null;
-                  this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
+                  this.target = null;
+                  this.phase = Inner_DataUtil.TRAVEL;
                }
             }
 
-            void init_V_5(BlockPos brokenCell) {
-               this.read_BlockPos = brokenCell.immutable();
+            void onBroken(BlockPos brokenCell) {
+               this.lastBroken = brokenCell.immutable();
                this.poll = 0;
-               this.load_V_3(brokenCell);
-               this.init_TokenStore_1_DataU = Inner_DataUtil.COLLECT;
+               this.gatherDropsNear(brokenCell);
+               this.phase = Inner_DataUtil.COLLECT;
             }
 
-            void load_V_3(BlockPos near) {
-               this.read_List = new ArrayList<>();
+            void gatherDropsNear(BlockPos near) {
+               this.drops = new ArrayList<>();
                Vec3 center = Vec3.atCenterOf(near);
 
-               for (Entity entity : this.init_Minecraft.level.entitiesForRendering()) {
+               for (Entity entity : this.mc.level.entitiesForRendering()) {
                   if (entity instanceof ItemEntity item && item.isAlive() && !(item.position().distanceToSqr(center) > 64.0)) {
-                     if (this.read_List.size() >= 8) {
+                     if (this.drops.size() >= 8) {
                         break;
                      }
 
-                     this.read_List.add(item);
+                     this.drops.add(item);
                   }
                }
 
-               this.read_List.sort(Comparator.comparingDouble(this.init_Minecraft.player::distanceToSqr));
+               this.drops.sort(Comparator.comparingDouble(this.mc.player::distanceToSqr));
                this.open = 0;
             }
 
-            boolean init_Z_6(BlockPos pos) {
-               BlockState state = this.init_Minecraft.level.getBlockState(pos);
-               Boolean match = this.load_Map.get(state.getBlock());
+            boolean isWanted(BlockPos pos) {
+               BlockState state = this.mc.level.getBlockState(pos);
+               Boolean match = this.blockMatchCache.get(state.getBlock());
                if (match == null) {
                   match = AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
-                  this.load_Map.put(state.getBlock(), match);
+                  this.blockMatchCache.put(state.getBlock(), match);
                }
 
                String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-               boolean wanted = match && (quota == null || quota.covers(id)) && !this.load_Z_4(pos);
+               boolean wanted = match && (quota == null || quota.covers(id)) && !this.touchesFluid(pos);
                if (wanted && quota != null) {
-                  this.read_Map.put(pos.asLong(), id);
+                  this.blockIdByCell.put(pos.asLong(), id);
                }
 
                return wanted;
             }
 
-            boolean load_Z_4(BlockPos pos) {
+            boolean touchesFluid(BlockPos pos) {
                for (Direction side : Direction.values()) {
-                  if (!this.init_Minecraft.level.getFluidState(pos.relative(side)).isEmpty()) {
+                  if (!this.mc.level.getFluidState(pos.relative(side)).isEmpty()) {
                      return true;
                   }
                }
@@ -681,15 +681,15 @@ public final class AiMine {
             }
 
             boolean read(BlockPos pos) {
-               return AiBlockInteraction.findReachableHit(this.init_Minecraft, pos) != null;
+               return AiBlockInteraction.findReachableHit(this.mc, pos) != null;
             }
 
             boolean write(BlockPos pos) {
-               return AiBlockInteraction.findReachableHit(this.init_Minecraft, pos) != null;
+               return AiBlockInteraction.findReachableHit(this.mc, pos) != null;
             }
 
             boolean update(BlockPos to) {
-               BlockPos from = this.init_Minecraft.player.blockPosition();
+               BlockPos from = this.mc.player.blockPosition();
                if (to.getY() != from.getY()) {
                   return false;
                }
@@ -699,7 +699,7 @@ public final class AiMine {
                int ax = Math.abs(dx);
                int az = Math.abs(dz);
                if (Math.max(ax, az) <= 3 && (ax == 0 || az == 0 || ax == az)) {
-                  if (!AiMotionSafety.isSegmentHazardFree(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(to))) {
+                  if (!AiMotionSafety.isSegmentHazardFree(this.mc.player.position(), Vec3.atBottomCenterOf(to))) {
                      return false;
                   }
 
@@ -722,14 +722,14 @@ public final class AiMine {
             }
 
             void init(Vec3 point) {
-               this.init_DataUtil.aimAt(point);
+               this.aim.aimAt(point);
             }
 
-            AiOperation.Result init_AiOperation_Result_14() {
-               BlockState state = this.init_Minecraft.level.getBlockState(this.load_BlockPos);
+            AiOperation.Result checkTool() {
+               BlockState state = this.mc.level.getBlockState(this.target);
 
                for (int slot = 0; slot < 9; slot++) {
-                  ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
+                  ItemStack stack = this.mc.player.getInventory().getItem(slot);
                   boolean suitable = !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state);
                   if (stack.isDamageableItem()) {
                      int missing = stack.getMaxDamage() - stack.getDamageValue();
@@ -744,13 +744,13 @@ public final class AiMine {
 
                ToolUpkeep.Inner_DataUtil decision = ToolUpkeep.init(this.init(state));
                if (decision instanceof ToolUpkeep.Inner_DataUtil.Inner_StreamUtil keep) {
-                  this.init_V(keep.hotbarSlot());
+                  this.selectSlot(keep.hotbarSlot());
                   return null;
                } else {
                   if (decision instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool swap) {
-                     int selected = this.init_Minecraft.player.getInventory().getSelectedSlot();
-                     if (InventorySlotHelper.swapToHotbar(this.init_Minecraft, swap.backpackSlot(), selected)) {
-                        this.init_V(selected);
+                     int selected = this.mc.player.getInventory().getSelectedSlot();
+                     if (InventorySlotHelper.swapToHotbar(this.mc, swap.backpackSlot(), selected)) {
+                        this.selectSlot(selected);
                         return null;
                      }
                   }
@@ -758,7 +758,7 @@ public final class AiMine {
                   Item needed = AiItems.cheapestRequiredTool(state);
                   JsonObject missing = new JsonObject();
                   missing.addProperty(needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString(), 1);
-                  JsonObject data = this.init_JsonObject_28();
+                  JsonObject data = this.progressJson();
                   data.addProperty("reason", "TOOL_WORN");
                   data.add("missing", missing);
                   this.cancel();
@@ -773,7 +773,7 @@ public final class AiMine {
                List<ToolUpkeep.Inner_StreamUtil> out = new ArrayList<>(36);
 
                for (int slot = 0; slot < 36; slot++) {
-                  ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
+                  ItemStack stack = this.mc.player.getInventory().getItem(slot);
                   out.add(
                      new ToolUpkeep.Inner_StreamUtil(
                         slot,
@@ -787,25 +787,25 @@ public final class AiMine {
                return out;
             }
 
-            void init_V(int slot) {
-               if (this.init_Minecraft.player.getInventory().getSelectedSlot() != slot) {
-                  this.init_Minecraft.player.getInventory().setSelectedSlot(slot);
+            void selectSlot(int slot) {
+               if (this.mc.player.getInventory().getSelectedSlot() != slot) {
+                  this.mc.player.getInventory().setSelectedSlot(slot);
                   this.push = slot;
                }
             }
 
-            int init_I(int cap) {
+            int secondsLeft(int cap) {
                return (int)Math.max(1L, Math.min(cap, (deadline - System.nanoTime()) / 1000000000L));
             }
 
-            int init_I_15() {
-               return Math.max(0, this.load_I_9() - this.load_I);
+            int collectedCount() {
+               return Math.max(0, this.heldDrops() - this.heldAtStart);
             }
 
-            int load_I_9() {
+            int heldDrops() {
                int total = 0;
                String dropArg = AiMine.init(blockArg);
-               Inventory inventory = this.init_Minecraft.player.getInventory();
+               Inventory inventory = this.mc.player.getInventory();
 
                for (int i = 0; i < 36; i++) {
                   ItemStack stack = inventory.getItem(i);
@@ -817,7 +817,7 @@ public final class AiMine {
                return total;
             }
 
-            JsonObject init_JsonObject_28() {
+            JsonObject progressJson() {
                return AiJson.objectOf(
                   "brokenByBlock",
                   quota == null ? null : quota.brokenByBlock(),
@@ -828,26 +828,26 @@ public final class AiMine {
                   "broken",
                   this.close,
                   "collected",
-                  this.init_I_15(),
+                  this.collectedCount(),
                   "count",
                   count,
                   "candidates",
-                  this.init_List.size(),
+                  this.candidates.size(),
                   "blacklisted",
-                  this.load_Set.size(),
+                  this.blacklistedCells.size(),
                   "blacklist",
-                  this.init_JsonArray,
+                  this.blacklistJson,
                   "backfilled",
-                  this.init_StreamUtil == null ? 0 : this.init_StreamUtil.getBackfilledCount(),
+                  this.backfiller == null ? 0 : this.backfiller.getBackfilledCount(),
                   "target",
-                  this.load_BlockPos == null ? null : this.load_BlockPos.toShortString(),
+                  this.target == null ? null : this.target.toShortString(),
                   "scanned",
-                  this.read_Z
+                  this.scanComplete
                );
             }
 
-            AiOperation.Result init_AiOperation_Result_7(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_28().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -862,43 +862,43 @@ public final class AiMine {
 
             AiOperation.Result init(AiOperation.Status status, AiFailure reason, String message) {
                this.cancel();
-               return new AiOperation.Result(status, message, this.init_JsonObject_28().toString(), List.of(), reason);
+               return new AiOperation.Result(status, message, this.progressJson().toString(), List.of(), reason);
             }
 
             @Override
             public void cancel() {
-               if (!this.write_Z) {
-                  this.write_Z = true;
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  if (this.travel != null) {
+                     this.travel.cancel();
+                     this.travel = null;
                   }
 
                   this.init_RefQueue_DataUtil.stopCompat();
-                  if (this.init_FutureTask != null) {
-                     this.init_FutureTask.cancel(true);
+                  if (this.routeSearch != null) {
+                     this.routeSearch.cancel(true);
                   }
 
-                  if (this.init_StreamUtil != null) {
-                     this.init_StreamUtil.reset();
+                  if (this.backfiller != null) {
+                     this.backfiller.reset();
                   }
 
-                  if (this.init_Minecraft.options != null) {
+                  if (this.mc.options != null) {
                      for (KeyMapping key : List.of(
-                        this.init_Minecraft.options.keyUp,
-                        this.init_Minecraft.options.keyDown,
-                        this.init_Minecraft.options.keyLeft,
-                        this.init_Minecraft.options.keyRight,
-                        this.init_Minecraft.options.keyJump,
-                        this.init_Minecraft.options.keySprint,
-                        this.init_Minecraft.options.keyShift
+                        this.mc.options.keyUp,
+                        this.mc.options.keyDown,
+                        this.mc.options.keyLeft,
+                        this.mc.options.keyRight,
+                        this.mc.options.keyJump,
+                        this.mc.options.keySprint,
+                        this.mc.options.keyShift
                      )) {
                         key.setDown(KeyMappingControl.of(key).autism$physicalForBody());
                      }
                   }
 
-                  if (this.init_Minecraft.player != null && this.push >= 0 && this.init_Minecraft.player.getInventory().getSelectedSlot() == this.push) {
-                     this.init_Minecraft.player.getInventory().setSelectedSlot(this.init_I);
+                  if (this.mc.player != null && this.push >= 0 && this.mc.player.getInventory().getSelectedSlot() == this.push) {
+                     this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
                   }
                }
             }

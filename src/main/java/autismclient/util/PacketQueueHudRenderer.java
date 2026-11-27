@@ -8,17 +8,17 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 public final class PacketQueueHudRenderer {
-   private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final long init_J = 50000000L;
    private static final int ROW_COLOR = -1581859;
    private static final int load_I = -601459;
    private static final int read_I = -6366544;
    private static final int write = -9184882;
-   private static final Identifier init_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write);
-   private static final Identifier load_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read);
-   private static final Identifier read_Identifier = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load);
-   private static final int update = init_CharEncoder.load(autismclient.gui.f.b.l.write);
-   private static final int sync = init_CharEncoder.load(autismclient.gui.f.b.l.read);
+   private static final Identifier init_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
+   private static final Identifier load_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
+   private static final Identifier read_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
+   private static final int update = THEME.load(autismclient.gui.f.b.l.write);
+   private static final int sync = THEME.load(autismclient.gui.f.b.l.read);
    private static boolean init_Z;
    private static String init_Str = null;
    private static int flush = -2147483648;
@@ -130,7 +130,7 @@ public final class PacketQueueHudRenderer {
       open = totalCount;
       poll = queueRevision;
       load_Str = autismclient.gui.f.b.k.init(textRenderer, "PACKET QUEUE", contentWidth, read_Identifier, sync);
-      push = isSending ? -9184882 : init_CharEncoder.run();
+      push = isSending ? -9184882 : THEME.run();
       init_List = rows;
       load_J = now;
    }

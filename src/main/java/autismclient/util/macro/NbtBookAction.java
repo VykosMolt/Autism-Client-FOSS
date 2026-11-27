@@ -40,7 +40,7 @@ public class NbtBookAction implements MacroAction {
    public boolean requireHeldWritableBook = false;
    public boolean dropInventoryBefore = false;
    public boolean disconnectAfter = false;
-   private boolean init_Z = true;
+   private boolean enabled = true;
    public transient String pasteInfo = "";
    private static final int init_I = 100;
    private static final int load = 14;
@@ -118,12 +118,12 @@ public class NbtBookAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cNBT Book file is missing or empty.");
             return List.of();
          } else {
-            return this.init_List_I_3(numPages);
+            return this.randomPages(numPages);
          }
       } else {
          return this.customComponent != null && !this.customComponent.isBlank()
             ? this.load(mc.font, this.customComponent, numPages)
-            : this.init_List_I_3(numPages);
+            : this.randomPages(numPages);
       }
    }
 
@@ -131,11 +131,11 @@ public class NbtBookAction implements MacroAction {
       return this.wordWrap ? wrapToPages(font, text, numPages) : splitToPages(text, numPages, this.characters);
    }
 
-   private List<String> init_List_I_3(int numPages) {
+   private List<String> randomPages(int numPages) {
       return BookBotPageGenerator.init(numPages, this.characters, this.read(), new Random());
    }
 
-   public static File init_File() {
+   public static File bookSourcesDir() {
       File dir = new File(AutismClientAddon.FOLDER, "book-sources");
       dir.mkdirs();
       return dir;
@@ -148,7 +148,7 @@ public class NbtBookAction implements MacroAction {
       }
 
       try {
-         Path base = init_File().getCanonicalFile().toPath();
+         Path base = bookSourcesDir().getCanonicalFile().toPath();
          Path resolved = base.resolve(path).toFile().getCanonicalFile().toPath();
          if (!resolved.startsWith(base)) {
             AutismClientMessaging.sendPrefixed("§cBook file must be inside book-sources/.");
@@ -228,7 +228,7 @@ public class NbtBookAction implements MacroAction {
             if (para.isEmpty()) {
                visualLines.add("");
             } else {
-               init_V_Font(tr, para, visualLines);
+               wrapParagraph(tr, para, visualLines);
             }
          }
 
@@ -285,7 +285,7 @@ public class NbtBookAction implements MacroAction {
       }
    }
 
-   private static void init_V_Font(Font tr, String para, List<String> out) {
+   private static void wrapParagraph(Font tr, String para, List<String> out) {
       int idx = 0;
 
       while (idx < para.length()) {
@@ -324,7 +324,7 @@ public class NbtBookAction implements MacroAction {
       }
    }
 
-   public static int init_I_Font_Str(Font tr, String text) {
+   public static int countPages(Font tr, String text) {
       return text != null && !text.isEmpty() ? wrapToPages(tr, text, 100).size() : 0;
    }
 
@@ -388,7 +388,7 @@ public class NbtBookAction implements MacroAction {
       tag.putBoolean("requireHeldWritableBook", this.requireHeldWritableBook);
       tag.putBoolean("dropInventoryBefore", this.dropInventoryBefore);
       tag.putBoolean("disconnectAfter", this.disconnectAfter);
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -444,7 +444,7 @@ public class NbtBookAction implements MacroAction {
       this.dropInventoryBefore = tag.getBooleanOr("dropInventoryBefore", false);
       this.disconnectAfter = tag.getBooleanOr("disconnectAfter", false);
       if (tag.contains("enabled")) {
-         this.init_Z = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -521,11 +521,11 @@ public class NbtBookAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init_Z = e;
+      this.enabled = e;
    }
 }

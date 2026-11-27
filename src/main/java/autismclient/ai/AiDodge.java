@@ -64,23 +64,23 @@ final class AiDodge {
          final boolean shieldOk = AiJson.getBoolean(args, "shield", false);
          final long deadline = System.nanoTime() + Math.min(10, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 4))) * 1000000000L;
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            final Object init_Obj = this.init_Minecraft.level;
-            final Object load_Obj = this.init_Minecraft.getConnection();
-            final Object read_Obj = this.init_Minecraft.player;
-            AiGhastReflect init_V = new AiGhastReflect(this.init_Minecraft);
-            final List<AiGhastReflect> init_List = new ArrayList<>(List.of(this.init_V));
+            final Minecraft mc = Minecraft.getInstance();
+            final Object startLevel = this.mc.level;
+            final Object startConnection = this.mc.getConnection();
+            final Object startPlayer = this.mc.player;
+            AiGhastReflect ghastReflect = new AiGhastReflect(this.mc);
+            final List<AiGhastReflect> reflectors = new ArrayList<>(List.of(this.ghastReflect));
             final Set<Integer> init_Set = new HashSet<>();
             final Set<Integer> load_Set = new HashSet<>();
-            final Map<Integer, UUID> init_Map = new HashMap<>();
-            boolean init_Z;
+            final Map<Integer, UUID> threatUuids = new HashMap<>();
+            boolean cancelled;
             boolean load_Z;
             boolean read_Z;
             int init_I;
             int load_I;
             int read_I;
-            final long init_J = System.nanoTime();
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final long startNanos = System.nanoTime();
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
             int write;
             int update;
             int sync;
@@ -89,39 +89,39 @@ final class AiDodge {
             Vec3 load_Vec3;
             int close;
             final Set<Integer> read_Set;
-            final float init_F;
-            float load_F;
-            float read_F;
+            final float startHealth;
+            float lastHealth;
+            float damageTaken;
 
             {
-               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
+               this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
                this.update = -1;
                this.close = -100;
                this.read_Set = new HashSet<>();
-               this.init_F = this.init_Minecraft.player.getHealth();
-               this.load_F = this.init_F;
+               this.startHealth = this.mc.player.getHealth();
+               this.lastHealth = this.startHealth;
             }
 
             @Override
             public AiOperation.Result tick() {
                this.read_I++;
-               if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-                  if (this.init_Minecraft.level == this.init_Obj
-                     && this.init_Minecraft.getConnection() == this.load_Obj
-                     && this.init_Minecraft.player == this.read_Obj
-                     && this.init_Minecraft.player.isAlive()) {
+               if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
+                  if (this.mc.level == this.startLevel
+                     && this.mc.getConnection() == this.startConnection
+                     && this.mc.player == this.startPlayer
+                     && this.mc.player.isAlive()) {
                      List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
-                     for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.init_Minecraft)) {
+                     for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.mc)) {
                         if (AiProjectiles.init(t)) {
                            threats.add(t);
                         }
                      }
 
                      for (AiProjectiles.IncomingProjectile t : threats) {
-                        Entity observed = this.init_Minecraft.level.getEntity(t.entityId());
+                        Entity observed = this.mc.level.getEntity(t.entityId());
                         if (observed != null) {
-                           UUID previous = this.init_Map.put(t.entityId(), observed.getUUID());
+                           UUID previous = this.threatUuids.put(t.entityId(), observed.getUUID());
                            if (previous != null && !previous.equals(observed.getUUID())) {
                               this.load_Set.remove(t.entityId());
                               this.read_Set.remove(t.entityId());
@@ -134,8 +134,8 @@ final class AiDodge {
                         }
                      }
 
-                     this.read_F = this.read_F + Math.max(0.0F, this.load_F - this.init_Minecraft.player.getHealth());
-                     this.load_F = this.init_Minecraft.player.getHealth();
+                     this.damageTaken = this.damageTaken + Math.max(0.0F, this.lastHealth - this.mc.player.getHealth());
+                     this.lastHealth = this.mc.player.getHealth();
                      this.init();
                      if (this.load_Z) {
                         this.read();
@@ -153,7 +153,7 @@ final class AiDodge {
                            }
                         }
 
-                        if (!stillThreat && !this.load_Set.contains(id) && this.init_List.stream().noneMatch(r -> r.isReflected(id)) && this.read_F == 0.0F) {
+                        if (!stillThreat && !this.load_Set.contains(id) && this.reflectors.stream().noneMatch(r -> r.isReflected(id)) && this.damageTaken == 0.0F) {
                            this.flush++;
                         }
                      }
@@ -163,25 +163,25 @@ final class AiDodge {
                      }
 
                      if (deflect) {
-                        if (this.init_V.load_Z()
+                        if (this.ghastReflect.load_Z()
                            && threats.stream()
                               .anyMatch(
-                                 tx -> this.init_Minecraft.level.getEntity(tx.entityId()) instanceof LargeFireball && !this.init_V.isReflected(tx.entityId())
+                                 tx -> this.mc.level.getEntity(tx.entityId()) instanceof LargeFireball && !this.ghastReflect.isReflected(tx.entityId())
                               )) {
-                           this.init_V = new AiGhastReflect(this.init_Minecraft);
-                           this.init_List.add(this.init_V);
+                           this.ghastReflect = new AiGhastReflect(this.mc);
+                           this.reflectors.add(this.ghastReflect);
                         }
 
-                        String reflection = this.init_V.plan(threats);
-                        threats.removeIf(tx -> this.init_List.stream().anyMatch(r -> r.isReflected(tx.entityId())));
-                        if (this.read_Z && !this.init_Minecraft.options.keyUse.isDown()) {
+                        String reflection = this.ghastReflect.plan(threats);
+                        threats.removeIf(tx -> this.reflectors.stream().anyMatch(r -> r.isReflected(tx.entityId())));
+                        if (this.read_Z && !this.mc.options.keyUse.isDown()) {
                            this.read_Z = false;
                         }
 
                         if (reflection != null) {
                            if (this.read_Z) {
-                              this.init_Minecraft.options.keyUse.setDown(false);
-                              this.init_Minecraft.gameMode.releaseUsingItem(this.init_Minecraft.player);
+                              this.mc.options.keyUse.setDown(false);
+                              this.mc.gameMode.releaseUsingItem(this.mc.player);
                            }
 
                            this.read_Z = false;
@@ -191,12 +191,12 @@ final class AiDodge {
                         }
                      }
 
-                     if (threats.isEmpty() && !this.init_V.isTracking()) {
+                     if (threats.isEmpty() && !this.ghastReflect.isTracking()) {
                         return this.init(
                            AiOperation.Status.SUCCEEDED,
                            this.init_Set.isEmpty() && this.load_Set.isEmpty()
                               ? "No incoming projectiles"
-                              : (this.read_F > 0.0F ? "Incoming threats resolved; damage was received" : "Incoming threats resolved without observed damage"),
+                              : (this.damageTaken > 0.0F ? "Incoming threats resolved; damage was received" : "Incoming threats resolved without observed damage"),
                            List.of()
                         );
                      }
@@ -215,23 +215,23 @@ final class AiDodge {
                            }
 
                            Entity owner = fireball instanceof Projectile projectile ? projectile.getOwner() : null;
-                           Vec3 eye = this.init_Minecraft.player.getEyePosition();
+                           Vec3 eye = this.mc.player.getEyePosition();
                            Vec3 back = owner != null && owner.isAlive() ? owner.getBoundingBox().getCenter() : null;
                            boolean onLine = back != null
                               && fireball.getBoundingBox().inflate(0.2).clip(eye, eye.add(back.subtract(eye).normalize().scale(6.0))).isPresent();
                            AiGameOperations.snapLookAt(onLine ? back : fireball.getBoundingBox().getCenter());
-                           double reach = AiDefense.attackReach(this.init_Minecraft);
-                           BlockHitResult blockRay = this.init_Minecraft
+                           double reach = AiDefense.attackReach(this.mc);
+                           BlockHitResult blockRay = this.mc
                               .level
-                              .clip(new ClipContext(eye, fireball.getBoundingBox().getCenter(), Block.COLLIDER, Fluid.NONE, this.init_Minecraft.player));
-                           if (this.init_Minecraft.player.tickCount - this.close >= 4
+                              .clip(new ClipContext(eye, fireball.getBoundingBox().getCenter(), Block.COLLIDER, Fluid.NONE, this.mc.player));
+                           if (this.mc.player.tickCount - this.close >= 4
                               && blockRay.getType() == Type.MISS
                               && fireball.getBoundingBox().distanceToSqr(eye) <= reach * reach
-                              && AiDefense.load(this.init_Minecraft, fireball)) {
-                              this.init_Minecraft.gameMode.attack(this.init_Minecraft.player, fireball);
+                              && AiDefense.load(this.mc, fireball)) {
+                              this.mc.gameMode.attack(this.mc.player, fireball);
                               this.read_Set.add(fireball.getId());
-                              this.close = this.init_Minecraft.player.tickCount;
-                              Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
+                              this.close = this.mc.player.tickCount;
+                              Compat263.swing(this.mc.player, InteractionHand.MAIN_HAND);
                               return this.init(onLine ? "Sending the fireball back" : "Batting the fireball away", threats);
                            }
                         }
@@ -246,22 +246,22 @@ final class AiDodge {
                      }
 
                      if (shieldOk
-                        && AiDefense.init(this.init_Minecraft, this.init_Minecraft.level.getEntity(dominant.entityId()))
-                        && AiDefense.init(this.init_Minecraft, dominant.secondsToClosest() * 20.0)
+                        && AiDefense.init(this.mc, this.mc.level.getEntity(dominant.entityId()))
+                        && AiDefense.init(this.mc, dominant.secondsToClosest() * 20.0)
                         && this.init(dominant, threats)) {
                         this.load();
-                        this.init_DataUtil.aimAt(new Vec3(dominant.x(), dominant.y(), dominant.z()));
-                        this.init_DataUtil.tick();
+                        this.aim.aimAt(new Vec3(dominant.x(), dominant.y(), dominant.z()));
+                        this.aim.tick();
                         if (!this.read_Z) {
                            this.read_Z = true;
-                           this.init_Minecraft.options.keyUse.setDown(true);
+                           this.mc.options.keyUse.setDown(true);
                         }
 
                         this.load_I++;
                         return this.init("Blocking " + dominant.type(), threats);
                      } else {
                         if (this.read_Z) {
-                           this.init_Minecraft.options.keyUse.setDown(false);
+                           this.mc.options.keyUse.setDown(false);
                            this.read_Z = false;
                         }
 
@@ -280,8 +280,8 @@ final class AiDodge {
                            return this.init("Holding ground; no safe escape direction", threats);
                         } else {
                            this.load();
-                           this.init_Minecraft.player.setYRot((float)(Math.toDegrees(Math.atan2(this.init_Vec3.z, this.init_Vec3.x)) - 90.0));
-                           this.init_Minecraft.options.keyUp.setDown(true);
+                           this.mc.player.setYRot((float)(Math.toDegrees(Math.atan2(this.init_Vec3.z, this.init_Vec3.x)) - 90.0));
+                           this.mc.options.keyUp.setDown(true);
                            return this.init("Dodging " + dominant.type(), threats);
                         }
                      }
@@ -295,12 +295,12 @@ final class AiDodge {
 
             void init() {
                if (this.update >= 0) {
-                  Entity e = this.init_Minecraft.level.getEntity(this.update);
+                  Entity e = this.mc.level.getEntity(this.update);
                   if (!this.read_Set.contains(this.update)
                      || e == null
-                     || !e.getUUID().equals(this.init_Map.get(this.update))
+                     || !e.getUUID().equals(this.threatUuids.get(this.update))
                      || !e.isAlive()
-                     || !(e instanceof Projectile projectile && projectile.getOwner() == this.init_Minecraft.player)
+                     || !(e instanceof Projectile projectile && projectile.getOwner() == this.mc.player)
                         && (this.load_Vec3 == null || !(e.getDeltaMovement().dot(this.load_Vec3) < 0.0))) {
                      if (++this.sync > 20) {
                         this.update = -1;
@@ -319,7 +319,7 @@ final class AiDodge {
                   new Vec3(dominant.x(), dominant.y(), dominant.z()),
                   new Vec3(dominant.vx(), dominant.vy(), dominant.vz()),
                   dominant.gravity(),
-                  this.init_Minecraft.player.getEyePosition(),
+                  this.mc.player.getEyePosition(),
                   dominant.secondsToClosest()
                );
                Vec3 best = null;
@@ -328,20 +328,20 @@ final class AiDodge {
                   for (Vec3 candidate : List.of(
                      dir,
                      dir.scale(-1.0),
-                     this.init_Minecraft.player.position().subtract(new Vec3(dominant.x(), this.init_Minecraft.player.getY(), dominant.z())).normalize()
+                     this.mc.player.position().subtract(new Vec3(dominant.x(), this.mc.player.getY(), dominant.z())).normalize()
                   )) {
                      if (this.init(candidate)) {
-                        double yaw = Math.toRadians(this.init_Minecraft.player.getYRot());
+                        double yaw = Math.toRadians(this.mc.player.getYRot());
                         double forward = -candidate.x * Math.sin(yaw) + candidate.z * Math.cos(yaw);
                         double strafe = candidate.x * Math.cos(yaw) + candidate.z * Math.sin(yaw);
                         int travelTicks = Math.max(1, Math.min(12, (int)Math.ceil(dominant.secondsToClosest() * 20.0)));
-                        AABB landing = autismclient.ai.engine.AiCombatMotion.init(this.init_Minecraft, forward, strafe, travelTicks);
+                        AABB landing = autismclient.ai.engine.AiCombatMotion.init(this.mc, forward, strafe, travelTicks);
                         if (landing != null) {
-                           Vec3 displacement = landing.getCenter().subtract(this.init_Minecraft.player.getBoundingBox().getCenter());
+                           Vec3 displacement = landing.getCenter().subtract(this.mc.player.getBoundingBox().getCenter());
                            boolean contact = false;
 
-                           for (Entity mob : this.init_Minecraft.level.entitiesForRendering()) {
-                              if (mob instanceof LivingEntity && AiThreats.isActiveThreat(this.init_Minecraft, mob) && landing.intersects(mob.getBoundingBox().inflate(1.2))) {
+                           for (Entity mob : this.mc.level.entitiesForRendering()) {
+                              if (mob instanceof LivingEntity && AiThreats.isActiveThreat(this.mc, mob) && landing.intersects(mob.getBoundingBox().inflate(1.2))) {
                                  contact = true;
                                  break;
                               }
@@ -350,11 +350,11 @@ final class AiDodge {
                            if (!contact) {
                               double clearance = 1.7976931348623157E308;
 
-                              for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(this.init_Minecraft)) {
+                              for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(this.mc)) {
                                  if (AiProjectiles.init(shot)) {
-                                    Entity projectile = this.init_Minecraft.level.getEntity(shot.entityId());
+                                    Entity projectile = this.mc.level.getEntity(shot.entityId());
                                     if (projectile != null) {
-                                       AiProjectiles.ApproachMetrics predicted = AiProjectiles.init(this.init_Minecraft, projectile, landing, travelTicks);
+                                       AiProjectiles.ApproachMetrics predicted = AiProjectiles.init(this.mc, projectile, landing, travelTicks);
                                        clearance = Math.min(clearance, predicted == null ? 10.0 : predicted.closestApproach());
                                     }
                                  }
@@ -374,14 +374,14 @@ final class AiDodge {
             }
 
             boolean init(AiProjectiles.IncomingProjectile main, List<AiProjectiles.IncomingProjectile> threats) {
-               Vec3 facing = new Vec3(main.x() - this.init_Minecraft.player.getX(), 0.0, main.z() - this.init_Minecraft.player.getZ()).normalize();
+               Vec3 facing = new Vec3(main.x() - this.mc.player.getX(), 0.0, main.z() - this.mc.player.getZ()).normalize();
 
                for (AiProjectiles.IncomingProjectile shot : threats) {
-                  if (!AiDefense.init(this.init_Minecraft, this.init_Minecraft.level.getEntity(shot.entityId()))) {
+                  if (!AiDefense.init(this.mc, this.mc.level.getEntity(shot.entityId()))) {
                      return false;
                   }
 
-                  Vec3 direction = new Vec3(shot.x() - this.init_Minecraft.player.getX(), 0.0, shot.z() - this.init_Minecraft.player.getZ()).normalize();
+                  Vec3 direction = new Vec3(shot.x() - this.mc.player.getX(), 0.0, shot.z() - this.mc.player.getZ()).normalize();
                   if (facing.dot(direction) < 0.5) {
                      return false;
                   }
@@ -391,15 +391,15 @@ final class AiDodge {
             }
 
             boolean init(Vec3 dir) {
-               BlockPos feet = this.init_Minecraft.player.blockPosition();
+               BlockPos feet = this.mc.player.blockPosition();
 
                for (int ahead = 1; ahead <= 3; ahead++) {
                   BlockPos cell = feet.offset((int)Math.round(dir.x * ahead), 0, (int)Math.round(dir.z * ahead));
-                  if (!AiCombat.isSafeStep(this.init_Minecraft, cell)) {
+                  if (!AiCombat.isSafeStep(this.mc, cell)) {
                      return false;
                   }
 
-                  if (this.init_Minecraft.level.getBlockState(cell.below()).getCollisionShape(this.init_Minecraft.level, cell.below()).isEmpty()) {
+                  if (this.mc.level.getBlockState(cell.below()).getCollisionShape(this.mc.level, cell.below()).isEmpty()) {
                      return false;
                   }
                }
@@ -412,12 +412,12 @@ final class AiDodge {
                double bestTime = 1.7976931348623157E308;
 
                for (AiProjectiles.IncomingProjectile t : threats) {
-                  Entity e = this.init_Minecraft.level.getEntity(t.entityId());
+                  Entity e = this.mc.level.getEntity(t.entityId());
                   if (e instanceof Projectile
                      && e.isAlive()
                      && e.is(EntityTypeTags.REDIRECTABLE_PROJECTILE)
                      && !(e instanceof LargeFireball)
-                     && AiDodge.init(t, Math.sqrt(e.distanceToSqr(this.init_Minecraft.player)))
+                     && AiDodge.init(t, Math.sqrt(e.distanceToSqr(this.mc.player)))
                      && t.secondsToClosest() < bestTime) {
                      best = e;
                      bestTime = t.secondsToClosest();
@@ -438,15 +438,15 @@ final class AiDodge {
                   );
                }
 
-               JsonObject reflection = this.init_V.statusJson();
+               JsonObject reflection = this.ghastReflect.statusJson();
                JsonArray shots = new JsonArray();
 
-               for (AiGhastReflect controller : this.init_List) {
+               for (AiGhastReflect controller : this.reflectors) {
                   shots.add(controller.statusJson());
                }
 
                for (String counter : List.of("serverConfirmedReflections", "ghastDeathsObserved", "missedAttempts", "defensiveBats", "movementTicks")) {
-                  reflection.addProperty(counter, this.init_List.stream().mapToInt(r -> AiJson.getInt(r.statusJson(), counter, 0)).sum());
+                  reflection.addProperty(counter, this.reflectors.stream().mapToInt(r -> AiJson.getInt(r.statusJson(), counter, 0)).sum());
                }
 
                reflection.add("shots", shots);
@@ -454,11 +454,11 @@ final class AiDodge {
                   "defenseTicks",
                   this.read_I,
                   "defenseMs",
-                  (System.nanoTime() - this.init_J) / 1000000L,
+                  (System.nanoTime() - this.startNanos) / 1000000L,
                   "dodged",
                   this.flush,
                   "deflected",
-                  this.load_Set.size() + this.init_List.stream().mapToInt(AiGhastReflect::init_I).sum(),
+                  this.load_Set.size() + this.reflectors.stream().mapToInt(AiGhastReflect::init_I).sum(),
                   "blocked",
                   this.init_I,
                   "shieldTicks",
@@ -468,7 +468,7 @@ final class AiDodge {
                   "ghastReflection",
                   reflection,
                   "healthLost",
-                  this.read_F,
+                  this.damageTaken,
                   "outcomeEvidence",
                   "client health and live projectile motion; shield block events unavailable",
                   "threats",
@@ -486,13 +486,13 @@ final class AiDodge {
             }
 
             void load() {
-               if (this.init_Minecraft.options != null) {
+               if (this.mc.options != null) {
                   for (KeyMapping key : List.of(
-                     this.init_Minecraft.options.keyUp,
-                     this.init_Minecraft.options.keyDown,
-                     this.init_Minecraft.options.keyLeft,
-                     this.init_Minecraft.options.keyRight,
-                     this.init_Minecraft.options.keySprint
+                     this.mc.options.keyUp,
+                     this.mc.options.keyDown,
+                     this.mc.options.keyLeft,
+                     this.mc.options.keyRight,
+                     this.mc.options.keySprint
                   )) {
                      key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
                   }
@@ -500,25 +500,25 @@ final class AiDodge {
             }
 
             void read() {
-               if (this.init_Minecraft.options != null && this.load_Z) {
+               if (this.mc.options != null && this.load_Z) {
                   this.load_Z = false;
-                  this.init_Minecraft.options.keyAttack.setDown(autismclient.util.KeyMappingControl.of(this.init_Minecraft.options.keyAttack).autism$physicalForBody());
+                  this.mc.options.keyAttack.setDown(autismclient.util.KeyMappingControl.of(this.mc.options.keyAttack).autism$physicalForBody());
                }
             }
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   this.load();
                   this.read();
-                  this.init_V.tick();
-                  if (this.read_Z && this.init_Minecraft.options != null) {
-                     this.init_Minecraft.options.keyUse.setDown(false);
+                  this.ghastReflect.tick();
+                  if (this.read_Z && this.mc.options != null) {
+                     this.mc.options.keyUse.setDown(false);
                   }
 
                   this.read_Z = false;
-                  this.init_DataUtil.clear();
+                  this.aim.clear();
                }
             }
          };

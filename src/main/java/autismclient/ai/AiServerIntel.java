@@ -283,22 +283,22 @@ public final class AiServerIntel {
       final String brand = load(mc);
       overlay.startAutoScan();
       return new AiOperation() {
-         final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         long load_J = startRevision;
-         int init_I;
-         int load_I;
-         boolean init_Z;
-         boolean load_Z;
+         final long scanDeadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+         long lastRevision = startRevision;
+         int stableTicks;
+         int waitTicks;
+         boolean sawScanning;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (this.load_Z) {
+            if (this.cancelled) {
                return AiGameOperations.result(AiOperation.Status.CANCELLED, "Plugin scan cancelled", new JsonObject());
             }
 
             String now = AiServerIntel.serverAddress(Minecraft.getInstance());
             if (!now.equals(address)) {
-               this.load_Z = true;
+               this.cancelled = true;
                return AiGameOperations.result(AiOperation.Status.CANCELLED, "Left the server during the plugin scan", new JsonObject());
             }
 
@@ -309,32 +309,32 @@ public final class AiServerIntel {
             AutismConfig config = AutismConfig.getGlobal();
             AutismConfig.PluginScanCacheEntry entry = config.getPluginScanByAddress(address);
             long revision = config.pluginScanRevision();
-            if (revision != this.load_J) {
-               this.load_J = revision;
-               this.init_I = 0;
+            if (revision != this.lastRevision) {
+               this.lastRevision = revision;
+               this.stableTicks = 0;
             } else {
-               this.init_I++;
+               this.stableTicks++;
             }
 
             boolean scanning = overlay.isScanRunning();
-            this.init_Z |= scanning;
-            this.load_I++;
-            if (!scanning && this.init_I >= 5) {
+            this.sawScanning |= scanning;
+            this.waitTicks++;
+            if (!scanning && this.stableTicks >= 5) {
                if (entry != null) {
                   return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan results cached for " + address, this.init(entry, false));
                }
 
-               if (this.init_Z || revision != startRevision) {
+               if (this.sawScanning || revision != startRevision) {
                   return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan completed with no detected plugins", this.init(null, false));
                }
 
-               if (this.load_I % 20 == 0) {
+               if (this.waitTicks % 20 == 0) {
                   overlay.startAutoScan();
                }
             }
 
-            if (System.nanoTime() > this.init_J) {
-               this.load_Z = true;
+            if (System.nanoTime() > this.scanDeadline) {
+               this.cancelled = true;
                return AiGameOperations.result(
                   AiOperation.Status.TIMED_OUT, "Plugin scan did not finish in time; returning cached partial results", this.init(entry, true)
                );
@@ -352,7 +352,7 @@ public final class AiServerIntel {
 
          @Override
          public void cancel() {
-            this.load_Z = true;
+            this.cancelled = true;
          }
       };
    }

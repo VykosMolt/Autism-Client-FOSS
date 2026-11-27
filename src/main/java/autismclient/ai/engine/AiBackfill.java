@@ -21,20 +21,20 @@ public final class AiBackfill {
    private static final int load_I = 32;
    private static final int read = 40;
    private static final double init_D = 22.5625;
-   private static final ItemStack[] init_ItemStackArr = new ItemStack[9];
-   private static final boolean init_Z = Boolean.getBoolean("autism.navigation.debug");
-   private final Minecraft init_Minecraft;
-   private final AiPlacer init_DataPipe = new AiPlacer();
+   private static final ItemStack[] EMPTY_HOTBAR = new ItemStack[9];
+   private static final boolean DEBUG = Boolean.getBoolean("autism.navigation.debug");
+   private final Minecraft client;
+   private final AiPlacer placer = new AiPlacer();
    private boolean load_Z;
-   private final Deque<BlockPos> init_Deque = new ArrayDeque<>();
-   private final Set<Long> init_Set = new HashSet<>();
-   private BlockPos init_BlockPos;
+   private final Deque<BlockPos> pendingCells = new ArrayDeque<>();
+   private final Set<Long> visitedCells = new HashSet<>();
+   private BlockPos currentCell;
    private int write;
    private int update = -1;
    private int sync;
 
    public AiBackfill(Minecraft mc) {
-      this.init_Minecraft = mc;
+      this.client = mc;
    }
 
    public int getBackfilledCount() {
@@ -42,24 +42,24 @@ public final class AiBackfill {
    }
 
    boolean isBackfilling() {
-      return this.init_BlockPos != null;
+      return this.currentCell != null;
    }
 
    boolean isIdle() {
-      return this.init_BlockPos == null && this.init_Deque.isEmpty();
+      return this.currentCell == null && this.pendingCells.isEmpty();
    }
 
-   int load_I() {
-      return this.init_Deque.size();
+   int pendingCount() {
+      return this.pendingCells.size();
    }
 
    public void recordDugCell(BlockPos cell) {
       BlockPos immutable = cell.immutable();
-      if (this.init_Set.add(immutable.asLong())) {
-         this.init_Deque.addLast(immutable);
+      if (this.visitedCells.add(immutable.asLong())) {
+         this.pendingCells.addLast(immutable);
 
-         while (this.init_Deque.size() > 256) {
-            this.init_Set.remove(this.init_Deque.pollFirst().asLong());
+         while (this.pendingCells.size() > 256) {
+            this.visitedCells.remove(this.pendingCells.pollFirst().asLong());
          }
       }
    }
@@ -73,25 +73,25 @@ public final class AiBackfill {
    }
 
    public void tick() {
-      if (this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-         if (this.init_BlockPos != null) {
+      if (this.client.player != null && this.client.level != null) {
+         if (this.currentCell != null) {
             this.read_V();
          } else {
-            Vec3 look = this.init_Minecraft.player.getLookAngle();
-            Vec3 pos = this.init_Minecraft.player.position();
+            Vec3 look = this.client.player.getLookAngle();
+            Vec3 pos = this.client.player.position();
             int scanned = 0;
-            Iterator<BlockPos> iterator = this.init_Deque.iterator();
+            Iterator<BlockPos> iterator = this.pendingCells.iterator();
 
             while (iterator.hasNext() && scanned < 32) {
                scanned++;
                BlockPos cell = iterator.next();
                Vec3 center = Vec3.atCenterOf(cell);
-               AiPathfinder.CellInfo probe = this.init_ClassCache_FileCac(cell);
+               AiPathfinder.CellInfo probe = this.classifyCell(cell);
                boolean open = probe.passable() && !probe.water() && !probe.lava();
                if (open && this.init_Z(cell)) {
                   double distanceSqr = center.distanceToSqr(pos);
                   if (!init(init(center.subtract(pos), look), distanceSqr, true, true, false)) {
-                     if (init_Z) {
+                     if (DEBUG) {
                         AiNavDebug.log(
                            "backfill skip-geometry cell="
                               + cell
@@ -102,22 +102,22 @@ public final class AiBackfill {
                         );
                      }
                   } else {
-                     if (!(this.init_Minecraft.player.getEyePosition().distanceToSqr(center) > 22.5625)) {
+                     if (!(this.client.player.getEyePosition().distanceToSqr(center) > 22.5625)) {
                         iterator.remove();
-                        this.init_BlockPos = cell;
+                        this.currentCell = cell;
                         this.write = 0;
                         this.load_Z = false;
                         this.read_V();
                         return;
                      }
 
-                     if (init_Z) {
+                     if (DEBUG) {
                         AiNavDebug.log("backfill skip-reach cell=" + cell);
                      }
                   }
                } else {
                   iterator.remove();
-                  this.init_Set.remove(cell.asLong());
+                  this.visitedCells.remove(cell.asLong());
                }
             }
          }
@@ -129,9 +129,9 @@ public final class AiBackfill {
          this.init(false);
       } else {
          if (!this.load_Z) {
-            if (!this.init_ClassCache_FileCac(this.init_BlockPos).passable()) {
-               if (init_Z) {
-                  AiNavDebug.log("backfill fail occupied cell=" + this.init_BlockPos);
+            if (!this.classifyCell(this.currentCell).passable()) {
+               if (DEBUG) {
+                  AiNavDebug.log("backfill fail occupied cell=" + this.currentCell);
                }
 
                this.init(false);
@@ -140,26 +140,26 @@ public final class AiBackfill {
 
             int slot = this.read_I();
             if (slot < 0) {
-               if (init_Z) {
-                  AiNavDebug.log("backfill fail no-throwaway cell=" + this.init_BlockPos);
+               if (DEBUG) {
+                  AiNavDebug.log("backfill fail no-throwaway cell=" + this.currentCell);
                }
 
                this.init(false);
                return;
             }
 
-            this.update = this.init_Minecraft.player.getInventory().getSelectedSlot();
-            this.init_DataPipe.start(this.init_BlockPos, this.init_Minecraft.player.getInventory().getItem(slot).getItem());
+            this.update = this.client.player.getInventory().getSelectedSlot();
+            this.placer.start(this.currentCell, this.client.player.getInventory().getItem(slot).getItem());
             this.load_Z = true;
          }
 
-         switch (this.init_DataPipe.tick()) {
+         switch (this.placer.tick()) {
             case PLACED:
                this.init(true);
                break;
             case FAILED:
-               if (init_Z) {
-                  AiNavDebug.log("backfill placer-failed cell=" + this.init_BlockPos);
+               if (DEBUG) {
+                  AiNavDebug.log("backfill placer-failed cell=" + this.currentCell);
                }
 
                this.init(false);
@@ -173,25 +173,25 @@ public final class AiBackfill {
          this.sync++;
       }
 
-      this.init_Set.remove(this.init_BlockPos.asLong());
-      this.init_BlockPos = null;
+      this.visitedCells.remove(this.currentCell.asLong());
+      this.currentCell = null;
       this.write = 0;
-      this.init_DataPipe.reset();
+      this.placer.reset();
       this.load_Z = false;
-      if (this.update >= 0 && this.init_Minecraft.player != null) {
-         this.init_Minecraft.player.getInventory().setSelectedSlot(this.update);
+      if (this.update >= 0 && this.client.player != null) {
+         this.client.player.getInventory().setSelectedSlot(this.update);
          this.update = -1;
       }
    }
 
    public void reset() {
-      this.init_Deque.clear();
-      this.init_Set.clear();
-      if (this.init_BlockPos != null) {
+      this.pendingCells.clear();
+      this.visitedCells.clear();
+      if (this.currentCell != null) {
          this.init(false);
       }
 
-      this.init_DataPipe.reset();
+      this.placer.reset();
       this.load_Z = false;
    }
 
@@ -199,19 +199,19 @@ public final class AiBackfill {
       List<AiRestock.Inner_CachePool> hotbar = new ArrayList<>(9);
 
       for (int slot = 0; slot < 9; slot++) {
-         hotbar.add(this.init(this.init_Minecraft.player.getInventory().getItem(slot)));
+         hotbar.add(this.init(this.client.player.getInventory().getItem(slot)));
       }
 
       return AiRestock.pickBestBackpackSlot(hotbar, null);
    }
 
    private AiRestock.Inner_CachePool init(ItemStack stack) {
-      return stack.getItem() instanceof BlockItem block && AiRestock.canSpendStack(stack, this.init_Minecraft.player.getInventory())
+      return stack.getItem() instanceof BlockItem block && AiRestock.canSpendStack(stack, this.client.player.getInventory())
          ? new AiRestock.Inner_CachePool(
             BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
             stack.getCount(),
             block.getBlock() instanceof FallingBlock,
-            block.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.init_Minecraft.level, this.init_Minecraft.player.blockPosition()),
+            block.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.client.level, this.client.player.blockPosition()),
             block.getBlock().defaultBlockState().hasBlockEntity()
          )
          : new AiRestock.Inner_CachePool(null, 0, false, false, false);
@@ -219,7 +219,7 @@ public final class AiBackfill {
 
    private boolean init_Z(BlockPos cell) {
       for (Direction direction : Direction.values()) {
-         if (!this.init_ClassCache_FileCac(cell.relative(direction)).passable()) {
+         if (!this.classifyCell(cell.relative(direction)).passable()) {
             return true;
          }
       }
@@ -227,7 +227,7 @@ public final class AiBackfill {
       return false;
    }
 
-   private AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos cell) {
-      return AiPathfinder.LiveGridView.classifyCellCompat(this.init_Minecraft, this.init_Minecraft.level, cell, init_ItemStackArr);
+   private AiPathfinder.CellInfo classifyCell(BlockPos cell) {
+      return AiPathfinder.LiveGridView.classifyCellCompat(this.client, this.client.level, cell, EMPTY_HOTBAR);
    }
 }

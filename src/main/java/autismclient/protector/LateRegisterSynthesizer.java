@@ -21,8 +21,8 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 public final class LateRegisterSynthesizer {
-   private static final Logger init_Logger = LogUtils.getLogger();
-   private static final boolean init_Z = Boolean.getBoolean("autism.protector.debug");
+   private static final Logger LOGGER = LogUtils.getLogger();
+   private static final boolean DEBUG = Boolean.getBoolean("autism.protector.debug");
    private static final long init_J = 5L;
    private static final String init_Str = "fabric-menu-api-v1";
    private static final String load_Str = "open_screen";
@@ -31,17 +31,17 @@ public final class LateRegisterSynthesizer {
       "secret", "state", "states", "remove_state", "add_group", "remove_group", "joined_group", "add_category", "remove_category"
    };
    private static final int init_I = 1024;
-   private static final Map<Connection, LateRegisterSynthesizer.Inner_DataUtil> init_Map = new IdentityHashMap<>();
+   private static final Map<Connection, LateRegisterSynthesizer.Inner_DataUtil> SESSIONS = new IdentityHashMap<>();
    private static long load_J;
 
    private LateRegisterSynthesizer() {
    }
 
    public static void init_V(Connection connection) {
-      LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, true);
+      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
       if (session != null) {
-         synchronized (init_Map) {
-            if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea)) {
+         synchronized (SESSIONS) {
+            if (ConnectionPrivacyRegistry.isActive(session.privacySession)) {
                session.init_Z = true;
             }
          }
@@ -49,13 +49,13 @@ public final class LateRegisterSynthesizer {
    }
 
    static boolean init_Z(Connection connection) {
-      LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, true);
+      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
       if (session == null) {
          return false;
       }
 
-      synchronized (init_Map) {
-         if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea) && !session.write) {
+      synchronized (SESSIONS) {
+         if (ConnectionPrivacyRegistry.isActive(session.privacySession) && !session.write) {
             session.write = true;
             return true;
          } else {
@@ -97,11 +97,11 @@ public final class LateRegisterSynthesizer {
 
          sender.accept(new ServerboundCustomPayloadPacket(new RegistrationPayload(RegistrationPayload.REGISTER, channels)));
          completed = true;
-         if (init_Z) {
-            init_Logger.debug("[AutismProtector] Synthesized late register with {} channel(s)", channels.size());
+         if (DEBUG) {
+            LOGGER.debug("[AutismProtector] Synthesized late register with {} channel(s)", channels.size());
          }
       } catch (Throwable t) {
-         init_Logger.warn("[AutismProtector] Late register send failed: {}", t.getMessage());
+         LOGGER.warn("[AutismProtector] Late register send failed: {}", t.getMessage());
          return;
       } finally {
          init_V(context.connection(), completed);
@@ -109,13 +109,13 @@ public final class LateRegisterSynthesizer {
    }
 
    static List<Identifier> init(Connection connection, long tick) {
-      LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, true);
+      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
       if (session == null) {
          return null;
       }
 
-      synchronized (init_Map) {
-         if (!ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea)) {
+      synchronized (SESSIONS) {
+         if (!ConnectionPrivacyRegistry.isActive(session.privacySession)) {
             return null;
          }
 
@@ -134,8 +134,8 @@ public final class LateRegisterSynthesizer {
          return init_List();
       } catch (Throwable t) {
          init_V(connection, false);
-         if (init_Z) {
-            init_Logger.debug("[AutismProtector] Late register preparation failed: {}", t.getMessage());
+         if (DEBUG) {
+            LOGGER.debug("[AutismProtector] Late register preparation failed: {}", t.getMessage());
          }
 
          return null;
@@ -143,10 +143,10 @@ public final class LateRegisterSynthesizer {
    }
 
    static void init_V(Connection connection, boolean success) {
-      LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, false);
+      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, false);
       if (session != null) {
-         synchronized (init_Map) {
-            if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea) && session.load) {
+         synchronized (SESSIONS) {
+            if (ConnectionPrivacyRegistry.isActive(session.privacySession) && session.load) {
                session.load = false;
                session.read |= success;
             }
@@ -154,28 +154,28 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   private static LateRegisterSynthesizer.Inner_DataUtil init_TaskQueue_DataUtil(Connection connection, boolean create) {
+   private static LateRegisterSynthesizer.Inner_DataUtil sessionFor(Connection connection, boolean create) {
       if (connection == null) {
          return null;
       }
 
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
       if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
-         synchronized (init_Map) {
-            LateRegisterSynthesizer.Inner_DataUtil existing = init_Map.get(connection);
+         synchronized (SESSIONS) {
+            LateRegisterSynthesizer.Inner_DataUtil existing = SESSIONS.get(connection);
             if (existing != null) {
-               if (existing.init_BufferHelper_Strea == context && existing.init_PacketListener == context.packetListener() && ConnectionPrivacyRegistry.isActive(context)
+               if (existing.privacySession == context && existing.listener == context.packetListener() && ConnectionPrivacyRegistry.isActive(context)
                   )
                 {
                   return existing;
                }
 
-               init_Map.remove(connection);
+               SESSIONS.remove(connection);
             }
 
-            if (create && init_Map.size() < 1024 && ConnectionPrivacyRegistry.isActive(context)) {
+            if (create && SESSIONS.size() < 1024 && ConnectionPrivacyRegistry.isActive(context)) {
                LateRegisterSynthesizer.Inner_DataUtil created = new LateRegisterSynthesizer.Inner_DataUtil(context);
-               init_Map.put(connection, created);
+               SESSIONS.put(connection, created);
                return created;
             } else {
                return null;
@@ -188,21 +188,21 @@ public final class LateRegisterSynthesizer {
 
    static void load(Connection connection) {
       if (connection != null) {
-         synchronized (init_Map) {
-            init_Map.remove(connection);
+         synchronized (SESSIONS) {
+            SESSIONS.remove(connection);
          }
       }
    }
 
    private static void load() {
-      synchronized (init_Map) {
-         init_Map.entrySet().removeIf(entry -> !ConnectionPrivacyRegistry.isActive(entry.getValue().init_BufferHelper_Strea));
+      synchronized (SESSIONS) {
+         SESSIONS.entrySet().removeIf(entry -> !ConnectionPrivacyRegistry.isActive(entry.getValue().privacySession));
       }
    }
 
    static void reset() {
-      synchronized (init_Map) {
-         init_Map.clear();
+      synchronized (SESSIONS) {
+         SESSIONS.clear();
          load_J = 0L;
       }
    }
@@ -212,11 +212,11 @@ public final class LateRegisterSynthesizer {
       try {
          receivable = ClientPlayNetworking.getGlobalReceivers();
       } catch (Throwable t) {
-         if (init_Z) {
-            init_Logger.debug("[AutismProtector] getGlobalReceivers unavailable, using stock fallback: {}", t.getMessage());
+         if (DEBUG) {
+            LOGGER.debug("[AutismProtector] getGlobalReceivers unavailable, using stock fallback: {}", t.getMessage());
          }
 
-         receivable = init(init_Z());
+         receivable = init(isVoiceChatLoaded());
       }
 
       if (receivable == null) {
@@ -238,7 +238,7 @@ public final class LateRegisterSynthesizer {
       return new ArrayList<>(channels);
    }
 
-   private static boolean init_Z() {
+   private static boolean isVoiceChatLoaded() {
       try {
          return FabricLoader.getInstance().isModLoaded("voicechat");
       } catch (Throwable t) {
@@ -255,8 +255,8 @@ public final class LateRegisterSynthesizer {
    }
 
    private static final class Inner_DataUtil {
-      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
-      private final PacketListener init_PacketListener;
+      private final ConnectionPrivacyRegistry.ConnectionSession privacySession;
+      private final PacketListener listener;
       private long init_J = -1L;
       private boolean init_Z;
       private boolean load;
@@ -264,8 +264,8 @@ public final class LateRegisterSynthesizer {
       private boolean write;
 
       private Inner_DataUtil(ConnectionPrivacyRegistry.ConnectionSession context) {
-         this.init_BufferHelper_Strea = context;
-         this.init_PacketListener = context.packetListener();
+         this.privacySession = context;
+         this.listener = context.packetListener();
       }
    }
 }

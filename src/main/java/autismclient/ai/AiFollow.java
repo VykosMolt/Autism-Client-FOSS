@@ -14,8 +14,8 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.phys.Vec3;
 
 final class AiFollow {
-   private static final int init_I = 4;
-   private static final double init_D = 9.0;
+   private static final int MAX_LEG_SECONDS = 4;
+   private static final double RETARGET_DISTANCE_SQ = 9.0;
    private static final int load = 60;
 
    private AiFollow() {
@@ -37,92 +37,92 @@ final class AiFollow {
          AiService service = AiService.getExistingInstance();
          final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            Entity init_Entity;
-            Vec3 init_Vec3;
-            AiOperation init_AiOperation;
-            BlockPos init_BlockPos;
-            int init_I;
+            final Minecraft mc = Minecraft.getInstance();
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            Entity followed;
+            Vec3 lastSeen;
+            AiOperation leg;
+            BlockPos legGoal;
+            int settledTicks;
             int load;
-            boolean init_Z;
+            boolean cancelled;
 
             {
-               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.setSilent(silentAim);
+               this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.aim.setSilent(silentAim);
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
+               if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
                   if (System.nanoTime() > deadline) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Follow deadline reached at " + this.init_D() + " blocks from the target");
+                     return this.init(AiOperation.Status.TIMED_OUT, "Follow deadline reached at " + this.currentDistance() + " blocks from the target");
                   }
 
-                  if (this.init_Entity != null
-                     && (!this.init_Entity.isAlive() || this.init_Entity.isRemoved() || this.init_Minecraft.level.getEntity(this.init_Entity.getId()) == null)) {
-                     this.init_Entity = null;
-                     this.init_V_6();
+                  if (this.followed != null
+                     && (!this.followed.isAlive() || this.followed.isRemoved() || this.mc.level.getEntity(this.followed.getId()) == null)) {
+                     this.followed = null;
+                     this.stopLeg();
                   }
 
-                  if (this.init_Entity == null) {
-                     this.init_Entity = this.init_Entity();
-                     if (this.init_Entity == null) {
+                  if (this.followed == null) {
+                     this.followed = this.findTarget();
+                     if (this.followed == null) {
                         return this.init(
                            AiOperation.Status.FAILED,
                            AiFailure.TARGET_GONE,
-                           this.init_Vec3 != null
-                              ? "Follow target lost; last observed at " + BlockPos.containing(this.init_Vec3).toShortString()
+                           this.lastSeen != null
+                              ? "Follow target lost; last observed at " + BlockPos.containing(this.lastSeen).toShortString()
                               : "No matching entity observed"
                         );
                      }
                   }
 
-                  this.init_Vec3 = this.init_Entity.position();
-                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
-                  this.init_DataUtil.tick();
-                  if (this.init_Minecraft.player.distanceTo(this.init_Entity) <= distance) {
-                     this.init_V_6();
-                     return timeout == null && ++this.init_I >= 60
-                        ? this.init(AiOperation.Status.SUCCEEDED, "Settled within follow distance of " + this.init_Str_5())
-                        : this.init("Holding follow distance of " + this.init_Str_5());
+                  this.lastSeen = this.followed.position();
+                  this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.followed));
+                  this.aim.tick();
+                  if (this.mc.player.distanceTo(this.followed) <= distance) {
+                     this.stopLeg();
+                     return timeout == null && ++this.settledTicks >= 60
+                        ? this.init(AiOperation.Status.SUCCEEDED, "Settled within follow distance of " + this.targetLabel())
+                        : this.init("Holding follow distance of " + this.targetLabel());
                   }
 
-                  this.init_I = 0;
-                  if (this.init_AiOperation == null || this.init_BlockPos.distSqr(this.init_Entity.blockPosition()) >= 9.0 || ++this.load > 80) {
-                     this.init_V_6();
-                     this.init_BlockPos = this.init_Entity.blockPosition();
+                  this.settledTicks = 0;
+                  if (this.leg == null || this.legGoal.distSqr(this.followed.blockPosition()) >= 9.0 || ++this.load > 80) {
+                     this.stopLeg();
+                     this.legGoal = this.followed.blockPosition();
                      this.load = 0;
-                     this.init_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, distance, false, false, false, this.init_I_7());
+                     this.leg = AiGoto.travelToCompat(this.legGoal, distance, false, false, false, this.legSeconds());
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.leg.tick();
                   if (!r.terminal()) {
-                     return this.init("Following " + this.init_Str_5());
+                     return this.init("Following " + this.targetLabel());
                   }
 
                   AiOperation.Status status = r.status();
-                  this.init_V_6();
-                  return status != AiOperation.Status.SUCCEEDED ? this.init(status, r.message()) : this.init("Closing on " + this.init_Str_5());
+                  this.stopLeg();
+                  return status != AiOperation.Status.SUCCEEDED ? this.init(status, r.message()) : this.init("Closing on " + this.targetLabel());
                } else {
                   return this.init(AiOperation.Status.CANCELLED, "Follow cancelled");
                }
             }
 
-            Entity init_Entity() {
+            Entity findTarget() {
                if (entityId >= 0) {
-                  Entity explicit = this.init_Minecraft.level.getEntity(entityId);
+                  Entity explicit = this.mc.level.getEntity(entityId);
                   return explicit != null && explicit.isAlive() ? explicit : null;
                }
 
                Entity best = null;
                double bestDistance = 1.7976931348623157E308;
 
-               for (Entity entity : this.init_Minecraft.level.entitiesForRendering()) {
-                  if (entity != this.init_Minecraft.player
+               for (Entity entity : this.mc.level.entitiesForRendering()) {
+                  if (entity != this.mc.player
                      && entity.isAlive()
                      && (types.isEmpty() ? entity instanceof Enemy : types.contains(entity.getType()))) {
-                     double d = entity.distanceToSqr(this.init_Minecraft.player);
+                     double d = entity.distanceToSqr(this.mc.player);
                      if (d < bestDistance) {
                         bestDistance = d;
                         best = entity;
@@ -133,47 +133,47 @@ final class AiFollow {
                return best;
             }
 
-            int init_I_7() {
+            int legSeconds() {
                return timeout == null ? 4 : (int)Math.max(1L, Math.min(4L, (deadline - System.nanoTime()) / 1000000000L));
             }
 
-            String init_Str_5() {
-               return this.init_Entity == null
+            String targetLabel() {
+               return this.followed == null
                   ? "target"
-                  : BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).getPath() + "#" + this.init_Entity.getId();
+                  : BuiltInRegistries.ENTITY_TYPE.getKey(this.followed.getType()).getPath() + "#" + this.followed.getId();
             }
 
-            double init_D() {
-               if (this.init_Minecraft.player == null) {
+            double currentDistance() {
+               if (this.mc.player == null) {
                   return -1.0;
                }
 
-               double d = this.init_Entity != null
-                  ? this.init_Minecraft.player.distanceTo(this.init_Entity)
-                  : (this.init_Vec3 != null ? this.init_Minecraft.player.position().distanceTo(this.init_Vec3) : -1.0);
+               double d = this.followed != null
+                  ? this.mc.player.distanceTo(this.followed)
+                  : (this.lastSeen != null ? this.mc.player.position().distanceTo(this.lastSeen) : -1.0);
                return Math.round(d * 10.0) / 10.0;
             }
 
-            void init_V_6() {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+            void stopLeg() {
+               if (this.leg != null) {
+                  this.leg.cancel();
+                  this.leg = null;
                }
             }
 
-            JsonObject init_JsonObject_13() {
-               JsonObject out = AiJson.objectOf("distance", this.init_D(), "followDistance", distance);
-               if (this.init_Entity != null) {
+            JsonObject progressJson() {
+               JsonObject out = AiJson.objectOf("distance", this.currentDistance(), "followDistance", distance);
+               if (this.followed != null) {
                   out.add(
                      "target",
                      AiJson.objectOf(
-                        "entityId", this.init_Entity.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).toString()
+                        "entityId", this.followed.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(this.followed.getType()).toString()
                      )
                   );
                }
 
-               if (this.init_Vec3 != null) {
-                  BlockPos p = BlockPos.containing(this.init_Vec3);
+               if (this.lastSeen != null) {
+                  BlockPos p = BlockPos.containing(this.lastSeen);
                   out.add("lastKnown", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
                }
 
@@ -181,27 +181,27 @@ final class AiFollow {
             }
 
             AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_13().toString(), List.of());
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               JsonObject data = this.init_JsonObject_13();
+               JsonObject data = this.progressJson();
                this.cancel();
                return new AiOperation.Result(status, message, data.toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, AiFailure code, String message) {
-               JsonObject data = this.init_JsonObject_13();
+               JsonObject data = this.progressJson();
                this.cancel();
                return AiOperation.Result.failed(code, message, data.toString());
             }
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
-                  this.init_V_6();
-                  this.init_DataUtil.clear();
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.stopLeg();
+                  this.aim.clear();
                }
             }
          };

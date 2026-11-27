@@ -43,7 +43,7 @@ final class AiSurvival {
    private AiSurvival() {
    }
 
-   static boolean init_Z_D(double distance, boolean swelling, boolean ignited) {
+   static boolean creeperAboutToBlow(double distance, boolean swelling, boolean ignited) {
       return distance <= 6.0 && (swelling || ignited);
    }
 
@@ -107,44 +107,44 @@ final class AiSurvival {
          final int target = Math.max(1, Math.min(20, AiJson.getInt(args, "food", 18)));
          final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 30))) * 1000000000L;
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            final Object init_Obj = client.level;
-            final Object load_Obj = client.player;
-            final Object read_Obj = client.getConnection();
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            int init_I = -1;
-            int load_I = -1;
-            int read_I = -1;
-            int write_I = -1;
+            final Minecraft mc = Minecraft.getInstance();
+            final Object startLevel = client.level;
+            final Object startPlayer = client.player;
+            final Object startConnection = client.getConnection();
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            int foodBefore = -1;
+            int lastFood = -1;
+            int originalSlot = -1;
+            int foodSlot = -1;
             int update;
             int sync;
-            boolean init_Z;
+            boolean closedContainer;
             int flush;
             int close;
             int open;
-            boolean load_Z;
-            boolean read_Z;
-            boolean write_Z;
+            boolean swapPending;
+            boolean cancelled;
+            boolean releasePending;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.read_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-                  if (this.init_Minecraft.level == this.init_Obj
-                     && this.init_Minecraft.player == this.load_Obj
-                     && this.init_Minecraft.getConnection() == this.read_Obj) {
-                     Inventory inventory = this.init_Minecraft.player.getInventory();
-                     int food = this.init_Minecraft.player.getFoodData().getFoodLevel();
-                     if (this.init_I < 0) {
-                        this.init_I = food;
-                        this.load_I = food;
+               if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
+                  if (this.mc.level == this.startLevel
+                     && this.mc.player == this.startPlayer
+                     && this.mc.getConnection() == this.startConnection) {
+                     Inventory inventory = this.mc.player.getInventory();
+                     int food = this.mc.player.getFoodData().getFoodLevel();
+                     if (this.foodBefore < 0) {
+                        this.foodBefore = food;
+                        this.lastFood = food;
                      }
 
                      if (food >= target) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Food level target reached");
                      }
 
-                     if (food != this.load_I) {
-                        this.load_I = food;
+                     if (food != this.lastFood) {
+                        this.lastFood = food;
                         this.sync = this.flush = 0;
                      }
 
@@ -155,27 +155,27 @@ final class AiSurvival {
                         );
                      }
 
-                     if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
-                        if (this.init_Minecraft.player.containerMenu.getCarried().isEmpty() && !this.init_Z) {
-                           this.init_Z = true;
-                           this.init_Minecraft.player.closeContainer();
+                     if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
+                        if (this.mc.player.containerMenu.getCarried().isEmpty() && !this.closedContainer) {
+                           this.closedContainer = true;
+                           this.mc.player.closeContainer();
                            return this.init("Closing the container to eat");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "Close the open container before eating");
                         }
                      } else {
-                        if (this.init_Minecraft.gui.screen() != null) {
+                        if (this.mc.gui.screen() != null) {
                            return this.init(AiOperation.Status.FAILED, "Close the open screen before eating");
                         }
 
-                        if (!this.init_Minecraft.player.containerMenu.getCarried().isEmpty()) {
+                        if (!this.mc.player.containerMenu.getCarried().isEmpty()) {
                            return this.init(AiOperation.Status.FAILED, "Clear the cursor stack before eating");
                         }
 
-                        if (this.write_Z) {
-                           this.init_Minecraft.options.keyUse.setDown(false);
-                           if (!this.init_Minecraft.player.isUsingItem()) {
-                              this.write_Z = false;
+                        if (this.releasePending) {
+                           this.mc.options.keyUse.setDown(false);
+                           if (!this.mc.player.isUsingItem()) {
+                              this.releasePending = false;
                               this.open = this.flush = 0;
                               return this.init("Stalled food use released; rechecking nutrition before restarting");
                            }
@@ -184,16 +184,16 @@ final class AiSurvival {
                               return this.init(AiOperation.Status.UNCERTAIN, "Food use release not confirmed; reobserve nutrition and item use before retrying");
                            }
 
-                           this.init_Minecraft.gameMode.releaseUsingItem(this.init_Minecraft.player);
+                           this.mc.gameMode.releaseUsingItem(this.mc.player);
                            return this.init("Waiting for stalled food use to stop before retrying");
-                        } else if (this.init_Minecraft.player.isUsingItem()) {
-                           if (!AiSurvival.init(this.init_Minecraft.player.getUseItem())) {
+                        } else if (this.mc.player.isUsingItem()) {
+                           if (!AiSurvival.init(this.mc.player.getUseItem())) {
                               return this.init(AiOperation.Status.FAILED, "Another item use is already active; finish or stop it before eating");
                            }
 
-                           if (!AiSurvival.init(++this.flush, this.init_Minecraft.player.getUseItem().getUseDuration(this.init_Minecraft.player))) {
+                           if (!AiSurvival.init(++this.flush, this.mc.player.getUseItem().getUseDuration(this.mc.player))) {
                               this.sync = 0;
-                              this.init_Minecraft.options.keyUse.setDown(true);
+                              this.mc.options.keyUse.setDown(true);
                               return this.init("Eating (" + food + "/" + target + ")");
                            }
 
@@ -202,39 +202,39 @@ final class AiSurvival {
                            }
 
                            this.close++;
-                           this.write_Z = true;
-                           this.init_Minecraft.options.keyUse.setDown(false);
-                           this.init_Minecraft.gameMode.releaseUsingItem(this.init_Minecraft.player);
+                           this.releasePending = true;
+                           this.mc.options.keyUse.setDown(false);
+                           this.mc.gameMode.releaseUsingItem(this.mc.player);
                            return this.init("Releasing stalled food use before one bounded retry");
-                        } else if (!this.load_Z) {
+                        } else if (!this.swapPending) {
                            int slot = AiSurvival.init(inventory);
                            if (slot < 0) {
                               return this.init(AiOperation.Status.FAILED, "No food in inventory");
                            }
 
                            if (!Inventory.isHotbarSlot(slot)) {
-                              AiContainerTransactions.sendPredictedClick(this.init_Minecraft.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
-                              this.load_Z = true;
+                              AiContainerTransactions.sendPredictedClick(this.mc.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
+                              this.swapPending = true;
                               return this.init("Moving food to the hotbar");
                            }
 
                            if (inventory.getSelectedSlot() != slot) {
-                              if (this.read_I < 0) {
-                                 this.read_I = inventory.getSelectedSlot();
+                              if (this.originalSlot < 0) {
+                                 this.originalSlot = inventory.getSelectedSlot();
                               }
 
-                              this.write_I = slot;
+                              this.foodSlot = slot;
                               inventory.setSelectedSlot(slot);
                            }
 
-                           this.init_DataUtil.setTargetRotation(new autismclient.util.RotationMath.Rotation(this.init_Minecraft.player.getYRot(), -89.5F));
-                           this.init_DataUtil.tick();
-                           this.init_Minecraft.options.keyUse.setDown(true);
+                           this.aim.setTargetRotation(new autismclient.util.RotationMath.Rotation(this.mc.player.getYRot(), -89.5F));
+                           this.aim.tick();
+                           this.mc.options.keyUse.setDown(true);
                            return ++this.sync > 100
                               ? this.init(AiOperation.Status.FAILED, "Eating did not start; the item use may have been rejected")
                               : this.init("Starting to eat (" + food + "/" + target + ")");
                         } else if (AiSurvival.init(inventory.getItem(inventory.getSelectedSlot()))) {
-                           this.load_Z = false;
+                           this.swapPending = false;
                            this.update = 0;
                            return this.init("Food moved to the hotbar");
                         } else {
@@ -266,15 +266,15 @@ final class AiSurvival {
             JsonObject init() {
                return AiJson.objectOf(
                   "foodBefore",
-                  this.init_I,
+                  this.foodBefore,
                   "food",
-                  this.init_Minecraft.player == null ? -1 : this.init_Minecraft.player.getFoodData().getFoodLevel(),
+                  this.mc.player == null ? -1 : this.mc.player.getFoodData().getFoodLevel(),
                   "target",
                   target,
                   "useRestarts",
                   this.close,
                   "pendingFoodUseRelease",
-                  this.write_Z
+                  this.releasePending
                );
             }
 
@@ -285,30 +285,30 @@ final class AiSurvival {
 
             @Override
             public boolean canInterruptNow() {
-               return !this.load_Z;
+               return !this.swapPending;
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.load_Z || this.write_Z;
+               return this.swapPending || this.releasePending;
             }
 
             @Override
             public void cancel() {
-               if (!this.read_Z) {
-                  this.read_Z = true;
-                  this.init_DataUtil.clear();
-                  if (this.init_Minecraft.options != null) {
-                     this.init_Minecraft.options.keyUse.setDown(autismclient.util.KeyMappingControl.of(this.init_Minecraft.options.keyUse).autism$physicalForBody());
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.aim.clear();
+                  if (this.mc.options != null) {
+                     this.mc.options.keyUse.setDown(autismclient.util.KeyMappingControl.of(this.mc.options.keyUse).autism$physicalForBody());
                   }
 
-                  if (this.init_Minecraft.player == this.load_Obj && this.init_Minecraft.level == this.init_Obj) {
-                     if (this.init_Minecraft.player.isUsingItem() && AiSurvival.init(this.init_Minecraft.player.getUseItem()) && this.init_Minecraft.gameMode != null) {
-                        this.init_Minecraft.gameMode.releaseUsingItem(this.init_Minecraft.player);
+                  if (this.mc.player == this.startPlayer && this.mc.level == this.startLevel) {
+                     if (this.mc.player.isUsingItem() && AiSurvival.init(this.mc.player.getUseItem()) && this.mc.gameMode != null) {
+                        this.mc.gameMode.releaseUsingItem(this.mc.player);
                      }
 
-                     if (this.write_I >= 0 && this.read_I >= 0 && this.init_Minecraft.player.getInventory().getSelectedSlot() == this.write_I) {
-                        this.init_Minecraft.player.getInventory().setSelectedSlot(this.read_I);
+                     if (this.foodSlot >= 0 && this.originalSlot >= 0 && this.mc.player.getInventory().getSelectedSlot() == this.foodSlot) {
+                        this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
                      }
                   }
                }
@@ -326,32 +326,32 @@ final class AiSurvival {
          final double distance = Math.max(4.0, Math.min(128.0, AiJson.getDouble(args, "distance", 24.0)));
          final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 60))) * 1000000000L;
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            AiOperation init_AiOperation;
-            boolean init_Z;
-            boolean load_Z;
-            boolean read_Z;
-            AiOperation.Result init_AiOperation_Result;
-            final Vec3 init_Vec3 = client.player.position();
-            int init_I;
-            List<BlockPos> init_List;
-            int load_I;
-            int read_I;
-            int write_I;
-            boolean write_Z;
+            final Minecraft mc = Minecraft.getInstance();
+            AiOperation leg;
+            boolean cancelled;
+            boolean shielding;
+            boolean blastSprint;
+            AiOperation.Result pendingResult;
+            final Vec3 origin = client.player.position();
+            int legs;
+            List<BlockPos> candidates;
+            int candidateIndex;
+            int projectileDodges;
+            int unusedThreatCount;
+            boolean projectileIncoming;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
+               if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
                   ArrayList<Entity> observed = new ArrayList<>();
-                  this.init_Minecraft.level.entitiesForRendering().forEach(observed::add);
-                  List<LivingEntity> close = AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), radius * 1.5);
+                  this.mc.level.entitiesForRendering().forEach(observed::add);
+                  List<LivingEntity> close = AiSurvival.livingWithin(observed, this.mc.player.position(), radius * 1.5);
                   List<Vec3> escapeThreats = close.stream().map(Entity::position).toList();
-                  boolean safeHandoff = this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+                  boolean safeHandoff = this.leg == null || this.leg.canInterruptNow();
                   if (close.isEmpty() && safeHandoff) {
                      return this.init(
                         AiOperation.Status.SUCCEEDED,
-                        this.init_List == null && this.init_AiOperation == null
+                        this.candidates == null && this.leg == null
                            ? "No threats observed"
                            : "Escaped; no threats within " + (int)Math.ceil(radius * 1.5) + " blocks"
                      );
@@ -361,80 +361,80 @@ final class AiSurvival {
                      return this.init(AiOperation.Status.TIMED_OUT, "Escape deadline reached with threats still observed");
                   }
 
-                  Creeper immediateBlast = safeHandoff ? AiCombat.mostDangerousCreeper(this.init_Minecraft) : null;
-                  Float retreatYaw = immediateBlast == null ? null : AiBlastEscape.init(this.init_Minecraft, immediateBlast);
+                  Creeper immediateBlast = safeHandoff ? AiCombat.mostDangerousCreeper(this.mc) : null;
+                  Float retreatYaw = immediateBlast == null ? null : AiBlastEscape.init(this.mc, immediateBlast);
                   if (retreatYaw != null) {
-                     if (this.init_AiOperation != null) {
-                        this.init_AiOperation.cancel();
+                     if (this.leg != null) {
+                        this.leg.cancel();
                      }
 
-                     this.init_AiOperation = null;
-                     this.init_AiOperation_Result = null;
-                     this.init_List = null;
-                     this.load_Z = false;
-                     AiBlastEscape.init(this.init_Minecraft, retreatYaw);
-                     this.read_Z = true;
+                     this.leg = null;
+                     this.pendingResult = null;
+                     this.candidates = null;
+                     this.shielding = false;
+                     AiBlastEscape.init(this.mc, retreatYaw);
+                     this.blastSprint = true;
                      return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         "Immediate safe sprint out of the creeper blast before planning cover",
                         AiJson.objectOf("priority", "creeper-fuse", "escape", "verified-sprint-and-coast", "creeperId", immediateBlast.getId())
                      );
                   } else {
-                     if (this.read_Z && this.init_Minecraft.player.onGround()) {
-                        this.read_Z = false;
+                     if (this.blastSprint && this.mc.player.onGround()) {
+                        this.blastSprint = false;
 
                         for (KeyMapping key : new KeyMapping[]{
-                           this.init_Minecraft.options.keyUp,
-                           this.init_Minecraft.options.keyDown,
-                           this.init_Minecraft.options.keyLeft,
-                           this.init_Minecraft.options.keyRight,
-                           this.init_Minecraft.options.keySprint
+                           this.mc.options.keyUp,
+                           this.mc.options.keyDown,
+                           this.mc.options.keyLeft,
+                           this.mc.options.keyRight,
+                           this.mc.options.keySprint
                         }) {
                            key.setDown(false);
                         }
                      }
 
-                     if (safeHandoff && !this.load_Z && AiShield.init(this.init_Minecraft) != null) {
+                     if (safeHandoff && !this.shielding && AiShield.init(this.mc) != null) {
                         for (Entity threat : close) {
                            if (threat instanceof Creeper creeper
-                              && AiSurvival.init_Z_D(creeper.distanceTo(this.init_Minecraft.player), creeper.getSwellDir() > 0, creeper.isIgnited())
-                              && this.init_Minecraft.player.hasLineOfSight(creeper)
-                              && AiShield.init(this.init_Minecraft, creeper) != null) {
-                              if (this.init_AiOperation != null) {
-                                 this.init_AiOperation.cancel();
+                              && AiSurvival.creeperAboutToBlow(creeper.distanceTo(this.mc.player), creeper.getSwellDir() > 0, creeper.isIgnited())
+                              && this.mc.player.hasLineOfSight(creeper)
+                              && AiShield.init(this.mc, creeper) != null) {
+                              if (this.leg != null) {
+                                 this.leg.cancel();
                               }
 
-                              this.init_AiOperation_Result = null;
-                              this.load_Z = true;
+                              this.pendingResult = null;
+                              this.shielding = true;
                               AutismClientAddon.LOG
-                                 .info("[AI] flee: shielding an igniting creeper at {} blocks", creeper.distanceTo(this.init_Minecraft.player));
-                              this.init_AiOperation = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
-                              AiOperation.Result shield = this.init_AiOperation.tick();
+                                 .info("[AI] flee: shielding an igniting creeper at {} blocks", creeper.distanceTo(this.mc.player));
+                              this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
+                              AiOperation.Result shield = this.leg.tick();
                               return shield.terminal() ? this.init(shield.status(), shield.message()) : shield;
                            }
                         }
                      }
 
-                     if (this.init_AiOperation != null) {
-                        AiOperation.Result result = this.init_AiOperation_Result == null ? this.init_AiOperation.tick() : this.init_AiOperation_Result;
-                        this.init_AiOperation_Result = null;
+                     if (this.leg != null) {
+                        AiOperation.Result result = this.pendingResult == null ? this.leg.tick() : this.pendingResult;
+                        this.pendingResult = null;
                         if (!result.terminal()) {
                            return result;
                         }
 
-                        this.init_AiOperation = null;
-                        if (this.load_Z) {
+                        this.leg = null;
+                        if (this.shielding) {
                            return this.init(result.status(), result.message());
                         }
 
-                        if (++this.init_I >= 6 && this.init_Minecraft.player.position().distanceTo(this.init_Vec3) < 6.0) {
-                           return this.init(AiOperation.Status.FAILED, "Boxed in: " + this.init_I + " legs and still within six blocks of the start");
+                        if (++this.legs >= 6 && this.mc.player.position().distanceTo(this.origin) < 6.0) {
+                           return this.init(AiOperation.Status.FAILED, "Boxed in: " + this.legs + " legs and still within six blocks of the start");
                         }
 
                         if (result.status() == AiOperation.Status.SUCCEEDED) {
-                           this.init_List = null;
+                           this.candidates = null;
                         } else {
-                           this.load_I++;
+                           this.candidateIndex++;
                         }
                      }
 
@@ -442,35 +442,35 @@ final class AiSurvival {
                         return this.init(AiOperation.Status.SUCCEEDED, "Escaped and landed clear of the threats");
                      }
 
-                     if (this.init_List == null) {
-                        List<LivingEntity> near = AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), radius);
+                     if (this.candidates == null) {
+                        List<LivingEntity> near = AiSurvival.livingWithin(observed, this.mc.player.position(), radius);
                         ArrayList<Vec3> positions = new ArrayList<>();
 
                         for (LivingEntity threat : near.isEmpty() ? close : near) {
                            positions.add(threat.position());
                         }
 
-                        this.write_I = positions.size();
-                        this.write_Z = false;
+                        this.unusedThreatCount = positions.size();
+                        this.projectileIncoming = false;
 
-                        for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.init_Minecraft)) {
+                        for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.mc)) {
                            if (AiProjectiles.init(t)) {
-                              this.write_Z = true;
+                              this.projectileIncoming = true;
                               break;
                            }
                         }
 
-                        double primary = this.write_Z ? AiSurvival.init_D(this.read_I++) : 0.0;
+                        double primary = this.projectileIncoming ? AiSurvival.dodgeBearing(this.projectileDodges++) : 0.0;
                         double legDistance = Math.min(6.0, distance);
                         double[] fractions = new double[]{1.0, 0.75, 0.5, 0.25};
-                        this.init_List = new ArrayList<>();
+                        this.candidates = new ArrayList<>();
 
                         for (double bearing : new double[]{0.0, -45.0, 45.0, -90.0, 90.0}) {
                            for (double fraction : fractions) {
-                              this.init_List
+                              this.candidates
                                  .add(
                                     BlockPos.containing(
-                                       AiSurvival.init_Vec3_Vec3(this.init_Minecraft.player.position(), positions, legDistance * fraction, primary + bearing)
+                                       AiSurvival.awayFrom(this.mc.player.position(), positions, legDistance * fraction, primary + bearing)
                                     )
                                  );
                            }
@@ -478,44 +478,44 @@ final class AiSurvival {
 
                         ArrayList<Vec3> routeThreats = new ArrayList<>();
 
-                        for (LivingEntity threat : AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), distance + radius)) {
+                        for (LivingEntity threat : AiSurvival.livingWithin(observed, this.mc.player.position(), distance + radius)) {
                            routeThreats.add(threat.position());
                         }
 
-                        Vec3 start = this.init_Minecraft.player.position();
-                        this.init_List.sort(Comparator.comparingDouble(p -> AiSurvival.init_D_Vec3(start, Vec3.atBottomCenterOf(p), routeThreats)));
-                        this.load_I = 0;
+                        Vec3 start = this.mc.player.position();
+                        this.candidates.sort(Comparator.comparingDouble(p -> AiSurvival.routeRisk(start, Vec3.atBottomCenterOf(p), routeThreats)));
+                        this.candidateIndex = 0;
                      }
 
                      BlockPos target = null;
 
-                     while (this.load_I < this.init_List.size()) {
-                        BlockPos candidate = this.init_List.get(this.load_I);
+                     while (this.candidateIndex < this.candidates.size()) {
+                        BlockPos candidate = this.candidates.get(this.candidateIndex);
                         BlockPos grounded = AiGoto.findStandableNearCompat(candidate, 2);
                         if (grounded != null
-                           && !grounded.equals(this.init_Minecraft.player.blockPosition())
-                           && AiSurvival.init_Z_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(grounded), escapeThreats)
+                           && !grounded.equals(this.mc.player.blockPosition())
+                           && AiSurvival.movesAway(this.mc.player.position(), Vec3.atBottomCenterOf(grounded), escapeThreats)
                            && AiGoto.isStandableCompat(grounded)
                            && (
-                              AiCombat.isSafeStep(this.init_Minecraft, grounded)
-                                 || this.init_Minecraft.level.getFluidState(grounded).is(FluidTags.WATER)
+                              AiCombat.isSafeStep(this.mc, grounded)
+                                 || this.mc.level.getFluidState(grounded).is(FluidTags.WATER)
                            )) {
                            target = grounded;
                            break;
                         }
 
-                        this.load_I++;
+                        this.candidateIndex++;
                      }
 
                      boolean shaft = false;
-                     if (target == null && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && !this.init_Minecraft.player.isInWater()) {
-                        target = AiSurvival.init_BlockPos_BlockPos(
-                           this.init_Minecraft.player.blockPosition(),
+                     if (target == null && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && !this.mc.player.isInWater()) {
+                        target = AiSurvival.shaftClimbTarget(
+                           this.mc.player.blockPosition(),
                            escapeThreats,
                            AiGuard.countPerchBlocks(),
-                           cell -> this.init_Minecraft.level.getChunkSource().getChunk(cell.getX() >> 4, cell.getZ() >> 4, ChunkStatus.FULL, false) != null
-                              && this.init_Minecraft.level.getBlockState(cell).getCollisionShape(this.init_Minecraft.level, cell).isEmpty()
-                              && this.init_Minecraft.level.getFluidState(cell).isEmpty()
+                           cell -> this.mc.level.getChunkSource().getChunk(cell.getX() >> 4, cell.getZ() >> 4, ChunkStatus.FULL, false) != null
+                              && this.mc.level.getBlockState(cell).getCollisionShape(this.mc.level, cell).isEmpty()
+                              && this.mc.level.getFluidState(cell).isEmpty()
                         );
                         shaft = target != null;
                         if (shaft) {
@@ -526,12 +526,12 @@ final class AiSurvival {
                      if (target == null) {
                         Entity creeper = close.stream()
                            .filter(entity -> entity instanceof Creeper)
-                           .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(this.init_Minecraft.player)))
+                           .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(this.mc.player)))
                            .orElse(null);
-                        if (creeper != null && AiShield.init(this.init_Minecraft) != null && AiShield.init(this.init_Minecraft, creeper) != null) {
-                           this.load_Z = true;
-                           this.init_AiOperation = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
-                           AiOperation.Result first = this.init_AiOperation.tick();
+                        if (creeper != null && AiShield.init(this.mc) != null && AiShield.init(this.mc, creeper) != null) {
+                           this.shielding = true;
+                           this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
+                           AiOperation.Result first = this.leg.tick();
                            return first.terminal() ? this.init(first.status(), first.message()) : first;
                         } else {
                            return this.init(
@@ -540,7 +540,7 @@ final class AiSurvival {
                         }
                      } else {
                         int remaining = (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L);
-                        this.init_AiOperation = AiGoto.travelToCompat(
+                        this.leg = AiGoto.travelToCompat(
                            target,
                            0.6,
                            false,
@@ -550,14 +550,14 @@ final class AiSurvival {
                            autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                            shaft,
                            2.0,
-                           AiSurvival.init(this.init_Minecraft.player.blockPosition(), target)
+                           AiSurvival.init(this.mc.player.blockPosition(), target)
                         );
-                        AiOperation.Result first = this.init_AiOperation.tick();
+                        AiOperation.Result first = this.leg.tick();
                         if (!first.terminal()) {
                            return first;
                         }
 
-                        this.init_AiOperation_Result = first;
+                        this.pendingResult = first;
                         return AiGameOperations.result(AiOperation.Status.RUNNING, "Re-evaluating escape direction", this.init());
                      }
                   }
@@ -577,20 +577,20 @@ final class AiSurvival {
 
             @Override
             public boolean canInterruptNow() {
-               return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+               return this.leg == null || this.leg.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+               return this.leg != null && this.leg.requiresReconciliationAfterEmergency();
             }
 
             @Override
             public void cancel() {
-               this.init_Z = true;
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               this.cancelled = true;
+               if (this.leg != null) {
+                  this.leg.cancel();
+                  this.leg = null;
                }
             }
          };
@@ -656,11 +656,11 @@ final class AiSurvival {
       return -1;
    }
 
-   static Vec3 init_Vec3_Vec3(Vec3 playerPos, List<Vec3> threatPositions, double distance) {
-      return init_Vec3_Vec3(playerPos, threatPositions, distance, 0.0);
+   static Vec3 awayFrom(Vec3 playerPos, List<Vec3> threatPositions, double distance) {
+      return awayFrom(playerPos, threatPositions, distance, 0.0);
    }
 
-   static Vec3 init_Vec3_Vec3(Vec3 playerPos, List<Vec3> threatPositions, double distance, double bearingDegrees) {
+   static Vec3 awayFrom(Vec3 playerPos, List<Vec3> threatPositions, double distance, double bearingDegrees) {
       if (threatPositions.isEmpty()) {
          return null;
       }
@@ -683,7 +683,7 @@ final class AiSurvival {
       return playerPos.add(rotated.scale(distance));
    }
 
-   static double init_D(int leg) {
+   static double dodgeBearing(int leg) {
       return leg % 2 == 0 ? 22.5 : -22.5;
    }
 
@@ -709,16 +709,16 @@ final class AiSurvival {
       };
    }
 
-   static boolean init_Z_Vec3(Vec3 start, Vec3 end, List<Vec3> threats) {
+   static boolean movesAway(Vec3 start, Vec3 end, List<Vec3> threats) {
       if (start.distanceToSqr(end) < 1.0) {
          return false;
       }
 
-      Vec3 away = init_Vec3_Vec3(start, threats, 1.0);
+      Vec3 away = awayFrom(start, threats, 1.0);
       return away != null && (end.x - start.x) * (away.x - start.x) + (end.z - start.z) * (away.z - start.z) >= -0.05;
    }
 
-   static BlockPos init_BlockPos_BlockPos(BlockPos feet, List<Vec3> threats, int blocks, Predicate<BlockPos> clear) {
+   static BlockPos shaftClimbTarget(BlockPos feet, List<Vec3> threats, int blocks, Predicate<BlockPos> clear) {
       if (blocks > 0 && !threats.isEmpty()) {
          for (Vec3 threat : threats) {
             if (threat.y > feet.getY() - 4) {
@@ -739,7 +739,7 @@ final class AiSurvival {
       }
    }
 
-   static double init_D_Vec3(Vec3 start, Vec3 end, List<Vec3> threats) {
+   static double routeRisk(Vec3 start, Vec3 end, List<Vec3> threats) {
       double dx = end.x - start.x;
       double dz = end.z - start.z;
       double lengthSq = dx * dx + dz * dz;

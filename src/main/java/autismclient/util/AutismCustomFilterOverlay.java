@@ -13,47 +13,47 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.protocol.Packet;
 
 public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft unusedClient = Minecraft.getInstance();
    private static final int flush_I = 220;
    private static final int close_I = 10;
    private static final int open = 3;
    private static final int poll = 0;
    private static final int push = 1;
    private static final int pop = 2;
-   private final Font init_Font;
-   private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil;
-   private final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil;
-   private final AutismPacketSelectorOverlay init_AutismPacketSelect;
-   private final AutismCustomFilterPresetOverlay init_AutismCustomFilter_2;
-   private final List<AutismCustomFilterOverlay.Inner_DataUtil> init_List = new ArrayList<>();
-   private final AutismCustomFilterOverlay.Inner_StreamUtil init_AutismCustomFilter = new AutismCustomFilterOverlay.Inner_StreamUtil();
-   private final AutismCustomFilterOverlay.Inner_StreamUtil load_AutismCustomFilter = new AutismCustomFilterOverlay.Inner_StreamUtil();
+   private final Font font;
+   private final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
+   private final autismclient.gui.ui.widgets.TextInputWidget c2sSearch;
+   private final autismclient.gui.ui.widgets.TextInputWidget s2cSearch;
+   private final AutismPacketSelectorOverlay packetSelector;
+   private final AutismCustomFilterPresetOverlay presetOverlay;
+   private final List<AutismCustomFilterOverlay.Inner_DataUtil> actionButtons = new ArrayList<>();
+   private final AutismCustomFilterOverlay.Inner_StreamUtil c2sList = new AutismCustomFilterOverlay.Inner_StreamUtil();
+   private final AutismCustomFilterOverlay.Inner_StreamUtil s2cList = new AutismCustomFilterOverlay.Inner_StreamUtil();
    private int tick = 260;
    private int run = 36;
    private int get = 220;
    private int set = 200;
-   private boolean write_Z = false;
-   private boolean update_Z = false;
-   private boolean sync_Z = false;
-   private double init_D = 0.0;
-   private double load_D = 0.0;
+   private boolean boundsVisible = false;
+   private boolean boundsCollapsed = false;
+   private boolean draggingWindow = false;
+   private double dragOffsetX = 0.0;
+   private double dragOffsetY = 0.0;
    private int put = 0;
    private int add = 0;
 
    public AutismCustomFilterOverlay(Font textRenderer) {
-      this.init_Font = textRenderer;
+      this.font = textRenderer;
       this.get = this.pop_I_5();
       this.set = this.tick_I_3();
-      this.init_BitSetUtil = this.init_BitSetUtil("Search C2S packets...");
-      this.load_BitSetUtil = this.init_BitSetUtil("Search S2C packets...");
-      this.init_AutismPacketSelect = new AutismPacketSelectorOverlay(textRenderer);
-      this.init_AutismCustomFilter_2 = new AutismCustomFilterPresetOverlay(textRenderer);
-      this.init_BitSetUtil.setOnChange(text -> this.init_AutismCustomFilter.init_CacheEntry.jumpTo(0, 0));
-      this.load_BitSetUtil.setOnChange(text -> this.load_AutismCustomFilter.init_CacheEntry.jumpTo(0, 0));
+      this.c2sSearch = this.createSearchInput("Search C2S packets...");
+      this.s2cSearch = this.createSearchInput("Search S2C packets...");
+      this.packetSelector = new AutismPacketSelectorOverlay(textRenderer);
+      this.presetOverlay = new AutismCustomFilterPresetOverlay(textRenderer);
+      this.c2sSearch.setOnChange(text -> this.c2sList.scroll.jumpTo(0, 0));
+      this.s2cSearch.setOnChange(text -> this.s2cList.scroll.jumpTo(0, 0));
    }
 
-   private autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil(String placeholder) {
+   private autismclient.gui.ui.widgets.TextInputWidget createSearchInput(String placeholder) {
       return new autismclient.gui.ui.widgets.TextInputWidget()
          .setPlaceholder(placeholder)
          .setFixedHeight(this.clear())
@@ -64,11 +64,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    public AutismCustomFilterPresetOverlay getPresetOverlay() {
-      return this.init_AutismCustomFilter_2;
+      return this.presetOverlay;
    }
 
    public AutismPacketSelectorOverlay getPacketSelector() {
-      return this.init_AutismPacketSelect;
+      return this.packetSelector;
    }
 
    @Override
@@ -88,7 +88,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.tick, this.run, this.get, this.set, this.write_Z, this.update_Z);
+      return new OverlayBounds(this.tick, this.run, this.get, this.set, this.boundsVisible, this.boundsCollapsed);
    }
 
    @Override
@@ -99,45 +99,45 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          this.run = clamped.y;
          this.get = clamped.width;
          this.set = clamped.height;
-         this.write_Z = clamped.visible;
-         this.update_Z = clamped.collapsed;
+         this.boundsVisible = clamped.visible;
+         this.boundsCollapsed = clamped.collapsed;
       }
    }
 
    @Override
    public void setVisible(boolean visible) {
-      this.write_Z = visible;
+      this.boundsVisible = visible;
       if (visible) {
          OverlayManager.getInstance().bringToFront(this);
       } else {
-         this.write_V_6();
-         this.init_AutismPacketSelect.resetSelection();
+         this.blurSearchFields();
+         this.packetSelector.resetSelection();
       }
 
       this.saveBounds();
    }
 
-   public void load_V_5() {
-      this.setVisible(!this.write_Z);
+   public void toggleFilterOverlay() {
+      this.setVisible(!this.boundsVisible);
    }
 
    @Override
    public boolean isVisible() {
-      return this.write_Z;
+      return this.boundsVisible;
    }
 
    @Override
    public boolean isCollapsed() {
-      return this.update_Z;
+      return this.boundsCollapsed;
    }
 
    @Override
    public void setCollapsed(boolean collapsed) {
-      if (this.update_Z != collapsed) {
-         this.update_Z = collapsed;
+      if (this.boundsCollapsed != collapsed) {
+         this.boundsCollapsed = collapsed;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
-            this.init_AutismPacketSelect.resetSelection();
+            this.packetSelector.resetSelection();
          }
 
          this.saveBounds();
@@ -151,7 +151,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isOverHeader(double mouseX, double mouseY) {
-      if (!this.write_Z) {
+      if (!this.boundsVisible) {
          return false;
       }
 
@@ -161,32 +161,32 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean hasFocusedTextInput() {
-      return this.init_AutismPacketSelect.isVisible() || this.init_BitSetUtil.isFocused() || this.load_BitSetUtil.isFocused();
+      return this.packetSelector.isVisible() || this.c2sSearch.isFocused() || this.s2cSearch.isFocused();
    }
 
    @Override
    public void clearInputFocus() {
-      this.write_V_6();
+      this.blurSearchFields();
    }
 
    @Override
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.isClosing()) {
-         this.init_List.clear();
+      if (this.boundsVisible || this.isClosing()) {
+         this.actionButtons.clear();
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          int wantC2s = this.load(this.init(module.getCustomC2sPacketsCopy().size()));
          int wantS2c = this.load(this.init(module.getCustomS2cPacketsCopy().size()));
          this.set = this.push_I_5() + wantC2s + wantS2c;
-         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.tick, this.run, this.get, this.set, this.write_Z, this.update_Z));
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.tick, this.run, this.get, this.set, this.boundsVisible, this.boundsCollapsed));
          this.tick = clamped.x;
          this.run = clamped.y;
          this.get = clamped.width;
          this.set = clamped.height;
-         OverlayBounds bounds = new OverlayBounds(this.tick, this.run, this.get, this.set, this.write_Z, this.update_Z);
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Packet Delay", this.update_Z, this.sync_Z);
-         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.tick, this.run, this.get, this.set, this.boundsVisible, this.boundsCollapsed);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, "Packet Delay", this.boundsCollapsed, this.draggingWindow);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.boundsCollapsed);
          if (!clipBody) {
-            this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
+            this.renderInactiveDim(context, bounds, this.boundsCollapsed, this.draggingWindow);
          } else {
             try {
                int x = this.tick + this.run_I_3();
@@ -206,31 +206,31 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                );
                int presetsY = y;
                y = this.init(context, mouseX, mouseY, x, y, width, "Presets", () -> {
-                  this.init_AutismCustomFilter_2.toggleVisible();
-                  OverlayManager.getInstance().bringToFront(this.init_AutismCustomFilter_2);
+                  this.presetOverlay.toggleVisible();
+                  OverlayManager.getInstance().bringToFront(this.presetOverlay);
                }, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true);
                String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
-               int countsW = ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.MUTED);
+               int countsW = ThemedTextHelper.init(this.font, counts, ThemedTextHelper.TextTone.MUTED);
                ThemedTextHelper.init(
                   context,
-                  this.init_Font,
+                  this.font,
                   counts,
                   ThemedTextHelper.TextTone.MUTED,
                   x + width - countsW,
-                  UiLayoutMath.centerTextY(presetsY, this.set_I_3(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+                  UiLayoutMath.centerTextY(presetsY, this.set_I_3(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
                   false
                );
                y += this.add_I_3() - this.put();
-               int[] lists = this.init_IArr_I(wantC2s, wantS2c, this.set - this.push_I_5());
-               y = this.init(context, mouseX, mouseY, delta, x, y, width, lists[0], true, module, this.init_BitSetUtil, this.init_AutismCustomFilter);
-               this.init(context, mouseX, mouseY, delta, x, y, width, lists[1], false, module, this.load_BitSetUtil, this.load_AutismCustomFilter);
+               int[] lists = this.splitWidths(wantC2s, wantS2c, this.set - this.push_I_5());
+               y = this.init(context, mouseX, mouseY, delta, x, y, width, lists[0], true, module, this.c2sSearch, this.c2sList);
+               this.init(context, mouseX, mouseY, delta, x, y, width, lists[1], false, module, this.s2cSearch, this.s2cList);
             } finally {
                this.endBodyClip(context, clipBody);
-               this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
+               this.renderInactiveDim(context, bounds, this.boundsCollapsed, this.draggingWindow);
             }
 
-            if (this.init_AutismPacketSelect.isVisible()) {
-               this.init_AutismPacketSelect.render(context, mouseX, mouseY, delta);
+            if (this.packetSelector.isVisible()) {
+               this.packetSelector.render(context, mouseX, mouseY, delta);
             }
          }
       }
@@ -252,21 +252,21 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    ) {
       String label = c2s ? "C2S Packets" : "S2C Packets";
       Set<Class<? extends Packet<?>>> selectedPackets = c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy();
-      List<Class<? extends Packet<?>>> filteredPackets = this.init_List_AutismCustomFilter(listState, selectedPackets, searchField.getValue());
+      List<Class<? extends Packet<?>>> filteredPackets = this.cachedFilteredPackets(listState, selectedPackets, searchField.getValue());
       int headerY = y;
       autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(
          context,
-         this.init_Font,
+         this.font,
          label + " (" + selectedPackets.size() + ")",
          x,
-         UiLayoutMath.centerTextY(headerY, this.prev(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.load), this.init_CharEncoder.flush())
+         UiLayoutMath.centerTextY(headerY, this.prev(), this.theme.init_I_l(autismclient.gui.f.b.l.load), this.theme.flush())
       );
       y += this.prev();
       String addLabel = c2s ? "Add C2S" : "Add S2C";
-      int addW = Math.min(width / 2, this.init_I_2(addLabel));
+      int addW = Math.min(width / 2, this.buttonWidthFor(addLabel));
       int searchW = Math.max(1, width - addW - this.put());
       searchField.setBounds(x, y, searchW, this.clear());
-      searchField.render(this.init_SyncManager_GuiGraphicsExtract(context, mouseX, mouseY, delta));
+      searchField.render(this.layoutContext(context, mouseX, mouseY, delta));
       this.init(
          context,
          mouseX,
@@ -277,11 +277,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          addLabel,
          () -> {
             if (c2s) {
-               this.init_AutismPacketSelect
-                  .openC2sMultiSelect((packetClass, selected) -> this.init_V_Z_2(true, packetClass, selected), module.getCustomC2sPacketsCopy());
+               this.packetSelector
+                  .openC2sMultiSelect((packetClass, selected) -> this.setPacketSelected(true, packetClass, selected), module.getCustomC2sPacketsCopy());
             } else {
-               this.init_AutismPacketSelect
-                  .openS2cMultiSelect((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.getCustomS2cPacketsCopy());
+               this.packetSelector
+                  .openS2cMultiSelect((packetClass, selected) -> this.setPacketSelected(false, packetClass, selected), module.getCustomS2cPacketsCopy());
             }
          },
          autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
@@ -289,14 +289,14 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       );
       y += Math.max(this.clear(), this.set_I_3()) + this.put();
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout baseLayout = this.init(x, y, width, listHeight, filteredPackets.size(), 0);
-      int visualScroll = listState.init_CacheEntry.tickAndClamp(delta, baseLayout.maxScroll());
+      int visualScroll = listState.scroll.tickAndClamp(delta, baseLayout.maxScroll());
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init(x, y, width, listHeight, filteredPackets.size(), visualScroll);
       boolean focused = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
       listLayout.drawFrame(context, focused);
       int contentWidth = Math.max(24, listLayout.contentWidth());
       listState.init(x, y, width, listHeight, listLayout.scrollbar());
       if (filteredPackets.isEmpty()) {
-         autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(context, this.init_Font, "No packets", x, y, contentWidth);
+         autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(context, this.font, "No packets", x, y, contentWidth);
       } else {
          listLayout.pushContentClip(context);
 
@@ -309,7 +309,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   String packetName = PacketNameResolver.nameOfClass(packetClass);
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                      context,
-                     this.init_Font,
+                     this.font,
                      packetName,
                      x + 2,
                      rowY,
@@ -324,9 +324,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   int iconY = rowY + 1;
                   autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButtonSquare(context, iconX, iconY, iconSize, hovered);
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, x + 2, rowY + this.reset(), contentWidth);
-                  this.init_List
+                  this.actionButtons
                      .add(
-                        new AutismCustomFilterOverlay.Inner_DataUtil(x + 2, rowY, contentWidth, this.reset(), () -> this.load_V_Z_Class(c2s, packetClass), true)
+                        new AutismCustomFilterOverlay.Inner_DataUtil(x + 2, rowY, contentWidth, this.reset(), () -> this.deselectPacket(c2s, packetClass), true)
                      );
                }
             );
@@ -341,20 +341,20 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          : (
             listLayout.maxScroll() > 0
                ? "Scroll: "
-                  + Math.min(filteredPackets.size(), Math.round((float)listState.init_CacheEntry.getOffset() / this.start_I_3()) + 1)
+                  + Math.min(filteredPackets.size(), Math.round((float)listState.scroll.getOffset() / this.start_I_3()) + 1)
                   + "/"
                   + Math.max(1, Math.round((float)listLayout.maxScroll() / this.start_I_3()) + 1)
                : "Click a row to remove"
          );
       if (!footer.isEmpty()) {
-         int footerW = ThemedTextHelper.init(this.init_Font, footer, ThemedTextHelper.TextTone.MUTED);
+         int footerW = ThemedTextHelper.init(this.font, footer, ThemedTextHelper.TextTone.MUTED);
          ThemedTextHelper.init(
             context,
-            this.init_Font,
+            this.font,
             footer,
             ThemedTextHelper.TextTone.MUTED,
             x + width - footerW,
-            UiLayoutMath.centerTextY(headerY, this.prev(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+            UiLayoutMath.centerTextY(headerY, this.prev(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
             false
          );
       }
@@ -362,9 +362,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return y + listHeight + this.add_I_3();
    }
 
-   private int init_I_2(String label) {
+   private int buttonWidthFor(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
-         autismclient.gui.f.b.k.init(this.init_Font, label, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
+         autismclient.gui.f.b.k.init(this.font, label, this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
       );
    }
 
@@ -382,7 +382,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return top + section * 2 - this.add_I_3() + this.run_I_3();
    }
 
-   private int[] init_IArr_I(int wantA, int wantB, int available) {
+   private int[] splitWidths(int wantA, int wantB, int available) {
       if (wantA + wantB <= available) {
          return new int[]{wantA, wantB};
       } else {
@@ -396,7 +396,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<Class<? extends Packet<?>>> init_List_List_Str_2(List<Class<? extends Packet<?>>> packets, String query) {
+   private List<Class<? extends Packet<?>>> filterPackets(List<Class<? extends Packet<?>>> packets, String query) {
       if (query != null && !query.isBlank()) {
          String lowered = query.toLowerCase(Locale.ROOT);
          List<Class<? extends Packet<?>>> filtered = new ArrayList<>();
@@ -415,26 +415,26 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<Class<? extends Packet<?>>> init_List_AutismCustomFilter(
+   private List<Class<? extends Packet<?>>> cachedFilteredPackets(
       AutismCustomFilterOverlay.Inner_StreamUtil state, Set<Class<? extends Packet<?>>> packets, String query
    ) {
       String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       int sourceHash = packets == null ? 0 : packets.hashCode();
       int sourceSize = packets == null ? 0 : packets.size();
-      if (state.update == sourceHash && state.sync == sourceSize && state.init_Str.equals(normalizedQuery)) {
-         return state.init_List;
+      if (state.update == sourceHash && state.sync == sourceSize && state.cachedQuery.equals(normalizedQuery)) {
+         return state.filteredPackets;
       }
 
       List<Class<? extends Packet<?>>> sorted = packets == null ? new ArrayList<>() : new ArrayList<>(packets);
       sorted.sort(Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER));
-      state.init_List = List.copyOf(this.init_List_List_Str_2(sorted, normalizedQuery));
+      state.filteredPackets = List.copyOf(this.filterPackets(sorted, normalizedQuery));
       state.update = sourceHash;
       state.sync = sourceSize;
-      state.init_Str = normalizedQuery;
-      return state.init_List;
+      state.cachedQuery = normalizedQuery;
+      return state.filteredPackets;
    }
 
-   private void init_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
+   private void selectPacket(boolean c2s, Class<? extends Packet<?>> packetClass) {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy());
       if (packets.add(packetClass)) {
@@ -446,7 +446,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
+   private void deselectPacket(boolean c2s, Class<? extends Packet<?>> packetClass) {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy());
       if (packets.remove(packetClass)) {
@@ -458,11 +458,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Z_2(boolean c2s, Class<? extends Packet<?>> packetClass, boolean selected) {
+   private void setPacketSelected(boolean c2s, Class<? extends Packet<?>> packetClass, boolean selected) {
       if (selected) {
-         this.init_V_Z_Class(c2s, packetClass);
+         this.selectPacket(c2s, packetClass);
       } else {
-         this.load_V_Z_Class(c2s, packetClass);
+         this.deselectPacket(c2s, packetClass);
       }
    }
 
@@ -478,10 +478,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean enabled
    ) {
-      int w = Math.min(width, this.init_I_2(label));
+      int w = Math.min(width, this.buttonWidthFor(label));
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(
          context,
-         this.init_Font,
+         this.font,
          x,
          y,
          w,
@@ -492,26 +492,26 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          mouseX,
          mouseY
       );
-      this.init_List.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, w, this.set_I_3(), action, enabled));
+      this.actionButtons.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, w, this.set_I_3(), action, enabled));
       return y + this.set_I_3() + this.put();
    }
 
    private int init(
       GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, Runnable action, boolean enabled, String animationKey
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, width, this.set_I_3(), label, enabled, animationKey, mouseX, mouseY);
-      this.init_List.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, width, this.set_I_3(), action, true));
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, this.set_I_3(), label, enabled, animationKey, mouseX, mouseY);
+      this.actionButtons.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, width, this.set_I_3(), action, true));
       return y + this.set_I_3() + this.put();
    }
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-      if (!this.write_Z) {
+      if (!this.boundsVisible) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.isVisible()) {
-         return this.init_AutismPacketSelect.mouseClicked(mouseX, mouseY, button);
+      if (this.packetSelector.isVisible()) {
+         return this.packetSelector.mouseClicked(mouseX, mouseY, button);
       }
 
       if (button == 0 && mouseX >= this.tick && mouseX < this.tick + this.get && mouseY >= this.run && mouseY < this.run + 14) {
@@ -520,46 +520,46 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
             this.setVisible(false);
             return true;
          } else {
-            this.sync_Z = true;
-            this.init_D = mouseX - this.tick;
-            this.load_D = mouseY - this.run;
-            this.write_V_6();
+            this.draggingWindow = true;
+            this.dragOffsetX = mouseX - this.tick;
+            this.dragOffsetY = mouseY - this.run;
+            this.blurSearchFields();
             return true;
          }
       } else {
-         if (this.update_Z) {
+         if (this.boundsCollapsed) {
             return false;
          }
 
          if (button == 0) {
-            if (this.init_Z_AutismCustomFilter(this.init_AutismCustomFilter, 1, mouseX, mouseY)) {
+            if (this.init_Z_AutismCustomFilter(this.c2sList, 1, mouseX, mouseY)) {
                return true;
             }
 
-            if (this.init_Z_AutismCustomFilter(this.load_AutismCustomFilter, 2, mouseX, mouseY)) {
+            if (this.init_Z_AutismCustomFilter(this.s2cList, 2, mouseX, mouseY)) {
                return true;
             }
          }
 
-         if (this.init_Z_BitSetUtil(this.init_BitSetUtil, mouseX, mouseY, button)) {
-            this.init_AutismCustomFilter.init_CacheEntry.jumpTo(0, 0);
+         if (this.clickSearchField(this.c2sSearch, mouseX, mouseY, button)) {
+            this.c2sList.scroll.jumpTo(0, 0);
             return true;
          }
 
-         if (this.init_Z_BitSetUtil(this.load_BitSetUtil, mouseX, mouseY, button)) {
-            this.load_AutismCustomFilter.init_CacheEntry.jumpTo(0, 0);
+         if (this.clickSearchField(this.s2cSearch, mouseX, mouseY, button)) {
+            this.s2cList.scroll.jumpTo(0, 0);
             return true;
          }
 
-         this.write_V_6();
+         this.blurSearchFields();
          if (button == 0) {
-            for (AutismCustomFilterOverlay.Inner_DataUtil actionButton : this.init_List) {
+            for (AutismCustomFilterOverlay.Inner_DataUtil actionButton : this.actionButtons) {
                if (actionButton.init(mouseX, mouseY)) {
-                  if (!actionButton.init_Z()) {
+                  if (!actionButton.enabled()) {
                      return true;
                   }
 
-                  actionButton.init_Runnable.run();
+                  actionButton.action.run();
                   return true;
                }
             }
@@ -569,10 +569,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_BitSetUtil(autismclient.gui.ui.widgets.TextInputWidget field, double mouseX, double mouseY, int button) {
-      boolean clicked = field.mouseClicked(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button);
+   private boolean clickSearchField(autismclient.gui.ui.widgets.TextInputWidget field, double mouseX, double mouseY, int button) {
+      boolean clicked = field.mouseClicked(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button);
       if (clicked) {
-         this.write_V_6();
+         this.blurSearchFields();
          field.setFocused(true);
       }
 
@@ -581,15 +581,15 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseReleased(mouseX, mouseY, button)) {
+      if (this.packetSelector.isVisible() && this.packetSelector.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
 
-      if (this.init_BitSetUtil.mouseReleased(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button)) {
+      if (this.c2sSearch.mouseReleased(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button)) {
          return true;
       }
 
-      if (this.load_BitSetUtil.mouseReleased(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button)) {
+      if (this.s2cSearch.mouseReleased(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button)) {
          return true;
       }
 
@@ -599,11 +599,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
 
       if (button == 0) {
-         if (this.sync_Z) {
+         if (this.draggingWindow) {
             this.saveBounds();
          }
 
-         this.sync_Z = false;
+         this.draggingWindow = false;
       }
 
       return false;
@@ -611,23 +611,23 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-      if (this.init_AutismPacketSelect.isVisible() && this.init_AutismPacketSelect.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+      if (this.packetSelector.isVisible() && this.packetSelector.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
          return true;
-      } else if (this.init_BitSetUtil
-         .mouseDragged(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
+      } else if (this.c2sSearch
+         .mouseDragged(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
          return true;
-      } else if (this.load_BitSetUtil
-         .mouseDragged(this.init_SyncManager_D_D(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
+      } else if (this.s2cSearch
+         .mouseDragged(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
          return true;
       } else if (this.put == 1) {
-         this.init_AutismCustomFilter.init_CacheEntry.dragToMouseYStepped(this.init_AutismCustomFilter.init_PoolEntry_DataUtil, mouseY, this.add, this.start_I_3());
+         this.c2sList.scroll.dragToMouseYStepped(this.c2sList.scrollbarMetrics, mouseY, this.add, this.start_I_3());
          return true;
       } else if (this.put == 2) {
-         this.load_AutismCustomFilter.init_CacheEntry.dragToMouseYStepped(this.load_AutismCustomFilter.init_PoolEntry_DataUtil, mouseY, this.add, this.start_I_3());
+         this.s2cList.scroll.dragToMouseYStepped(this.s2cList.scrollbarMetrics, mouseY, this.add, this.start_I_3());
          return true;
-      } else if (this.sync_Z && button == 0) {
+      } else if (this.draggingWindow && button == 0) {
          OverlayBounds nextBounds = this.clampToScreen(
-            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.get, this.set, this.write_Z, this.update_Z)
+            this, new OverlayBounds((int)(mouseX - this.dragOffsetX), (int)(mouseY - this.dragOffsetY), this.get, this.set, this.boundsVisible, this.boundsCollapsed)
          );
          this.tick = nextBounds.x;
          this.run = nextBounds.y;
@@ -639,31 +639,31 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-      if (this.init_AutismPacketSelect.isVisible()) {
-         return this.init_AutismPacketSelect.mouseScrolled(mouseX, mouseY, amount);
-      } else if (this.init_AutismCustomFilter.init(mouseX, mouseY)) {
+      if (this.packetSelector.isVisible()) {
+         return this.packetSelector.mouseScrolled(mouseX, mouseY, amount);
+      } else if (this.c2sList.init(mouseX, mouseY)) {
          int maxScroll = this.init(
-               this.init_AutismCustomFilter.init_I,
-               this.init_AutismCustomFilter.load,
-               this.init_AutismCustomFilter.read,
-               this.init_AutismCustomFilter.write,
-               this.init_AutismCustomFilter.init_List.size(),
+               this.c2sList.init_I,
+               this.c2sList.load,
+               this.c2sList.read,
+               this.c2sList.write,
+               this.c2sList.filteredPackets.size(),
                0
             )
             .maxScroll();
-         this.init_AutismCustomFilter.init_CacheEntry.scrollByWheel(amount, this.start_I_3(), maxScroll);
+         this.c2sList.scroll.scrollByWheel(amount, this.start_I_3(), maxScroll);
          return true;
-      } else if (this.load_AutismCustomFilter.init(mouseX, mouseY)) {
+      } else if (this.s2cList.init(mouseX, mouseY)) {
          int maxScroll = this.init(
-               this.load_AutismCustomFilter.init_I,
-               this.load_AutismCustomFilter.load,
-               this.load_AutismCustomFilter.read,
-               this.load_AutismCustomFilter.write,
-               this.load_AutismCustomFilter.init_List.size(),
+               this.s2cList.init_I,
+               this.s2cList.load,
+               this.s2cList.read,
+               this.s2cList.write,
+               this.s2cList.filteredPackets.size(),
                0
             )
             .maxScroll();
-         this.load_AutismCustomFilter.init_CacheEntry.scrollByWheel(amount, this.start_I_3(), maxScroll);
+         this.s2cList.scroll.scrollByWheel(amount, this.start_I_3(), maxScroll);
          return true;
       } else {
          return false;
@@ -675,7 +675,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_AutismCustomFilter(AutismCustomFilterOverlay.Inner_StreamUtil listState, int dragId, double mouseX, double mouseY) {
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = listState.init_PoolEntry_DataUtil;
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = listState.scrollbarMetrics;
       if (metrics == null || !metrics.isScrollable()) {
          return false;
       }
@@ -686,25 +686,25 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
       this.put = dragId;
       this.add = Math.max(0, (int)mouseY - metrics.thumbY());
-      listState.init_CacheEntry.dragToMouseYStepped(metrics, mouseY, this.add, this.start_I_3());
+      listState.scroll.dragToMouseYStepped(metrics, mouseY, this.add, this.start_I_3());
       return true;
    }
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (this.init_AutismPacketSelect.isVisible()) {
-         return this.init_AutismPacketSelect.keyPressed(keyCode, scanCode, modifiers);
-      } else if (!this.write_Z) {
+      if (this.packetSelector.isVisible()) {
+         return this.packetSelector.keyPressed(keyCode, scanCode, modifiers);
+      } else if (!this.boundsVisible) {
          return false;
       } else if (keyCode == 256) {
-         this.write_V_6();
+         this.blurSearchFields();
          return false;
       } else {
-         autismclient.gui.ui.widgets.TextInputWidget focusedField = this.init_BitSetUtil_2();
+         autismclient.gui.ui.widgets.TextInputWidget focusedField = this.focusedSearchField();
          if (focusedField == null) {
             return false;
          } else if (keyCode != 257 && keyCode != 335) {
-            focusedField.keyPressed(this.init_SyncManager_D_D(0.0, 0.0), keyCode, scanCode, modifiers);
+            focusedField.keyPressed(this.inputLayoutContext(0.0, 0.0), keyCode, scanCode, modifiers);
             return true;
          } else {
             return true;
@@ -714,40 +714,40 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean charTyped(char chr, int modifiers) {
-      if (this.init_AutismPacketSelect.isVisible()) {
-         return this.init_AutismPacketSelect.charTyped(chr, modifiers);
+      if (this.packetSelector.isVisible()) {
+         return this.packetSelector.charTyped(chr, modifiers);
       }
 
-      if (!this.write_Z) {
+      if (!this.boundsVisible) {
          return false;
       }
 
-      autismclient.gui.ui.widgets.TextInputWidget focusedField = this.init_BitSetUtil_2();
-      return focusedField == null ? false : focusedField.charTyped(this.init_SyncManager_D_D(0.0, 0.0), chr, modifiers);
+      autismclient.gui.ui.widgets.TextInputWidget focusedField = this.focusedSearchField();
+      return focusedField == null ? false : focusedField.charTyped(this.inputLayoutContext(0.0, 0.0), chr, modifiers);
    }
 
    @Override
    public boolean containsPoint(double mouseX, double mouseY) {
-      if (!this.write_Z) {
+      if (!this.boundsVisible) {
          return false;
       }
 
-      if (this.init_AutismPacketSelect.isVisible()) {
+      if (this.packetSelector.isVisible()) {
          return true;
       }
 
       OverlayBounds bounds = this.getBounds();
-      int frameHeight = this.update_Z ? 14 : this.set;
+      int frameHeight = this.boundsCollapsed ? 14 : this.set;
       return mouseX >= bounds.x && mouseX <= bounds.x + bounds.width && mouseY >= bounds.y && mouseY <= bounds.y + frameHeight
          ? true
-         : this.init_Z_BitSetUtil(this.init_BitSetUtil, mouseX, mouseY) || this.init_Z_BitSetUtil(this.load_BitSetUtil, mouseX, mouseY);
+         : this.isOverField(this.c2sSearch, mouseX, mouseY) || this.isOverField(this.s2cSearch, mouseX, mouseY);
    }
 
-   private autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_2() {
-      if (this.init_BitSetUtil.isFocused()) {
-         return this.init_BitSetUtil;
+   private autismclient.gui.ui.widgets.TextInputWidget focusedSearchField() {
+      if (this.c2sSearch.isFocused()) {
+         return this.c2sSearch;
       } else {
-         return this.load_BitSetUtil.isFocused() ? this.load_BitSetUtil : null;
+         return this.s2cSearch.isFocused() ? this.s2cSearch : null;
       }
    }
 
@@ -803,28 +803,28 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private void write_V_6() {
-      this.init_BitSetUtil.setFocused(false);
-      this.load_BitSetUtil.setFocused(false);
+   private void blurSearchFields() {
+      this.c2sSearch.setFocused(false);
+      this.s2cSearch.setFocused(false);
    }
 
-   private autismclient.gui.ui.layout.LayoutContext init_SyncManager_GuiGraphicsExtract(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+   private autismclient.gui.ui.layout.LayoutContext layoutContext(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
       return new autismclient.gui.ui.layout.LayoutContext(
-         context, this.init_Font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), delta
+         context, this.font, viewport, this.theme, viewport.toUiX(mouseX), viewport.toUiY(mouseY), delta
       );
    }
 
-   private autismclient.gui.ui.layout.LayoutContext init_SyncManager_D_D(double mouseX, double mouseY) {
+   private autismclient.gui.ui.layout.LayoutContext inputLayoutContext(double mouseX, double mouseY) {
       autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
-      return new autismclient.gui.ui.layout.LayoutContext(null, this.init_Font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
+      return new autismclient.gui.ui.layout.LayoutContext(null, this.font, viewport, this.theme, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
    }
 
-   private boolean init_Z_BitSetUtil(autismclient.gui.ui.widgets.TextInputWidget field, double mouseX, double mouseY) {
+   private boolean isOverField(autismclient.gui.ui.widgets.TextInputWidget field, double mouseX, double mouseY) {
       return mouseX >= field.x() && mouseX <= field.x() + field.width() && mouseY >= field.y() && mouseY <= field.y() + field.height();
    }
 
-   private record Inner_DataUtil(int init_I, int load, int read, int write, Runnable init_Runnable, boolean init_Z) {
+   private record Inner_DataUtil(int init_I, int load, int read, int write, Runnable action, boolean enabled) {
       boolean init(double mouseX, double mouseY) {
          return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + this.write;
       }
@@ -835,19 +835,19 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       private int load;
       private int read;
       private int write;
-      private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-      private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil = null;
-      private List<Class<? extends Packet<?>>> init_List = List.of();
+      private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
+      private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = null;
+      private List<Class<? extends Packet<?>>> filteredPackets = List.of();
       private int update;
       private int sync = -1;
-      private String init_Str = "";
+      private String cachedQuery = "";
 
       private void init(int x, int y, int width, int height, autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics) {
          this.init_I = x;
          this.load = y;
          this.read = width;
          this.write = height;
-         this.init_PoolEntry_DataUtil = scrollbarMetrics;
+         this.scrollbarMetrics = scrollbarMetrics;
       }
 
       private boolean init(double mouseX, double mouseY) {

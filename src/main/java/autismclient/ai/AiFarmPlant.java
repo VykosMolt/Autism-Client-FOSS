@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class AiFarmPlant {
-   static final Set<String> init_Set = Set.of("minecraft:grass_block", "minecraft:dirt", "minecraft:dirt_path");
+   static final Set<String> TILLABLE_BLOCKS = Set.of("minecraft:grass_block", "minecraft:dirt", "minecraft:dirt_path");
    static final int init_I = 4;
    static final int load = 128;
    static final int read = 15;
@@ -28,7 +28,7 @@ final class AiFarmPlant {
    }
 
    static boolean init(String blockId) {
-      return init_Set.contains(blockId);
+      return TILLABLE_BLOCKS.contains(blockId);
    }
 
    static boolean init(BlockPos ground, BlockPos water) {
@@ -67,81 +67,81 @@ final class AiFarmPlant {
 
       final int plots = Math.min(requested, seeds);
       return new AiOperation() {
-         final Minecraft init_Minecraft = Minecraft.getInstance();
-         final long init_J = System.nanoTime() + Math.max(10, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
-         final List<JsonObject> init_List = new ArrayList<>();
-         List<BlockPos> load_List;
-         BlockPos init_BlockPos;
-         BlockPos load_BlockPos;
-         int init_I;
-         int load_I;
-         int read_I;
-         AiOperation init_AiOperation;
-         AiOperation load_AiOperation;
-         List<BlockPos> read_List;
+         final Minecraft mc = Minecraft.getInstance();
+         final long deadline = System.nanoTime() + Math.max(10, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
+         final List<JsonObject> skipped = new ArrayList<>();
+         List<BlockPos> candidates;
+         BlockPos water;
+         BlockPos ice;
+         int planted;
+         int tilled;
+         int cleared;
+         AiOperation breakOp;
+         AiOperation fieldWork;
+         List<BlockPos> plotCells;
          int write;
-         boolean init_Z;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-               if (System.nanoTime() > this.init_J) {
-                  return this.init(this.init_I > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.TIMED_OUT, "Planting ran out of time");
+            if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
+               if (System.nanoTime() > this.deadline) {
+                  return this.init(this.planted > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.TIMED_OUT, "Planting ran out of time");
                }
 
-               if (this.load_List == null) {
-                  this.init_V_3();
+               if (this.candidates == null) {
+                  this.layOut();
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.breakOp != null) {
+                  AiOperation.Result r = this.breakOp.tick();
                   if (!r.terminal()) {
                      return this.init(this.read());
                   }
 
-                  this.init_AiOperation = null;
-                  return this.read_List != null ? this.init(this.read()) : this.init(r);
+                  this.breakOp = null;
+                  return this.plotCells != null ? this.init(this.read()) : this.init(r);
                } else {
-                  if (this.load_BlockPos != null) {
-                     this.init_AiOperation = AiGameOperations.blockAction("break", AiFarmPlant.load(this.load_BlockPos));
-                     return this.init("Breaking ice at " + this.load_BlockPos.toShortString() + " to open water");
+                  if (this.ice != null) {
+                     this.breakOp = AiGameOperations.blockAction("break", AiFarmPlant.load(this.ice));
+                     return this.init("Breaking ice at " + this.ice.toShortString() + " to open water");
                   }
 
-                  if (this.read_List == null) {
-                     this.read_List = new ArrayList<>();
+                  if (this.plotCells == null) {
+                     this.plotCells = new ArrayList<>();
 
-                     for (BlockPos c : this.load_List) {
-                        if (this.read_List.size() < plots) {
-                           this.read_List.add(c);
+                     for (BlockPos c : this.candidates) {
+                        if (this.plotCells.size() < plots) {
+                           this.plotCells.add(c);
                         }
                      }
                   }
 
-                  if (this.read_List.isEmpty()) {
+                  if (this.plotCells.isEmpty()) {
                      return this.init(AiOperation.Status.FAILED, "No tillable ground (grass, dirt or path with open air above) within " + radius + " blocks");
                   }
 
-                  while (this.write < this.read_List.size()) {
-                     BlockPos c = this.read_List.get(this.write);
-                     if (AiFarmPlant.init(this.init_Minecraft.level.getBlockState(c.above()))) {
-                        this.init_AiOperation = AiGameOperations.blockAction("break", AiFarmPlant.load(c.above()));
+                  while (this.write < this.plotCells.size()) {
+                     BlockPos c = this.plotCells.get(this.write);
+                     if (AiFarmPlant.init(this.mc.level.getBlockState(c.above()))) {
+                        this.breakOp = AiGameOperations.blockAction("break", AiFarmPlant.load(c.above()));
                         this.write++;
-                        this.read_I++;
+                        this.cleared++;
                         return this.init("Clearing " + c.above().toShortString());
                      }
 
                      this.write++;
                   }
 
-                  if (this.load_AiOperation == null) {
+                  if (this.fieldWork == null) {
                      int minX = 2147483647;
                      int minZ = 2147483647;
                      int maxX = -2147483648;
                      int maxZ = -2147483648;
-                     int y = this.read_List.getFirst().getY();
+                     int y = this.plotCells.getFirst().getY();
                      List<BlockPos> level = new ArrayList<>();
 
-                     for (BlockPos c : this.read_List) {
+                     for (BlockPos c : this.plotCells) {
                         if (c.getY() == y) {
                            level.add(c);
                         }
@@ -154,31 +154,31 @@ final class AiFarmPlant {
                         maxZ = Math.max(maxZ, c.getZ());
                      }
 
-                     this.load_AiOperation = AiFieldWork.init(level, new BlockPos(minX, y, minZ), maxX - minX + 1, maxZ - minZ + 1, cropBlock, seedItem);
+                     this.fieldWork = AiFieldWork.init(level, new BlockPos(minX, y, minZ), maxX - minX + 1, maxZ - minZ + 1, cropBlock, seedItem);
                   }
 
-                  AiOperation.Result w = this.load_AiOperation.tick();
+                  AiOperation.Result w = this.fieldWork.tick();
                   JsonObject data = AiJson.parseObject(w.dataJson());
                   if (data.has("sown")) {
-                     this.init_I = data.get("sown").getAsInt();
+                     this.planted = data.get("sown").getAsInt();
                   }
 
                   if (data.has("tilled")) {
-                     this.load_I = data.get("tilled").getAsInt();
+                     this.tilled = data.get("tilled").getAsInt();
                   }
 
                   if (!w.terminal()) {
                      return this.init(w.message());
                   } else {
-                     return this.init_I == 0 && w.status() != AiOperation.Status.SUCCEEDED
+                     return this.planted == 0 && w.status() != AiOperation.Status.SUCCEEDED
                         ? this.init(w.status(), "No cell could be tilled and sown: " + w.message())
                         : this.init(
                            AiOperation.Status.SUCCEEDED,
                            "Planted "
-                              + this.init_I
+                              + this.planted
                               + " "
                               + this.load()
-                              + (this.init_I < requested ? " (asked for " + requested + ": " + this.init_Str_4() + ")" : "")
+                              + (this.planted < requested ? " (asked for " + requested + ": " + this.shortfallReason() + ")" : "")
                         );
                   }
                }
@@ -188,12 +188,12 @@ final class AiFarmPlant {
          }
 
          AiOperation.Result init(AiOperation.Result r) {
-            if (this.load_BlockPos != null) {
-               BlockPos opened = this.load_BlockPos;
-               this.load_BlockPos = null;
-               if (this.init_Minecraft.level.getBlockState(opened).is(Blocks.WATER)) {
-                  this.init_BlockPos = opened;
-                  this.load_List = this.init(opened);
+            if (this.ice != null) {
+               BlockPos opened = this.ice;
+               this.ice = null;
+               if (this.mc.level.getBlockState(opened).is(Blocks.WATER)) {
+                  this.water = opened;
+                  this.candidates = this.init(opened);
                }
 
                return this.init("Water opened; laying out the field");
@@ -202,33 +202,33 @@ final class AiFarmPlant {
             }
          }
 
-         void init_V_3() {
-            BlockPos feet = autismclient.ai.engine.AiStance.init(this.init_Minecraft);
+         void layOut() {
+            BlockPos feet = autismclient.ai.engine.AiStance.init(this.mc);
             if (soulSand) {
-               this.load_List = this.init(feet);
+               this.candidates = this.init(feet);
             } else {
-               this.init_BlockPos = this.init(feet, s -> s.is(Blocks.WATER) && s.getFluidState().isSource());
-               if (this.init_BlockPos == null) {
+               this.water = this.init(feet, s -> s.is(Blocks.WATER) && s.getFluidState().isSource());
+               if (this.water == null) {
                   BlockPos frozen = this.init(feet, s -> s.is(Blocks.ICE));
-                  if (frozen != null && !this.init_Minecraft.level.getBlockState(frozen.below()).isAir()) {
-                     this.load_BlockPos = frozen;
+                  if (frozen != null && !this.mc.level.getBlockState(frozen.below()).isAir()) {
+                     this.ice = frozen;
                   }
                }
 
-               this.load_List = this.init(this.init_BlockPos != null ? this.init_BlockPos : (this.load_BlockPos != null ? this.load_BlockPos : feet));
+               this.candidates = this.init(this.water != null ? this.water : (this.ice != null ? this.ice : feet));
             }
          }
 
          List<BlockPos> init(BlockPos anchor) {
             boolean rectangle = width > 0 && length > 0;
-            boolean hydrate = !soulSand && !rectangle && (this.init_BlockPos != null || this.load_BlockPos != null);
+            boolean hydrate = !soulSand && !rectangle && (this.water != null || this.ice != null);
             List<BlockPos> out = new ArrayList<>();
             int span = hydrate ? 4 : Math.min(radius, 6);
             int fromX = rectangle ? -(width - 1) / 2 : -span;
             int toX = rectangle ? width / 2 : span;
             int fromZ = rectangle ? -(length - 1) / 2 : -span;
             int toZ = rectangle ? length / 2 : span;
-            if (rectangle && (this.init_BlockPos != null || this.load_BlockPos != null) && width % 2 == 1 && length % 2 == 1 && width * length - 1 < requested) {
+            if (rectangle && (this.water != null || this.ice != null) && width % 2 == 1 && length % 2 == 1 && width * length - 1 < requested) {
                toX++;
                toZ++;
             }
@@ -237,9 +237,9 @@ final class AiFarmPlant {
                for (int dz = fromZ; dz <= toZ; dz++) {
                   for (int dy = -2; dy <= 1; dy++) {
                      BlockPos p = anchor.offset(dx, dy, dz);
-                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
-                        BlockState ground = this.init_Minecraft.level.getBlockState(p);
-                        BlockState above = this.init_Minecraft.level.getBlockState(p.above());
+                     if (AiTerrain.isLoaded(this.mc.level, p)) {
+                        BlockState ground = this.mc.level.getBlockState(p);
+                        BlockState above = this.mc.level.getBlockState(p.above());
                         boolean farmland = soulSand ? ground.is(Blocks.SOUL_SAND) : ground.is(Blocks.FARMLAND);
                         if ((farmland || !soulSand && AiFarmPlant.init(BuiltInRegistries.BLOCK.getKey(ground.getBlock()).toString()))
                            && (above.isAir() || AiFarmPlant.init(above))
@@ -255,7 +255,7 @@ final class AiFarmPlant {
             out.sort(
                Comparator.<BlockPos>comparingInt(px -> Math.abs(px.getY() - level) > 0 ? 1 : 0)
                   .thenComparingInt(px -> Math.max(Math.abs(px.getX() - anchor.getX()), Math.abs(px.getZ() - anchor.getZ())))
-                  .thenComparingDouble(px -> px.distSqr(this.init_Minecraft.player.blockPosition()))
+                  .thenComparingDouble(px -> px.distSqr(this.mc.player.blockPosition()))
             );
             return out;
          }
@@ -269,7 +269,7 @@ final class AiFarmPlant {
                for (int dz = -radius; dz <= radius; dz++) {
                   for (int dy = -4; dy <= 3; dy++) {
                      p.set(from.getX() + dx, from.getY() + dy, from.getZ() + dz);
-                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && match.test(this.init_Minecraft.level.getBlockState(p))) {
+                     if (AiTerrain.isLoaded(this.mc.level, p) && match.test(this.mc.level.getBlockState(p))) {
                         double sq = p.distSqr(from);
                         if (sq < bestSq) {
                            bestSq = sq;
@@ -283,63 +283,63 @@ final class AiFarmPlant {
             return best;
          }
 
-         String init_Str_4() {
+         String shortfallReason() {
             return seeds < requested
                ? "only " + seeds + " " + seedItem + " in the bag"
-               : "only " + this.init_I + " cells could be prepared" + (this.init_BlockPos == null ? " (no water nearby, the field is dry)" : "");
+               : "only " + this.planted + " cells could be prepared" + (this.water == null ? " (no water nearby, the field is dry)" : "");
          }
 
          String load() {
-            return this.init_I == 1 ? "crop" : "crops";
+            return this.planted == 1 ? "crop" : "crops";
          }
 
          String read() {
-            return "Farming: " + this.init_I + "/" + plots + " planted";
+            return "Farming: " + this.planted + "/" + plots + " planted";
          }
 
-         JsonObject init_JsonObject_6() {
+         JsonObject progressJson() {
             JsonArray skips = new JsonArray();
-            this.init_List.forEach(skips::add);
+            this.skipped.forEach(skips::add);
             JsonObject out = AiJson.objectOf(
                "planted",
-               this.init_I,
+               this.planted,
                "tilled",
-               this.load_I,
+               this.tilled,
                "cleared",
-               this.read_I,
+               this.cleared,
                "requested",
                requested,
                "seedsLeft",
                AiGameState.countInventoryItem(seedItem),
                "hydrated",
-               this.init_BlockPos != null,
+               this.water != null,
                "skipped",
                skips
             );
-            if (this.init_BlockPos != null) {
-               out.add("water", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+            if (this.water != null) {
+               out.add("water", AiJson.objectOf("x", this.water.getX(), "y", this.water.getY(), "z", this.water.getZ()));
             }
 
             return out;
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_6());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            return AiGameOperations.result(status, message, this.init_JsonObject_6());
+            return AiGameOperations.result(status, message, this.progressJson());
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            if (this.breakOp != null) {
+               this.breakOp.cancel();
             }
 
-            if (this.load_AiOperation != null) {
-               this.load_AiOperation.cancel();
+            if (this.fieldWork != null) {
+               this.fieldWork.cancel();
             }
          }
       };

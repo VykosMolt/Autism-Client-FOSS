@@ -33,9 +33,9 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    public boolean useCursorItemForPickupAll = true;
    public boolean useClickDelay = false;
    public int clickDelayMs = 50;
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final autismclient.util.ContainerClickType[] init_NArr = autismclient.util.ContainerClickType.values();
-   private static final int[] init_IArr = new int[]{
+   private static final Minecraft CLIENT = Minecraft.getInstance();
+   private static final autismclient.util.ContainerClickType[] CLICK_TYPES = autismclient.util.ContainerClickType.values();
+   private static final int[] CYCLE_ORDER = new int[]{
       autismclient.util.ContainerClickType.PICKUP.ordinal(),
       autismclient.util.ContainerClickType.QUICK_MOVE.ordinal(),
       autismclient.util.ContainerClickType.SWAP.ordinal(),
@@ -64,14 +64,14 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
    public int getItemButton(int index) {
       int raw = index < this.itemButtons.size() ? this.itemButtons.get(index) : this.button;
-      return init_I_N_I(this.getItemClickType(index), raw);
+      return clampButton(this.getItemClickType(index), raw);
    }
 
    public autismclient.util.ContainerClickType getItemClickType(int index) {
-      return init_NArr[this.getItemActionIndex(index)];
+      return CLICK_TYPES[this.getItemActionIndex(index)];
    }
 
-   public String init_Str_I_2(int index) {
+   public String itemButtonLabel(int index) {
       if (this.getItemClickType(index) == autismclient.util.ContainerClickType.PICKUP_ALL) {
          return "All";
       }
@@ -99,22 +99,22 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return var10000;
    }
 
-   public void init_V_I(int index) {
+   public void nextItemAction(int index) {
       while (this.itemActionIdx.size() <= index) {
          this.itemActionIdx.add(this.actionIndex);
       }
 
-      this.itemActionIdx.set(index, init_I_I_I(this.itemActionIdx.get(index), 1));
-      this.update_V(index);
+      this.itemActionIdx.set(index, cycleActionIndex(this.itemActionIdx.get(index), 1));
+      this.normalizeItemButton(index);
    }
 
-   public void load_V(int index) {
+   public void previousItemAction(int index) {
       while (this.itemActionIdx.size() <= index) {
          this.itemActionIdx.add(this.actionIndex);
       }
 
-      this.itemActionIdx.set(index, init_I_I_I(this.itemActionIdx.get(index), -1));
-      this.update_V(index);
+      this.itemActionIdx.set(index, cycleActionIndex(this.itemActionIdx.get(index), -1));
+      this.normalizeItemButton(index);
    }
 
    public void nextItemButton(int index) {
@@ -123,7 +123,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       if (this.getItemClickType(index) != autismclient.util.ContainerClickType.PICKUP_ALL) {
-         int limit = init_I_N(this.getItemClickType(index));
+         int limit = buttonCount(this.getItemClickType(index));
          if (limit > 1) {
             int current = this.getItemButton(index);
             this.itemButtons.set(index, (current + 1) % limit);
@@ -137,7 +137,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       if (this.getItemClickType(index) != autismclient.util.ContainerClickType.PICKUP_ALL) {
-         int limit = init_I_N(this.getItemClickType(index));
+         int limit = buttonCount(this.getItemClickType(index));
          if (limit > 1) {
             int current = this.getItemButton(index);
             this.itemButtons.set(index, (current - 1 + limit) % limit);
@@ -148,8 +148,8 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    public static List<autismclient.util.ContainerClickType> selectableClickTypes() {
       List<autismclient.util.ContainerClickType> list = new ArrayList<>();
 
-      for (int ordinal : init_IArr) {
-         list.add(init_NArr[ordinal]);
+      for (int ordinal : CYCLE_ORDER) {
+         list.add(CLICK_TYPES[ordinal]);
       }
 
       return list;
@@ -177,28 +177,28 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             }
 
             this.itemActionIdx.set(index, sync(opts.get(optionIndex).ordinal()));
-            this.update_V(index);
+            this.normalizeItemButton(index);
          }
       }
    }
 
    public int getItemButtonCount(int index) {
-      return init_I_N(this.getItemClickType(index));
+      return buttonCount(this.getItemClickType(index));
    }
 
    public List<String> getItemButtonLabels(int index) {
       autismclient.util.ContainerClickType action = this.getItemClickType(index);
-      int limit = Math.max(1, init_I_N(action));
+      int limit = Math.max(1, buttonCount(action));
       List<String> opts = new ArrayList<>();
 
       for (int b = 0; b < limit; b++) {
-         opts.add(init_Str_N_I(action, b));
+         opts.add(buttonLabel(action, b));
       }
 
       return opts;
    }
 
-   private static String init_Str_N_I(autismclient.util.ContainerClickType action, int b) {
+   private static String buttonLabel(autismclient.util.ContainerClickType action, int b) {
       if (action == autismclient.util.ContainerClickType.PICKUP_ALL) {
          return "All";
       }
@@ -228,18 +228,18 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             this.itemButtons.add(this.button);
          }
 
-         int limit = init_I_N(this.getItemClickType(index));
+         int limit = buttonCount(this.getItemClickType(index));
          if (limit > 1) {
             this.itemButtons.set(index, Math.floorMod(optionIndex, limit));
          }
       }
    }
 
-   public boolean init_Z_I_2(int index) {
+   public boolean isPlayerInventoryOnly(int index) {
       return this.getItemSearchScope(index) == ItemAction.Inner_DataUtil.PLAYER_INVENTORY;
    }
 
-   public void init_V_I_Z(int index, boolean value) {
+   public void setPlayerInventoryOnly(int index, boolean value) {
       this.setItemSearchScope(index, value ? ItemAction.Inner_DataUtil.PLAYER_INVENTORY : ItemAction.Inner_DataUtil.BOTH);
    }
 
@@ -308,13 +308,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             int clickCount = this.getItemTimes(ei);
             autismclient.util.ContainerClickType eiAction = this.getItemClickType(ei);
             int eiButton = this.getItemButton(ei);
-            if (init_Z_N(eiAction)) {
+            if (hasFixedButton(eiAction)) {
                eiButton = eiAction.defaultButton();
             }
 
-            MacroItemTarget entryTarget = this.init_ArrayUtil_I(ei).resolveTemplates(mc);
+            MacroItemTarget entryTarget = this.targetAt(ei).resolveTemplates(mc);
             if (entryTarget != null) {
-               String entryName = init_Str_Str(entryTarget.toSpecString());
+               String entryName = entryItemName(entryTarget.toSpecString());
                int configuredEntrySlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                if (eiAction == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
                   out.add(new ItemAction.Inner_StreamUtil(eiAction, eiButton, -1, entryTarget, clickCount));
@@ -347,9 +347,9 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             }
          }
       } else if (this.useSlot && this.targetSlot >= 0) {
-         autismclient.util.ContainerClickType action = this.init_N();
-         int effectiveButton = this.init_I_2();
-         if (init_Z_N(action)) {
+         autismclient.util.ContainerClickType action = this.currentClickType();
+         int effectiveButton = this.effectiveButton();
+         if (hasFixedButton(action)) {
             effectiveButton = action.defaultButton();
          }
 
@@ -364,23 +364,23 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          }
 
          out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, resolvedTargetSlot, null, this.times));
-      } else if (this.init_N() == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
-         out.add(new ItemAction.Inner_StreamUtil(this.init_N(), this.init_I_2(), -1, null, this.times));
+      } else if (this.currentClickType() == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
+         out.add(new ItemAction.Inner_StreamUtil(this.currentClickType(), this.effectiveButton(), -1, null, this.times));
       }
 
       return out;
    }
 
    private static void init_V_Minecraft_MapStore_StreamUti(Minecraft mc, ItemAction.Inner_StreamUtil e) {
-      boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
+      boolean cursorPickupAll = e.pickupTarget() != null || e.clickType() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
       if (cursorPickupAll) {
-         autismclient.util.ContainerPickUpAllHelper.init(mc, e.init_ArrayUtil(), e.read());
-      } else if (e.init_N() != autismclient.util.ContainerClickType.DROP_ITEM && e.init_N() != autismclient.util.ContainerClickType.DROP_STACK) {
+         autismclient.util.ContainerPickUpAllHelper.init(mc, e.pickupTarget(), e.read());
+      } else if (e.clickType() != autismclient.util.ContainerClickType.DROP_ITEM && e.clickType() != autismclient.util.ContainerClickType.DROP_STACK) {
          for (int j = 0; j < e.read(); j++) {
-            autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.init_I(), e.init_N().toContainerInput());
+            autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.button(), e.clickType().toContainerInput());
          }
       } else {
-         autismclient.util.InventoryDropHelper.init(mc, e.load(), e.init_N() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
+         autismclient.util.InventoryDropHelper.init(mc, e.load(), e.clickType() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
       }
    }
 
@@ -405,17 +405,17 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          }
 
          for (ItemAction.Inner_StreamUtil e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
-            boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
+            boolean cursorPickupAll = e.pickupTarget() != null || e.clickType() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
             if (cursorPickupAll) {
-               MacroItemTarget t = e.init_ArrayUtil();
+               MacroItemTarget t = e.pickupTarget();
 
                for (int j = 0; j < e.read(); j++) {
                   plan.add(() -> autismclient.util.ContainerPickUpAllHelper.init(mc, t, 1));
                }
-            } else if (e.init_N() == autismclient.util.ContainerClickType.DROP_STACK) {
+            } else if (e.clickType() == autismclient.util.ContainerClickType.DROP_STACK) {
                int fs = e.load();
                plan.add(() -> autismclient.util.InventoryDropHelper.init(mc, fs, 0));
-            } else if (e.init_N() == autismclient.util.ContainerClickType.DROP_ITEM) {
+            } else if (e.clickType() == autismclient.util.ContainerClickType.DROP_ITEM) {
                int fs = e.load();
 
                for (int j = 0; j < e.read(); j++) {
@@ -423,8 +423,8 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                }
             } else {
                int fs = e.load();
-               int fb = e.init_I();
-               ContainerInput input = e.init_N().toContainerInput();
+               int fb = e.button();
+               ContainerInput input = e.clickType().toContainerInput();
 
                for (int j = 0; j < e.read(); j++) {
                   plan.add(() -> autismclient.util.ContainerClickExecutor.init(mc, fs, fb, input));
@@ -438,11 +438,11 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private int init_I_AbstractContainerM_Str(AbstractContainerMenu handler, String name) {
-      return this.init_I_AbstractContainerM_ArrayUtil(handler, MacroItemTarget.parse(name));
+   private int findSlotByName(AbstractContainerMenu handler, String name) {
+      return this.findSlotForTarget(handler, MacroItemTarget.parse(name));
    }
 
-   private int init_I_AbstractContainerM_ArrayUtil(AbstractContainerMenu handler, MacroItemTarget target) {
+   private int findSlotForTarget(AbstractContainerMenu handler, MacroItemTarget target) {
       return this.init(handler, target, ItemAction.Inner_DataUtil.BOTH, ItemAction.Inner_CachePool.DEFAULT);
    }
 
@@ -479,13 +479,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
             if (playerInventoryOnly != null) {
-               boolean isPlayerInventory = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, slot);
+               boolean isPlayerInventory = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(CLIENT, slot);
                if (playerInventoryOnly != isPlayerInventory) {
                   continue;
                }
             }
 
-            int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, slot.index);
+            int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(CLIENT, slot.index);
             int score = target.matchScore(slot.getItem(), visibleSlot);
             if (score >= 0) {
                int count = slot.getItem().getCount();
@@ -528,7 +528,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return requiredSlot;
          }
 
-         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, requiredSlot);
+         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(CLIENT, requiredSlot);
          return target.matches(slot.getItem(), visibleSlot) ? requiredSlot : -1;
       } else {
          return -1;
@@ -579,7 +579,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "ITEM");
-      tag.put("itemNames", MacroItemTarget.toListTag(this.load_List_3()));
+      tag.put("itemNames", MacroItemTarget.toListTag(this.effectiveTargets()));
       ListTag times2 = new ListTag();
 
       for (int t : this.itemTimes) {
@@ -605,7 +605,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       ListTag searchScopes = new ListTag();
 
       for (int i = 0; i < this.itemNames.size(); i++) {
-         preferInv.add(StringTag.valueOf(String.valueOf(this.init_Z_I_2(i))));
+         preferInv.add(StringTag.valueOf(String.valueOf(this.isPlayerInventoryOnly(i))));
          searchScopes.add(StringTag.valueOf(String.valueOf(this.getItemSearchScope(i).ordinal())));
       }
 
@@ -647,7 +647,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          }
       }
 
-      this.update_V();
+      this.syncItemNames();
       this.itemTimes.clear();
       if (tag.contains("itemTimes")) {
          for (Tag el : tag.getList("itemTimes").orElse(new ListTag())) {
@@ -698,7 +698,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       for (int i = 0; i < this.itemButtons.size(); i++) {
-         this.itemButtons.set(i, init_I_N_I(this.getItemClickType(i), this.itemButtons.get(i)));
+         this.itemButtons.set(i, clampButton(this.getItemClickType(i), this.itemButtons.get(i)));
       }
 
       this.preferPlayerInventory.clear();
@@ -770,7 +770,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       this.targetSlot = tag.getIntOr("targetSlot", -1);
       this.useSlot = tag.getBooleanOr("useSlot", false);
       this.actionIndex = sync(tag.getIntOr("actionIndex", 0));
-      this.button = init_I_N_I(this.init_N(), tag.getIntOr("button", 0));
+      this.button = clampButton(this.currentClickType(), tag.getIntOr("button", 0));
       this.times = tag.getIntOr("times", 1);
       this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
@@ -789,17 +789,17 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
    @Override
    public String getDisplayName() {
-      List<MacroItemTarget> targets = this.load_List_3();
+      List<MacroItemTarget> targets = this.effectiveTargets();
       if (targets.isEmpty()) {
          return this.useSlot && this.targetSlot >= 0
-            ? "#" + this.targetSlot + " (" + this.init_N().load_Str + ")" + GuiWaitAware.waitSuffix(this)
+            ? "#" + this.targetSlot + " (" + this.currentClickType().load_Str + ")" + GuiWaitAware.waitSuffix(this)
             : "Item (empty)" + GuiWaitAware.waitSuffix(this);
       }
 
       String actionName = this.getItemClickType(0).load_Str;
       String e0 = targets.get(0).toSpecString();
-      int slotNumber = init_I_Str(e0);
-      String itemName = init_Str_Str(e0);
+      int slotNumber = parseSlotEntry(e0);
+      String itemName = entryItemName(e0);
       String first;
       if (slotNumber >= 0 && !itemName.isEmpty()) {
          first = itemName + " @ " + slotNumber;
@@ -824,32 +824,32 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return "I";
    }
 
-   public autismclient.util.ContainerClickType init_N() {
-      return init_NArr[sync(this.actionIndex)];
+   public autismclient.util.ContainerClickType currentClickType() {
+      return CLICK_TYPES[sync(this.actionIndex)];
    }
 
-   public void init_V_5() {
-      this.actionIndex = init_I_I_I(this.actionIndex, 1);
-      this.button = init_I_N_I(this.init_N(), this.button);
+   public void nextClickAction() {
+      this.actionIndex = cycleActionIndex(this.actionIndex, 1);
+      this.button = clampButton(this.currentClickType(), this.button);
    }
 
-   public void load_V_3() {
-      this.actionIndex = init_I_I_I(this.actionIndex, -1);
-      this.button = init_I_N_I(this.init_N(), this.button);
+   public void previousClickAction() {
+      this.actionIndex = cycleActionIndex(this.actionIndex, -1);
+      this.button = clampButton(this.currentClickType(), this.button);
    }
 
-   public String load_Str() {
-      if (this.init_N() == autismclient.util.ContainerClickType.PICKUP_ALL) {
+   public String currentButtonLabel() {
+      if (this.currentClickType() == autismclient.util.ContainerClickType.PICKUP_ALL) {
          return "All";
       }
 
-      if (this.init_N() == autismclient.util.ContainerClickType.SWAP) {
-         int hotbarSlot = Math.max(0, Math.min(8, this.init_I_2())) + 1;
+      if (this.currentClickType() == autismclient.util.ContainerClickType.SWAP) {
+         int hotbarSlot = Math.max(0, Math.min(8, this.effectiveButton())) + 1;
          return "Hotbar " + hotbarSlot;
       }
 
       String var10000;
-      switch (this.init_I_2()) {
+      switch (this.effectiveButton()) {
          case 0:
             var10000 = "Left";
             break;
@@ -866,41 +866,41 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return var10000;
    }
 
-   public void read_V() {
-      if (this.init_N() != autismclient.util.ContainerClickType.PICKUP_ALL) {
-         int limit = init_I_N(this.init_N());
+   public void nextButton() {
+      if (this.currentClickType() != autismclient.util.ContainerClickType.PICKUP_ALL) {
+         int limit = buttonCount(this.currentClickType());
          if (limit > 1) {
-            this.button = (this.init_I_2() + 1) % limit;
+            this.button = (this.effectiveButton() + 1) % limit;
          }
       }
    }
 
-   public void write_V() {
-      if (this.init_N() != autismclient.util.ContainerClickType.PICKUP_ALL) {
-         int limit = init_I_N(this.init_N());
+   public void previousButton() {
+      if (this.currentClickType() != autismclient.util.ContainerClickType.PICKUP_ALL) {
+         int limit = buttonCount(this.currentClickType());
          if (limit > 1) {
-            this.button = (this.init_I_2() - 1 + limit) % limit;
+            this.button = (this.effectiveButton() - 1 + limit) % limit;
          }
       }
    }
 
-   public int init_I_2() {
-      return init_I_N_I(this.init_N(), this.button);
+   public int effectiveButton() {
+      return clampButton(this.currentClickType(), this.button);
    }
 
-   private void update_V(int index) {
+   private void normalizeItemButton(int index) {
       while (this.itemButtons.size() <= index) {
          this.itemButtons.add(this.button);
       }
 
-      this.itemButtons.set(index, init_I_N_I(this.getItemClickType(index), this.itemButtons.get(index)));
+      this.itemButtons.set(index, clampButton(this.getItemClickType(index), this.itemButtons.get(index)));
    }
 
-   private static boolean init_Z_N(autismclient.util.ContainerClickType action) {
+   private static boolean hasFixedButton(autismclient.util.ContainerClickType action) {
       return action != autismclient.util.ContainerClickType.QUICK_MOVE && action.load();
    }
 
-   private static int init_I_N(autismclient.util.ContainerClickType action) {
+   private static int buttonCount(autismclient.util.ContainerClickType action) {
       byte var10000;
       switch (action) {
          case SWAP:
@@ -919,16 +919,16 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return var10000;
    }
 
-   private static int init_I_N_I(autismclient.util.ContainerClickType action, int rawButton) {
+   private static int clampButton(autismclient.util.ContainerClickType action, int rawButton) {
       if (action == null) {
          action = autismclient.util.ContainerClickType.PICKUP;
       }
 
-      if (init_Z_N(action)) {
+      if (hasFixedButton(action)) {
          return action.defaultButton();
       }
 
-      int limit = init_I_N(action);
+      int limit = buttonCount(action);
       if (limit <= 1) {
          return 0;
       }
@@ -955,25 +955,25 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return rawScope >= 0 && rawScope < ItemAction.Inner_DataUtil.values().length ? rawScope : ItemAction.Inner_DataUtil.BOTH.ordinal();
    }
 
-   private static int init_I_I_I(int current, int direction) {
+   private static int cycleActionIndex(int current, int direction) {
       int selected = direction >= 0 ? -1 : 0;
 
-      for (int i = 0; i < init_IArr.length; i++) {
-         if (init_IArr[i] == current) {
+      for (int i = 0; i < CYCLE_ORDER.length; i++) {
+         if (CYCLE_ORDER[i] == current) {
             selected = i;
             break;
          }
       }
 
-      int next = (selected + direction) % init_IArr.length;
+      int next = (selected + direction) % CYCLE_ORDER.length;
       if (next < 0) {
-         next += init_IArr.length;
+         next += CYCLE_ORDER.length;
       }
 
-      return init_IArr[next];
+      return CYCLE_ORDER[next];
    }
 
-   private static int init_I_Str(String entry) {
+   private static int parseSlotEntry(String entry) {
       if (entry != null && entry.startsWith("#")) {
          int separator = entry.indexOf(124);
          String raw = separator >= 0 ? entry.substring(1, separator) : entry.substring(1);
@@ -988,7 +988,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private static String init_Str_Str(String entry) {
+   private static String entryItemName(String entry) {
       if (entry == null || entry.isBlank()) {
          return "";
       }
@@ -1001,7 +1001,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return separator >= 0 && separator + 1 < entry.length() ? entry.substring(separator + 1).trim() : "";
    }
 
-   private List<MacroItemTarget> load_List_3() {
+   private List<MacroItemTarget> effectiveTargets() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
@@ -1016,12 +1016,12 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return this.itemTargets;
    }
 
-   private MacroItemTarget init_ArrayUtil_I(int index) {
-      List<MacroItemTarget> targets = this.load_List_3();
+   private MacroItemTarget targetAt(int index) {
+      List<MacroItemTarget> targets = this.effectiveTargets();
       return index >= 0 && index < targets.size() ? targets.get(index) : new MacroItemTarget();
    }
 
-   private void update_V() {
+   private void syncItemNames() {
       this.itemNames.clear();
 
       for (MacroItemTarget target : this.itemTargets) {
@@ -1058,6 +1058,6 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private record Inner_StreamUtil(autismclient.util.ContainerClickType init_N, int init_I, int load, MacroItemTarget init_ArrayUtil, int read) {
+   private record Inner_StreamUtil(autismclient.util.ContainerClickType clickType, int button, int load, MacroItemTarget pickupTarget, int read) {
    }
 }

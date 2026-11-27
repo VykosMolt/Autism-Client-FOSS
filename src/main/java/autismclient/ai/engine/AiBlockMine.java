@@ -79,7 +79,7 @@ import net.minecraft.world.phys.HitResult.Type;
 
 public final class AiBlockMine {
    static final int init_I = 64;
-   private static final boolean init_Z = Boolean.getBoolean("autism.navigation.trace");
+   private static final boolean NAVIGATION_TRACE = Boolean.getBoolean("autism.navigation.trace");
    static final int load_I = 14;
    static final long init_J = 250000000L;
    static final int read_I = 64;
@@ -89,31 +89,31 @@ public final class AiBlockMine {
    static final double load_D = 9.0;
    static final int sync_I = 5;
    static final int flush_I = 256;
-   static final long load_J = 1500000L;
+   static final long SCAN_BUDGET_NANOS = 1500000L;
    static final int close_I = 64;
    static final int open_I = 30;
-   static final long read_J = 90000000000L;
-   static final double read_D = 1.3;
+   static final long EXPLORE_TIMEOUT_NANOS = 90000000000L;
+   static final double PICKUP_HALF_WIDTH = 1.3;
    static final double write_D = 0.5;
-   static final double update_D = 2.3;
+   static final double PICKUP_HEIGHT = 2.3;
    static final double sync_D = 5.0;
-   static final double flush_D = 2.2026431718061676;
-   static final double close_D = 2.4271844660194173;
+   static final double GROUND_DRIFT_FACTOR = 2.2026431718061676;
+   static final double ITEM_GROUND_GLIDE = 2.4271844660194173;
    static final double open_D = 0.125;
    static final int poll_I = 4;
-   static final long write_J = 12000000000L;
+   static final long NO_PROGRESS_NANOS = 12000000000L;
    static final int push_I = 6;
    static final int pop_I = 8;
    static final double poll_D = 20.0;
-   static final double push_D = 0.3;
+   static final double SURFACE_ACROSS_COST = 0.3;
    static final int tick_I = 2;
-   static final long update_J = 600000000000L;
-   static final double pop_D = 4.3;
+   static final long STRIKE_TTL_NANOS = 600000000000L;
+   static final double WALK_SPEED = 4.3;
    static final double tick_D = 0.5;
    private static final Map<Long, long[]> STRIKES_BY_CELL = new HashMap<>();
-   private static final long[] init_JArr = new long[2];
-   static final long sync_J = 180000000000L;
-   static final long flush_J = 300000000000L;
+   private static final long[] BREATHE_START_NANOS = new long[2];
+   static final long BREATHE_REPEAT_WINDOW_NANOS = 180000000000L;
+   static final long BREATHE_RECENT_NANOS = 300000000000L;
    static final int run_I = 16;
    static final double run_D = 1.5;
 
@@ -192,7 +192,7 @@ public final class AiBlockMine {
       return !checked && heldGoal > 0 && remaining >= 8 && ordinaryLog && supported && interruptible && !pending;
    }
 
-   static boolean init_Z_D(double dropDistance, double workDistance, int available, int needed) {
+   static boolean dropNotWorthDetour(double dropDistance, double workDistance, int available, int needed) {
       return available < needed && dropDistance > 8.0 && dropDistance > workDistance + 8.0;
    }
 
@@ -272,7 +272,7 @@ public final class AiBlockMine {
       return across * 2.0 * deepAcross + (dy < 0 ? -dy + deepDown : dy * 2.5);
    }
 
-   static double init_D(BlockPos feet, BlockPos target, int surfaceThere) {
+   static double surfaceRouteCost(BlockPos feet, BlockPos target, int surfaceThere) {
       double across = Math.hypot(target.getX() - feet.getX(), target.getZ() - feet.getZ());
       int down = Math.max(0, surfaceThere - 1 - target.getY());
       int deep = Math.max(0, Math.min(down, -target.getY()));
@@ -308,7 +308,7 @@ public final class AiBlockMine {
       if (feet.getY() >= here - 1) {
          int there = level.getHeight(Types.MOTION_BLOCKING, target.getX(), target.getZ());
          if (there > target.getY() && init(feet, target, (x, z) -> level.getHeight(Types.MOTION_BLOCKING, x, z))) {
-            cost = Math.min(cost, init_D(feet, target, there));
+            cost = Math.min(cost, surfaceRouteCost(feet, target, there));
          }
       }
 
@@ -527,146 +527,146 @@ public final class AiBlockMine {
          );
          final long deadline = System.nanoTime() + Math.max(20, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
          return new AiOperation() {
-            final Object init_Obj = mc.level;
-            final Set<Long> init_Set = new HashSet<>(avoid);
-            final Set<Long> load_Set = new HashSet<>();
-            final Predicate<Block> init_Predicate = AiBlockMine.sourceBlockFilter(
-               wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString())
+            final Object startLevel = mc.level;
+            final Set<Long> blacklistedCells = new HashSet<>(avoid);
+            final Set<Long> lavaSealedCells = new HashSet<>();
+            final Predicate<Block> targetBlockFilter = AiBlockMine.sourceBlockFilter(
+               wantedDrops, block -> this.matchesBlockId(BuiltInRegistries.BLOCK.getKey(block).toString())
             );
-            final Map<Block, Boolean> init_Map = new IdentityHashMap<>();
-            final Map<Item, Boolean> load_Map = new IdentityHashMap<>();
-            final BiPredicate<BlockState, ItemStack> init_BiPredicate = this.init_BiPredicate();
-            final Map<Long, Double> read_Map = new HashMap<>();
-            BlockPos init_BlockPos;
-            int init_I = -1;
-            final Map<Long, Long> write_Map = new LinkedHashMap<>();
-            final AiBlockMine.Inner_CachePool init_BufferHelper_Cache = new AiBlockMine.Inner_CachePool();
-            final Set<Long> read_Set = new HashSet<>();
-            final Map<Long, String> update_Map = new HashMap<>();
-            final Map<Long, Integer> sync_Map = new HashMap<>();
-            final int load_I = this.load_I_6();
-            final AiAim init_DataUtil = new AiAim();
+            final Map<Block, Boolean> blockMatchCache = new IdentityHashMap<>();
+            final Map<Item, Boolean> wantedItemCache = new IdentityHashMap<>();
+            final BiPredicate<BlockState, ItemStack> acceptedTool = this.buildAcceptedTool();
+            final Map<Long, Double> travelCostCache = new HashMap<>();
+            BlockPos travelCostFeet;
+            int travelCostTick = -1;
+            final Map<Long, Long> pendingDropDeadlines = new LinkedHashMap<>();
+            final AiBlockMine.Inner_CachePool dropAttribution = new AiBlockMine.Inner_CachePool();
+            final Set<Long> countedCells = new HashSet<>();
+            final Map<Long, String> blockIdByCell = new HashMap<>();
+            final Map<Long, Integer> failuresByCell = new HashMap<>();
+            final int heldAtStart = this.heldWanted();
+            final AiAim aim = new AiAim();
             final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
-                  this.init_DataUtil::aimAt,
+                  this.aim::aimAt,
                   true,
                   true,
-                  this.init_DataUtil::tick,
-                  () -> !this.init_DataUtil.isSilent()
+                  this.aim::tick,
+                  () -> !this.aim.isSilent()
                )
-               .withRotationConsumerCompat(rotation -> this.init_DataUtil.setTargetRotation(rotation))
+               .withRotationConsumerCompat(rotation -> this.aim.setTargetRotation(rotation))
                .withAcceptedToolCompat((state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops));
             final AiBlockDigger load_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
-                  this.init_DataUtil::aimAt,
+                  this.aim::aimAt,
                   true,
                   false,
-                  this.init_DataUtil::tick,
-                  () -> !this.init_DataUtil.isSilent()
+                  this.aim::tick,
+                  () -> !this.aim.isSilent()
                )
-               .withRotationConsumerCompat(rotation -> this.init_DataUtil.setTargetRotation(rotation));
+               .withRotationConsumerCompat(rotation -> this.aim.setTargetRotation(rotation));
             AiBlockDigger read_RefQueue_DataUtil = this.init_RefQueue_DataUtil;
-            List<BlockPos> init_List = new ArrayList<>();
-            final Set<Long> write_Set = new HashSet<>();
-            final AiMiningCommitment init_FieldCache = new AiMiningCommitment();
-            final Set<Long> update_Set = new HashSet<>();
-            final Set<Long> sync_Set = new HashSet<>();
-            BlockPos load_BlockPos = args.has("focusX")
+            List<BlockPos> knownTargets = new ArrayList<>();
+            final Set<Long> treeLogs = new HashSet<>();
+            final AiMiningCommitment veinCommitment = new AiMiningCommitment();
+            final Set<Long> lastGoalCells = new HashSet<>();
+            final Set<Long> blindStances = new HashSet<>();
+            BlockPos focus = args.has("focusX")
                ? new BlockPos(AiJson.getInt(args, "focusX", 0), AiJson.getInt(args, "focusY", 0), AiJson.getInt(args, "focusZ", 0))
                : null;
-            final Set<Long> flush_Set = new HashSet<>();
-            final Set<Long> close_Set = new LinkedHashSet<>();
-            AiGoto.GotoOp init_HashUtil_CachePool;
-            AiBlockMine.Inner_TaskQueue init_BufferHelper_TaskQ;
-            AiBlockMine.Inner_TaskQueue load_BufferHelper_TaskQ;
-            BlockPos read_BlockPos;
-            int read_I;
-            BlockPos write_BlockPos;
-            long init_J;
-            boolean init_Z;
-            boolean load_Z;
-            boolean read_Z;
-            AiOperation init_AiOperation;
-            AiOperation.Result init_AiOperation_Result;
-            AiOperation load_AiOperation;
-            boolean write_Z;
-            boolean update_Z = AiJson.getBoolean(args, "toolPrepared", false);
-            boolean sync_Z;
-            final AiPlacer init_DataPipe = new AiPlacer();
-            BlockPos update_BlockPos;
-            BlockPos sync_BlockPos;
-            int write_I;
-            int update_I;
-            int sync_I;
-            int flush_I;
-            int close_I;
-            int open_I;
-            int poll_I;
-            int push_I;
-            int pop_I;
-            long load_J;
-            long read_J;
-            AiPathfinder.PathGoal init_ClassCache_JsonUti;
-            AiBlockMine.Inner_BufferHelper init_BufferHelper_Buffe;
-            AiBlockMine.Inner_StreamUtil init_BufferHelper_Strea;
-            BlockPos flush_BlockPos;
-            final Map<String, Integer> flush_Map = new HashMap<>();
-            final Set<Vec3> open_Set = new HashSet<>();
-            final Map<Vec3, Integer> close_Map = new HashMap<>();
-            boolean flush_Z;
+            final Set<Long> stuckCells = new HashSet<>();
+            final Set<Long> goalSet = new LinkedHashSet<>();
+            AiGoto.GotoOp travel;
+            AiBlockMine.Inner_TaskQueue currentGatherGoal;
+            AiBlockMine.Inner_TaskQueue replannedDropGoal;
+            BlockPos breaking;
+            int descentDepth;
+            BlockPos pillarDirt;
+            long pillarDirtSince;
+            boolean breakingTarget;
+            boolean exploring;
+            boolean cancelled;
+            AiOperation preparation;
+            AiOperation.Result lastPreparationResult;
+            AiOperation breathe;
+            boolean diveStrikeCounted;
+            boolean toolPrepared = AiJson.getBoolean(args, "toolPrepared", false);
+            boolean reconcileAfterPreparation;
+            final AiPlacer waterPlacer = new AiPlacer();
+            BlockPos waterCell;
+            BlockPos wetTarget;
+            int reachFailures;
+            int brokenCount;
+            int treesStarted;
+            int tickCount;
+            int idleAtGoalTicks;
+            int breakFailures;
+            int breakStartTick;
+            int collectableNearbyCount;
+            int nearbyDropCount;
+            long exploreSince;
+            long settleSince;
+            AiPathfinder.PathGoal travelGoal;
+            AiBlockMine.Inner_BufferHelper exploreGoal;
+            AiBlockMine.Inner_StreamUtil descent;
+            BlockPos descentTarget;
+            final Map<String, Integer> descentFailures = new HashMap<>();
+            final Set<Vec3> freshDropSpots = new HashSet<>();
+            final Map<Vec3, Integer> dropCountBySpot = new HashMap<>();
+            boolean collectingInBox;
             int tick = -1;
-            final List<Vec3> load_List = new ArrayList<>();
-            double init_D;
-            BlockPos close_BlockPos;
-            long write_J;
+            final List<Vec3> inBoxItems = new ArrayList<>();
+            double bestDistance;
+            BlockPos progressNearest;
+            long lastTickNanos;
             int run;
             int get;
-            long update_J;
-            final AiBlockMine.Inner_ConfigStore init_BufferHelper_Confi = new AiBlockMine.Inner_ConfigStore();
+            long progressSince;
+            final AiBlockMine.Inner_ConfigStore pathProgress = new AiBlockMine.Inner_ConfigStore();
             int set = 2147483647;
             int put = radius;
-            List<BlockPos> read_List = new ArrayList<>();
+            List<BlockPos> scanHits = new ArrayList<>();
             int add;
-            boolean close_Z;
-            boolean open_Z;
-            int[][] init_IArr2;
-            long sync_J;
-            BlockPos open_BlockPos;
-            boolean poll_Z;
-            final Map<Long, Double> open_Map = new HashMap<>();
-            long flush_J = -1L;
-            AiDigLine.Inner_DataUtil init_EventBus_DataUtil;
-            Set<BlockPos> poll_Set = Set.of();
-            final List<AiDigLine.Inner_DataUtil> write_List = new ArrayList<>();
-            Set<BlockPos> push_Set = Set.of();
-            BlockPos poll_BlockPos;
-            List<BlockPos> update_List = List.of();
+            boolean scanning;
+            boolean scanned;
+            int[][] scanOrder;
+            long scanOrderKey;
+            BlockPos scanCentre;
+            boolean steppingToDrop;
+            final Map<Long, Double> diveCostCache = new HashMap<>();
+            long diveCostTick = -1L;
+            AiDigLine.Inner_DataUtil digLine;
+            Set<BlockPos> unusedDigCells = Set.of();
+            final List<AiDigLine.Inner_DataUtil> digLines = new ArrayList<>();
+            Set<BlockPos> digLinesCells = Set.of();
+            BlockPos aimCacheEnd;
+            List<BlockPos> aimCacheBlocks = List.of();
             int clear = -2147483648;
-            Vec3 init_Vec3;
-            BlockPos push_BlockPos;
-            BlockPos pop_BlockPos;
-            Vec3 load_Vec3;
-            private final Map<Long, long[]> push_Map = new HashMap<>();
+            Vec3 aimCachePoint;
+            BlockPos hiddenTarget;
+            BlockPos softBlocker;
+            Vec3 softBlockerAim;
+            private final Map<Long, long[]> standCellCache = new HashMap<>();
             private int data = -2147483648;
-            final Map<Long, long[]> poll_Map = new HashMap<>();
+            final Map<Long, long[]> wetCache = new HashMap<>();
 
-            void init_V_14() {
+            void checkAirDive() {
                LocalPlayer p = mc.player;
                if (!p.isEyeInFluid(FluidTags.WATER)) {
-                  this.write_Z = false;
+                  this.diveStrikeCounted = false;
                } else {
                   if (p.getAirSupply() >= p.getMaxAirSupply() - 10) {
-                     this.write_Z = false;
+                     this.diveStrikeCounted = false;
                   }
 
-                  if (!this.write_Z && !(p.getAirSupply() > p.getMaxAirSupply() * 0.45)) {
-                     BlockPos target = this.read_BlockPos;
+                  if (!this.diveStrikeCounted && !(p.getAirSupply() > p.getMaxAirSupply() * 0.45)) {
+                     BlockPos target = this.breaking;
                      if (target == null) {
                         BlockPos feet = p.blockPosition();
 
-                        for (BlockPos g : this.init_List_5()) {
+                        for (BlockPos g : this.goalBlocks()) {
                            if (g.distSqr(feet) <= 64.0 && AiBlockMine.init(mc, g) && (target == null || g.distSqr(feet) < target.distSqr(feet))) {
                               target = g;
                            }
@@ -674,7 +674,7 @@ public final class AiBlockMine {
                      }
 
                      if (target != null && AiBlockMine.init(mc, target)) {
-                        this.write_Z = true;
+                        this.diveStrikeCounted = true;
                         AiBlockMine.recordStrike(target);
                         AutismClientAddon.LOG
                            .info(
@@ -684,23 +684,23 @@ public final class AiBlockMine {
                               AiBlockMine.strikeCount(target)
                            );
                         if (AiBlockMine.strikeCount(target) >= 2) {
-                           this.init_Set.add(target.asLong());
+                           this.blacklistedCells.add(target.asLong());
                         }
                      }
                   }
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_2(BlockPos cell) {
-               if (!this.write_Z) {
-                  this.write_Z = true;
+            AiOperation.Result surfaceForAir(BlockPos cell) {
+               if (!this.diveStrikeCounted) {
+                  this.diveStrikeCounted = true;
                   AiBlockMine.recordStrike(cell);
                }
 
                BlockState state = mc.level.getBlockState(cell);
                double breakTicks = MiningCost.breakTicks(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
                if (AiBlockMine.strikeCount(cell) >= 2 || breakTicks + AiBlockDigger.airTicksToSurfaceCompat(mc) + 40.0 > mc.player.getMaxAirSupply()) {
-                  this.init_Set.add(cell.asLong());
+                  this.blacklistedCells.add(cell.asLong());
                }
 
                AutismClientAddon.LOG
@@ -709,36 +709,36 @@ public final class AiBlockMine {
                      label,
                      cell.toShortString(),
                      AiBlockMine.strikeCount(cell),
-                     this.init_Set.contains(cell.asLong()) ? "; left" : "; surfacing first"
+                     this.blacklistedCells.contains(cell.asLong()) ? "; left" : "; surfacing first"
                   );
-               if (this.init_HashUtil_CachePool != null) {
-                  this.init_HashUtil_CachePool.load(true);
+               if (this.travel != null) {
+                  this.travel.load(true);
                }
 
                if (!AutismLiteVariant.enabled()) {
-                  this.load_AiOperation = autismclient.ai.AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
+                  this.breathe = autismclient.ai.AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
                }
 
-               return this.init_AiOperation_Result_6("Too little air for " + cell.toShortString() + " under water; surfacing first");
+               return this.running("Too little air for " + cell.toShortString() + " under water; surfacing first");
             }
 
-            Set<Long> init_Set_3() {
+            Set<Long> knownTargetCells() {
                Set<Long> out = new HashSet<>();
 
-               for (BlockPos t : this.init_List) {
+               for (BlockPos t : this.knownTargets) {
                   out.add(t.asLong());
                }
 
                return out;
             }
 
-            AiOperation.Result init_AiOperation_Result_11() {
-               if (this.open_Z && !this.init_List.isEmpty()) {
+            AiOperation.Result approachResult() {
+               if (this.scanned && !this.knownTargets.isEmpty()) {
                   BlockPos feet = mc.player.blockPosition();
                   BlockPos nearest = null;
 
-                  for (BlockPos t : this.init_List) {
-                     if (!this.init_Set.contains(t.asLong())) {
+                  for (BlockPos t : this.knownTargets) {
+                     if (!this.blacklistedCells.contains(t.asLong())) {
                         if (AiBlockMine.init(feet, t, false) && t.distSqr(feet) <= 16.0) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Beside the " + label + " at " + t.toShortString());
                         }
@@ -759,7 +759,7 @@ public final class AiBlockMine {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_List(List<BlockPos> goalCells, BlockPos nearest, BlockPos feet) {
+            AiOperation.Result checkProgress(List<BlockPos> goalCells, BlockPos nearest, BlockPos feet) {
                double d = 1.7976931348623157E308;
 
                for (BlockPos t : goalCells) {
@@ -767,34 +767,34 @@ public final class AiBlockMine {
                }
 
                long now = System.nanoTime();
-               int heldx = this.load_I_6();
-               int toGo = this.init_HashUtil_CachePool == null ? -1 : this.init_HashUtil_CachePool.remainingSteps();
-               if (toGo < 0 && this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.getPathEnd() != null) {
-                  BlockPos end = this.init_HashUtil_CachePool.getPathEnd();
+               int heldx = this.heldWanted();
+               int toGo = this.travel == null ? -1 : this.travel.remainingSteps();
+               if (toGo < 0 && this.travel != null && this.travel.getPathEnd() != null) {
+                  BlockPos end = this.travel.getPathEnd();
                   double e = 1.7976931348623157E308;
 
                   for (BlockPos t : goalCells) {
                      e = Math.min(e, Math.sqrt(t.distSqr(end)));
                   }
 
-                  if (e < this.init_D - 2.0) {
-                     toGo = this.init_HashUtil_CachePool.load_I_8();
+                  if (e < this.bestDistance - 2.0) {
+                     toGo = this.travel.load_I_8();
                   }
                }
 
-               boolean changedWork = this.update_J == 0L
-                  || this.update_I != this.run
+               boolean changedWork = this.progressSince == 0L
+                  || this.brokenCount != this.run
                   || heldx != this.get
-                  || this.close_BlockPos != null && !goalCells.contains(this.close_BlockPos);
+                  || this.progressNearest != null && !goalCells.contains(this.progressNearest);
                if (changedWork) {
-                  this.init_BufferHelper_Confi.init();
+                  this.pathProgress.init();
                }
 
-               boolean along = this.init_BufferHelper_Confi
-                  .init(this.init_HashUtil_CachePool == null ? null : this.init_HashUtil_CachePool.getPathEnd(), toGo);
+               boolean along = this.pathProgress
+                  .init(this.travel == null ? null : this.travel.getPathEnd(), toGo);
                boolean down = nearest != null && feet.getY() - nearest.getY() > 4 && feet.getY() < this.set - 1;
-               if (!changedWork && !(d < this.init_D - 1.0) && !along && !down) {
-                  if (now - this.update_J < 12000000000L) {
+               if (!changedWork && !(d < this.bestDistance - 1.0) && !along && !down) {
+                  if (now - this.progressSince < 12000000000L) {
                      return null;
                   }
 
@@ -802,8 +802,8 @@ public final class AiBlockMine {
 
                   for (BlockPos t : goalCells) {
                      if (!(t.distSqr(nearest) > 36.0)) {
-                        this.init_Set.add(t.asLong());
-                        this.write_Set.remove(t.asLong());
+                        this.blacklistedCells.add(t.asLong());
+                        this.treeLogs.remove(t.asLong());
                         left++;
                      }
                   }
@@ -812,279 +812,279 @@ public final class AiBlockMine {
                      .info(
                         "[AI] NO PROGRESS: block mine {} got no closer than {} to {} in {} s; left {} targets there",
                         label,
-                        String.format(Locale.ROOT, "%.1f", this.init_D),
+                        String.format(Locale.ROOT, "%.1f", this.bestDistance),
                         nearest.toShortString(),
                         12L,
                         left
                      );
                   AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.init(mc.level, feet, nearest, 6, 4));
-                  this.init_BufferHelper_Strea = null;
-                  this.flush_BlockPos = null;
-                  this.update_J = 0L;
-                  if (this.init_HashUtil_CachePool != null) {
-                     this.init_HashUtil_CachePool.cancel();
-                     this.init_HashUtil_CachePool = null;
-                     this.init_BufferHelper_TaskQ = null;
-                     this.init_ClassCache_JsonUti = null;
+                  this.descent = null;
+                  this.descentTarget = null;
+                  this.progressSince = 0L;
+                  if (this.travel != null) {
+                     this.travel.cancel();
+                     this.travel = null;
+                     this.currentGatherGoal = null;
+                     this.travelGoal = null;
                   }
 
-                  return ++this.write_I >= 14
-                     ? this.init(AiOperation.Status.FAILED, "No reachable " + label + " after " + this.write_I + " attempts (" + this.init_Str_9() + ")")
-                     : this.init_AiOperation_Result_6("No way to the " + label + " near " + nearest.toShortString() + "; trying elsewhere");
+                  return ++this.reachFailures >= 14
+                     ? this.init(AiOperation.Status.FAILED, "No reachable " + label + " after " + this.reachFailures + " attempts (" + this.progressText() + ")")
+                     : this.running("No way to the " + label + " near " + nearest.toShortString() + "; trying elsewhere");
                } else {
                   this.set = changedWork ? feet.getY() : Math.min(this.set, feet.getY());
-                  this.init_D = changedWork ? d : Math.min(this.init_D, d);
-                  this.run = this.update_I;
+                  this.bestDistance = changedWork ? d : Math.min(this.bestDistance, d);
+                  this.run = this.brokenCount;
                   this.get = heldx;
-                  this.update_J = now;
-                  this.close_BlockPos = nearest;
+                  this.progressSince = now;
+                  this.progressNearest = nearest;
                   return null;
                }
             }
 
             @Override
             public boolean canInterruptNow() {
-               if (this.sync_Z) {
+               if (this.reconcileAfterPreparation) {
                   return false;
                } else {
-                  return this.init_AiOperation != null
-                     ? this.init_AiOperation.canInterruptNow()
-                     : (this.read_BlockPos == null || !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos))
-                        && !this.init_DataPipe.needsReconciliation()
-                        && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt());
+                  return this.preparation != null
+                     ? this.preparation.canInterruptNow()
+                     : (this.breaking == null || !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.breaking))
+                        && !this.waterPlacer.needsReconciliation()
+                        && (this.travel == null || this.travel.canInterrupt());
                }
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.sync_Z
-                  || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.read_BlockPos != null && this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos)
-                  || this.init_DataPipe.needsReconciliation()
-                  || this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency();
+               return this.reconcileAfterPreparation
+                  || this.preparation != null && this.preparation.requiresReconciliationAfterEmergency()
+                  || this.breaking != null && this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.breaking)
+                  || this.waterPlacer.needsReconciliation()
+                  || this.travel != null && this.travel.requiresReconciliationAfterEmergency();
             }
 
             @Override
             public AiOperation.Result tick() {
-               AiOperation.Result result = this.load_AiOperation_Result_9();
-               if (!AutismLiteVariant.enabled() && result.terminal() && this.sync_Z) {
-                  result = AiMiningPreparation.init(result, true, this.init_AiOperation_Result);
+               AiOperation.Result result = this.step();
+               if (!AutismLiteVariant.enabled() && result.terminal() && this.reconcileAfterPreparation) {
+                  result = AiMiningPreparation.init(result, true, this.lastPreparationResult);
                }
 
-               if (!AutismLiteVariant.enabled() && !result.terminal() && this.init_AiOperation == null) {
-                  AiVisualization.init(this, this.init_List_5());
+               if (!AutismLiteVariant.enabled() && !result.terminal() && this.preparation == null) {
+                  AiVisualization.init(this, this.goalBlocks());
                   AiVisualization.init(
                      this,
-                     this.read_Str_2(),
-                     this.write_Str(),
-                     held <= 0 && !dropsOnly ? this.update_I : Math.max(0, this.load_I_6() - this.load_I),
-                     held > 0 ? Math.max(0, held - this.load_I) : (dropsOnly ? 0 : count)
+                     this.visualTitle(),
+                     this.activityLabel(),
+                     held <= 0 && !dropsOnly ? this.brokenCount : Math.max(0, this.heldWanted() - this.heldAtStart),
+                     held > 0 ? Math.max(0, held - this.heldAtStart) : (dropsOnly ? 0 : count)
                   );
                }
 
-               if (!result.terminal() && this.init_AiOperation == null && mc.player != null) {
+               if (!result.terminal() && this.preparation == null && mc.player != null) {
                   AiBlockDigger.tickDestroyDelayCompat(mc);
                }
 
                return result;
             }
 
-            AiOperation.Result load_AiOperation_Result_9() {
-               if (!this.read_Z && mc.player != null && mc.level != null) {
-                  if (mc.level != this.init_Obj) {
+            AiOperation.Result step() {
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (mc.level != this.startLevel) {
                      return this.init(AiOperation.Status.FAILED, "World changed");
                   }
 
-                  if (this.init_AiOperation != null) {
+                  if (this.preparation != null) {
                      if (System.nanoTime() > deadline) {
-                        return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.init_Str_9() + ")");
+                        return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.progressText() + ")");
                      }
 
-                     AiOperation.Result result = this.init_AiOperation.tick();
-                     this.init_AiOperation_Result = result;
+                     AiOperation.Result result = this.preparation.tick();
+                     this.lastPreparationResult = result;
                      if (result.terminal()) {
-                        this.sync_Z = this.sync_Z | this.init_AiOperation.requiresReconciliationAfterEmergency();
-                        this.init_AiOperation.cancel();
-                        this.init_AiOperation = null;
-                        this.flush_V();
+                        this.reconcileAfterPreparation = this.reconcileAfterPreparation | this.preparation.requiresReconciliationAfterEmergency();
+                        this.preparation.cancel();
+                        this.preparation = null;
+                        this.stopActivity();
                      }
 
                      return result;
                   } else {
-                     if (this.init_Z_12()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, this.load_Str_2());
+                     if (this.goalReached()) {
+                        return this.init(AiOperation.Status.SUCCEEDED, this.doneMessage());
                      }
 
                      if (approach) {
-                        AiOperation.Result there = this.init_AiOperation_Result_11();
+                        AiOperation.Result there = this.approachResult();
                         if (there != null) {
                            return there;
                         }
                      }
 
                      if (System.nanoTime() > deadline) {
-                        return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.init_Str_9() + ")");
+                        return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.progressText() + ")");
                      }
 
                      long tickNow = System.nanoTime();
-                     if (this.write_J != 0L && tickNow - this.write_J > 1000000000L) {
-                        this.update_J = 0L;
+                     if (this.lastTickNanos != 0L && tickNow - this.lastTickNanos > 1000000000L) {
+                        this.progressSince = 0L;
                      }
 
-                     this.write_J = tickNow;
-                     this.flush_I++;
-                     if (this.load_AiOperation != null) {
-                        AiOperation.Result breathing = this.load_AiOperation.tick();
+                     this.lastTickNanos = tickNow;
+                     this.tickCount++;
+                     if (this.breathe != null) {
+                        AiOperation.Result breathing = this.breathe.tick();
                         if (!breathing.terminal()) {
-                           return this.init_AiOperation_Result_6("Surfacing for air: " + breathing.message());
+                           return this.running("Surfacing for air: " + breathing.message());
                         }
 
-                        this.load_AiOperation.cancel();
-                        this.load_AiOperation = null;
+                        this.breathe.cancel();
+                        this.breathe = null;
                         AiMotionSafety.releaseMovementKeys();
-                        return this.init_AiOperation_Result_6("Breathing again; back to " + label);
+                        return this.running("Breathing again; back to " + label);
                      } else {
-                        this.init_V_14();
-                        if (this.flush_I == 1
-                           && this.load_BlockPos != null
-                           && this.write_Z_2(this.load_BlockPos)
-                           && this.init_Z(this.load_BlockPos, mc.player.blockPosition())
-                           && this.sync(this.load_BlockPos)) {
-                           this.init_List.add(this.load_BlockPos);
-                           this.init_V_3(this.load_BlockPos);
-                           this.load_BlockPos = null;
+                        this.checkAirDive();
+                        if (this.tickCount == 1
+                           && this.focus != null
+                           && this.isTargetBlock(this.focus)
+                           && this.withinScanRadius(this.focus, mc.player.blockPosition())
+                           && this.sync(this.focus)) {
+                           this.knownTargets.add(this.focus);
+                           this.commitVein(this.focus);
+                           this.focus = null;
                         }
 
-                        if (this.flush_I % 200 == 0) {
+                        if (this.tickCount % 200 == 0) {
                            AutismClientAddon.LOG
                               .info(
                                  "[AI] block mine {}: tick {} at {} breaking {} ({}, {} known, goal {}, tree {}, travel {})",
                                  label,
-                                 this.flush_I,
+                                 this.tickCount,
                                  mc.player.blockPosition().toShortString(),
-                                 this.read_BlockPos == null ? "-" : this.read_BlockPos.toShortString(),
-                                 this.init_Str_9(),
-                                 this.init_List.size(),
-                                 this.close_Set.size(),
-                                 this.write_Set.size(),
-                                 this.init_HashUtil_CachePool == null ? "none" : (this.init_HashUtil_CachePool.isAtGoal() ? "at goal" : "on")
+                                 this.breaking == null ? "-" : this.breaking.toShortString(),
+                                 this.progressText(),
+                                 this.knownTargets.size(),
+                                 this.goalSet.size(),
+                                 this.treeLogs.size(),
+                                 this.travel == null ? "none" : (this.travel.isAtGoal() ? "at goal" : "on")
                               );
                         }
 
-                        if (this.read_BlockPos != null && this.flush_I - this.poll_I > 30 && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos)) {
-                           AutismClientAddon.LOG.info("[AI] block mine {}: gave up breaking {} in place", label, this.read_BlockPos.toShortString());
-                           this.init_Set.add(this.read_BlockPos.asLong());
+                        if (this.breaking != null && this.tickCount - this.breakStartTick > 30 && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.breaking)) {
+                           AutismClientAddon.LOG.info("[AI] block mine {}: gave up breaking {} in place", label, this.breaking.toShortString());
+                           this.blacklistedCells.add(this.breaking.asLong());
                            this.read_RefQueue_DataUtil.stopCompat();
-                           this.read_BlockPos = null;
+                           this.breaking = null;
                         }
 
-                        if (this.read_BlockPos != null) {
-                           if (this.init_HashUtil_CachePool != null) {
-                              this.init_HashUtil_CachePool.tick();
+                        if (this.breaking != null) {
+                           if (this.travel != null) {
+                              this.travel.tick();
                            }
 
                            if (AiMotionAudit.isEnabled()) {
-                              AiMotionAudit.note("gather dig " + this.read_BlockPos.toShortString());
+                              AiMotionAudit.note("gather dig " + this.breaking.toShortString());
                            }
 
-                           AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.read_BlockPos);
+                           AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.breaking);
                            if (status == AiBlockDigger.Inner_DataUtil_2.init) {
-                              return this.init_AiOperation_Result_6("Breaking " + mc.level.getBlockState(this.read_BlockPos).getBlock().getName().getString());
+                              return this.running("Breaking " + mc.level.getBlockState(this.breaking).getBlock().getName().getString());
                            }
 
-                           BlockPos was = this.read_BlockPos;
-                           this.read_BlockPos = null;
+                           BlockPos was = this.breaking;
+                           this.breaking = null;
                            if (status == AiBlockDigger.Inner_DataUtil_2.load) {
-                              this.open_I = 0;
-                              if (this.init_Z) {
-                                 this.write_V(was);
+                              this.breakFailures = 0;
+                              if (this.breakingTarget) {
+                                 this.onBroken(was);
                               }
                            } else {
                               if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("no tool that gets its drops")) {
-                                 return this.load_AiOperation_Result_2(was);
+                                 return this.missingTool(was);
                               }
 
                               if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("too little air to break it under water")) {
-                                 return this.init_AiOperation_Result_2(was);
+                                 return this.surfaceForAir(was);
                               }
 
                               this.init(was, "could not break it in place (" + this.read_RefQueue_DataUtil.lastFailureReasonCompat() + ")");
-                              if (was.equals(this.write_BlockPos)) {
-                                 this.init_Set.add(was.asLong());
-                                 this.write_BlockPos = null;
+                              if (was.equals(this.pillarDirt)) {
+                                 this.blacklistedCells.add(was.asLong());
+                                 this.pillarDirt = null;
                               }
 
-                              if (++this.open_I >= 14) {
-                                 return this.init(AiOperation.Status.FAILED, "Could not break " + label + " (" + this.init_Str_9() + ")");
+                              if (++this.breakFailures >= 14) {
+                                 return this.init(AiOperation.Status.FAILED, "Could not break " + label + " (" + this.progressText() + ")");
                               }
                            }
 
-                           if (this.init_Z_12()) {
-                              return this.init(AiOperation.Status.SUCCEEDED, this.load_Str_2());
+                           if (this.goalReached()) {
+                              return this.init(AiOperation.Status.SUCCEEDED, this.doneMessage());
                            }
                         }
 
-                        this.update_V_3();
-                        this.sync_V_2();
-                        this.write_V_4();
-                        this.write_Map.values().removeIf(until -> until < System.nanoTime());
-                        this.init_BufferHelper_Cache.entitiesByCell.keySet().retainAll(this.write_Map.keySet());
-                        List<Vec3> drops = this.load_List_2();
-                        if (held > 0 && this.load_I_6() + this.pop_I + this.write_Map.size() >= held) {
+                        this.scanAroundFeet();
+                        this.scanTerrain();
+                        this.pruneKnownTargets();
+                        this.pendingDropDeadlines.values().removeIf(until -> until < System.nanoTime());
+                        this.dropAttribution.entitiesByCell.keySet().retainAll(this.pendingDropDeadlines.keySet());
+                        List<Vec3> drops = this.visibleDrops();
+                        if (held > 0 && this.heldWanted() + this.nearbyDropCount + this.pendingDropDeadlines.size() >= held) {
                            drops = this.init(true);
                         }
 
-                        boolean enough = held > 0 ? this.load_I_6() + this.pop_I + this.write_Map.size() >= held : this.load_Z_7();
+                        boolean enough = held > 0 ? this.heldWanted() + this.nearbyDropCount + this.pendingDropDeadlines.size() >= held : this.countReached();
                         boolean collectFirst = enough
-                           || held > 0 && this.push_I >= Math.max(1, held - this.load_I_6())
-                           || this.init_Z(drops) && !this.write_Z_3();
-                        if (this.update_BlockPos != null) {
-                           AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+                           || held > 0 && this.collectableNearbyCount >= Math.max(1, held - this.heldWanted())
+                           || this.hasLooseDropNearby(drops) && !this.goalInReach();
+                        if (this.waterCell != null) {
+                           AiPlacer.PlaceStatus status = this.waterPlacer.tick();
                            if (status == AiPlacer.PlaceStatus.WORKING) {
-                              return this.init_AiOperation_Result_6("Blocking the water next to " + this.sync_BlockPos.toShortString());
+                              return this.running("Blocking the water next to " + this.wetTarget.toShortString());
                            }
 
                            if (status == AiPlacer.PlaceStatus.FAILED) {
-                              this.init(this.sync_BlockPos, "could not block the water beside it (" + this.init_DataPipe.failureReason() + ")");
+                              this.init(this.wetTarget, "could not block the water beside it (" + this.waterPlacer.failureReason() + ")");
                            }
 
-                           this.update_BlockPos = null;
-                           return this.init_AiOperation_Result_6("Water blocked");
+                           this.waterCell = null;
+                           return this.running("Water blocked");
                         } else {
-                           if (this.init_HashUtil_CachePool != null
-                              && this.init_ClassCache_JsonUti != null
+                           if (this.travel != null
+                              && this.travelGoal != null
                               && mc.gameMode instanceof AutismMultiPlayerGameModeAccessor activeDig
                               && (activeDig.autism$isDestroying() || activeDig.autism$getDestroyProgress() > 0.0F)) {
                               BlockPos cell = activeDig.autism$getDestroyBlockPos();
-                              if (cell != null && this.init_HashUtil_CachePool.getRouteDigCells().contains(cell)) {
-                                 this.flush_Z = false;
-                                 this.load_List.clear();
-                                 return this.init(this.init_ClassCache_JsonUti, "Finishing the route block at " + cell.toShortString());
+                              if (cell != null && this.travel.getRouteDigCells().contains(cell)) {
+                                 this.collectingInBox = false;
+                                 this.inBoxItems.clear();
+                                 return this.init(this.travelGoal, "Finishing the route block at " + cell.toShortString());
                               }
                            }
 
                            if (!dropsOnly && !collectFirst && !approach) {
                               boolean unsettled = !mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()
-                                 || this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.canInterrupt()
-                                 || this.update_Z_3();
-                              BlockPos inReach = unsettled ? null : this.load_BlockPos_2();
+                                 || this.travel != null && !this.travel.canInterrupt()
+                                 || this.driftingOffEdge();
+                              BlockPos inReach = unsettled ? null : this.pickInReach();
                               if (inReach == null
                                  && !unsettled
                                  && treeMode
                                  && held > 0
-                                 && this.update_I > 0
-                                 && this.write_Set.isEmpty()
-                                 && this.load_I_6() + this.pop_I < held
+                                 && this.brokenCount > 0
+                                 && this.treeLogs.isEmpty()
+                                 && this.heldWanted() + this.nearbyDropCount < held
                                  && !this.close()
-                                 && this.sync_Z_2()
-                                 && (this.write_BlockPos == null || !mc.level.getBlockState(this.write_BlockPos).isAir())) {
-                                 BlockPos dirt = this.write_BlockPos != null ? this.write_BlockPos : this.write_BlockPos();
+                                 && this.tallTreeOverhead()
+                                 && (this.pillarDirt == null || !mc.level.getBlockState(this.pillarDirt).isAir())) {
+                                 BlockPos dirt = this.pillarDirt != null ? this.pillarDirt : this.findPillarDirt();
                                  if (dirt != null) {
-                                    if (this.write_BlockPos == null) {
-                                       this.init_J = System.nanoTime();
+                                    if (this.pillarDirt == null) {
+                                       this.pillarDirtSince = System.nanoTime();
                                     }
 
-                                    this.write_BlockPos = dirt;
+                                    this.pillarDirt = dirt;
                                     inReach = dirt;
                                  }
                               }
@@ -1092,57 +1092,57 @@ public final class AiBlockMine {
                               if (!AutismLiteVariant.enabled()
                                  && inReach != null
                                  && AiBlockMine.init(
-                                    this.update_Z,
+                                    this.toolPrepared,
                                     held,
-                                    held - this.load_I_6() - this.pop_I - this.write_Map.size(),
+                                    held - this.heldWanted() - this.nearbyDropCount - this.pendingDropDeadlines.size(),
                                     mc.level.getBlockState(inReach).is(BlockTags.LOGS),
                                     AiMotionSafety.isPlayerSupported(),
                                     this.canInterruptNow(),
-                                    this.requiresReconciliationAfterEmergency() || !this.write_Map.isEmpty()
+                                    this.requiresReconciliationAfterEmergency() || !this.pendingDropDeadlines.isEmpty()
                                  )) {
-                                 this.update_Z = true;
+                                 this.toolPrepared = true;
                                  JsonObject investment = args.deepCopy();
                                  investment.addProperty("timeoutSeconds", (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L));
                                  AiOperation prepared = AiMiningPreparation.init(investment);
                                  if (prepared != null) {
-                                    this.flush_V();
-                                    this.init_AiOperation = prepared;
-                                    return this.init_AiOperation_Result_6("Preparing a faster axe for the remaining log batch");
+                                    this.stopActivity();
+                                    this.preparation = prepared;
+                                    return this.running("Preparing a faster axe for the remaining log batch");
                                  }
                               }
 
-                              BlockPos water = inReach != null && this.write_Z_2(inReach) ? this.init_BlockPos_4(inReach) : null;
+                              BlockPos water = inReach != null && this.isTargetBlock(inReach) ? this.adjacentWater(inReach) : null;
                               if (water != null) {
-                                 Item item = this.init_Item_2();
+                                 Item item = this.bestScaffoldItem();
                                  if (item == null) {
-                                    this.init_Set.add(inReach.asLong());
-                                    return this.init_AiOperation_Result_6("No block to hold back the water at " + inReach.toShortString());
+                                    this.blacklistedCells.add(inReach.asLong());
+                                    return this.running("No block to hold back the water at " + inReach.toShortString());
                                  }
 
-                                 if (this.init_HashUtil_CachePool != null) {
-                                    this.init_HashUtil_CachePool.load(true);
+                                 if (this.travel != null) {
+                                    this.travel.load(true);
                                  }
 
                                  this.read_RefQueue_DataUtil.stopCompat();
-                                 this.update_BlockPos = water;
-                                 this.sync_BlockPos = inReach;
-                                 this.init_DataPipe.start(water, item);
+                                 this.waterCell = water;
+                                 this.wetTarget = inReach;
+                                 this.waterPlacer.start(water, item);
                                  AutismClientAddon.LOG
                                     .info("[AI] block mine {}: blocking water at {} before breaking {}", label, water.toShortString(), inReach.toShortString());
-                                 return this.init_AiOperation_Result_6("Blocking the water next to " + inReach.toShortString());
+                                 return this.running("Blocking the water next to " + inReach.toShortString());
                               }
 
                               if (inReach != null) {
-                                 this.load_V_7();
-                                 if (this.init_HashUtil_CachePool != null) {
-                                    this.init_HashUtil_CachePool.load(true);
+                                 this.releaseStepKeys();
+                                 if (this.travel != null) {
+                                    this.travel.load(true);
                                  }
 
-                                 this.init_Z = this.write_Z_2(inReach);
-                                 this.read_BlockPos = inReach;
-                                 this.poll_I = this.flush_I;
+                                 this.breakingTarget = this.isTargetBlock(inReach);
+                                 this.breaking = inReach;
+                                 this.breakStartTick = this.tickCount;
                                  this.read_RefQueue_DataUtil.stopCompat();
-                                 this.read_RefQueue_DataUtil = this.init_Z ? this.init_RefQueue_DataUtil : this.load_RefQueue_DataUtil;
+                                 this.read_RefQueue_DataUtil = this.breakingTarget ? this.init_RefQueue_DataUtil : this.load_RefQueue_DataUtil;
                                  if (AiMotionAudit.isEnabled()) {
                                     AiMotionAudit.note("gather dig " + inReach.toShortString());
                                  }
@@ -1150,24 +1150,24 @@ public final class AiBlockMine {
                                  AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
                                  if (status == AiBlockDigger.Inner_DataUtil_2.read) {
                                     if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("no tool that gets its drops")) {
-                                       return this.load_AiOperation_Result_2(inReach);
+                                       return this.missingTool(inReach);
                                     }
 
                                     if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("too little air to break it under water")) {
-                                       this.read_BlockPos = null;
-                                       return this.init_AiOperation_Result_2(inReach);
+                                       this.breaking = null;
+                                       return this.surfaceForAir(inReach);
                                     }
 
                                     this.init(inReach, "could not start breaking it (" + this.read_RefQueue_DataUtil.lastFailureReasonCompat() + ")");
-                                    this.read_BlockPos = null;
-                                    if (inReach.equals(this.write_BlockPos)) {
-                                       this.init_Set.add(inReach.asLong());
-                                       this.write_BlockPos = null;
+                                    this.breaking = null;
+                                    if (inReach.equals(this.pillarDirt)) {
+                                       this.blacklistedCells.add(inReach.asLong());
+                                       this.pillarDirt = null;
                                     }
                                  }
 
-                                 return this.init_AiOperation_Result_6(
-                                    "Breaking " + (this.init_Z ? label : "the way to " + label) + " at " + inReach.toShortString()
+                                 return this.running(
+                                    "Breaking " + (this.breakingTarget ? label : "the way to " + label) + " at " + inReach.toShortString()
                                  );
                               }
                            }
@@ -1178,7 +1178,7 @@ public final class AiBlockMine {
                               drops.removeIf(itemx -> itemx.distanceToSqr(body) > 64.0);
                            }
 
-                           List<BlockPos> goalBlocks = collectFirst && (!drops.isEmpty() || enough) ? List.of() : this.init_List_5();
+                           List<BlockPos> goalBlocks = collectFirst && (!drops.isEmpty() || enough) ? List.of() : this.goalBlocks();
                            List<BlockPos> goalCells = new ArrayList<>(goalBlocks);
                            List<Vec3> goalItems = new ArrayList<>(drops);
                            if (!dropsOnly && !treeMode && !approach && held > 0 && !goalBlocks.isEmpty()) {
@@ -1190,54 +1190,54 @@ public final class AiBlockMine {
                               }
 
                               double closerWork = workDistance;
-                              int needed = Math.max(1, held - this.load_I_6());
+                              int needed = Math.max(1, held - this.heldWanted());
                               goalItems.removeIf(itemx -> {
                                  int available = 0;
 
-                                 for (Entry<Vec3, Integer> entry : this.close_Map.entrySet()) {
+                                 for (Entry<Vec3, Integer> entry : this.dropCountBySpot.entrySet()) {
                                     if (entry.getKey().distanceToSqr(itemx) <= 9.0) {
                                        available += entry.getValue();
                                     }
                                  }
 
-                                 return AiBlockMine.init_Z_D(itemx.distanceTo(body), closerWork, available, needed);
+                                 return AiBlockMine.dropNotWorthDetour(itemx.distanceTo(body), closerWork, available, needed);
                               });
                            }
 
-                           if (this.write_BlockPos != null) {
+                           if (this.pillarDirt != null) {
                               if (this.close()) {
-                                 this.write_BlockPos = null;
+                                 this.pillarDirt = null;
                               } else {
-                                 Vec3 stock = this.load_Vec3();
+                                 Vec3 stock = this.pillarDirtDrop();
                                  if (stock != null) {
                                     goalItems.add(stock);
-                                 } else if (this.flush_Z() && mc.level.getBlockState(this.write_BlockPos).isAir()) {
-                                    if (this.init_HashUtil_CachePool != null) {
-                                       this.init_HashUtil_CachePool.load(true);
+                                 } else if (this.pillarDirtFresh() && mc.level.getBlockState(this.pillarDirt).isAir()) {
+                                    if (this.travel != null) {
+                                       this.travel.load(true);
                                     }
 
-                                    return this.init_AiOperation_Result_6("Taking the dirt for a pillar");
+                                    return this.running("Taking the dirt for a pillar");
                                  }
                               }
                            }
 
-                           for (Long cell : this.write_Map.keySet()) {
-                              goalItems.add(this.init_Vec3(BlockPos.of(cell)));
+                           for (Long cell : this.pendingDropDeadlines.keySet()) {
+                              goalItems.add(this.dropLandingSpot(BlockPos.of(cell)));
                            }
 
-                           this.flush_Z = false;
-                           this.load_List.clear();
+                           this.collectingInBox = false;
+                           this.inBoxItems.clear();
                            if (!goalItems.isEmpty()) {
                               Vec3 body = mc.player.position();
                               List<Vec3> inBox = new ArrayList<>();
                               Set<Vec3> spawning = new HashSet<>();
 
-                              for (Long cell : this.write_Map.keySet()) {
-                                 spawning.add(this.init_Vec3(BlockPos.of(cell)));
+                              for (Long cell : this.pendingDropDeadlines.keySet()) {
+                                 spawning.add(this.dropLandingSpot(BlockPos.of(cell)));
                               }
 
                               for (Vec3 item : goalItems) {
-                                 if (this.open_Set.contains(item)
+                                 if (this.freshDropSpots.contains(item)
                                     ? AiBlockMine.init(body, item)
                                     : spawning.contains(item)
                                        && AiBlockMine.isItemAtBlock(mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ(), item)) {
@@ -1247,133 +1247,133 @@ public final class AiBlockMine {
 
                               if (!inBox.isEmpty() && (!goalCells.isEmpty() || goalItems.size() > inBox.size())) {
                                  if (this.tick < 0) {
-                                    this.tick = this.flush_I;
+                                    this.tick = this.tickCount;
                                  }
 
-                                 if (this.flush_I - this.tick <= 20) {
+                                 if (this.tickCount - this.tick <= 20) {
                                     goalItems.removeAll(inBox);
-                                    this.load_List.addAll(inBox);
-                                    this.flush_Z = true;
+                                    this.inBoxItems.addAll(inBox);
+                                    this.collectingInBox = true;
                                  }
                               }
                            }
 
-                           if (!this.flush_Z) {
+                           if (!this.collectingInBox) {
                               this.tick = -1;
                            }
 
                            if (goalCells.isEmpty() && goalItems.isEmpty()) {
-                              if (this.init_Z_12()) {
-                                 return this.init(AiOperation.Status.SUCCEEDED, this.load_Str_2());
+                              if (this.goalReached()) {
+                                 return this.init(AiOperation.Status.SUCCEEDED, this.doneMessage());
                               }
 
-                              if (held <= 0 && this.load_Z_7()) {
-                                 return this.init_AiOperation_Result_6("Waiting for the last mined drops");
+                              if (held <= 0 && this.countReached()) {
+                                 return this.running("Waiting for the last mined drops");
                               }
 
-                              if (this.init_FieldCache.isActive()) {
-                                 return this.init_AiOperation_Result_6("Finishing the committed " + label + " vein scan");
+                              if (this.veinCommitment.isActive()) {
+                                 return this.running("Finishing the committed " + label + " vein scan");
                               }
 
-                              if (!this.open_Z) {
-                                 return this.init_AiOperation_Result_6("Scanning loaded terrain for " + label);
+                              if (!this.scanned) {
+                                 return this.running("Scanning loaded terrain for " + label);
                               }
 
-                              if (obsidianJob && !dropsOnly && !this.load_Set.isEmpty()) {
+                              if (obsidianJob && !dropsOnly && !this.lavaSealedCells.isEmpty()) {
                                  return this.init(
                                     AiOperation.Status.FAILED,
-                                    "Known obsidian is sealed by lava; cool or seal the lava before mining it (" + this.init_Str_9() + ")"
+                                    "Known obsidian is sealed by lava; cool or seal the lava before mining it (" + this.progressText() + ")"
                                  );
                               }
 
                               if (dropsOnly) {
-                                 if (this.flush_I < 30) {
-                                    return this.init_AiOperation_Result_6("Waiting for the drop to land");
+                                 if (this.tickCount < 30) {
+                                    return this.running("Waiting for the drop to land");
                                  }
 
-                                 JsonObject out = this.init_JsonObject_25();
-                                 this.flush_V();
+                                 JsonObject out = this.progressJson();
+                                 this.stopActivity();
                                  return AiOperation.Result.failed(
-                                    AiFailure.NO_REACHABLE_TARGET, "No matching observed drops remain nearby (" + this.init_Str_9() + ")", out.toString()
+                                    AiFailure.NO_REACHABLE_TARGET, "No matching observed drops remain nearby (" + this.progressText() + ")", out.toString()
                                  );
                               } else {
                                  if (!explore) {
-                                    return this.init(AiOperation.Status.FAILED, "No " + label + " in loaded terrain around here (" + this.init_Str_9() + ")");
+                                    return this.init(AiOperation.Status.FAILED, "No " + label + " in loaded terrain around here (" + this.progressText() + ")");
                                  }
 
                                  int loaded = Math.min(256, mc.options.getEffectiveRenderDistance() * 16);
-                                 if (treeMode && !this.load_Z && this.put < loaded) {
+                                 if (treeMode && !this.exploring && this.put < loaded) {
                                     this.put = loaded;
-                                    this.open_Z = false;
-                                    this.close_Z = false;
+                                    this.scanned = false;
+                                    this.scanning = false;
                                     AutismClientAddon.LOG
                                        .info("[AI] block mine {}: none within {}, scanning every loaded chunk ({} across)", label, radius, loaded);
-                                    return this.init_AiOperation_Result_6("Looking further out for " + label);
+                                    return this.running("Looking further out for " + label);
                                  }
 
-                                 if (!this.load_Z) {
-                                    this.load_Z = true;
-                                    this.load_J = System.nanoTime();
-                                    BlockPos wood = treeMode ? this.read_BlockPos() : null;
+                                 if (!this.exploring) {
+                                    this.exploring = true;
+                                    this.exploreSince = System.nanoTime();
+                                    BlockPos wood = treeMode ? this.nearestWoodedBiome() : null;
                                     if (wood != null) {
                                        AutismClientAddon.LOG
                                           .info("[AI] block mine {}: no tree loaded; heading for the wooded biome at {}", label, wood.toShortString());
                                     }
 
-                                    this.init_BufferHelper_Buffe = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY, wood);
+                                    this.exploreGoal = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY, wood);
                                  }
 
-                                 if (this.init_BufferHelper_Buffe.load != null
+                                 if (this.exploreGoal.load != null
                                     && Math.hypot(
-                                          mc.player.getX() - this.init_BufferHelper_Buffe.load.getX(),
-                                          mc.player.getZ() - this.init_BufferHelper_Buffe.load.getZ()
+                                          mc.player.getX() - this.exploreGoal.load.getX(),
+                                          mc.player.getZ() - this.exploreGoal.load.getZ()
                                        )
                                        < 16.0) {
-                                    this.init_BufferHelper_Buffe = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY);
+                                    this.exploreGoal = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY);
                                  }
 
-                                 return System.nanoTime() - this.load_J > 90000000000L
-                                    ? this.init(AiOperation.Status.FAILED, "No " + label + " found after exploring (" + this.init_Str_9() + ")")
-                                    : this.init(this.init_BufferHelper_Buffe, "Exploring for " + label);
+                                 return System.nanoTime() - this.exploreSince > 90000000000L
+                                    ? this.init(AiOperation.Status.FAILED, "No " + label + " found after exploring (" + this.progressText() + ")")
+                                    : this.init(this.exploreGoal, "Exploring for " + label);
                               }
                            } else {
-                              this.load_Z = false;
-                              this.init_BufferHelper_Buffe = null;
+                              this.exploring = false;
+                              this.exploreGoal = null;
                               if (goalItems.isEmpty() && !goalCells.isEmpty()) {
                                  BlockPos feet = mc.player.blockPosition();
                                  BlockPos nearest = null;
 
                                  for (BlockPos t : goalCells) {
-                                    if (nearest == null || this.init_D(t, feet) < this.init_D(nearest, feet)) {
+                                    if (nearest == null || this.travelCost(t, feet) < this.travelCost(nearest, feet)) {
                                        nearest = t;
                                     }
                                  }
 
-                                 AiOperation.Result stuck = this.init_AiOperation_Result_List(goalCells, nearest, feet);
+                                 AiOperation.Result stuck = this.checkProgress(goalCells, nearest, feet);
                                  if (stuck != null) {
                                     return stuck;
                                  }
 
-                                 if (this.init_BufferHelper_Strea != null
-                                    && feet.getY() <= this.init_BufferHelper_Strea.maxY
-                                    && this.init_BufferHelper_Strea.maxY <= nearest.getY()) {
-                                    this.flush_BlockPos = nearest;
+                                 if (this.descent != null
+                                    && feet.getY() <= this.descent.maxY
+                                    && this.descent.maxY <= nearest.getY()) {
+                                    this.descentTarget = nearest;
                                  }
 
                                  if (feet.getY() - nearest.getY() <= 4) {
-                                    this.flush_BlockPos = nearest;
+                                    this.descentTarget = nearest;
                                  }
 
-                                 boolean sameCluster = this.flush_BlockPos != null && this.flush_BlockPos.distSqr(nearest) <= 36.0;
+                                 boolean sameCluster = this.descentTarget != null && this.descentTarget.distSqr(nearest) <= 36.0;
                                  if (feet.getY() - nearest.getY() > 4 && !sameCluster) {
-                                    if (this.init_BufferHelper_Strea == null || !this.init_BufferHelper_Strea.init_Z_BlockPos_BlockPos(feet, nearest)) {
+                                    if (this.descent == null || !this.descent.stillDescendingToward(feet, nearest)) {
                                        String key = feet.getY() + ">" + nearest.toShortString();
-                                       if (this.flush_Map.merge(key, 1, Integer::sum) >= 3) {
+                                       if (this.descentFailures.merge(key, 1, Integer::sum) >= 3) {
                                           int left = 0;
 
                                           for (BlockPos t : goalCells) {
                                              if (t.distSqr(nearest) <= 36.0) {
-                                                this.init_Set.add(t.asLong());
+                                                this.blacklistedCells.add(t.asLong());
                                                 left++;
                                              }
                                           }
@@ -1385,34 +1385,34 @@ public final class AiBlockMine {
                                                 nearest.toShortString(),
                                                 left
                                              );
-                                          this.flush_Map.clear();
-                                          this.init_BufferHelper_Strea = null;
-                                          if (this.init_HashUtil_CachePool != null) {
-                                             this.init_HashUtil_CachePool.cancel();
-                                             this.init_HashUtil_CachePool = null;
-                                             this.init_BufferHelper_TaskQ = null;
-                                             this.init_ClassCache_JsonUti = null;
+                                          this.descentFailures.clear();
+                                          this.descent = null;
+                                          if (this.travel != null) {
+                                             this.travel.cancel();
+                                             this.travel = null;
+                                             this.currentGatherGoal = null;
+                                             this.travelGoal = null;
                                           }
 
-                                          if (++this.write_I >= 14) {
+                                          if (++this.reachFailures >= 14) {
                                              return this.init(
                                                 AiOperation.Status.FAILED,
-                                                "No reachable " + label + " after " + this.write_I + " attempts (" + this.init_Str_9() + ")"
+                                                "No reachable " + label + " after " + this.reachFailures + " attempts (" + this.progressText() + ")"
                                              );
                                           }
 
-                                          return this.init_AiOperation_Result_6(
+                                          return this.running(
                                              "No way down to the " + label + " near " + nearest.toShortString() + "; trying elsewhere"
                                           );
                                        }
 
-                                       this.init_BufferHelper_Strea = AiBlockMine.Inner_StreamUtil.descentToward(feet, nearest);
-                                       if (this.init_FieldCache.isIdle()) {
-                                          this.init_V_3(nearest);
+                                       this.descent = AiBlockMine.Inner_StreamUtil.descentToward(feet, nearest);
+                                       if (this.veinCommitment.isIdle()) {
+                                          this.commitVein(nearest);
                                        }
 
                                        if (approach) {
-                                          this.init_BufferHelper_Strea.blocked = this.init_Set_3();
+                                          this.descent.blocked = this.knownTargetCells();
                                        }
 
                                        AutismClientAddon.LOG
@@ -1420,24 +1420,24 @@ public final class AiBlockMine {
                                              "[AI] block mine {}: descending from y {} to y {} toward {} ({} goal cells, {} known, focus {}, nearest known {})",
                                              label,
                                              feet.getY(),
-                                             this.init_BufferHelper_Strea.maxY,
+                                             this.descent.maxY,
                                              nearest.toShortString(),
                                              goalCells.size(),
-                                             this.init_List.size(),
-                                             this.init_FieldCache.remainingCount(),
-                                             this.init_List.isEmpty()
+                                             this.knownTargets.size(),
+                                             this.veinCommitment.remainingCount(),
+                                             this.knownTargets.isEmpty()
                                                 ? "none"
-                                                : this.init_Str(this.init_List.stream().min(Comparator.comparingDouble(t -> t.distSqr(feet))).get())
+                                                : this.describeTarget(this.knownTargets.stream().min(Comparator.comparingDouble(t -> t.distSqr(feet))).get())
                                           );
                                     }
 
-                                    this.read_I = feet.getY() - nearest.getY();
-                                    return this.init(this.init_BufferHelper_Strea, "Digging down toward " + label + " at y " + nearest.getY());
+                                    this.descentDepth = feet.getY() - nearest.getY();
+                                    return this.init(this.descent, "Digging down toward " + label + " at y " + nearest.getY());
                                  }
                               }
 
-                              if (goalItems.isEmpty() && !this.flush_Z) {
-                                 this.init_BufferHelper_Strea = null;
+                              if (goalItems.isEmpty() && !this.collectingInBox) {
+                                 this.descent = null;
                               }
 
                               Set<Long> noShaft = new HashSet<>();
@@ -1458,7 +1458,7 @@ public final class AiBlockMine {
 
                               AiBlockMine.Inner_TaskQueue goal = new AiBlockMine.Inner_TaskQueue(goalCells, goalItems, noShaft, wet);
                               if (treeMode) {
-                                 goal.init_I = 5;
+                                 goal.reachAbove = 5;
 
                                  for (BlockPos t : goalCells) {
                                     this.init(t, goal.update);
@@ -1467,38 +1467,38 @@ public final class AiBlockMine {
 
                               for (BlockPos t : goalCells) {
                                  if (!wet.contains(t.asLong())) {
-                                    for (long cell : this.init_JArr_BlockPos(t, treeMode && this.write_Set.contains(t.asLong()), goal.init_I)) {
+                                    for (long cell : this.standCells(t, treeMode && this.treeLogs.contains(t.asLong()), goal.reachAbove)) {
                                        goal.update.add(cell);
                                     }
                                  }
                               }
 
                               if (approach) {
-                                 goal.write = this.init_Set_3();
+                                 goal.write = this.knownTargetCells();
                               }
 
-                              if (!this.update_Set.equals(goal.init_Set)) {
-                                 this.update_Set.clear();
-                                 this.update_Set.addAll(goal.init_Set);
-                                 this.sync_Set.clear();
+                              if (!this.lastGoalCells.equals(goal.dryTargetCells)) {
+                                 this.lastGoalCells.clear();
+                                 this.lastGoalCells.addAll(goal.dryTargetCells);
+                                 this.blindStances.clear();
                               }
 
-                              goal.read_Set.addAll(this.sync_Set);
+                              goal.excludedStances.addAll(this.blindStances);
                               if (!approach
                                  && !goalCells.isEmpty()
                                  && goalItems.isEmpty()
-                                 && goal.read_List.isEmpty()
-                                 && this.init_HashUtil_CachePool != null
-                                 && this.init_HashUtil_CachePool.isAtGoal()
-                                 && goal.init(this.init_BufferHelper_TaskQ)
+                                 && goal.wetTargets.isEmpty()
+                                 && this.travel != null
+                                 && this.travel.isAtGoal()
+                                 && goal.init(this.currentGatherGoal)
                                  && mc.player.onGround()
-                                 && this.init_HashUtil_CachePool.canInterrupt()) {
+                                 && this.travel.canInterrupt()) {
                                  boolean visible = false;
                                  Vec3 eye = mc.player.getEyePosition();
 
                                  for (BlockPos block : goalCells) {
-                                    if (AiBlockMine.init(mc.player.blockPosition(), block, treeMode && this.write_Set.contains(block.asLong()))
-                                       && (AiBlockInteraction.findReachableHit(mc, block) != null || this.init_BlockPos_Vec3(eye, block, mc.player.blockInteractionRange()) != null)
+                                    if (AiBlockMine.init(mc.player.blockPosition(), block, treeMode && this.treeLogs.contains(block.asLong()))
+                                       && (AiBlockInteraction.findReachableHit(mc, block) != null || this.softBlockerToward(eye, block, mc.player.blockInteractionRange()) != null)
                                        )
                                      {
                                        visible = true;
@@ -1508,13 +1508,13 @@ public final class AiBlockMine {
 
                                  if (!visible) {
                                     BlockPos feet = mc.player.blockPosition();
-                                    this.sync_Set.add(feet.asLong());
-                                    goal.read_Set.add(feet.asLong());
-                                    this.init_HashUtil_CachePool.cancel();
-                                    this.init_HashUtil_CachePool = null;
-                                    this.init_BufferHelper_TaskQ = null;
-                                    this.init_ClassCache_JsonUti = null;
-                                    this.close_I = 0;
+                                    this.blindStances.add(feet.asLong());
+                                    goal.excludedStances.add(feet.asLong());
+                                    this.travel.cancel();
+                                    this.travel = null;
+                                    this.currentGatherGoal = null;
+                                    this.travelGoal = null;
+                                    this.idleAtGoalTicks = 0;
                                     AutismClientAddon.LOG
                                        .info(
                                           "[AI] block mine {}: stance {} cannot see its ore; approach the same targets from another cell",
@@ -1524,7 +1524,7 @@ public final class AiBlockMine {
                                  }
                               }
 
-                              if (this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.isAtGoal() && goal.init(this.init_BufferHelper_TaskQ)) {
+                              if (this.travel != null && this.travel.isAtGoal() && goal.init(this.currentGatherGoal)) {
                                  if (dropsOnly) {
                                     List<ItemStack> observed = new ArrayList<>();
                                     List<Vec3> positions = new ArrayList<>();
@@ -1541,7 +1541,7 @@ public final class AiBlockMine {
 
                                     AiFailure failure = AiBlockMine.init(true, mc.player.getInventory(), observed);
                                     if (failure != null) {
-                                       JsonObject out = this.init_JsonObject_25();
+                                       JsonObject out = this.progressJson();
                                        out.addProperty("observedDropStacks", observed.size());
                                        JsonArray dropGoals = new JsonArray();
 
@@ -1550,19 +1550,19 @@ public final class AiBlockMine {
                                        }
 
                                        out.add("dropGoals", dropGoals);
-                                       this.flush_V();
+                                       this.stopActivity();
                                        return AiOperation.Result.failed(
                                           failure, "Matching drops are observed but the inventory cannot accept them", out.toString()
                                        );
                                     }
 
                                     if (AiBlockMine.init(true, mc.player.position(), positions)) {
-                                       this.close_I = 0;
-                                       return this.init_AiOperation_Result_6("Waiting for the observed " + label + " pickup; inventory has room");
+                                       this.idleAtGoalTicks = 0;
+                                       return this.running("Waiting for the observed " + label + " pickup; inventory has room");
                                     }
                                  }
 
-                                 if (++this.close_I > 20) {
+                                 if (++this.idleAtGoalTicks > 20) {
                                     BlockPos feet = mc.player.blockPosition();
                                     List<Vec3> inBox = new ArrayList<>();
 
@@ -1573,23 +1573,23 @@ public final class AiBlockMine {
                                     }
 
                                     if (inBox.isEmpty() && goalCells.isEmpty() && !drops.isEmpty()) {
-                                       if (!goal.init(this.load_BufferHelper_TaskQ)) {
-                                          this.load_BufferHelper_TaskQ = goal;
-                                          this.close_I = 0;
-                                          if (this.init_HashUtil_CachePool != null) {
-                                             this.init_HashUtil_CachePool.cancel();
-                                             this.init_HashUtil_CachePool = null;
+                                       if (!goal.init(this.replannedDropGoal)) {
+                                          this.replannedDropGoal = goal;
+                                          this.idleAtGoalTicks = 0;
+                                          if (this.travel != null) {
+                                             this.travel.cancel();
+                                             this.travel = null;
                                           }
 
-                                          this.init_BufferHelper_TaskQ = null;
-                                          this.init_ClassCache_JsonUti = null;
-                                          return this.init_AiOperation_Result_6("Planning to the " + label + " drop afresh");
+                                          this.currentGatherGoal = null;
+                                          this.travelGoal = null;
+                                          return this.running("Planning to the " + label + " drop afresh");
                                        }
 
                                        inBox.addAll(drops);
                                     }
 
-                                    BlockPos gone = inBox.isEmpty() ? this.init_BlockPos_5() : this.init_BlockPos(inBox);
+                                    BlockPos gone = inBox.isEmpty() ? this.blacklistNearestGoal() : this.blacklistNearestDrop(inBox);
                                     AutismClientAddon.LOG
                                        .info(
                                           "[AI] block mine {}: nothing breakable from the goal, blacklisted {} (at {}, drops {}; {})",
@@ -1597,18 +1597,18 @@ public final class AiBlockMine {
                                           gone == null ? "-" : gone.toShortString(),
                                           mc.player.position(),
                                           drops.size() > 3 ? drops.subList(0, 3) : drops,
-                                          this.update_Str()
+                                          this.reachReport()
                                        );
-                                    this.close_I = 0;
+                                    this.idleAtGoalTicks = 0;
                                  }
                               } else {
-                                 this.close_I = 0;
+                                 this.idleAtGoalTicks = 0;
                               }
 
                               if (goalCells.isEmpty()
-                                 && this.init_HashUtil_CachePool != null
-                                 && this.init_HashUtil_CachePool.isAtGoal()
-                                 && goal.init(this.init_BufferHelper_TaskQ)
+                                 && this.travel != null
+                                 && this.travel.isAtGoal()
+                                 && goal.init(this.currentGatherGoal)
                                  && mc.player.onGround()) {
                                  Vec3 at = mc.player.position();
                                  Vec3 near = null;
@@ -1624,28 +1624,28 @@ public final class AiBlockMine {
                                     && (Math.abs(near.x - at.x) > 1.15 || Math.abs(near.z - at.z) > 1.15)
                                     && near.distanceToSqr(at) < 9.0) {
                                     if (this.init(near)) {
-                                       this.poll_Z = true;
-                                       return this.init_AiOperation_Result_6("Stepping onto the " + label + " drop");
+                                       this.steppingToDrop = true;
+                                       return this.running("Stepping onto the " + label + " drop");
                                     }
 
-                                    this.load_V_7();
+                                    this.releaseStepKeys();
                                     AiMotionSafety.releaseMovementKeys();
                                     if (!AiMotionSafety.isHorizontalMoveSafe(0.0, 0.0)) {
                                        AiMotionSafety.applyEmergencyBrake();
                                     }
 
-                                    this.init_BlockPos(List.of(near));
-                                    return this.init_AiOperation_Result_6("Leaving a drop whose pickup step would touch lava or leave the floor");
+                                    this.blacklistNearestDrop(List.of(near));
+                                    return this.running("Leaving a drop whose pickup step would touch lava or leave the floor");
                                  }
                               }
 
-                              this.load_V_7();
+                              this.releaseStepKeys();
                               return this.init(
                                  goal,
                                  (goalCells.isEmpty() ? "Collecting " : "Mining ")
                                     + label
                                     + " ("
-                                    + this.init_List.size()
+                                    + this.knownTargets.size()
                                     + " known, "
                                     + drops.size()
                                     + " drops)"
@@ -1660,150 +1660,150 @@ public final class AiBlockMine {
             }
 
             AiOperation.Result init(AiPathfinder.PathGoal goal, String message) {
-               if (this.init_FieldCache.isIdle() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.init_List.isEmpty()) {
-                  this.init_V_3(t.init_List.getFirst());
+               if (this.veinCommitment.isIdle() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.targetBlocks.isEmpty()) {
+                  this.commitVein(t.targetBlocks.getFirst());
                }
 
-               boolean changed = goal instanceof AiBlockMine.Inner_TaskQueue t ? !t.init(this.init_BufferHelper_TaskQ) : goal != this.init_ClassCache_JsonUti;
-               if (AiBlockMine.init_Z && changed && goal instanceof AiBlockMine.Inner_TaskQueue t) {
+               boolean changed = goal instanceof AiBlockMine.Inner_TaskQueue t ? !t.init(this.currentGatherGoal) : goal != this.travelGoal;
+               if (AiBlockMine.NAVIGATION_TRACE && changed && goal instanceof AiBlockMine.Inner_TaskQueue t) {
                   AutismClientAddon.LOG
                      .info(
                         "[AI] gather goal {} blocks (first {}), {} items (first {}), was {} blocks / {} items",
-                        t.init_List.size(),
-                        t.init_List.isEmpty() ? "-" : t.init_List.subList(0, Math.min(3, t.init_List.size())),
-                        t.load_List.size(),
-                        t.load_List.isEmpty() ? "-" : t.load_List.get(0),
-                        this.init_BufferHelper_TaskQ == null ? -1 : this.init_BufferHelper_TaskQ.init_List.size(),
-                        this.init_BufferHelper_TaskQ == null ? -1 : this.init_BufferHelper_TaskQ.load_List.size()
+                        t.targetBlocks.size(),
+                        t.targetBlocks.isEmpty() ? "-" : t.targetBlocks.subList(0, Math.min(3, t.targetBlocks.size())),
+                        t.targetItems.size(),
+                        t.targetItems.isEmpty() ? "-" : t.targetItems.get(0),
+                        this.currentGatherGoal == null ? -1 : this.currentGatherGoal.targetBlocks.size(),
+                        this.currentGatherGoal == null ? -1 : this.currentGatherGoal.targetItems.size()
                      );
                }
 
-               if (this.init_HashUtil_CachePool == null) {
-                  if (goal instanceof AiBlockMine.Inner_TaskQueue t && !t.init_List.isEmpty()) {
+               if (this.travel == null) {
+                  if (goal instanceof AiBlockMine.Inner_TaskQueue t && !t.targetBlocks.isEmpty()) {
                      AutismClientAddon.LOG
                         .info(
                            "[AI] block mine {}: route from {} to {} targets, nearest {} (h {})",
                            label,
                            mc.player.blockPosition().toShortString(),
-                           t.init_List.size(),
-                           t.init_List.get(0).toShortString(),
+                           t.targetBlocks.size(),
+                           t.targetBlocks.get(0).toShortString(),
                            String.format(Locale.ROOT, "%.1f", t.heuristic(mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ()))
                         );
                   }
 
-                  this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
+                  this.travel = AiGoto.createPersistentOpCompat(
                      mc.player.blockPosition(), AiGoto.protectingCellsCompat(goal, protectedCells), (int)Math.max(20L, (deadline - System.nanoTime()) / 1000000000L)
                   );
-                  this.init_HashUtil_CachePool.setAcceptedTool(this.init_BiPredicate);
+                  this.travel.setAcceptedTool(this.acceptedTool);
 
-                  for (Long cell : this.flush_Set) {
-                     this.init_HashUtil_CachePool.blacklistCell(BlockPos.of(cell));
+                  for (Long cell : this.stuckCells) {
+                     this.travel.blacklistCell(BlockPos.of(cell));
                   }
                } else {
-                  this.init_HashUtil_CachePool.load(false);
+                  this.travel.load(false);
                   boolean airborne = !mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable();
                   if (changed && airborne) {
-                     AiOperation.Result r = this.init_HashUtil_CachePool.tick();
-                     return r.terminal() ? this.init_AiOperation_Result_6(message + ": landing") : this.init_AiOperation_Result_6(message + ": " + r.message());
+                     AiOperation.Result r = this.travel.tick();
+                     return r.terminal() ? this.running(message + ": landing") : this.running(message + ": " + r.message());
                   }
 
                   if (changed) {
-                     this.init_HashUtil_CachePool.retarget(AiGoto.protectingCellsCompat(goal, protectedCells));
+                     this.travel.retarget(AiGoto.protectingCellsCompat(goal, protectedCells));
                   }
                }
 
-               this.init_HashUtil_CachePool.init(this.flush_Z, this.flush_Z ? this::read_Z_2 : null);
-               this.init_HashUtil_CachePool.init_V_I_2(goal instanceof AiBlockMine.Inner_StreamUtil ? this.read_I : 0);
+               this.travel.init(this.collectingInBox, this.collectingInBox ? this::coversInBoxItems : null);
+               this.travel.init_V_I_2(goal instanceof AiBlockMine.Inner_StreamUtil ? this.descentDepth : 0);
                List<BlockPos> work;
                List var20 = work = goal instanceof AiBlockMine.Inner_TaskQueue t
-                  ? (t.init_List.isEmpty() && !t.load_List.isEmpty() && !dropsOnly ? this.init_List_5() : t.init_List)
+                  ? (t.targetBlocks.isEmpty() && !t.targetItems.isEmpty() && !dropsOnly ? this.goalBlocks() : t.targetBlocks)
                   : List.of();
                if (!work.isEmpty()) {
                   boolean trees = treeMode;
-                  this.init_HashUtil_CachePool.setAimFunction(end -> this.init_Vec3_BlockPos(end, work, trees));
+                  this.travel.setAimFunction(end -> this.aimFromPathEnd(end, work, trees));
                } else {
-                  this.init_HashUtil_CachePool.setAimFunction(null);
+                  this.travel.setAimFunction(null);
                }
 
-               this.init_ClassCache_JsonUti = goal;
-               this.init_BufferHelper_TaskQ = goal instanceof AiBlockMine.Inner_TaskQueue t ? t : null;
-               AiOperation.Result r = this.init_HashUtil_CachePool.tick();
+               this.travelGoal = goal;
+               this.currentGatherGoal = goal instanceof AiBlockMine.Inner_TaskQueue t ? t : null;
+               AiOperation.Result r = this.travel.tick();
                if (!r.terminal()) {
-                  return this.init_AiOperation_Result_6(message + ": " + r.message());
+                  return this.running(message + ": " + r.message());
                }
 
-               AiBlockMine.Inner_TaskQueue failedGoal = this.init_BufferHelper_TaskQ;
-               BlockPos stuck = this.init_HashUtil_CachePool.getStuckCell();
+               AiBlockMine.Inner_TaskQueue failedGoal = this.currentGatherGoal;
+               BlockPos stuck = this.travel.getStuckCell();
                if (stuck != null) {
-                  this.flush_Set.add(stuck.asLong());
+                  this.stuckCells.add(stuck.asLong());
                }
 
-               this.init_HashUtil_CachePool.cancel();
-               this.init_HashUtil_CachePool = null;
-               this.init_BufferHelper_TaskQ = null;
-               this.init_ClassCache_JsonUti = null;
-               this.init_BufferHelper_Strea = null;
+               this.travel.cancel();
+               this.travel = null;
+               this.currentGatherGoal = null;
+               this.travelGoal = null;
+               this.descent = null;
                if (r.status() == AiOperation.Status.CANCELLED) {
                   return this.init(AiOperation.Status.CANCELLED, "Cancelled");
                }
 
                if (r.failure() == AiFailure.MISSING_TOOL || r.failure() == AiFailure.TOOL_WORN) {
-                  this.flush_V();
+                  this.stopActivity();
                   return r;
                }
 
                if (r.status() == AiOperation.Status.TIMED_OUT) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.init_Str_9() + ")");
+                  return this.init(AiOperation.Status.TIMED_OUT, "Ran out of time mining " + label + " (" + this.progressText() + ")");
                }
 
                if (r.message() != null && r.message().startsWith("Health too low")) {
                   return this.init(AiOperation.Status.FAILED, r.message());
                }
 
-               BlockPos closest = !this.write_Set.isEmpty()
-                  ? BlockPos.of(this.write_Set.iterator().next())
-                  : (failedGoal != null && failedGoal.init_List.isEmpty() ? this.init_BlockPos(failedGoal.load_List) : this.init_BlockPos_5());
-               if (!this.write_Set.isEmpty()) {
-                  this.init_Set.addAll(this.write_Set);
-                  this.write_Set.clear();
+               BlockPos closest = !this.treeLogs.isEmpty()
+                  ? BlockPos.of(this.treeLogs.iterator().next())
+                  : (failedGoal != null && failedGoal.targetBlocks.isEmpty() ? this.blacklistNearestDrop(failedGoal.targetItems) : this.blacklistNearestGoal());
+               if (!this.treeLogs.isEmpty()) {
+                  this.blacklistedCells.addAll(this.treeLogs);
+                  this.treeLogs.clear();
                }
 
-               this.init_FieldCache.clear();
+               this.veinCommitment.clear();
                AutismClientAddon.LOG
                   .info(
                      "[AI] block mine {}: route failed ({}), blacklisted {}: {}",
                      label,
-                     this.write_I + 1,
+                     this.reachFailures + 1,
                      closest == null ? "-" : closest.toShortString(),
                      r.message()
                   );
-               return ++this.write_I >= 14
-                  ? this.init(AiOperation.Status.FAILED, "No reachable " + label + " after " + this.write_I + " attempts (" + this.init_Str_9() + ")")
-                  : this.init_AiOperation_Result_6("Could not reach it; trying the next");
+               return ++this.reachFailures >= 14
+                  ? this.init(AiOperation.Status.FAILED, "No reachable " + label + " after " + this.reachFailures + " attempts (" + this.progressText() + ")")
+                  : this.running("Could not reach it; trying the next");
             }
 
             void init(BlockPos cell, String why) {
                if (!this.update(cell)) {
-                  int n = this.sync_Map.merge(cell.asLong(), 1, Integer::sum);
+                  int n = this.failuresByCell.merge(cell.asLong(), 1, Integer::sum);
                   AutismClientAddon.LOG.info("[AI] block mine {}: {} at {} ({}/3)", label, why, cell.toShortString(), n);
                   if (n >= 3) {
-                     this.init_Set.add(cell.asLong());
-                     this.write_Set.remove(cell.asLong());
+                     this.blacklistedCells.add(cell.asLong());
+                     this.treeLogs.remove(cell.asLong());
                   }
                }
             }
 
-            BlockPos init_BlockPos_5() {
+            BlockPos blacklistNearestGoal() {
                BlockPos feet = mc.player.blockPosition();
                BlockPos best = null;
 
-               for (BlockPos t : this.init_List_5()) {
+               for (BlockPos t : this.goalBlocks()) {
                   if (best == null || t.distSqr(feet) < best.distSqr(feet)) {
                      best = t;
                   }
                }
 
-               for (Vec3 item : this.load_List_2()) {
+               for (Vec3 item : this.visibleDrops()) {
                   BlockPos cell = BlockPos.containing(item);
                   if (best == null || cell.distSqr(feet) < best.distSqr(feet)) {
                      best = cell;
@@ -1811,14 +1811,14 @@ public final class AiBlockMine {
                }
 
                if (best != null) {
-                  this.init_Set.add(best.asLong());
-                  this.write_Set.remove(best.asLong());
+                  this.blacklistedCells.add(best.asLong());
+                  this.treeLogs.remove(best.asLong());
                }
 
                return best;
             }
 
-            BlockPos init_BlockPos(List<Vec3> items) {
+            BlockPos blacklistNearestDrop(List<Vec3> items) {
                Vec3 at = mc.player.position();
                Vec3 best = null;
 
@@ -1833,13 +1833,13 @@ public final class AiBlockMine {
                }
 
                BlockPos cell = BlockPos.containing(best);
-               this.init_Set.add(cell.asLong());
+               this.blacklistedCells.add(cell.asLong());
                return cell;
             }
 
-            void load_V_7() {
-               if (this.poll_Z) {
-                  this.poll_Z = false;
+            void releaseStepKeys() {
+               if (this.steppingToDrop) {
+                  this.steppingToDrop = false;
                   mc.options.keyUp.setDown(false);
                   mc.options.keyDown.setDown(false);
                   mc.options.keyLeft.setDown(false);
@@ -1881,20 +1881,20 @@ public final class AiBlockMine {
                return false;
             }
 
-            void init_V_3(BlockPos seed) {
+            void commitVein(BlockPos seed) {
                if (!treeMode && !approach && !dropsOnly) {
-                  this.init_FieldCache.init(seed, this.init_List, cell -> !this.init_Set.contains(cell.asLong()));
-                  this.close_Set.clear();
+                  this.veinCommitment.init(seed, this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
+                  this.goalSet.clear();
                } else {
-                  this.init_FieldCache.clear();
+                  this.veinCommitment.clear();
                }
             }
 
-            void read_V_5() {
-               this.init_FieldCache.init(this.init_List, cell -> !this.init_Set.contains(cell.asLong()));
+            void refreshVein() {
+               this.veinCommitment.init(this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
             }
 
-            Vec3 init_Vec3(BlockPos cell) {
+            Vec3 dropLandingSpot(BlockPos cell) {
                BlockPos at = cell;
 
                for (int i = 0; i < 8; i++) {
@@ -1909,50 +1909,50 @@ public final class AiBlockMine {
                return Vec3.atBottomCenterOf(at);
             }
 
-            void load_V_2(BlockPos cell) {
-               if (this.read_Set.add(cell.asLong()) && (quota == null || quota.load(this.update_Map.get(cell.asLong())))) {
-                  this.update_I++;
+            void countBroken(BlockPos cell) {
+               if (this.countedCells.add(cell.asLong()) && (quota == null || quota.load(this.blockIdByCell.get(cell.asLong())))) {
+                  this.brokenCount++;
                }
             }
 
-            void read_V(BlockPos cell) {
+            void countIfBroken(BlockPos cell) {
                if (quota != null) {
                   if (mc.level.getChunkSource().getChunk(cell.getX() >> 4, cell.getZ() >> 4, ChunkStatus.FULL, false) == null) {
                      return;
                   }
 
-                  if (this.init_Z_3(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(cell).getBlock()).toString())) {
+                  if (this.matchesBlockId(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(cell).getBlock()).toString())) {
                      return;
                   }
                }
 
-               this.load_V_2(cell);
+               this.countBroken(cell);
             }
 
-            void write_V(BlockPos cell) {
-               this.load_V_2(cell);
-               if (this.init_FieldCache.isIdle()) {
-                  this.init_V_3(cell);
+            void onBroken(BlockPos cell) {
+               this.countBroken(cell);
+               if (this.veinCommitment.isIdle()) {
+                  this.commitVein(cell);
                } else {
-                  this.read_V_5();
+                  this.refreshVein();
                }
 
                if (cell.distSqr(mc.player.blockPosition()) <= 64.0) {
-                  this.write_Map.put(cell.asLong(), System.nanoTime() + 250000000L);
+                  this.pendingDropDeadlines.put(cell.asLong(), System.nanoTime() + 250000000L);
                }
 
                if (treeMode) {
-                  boolean fresh = this.write_Set.isEmpty();
-                  this.write_Set.remove(cell.asLong());
+                  boolean fresh = this.treeLogs.isEmpty();
+                  this.treeLogs.remove(cell.asLong());
 
                   for (int dx = -1; dx <= 1; dx++) {
                      for (int dy = -1; dy <= 1; dy++) {
                         for (int dz = -1; dz <= 1; dz++) {
                            BlockPos n = cell.offset(dx, dy, dz);
-                           if (this.write_Z_2(n) && !this.write_Set.contains(n.asLong())) {
-                              for (BlockPos log : AiBlockMine.init(this::write_Z_2, n, 64)) {
-                                 if (!this.init_Set.contains(log.asLong()) && !this.open(log)) {
-                                    this.write_Set.add(log.asLong());
+                           if (this.isTargetBlock(n) && !this.treeLogs.contains(n.asLong())) {
+                              for (BlockPos log : AiBlockMine.init(this::isTargetBlock, n, 64)) {
+                                 if (!this.blacklistedCells.contains(log.asLong()) && !this.open(log)) {
+                                    this.treeLogs.add(log.asLong());
                                  }
                               }
                            }
@@ -1961,14 +1961,14 @@ public final class AiBlockMine {
                   }
 
                   if (fresh) {
-                     this.sync_I++;
+                     this.treesStarted++;
                   }
                }
             }
 
             AiBlockDigger.Inner_DataUtil_2 init_RefQueue_DataUtil_(BlockPos cell) {
                Set<UUID> before = null;
-               if (this.init_Z && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) && this.write_Z_2(cell)) {
+               if (this.breakingTarget && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) && this.isTargetBlock(cell)) {
                   before = new HashSet<>();
                   Vec3 centre = Vec3.atCenterOf(cell);
 
@@ -1983,141 +1983,141 @@ public final class AiBlockMine {
                }
 
                AiBlockDigger.Inner_DataUtil_2 result = this.read_RefQueue_DataUtil
-                  .digCompat(cell, this.write_Vec3(cell), this.load_Vec3(cell));
+                  .digCompat(cell, this.aimPoint(cell), this.nextLineDirection(cell));
                if (before != null && (this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) || result == AiBlockDigger.Inner_DataUtil_2.load)) {
-                  this.init_BufferHelper_Cache.init(cell.asLong(), before);
+                  this.dropAttribution.init(cell.asLong(), before);
                }
 
                return result;
             }
 
-            List<BlockPos> init_List_5() {
+            List<BlockPos> goalBlocks() {
                BlockPos feet = mc.player.blockPosition();
                List<BlockPos> out = new ArrayList<>();
-               if (this.load_BlockPos != null && this.open_Z) {
+               if (this.focus != null && this.scanned) {
                   BlockPos near = null;
 
-                  for (BlockPos t : this.init_List) {
-                     if (!this.init_Set.contains(t.asLong())
-                        && t.distSqr(this.load_BlockPos) <= 36.0
-                        && (near == null || t.distSqr(this.load_BlockPos) < near.distSqr(this.load_BlockPos))) {
+                  for (BlockPos t : this.knownTargets) {
+                     if (!this.blacklistedCells.contains(t.asLong())
+                        && t.distSqr(this.focus) <= 36.0
+                        && (near == null || t.distSqr(this.focus) < near.distSqr(this.focus))) {
                         near = t;
                      }
                   }
 
-                  if (near != null && this.init_FieldCache.isIdle()) {
-                     this.init_V_3(near);
+                  if (near != null && this.veinCommitment.isIdle()) {
+                     this.commitVein(near);
                   }
 
-                  this.load_BlockPos = null;
+                  this.focus = null;
                }
 
-               if (this.init_FieldCache.isActive()) {
-                  this.init_FieldCache.init(this.init_Set_3());
-                  if (this.init_FieldCache.init(System.nanoTime(), this.open_Z, 250000000L)) {
-                     this.init_FieldCache.clear();
+               if (this.veinCommitment.isActive()) {
+                  this.veinCommitment.init(this.knownTargetCells());
+                  if (this.veinCommitment.init(System.nanoTime(), this.scanned, 250000000L)) {
+                     this.veinCommitment.clear();
                   }
                }
 
-               if (!this.write_Set.isEmpty()) {
-                  for (Long cell : this.write_Set) {
+               if (!this.treeLogs.isEmpty()) {
+                  for (Long cell : this.treeLogs) {
                      out.add(BlockPos.of(cell));
                   }
-               } else if (this.init_FieldCache.isActive() && !dropsOnly) {
-                  out.addAll(this.init_FieldCache.remainingCells());
+               } else if (this.veinCommitment.isActive() && !dropsOnly) {
+                  out.addAll(this.veinCommitment.remainingCells());
                } else if (!dropsOnly) {
                   Set<Long> known = new HashSet<>();
 
-                  for (BlockPos t : this.init_List) {
+                  for (BlockPos t : this.knownTargets) {
                      known.add(t.asLong());
                   }
 
-                  this.close_Set.removeIf(cell -> !known.contains(cell));
+                  this.goalSet.removeIf(cell -> !known.contains(cell));
 
-                  for (BlockPos t : this.init_List) {
-                     if (this.close_Set.size() >= 64) {
+                  for (BlockPos t : this.knownTargets) {
+                     if (this.goalSet.size() >= 64) {
                         break;
                      }
 
-                     this.close_Set.add(t.asLong());
+                     this.goalSet.add(t.asLong());
                   }
 
-                  for (Long cell : this.close_Set) {
+                  for (Long cell : this.goalSet) {
                      out.add(BlockPos.of(cell));
                   }
                }
 
                out.removeIf(gx -> gx.equals(feet) || gx.equals(feet.above()) || gx.equals(feet.above(2)));
                if (!dropsOnly) {
-                  out = AiBlockMine.init_Z()
+                  out = AiBlockMine.breathingOften()
                      ? new ArrayList<>(out.stream().filter(gx -> !AiBlockMine.init(mc, gx)).toList())
-                     : AiBlockMine.init_List_List(out, feet, gx -> AiBlockMine.init(mc, gx), this::init_D_2);
+                     : AiBlockMine.pruneCostlyWetTargets(out, feet, gx -> AiBlockMine.init(mc, gx), this::diveCost);
                }
 
-               if (oreJob && this.write_Set.isEmpty() && this.init_FieldCache.isIdle()) {
+               if (oreJob && this.treeLogs.isEmpty() && this.veinCommitment.isIdle()) {
                   List<BlockPos> buried = new ArrayList<>();
 
                   for (BlockPos g : out) {
-                     if (!this.init_Z_5(g) && !this.poll(g)) {
+                     if (!this.opensToCave(g) && !this.poll(g)) {
                         buried.add(g);
                      }
                   }
 
-                  int still = held > 0 ? Math.max(1, held - this.load_I_6()) : Math.max(1, count - this.update_I);
+                  int still = held > 0 ? Math.max(1, held - this.heldWanted()) : Math.max(1, count - this.brokenCount);
                   if (buried.size() >= still && buried.size() < out.size()) {
                      out = buried;
                   }
                }
 
-               out.sort(Comparator.comparingDouble(gx -> this.init_D(gx, feet)));
+               out.sort(Comparator.comparingDouble(gx -> this.travelCost(gx, feet)));
                return out;
             }
 
-            String init_Str(BlockPos cell) {
+            String describeTarget(BlockPos cell) {
                for (Direction side : Direction.values()) {
                   BlockPos n = cell.relative(side);
-                  if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !this.load_Z_3(n)) {
+                  if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !this.nearOwnDig(n)) {
                      return cell.toShortString() + " open to a cave at " + n.toShortString();
                   }
                }
 
                return cell.toShortString()
                   + (this.poll(cell) ? " wet" : " buried")
-                  + (this.init_Set.contains(cell.asLong()) ? ", blacklisted" : "")
-                  + (this.close_Set.contains(cell.asLong()) ? ", in the goal set" : ", not in the goal set");
+                  + (this.blacklistedCells.contains(cell.asLong()) ? ", blacklisted" : "")
+                  + (this.goalSet.contains(cell.asLong()) ? ", in the goal set" : ", not in the goal set");
             }
 
-            double init_D(BlockPos target, BlockPos feet) {
+            double travelCost(BlockPos target, BlockPos feet) {
                if (!oreJob) {
                   return target.distSqr(feet);
                }
 
-               if (this.init_I != this.flush_I || !feet.equals(this.init_BlockPos)) {
-                  this.read_Map.clear();
-                  this.init_BlockPos = feet;
-                  this.init_I = this.flush_I;
+               if (this.travelCostTick != this.tickCount || !feet.equals(this.travelCostFeet)) {
+                  this.travelCostCache.clear();
+                  this.travelCostFeet = feet;
+                  this.travelCostTick = this.tickCount;
                }
 
-               return this.read_Map.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc.level, feet, target));
+               return this.travelCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc.level, feet, target));
             }
 
-            double init_D_2(BlockPos target) {
-               if (AiBlockMine.init_Z()) {
+            double diveCost(BlockPos target) {
+               if (AiBlockMine.breathingOften()) {
                   return 1.0 / 0.0;
                }
 
-               if (this.flush_J != this.flush_I) {
-                  this.open_Map.clear();
-                  this.flush_J = this.flush_I;
+               if (this.diveCostTick != this.tickCount) {
+                  this.diveCostCache.clear();
+                  this.diveCostTick = this.tickCount;
                }
 
-               return this.open_Map.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc, target, true));
+               return this.diveCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc, target, true));
             }
 
-            boolean init_Z_5(BlockPos cell) {
+            boolean opensToCave(BlockPos cell) {
                for (Direction side : Direction.values()) {
                   BlockPos n = cell.relative(side);
-                  if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !this.load_Z_3(n)) {
+                  if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !this.nearOwnDig(n)) {
                      return true;
                   }
                }
@@ -2125,77 +2125,77 @@ public final class AiBlockMine {
                return false;
             }
 
-            boolean load_Z_3(BlockPos air) {
+            boolean nearOwnDig(BlockPos air) {
                return AiEditLedger.update(air);
             }
 
-            void write_V_4() {
+            void pruneKnownTargets() {
                BlockPos feet = mc.player.blockPosition();
-               this.init_List.removeIf(t -> {
-                  if (this.init_Set.contains(t.asLong())) {
+               this.knownTargets.removeIf(t -> {
+                  if (this.blacklistedCells.contains(t.asLong())) {
                      return true;
                   }
 
-                  if (this.write_Z_2(t)) {
+                  if (this.isTargetBlock(t)) {
                      return false;
                   }
 
                   if (t.distSqr(feet) <= 49.0) {
-                     this.read_V(t);
+                     this.countIfBroken(t);
                   }
 
                   return true;
                });
-               this.write_Set.removeIf(cell -> {
+               this.treeLogs.removeIf(cell -> {
                   BlockPos p = BlockPos.of(cell);
-                  if (this.write_Z_2(p)) {
-                     return this.init_Set.contains(cell);
+                  if (this.isTargetBlock(p)) {
+                     return this.blacklistedCells.contains(cell);
                   }
 
                   if (p.distSqr(feet) <= 49.0) {
-                     this.read_V(p);
+                     this.countIfBroken(p);
                   }
 
                   return true;
                });
             }
 
-            boolean init_Z_12() {
+            boolean goalReached() {
                if (held > 0) {
-                  return this.load_I_6() >= held
+                  return this.heldWanted() >= held
                      || heldMin > 0
-                        && this.load_I_6() >= heldMin
-                        && this.open_Z
-                        && this.write_Set.isEmpty()
+                        && this.heldWanted() >= heldMin
+                        && this.scanned
+                        && this.treeLogs.isEmpty()
                         && this.init(nearRadius)
-                        && this.read_I_3() == 0
-                        && (!treeMode || !this.sync_Z_2() || !this.close() && this.write_BlockPos == null && this.write_BlockPos() == null)
-                        && (!treeMode || !this.read_Z_4());
+                        && this.nearbyDropEntities() == 0
+                        && (!treeMode || !this.tallTreeOverhead() || !this.close() && this.pillarDirt == null && this.findPillarDirt() == null)
+                        && (!treeMode || !this.reachableLogLeft());
                }
 
-               if (!this.load_Z_7()) {
+               if (!this.countReached()) {
                   return false;
                }
 
-               if (this.read_J == 0L) {
-                  this.read_J = System.nanoTime();
+               if (this.settleSince == 0L) {
+                  this.settleSince = System.nanoTime();
                }
 
-               long settling = System.nanoTime() - this.read_J;
-               return settling >= 250000000L && this.read_I_3() == 0 || settling > 3000000000L;
+               long settling = System.nanoTime() - this.settleSince;
+               return settling >= 250000000L && this.nearbyDropEntities() == 0 || settling > 3000000000L;
             }
 
-            boolean load_Z_7() {
+            boolean countReached() {
                return quota != null
                   ? quota.isMet()
-                  : this.update_I >= count || treeLimit > 0 && this.sync_I >= treeLimit && this.write_Set.isEmpty() && this.update_I > 0;
+                  : this.brokenCount >= count || treeLimit > 0 && this.treesStarted >= treeLimit && this.treeLogs.isEmpty() && this.brokenCount > 0;
             }
 
-            boolean read_Z_4() {
+            boolean reachableLogLeft() {
                BlockPos feet = mc.player.blockPosition();
 
-               for (BlockPos t : this.init_List) {
-                  if (!this.init_Set.contains(t.asLong()) && this.write_Z_2(t) && AiBlockMine.init(feet, t, true) && AiBlockInteraction.findReachableHit(mc, t) != null) {
+               for (BlockPos t : this.knownTargets) {
+                  if (!this.blacklistedCells.contains(t.asLong()) && this.isTargetBlock(t) && AiBlockMine.init(feet, t, true) && AiBlockInteraction.findReachableHit(mc, t) != null) {
                      return true;
                   }
                }
@@ -2206,8 +2206,8 @@ public final class AiBlockMine {
             boolean init(int radiusx) {
                BlockPos feet = mc.player.blockPosition();
 
-               for (BlockPos t : this.init_List) {
-                  if (!this.init_Set.contains(t.asLong()) && AiBlockMine.withinRadius(feet, t, radius)) {
+               for (BlockPos t : this.knownTargets) {
+                  if (!this.blacklistedCells.contains(t.asLong()) && AiBlockMine.withinRadius(feet, t, radius)) {
                      return false;
                   }
                }
@@ -2215,39 +2215,39 @@ public final class AiBlockMine {
                return true;
             }
 
-            String init_Str_9() {
-               return held > 0 ? this.load_I_6() + "/" + held + " held" : this.update_I + "/" + count + " broken";
+            String progressText() {
+               return held > 0 ? this.heldWanted() + "/" + held + " held" : this.brokenCount + "/" + count + " broken";
             }
 
-            String load_Str_2() {
+            String doneMessage() {
                return "Mined "
-                  + this.update_I
+                  + this.brokenCount
                   + " "
                   + label
-                  + (held > 0 ? ", holding " + this.load_I_6() : "")
-                  + (this.sync_I > 0 ? " from " + this.sync_I + " tree(s)" : "");
+                  + (held > 0 ? ", holding " + this.heldWanted() : "")
+                  + (this.treesStarted > 0 ? " from " + this.treesStarted + " tree(s)" : "");
             }
 
-            String read_Str_2() {
+            String visualTitle() {
                String item = !dropArg.isEmpty() ? dropArg : (dropIds.size() == 1 ? dropIds.iterator().next() : label);
                item = item.replace("minecraft:", "").replace('_', ' ');
                return (dropsOnly ? "Collecting " : "Mining ") + item;
             }
 
-            String write_Str() {
-               if (this.update_BlockPos != null) {
+            String activityLabel() {
+               if (this.waterCell != null) {
                   return "Securing the next block";
-               } else if (this.read_BlockPos != null) {
-                  return this.init_Z ? "Breaking blocks" : "Clearing access";
+               } else if (this.breaking != null) {
+                  return this.breakingTarget ? "Breaking blocks" : "Clearing access";
                } else if (mc.gameMode instanceof AutismMultiPlayerGameModeAccessor active && active.autism$isDestroying()) {
                   BlockPos cell = active.autism$getDestroyBlockPos();
-                  return cell != null && this.write_Z_2(cell) ? "Breaking blocks" : "Clearing access";
-               } else if (this.poll_Z
-                  || this.flush_Z
-                  || this.init_ClassCache_JsonUti instanceof AiBlockMine.Inner_TaskQueue target && target.init_List.isEmpty() && !target.load_List.isEmpty()) {
+                  return cell != null && this.isTargetBlock(cell) ? "Breaking blocks" : "Clearing access";
+               } else if (this.steppingToDrop
+                  || this.collectingInBox
+                  || this.travelGoal instanceof AiBlockMine.Inner_TaskQueue target && target.targetBlocks.isEmpty() && !target.targetItems.isEmpty()) {
                   return "Collecting drops";
-               } else if (!this.load_Z && !this.init_List.isEmpty()) {
-                  return this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.isAtGoal()
+               } else if (!this.exploring && !this.knownTargets.isEmpty()) {
+                  return this.travel != null && !this.travel.isAtGoal()
                      ? "Moving to the next blocks"
                      : "Mining the nearby batch";
                } else {
@@ -2255,11 +2255,11 @@ public final class AiBlockMine {
                }
             }
 
-            int init_I_12() {
-               return Math.max(1, held > 0 ? held - this.load_I_6() - this.pop_I - this.write_Map.size() : count - this.update_I);
+            int remainingNeeded() {
+               return Math.max(1, held > 0 ? held - this.heldWanted() - this.nearbyDropCount - this.pendingDropDeadlines.size() : count - this.brokenCount);
             }
 
-            ToDoubleFunction<BlockPos> init_ToDoubleFunction() {
+            ToDoubleFunction<BlockPos> breakCost() {
                Map<BlockState, Double> costs = new IdentityHashMap<>();
                return cell -> costs.computeIfAbsent(mc.level.getBlockState(cell), state -> {
                   int slot = MiningCost.bestToolSlot(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, wantedDrops));
@@ -2268,19 +2268,19 @@ public final class AiBlockMine {
             }
 
             boolean init(Item item) {
-               return this.load_Map.computeIfAbsent(item, it -> {
+               return this.wantedItemCache.computeIfAbsent(item, it -> {
                   String id = BuiltInRegistries.ITEM.getKey(it).toString();
                   if (!dropIds.isEmpty()) {
                      return dropIds.contains(id);
                   }
 
                   if (dropArg.isEmpty() || !id.equals(dropArg) && !AiMine.init(dropArg, id)) {
-                     if (this.init_Z_3(id)) {
+                     if (this.matchesBlockId(id)) {
                         return true;
                      }
 
                      for (Block source : AiItems.sourceBlocksFor(it)) {
-                        if (this.init_Z_3(BuiltInRegistries.BLOCK.getKey(source).toString())) {
+                        if (this.matchesBlockId(BuiltInRegistries.BLOCK.getKey(source).toString())) {
                            return true;
                         }
                      }
@@ -2292,7 +2292,7 @@ public final class AiBlockMine {
                });
             }
 
-            int load_I_6() {
+            int heldWanted() {
                int total = 0;
                Inventory inventory = mc.player.getInventory();
 
@@ -2306,8 +2306,8 @@ public final class AiBlockMine {
                return total;
             }
 
-            boolean read_Z_2(BlockPos cell) {
-               for (Vec3 item : this.load_List) {
+            boolean coversInBoxItems(BlockPos cell) {
+               for (Vec3 item : this.inBoxItems) {
                   if (Math.abs(item.x - (cell.getX() + 0.5)) > 1.0
                      || Math.abs(item.z - (cell.getZ() + 0.5)) > 1.0
                      || item.y < cell.getY() - 0.5
@@ -2325,7 +2325,7 @@ public final class AiBlockMine {
                double glide = item.onGround() ? 2.4271844660194173 : 4.0;
                double gx = Math.max(-1.5, Math.min(1.5, v.x * glide));
                double gz = Math.max(-1.5, Math.min(1.5, v.z * glide));
-               if (gx * gx + gz * gz > 1.0E-4 && this.init_Z_Vec3(at, gx, gz)) {
+               if (gx * gx + gz * gz > 1.0E-4 && this.glidePathClear(at, gx, gz)) {
                   at = at.add(gx, 0.0, gz);
                }
 
@@ -2345,12 +2345,12 @@ public final class AiBlockMine {
                return at;
             }
 
-            boolean init_Z_Vec3(Vec3 at, double gx, double gz) {
+            boolean glidePathClear(Vec3 at, double gx, double gz) {
                BlockPos to = BlockPos.containing(at.x + gx, at.y + 0.05, at.z + gz);
                return mc.level.getBlockState(to).getCollisionShape(mc.level, to).isEmpty();
             }
 
-            boolean init_Z(List<Vec3> drops) {
+            boolean hasLooseDropNearby(List<Vec3> drops) {
                if (dropsOnly) {
                   return false;
                }
@@ -2366,12 +2366,12 @@ public final class AiBlockMine {
                return false;
             }
 
-            boolean write_Z_3() {
+            boolean goalInReach() {
                if (!dropsOnly && !approach && mc.player.onGround()) {
                   BlockPos feet = mc.player.blockPosition();
 
-                  for (BlockPos block : this.init_List_5()) {
-                     if (AiBlockMine.init(feet, block, treeMode && this.write_Set.contains(block.asLong())) && AiBlockInteraction.findReachableHit(mc, block) != null) {
+                  for (BlockPos block : this.goalBlocks()) {
+                     if (AiBlockMine.init(feet, block, treeMode && this.treeLogs.contains(block.asLong())) && AiBlockInteraction.findReachableHit(mc, block) != null) {
                         return true;
                      }
                   }
@@ -2382,7 +2382,7 @@ public final class AiBlockMine {
                }
             }
 
-            int read_I_3() {
+            int nearbyDropEntities() {
                int n = 0;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -2394,16 +2394,16 @@ public final class AiBlockMine {
                return n;
             }
 
-            List<Vec3> load_List_2() {
+            List<Vec3> visibleDrops() {
                return this.init(false);
             }
 
             List<Vec3> init(boolean all) {
                List<Vec3> out = new ArrayList<>();
-               this.push_I = 0;
-               this.pop_I = 0;
-               this.open_Set.clear();
-               this.close_Map.clear();
+               this.collectableNearbyCount = 0;
+               this.nearbyDropCount = 0;
+               this.freshDropSpots.clear();
+               this.dropCountBySpot.clear();
                Vec3 at = mc.player.position();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -2411,15 +2411,15 @@ public final class AiBlockMine {
                      && item.isAlive()
                      && this.init(item.getItem().getItem())
                      && !(entity.position().distanceToSqr(at) > (double)radius * radius)
-                     && !this.init_Set.contains(entity.blockPosition().asLong())) {
-                     Long spawned = this.init_BufferHelper_Cache.init(this.write_Map.keySet(), item.getUUID(), item.position(), item.getAge());
+                     && !this.blacklistedCells.contains(entity.blockPosition().asLong())) {
+                     Long spawned = this.dropAttribution.init(this.pendingDropDeadlines.keySet(), item.getUUID(), item.position(), item.getAge());
                      if (spawned != null) {
-                        this.write_Map.remove(spawned);
+                        this.pendingDropDeadlines.remove(spawned);
                      }
 
                      boolean nearTree = false;
                      if (!all) {
-                        for (Long cell : this.write_Set) {
+                        for (Long cell : this.treeLogs) {
                            if (BlockPos.of(cell).distToCenterSqr(entity.position()) <= 9.0) {
                               nearTree = true;
                               break;
@@ -2429,19 +2429,19 @@ public final class AiBlockMine {
 
                      boolean counts = entity.position().distanceToSqr(at) <= 64.0;
                      if (counts) {
-                        this.pop_I = this.pop_I + item.getItem().getCount();
+                        this.nearbyDropCount = this.nearbyDropCount + item.getItem().getCount();
                      }
 
                      if (!nearTree) {
                         Vec3 rest = this.init(item);
                         out.add(rest);
-                        this.close_Map.merge(rest, item.getItem().getCount(), Integer::sum);
+                        this.dropCountBySpot.merge(rest, item.getItem().getCount(), Integer::sum);
                         if (counts) {
-                           this.push_I = this.push_I + item.getItem().getCount();
+                           this.collectableNearbyCount = this.collectableNearbyCount + item.getItem().getCount();
                         }
 
                         if (item.getAge() < 14) {
-                           this.open_Set.add(rest);
+                           this.freshDropSpots.add(rest);
                         }
                      }
 
@@ -2454,21 +2454,21 @@ public final class AiBlockMine {
                return out;
             }
 
-            AiDigLine.Inner_CachePool init_EventBus_CachePool() {
+            AiDigLine.Inner_CachePool blockShapes() {
                return pos -> mc.level.getBlockState(pos).getShape(mc.level, pos);
             }
 
-            void init_V_Vec3(Vec3 from, List<BlockPos> heads, Set<BlockPos> cells, double reach) {
-               while (!this.write_List.isEmpty() && Collections.disjoint(this.write_List.get(0).chain(), cells)) {
-                  this.write_List.remove(0);
+            void planDigLines(Vec3 from, List<BlockPos> heads, Set<BlockPos> cells, double reach) {
+               while (!this.digLines.isEmpty() && Collections.disjoint(this.digLines.get(0).chain(), cells)) {
+                  this.digLines.remove(0);
                }
 
-               boolean valid = !this.write_List.isEmpty()
-                  && !Collections.disjoint(this.push_Set, cells)
-                  && AiDigLine.init(this.write_List.get(0), from, cells, this.init_EventBus_CachePool(), reach) != null;
+               boolean valid = !this.digLines.isEmpty()
+                  && !Collections.disjoint(this.digLinesCells, cells)
+                  && AiDigLine.init(this.digLines.get(0), from, cells, this.blockShapes(), reach) != null;
                if (!valid) {
-                  this.write_List.clear();
-                  this.write_List
+                  this.digLines.clear();
+                  this.digLines
                      .addAll(
                         AiDigLine.planLines(
                            from,
@@ -2476,19 +2476,19 @@ public final class AiBlockMine {
                            mc.player.getXRot(),
                            heads,
                            cells,
-                           this.init_EventBus_CachePool(),
+                           this.blockShapes(),
                            reach,
-                           this.init_I_12(),
-                           this.init_ToDoubleFunction()
+                           this.remainingNeeded(),
+                           this.breakCost()
                         )
                      );
-                  this.push_Set = Set.copyOf(cells);
-                  if (AiBlockMine.init_Z && !this.write_List.isEmpty()) {
+                  this.digLinesCells = Set.copyOf(cells);
+                  if (AiBlockMine.NAVIGATION_TRACE && !this.digLines.isEmpty()) {
                      AutismClientAddon.LOG
                         .info(
                            "[AI] dig plan from {}: {}",
                            mc.player.blockPosition().toShortString(),
-                           this.write_List
+                           this.digLines
                               .stream()
                               .map(l -> String.format(Locale.ROOT, "%.0f/%.0f %s", l.yaw(), l.pitch(), l.chain().stream().map(Vec3i::toShortString).toList()))
                               .toList()
@@ -2497,9 +2497,9 @@ public final class AiBlockMine {
                }
             }
 
-            Vec3 load_Vec3(BlockPos cell) {
-               if (this.write_List.size() >= 2 && this.init_EventBus_DataUtil != null && this.write_List.get(0).equals(this.init_EventBus_DataUtil)) {
-                  List<BlockPos> chain = this.init_EventBus_DataUtil.chain();
+            Vec3 nextLineDirection(BlockPos cell) {
+               if (this.digLines.size() >= 2 && this.digLine != null && this.digLines.get(0).equals(this.digLine)) {
+                  List<BlockPos> chain = this.digLine.chain();
                   int at = chain.indexOf(cell);
                   if (at < 0) {
                      return null;
@@ -2511,13 +2511,13 @@ public final class AiBlockMine {
                      }
                   }
 
-                  AiDigLine.Inner_DataUtil next = this.write_List.get(1);
-                  BlockPos led = AiBlockMine.init(next, mc.player.getEyePosition(), cell, this.init_EventBus_CachePool(), mc.player.blockInteractionRange());
+                  AiDigLine.Inner_DataUtil next = this.digLines.get(1);
+                  BlockPos led = AiBlockMine.init(next, mc.player.getEyePosition(), cell, this.blockShapes(), mc.player.blockInteractionRange());
                   if (led != null
-                     && !this.init_Set.contains(led.asLong())
-                     && this.write_Z_2(led)
+                     && !this.blacklistedCells.contains(led.asLong())
+                     && this.isTargetBlock(led)
                      && this.sync(led)
-                     && AiBlockMine.init(mc.player.blockPosition(), led, treeMode && this.write_Set.contains(led.asLong()))) {
+                     && AiBlockMine.init(mc.player.blockPosition(), led, treeMode && this.treeLogs.contains(led.asLong()))) {
                      return MiningCost.bestToolSlot(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops)) < 0
                         ? null
                         : next.direction();
@@ -2529,34 +2529,34 @@ public final class AiBlockMine {
                }
             }
 
-            Vec3 read_Vec3(BlockPos cell) {
+            Vec3 digLineAim(BlockPos cell) {
                if (mc.player == null) {
                   return null;
                }
 
-               Vec3 from = this.init_Vec3_6();
+               Vec3 from = this.driftedEye();
                double reach = mc.player.blockInteractionRange();
-               BlockPos led = this.init_EventBus_DataUtil == null
+               BlockPos led = this.digLine == null
                   ? null
-                  : AiDigLine.init(this.init_EventBus_DataUtil, from, List.of(cell), this.init_EventBus_CachePool(), reach);
-               if (led == null && this.push_Set.contains(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
+                  : AiDigLine.init(this.digLine, from, List.of(cell), this.blockShapes(), reach);
+               if (led == null && this.digLinesCells.contains(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
                   Set<BlockPos> rest = new HashSet<>();
 
-                  for (BlockPos c : this.push_Set) {
+                  for (BlockPos c : this.digLinesCells) {
                      if (!mc.level.getBlockState(c).isAir()) {
                         rest.add(c);
                      }
                   }
 
                   AiDigLine.Inner_DataUtil again = AiDigLine.planLine(
-                     from, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.init_EventBus_CachePool(), reach
+                     from, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.blockShapes(), reach
                   );
                   if (again != null && again.chain().get(0).equals(cell)) {
-                     this.init_EventBus_DataUtil = again;
-                     if (!this.write_List.isEmpty() && this.write_List.get(0).chain().contains(cell)) {
-                        this.write_List.set(0, again);
+                     this.digLine = again;
+                     if (!this.digLines.isEmpty() && this.digLines.get(0).chain().contains(cell)) {
+                        this.digLines.set(0, again);
                      } else {
-                        this.write_List.add(0, again);
+                        this.digLines.add(0, again);
                      }
 
                      led = cell;
@@ -2568,14 +2568,14 @@ public final class AiBlockMine {
                }
 
                Vec3 eye = mc.player.getEyePosition();
-               BlockHitResult hit = AiDigLine.init(eye, this.init_EventBus_DataUtil.direction(), reach, Set.of(), this.init_EventBus_CachePool());
+               BlockHitResult hit = AiDigLine.init(eye, this.digLine.direction(), reach, Set.of(), this.blockShapes());
                if (hit != null && hit.getBlockPos().equals(cell)) {
-                  return hit.getLocation().add(this.init_EventBus_DataUtil.direction().scale(0.02));
+                  return hit.getLocation().add(this.digLine.direction().scale(0.02));
                }
 
                Set<BlockPos> rest = new HashSet<>();
 
-               for (BlockPos c : this.push_Set) {
+               for (BlockPos c : this.digLinesCells) {
                   if (!mc.level.getBlockState(c).isAir()) {
                      rest.add(c);
                   }
@@ -2583,25 +2583,25 @@ public final class AiBlockMine {
 
                rest.add(cell);
                AiDigLine.Inner_DataUtil here = AiDigLine.planLine(
-                  eye, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.init_EventBus_CachePool(), reach
+                  eye, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.blockShapes(), reach
                );
                if (here != null && here.chain().get(0).equals(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
-                  this.init_EventBus_DataUtil = here;
-                  if (!this.write_List.isEmpty() && this.write_List.get(0).chain().contains(cell)) {
-                     this.write_List.set(0, here);
+                  this.digLine = here;
+                  if (!this.digLines.isEmpty() && this.digLines.get(0).chain().contains(cell)) {
+                     this.digLines.set(0, here);
                   } else {
-                     this.write_List.add(0, here);
+                     this.digLines.add(0, here);
                   }
 
-                  return AiDigLine.init(here, eye, this.init_EventBus_CachePool(), reach);
+                  return AiDigLine.init(here, eye, this.blockShapes(), reach);
                } else {
                   return null;
                }
             }
 
-            Vec3 init_Vec3_BlockPos(BlockPos end, List<BlockPos> blocks, boolean trees) {
-               if (end.equals(this.poll_BlockPos) && blocks.equals(this.update_List) && mc.player.tickCount - this.clear < 2) {
-                  return this.init_Vec3;
+            Vec3 aimFromPathEnd(BlockPos end, List<BlockPos> blocks, boolean trees) {
+               if (end.equals(this.aimCacheEnd) && blocks.equals(this.aimCacheBlocks) && mc.player.tickCount - this.clear < 2) {
+                  return this.aimCachePoint;
                }
 
                List<BlockPos> beside = new ArrayList<>();
@@ -2621,21 +2621,21 @@ public final class AiBlockMine {
                   Vec3 eye = new Vec3(end.getX() + 0.5, end.getY() + mc.player.getEyeHeight(), end.getZ() + 0.5);
                   double reach = mc.player.blockInteractionRange();
                   List<AiDigLine.Inner_DataUtil> lines = AiDigLine.planLines(
-                     eye, mc.player.getYRot(), mc.player.getXRot(), beside, beside, this.init_EventBus_CachePool(), reach, 1, this.init_ToDoubleFunction()
+                     eye, mc.player.getYRot(), mc.player.getXRot(), beside, beside, this.blockShapes(), reach, 1, this.breakCost()
                   );
                   if (!lines.isEmpty()) {
-                     point = AiDigLine.init(lines.get(0), eye, this.init_EventBus_CachePool(), reach);
+                     point = AiDigLine.init(lines.get(0), eye, this.blockShapes(), reach);
                   }
                }
 
-               this.poll_BlockPos = end.immutable();
-               this.update_List = List.copyOf(blocks);
+               this.aimCacheEnd = end.immutable();
+               this.aimCacheBlocks = List.copyOf(blocks);
                this.clear = mc.player.tickCount;
-               this.init_Vec3 = point;
+               this.aimCachePoint = point;
                return point;
             }
 
-            boolean update_Z_3() {
+            boolean driftingOffEdge() {
                if (mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
                   Vec3 v = mc.player.getDeltaMovement();
                   if (v.horizontalDistanceSqr() < 1.0E-4) {
@@ -2651,7 +2651,7 @@ public final class AiBlockMine {
                }
             }
 
-            Vec3 init_Vec3_6() {
+            Vec3 driftedEye() {
                Vec3 eye = mc.player.getEyePosition();
                Vec3 drift = mc.player.getDeltaMovement();
                return mc.player.onGround() && drift.horizontalDistanceSqr() > 1.0E-4
@@ -2659,19 +2659,19 @@ public final class AiBlockMine {
                   : eye;
             }
 
-            BlockPos load_BlockPos_2() {
+            BlockPos pickInReach() {
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.2;
-               List<BlockPos> candidates = new ArrayList<>(this.init_List_5());
+               List<BlockPos> candidates = new ArrayList<>(this.goalBlocks());
                BlockPos feet = mc.player.blockPosition();
 
-               for (BlockPos nearby : this.init_List) {
+               for (BlockPos nearby : this.knownTargets) {
                   if (!candidates.contains(nearby)
-                     && !this.init_Set.contains(nearby.asLong())
-                     && this.write_Z_2(nearby)
-                     && (!this.init_FieldCache.isActive() || this.init_FieldCache.init(nearby.asLong()))
-                     && (!treeMode || this.write_Set.isEmpty() || this.write_Set.contains(nearby.asLong()))
-                     && AiBlockMine.init(feet, nearby, treeMode && this.write_Set.contains(nearby.asLong()))) {
+                     && !this.blacklistedCells.contains(nearby.asLong())
+                     && this.isTargetBlock(nearby)
+                     && (!this.veinCommitment.isActive() || this.veinCommitment.init(nearby.asLong()))
+                     && (!treeMode || this.treeLogs.isEmpty() || this.treeLogs.contains(nearby.asLong()))
+                     && AiBlockMine.init(feet, nearby, treeMode && this.treeLogs.contains(nearby.asLong()))) {
                      candidates.add(nearby);
                   }
                }
@@ -2679,24 +2679,24 @@ public final class AiBlockMine {
                BlockPos over = mc.player.blockPosition().above(2);
                RotationMath.Rotation facing = RotationMath.ofPlayer(mc.player);
                BlockPos best = null;
-               this.push_BlockPos = null;
+               this.hiddenTarget = null;
                double bestScore = 1.7976931348623157E308;
                List<BlockPos> direct = new ArrayList<>();
                List<BlockPos> hidden = new ArrayList<>();
-               boolean moving = this.init_HashUtil_CachePool != null
-                  && !this.init_HashUtil_CachePool.isAtGoal()
+               boolean moving = this.travel != null
+                  && !this.travel.isAtGoal()
                   && mc.player.getDeltaMovement().horizontalDistanceSqr() > 0.003;
                Vec3 drift = mc.player.getDeltaMovement();
                Vec3 rest = drift.horizontalDistanceSqr() > 1.0E-4 ? eye.add(drift.x * 2.2026431718061676, 0.0, drift.z * 2.2026431718061676) : null;
-               Set<BlockPos> routeCells = this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.isAtGoal()
-                  ? this.init_HashUtil_CachePool.getRouteDigCells()
+               Set<BlockPos> routeCells = this.travel != null && !this.travel.isAtGoal()
+                  ? this.travel.getRouteDigCells()
                   : Set.of();
-               BlockPos end = moving ? this.init_HashUtil_CachePool.getPathEnd() : null;
+               BlockPos end = moving ? this.travel.getPathEnd() : null;
 
                for (BlockPos t : candidates) {
                   if (!routeCells.contains(t)
-                     && (end == null || end.equals(feet) || !AiBlockMine.init(end, t, treeMode && this.write_Set.contains(t.asLong())))
-                     && AiBlockMine.init(feet, t, treeMode && this.write_Set.contains(t.asLong()))) {
+                     && (end == null || end.equals(feet) || !AiBlockMine.init(end, t, treeMode && this.treeLogs.contains(t.asLong())))
+                     && AiBlockMine.init(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
                      if (moving) {
                         float yaw = RotationMath.lookAt(Vec3.atCenterOf(t), eye).yaw();
                         if (Math.abs(Mth.wrapDegrees(yaw - facing.yaw())) > 70.0F) {
@@ -2707,12 +2707,12 @@ public final class AiBlockMine {
                      if (!t.equals(over) || !this.update(t)) {
                         BlockPos in = AiBlockInteraction.findReachableHit(mc, t) != null && (rest == null || AiBlockInteraction.findReachableHitFrom(mc, t, rest) != null)
                            ? t
-                           : this.init_BlockPos_Vec3(eye, t, reach);
-                        if (in == null && !this.init_Set.contains(t.asLong())) {
+                           : this.softBlockerToward(eye, t, reach);
+                        if (in == null && !this.blacklistedCells.contains(t.asLong())) {
                            hidden.add(t);
                         }
 
-                        if (in != null && (in.equals(t) || !this.init_Set.contains(in.asLong()))) {
+                        if (in != null && (in.equals(t) || !this.blacklistedCells.contains(in.asLong()))) {
                            if (in.equals(t)) {
                               direct.add(t);
                            }
@@ -2721,7 +2721,7 @@ public final class AiBlockMine {
                            if (score < bestScore) {
                               bestScore = score;
                               best = in;
-                              this.push_BlockPos = in.equals(t) ? null : t;
+                              this.hiddenTarget = in.equals(t) ? null : t;
                            }
                         }
                      }
@@ -2729,24 +2729,24 @@ public final class AiBlockMine {
                }
 
                if (!direct.isEmpty()) {
-                  BlockPos base = treeMode && held > 0 ? AiBlockMine.init(direct, candidates, held - this.load_I_6()) : null;
+                  BlockPos base = treeMode && held > 0 ? AiBlockMine.init(direct, candidates, held - this.heldWanted()) : null;
                   if (base != null) {
-                     this.init_EventBus_DataUtil = null;
-                     this.write_List.clear();
-                     this.poll_Set = Set.of();
-                     this.pop_BlockPos = null;
-                     this.load_Vec3 = null;
+                     this.digLine = null;
+                     this.digLines.clear();
+                     this.unusedDigCells = Set.of();
+                     this.softBlocker = null;
+                     this.softBlockerAim = null;
                      return base;
                   }
 
-                  if (treeMode && held > 0 && this.pop_I > 0) {
+                  if (treeMode && held > 0 && this.nearbyDropCount > 0) {
                      BlockPos support = null;
                      double distance = 1.7976931348623157E308;
 
                      for (Entity entity : mc.level.entitiesForRendering()) {
                         if (entity instanceof ItemEntity item && item.isAlive() && item.onGround() && this.init(item.getItem().getItem())) {
                            BlockPos below = BlockPos.containing(item.getX(), item.getY() - 0.02, item.getZ());
-                           if (direct.contains(below) && this.write_Z_2(below)) {
+                           if (direct.contains(below) && this.isTargetBlock(below)) {
                               double d = below.distToCenterSqr(eye);
                               if (d < distance) {
                                  distance = d;
@@ -2757,11 +2757,11 @@ public final class AiBlockMine {
                      }
 
                      if (support != null) {
-                        this.init_EventBus_DataUtil = null;
-                        this.write_List.clear();
-                        this.poll_Set = Set.of();
-                        this.pop_BlockPos = null;
-                        this.load_Vec3 = null;
+                        this.digLine = null;
+                        this.digLines.clear();
+                        this.unusedDigCells = Set.of();
+                        this.softBlocker = null;
+                        this.softBlockerAim = null;
                         return support;
                      }
                   }
@@ -2769,43 +2769,43 @@ public final class AiBlockMine {
                   double lineReach = mc.player.blockInteractionRange();
                   Set<BlockPos> cells = new LinkedHashSet<>(direct);
                   cells.addAll(hidden);
-                  Vec3 from = this.init_Vec3_6();
-                  this.init_V_Vec3(from, direct, cells, lineReach);
-                  this.init_EventBus_DataUtil = this.write_List.isEmpty() ? null : this.write_List.get(0);
-                  this.poll_Set = cells;
-                  BlockPos led = this.init_EventBus_DataUtil == null
+                  Vec3 from = this.driftedEye();
+                  this.planDigLines(from, direct, cells, lineReach);
+                  this.digLine = this.digLines.isEmpty() ? null : this.digLines.get(0);
+                  this.unusedDigCells = cells;
+                  BlockPos led = this.digLine == null
                      ? null
-                     : AiDigLine.init(this.init_EventBus_DataUtil, from, cells, this.init_EventBus_CachePool(), lineReach);
+                     : AiDigLine.init(this.digLine, from, cells, this.blockShapes(), lineReach);
                   if (led != null && direct.contains(led)) {
                      return led;
                   }
                }
 
-               this.pop_BlockPos = null;
-               this.load_Vec3 = null;
-               if (best != null && this.push_BlockPos != null) {
-                  Vec3 to = Vec3.atCenterOf(this.push_BlockPos);
+               this.softBlocker = null;
+               this.softBlockerAim = null;
+               if (best != null && this.hiddenTarget != null) {
+                  Vec3 to = Vec3.atCenterOf(this.hiddenTarget);
                   BlockHitResult hit = mc.level.clip(new ClipContext(eye, to, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, mc.player));
                   if (hit.getType() == Type.BLOCK && hit.getBlockPos().equals(best)) {
-                     this.pop_BlockPos = best;
-                     this.load_Vec3 = hit.getLocation().add(to.subtract(eye).normalize().scale(0.05));
+                     this.softBlocker = best;
+                     this.softBlockerAim = hit.getLocation().add(to.subtract(eye).normalize().scale(0.05));
                   }
                }
 
                return best;
             }
 
-            String update_Str() {
+            String reachReport() {
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.2;
                BlockPos feet = mc.player.blockPosition();
                StringBuilder out = new StringBuilder(
-                  "ground=" + mc.player.onGround() + " pause=" + (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt())
+                  "ground=" + mc.player.onGround() + " pause=" + (this.travel == null || this.travel.canInterrupt())
                );
                int n = 0;
 
-               for (BlockPos t : this.init_List_5()) {
-                  if (AiBlockMine.init(feet, t, treeMode && this.write_Set.contains(t.asLong()))) {
+               for (BlockPos t : this.goalBlocks()) {
+                  if (AiBlockMine.init(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
                      if (n++ >= 4) {
                         break;
                      }
@@ -2815,34 +2815,34 @@ public final class AiBlockMine {
                         out.append(" unseen");
                      }
 
-                     BlockPos in = this.init_BlockPos_Vec3(eye, t, reach);
+                     BlockPos in = this.softBlockerToward(eye, t, reach);
                      if (in != null) {
                         out.append(" behind ").append(in.toShortString());
                      }
 
-                     if (this.init_Set.contains(t.asLong())) {
+                     if (this.blacklistedCells.contains(t.asLong())) {
                         out.append(" blacklisted");
                      }
                   }
                }
 
                if (n == 0) {
-                  out.append(" | no goal block beside the feet (").append(this.init_List_5().size()).append(" in the goal)");
+                  out.append(" | no goal block beside the feet (").append(this.goalBlocks().size()).append(" in the goal)");
                }
 
                return out.toString();
             }
 
-            Vec3 write_Vec3(BlockPos cell) {
-               Vec3 along = this.read_Vec3(cell);
+            Vec3 aimPoint(BlockPos cell) {
+               Vec3 along = this.digLineAim(cell);
                if (along != null) {
                   return along;
                } else {
-                  return cell.equals(this.pop_BlockPos) ? this.load_Vec3 : null;
+                  return cell.equals(this.softBlocker) ? this.softBlockerAim : null;
                }
             }
 
-            BlockPos init_BlockPos_Vec3(Vec3 eye, BlockPos target, double reach) {
+            BlockPos softBlockerToward(Vec3 eye, BlockPos target, double reach) {
                BlockHitResult hit = mc.level
                   .clip(new ClipContext(eye, Vec3.atCenterOf(target), net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, mc.player));
                if (hit.getType() != Type.BLOCK) {
@@ -2859,10 +2859,10 @@ public final class AiBlockMine {
                }
             }
 
-            void update_V_3() {
+            void scanAroundFeet() {
                if (!treeMode && !oreJob && !dropsOnly && !approach) {
                   BlockPos feet = mc.player.blockPosition();
-                  Set<Long> known = this.init_Set_3();
+                  Set<Long> known = this.knownTargetCells();
 
                   for (int dx = -2; dx <= 2; dx++) {
                      for (int dz = -2; dz <= 2; dz++) {
@@ -2871,36 +2871,36 @@ public final class AiBlockMine {
                            long key = cell.asLong();
                            if (!cell.equals(feet)
                               && !cell.equals(feet.above())
-                              && !this.init_Set.contains(key)
-                              && this.write_Z_2(cell)
-                              && (!known.contains(key) || !this.init_FieldCache.load(key) && (!this.init_FieldCache.isIdle() || !this.close_Set.contains(key)))
+                              && !this.blacklistedCells.contains(key)
+                              && this.isTargetBlock(cell)
+                              && (!known.contains(key) || !this.veinCommitment.load(key) && (!this.veinCommitment.isIdle() || !this.goalSet.contains(key)))
                               && this.sync(cell)) {
                               if (known.add(key)) {
-                                 this.init_List.add(cell);
+                                 this.knownTargets.add(cell);
                               }
 
-                              if (this.init_FieldCache.isIdle()) {
-                                 this.init_V_Set(this.close_Set, cell, feet);
+                              if (this.veinCommitment.isIdle()) {
+                                 this.addToGoalBatch(this.goalSet, cell, feet);
                               }
                            }
                         }
                      }
                   }
 
-                  if (this.init_FieldCache.isActive()) {
-                     this.read_V_5();
+                  if (this.veinCommitment.isActive()) {
+                     this.refreshVein();
                   }
                }
             }
 
-            void init_V_Set(Set<Long> batch, BlockPos cell, BlockPos feet) {
+            void addToGoalBatch(Set<Long> batch, BlockPos cell, BlockPos feet) {
                if (!batch.contains(cell.asLong())) {
                   if (batch.size() >= 64) {
                      Long farthest = null;
-                     double cost = this.init_D(cell, feet);
+                     double cost = this.travelCost(cell, feet);
 
                      for (Long key : batch) {
-                        double remote = this.init_D(BlockPos.of(key), feet);
+                        double remote = this.travelCost(BlockPos.of(key), feet);
                         if (remote > cost) {
                            farthest = key;
                            cost = remote;
@@ -2918,41 +2918,41 @@ public final class AiBlockMine {
                }
             }
 
-            void sync_V_2() {
-               if (!this.close_Z) {
-                  if (this.open_Z && this.flush_I % 5 != 0) {
+            void scanTerrain() {
+               if (!this.scanning) {
+                  if (this.scanned && this.tickCount % 5 != 0) {
                      return;
                   }
 
-                  this.close_Z = true;
-                  this.read_List = new ArrayList<>();
+                  this.scanning = true;
+                  this.scanHits = new ArrayList<>();
                   this.add = 0;
-                  this.open_BlockPos = mc.player.blockPosition();
-                  long key = this.open_BlockPos.getX() >> 4 & 1048575L
-                     | (this.open_BlockPos.getZ() >> 4 & 1048575L) << 20
-                     | (this.open_BlockPos.getY() >> 4 & 4095L) << 40
+                  this.scanCentre = mc.player.blockPosition();
+                  long key = this.scanCentre.getX() >> 4 & 1048575L
+                     | (this.scanCentre.getZ() >> 4 & 1048575L) << 20
+                     | (this.scanCentre.getY() >> 4 & 4095L) << 40
                      | (long)this.put << 52;
-                  if (this.init_IArr2 == null || key != this.sync_J) {
-                     this.init_IArr2 = AiBlockMine.init(
-                        this.open_BlockPos.getX(),
-                        this.open_BlockPos.getY(),
-                        this.open_BlockPos.getZ(),
+                  if (this.scanOrder == null || key != this.scanOrderKey) {
+                     this.scanOrder = AiBlockMine.init(
+                        this.scanCentre.getX(),
+                        this.scanCentre.getY(),
+                        this.scanCentre.getZ(),
                         this.put + 15 >> 4,
                         mc.level.getMinSectionY(),
                         mc.level.getSectionsCount(),
                         oreJob
                      );
-                     this.sync_J = key;
+                     this.scanOrderKey = key;
                   }
                }
 
                long until = System.nanoTime() + 1500000L;
                MutableBlockPos p = new MutableBlockPos();
 
-               while (this.add < this.init_IArr2.length && this.read_List.size() < 256 && System.nanoTime() <= until) {
-                  int[] unit = this.init_IArr2[this.add++];
-                  int cx = (this.open_BlockPos.getX() >> 4) + unit[0];
-                  int cz = (this.open_BlockPos.getZ() >> 4) + unit[1];
+               while (this.add < this.scanOrder.length && this.scanHits.size() < 256 && System.nanoTime() <= until) {
+                  int[] unit = this.scanOrder[this.add++];
+                  int cx = (this.scanCentre.getX() >> 4) + unit[0];
+                  int cz = (this.scanCentre.getZ() >> 4) + unit[1];
                   int si = unit[2];
                   if (mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) instanceof LevelChunk chunk) {
                      LevelChunkSection[] sections = chunk.getSections();
@@ -2967,25 +2967,25 @@ public final class AiBlockMine {
                            int y = i >> 8;
                            if (this.init(section.getBlockState(x, y, z))) {
                               p.set((cx << 4) + x, baseY + y, (cz << 4) + z);
-                              if (!this.init_Set.contains(p.asLong()) && this.init_Z(p, this.open_BlockPos)) {
+                              if (!this.blacklistedCells.contains(p.asLong()) && this.withinScanRadius(p, this.scanCentre)) {
                                  sectionHits.add(p.immutable());
                               }
                            }
                         }
 
-                        sectionHits.sort(Comparator.comparingDouble(cellx -> cellx.distSqr(this.open_BlockPos)));
+                        sectionHits.sort(Comparator.comparingDouble(cellx -> cellx.distSqr(this.scanCentre)));
 
                         for (BlockPos cell : sectionHits) {
-                           if (this.read_List.size() >= 256) {
+                           if (this.scanHits.size() >= 256) {
                               break;
                            }
 
                            if (this.sync(cell)) {
                               if (quota != null) {
-                                 this.update_Map.put(cell.asLong(), BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(cell).getBlock()).toString());
+                                 this.blockIdByCell.put(cell.asLong(), BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(cell).getBlock()).toString());
                               }
 
-                              this.read_List.add(cell);
+                              this.scanHits.add(cell);
                            }
                         }
                      }
@@ -2995,49 +2995,49 @@ public final class AiBlockMine {
                BlockPos feet = mc.player.blockPosition();
                Set<Long> have = new HashSet<>();
 
-               for (BlockPos hit : this.read_List) {
+               for (BlockPos hit : this.scanHits) {
                   have.add(hit.asLong());
                }
 
-               List<BlockPos> merged = new ArrayList<>(this.read_List);
+               List<BlockPos> merged = new ArrayList<>(this.scanHits);
 
-               for (BlockPos old : this.init_List) {
-                  if (have.add(old.asLong()) && this.init_Z(old, feet)) {
+               for (BlockPos old : this.knownTargets) {
+                  if (have.add(old.asLong()) && this.withinScanRadius(old, feet)) {
                      merged.add(old);
                   }
                }
 
-               merged.sort(Comparator.comparingDouble(b -> this.init_D(b, feet)));
-               this.init_List = merged.size() > 1024 ? new ArrayList<>(merged.subList(0, 1024)) : merged;
-               this.read_V_5();
-               if (this.add >= this.init_IArr2.length || this.read_List.size() >= 256) {
-                  this.close_Z = false;
-                  this.open_Z = true;
+               merged.sort(Comparator.comparingDouble(b -> this.travelCost(b, feet)));
+               this.knownTargets = merged.size() > 1024 ? new ArrayList<>(merged.subList(0, 1024)) : merged;
+               this.refreshVein();
+               if (this.add >= this.scanOrder.length || this.scanHits.size() >= 256) {
+                  this.scanning = false;
+                  this.scanned = true;
                }
             }
 
-            boolean init_Z(BlockPos p, BlockPos centre) {
+            boolean withinScanRadius(BlockPos p, BlockPos centre) {
                double dx = p.getX() - centre.getX();
                double dz = p.getZ() - centre.getZ();
                return dx * dx + dz * dz <= (double)this.put * this.put;
             }
 
-            BiPredicate<BlockState, ItemStack> init_BiPredicate() {
-               Set<Block> sources = AiBlockMine.sourceBlocks(wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString()));
+            BiPredicate<BlockState, ItemStack> buildAcceptedTool() {
+               Set<Block> sources = AiBlockMine.sourceBlocks(wantedDrops, block -> this.matchesBlockId(BuiltInRegistries.BLOCK.getKey(block).toString()));
                BiPredicate<BlockState, ItemStack> wanted = AiItems.dropFilterFor(mc, wantedDrops);
                return (state, tool) -> !sources.contains(state.getBlock()) || wanted.test(state, tool);
             }
 
             boolean init(BlockState state) {
-               return this.init_Map.computeIfAbsent(state.getBlock(), this.init_Predicate::test)
+               return this.blockMatchCache.computeIfAbsent(state.getBlock(), this.targetBlockFilter::test)
                   && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()));
             }
 
-            boolean init_Z_3(String id) {
+            boolean matchesBlockId(String id) {
                return blockIds.contains(id) ? true : !blockArg.isEmpty() && AiMine.init(blockArg, id);
             }
 
-            boolean write_Z_2(BlockPos pos) {
+            boolean isTargetBlock(BlockPos pos) {
                if (mc.level.getChunkSource().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.FULL, false) == null) {
                   return false;
                }
@@ -3045,7 +3045,7 @@ public final class AiBlockMine {
                BlockState state = mc.level.getBlockState(pos);
                boolean wanted = this.init(state);
                if (wanted && quota != null) {
-                  this.update_Map.put(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+                  this.blockIdByCell.put(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
                }
 
                return wanted;
@@ -3085,20 +3085,20 @@ public final class AiBlockMine {
                   for (Direction side : Direction.values()) {
                      if (mc.level.getFluidState(pos.relative(side)).is(FluidTags.LAVA)) {
                         if (obsidianJob) {
-                           this.load_Set.add(pos.asLong());
+                           this.lavaSealedCells.add(pos.asLong());
                         }
 
                         return false;
                      }
                   }
 
-                  return this.init_BlockPos_4(pos) == null || this.init_Item_2() != null;
+                  return this.adjacentWater(pos) == null || this.bestScaffoldItem() != null;
                } else {
                   return false;
                }
             }
 
-            BlockPos read_BlockPos() {
+            BlockPos nearestWoodedBiome() {
                BlockPos feet = mc.player.blockPosition();
                int r = Math.min(16, mc.options.getEffectiveRenderDistance());
                BlockPos best = null;
@@ -3132,14 +3132,14 @@ public final class AiBlockMine {
                return best;
             }
 
-            long[] init_JArr_BlockPos(BlockPos t, boolean trunk, int reachAbove) {
-               if (this.flush_I - this.data > 20) {
-                  this.push_Map.clear();
-                  this.data = this.flush_I;
+            long[] standCells(BlockPos t, boolean trunk, int reachAbove) {
+               if (this.tickCount - this.data > 20) {
+                  this.standCellCache.clear();
+                  this.data = this.tickCount;
                }
 
                long key = t.asLong() * 31L + (trunk ? 1 : 0);
-               long[] cached = this.push_Map.get(key);
+               long[] cached = this.standCellCache.get(key);
                if (cached != null) {
                   return cached;
                }
@@ -3162,10 +3162,10 @@ public final class AiBlockMine {
                               if (!diagonal && dy <= 1) {
                                  visible = true;
                               } else if (!diagonal) {
-                                 visible = this.init_Z_I(x, z, y + 2, t.getY()) || dy == 2 && this.flush(t.below());
+                                 visible = this.columnPassable(x, z, y + 2, t.getY()) || dy == 2 && this.flush(t.below());
                               } else {
                                  visible = (this.flush(new BlockPos(x, t.getY(), t.getZ())) || this.flush(new BlockPos(t.getX(), t.getY(), z)))
-                                    && (dy <= 1 || this.init_Z_I(x, z, y + 2, t.getY()));
+                                    && (dy <= 1 || this.columnPassable(x, z, y + 2, t.getY()));
                               }
 
                               if (visible) {
@@ -3178,11 +3178,11 @@ public final class AiBlockMine {
                }
 
                long[] cells = out.stream().mapToLong(Long::longValue).toArray();
-               this.push_Map.put(key, cells);
+               this.standCellCache.put(key, cells);
                return cells;
             }
 
-            boolean init_Z_I(int x, int z, int fromY, int toY) {
+            boolean columnPassable(int x, int z, int fromY, int toY) {
                for (int y = fromY; y <= toY; y++) {
                   if (!this.flush(new BlockPos(x, y, z))) {
                      return false;
@@ -3275,14 +3275,14 @@ public final class AiBlockMine {
                return true;
             }
 
-            boolean sync_Z_2() {
+            boolean tallTreeOverhead() {
                BlockPos feet = mc.player.blockPosition();
 
                for (int dx = -2; dx <= 2; dx++) {
                   for (int dz = -2; dz <= 2; dz++) {
                      for (int dy = 5; dy <= 8; dy++) {
                         BlockPos p = feet.offset(dx, dy, dz);
-                        if (this.write_Z_2(p) && !this.init_Set.contains(p.asLong()) && this.open(p) && !this.close(p)) {
+                        if (this.isTargetBlock(p) && !this.blacklistedCells.contains(p.asLong()) && this.open(p) && !this.close(p)) {
                            int ground = 0;
 
                            while (ground < 12 && !mc.level.getBlockState(p.below(ground + 1)).isSolidRender()) {
@@ -3300,7 +3300,7 @@ public final class AiBlockMine {
                return false;
             }
 
-            BlockPos write_BlockPos() {
+            BlockPos findPillarDirt() {
                BlockPos feet = mc.player.blockPosition();
                BlockPos best = null;
 
@@ -3316,7 +3316,7 @@ public final class AiBlockMine {
                                  && over.getCollisionShape(mc.level, p.above()).isEmpty()
                                  && !AiEditLedger.wasRecentlyPlaced(p)
                                  && AiBlockInteraction.findReachableHit(mc, p) != null
-                                 && !this.init_Set.contains(p.asLong())
+                                 && !this.blacklistedCells.contains(p.asLong())
                                  && AiPathfinder.LiveGridView.isSafeToDigCompat(mc.level, p)
                                  && (best == null || dx * dz == 0)) {
                                  best = p;
@@ -3330,16 +3330,16 @@ public final class AiBlockMine {
                return best;
             }
 
-            boolean flush_Z() {
-               return this.write_BlockPos != null && System.nanoTime() - this.init_J < 5000000000L;
+            boolean pillarDirtFresh() {
+               return this.pillarDirt != null && System.nanoTime() - this.pillarDirtSince < 5000000000L;
             }
 
-            Vec3 load_Vec3() {
+            Vec3 pillarDirtDrop() {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof ItemEntity item
                      && item.isAlive()
                      && item.getItem().is(Items.DIRT)
-                     && item.position().distanceToSqr(Vec3.atCenterOf(this.write_BlockPos)) <= 9.0) {
+                     && item.position().distanceToSqr(Vec3.atCenterOf(this.pillarDirt)) <= 9.0) {
                      return this.init(item);
                   }
                }
@@ -3365,17 +3365,17 @@ public final class AiBlockMine {
 
             boolean poll(BlockPos pos) {
                long now = System.nanoTime();
-               long[] seen = this.poll_Map.get(pos.asLong());
+               long[] seen = this.wetCache.get(pos.asLong());
                if (seen != null && now - seen[1] < 5000000000L) {
                   return seen[0] != 0L;
                }
 
-               boolean wet = this.init_BlockPos_4(pos) != null;
-               this.poll_Map.put(pos.asLong(), new long[]{wet ? 1L : 0L, now});
+               boolean wet = this.adjacentWater(pos) != null;
+               this.wetCache.put(pos.asLong(), new long[]{wet ? 1L : 0L, now});
                return wet;
             }
 
-            BlockPos init_BlockPos_4(BlockPos pos) {
+            BlockPos adjacentWater(BlockPos pos) {
                for (Direction side : new Direction[]{Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST}) {
                   BlockPos n = pos.relative(side);
                   if (mc.level.getFluidState(n).is(FluidTags.WATER)) {
@@ -3386,7 +3386,7 @@ public final class AiBlockMine {
                return null;
             }
 
-            Item init_Item_2() {
+            Item bestScaffoldItem() {
                Inventory inventory = mc.player.getInventory();
                Item best = null;
                int bestRank = 2147483647;
@@ -3405,40 +3405,40 @@ public final class AiBlockMine {
                return best;
             }
 
-            JsonObject init_JsonObject_25() {
+            JsonObject progressJson() {
                JsonObject out = AiJson.objectOf(
                   "block",
                   label,
                   "broken",
-                  this.update_I,
+                  this.brokenCount,
                   "held",
-                  this.load_I_6(),
+                  this.heldWanted(),
                   "gained",
-                  this.load_I_6() - this.load_I,
+                  this.heldWanted() - this.heldAtStart,
                   "known",
-                  this.init_List.size(),
+                  this.knownTargets.size(),
                   "failures",
-                  this.write_I,
+                  this.reachFailures,
                   "trees",
-                  this.sync_I,
+                  this.treesStarted,
                   "exploring",
-                  this.load_Z
+                  this.exploring
                );
                if (quota != null) {
                   out.add("brokenByBlock", quota.brokenByBlock());
                   out.add("remainingByBlock", quota.load());
                }
 
-               if (!this.write_Set.isEmpty()) {
-                  out.addProperty("treeLogsLeft", this.write_Set.size());
+               if (!this.treeLogs.isEmpty()) {
+                  out.addProperty("treeLogsLeft", this.treeLogs.size());
                }
 
                return out;
             }
 
-            AiOperation.Result load_AiOperation_Result_2(BlockPos target) {
+            AiOperation.Result missingTool(BlockPos target) {
                Item needed = AiItems.cheapestRequiredTool(mc.level.getBlockState(target));
-               JsonObject out = this.init_JsonObject_25();
+               JsonObject out = this.progressJson();
                out.addProperty("targetX", target.getX());
                out.addProperty("targetY", target.getY());
                out.addProperty("targetZ", target.getZ());
@@ -3446,63 +3446,63 @@ public final class AiBlockMine {
                   out.addProperty("neededTool", BuiltInRegistries.ITEM.getKey(needed).toString());
                }
 
-               this.flush_V();
+               this.stopActivity();
                return AiOperation.Result.failed(
                   AiFailure.MISSING_TOOL, "No usable harvesting tool for " + mc.level.getBlockState(target).getBlock().getName().getString(), out.toString()
                );
             }
 
-            AiOperation.Result init_AiOperation_Result_6(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_25().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               this.flush_V();
-               return new AiOperation.Result(status, message, this.init_JsonObject_25().toString(), List.of());
+               this.stopActivity();
+               return new AiOperation.Result(status, message, this.progressJson().toString(), List.of());
             }
 
-            void flush_V() {
-               if (this.init_AiOperation != null) {
-                  this.sync_Z = this.sync_Z | this.init_AiOperation.requiresReconciliationAfterEmergency();
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+            void stopActivity() {
+               if (this.preparation != null) {
+                  this.reconcileAfterPreparation = this.reconcileAfterPreparation | this.preparation.requiresReconciliationAfterEmergency();
+                  this.preparation.cancel();
+                  this.preparation = null;
                }
 
                if (!AutismLiteVariant.enabled()) {
                   AiVisualization.clearOwner(this);
                }
 
-               if (this.poll_Z) {
-                  this.poll_Z = false;
+               if (this.steppingToDrop) {
+                  this.steppingToDrop = false;
                   mc.options.keyUp.setDown(false);
                   mc.options.keyDown.setDown(false);
                   mc.options.keyLeft.setDown(false);
                   mc.options.keyRight.setDown(false);
                }
 
-               if (this.init_HashUtil_CachePool != null) {
-                  this.init_HashUtil_CachePool.cancel();
-                  this.init_HashUtil_CachePool = null;
+               if (this.travel != null) {
+                  this.travel.cancel();
+                  this.travel = null;
                }
 
-               if (this.load_AiOperation != null) {
-                  this.load_AiOperation.cancel();
-                  this.load_AiOperation = null;
+               if (this.breathe != null) {
+                  this.breathe.cancel();
+                  this.breathe = null;
                }
 
                this.init_RefQueue_DataUtil.stopCompat();
                this.load_RefQueue_DataUtil.stopCompat();
-               this.init_DataPipe.reset();
-               this.update_BlockPos = null;
-               this.init_DataUtil.clear();
+               this.waterPlacer.reset();
+               this.waterCell = null;
+               this.aim.clear();
                AiMotionSafety.releaseMovementKeys();
             }
 
             @Override
             public void cancel() {
-               if (!this.read_Z) {
-                  this.read_Z = true;
-                  this.flush_V();
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.stopActivity();
                }
             }
          };
@@ -3512,13 +3512,13 @@ public final class AiBlockMine {
    }
 
    public static synchronized void init_V() {
-      init_JArr[0] = init_JArr[1];
-      init_JArr[1] = System.nanoTime();
+      BREATHE_START_NANOS[0] = BREATHE_START_NANOS[1];
+      BREATHE_START_NANOS[1] = System.nanoTime();
    }
 
-   static synchronized boolean init_Z() {
+   static synchronized boolean breathingOften() {
       long now = System.nanoTime();
-      return init_JArr[0] != 0L && init_JArr[1] - init_JArr[0] < 180000000000L && now - init_JArr[1] < 300000000000L;
+      return BREATHE_START_NANOS[0] != 0L && BREATHE_START_NANOS[1] - BREATHE_START_NANOS[0] < 180000000000L && now - BREATHE_START_NANOS[1] < 300000000000L;
    }
 
    static synchronized int strikeCount(BlockPos pos) {
@@ -3571,7 +3571,7 @@ public final class AiBlockMine {
       return swim + dryTicks / 20.0 * (slowdown - 1.0);
    }
 
-   static List<BlockPos> init_List_List(List<BlockPos> targets, BlockPos feet, Predicate<BlockPos> submerged, ToDoubleFunction<BlockPos> dive) {
+   static List<BlockPos> pruneCostlyWetTargets(List<BlockPos> targets, BlockPos feet, Predicate<BlockPos> submerged, ToDoubleFunction<BlockPos> dive) {
       double bestDry = 1.0 / 0.0;
       boolean anyWet = false;
 
@@ -3682,14 +3682,14 @@ public final class AiBlockMine {
 
    static final class Inner_CachePool {
       final Map<Long, Set<UUID>> entitiesByCell = new HashMap<>();
-      final Set<UUID> init_Set = new HashSet<>();
+      final Set<UUID> attributedEntities = new HashSet<>();
 
       void init(long cell, Collection<UUID> present) {
          this.entitiesByCell.put(cell, Set.copyOf(present));
       }
 
       Long init(Collection<Long> pending, UUID entity, Vec3 position, int age) {
-         if (this.init_Set.contains(entity)) {
+         if (this.attributedEntities.contains(entity)) {
             return null;
          }
 
@@ -3704,7 +3704,7 @@ public final class AiBlockMine {
 
          Long cell = AiBlockMine.init(eligible, position, age);
          if (cell != null) {
-            this.init_Set.add(entity);
+            this.attributedEntities.add(entity);
             this.entitiesByCell.remove(cell);
          }
 
@@ -3793,7 +3793,7 @@ public final class AiBlockMine {
          return new AiBlockMine.Inner_StreamUtil(Math.max(target.getY(), feet.getY() - 8), target, Math.max(3.0, across - 8.0));
       }
 
-      boolean init_Z_BlockPos_BlockPos(BlockPos feet, BlockPos target) {
+      boolean stillDescendingToward(BlockPos feet, BlockPos target) {
          return feet.getY() > this.maxY && this.toward.distSqr(target) <= 36.0;
       }
 
@@ -3816,14 +3816,14 @@ public final class AiBlockMine {
    }
 
    static final class Inner_TaskQueue implements AiPathfinder.PathGoal {
-      final Set<Long> init_Set = new HashSet<>();
-      final Set<Long> load_Set;
-      final List<BlockPos> init_List;
-      final List<Vec3> load_List;
-      final List<BlockPos> read_List;
-      final Set<Long> read_Set = new HashSet<>();
+      final Set<Long> dryTargetCells = new HashSet<>();
+      final Set<Long> noShaftCells;
+      final List<BlockPos> targetBlocks;
+      final List<Vec3> targetItems;
+      final List<BlockPos> wetTargets;
+      final Set<Long> excludedStances = new HashSet<>();
       Set<Long> write = Set.of();
-      int init_I = 2;
+      int reachAbove = 2;
       final Set<Long> update = new HashSet<>();
 
       Inner_TaskQueue(List<BlockPos> blocks, List<Vec3> items) {
@@ -3835,47 +3835,47 @@ public final class AiBlockMine {
       }
 
       Inner_TaskQueue(List<BlockPos> blocks, List<Vec3> items, Set<Long> noShaft, Set<Long> wet) {
-         this.init_List = List.copyOf(blocks);
-         this.load_List = List.copyOf(items);
-         this.load_Set = Set.copyOf(noShaft);
+         this.targetBlocks = List.copyOf(blocks);
+         this.targetItems = List.copyOf(items);
+         this.noShaftCells = Set.copyOf(noShaft);
          List<BlockPos> beside = new ArrayList<>();
 
          for (BlockPos p : blocks) {
             if (wet.contains(p.asLong())) {
                beside.add(p);
             } else {
-               this.init_Set.add(p.asLong());
+               this.dryTargetCells.add(p.asLong());
             }
          }
 
-         this.read_List = List.copyOf(beside);
+         this.wetTargets = List.copyOf(beside);
       }
 
       @Override
       public boolean isInGoal(int x, int y, int z) {
-         for (Vec3 item : this.load_List) {
+         for (Vec3 item : this.targetItems) {
             if (AiBlockMine.isItemAtBlock(x, y, z, item)) {
                return true;
             }
          }
 
-         if (this.read_Set.contains(BlockPos.asLong(x, y, z))) {
+         if (this.excludedStances.contains(BlockPos.asLong(x, y, z))) {
             return false;
          }
 
-         if (!this.read_List.isEmpty()) {
+         if (!this.wetTargets.isEmpty()) {
             BlockPos feet = new BlockPos(x, y, z);
 
-            for (BlockPos t : this.read_List) {
+            for (BlockPos t : this.wetTargets) {
                if (AiBlockMine.init(feet, t, false) && t.getY() - y <= 3) {
                   return true;
                }
             }
          }
 
-         if (!this.init_Set.contains(BlockPos.asLong(x, y, z)) && !this.init_Set.contains(BlockPos.asLong(x, y + 1, z))) {
+         if (!this.dryTargetCells.contains(BlockPos.asLong(x, y, z)) && !this.dryTargetCells.contains(BlockPos.asLong(x, y + 1, z))) {
             long over = BlockPos.asLong(x, y + 2, z);
-            return this.init_Set.contains(over) && !this.load_Set.contains(over) ? true : this.update.contains(BlockPos.asLong(x, y, z));
+            return this.dryTargetCells.contains(over) && !this.noShaftCells.contains(over) ? true : this.update.contains(BlockPos.asLong(x, y, z));
          } else {
             return true;
          }
@@ -3888,7 +3888,7 @@ public final class AiBlockMine {
          }
 
          if (planned != null && planned.probeCell(x, y, z).water()) {
-            for (Vec3 item : this.load_List) {
+            for (Vec3 item : this.targetItems) {
                if (AiBlockMine.isItemAtBlock(x, y, z, item)) {
                   return true;
                }
@@ -3904,13 +3904,13 @@ public final class AiBlockMine {
       public double heuristic(int x, int y, int z) {
          double best = 1.7976931348623157E308;
 
-         for (BlockPos p : this.init_List) {
+         for (BlockPos p : this.targetBlocks) {
             int dy = p.getY() - y;
-            dy = dy >= 0 && dy <= this.init_I ? 0 : (dy > this.init_I ? dy - this.init_I : dy);
+            dy = dy >= 0 && dy <= this.reachAbove ? 0 : (dy > this.reachAbove ? dy - this.reachAbove : dy);
             best = Math.min(best, AiPathfinder.MoveCosts.estimateHeuristicCompat(p.getX() - x, dy, p.getZ() - z));
          }
 
-         for (Vec3 item : this.load_List) {
+         for (Vec3 item : this.targetItems) {
             double dx = Math.max(0.0, Math.abs(item.x - (x + 0.5)) - 1.3);
             double dz = Math.max(0.0, Math.abs(item.z - (z + 0.5)) - 1.3);
             double dy = item.y < y - 0.5 ? item.y - (y - 0.5) : (item.y > y + 2.3 ? item.y - (y + 2.3) : 0.0);
@@ -3923,7 +3923,7 @@ public final class AiBlockMine {
       @Override
       public boolean write(BlockPos cell) {
          long key = cell.asLong();
-         return this.init_Set.contains(key) && !this.write.contains(key) && !this.load_Set.contains(key);
+         return this.dryTargetCells.contains(key) && !this.write.contains(key) && !this.noShaftCells.contains(key);
       }
 
       @Override
@@ -3932,9 +3932,9 @@ public final class AiBlockMine {
       }
 
       boolean init(AiBlockMine.Inner_TaskQueue other) {
-         if (other != null && this.init_Set.equals(other.init_Set) && this.read_Set.equals(other.read_Set) && this.load_List.size() == other.load_List.size()) {
-            for (int i = 0; i < this.load_List.size(); i++) {
-               if (this.load_List.get(i).distanceToSqr(other.load_List.get(i)) > 0.25) {
+         if (other != null && this.dryTargetCells.equals(other.dryTargetCells) && this.excludedStances.equals(other.excludedStances) && this.targetItems.size() == other.targetItems.size()) {
+            for (int i = 0; i < this.targetItems.size(); i++) {
+               if (this.targetItems.get(i).distanceToSqr(other.targetItems.get(i)) > 0.25) {
                   return false;
                }
             }

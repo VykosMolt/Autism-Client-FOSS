@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 final class AiFarmPlacement extends AiPlacementSession {
-   private final ClientLevel init_ClientLevel;
+   private final ClientLevel level;
    private final String init_Str;
    private final String load_Str;
    private final BlockPos init_BlockPos;
@@ -39,7 +39,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    AiFarmPlacement(String cropBlock, String substrate, AiFarmArea.Inner_DataUtil previous) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         this.init_ClientLevel = mc.level;
+         this.level = mc.level;
          this.init_Str = cropBlock;
          this.load_Str = AiFarmArea.substrateFor(AiJson.objectOf("substrate", substrate), cropBlock);
          this.read_BlockPos = previous == null ? null : previous.from();
@@ -78,7 +78,7 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    @Override
    public boolean isActive() {
-      return !this.read_Z && Minecraft.getInstance().level == this.init_ClientLevel;
+      return !this.read_Z && Minecraft.getInstance().level == this.level;
    }
 
    @Override
@@ -165,9 +165,9 @@ final class AiFarmPlacement extends AiPlacementSession {
          "ready",
          this.isReadyToConfirm(),
          "first",
-         this.read_BlockPos == null ? new JsonObject() : init_JsonObject_BlockPos(this.read_BlockPos),
+         this.read_BlockPos == null ? new JsonObject() : posJson(this.read_BlockPos),
          "second",
-         init_JsonObject_BlockPos(this.write),
+         posJson(this.write),
          "status",
          this.getStatus(),
          "width",
@@ -187,16 +187,16 @@ final class AiFarmPlacement extends AiPlacementSession {
          this.init_Vec3 = direction;
          if (surface) {
             double reach = (mc.options.getEffectiveRenderDistance() + 2) * 16.0;
-            BlockHitResult hit = this.init_ClientLevel.clip(new ClipContext(eye, eye.add(direction.scale(reach)), Block.OUTLINE, Fluid.NONE, mc.player));
-            if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.init_ClientLevel, hit.getBlockPos())) {
+            BlockHitResult hit = this.level.clip(new ClipContext(eye, eye.add(direction.scale(reach)), Block.OUTLINE, Fluid.NONE, mc.player));
+            if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.level, hit.getBlockPos())) {
                this.write = this.init_BlockPos_BlockPos(hit.getBlockPos());
                this.init_D = Vec3.atCenterOf(this.write).distanceTo(eye);
             } else {
                this.init_D = AiPlacementControls.init(eye, direction, this.write.getY() + 1, this.init_D);
-               this.write = this.init_BlockPos_Vec3(AiPlacementControls.init(eye, direction, this.init_D));
+               this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, direction, this.init_D));
             }
          } else {
-            this.write = this.init_BlockPos_Vec3(AiPlacementControls.init(eye, direction, this.init_D));
+            this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, direction, this.init_D));
          }
 
          this.write_V();
@@ -204,19 +204,19 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    private BlockPos init_BlockPos_BlockPos(BlockPos hit) {
-      BlockState state = this.init_ClientLevel.getBlockState(hit);
-      return state.getCollisionShape(this.init_ClientLevel, hit).isEmpty()
+      BlockState state = this.level.getBlockState(hit);
+      return state.getCollisionShape(this.level, hit).isEmpty()
             && state.getFluidState().isEmpty()
-            && !this.init_ClientLevel.getBlockState(hit.below()).getCollisionShape(this.init_ClientLevel, hit.below()).isEmpty()
+            && !this.level.getBlockState(hit.below()).getCollisionShape(this.level, hit.below()).isEmpty()
          ? hit.below()
          : hit;
    }
 
-   private BlockPos init_BlockPos_Vec3(Vec3 point) {
-      WorldBorder border = this.init_ClientLevel.getWorldBorder();
+   private BlockPos clampToWorldBorder(Vec3 point) {
+      WorldBorder border = this.level.getWorldBorder();
       return BlockPos.containing(
          Mth.clamp(point.x, border.getMinX(), border.getMaxX() - 1.0),
-         Mth.clamp(point.y, this.init_ClientLevel.getMinY(), this.init_ClientLevel.getMaxY() - 1),
+         Mth.clamp(point.y, this.level.getMinY(), this.level.getMaxY() - 1),
          Mth.clamp(point.z, border.getMinZ(), border.getMaxZ() - 1.0)
       );
    }
@@ -231,7 +231,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          }
 
          this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
-         this.write = this.init_BlockPos_Vec3(AiPlacementControls.init(eye, this.init_Vec3, this.init_D));
+         this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, this.init_Vec3, this.init_D));
          this.write_V();
       }
    }
@@ -240,7 +240,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    public void snapToGround() {
       if (this.isActive()) {
          this.write = new BlockPos(
-            this.write.getX(), this.init_ClientLevel.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.write.getX(), this.write.getZ()) - 1, this.write.getZ()
+            this.write.getX(), this.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.write.getX(), this.write.getZ()) - 1, this.write.getZ()
          );
          this.write_V();
       }
@@ -303,7 +303,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       }
    }
 
-   private static JsonObject init_JsonObject_BlockPos(BlockPos p) {
+   private static JsonObject posJson(BlockPos p) {
       return AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ());
    }
 }

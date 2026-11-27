@@ -39,24 +39,24 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private static final int load_I = 16384;
    private static final int read_I = 8;
    private static final int write_I = -1;
-   private final ResourcePackDownloadScope.Inner_BufferHelper init_UiHelper_BufferHel;
-   private final Proxy init_Proxy;
-   private final PackUrlValidator.Inner_StreamUtil init_TextFormat_StreamU;
-   private final ScopedHttpUrlConnection.Inner_NetHelper init_RenderState_NetHel;
-   private final ScopedHttpUrlConnection.Inner_SyncManager init_RenderState_SyncMa;
-   private final BooleanSupplier init_BooleanSupplier;
-   private final LinkedHashMap<String, List<String>> init_LinkedHashMap = new LinkedHashMap<>();
+   private final ResourcePackDownloadScope.Inner_BufferHelper scopeSnapshot;
+   private final Proxy connectionProxy;
+   private final PackUrlValidator.Inner_StreamUtil resolver;
+   private final ScopedHttpUrlConnection.Inner_NetHelper socketFactory;
+   private final ScopedHttpUrlConnection.Inner_SyncManager tlsFactory;
+   private final BooleanSupplier stillCurrent;
+   private final LinkedHashMap<String, List<String>> requestHeaders = new LinkedHashMap<>();
    private int update = -1;
    private int sync = -1;
-   private volatile Socket init_Socket;
-   private InputStream init_InputStream;
-   private volatile boolean init_Z;
-   private boolean load_Z;
-   private boolean read_Z;
-   private ScopedHttpUrlConnection.Inner_JsonUtil init_RenderState_JsonUt;
-   private InputStream load_InputStream;
-   private PackUrlValidator.Inner_BufferHelper init_TextFormat_BufferH;
-   private boolean write_Z;
+   private volatile Socket activeSocket;
+   private InputStream socketInput;
+   private volatile boolean disconnected;
+   private boolean socketConnected;
+   private boolean viaProxy;
+   private ScopedHttpUrlConnection.Inner_JsonUtil response;
+   private InputStream responseBody;
+   private PackUrlValidator.Inner_BufferHelper route;
+   private boolean routeResolved;
 
    public ScopedHttpUrlConnection(ResourcePackDownloadScope.Inner_BufferHelper snapshot, URL url, Proxy proxy) throws IOException, UnknownHostException {
       this(
@@ -80,15 +80,15 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       BooleanSupplier currency
    ) throws IOException {
       super(Objects.requireNonNull(url, "url"));
-      this.init_UiHelper_BufferHel = Objects.requireNonNull(snapshot, "snapshot");
+      this.scopeSnapshot = Objects.requireNonNull(snapshot, "snapshot");
       ConnectionPrivacyRegistry.ProxyEndpoint connectionProxy = snapshot.proxyEndpoint();
-      this.init_Proxy = connectionProxy == null
+      this.connectionProxy = connectionProxy == null
          ? (proxy == null ? Proxy.NO_PROXY : proxy)
          : new Proxy(Type.SOCKS, InetSocketAddress.createUnresolved(connectionProxy.host(), connectionProxy.port()));
-      this.init_TextFormat_StreamU = Objects.requireNonNull(resolver, "resolver");
-      this.init_RenderState_NetHel = Objects.requireNonNull(socketFactory, "socketFactory");
-      this.init_RenderState_SyncMa = Objects.requireNonNull(tlsFactory, "tlsFactory");
-      this.init_BooleanSupplier = Objects.requireNonNull(currency, "currency");
+      this.resolver = Objects.requireNonNull(resolver, "resolver");
+      this.socketFactory = Objects.requireNonNull(socketFactory, "socketFactory");
+      this.tlsFactory = Objects.requireNonNull(tlsFactory, "tlsFactory");
+      this.stillCurrent = Objects.requireNonNull(currency, "currency");
       PackUrlValidator.parseUrl(url);
       snapshot.ensureCurrent();
    }
@@ -100,13 +100,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    @Override
    public void disconnect() {
-      this.init_Z = true;
+      this.disconnected = true;
       this.write();
    }
 
    @Override
    public boolean usingProxy() {
-      return this.read_Z;
+      return this.viaProxy;
    }
 
    @Override
@@ -162,41 +162,41 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    @Override
    public void setRequestProperty(String key, String value) {
-      this.init_V();
-      init_V_Str_Str(key, value);
-      this.init_LinkedHashMap.remove(key);
-      init_V_Map_Str(this.init_LinkedHashMap, key);
-      this.init_LinkedHashMap.put(key, new ArrayList<>(List.of(value)));
+      this.ensureNotConnected();
+      validateHeader(key, value);
+      this.requestHeaders.remove(key);
+      removeHeader(this.requestHeaders, key);
+      this.requestHeaders.put(key, new ArrayList<>(List.of(value)));
    }
 
    @Override
    public void addRequestProperty(String key, String value) {
-      this.init_V();
-      init_V_Str_Str(key, value);
+      this.ensureNotConnected();
+      validateHeader(key, value);
 
-      for (Entry<String, List<String>> entry : this.init_LinkedHashMap.entrySet()) {
+      for (Entry<String, List<String>> entry : this.requestHeaders.entrySet()) {
          if (entry.getKey().equalsIgnoreCase(key)) {
             entry.getValue().add(value);
             return;
          }
       }
 
-      this.init_LinkedHashMap.put(key, new ArrayList<>(List.of(value)));
+      this.requestHeaders.put(key, new ArrayList<>(List.of(value)));
    }
 
    @Override
    public String getRequestProperty(String key) {
-      List<String> values = init_List_Map_Str(this.init_LinkedHashMap, key);
+      List<String> values = headerValues(this.requestHeaders, key);
       return values.isEmpty() ? null : String.join(", ", values);
    }
 
    @Override
    public Map<String, List<String>> getRequestProperties() {
-      return init_Map_Map(this.init_LinkedHashMap);
+      return copyHeaders(this.requestHeaders);
    }
 
-   private void init_V() {
-      if (this.load_Z) {
+   private void ensureNotConnected() {
+      if (this.socketConnected) {
          throw new IllegalStateException("Already connected");
       }
    }
@@ -207,7 +207,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       if (this.responseCode >= 400) {
          throw new IOException("Server returned HTTP response code: " + this.responseCode + " for URL: " + this.url);
       } else {
-         return this.init_InputStream();
+         return this.openResponseStream();
       }
    }
 
@@ -215,7 +215,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    public InputStream getErrorStream() {
       try {
          this.load();
-         return this.responseCode >= 400 ? this.init_InputStream() : null;
+         return this.responseCode >= 400 ? this.openResponseStream() : null;
       } catch (IOException e) {
          return null;
       }
@@ -237,7 +237,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    public long getContentLengthLong() {
       try {
          this.load();
-         return this.init_RenderState_JsonUt.init_J;
+         return this.response.contentLength;
       } catch (IOException e) {
          return -1L;
       }
@@ -254,10 +254,10 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       try {
          this.load();
          if (name == null) {
-            return this.init_RenderState_JsonUt.init_Str;
+            return this.response.statusLine;
          }
 
-         List<String> values = this.init_RenderState_JsonUt.init(name);
+         List<String> values = this.response.init(name);
          return values.isEmpty() ? null : String.join(", ", values);
       } catch (IOException e) {
          return null;
@@ -269,12 +269,12 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       try {
          this.load();
          if (index == 0) {
-            return this.init_RenderState_JsonUt.init_Str;
+            return this.response.statusLine;
          }
 
          int current = 1;
 
-         for (List<String> values : this.init_RenderState_JsonUt.init_LinkedHashMap.values()) {
+         for (List<String> values : this.response.headers.values()) {
             if (!values.isEmpty() && current++ == index) {
                return values.getLast();
             }
@@ -296,7 +296,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
          int current = 1;
 
-         for (String key : this.init_RenderState_JsonUt.init_LinkedHashMap.keySet()) {
+         for (String key : this.response.headers.keySet()) {
             if (current++ == index) {
                return key;
             }
@@ -313,8 +313,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       try {
          this.load();
          LinkedHashMap<String, List<String>> result = new LinkedHashMap<>();
-         result.put(null, List.of(this.init_RenderState_JsonUt.init_Str));
-         result.putAll(init_Map_Map(this.init_RenderState_JsonUt.init_LinkedHashMap));
+         result.put(null, List.of(this.response.statusLine));
+         result.putAll(copyHeaders(this.response.headers));
          return Collections.unmodifiableMap(result);
       } catch (IOException e) {
          return Map.of();
@@ -322,38 +322,38 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private void load() throws IOException {
-      if (this.init_RenderState_JsonUt != null) {
-         if (this.init_Z) {
+      if (this.response != null) {
+         if (this.disconnected) {
             throw new IOException("Connection disconnected");
          }
       } else {
-         if (this.init_Z) {
+         if (this.disconnected) {
             throw new IOException("Connection disconnected");
          }
 
-         if (this.load_Z) {
+         if (this.socketConnected) {
             throw new IOException("Connection attempt already failed");
          }
 
-         this.load_Z = true;
+         this.socketConnected = true;
          this.read();
          PackUrlValidator.Inner_ConfigStore target = PackUrlValidator.parseUrl(this.url);
          PackUrlValidator.Inner_ConfigStore initialTarget = target;
          PackUrlValidator.Inner_ConfigStore previousTarget = null;
          PackUrlValidator.Inner_CachePool endpoint = null;
-         PackUrlValidator.Inner_BufferHelper route = this.init_TextFormat_BufferH();
+         PackUrlValidator.Inner_BufferHelper route = this.resolveRoute();
          boolean used305 = false;
          int redirects = 0;
 
          while (true) {
             this.read();
             if (endpoint == null) {
-               endpoint = PackUrlValidator.resolveEndpoint(target, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
+               endpoint = PackUrlValidator.resolveEndpoint(target, this.scopeSnapshot, this.resolver);
             }
 
-            Socket socket = this.init_Socket_TextFormat_CachePo_TextFormat_BufferH(endpoint, route);
-            this.init_Socket = socket;
-            this.read_Z = route != null;
+            Socket socket = this.openSocketFor(endpoint, route);
+            this.activeSocket = socket;
+            this.viaProxy = route != null;
 
             try {
                if ("https".equals(target.init_Str())) {
@@ -361,29 +361,29 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                      this.init(socket, target, route);
                   }
 
-                  socket = this.init_Socket_Socket_TextFormat_ConfigS(socket, target);
-                  this.init_Socket = socket;
+                  socket = this.layerTls(socket, target);
+                  this.activeSocket = socket;
                }
 
                this.init(socket, target, previousTarget == null ? null : initialTarget, route);
-               ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.init_InputStream_Socket(socket));
-               String location = this.instanceFollowRedirects ? this.init_Str_RenderState_JsonUt(response) : null;
-               if (!init_Z_I(response.init_I) || location == null) {
-                  this.init_RenderState_JsonUt = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
-                  this.responseCode = response.init_I;
-                  this.responseMessage = response.load_Str;
+               ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+               String location = this.instanceFollowRedirects ? this.redirectLocation(response) : null;
+               if (!isRedirectStatus(response.code) || location == null) {
+                  this.response = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
+                  this.responseCode = response.code;
+                  this.responseMessage = response.message;
                   this.url = target.uri().toURL();
                   this.connected = true;
                   return;
                }
 
-               if (redirects >= init_I()) {
-                  throw new ProtocolException("Server redirected too many times (" + init_I() + ")");
+               if (redirects >= maxRedirects()) {
+                  throw new ProtocolException("Server redirected too many times (" + maxRedirects() + ")");
                }
 
                redirects++;
                this.write();
-               if (response.init_I == 305) {
+               if (response.code == 305) {
                   if (route != null && route.init_Z()) {
                      throw new ProtocolException("HTTP 305 cannot replace the configured resource-pack proxy");
                   }
@@ -392,16 +392,16 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                      throw new ProtocolException("Repeated HTTP 305 proxy routes are refused");
                   }
 
-                  route = PackUrlValidator.routeForLocation(location, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
+                  route = PackUrlValidator.routeForLocation(location, this.scopeSnapshot, this.resolver);
                   used305 = true;
                } else {
-                  PackUrlValidator.Inner_ConfigStore next = init_TextFormat_ConfigS_TextFormat_ConfigS_Str(target, location);
+                  PackUrlValidator.Inner_ConfigStore next = resolveRedirectTarget(target, location);
                   if (!target.init_Str().equals(next.init_Str())) {
                      throw new ProtocolException("Resource-pack redirect changed URL scheme");
                   }
 
                   if (!PackUrlValidator.sameAuthority(initialTarget, next)) {
-                     this.init_LinkedHashMap.entrySet().removeIf(e -> {
+                     this.requestHeaders.entrySet().removeIf(e -> {
                         String n = e.getKey();
                         return n != null
                            && (n.equalsIgnoreCase("Authorization")
@@ -414,7 +414,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   previousTarget = target;
                   target = next;
                   endpoint = null;
-                  route = this.init_TextFormat_BufferH();
+                  route = this.resolveRoute();
                   used305 = false;
                }
             } catch (IOException | RuntimeException e) {
@@ -425,16 +425,16 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private PackUrlValidator.Inner_BufferHelper init_TextFormat_BufferH() throws IOException {
-      if (!this.write_Z) {
-         this.init_TextFormat_BufferH = PackUrlValidator.routeFor(this.init_Proxy, this.init_TextFormat_StreamU);
-         this.write_Z = true;
+   private PackUrlValidator.Inner_BufferHelper resolveRoute() throws IOException {
+      if (!this.routeResolved) {
+         this.route = PackUrlValidator.routeFor(this.connectionProxy, this.resolver);
+         this.routeResolved = true;
       }
 
-      return this.init_TextFormat_BufferH;
+      return this.route;
    }
 
-   private Socket init_Socket_TextFormat_CachePo_TextFormat_BufferH(PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
+   private Socket openSocketFor(PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       PackUrlValidator.Inner_CachePool connectionEndpoint = route == null ? target : route.endpoint();
       IOException last = null;
 
@@ -443,15 +443,15 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          Socket socket = null;
 
          try {
-            socket = this.init_RenderState_NetHel.create();
-            this.init_Socket = socket;
-            this.init_InputStream = null;
-            ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, socket);
-            socket.setSoTimeout(init_I_I_Str(this.sync, "sun.net.client.defaultReadTimeout"));
+            socket = this.socketFactory.create();
+            this.activeSocket = socket;
+            this.socketInput = null;
+            ResourcePackDownloadScope.init(this.scopeSnapshot, socket);
+            socket.setSoTimeout(timeoutOrProperty(this.sync, "sun.net.client.defaultReadTimeout"));
             InetSocketAddress selected = new InetSocketAddress(address, connectionEndpoint.port());
-            socket.connect(selected, init_I_I_Str(this.update, "sun.net.client.defaultConnectTimeout"));
-            this.init_V_Socket_InetSocketAddress(socket, selected);
-            this.init_InputStream = new BufferedInputStream(socket.getInputStream());
+            socket.connect(selected, timeoutOrProperty(this.update, "sun.net.client.defaultConnectTimeout"));
+            this.verifyConnectedPeer(socket, selected);
+            this.socketInput = new BufferedInputStream(socket.getInputStream());
             if (route != null && route.proxyType() == Type.SOCKS) {
                this.init(socket, target, route);
             }
@@ -459,7 +459,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             return socket;
          } catch (IOException | RuntimeException e) {
             if (socket != null) {
-               this.init_V_Socket(socket);
+               this.closeSocket(socket);
             }
 
             last = e instanceof IOException io ? io : new IOException("Resource-pack socket failed", e);
@@ -469,7 +469,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       throw last == null ? new IOException("No validated resource-pack address") : last;
    }
 
-   private void init_V_Socket_InetSocketAddress(Socket socket, InetSocketAddress selected) throws IOException {
+   private void verifyConnectedPeer(Socket socket, InetSocketAddress selected) throws IOException {
       if (socket.getRemoteSocketAddress() instanceof InetSocketAddress inet
          && inet.getAddress() != null
          && inet.getPort() == selected.getPort()
@@ -480,35 +480,35 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private InputStream init_InputStream_Socket(Socket socket) throws IOException {
-      if (socket != this.init_Socket) {
+   private InputStream socketInputFor(Socket socket) throws IOException {
+      if (socket != this.activeSocket) {
          throw new IOException("Resource-pack socket is no longer active");
       }
 
-      if (this.init_InputStream == null) {
-         this.init_InputStream = new BufferedInputStream(socket.getInputStream());
+      if (this.socketInput == null) {
+         this.socketInput = new BufferedInputStream(socket.getInputStream());
       }
 
-      return this.init_InputStream;
+      return this.socketInput;
    }
 
-   private Socket init_Socket_Socket_TextFormat_ConfigS(Socket plain, PackUrlValidator.Inner_ConfigStore target) throws IOException {
-      Socket layered = this.init_RenderState_SyncMa.create(plain, target.load(), target.port(), true);
+   private Socket layerTls(Socket plain, PackUrlValidator.Inner_ConfigStore target) throws IOException {
+      Socket layered = this.tlsFactory.create(plain, target.load(), target.port(), true);
       if (layered == null) {
          throw new IOException("TLS factory returned no socket");
       }
 
       if (layered != plain) {
-         ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, layered);
-         ResourcePackDownloadScope.load(this.init_UiHelper_BufferHel, plain);
-         this.init_Socket = layered;
-         this.init_InputStream = new BufferedInputStream(layered.getInputStream());
+         ResourcePackDownloadScope.init(this.scopeSnapshot, layered);
+         ResourcePackDownloadScope.load(this.scopeSnapshot, plain);
+         this.activeSocket = layered;
+         this.socketInput = new BufferedInputStream(layered.getInputStream());
       }
 
       if (layered instanceof SSLSocket ssl) {
          SSLParameters parameters = ssl.getSSLParameters();
          parameters.setEndpointIdentificationAlgorithm("HTTPS");
-         if (!init_Z_Str(target.load())) {
+         if (!isIpLiteralHost(target.load())) {
             parameters.setServerNames(List.of(new SNIHostName(target.load())));
          }
 
@@ -522,13 +522,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private void init(Socket socket, PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       OutputStream output = socket.getOutputStream();
-      InputStream input = this.init_InputStream_Socket(socket);
-      ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.init_UiHelper_BufferHel.proxyEndpoint();
+      InputStream input = this.socketInputFor(socket);
+      ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.scopeSnapshot.proxyEndpoint();
       if (frozen == null
          || route.init_Z()
             && frozen.port() == route.endpoint().port()
             && frozen.host().equalsIgnoreCase(route.endpoint().load())) {
-         ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, route) : null;
+         ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
          byte[] username = null;
          byte[] password = null;
          ScopedHttpUrlConnection.Inner_StreamUtil authenticationRequest = null;
@@ -552,7 +552,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   output.write(username);
                   output.write(0);
                   output.flush();
-                  byte[] reply = init_BArr_InputStream_I(input, 8);
+                  byte[] reply = readExactly(input, 8);
                   if (reply[0] != 0 || reply[1] != 90) {
                      throw new IOException("SOCKS4 resource-pack connection refused");
                   }
@@ -565,7 +565,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             boolean authenticated = authentication != null || frozen != null && (username.length != 0 || password.length != 0);
             output.write(authenticated ? new byte[]{5, 2, 0, 2} : new byte[]{5, 1, 0});
             output.flush();
-            byte[] greeting = init_BArr_InputStream_I(input, 2);
+            byte[] greeting = readExactly(input, 2);
             if (greeting[0] != 5) {
                throw new IOException("SOCKS5 proxy returned an invalid greeting");
             }
@@ -591,9 +591,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                authenticationRequest.init(username);
                authenticationRequest.init(password.length);
                authenticationRequest.init(password);
-               output.write(authenticationRequest.init_BArr(), 0, authenticationRequest.init_I());
+               output.write(authenticationRequest.rawBytes(), 0, authenticationRequest.byteCount());
                output.flush();
-               byte[] authenticationReply = init_BArr_InputStream_I(input, 2);
+               byte[] authenticationReply = readExactly(input, 2);
                if (authenticationReply[0] != 1 || authenticationReply[1] != 0) {
                   throw new IOException("SOCKS5 proxy authentication failed");
                }
@@ -611,9 +611,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             request.init(raw);
             request.init(target.port() >>> 8);
             request.init(target.port() & 0xFF);
-            output.write(request.init_BArr(), 0, request.init_I());
+            output.write(request.rawBytes(), 0, request.byteCount());
             output.flush();
-            byte[] reply = init_BArr_InputStream_I(input, 4);
+            byte[] reply = readExactly(input, 4);
             if (reply[0] != 5 || reply[1] != 0 || reply[2] != 0) {
                throw new IOException("SOCKS5 proxy refused the connection");
             }
@@ -627,7 +627,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                default:
                   throw new IOException("SOCKS5 proxy returned an unsupported address");
                case 3:
-                  var10000 = init_BArr_InputStream_I(input, 1)[0] & 255;
+                  var10000 = readExactly(input, 1)[0] & 255;
                   break;
                case 4:
                   var10000 = 16;
@@ -638,7 +638,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                throw new IOException("SOCKS5 proxy returned an empty address");
             }
 
-            init_BArr_InputStream_I(input, length + 2);
+            readExactly(input, length + 2);
             this.read();
          } finally {
             if (username != null) {
@@ -650,7 +650,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             }
 
             if (authenticationRequest != null) {
-               Arrays.fill(authenticationRequest.init_BArr(), (byte)0);
+               Arrays.fill(authenticationRequest.rawBytes(), (byte)0);
             }
          }
       } else {
@@ -664,13 +664,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       StringBuilder request = new StringBuilder("CONNECT ").append(connectAuthority).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
       this.init(request, "Accept", "*/*");
       this.init(request, "Proxy-Connection", "keep-alive");
-      this.init_V_StringBuilder_TextFormat_BufferH(request, route);
+      this.appendProxyAuthorization(request, route);
       request.append("\r\n");
       socket.getOutputStream().write(request.toString().getBytes(StandardCharsets.ISO_8859_1));
       socket.getOutputStream().flush();
-      ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.init_InputStream_Socket(socket));
-      if (response.init_I != 200) {
-         throw new IOException("HTTP proxy CONNECT failed with status " + response.init_I);
+      ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+      if (response.code != 200) {
+         throw new IOException("HTTP proxy CONNECT failed with status " + response.code);
       }
 
       this.read();
@@ -686,7 +686,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       StringBuilder request = new StringBuilder("GET ").append(requestTarget).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
       boolean authorityChanged = previousTarget != null && !PackUrlValidator.sameAuthority(previousTarget, target);
 
-      for (Entry<String, List<String>> entry : this.init_LinkedHashMap.entrySet()) {
+      for (Entry<String, List<String>> entry : this.requestHeaders.entrySet()) {
          String name = entry.getKey();
          if (!name.equalsIgnoreCase("Host")
             && !name.equalsIgnoreCase("Proxy-Authorization")
@@ -698,15 +698,15 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
 
       if (plainHttpProxy) {
-         this.init_V_StringBuilder_TextFormat_BufferH(request, route);
-         if (init_List_Map_Str(this.init_LinkedHashMap, "Proxy-Connection").isEmpty()) {
+         this.appendProxyAuthorization(request, route);
+         if (headerValues(this.requestHeaders, "Proxy-Connection").isEmpty()) {
             request.append("Proxy-Connection: keep-alive\r\n");
          }
-      } else if (init_List_Map_Str(this.init_LinkedHashMap, "Connection").isEmpty()) {
+      } else if (headerValues(this.requestHeaders, "Connection").isEmpty()) {
          request.append("Connection: keep-alive\r\n");
       }
 
-      if (init_List_Map_Str(this.init_LinkedHashMap, "Accept").isEmpty()) {
+      if (headerValues(this.requestHeaders, "Accept").isEmpty()) {
          request.append("Accept: */*\r\n");
       }
 
@@ -718,7 +718,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private void init(StringBuilder request, String name, String defaultValue) {
-      List<String> values = init_List_Map_Str(this.init_LinkedHashMap, name);
+      List<String> values = headerValues(this.requestHeaders, name);
       if (values.isEmpty()) {
          load(request, name, defaultValue);
       } else {
@@ -728,9 +728,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private void init_V_StringBuilder_TextFormat_BufferH(StringBuilder request, PackUrlValidator.Inner_BufferHelper route) {
+   private void appendProxyAuthorization(StringBuilder request, PackUrlValidator.Inner_BufferHelper route) {
       if (route.init_Z()) {
-         for (String value : init_List_Map_Str(this.init_LinkedHashMap, "Proxy-Authorization")) {
+         for (String value : headerValues(this.requestHeaders, "Proxy-Authorization")) {
             load(request, "Proxy-Authorization", value);
          }
       }
@@ -745,25 +745,25 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       int interim = 0;
 
       while (true) {
-         String status = init_Str_InputStream(input);
+         String status = readHeaderLine(input);
          aggregate += status.length() + 2;
          if (aggregate > 65536) {
             throw new IOException("HTTP response headers are too large");
          }
 
-         ScopedHttpUrlConnection.Inner_StateCache statusLine = init_RenderState_StateC_Str(status);
+         ScopedHttpUrlConnection.Inner_StateCache statusLine = parseStatusLine(status);
          LinkedHashMap<String, List<String>> headers = new LinkedHashMap<>();
 
          while (true) {
-            String line = init_Str_InputStream(input);
+            String line = readHeaderLine(input);
             aggregate += line.length() + 2;
             if (aggregate > 65536) {
                throw new IOException("HTTP response headers are too large");
             }
 
             if (line.isEmpty()) {
-               if (statusLine.init_I >= 100 && statusLine.init_I < 200) {
-                  if (statusLine.init_I != 101 && interim < 7) {
+               if (statusLine.code >= 100 && statusLine.code < 200) {
+                  if (statusLine.code != 101 && interim < 7) {
                      interim++;
                      break;
                   }
@@ -771,7 +771,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   throw new IOException("Too many or unsupported interim HTTP responses");
                }
 
-               return new ScopedHttpUrlConnection.Inner_JsonUtil(status, statusLine.init_I, statusLine.init_Str, headers, -1L, false, false);
+               return new ScopedHttpUrlConnection.Inner_JsonUtil(status, statusLine.code, statusLine.reasonPhrase, headers, -1L, false, false);
             }
 
             if (line.charAt(0) == ' ' || line.charAt(0) == '\t') {
@@ -787,7 +787,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             String value = line.substring(colon + 1).trim();
 
             try {
-               init_V_Str_Str(name, value);
+               validateHeader(name, value);
             } catch (IllegalArgumentException e) {
                throw new IOException("Malformed HTTP response header", e);
             }
@@ -817,7 +817,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static ScopedHttpUrlConnection.Inner_StateCache init_RenderState_StateC_Str(String line) throws IOException {
+   private static ScopedHttpUrlConnection.Inner_StateCache parseStatusLine(String line) throws IOException {
       int first = line.indexOf(32);
       if (first >= 0 && (line.startsWith("HTTP/1.1") || line.startsWith("HTTP/1.0"))) {
          int second = line.indexOf(32, first + 1);
@@ -840,10 +840,10 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          throw new IOException("Ambiguous HTTP response framing");
       }
 
-      boolean noBody = response.init_I == 204 || response.init_I == 304 || response.init_I >= 100 && response.init_I < 200;
+      boolean noBody = response.code == 204 || response.code == 304 || response.code >= 100 && response.code < 200;
       boolean chunked = false;
       if (!transfer.isEmpty()) {
-         List<String> codings = init_List_List(transfer);
+         List<String> codings = splitHeaderValues(transfer);
          if (codings.size() != 1 || !codings.getFirst().equalsIgnoreCase("chunked")) {
             throw new IOException("Unsupported HTTP transfer coding");
          }
@@ -853,7 +853,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
       long contentLength = -1L;
       if (!lengths.isEmpty()) {
-         for (String value : init_List_List(lengths)) {
+         for (String value : splitHeaderValues(lengths)) {
             if (value.isEmpty() || !value.chars().allMatch(Character::isDigit)) {
                throw new IOException("Malformed HTTP Content-Length");
             }
@@ -876,39 +876,39 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return response.init(contentLength, chunked, noBody);
    }
 
-   private InputStream init_InputStream() throws IOException {
-      if (this.load_InputStream != null) {
-         return this.load_InputStream;
+   private InputStream openResponseStream() throws IOException {
+      if (this.responseBody != null) {
+         return this.responseBody;
       }
 
-      Socket socket = this.init_Socket;
+      Socket socket = this.activeSocket;
       if (socket == null) {
          throw new IOException("Response body has no active socket");
       }
 
-      ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt;
-      InputStream input = this.init_InputStream_Socket(socket);
-      if (response.load_Z) {
-         this.load_InputStream = new ScopedHttpUrlConnection.Inner_DataUtil(this, socket, InputStream.nullInputStream(), true, response.init_I >= 400);
-      } else if (response.init_Z) {
-         this.load_InputStream = new ScopedHttpUrlConnection.Inner_CachePool(this, socket, input, response.init_I >= 400);
-      } else if (response.init_J >= 0L) {
-         this.load_InputStream = new ScopedHttpUrlConnection.Inner_TaskQueue(this, socket, input, response.init_J, response.init_I >= 400);
+      ScopedHttpUrlConnection.Inner_JsonUtil response = this.response;
+      InputStream input = this.socketInputFor(socket);
+      if (response.noBody) {
+         this.responseBody = new ScopedHttpUrlConnection.Inner_DataUtil(this, socket, InputStream.nullInputStream(), true, response.code >= 400);
+      } else if (response.chunked) {
+         this.responseBody = new ScopedHttpUrlConnection.Inner_CachePool(this, socket, input, response.code >= 400);
+      } else if (response.contentLength >= 0L) {
+         this.responseBody = new ScopedHttpUrlConnection.Inner_TaskQueue(this, socket, input, response.contentLength, response.code >= 400);
       } else {
-         this.load_InputStream = new ScopedHttpUrlConnection.Inner_ConfigStore(this, socket, input, response.init_I >= 400);
+         this.responseBody = new ScopedHttpUrlConnection.Inner_ConfigStore(this, socket, input, response.code >= 400);
       }
 
-      return this.load_InputStream;
+      return this.responseBody;
    }
 
-   private String init_Str_RenderState_JsonUt(ScopedHttpUrlConnection.Inner_JsonUtil response) throws ProtocolException {
-      if (!init_Z_I(response.init_I)) {
+   private String redirectLocation(ScopedHttpUrlConnection.Inner_JsonUtil response) throws ProtocolException {
+      if (!isRedirectStatus(response.code)) {
          return null;
       }
 
       List<String> locations = response.init("Location");
       if (locations.isEmpty()) {
-         if (response.init_I == 305) {
+         if (response.code == 305) {
             throw new ProtocolException("HTTP 305 has no Location header");
          } else {
             return null;
@@ -920,7 +920,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_TextFormat_ConfigS_Str(PackUrlValidator.Inner_ConfigStore current, String location) throws MalformedURLException {
+   private static PackUrlValidator.Inner_ConfigStore resolveRedirectTarget(PackUrlValidator.Inner_ConfigStore current, String location) throws MalformedURLException {
       try {
          URI resolved = current.uri().resolve(new URI(location));
          return PackUrlValidator.parseUri(resolved);
@@ -931,11 +931,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static boolean init_Z_I(int status) {
+   private static boolean isRedirectStatus(int status) {
       return status == 300 || status == 301 || status == 302 || status == 303 || status == 305 || status == 307;
    }
 
-   private static int init_I() {
+   private static int maxRedirects() {
       int value = 20;
       String configured = System.getProperty("http.maxRedirects");
       if (configured != null) {
@@ -949,7 +949,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return Math.max(0, Math.min(50, value));
    }
 
-   private static int init_I_I_Str(int explicit, String property) {
+   private static int timeoutOrProperty(int explicit, String property) {
       if (explicit != -1) {
          return explicit;
       }
@@ -969,43 +969,43 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private void read() throws IOException {
-      if (this.init_Z || !this.init_BooleanSupplier.getAsBoolean() || !this.init_UiHelper_BufferHel.isCurrent()) {
+      if (this.disconnected || !this.stillCurrent.getAsBoolean() || !this.scopeSnapshot.isCurrent()) {
          throw new IOException("The resource-pack connection is no longer current");
       }
    }
 
    private void write() {
-      Socket socket = this.init_Socket;
-      this.init_Socket = null;
-      this.init_InputStream = null;
+      Socket socket = this.activeSocket;
+      this.activeSocket = null;
+      this.socketInput = null;
       if (socket != null) {
-         this.init_V_Socket(socket);
+         this.closeSocket(socket);
       }
    }
 
-   private void init_V_Socket(Socket socket) {
-      if (this.init_Socket == socket) {
-         this.init_Socket = null;
-         this.init_InputStream = null;
+   private void closeSocket(Socket socket) {
+      if (this.activeSocket == socket) {
+         this.activeSocket = null;
+         this.socketInput = null;
       }
 
       try {
          socket.close();
       } catch (IOException var6) {
       } finally {
-         ResourcePackDownloadScope.load(this.init_UiHelper_BufferHel, socket);
+         ResourcePackDownloadScope.load(this.scopeSnapshot, socket);
       }
    }
 
-   private void init_V_Socket_Socket(Socket socket, Socket expected) {
-      if (this.init_Socket == expected) {
+   private void releaseSocket(Socket socket, Socket expected) {
+      if (this.activeSocket == expected) {
          this.write();
       } else {
-         this.init_V_Socket(socket);
+         this.closeSocket(socket);
       }
    }
 
-   private static String init_Str_InputStream(InputStream input) throws EOFException, IOException {
+   private static String readHeaderLine(InputStream input) throws EOFException, IOException {
       byte[] buffer = new byte[256];
       int size = 0;
 
@@ -1040,7 +1040,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static byte[] init_BArr_InputStream_I(InputStream input, int count) throws EOFException, IOException {
+   private static byte[] readExactly(InputStream input, int count) throws EOFException, IOException {
       byte[] result = input.readNBytes(count);
       if (result.length != count) {
          throw new EOFException("Unexpected EOF in proxy negotiation");
@@ -1049,7 +1049,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static void init_V_Str_Str(String name, String value) {
+   private static void validateHeader(String name, String value) {
       if (name == null || name.isEmpty() || !name.chars().allMatch(ScopedHttpUrlConnection::load)) {
          throw new IllegalArgumentException("Invalid HTTP header name");
       }
@@ -1070,11 +1070,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return c > 32 && c < 127 ? "()<>@,;:\\\"/[]?={}\t".indexOf(c) < 0 : false;
    }
 
-   private static boolean init_Z_Str(String host) {
+   private static boolean isIpLiteralHost(String host) {
       return host.indexOf(58) >= 0 ? true : host.matches("[0-9.]+");
    }
 
-   private static List<String> init_List_Map_Str(Map<String, List<String>> headers, String name) {
+   private static List<String> headerValues(Map<String, List<String>> headers, String name) {
       if (name == null) {
          return List.of();
       }
@@ -1088,11 +1088,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return List.of();
    }
 
-   private static void init_V_Map_Str(Map<String, List<String>> headers, String name) {
+   private static void removeHeader(Map<String, List<String>> headers, String name) {
       headers.keySet().removeIf(key -> key.equalsIgnoreCase(name));
    }
 
-   private static Map<String, List<String>> init_Map_Map(Map<String, List<String>> source) {
+   private static Map<String, List<String>> copyHeaders(Map<String, List<String>> source) {
       LinkedHashMap<String, List<String>> result = new LinkedHashMap<>();
 
       for (Entry<String, List<String>> entry : source.entrySet()) {
@@ -1102,7 +1102,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return Collections.unmodifiableMap(result);
    }
 
-   private static List<String> init_List_List(List<String> values) {
+   private static List<String> splitHeaderValues(List<String> values) {
       List<String> result = new ArrayList<>();
 
       for (String value : values) {
@@ -1121,9 +1121,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private static final class Inner_CachePool extends ScopedHttpUrlConnection.Inner_DataUtil {
-      private long init_J;
-      private boolean init_Z_2;
-      private boolean load_Z;
+      private long chunkRemaining;
+      private boolean chunkEndPending;
+      private boolean reachedEnd;
 
       private Inner_CachePool(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean closeOnEof) {
          super(owner, socket, input, false, closeOnEof);
@@ -1131,21 +1131,21 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
       @Override
       protected int init(byte[] bytes, int offset, int length) throws EOFException, IOException {
-         if (this.load_Z) {
+         if (this.reachedEnd) {
             return -1;
          }
 
-         if (this.init_Z_2) {
-            byte[] ending = ScopedHttpUrlConnection.init_BArr_InputStream_I(this.init_InputStream, 2);
+         if (this.chunkEndPending) {
+            byte[] ending = ScopedHttpUrlConnection.readExactly(this.delegate, 2);
             if (ending[0] != 13 || ending[1] != 10) {
                throw new IOException("Malformed chunk ending");
             }
 
-            this.init_Z_2 = false;
+            this.chunkEndPending = false;
          }
 
-         if (this.init_J == 0L) {
-            String line = ScopedHttpUrlConnection.init_Str_InputStream(this.init_InputStream);
+         if (this.chunkRemaining == 0L) {
+            String line = ScopedHttpUrlConnection.readHeaderLine(this.delegate);
             int extension = line.indexOf(59);
             String size = (extension < 0 ? line : line.substring(0, extension)).trim();
             if (size.isEmpty() || !size.chars().allMatch(c -> Character.digit(c, 16) >= 0)) {
@@ -1153,26 +1153,26 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             }
 
             try {
-               this.init_J = Long.parseLong(size, 16);
+               this.chunkRemaining = Long.parseLong(size, 16);
             } catch (NumberFormatException e) {
                throw new IOException("Chunk size is too large", e);
             }
 
-            if (this.init_J == 0L) {
-               init(this.init_InputStream);
-               this.load_Z = true;
+            if (this.chunkRemaining == 0L) {
+               init(this.delegate);
+               this.reachedEnd = true;
                return -1;
             }
          }
 
-         int read = this.init_InputStream.read(bytes, offset, (int)Math.min(length, this.init_J));
+         int read = this.delegate.read(bytes, offset, (int)Math.min(length, this.chunkRemaining));
          if (read < 0) {
             throw new EOFException("Unexpected EOF in chunked body");
          }
 
-         this.init_J -= read;
-         if (this.init_J == 0L) {
-            this.init_Z_2 = true;
+         this.chunkRemaining -= read;
+         if (this.chunkRemaining == 0L) {
+            this.chunkEndPending = true;
          }
 
          return read;
@@ -1182,7 +1182,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          int aggregate = 0;
 
          while (true) {
-            String line = ScopedHttpUrlConnection.init_Str_InputStream(input);
+            String line = ScopedHttpUrlConnection.readHeaderLine(input);
             aggregate += line.length() + 2;
             if (aggregate > 65536) {
                throw new IOException("HTTP trailers are too large");
@@ -1198,7 +1198,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             }
 
             try {
-               ScopedHttpUrlConnection.init_V_Str_Str(line.substring(0, colon), line.substring(colon + 1).trim());
+               ScopedHttpUrlConnection.validateHeader(line.substring(0, colon), line.substring(colon + 1).trim());
             } catch (IllegalArgumentException e) {
                throw new IOException("Malformed HTTP trailer", e);
             }
@@ -1213,17 +1213,17 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private static class Inner_DataUtil extends InputStream {
-      private final ScopedHttpUrlConnection init_RenderState;
-      private final Socket init_Socket;
-      protected final InputStream init_InputStream;
-      private final boolean init_Z;
+      private final ScopedHttpUrlConnection owner;
+      private final Socket socket;
+      protected final InputStream delegate;
+      private final boolean closeOnEof;
       private boolean load;
 
       private Inner_DataUtil(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean done, boolean closeOnEof) {
-         this.init_RenderState = owner;
-         this.init_Socket = socket;
-         this.init_InputStream = input;
-         this.init_Z = closeOnEof;
+         this.owner = owner;
+         this.socket = socket;
+         this.delegate = input;
+         this.closeOnEof = closeOnEof;
          this.load = done;
       }
 
@@ -1245,11 +1245,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             return -1;
          }
 
-         this.init_RenderState.read();
+         this.owner.read();
          int result = this.init(bytes, offset, length);
          if (result < 0) {
             this.load = true;
-            if (this.init_Z) {
+            if (this.closeOnEof) {
                this.close();
             }
          }
@@ -1258,52 +1258,52 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
 
       protected int init(byte[] bytes, int offset, int length) throws IOException {
-         return this.init_InputStream.read(bytes, offset, length);
+         return this.delegate.read(bytes, offset, length);
       }
 
       @Override
       public int available() throws IOException {
-         return this.load ? 0 : this.init_InputStream.available();
+         return this.load ? 0 : this.delegate.available();
       }
 
       @Override
       public void close() {
-         if (this.load && !this.init_Z) {
-            this.init_RenderState.init_V_Socket_Socket(this.init_Socket, this.init_Socket);
+         if (this.load && !this.closeOnEof) {
+            this.owner.releaseSocket(this.socket, this.socket);
          } else {
             this.load = true;
-            this.init_RenderState.init_V_Socket_Socket(this.init_Socket, this.init_Socket);
+            this.owner.releaseSocket(this.socket, this.socket);
          }
       }
    }
 
    private static final class Inner_JsonUtil {
-      private final String init_Str;
-      private final int init_I;
-      private final String load_Str;
-      private final LinkedHashMap<String, List<String>> init_LinkedHashMap;
-      private final long init_J;
-      private final boolean init_Z;
-      private final boolean load_Z;
+      private final String statusLine;
+      private final int code;
+      private final String message;
+      private final LinkedHashMap<String, List<String>> headers;
+      private final long contentLength;
+      private final boolean chunked;
+      private final boolean noBody;
 
       private Inner_JsonUtil(
          String statusLine, int code, String message, LinkedHashMap<String, List<String>> headers, long contentLength, boolean chunked, boolean noBody
       ) {
-         this.init_Str = statusLine;
-         this.init_I = code;
-         this.load_Str = message;
-         this.init_LinkedHashMap = headers;
-         this.init_J = contentLength;
-         this.init_Z = chunked;
-         this.load_Z = noBody;
+         this.statusLine = statusLine;
+         this.code = code;
+         this.message = message;
+         this.headers = headers;
+         this.contentLength = contentLength;
+         this.chunked = chunked;
+         this.noBody = noBody;
       }
 
       private List<String> init(String name) {
-         return ScopedHttpUrlConnection.init_List_Map_Str(this.init_LinkedHashMap, name);
+         return ScopedHttpUrlConnection.headerValues(this.headers, name);
       }
 
       private ScopedHttpUrlConnection.Inner_JsonUtil init(long length, boolean chunked, boolean noBody) {
-         return new ScopedHttpUrlConnection.Inner_JsonUtil(this.init_Str, this.init_I, this.load_Str, this.init_LinkedHashMap, length, chunked, noBody);
+         return new ScopedHttpUrlConnection.Inner_JsonUtil(this.statusLine, this.code, this.message, this.headers, length, chunked, noBody);
       }
    }
 
@@ -1312,32 +1312,32 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       Socket create();
    }
 
-   private record Inner_StateCache(int init_I, String init_Str) {
+   private record Inner_StateCache(int code, String reasonPhrase) {
    }
 
    private static final class Inner_StreamUtil {
-      private final byte[] init_BArr;
-      private int init_I;
+      private final byte[] bytes;
+      private int length;
 
       private Inner_StreamUtil(int capacity) {
-         this.init_BArr = new byte[capacity];
+         this.bytes = new byte[capacity];
       }
 
       private void init(int value) {
-         this.init_BArr[this.init_I++] = (byte)value;
+         this.bytes[this.length++] = (byte)value;
       }
 
       private void init(byte[] value) {
-         System.arraycopy(value, 0, this.init_BArr, this.init_I, value.length);
-         this.init_I += value.length;
+         System.arraycopy(value, 0, this.bytes, this.length, value.length);
+         this.length += value.length;
       }
 
-      private byte[] init_BArr() {
-         return this.init_BArr;
+      private byte[] rawBytes() {
+         return this.bytes;
       }
 
-      private int init_I() {
-         return this.init_I;
+      private int byteCount() {
+         return this.length;
       }
    }
 
@@ -1347,31 +1347,31 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private static final class Inner_TaskQueue extends ScopedHttpUrlConnection.Inner_DataUtil {
-      private long init_J;
+      private long remaining;
 
       private Inner_TaskQueue(ScopedHttpUrlConnection owner, Socket socket, InputStream input, long length, boolean closeOnEof) {
          super(owner, socket, input, length == 0L, closeOnEof);
-         this.init_J = length;
+         this.remaining = length;
       }
 
       @Override
       protected int init(byte[] bytes, int offset, int length) throws EOFException, IOException {
-         if (this.init_J == 0L) {
+         if (this.remaining == 0L) {
             return -1;
          }
 
-         int read = this.init_InputStream.read(bytes, offset, (int)Math.min(length, this.init_J));
+         int read = this.delegate.read(bytes, offset, (int)Math.min(length, this.remaining));
          if (read < 0) {
             throw new EOFException("HTTP body ended before Content-Length");
          }
 
-         this.init_J -= read;
+         this.remaining -= read;
          return read;
       }
 
       @Override
       public int available() throws IOException {
-         return (int)Math.min(super.available(), this.init_J);
+         return (int)Math.min(super.available(), this.remaining);
       }
    }
 }
