@@ -75,11 +75,11 @@ public final class GifTextureManager {
    private GifTextureManager() {
    }
 
-   public static Identifier init_Identifier_Str(String path, double targetFps, double quality, String owner) {
+   public static Identifier texture(String path, double targetFps, double quality, String owner) {
       return init(path, targetFps, false, quality, GifTextureManager.NetHelper.HUD, owner);
    }
 
-   public static Identifier init_Identifier_Str_2(String path, double targetFps, boolean keepAspect, double quality) {
+   public static Identifier textureKeepAspect(String path, double targetFps, boolean keepAspect, double quality) {
       return init(path, targetFps, keepAspect, quality, GifTextureManager.NetHelper.CAPE, null);
    }
 
@@ -87,7 +87,7 @@ public final class GifTextureManager {
       return init(path, targetFps, keepAspect, quality, GifTextureManager.NetHelper.SHIELD, null);
    }
 
-   public static int[] init_IArr_Str(String path) {
+   public static int[] naturalSize(String path) {
       GifTextureManager.ConfigStore resolved = init_CachePool_ConfigSt_Str(path);
       if (resolved.init_Path() == null) {
          return null;
@@ -289,7 +289,7 @@ public final class GifTextureManager {
 
    private static void write() {
       if (init_AtomicBoolean.compareAndSet(false, true)) {
-         BackgroundTaskExecutor.init_Future_Str_Runnable("gif-load", () -> {
+         BackgroundTaskExecutor.submit("gif-load", () -> {
             GifTextureManager.Inner_CachePool job;
             try {
                while ((job = init_Queue.poll()) != null) {
@@ -413,7 +413,7 @@ public final class GifTextureManager {
       try {
          attrs = Files.readAttributes(entry.init_Path, BasicFileAttributes.class);
          byte[] bytes = Files.readAllBytes(entry.init_Path);
-         GifImageDecoder.Inner_DataUtil decoded = GifImageDecoder.init_DataUtil_DataUtil(bytes);
+         GifImageDecoder.Inner_DataUtil decoded = GifImageDecoder.decode(bytes);
          init_V_BooleanSupplier(stale);
          GifTextureManager.JsonUtil var10000;
          switch (entry.init_CachePool_NetHelpe) {
@@ -447,7 +447,7 @@ public final class GifTextureManager {
          }
 
          return new GifTextureManager.BufferHelper(
-            attrs.lastModifiedTime().toMillis(), attrs.size(), chains, decoded.init_IArr(), decoded.read(), decoded.init_I(), decoded.load(), null
+            attrs.lastModifiedTime().toMillis(), attrs.size(), chains, decoded.delays(), decoded.read(), decoded.width(), decoded.load(), null
          );
       } catch (CancellationException e) {
          return null;
@@ -482,9 +482,9 @@ public final class GifTextureManager {
    private static GifTextureManager.JsonUtil init_CachePool_JsonUtil_DataUtil_DataUtil(
       GifImageDecoder.Inner_DataUtil decoded, boolean keepAspect, double quality, BooleanSupplier stale
    ) {
-      int frames = decoded.init_IArr2().length;
+      int frames = decoded.frames().length;
       double faceScale = 64.0 / init_IArr[2];
-      int width = Math.max(64, Math.min(3072, (int)Math.round(decoded.init_I() * quality * faceScale)));
+      int width = Math.max(64, Math.min(3072, (int)Math.round(decoded.width() * quality * faceScale)));
 
       while (width > 64 && (long)width * (width / 2) * frames > 64000000L) {
          width /= 2;
@@ -500,10 +500,10 @@ public final class GifTextureManager {
          BufferedImage canvas = new BufferedImage(width, height, 2);
          Graphics2D graphics = canvas.createGraphics();
          init_V_Graphics2D(graphics);
-         BufferedImage frame = init_BufferedImage_IArr(decoded.init_IArr2()[i], decoded.init_I(), decoded.load());
-         init(graphics, frame, decoded.init_I(), decoded.load(), init_IArr, sx, sy, keepAspect);
-         init(graphics, frame, decoded.init_I(), decoded.load(), load_IArr, sx, sy, keepAspect);
-         int w = decoded.init_I();
+         BufferedImage frame = init_BufferedImage_IArr(decoded.frames()[i], decoded.width(), decoded.load());
+         init(graphics, frame, decoded.width(), decoded.load(), init_IArr, sx, sy, keepAspect);
+         init(graphics, frame, decoded.width(), decoded.load(), load_IArr, sx, sy, keepAspect);
+         int w = decoded.width();
          int hh = decoded.load();
          init_V_Graphics2D_2(graphics, frame, read_IArr, sx, sy, 0, 0, 1, hh);
          init_V_Graphics2D_2(graphics, frame, write_IArr, sx, sy, w - 1, 0, w, hh);
@@ -518,19 +518,19 @@ public final class GifTextureManager {
 
    private static GifTextureManager.JsonUtil init_CachePool_JsonUtil_DataUtil_DataUtil(GifImageDecoder.Inner_DataUtil decoded, double quality, BooleanSupplier stale) {
       if (quality >= 0.999) {
-         return new GifTextureManager.JsonUtil(decoded.init_I(), decoded.load(), decoded.init_IArr2());
+         return new GifTextureManager.JsonUtil(decoded.width(), decoded.load(), decoded.frames());
       }
 
-      int width = Math.max(1, (int)Math.round(decoded.init_I() * quality));
+      int width = Math.max(1, (int)Math.round(decoded.width() * quality));
       int height = Math.max(1, (int)Math.round(decoded.load() * quality));
-      int[][] out = new int[decoded.init_IArr2().length][];
+      int[][] out = new int[decoded.frames().length][];
 
       for (int i = 0; i < out.length; i++) {
          init_V_BooleanSupplier(stale);
          BufferedImage canvas = new BufferedImage(width, height, 2);
          Graphics2D graphics = canvas.createGraphics();
          init_V_Graphics2D(graphics);
-         graphics.drawImage(init_BufferedImage_IArr(decoded.init_IArr2()[i], decoded.init_I(), decoded.load()), 0, 0, width, height, null);
+         graphics.drawImage(init_BufferedImage_IArr(decoded.frames()[i], decoded.width(), decoded.load()), 0, 0, width, height, null);
          graphics.dispose();
          out[i] = canvas.getRGB(0, 0, width, height, null, 0, width);
       }
@@ -539,9 +539,9 @@ public final class GifTextureManager {
    }
 
    private static GifTextureManager.JsonUtil load(GifImageDecoder.Inner_DataUtil decoded, boolean keepAspect, double quality, BooleanSupplier stale) {
-      int frames = decoded.init_IArr2().length;
+      int frames = decoded.frames().length;
       double faceScale = 6.4;
-      int target = (int)Math.round(Math.max(decoded.init_I(), decoded.load()) * quality * faceScale);
+      int target = (int)Math.round(Math.max(decoded.width(), decoded.load()) * quality * faceScale);
       int size = Math.max(64, Math.min(3072, target));
 
       while (size > 64 && (long)size * size * frames > 64000000L) {
@@ -552,7 +552,7 @@ public final class GifTextureManager {
 
       for (int i = 0; i < frames; i++) {
          init_V_BooleanSupplier(stale);
-         out[i] = init(decoded.init_IArr2()[i], decoded.init_I(), decoded.load(), keepAspect, size);
+         out[i] = init(decoded.frames()[i], decoded.width(), decoded.load(), keepAspect, size);
       }
 
       return new GifTextureManager.JsonUtil(size, size, out);

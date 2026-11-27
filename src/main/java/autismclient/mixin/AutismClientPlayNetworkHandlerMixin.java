@@ -130,7 +130,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleMapItemData", at = @At("RETURN"))
    private void autism$mapPreviewUpdated(ClientboundMapItemDataPacket packet, CallbackInfo ci) {
-      MapTooltipPreview.init_V(packet.mapId());
+      MapTooltipPreview.invalidate(packet.mapId());
    }
 
    @Inject(method = "handleAnimate", at = @At("RETURN"))
@@ -328,7 +328,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleContainerContent", at = @At("RETURN"))
    private void autism$aiContentsApplied(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
-      VillagerTradeSession.init_V_ClientboundContain(packet);
+      VillagerTradeSession.onContainerContent(packet);
       AutoCraftingEngine.onContainerContentPacket(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.recordContainerContents(packet.containerId(), packet.items());

@@ -177,7 +177,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    protected boolean hasCustomStoredSize() {
-      return this.isResizable() && this.getSizeStore().init_Z();
+      return this.isResizable() && this.getSizeStore().hasSavedSize();
    }
 
    @Override
@@ -202,7 +202,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    @Override
    public void onResizeFinished() {
       if (this.isResizable()) {
-         this.getSizeStore().init_V();
+         this.getSizeStore().save();
       }
    }
 
@@ -259,12 +259,12 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    protected final void clearFocusAndDismissMenu() {
       this.clearInputFocus();
       if (this.activeContextMenu != null) {
-         this.activeContextMenu.init_V();
+         this.activeContextMenu.close();
       }
    }
 
    protected int maskMouseCoordIfMenuCovers(int mouse, int axis) {
-      if (this.activeContextMenu != null && this.activeContextMenu.init_Z()) {
+      if (this.activeContextMenu != null && this.activeContextMenu.isOpen()) {
          int otherAxis = axis == 0 ? this.lastMouseY : this.lastMouseX;
          boolean covered = axis == 0 ? this.activeContextMenu.init(mouse, otherAxis) : this.activeContextMenu.init(otherAxis, mouse);
          return covered ? -10000 : mouse;

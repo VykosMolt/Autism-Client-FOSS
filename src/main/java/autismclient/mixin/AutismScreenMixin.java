@@ -52,7 +52,7 @@ public abstract class AutismScreenMixin {
       if (screen instanceof LecternScreen && this.autism$isModuleActive()) {
          if (this.autism$lecternInitialized) {
             if (this.autism$queueEditorOverlay != null) {
-               this.autism$queueEditorOverlay.sync_V_17();
+               this.autism$queueEditorOverlay.restoreState();
             }
 
             if (this.autism$queueEditorOverlay != null) {
@@ -61,7 +61,7 @@ public abstract class AutismScreenMixin {
          } else {
             Font textRenderer = ((AutismScreenAccessor)(Object)this).getFont();
             this.autism$queueEditorOverlay = new AutismQueueEditorOverlay(textRenderer);
-            this.autism$queueEditorOverlay.sync_V_17();
+            this.autism$queueEditorOverlay.restoreState();
             OverlayManager.getInstance().register(this.autism$queueEditorOverlay);
             this.autism$lecternInitialized = true;
          }
@@ -98,12 +98,12 @@ public abstract class AutismScreenMixin {
 
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$renderMenuMacroProgress(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (ScreenMacroStopWidget.init_Z_Minecraft(MC) && (AutismLiteVariant.enabled() || TableIndex.init())) {
+      if (ScreenMacroStopWidget.isVisible(MC) && (AutismLiteVariant.enabled() || TableIndex.init())) {
          context.nextStratum();
          cA.init_V_GuiGraphicsExtract(context);
 
          try {
-            ScreenMacroStopWidget.init_V_GuiGraphicsExtract(context, (Screen)(Object)this, mouseX, mouseY);
+            ScreenMacroStopWidget.render(context, (Screen)(Object)this, mouseX, mouseY);
          } catch (Throwable var10) {
          } finally {
             cA.load_V_GuiGraphicsExtract(context);

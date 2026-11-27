@@ -10,7 +10,7 @@ public final class NormalizedTextMatcher {
    private NormalizedTextMatcher() {
    }
 
-   public static String init_Str(String text) {
+   public static String normalize(String text) {
       if (text != null && !text.isBlank()) {
          String decomposed = Normalizer.normalize(load(text), Form.NFKD).toLowerCase(Locale.ROOT);
          StringBuilder out = new StringBuilder(decomposed.length());
@@ -46,8 +46,8 @@ public final class NormalizedTextMatcher {
    }
 
    public static String init(String text, String playerName, List<String> keywords, String mode) {
-      String normalized = init_Str(text);
-      String normalizedName = init_Str(playerName);
+      String normalized = normalize(text);
+      String normalizedName = normalize(playerName);
       if (!normalizedName.isBlank()) {
          normalized = init_Str(normalized, normalizedName);
       }
@@ -55,7 +55,7 @@ public final class NormalizedTextMatcher {
       String matchMode = mode == null ? "Contains" : mode;
 
       for (String raw : keywords == null ? List.<String>of() : keywords) {
-         String keyword = init_Str(raw);
+         String keyword = normalize(raw);
          if (keyword.isBlank()) {
             String literal = load(raw == null ? "" : raw).trim().toLowerCase(Locale.ROOT);
             if (!literal.isBlank() && load(text).toLowerCase(Locale.ROOT).contains(literal)) {
@@ -91,7 +91,7 @@ public final class NormalizedTextMatcher {
       }
 
       for (String keyword : keywords) {
-         String normalized = init_Str(keyword);
+         String normalized = normalize(keyword);
          if (!normalized.isBlank() && !out.contains(normalized)) {
             out.add(normalized);
          }
@@ -100,7 +100,7 @@ public final class NormalizedTextMatcher {
       return out;
    }
 
-   public static boolean init_Z(String displayedName, String playerName) {
+   public static boolean matchesName(String displayedName, String playerName) {
       String rawDisplay = load(displayedName == null ? "" : displayedName).toLowerCase(Locale.ROOT);
       String rawPlayer = load(playerName == null ? "" : playerName).trim().toLowerCase(Locale.ROOT);
       if (rawPlayer.matches("[a-z0-9_]{1,16}")) {
@@ -124,19 +124,19 @@ public final class NormalizedTextMatcher {
 
          return false;
       } else {
-         String displayed = init_Str(displayedName);
-         String player = init_Str(playerName);
+         String displayed = normalize(displayedName);
+         String player = normalize(playerName);
          return !displayed.isBlank() && !player.isBlank() ? displayed.equals(player) || (" " + displayed + " ").contains(" " + player + " ") : false;
       }
    }
 
    public static boolean load(String message, String playerName) {
-      if (!init_Z(message, playerName)) {
+      if (!matchesName(message, playerName)) {
          return false;
       }
 
-      String text = " " + init_Str(message) + " ";
-      String player = init_Str(playerName);
+      String text = " " + normalize(message) + " ";
+      String player = normalize(playerName);
       if (player.isBlank()) {
          return false;
       }

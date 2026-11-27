@@ -155,7 +155,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             .description("Auto chooses blast positions; Aimed starts at your crosshair and finishes that anchor.")
             .build()
       );
-      this.add(autismclient.util.CombatAimSpeedController.init_DoubleSetting().build());
+      this.add(autismclient.util.CombatAimSpeedController.speedSetting().build());
       this.add(new BoolSetting("silent", "Silent", true).group("Aim").build());
       this.add(new BoolSetting("move-fix", "Move Fix", true).group("Aim").description("Walk where you look").visibleWhen(() -> this.bool("silent")).build());
       this.add(
@@ -300,7 +300,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private void init_V_2() {
-      this.init_StateCache.init_V();
+      this.init_StateCache.reset();
       this.init_PoolEntry.init();
       this.init_HashUtil.init();
       autismclient.util.QueuedCombatAction.init("anchor-aura");
@@ -679,7 +679,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private void load_V_2() {
-      this.init_StateCache.init_V();
+      this.init_StateCache.reset();
       this.read_Str = "";
       if (this.load_BlockPos == null) {
          autismclient.util.InventorySlotArbiter.releaseInventoryClick("anchor-aura");
@@ -704,17 +704,17 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private boolean init_Z_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore step) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      return this.init_NetHelper.init_Z_Str(step.name(), tick, System.nanoTime());
+      return this.init_NetHelper.isReady(step.name(), tick, System.nanoTime());
    }
 
    private void init_V_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore step) {
       int tick = AutismSessionState.getInstance().getClientTick();
       this.init_NetHelper
-         .init_V_Str(
+         .schedule(
             step.name(),
             AutismSessionState.getInstance().getClientTick(),
             System.nanoTime(),
-            autismclient.util.ActionCooldownScheduler.init_J_I(this.init_I_BufferHelper_Confi(step), this.integer("step-jitter"), this.init_Random)
+            autismclient.util.ActionCooldownScheduler.jitteredDelayNanos(this.init_I_BufferHelper_Confi(step), this.integer("step-jitter"), this.init_Random)
          );
       this.start = this.integer("switch-back-delay");
    }
@@ -1093,7 +1093,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private int load_I() {
-      return autismclient.util.ActionCooldownScheduler.init_I_I(
+      return autismclient.util.ActionCooldownScheduler.timeoutTicks(
          this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs()
       );
    }
@@ -1567,7 +1567,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          int charge = state.getValue(RespawnAnchorBlock.CHARGE);
          BlockState received = autismclient.util.ServerVerifiedBlockState.init(MC.level, cell);
          if (!(received.getBlock() instanceof RespawnAnchorBlock)
-            || !autismclient.util.WeaponDamageCalculator.init_Z_I(charge, received.getValue(RespawnAnchorBlock.CHARGE), load_Z_ItemStack(MC.player.getOffhandItem()))) {
+            || !autismclient.util.WeaponDamageCalculator.isAnchorChargeConfirmed(charge, received.getValue(RespawnAnchorBlock.CHARGE), load_Z_ItemStack(MC.player.getOffhandItem()))) {
             return false;
          } else if (charge <= 0) {
             return false;
@@ -2347,7 +2347,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy) {
       int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs() / 50.0));
-      return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.getInstance().getClientTick(), horizon, 2.0);
+      return this.init_TableIndex.predictedBox(enemy, AutismSessionState.getInstance().getClientTick(), horizon, 2.0);
    }
 
    private autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(

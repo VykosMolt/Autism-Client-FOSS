@@ -34,15 +34,15 @@ public final class FreecamTargetOutlineRenderer {
    private FreecamTargetOutlineRenderer() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return autismclient.modules.FreecamController.isActive() && (autismclient.modules.FreecamController.isInteractionAllowed() || autismclient.modules.FreecamController.isAiControllingBody()) && !autismclient.modules.aD.read_Z();
    }
 
-   public static void init_V() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
-               if (init_Z()) {
+               if (isActive()) {
                   Minecraft mc = Minecraft.getInstance();
                   if (mc != null && mc.level != null && mc.player != null) {
                      CameraRenderState cameraState = context.levelState().cameraRenderState;

@@ -362,7 +362,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          proxy.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
          proxy.init_J = 0L;
          this.load_V();
-         autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("Autism-Proxy-Check", () -> {
+         autismclient.util.BackgroundTaskExecutor.submit("Autism-Proxy-Check", () -> {
             proxy.init_I_I(ProxyListManager.getInstance().getTimeoutMs());
             if (this.minecraft != null) {
                this.minecraft.execute(() -> {

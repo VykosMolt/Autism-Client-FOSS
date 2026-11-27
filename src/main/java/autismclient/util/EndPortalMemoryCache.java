@@ -54,11 +54,11 @@ public final class EndPortalMemoryCache {
       public final Map<Long, StrongholdTriangulator.Inner_CachePool> frames = new LinkedHashMap<>();
 
       public void init(StrongholdTriangulator.Inner_CachePool frame) {
-         if (this.frames.size() >= 512 && !this.frames.containsKey(frame.init_BlockPos().asLong())) {
+         if (this.frames.size() >= 512 && !this.frames.containsKey(frame.pos().asLong())) {
             this.frames.remove(this.frames.keySet().iterator().next());
          }
 
-         this.frames.put(frame.init_BlockPos().asLong(), frame);
+         this.frames.put(frame.pos().asLong(), frame);
       }
    }
 }

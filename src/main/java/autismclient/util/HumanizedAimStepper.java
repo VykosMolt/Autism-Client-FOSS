@@ -48,20 +48,20 @@ public final class HumanizedAimStepper {
       this.init_Random = random;
    }
 
-   public static HumanizedAimStepper init_an() {
+   public static HumanizedAimStepper create() {
       Random random = new Random();
-      return new HumanizedAimStepper(HumanHandProfile.init_am().init_am_Random(random), random);
+      return new HumanizedAimStepper(HumanHandProfile.shared().forSession(random), random);
    }
 
    public HumanHandProfile init_am() {
       return this.init_am;
    }
 
-   public void init_V_Z(boolean on) {
+   public void setHandBack(boolean on) {
       this.write_Z = on;
    }
 
-   public void init_V() {
+   public void reset() {
       this.init_Z = false;
       this.load_Z = false;
       this.read_Z = false;
@@ -176,7 +176,7 @@ public final class HumanizedAimStepper {
       this.next = (this.init_am.sync() + this.init_am.flush() * init(this.init_D(), -2.5, 2.5)) * length;
       this.size = init(this.init_am.close() * (1.0 + 0.05 * this.init_D()), 0.75, 1.0);
       double width = Math.max(1.0, 2.0 * tolerance);
-      double fittsMs = this.init_am.init_D() + this.init_am.load_D() * (Math.log(1.0 + length / width) / Math.log(2.0));
+      double fittsMs = this.init_am.fittsIntercept() + this.init_am.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
       double ticks = this.write_Z ? 0.0 : fittsMs / 50.0 * Math.exp(this.init_am.open() * this.init_D());
       ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.write_Z ? 20.0 : 14.0) * this.size * this.size)));
       if (maxYawStep > 0.0) {
@@ -198,7 +198,7 @@ public final class HumanizedAimStepper {
       this.valid++;
       double s = Math.min(1.0, this.valid / this.prev);
       double u = Math.pow(s, this.size);
-      double along = init_D_D(u);
+      double along = smootherStep(u);
       double side = Math.sin(3.141592653589793 * u) * this.next;
       double y = this.clear * along + this.start * side;
       double p = this.reset * along + this.stop * side;
@@ -214,7 +214,7 @@ public final class HumanizedAimStepper {
       }
    }
 
-   public static double init_D_D(double progress) {
+   public static double smootherStep(double progress) {
       double u = Math.max(0.0, Math.min(1.0, progress));
       return u * u * u * (10.0 + u * (-15.0 + 6.0 * u));
    }

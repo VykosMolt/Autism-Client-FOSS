@@ -34,7 +34,7 @@ final class ScaffoldRotationSmoother {
 
    static ScaffoldRotationSmoother create() {
       Random random = new Random();
-      return new ScaffoldRotationSmoother(autismclient.util.HumanHandProfile.init_am().init_am_Random(random), random);
+      return new ScaffoldRotationSmoother(autismclient.util.HumanHandProfile.shared().forSession(random), random);
    }
 
    void reset() {
@@ -209,7 +209,7 @@ final class ScaffoldRotationSmoother {
 
    private RotationMath.Rotation init(RotationMath.Rotation from, double time, ValueRange band, double gcd) {
       double s = Math.min(1.0, time / this.write_D);
-      double progress = autismclient.util.HumanizedAimStepper.init_D_D(Math.pow(s, this.update_D));
+      double progress = autismclient.util.HumanizedAimStepper.smootherStep(Math.pow(s, this.update_D));
       double yaw = this.load_ce_DataUtil.yaw() - this.init_ce_DataUtil.yaw();
       double pitch = this.load_ce_DataUtil.pitch() - this.init_ce_DataUtil.pitch();
       double distance = Math.hypot(yaw, pitch);

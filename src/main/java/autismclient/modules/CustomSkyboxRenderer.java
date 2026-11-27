@@ -64,8 +64,8 @@ public final class CustomSkyboxRenderer {
 
             for (int face = 0; face < init_FArr2.length; face++) {
                Identifier texture = recolor
-                  ? ThemeTextureRecolorer.init_Identifier(init_IdentifierArr[face], ThemePaletteManager.getPalette().targetArgb(ThemePaletteManager.ColorRole.BACKDROP))
-                  : ThemeTextureRecolorer.init_Identifier(init_IdentifierArr[face], customColor);
+                  ? ThemeTextureRecolorer.recolor(init_IdentifierArr[face], ThemePaletteManager.getPalette().targetArgb(ThemePaletteManager.ColorRole.BACKDROP))
+                  : ThemeTextureRecolorer.recolor(init_IdentifierArr[face], customColor);
                if (texture != null) {
                   VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
                   float[] verts = init_FArr2[face];

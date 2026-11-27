@@ -28,10 +28,10 @@ public enum ContainerClickType {
    }
 
    public boolean load() {
-      return this.init_I() >= 0;
+      return this.defaultButton() >= 0;
    }
 
-   public int init_I() {
+   public int defaultButton() {
       byte var10000;
       switch (this) {
          case QUICK_MOVE:
@@ -59,7 +59,7 @@ public enum ContainerClickType {
       return var10000;
    }
 
-   public ContainerInput init_ContainerInput() {
+   public ContainerInput toContainerInput() {
       if (this.init_Z) {
          throw new IllegalStateException("Cannot convert PlayerAction to ContainerInput: " + this);
       }

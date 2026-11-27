@@ -36,8 +36,8 @@ public class WaypointEmptyCheck {
       File bak = new File(folder, "waypoints.json.bak");
       Files.writeString(new File(folder, "waypoints.json").toPath(), "");
       Files.writeString(bak.toPath(), "{\"example.com\":[{\"name\":\"Base\",\"x\":1,\"y\":2,\"z\":3,\"color\":0,\"createdMs\":1,\"death\":false}]}");
-      AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
-      check(store.init_List_Str("example.com").size() == 1, "zero-byte waypoints.json loaded as an empty store, backup ignored");
+      AutismWaypoints store = AutismWaypoints.getInstance();
+      check(store.list("example.com").size() == 1, "zero-byte waypoints.json loaded as an empty store, backup ignored");
       String[] corrupt = folder.list((dir, name) -> name.startsWith("waypoints.json.corrupt-"));
       check(corrupt != null && corrupt.length == 1, "zero-byte waypoints.json was not moved aside");
 

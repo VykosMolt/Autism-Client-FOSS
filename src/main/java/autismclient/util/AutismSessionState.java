@@ -466,8 +466,8 @@ public final class AutismSessionState {
 
    public void setLastInteractionTarget(InteractionTargetRef target) {
       this.lastInteractionTarget = target;
-      if (target != null && target.init_Z()) {
-         this.lastInteractedBlockPos = target.init_BlockPos();
+      if (target != null && target.isBlock()) {
+         this.lastInteractedBlockPos = target.blockPos();
       }
    }
 

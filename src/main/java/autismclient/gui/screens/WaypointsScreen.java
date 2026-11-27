@@ -200,7 +200,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int ph = this.poll();
       this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ph);
       this.load(graphics, x, y, w, ph, -301266162, init_CharEncoder.set());
-      int current = AutismWaypoints.init_AutismWaypoints().init_I(this.init_Str, this.load_Str, write_I_15());
+      int current = AutismWaypoints.getInstance().colorOf(this.init_Str, this.load_Str, write_I_15());
       int swatchY = y + 4;
       int swatchX = x + 4;
 
@@ -451,10 +451,10 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private void load_V_24() {
       if (AuditWaypointScope.canAdd(Minecraft.getInstance(), this.init_Str)) {
          if (this.minecraft != null && this.minecraft.player != null) {
-            AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
+            AutismWaypoints store = AutismWaypoints.getInstance();
             String name = this.init_Str_13().trim();
             if (name.isEmpty()) {
-               name = store.init_Str(this.init_Str, "Waypoint");
+               name = store.nextName(this.init_Str, "Waypoint");
             }
 
             int x = (int)Math.floor(this.minecraft.player.getX());
@@ -470,7 +470,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private void init_V_Str_10(String name) {
-      AutismWaypoints.init_AutismWaypoints().init_Z(this.init_Str, name);
+      AutismWaypoints.getInstance().remove(this.init_Str, name);
       if (name != null && name.equals(this.load_Str)) {
          this.sync_V_11();
       }
@@ -549,7 +549,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             String renamed = field.getValue().trim();
             if (renamed.equals(original)) {
                field.setValue(original);
-            } else if (AutismWaypoints.init_AutismWaypoints().init(this.init_Str, original, renamed)) {
+            } else if (AutismWaypoints.getInstance().init(this.init_Str, original, renamed)) {
                this.init_Map.remove(original);
                this.init_Map.put(renamed, field);
                field.setValue(renamed);
@@ -585,7 +585,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
 
       try {
          this.load_k
-            .setValue(String.format(Locale.ROOT, "%06X", AutismWaypoints.init_AutismWaypoints().init_I(this.init_Str, name, write_I_15()) & 16777215));
+            .setValue(String.format(Locale.ROOT, "%06X", AutismWaypoints.getInstance().colorOf(this.init_Str, name, write_I_15()) & 16777215));
       } finally {
          this.load_Z = false;
       }
@@ -611,7 +611,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          }
 
          if (index >= 0 && index < init_IArr.length) {
-            AutismWaypoints.init_AutismWaypoints().init_Z(this.init_Str, this.load_Str, init_IArr[index]);
+            AutismWaypoints.getInstance().setColor(this.init_Str, this.load_Str, init_IArr[index]);
             this.load_Z = true;
 
             try {
@@ -627,7 +627,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       if (!this.load_Z && this.load_Str != null) {
          Integer color = init_Integer_Str(raw);
          if (color != null) {
-            AutismWaypoints.init_AutismWaypoints().init_Z(this.init_Str, this.load_Str, color);
+            AutismWaypoints.getInstance().setColor(this.init_Str, this.load_Str, color);
          }
       }
    }
@@ -658,11 +658,11 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private List<AutismWaypoints.Waypoint> init_List_14() {
-      AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
-      long revision = store.init_J();
+      AutismWaypoints store = AutismWaypoints.getInstance();
+      long revision = store.revision();
       if (revision != this.init_J) {
          this.init_J = revision;
-         this.read_List = store.init_List_Str(this.init_Str);
+         this.read_List = store.list(this.init_Str);
       }
 
       return this.read_List;

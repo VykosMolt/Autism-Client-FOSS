@@ -101,7 +101,7 @@ public class AutismLocalPlayerMovementMixin {
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
    private boolean autism$sprintNetworkDecision(boolean original) {
       boolean announced = MovementModuleHooks.init(original);
-      SprintStateTracker.init_V(announced);
+      SprintStateTracker.update(announced);
       return announced;
    }
 

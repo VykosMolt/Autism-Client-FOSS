@@ -48,7 +48,7 @@ public final class MacroStatusHudRenderer {
       init(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
    }
 
-   public static int init_I(Font textRenderer, int panelWidth, int maxLines) {
+   public static int layoutHeight(Font textRenderer, int panelWidth, int maxLines) {
       if (textRenderer == null) {
          return 0;
       } else {

@@ -421,7 +421,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       boolean leavingOfflineSetup = this.update_Z && !configurationOnly;
       this.update_Z = configurationOnly;
       if (configurationOnly) {
-         this.init_F_2.init_V();
+         this.init_F_2.close();
       }
 
       if (leavingOfflineSetup) {
@@ -958,7 +958,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.next = 0;
          this.init_CacheEntry.jumpTo(0, 0);
          this.pop_Z = true;
-         this.init_F_2.init_V();
+         this.init_F_2.close();
          OverlayManager.getInstance().bringToFront(this);
       } else {
          this.init_AutismPacketInspec.clearInspection();
@@ -990,7 +990,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.close_Z = false;
          if (c) {
             this.clearFocusAndDismissMenu();
-            this.init_F_2.init_V();
+            this.init_F_2.close();
          }
 
          this.saveBounds();
@@ -1124,7 +1124,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                this.renderInactiveDim(ctx, bounds, this.windowCollapsed, this.sync_Z);
             }
 
-            if (this.init_F_2.init_Z()) {
+            if (this.init_F_2.isOpen()) {
                ctx.nextStratum();
                this.init_F_2.init(ctx, mx, my);
             }

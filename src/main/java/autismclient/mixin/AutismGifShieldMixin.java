@@ -45,7 +45,7 @@ public abstract class AutismGifShieldMixin {
       CallbackInfo ci
    ) {
       if (GifOverlayState.isShieldActive()) {
-         String name = GifRenderContext.init_Z() ? GifOverlayState.init_Str() : GifRenderContext.init_Str();
+         String name = GifRenderContext.isShieldRendering() ? GifOverlayState.init_Str() : GifRenderContext.currentName();
          if (name != null && !name.isEmpty()) {
             String path = GifOverlayState.load(name);
             if (path != null) {

@@ -115,7 +115,7 @@ public final class CombatAimEngine {
 
    public static CombatAimEngine createDefault() {
       Random random = new Random();
-      return new CombatAimEngine(HumanHandProfile.init_am().init_am_Random(random), random);
+      return new CombatAimEngine(HumanHandProfile.shared().forSession(random), random);
    }
 
    public void reset() {
@@ -636,7 +636,7 @@ public final class CombatAimEngine {
 
    private double computeFittsFlickTicks(double distance, double halfWidth) {
       double width = Math.max(2.0, 2.0 * halfWidth);
-      double ms = (this.handProfile.init_D() + this.handProfile.load_D() * (Math.log(1.0 + distance / width) / Math.log(2.0))) * 0.42;
+      double ms = (this.handProfile.fittsIntercept() + this.handProfile.fittsSlope() * (Math.log(1.0 + distance / width) / Math.log(2.0))) * 0.42;
       return ms / 50.0 * Math.exp(this.handProfile.open() * this.nextClampedGaussian());
    }
 

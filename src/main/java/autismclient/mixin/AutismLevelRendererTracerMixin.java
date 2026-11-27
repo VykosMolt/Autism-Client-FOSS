@@ -37,7 +37,7 @@ public class AutismLevelRendererTracerMixin {
       boolean tracers = ar.init_Z();
       boolean esp = ar.load_Z();
       boolean waypoints = ar.read_Z();
-      boolean skeleton = SkeletonEspRenderer.init_Z();
+      boolean skeleton = SkeletonEspRenderer.hasSkeletons();
       boolean ai = !AutismLiteVariant.enabled() && AiVisualization.hasContent();
       boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.init();
       boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.isActive();

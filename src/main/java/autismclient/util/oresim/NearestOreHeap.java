@@ -17,7 +17,7 @@ final class NearestOreHeap {
       this.init_IArr = new int[capacity];
    }
 
-   boolean init_Z() {
+   boolean isFull() {
       return this.init_I == this.init_DArr.length;
    }
 

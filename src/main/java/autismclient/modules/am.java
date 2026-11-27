@@ -386,7 +386,7 @@ public final class am {
       if (init_AtomicBoolean.getAndSet(false)) {
          load_J = -1L;
          if (init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.levelExtractor != null) {
-            SodiumRegionResourceProbe.init_V();
+            SodiumRegionResourceProbe.invalidate();
             AuditClientFixes.refreshChunksSoft(init_Minecraft);
          }
       }

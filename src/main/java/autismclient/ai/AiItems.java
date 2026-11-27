@@ -737,7 +737,7 @@ public final class AiItems {
 
    public static boolean canDropWantedItem(Minecraft mc, BlockState state, ItemStack tool, Set<Item> wanted) {
       if (!wanted.isEmpty() && mc.player != null && !mc.player.hasInfiniteMaterials()) {
-         boolean silk = BlockBreakSpeedHelper.init_Z(mc, tool);
+         boolean silk = BlockBreakSpeedHelper.hasSilkTouch(mc, tool);
 
          for (Item item : wanted) {
             if (sourceBlocksFor(item).contains(state.getBlock())) {

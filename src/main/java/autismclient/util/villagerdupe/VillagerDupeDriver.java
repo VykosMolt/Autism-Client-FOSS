@@ -75,11 +75,11 @@ public final class VillagerDupeDriver {
    private boolean sync_Z;
    private int get;
 
-   public static VillagerDupeDriver init_DataUtil() {
+   public static VillagerDupeDriver getInstance() {
       return init_DataUtil;
    }
 
-   public VillagerDupeDriver.BufferHelper init_DataUtil_BufferHel_Minecraft_DataUtil_CachePool(Minecraft mc, VillagerDupeDriver.CachePool opts) {
+   public VillagerDupeDriver.BufferHelper step(Minecraft mc, VillagerDupeDriver.CachePool opts) {
       return this.init_DataUtil_BufferHel_Minecraft(mc, opts, VillagerDupeDriver.StreamUtil.SHEAR);
    }
 
@@ -91,7 +91,7 @@ public final class VillagerDupeDriver {
       return this.init_DataUtil_BufferHel_Minecraft(mc, opts, VillagerDupeDriver.StreamUtil.WATCH);
    }
 
-   public boolean init_Z() {
+   public boolean isActive() {
       return this.init_Z;
    }
 
@@ -99,11 +99,11 @@ public final class VillagerDupeDriver {
       return this.get;
    }
 
-   public static void init_V_Predicate(Predicate<Minecraft> body) {
+   public static void addWatcher(Predicate<Minecraft> body) {
       init_List.add(body);
    }
 
-   public static void init_V_Minecraft(Minecraft mc) {
+   public static void tickWatchers(Minecraft mc) {
       if (!init_List.isEmpty() && !AutoTotemModule.init_Z_6()) {
          for (Predicate<Minecraft> driver : init_List) {
             boolean keep = false;
@@ -121,11 +121,11 @@ public final class VillagerDupeDriver {
       }
    }
 
-   public static void load_V_Minecraft(Minecraft mc) {
+   public static void tickInstance(Minecraft mc) {
       init_DataUtil.init_Z_Minecraft(mc);
    }
 
-   public void read_V_Minecraft(Minecraft mc) {
+   public void restoreSelectedSlot(Minecraft mc) {
       if (this.init_Z && mc != null && mc.player != null && this.close >= 0 && this.close < 9 && !aD.read_Z()) {
          mc.player.getInventory().setSelectedSlot(this.close);
       }
@@ -135,7 +135,7 @@ public final class VillagerDupeDriver {
       this.init_V();
    }
 
-   public VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto_Minecraft_DataUtil_CachePool(Minecraft mc, VillagerDupeDriver.CachePool opts) {
+   public VillagerDupeDriver.ConfigStore checkReady(Minecraft mc, VillagerDupeDriver.CachePool opts) {
       if (!load_Z_Minecraft(mc)) {
          return VillagerDupeDriver.ConfigStore.NO_WORLD;
       }
@@ -875,7 +875,7 @@ public final class VillagerDupeDriver {
       return best;
    }
 
-   public record BufferHelper(int init_I, VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto) {
+   public record BufferHelper(int count, VillagerDupeDriver.ConfigStore status) {
    }
 
    public record CachePool(
@@ -915,11 +915,11 @@ public final class VillagerDupeDriver {
          this.load_Str = message;
       }
 
-      public String init_Str() {
+      public String label() {
          return this.init_Str;
       }
 
-      public String load_Str() {
+      public String detail() {
          return this.load_Str;
       }
 
@@ -995,7 +995,7 @@ public final class VillagerDupeDriver {
          return var10000;
       }
 
-      public static VillagerDupeDriver.Inner_DataUtil init_DataUtil_DataUtil_Str(String token) {
+      public static VillagerDupeDriver.Inner_DataUtil parse(String token) {
          if (token == null) {
             return ALL;
          }

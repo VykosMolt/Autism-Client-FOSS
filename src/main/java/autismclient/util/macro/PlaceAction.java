@@ -35,7 +35,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
          && mc.level != null
          && this.blockPos != null
          && !mc.level.isOutsideBuildHeight(this.blockPos)
-         && autismclient.util.InteractionTargetRef.init_Z(mc, this.blockPos)) {
+         && autismclient.util.InteractionTargetRef.isInReach(mc, this.blockPos)) {
          BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
@@ -81,7 +81,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
             BlockPos supportPos = targetPos.relative(face.getOpposite());
             if (!mc.level.isOutsideBuildHeight(supportPos)
                && !mc.level.getBlockState(supportPos).isAir()
-               && autismclient.util.InteractionTargetRef.init_Z(mc, supportPos)
+               && autismclient.util.InteractionTargetRef.isInReach(mc, supportPos)
                && mc.level.getBlockState(targetPos).isAir()) {
                Vec3 hitPos = Vec3.atCenterOf(supportPos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
                return new BlockHitResult(hitPos, face, supportPos, false);

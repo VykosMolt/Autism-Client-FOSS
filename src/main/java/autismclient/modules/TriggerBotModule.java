@@ -46,7 +46,7 @@ final class TriggerBotModule extends Module {
    private final ClickerSettingsGroup init_h;
    private final HeldItemFilter init_O;
    private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
-   private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.init_StreamUtil();
+   private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.attack();
    private final autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper init_DataUtil_NetHelper = new autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper() {
       @Override
       public boolean init_Z_J(long now) {
@@ -59,13 +59,13 @@ final class TriggerBotModule extends Module {
       }
 
       @Override
-      public void load_V(long now) {
-         TriggerBotModule.this.init_StreamUtil.load_V(now);
+      public void onClick(long now) {
+         TriggerBotModule.this.init_StreamUtil.onClick(now);
       }
 
       @Override
-      public long init_J_J(long now) {
-         return TriggerBotModule.this.init_StreamUtil.init_J_J(now);
+      public long earliestClickNanos(long now) {
+         return TriggerBotModule.this.init_StreamUtil.earliestClickNanos(now);
       }
    };
    private final Random init_Random = new Random();
@@ -181,14 +181,14 @@ final class TriggerBotModule extends Module {
          boolean timed = !noCooldown && this.bool("respect-cooldown");
          boolean rage = !timed && this.init_h.technique() == autismclient.util.clicker.ClickTechnique.RAGE;
          boolean flinched = this.load_Z_15();
-         boolean physical = this.init_StreamUtil.load_Z();
+         boolean physical = this.init_StreamUtil.isPhysicallyDown();
          if (physical && !this.load_Z && !timed) {
             this.init_DataUtil.init_V_J(now);
          }
 
          this.load_Z = physical;
          autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
-         this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
+         this.init_DataUtil.setPersonality(this.init_h.init_DataUtil_ConfigSto());
          LivingEntity target = this.init(now, noCooldown, rage);
          boolean engaged = false;
          if (target == null && !timed && !rage) {
@@ -239,7 +239,7 @@ final class TriggerBotModule extends Module {
          } else {
             Vec3 eyes = MC.player.getEyePosition();
             AABB box = living.getBoundingBox();
-            double near = autismclient.util.AttackReachHelper.init_D(MC.player) + (Double.isNaN(this.open) ? 0.0 : this.open) + 1.5;
+            double near = autismclient.util.AttackReachHelper.maxReach(MC.player) + (Double.isNaN(this.open) ? 0.0 : this.open) + 1.5;
             if (box.distanceToSqr(eyes) > near * near) {
                return null;
             } else {
@@ -289,7 +289,7 @@ final class TriggerBotModule extends Module {
       MC.hitResult = live;
       if (live instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity living && this.init(living)) {
          return !MC.player.getMainHandItem().has(DataComponents.PIERCING_WEAPON)
-               && !autismclient.util.AttackReachHelper.init_AttackRange(MC.player).isInRange(MC.player, entityHit.getLocation())
+               && !autismclient.util.AttackReachHelper.attackRange(MC.player).isInRange(MC.player, entityHit.getLocation())
             ? null
             : living;
       } else {
@@ -297,7 +297,7 @@ final class TriggerBotModule extends Module {
             return null;
          }
 
-         double reach = autismclient.util.AttackReachHelper.init_D(MC.player);
+         double reach = autismclient.util.AttackReachHelper.maxReach(MC.player);
          if (!rage && this.close_D > 0.0) {
             LivingEntity graze = this.init_LivingEntity_D_D(reach + this.close_D, this.close_D);
             if (graze != null && !autismclient.util.RecentCombatTracker.init(graze, now)) {
@@ -384,7 +384,7 @@ final class TriggerBotModule extends Module {
                   target.getBoundingBox(),
                   ShieldHitWindowHelper.init(MC.player.getDeltaMovement()),
                   ShieldHitWindowHelper.init(step),
-                  autismclient.util.AttackReachHelper.init_D(MC.player)
+                  autismclient.util.AttackReachHelper.maxReach(MC.player)
                );
             if (lastChance || autismclient.util.clicker.SwingTimingModel.init(shown, ticker, MC.player.getCurrentItemAttackStrengthDelay(), init_D_10(), offset)) {
                ValueRange hold = ValueRange.parse(this.value("modern-hold"), write_ValueRange);
@@ -437,11 +437,11 @@ final class TriggerBotModule extends Module {
 
    private double init_D_LivingEntity_Z(LivingEntity target, boolean timed) {
       if (this.init_am == null) {
-         this.init_am = autismclient.util.HumanHandProfile.init_am();
+         this.init_am = autismclient.util.HumanHandProfile.shared();
       }
 
       ValueRange reaction = ValueRange.parse(this.value(timed ? "reaction" : "legacy-reaction"), init_ValueRange);
-      double trait = Math.abs(this.init_am.init_D() * 1000.0);
+      double trait = Math.abs(this.init_am.fittsIntercept() * 1000.0);
       double bias = 0.92 + 0.16 * (trait - Math.floor(trait));
       RotationMath.Rotation toTarget = RotationMath.lookAt(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
       float angle = RotationMath.angularDistance(RotationMath.ofPlayer(MC.player), toTarget);
@@ -499,7 +499,7 @@ final class TriggerBotModule extends Module {
 
    private void init_V(long now) {
       this.init_DataUtil.init_V_J_DataUtil_NetHelper(now, this.init_StreamUtil);
-      this.init_StreamUtil.load_V();
+      this.init_StreamUtil.release();
       this.read();
    }
 

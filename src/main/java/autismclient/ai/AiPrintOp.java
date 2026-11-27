@@ -1130,7 +1130,7 @@ final class AiPrintOp implements AiOperation {
                false,
                Set.of(),
                (state, stack) -> !state.is(Blocks.GRASS_BLOCK) && !state.is(Blocks.MYCELIUM) && !state.is(Blocks.PODZOL)
-                  || !BlockBreakSpeedHelper.init_Z(AiPrintOp.this.init_Minecraft, stack)
+                  || !BlockBreakSpeedHelper.hasSilkTouch(AiPrintOp.this.init_Minecraft, stack)
             );
          }
 

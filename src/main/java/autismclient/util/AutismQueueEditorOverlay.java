@@ -107,7 +107,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          OverlayManager.getInstance().bringToFront(this);
       }
 
-      this.update_V_20();
+      this.saveState();
    }
 
    public void write_V_23() {
@@ -172,7 +172,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
-   public void update_V_20() {
+   public void saveState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       shared.setQueueEditorVisible(this.sync_Z);
       shared.setQueueEditorX(this.flush_I);
@@ -180,7 +180,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       this.saveBounds();
    }
 
-   public void sync_V_17() {
+   public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
       this.sync_Z = shared.isQueueEditorVisible();
@@ -1055,7 +1055,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0 && this.write_Z) {
          this.write_Z = false;
-         this.update_V_20();
+         this.saveState();
          return true;
       } else if (button == 0 && this.poll_Z) {
          this.poll_Z = false;

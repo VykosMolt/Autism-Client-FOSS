@@ -57,7 +57,7 @@ public final class LocalPrefsStore {
    private LocalPrefsStore() {
    }
 
-   public static LocalPrefsStore init_EventBus() {
+   public static LocalPrefsStore getInstance() {
       LocalPrefsStore local = init_EventBus;
       if (local == null) {
          synchronized (LocalPrefsStore.class) {
@@ -228,36 +228,36 @@ public final class LocalPrefsStore {
       this.load_V();
    }
 
-   public String write_Str() {
+   public String sealedSession() {
       return this.init_Str;
    }
 
-   public String update_Str() {
+   public String accountName() {
       return this.load_Str;
    }
 
-   public String sync_Str() {
+   public String idToken() {
       return this.read_Str;
    }
 
-   public void init_V_Str_2(String sealedSession, String name, String idToken) {
+   public void saveSession(String sealedSession, String name, String idToken) {
       this.init_Str = sealedSession == null ? "" : sealedSession;
       this.load_Str = name == null ? "" : name;
       this.read_Str = idToken == null ? "" : idToken;
       this.load_V();
    }
 
-   public void write_V(String idToken) {
+   public void setIdToken(String idToken) {
       this.read_Str = idToken == null ? "" : idToken;
       this.load_V();
    }
 
-   public void update_V(String sealedSession) {
+   public void setSealedSession(String sealedSession) {
       this.init_Str = sealedSession == null ? "" : sealedSession;
       this.load_V();
    }
 
-   public void init_V() {
+   public void clearSession() {
       this.init_Str = "";
       this.load_Str = "";
       this.read_Str = "";

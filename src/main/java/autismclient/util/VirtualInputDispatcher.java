@@ -50,12 +50,12 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static boolean init_Z_Str(String owner) {
+   public static boolean isTicketOwner(String owner) {
       return load_cW != null && load_cW.owner.equals(owner);
    }
 
-   public static void init_V_Str(String owner) {
-      if (init_Z_Str(owner)) {
+   public static void markTicketSent(String owner) {
+      if (isTicketOwner(owner)) {
          load_cW.markSent();
       }
    }
@@ -84,30 +84,30 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void init_V_J(long generation) {
+   public static void requestScaffold(long generation) {
       if (generation > 0L && !autismclient.modules.aD.read_Z()) {
          init_J = generation;
          init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
       }
    }
 
-   public static void read_V() {
+   public static void requestFastExp() {
       init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
-   public static void write_V() {
+   public static void requestFastBlock() {
       init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
-   public static boolean init_Z() {
+   public static boolean consumeFastExp() {
       return init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
-   public static boolean load_Z() {
+   public static boolean consumeFastBlock() {
       return init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
-   public static boolean init_Z_J(long generation) {
+   public static boolean consumeScaffold(long generation) {
       if (generation <= 0L || load_J != generation) {
          return false;
       }
@@ -147,15 +147,15 @@ public final class VirtualInputDispatcher {
       return read_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP;
    }
 
-   public static boolean update_Z() {
+   public static boolean hasFastRequest() {
       return load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP || load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK;
    }
 
-   public static void sync_V() {
+   public static void releaseFastExp() {
       load(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
-   public static void flush_V() {
+   public static void releaseFastBlock() {
       load(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
@@ -208,11 +208,11 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void init_V_Z(boolean held) {
+   public static void setAttackHeld(boolean held) {
       update = init(init_Minecraft != null && init_Minecraft.options != null ? init_Minecraft.options.keyAttack : null, update, held);
    }
 
-   public static boolean init_Z_Z(boolean use) {
+   public static boolean isHeld(boolean use) {
       return use ? sync : update;
    }
 
@@ -245,11 +245,11 @@ public final class VirtualInputDispatcher {
    }
 
    private static void get() {
-      init_V_Z(false);
+      setAttackHeld(false);
       load(false);
    }
 
-   public static void init_V_I(int slot) {
+   public static void setSlot(int slot) {
       if (!autismclient.modules.aD.read_Z()) {
          init_I = Math.max(0, Math.min(8, slot));
          load_I = -1;

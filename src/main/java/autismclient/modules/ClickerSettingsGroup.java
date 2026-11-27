@@ -65,7 +65,7 @@ final class ClickerSettingsGroup {
       this.load_D = defaultCpsCeiling;
       this.load_ValueRange = defaultButterflyBand;
       this.init_ChoiceSetting = module.add(
-         new ChoiceSetting("technique", "Technique", fallback.init_Str, autismclient.util.clicker.ClickTechnique.init_StrArr())
+         new ChoiceSetting("technique", "Technique", fallback.init_Str, autismclient.util.clicker.ClickTechnique.labels())
             .group(group)
             .description("Clicking style")
             .visibleWhen(this.init_BooleanSupplier)
@@ -97,18 +97,18 @@ final class ClickerSettingsGroup {
 
    autismclient.util.clicker.ClickProfile profile() {
       ClickerSettingsGroup.Inner_DataUtil section = this.init_Map.get(this.technique());
-      return section == null ? autismclient.util.clicker.ClickProfile.init_CachePool(this.technique()) : section.init_CachePool();
+      return section == null ? autismclient.util.clicker.ClickProfile.forTechnique(this.technique()) : section.init_CachePool();
    }
 
    autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
       if (this.init_DataUtil_ConfigSto == null) {
          try {
-            autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.init_am();
+            autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.shared();
             this.init_DataUtil_ConfigSto = new autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore(
-               0.85 + 0.3 * init_D_D(hand.open()), 0.9 + 0.2 * init_D_D(hand.load_D()), hand.sync() >= 0.0
+               0.85 + 0.3 * init_D_D(hand.open()), 0.9 + 0.2 * init_D_D(hand.fittsSlope()), hand.sync() >= 0.0
             );
          } catch (Throwable unavailable) {
-            this.init_DataUtil_ConfigSto = autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore.init_DataUtil_ConfigSto;
+            this.init_DataUtil_ConfigSto = autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore.DEFAULT;
          }
       }
 
@@ -295,12 +295,12 @@ final class ClickerSettingsGroup {
             return this.init_CachePool;
          }
 
-         autismclient.util.clicker.ClickProfile.Inner_DataUtil builder = autismclient.util.clicker.ClickProfile.init_CachePool_DataUtil(this.init_BufferHelper);
+         autismclient.util.clicker.ClickProfile.Inner_DataUtil builder = autismclient.util.clicker.ClickProfile.builder(this.init_BufferHelper);
          if (this.init_DoubleSetting != null) {
-            builder.init_CachePool_DataUtil_D_D(this.init_DoubleSetting.get(), this.init_DoubleSetting.get());
+            builder.cpsRange(this.init_DoubleSetting.get(), this.init_DoubleSetting.get());
          } else {
             ValueRange band = this.init_RangeSetting.get();
-            builder.init_CachePool_DataUtil_D_D(band.min(), band.max());
+            builder.cpsRange(band.min(), band.max());
          }
 
          if (this.load_RangeSetting != null) {
@@ -320,7 +320,7 @@ final class ClickerSettingsGroup {
          }
 
          if (this.init_ChoiceSetting != null) {
-            builder.init_CachePool_DataUtil_Z_D("Free Spin".equals(this.init_ChoiceSetting.get()), this.load_DoubleSetting.get());
+            builder.freeSpin("Free Spin".equals(this.init_ChoiceSetting.get()), this.load_DoubleSetting.get());
          }
 
          if (this.load_IntSetting != null) {

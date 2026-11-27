@@ -61,8 +61,8 @@ public class HudProviderGuardCheck {
       ((Map<String, HudElementProvider>) providers.get(null)).put("check:broken", broken);
 
       String id = "check:broken";
-      check("check:broken".equals(call("init_Str_Str", id)), "label falls back to id");
-      check("".equals(call("load_Str", id)), "description falls back to empty");
+      check("check:broken".equals(call("displayName", id)), "label falls back to id");
+      check("".equals(call("description", id)), "description falls back to empty");
       check("TOP_LEFT".equals(call("read_Str", id)), "anchor falls back to TOP_LEFT");
       check(Arrays.equals(new int[]{0, 0}, (int[]) call("init_IArr_Str", id)), "position falls back to 0,0");
       check(Boolean.FALSE.equals(call("update_Z", id)), "enabled falls back to false");

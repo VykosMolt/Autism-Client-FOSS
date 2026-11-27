@@ -38,7 +38,7 @@ public final class SystemClipboardHelper {
    private SystemClipboardHelper() {
    }
 
-   public static String init_Str() {
+   public static String getText() {
       if (auditPendingWrites.get() > 0) {
          return init_Str;
       }
@@ -90,7 +90,7 @@ public final class SystemClipboardHelper {
       return load_Str();
    }
 
-   public static void init_V(String text) {
+   public static void setText(String text) {
       String value = text == null ? "" : text;
       init_Str = value;
       auditPendingWrites.incrementAndGet();

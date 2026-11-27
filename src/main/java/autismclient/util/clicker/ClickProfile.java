@@ -2,11 +2,11 @@ package autismclient.util.clicker;
 
 public final class ClickProfile {
    public static final double init_D = 0.5;
-   public final ClickTechnique init_BufferHelper;
+   public final ClickTechnique technique;
    public final double load_D;
    public final double read;
-   public final long init_J;
-   public final long load_J;
+   public final long minIntervalNanos;
+   public final long maxIntervalNanos;
    public final double write;
    public final double update;
    public final double sync;
@@ -18,22 +18,22 @@ public final class ClickProfile {
    public final double poll;
    public final double push;
    public final double pop;
-   public final boolean init_Z;
+   public final boolean freeSpin;
    public final double tick;
 
    private ClickProfile(ClickProfile.Inner_DataUtil b) {
-      this.init_BufferHelper = b.init_BufferHelper == null ? ClickTechnique.NORMAL : b.init_BufferHelper;
-      double ceiling = Math.min(this.init_BufferHelper.load_D, 30.0);
-      if (this.init_BufferHelper == ClickTechnique.RAGE) {
-         double cps = init(init(b.load_D, this.init_BufferHelper.write_D), 1.0, ceiling);
+      this.technique = b.init_BufferHelper == null ? ClickTechnique.NORMAL : b.init_BufferHelper;
+      double ceiling = Math.min(this.technique.load_D, 30.0);
+      if (this.technique == ClickTechnique.RAGE) {
+         double cps = init(init(b.load_D, this.technique.write_D), 1.0, ceiling);
          this.load_D = cps;
          this.read = cps;
       } else {
          double lo = init(b.init_D, 0.0 / 0.0);
          double hi = init(b.load_D, 0.0 / 0.0);
          if (Double.isNaN(lo) || Double.isNaN(hi)) {
-            lo = this.init_BufferHelper.read_D;
-            hi = this.init_BufferHelper.write_D;
+            lo = this.technique.read_D;
+            hi = this.technique.write_D;
          }
 
          lo = init(lo, 1.0, ceiling);
@@ -53,8 +53,8 @@ public final class ClickProfile {
          this.read = hi;
       }
 
-      this.init_J = ClickTimingMath.init(ClickTimingMath.init(this.init_BufferHelper, this.read));
-      this.load_J = Math.max(this.init_J, ClickTimingMath.init(this.load_D));
+      this.minIntervalNanos = ClickTimingMath.init(ClickTimingMath.init(this.technique, this.read));
+      this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.init(this.load_D));
       double holdLo = init(init(b.read, 40.0), 1.0, 1000.0);
       double holdHi = init(init(b.write, 90.0), 1.0, 1000.0);
       this.write = Math.min(holdLo, holdHi);
@@ -72,16 +72,16 @@ public final class ClickProfile {
       this.poll = Math.min(rLo, rHi);
       this.push = Math.max(rLo, rHi);
       this.pop = init(init(b.push, 10.0), 1.0, 100.0);
-      this.init_Z = b.init_Z;
+      this.freeSpin = b.init_Z;
       this.tick = init(init(b.pop, 1.0), 0.1, 20.0);
    }
 
-   public static ClickProfile.Inner_DataUtil init_CachePool_DataUtil(ClickTechnique technique) {
+   public static ClickProfile.Inner_DataUtil builder(ClickTechnique technique) {
       return new ClickProfile.Inner_DataUtil(technique);
    }
 
-   public static ClickProfile init_CachePool(ClickTechnique technique) {
-      return init_CachePool_DataUtil(technique).init();
+   public static ClickProfile forTechnique(ClickTechnique technique) {
+      return builder(technique).init();
    }
 
    private static double init(double value, double fallback) {
@@ -134,7 +134,7 @@ public final class ClickProfile {
          }
       }
 
-      public ClickProfile.Inner_DataUtil init_CachePool_DataUtil_D_D(double low, double high) {
+      public ClickProfile.Inner_DataUtil cpsRange(double low, double high) {
          this.init_D = low;
          this.load_D = high;
          return this;
@@ -183,7 +183,7 @@ public final class ClickProfile {
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil init_CachePool_DataUtil_Z_D(boolean freeSpin, double decayPerSecond) {
+      public ClickProfile.Inner_DataUtil freeSpin(boolean freeSpin, double decayPerSecond) {
          this.init_Z = freeSpin;
          this.pop = decayPerSecond;
          return this;

@@ -315,7 +315,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       ContainerClickType packetAction = this.init_AutismFabricatorOv.init_N(this.flush_Z);
-      return packetAction.load() ? packetAction.init_I() : Math.min(this.prev, 1);
+      return packetAction.load() ? packetAction.defaultButton() : Math.min(this.prev, 1);
    }
 
    private String load_Str_5() {
@@ -357,10 +357,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.add = this.fill();
    }
 
-   public static synchronized AutismFabricatorOverlay init_AutismFabricatorOv_AbstractContainerS(AbstractContainerScreen<?> parentScreen) {
+   public static synchronized AutismFabricatorOverlay getOrCreate(AbstractContainerScreen<?> parentScreen) {
       if (init_AutismFabricatorOv_2 == null) {
          init_AutismFabricatorOv_2 = new AutismFabricatorOverlay(parentScreen);
-         init_AutismFabricatorOv_2.write_V_8();
+         init_AutismFabricatorOv_2.restoreState();
       } else {
          init_AutismFabricatorOv_2.init_AbstractContainerS = parentScreen;
       }
@@ -413,7 +413,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          this.clear_V_2();
       }
 
-      this.read_V_3();
+      this.saveState();
    }
 
    @Override
@@ -481,7 +481,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void read_V_3() {
+   public void saveState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       shared.setFabricatorVisible(this.sync_Z);
       shared.setFabricatorX(this.get);
@@ -503,7 +503,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.saveBounds();
    }
 
-   public void write_V_8() {
+   public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
       this.sync_Z = shared.isFabricatorVisible();
@@ -629,7 +629,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             this.update_Str = text;
             this.reset_V_2();
             this.init_V_Str_Z(text, true);
-            this.read_V_3();
+            this.saveState();
          });
          this.init_List.add(this.write_k);
          this.sync_V_5();
@@ -707,7 +707,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   this.queue = Math.max(0, (int)mouseY - craftPlanScrollbar.thumbY());
                   this.value = this.init_I_PoolEntry_DataUtil(craftPlanScrollbar, (int)mouseY, this.queue, 13, Math.max(0, this.open_List.size() - 4));
                   this.load_CacheEntry.jumpTo(this.value * 13, Math.max(0, this.open_List.size() * 13 - this.push_I));
-                  this.read_V_3();
+                  this.saveState();
                   return true;
                }
 
@@ -717,7 +717,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   this.queue = Math.max(0, (int)mouseY - craftListScrollbar.thumbY());
                   this.size = this.init_I_PoolEntry_DataUtil(craftListScrollbar, (int)mouseY, this.queue, this.close_I, Math.max(0, this.close_List.size() - 6));
                   this.init_CacheEntry.jumpTo(this.size * this.close_I, Math.max(0, this.close_List.size() * this.close_I - this.open_I));
-                  this.read_V_3();
+                  this.saveState();
                   return true;
                }
             }
@@ -728,7 +728,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                this.value = 0;
                this.load_CacheEntry.jumpTo(0, 0);
                this.reset_V_2();
-               this.read_V_3();
+               this.saveState();
                return true;
             }
 
@@ -802,7 +802,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      field.setFocused(false);
                   }
 
-                  this.read_V_3();
+                  this.saveState();
                   return true;
                }
             }
@@ -823,7 +823,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                this.reset_V_2();
-               this.read_V_3();
+               this.saveState();
 
                for (ThemedTextInputBox field : this.init_List) {
                   field.setFocused(false);
@@ -894,13 +894,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List);
       if (button == 0 && this.state != 0) {
          this.state = 0;
-         this.read_V_3();
+         this.saveState();
          return true;
       }
 
       if (button == 0) {
          if (this.write_Z) {
-            this.read_V_3();
+            this.saveState();
          }
 
          this.write_Z = false;
@@ -971,7 +971,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int maxPlanScroll = Math.max(0, this.open_List.size() - 4);
                this.value = Math.max(0, Math.min(maxPlanScroll, this.value - (int)Math.signum(amount)));
                this.load_CacheEntry.setOffset(this.value * 13, Math.max(0, this.open_List.size() * 13 - this.push_I));
-               this.read_V_3();
+               this.saveState();
                return true;
             }
 
@@ -981,7 +981,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int maxScroll = Math.max(0, this.close_List.size() - 6);
                this.size = Math.max(0, Math.min(maxScroll, this.size - (int)Math.signum(amount)));
                this.init_CacheEntry.setOffset(this.size * this.close_I, Math.max(0, this.close_List.size() * this.close_I - this.open_I));
-               this.read_V_3();
+               this.saveState();
                return true;
             }
          }
@@ -1226,7 +1226,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                + AutoCraftingEngine.formatStatusLabel(option),
             option.craftable ? ChatFormatting.GREEN : ChatFormatting.RED
          );
-         this.read_V_3();
+         this.saveState();
       }
    }
 
@@ -1279,14 +1279,14 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.read_V_3();
+         this.saveState();
       } else {
          this.data = -1;
          this.init_J_TaskQueue = null;
          this.init_ItemStack = ItemStack.EMPTY;
          this.task = -1;
          this.sync_Str = "";
-         this.read_V_3();
+         this.saveState();
       }
    }
 
@@ -1318,7 +1318,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
          int maxPlanScroll = Math.max(0, this.open_List.size() - 4);
          this.value = Math.max(0, Math.min(maxPlanScroll, this.data));
-         this.read_V_3();
+         this.saveState();
       }
    }
 
@@ -1332,7 +1332,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          }
 
          this.value = Math.max(0, Math.min(Math.max(0, this.open_List.size() - 4), this.value));
-         this.read_V_3();
+         this.saveState();
       }
    }
 
@@ -1469,7 +1469,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            this.init_AutismFabricatorOv = this.init_AutismFabricatorOvArr[idx];
                            this.reset_V_2();
                            this.update_V_6();
-                           this.read_V_3();
+                           this.saveState();
                         }
                      }
                   );
@@ -1511,7 +1511,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                                  if (idx >= 0 && idx < 3) {
                                     this.prev = idx;
                                     this.reset_V_2();
-                                    this.read_V_3();
+                                    this.saveState();
                                  }
                               }
                            );
@@ -1529,7 +1529,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            this.read_SyncManager = new autismclient.gui.ui.widgets.DropdownWidget(fieldX, this.next_I_2(), fieldWidth, push_I_7(), options, sel, idx -> {
                               this.flush_Z = idx == 1;
                               this.reset_V_2();
-                              this.read_V_3();
+                              this.saveState();
                            });
                         }
 
@@ -1809,7 +1809,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.init_AutismFabricatorOv = this.init_AutismFabricatorOvArr[this.next];
       this.reset_V_2();
       this.update_V_6();
-      this.read_V_3();
+      this.saveState();
    }
 
    private void add_V_3() {
@@ -1817,7 +1817,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.init_AutismFabricatorOv = this.init_AutismFabricatorOvArr[this.next];
       this.reset_V_2();
       this.update_V_6();
-      this.read_V_3();
+      this.saveState();
    }
 
    private void clear_V_2() {
@@ -1849,7 +1849,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   System.currentTimeMillis()
                );
                this.init_V_Str_ChatFormatting("Captured Packet " + this.init_bo_StreamUtil.init_Str(), ChatFormatting.GREEN);
-               this.read_V_3();
+               this.saveState();
             }
          } else {
             this.init_Integer = stableSlotId;
@@ -1876,7 +1876,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                this.init_V_Str_ChatFormatting("Selected slot " + stableSlotId + " (Empty)", ChatFormatting.YELLOW);
             }
 
-            this.read_V_3();
+            this.saveState();
          }
       }
    }
@@ -1886,7 +1886,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          if (this.poll_Z_5()) {
             autismclient.util.macro.CraftAction craftAction = this.init_SyncManager();
             if (craftAction != null && craftAction.hasValidEntry()) {
-               macroEditor.init_V_MacroAction_2(craftAction);
+               macroEditor.appendAction(craftAction);
                return;
             }
 
@@ -1914,7 +1914,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             }
 
             autismclient.util.macro.PacketClickAction action = new autismclient.util.macro.PacketClickAction(target, repeats, false);
-            macroEditor.init_V_MacroAction_2(action);
+            macroEditor.appendAction(action);
             this.init_V_Str_ChatFormatting("Added Packet Click action to macro!", ChatFormatting.GREEN);
             return;
          }
@@ -1940,7 +1940,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                dropAction.itemCounts.add(this.flush_Z ? 0 : repeats);
             }
 
-            macroEditor.init_V_MacroAction_2(dropAction);
+            macroEditor.appendAction(dropAction);
             this.init_V_Str_ChatFormatting("Added Drop action to macro!", ChatFormatting.GREEN);
             return;
          }
@@ -1963,7 +1963,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             itemAction.itemButtons.add(itemAction.button);
          }
 
-         macroEditor.init_V_MacroAction_2(itemAction);
+         macroEditor.appendAction(itemAction);
          this.init_V_Str_ChatFormatting("Added " + this.init_AutismFabricatorOv.init_Str + " action to macro!", ChatFormatting.GREEN);
       } catch (NumberFormatException e) {
          this.init_V_Str_ChatFormatting("Invalid value", ChatFormatting.RED);
@@ -2005,7 +2005,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      ContainerInput actionType = this.init_AutismFabricatorOv.init_N(this.flush_Z).init_ContainerInput();
+      ContainerInput actionType = this.init_AutismFabricatorOv.init_N(this.flush_Z).toContainerInput();
       return new ServerboundContainerClickPacket(
          handler.containerId, handler.getStateId(), (short)slot, (byte)this.pool(), actionType, new Int2ObjectArrayMap<>(), HashedStack.EMPTY
       );
@@ -2049,7 +2049,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
             if (!queue) {
                AutismSessionState.getInstance().flushDelayedPackets(handler);
-               ContainerInput actionType = this.init_AutismFabricatorOv.init_N(this.flush_Z).init_ContainerInput();
+               ContainerInput actionType = this.init_AutismFabricatorOv.init_N(this.flush_Z).toContainerInput();
                int effectiveButton = this.pool();
 
                for (int i = 0; i < repeats; i++) {

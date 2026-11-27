@@ -68,18 +68,18 @@ public final class BedDefenderGhostRenderer {
                                              cell.state()
                                           );
 
-                                          for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.init_List()) {
+                                          for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.faces()) {
                                              if (++quads > 4096) {
                                                 return;
                                              }
 
-                                             Direction d = face.init_Direction();
+                                             Direction d = face.cullFace();
                                              autismclient.modules.BedDefenderModule.Inner_CachePool neighbour = d == null ? null : solid.get(p.relative(d));
                                              if (neighbour == null || cell.layer() < neighbour.layer()) {
                                                 float shade = face.load() == null ? 1.0F : level.cardinalLighting().byFace(face.load());
-                                                BlockTintSource tintSource = face.init_I() < 0
+                                                BlockTintSource tintSource = face.tintIndex() < 0
                                                    ? null
-                                                   : mc.getBlockColors().getTintSource(cell.state(), face.init_I());
+                                                   : mc.getBlockColors().getTintSource(cell.state(), face.tintIndex());
                                                 int tint = tintSource == null ? 16777215 : tintSource.colorInWorld(cell.state(), level, p);
                                                 if (!cell.init_Z()) {
                                                    tint = tint & 0xFF0000 | (tint >> 8 & 0xFF) * 155 / 255 << 8 | (tint & 0xFF) * 175 / 255;
@@ -89,7 +89,7 @@ public final class BedDefenderGhostRenderer {
                                                 int g = (int)((tint >> 8 & 0xFF) * (ghostTint >> 8 & 0xFF) / 255.0F * shade);
                                                 int b = (int)((tint & 0xFF) * (ghostTint & 0xFF) / 255.0F * shade);
                                                 int color = layerAlpha << 24 | r << 16 | g << 8 | b;
-                                                float[] data = face.init_FArr();
+                                                float[] data = face.vertices();
 
                                                 for (int v = 0; v < 4; v++) {
                                                    int k = v * 5;

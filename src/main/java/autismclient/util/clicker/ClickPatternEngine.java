@@ -58,7 +58,7 @@ public final class ClickPatternEngine {
    private final Random init_Random;
    private ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto;
    private final Map<ClickTechnique, ClickPatternEngine.Inner_CachePool> init_Map = new EnumMap<>(ClickTechnique.class);
-   private ClickProfile init_CachePool = ClickProfile.init_CachePool(ClickTechnique.NORMAL);
+   private ClickProfile init_CachePool = ClickProfile.forTechnique(ClickTechnique.NORMAL);
    private ClickPatternEngine.Inner_CachePool init_DataUtil_CachePool;
    private double level;
    private double frame;
@@ -85,17 +85,17 @@ public final class ClickPatternEngine {
    private long stop_J;
    private long next_J;
 
-   public void init_V_D(double multiplier) {
+   public void setSpeedMultiplier(double multiplier) {
       this.store = Double.isFinite(multiplier) ? Math.max(1.0, Math.min(2.0, multiplier)) : 1.0;
    }
 
    public ClickPatternEngine() {
-      this(new Random(), ClickPatternEngine.Inner_ConfigStore.init_DataUtil_ConfigSto);
+      this(new Random(), ClickPatternEngine.Inner_ConfigStore.DEFAULT);
    }
 
    public ClickPatternEngine(Random seed, ClickPatternEngine.Inner_ConfigStore personality) {
       this.init_Random = seed == null ? new Random() : seed;
-      this.init_DataUtil_ConfigSto = personality == null ? ClickPatternEngine.Inner_ConfigStore.init_DataUtil_ConfigSto : personality;
+      this.init_DataUtil_ConfigSto = personality == null ? ClickPatternEngine.Inner_ConfigStore.DEFAULT : personality;
       this.level = ClickTechnique.NORMAL.sync_D * 2.5 * this.init_Random.nextGaussian();
       this.frame = 0.2 * this.init_Random.nextGaussian();
       this.init_Map.put(ClickTechnique.NORMAL, new ClickPatternEngine.Inner_BufferHelper(this.init_Random.nextLong()));
@@ -107,7 +107,7 @@ public final class ClickPatternEngine {
       this.init_DataUtil_CachePool = this.init_Map.get(ClickTechnique.NORMAL);
    }
 
-   public void init_V_DataUtil_ConfigSto(ClickPatternEngine.Inner_ConfigStore personality) {
+   public void setPersonality(ClickPatternEngine.Inner_ConfigStore personality) {
       if (personality != null) {
          this.init_DataUtil_ConfigSto = personality;
       }
@@ -127,7 +127,7 @@ public final class ClickPatternEngine {
       if (!active) {
          this.load_V();
       } else {
-         ClickPatternEngine.Inner_CachePool wanted = this.init_Map.get(this.init_CachePool.init_BufferHelper);
+         ClickPatternEngine.Inner_CachePool wanted = this.init_Map.get(this.init_CachePool.technique);
          if (wanted != this.init_DataUtil_CachePool) {
             this.init_DataUtil_CachePool = wanted;
             this.load_V();
@@ -154,21 +154,21 @@ public final class ClickPatternEngine {
       this.load_V();
    }
 
-   public void init_V_J_2(long now, ClickProfile profile, ClickPatternEngine.Inner_NetHelper sink) {
+   public void applyProfile(long now, ClickProfile profile, ClickPatternEngine.Inner_NetHelper sink) {
       if (profile != null) {
          this.init_CachePool = profile;
       }
 
-      this.init_DataUtil_CachePool = this.init_Map.get(this.init_CachePool.init_BufferHelper);
+      this.init_DataUtil_CachePool = this.init_Map.get(this.init_CachePool.technique);
       this.init_V_J(now);
       this.load_Z = true;
       this.get_J = now + Math.max(1000000L, this.init_DataUtil_CachePool.init_J());
       if (sink != null) {
-         sink.load_V(now);
+         sink.onClick(now);
       }
    }
 
-   public long init_J_J(long now) {
+   public long nextClickNanos(long now) {
       if (this.tick_J == -9223372036854775808L) {
          return 9223372036854775807L;
       }
@@ -219,8 +219,8 @@ public final class ClickPatternEngine {
 
    private void load_V_J(long now) {
       long start = now;
-      if (this.set_J != -9223372036854775808L && now - this.set_J < this.init_CachePool.load_J) {
-         long interval = this.init_CachePool.init_BufferHelper.init_Z()
+      if (this.set_J != -9223372036854775808L && now - this.set_J < this.init_CachePool.maxIntervalNanos) {
+         long interval = this.init_CachePool.technique.init_Z()
             ? this.init(now - this.push_J, 0.0, this.open(), this.poll(), 0.0, this.init_DataUtil_CachePool.init)
             : this.close();
          start = Math.max(now, this.set_J + interval);
@@ -253,7 +253,7 @@ public final class ClickPatternEngine {
             }
 
             if (sink != null && sink.init_Z_J(now)) {
-               this.init_V_J_J(now, Math.max(now, sink.init_J_J(now)));
+               this.init_V_J_J(now, Math.max(now, sink.earliestClickNanos(now)));
                return;
             }
 
@@ -308,7 +308,7 @@ public final class ClickPatternEngine {
    }
 
    private double load_D() {
-      ClickTechnique technique = this.init_CachePool.init_BufferHelper;
+      ClickTechnique technique = this.init_CachePool.technique;
       boolean lapses = technique == ClickTechnique.NORMAL
          || technique == ClickTechnique.JITTER
          || technique == ClickTechnique.BUTTERFLY;
@@ -375,15 +375,15 @@ public final class ClickPatternEngine {
    }
 
    private long close() {
-      return Math.max(this.init_CachePool.init_J, 33333334L);
+      return Math.max(this.init_CachePool.minIntervalNanos, 33333334L);
    }
 
    private long open() {
-      return this.init_CachePool.init_J;
+      return this.init_CachePool.minIntervalNanos;
    }
 
    private long poll() {
-      return this.init_CachePool.load_J;
+      return this.init_CachePool.maxIntervalNanos;
    }
 
    private long push() {
@@ -406,7 +406,7 @@ public final class ClickPatternEngine {
          this.open_J = at;
          double spread = this.read_D();
          this.level = init(
-            this.level, dt, this.init_CachePool.init_BufferHelper.update_D, this.init_CachePool.init_BufferHelper.sync_D * spread, this.init_Random
+            this.level, dt, this.init_CachePool.technique.update_D, this.init_CachePool.technique.sync_D * spread, this.init_Random
          );
          this.frame = init(this.frame, dt, 6.0, 0.08 * spread, this.init_Random);
       }
@@ -420,7 +420,7 @@ public final class ClickPatternEngine {
 
       double latent = this.level
          + this.frame
-         + this.init_CachePool.init_BufferHelper.flush * this.read_D() * r.nextGaussian()
+         + this.init_CachePool.technique.flush * this.read_D() * r.nextGaussian()
          + boundary
          + envelope
          + 0.7 * this.init_CachePool.flush * this.block
@@ -458,7 +458,7 @@ public final class ClickPatternEngine {
    }
 
    private double write_D() {
-      ClickTechnique technique = this.init_CachePool.init_BufferHelper;
+      ClickTechnique technique = this.init_CachePool.technique;
       if (!technique.init_Z()) {
          return 0.0;
       }
@@ -564,7 +564,7 @@ public final class ClickPatternEngine {
    }
 
    public record Inner_ConfigStore(double init_D, double load, boolean init_Z) {
-      public static final ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto = new ClickPatternEngine.Inner_ConfigStore(1.0, 1.0, true);
+      public static final ClickPatternEngine.Inner_ConfigStore DEFAULT = new ClickPatternEngine.Inner_ConfigStore(1.0, 1.0, true);
 
       public Inner_ConfigStore {
          init_D = Double.isFinite(init_D) ? Math.max(0.25, Math.min(4.0, init_D)) : 1.0;
@@ -755,7 +755,7 @@ public final class ClickPatternEngine {
 
       @Override
       void init_V() {
-         if (this.init_Z && ClickPatternEngine.this.init_CachePool.init_Z) {
+         if (this.init_Z && ClickPatternEngine.this.init_CachePool.freeSpin) {
             this.load();
          } else {
             if (this.load_I == 0) {
@@ -861,10 +861,10 @@ public final class ClickPatternEngine {
 
       void init_V_J(long var1);
 
-      default void load_V(long now) {
+      default void onClick(long now) {
       }
 
-      default long init_J_J(long now) {
+      default long earliestClickNanos(long now) {
          return now;
       }
    }

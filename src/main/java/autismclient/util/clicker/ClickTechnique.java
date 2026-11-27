@@ -49,7 +49,7 @@ public enum ClickTechnique {
       return NORMAL;
    }
 
-   public static String[] init_StrArr() {
+   public static String[] labels() {
       ClickTechnique[] all = values();
       String[] labels = new String[all.length];
 

@@ -217,7 +217,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             .description("Auto chooses blast positions; Aimed starts combos at your crosshair.")
             .build()
       );
-      this.add(autismclient.util.CombatAimSpeedController.init_DoubleSetting().build());
+      this.add(autismclient.util.CombatAimSpeedController.speedSetting().build());
       this.add(new BoolSetting("silent", "Silent", true).group("Aim").build());
       this.add(new BoolSetting("move-fix", "Move Fix", true).group("Aim").description("Walk where you look").visibleWhen(() -> this.bool("silent")).build());
       this.add(
@@ -439,7 +439,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private void init_V_51() {
-      this.init_StateCache.init_V();
+      this.init_StateCache.reset();
       autismclient.util.QueuedCombatAction.init("crystal-aura");
       this.init_PoolEntry.init();
       this.update_J = 0L;
@@ -859,7 +859,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
             destroy = defend == null ? this.init_t_ConfigStore_LivingEntity(enemy) : null;
             CrystalAuraModule.Inner_ConfigStore waitingDestroy = null;
-            if (destroy != null && !this.init_NetHelper.init_Z_Str("destroy", "place", AutismSessionState.getInstance().getClientTick(), System.nanoTime())) {
+            if (destroy != null && !this.init_NetHelper.isReadyOrOtherCooling("destroy", "place", AutismSessionState.getInstance().getClientTick(), System.nanoTime())) {
                waitingDestroy = destroy;
                destroy = null;
             }
@@ -1021,7 +1021,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private void load_V_34() {
-      this.init_StateCache.init_V();
+      this.init_StateCache.reset();
       autismclient.util.InventorySlotArbiter.releaseInventoryClick("crystal-aura");
       if ("crystal-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          autismclient.util.SilentRotationManager.releaseOwner("crystal-aura");
@@ -1041,7 +1041,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private boolean init_Z_Z_4(boolean destroy) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      return this.init_NetHelper.init_Z_Str(destroy ? "destroy" : "place", tick, System.nanoTime());
+      return this.init_NetHelper.isReady(destroy ? "destroy" : "place", tick, System.nanoTime());
    }
 
    private void init_V_Z_11(boolean destroy) {
@@ -1049,14 +1049,14 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.init_StateCache.load(this.init_LivingEntity, tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
       long now = System.nanoTime();
       if (this.tick_Z_7()) {
-         this.init_NetHelper.init_V_Str(destroy ? "destroy" : "place", tick, now, this.integer("spam-delay") * 1000000L);
+         this.init_NetHelper.schedule(destroy ? "destroy" : "place", tick, now, this.integer("spam-delay") * 1000000L);
       } else {
          this.init_NetHelper
-            .init_V_Str(
+            .schedule(
                destroy ? "destroy" : "place",
                tick,
                now,
-               autismclient.util.ActionCooldownScheduler.init_J_I(this.integer(destroy ? "destroy-delay" : "place-delay"), this.integer("jitter"), this.init_Random)
+               autismclient.util.ActionCooldownScheduler.jitteredDelayNanos(this.integer(destroy ? "destroy-delay" : "place-delay"), this.integer("jitter"), this.init_Random)
             );
       }
 
@@ -2817,7 +2817,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy, int horizonTicks, double maxLead) {
-      return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.getInstance().getClientTick(), horizonTicks, maxLead);
+      return this.init_TableIndex.predictedBox(enemy, AutismSessionState.getInstance().getClientTick(), horizonTicks, maxLead);
    }
 
    private autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(LivingEntity enemy, Vec3 source, AABB targetBox) {

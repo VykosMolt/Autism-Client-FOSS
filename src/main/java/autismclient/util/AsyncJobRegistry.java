@@ -36,10 +36,10 @@ public final class AsyncJobRegistry {
       return state;
    }
 
-   public synchronized boolean init_Z(long id) {
+   public synchronized boolean requestCancel(long id) {
       AsyncJobRegistry.Inner_StreamUtil state = this.init_Map.get(id);
       if (state != null && !state.init_Z()) {
-         this.init_Map.put(id, new AsyncJobRegistry.Inner_StreamUtil(state.init_J(), state.init_Str(), AsyncJobRegistry.Inner_DataUtil.PENDING, false, true, state.load_J()));
+         this.init_Map.put(id, new AsyncJobRegistry.Inner_StreamUtil(state.id(), state.label(), AsyncJobRegistry.Inner_DataUtil.PENDING, false, true, state.deadline()));
          return true;
       } else {
          return false;
@@ -49,7 +49,7 @@ public final class AsyncJobRegistry {
    public synchronized boolean init(long id, AsyncJobRegistry.Inner_DataUtil completion) {
       AsyncJobRegistry.Inner_StreamUtil state = this.init_Map.get(id);
       if (state != null && !state.init_Z() && completion != null && completion != AsyncJobRegistry.Inner_DataUtil.PENDING) {
-         this.init_Map.put(id, new AsyncJobRegistry.Inner_StreamUtil(state.init_J(), state.init_Str(), completion, false, false, state.load_J()));
+         this.init_Map.put(id, new AsyncJobRegistry.Inner_StreamUtil(state.id(), state.label(), completion, false, false, state.deadline()));
          this.read++;
          this.init_V();
          return true;
@@ -69,18 +69,18 @@ public final class AsyncJobRegistry {
       }
    }
 
-   public synchronized AsyncJobRegistry.Inner_StreamUtil init_dc_StreamUtil(long id) {
+   public synchronized AsyncJobRegistry.Inner_StreamUtil state(long id) {
       AsyncJobRegistry.Inner_StreamUtil state = this.init_Map.get(id);
       return state == null ? new AsyncJobRegistry.Inner_StreamUtil(id, "", AsyncJobRegistry.Inner_DataUtil.FAILED, false, false, 0L) : state;
    }
 
-   public synchronized List<Long> init_List() {
+   public synchronized List<Long> expireOverdue() {
       long now = this.init_LongSupplier.getAsLong();
       List<Long> expired = new ArrayList<>();
 
       for (AsyncJobRegistry.Inner_StreamUtil state : this.init_Map.values()) {
-         if (!state.init_Z() && now >= state.load_J()) {
-            expired.add(state.init_J());
+         if (!state.init_Z() && now >= state.deadline()) {
+            expired.add(state.id());
          }
       }
 
@@ -92,7 +92,7 @@ public final class AsyncJobRegistry {
 
       for (AsyncJobRegistry.Inner_StreamUtil state : this.init_Map.values()) {
          if (!state.init_Z()) {
-            pending.add(state.init_J());
+            pending.add(state.id());
          }
       }
 
@@ -106,9 +106,9 @@ public final class AsyncJobRegistry {
       CANCELLED;
    }
 
-   public record Inner_StreamUtil(long init_J, String init_Str, AsyncJobRegistry.Inner_DataUtil init_dc_DataUtil, boolean init_Z, boolean load_Z, long load_J) {
+   public record Inner_StreamUtil(long id, String label, AsyncJobRegistry.Inner_DataUtil status, boolean init_Z, boolean load_Z, long deadline) {
       public boolean init_Z() {
-         return this.init_dc_DataUtil != AsyncJobRegistry.Inner_DataUtil.PENDING;
+         return this.status != AsyncJobRegistry.Inner_DataUtil.PENDING;
       }
 
       public boolean load_Z() {

@@ -3813,7 +3813,7 @@ final class AiTools {
                   var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Read scoped waypoints",
-                     AiJson.objectOf("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc)))
+                     AiJson.objectOf("waypoints", AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc)))
                   );
                   break;
                case "client:waypoints_add":
@@ -3824,12 +3824,12 @@ final class AiTools {
                   }
 
                   BlockPos p = AiGameOperations.requireBlockPos(args);
-                  AutismWaypoints.init_AutismWaypoints()
+                  AutismWaypoints.getInstance()
                      .init(scope, new AutismWaypoints.Waypoint(name, p.getX(), p.getY(), p.getZ(), -8337153, System.currentTimeMillis()));
                   var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Added scoped waypoint",
-                     AiJson.objectOf("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(scope))
+                     AiJson.objectOf("waypoints", AutismWaypoints.getInstance().list(scope))
                   );
                   break;
                default:

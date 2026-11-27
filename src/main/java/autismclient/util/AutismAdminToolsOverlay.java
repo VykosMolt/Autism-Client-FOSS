@@ -65,7 +65,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.windowY = 32;
    }
 
-   public static synchronized AutismAdminToolsOverlay init_AutismAdminToolsOv() {
+   public static synchronized AutismAdminToolsOverlay getInstance() {
       if (init_AutismAdminToolsOv_2 == null) {
          init_AutismAdminToolsOv_2 = new AutismAdminToolsOverlay();
       }

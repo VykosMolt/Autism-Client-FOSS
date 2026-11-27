@@ -129,7 +129,7 @@ public final class WeaponDamageCalculator {
          && (!efficient || target > self);
    }
 
-   public static boolean init_Z_I(int local, int received, boolean offhandFuel) {
+   public static boolean isAnchorChargeConfirmed(int local, int received, boolean offhandFuel) {
       return local >= 1 && local <= 4 && local == received && (!offhandFuel || received == 4);
    }
 }

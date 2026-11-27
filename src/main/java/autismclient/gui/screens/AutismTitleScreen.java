@@ -261,7 +261,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      if (ScreenMacroStopWidget.init_Z_Minecraft(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
+      if (ScreenMacroStopWidget.isVisible(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
          List<autismclient.gui.f.NetHelper> avoid = new ArrayList<>();
          avoid.add(autismclient.gui.f.NetHelper.init(this.put, this.add, this.clear, this.reset));
          if (this.flush_Z) {
@@ -277,7 +277,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          cA.init_V_GuiGraphicsExtract(graphics);
 
          try {
-            ScreenMacroStopWidget.init_V_GuiGraphicsExtract(graphics, this, mouseX, mouseY, avoid.toArray(new autismclient.gui.f.NetHelper[0]));
+            ScreenMacroStopWidget.render(graphics, this, mouseX, mouseY, avoid.toArray(new autismclient.gui.f.NetHelper[0]));
          } catch (Throwable var10) {
          } finally {
             cA.load_V_GuiGraphicsExtract(graphics);
@@ -1157,7 +1157,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                int iconY = yDraw + (this.write_I - iconSize) / 2;
                graphics.blit(
                   RenderPipelines.GUI_TEXTURED,
-                  ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
+                  ThemeTextureRecolorer.themed(this.read_Identifier),
                   iconX,
                   iconY,
                   0.0F,
@@ -1224,7 +1224,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int tint = AutismTitleScreen.init(ThemePaletteManager.recolor(-528658, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
-               ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
+               ThemeTextureRecolorer.themed(this.read_Identifier),
                iconX,
                iconY,
                0.0F,
@@ -1240,7 +1240,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             if (hoverT > 0.001F) {
                graphics.blit(
                   RenderPipelines.GUI_TEXTURED,
-                  ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
+                  ThemeTextureRecolorer.themed(this.read_Identifier),
                   iconX,
                   iconY,
                   0.0F,
@@ -1297,7 +1297,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int iconTint = AutismTitleScreen.init(ThemePaletteManager.recolor(this.init_Z ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
-               ThemeTextureRecolorer.init_Identifier(this.init_Identifier),
+               ThemeTextureRecolorer.themed(this.init_Identifier),
                iconX,
                iconY,
                0.0F,

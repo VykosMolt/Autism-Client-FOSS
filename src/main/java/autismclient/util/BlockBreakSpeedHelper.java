@@ -52,7 +52,7 @@ public final class BlockBreakSpeedHelper {
       return init(mc, stack, Enchantments.EFFICIENCY);
    }
 
-   public static boolean init_Z(Minecraft mc, ItemStack stack) {
+   public static boolean hasSilkTouch(Minecraft mc, ItemStack stack) {
       return stack != null && !stack.isEmpty() ? init(mc, stack, Enchantments.SILK_TOUCH) > 0 : false;
    }
 
@@ -87,7 +87,7 @@ public final class BlockBreakSpeedHelper {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (!stack.isEmpty() && (ignoreDurability || !stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 2)) {
                float speed = init(mc, stack, state);
-               if (!(speed <= 1.0F) && (!requireSilkTouch || init_Z(mc, stack))) {
+               if (!(speed <= 1.0F) && (!requireSilkTouch || hasSilkTouch(mc, stack))) {
                   boolean better = speed > bestSpeed || speed == bestSpeed && best >= 0 && init(slot, selected) < init(best, selected);
                   if (better) {
                      bestSpeed = speed;
@@ -139,9 +139,9 @@ public final class BlockBreakSpeedHelper {
       ItemStack heldStack = mc.player.getInventory().getItem(selected);
       float bestSpeed = init(mc, bestStack, state);
       float heldSpeed = init(mc, heldStack, state);
-      boolean silkChosen = preferSilkTouch && bestSpeed > 1.0F && init_Z(mc, bestStack);
+      boolean silkChosen = preferSilkTouch && bestSpeed > 1.0F && hasSilkTouch(mc, bestStack);
       if (silkChosen) {
-         if (heldSpeed > 1.0F && init_Z(mc, heldStack)) {
+         if (heldSpeed > 1.0F && hasSilkTouch(mc, heldStack)) {
             return true;
          }
       } else if (bestSpeed <= heldSpeed) {

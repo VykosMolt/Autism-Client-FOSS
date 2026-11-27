@@ -58,7 +58,7 @@ public final class WaypointsModule extends Module {
    @Override
    public void onGameJoin() {
       if (MC != null) {
-         AutismWaypoints.init_AutismWaypoints().init(AuditWaypointScope.current(MC), this.init_IntSetting.get());
+         AutismWaypoints.getInstance().init(AuditWaypointScope.current(MC), this.init_IntSetting.get());
       }
    }
 
@@ -82,7 +82,7 @@ public final class WaypointsModule extends Module {
          int x = (int)Math.floor(MC.player.getX());
          int y = (int)Math.floor(MC.player.getY());
          int z = (int)Math.floor(MC.player.getZ());
-         AutismWaypoints.Waypoint added = AutismWaypoints.init_AutismWaypoints()
+         AutismWaypoints.Waypoint added = AutismWaypoints.getInstance()
             .init(AuditWaypointScope.current(MC), x, y, z, this.init_ColorSetting.get(), System.currentTimeMillis(), this.init_IntSetting.get());
          if (added != null && enabled) {
             AutismClientMessaging.sendPrefixed("§aDeath waypoint saved: §f" + added.name() + " §7(" + x + " " + y + " " + z + ")");

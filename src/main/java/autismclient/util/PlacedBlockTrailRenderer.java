@@ -39,11 +39,11 @@ public final class PlacedBlockTrailRenderer {
       }
    }
 
-   public static void init_V() {
-      init_V(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD);
+   public static void recordScaffoldPlacement() {
+      recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD);
    }
 
-   public static void init_V(PlacedBlockTrailRenderer.Inner_DataUtil source) {
+   public static void recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil source) {
       PlacedBlockTrailRenderer.Inner_StreamUtil style = init_cg_StreamUtilArr[source.ordinal()];
       init(source, false, style.load(), style.init_I());
    }

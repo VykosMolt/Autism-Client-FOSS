@@ -30,7 +30,7 @@ public final class MapTooltipPreview {
    private MapTooltipPreview() {
    }
 
-   public static void init_V() {
+   public static void register() {
       ClientTooltipComponentCallback.EVENT.register(data -> {
          if (!(data instanceof MapTooltipPreview.Inner_StreamUtil tooltip)) {
             return null;
@@ -76,7 +76,7 @@ public final class MapTooltipPreview {
       }
    }
 
-   public static void init_V(MapId id) {
+   public static void invalidate(MapId id) {
       init_da.init(id);
       if (id != null && id.equals(init_MapId)) {
          init_MapItemSavedData = null;

@@ -372,7 +372,7 @@ public final class AiToolsSuggest {
       try {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.player != null) {
-            for (AutismWaypoints.Waypoint wp : AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))) {
+            for (AutismWaypoints.Waypoint wp : AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc))) {
                if (!wp.name().contains(" ")) {
                   out.add(wp.name());
                }

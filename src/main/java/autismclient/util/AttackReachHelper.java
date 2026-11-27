@@ -10,17 +10,17 @@ public final class AttackReachHelper {
    private AttackReachHelper() {
    }
 
-   public static AttackRange init_AttackRange(LivingEntity attacker) {
+   public static AttackRange attackRange(LivingEntity attacker) {
       return attacker.getAttackRangeWith(attacker.getMainHandItem());
    }
 
-   public static double init_D(LivingEntity attacker) {
-      AttackRange range = init_AttackRange(attacker);
+   public static double maxReach(LivingEntity attacker) {
+      AttackRange range = attackRange(attacker);
       return range.effectiveMaxRange(attacker) + range.hitboxMargin();
    }
 
    public static double init(LivingEntity attacker, Vec3 look) {
-      AttackRange range = init_AttackRange(attacker);
+      AttackRange range = attackRange(attacker);
       double forward = attacker.getMainHandItem().has(DataComponents.PIERCING_WEAPON) ? Math.max(0.0, attacker.getKnownMovement().dot(look)) : 0.0;
       return range.effectiveMaxRange(attacker) + forward;
    }

@@ -52,29 +52,29 @@ public class OreSimCommand extends Command {
          );
          AutismClientMessaging.sendPrefixed(
             "§7saved scope: §f"
-               + AutismWaypoints.init_Str_Minecraft(Minecraft.getInstance())
+               + AutismWaypoints.scopeFor(Minecraft.getInstance())
                + "§7; the same world/server scoping as waypoints. No world or server seed is read."
          );
          AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.targetCount(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.read_I(xray)));
-         String worldgen = autismclient.util.oresim.OreSimEngine.read_Z()
+         String worldgen = autismclient.util.oresim.OreSimEngine.hasError()
             ? "§cFAILED"
             : (
                autismclient.util.oresim.OreSimEngine.load_Z()
-                  ? "§e" + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
+                  ? "§e" + autismclient.util.oresim.OreSimEngine.status().name().toLowerCase(Locale.ROOT)
                   : (
-                     autismclient.util.oresim.OreSimEngine.init_Z()
+                     autismclient.util.oresim.OreSimEngine.isReady()
                         ? "§aready"
-                        : "§c" + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
+                        : "§c" + autismclient.util.oresim.OreSimEngine.status().name().toLowerCase(Locale.ROOT)
                   )
             );
          AutismClientMessaging.sendPrefixed("§7local Minecraft 26.2 worldgen: " + worldgen);
-         if (autismclient.util.oresim.OreSimEngine.read_Z()
-            || autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
-            AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.OreSimEngine.init_Str());
+         if (autismclient.util.oresim.OreSimEngine.hasError()
+            || autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
+            AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.OreSimEngine.errorMessage());
          }
 
          AutismClientMessaging.sendPrefixed(
-            "§7chunks simulated: §f" + autismclient.util.oresim.OreSimEngine.init_I() + "§7  positions: §f" + autismclient.util.oresim.OreSimEngine.load_I()
+            "§7chunks simulated: §f" + autismclient.util.oresim.OreSimEngine.simulatedChunkCount() + "§7  positions: §f" + autismclient.util.oresim.OreSimEngine.positionCount()
          );
          AutismClientMessaging.sendPrefixed(
             "§7generation source: §flocal vanilla registries + terrain + carvers + biome decoration§7; received server chunks are not inputs."

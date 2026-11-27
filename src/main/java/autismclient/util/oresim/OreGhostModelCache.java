@@ -114,10 +114,10 @@ public final class OreGhostModelCache {
       }
    }
 
-   public record Inner_DataUtil(Direction init_Direction, Direction load, float[] init_FArr, int init_I) {
+   public record Inner_DataUtil(Direction cullFace, Direction load, float[] vertices, int tintIndex) {
    }
 
-   public record Inner_StreamUtil(List<OreGhostModelCache.Inner_DataUtil> init_List) {
+   public record Inner_StreamUtil(List<OreGhostModelCache.Inner_DataUtil> faces) {
       static final OreGhostModelCache.Inner_StreamUtil init_DataUtil_StreamUti = new OreGhostModelCache.Inner_StreamUtil(List.of());
    }
 }

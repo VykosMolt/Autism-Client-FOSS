@@ -26,7 +26,7 @@ public final class MacroFolderLayout {
    private final Map<String, String> load = new HashMap<>();
    private final Map<String, Integer> read = new HashMap<>();
 
-   public static String init_Str_Str(String name) {
+   public static String sanitize(String name) {
       if (name == null) {
          return "";
       }
@@ -36,32 +36,32 @@ public final class MacroFolderLayout {
       return out.toString().strip();
    }
 
-   public static String load_Str_Str(String name) {
-      return init_Str_Str(name).toLowerCase(Locale.ROOT);
+   public static String key(String name) {
+      return sanitize(name).toLowerCase(Locale.ROOT);
    }
 
    public String read(String name) {
-      String clean = init_Str_Str(name);
-      return clean.isEmpty() ? "" : this.init_Map.getOrDefault(load_Str_Str(clean), clean);
+      String clean = sanitize(name);
+      return clean.isEmpty() ? "" : this.init_Map.getOrDefault(key(clean), clean);
    }
 
-   public boolean init_Z_Str(String name) {
-      String clean = init_Str_Str(name);
-      return !clean.isEmpty() && this.init_Map.putIfAbsent(load_Str_Str(clean), clean) == null;
+   public boolean add(String name) {
+      String clean = sanitize(name);
+      return !clean.isEmpty() && this.init_Map.putIfAbsent(key(clean), clean) == null;
    }
 
-   public List<String> init_List() {
+   public List<String> folders() {
       return List.copyOf(this.init_Map.values());
    }
 
-   public boolean init_Z_Str_Str(String name, String beforeName) {
-      String key = load_Str_Str(name);
+   public boolean moveBefore(String name, String beforeName) {
+      String key = key(name);
       String label = this.init_Map.get(key);
       if (label == null) {
          return false;
       }
 
-      String beforeKey = beforeName == null ? null : load_Str_Str(beforeName);
+      String beforeKey = beforeName == null ? null : key(beforeName);
       if (key.equals(beforeKey)) {
          return false;
       }
@@ -89,15 +89,15 @@ public final class MacroFolderLayout {
    }
 
    public boolean load_Z_Str(String name) {
-      return this.init_Set.contains(load_Str_Str(name));
+      return this.init_Set.contains(key(name));
    }
 
    public String write(String folder) {
-      return this.load.get(load_Str_Str(folder));
+      return this.load.get(key(folder));
    }
 
-   public void init_V_Str_Str(String folder, String macroName) {
-      String key = load_Str_Str(folder);
+   public void setAnchor(String folder, String macroName) {
+      String key = key(folder);
       if (this.init_Map.containsKey(key)) {
          if (macroName != null && !macroName.isBlank()) {
             this.load.put(key, MacroNameNormalizer.init(macroName));
@@ -168,27 +168,27 @@ public final class MacroFolderLayout {
       }
    }
 
-   public void init_V_Str(String name) {
-      String key = load_Str_Str(name);
+   public void toggleCollapsed(String name) {
+      String key = key(name);
       if (this.init_Map.containsKey(key) && !this.init_Set.remove(key)) {
          this.init_Set.add(key);
       }
    }
 
-   public void init_V_Collection(Collection<AutismMacro> macros) {
+   public void discoverFolders(Collection<AutismMacro> macros) {
       TreeSet<String> discovered = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
       for (AutismMacro macro : macros) {
          if (macro != null) {
-            String clean = init_Str_Str(macro.folder);
-            if (!clean.isEmpty() && !this.init_Map.containsKey(load_Str_Str(clean))) {
+            String clean = sanitize(macro.folder);
+            if (!clean.isEmpty() && !this.init_Map.containsKey(key(clean))) {
                discovered.add(clean);
             }
          }
       }
 
       for (String name : discovered) {
-         this.init_Z_Str(name);
+         this.add(name);
       }
 
       for (AutismMacro macro : macros) {
@@ -199,9 +199,9 @@ public final class MacroFolderLayout {
    }
 
    public boolean init(String oldName, String newName, Collection<AutismMacro> macros) {
-      String oldKey = load_Str_Str(oldName);
-      String next = init_Str_Str(newName);
-      String nextKey = load_Str_Str(next);
+      String oldKey = key(oldName);
+      String next = sanitize(newName);
+      String nextKey = key(next);
       if (this.init_Map.containsKey(oldKey) && !next.isEmpty() && (oldKey.equals(nextKey) || !this.init_Map.containsKey(nextKey))) {
          Map<String, String> previous = new LinkedHashMap<>(this.init_Map);
          this.init_Map.clear();
@@ -229,7 +229,7 @@ public final class MacroFolderLayout {
          }
 
          for (AutismMacro macro : macros) {
-            if (macro != null && load_Str_Str(macro.folder).equals(oldKey)) {
+            if (macro != null && key(macro.folder).equals(oldKey)) {
                macro.folder = next;
             }
          }
@@ -240,8 +240,8 @@ public final class MacroFolderLayout {
       }
    }
 
-   public boolean init_Z_Str_Collection(String name, Collection<AutismMacro> macros) {
-      String key = load_Str_Str(name);
+   public boolean removeFolder(String name, Collection<AutismMacro> macros) {
+      String key = key(name);
       if (this.init_Map.remove(key) == null) {
          return false;
       }
@@ -251,7 +251,7 @@ public final class MacroFolderLayout {
       this.read.remove(key);
 
       for (AutismMacro macro : macros) {
-         if (macro != null && load_Str_Str(macro.folder).equals(key)) {
+         if (macro != null && key(macro.folder).equals(key)) {
             macro.folder = "";
          }
       }
@@ -259,17 +259,17 @@ public final class MacroFolderLayout {
       return true;
    }
 
-   public ListTag init_ListTag() {
+   public ListTag toTag() {
       ListTag list = new ListTag();
 
-      for (String name : this.init_List()) {
+      for (String name : this.folders()) {
          CompoundTag folder = new CompoundTag();
          folder.putString("name", name);
          folder.putBoolean("collapsed", this.load_Z_Str(name));
-         String anchor = this.load.get(load_Str_Str(name));
+         String anchor = this.load.get(key(name));
          if (anchor != null) {
             folder.putString("before", anchor);
-            folder.putInt("beforeSlot", this.read.getOrDefault(load_Str_Str(name), 0));
+            folder.putInt("beforeSlot", this.read.getOrDefault(key(name), 0));
          }
 
          list.add(folder);
@@ -278,36 +278,36 @@ public final class MacroFolderLayout {
       return list;
    }
 
-   public static MacroFolderLayout init_cY_Tag_Collection(Tag tag, Collection<AutismMacro> macros) {
+   public static MacroFolderLayout fromTag(Tag tag, Collection<AutismMacro> macros) {
       MacroFolderLayout folders = new MacroFolderLayout();
       if (tag instanceof ListTag) {
          for (Tag entry : (ListTag)tag) {
             if (entry instanceof CompoundTag folder) {
-               String name = init_Str_Str(folder.getStringOr("name", ""));
-               folders.init_Z_Str(name);
+               String name = sanitize(folder.getStringOr("name", ""));
+               folders.add(name);
                if (!name.isEmpty() && folder.getBooleanOr("collapsed", false)) {
-                  folders.init_Set.add(load_Str_Str(name));
+                  folders.init_Set.add(key(name));
                }
 
                String before = folder.getStringOr("before", "");
                if (!name.isEmpty() && !before.isEmpty()) {
-                  folders.load.put(load_Str_Str(name), before);
-                  folders.read.put(load_Str_Str(name), Math.max(0, folder.getIntOr("beforeSlot", 0)));
+                  folders.load.put(key(name), before);
+                  folders.read.put(key(name), Math.max(0, folder.getIntOr("beforeSlot", 0)));
                }
             }
          }
       }
 
-      folders.init_V_Collection(macros);
+      folders.discoverFolders(macros);
       return folders;
    }
 
    public List<MacroFolderLayout.Inner_DataUtil> init(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
-      return init(macros, this.init_List(), this::load_Z_Str, query, includeEmpty);
+      return init(macros, this.folders(), this::load_Z_Str, query, includeEmpty);
    }
 
    public List<MacroFolderLayout.Inner_DataUtil> load(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
-      return init(macros, this.init_List(), this::load_Z_Str, query, includeEmpty, true, this.load);
+      return init(macros, this.folders(), this::load_Z_Str, query, includeEmpty, true, this.load);
    }
 
    public static List<MacroFolderLayout.Inner_DataUtil> init(
@@ -337,11 +337,11 @@ public final class MacroFolderLayout {
       List<String> order = new ArrayList<>();
 
       for (String folder : folders) {
-         String clean = init_Str_Str(folder);
-         if (!clean.isEmpty() && !labels.containsKey(load_Str_Str(clean))) {
-            labels.put(load_Str_Str(clean), clean);
-            groups.put(load_Str_Str(clean), new ArrayList<>());
-            order.add(load_Str_Str(clean));
+         String clean = sanitize(folder);
+         if (!clean.isEmpty() && !labels.containsKey(key(clean))) {
+            labels.put(key(clean), clean);
+            groups.put(key(clean), new ArrayList<>());
+            order.add(key(clean));
          }
       }
 
@@ -349,8 +349,8 @@ public final class MacroFolderLayout {
 
       for (AutismMacro macro : macros) {
          if (macro != null && macro.name != null && !macro.name.isBlank()) {
-            String folder = init_Str_Str(macro.folder);
-            String key = load_Str_Str(folder);
+            String folder = sanitize(macro.folder);
+            String key = key(folder);
             if (!labels.containsKey(key)) {
                labels.put(key, folder);
                groups.put(key, new ArrayList<>());
@@ -425,20 +425,20 @@ public final class MacroFolderLayout {
       }
    }
 
-   public record Inner_DataUtil(String init_Str, AutismMacro init_aM, int init_I, boolean init_Z) {
+   public record Inner_DataUtil(String init_Str, AutismMacro macro, int init_I, boolean init_Z) {
       public boolean init_Z() {
-         return this.init_aM == null;
+         return this.macro == null;
       }
 
       public String init_Str() {
-         return this.init_Z() ? this.init_Str + " (" + this.init_I + ")" : this.init_aM.name;
+         return this.init_Z() ? this.init_Str + " (" + this.init_I + ")" : this.macro.name;
       }
 
-      public String load_Str() {
+      public String folderName() {
          return this.init_Str;
       }
 
-      public boolean load_Z() {
+      public boolean isFolder() {
          return this.init_Z;
       }
    }

@@ -36,7 +36,7 @@ public final class PaleMossDecoratorShim {
             level.registryAccess()
                .lookup(Registries.FEATURE)
                .flatMap(registry -> registry.get(VegetationFeatures.PALE_MOSS_PATCH))
-               .ifPresent(mossPatch -> mossPatch.value().place(level, synthetic.init_ChunkGenerator(), random, origin.above()));
+               .ifPresent(mossPatch -> mossPatch.value().place(level, synthetic.chunkGenerator(), random, origin.above()));
          }
 
          context.logs().forEach(pos -> {

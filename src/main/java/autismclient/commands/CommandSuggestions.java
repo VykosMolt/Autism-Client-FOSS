@@ -98,7 +98,7 @@ public final class CommandSuggestions {
       String bare = (remaining.startsWith("\"") ? remaining.substring(1) : remaining).toLowerCase(Locale.ROOT);
       Minecraft mc = Minecraft.getInstance();
       if (mc != null) {
-         for (AutismWaypoints.Waypoint wp : AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))) {
+         for (AutismWaypoints.Waypoint wp : AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc))) {
             String name = wp.name();
             if (name.toLowerCase(Locale.ROOT).startsWith(bare)) {
                builder.suggest(name.contains(" ") ? "\"" + name + "\"" : name);

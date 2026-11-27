@@ -364,7 +364,7 @@ public final class AutoTradeModule extends Module {
                this.init("Run limit reached", false);
             } else if (this.init_CachePool != null) {
                this.write();
-            } else if (autismclient.util.villager.VillagerTradeSession.init_Z()) {
+            } else if (autismclient.util.villager.VillagerTradeSession.isRunning()) {
                this.init_Str = "Waiting for macro trade";
             } else if (this.init_MerchantMenu != null && MC.player.containerMenu != this.init_MerchantMenu) {
                this.init("Trade screen closed", false);
@@ -427,7 +427,7 @@ public final class AutoTradeModule extends Module {
             this.integer("budget") == 0 ? 0 : this.integer("budget") - this.flush_I,
             this.integer("reserve")
          );
-         if (!this.init_CachePool.read_Z()) {
+         if (!this.init_CachePool.reserve()) {
             this.init_CachePool = null;
             this.init_Str = "Waiting for macro trade";
          }
@@ -435,12 +435,12 @@ public final class AutoTradeModule extends Module {
    }
 
    private void write() {
-      this.init_CachePool.init_CachePool_CachePoo_Minecraft(MC);
-      this.init_Str = this.init_CachePool.init_Str();
-      if (this.init_CachePool.load_Z()) {
-         autismclient.util.villager.VillagerTradeSession.Inner_CachePool result = this.init_CachePool.init_CachePool_CachePoo();
-         this.sync_I = this.sync_I + this.init_CachePool.init_I();
-         this.flush_I = this.flush_I + this.init_CachePool.load_I();
+      this.init_CachePool.tick(MC);
+      this.init_Str = this.init_CachePool.message();
+      if (this.init_CachePool.isFinished()) {
+         autismclient.util.villager.VillagerTradeSession.Inner_CachePool result = this.init_CachePool.status();
+         this.sync_I = this.sync_I + this.init_CachePool.traded();
+         this.flush_I = this.flush_I + this.init_CachePool.spent();
          this.init_CachePool.init_V_Minecraft(MC);
          this.init_CachePool = null;
          if (this.init_Z) {
@@ -665,7 +665,7 @@ public final class AutoTradeModule extends Module {
 
    private int init_I_MerchantMenu(MerchantMenu menu) {
       for (int i = 0; i < menu.getOffers().size(); i++) {
-         if (this.init_StreamUtil.init_Z_MerchantOffer_I(menu.getOffers().get(i), i)) {
+         if (this.init_StreamUtil.matches(menu.getOffers().get(i), i)) {
             return i;
          }
       }

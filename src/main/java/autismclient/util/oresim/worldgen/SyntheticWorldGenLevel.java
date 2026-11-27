@@ -76,7 +76,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    public SyntheticWorldGenLevel(VanillaWorldGenBootstrap context, Map<Long, ChunkAccess> chunks) {
       this.init_ConfigStore = context;
       this.init_Map = chunks;
-      this.init_BiomeManager = new BiomeManager(this, BiomeManager.obfuscateSeed(context.init_J()));
+      this.init_BiomeManager = new BiomeManager(this, BiomeManager.obfuscateSeed(context.seed()));
       this.init_LevelLightEngine = new LevelLightEngine(new LightChunkGetter() {
          @Override
          public LightChunk getChunkForLighting(int chunkX, int chunkZ) {
@@ -87,13 +87,13 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
          public BlockGetter getLevel() {
             return SyntheticWorldGenLevel.this;
          }
-      }, true, context.init_DimensionType().hasSkyLight());
+      }, true, context.dimensionType().hasSkyLight());
       this.init(new ChunkPos(0, 0), 0);
    }
 
    public void init(ChunkPos center, int writeRadius) {
       this.init_RandomSource = this.init_ConfigStore
-         .init_RandomState()
+         .randomState()
          .getOrCreateRandomFactory(Identifier.withDefaultNamespace("worldgen_region_random"))
          .at(center.getWorldPosition());
       this.init_J = 0L;
@@ -116,11 +116,11 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    }
 
    StructureTemplateManager init_StructureTemplateM() {
-      return this.init_ConfigStore.init_StructureTemplateM();
+      return this.init_ConfigStore.structureTemplates();
    }
 
-   ChunkGenerator init_ChunkGenerator() {
-      return this.init_ConfigStore.init_ChunkGenerator();
+   ChunkGenerator chunkGenerator() {
+      return this.init_ConfigStore.chunkGenerator();
    }
 
    @Override
@@ -135,7 +135,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public long getSeed() {
-      return this.init_ConfigStore.init_J();
+      return this.init_ConfigStore.seed();
    }
 
    @Override
@@ -230,7 +230,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public Holder<Biome> getUncachedNoiseBiome(int quartX, int quartY, int quartZ) {
-      return this.init_ConfigStore.init_BiomeSource().createCachingResolver(this.init_ConfigStore.init_RandomState()).getNoiseBiome(quartX, quartY, quartZ);
+      return this.init_ConfigStore.biomeSource().createCachingResolver(this.init_ConfigStore.randomState()).getNoiseBiome(quartX, quartY, quartZ);
    }
 
    @Override
@@ -240,27 +240,27 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public RegistryAccess registryAccess() {
-      return this.init_ConfigStore.init_RegistryAccess();
+      return this.init_ConfigStore.registryAccess();
    }
 
    @Override
    public DimensionType dimensionType() {
-      return this.init_ConfigStore.init_DimensionType();
+      return this.init_ConfigStore.dimensionType();
    }
 
    @Override
    public int getMinY() {
-      return this.init_ConfigStore.init_LevelHeightAccesso().getMinY();
+      return this.init_ConfigStore.heightAccessor().getMinY();
    }
 
    @Override
    public int getHeight() {
-      return this.init_ConfigStore.init_LevelHeightAccesso().getHeight();
+      return this.init_ConfigStore.heightAccessor().getHeight();
    }
 
    @Override
    public int getSeaLevel() {
-      return this.init_ConfigStore.init_ChunkGenerator().getSeaLevel();
+      return this.init_ConfigStore.chunkGenerator().getSeaLevel();
    }
 
    @Override

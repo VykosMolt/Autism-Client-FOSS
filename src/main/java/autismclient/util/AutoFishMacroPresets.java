@@ -45,7 +45,7 @@ public final class AutoFishMacroPresets {
       return macro != null && init_Z(macro.name);
    }
 
-   public static AutoFishMacroPresets.Inner_DataUtil init_cL_DataUtil(String name) {
+   public static AutoFishMacroPresets.Inner_DataUtil presetFor(String name) {
       if (name == null) {
          return null;
       } else if (init(name, "AutoFish - Free Slots Stop")) {

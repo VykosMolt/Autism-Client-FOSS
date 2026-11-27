@@ -38,7 +38,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       if (target == null) {
          return null;
       } else {
-         return target.init_Z() ? AimTargetAction.AimTarget.init(target.init_BlockPos()) : AimTargetAction.AimTarget.init(target.init_Entity_Minecraft(mc));
+         return target.isBlock() ? AimTargetAction.AimTarget.init(target.blockPos()) : AimTargetAction.AimTarget.init(target.resolveEntity(mc));
       }
    }
 
@@ -49,7 +49,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
       for (String ref : this.entityTargets) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
             if (target != null) {
                return target;
             }
@@ -71,13 +71,13 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
             for (String ref : this.entityTargets) {
                if (ref != null && !ref.isBlank()) {
-                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
+                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
                   if (target != null) {
-                     if (this.waitForTarget && !target.load_Z(mc)) {
+                     if (this.waitForTarget && !target.isPresent(mc)) {
                         return false;
                      }
 
-                     sentAny |= target.init_Z_Minecraft(mc);
+                     sentAny |= target.interact(mc);
                   }
                }
             }
@@ -85,7 +85,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
             return sentAny;
          } else {
             autismclient.util.InteractionTargetRef target = AutismSessionState.getInstance().getLastInteractionTarget();
-            return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
+            return target != null && (!this.waitForTarget || target.isPresent(mc)) && target.interact(mc);
          }
       } else {
          return false;
@@ -99,15 +99,15 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
          autismclient.util.InteractionTargetRef target = AutismSessionState.getInstance().getLastInteractionTarget();
-         return target != null && target.load_Z(mc);
+         return target != null && target.isPresent(mc);
       }
 
       boolean hasTarget = false;
 
       for (String ref : this.entityTargets) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
-            if (target == null || !target.load_Z(mc)) {
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
+            if (target == null || !target.isPresent(mc)) {
                return false;
             }
 
@@ -121,7 +121,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    public void captureCrosshairTarget(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
          this.targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
-         String ref = autismclient.util.InteractionTargetRef.init_Str_Entity(entityHit.getEntity());
+         String ref = autismclient.util.InteractionTargetRef.refFor(entityHit.getEntity());
          if (!ref.isBlank() && !this.entityTargets.contains(ref)) {
             this.entityTargets.add(ref);
          }

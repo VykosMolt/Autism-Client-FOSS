@@ -24,8 +24,8 @@ public final class StrongholdRingEstimator {
       if (observations != null && !observations.isEmpty() && observations.size() <= 8) {
          StrongholdTriangulator.Inner_BufferHelper ray = observations.getLast();
          if (ray != null
-            && StrongholdTriangulator.init_Z_Vec3(ray.init())
-            && StrongholdTriangulator.init_Z_Vec3(ray.load())
+            && StrongholdTriangulator.isValidPoint(ray.init())
+            && StrongholdTriangulator.isValidPoint(ray.load())
             && !(ray.init().horizontalDistance() > 40000.0)
             && !(ray.load().horizontalDistance() < 0.99)) {
             Vec3 origin = ray.init();
@@ -77,7 +77,7 @@ public final class StrongholdRingEstimator {
                                  boolean consistent = true;
 
                                  for (StrongholdTriangulator.Inner_BufferHelper observation : observations) {
-                                    if (observation != null && StrongholdTriangulator.init_Z_Vec3(observation.init()) && StrongholdTriangulator.init_Z_Vec3(observation.load())) {
+                                    if (observation != null && StrongholdTriangulator.isValidPoint(observation.init()) && StrongholdTriangulator.isValidPoint(observation.load())) {
                                        double ox = x - observation.init().x;
                                        double oz = z - observation.init().z;
                                        double ahead = ox * observation.load().x + oz * observation.load().z;
@@ -140,7 +140,7 @@ public final class StrongholdRingEstimator {
                   }
 
                   if (mass < 0.999) {
-                     uncertainty = Math.max(uncertainty, StrongholdTriangulator.init_D_Vec3_Vec3(best.init_Vec3, c.init_Vec3) + 16.0);
+                     uncertainty = Math.max(uncertainty, StrongholdTriangulator.horizontalDistance(best.init_Vec3, c.init_Vec3) + 16.0);
                   }
 
                   mass += probability;
@@ -225,6 +225,6 @@ public final class StrongholdRingEstimator {
    public record Inner_DataUtil(Vec3 init_Vec3, double init_D) {
    }
 
-   public record Inner_StreamUtil(Vec3 init_Vec3, double init_D, double load, int init_I, List<StrongholdRingEstimator.Inner_DataUtil> init_List) {
+   public record Inner_StreamUtil(Vec3 center, double uncertainty, double load, int init_I, List<StrongholdRingEstimator.Inner_DataUtil> init_List) {
    }
 }

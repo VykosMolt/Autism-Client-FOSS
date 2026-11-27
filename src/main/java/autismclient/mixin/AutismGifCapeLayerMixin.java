@@ -47,7 +47,7 @@ public abstract class AutismGifCapeLayerMixin {
          if (name != null && !name.isEmpty()) {
             String path = GifOverlayState.init(name);
             if (path != null) {
-               Identifier texture = GifTextureManager.init_Identifier_Str_2(path, GifOverlayState.init_D(), GifOverlayState.read_Z(), GifOverlayState.read_D());
+               Identifier texture = GifTextureManager.textureKeepAspect(path, GifOverlayState.init_D(), GifOverlayState.read_Z(), GifOverlayState.read_D());
                if (texture != null) {
                   ci.cancel();
                   if (!state.isInvisible && !this.hasLayer(state.chestEquipment, LayerType.WINGS)) {
@@ -77,7 +77,7 @@ public abstract class AutismGifCapeLayerMixin {
 
    @Unique
    private static String autism$owner(AvatarRenderState state) {
-      String name = GifRenderContext.init_Str();
+      String name = GifRenderContext.currentName();
       if (name != null && !name.isEmpty()) {
          return name;
       }

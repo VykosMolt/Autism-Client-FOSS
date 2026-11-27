@@ -372,7 +372,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public static String init_Str_I_3(int keyCode) {
+   public static String keyName(int keyCode) {
       return ValueSink.init_Str(keyCode);
    }
 

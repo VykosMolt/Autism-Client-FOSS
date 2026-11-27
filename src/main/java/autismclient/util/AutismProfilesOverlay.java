@@ -35,7 +35,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void update_V_19() {
+   public void open() {
       this.load(false);
       this.setVisible(true);
    }

@@ -50,7 +50,7 @@ public final class AutismOreSimSeedStore {
       this.load_File = new File(file.getParentFile(), file.getName() + ".tmp");
    }
 
-   public static AutismOreSimSeedStore init_AutismOreSimSeedSt() {
+   public static AutismOreSimSeedStore getInstance() {
       AutismOreSimSeedStore local = init_AutismOreSimSeedSt;
       if (local == null) {
          synchronized (AutismOreSimSeedStore.class) {
@@ -66,7 +66,7 @@ public final class AutismOreSimSeedStore {
       return local;
    }
 
-   public String init_Str(String scope, String legacyGlobalValue) {
+   public String seedFor(String scope, String legacyGlobalValue) {
       String key = init_Str_Str(scope);
       if (key == null) {
          return "";
@@ -94,7 +94,7 @@ public final class AutismOreSimSeedStore {
       return result;
    }
 
-   public void init_V(String scope, String rawValue) {
+   public void setSeed(String scope, String rawValue) {
       String key = init_Str_Str(scope);
       if (key != null) {
          String value = rawValue == null ? "" : rawValue;

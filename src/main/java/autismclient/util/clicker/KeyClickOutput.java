@@ -33,15 +33,15 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       }
    }
 
-   public static KeyClickOutput init_StreamUtil() {
+   public static KeyClickOutput attack() {
       return new KeyClickOutput(false);
    }
 
-   public static KeyClickOutput load_StreamUtil() {
+   public static KeyClickOutput use() {
       return new KeyClickOutput(true);
    }
 
-   public static boolean init_Z_Z(boolean useKey) {
+   public static boolean isAnyPressed(boolean useKey) {
       synchronized (init_List) {
          for (KeyClickOutput output : init_List) {
             if (output.init_Z == useKey && output.load_Z) {
@@ -57,15 +57,15 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       this.sync = init_J;
    }
 
-   public void init_V_Z(boolean owns) {
+   public void setOwnsKey(boolean owns) {
       this.read_Z = owns;
    }
 
-   public boolean init_Z() {
+   public boolean isPressed() {
       return this.load_Z;
    }
 
-   public boolean load_Z() {
+   public boolean isPhysicallyDown() {
       KeyMapping mapping = this.init_KeyMapping();
       return mapping != null && !mapping.isUnbound() && KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
@@ -92,7 +92,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    @Override
-   public long init_J_J(long now) {
+   public long earliestClickNanos(long now) {
       return Math.max(now, this.update);
    }
 
@@ -116,7 +116,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    @Override
-   public void load_V(long now) {
+   public void onClick(long now) {
       this.load_Z = true;
       this.load_J = -9223372036854775808L;
    }
@@ -130,7 +130,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          return false;
       }
 
-      this.write_J = this.init_J_J(now);
+      this.write_J = this.earliestClickNanos(now);
       this.load_J = this.write_J + Math.max(1000000L, holdNanos);
       return true;
    }
@@ -141,14 +141,14 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       }
    }
 
-   public void load_V() {
+   public void release() {
       this.read_Z = false;
       if (this.load_Z) {
          this.init_V_J(System.nanoTime());
       }
    }
 
-   public static void read_V() {
+   public static void flushAll() {
       synchronized (init_List) {
          for (KeyClickOutput output : init_List) {
             output.flush();
@@ -209,7 +209,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       synchronized (init_List) {
          for (KeyClickOutput output : init_List) {
             if (output.load_Z && (!read_Z() || output.sync != init_J)) {
-               output.load_V();
+               output.release();
             }
          }
       }

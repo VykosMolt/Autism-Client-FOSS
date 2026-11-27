@@ -108,7 +108,7 @@ public final class SilentRotationManager {
             targetRotation = currentRotation;
             lastSteppedTick = AutismSessionState.getInstance().getClientTick();
             usedHumanizedStep = false;
-            RotationStreamPlanner.init_V_ap_TaskQueue_3(streamState, currentRotation, 0.0, 0.0, RotationMath.gcdStep());
+            RotationStreamPlanner.resume(streamState, currentRotation, 0.0, 0.0, RotationMath.gcdStep());
             return true;
          } else {
             return false;
@@ -135,7 +135,7 @@ public final class SilentRotationManager {
          targetRotation = currentRotation;
          lastSteppedTick = AutismSessionState.getInstance().getClientTick();
          usedHumanizedStep = false;
-         RotationStreamPlanner.init_V_ap_TaskQueue_3(
+         RotationStreamPlanner.resume(
             streamState, currentRotation, RotationMath.angleDelta(currentRotation.yaw(), from.yaw()), currentRotation.pitch() - from.pitch(), RotationMath.gcdStep()
          );
          return true;
@@ -170,12 +170,12 @@ public final class SilentRotationManager {
    }
 
    private static RotationMath.Rotation stepWithCustomHand(float maxYawStep, float maxPitchStep) {
-      double[] last = RotationStreamPlanner.init_DArr_ap_TaskQueue(streamState);
+      double[] last = RotationStreamPlanner.lastStep(streamState);
       double count = RotationMath.gcdStep();
       maxYawStep = (float)Math.max(maxYawStep, last[0] - 18.0 + count);
       maxPitchStep = (float)Math.max(maxPitchStep, last[1] - 18.0 + count);
       maxPitchStep = (float)Math.min(maxPitchStep, last[1] + 18.0);
-      RotationMath.Rotation at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(streamState);
+      RotationMath.Rotation at = RotationStreamPlanner.currentRotation(streamState);
       double[] want = customHandStepper.step(at, maxYawStep, maxPitchStep);
       usedHumanizedStep = true;
       lastHumanizedTick = -1073741824;
@@ -183,30 +183,30 @@ public final class SilentRotationManager {
    }
 
    public static void setExactYawHints(float exactYaw, float exactClosestYaw) {
-      RotationStreamPlanner.init_V_ap_TaskQueue(streamState, exactYaw, exactClosestYaw);
+      RotationStreamPlanner.setExactYaw(streamState, exactYaw, exactClosestYaw);
    }
 
    private static RotationMath.Rotation stepHumanized(
       RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double tolerance, int tick, boolean handBack
    ) {
       if (humanizedStepper == null) {
-         humanizedStepper = HumanizedAimStepper.init_an();
+         humanizedStepper = HumanizedAimStepper.create();
       }
 
       if (!usedHumanizedStep || tick - lastHumanizedTick > 10) {
-         humanizedStepper.init_V();
+         humanizedStepper.reset();
       }
 
-      humanizedStepper.init_V_Z(handBack);
+      humanizedStepper.setHandBack(handBack);
       lastHumanizedTick = tick;
       usedHumanizedStep = true;
-      RotationMath.Rotation at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(streamState);
+      RotationMath.Rotation at = RotationStreamPlanner.currentRotation(streamState);
       double[] want = humanizedStepper.init(goal.yaw(), goal.pitch(), at.yaw(), at.pitch(), tolerance, maxYawStep, maxPitchStep, true);
-      return RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(streamState, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), 18.0);
+      return RotationStreamPlanner.stepBy(streamState, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), 18.0);
    }
 
    public static double[] getLastStepDeltas() {
-      return RotationStreamPlanner.init_DArr_ap_TaskQueue(streamState);
+      return RotationStreamPlanner.lastStep(streamState);
    }
 
    public static String getActiveOwnerId() {
@@ -223,7 +223,7 @@ public final class SilentRotationManager {
 
          if (currentRotation == null || !(Math.abs(RotationMath.angleDelta(currentRotation.yaw(), yaw)) < 0.2) || !(Math.abs(currentRotation.pitch() - wire.currentPitch()) < 0.2)) {
             currentRotation = new RotationMath.Rotation(yaw, wire.currentPitch());
-            RotationStreamPlanner.init_V_ap_TaskQueue_3(streamState, currentRotation, RotationMath.angleDelta(wire.currentYaw(), wire.previousYaw()), wire.currentPitch() - wire.previousPitch(), RotationMath.gcdStep());
+            RotationStreamPlanner.resume(streamState, currentRotation, RotationMath.angleDelta(wire.currentYaw(), wire.previousYaw()), wire.currentPitch() - wire.previousPitch(), RotationMath.gcdStep());
          }
       }
    }
@@ -245,7 +245,7 @@ public final class SilentRotationManager {
       remainingReturnTicks = 0;
       returningToPlayer = false;
       usedHumanizedStep = false;
-      RotationStreamPlanner.init_V_ap_TaskQueue(streamState);
+      RotationStreamPlanner.reset(streamState);
    }
 
    public static void releaseOwner(String ownerId) {
@@ -302,7 +302,7 @@ public final class SilentRotationManager {
             }
 
             currentRotation = RotationMath.stepQuantized(currentRotation, targetRotation, step, step, RotationMath.gcdStep());
-            RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(streamState, currentRotation);
+            RotationStreamPlanner.begin(streamState, currentRotation);
             usedHumanizedStep = false;
             lastSteppedTick = tick;
             remainingHoldTicks--;
@@ -335,8 +335,8 @@ public final class SilentRotationManager {
                currentRotation = RotationMath.ofPlayer(player);
             }
 
-            if (!RotationStreamPlanner.init_Z_ap_TaskQueue(streamState)) {
-               RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(streamState, currentRotation);
+            if (!RotationStreamPlanner.isActive(streamState)) {
+               RotationStreamPlanner.begin(streamState, currentRotation);
             }
 
             double remaining = Math.max(
@@ -346,9 +346,9 @@ public final class SilentRotationManager {
             double gcd = RotationMath.gcdStep();
             if (urgency.directQuantized()) {
                currentRotation = RotationMath.stepQuantized(currentRotation, targetRotation, urgency.maxStepDegrees(), urgency.maxStepDegrees(), gcd);
-               RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(streamState, currentRotation);
+               RotationStreamPlanner.begin(streamState, currentRotation);
             } else {
-               currentRotation = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue_2(
+               currentRotation = RotationStreamPlanner.stepToward(
                   streamState, targetRotation, urgency.maxStepDegrees(), urgency.maxStepDegrees(), gcd, false, urgency.profile()
                );
             }
@@ -392,10 +392,10 @@ public final class SilentRotationManager {
                   && currentRotation != null
                   && (playerRotation.yaw() != currentRotation.yaw() || playerRotation.pitch() != currentRotation.pitch())) {
                   currentRotation = playerRotation;
-                  RotationStreamPlanner.init_V_ap_TaskQueue_3(streamState, playerRotation, 0.0, 0.0, RotationMath.gcdStep());
+                  RotationStreamPlanner.resume(streamState, playerRotation, 0.0, 0.0, RotationMath.gcdStep());
                }
 
-               if (!RotationStreamPlanner.init_Z_ap_TaskQueue(streamState)) {
+               if (!RotationStreamPlanner.isActive(streamState)) {
                   RotationMath.Rotation seedFrom = currentRotation;
                   if (seedFrom == null) {
                      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
@@ -403,7 +403,7 @@ public final class SilentRotationManager {
                      seedFrom = wire.initialized() ? new RotationMath.Rotation(Float.isFinite(wireYaw) ? wireYaw : wire.currentYaw(), wire.currentPitch()) : playerRotation;
                   }
 
-                  RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(streamState, seedFrom);
+                  RotationStreamPlanner.begin(streamState, seedFrom);
                   usedHumanizedStep = false;
                }
 
@@ -420,7 +420,7 @@ public final class SilentRotationManager {
                      currentRotation = stepHumanized(targetRotation, maxYawStep, maxPitchStep, humanizedToleranceDegrees, tick, false);
                   } else {
                      usedHumanizedStep = false;
-                     currentRotation = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue_2(
+                     currentRotation = RotationStreamPlanner.stepToward(
                         streamState, targetRotation, maxYawStep, maxPitchStep, RotationMath.gcdStep(), false, profile
                      );
                   }
@@ -450,9 +450,9 @@ public final class SilentRotationManager {
                   RotationMath.Rotation next = releaseNow
                      ? playerRotation
                      : (
-                        usedHumanizedStep && RotationStreamPlanner.init_Z_ap_TaskQueue(streamState)
+                        usedHumanizedStep && RotationStreamPlanner.isActive(streamState)
                            ? stepHumanized(playerRotation, returnStepDegrees, returnStepDegrees, 2.5, tick, true)
-                           : RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(streamState, playerRotation, returnStepDegrees, returnStepDegrees, RotationMath.gcdStep(), false)
+                           : RotationStreamPlanner.stepToward(streamState, playerRotation, returnStepDegrees, returnStepDegrees, RotationMath.gcdStep(), false)
                      );
                   remainingReturnTicks--;
                   if (!releaseNow && !(RotationMath.vectorAngleDegrees(next, playerRotation) <= 2.0F) && remainingReturnTicks > 0) {

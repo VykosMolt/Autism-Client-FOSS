@@ -1387,7 +1387,7 @@ final class AiObtain {
          if (mc != null && mc.player != null) {
             for (int slot = 0; slot < 36; slot++) {
                ItemStack stack = mc.player.getInventory().getItem(slot);
-               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && AiItems.hasEnoughDurability(stack, 2) && BlockBreakSpeedHelper.init_Z(mc, stack)) {
+               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && AiItems.hasEnoughDurability(stack, 2) && BlockBreakSpeedHelper.hasSilkTouch(mc, stack)) {
                   return true;
                }
             }

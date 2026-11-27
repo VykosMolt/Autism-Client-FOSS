@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class OreBlockCatalog {
-   public static final List<String> init_List = List.of(
+   public static final List<String> ORE_IDS = List.of(
       "minecraft:coal_ore",
       "minecraft:deepslate_coal_ore",
       "minecraft:iron_ore",
@@ -50,7 +50,7 @@ public final class OreBlockCatalog {
       if (known == null) {
          Set<Block> built = Collections.newSetFromMap(new IdentityHashMap<>());
 
-         for (String id : init_List) {
+         for (String id : ORE_IDS) {
             Identifier parsed = Identifier.tryParse(id);
             if (parsed != null) {
                BuiltInRegistries.BLOCK.getOptional(parsed).ifPresent(built::add);
@@ -138,12 +138,12 @@ public final class OreBlockCatalog {
          return id;
       }
 
-      public static BlockState init_BlockState(int id) {
+      public static BlockState stateById(int id) {
          BlockState[] snapshot = init_BlockStateArr;
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
-      public static OreBlockCatalog.Inner_DataUtil init_CachePool_DataUtil(int id) {
+      public static OreBlockCatalog.Inner_DataUtil kindById(int id) {
          OreBlockCatalog.Inner_DataUtil[] snapshot = init_CachePool_DataUtilArr;
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }

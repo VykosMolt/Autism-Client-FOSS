@@ -31,7 +31,7 @@ public class OverlayContextMenu<T> {
       this.update = Math.max(12, lineHeight);
    }
 
-   public boolean init_Z() {
+   public boolean isOpen() {
       return this.init_Z && this.init_Obj != null;
    }
 
@@ -50,7 +50,7 @@ public class OverlayContextMenu<T> {
       this.read();
    }
 
-   public void init_V() {
+   public void close() {
       this.init_Z = false;
       this.init_Obj = null;
       this.init_StrArr = new String[0];
@@ -119,7 +119,7 @@ public class OverlayContextMenu<T> {
    }
 
    public boolean init(double mx, double my) {
-      if (!this.init_Z()) {
+      if (!this.isOpen()) {
          return false;
       }
 
@@ -130,7 +130,7 @@ public class OverlayContextMenu<T> {
    }
 
    public void init(GuiGraphicsExtractor ctx, int mx, int my) {
-      if (this.init_Z()) {
+      if (this.isOpen()) {
          this.read();
          String[] items = this.init_StrArr();
          int w = this.init_I(items);
@@ -190,12 +190,12 @@ public class OverlayContextMenu<T> {
    }
 
    public boolean init(double mouseX, double mouseY, int button, OverlayContextMenu.Inner_DataUtil<T> onPick) {
-      if (!this.init_Z()) {
+      if (!this.isOpen()) {
          return false;
       }
 
       if (button != 0) {
-         this.init_V();
+         this.close();
          return true;
       }
 
@@ -211,7 +211,7 @@ public class OverlayContextMenu<T> {
                T t = this.init_Obj;
                String label = items[i];
                int idx = i;
-               this.init_V();
+               this.close();
                if (onPick != null) {
                   onPick.onPicked(t, label, idx);
                }
@@ -221,7 +221,7 @@ public class OverlayContextMenu<T> {
          }
       }
 
-      this.init_V();
+      this.close();
       return true;
    }
 

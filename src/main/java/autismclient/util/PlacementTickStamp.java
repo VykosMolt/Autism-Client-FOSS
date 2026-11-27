@@ -6,7 +6,7 @@ public final class PlacementTickStamp {
    private PlacementTickStamp() {
    }
 
-   public static void init_V() {
+   public static void stamp() {
       init = AutismSessionState.getInstance().getClientTick();
    }
 

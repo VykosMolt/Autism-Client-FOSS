@@ -13,7 +13,7 @@ public final class GifRenderContext {
       init_Str = name;
    }
 
-   public static void init_V() {
+   public static void popEntity() {
       if (init_I > 0) {
          init_I--;
       }
@@ -23,7 +23,7 @@ public final class GifRenderContext {
       }
    }
 
-   public static String init_Str() {
+   public static String currentName() {
       return init_I > 0 ? init_Str : null;
    }
 
@@ -37,7 +37,7 @@ public final class GifRenderContext {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isShieldRendering() {
       return load > 0;
    }
 }

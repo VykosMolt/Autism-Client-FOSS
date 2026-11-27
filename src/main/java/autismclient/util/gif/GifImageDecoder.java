@@ -27,7 +27,7 @@ public final class GifImageDecoder {
    private GifImageDecoder() {
    }
 
-   public static GifImageDecoder.Inner_DataUtil init_DataUtil_DataUtil(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   public static GifImageDecoder.Inner_DataUtil decode(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
       if (bytes != null && bytes.length != 0) {
          if (bytes.length > 67108864) {
             throw new GifImageDecoder.Inner_CachePool("file too large (max 25 MB)");
@@ -328,7 +328,7 @@ public final class GifImageDecoder {
       }
    }
 
-   public record Inner_DataUtil(int init_I, int load, int[][] init_IArr2, int[] init_IArr, int read) {
+   public record Inner_DataUtil(int width, int load, int[][] frames, int[] delays, int read) {
    }
 
    private static final class Inner_StreamUtil {

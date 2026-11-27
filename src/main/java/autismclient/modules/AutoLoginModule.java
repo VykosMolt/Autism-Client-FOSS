@@ -75,7 +75,7 @@ public final class AutoLoginModule extends Module {
          }
 
          try {
-            String shared = autismclient.util.JoinMacroController.init_Map().get("password");
+            String shared = autismclient.util.JoinMacroController.formValues().get("password");
             if (shared != null && !shared.isBlank()) {
                return shared;
             }
@@ -137,7 +137,7 @@ public final class AutoLoginModule extends Module {
 
       @Override
       public boolean read() {
-         return autismclient.util.JoinMacroController.read_Z();
+         return autismclient.util.JoinMacroController.isRunning();
       }
 
       @Override

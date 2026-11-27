@@ -18,7 +18,7 @@ public record TradeOfferFilter(int init_I, List<String> init_List, List<String> 
       read = List.copyOf(read);
    }
 
-   public boolean init_Z_MerchantOffer_I(MerchantOffer offer, int index) {
+   public boolean matches(MerchantOffer offer, int index) {
       if (offer != null && (this.init_I <= 0 || index + 1 == this.init_I)) {
          if (!this.init_List.isEmpty() && !init_Z_List_ItemStack(this.init_List, offer.getResult())) {
             return false;

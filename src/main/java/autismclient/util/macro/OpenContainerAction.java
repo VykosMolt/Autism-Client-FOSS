@@ -44,7 +44,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
          if (target == null) {
             return null;
          } else {
-            return target.init_Z() ? AimTargetAction.AimTarget.init(target.init_BlockPos()) : AimTargetAction.AimTarget.init(target.init_Entity_Minecraft(mc));
+            return target.isBlock() ? AimTargetAction.AimTarget.init(target.blockPos()) : AimTargetAction.AimTarget.init(target.resolveEntity(mc));
          }
       }
    }
@@ -52,7 +52,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    private autismclient.util.InteractionTargetRef init_E_2() {
       for (String ref : this.init_List_13()) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
             if (target != null) {
                return target;
             }
@@ -75,21 +75,21 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
             for (String ref : refs) {
                if (ref != null && !ref.isBlank()) {
-                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
+                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
                   if (target != null) {
-                     if (this.waitForTarget && !target.load_Z(mc)) {
+                     if (this.waitForTarget && !target.isPresent(mc)) {
                         return false;
                      }
 
-                     sentAny |= target.init_Z_Minecraft(mc);
+                     sentAny |= target.interact(mc);
                   }
                }
             }
 
             return sentAny;
          } else {
-            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
-            return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
+            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
+            return target != null && (!this.waitForTarget || target.isPresent(mc)) && target.interact(mc);
          }
       } else {
          return false;
@@ -107,8 +107,8 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          for (String ref : refs) {
             if (ref != null && !ref.isBlank()) {
-               autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
-               if (target == null || !target.load_Z(mc)) {
+               autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
+               if (target == null || !target.isPresent(mc)) {
                   return false;
                }
 
@@ -118,8 +118,8 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          return hasTarget;
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
-         return target != null && target.load_Z(mc);
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
+         return target != null && target.isPresent(mc);
       }
    }
 
@@ -127,7 +127,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       if (mc != null) {
          if (mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
             this.targetMode = OpenContainerAction.Inner_DataUtil.ENTITY;
-            this.entityTarget = autismclient.util.InteractionTargetRef.init_Str_Entity(entityHit.getEntity());
+            this.entityTarget = autismclient.util.InteractionTargetRef.refFor(entityHit.getEntity());
             if (!this.entityTarget.isBlank() && !this.entityTargets.contains(this.entityTarget)) {
                this.entityTargets.add(this.entityTarget);
             }

@@ -10,7 +10,7 @@ public final class AuditWaypointScope {
    }
 
    public static String current(Minecraft var0) {
-      String var1 = AutismWaypoints.init_Str_Minecraft(var0);
+      String var1 = AutismWaypoints.scopeFor(var0);
       return var0 != null && var0.level != null ? qualify(var1, var0.level.dimension().identifier().toString()) : var1;
    }
 

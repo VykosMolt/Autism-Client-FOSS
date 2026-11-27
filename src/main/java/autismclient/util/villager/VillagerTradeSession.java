@@ -53,31 +53,31 @@ public final class VillagerTradeSession {
       this.update = Math.max(0, reserve);
    }
 
-   public static boolean init_Z() {
+   public static boolean isRunning() {
       return init_CachePool != null;
    }
 
-   public boolean load_Z() {
+   public boolean isFinished() {
       return this.init_CachePool_CachePoo != VillagerTradeSession.Inner_CachePool.RUNNING;
    }
 
-   public VillagerTradeSession.Inner_CachePool init_CachePool_CachePoo() {
+   public VillagerTradeSession.Inner_CachePool status() {
       return this.init_CachePool_CachePoo;
    }
 
-   public int init_I() {
+   public int traded() {
       return this.flush;
    }
 
-   public int load_I() {
+   public int spent() {
       return this.close;
    }
 
-   public String init_Str() {
+   public String message() {
       return this.init_Str;
    }
 
-   public boolean read_Z() {
+   public boolean reserve() {
       if (init_CachePool != null && init_CachePool != this) {
          this.init(VillagerTradeSession.Inner_CachePool.BUSY, "Another trade is running");
          return false;
@@ -87,13 +87,13 @@ public final class VillagerTradeSession {
       }
    }
 
-   public void init_V() {
+   public void cancel() {
       if (this.init_CachePool_DataUtil != null) {
          this.init_CachePool_DataUtil.init_V();
       }
    }
 
-   public static void init_V_ClientboundContain(ClientboundContainerSetContentPacket packet) {
+   public static void onContainerContent(ClientboundContainerSetContentPacket packet) {
       VillagerTradeSession session = init_CachePool;
       if (session != null && session.init_CachePool_DataUtil != null && packet.containerId() == session.init_CachePool_DataUtil.init_I()) {
          session.load_ItemStack = packet.carriedItem().copy();
@@ -111,8 +111,8 @@ public final class VillagerTradeSession {
       }
    }
 
-   public VillagerTradeSession.Inner_CachePool init_CachePool_CachePoo_Minecraft(final Minecraft mc) {
-      if (this.load_Z()) {
+   public VillagerTradeSession.Inner_CachePool tick(final Minecraft mc) {
+      if (this.isFinished()) {
          return this.init_CachePool_CachePoo;
       } else {
          return mc.player != null
@@ -200,7 +200,7 @@ public final class VillagerTradeSession {
    }
 
    VillagerTradeSession.Inner_CachePool init_CachePool_CachePoo_CachePool_DataUtil(VillagerTradeSession.Inner_DataUtil current) {
-      if (this.load_Z()) {
+      if (this.isFinished()) {
          return this.init_CachePool_CachePoo;
       }
 
@@ -242,7 +242,7 @@ public final class VillagerTradeSession {
 
                for (int i = 0; i < this.init_CachePool_DataUtil.init_List().size(); i++) {
                   MerchantOffer offer = this.init_CachePool_DataUtil.init_List().get(i);
-                  if (this.init_StreamUtil.init_Z_MerchantOffer_I(offer, i)) {
+                  if (this.init_StreamUtil.matches(offer, i)) {
                      match = true;
                      if (!offer.isOutOfStock()) {
                         stock = true;
@@ -281,7 +281,7 @@ public final class VillagerTradeSession {
                }
 
                MerchantOffer offer = this.init_CachePool_DataUtil.init_List().get(this.open);
-               if (!this.init_StreamUtil.init_Z_MerchantOffer_I(offer, this.open) || offer.isOutOfStock()) {
+               if (!this.init_StreamUtil.matches(offer, this.open) || offer.isOutOfStock()) {
                   return this.init(VillagerTradeSession.Inner_CachePool.NO_MATCH, "Offer changed");
                }
 
@@ -469,13 +469,13 @@ public final class VillagerTradeSession {
       if (this.init_CachePool_DataUtil != null
          && (
             !this.init_CachePool_DataUtil.init_ItemStack().isEmpty()
-               || (!this.load_Z() || this.init_CachePool_CachePoo == VillagerTradeSession.Inner_CachePool.UNCERTAIN)
+               || (!this.isFinished() || this.init_CachePool_CachePoo == VillagerTradeSession.Inner_CachePool.UNCERTAIN)
                   && (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.TAKE || this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.STORED)
          )) {
          this.init_CachePool_DataUtil.init_V();
       }
 
-      if (!this.load_Z()) {
+      if (!this.isFinished()) {
          this.init(VillagerTradeSession.Inner_CachePool.CANCELLED, "Trade cancelled");
       }
 

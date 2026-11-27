@@ -179,7 +179,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                         return;
                      }
 
-                     List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes = autismclient.util.PvpHoleScanner.init_List();
+                     List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes = autismclient.util.PvpHoleScanner.holes();
                      if (holes.isEmpty()) {
                         return;
                      }
@@ -219,12 +219,12 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             break;
          }
 
-         double fade = this.init_D_BlockPos_Vec3(hole.init_BlockPos(), player);
+         double fade = this.init_D_BlockPos_Vec3(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = init_I_I_D(this.init(hole.init_aj_StreamUtil()), 0.19607843137254902 * fade);
+            int color = init_I_I_D(this.init(hole.type()), 0.19607843137254902 * fade);
             if (color != 0) {
-               AABB box = hole.init_AABB().move(-camera.x, -camera.y, -camera.z);
+               AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
                   double floorY = box.minY + 0.002;
                   init(pose, buffer, box.minX, box.maxX, box.minZ, box.maxZ, floorY, color);
@@ -250,12 +250,12 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             break;
          }
 
-         double fade = this.init_D_BlockPos_Vec3(hole.init_BlockPos(), player);
+         double fade = this.init_D_BlockPos_Vec3(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = init_I_I_D(this.init(hole.init_aj_StreamUtil()), 0.39215686274509803 * fade);
+            int color = init_I_I_D(this.init(hole.type()), 0.39215686274509803 * fade);
             if (color != 0) {
-               AABB box = hole.init_AABB().move(-camera.x, -camera.y, -camera.z);
+               AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
                   load_V_PoseStack_Pose_2(pose, buffer, box, box.minY + 0.002, color);
                } else {

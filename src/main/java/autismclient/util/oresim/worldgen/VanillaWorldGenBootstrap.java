@@ -205,43 +205,43 @@ public final class VanillaWorldGenBootstrap {
       return result;
    }
 
-   public long init_J() {
+   public long seed() {
       return this.init_J;
    }
 
-   public ResourceKey<Level> init_ResourceKey() {
+   public ResourceKey<Level> dimension() {
       return this.init_ResourceKey;
    }
 
-   public Provider init_HolderLookup_Provi() {
+   public Provider registries() {
       return this.init_HolderLookup_Provi;
    }
 
-   public RegistryAccess init_RegistryAccess() {
+   public RegistryAccess registryAccess() {
       return this.init_RegistryAccess;
    }
 
-   public ChunkGenerator init_ChunkGenerator() {
+   public ChunkGenerator chunkGenerator() {
       return this.init_ChunkGenerator;
    }
 
-   public NoiseBasedChunkGenerator init_NoiseBasedChunkGen() {
+   public NoiseBasedChunkGenerator noiseGenerator() {
       return (NoiseBasedChunkGenerator)this.init_ChunkGenerator;
    }
 
-   public BiomeSource init_BiomeSource() {
+   public BiomeSource biomeSource() {
       return this.init_ChunkGenerator.getBiomeSource();
    }
 
-   public RandomState init_RandomState() {
+   public RandomState randomState() {
       return this.init_RandomState;
    }
 
-   public ChunkGeneratorStructureState init_ChunkGeneratorStru() {
+   public ChunkGeneratorStructureState structureState() {
       return this.init_ChunkGeneratorStru;
    }
 
-   public StructureTemplateManager init_StructureTemplateM() {
+   public StructureTemplateManager structureTemplates() {
       return this.init_StructureTemplateM;
    }
 
@@ -257,15 +257,15 @@ public final class VanillaWorldGenBootstrap {
       return true;
    }
 
-   public DimensionType init_DimensionType() {
+   public DimensionType dimensionType() {
       return this.init_DimensionType;
    }
 
-   public LevelHeightAccessor init_LevelHeightAccesso() {
+   public LevelHeightAccessor heightAccessor() {
       return this.init_LevelHeightAccesso;
    }
 
-   public PalettedContainerFactory init_PalettedContainerF() {
+   public PalettedContainerFactory paletteFactory() {
       final List<Reference<Biome>> biomes = this.init_HolderLookup_Provi.lookupOrThrow(Registries.BIOME).listElements().toList();
       final Map<Holder<Biome>, Integer> ids = new IdentityHashMap<>();
 

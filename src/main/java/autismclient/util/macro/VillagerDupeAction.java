@@ -41,7 +41,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
          Math.max(0, this.stopAfter),
          this.stopWhenMissing
       );
-      autismclient.util.villagerdupe.VillagerDupeDriver.init_V_Predicate(driver::init);
+      autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(driver::init);
 
       while (!driver.load_Z && ctx.isActive()) {
          CompletableFuture<Void> next = driver.init_CompletableFuture;
@@ -51,7 +51,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
       autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore last = driver.init_DataUtil_ConfigSto;
       if (driver.init_Z && ctx.isActive()) {
-         String why = last.load_Str();
+         String why = last.detail();
          ctx.runOnClientThread(() -> AutismClientMessaging.sendPrefixed("§cVillager Dupe: " + why));
          MacroExecutor.stopCurrentRun();
       }
@@ -82,7 +82,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(tag.getStringOr("filter", "ALL"));
+      this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(tag.getStringOr("filter", "ALL"));
 
       try {
          this.targets = VillagerDupeAction.Inner_StreamUtil.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));
@@ -134,7 +134,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    private static final class Inner_DataUtil {
       private final MacroExecutionContext init_MacroExecutionCont;
-      private final autismclient.util.villagerdupe.VillagerDupeDriver init_DataUtil = autismclient.util.villagerdupe.VillagerDupeDriver.init_DataUtil();
+      private final autismclient.util.villagerdupe.VillagerDupeDriver init_DataUtil = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance();
       private final autismclient.util.villagerdupe.VillagerDupeDriver.CachePool init_DataUtil_CachePool;
       private final int load_I;
       private final int read_I;
@@ -158,17 +158,17 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
       boolean init(Minecraft mc) {
          if (!this.init_MacroExecutionCont.isActive()) {
-            if (this.init_DataUtil.init_Z()) {
-               this.init_DataUtil.read_V_Minecraft(mc);
+            if (this.init_DataUtil.isActive()) {
+               this.init_DataUtil.restoreSelectedSlot(mc);
             }
 
             return this.init_Z();
          } else if (this.write_Z) {
-            if (this.init_DataUtil.init_Z() && this.update++ < 10) {
+            if (this.init_DataUtil.isActive() && this.update++ < 10) {
                this.init_DataUtil.load(mc, this.init_DataUtil_CachePool);
             }
 
-            if (!this.init_DataUtil.init_Z()) {
+            if (!this.init_DataUtil.isActive()) {
                return this.init_Z();
             }
 
@@ -176,15 +176,15 @@ public final class VillagerDupeAction implements ContextMacroAction {
                return true;
             }
 
-            this.init_DataUtil.read_V_Minecraft(mc);
+            this.init_DataUtil.restoreSelectedSlot(mc);
             return this.init_Z();
          } else {
             autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = this.init_DataUtil
-               .init_DataUtil_BufferHel_Minecraft_DataUtil_CachePool(mc, this.init_DataUtil_CachePool);
+               .step(mc, this.init_DataUtil_CachePool);
             this.write_I++;
-            autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = result.init_DataUtil_ConfigSto();
-            boolean change = result.init_I() > 0 || status != this.init_DataUtil_ConfigSto;
-            this.init_I = this.init_I + result.init_I();
+            autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = result.status();
+            boolean change = result.count() > 0 || status != this.init_DataUtil_ConfigSto;
+            this.init_I = this.init_I + result.count();
             this.init_DataUtil_ConfigSto = status;
             if (this.read_Z && status.init_Z()) {
                this.init_Z = true;
@@ -203,7 +203,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
       String init_Str() {
          autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = this.init_DataUtil_ConfigSto;
-         return "Villager Dupe: " + this.init_I + (status.load_Z() ? "" : " (" + status.init_Str() + ")");
+         return "Villager Dupe: " + this.init_I + (status.load_Z() ? "" : " (" + status.label() + ")");
       }
 
       private boolean init_Z() {

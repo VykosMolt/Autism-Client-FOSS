@@ -20,7 +20,7 @@ public final class BackgroundTaskExecutor {
    private BackgroundTaskExecutor() {
    }
 
-   public static Future<?> init_Future_Str_Runnable(String name, Runnable work) {
+   public static Future<?> submit(String name, Runnable work) {
       String label = name != null && !name.isBlank() ? name : "Autism-BG-" + init_AtomicInteger.incrementAndGet();
       return init_ExecutorService.submit(() -> {
          Thread current = Thread.currentThread();
@@ -39,7 +39,7 @@ public final class BackgroundTaskExecutor {
 
    public static <T> CompletableFuture<T> init_CompletableFuture_Str_Supplier(String name, Supplier<T> work) {
       CompletableFuture<T> future = new CompletableFuture<>();
-      init_Future_Str_Runnable(name, () -> {
+      submit(name, () -> {
          try {
             future.complete(work.get());
          } catch (Throwable t) {
@@ -50,7 +50,7 @@ public final class BackgroundTaskExecutor {
    }
 
    public static Future<?> init(String name, BooleanSupplier done, Runnable onDone, long pollMs) {
-      return init_Future_Str_Runnable(name, () -> {
+      return submit(name, () -> {
          while (!done.getAsBoolean()) {
             try {
                Thread.sleep(Math.max(1L, pollMs));

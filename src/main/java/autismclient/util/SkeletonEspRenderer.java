@@ -33,7 +33,7 @@ public final class SkeletonEspRenderer {
    private SkeletonEspRenderer() {
    }
 
-   public static void init_V() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
          init_List = List.of();
          Minecraft mc = Minecraft.getInstance();
@@ -62,7 +62,7 @@ public final class SkeletonEspRenderer {
       });
    }
 
-   public static boolean init_Z() {
+   public static boolean hasSkeletons() {
       return !init_List.isEmpty();
    }
 

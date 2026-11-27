@@ -172,7 +172,7 @@ public final class LagWatchdogReporter {
       init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.pendingCount());
       init(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);
       init(sb, "hud", () -> {
-         return "enabledElements=" + AutismHudManager.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();
+         return "enabledElements=" + AutismHudManager.enabledCount() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();
       });
       init(
          sb,

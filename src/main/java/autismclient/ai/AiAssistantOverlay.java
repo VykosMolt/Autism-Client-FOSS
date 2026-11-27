@@ -227,7 +227,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.update_Z = false;
          this.init_cf.closePopups();
          this.init_cf.cancelKeyCapture();
-         this.init_F_2.init_V();
+         this.init_F_2.close();
          if (next == AiAssistantOverlay.Inner_DataUtil.SETTINGS) {
             this.init_cf.loadSettings(this.init_cc.getSettings());
          }
@@ -328,7 +328,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             }
 
             this.init_F_2.init(graphics, mx, my);
-            if (!this.init_F_2.init_Z() && (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.SETTINGS || !this.init_cf.hasOpenDropdown())) {
+            if (!this.init_F_2.isOpen() && (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.SETTINGS || !this.init_cf.hasOpenDropdown())) {
                this.init_cE.renderHoveredTooltip();
             }
          }
@@ -435,7 +435,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (this.windowVisible && this.containsPoint(x, y)) {
          this.push = (int)x;
          this.pop = (int)y;
-         if (this.init_F_2.init_Z()) {
+         if (this.init_F_2.isOpen()) {
             this.init_F_2.init(x, y, button, (id, label, index) -> this.init_ce.onMenuAction(id, index));
             return true;
          }
@@ -523,7 +523,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return false;
       }
 
-      if (this.init_F_2.init_Z()) {
+      if (this.init_F_2.isOpen()) {
          return true;
       }
 
@@ -548,7 +548,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (key == 258
          && (mods & 1) != 0
          && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
-         && !this.init_F_2.init_Z()
+         && !this.init_F_2.isOpen()
          && !this.init_cF.settings.builtIn) {
          this.init_TaskTimer.init_V();
          return true;
@@ -561,15 +561,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.init_BitSetUtil();
       return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
             && !this.init_ce.open
-            && !this.init_F_2.init_Z()
+            && !this.init_F_2.isOpen()
             && this.init_TaskTimer.init_Z_I_BitSetUtil(key, focused)
          ? true
          : focused != null && focused.keyPressed(this.init_cE.layoutContext, key, scan, mods);
    }
 
    private boolean poll_Z() {
-      if (this.init_F_2.init_Z()) {
-         this.init_F_2.init_V();
+      if (this.init_F_2.isOpen()) {
+         this.init_F_2.close();
          return true;
       } else if (this.init_cf.closePopups() || this.init_cf.consumeKeyCapture()) {
          return true;
@@ -605,7 +605,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.init_BitSetUtil();
-      if (focused == null && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.init_ce.open && !this.init_F_2.init_Z()) {
+      if (focused == null && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.init_ce.open && !this.init_F_2.isOpen()) {
          autismclient.gui.ui.widgets.TextInputWidget target = this.init_TaskTimer.init_BitSetUtil_C(c);
          if (target != null) {
             this.init(target);
@@ -632,7 +632,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.CHAT
                   || this.init_ce.open
                   || this.init_cf.isCapturingKey()
-                  || this.init_F_2.init_Z()
+                  || this.init_F_2.isOpen()
                   || this.init_TaskTimer.init_Z()
             )
          ? Minecraft.getInstance().gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.init(this)

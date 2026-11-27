@@ -309,7 +309,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             autismclient.util.ContainerClickType eiAction = this.getItemClickType(ei);
             int eiButton = this.getItemButton(ei);
             if (init_Z_N(eiAction)) {
-               eiButton = eiAction.init_I();
+               eiButton = eiAction.defaultButton();
             }
 
             MacroItemTarget entryTarget = this.init_ArrayUtil_I(ei).resolveTemplates(mc);
@@ -350,7 +350,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          autismclient.util.ContainerClickType action = this.init_N();
          int effectiveButton = this.init_I_2();
          if (init_Z_N(action)) {
-            effectiveButton = action.init_I();
+            effectiveButton = action.defaultButton();
          }
 
          if (action == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
@@ -377,7 +377,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          autismclient.util.ContainerPickUpAllHelper.init(mc, e.init_ArrayUtil(), e.read());
       } else if (e.init_N() != autismclient.util.ContainerClickType.DROP_ITEM && e.init_N() != autismclient.util.ContainerClickType.DROP_STACK) {
          for (int j = 0; j < e.read(); j++) {
-            autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.init_I(), e.init_N().init_ContainerInput());
+            autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.init_I(), e.init_N().toContainerInput());
          }
       } else {
          autismclient.util.InventoryDropHelper.init(mc, e.load(), e.init_N() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
@@ -424,7 +424,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             } else {
                int fs = e.load();
                int fb = e.init_I();
-               ContainerInput input = e.init_N().init_ContainerInput();
+               ContainerInput input = e.init_N().toContainerInput();
 
                for (int j = 0; j < e.read(); j++) {
                   plan.add(() -> autismclient.util.ContainerClickExecutor.init(mc, fs, fb, input));
@@ -925,7 +925,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       if (init_Z_N(action)) {
-         return action.init_I();
+         return action.defaultButton();
       }
 
       int limit = init_I_N(action);

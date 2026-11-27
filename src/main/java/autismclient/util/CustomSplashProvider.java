@@ -33,7 +33,7 @@ public final class CustomSplashProvider {
    private CustomSplashProvider() {
    }
 
-   public static SplashRenderer init_SplashRenderer(Minecraft client) {
+   public static SplashRenderer splashRenderer(Minecraft client) {
       List<String> lines = load(client);
       if (lines.isEmpty()) {
          return null;
@@ -43,7 +43,7 @@ public final class CustomSplashProvider {
       return new SplashRenderer(Component.literal(text).setStyle(Style.EMPTY.withColor(-256)));
    }
 
-   public static List<Component> init_List(Minecraft client) {
+   public static List<Component> splashLines(Minecraft client) {
       return load(client).stream().map(text -> (Component)Component.literal(text).setStyle(Style.EMPTY.withColor(-256))).toList();
    }
 

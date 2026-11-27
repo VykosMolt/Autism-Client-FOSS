@@ -8,8 +8,8 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 public record HumanHandProfile(
-   double init_D,
-   double load_D,
+   double fittsIntercept,
+   double fittsSlope,
    double read,
    double write,
    double update,
@@ -30,7 +30,7 @@ public record HumanHandProfile(
    private static final String init_Str = "hand.seed";
    private static volatile HumanHandProfile init_am;
 
-   public static HumanHandProfile init_am() {
+   public static HumanHandProfile shared() {
       HumanHandProfile hand = init_am;
       if (hand == null) {
          synchronized (HumanHandProfile.class) {
@@ -70,11 +70,11 @@ public record HumanHandProfile(
       );
    }
 
-   public HumanHandProfile init_am_Random(Random session) {
+   public HumanHandProfile forSession(Random session) {
       double tempo = 1.0 + 0.03 * init_D_Random(session);
       return new HumanHandProfile(
-         this.init_D * tempo,
-         this.load_D * tempo,
+         this.fittsIntercept * tempo,
+         this.fittsSlope * tempo,
          this.read,
          this.write,
          this.update,

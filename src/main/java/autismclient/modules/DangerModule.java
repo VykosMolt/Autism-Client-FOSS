@@ -921,7 +921,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          this.load_Str = "Inactive";
       } else if (!read_Z_22() || this.flush == this.open) {
          this.load_Str = "Rotation or attack interval";
-      } else if (SprintStateTracker.init_Z()) {
+      } else if (SprintStateTracker.isServerSprinting()) {
          this.load_Str = "Sprint still announced";
       } else {
          DangerModule.Inner_DataUtil previousAttempt = this.init_Map.get(this.init_Entity.getUUID());

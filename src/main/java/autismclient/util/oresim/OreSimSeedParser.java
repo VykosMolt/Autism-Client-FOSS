@@ -26,16 +26,16 @@ public final class OreSimSeedParser {
       }
    }
 
-   public record Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil init_BufferHelper_Strea, Long init_Long) {
+   public record Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil status, Long seed) {
       public Inner_DataUtil {
-         Objects.requireNonNull(init_BufferHelper_Strea, "status");
-         if (init_BufferHelper_Strea == OreSimSeedParser.Inner_StreamUtil.VALID != (init_Long != null)) {
+         Objects.requireNonNull(status, "status");
+         if (status == OreSimSeedParser.Inner_StreamUtil.VALID != (seed != null)) {
             throw new IllegalArgumentException("Only a valid seed may carry a value");
          }
       }
 
-      public boolean init_Z() {
-         return this.init_BufferHelper_Strea == OreSimSeedParser.Inner_StreamUtil.VALID;
+      public boolean isValid() {
+         return this.status == OreSimSeedParser.Inner_StreamUtil.VALID;
       }
    }
 

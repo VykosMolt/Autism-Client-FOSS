@@ -41,14 +41,14 @@ public final class OreSimRegionGenerator {
 
    public OreSimRegionGenerator(VanillaWorldGenBootstrap context) {
       this.init_ConfigStore = context;
-      this.init_PalettedContainerF = context.init_PalettedContainerF();
+      this.init_PalettedContainerF = context.paletteFactory();
    }
 
    public Map<Long, ChunkAccess> init_Map_I(int minChunkX, int minChunkZ, int size) {
-      return this.init_Map_I(minChunkX, minChunkZ, size, () -> false);
+      return this.generateRegion(minChunkX, minChunkZ, size, () -> false);
    }
 
-   public Map<Long, ChunkAccess> init_Map_I(int minChunkX, int minChunkZ, int size, BooleanSupplier cancelled) {
+   public Map<Long, ChunkAccess> generateRegion(int minChunkX, int minChunkZ, int size, BooleanSupplier cancelled) {
       if (size < 5) {
          throw new IllegalArgumentException("Region size must leave at least one reportable chunk");
       } else if (cancelled == null) {
@@ -65,12 +65,12 @@ public final class OreSimRegionGenerator {
          for (int dz = -8; dz < size + 8; dz++) {
             init(cancelled);
             ChunkPos pos = new ChunkPos(minChunkX + dx, minChunkZ + dz);
-            chunks.put(pos.pack(), new ProtoChunk(pos, UpgradeData.EMPTY, this.init_ConfigStore.init_LevelHeightAccesso(), this.init_PalettedContainerF, null));
+            chunks.put(pos.pack(), new ProtoChunk(pos, UpgradeData.EMPTY, this.init_ConfigStore.heightAccessor(), this.init_PalettedContainerF, null));
          }
       }
 
       SyntheticWorldGenLevel level = new SyntheticWorldGenLevel(this.init_ConfigStore, chunks);
-      StructureManager structures = new StructureManager(level, new WorldOptions(this.init_ConfigStore.init_J(), true, false), null);
+      StructureManager structures = new StructureManager(level, new WorldOptions(this.init_ConfigStore.seed(), true, false), null);
 
       for (int dx = -8; dx < size + 8; dx++) {
          for (int dz = -8; dz < size + 8; dz++) {
@@ -78,14 +78,14 @@ public final class OreSimRegionGenerator {
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
             this.init_ConfigStore
-               .init_ChunkGenerator()
+               .chunkGenerator()
                .createStructures(
-                  this.init_ConfigStore.init_RegistryAccess(),
-                  this.init_ConfigStore.init_ChunkGeneratorStru(),
+                  this.init_ConfigStore.registryAccess(),
+                  this.init_ConfigStore.structureState(),
                   structures,
                   chunk,
-                  this.init_ConfigStore.init_StructureTemplateM(),
-                  this.init_ConfigStore.init_ResourceKey()
+                  this.init_ConfigStore.structureTemplates(),
+                  this.init_ConfigStore.dimension()
                );
             init(chunk, ChunkStatus.STRUCTURE_STARTS);
          }
@@ -96,7 +96,7 @@ public final class OreSimRegionGenerator {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
-            this.init_ConfigStore.init_ChunkGenerator().createReferences(level, structures, chunk);
+            this.init_ConfigStore.chunkGenerator().createReferences(level, structures, chunk);
             init(chunk, ChunkStatus.STRUCTURE_REFERENCES);
          }
       }
@@ -106,7 +106,7 @@ public final class OreSimRegionGenerator {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
-            this.init_ConfigStore.init_ChunkGenerator().createBiomes(this.init_ConfigStore.init_RandomState(), Blender.empty(), structures, chunk).join();
+            this.init_ConfigStore.chunkGenerator().createBiomes(this.init_ConfigStore.randomState(), Blender.empty(), structures, chunk).join();
             init(chunk, ChunkStatus.BIOMES);
          }
       }
@@ -146,7 +146,7 @@ public final class OreSimRegionGenerator {
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             Heightmap.primeHeightmaps(chunk, init_EnumSet);
             level.init(chunk.getPos(), 1);
-            this.init_ConfigStore.init_ChunkGenerator().applyBiomeDecoration(level, chunk, structures);
+            this.init_ConfigStore.chunkGenerator().applyBiomeDecoration(level, chunk, structures);
             init(chunk, ChunkStatus.FEATURES);
          }
       }
@@ -177,7 +177,7 @@ public final class OreSimRegionGenerator {
    }
 
    private void init_V_WorldGenLevel(WorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk) {
-      new WorldGenerationContext(this.init_ConfigStore.init_ChunkGenerator(), this.init_ConfigStore.init_LevelHeightAccesso());
+      new WorldGenerationContext(this.init_ConfigStore.chunkGenerator(), this.init_ConfigStore.heightAccessor());
       Set<Holder<Biome>> biomes = new HashSet<>();
       ChunkPos pos = chunk.getPos();
 
@@ -196,12 +196,12 @@ public final class OreSimRegionGenerator {
    }
 
    private void init(SyntheticWorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk, BooleanSupplier cancelled) {
-      NoiseBasedChunkGenerator generator = this.init_ConfigStore.init_NoiseBasedChunkGen();
+      NoiseBasedChunkGenerator generator = this.init_ConfigStore.noiseGenerator();
       BiomeManager biomeManager = level.getBiomeManager()
          .withDifferentSource(
             (quartX, quartY, quartZ) -> this.init_ConfigStore
-               .init_BiomeSource()
-               .createCachingResolver(this.init_ConfigStore.init_RandomState())
+               .biomeSource()
+               .createCachingResolver(this.init_ConfigStore.randomState())
                .getNoiseBiome(quartX, quartY, quartZ)
          );
       new WorldgenRandom(new LegacyRandomSource(RandomSupport.generateUniqueSeed()));
@@ -209,10 +209,10 @@ public final class OreSimRegionGenerator {
    }
 
    public static void init_V_ChunkAccess(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink) {
-      init_V_ChunkAccess(chunk, wanted, sink, () -> false);
+      scanChunk(chunk, wanted, sink, () -> false);
    }
 
-   public static void init_V_ChunkAccess(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink, BooleanSupplier cancelled) {
+   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink, BooleanSupplier cancelled) {
       if (cancelled == null) {
          throw new IllegalArgumentException("Cancellation supplier must not be null");
       }

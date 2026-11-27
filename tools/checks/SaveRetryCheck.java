@@ -35,8 +35,8 @@ public class SaveRetryCheck {
       File blocker = new File(folder, "ore-sim-seeds.json.tmp");
       // A directory where the temp file goes makes the first save fail.
       blocker.mkdirs();
-      AutismOreSimSeedStore store = AutismOreSimSeedStore.init_AutismOreSimSeedSt();
-      store.init_V("check-scope", "12345");
+      AutismOreSimSeedStore store = AutismOreSimSeedStore.getInstance();
+      store.setSeed("check-scope", "12345");
       Thread.sleep(700L);
       if (saved.exists()) {
          System.out.println("FAIL: premise, first save should have failed");
@@ -55,7 +55,7 @@ public class SaveRetryCheck {
       File waypointsSaved = new File(folder, "waypoints.json");
       File waypointsBlocker = new File(folder, "waypoints.json.tmp");
       waypointsBlocker.mkdirs();
-      autismclient.util.AutismWaypoints.init_AutismWaypoints()
+      autismclient.util.AutismWaypoints.getInstance()
          .init("check-scope", new autismclient.util.AutismWaypoints.Waypoint("checkpoint", 1, 2, 3, 0, 0L));
       Thread.sleep(700L);
       if (waypointsSaved.exists()) {

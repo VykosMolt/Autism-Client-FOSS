@@ -323,7 +323,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          if (item != Items.AIR) {
             Identifier id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null) {
-               ItemStack stack = DisplayItemStackFactory.init_ItemStack(item);
+               ItemStack stack = DisplayItemStackFactory.displayStack(item);
                String itemId = id.toString().toLowerCase(Locale.ROOT);
                out.add(new PickItemScreen.Inner_DataUtil(itemId, item.getName(item.getDefaultInstance()).getString(), stack));
             }

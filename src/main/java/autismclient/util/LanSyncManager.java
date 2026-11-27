@@ -2686,7 +2686,7 @@ public class LanSyncManager {
 
          AutismMacro newMacro = new AutismMacro(newName);
          newMacro.actions.addAll(remoteMacro.actions);
-         newMacro.folder = MacroFolderLayout.init_Str_Str(remoteMacro.folder);
+         newMacro.folder = MacroFolderLayout.sanitize(remoteMacro.folder);
          MacroLibraryManager.getInstance().saveMacro(newMacro);
          MacroLibraryManager.getInstance().save();
          AutismClientMessaging.sendPrefixed("§aImported macro: " + newName);

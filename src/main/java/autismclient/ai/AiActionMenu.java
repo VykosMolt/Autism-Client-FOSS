@@ -1135,7 +1135,7 @@ final class AiActionMenu {
       return new AiActionMenu.Inner_CachePool(
          "Build " + crop + " farm",
          crop + " farm build",
-         autismclient.util.DisplayItemStackFactory.init_ItemStack(icon),
+         autismclient.util.DisplayItemStackFactory.displayStack(icon),
          n -> "build a " + crop + " farm" + (n == null ? "" : " of " + n + " crops"),
          "crop",
          0,
@@ -1458,7 +1458,7 @@ final class AiActionMenu {
          String text = "go to " + typed;
          return this.init_ad_BufferHelper_Str_Str(text, AiActionMenu.Inner_DataUtil.GOTO.load_Str) == null
             ? null
-            : new AiActionMenu.Inner_CachePool("Go to " + typed, "", autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.COMPASS), n -> text, "", 0, "");
+            : new AiActionMenu.Inner_CachePool("Go to " + typed, "", autismclient.util.DisplayItemStackFactory.displayStack(Items.COMPASS), n -> text, "", 0, "");
       } else {
          return null;
       }
@@ -1655,7 +1655,7 @@ final class AiActionMenu {
                new AiActionMenu.Inner_StreamUtil(
                   "Nearest tree",
                   "tree log wood",
-                  autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.OAK_SAPLING),
+                  autismclient.util.DisplayItemStackFactory.displayStack(Items.OAK_SAPLING),
                   List.of(n -> "chop " + init_Str_Integer(n) + "logs"),
                   "block",
                   null,
@@ -1701,13 +1701,13 @@ final class AiActionMenu {
          case GOTO:
             Minecraft mc = Minecraft.getInstance();
 
-            for (AutismWaypoints.Waypoint wp : AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))) {
+            for (AutismWaypoints.Waypoint wp : AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc))) {
                String name = wp.name();
                out.add(
                   new AiActionMenu.Inner_StreamUtil(
                      name + " (" + wp.x() + " " + wp.y() + " " + wp.z() + ")",
                      name,
-                     autismclient.util.DisplayItemStackFactory.init_ItemStack(wp.death() ? Items.RECOVERY_COMPASS : Items.COMPASS),
+                     autismclient.util.DisplayItemStackFactory.displayStack(wp.death() ? Items.RECOVERY_COMPASS : Items.COMPASS),
                      List.of(n -> "go to " + name),
                      null,
                      null,
@@ -1723,7 +1723,7 @@ final class AiActionMenu {
                      new AiActionMenu.Inner_StreamUtil(
                         "Hostile mobs",
                         "hostiles monsters",
-                        autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.ZOMBIE_HEAD),
+                        autismclient.util.DisplayItemStackFactory.displayStack(Items.ZOMBIE_HEAD),
                         List.of(n -> "fight " + init_Str_Integer(n) + "hostiles"),
                         "target",
                         "hostiles",
@@ -1822,7 +1822,7 @@ final class AiActionMenu {
       return new AiActionMenu.Inner_StreamUtil(
          autismclient.util.RegistryDisplayNameCache.init(id.toString()),
          words,
-         autismclient.util.DisplayItemStackFactory.init_ItemStack(item),
+         autismclient.util.DisplayItemStackFactory.displayStack(item),
          List.of(n -> verb + " " + init_Str_Integer(n) + words, n -> verb + " " + init_Str_Integer(n) + path),
          key,
          id.toString(),
@@ -1852,7 +1852,7 @@ final class AiActionMenu {
       try {
          AiItems.ItemSpec target = AiItems.resolve(family);
          if (!target.items().isEmpty()) {
-            icon = autismclient.util.DisplayItemStackFactory.init_ItemStack(target.items().iterator().next());
+            icon = autismclient.util.DisplayItemStackFactory.displayStack(target.items().iterator().next());
          }
       } catch (RuntimeException var6) {
       }
@@ -1885,7 +1885,7 @@ final class AiActionMenu {
          for (Item item : BuiltInRegistries.ITEM) {
             TypedEntityData<EntityType<?>> data = item.components().get(DataComponents.ENTITY_DATA);
             if (data != null) {
-               map.putIfAbsent(data.type(), autismclient.util.DisplayItemStackFactory.init_ItemStack(item));
+               map.putIfAbsent(data.type(), autismclient.util.DisplayItemStackFactory.displayStack(item));
             }
          }
 

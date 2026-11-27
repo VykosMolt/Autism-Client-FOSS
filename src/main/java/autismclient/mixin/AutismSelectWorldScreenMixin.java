@@ -85,7 +85,7 @@ public abstract class AutismSelectWorldScreenMixin extends Screen implements Ext
    public void autism$renderExternalButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float deltaTicks) {
       this.autism$layoutMacroButton();
       if (!aD.init_Z()) {
-         String macroName = JoinMacroController.init_Str();
+         String macroName = JoinMacroController.macroName();
          String macroLabel;
          int macroColor;
          if (macroName.isBlank()) {
@@ -95,7 +95,7 @@ public abstract class AutismSelectWorldScreenMixin extends Screen implements Ext
             macroLabel = "Join Macro missing: " + macroName;
             macroColor = -38037;
          } else {
-            macroLabel = "Join Macro: " + macroName + " - " + JoinMacroController.load_Str();
+            macroLabel = "Join Macro: " + macroName + " - " + JoinMacroController.summary();
             macroColor = -10035062;
          }
 

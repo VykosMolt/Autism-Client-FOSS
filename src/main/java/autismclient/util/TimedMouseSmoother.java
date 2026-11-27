@@ -12,7 +12,7 @@ public final class TimedMouseSmoother {
    private boolean init_Z;
    private boolean load_Z = true;
 
-   public void init_V_D(double x, double y, double durationSeconds) {
+   public void push(double x, double y, double durationSeconds) {
       if (Double.isFinite(x) && Double.isFinite(y) && Double.isFinite(durationSeconds)) {
          this.write = init_D_D(this.write, this.load_D, x);
          this.update = init_D_D(this.update, this.read, y);
@@ -22,7 +22,7 @@ public final class TimedMouseSmoother {
       }
    }
 
-   public FractionalCountAccumulator.Inner_DataUtil init_dh_DataUtil_D(double elapsedSeconds) {
+   public FractionalCountAccumulator.Inner_DataUtil drain(double elapsedSeconds) {
       if (Double.isFinite(elapsedSeconds) && !(elapsedSeconds <= 0.0) && !(this.sync <= 0.0)) {
          double fraction = elapsedSeconds + 1.0E-9 >= this.sync ? 1.0 : Math.min(1.0, elapsedSeconds / this.sync);
          double sliceX = this.load_D * fraction;
@@ -65,7 +65,7 @@ public final class TimedMouseSmoother {
       return this.sync > 0.0;
    }
 
-   public void init_V() {
+   public void reset() {
       this.load_D = 0.0;
       this.read = 0.0;
       this.write = 0.0;

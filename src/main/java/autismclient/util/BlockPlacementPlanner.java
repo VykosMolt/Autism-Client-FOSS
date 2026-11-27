@@ -117,7 +117,7 @@ public final class BlockPlacementPlanner {
    }
 
    public static double defaultMaxPitchDegrees() {
-      return 89.5 - RotationStreamPlanner.init_D_D(RotationMath.gcdStep()) - 0.01;
+      return 89.5 - RotationStreamPlanner.pitchMargin(RotationMath.gcdStep()) - 0.01;
    }
 
    public static void collectCandidates(BlockPlacementPlanner.Query request, List<BlockPlacementPlanner.SupportCandidate> out) {
@@ -454,7 +454,7 @@ public final class BlockPlacementPlanner {
    }
 
    public static double marginForDistance(double distance) {
-      double band = RotationStreamPlanner.init_D_D(RotationMath.gcdStep());
+      double band = RotationStreamPlanner.pitchMargin(RotationMath.gcdStep());
       return Math.max(0.12, Math.abs(distance) * Math.tan(Math.toRadians(band)));
    }
 

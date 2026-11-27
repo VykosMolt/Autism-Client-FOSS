@@ -31,7 +31,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
    }
 
    public boolean init(RenderType type, Consumer<VertexConsumer> emit) {
-      this.init_V();
+      this.release();
 
       try (ByteBufferBuilder scratch = new ByteBufferBuilder(1048576)) {
          BufferBuilder builder = new BufferBuilder(scratch, type.primitiveTopology(), type.format());
@@ -76,7 +76,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
       }
    }
 
-   public void init_V() {
+   public void release() {
       GpuBuffer buffer = this.init_GpuBuffer;
       this.init_GpuBuffer = null;
       this.load = 0;
@@ -92,6 +92,6 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
 
    @Override
    public void close() {
-      this.init_V();
+      this.release();
    }
 }

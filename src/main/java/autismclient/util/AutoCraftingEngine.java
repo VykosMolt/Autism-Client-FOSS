@@ -105,11 +105,11 @@ public final class AutoCraftingEngine {
    }
 
    public static AutoCraftingEngine.CraftContext captureContext(Minecraft mc, boolean forExecution) {
-      return mc != null && mc.player != null && mc.level != null ? captureContextWithRecipes(mc, forExecution ? RecipeCatalogLoader.init_List(mc) : RecipeCatalogLoader.read(mc)) : null;
+      return mc != null && mc.player != null && mc.level != null ? captureContextWithRecipes(mc, forExecution ? RecipeCatalogLoader.craftingRecipes(mc) : RecipeCatalogLoader.read(mc)) : null;
    }
 
    public static void prewarmCatalog(Minecraft mc) {
-      RecipeCatalogLoader.init_V(mc);
+      RecipeCatalogLoader.preload(mc);
    }
 
    private static AutoCraftingEngine.CraftContext captureContextWithRecipes(Minecraft mc, List<RecipeCatalogLoader.Inner_StreamUtil> recipes) {
@@ -153,9 +153,9 @@ public final class AutoCraftingEngine {
    public static AutoCraftingEngine.RecipeMatcher matcherFor(String recipeKey, int recipeId) {
       String key = recipeKey == null ? "" : recipeKey;
       int syncedIndex = parseSyncedIndex(key);
-      return (recipe, synced) -> !key.isBlank() && key.equalsIgnoreCase(recipe.init_Str)
+      return (recipe, synced) -> !key.isBlank() && key.equalsIgnoreCase(recipe.recipeKey)
          || syncedIndex >= 0 && synced != null && synced.id().index() == syncedIndex
-         || recipeId >= 0 && (recipe.init_Str.hashCode() == recipeId || synced != null && synced.id().index() == recipeId);
+         || recipeId >= 0 && (recipe.recipeKey.hashCode() == recipeId || synced != null && synced.id().index() == recipeId);
    }
 
    private static int parseSyncedIndex(String key) {
@@ -194,15 +194,15 @@ public final class AutoCraftingEngine {
       Map<String, AutoCraftingEngine.CraftOption> optionsByKey = new HashMap<>();
       List<RecipeCatalogLoader.Inner_StreamUtil> localRecipes = snap.localRecipes != null
          ? snap.localRecipes
-         : RecipeCatalogLoader.init_List(snap.registryAccess, snap.enabledFeatures, snap.slotContext);
+         : RecipeCatalogLoader.buildCraftingRecipes(snap.registryAccess, snap.enabledFeatures, snap.slotContext);
 
       for (AutoCraftingEngine.MenuSnapshot context : contexts) {
          List<RecipeCatalogLoader.Inner_StreamUtil> candidates = mergeLocalAndSyncedRecipes(localRecipes, context.syncedRecipes);
          AutoCraftingEngine.ItemInventoryCount materials = new AutoCraftingEngine.ItemInventoryCount(bag, context.inputStacks);
 
          for (RecipeCatalogLoader.Inner_StreamUtil localRecipe : candidates) {
-            if (localRecipe.init(context.gridWidth, context.gridHeight) && !localRecipe.init_ItemStack.isEmpty()) {
-               RecipeDisplayEntry syncedEntry = context.syncedBySignature.get(localRecipe.load_Str);
+            if (localRecipe.init(context.gridWidth, context.gridHeight) && !localRecipe.result.isEmpty()) {
+               RecipeDisplayEntry syncedEntry = context.syncedBySignature.get(localRecipe.signature);
                if (filter == null || filter.test(localRecipe, syncedEntry)) {
                   int maxCraftsByMaterials = materials.maxCraftsFor(localRecipe);
                   int maxCraftsByStorage = simulateMaxCraftsByStorage(localRecipe, context.inputStacks, bag, maxCraftsByMaterials);
@@ -308,8 +308,8 @@ public final class AutoCraftingEngine {
          for (RecipeCatalogLoader.Inner_StreamUtil recipe : localRecipes) {
             if (recipe != null) {
                merged.add(recipe);
-               if (recipe.load_Str != null && !recipe.load_Str.isBlank()) {
-                  seenSignatures.add(recipe.load_Str);
+               if (recipe.signature != null && !recipe.signature.isBlank()) {
+                  seenSignatures.add(recipe.signature);
                }
             }
          }
@@ -317,10 +317,10 @@ public final class AutoCraftingEngine {
 
       if (syncedRecipes != null) {
          for (RecipeCatalogLoader.Inner_StreamUtil recipe : syncedRecipes) {
-            if (recipe != null && (recipe.load_Str == null || !seenSignatures.contains(recipe.load_Str))) {
+            if (recipe != null && (recipe.signature == null || !seenSignatures.contains(recipe.signature))) {
                merged.add(recipe);
-               if (recipe.load_Str != null && !recipe.load_Str.isBlank()) {
-                  seenSignatures.add(recipe.load_Str);
+               if (recipe.signature != null && !recipe.signature.isBlank()) {
+                  seenSignatures.add(recipe.signature);
                }
             }
          }
@@ -331,7 +331,7 @@ public final class AutoCraftingEngine {
 
    private static AutoCraftingEngine.CraftContext captureContextOnClient(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         return callOnClientThread(mc, () -> captureContextWithRecipes(mc, RecipeCatalogLoader.init_List(mc)));
+         return callOnClientThread(mc, () -> captureContextWithRecipes(mc, RecipeCatalogLoader.craftingRecipes(mc)));
       } else {
          return null;
       }
@@ -431,11 +431,11 @@ public final class AutoCraftingEngine {
 
                CraftingClickPlanner.Inner_CachePool layout = resolveMenuLayout(mc, craftingHandler);
                if (layout != null) {
-                  List<CraftingClickPlanner.Inner_ConfigStore> phases = CraftingClickPlanner.init_List(
+                  List<CraftingClickPlanner.Inner_ConfigStore> phases = CraftingClickPlanner.planPhases(
                      layout,
                      snapshotMenuSlots((AbstractContainerMenu)craftingHandler),
                      craftingHandler.getCarried(),
-                     CraftingClickPlanner.Inner_NetHelper.init_I_NetHelper_aK_StreamUtil(option.localRecipe),
+                     CraftingClickPlanner.Inner_NetHelper.fromRecipe(option.localRecipe),
                      wantCrafts,
                      mc.player.getInventory().getSelectedSlot()
                   );
@@ -443,14 +443,14 @@ public final class AutoCraftingEngine {
                      List<Packet<?>> packets = new ArrayList<>();
 
                      for (CraftingClickPlanner.Inner_ConfigStore phase : phases) {
-                        for (CraftingClickPlanner.Inner_StreamUtil click : phase.init_List()) {
+                        for (CraftingClickPlanner.Inner_StreamUtil click : phase.clicks()) {
                            packets.add(
                               new ServerboundContainerClickPacket(
                                  craftingHandler.containerId,
                                  craftingHandler.getStateId(),
-                                 (short)click.init_I(),
-                                 (byte)click.load_I(),
-                                 click.init_ContainerInput(),
+                                 (short)click.slot(),
+                                 (byte)click.button(),
+                                 click.input(),
                                  new Int2ObjectArrayMap<>(),
                                  HashedStack.EMPTY
                               )
@@ -563,7 +563,7 @@ public final class AutoCraftingEngine {
       int perCraft = Math.max(1, option.outputStack.getCount());
       int wantCrafts = Math.min(option.maxCrafts, craftsNeededForAmount(perCraft, desiredAmount));
       int roundedTarget = wantCrafts * perCraft;
-      CraftingClickPlanner.Inner_NetHelper spec = CraftingClickPlanner.Inner_NetHelper.init_I_NetHelper_aK_StreamUtil(option.localRecipe);
+      CraftingClickPlanner.Inner_NetHelper spec = CraftingClickPlanner.Inner_NetHelper.fromRecipe(option.localRecipe);
       Integer before = callOnClientThread(mc, () -> countInventoryItem(mc, option.outputStack));
       if (before == null) {
          return AutoCraftingEngine.CraftResult.failed("The client did not respond.");
@@ -681,25 +681,25 @@ public final class AutoCraftingEngine {
          return AutoCraftingEngine.PlannedCraft.failed("This crafting screen is not supported.");
       }
 
-      CraftingClickPlanner.Inner_BufferHelper outcome = CraftingClickPlanner.init_I_BufferHelper(
+      CraftingClickPlanner.Inner_BufferHelper outcome = CraftingClickPlanner.planNextPhase(
          layout, snapshotMenuSlots((AbstractContainerMenu)menu), menu.getCarried(), spec, crafts, mc.player.getInventory().getSelectedSlot()
       );
-      if (outcome.init_I_ConfigStore() == null) {
-         return AutoCraftingEngine.PlannedCraft.failed(outcome.init_Str());
+      if (outcome.phase() == null) {
+         return AutoCraftingEngine.PlannedCraft.failed(outcome.error());
       }
 
       ItemStack[] initial = snapshotMenuSlots((AbstractContainerMenu)menu);
       int stateBefore = menu.getStateId();
       long contentBefore = getContainerPacketCount(menu.containerId);
-      sendClickPhase(mc, menu, layout, outcome.init_I_ConfigStore());
-      return new AutoCraftingEngine.PlannedCraft(outcome.init_I_ConfigStore(), layout, initial, stateBefore, contentBefore, null);
+      sendClickPhase(mc, menu, layout, outcome.phase());
+      return new AutoCraftingEngine.PlannedCraft(outcome.phase(), layout, initial, stateBefore, contentBefore, null);
    }
 
    private static void sendClickPhase(Minecraft mc, AbstractCraftingMenu menu, CraftingClickPlanner.Inner_CachePool layout, CraftingClickPlanner.Inner_ConfigStore phase) {
-      for (int i = 0; i < phase.init_List().size(); i++) {
-         CraftingClickPlanner.Inner_StreamUtil click = phase.init_List().get(i);
-         if (click.init_I() == layout.init_I()) {
-            menu.getSlot(layout.init_I()).set(phase.write().get(i).copy());
+      for (int i = 0; i < phase.clicks().size(); i++) {
+         CraftingClickPlanner.Inner_StreamUtil click = phase.clicks().get(i);
+         if (click.slot() == layout.resultSlot()) {
+            menu.getSlot(layout.resultSlot()).set(phase.write().get(i).copy());
          }
 
          ClientPacketListener connection = mc.getConnection();
@@ -708,7 +708,7 @@ public final class AutoCraftingEngine {
          }
 
          ItemStack[] before = snapshotMenuSlots((AbstractContainerMenu)menu);
-         menu.clicked(click.init_I(), click.load_I(), click.init_ContainerInput(), mc.player);
+         menu.clicked(click.slot(), click.button(), click.input(), mc.player);
          Int2ObjectArrayMap<HashedStack> changed = new Int2ObjectArrayMap<>();
 
          for (int slot = 0; slot < before.length; slot++) {
@@ -721,17 +721,17 @@ public final class AutoCraftingEngine {
             new ServerboundContainerClickPacket(
                menu.containerId,
                -1,
-               (short)click.init_I(),
-               (byte)click.load_I(),
-               click.init_ContainerInput(),
+               (short)click.slot(),
+               (byte)click.button(),
+               click.input(),
                changed,
                HashedStack.create(menu.getCarried(), connection.decoratedHashOpsGenenerator())
             )
          );
-         applyPredictedMenuState(menu, phase.load_List().get(i), phase.read_List().get(i));
+         applyPredictedMenuState(menu, phase.predictedSlots().get(i), phase.predictedCarried().get(i));
       }
 
-      recordDispatchedClicks(phase.init_List().size());
+      recordDispatchedClicks(phase.clicks().size());
    }
 
    private static void applyPredictedMenuState(AbstractContainerMenu menu, ItemStack[] slots, ItemStack carried) {
@@ -749,7 +749,7 @@ public final class AutoCraftingEngine {
 
    private static AutoCraftingEngine.SyncStatus awaitServerConfirm(Minecraft mc, AbstractCraftingMenu menu, AutoCraftingEngine.PlannedCraft run) {
       long deadline = System.nanoTime() + confirmTimeoutMs(mc) * 1000000L;
-      int stale = run.phase().init_List().size();
+      int stale = run.phase().clicks().size();
       long[] last = new long[]{-1L, -9223372036854775808L, System.nanoTime()};
       long started = System.nanoTime();
 
@@ -794,12 +794,12 @@ public final class AutoCraftingEngine {
    }
 
    private static boolean matchesPlannedState(AbstractCraftingMenu menu, AutoCraftingEngine.PlannedCraft run) {
-      ItemStack[] planned = run.phase().init_ItemStackArr();
+      ItemStack[] planned = run.phase().finalSlots();
       ItemStack[] initial = run.initialSlots();
       CraftingClickPlanner.Inner_CachePool layout = run.layout();
 
       for (int i = 0; i < Math.min(planned.length, menu.slots.size()); i++) {
-         if (i != layout.init_I()) {
+         if (i != layout.resultSlot()) {
             boolean planChanges = layout.init(i) || initial == null || i >= initial.length || !ItemStack.matches(initial[i], planned[i]);
             if (planChanges && !ItemStack.matches(menu.slots.get(i).getItem(), planned[i])) {
                return false;
@@ -807,7 +807,7 @@ public final class AutoCraftingEngine {
          }
       }
 
-      return ItemStack.matches(menu.getCarried(), run.phase().init_ItemStack());
+      return ItemStack.matches(menu.getCarried(), run.phase().finalCarried());
    }
 
    private static void clearCraftingGrid(Minecraft mc, AbstractCraftingMenu menu) {
@@ -856,10 +856,10 @@ public final class AutoCraftingEngine {
    static CraftingClickPlanner.Inner_CachePool resolveMenuLayout(Minecraft mc, AbstractCraftingMenu menu) {
       if (mc != null && mc.player != null && menu != null) {
          if (menu == mc.player.inventoryMenu && menu.slots.size() == 46) {
-            return CraftingClickPlanner.Inner_CachePool.load_I_CachePool();
+            return CraftingClickPlanner.Inner_CachePool.inventoryGrid();
          } else {
             return menu instanceof CraftingMenu && menu.slots.size() == 46 && menu.getGridWidth() == 3 && menu.getGridHeight() == 3
-               ? CraftingClickPlanner.Inner_CachePool.init_I_CachePool()
+               ? CraftingClickPlanner.Inner_CachePool.craftingTable()
                : null;
          }
       } else {
@@ -1161,11 +1161,11 @@ public final class AutoCraftingEngine {
             if (entry != null && entry.display() != null) {
                RecipeCatalogLoader.Inner_StreamUtil recipe = RecipeCatalogLoader.init("synced:" + entry.id().index(), entry.display(), entry.craftingRequirements(), enabledFeatures, params);
                if (recipe != null) {
-                  if (recipe.load_Str != null) {
-                     bySignature.putIfAbsent(recipe.load_Str, entry);
+                  if (recipe.signature != null) {
+                     bySignature.putIfAbsent(recipe.signature, entry);
                   }
 
-                  if (seenKeys.add(recipe.init_Str)) {
+                  if (seenKeys.add(recipe.recipeKey)) {
                      recipes.add(recipe);
                   }
                }
@@ -1179,7 +1179,7 @@ public final class AutoCraftingEngine {
    }
 
    private static int simulateMaxCraftsByStorage(RecipeCatalogLoader.Inner_StreamUtil localRecipe, List<ItemStack> inputStacks, List<ItemStack> inventoryStacks, int maxCraftsByMaterials) {
-      if (localRecipe != null && !localRecipe.init_ItemStack.isEmpty() && inventoryStacks != null) {
+      if (localRecipe != null && !localRecipe.result.isEmpty() && inventoryStacks != null) {
          int craftLimit = Math.max(0, maxCraftsByMaterials);
          if (craftLimit <= 0) {
             return 0;
@@ -1204,7 +1204,7 @@ public final class AutoCraftingEngine {
 
          int crafted = 0;
 
-         while (crafted < craftLimit && consumeIngredientsSimulated(localRecipe, inventorySlots, gridPools) && insertOutputSimulated(localRecipe.init_ItemStack, inventorySlots)) {
+         while (crafted < craftLimit && consumeIngredientsSimulated(localRecipe, inventorySlots, gridPools) && insertOutputSimulated(localRecipe.result, inventorySlots)) {
             crafted++;
          }
 
@@ -1215,8 +1215,8 @@ public final class AutoCraftingEngine {
    }
 
    private static boolean consumeIngredientsSimulated(RecipeCatalogLoader.Inner_StreamUtil localRecipe, List<ItemStack> inventorySlots, List<ItemStack> gridPools) {
-      if (localRecipe != null && !localRecipe.load_List.isEmpty()) {
-         for (Ingredient ingredient : localRecipe.load_List) {
+      if (localRecipe != null && !localRecipe.requirements.isEmpty()) {
+         for (Ingredient ingredient : localRecipe.requirements) {
             if (ingredient != null && !ingredient.isEmpty() && !consumeOneIngredientSimulated(gridPools, ingredient, false) && !consumeOneIngredientSimulated(inventorySlots, ingredient, true)) {
                return false;
             }
@@ -1235,7 +1235,7 @@ public final class AutoCraftingEngine {
 
          for (int i = 0; i < stacks.size(); i++) {
             ItemStack stack = stacks.get(i);
-            if (CraftingClickPlanner.init_Z(stack) && ingredient.test(stack)) {
+            if (CraftingClickPlanner.isUsableIngredient(stack) && ingredient.test(stack)) {
                int count = stack.getCount();
                if (bestIndex < 0 || preferSmallestStack && count < bestCount) {
                   bestIndex = i;
@@ -1414,7 +1414,7 @@ public final class AutoCraftingEngine {
    }
 
    private static List<RecipeCatalogLoader.Inner_StreamUtil> getCraftingCatalogRecipes(Minecraft mc) {
-      List<RecipeCatalogLoader.Inner_StreamUtil> local = RecipeCatalogLoader.init_List(mc);
+      List<RecipeCatalogLoader.Inner_StreamUtil> local = RecipeCatalogLoader.craftingRecipes(mc);
       if (!local.isEmpty()) {
          return local;
       }
@@ -1465,16 +1465,16 @@ public final class AutoCraftingEngine {
    public static synchronized JsonObject describeCatalogDiagnostics(Minecraft mc) {
       JsonObject out = new JsonObject();
       if (mc != null && mc.level != null) {
-         RecipeCatalogLoader.Inner_CachePool snapshot = RecipeCatalogLoader.init_aK_CachePool(mc);
+         RecipeCatalogLoader.Inner_CachePool snapshot = RecipeCatalogLoader.catalog(mc);
          List<AutoCraftingEngine.ResolvedRecipe> plans = getResolvedCraftingRecipes(mc);
          List<RecipeDisplayEntry> synced = new ArrayList<>(getKnownRecipeEntries(mc));
          FeatureFlagSet features = mc.getConnection() != null ? mc.getConnection().enabledFeatures() : mc.level.enabledFeatures();
          int syncedDerived = buildSyncedIndex(synced, SlotDisplayContext.fromLevel(mc.level), features).recipes.size();
-         out.addProperty("source", snapshot.init_Str());
-         out.addProperty("filesRead", snapshot.init_I());
-         out.addProperty("filesSkipped", snapshot.load_I());
-         out.addProperty("craftingRecipes", snapshot.init_List().size());
-         out.addProperty("cookingRecipes", snapshot.load_List().size());
+         out.addProperty("source", snapshot.source());
+         out.addProperty("filesRead", snapshot.filesRead());
+         out.addProperty("filesSkipped", snapshot.filesSkipped());
+         out.addProperty("craftingRecipes", snapshot.craftingRecipes().size());
+         out.addProperty("cookingRecipes", snapshot.cookingRecipes().size());
          out.addProperty("plansBuilt", plans.size());
          out.addProperty("syncedBookEntries", synced.size());
          out.addProperty("syncedDerivedRecipes", syncedDerived);
@@ -1495,7 +1495,7 @@ public final class AutoCraftingEngine {
    }
 
    public static synchronized List<AutoCraftingEngine.SmeltRecipe> getSmeltRecipes(Minecraft mc) {
-      List<RecipeCatalogLoader.Inner_DataUtil> source = RecipeCatalogLoader.load_List(mc);
+      List<RecipeCatalogLoader.Inner_DataUtil> source = RecipeCatalogLoader.cookingRecipes(mc);
       if (source == cachedSmeltSource) {
          return cachedSmeltRecipes;
       }
@@ -1591,10 +1591,10 @@ public final class AutoCraftingEngine {
    }
 
    static AutoCraftingEngine.ResolvedRecipe resolveRecipe(RecipeCatalogLoader.Inner_StreamUtil recipe, ContextMap slotContext) {
-      if (recipe != null && !recipe.init_ItemStack.isEmpty() && !recipe.load_List.isEmpty()) {
-         List<AutoCraftingEngine.IngredientSlot> inputs = new ArrayList<>(recipe.load_List.size());
+      if (recipe != null && !recipe.result.isEmpty() && !recipe.requirements.isEmpty()) {
+         List<AutoCraftingEngine.IngredientSlot> inputs = new ArrayList<>(recipe.requirements.size());
 
-         for (Ingredient ingredient : recipe.load_List) {
+         for (Ingredient ingredient : recipe.requirements) {
             if (ingredient == null || ingredient.isEmpty()) {
                return null;
             }
@@ -1615,7 +1615,7 @@ public final class AutoCraftingEngine {
          }
 
          return new AutoCraftingEngine.ResolvedRecipe(
-            recipe.init_Str, recipe.init_ItemStack.getItem(), Math.max(1, recipe.init_ItemStack.getCount()), !recipe.init(2, 2), inputs
+            recipe.recipeKey, recipe.result.getItem(), Math.max(1, recipe.result.getCount()), !recipe.init(2, 2), inputs
          );
       } else {
          return null;
@@ -1760,7 +1760,7 @@ public final class AutoCraftingEngine {
       private void addStacks(List<ItemStack> stacks) {
          if (stacks != null) {
             for (ItemStack stack : stacks) {
-               if (CraftingClickPlanner.init_Z(stack)) {
+               if (CraftingClickPlanner.isUsableIngredient(stack)) {
                   this.itemCounts.merge(stack.typeHolder(), stack.getCount(), Integer::sum);
                }
             }
@@ -1768,10 +1768,10 @@ public final class AutoCraftingEngine {
       }
 
       int maxCraftsFor(RecipeCatalogLoader.Inner_StreamUtil recipe) {
-         if (recipe != null && !recipe.load_List.isEmpty() && !this.itemCounts.isEmpty()) {
+         if (recipe != null && !recipe.requirements.isEmpty() && !this.itemCounts.isEmpty()) {
             int bound = 2147483647;
 
-            for (Ingredient ingredient : recipe.load_List) {
+            for (Ingredient ingredient : recipe.requirements) {
                if (ingredient == null || ingredient.isEmpty()) {
                   return 0;
                }
@@ -1793,7 +1793,7 @@ public final class AutoCraftingEngine {
 
             StackedContents<Holder<Item>> contents = new StackedContents<>();
             this.itemCounts.forEach(contents::account);
-            return contents.tryPickAll(recipe.load_List, Math.max(1, bound), null);
+            return contents.tryPickAll(recipe.requirements, Math.max(1, bound), null);
          } else {
             return 0;
          }
@@ -1876,10 +1876,10 @@ public final class AutoCraftingEngine {
       ) {
          this.localRecipe = localRecipe;
          this.syncedEntry = syncedEntry;
-         this.recipeKey = localRecipe.init_Str;
-         this.recipeKeyHash = localRecipe.init_Str.hashCode();
+         this.recipeKey = localRecipe.recipeKey;
+         this.recipeKeyHash = localRecipe.recipeKey.hashCode();
          this.syncedRecipeIndex = syncedEntry != null ? syncedEntry.id().index() : -1;
-         this.outputStack = localRecipe.init_ItemStack.copy();
+         this.outputStack = localRecipe.result.copy();
          this.outputHoverName = this.outputStack.getHoverName().copy();
          this.outputName = this.outputHoverName.getString();
          this.maxCraftsByMaterials = Math.max(0, maxCraftsByMaterials);

@@ -79,7 +79,7 @@ public final class PvpHoleScanner {
       read();
    }
 
-   public static List<PvpHoleScanner.Inner_DataUtil> init_List() {
+   public static List<PvpHoleScanner.Inner_DataUtil> holes() {
       read();
       return init_aj_BufferHelper.init_List();
    }
@@ -502,11 +502,11 @@ public final class PvpHoleScanner {
          this.init_AABB = new AABB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + sizeX, pos.getY() + 1, pos.getZ() + sizeZ);
       }
 
-      public PvpHoleScanner.Inner_StreamUtil init_aj_StreamUtil() {
+      public PvpHoleScanner.Inner_StreamUtil type() {
          return this.init_aj_StreamUtil;
       }
 
-      public BlockPos init_BlockPos() {
+      public BlockPos pos() {
          return this.init_BlockPos;
       }
 
@@ -518,7 +518,7 @@ public final class PvpHoleScanner {
          return this.load;
       }
 
-      public AABB init_AABB() {
+      public AABB box() {
          return this.init_AABB;
       }
 

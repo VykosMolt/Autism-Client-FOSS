@@ -248,7 +248,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.add(new IntSetting("fov", "FOV", 360, 10, 360, 10).group("Aim").description("Attack cone in degrees").build());
       this.add(new BoolSetting("fov-circle", "FOV Circle", false).group("Aim").description("Draw the attack cone when its edge is on screen").build());
       this.add(new ChoiceSetting("aim", "Aim", "Human", "Human", "Classic").group("Aim").description("Human: flicks, tracking, timing").build());
-      this.add(autismclient.util.CombatAimSpeedController.init_DoubleSetting().build());
+      this.add(autismclient.util.CombatAimSpeedController.speedSetting().build());
       this.add(new BoolSetting("silent", "Silent", true).group("Aim").build());
       this.add(new BoolSetting("move-fix", "Move Fix", true).group("Aim").description("Walk where you look").visibleWhen(() -> this.bool("silent")).build());
       this.add(new IntSetting("miss-chance", "Miss Chance", 0, 0, 20, 1).description("Miss rate after the opening hit; 0 = off").build());
@@ -356,7 +356,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    @Override
    protected void onOptionValueChanged(String settingId) {
       if (!AutismLiteVariant.enabled() && "interactions".equals(settingId)) {
-         autismclient.util.CombatInteractionController.init_V();
+         autismclient.util.CombatInteractionController.reset();
       }
 
       if ("block-hit".equals(settingId)) {
@@ -537,12 +537,12 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                      this.start_V_2();
                      boolean inAttackWindow = postAttackWindow || this.prev();
                      boolean throttle = inAttackWindow && this.init_aa_DataUtil.load_Z();
-                     this.init_q_DataUtil.speedScale = autismclient.util.CombatAimSpeedController.init_D(this.decimal("rotation-speed-multiplier"));
+                     this.init_q_DataUtil.speedScale = autismclient.util.CombatAimSpeedController.clampMultiplier(this.decimal("rotation-speed-multiplier"));
                      if ("Human".equals(this.choice("aim"))) {
                         this.init_V_Z_7(inAttackWindow);
                      }
 
-                     float turnCap = autismclient.util.CombatAimSpeedController.init_F(this.init_q_DataUtil.speedScale);
+                     float turnCap = autismclient.util.CombatAimSpeedController.turnCap(this.init_q_DataUtil.speedScale);
                      double[] lastStep = autismclient.util.SilentRotationManager.getLastStepDeltas();
                      autismclient.util.SilentRotationManager.tick(
                         "kill-aura",
@@ -578,7 +578,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             }
          } else {
             if (!AutismLiteVariant.enabled()) {
-               autismclient.util.CombatInteractionController.init_V();
+               autismclient.util.CombatInteractionController.reset();
             }
 
             this.load_V_Z_2(false);
@@ -595,7 +595,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          autismclient.util.ClientInteractionOverride.cancelAttackOwner(this.id());
          this.load_V_Z_2(false);
          if (!AutismLiteVariant.enabled()) {
-            autismclient.util.CombatInteractionController.init_V();
+            autismclient.util.CombatInteractionController.reset();
          }
 
          this.init_LivingEntity = null;
@@ -650,7 +650,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          AABB region = autismclient.util.CombatAimEngine.Inner_DataUtil.shrinkRegionToReach(eyes, targetBox, anchor, this.write_D());
          AABB receivedBox = null;
          Vec3 heldPose = BacktrackModule.init_Vec3_LivingEntity_Vec3(target, eyes);
-         Vec3 sampled = heldPose != null ? heldPose : (this.init_cj.init_Z_LivingEntity(target) ? this.init_Vec3_4() : null);
+         Vec3 sampled = heldPose != null ? heldPose : (this.init_cj.isTracking(target) ? this.init_Vec3_4() : null);
          if (sampled != null) {
             receivedBox = targetBox.move(sampled.subtract(target.position()));
             double bottom = Math.max(region.minY, receivedBox.minY);
@@ -800,7 +800,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                AABB box = target.getBoundingBox();
                if (this.init_Z_LivingEntity_Vec3(target, eyes) && init_Z_Vec3_6(eyes, box, rotation) && load_Z_Vec3_3(eyes, box, rotation)) {
                   Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-                  autismclient.util.ClickRateTracker.init_V();
+                  autismclient.util.ClickRateTracker.recordLeftClick();
                   this.init_aa_CachePool.init_V_Str("nearMiss");
                   this.flush_V_7();
                }
@@ -1278,7 +1278,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private static Vec3 init_Vec3_LivingEntity_3(LivingEntity enemy) {
-      return EntityMotionTracker.init_Vec3_LivingEntity(enemy);
+      return EntityMotionTracker.observedPosition(enemy);
    }
 
    private static Vec3 load_Vec3_LivingEntity(LivingEntity enemy) {
@@ -2136,7 +2136,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                }
             } else {
                Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-               autismclient.util.ClickRateTracker.init_V();
+               autismclient.util.ClickRateTracker.recordLeftClick();
             }
 
             this.init_aa_CachePool.init_V_Str("whiff");
@@ -2197,7 +2197,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
                while (this.init_aa_CachePool.init_Z()) {
                   Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-                  autismclient.util.ClickRateTracker.init_V();
+                  autismclient.util.ClickRateTracker.recordLeftClick();
                   this.init_aa_CachePool.init_V_Str(nearMiss ? "nearMiss" : "poke");
                }
 
@@ -2262,7 +2262,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init_Z_Player_2(Player target, RotationMath.Rotation look, Vec3 sentPosition) {
-      if (!this.init_cj.init_Z_LivingEntity(target)) {
+      if (!this.init_cj.isTracking(target)) {
          return true;
       }
 
@@ -2712,7 +2712,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                Compat263.piercingAttack(MC.gameMode, piercing);
                autismclient.util.RecentCombatTracker.init(MC.player, target);
                Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-               autismclient.util.ClickRateTracker.init_V();
+               autismclient.util.ClickRateTracker.recordLeftClick();
                dispatched.run();
                return true;
             }
@@ -2740,7 +2740,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                }
 
                Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-               autismclient.util.ClickRateTracker.init_V();
+               autismclient.util.ClickRateTracker.recordLeftClick();
                if (MC.gameMode.isSpectator()) {
                   dispatched.run();
                }
@@ -2889,7 +2889,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private double write_D() {
-      return autismclient.util.AttackReachHelper.init_D(MC.player);
+      return autismclient.util.AttackReachHelper.maxReach(MC.player);
    }
 
    private double update_D() {
@@ -3257,7 +3257,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.read_LivingEntity = null;
       this.flags = this.level = -2147483648;
       if (!AutismLiteVariant.enabled()) {
-         autismclient.util.CombatInteractionController.init_V();
+         autismclient.util.CombatInteractionController.reset();
       }
 
       this.load_V_Z_2(this.poll_Z_4());
@@ -3289,7 +3289,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.tick_I = -1;
       this.run_D = 0.0 / 0.0;
       this.run_I = -1;
-      this.init_cj.init_V();
+      this.init_cj.reset();
       this.init_Z = false;
       this.get_I = 1000;
       this.add_I = 1000;
@@ -3348,7 +3348,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       private String init_Str = "";
 
       Inner_CachePool() {
-         this.init_DataUtil.init_V_D(2.0);
+         this.init_DataUtil.setSpeedMultiplier(2.0);
          this.sync();
       }
 
@@ -3390,7 +3390,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
       void init_V_J(long now) {
          if (KillAuraModule.this.init_h != null) {
-            this.init_DataUtil.init_V_DataUtil_ConfigSto(KillAuraModule.this.init_h.init_DataUtil_ConfigSto());
+            this.init_DataUtil.setPersonality(KillAuraModule.this.init_h.init_DataUtil_ConfigSto());
             autismclient.util.clicker.ClickProfile profile = KillAuraModule.this.init_h.profile();
             this.init_aa_TaskQueue.init_I = (profile.read > 20.000000001 ? 2 : 1) + (KillAuraModule.this.pop_Z_2() ? 1 : 0);
             if (KillAuraModule.this.pop_Z_2()) {
@@ -3422,7 +3422,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       private int load_I() {
-         return SprintStateTracker.init_Z() ? 1 : 2;
+         return SprintStateTracker.isServerSprinting() ? 1 : 2;
       }
 
       void load(String why) {
@@ -3518,7 +3518,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             if (this.init_I > 0) {
                return 0;
             } else {
-               long nanos = this.init_DataUtil.init_J_J(System.nanoTime());
+               long nanos = this.init_DataUtil.nextClickNanos(System.nanoTime());
                if (nanos == 9223372036854775807L) {
                   return this.init_Z ? 1 : 20;
                } else {

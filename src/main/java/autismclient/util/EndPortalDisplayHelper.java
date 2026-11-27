@@ -9,7 +9,7 @@ public final class EndPortalDisplayHelper {
    }
 
    public static boolean init(Vec3 camera, Vec3 target, int radius) {
-      if (StrongholdTriangulator.init_Z_Vec3(camera) && StrongholdTriangulator.init_Z_Vec3(target) && radius >= 1 && radius <= 46340) {
+      if (StrongholdTriangulator.isValidPoint(camera) && StrongholdTriangulator.isValidPoint(target) && radius >= 1 && radius <= 46340) {
          int cx = (int)Math.floor(camera.x) >> 4;
          int cz = (int)Math.floor(camera.z) >> 4;
          int tx = (int)Math.floor(target.x) >> 4;
@@ -21,7 +21,7 @@ public final class EndPortalDisplayHelper {
    }
 
    public static EndPortalDisplayHelper.Inner_DataUtil init(Vec3 camera, Vec3 target, double minY, double maxY) {
-      if (StrongholdTriangulator.init_Z_Vec3(camera) && StrongholdTriangulator.init_Z_Vec3(target) && Double.isFinite(minY) && Double.isFinite(maxY) && !(maxY <= minY)) {
+      if (StrongholdTriangulator.isValidPoint(camera) && StrongholdTriangulator.isValidPoint(target) && Double.isFinite(minY) && Double.isFinite(maxY) && !(maxY <= minY)) {
          double dx = target.x - camera.x;
          double dz = target.z - camera.z;
          return dx * dx + dz * dz < 4.0 ? null : new EndPortalDisplayHelper.Inner_DataUtil(dx, dz, minY - camera.y, maxY - camera.y, 0.12, 0.7);
@@ -40,7 +40,7 @@ public final class EndPortalDisplayHelper {
    }
 
    public static String init(Vec3 target, boolean observed, boolean estimated) {
-      if (StrongholdTriangulator.init_Z_Vec3(target) && (observed || estimated)) {
+      if (StrongholdTriangulator.isValidPoint(target) && (observed || estimated)) {
          long x = (long)Math.floor(target.x);
          long z = (long)Math.floor(target.z);
          return observed ? x + ", " + (long)Math.floor(target.y) + ", " + z : x + ", " + z;
@@ -50,8 +50,8 @@ public final class EndPortalDisplayHelper {
    }
 
    public static String init(Vec3 player, Vec3 target, boolean observed, boolean estimated) {
-      if (StrongholdTriangulator.init_Z_Vec3(player) && StrongholdTriangulator.init_Z_Vec3(target) && (observed || estimated)) {
-         double distance = observed ? player.distanceTo(target) : StrongholdTriangulator.init_D_Vec3_Vec3(player, target);
+      if (StrongholdTriangulator.isValidPoint(player) && StrongholdTriangulator.isValidPoint(target) && (observed || estimated)) {
+         double distance = observed ? player.distanceTo(target) : StrongholdTriangulator.horizontalDistance(player, target);
          return Double.isFinite(distance) ? Math.round(distance) + " m" : "";
       } else {
          return "";

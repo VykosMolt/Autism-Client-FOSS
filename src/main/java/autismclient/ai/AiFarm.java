@@ -1013,7 +1013,7 @@ final class AiFarm {
 
             boolean load(BlockPos pos) {
                return this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) <= 25.0
-                  && autismclient.util.InteractionTargetRef.init_Z(this.init_Minecraft, pos);
+                  && autismclient.util.InteractionTargetRef.isInReach(this.init_Minecraft, pos);
             }
 
             boolean read(BlockPos pos) {
@@ -1448,7 +1448,7 @@ final class AiFarm {
                BlockPos next = ground.offset(dx, 0, dz);
                if (seen.add(next.asLong())
                   && AiTerrain.isLoaded(mc.level, next)
-                  && autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(next))
+                  && autismclient.util.FarmCropCatalog.canGrowOn(crop, mc.level.getBlockState(next))
                   && (mc.level.getBlockState(next.above()).isAir() || mc.level.getBlockState(next.above()).is(crop))) {
                   queue.add(next);
                }

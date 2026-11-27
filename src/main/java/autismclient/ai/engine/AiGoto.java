@@ -302,16 +302,16 @@ public final class AiGoto {
          }
       } else if (var0.has("waypoint")) {
          String var11 = AiJson.getString(var0, "waypoint", "").trim();
-         AutismWaypoints var14 = AutismWaypoints.init_AutismWaypoints();
+         AutismWaypoints var14 = AutismWaypoints.getInstance();
          String var16 = autismclient.util.AuditWaypointScope.current(var1);
-         AutismWaypoints.Waypoint var6 = var14.init_AutismWaypoints_Wa(var16, var11);
+         AutismWaypoints.Waypoint var6 = var14.find(var16, var11);
          if (var6 != null) {
             return new BlockPos(var6.x(), var6.y(), var6.z());
          }
 
          ArrayList<String> var7 = new ArrayList<>();
 
-         for (AutismWaypoints.Waypoint var9 : var14.init_List_Str(var16)) {
+         for (AutismWaypoints.Waypoint var9 : var14.list(var16)) {
             var7.add(var9.name());
          }
 

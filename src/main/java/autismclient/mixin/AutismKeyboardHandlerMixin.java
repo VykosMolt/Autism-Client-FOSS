@@ -131,14 +131,14 @@ public class AutismKeyboardHandlerMixin {
    @Inject(method = "getClipboard", at = @At("HEAD"), cancellable = true)
    private void autism$linuxClipboardGet(CallbackInfoReturnable<String> cir) {
       if (Util.getPlatform() == OS.LINUX) {
-         cir.setReturnValue(SystemClipboardHelper.init_Str());
+         cir.setReturnValue(SystemClipboardHelper.getText());
       }
    }
 
    @Inject(method = "setClipboard", at = @At("HEAD"), cancellable = true)
    private void autism$linuxClipboardSet(String text, CallbackInfo ci) {
       if (Util.getPlatform() == OS.LINUX) {
-         SystemClipboardHelper.init_V(text);
+         SystemClipboardHelper.setText(text);
          ci.cancel();
       }
    }

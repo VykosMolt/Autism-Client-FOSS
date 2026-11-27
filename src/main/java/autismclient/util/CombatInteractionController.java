@@ -116,11 +116,11 @@ public final class CombatInteractionController {
       int tick = AutismSessionState.getInstance().getClientTick();
       if (open() && load_Z(mc) && !load()) {
          if (init_LocalPlayer != null && (init_LocalPlayer != mc.player || init_ClientPacketListen != mc.getConnection() || init_ClientLevel != mc.level)) {
-            init_V();
+            reset();
          }
 
          if (autismclient.modules.KillAuraModule.init_Z_31()) {
-            init_V();
+            reset();
             return false;
          }
 
@@ -131,7 +131,7 @@ public final class CombatInteractionController {
                return false;
             }
 
-            init_V();
+            reset();
          }
 
          if (edge && !init_Z) {
@@ -203,7 +203,7 @@ public final class CombatInteractionController {
                boolean ready = tick > read_I && written != null && init_Z(mc, written);
                write_V(mc);
                if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : read_ce_DataUtil, init_q_DataUtil, ready)) {
-                  init_V();
+                  reset();
                   return false;
                }
 
@@ -227,7 +227,7 @@ public final class CombatInteractionController {
                }
 
                if (!SilentRotationManager.snapKillAuraRotation(read_ce_DataUtil)) {
-                  init_V();
+                  reset();
                   return false;
                }
             }
@@ -235,11 +235,11 @@ public final class CombatInteractionController {
             init_ce_DataUtil = SilentRotationManager.getCurrentRotation();
             return true;
          } else {
-            init_V();
+            reset();
             return false;
          }
       } else {
-         init_V();
+         reset();
          return false;
       }
    }
@@ -267,7 +267,7 @@ public final class CombatInteractionController {
          && AutismSessionState.getInstance().getClientTick() > read_I;
    }
 
-   public static void init_V(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       if (mc.options != null && open() && load_Z(mc)) {
          if (autismclient.modules.KillAuraModule.init_Z_31()) {
             sync_Z = false;
@@ -320,7 +320,7 @@ public final class CombatInteractionController {
       }
    }
 
-   public static void load_V(Minecraft mc) {
+   public static void releaseUse(Minecraft mc) {
       if (write_Z && mc.options != null) {
          KeyMappingControl.of(mc.options.keyUse).autism$resetPressedState();
       }
@@ -345,7 +345,7 @@ public final class CombatInteractionController {
       }
    }
 
-   public static CombatInteractionController.Inner_DataUtil init_ListPool_DataUtil(Minecraft mc) {
+   public static CombatInteractionController.Inner_DataUtil frame(Minecraft mc) {
       int tick = AutismSessionState.getInstance().getClientTick();
       if (!load() && !sync_Z && load_Z(mc) && update_I != tick) {
          if (!close() || update_Z(mc) && !init(tick)) {
@@ -492,7 +492,7 @@ public final class CombatInteractionController {
          init_AutismKeyMappingAc(mc).autism$setClickCount(0);
       }
 
-      init_V();
+      reset();
       init_LocalPlayer = mc.player;
       init_ClientPacketListen = mc.getConnection();
       init_ClientLevel = mc.level;
@@ -573,7 +573,7 @@ public final class CombatInteractionController {
       }
    }
 
-   public static void init_V() {
+   public static void reset() {
       load_Z = false;
       init_Z = false;
       init_ce_DataUtil = null;

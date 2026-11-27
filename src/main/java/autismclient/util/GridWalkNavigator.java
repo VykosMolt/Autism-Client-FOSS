@@ -116,7 +116,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   public static double init_D_BlockPos(BlockPos target) {
+   public static double pathCost(BlockPos target) {
       if (target != null && init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.player != null && !write(target)) {
          int now = AutismSessionState.getInstance().getClientTick();
          if (value != now) {
@@ -148,7 +148,7 @@ public final class GridWalkNavigator {
       return hit.getType() == Type.MISS || hit.getBlockPos().equals(target);
    }
 
-   public static void init_V() {
+   public static void reset() {
       load();
       update_HashMap.clear();
       sync_HashMap.clear();
@@ -402,7 +402,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   public static BlockPos init_BlockPos() {
+   public static BlockPos nextNode() {
       if (init_BlockPos == null) {
          return null;
       } else if (prev < init_ArrayList.size()) {

@@ -148,7 +148,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void load_V_4() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(new LoginPasswordScreen(this, JoinMacroController.init_Map(), updated -> {
+         this.minecraft.gui.setScreen(new LoginPasswordScreen(this, JoinMacroController.formValues(), updated -> {
             if (!JoinMacroController.init(updated)) {
                bi.write("Secure encryption is unavailable; values were not saved.");
             }
@@ -168,14 +168,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          methodOptions.add(t.load());
       }
 
-      int methodSel = JoinMacroController.init_aA_StreamUtil().ordinal();
+      int methodSel = JoinMacroController.timing().ordinal();
       int dropdownX = x + this.read_I_2() + 8;
       int dropdownW = this.init_I_List(methodOptions);
       this.init_SyncManager = this.init_SyncManager_SyncManager(
          this.init_SyncManager, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> JoinMacroController.init(timings[Math.max(0, Math.min(idx, timings.length - 1))])
       );
       this.read_List.add(this.init_SyncManager);
-      boolean keep = JoinMacroController.init_Z();
+      boolean keep = JoinMacroController.keepEnabled();
       this.init_V_I(
          dropdownX + dropdownW + 2,
          y,
@@ -184,7 +184,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          keep ? "Stays Enabled" : "Clears After",
          keep ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
          true,
-         () -> JoinMacroController.load(!JoinMacroController.init_Z())
+         () -> JoinMacroController.load(!JoinMacroController.keepEnabled())
       );
       int triggerRowY = this.clear();
       autismclient.gui.f.b.k.init(
@@ -196,7 +196,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
       for (int i = 0; i < triggerOpts.length; i++) {
          triggerLabels.add(this.init_Str_aA_CachePool(triggerOpts[i]));
-         if (triggerOpts[i] == JoinMacroController.init_aA_CachePool()) {
+         if (triggerOpts[i] == JoinMacroController.trigger()) {
             triggerSel = i;
          }
       }
@@ -237,14 +237,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int maxWidth) {
       int line = 12;
-      String selected = JoinMacroController.init_Str();
+      String selected = JoinMacroController.macroName();
       if (selected.isBlank()) {
          autismclient.gui.f.b.k.init(
             graphics, this.font, "Click a macro to select it.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, x, this.init_I_I_I_2(y, line), false
          );
       } else {
          String selectedLine = "Selected: " + selected;
-         String modeLine = JoinMacroController.load_Str();
+         String modeLine = JoinMacroController.summary();
          if (!this.init_Z_I(maxWidth)) {
             autismclient.gui.f.b.k.init(
                graphics, this.font, selectedLine + "  " + modeLine, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.open, x, this.init_I_I_I_2(y, line), false
@@ -275,12 +275,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private boolean init_Z_I(int maxWidth) {
-      String selected = JoinMacroController.init_Str();
+      String selected = JoinMacroController.macroName();
       if (selected.isBlank()) {
          return false;
       }
 
-      String combined = "Selected: " + selected + "  " + JoinMacroController.load_Str();
+      String combined = "Selected: " + selected + "  " + JoinMacroController.summary();
       return autismclient.gui.f.b.k.init(this.font, combined, autismclient.gui.f.a.DataUtil.init, 0) > maxWidth;
    }
 
@@ -311,7 +311,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, rowX + 8, this.init_I_I_I_2(this.size(), rowH), false
          );
       } else {
-         String selected = JoinMacroController.init_Str();
+         String selected = JoinMacroController.macroName();
          int max = Math.min(this.init_List.size(), this.read_I + visibleRows);
 
          for (int i = this.read_I; i < max; i++) {
@@ -325,7 +325,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
                   autismclient.gui.f.UiHelper.init(graphics, this.font, mouseX, mouseY),
                   rowBounds,
                   row.init_cY_DataUtil.init_Str(),
-                  row.init_cY_DataUtil.load_Z(),
+                  row.init_cY_DataUtil.isFolder(),
                   hovered
                );
             } else {
@@ -439,13 +439,13 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          if (rowIndex >= 0) {
             JoinMacroScreen.Inner_StreamUtil row = this.init_List.get(rowIndex);
             if (row.init_cY_DataUtil.init_Z()) {
-               MacroLibraryManager.getInstance().toggleFolderCollapsed(row.init_cY_DataUtil.load_Str());
+               MacroLibraryManager.getInstance().toggleFolderCollapsed(row.init_cY_DataUtil.folderName());
                this.write_V_2();
                return true;
             }
 
-            String selected = JoinMacroController.init_Str();
-            JoinMacroController.init_V(row.init_Str.equalsIgnoreCase(selected) ? "" : row.init_Str);
+            String selected = JoinMacroController.macroName();
+            JoinMacroController.setMacroName(row.init_Str.equalsIgnoreCase(selected) ? "" : row.init_Str);
             return true;
          }
       }
@@ -559,7 +559,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.getInstance().getFolderEntries(query)) {
          this.init_List
             .add(
-               new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.init_aM().actions != null ? item.init_aM().actions.size() : 0, item)
+               new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.macro().actions != null ? item.macro().actions.size() : 0, item)
             );
       }
 
@@ -571,16 +571,16 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private AutismMacro init_aM() {
-      String selected = JoinMacroController.init_Str();
+      String selected = JoinMacroController.macroName();
       return selected.isBlank() ? null : MacroLibraryManager.getInstance().findByName(selected);
    }
 
    private void init_V_aM_2(AutismMacro macro) {
-      AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+      AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.getInstance();
       OverlayManager.getInstance().register(editor, AutismOverlay.RenderLayer.HOST_SCREEN);
-      editor.init_V_aM_Consumer_2(macro, saved -> {
+      editor.openForJoinMacro(macro, saved -> {
          if (saved != null && saved.name != null && !saved.name.isBlank()) {
-            JoinMacroController.init_V(saved.name);
+            JoinMacroController.setMacroName(saved.name);
             bi.init("Join macro selected: " + saved.name, -10035062);
          }
       });
@@ -766,7 +766,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private JoinMacroController.Inner_CachePool[] init_aA_CachePoolArr() {
-      return JoinMacroController.init_Z()
+      return JoinMacroController.keepEnabled()
          ? new JoinMacroController.Inner_CachePool[]{
             JoinMacroController.Inner_CachePool.ANY,
             JoinMacroController.Inner_CachePool.SECOND,
@@ -786,7 +786,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private String init_Str_aA_CachePool(JoinMacroController.Inner_CachePool triggerJoin) {
-      return triggerJoin.init_Str_Z(JoinMacroController.init_Z());
+      return triggerJoin.label(JoinMacroController.keepEnabled());
    }
 
    private record Inner_DataUtil(

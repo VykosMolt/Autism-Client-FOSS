@@ -348,14 +348,14 @@ final class AiPlanMesh implements AutoCloseable {
                      BlockState state = this.init_BlockStateArr[i];
                      if (!state.isAir()) {
                         autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = init_DataUtil_StreamUti_BlockState(state);
-                        if (!model.init_List().isEmpty()) {
+                        if (!model.faces().isEmpty()) {
                            BlockPos at = this.posAt(i);
                            float ox = at.getX() - this.init_BlockPos.getX() - section.init_BlockPos.getX();
                            float oy = at.getY() - this.init_BlockPos.getY() - section.init_BlockPos.getY();
                            float oz = at.getZ() - this.init_BlockPos.getZ() - section.init_BlockPos.getZ();
                            boolean proud = classification == -20923 || classification == -885830;
                            drawn[0]++;
-                           Iterator i$ = model.init_List().iterator();
+                           Iterator i$ = model.faces().iterator();
 
                            while (true) {
                               autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face;
@@ -367,7 +367,7 @@ final class AiPlanMesh implements AutoCloseable {
                                  }
 
                                  face = (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil)i$.next();
-                                 cull = face.init_Direction();
+                                 cull = face.cullFace();
                                  if (cull == null) {
                                     break;
                                  }
@@ -378,11 +378,11 @@ final class AiPlanMesh implements AutoCloseable {
                                     || next == null && this.init_Predicate != null && this.init_Predicate.test(at.relative(cull).subtract(this.init_BlockPos))
                               );
 
-                              BlockTintSource tintSource = face.init_I() < 0 ? null : mc.getBlockColors().getTintSource(state, face.init_I());
+                              BlockTintSource tintSource = face.tintIndex() < 0 ? null : mc.getBlockColors().getTintSource(state, face.tintIndex());
                               int tint = tintSource == null ? 16777215 : tintSource.colorInWorld(state, world, at);
                               float shade = face.load() == null ? 1.0F : world.cardinalLighting().byFace(face.load());
                               int color = AiVisualization.ghostColor(classification, tint, shade, alpha);
-                              float[] data = face.init_FArr();
+                              float[] data = face.vertices();
 
                               for (int v = 0; v < 4; v++) {
                                  int k = v * 5;
@@ -412,7 +412,7 @@ final class AiPlanMesh implements AutoCloseable {
 
    static autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil init_DataUtil_StreamUti_BlockState(BlockState state) {
       autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(state);
-      if (!model.init_List().isEmpty()) {
+      if (!model.faces().isEmpty()) {
          return model;
       }
 
@@ -508,7 +508,7 @@ final class AiPlanMesh implements AutoCloseable {
       this.read_List = List.of();
 
       for (AiPlanMesh.Inner_BufferHelper section : this.load_List) {
-         section.init_P.init_V();
+         section.init_P.release();
       }
    }
 

@@ -26,8 +26,8 @@ public final class VillagerDupeModule extends Module {
    @Override
    public void onEnable() {
       this.init_V_32();
-      autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore ready = autismclient.util.villagerdupe.VillagerDupeDriver.init_DataUtil()
-         .init_DataUtil_ConfigSto_Minecraft_DataUtil_CachePool(MC, this.init_DataUtil_CachePool());
+      autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore ready = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance()
+         .checkReady(MC, this.init_DataUtil_CachePool());
       if (ready != null) {
          this.init(ready);
       }
@@ -35,7 +35,7 @@ public final class VillagerDupeModule extends Module {
 
    @Override
    public void onDisable() {
-      autismclient.util.villagerdupe.VillagerDupeDriver.init_DataUtil().read_V_Minecraft(MC);
+      autismclient.util.villagerdupe.VillagerDupeDriver.getInstance().restoreSelectedSlot(MC);
       if (this.bool("restore-slot") && this.init_I >= 0 && MC.player != null && MC.level != null && !aD.read_Z()) {
          MC.player.getInventory().setSelectedSlot(this.init_I);
       }
@@ -55,10 +55,10 @@ public final class VillagerDupeModule extends Module {
             this.init_I = MC.player.getInventory().getSelectedSlot();
          }
 
-         autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = autismclient.util.villagerdupe.VillagerDupeDriver.init_DataUtil()
-            .init_DataUtil_BufferHel_Minecraft_DataUtil_CachePool(MC, this.init_DataUtil_CachePool());
-         this.load_I = this.load_I + result.init_I();
-         this.init(result.init_DataUtil_ConfigSto());
+         autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance()
+            .step(MC, this.init_DataUtil_CachePool());
+         this.load_I = this.load_I + result.count();
+         this.init(result.status());
       }
    }
 
@@ -70,7 +70,7 @@ public final class VillagerDupeModule extends Module {
          && this.init_DataUtil_ConfigSto != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN) {
          return this.load_I > 0 ? Integer.toString(this.load_I) : "";
       } else {
-         return this.init_DataUtil_ConfigSto.init_Str();
+         return this.init_DataUtil_ConfigSto.label();
       }
    }
 
@@ -83,9 +83,9 @@ public final class VillagerDupeModule extends Module {
          if (toast && next != this.load_DataUtil_ConfigSto) {
             this.load_DataUtil_ConfigSto = next;
             if (next.init_Z()) {
-               autismclient.util.bi.write(next.load_Str());
+               autismclient.util.bi.write(next.detail());
             } else {
-               autismclient.util.bi.read(next.load_Str());
+               autismclient.util.bi.read(next.detail());
             }
          }
       }
@@ -100,7 +100,7 @@ public final class VillagerDupeModule extends Module {
 
    private autismclient.util.villagerdupe.VillagerDupeDriver.CachePool init_DataUtil_CachePool() {
       return new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
-         autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(this.choice("filter")),
+         autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(this.choice("filter")),
          this.bool("traders"),
          this.bool("auto-emerald"),
          this.bool("auto-shears"),

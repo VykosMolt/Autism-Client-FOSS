@@ -25,7 +25,7 @@ final class ProfileServerIconCache {
    ServerData serverFor(String pattern) {
       if (pattern != null && !pattern.isBlank() && !pattern.equals("*")) {
          ServerData current = Minecraft.getInstance().getCurrentServer();
-         boolean currentMatches = current != null && AutismProfileManager.load_Z_Str_Str(current.ip, pattern);
+         boolean currentMatches = current != null && AutismProfileManager.matchesAddress(current.ip, pattern);
          return currentMatches && this.hasIcon(current)
             ? current
             : this.init_Map.computeIfAbsent(pattern, key -> Optional.ofNullable(this.load(key))).orElse(currentMatches ? current : null);
@@ -47,7 +47,7 @@ final class ProfileServerIconCache {
 
       for (int i = 0; i < this.init_ServerList.size(); i++) {
          ServerData server = this.init_ServerList.get(i);
-         if (AutismProfileManager.load_Z_Str_Str(server.ip, pattern)) {
+         if (AutismProfileManager.matchesAddress(server.ip, pattern)) {
             if (this.hasIcon(server)) {
                return server;
             }

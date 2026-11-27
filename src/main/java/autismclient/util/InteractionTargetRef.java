@@ -29,7 +29,7 @@ public final class InteractionTargetRef {
       this.init_Z = insideBlock;
    }
 
-   public static InteractionTargetRef init_E_BlockPos(BlockPos pos) {
+   public static InteractionTargetRef ofBlock(BlockPos pos) {
       return pos == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.BLOCK, pos, "", InteractionHand.MAIN_HAND, null, null, false);
    }
 
@@ -40,20 +40,20 @@ public final class InteractionTargetRef {
    }
 
    public static InteractionTargetRef init(Entity entity, InteractionHand hand) {
-      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT, null, init_Str_Entity(entity), hand, null, null, false);
+      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT, null, refFor(entity), hand, null, null, false);
    }
 
    public static InteractionTargetRef init(Entity entity, InteractionHand hand, Vec3 hitPos) {
-      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT, null, init_Str_Entity(entity), hand, hitPos, null, false);
+      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT, null, refFor(entity), hand, hitPos, null, false);
    }
 
-   public static InteractionTargetRef init_E_Str(String entityRef) {
+   public static InteractionTargetRef ofEntityRef(String entityRef) {
       return entityRef != null && !entityRef.isBlank()
          ? new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT, null, entityRef.trim(), InteractionHand.MAIN_HAND, null, null, false)
          : null;
    }
 
-   public static String init_Str_Entity(Entity entity) {
+   public static String refFor(Entity entity) {
       if (entity == null) {
          return "";
       }
@@ -68,7 +68,7 @@ public final class InteractionTargetRef {
       return this.init_E_DataUtil;
    }
 
-   public BlockPos init_BlockPos() {
+   public BlockPos blockPos() {
       return this.init_BlockPos;
    }
 
@@ -76,11 +76,11 @@ public final class InteractionTargetRef {
       return this.init_Str;
    }
 
-   public boolean init_Z() {
+   public boolean isBlock() {
       return this.init_E_DataUtil == InteractionTargetRef.Inner_DataUtil.BLOCK;
    }
 
-   public boolean init_Z_Minecraft(Minecraft mc) {
+   public boolean interact(Minecraft mc) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -119,18 +119,18 @@ public final class InteractionTargetRef {
       }
    }
 
-   public boolean load_Z(Minecraft mc) {
+   public boolean isPresent(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
       } else if (this.init_E_DataUtil != InteractionTargetRef.Inner_DataUtil.BLOCK) {
          Entity entity = this.load_Entity(mc);
          return init(mc, entity);
       } else {
-         return this.init_BlockPos != null && init_Z(mc, this.init_BlockPos) && this.init_BlockHitResult_Minecraft(mc) != null;
+         return this.init_BlockPos != null && isInReach(mc, this.init_BlockPos) && this.init_BlockHitResult_Minecraft(mc) != null;
       }
    }
 
-   public Entity init_Entity_Minecraft(Minecraft mc) {
+   public Entity resolveEntity(Minecraft mc) {
       return this.init_E_DataUtil == InteractionTargetRef.Inner_DataUtil.BLOCK ? null : this.load_Entity(mc);
    }
 
@@ -166,7 +166,7 @@ public final class InteractionTargetRef {
       }
    }
 
-   public static boolean init_Z(Minecraft mc, BlockPos blockPos) {
+   public static boolean isInReach(Minecraft mc, BlockPos blockPos) {
       if (mc != null && mc.player != null && blockPos != null) {
          double reach = Math.max(4.5, mc.player.blockInteractionRange());
          return mc.player.distanceToSqr(Vec3.atCenterOf(blockPos)) <= reach * reach;

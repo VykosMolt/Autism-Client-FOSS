@@ -33,7 +33,7 @@ public final class BoundedPositionCache<T> {
       return true;
    }
 
-   public T init_Obj(long position) {
+   public T get(long position) {
       return this.init_Map.get(position);
    }
 
@@ -41,11 +41,11 @@ public final class BoundedPositionCache<T> {
       this.init_Map.remove(position);
    }
 
-   public Collection<T> init_Collection() {
+   public Collection<T> entries() {
       return this.init_Map.values();
    }
 
-   public int init_I() {
+   public int size() {
       return this.init_Map.size();
    }
 
@@ -53,7 +53,7 @@ public final class BoundedPositionCache<T> {
       return this.init_Map.isEmpty();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_Map.clear();
    }
 }

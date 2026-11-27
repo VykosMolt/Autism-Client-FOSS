@@ -1185,7 +1185,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation wire) {
-      double band = autismclient.util.RotationStreamPlanner.init_D_D(RotationMath.gcdStep());
+      double band = autismclient.util.RotationStreamPlanner.pitchMargin(RotationMath.gcdStep());
       if (RotationMath.angularDistance(wire, plan.init_ce_DataUtil()) > band * 2.0) {
          return false;
       }

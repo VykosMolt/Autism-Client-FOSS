@@ -219,12 +219,12 @@ public final class OreSimEspScanner {
    static Long init_Long(Module xray) {
       autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(xray == null ? null : xray.value("oresim-seed"));
       init_BufferHelper_DataU = parsed;
-      return parsed.init_Long();
+      return parsed.seed();
    }
 
    public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedInfo(Module xray) {
       init_Long(xray);
-      return init_BufferHelper_DataU.init_BufferHelper_Strea();
+      return init_BufferHelper_DataU.status();
    }
 
    public static Long seed(Module xray) {
@@ -254,7 +254,7 @@ public final class OreSimEspScanner {
             init_Z = true;
             init_Long = parsedSeed;
             load_J = now + 400000000L;
-            autismclient.util.oresim.OreSimEngine.init_V();
+            autismclient.util.oresim.OreSimEngine.reset();
          } else if (parsedSeed != null && mask != 0 && now >= load_J) {
             autismclient.util.oresim.OreSimEngine.init(level, player.blockPosition(), parsedSeed, write_I(xray), mask);
             if (++open >= 4) {
@@ -262,7 +262,7 @@ public final class OreSimEspScanner {
                load(xray, level, player);
             }
          } else {
-            autismclient.util.oresim.OreSimEngine.init_V();
+            autismclient.util.oresim.OreSimEngine.reset();
          }
       } else {
          autismclient.util.oresim.OreSimEngine.load_V();
@@ -284,8 +284,8 @@ public final class OreSimEspScanner {
          double maxDistSq = 25.0;
          MutableBlockPos cursor = new MutableBlockPos();
          int[] rays = new int[]{0};
-         autismclient.util.oresim.OreSimEngine.init_V_BlockPos(player.blockPosition(), 5, (stateId, packed) -> {
-            BlockState predicted = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(stateId);
+         autismclient.util.oresim.OreSimEngine.forEachPosition(player.blockPosition(), 5, (stateId, packed) -> {
+            BlockState predicted = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.stateById(stateId);
             if (predicted == null) {
                return false;
             } else {
@@ -323,11 +323,11 @@ public final class OreSimEspScanner {
    }
 
    static long init(Module xray, ClientLevel level) {
-      return init_Z(xray) ? (long)autismclient.util.oresim.OreSimEngine.read_I() << 1 | 1L : (long)EspChunkWorker.revision() << 1;
+      return init_Z(xray) ? (long)autismclient.util.oresim.OreSimEngine.revision() << 1 | 1L : (long)EspChunkWorker.revision() << 1;
    }
 
    private static boolean init(OreSimEspScanner.Inner_StreamUtil selection, int stateId) {
-      BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(stateId);
+      BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.stateById(stateId);
       return state != null && selection.init_Set().contains(state.getBlock());
    }
 
@@ -390,7 +390,7 @@ public final class OreSimEspScanner {
          }
 
          for (int i = 0; i < count; i++) {
-            autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_CachePool_DataUtil(init_IArr[i]);
+            autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.kindById(init_IArr[i]);
             emit.accept(init(init_JArr[i]), kind == null ? -3355444 : colors[kind.ordinal()]);
          }
       }
@@ -610,7 +610,7 @@ public final class OreSimEspScanner {
                set = 0;
             } else {
                LongOpenHashSet predicted = new LongOpenHashSet();
-               autismclient.util.oresim.OreSimEngine.init_V_BlockPos_2(center, 6, predicted);
+               autismclient.util.oresim.OreSimEngine.collectPositions(center, 6, predicted);
                int emitted = 0;
                int skippedPredicted = 0;
                int[] rays = new int[]{0};
@@ -694,26 +694,26 @@ public final class OreSimEspScanner {
       if (xray != null && xray.isEnabled() && init_Z(xray)) {
          boolean shaderCullMode = !load_Z(xray) && am.pop();
          Long parsedSeed = init_Long(xray);
-         if (init_BufferHelper_DataU.init_BufferHelper_Strea() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
+         if (init_BufferHelper_DataU.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";
          } else if (init_I(xray) == 0) {
             return "no ores";
-         } else if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
+         } else if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
             return "unsupported dimension";
-         } else if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
+         } else if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
             return "unverified worldgen";
-         } else if (autismclient.util.oresim.OreSimEngine.read_Z()) {
+         } else if (autismclient.util.oresim.OreSimEngine.hasError()) {
             return "worldgen failed";
          } else {
-            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
+            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.progress();
             if (progress.load() > 0) {
                return init(progress);
             } else if (shaderCullMode) {
                return "Shader cull mode";
             } else {
-               return autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.LOADING_CONTEXT
+               return autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.LOADING_CONTEXT
                   ? "loading worldgen"
                   : "waiting";
             }
@@ -724,7 +724,7 @@ public final class OreSimEspScanner {
    }
 
    static String init(autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress) {
-      return progress.init_I() + "/" + progress.load() + " chunks";
+      return progress.done() + "/" + progress.load() + " chunks";
    }
 
    @FunctionalInterface

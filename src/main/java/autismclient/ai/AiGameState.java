@@ -273,7 +273,7 @@ final class AiGameState {
 
          state.add("nearbyBlocks", blocks);
          state.add("activeModules", AiJson.GSON.toJsonTree(autismclient.modules.al.load_List().stream().map(m -> m.id()).toList()));
-         state.add("waypoints", AiJson.GSON.toJsonTree(AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))));
+         state.add("waypoints", AiJson.GSON.toJsonTree(AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc))));
          state.addProperty(
             "observationLimits",
             "Nearby blocks are capped at 48 within 5 blocks horizontally (use game:survey for wider/detail). Entities capped at 20 within 48 blocks; health is living-only, hostile follows game:entities classification (bosses included). Effects capped at 12. Projectiles (capped at 16) are ballistic predictions, not guarantees. Danger is a client-side damage prediction, not a guarantee. Unloaded terrain and remote inventories are unknown."

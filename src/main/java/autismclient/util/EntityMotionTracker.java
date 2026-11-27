@@ -23,7 +23,7 @@ public final class EntityMotionTracker {
          this.load_Vec3 = Vec3.ZERO;
          Arrays.fill(this.init_Vec3Arr, null);
       } else {
-         this.init(target.getId(), init_Vec3_LivingEntity(target), tick);
+         this.init(target.getId(), observedPosition(target), tick);
       }
    }
 
@@ -51,15 +51,15 @@ public final class EntityMotionTracker {
       return this.init_Vec3Arr[slot] != null && this.init_IArr[slot] == wanted ? this.init_Vec3Arr[slot] : this.init_Vec3;
    }
 
-   public void init_V() {
+   public void reset() {
       this.init(null, 0);
    }
 
-   public boolean init_Z_LivingEntity(LivingEntity target) {
+   public boolean isTracking(LivingEntity target) {
       return target != null && this.init_Vec3 != null && target.getId() == this.load_I;
    }
 
-   public Vec3 init_Vec3() {
+   public Vec3 trackedPosition() {
       return this.init_Vec3;
    }
 
@@ -78,7 +78,7 @@ public final class EntityMotionTracker {
       return Mth.wrapDegrees(serverYaw - centerYaw);
    }
 
-   public static Vec3 init_Vec3_LivingEntity(LivingEntity entity) {
+   public static Vec3 observedPosition(LivingEntity entity) {
       if (!AutismLiteVariant.enabled()) {
          Vec3 observed = autismclient.modules.BacktrackModule.backtrackedPosition(entity);
          if (observed != null) {

@@ -10,22 +10,22 @@ public final class CombatAimSpeedController {
    private Object init_Obj;
    private int load;
 
-   public static DoubleSetting init_DoubleSetting() {
+   public static DoubleSetting speedSetting() {
       return new DoubleSetting("rotation-speed-multiplier", "Rotation Speed", 1.0, 0.5, 2.5, 0.1)
          .group("Aim")
          .description("Relative to module default")
          .unit("×");
    }
 
-   public static double init_D(double multiplier) {
+   public static double clampMultiplier(double multiplier) {
       return Math.clamp(Double.isFinite(multiplier) ? multiplier : 1.0, 0.5, 2.5);
    }
 
-   public static float init_F(double scale) {
+   public static float turnCap(double scale) {
       return (float)Math.min(180.0, 72.0 * scale);
    }
 
-   public void init_V() {
+   public void reset() {
       this.init_Obj = null;
       this.init_q_CachePool.reset();
    }
@@ -60,7 +60,7 @@ public final class CombatAimSpeedController {
 
    public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
       if (!owner.equals(SilentRotationManager.getActiveOwnerId()) || SilentRotationManager.isReturningToPlayer()) {
-         this.init_V();
+         this.reset();
       }
 
       SilentRotationManager.requestRotation(owner, priority, goal);
@@ -70,9 +70,9 @@ public final class CombatAimSpeedController {
             this.init_q_CachePool.reset();
             SilentRotationManager.tickPinQuiet(owner, player, true);
          } else {
-            double scale = 2.0 * init_D(speed);
+            double scale = 2.0 * clampMultiplier(speed);
             SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.init_q_CachePool.stepToward(at, goal, yaw, pitch, scale));
-            float cap = init_F(scale);
+            float cap = turnCap(scale);
             SilentRotationManager.tick(owner, player, cap, cap);
          }
       }

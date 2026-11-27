@@ -61,7 +61,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
          this.init_Str = snapshot.revision();
       }
 
-      this.load = AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc)).stream().map(AutismWaypoints.Waypoint::name).toList();
+      this.load = AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc)).stream().map(AutismWaypoints.Waypoint::name).toList();
    }
 
    static String init_Str_Str(String schemaJson) {

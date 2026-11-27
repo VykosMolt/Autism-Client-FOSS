@@ -97,7 +97,7 @@ public final class NameScrapeController {
          LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
          read_I = names.size();
          List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
-         BackgroundTaskExecutor.init_Future_Str_Runnable("namescrape", () -> init(names, connection, self, vectors));
+         BackgroundTaskExecutor.submit("namescrape", () -> init(names, connection, self, vectors));
       }
    }
 

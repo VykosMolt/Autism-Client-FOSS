@@ -30,7 +30,7 @@ public final class GuiDesyncHelper {
 
    private static String init() {
       int keyCode = AutismConfig.getGlobal().keybindLoadGui;
-      return keyCode == -1 ? "GUI stored." : "GUI stored. Press " + AutismKeybindOverlay.init_Str_I_3(keyCode) + " to restore.";
+      return keyCode == -1 ? "GUI stored." : "GUI stored. Press " + AutismKeybindOverlay.keyName(keyCode) + " to restore.";
    }
 
    public static boolean load(Minecraft mc, boolean sendPacket) {

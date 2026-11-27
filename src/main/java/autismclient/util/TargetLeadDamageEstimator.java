@@ -14,8 +14,8 @@ public final class TargetLeadDamageEstimator {
       this.init.init(target, tick);
    }
 
-   public AABB init_AABB_LivingEntity(LivingEntity target, int tick, int horizonTicks, double maxLead) {
-      Vec3 base = this.init.init_Z_LivingEntity(target) ? this.init.init_Vec3() : EntityMotionTracker.init_Vec3_LivingEntity(target);
+   public AABB predictedBox(LivingEntity target, int tick, int horizonTicks, double maxLead) {
+      Vec3 base = this.init.isTracking(target) ? this.init.trackedPosition() : EntityMotionTracker.observedPosition(target);
       AABB box = target.getBoundingBox().move(base.subtract(target.position()));
       if (horizonTicks <= 0) {
          return box;
@@ -32,11 +32,11 @@ public final class TargetLeadDamageEstimator {
    }
 
    public void init() {
-      this.init.init_V();
+      this.init.reset();
    }
 
    public static AABB init(LivingEntity target) {
-      return target.getBoundingBox().move(EntityMotionTracker.init_Vec3_LivingEntity(target).subtract(target.position()));
+      return target.getBoundingBox().move(EntityMotionTracker.observedPosition(target).subtract(target.position()));
    }
 
    public static ExplosionDamageCalculator.DamagePair init(LivingEntity target, Vec3 source, float power, ExplosionDamageCalculator.SimOptions options, AABB targetBox) {

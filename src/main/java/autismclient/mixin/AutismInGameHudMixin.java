@@ -99,7 +99,7 @@ public abstract class AutismInGameHudMixin {
                boolean captureActive = this.hasAnyCaptureSession(shared);
                boolean payloadStudyActive = PayloadStudyTracker.isActive();
                Module hud = activity.init(64L) ? autismclient.modules.al.init_Module_Str("hud") : null;
-               boolean nativeHudVisible = hud != null && AutismHudManager.init_Z_Screen_Module(screen, hud);
+               boolean nativeHudVisible = hud != null && AutismHudManager.isNativeHudVisible(screen, hud);
                boolean esp2dVisible = am.add();
                boolean nametagsVisible = activity.init(128L);
                boolean bedsVisible = activity.init(16384L);
@@ -153,7 +153,7 @@ public abstract class AutismInGameHudMixin {
                      if (captureBanner != null) {
                         hudOccluders.add(
                            new AutismHudManager.HudElementBounds(
-                              "capture_banner", captureBanner.init_I(), captureBanner.load_I(), captureBanner.read_I(), captureBanner.write()
+                              "capture_banner", captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.write()
                            )
                         );
                      }
@@ -162,9 +162,9 @@ public abstract class AutismInGameHudMixin {
                         hudOccluders.add(
                            new AutismHudManager.HudElementBounds(
                               "payload_study_banner",
-                              payloadStudyBanner.init_I(),
-                              payloadStudyBanner.load_I(),
-                              payloadStudyBanner.read_I(),
+                              payloadStudyBanner.x(),
+                              payloadStudyBanner.y(),
+                              payloadStudyBanner.width(),
                               payloadStudyBanner.write()
                            )
                         );
@@ -182,22 +182,22 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (macroRunning) {
-                        int macroHeight = MacroStatusHudRenderer.init_I(MC.font, 172, 10);
+                        int macroHeight = MacroStatusHudRenderer.layoutHeight(MC.font, 172, 10);
                         if (macroHeight > 0) {
                            hudOccluders.add(new AutismHudManager.HudElementBounds("macro_queue", x, y, 172, macroHeight));
                         }
                      }
 
                      if (nativeHudVisible) {
-                        AutismHudManager.init_V_GuiGraphicsExtract_4(context, MC.font, false, null, -1, -1, hudOccluders);
+                        AutismHudManager.render(context, MC.font, false, null, -1, -1, hudOccluders);
                      } else if (antiVanishHudVisible) {
-                        AutismHudManager.init_V_GuiGraphicsExtract_2(context, MC.font, "anti_vanish");
+                        AutismHudManager.renderElement(context, MC.font, "anti_vanish");
                      }
 
                      if (captureBanner != null) {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
-                           NetHelper.init(captureBanner.init_I(), captureBanner.load_I(), captureBanner.read_I(), captureBanner.write()),
+                           NetHelper.init(captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.write()),
                            captureBanner.init_Str(),
                            captureBanner.load_Str(),
                            captureBanner.read_Str()
@@ -207,7 +207,7 @@ public abstract class AutismInGameHudMixin {
                      if (payloadStudyBanner != null) {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
-                           NetHelper.init(payloadStudyBanner.init_I(), payloadStudyBanner.load_I(), payloadStudyBanner.read_I(), payloadStudyBanner.write()),
+                           NetHelper.init(payloadStudyBanner.x(), payloadStudyBanner.y(), payloadStudyBanner.width(), payloadStudyBanner.write()),
                            payloadStudyBanner.init_Str(),
                            payloadStudyBanner.load_Str(),
                            payloadStudyBanner.read_Str()

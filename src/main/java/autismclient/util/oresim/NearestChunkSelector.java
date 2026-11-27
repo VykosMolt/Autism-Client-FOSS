@@ -7,7 +7,7 @@ final class NearestChunkSelector {
    private NearestChunkSelector() {
    }
 
-   static NearestChunkSelector.Inner_DataUtil init_TaskQueue_DataUtil_D(
+   static NearestChunkSelector.Inner_DataUtil select(
       double playerX, double playerZ, int centerChunkX, int centerChunkZ, int radius, LongPredicate completed
    ) {
       NearestChunkSelector.Inner_DataUtil nearest = null;

@@ -7,16 +7,16 @@ public class FarmTrackCheck {
          table.init(i, "cell" + i);
       }
 
-      if (table.init_Obj(4096L) == null) {
+      if (table.get(4096L) == null) {
          fail("position #4097 was rejected at capacity");
       }
 
-      if (table.init_I() != 4096 || table.init_Obj(0L) != null) {
-         fail("oldest position not evicted, size=" + table.init_I());
+      if (table.size() != 4096 || table.get(0L) != null) {
+         fail("oldest position not evicted, size=" + table.size());
       }
 
       table.init(1L, "replaced");
-      if (!"replaced".equals(table.init_Obj(1L)) || table.init_I() != 4096) {
+      if (!"replaced".equals(table.get(1L)) || table.size() != 4096) {
          fail("replacing an existing position changed the size");
       }
 

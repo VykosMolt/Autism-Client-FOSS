@@ -82,7 +82,7 @@ final class OreSimWorkerPool {
       this.read();
    }
 
-   synchronized boolean init_Z() {
+   synchronized boolean isIdle() {
       return this.init_ConfigStore_DataUt == null && this.activeTasks.isEmpty() && this.init_ThreadPoolExecutor.getQueue().isEmpty();
    }
 

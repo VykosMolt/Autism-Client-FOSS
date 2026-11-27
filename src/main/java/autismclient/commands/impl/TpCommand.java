@@ -42,7 +42,7 @@ public final class TpCommand extends Command {
 
          Minecraft mc = Minecraft.getInstance();
          if (mc != null) {
-            for (AutismWaypoints.Waypoint wp : AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))) {
+            for (AutismWaypoints.Waypoint wp : AutismWaypoints.getInstance().list(AuditWaypointScope.current(mc))) {
                String name = wp.name();
                if (name.toLowerCase(Locale.ROOT).startsWith(lower)) {
                   suggestions.suggest(name.contains(" ") ? "\"" + name + "\"" : name);
@@ -75,12 +75,12 @@ public final class TpCommand extends Command {
 
       String scope = AuditWaypointScope.current(mc);
       if (trimmed.length() >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-         return init(AutismWaypoints.init_AutismWaypoints().init_AutismWaypoints_Wa(scope, trimmed.substring(1, trimmed.length() - 1)), args);
+         return init(AutismWaypoints.getInstance().find(scope, trimmed.substring(1, trimmed.length() - 1)), args);
       }
 
       String lower = trimmed.toLowerCase(Locale.ROOT);
       return !lower.equals("stop") && !lower.equals("status") && !lower.equals("reset") && !lower.startsWith("config") && !init_Z(trimmed)
-         ? init(AutismWaypoints.init_AutismWaypoints().init_AutismWaypoints_Wa(scope, trimmed), args)
+         ? init(AutismWaypoints.getInstance().find(scope, trimmed), args)
          : args;
    }
 

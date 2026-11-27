@@ -50,6 +50,6 @@ public abstract class AutismGifEntityRenderMixin {
       SubmitNodeCollector submitNodeCollector,
       CallbackInfo ci
    ) {
-      GifRenderContext.init_V();
+      GifRenderContext.popEntity();
    }
 }

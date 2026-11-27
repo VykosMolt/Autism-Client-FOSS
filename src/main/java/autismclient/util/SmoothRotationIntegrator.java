@@ -15,16 +15,16 @@ public final class SmoothRotationIntegrator {
    private boolean load_Z;
 
    public void init_V() {
-      this.init_V_J(7640891576956012809L);
+      this.reseed(7640891576956012809L);
    }
 
-   public void init_V_J(long seed) {
+   public void reseed(long seed) {
       this.read_J = init_J_J(seed);
-      this.load_V();
+      this.reset();
       this.flush = this.load_D() * 3.141592653589793 * 2.0;
    }
 
-   public void load_V() {
+   public void reset() {
       this.read_D = 0.0;
       this.write = 0.0;
       this.update = 0.0;
@@ -87,7 +87,7 @@ public final class SmoothRotationIntegrator {
          : this.init_dg_DataUtil();
    }
 
-   public SmoothRotationIntegrator.Inner_DataUtil init_dg_DataUtil_F_2(
+   public SmoothRotationIntegrator.Inner_DataUtil step(
       float yawErrorDegrees,
       float pitchErrorDegrees,
       double degreesPerCount,

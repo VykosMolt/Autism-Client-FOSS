@@ -25,7 +25,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.HitResult;
 
 public final class AutoArmorModule extends Module {
-   private static final EquipmentSlot[] init_EquipmentSlotArr = autismclient.util.ArmorEvaluationHelper.init_EquipmentSlotArr;
+   private static final EquipmentSlot[] init_EquipmentSlotArr = autismclient.util.ArmorEvaluationHelper.ARMOR_SLOTS;
    private static final Map<EquipmentSlot, Integer> init_Map = new EnumMap<>(EquipmentSlot.class);
    private int init_I;
    private int load_I = -1;
@@ -277,10 +277,10 @@ public final class AutoArmorModule extends Module {
       for (EquipmentSlot slot : init_EquipmentSlotArr) {
          autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
          if (candidate != null
-            && candidate.init_TaskTimer_StreamUt() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR
-            && (candidate.init_I() < 0 || !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(candidate.init_I(), this.id()))) {
+            && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR
+            && (candidate.inventorySlot() < 0 || !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(candidate.inventorySlot(), this.id()))) {
             ItemStack worn = MC.player.getItemBySlot(slot);
-            if (worn.isEmpty() || !worn.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.load_Z(worn)) {
+            if (worn.isEmpty() || !worn.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(worn)) {
                return new AutoArmorModule.Inner_DataUtil(slot, candidate, worn);
             }
          }
@@ -314,11 +314,11 @@ public final class AutoArmorModule extends Module {
    private boolean init(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate, ItemStack worn) {
       boolean occupied = !worn.isEmpty();
       int armorMenuSlot = init_Map.get(slot);
-      boolean hotbarFast = candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && this.bool("hotbar");
+      boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && this.bool("hotbar");
       if (!occupied) {
-         return hotbarFast ? this.init(armorMenuSlot, candidate.init_I(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
+         return hotbarFast ? this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
       } else if (hotbarFast && this.bool("can-swap-armor")) {
-         return this.init(armorMenuSlot, candidate.init_I(), ContainerInput.SWAP);
+         return this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP);
       } else {
          return MC.player.getInventory().getFreeSlot() >= 0
             ? this.init(armorMenuSlot, 0, ContainerInput.QUICK_MOVE)
@@ -428,7 +428,7 @@ public final class AutoArmorModule extends Module {
    }
 
    private int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-      return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.init_I());
+      return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.inventorySlot());
    }
 
    private autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {
@@ -489,16 +489,16 @@ public final class AutoArmorModule extends Module {
       for (EquipmentSlot slot : init_EquipmentSlotArr) {
          ItemStack worn = MC.player.getItemBySlot(slot);
          if (!worn.isEmpty()
-            && autismclient.util.ArmorEvaluationHelper.init_Z_ItemStack(worn)
-            && autismclient.util.ArmorEvaluationHelper.init_I_ItemStack(worn) <= threshold
-            && !autismclient.util.ArmorEvaluationHelper.load_Z(worn)) {
+            && autismclient.util.ArmorEvaluationHelper.isArmor(worn)
+            && autismclient.util.ArmorEvaluationHelper.remainingDurability(worn) <= threshold
+            && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(worn)) {
             for (int inv = 0; inv < 36; inv++) {
                ItemStack stack = MC.player.getInventory().getItem(inv);
                if (!stack.isEmpty()
-                  && autismclient.util.ArmorEvaluationHelper.init_Z_ItemStack(stack)
-                  && (this.bool("allow-cursed") || !autismclient.util.ArmorEvaluationHelper.load_Z(stack))
-                  && slot.equals(autismclient.util.ArmorEvaluationHelper.init_EquipmentSlot_ItemStack(stack))
-                  && autismclient.util.ArmorEvaluationHelper.init_I_ItemStack(stack) > threshold) {
+                  && autismclient.util.ArmorEvaluationHelper.isArmor(stack)
+                  && (this.bool("allow-cursed") || !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(stack))
+                  && slot.equals(autismclient.util.ArmorEvaluationHelper.slotOf(stack))
+                  && autismclient.util.ArmorEvaluationHelper.remainingDurability(stack) > threshold) {
                   return true;
                }
             }
@@ -518,11 +518,11 @@ public final class AutoArmorModule extends Module {
    }
 
    private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(int threshold) {
-      return autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(this.init_Map(), threshold);
+      return autismclient.util.ArmorEvaluationHelper.bestBySlot(this.init_Map(), threshold);
    }
 
    private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> init_Map() {
-      return autismclient.util.ArmorEvaluationHelper.init_Map_TaskTimer_BufferHe(new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
+      return autismclient.util.ArmorEvaluationHelper.candidatesBySlot(new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
          @Override
          public ItemStack init(int index) {
             return Module.MC.player.getInventory().getItem(index);

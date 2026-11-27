@@ -7345,7 +7345,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (folderRow.init_Z()) {
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, iy, itemW, 14);
                   autismclient.gui.ui.widgets.GroupHeaderRenderer.load(
-                     UiHelper.init(ctx, this.init_Font, mx, my), bounds, folderRow.init_Str(), folderRow.load_Z(), bounds.init_Z(mx, my)
+                     UiHelper.init(ctx, this.init_Font, mx, my), bounds, folderRow.init_Str(), folderRow.isFolder(), bounds.init_Z(mx, my)
                   );
                   int hitTop = Math.max(iy, listY);
                   int hitBottom = Math.min(iy + 14, listY + listH);
@@ -7353,7 +7353,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.valid_List
                         .add(
                            new ActionEditorOverlay.Inner_StreamUtil(
-                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.getInstance().toggleFolderCollapsed(folderRow.load_Str())
+                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.getInstance().toggleFolderCollapsed(folderRow.folderName())
                            )
                         );
                   }
@@ -11851,7 +11851,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      BackgroundTaskExecutor.init_Future_Str_Runnable("pay-scan-probe", () -> {
+      BackgroundTaskExecutor.submit("pay-scan-probe", () -> {
          List<String> probed = OnlinePlayerCollector.init(init_Minecraft, true);
          if (!probed.isEmpty()) {
             init_Minecraft.execute(() -> {

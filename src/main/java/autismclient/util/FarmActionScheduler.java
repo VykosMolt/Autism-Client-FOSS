@@ -19,7 +19,7 @@ public final class FarmActionScheduler {
             double next = 1.0 / 0.0;
 
             for (FarmActionScheduler.Inner_StreamUtil<T> second : options) {
-               if (first != second && !first.init_Obj().equals(second.init_Obj())) {
+               if (first != second && !first.target().equals(second.target())) {
                   next = Math.min(next, init(first.init_F(), first.load(), nextSlot, second));
                }
             }
@@ -28,13 +28,13 @@ public final class FarmActionScheduler {
                cost += 0.65 * next;
             }
 
-            if (first.init_Obj().equals(previous)) {
+            if (first.target().equals(previous)) {
                cost -= 0.6;
             }
 
             if (cost < bestCost) {
                bestCost = cost;
-               best = first.init_Obj();
+               best = first.target();
             }
          }
       }
@@ -66,6 +66,6 @@ public final class FarmActionScheduler {
       TILL;
    }
 
-   public record Inner_StreamUtil<T>(T init_Obj, FarmActionScheduler.Inner_DataUtil init_aa_DataUtil, float init_F, float load, int init_I, boolean init_Z) {
+   public record Inner_StreamUtil<T>(T target, FarmActionScheduler.Inner_DataUtil init_aa_DataUtil, float init_F, float load, int init_I, boolean init_Z) {
    }
 }

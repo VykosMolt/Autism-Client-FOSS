@@ -31,18 +31,18 @@ public final class JoinMacroController {
    private JoinMacroController() {
    }
 
-   public static JoinMacroController.Inner_StreamUtil init_aA_StreamUtil() {
+   public static JoinMacroController.Inner_StreamUtil timing() {
       return JoinMacroController.Inner_StreamUtil.init(AutismConfig.getGlobal().joinMacroTiming);
    }
 
    public static void init(JoinMacroController.Inner_StreamUtil timing) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTiming = (timing == null ? JoinMacroController.Inner_StreamUtil.flush : timing).init_Str();
+      config.joinMacroTiming = (timing == null ? JoinMacroController.Inner_StreamUtil.flush : timing).id();
       sync();
       config.save();
    }
 
-   public static void init_V(String macroName) {
+   public static void setMacroName(String macroName) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroName = macroName == null ? "" : macroName.trim();
       config.joinMacroEnabled = !config.joinMacroName.isBlank();
@@ -57,8 +57,8 @@ public final class JoinMacroController {
       config.save();
    }
 
-   public static JoinMacroController.Inner_CachePool init_aA_CachePool() {
-      return init(JoinMacroController.Inner_CachePool.init_aA_CachePool_Str(AutismConfig.getGlobal().joinMacroTriggerJoin), init_Z());
+   public static JoinMacroController.Inner_CachePool trigger() {
+      return init(JoinMacroController.Inner_CachePool.init_aA_CachePool_Str(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
    }
 
    public static void init(JoinMacroController.Inner_CachePool triggerJoin) {
@@ -68,7 +68,7 @@ public final class JoinMacroController {
       config.save();
    }
 
-   public static boolean init_Z() {
+   public static boolean keepEnabled() {
       return AutismConfig.getGlobal().joinMacroKeepEnabled;
    }
 
@@ -80,13 +80,13 @@ public final class JoinMacroController {
       config.save();
    }
 
-   public static String init_Str() {
+   public static String macroName() {
       String name = AutismConfig.getGlobal().joinMacroName;
       return name == null ? "" : name.trim();
    }
 
-   public static boolean load_Z() {
-      return init_Str().length() > 0;
+   public static boolean hasMacro() {
+      return macroName().length() > 0;
    }
 
    public static void init_V() {
@@ -94,24 +94,24 @@ public final class JoinMacroController {
       init_aA_DataUtil.init();
    }
 
-   public static void load_V() {
+   public static void onJoin() {
       init_V();
       init_Z = false;
       load = true;
-      if (init_aA_StreamUtil() == JoinMacroController.Inner_StreamUtil.JOINING) {
+      if (timing() == JoinMacroController.Inner_StreamUtil.JOINING) {
          load(JoinMacroController.Inner_StreamUtil.JOINING);
       }
    }
 
-   public static void read_V() {
-      if (init_aA_StreamUtil() == JoinMacroController.Inner_StreamUtil.WORLD) {
+   public static void onWorldLoaded() {
+      if (timing() == JoinMacroController.Inner_StreamUtil.WORLD) {
          load(JoinMacroController.Inner_StreamUtil.WORLD);
       }
    }
 
-   public static void init_V(Minecraft mc) {
-      if (load_Z() && !init_Z && mc != null) {
-         JoinMacroController.Inner_StreamUtil timing = init_aA_StreamUtil();
+   public static void tick(Minecraft mc) {
+      if (hasMacro() && !init_Z && mc != null) {
+         JoinMacroController.Inner_StreamUtil timing = timing();
          if (init_aA_DataUtil.init(mc, timing, load)) {
             load(timing);
          }
@@ -135,8 +135,8 @@ public final class JoinMacroController {
       write();
       init_ClientConfiguratio = listener;
       init_I++;
-      if (load_Z() && init_aA_CachePool().init_Z_I(init_I)) {
-         AutismMacro selected = MacroLibraryManager.getInstance().findByName(init_Str());
+      if (hasMacro() && trigger().init_Z_I(init_I)) {
+         AutismMacro selected = MacroLibraryManager.getInstance().findByName(macroName());
          if (selected != null) {
             AutismMacro copy = selected.copy();
             int prefix = 0;
@@ -174,7 +174,7 @@ public final class JoinMacroController {
       return action instanceof autismclient.util.macro.WaitForGuiAction || action instanceof autismclient.util.macro.WaitGuiTypeAction || action instanceof autismclient.util.macro.DelayAction;
    }
 
-   public static boolean read_Z() {
+   public static boolean isRunning() {
       Thread worker = init_Thread;
       return worker != null && worker.isAlive();
    }
@@ -328,13 +328,13 @@ public final class JoinMacroController {
    }
 
    private static String load_Str(String template) {
-      return init_Str(template);
+      return fillSecrets(template);
    }
 
-   public static String init_Str(String template) {
+   public static String fillSecrets(String template) {
       String out = template == null ? "" : template;
 
-      for (Entry<String, String> entry : init_Map().entrySet()) {
+      for (Entry<String, String> entry : formValues().entrySet()) {
          out = out.replace("{secret." + entry.getKey() + "}", entry.getValue());
       }
 
@@ -348,7 +348,7 @@ public final class JoinMacroController {
       return out.replace("{username}", username).replace("{account_id}", accountId).replace("{profile_name}", "Rendered client");
    }
 
-   public static Map<String, String> init_Map() {
+   public static Map<String, String> formValues() {
       Map<String, String> result = new LinkedHashMap<>();
       Map<String, String> stored = AutismConfig.getGlobal().joinMacroFormValues;
       if (stored == null) {
@@ -386,21 +386,21 @@ public final class JoinMacroController {
    }
 
    private static void load(JoinMacroController.Inner_StreamUtil timing) {
-      if (load_Z() && !init_Z && init_aA_CachePool().init_Z_I(init_I)) {
+      if (hasMacro() && !init_Z && trigger().init_Z_I(init_I)) {
          init_Z = true;
-         String macroName = init_Str();
+         String macroName = macroName();
          AutismMacro macro = init_aM != null ? init_aM : MacroLibraryManager.getInstance().findByName(macroName);
          if (macro == null) {
             bi.read("Join macro missing: " + macroName);
-            init_V("");
+            setMacroName("");
          } else {
-            boolean keepEnabled = init_Z();
+            boolean keepEnabled = keepEnabled();
             if (!keepEnabled) {
                AutismConfig config = AutismConfig.getGlobal();
                config.joinMacroName = "";
                config.joinMacroEnabled = false;
                config.save();
-            } else if (init_aA_CachePool() != JoinMacroController.Inner_CachePool.ANY) {
+            } else if (trigger() != JoinMacroController.Inner_CachePool.ANY) {
                init_I = 0;
             }
 
@@ -433,9 +433,9 @@ public final class JoinMacroController {
       return init_Z(mc) && mc.gui.screen() == null;
    }
 
-   public static String load_Str() {
-      boolean keepEnabled = init_Z();
-      return init_aA_StreamUtil().load() + " / " + init_aA_CachePool().init_Str_Z(keepEnabled) + " / " + (keepEnabled ? "Stays Enabled" : "Clears After Run");
+   public static String summary() {
+      boolean keepEnabled = keepEnabled();
+      return timing().load() + " / " + trigger().label(keepEnabled) + " / " + (keepEnabled ? "Stays Enabled" : "Clears After Run");
    }
 
    private static void sync() {
@@ -480,7 +480,7 @@ public final class JoinMacroController {
          return this.load_Str;
       }
 
-      public String init_Str_Z(boolean keepEnabled) {
+      public String label(boolean keepEnabled) {
          if (keepEnabled) {
             String var2;
             switch (this) {
@@ -654,7 +654,7 @@ public final class JoinMacroController {
          this.load_Str = label;
       }
 
-      public String init_Str() {
+      public String id() {
          return this.init_Str;
       }
 

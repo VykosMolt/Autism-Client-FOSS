@@ -312,7 +312,7 @@ public class XCarryAction implements MacroAction {
                }
 
                mc.player.containerMenu = containerHandler;
-               containerTarget.init_Z_Minecraft(mc);
+               containerTarget.interact(mc);
             }
          }
       }
@@ -1445,7 +1445,7 @@ public class XCarryAction implements MacroAction {
 
    static void interactTarget(Minecraft mc, autismclient.util.InteractionTargetRef target) {
       if (target != null) {
-         target.init_Z_Minecraft(mc);
+         target.interact(mc);
       }
    }
 

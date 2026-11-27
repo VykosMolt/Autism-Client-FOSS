@@ -7,7 +7,7 @@ public final class OverlayWindowSizeStore {
       this.init = key;
    }
 
-   public boolean init_Z() {
+   public boolean hasSavedSize() {
       AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
       return s != null && (s.width > 0 || s.height > 0);
    }
@@ -31,7 +31,7 @@ public final class OverlayWindowSizeStore {
       }
    }
 
-   public void init_V() {
+   public void save() {
       try {
          AutismConfig.getGlobal().save();
       } catch (Throwable var2) {

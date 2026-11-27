@@ -74,7 +74,7 @@ public final class ThemeTextureRecolorer {
       return cached != null ? cached.init_Identifier : source;
    }
 
-   public static Identifier init_Identifier(Identifier source, int targetColor) {
+   public static Identifier recolor(Identifier source, int targetColor) {
       if (source == null) {
          return null;
       }
@@ -97,7 +97,7 @@ public final class ThemeTextureRecolorer {
             float[] hsb = Color.RGBtoHSB(targetColor >> 16 & 0xFF, targetColor >> 8 & 0xFF, targetColor & 0xFF, null);
             float targetHue = hsb[0];
             float targetSat = hsb[1];
-            BackgroundTaskExecutor.init_Future_Str_Runnable("skybox-recolor", () -> {
+            BackgroundTaskExecutor.submit("skybox-recolor", () -> {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
@@ -154,7 +154,7 @@ public final class ThemeTextureRecolorer {
          if (png == null) {
             load_Set.remove(source);
          } else {
-            BackgroundTaskExecutor.init_Future_Str_Runnable("theme-recolor", () -> {
+            BackgroundTaskExecutor.submit("theme-recolor", () -> {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
@@ -200,7 +200,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   public static Identifier init_Identifier(Identifier source) {
+   public static Identifier themed(Identifier source) {
       if (source == null) {
          return null;
       }
@@ -243,7 +243,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isEnabled() {
       return init_Z;
    }
 
@@ -319,7 +319,7 @@ public final class ThemeTextureRecolorer {
          return;
       }
 
-      BackgroundTaskExecutor.init_Future_Str_Runnable("theme-overlay", () -> {
+      BackgroundTaskExecutor.submit("theme-overlay", () -> {
          NativeImage recolored = null;
 
          try (NativeImage src = NativeImage.read(png)) {
@@ -466,15 +466,15 @@ public final class ThemeTextureRecolorer {
          this.init_Identifier = id;
       }
 
-      public Identifier init_Identifier() {
+      public Identifier id() {
          return this.init_Identifier;
       }
 
-      public int init_I() {
+      public int width() {
          return this.init_NativeImage.getWidth();
       }
 
-      public int load_I() {
+      public int height() {
          return this.init_NativeImage.getHeight();
       }
 
@@ -483,7 +483,7 @@ public final class ThemeTextureRecolorer {
          return sig == 0 ? 1 : sig;
       }
 
-      public void init_V_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
+      public void applyPalette(ThemePaletteManager.CompiledPalette st) {
          int sig = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP ? init_I_ct_StreamUtil(st) : st.roleSignature(this.init_ct_DataUtil);
          if (sig != this.init_I) {
             this.init_I = sig;
@@ -500,7 +500,7 @@ public final class ThemeTextureRecolorer {
                this.load = true;
             }
 
-            BackgroundTaskExecutor.init_Future_Str_Runnable("theme-preview", this::init_V);
+            BackgroundTaskExecutor.submit("theme-preview", this::init_V);
          }
       }
 

@@ -91,10 +91,10 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       sync.setOnPeerStateChanged(() -> {});
    }
 
-   public static synchronized AutismLANSyncOverlay init_AutismLANSyncOverl_Font(Font textRenderer) {
+   public static synchronized AutismLANSyncOverlay getOrCreate(Font textRenderer) {
       if (init_AutismLANSyncOverl == null) {
          init_AutismLANSyncOverl = new AutismLANSyncOverlay(textRenderer);
-         init_AutismLANSyncOverl.write_V_10();
+         init_AutismLANSyncOverl.restoreState();
       }
 
       return init_AutismLANSyncOverl;
@@ -155,7 +155,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init_k.setFocused(false);
       }
 
-      this.read_V_5();
+      this.saveState();
    }
 
    @Override
@@ -176,7 +176,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             this.clearFocusAndDismissMenu();
          }
 
-         this.read_V_5();
+         this.saveState();
       }
    }
 
@@ -295,7 +295,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void read_V_5() {
+   public void saveState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       shared.setLanSyncOverlayVisible(this.sync_Z);
       shared.setLanSyncOverlayX(this.pop);
@@ -309,7 +309,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.saveBounds();
    }
 
-   public void write_V_10() {
+   public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
       this.sync_Z = shared.isLanSyncOverlayVisible();
@@ -724,7 +724,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             this.init_CacheEntry.jumpTo(0, 0);
             this.sync_V_7();
             this.flush_V_7();
-            this.read_V_5();
+            this.saveState();
          }));
       }
    }
@@ -947,7 +947,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          String peerName = client.username;
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx - 2, cy, rowWidth, this.clear, () -> {
             this.read_Str = peerName.equals(this.read_Str) ? null : peerName;
-            this.read_V_5();
+            this.saveState();
          }));
          cy += this.clear + 1;
          if (isSelected) {
@@ -1139,7 +1139,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.read_V_5();
+         this.saveState();
       }));
       cy += this.add + 4;
       if (this.open_Z) {
@@ -1386,7 +1386,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             if (rowVisible) {
                this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx - 2, cy, rowW, rowPitch, () -> {
                   this.load_Str = peerKey.equals(this.load_Str) ? null : peerKey;
-                  this.read_V_5();
+                  this.saveState();
                }));
             }
 
@@ -1841,7 +1841,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                this.cache = Math.max(0, (int)Math.round(mouseY) - scrollbarMetrics.thumbY());
                this.size = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.cache);
                this.init_CacheEntry.jumpTo(this.size, scrollbarMetrics.maxScroll());
-               this.read_V_5();
+               this.saveState();
                return true;
             }
          }
@@ -1856,7 +1856,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                AutismMacro selected = this.init_RenderState.selected();
                if (selected != null) {
                   this.init_Str_2 = selected.name;
-                  this.read_V_5();
+                  this.saveState();
                }
             }
 
@@ -1897,12 +1897,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          if (this.close_Z) {
-            this.read_V_5();
+            this.saveState();
          }
 
          this.close_Z = false;
          if (this.write_Z) {
-            this.read_V_5();
+            this.saveState();
          }
 
          this.write_Z = false;
@@ -1969,7 +1969,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       this.size = Math.max(0, Math.min(this.data, this.size - (int)(amount * this.clear)));
-      this.read_V_5();
+      this.saveState();
       return true;
    }
 

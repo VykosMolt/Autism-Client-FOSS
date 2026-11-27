@@ -442,7 +442,7 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public boolean isInstantBreakTool(ItemStack stack) {
-      return autismclient.util.BlockBreakSpeedHelper.init_Z(this.mc, stack);
+      return autismclient.util.BlockBreakSpeedHelper.hasSilkTouch(this.mc, stack);
    }
 
    public void setFlightAllowed(boolean value) {

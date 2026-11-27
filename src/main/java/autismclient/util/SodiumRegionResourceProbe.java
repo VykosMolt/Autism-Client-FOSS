@@ -62,19 +62,19 @@ public final class SodiumRegionResourceProbe {
    private SodiumRegionResourceProbe() {
    }
 
-   public static void init_V() {
+   public static void invalidate() {
       init_AtomicInteger.incrementAndGet();
    }
 
    public static void load_V() {
       if (!init_Z()) {
-         init_V();
+         invalidate();
       }
    }
 
    public static void init(boolean active) {
       if (init_Z != active) {
-         init_V();
+         invalidate();
       }
 
       init_Z = active;

@@ -4,7 +4,7 @@ import java.util.function.LongConsumer;
 
 public final class ClickRateTracker {
    private static final long init_J = 1000000000L;
-   private static final int init_I = 48;
+   private static final int HISTORY_SIZE = 48;
    private static final long[] init_JArr = new long[48];
    private static final long[] load_JArr = new long[48];
    private static int load_I;
@@ -13,26 +13,26 @@ public final class ClickRateTracker {
    private ClickRateTracker() {
    }
 
-   public static void init_V() {
+   public static void recordLeftClick() {
       init_JArr[load_I] = System.nanoTime();
       load_I = (load_I + 1) % 48;
    }
 
-   public static void load_V() {
+   public static void recordRightClick() {
       load_JArr[read] = System.nanoTime();
       read = (read + 1) % 48;
    }
 
-   public static int init_I() {
+   public static int leftCps() {
       return init(init_JArr);
    }
 
-   public static int load_I() {
+   public static int rightCps() {
       return init(load_JArr);
    }
 
    public static int read() {
-      return init_I() + load_I();
+      return leftCps() + rightCps();
    }
 
    public static boolean init(long ms) {

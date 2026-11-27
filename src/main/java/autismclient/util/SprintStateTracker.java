@@ -22,7 +22,7 @@ public final class SprintStateTracker {
    private SprintStateTracker() {
    }
 
-   public static void init_V(boolean sprinting) {
+   public static void update(boolean sprinting) {
       init_Z = sprinting;
       write = sprinting;
       if (sprinting != read) {
@@ -72,7 +72,7 @@ public final class SprintStateTracker {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isServerSprinting() {
       return write;
    }
 
@@ -80,7 +80,7 @@ public final class SprintStateTracker {
       return load;
    }
 
-   public static boolean init_Z(boolean clientSprinting) {
+   public static boolean effectiveSprinting(boolean clientSprinting) {
       return clientSprinting != read ? clientSprinting : load;
    }
 

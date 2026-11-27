@@ -66,7 +66,7 @@ public class AutismHudEditorScreen extends Screen {
    public AutismHudEditorScreen(Screen parent) {
       super(Component.literal("Autism HUD Editor"));
       this.init_Screen = parent;
-      AutismHudManager.init_V();
+      AutismHudManager.ensureInitialized();
    }
 
    @Override
@@ -89,8 +89,8 @@ public class AutismHudEditorScreen extends Screen {
          }
 
          this.read(graphics, sw, sh);
-         AutismHudManager.init_V_GuiGraphicsExtract_4(graphics, this.font, true, this.init_Str, mx, my);
-         if ("gif".equals(this.init_Str) && AutismHudManager.init_AutismConfig_HudEl_Str(this.init_Str).enabled) {
+         AutismHudManager.render(graphics, this.font, true, this.init_Str, mx, my);
+         if ("gif".equals(this.init_Str) && AutismHudManager.getState(this.init_Str).enabled) {
             this.init(graphics);
          }
 
@@ -133,7 +133,7 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private int[] init_IArr(int sw, int sh, int w, int h) {
-      int rev = AutismHudManager.load_I();
+      int rev = AutismHudManager.revision();
       if (this.read_Z && sw == this.clear && sh == this.reset && w == this.start && h == this.stop && rev == this.next) {
          return this.init_IArr;
       }
@@ -162,9 +162,9 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private boolean init_Z(int x, int y, int w, int h) {
-      for (String id : AutismHudManager.init_List()) {
-         if (AutismHudManager.init_AutismConfig_HudEl_Str(id).enabled) {
-            AutismHudManager.HudElementBounds bounds = AutismHudManager.init_al_BufferHelper_Str_Font(id, this.font);
+      for (String id : AutismHudManager.elementIds()) {
+         if (AutismHudManager.getState(id).enabled) {
+            AutismHudManager.HudElementBounds bounds = AutismHudManager.bounds(id, this.font);
             if (this.init(x, y, w, h, bounds.read(), bounds.write(), bounds.update(), bounds.sync())) {
                return true;
             }
@@ -209,7 +209,7 @@ public class AutismHudEditorScreen extends Screen {
 
       for (String[] cat : init_StrArr2) {
          for (String id : cat) {
-            longest = Math.max(longest, k.init(this.font, AutismHudManager.init_Str_Str(id), init_CharEncoder.init_Identifier_l(l.read), -791321));
+            longest = Math.max(longest, k.init(this.font, AutismHudManager.displayName(id), init_CharEncoder.init_Identifier_l(l.read), -791321));
          }
       }
 
@@ -257,13 +257,13 @@ public class AutismHudEditorScreen extends Screen {
 
          for (String id : init_StrArr2[col]) {
             boolean over = this.init(mx, my, colX, cy, p.update, p.close - 2);
-            boolean enabled = AutismHudManager.init_AutismConfig_HudEl_Str(id).enabled;
+            boolean enabled = AutismHudManager.getState(id).enabled;
             autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
             if (enabled) {
                autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
             }
 
-            this.init(graphics, AutismHudManager.init_Str_Str(id), colX + 7, this.load(cy, p.close - 2), enabled ? -791321 : init_I(), p.update - 9);
+            this.init(graphics, AutismHudManager.displayName(id), colX + 7, this.load(cy, p.close - 2), enabled ? -791321 : init_I(), p.update - 9);
             cy += p.close;
          }
       }
@@ -276,9 +276,9 @@ public class AutismHudEditorScreen extends Screen {
       if (this.load_Z) {
          String picked = this.init_Str(mx, my);
          if (picked != null) {
-            AutismHudManager.init_V_Str_Z(picked, true);
+            AutismHudManager.setEnabled(picked, true);
             int[] snapped = this.init(picked, mx, my);
-            AutismHudManager.init_V_Str(picked, snapped[0], snapped[1], cA.init_I(), cA.load_I());
+            AutismHudManager.setPosition(picked, snapped[0], snapped[1], cA.init_I(), cA.load_I());
             this.init_Str = picked;
             this.load_Z = false;
             return true;
@@ -287,7 +287,7 @@ public class AutismHudEditorScreen extends Screen {
             return true;
          }
       } else {
-         String hit = AutismHudManager.init_Str_Font(this.font, mx, my);
+         String hit = AutismHudManager.elementAt(this.font, mx, my);
          if (Compat263.mouseEventGlfwButton(event) == 1) {
             if (hit != null) {
                this.minecraft.gui.setScreen(new HudElementSettingsScreen(this, hit));
@@ -299,7 +299,7 @@ public class AutismHudEditorScreen extends Screen {
 
             return true;
          } else {
-            if (Compat263.mouseEventGlfwButton(event) == 0 && "gif".equals(this.init_Str) && AutismHudManager.init_AutismConfig_HudEl_Str(this.init_Str).enabled) {
+            if (Compat263.mouseEventGlfwButton(event) == 0 && "gif".equals(this.init_Str) && AutismHudManager.getState(this.init_Str).enabled) {
                int corner = this.init_I(mx, my);
                if (corner >= 0) {
                   this.init_V(corner, mx, my);
@@ -310,7 +310,7 @@ public class AutismHudEditorScreen extends Screen {
             if (Compat263.mouseEventGlfwButton(event) == 0 && hit != null) {
                this.init_Str = hit;
                this.load_Str = hit;
-               AutismHudManager.HudElementBounds bounds = AutismHudManager.init_al_BufferHelper_Str_Font(hit, this.font);
+               AutismHudManager.HudElementBounds bounds = AutismHudManager.bounds(hit, this.font);
                this.close = mx - bounds.read();
                this.open = my - bounds.write();
                this.init_Z = false;
@@ -346,7 +346,7 @@ public class AutismHudEditorScreen extends Screen {
       }
 
       int[] snapped = this.init(this.load_Str, mx - this.close, my - this.open);
-      AutismHudManager.init_V_Str(this.load_Str, snapped[0], snapped[1], cA.init_I(), cA.load_I());
+      AutismHudManager.setPosition(this.load_Str, snapped[0], snapped[1], cA.init_I(), cA.load_I());
       this.init_Z = true;
       return true;
    }
@@ -359,13 +359,13 @@ public class AutismHudEditorScreen extends Screen {
       }
 
       if (this.init_Str != null && Compat263.keyEventGlfwKey(input) == 261) {
-         AutismHudManager.init_V_Str_Z(this.init_Str, false);
+         AutismHudManager.setEnabled(this.init_Str, false);
          return true;
       }
 
       if (this.init_Str != null) {
          int step = (Compat263.keyEventGlfwModifiers(input) & 2) != 0 ? 10 : 1;
-         AutismHudManager.HudElementBounds bounds = AutismHudManager.init_al_BufferHelper_Str_Font(this.init_Str, this.font);
+         AutismHudManager.HudElementBounds bounds = AutismHudManager.bounds(this.init_Str, this.font);
          int x = bounds.read();
          int y = bounds.write();
          boolean moved = true;
@@ -388,7 +388,7 @@ public class AutismHudEditorScreen extends Screen {
 
          if (moved) {
             int[] snapped = this.init(this.init_Str, x, y);
-            AutismHudManager.init_V_Str(this.init_Str, snapped[0], snapped[1], cA.init_I(), cA.load_I());
+            AutismHudManager.setPosition(this.init_Str, snapped[0], snapped[1], cA.init_I(), cA.load_I());
             return true;
          }
       }
@@ -397,7 +397,7 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private int[] init(String id, int x, int y) {
-      AutismHudManager.HudElementBounds bounds = AutismHudManager.init_al_BufferHelper_Str_Font(id, this.font);
+      AutismHudManager.HudElementBounds bounds = AutismHudManager.bounds(id, this.font);
       int sw = cA.init_I();
       int sh = cA.load_I();
       int outX = x;
@@ -430,9 +430,9 @@ public class AutismHudEditorScreen extends Screen {
       best = this.init(best, value, max, screenSize);
       best = this.init(best, value, (screenSize - size) / 2, screenSize / 2);
 
-      for (String other : AutismHudManager.init_List()) {
-         if (!other.equals(id) && AutismHudManager.init_AutismConfig_HudEl_Str(other).enabled) {
-            AutismHudManager.HudElementBounds ob = AutismHudManager.init_al_BufferHelper_Str_Font(other, this.font);
+      for (String other : AutismHudManager.elementIds()) {
+         if (!other.equals(id) && AutismHudManager.getState(other).enabled) {
+            AutismHudManager.HudElementBounds ob = AutismHudManager.bounds(other, this.font);
             int otherStart = horizontal ? ob.read() : ob.write();
             int otherSize = horizontal ? ob.update() : ob.sync();
             int otherEnd = otherStart + otherSize;
@@ -516,7 +516,7 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private int[][] init_IArr2() {
-      AutismHudManager.HudElementBounds b = AutismHudManager.init_al_BufferHelper_Str_Font("gif", this.font);
+      AutismHudManager.HudElementBounds b = AutismHudManager.bounds("gif", this.font);
       return new int[][]{
          {b.read(), b.write()}, {b.read() + b.update(), b.write()}, {b.read() + b.update(), b.write() + b.sync()}, {b.read(), b.write() + b.sync()}
       };
@@ -537,12 +537,12 @@ public class AutismHudEditorScreen extends Screen {
    private void init_V(int corner, int mx, int my) {
       String id = "gif";
       this.pop = corner;
-      AutismHudManager.HudElementBounds b = AutismHudManager.init_al_BufferHelper_Str_Font(id, this.font);
-      int pad = this.init_I(AutismHudManager.init_I_Str_2(id, "padding", 1), 0, 16);
+      AutismHudManager.HudElementBounds b = AutismHudManager.bounds(id, this.font);
+      int pad = this.init_I(AutismHudManager.intSetting(id, "padding", 1), 0, 16);
       this.put = b.read() + pad;
       this.add = b.write() + pad;
-      this.tick = this.init_I(AutismHudManager.init_I_Str_2(id, "gif-width", 120), 16, 512);
-      this.run = this.init_I(AutismHudManager.init_I_Str_2(id, "gif-height", 120), 16, 512);
+      this.tick = this.init_I(AutismHudManager.intSetting(id, "gif-width", 120), 16, 512);
+      this.run = this.init_I(AutismHudManager.intSetting(id, "gif-height", 120), 16, 512);
       this.get = mx;
       this.set = my;
    }
@@ -556,7 +556,7 @@ public class AutismHudEditorScreen extends Screen {
          int signY = this.pop != 0 && this.pop != 1 ? 1 : -1;
          int w = this.tick + (mx - this.get) * signX;
          int h = this.run + (my - this.set) * signY;
-         boolean keepRatio = AutismHudManager.init_Z_Str_Str(id, "gif-keep-aspect") != shiftDown;
+         boolean keepRatio = AutismHudManager.boolSetting(id, "gif-keep-aspect") != shiftDown;
          if (keepRatio) {
             double scale = Math.max((double)w / this.tick, (double)h / this.run);
             w = Math.max(1, (int)Math.round(this.tick * scale));
@@ -565,7 +565,7 @@ public class AutismHudEditorScreen extends Screen {
 
          w = this.init_I(w, 16, 512);
          h = this.init_I(h, 16, 512);
-         int pad = this.init_I(AutismHudManager.init_I_Str_2(id, "padding", 1), 0, 16);
+         int pad = this.init_I(AutismHudManager.intSetting(id, "padding", 1), 0, 16);
          int anchorX = signX < 0 ? this.put + this.tick : this.put;
          int anchorY = signY < 0 ? this.add + this.run : this.add;
          int sw = cA.init_I();
@@ -583,12 +583,12 @@ public class AutismHudEditorScreen extends Screen {
             }
          }
 
-         AutismHudManager.init_V_Str(id, "gif-width", Integer.toString(w));
-         AutismHudManager.init_V_Str(id, "gif-height", Integer.toString(h));
-         AutismHudManager.init_V_Str(id, "gif-natural", "false");
+         AutismHudManager.setSetting(id, "gif-width", Integer.toString(w));
+         AutismHudManager.setSetting(id, "gif-height", Integer.toString(h));
+         AutismHudManager.setSetting(id, "gif-natural", "false");
          int contentX = signX < 0 ? anchorX - w : anchorX;
          int contentY = signY < 0 ? anchorY - h : anchorY;
-         AutismHudManager.init_V_Str(id, contentX - pad, contentY - pad, sw, sh);
+         AutismHudManager.setPosition(id, contentX - pad, contentY - pad, sw, sh);
       }
    }
 

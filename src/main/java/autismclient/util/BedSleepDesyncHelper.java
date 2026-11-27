@@ -14,7 +14,7 @@ public final class BedSleepDesyncHelper {
    private BedSleepDesyncHelper() {
    }
 
-   public static void init_V() {
+   public static void wakeUp() {
       if (!AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init()) {
          AutismClientMessaging.sendPrefixed("§cAutism is locked: early access requires the donator role. Sign in to unlock.");
       } else {
@@ -34,7 +34,7 @@ public final class BedSleepDesyncHelper {
       init_J = -9223372036854775808L;
    }
 
-   public static boolean init_Z() {
+   public static boolean isClientAwake() {
       return init_Z;
    }
 

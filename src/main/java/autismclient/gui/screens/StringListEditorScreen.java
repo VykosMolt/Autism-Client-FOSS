@@ -669,7 +669,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
          this.write_List.sort(String::compareToIgnoreCase);
          bi.init("Scanned " + this.write_List.size() + " players.", -13248397);
-         autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("player-rank-scan", () -> {
+         autismclient.util.BackgroundTaskExecutor.submit("player-rank-scan", () -> {
             List<String> probed = OnlinePlayerCollector.init(this.minecraft, true);
             if (!probed.isEmpty()) {
                this.minecraft.execute(() -> {

@@ -21,7 +21,7 @@ public final class KillAuraHitMarkerRenderer {
    private KillAuraHitMarkerRenderer() {
    }
 
-   public static void init_V() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {

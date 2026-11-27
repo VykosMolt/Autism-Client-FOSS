@@ -351,8 +351,8 @@ public class ThemeColorScreen extends Screen {
    private ThemeColorScreen.Inner_BufferHelper init_CacheEntry_BufferH_I_I(int panelW, int budget) {
       int innerW = panelW - 8;
       int logoW = this.init_cu_CachePool != null ? Math.min(innerW, 340) : 0;
-      int logoH = this.init_cu_CachePool != null && this.init_cu_CachePool.init_I() > 0
-         ? Math.max(1, Math.round(logoW * ((float)this.init_cu_CachePool.load_I() / this.init_cu_CachePool.init_I())))
+      int logoH = this.init_cu_CachePool != null && this.init_cu_CachePool.width() > 0
+         ? Math.max(1, Math.round(logoW * ((float)this.init_cu_CachePool.height() / this.init_cu_CachePool.width())))
          : 0;
       int h = this.close() + this.poll() + 4;
       boolean showLogo = logoH > 0 && h + logoH + 2 <= budget;
@@ -394,20 +394,20 @@ public class ThemeColorScreen extends Screen {
          g, autismclient.gui.f.NetHelper.init(x, y, innerW, barH), 5, ctx.init_TableIndex().colors().headerSurface, ctx.init_TableIndex().colors().borderSubtle
       );
       if (this.read_cu_CachePool != null) {
-         this.read_cu_CachePool.init_V_ct_StreamUtil(this.init_ct_StreamUtil);
+         this.read_cu_CachePool.applyPalette(this.init_ct_StreamUtil);
          g.blit(
             RenderPipelines.GUI_TEXTURED,
-            this.read_cu_CachePool.init_Identifier(),
+            this.read_cu_CachePool.id(),
             x + 4,
             y + (barH - 14) / 2,
             0.0F,
             0.0F,
             14,
             14,
-            this.read_cu_CachePool.init_I(),
-            this.read_cu_CachePool.load_I(),
-            this.read_cu_CachePool.init_I(),
-            this.read_cu_CachePool.load_I(),
+            this.read_cu_CachePool.width(),
+            this.read_cu_CachePool.height(),
+            this.read_cu_CachePool.width(),
+            this.read_cu_CachePool.height(),
             -1
          );
       }
@@ -433,25 +433,25 @@ public class ThemeColorScreen extends Screen {
    private void init(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area, int x, int y, int innerW, ThemeColorScreen.Inner_BufferHelper layout) {
       int contentLimit = area.load() - 4;
       if (this.load_cu_CachePool != null) {
-         this.load_cu_CachePool.init_V_ct_StreamUtil(this.init_ct_StreamUtil);
+         this.load_cu_CachePool.applyPalette(this.init_ct_StreamUtil);
          int bw = innerW;
          int bh = layout.read();
          if (bh > 0) {
-            int regionH = Math.max(1, Math.min(this.load_cu_CachePool.load_I(), Math.round(this.load_cu_CachePool.load_I() * ((float)bh / bw))));
-            float vOff = Math.max(0.0F, (this.load_cu_CachePool.load_I() - regionH) / 2.0F);
+            int regionH = Math.max(1, Math.min(this.load_cu_CachePool.height(), Math.round(this.load_cu_CachePool.height() * ((float)bh / bw))));
+            float vOff = Math.max(0.0F, (this.load_cu_CachePool.height() - regionH) / 2.0F);
             g.blit(
                RenderPipelines.GUI_TEXTURED,
-               this.load_cu_CachePool.init_Identifier(),
+               this.load_cu_CachePool.id(),
                x,
                y,
                0.0F,
                vOff,
                bw,
                bh,
-               this.load_cu_CachePool.init_I(),
+               this.load_cu_CachePool.width(),
                regionH,
-               this.load_cu_CachePool.init_I(),
-               this.load_cu_CachePool.load_I(),
+               this.load_cu_CachePool.width(),
+               this.load_cu_CachePool.height(),
                -1
             );
             autismclient.gui.f.PacketUtil.load(g, autismclient.gui.f.NetHelper.init(x, y, bw, bh), this.init_I_I_ct_DataUtil(-7392975, ThemePaletteManager.ColorRole.OUTLINE));
@@ -525,21 +525,21 @@ public class ThemeColorScreen extends Screen {
          int logoH = layout.load();
          int ly = area.load() - 4 - logoH;
          if (ly >= y + 2) {
-            this.init_cu_CachePool.init_V_ct_StreamUtil(this.init_ct_StreamUtil);
+            this.init_cu_CachePool.applyPalette(this.init_ct_StreamUtil);
             int lx = x + (innerW - logoW) / 2;
             g.blit(
                RenderPipelines.GUI_TEXTURED,
-               this.init_cu_CachePool.init_Identifier(),
+               this.init_cu_CachePool.id(),
                lx,
                ly,
                0.0F,
                0.0F,
                logoW,
                logoH,
-               this.init_cu_CachePool.init_I(),
-               this.init_cu_CachePool.load_I(),
-               this.init_cu_CachePool.init_I(),
-               this.init_cu_CachePool.load_I(),
+               this.init_cu_CachePool.width(),
+               this.init_cu_CachePool.height(),
+               this.init_cu_CachePool.width(),
+               this.init_cu_CachePool.height(),
                -1
             );
          }
@@ -814,7 +814,7 @@ public class ThemeColorScreen extends Screen {
       init_V_AutismConfig_Theme_AutismConfig_Theme(this.init_AutismConfig_Theme, this.init_AutismConfig.themeColors);
       ThemePaletteManager.reload();
       Runnable saved = autismclient.gui.ThemeApplyProgressOverlay.init("Saving config");
-      autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("theme-config-save", () -> {
+      autismclient.util.BackgroundTaskExecutor.submit("theme-config-save", () -> {
          try {
             this.init_AutismConfig.save();
          } finally {

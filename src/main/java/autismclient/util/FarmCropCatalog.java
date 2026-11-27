@@ -41,7 +41,7 @@ public final class FarmCropCatalog {
    private FarmCropCatalog() {
    }
 
-   public static boolean init_Z_Block(Block block) {
+   public static boolean isCrop(Block block) {
       return block != null && read.contains(block);
    }
 
@@ -57,7 +57,7 @@ public final class FarmCropCatalog {
       return read;
    }
 
-   public static boolean init_Z_Block_BlockState(Block crop, BlockState below) {
+   public static boolean canGrowOn(Block crop, BlockState below) {
       if (crop == null || below == null) {
          return false;
       } else if (crop == Blocks.NETHER_WART) {
@@ -71,7 +71,7 @@ public final class FarmCropCatalog {
       }
    }
 
-   public static Item init_Item_Block(Block crop) {
+   public static Item seedFor(Block crop) {
       return crop == null ? null : init_Map.get(crop);
    }
 

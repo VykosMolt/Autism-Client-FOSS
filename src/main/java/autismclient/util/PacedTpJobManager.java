@@ -25,7 +25,7 @@ public final class PacedTpJobManager {
       }
 
       if (result != null && result.init_Z()) {
-         init_dc.init_Z(id);
+         init_dc.requestCancel(id);
       } else {
          init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.FAILED);
       }
@@ -34,8 +34,8 @@ public final class PacedTpJobManager {
    }
 
    public static PacedTpJobManager.Inner_CachePool status(long id) {
-      AsyncJobRegistry.Inner_StreamUtil state = init_dc.init_dc_StreamUtil(id);
-      return new PacedTpJobManager.Inner_CachePool(state.init_J(), state.init_Str(), init(state.init_dc_DataUtil()), state.load_Z(), state.read(), state.load_J());
+      AsyncJobRegistry.Inner_StreamUtil state = init_dc.state(id);
+      return new PacedTpJobManager.Inner_CachePool(state.id(), state.label(), init(state.status()), state.load_Z(), state.read(), state.deadline());
    }
 
    public static PacedTpJobManager.Inner_DataUtil init_bl_DataUtil(long id) {
@@ -50,7 +50,7 @@ public final class PacedTpJobManager {
    }
 
    public static void init(Minecraft client) {
-      for (long id : init_dc.init_List()) {
+      for (long id : init_dc.expireOverdue()) {
          autismclient.util.g.PkgCls_a.load(id, "timeout");
          init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.FAILED);
       }

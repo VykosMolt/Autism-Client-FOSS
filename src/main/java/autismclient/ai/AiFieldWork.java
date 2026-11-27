@@ -53,7 +53,7 @@ final class AiFieldWork {
       boolean open = above.isAir();
       if (above.is(crop)) {
          return AiFieldWork.Inner_DataUtil.DONE;
-      } else if (autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, ground)) {
+      } else if (autismclient.util.FarmCropCatalog.canGrowOn(crop, ground)) {
          return !open ? AiFieldWork.Inner_DataUtil.BLOCKED : (seeds ? AiFieldWork.Inner_DataUtil.SOW : AiFieldWork.Inner_DataUtil.DONE);
       } else if (crop != Blocks.NETHER_WART && (ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.DIRT) || ground.is(Blocks.DIRT_PATH))) {
          return open ? AiFieldWork.Inner_DataUtil.TILL : AiFieldWork.Inner_DataUtil.BLOCKED;
@@ -298,7 +298,7 @@ final class AiFieldWork {
                      && seedAvailable
                      && state.isAir()
                      && this.init(ground)
-                     && autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground));
+                     && autismclient.util.FarmCropCatalog.canGrowOn(crop, mc.level.getBlockState(ground));
                   if (ripeHere || sow) {
                      if (ripeHere) {
                         ripe++;
@@ -583,7 +583,7 @@ final class AiFieldWork {
 
                for (long key : this.load_Set) {
                   BlockPos ground = BlockPos.of(key);
-                  if (autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground)) && mc.level.getBlockState(ground.above()).isAir()) {
+                  if (autismclient.util.FarmCropCatalog.canGrowOn(crop, mc.level.getBlockState(ground)) && mc.level.getBlockState(ground.above()).isAir()) {
                      n++;
                   }
                }

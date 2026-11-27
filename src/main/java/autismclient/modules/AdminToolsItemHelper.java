@@ -18,7 +18,7 @@ public final class AdminToolsItemHelper {
       }
 
       try {
-         AutismAdminToolsOverlay overlay = AutismAdminToolsOverlay.init_AutismAdminToolsOv();
+         AutismAdminToolsOverlay overlay = AutismAdminToolsOverlay.getInstance();
          OverlayManager manager = OverlayManager.getInstance();
          manager.register(overlay);
          overlay.setVisible(true);

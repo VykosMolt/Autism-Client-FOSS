@@ -44,11 +44,11 @@ public final class BlockSelectionOutlineRenderer {
       write = dynamic;
    }
 
-   public static void init_V() {
+   public static void disable() {
       init_Z = false;
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return !AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init() ? false : init_Z && !autismclient.modules.aD.read_Z();
    }
 
@@ -56,7 +56,7 @@ public final class BlockSelectionOutlineRenderer {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
-               if (init_Z() && !FreecamTargetOutlineRenderer.init_Z()) {
+               if (isActive() && !FreecamTargetOutlineRenderer.isActive()) {
                   Minecraft mc = Minecraft.getInstance();
                   if (mc != null && mc.level != null && mc.player != null) {
                      CameraRenderState cameraState = context.levelState().cameraRenderState;

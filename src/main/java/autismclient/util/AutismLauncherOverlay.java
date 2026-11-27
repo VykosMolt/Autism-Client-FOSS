@@ -150,7 +150,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.write_V_11();
    }
 
-   public void init_V_AutismKeybindOverl(AutismKeybindOverlay overlay) {
+   public void setKeybindOverlay(AutismKeybindOverlay overlay) {
       this.init_AutismKeybindOverl = overlay;
    }
 
@@ -159,11 +159,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.load_Supplier = () -> this.init_AutismServerInfoOv;
    }
 
-   public void init_V_Supplier(Supplier<AutismPacketLoggerOverlay> supplier) {
+   public void setPacketLoggerSupplier(Supplier<AutismPacketLoggerOverlay> supplier) {
       this.init_Supplier = supplier == null ? () -> this.init_AutismPacketLogger : supplier;
    }
 
-   public void load_V_Supplier(Supplier<AutismServerInfoOverlay> supplier) {
+   public void setServerInfoSupplier(Supplier<AutismServerInfoOverlay> supplier) {
       this.load_Supplier = supplier == null ? () -> this.init_AutismServerInfoOv : supplier;
    }
 
@@ -194,7 +194,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.init_StateCache.getContent().addChild(this.init_DataUtil);
       autismclient.gui.ui.layout.ButtonNode macrosButton = this.init(
          "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
-            AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+            AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.getInstance();
             if (macroEditorOverlay != null && macroEditorOverlay.isVisible()) {
                if (this.init_AutismMacroListOve != null) {
                   this.init_AutismMacroListOve.setVisible(false);
@@ -319,8 +319,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             .init(new autismclient.gui.ui.layout.EdgeInsets(4, 0, 2, 0))
             .setUnderlineOnHover(false);
          syncRow.setGrowX(true);
-         int keyColor = LauncherQuickActions.init_I();
-         int[] valueColors = LauncherQuickActions.init_IArr();
+         int keyColor = LauncherQuickActions.keyColor();
+         int[] valueColors = LauncherQuickActions.valueColors();
          this.init_JsonUtil = syncRow.addChild(
             new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").init(keyColor).load(valueColors[0]).withGrowX(true)
          );
@@ -928,11 +928,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void update_V_9() {
-      LauncherQuickActions.init_V();
+      LauncherQuickActions.toggleSendPackets();
    }
 
    private void sync_V_8() {
-      LauncherQuickActions.load_V();
+      LauncherQuickActions.toggleDelayPackets();
    }
 
    private void flush_V_8() {
@@ -973,16 +973,16 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    private void add_V_4() {
       if (this.init_BitSetUtil != null) {
-         this.init_BitSetUtil.setPlaceholder(LauncherQuickActions.load_Str());
+         this.init_BitSetUtil.setPlaceholder(LauncherQuickActions.inputPlaceholder());
       }
    }
 
    private String load_Str_6() {
-      return LauncherQuickActions.init_Str();
+      return LauncherQuickActions.lastSentMessage();
    }
 
    private void clear_V_3() {
-      String[] metrics = LauncherQuickActions.init_StrArr();
+      String[] metrics = LauncherQuickActions.containerMetrics();
       if (this.init_JsonUtil != null) {
          this.init_JsonUtil.init(metrics[0]);
       }

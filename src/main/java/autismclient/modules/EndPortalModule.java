@@ -151,7 +151,7 @@ public final class EndPortalModule extends Module {
          if (this.init_cU.init(MC.level, MC.getConnection(), server, MC.level.dimension().identifier().toString())) {
             this.load_V_3();
             this.init_cR_DataUtil = this.init_cU.getMemory();
-            this.init_cR_DataUtil.triangulator.init_V_Z_Z(true, false);
+            this.init_cR_DataUtil.triangulator.configure(true, false);
             this.init_J = init_J_2() + 2000L;
          }
 
@@ -184,7 +184,7 @@ public final class EndPortalModule extends Module {
             this.update_V();
          }
 
-         if (this.init_cR_DataUtil.triangulator.init_cS_BufferHelper() == null
+         if (this.init_cR_DataUtil.triangulator.lastThrow() == null
             && this.init_cR_DataUtil.frames.isEmpty()
             && this.init_Map.isEmpty()
             && load_Z()
@@ -225,14 +225,14 @@ public final class EndPortalModule extends Module {
          if (eye instanceof EyeOfEnder && eye.isAlive() && eye.getUUID().equals(tracked.init_UUID) && age >= 0 && age <= 60) {
             StrongholdTriangulator.Inner_BufferHelper ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
             if (ray != null) {
-               boolean added = this.init_cR_DataUtil.triangulator.init_Z_Vec3_Vec3(ray.init(), ray.load().scale(8.0));
+               boolean added = this.init_cR_DataUtil.triangulator.addThrow(ray.init(), ray.load().scale(8.0));
                if (added) {
-                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.triangulator.init_cT_StreamUtil();
+                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.triangulator.ringEstimate();
                   autismclient.util.bi.read(
                      prediction != null
                         ? "EndPortal: stronghold location estimated."
                         : (
-                           this.init_cR_DataUtil.triangulator.init_cS_DataUtil() == null
+                           this.init_cR_DataUtil.triangulator.estimate() == null
                               ? "EndPortal: direction recorded."
                               : "EndPortal: stronghold position estimated; find the portal room nearby."
                         )
@@ -298,7 +298,7 @@ public final class EndPortalModule extends Module {
             this.init_cR_DataUtil
                .frames
                .values()
-               .removeIf(f -> f.init_BlockPos().getX() >> 4 == x && f.init_BlockPos().getZ() >> 4 == z && !current.contains(f.init_BlockPos().asLong()));
+               .removeIf(f -> f.pos().getX() >> 4 == x && f.pos().getZ() >> 4 == z && !current.contains(f.pos().asLong()));
          }
       }
    }
@@ -335,13 +335,13 @@ public final class EndPortalModule extends Module {
 
       while (iterator.hasNext()) {
          StrongholdTriangulator.Inner_CachePool f = iterator.next().getValue();
-         BlockPos pos = f.init_BlockPos();
+         BlockPos pos = f.pos();
          if (MC.level.getChunkSource().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.FULL, false) != null) {
             BlockState state = MC.level.getBlockState(pos);
             if (!state.is(Blocks.END_PORTAL_FRAME)) {
                iterator.remove();
             } else {
-               if (state.getValue(EndPortalFrameBlock.FACING) != f.init_Direction()) {
+               if (state.getValue(EndPortalFrameBlock.FACING) != f.facing()) {
                   this.init_cR_DataUtil.init(new StrongholdTriangulator.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
 
@@ -355,7 +355,7 @@ public final class EndPortalModule extends Module {
       shown.sort(Comparator.comparingDouble(p -> p.distToCenterSqr(MC.player.position())));
       this.read_List = List.copyOf(shown);
       if (!this.load_Map.equals(this.init_cR_DataUtil.frames)) {
-         this.load_List = StrongholdTriangulator.init_List_Collection(this.init_cR_DataUtil.frames.values());
+         this.load_List = StrongholdTriangulator.portalCentersFromFrames(this.init_cR_DataUtil.frames.values());
          this.load_Map = Map.copyOf(this.init_cR_DataUtil.frames);
       }
 
@@ -366,8 +366,8 @@ public final class EndPortalModule extends Module {
             .frames
             .values()
             .stream()
-            .min(Comparator.comparingDouble(fx -> fx.init_BlockPos().distToCenterSqr(MC.player.position())))
-            .map(fx -> Vec3.atCenterOf(fx.init_BlockPos()))
+            .min(Comparator.comparingDouble(fx -> fx.pos().distToCenterSqr(MC.player.position())))
+            .map(fx -> Vec3.atCenterOf(fx.pos()))
             .orElse(null);
    }
 
@@ -409,7 +409,7 @@ public final class EndPortalModule extends Module {
       } else if (this.load_Vec3 != null) {
          return this.load_Vec3;
       } else {
-         return load_Z() ? this.init_cR_DataUtil.triangulator.init_Vec3_Vec3(MC.player.position()) : null;
+         return load_Z() ? this.init_cR_DataUtil.triangulator.destinationFor(MC.player.position()) : null;
       }
    }
 
@@ -418,15 +418,15 @@ public final class EndPortalModule extends Module {
    }
 
    boolean open() {
-      return this.pop() && !this.close() && this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.init_cS_DataUtil() != null;
+      return this.pop() && !this.close() && this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.estimate() != null;
    }
 
    boolean poll() {
-      return this.open() && this.init_cR_DataUtil.triangulator.init_cT_StreamUtil() != null;
+      return this.open() && this.init_cR_DataUtil.triangulator.ringEstimate() != null;
    }
 
    double init_D_2() {
-      return this.open() ? this.init_cR_DataUtil.triangulator.init_cS_DataUtil().init_D() : 0.0;
+      return this.open() ? this.init_cR_DataUtil.triangulator.estimate().uncertainty() : 0.0;
    }
 
    String init_Str() {
@@ -434,9 +434,9 @@ public final class EndPortalModule extends Module {
          ? (this.init_Vec3 != null ? "Portal ring observed" : "Portal frame observed")
          : (
             this.open()
-               ? (this.poll() ? (this.init_cR_DataUtil.triangulator.init_I() == 1 ? "One-Eye estimate" : "Generation estimate") : "Stronghold estimate")
+               ? (this.poll() ? (this.init_cR_DataUtil.triangulator.throwCount() == 1 ? "One-Eye estimate" : "Generation estimate") : "Stronghold estimate")
                : (
-                  this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.init_cS_BufferHelper() != null
+                  this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.lastThrow() != null
                      ? "Eye bearing / distance unknown"
                      : "No Eye data"
                )

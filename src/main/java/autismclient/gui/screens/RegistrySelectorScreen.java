@@ -572,7 +572,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                               this.read(BuiltInRegistries.ITEM.getKey(item)),
                               item.getName(item.getDefaultInstance()).getString(),
                               "",
-                              DisplayItemStackFactory.init_ItemStack(item),
+                              DisplayItemStackFactory.displayStack(item),
                               false
                            )
                         );
@@ -598,7 +598,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         }
                         break;
                      case CROPS:
-                        if (!FarmCropCatalog.init_Z_Block(block)) {
+                        if (!FarmCropCatalog.isCrop(block)) {
                            return;
                         }
                         break;
@@ -665,7 +665,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       BuiltInRegistries.ITEM.forEach(item -> {
          TypedEntityData<EntityType<?>> data = item.components().get(DataComponents.ENTITY_DATA);
          if (data != null) {
-            out.put(data.type(), DisplayItemStackFactory.init_ItemStack(item));
+            out.put(data.type(), DisplayItemStackFactory.displayStack(item));
          }
       });
       return out;
@@ -673,7 +673,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private ItemStack init_ItemStack_Identifier_Map(Identifier soundId, Map<EntityType<?>, ItemStack> spawnEggs) {
       if (soundId == null) {
-         return DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK);
+         return DisplayItemStackFactory.displayStack(Items.NOTE_BLOCK);
       }
 
       String path = soundId.getPath().toLowerCase(Locale.ROOT);
@@ -706,40 +706,40 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       ItemStack registry = this.load(parts, spawnEggs);
-      return registry.isEmpty() ? DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK) : registry;
+      return registry.isEmpty() ? DisplayItemStackFactory.displayStack(Items.NOTE_BLOCK) : registry;
    }
 
    private ItemStack init_ItemStack_Str(String normalizedPath) {
       if (normalizedPath.contains("fishing_bobber")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.FISHING_ROD);
+         return DisplayItemStackFactory.displayStack(Items.FISHING_ROD);
       } else if (normalizedPath.contains("lava")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.LAVA_BUCKET);
+         return DisplayItemStackFactory.displayStack(Items.LAVA_BUCKET);
       } else if (normalizedPath.contains("water") || normalizedPath.contains("rain") || normalizedPath.contains("bubble")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.WATER_BUCKET);
+         return DisplayItemStackFactory.displayStack(Items.WATER_BUCKET);
       } else if (normalizedPath.contains("bucket_empty_lava") || normalizedPath.contains("bucket_fill_lava")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.LAVA_BUCKET);
+         return DisplayItemStackFactory.displayStack(Items.LAVA_BUCKET);
       } else if (normalizedPath.contains("bucket_empty") || normalizedPath.contains("bucket_fill")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.BUCKET);
+         return DisplayItemStackFactory.displayStack(Items.BUCKET);
       } else if (normalizedPath.contains("firework")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.FIREWORK_ROCKET);
+         return DisplayItemStackFactory.displayStack(Items.FIREWORK_ROCKET);
       } else if (normalizedPath.contains("experience_orb")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.EXPERIENCE_BOTTLE);
+         return DisplayItemStackFactory.displayStack(Items.EXPERIENCE_BOTTLE);
       } else if (normalizedPath.contains("lightning") || normalizedPath.contains("thunder")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.LIGHTNING_ROD.weathering().unaffected());
+         return DisplayItemStackFactory.displayStack(Items.LIGHTNING_ROD.weathering().unaffected());
       } else if (normalizedPath.contains("music_disc_")) {
          return this.load_ItemStack(normalizedPath.substring(normalizedPath.indexOf("music_disc_")));
       } else if (normalizedPath.startsWith("music_") || normalizedPath.startsWith("record_")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.JUKEBOX);
+         return DisplayItemStackFactory.displayStack(Items.JUKEBOX);
       } else if (normalizedPath.contains("goat_horn")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.GOAT_HORN);
+         return DisplayItemStackFactory.displayStack(Items.GOAT_HORN);
       } else if (normalizedPath.contains("note_block")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK);
+         return DisplayItemStackFactory.displayStack(Items.NOTE_BLOCK);
       } else if (normalizedPath.contains("ui_") || normalizedPath.startsWith("ui")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.COMPASS);
+         return DisplayItemStackFactory.displayStack(Items.COMPASS);
       } else if (normalizedPath.contains("ambient_cave")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.TORCH);
+         return DisplayItemStackFactory.displayStack(Items.TORCH);
       } else {
-         return normalizedPath.contains("ambient_underwater") ? DisplayItemStackFactory.init_ItemStack(Items.WATER_BUCKET) : ItemStack.EMPTY;
+         return normalizedPath.contains("ambient_underwater") ? DisplayItemStackFactory.displayStack(Items.WATER_BUCKET) : ItemStack.EMPTY;
       }
    }
 
@@ -755,17 +755,17 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       if (this.init_Z_StrArr_Str(parts, "player")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.PLAYER_HEAD);
+         return DisplayItemStackFactory.displayStack(Items.PLAYER_HEAD);
       } else if (this.init_Z_StrArr_Str(parts, "arrow")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.ARROW);
+         return DisplayItemStackFactory.displayStack(Items.ARROW);
       } else if (this.init_Z_StrArr_Str(parts, "trident")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.TRIDENT);
+         return DisplayItemStackFactory.displayStack(Items.TRIDENT);
       } else if (this.init_Z_StrArr_Str(parts, "boat")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.OAK_BOAT);
+         return DisplayItemStackFactory.displayStack(Items.OAK_BOAT);
       } else if (this.init_Z_StrArr_Str(parts, "minecart")) {
-         return DisplayItemStackFactory.init_ItemStack(Items.MINECART);
+         return DisplayItemStackFactory.displayStack(Items.MINECART);
       } else {
-         return this.init_Z_StrArr_Str(parts, "item") ? DisplayItemStackFactory.init_ItemStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
+         return this.init_Z_StrArr_Str(parts, "item") ? DisplayItemStackFactory.displayStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
       }
    }
 
@@ -910,7 +910,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private ItemStack load_ItemStack(String path) {
       Item item = BuiltInRegistries.ITEM.getOptional(Identifier.withDefaultNamespace(path)).orElse(Items.AIR);
-      return item == Items.AIR ? ItemStack.EMPTY : DisplayItemStackFactory.init_ItemStack(item);
+      return item == Items.AIR ? ItemStack.EMPTY : DisplayItemStackFactory.displayStack(item);
    }
 
    private ItemStack read(String path) {

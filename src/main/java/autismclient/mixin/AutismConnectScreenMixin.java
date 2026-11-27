@@ -34,7 +34,7 @@ public abstract class AutismConnectScreenMixin {
       AutoReconnectController.init(data, hostAndPort);
       if (!AutismLiteVariant.enabled()) {
          try {
-            AutismProfileManager.init_bV().init_V_ServerAddress_ServerData(hostAndPort, data);
+            AutismProfileManager.getInstance().onConnect(hostAndPort, data);
          } catch (Throwable t) {
             AutismClientAddon.LOG.error("Profiles: failed to apply on-connect profile", t);
          }

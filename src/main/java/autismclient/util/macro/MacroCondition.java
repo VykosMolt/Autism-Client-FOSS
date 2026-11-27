@@ -238,7 +238,7 @@ public final class MacroCondition {
                break;
             case VILLAGER_ITEM:
                var10000 = autismclient.util.villagerdupe.VillagerDupeDriver.init_Z_Minecraft(
-                  mc, autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(init_Str_Str_Minecraft(this.init_Str, mc)), true
+                  mc, autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(init_Str_Str_Minecraft(this.init_Str, mc)), true
                );
                break;
             case CONNECTION:

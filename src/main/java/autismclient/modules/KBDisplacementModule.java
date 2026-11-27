@@ -246,8 +246,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            Vec3 nextEye = terrain.init_Vec3_F(yaw).add(0.0, MC.player.getEyeHeight(), 0.0);
                            AABB nextBody = target.getBoundingBox().move(init_Vec3_LivingEntity_2(target));
                            terrain.init_F = AimHitboxHelper.init(pitch, nextEye, nextBody, nextEye, nextBody);
-                           terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player));
-                           terrain.load_Z = SprintStateTracker.init_Z(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
+                           terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
+                           terrain.load_Z = SprintStateTracker.effectiveSprinting(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
                               || autismclient.util.LegacyCombatDetector.init(MC.player);
                            KBDisplacementModule.Inner_StreamUtil struck = m.init_X_StreamUtil_LivingEntity(target, terrain, tick, m.init_Y.init_I(fallback));
                            terrain.init_Vec3 = struck.init_Vec3();
@@ -294,7 +294,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            m.init_V_Str_2("plan:" + KnockbackThrowPlanner.lastStatus);
                            plain.run();
                         } else {
-                           double reach = autismclient.util.AttackReachHelper.init_D(MC.player) - 0.06;
+                           double reach = autismclient.util.AttackReachHelper.maxReach(MC.player) - 0.06;
                            Vec3 nextEye = terrain.init_Vec3_F(plan.yaw()).add(0.0, MC.player.getEyeHeight(), 0.0);
                            float inputYaw = SilentMovementCoordinator.getMovementYaw(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
@@ -365,7 +365,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private KBDisplacementModule.Inner_StreamUtil init_X_StreamUtil_LivingEntity(LivingEntity target, KBDisplacementModule.Inner_CachePool terrain, int tick, int roundTrip) {
-      Vec3 latest = EntityMotionTracker.init_Vec3_LivingEntity(target);
+      Vec3 latest = EntityMotionTracker.observedPosition(target);
       AABB body = target.getBoundingBox().move(latest.subtract(target.position()));
       boolean grounded = target.onGround();
       if (!(target instanceof Player)) {
@@ -454,7 +454,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                   this.init_Map.put(other.getId(), tick);
                }
 
-               Vec3 latest = EntityMotionTracker.init_Vec3_LivingEntity(other);
+               Vec3 latest = EntityMotionTracker.observedPosition(other);
                KBDisplacementModule.Inner_BufferHelper old = this.load_Map.get(other.getId());
                if (old == null) {
                   this.load_Map.put(other.getId(), new KBDisplacementModule.Inner_BufferHelper(latest, tick, Vec3.ZERO));
@@ -562,10 +562,10 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                   && target == this.load_ClientLevel.getEntity(target.getId())
                   && this.init_Z_LivingEntity_2(target)
                   && (
-                     AimHitboxHelper.init(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player), 0.002)
+                     AimHitboxHelper.init(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player), 0.002)
                         || flank
                            && AimHitboxHelper.init(
-                              target.getBoundingBox(), MC.player.getEyePosition(), this.update_F, this.sync_F, autismclient.util.AttackReachHelper.init_D(MC.player), 0.002
+                              target.getBoundingBox(), MC.player.getEyePosition(), this.update_F, this.sync_F, autismclient.util.AttackReachHelper.maxReach(MC.player), 0.002
                            )
                   ),
                value -> {
@@ -641,7 +641,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private static boolean init_Z_AABB_4(AABB box, Vec3 eye, float yaw, float pitch) {
-      return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player));
+      return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
    }
 
    public static Input fixInput(Input input, float camera, float yaw) {
@@ -798,7 +798,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          return false;
       }
 
-      double reach = autismclient.util.AttackReachHelper.init_D(MC.player);
+      double reach = autismclient.util.AttackReachHelper.maxReach(MC.player);
       return target.getBoundingBox().distanceToSqr(MC.player.getEyePosition()) <= reach * reach && MC.player.hasLineOfSight(target);
    }
 
@@ -809,7 +809,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return KnockbackThrowPlanner.knockbackStrength(
          MC.player.getAttributeValue(Attributes.ATTACK_KNOCKBACK),
          level,
-         SprintStateTracker.init_Z(MC.player.isSprinting()),
+         SprintStateTracker.effectiveSprinting(MC.player.isSprinting()),
          MC.player.getAttackStrengthScale(0.5F),
          autismclient.util.LegacyCombatDetector.init(MC.player)
       );

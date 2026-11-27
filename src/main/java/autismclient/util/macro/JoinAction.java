@@ -33,7 +33,7 @@ public class JoinAction implements MacroAction {
    private static final long read = 2000L;
    private static final ReentrantLock init_ReentrantLock = new ReentrantLock();
    public String server = "";
-   public String when = DEFAULT_WHEN.init_Str();
+   public String when = DEFAULT_WHEN.id();
    public int timeoutSec = 60;
    private boolean init_Z = true;
 
@@ -187,7 +187,7 @@ public class JoinAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("server", this.server == null ? "" : this.server);
-      tag.putString("when", this.init_aA_StreamUtil().init_Str());
+      tag.putString("when", this.init_aA_StreamUtil().id());
       tag.putInt("timeoutSec", this.timeoutSec);
       tag.putBoolean("enabled", this.init_Z);
       return tag;
@@ -196,7 +196,7 @@ public class JoinAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.server = tag.getStringOr("server", "");
-      this.when = autismclient.util.JoinMacroController.Inner_StreamUtil.init(tag.getStringOr("when", DEFAULT_WHEN.init_Str())).init_Str();
+      this.when = autismclient.util.JoinMacroController.Inner_StreamUtil.init(tag.getStringOr("when", DEFAULT_WHEN.id())).id();
       this.timeoutSec = Math.max(1, Math.min(300, tag.getIntOr("timeoutSec", 60)));
       if (tag.contains("enabled")) {
          this.init_Z = tag.getBooleanOr("enabled", true);

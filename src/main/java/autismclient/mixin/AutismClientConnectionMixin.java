@@ -316,7 +316,7 @@ public abstract class AutismClientConnectionMixin {
          if (!aD.read_Z() && !PkgCls_a.load_Z()) {
             if (PkgCls_a.init_Z_Packet(packet)) {
                ci.cancel();
-            } else if (BedSleepDesyncHelper.init_Z() && packet instanceof ServerboundPlayerCommandPacket autism$cmd && autism$cmd.getAction() == Action.STOP_SLEEPING) {
+            } else if (BedSleepDesyncHelper.isClientAwake() && packet instanceof ServerboundPlayerCommandPacket autism$cmd && autism$cmd.getAction() == Action.STOP_SLEEPING) {
                ci.cancel();
             } else {
                if (packet instanceof ServerboundMovePlayerPacket) {

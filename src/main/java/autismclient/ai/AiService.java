@@ -4214,7 +4214,7 @@ public final class AiService {
       return new AiIntents.Inner_StreamUtil(name -> {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
-            AutismWaypoints.Waypoint wp = AutismWaypoints.init_AutismWaypoints().init_AutismWaypoints_Wa(AuditWaypointScope.current(mc), name);
+            AutismWaypoints.Waypoint wp = AutismWaypoints.getInstance().find(AuditWaypointScope.current(mc), name);
             return wp == null ? null : new int[]{wp.x(), wp.y(), wp.z()};
          } else {
             return null;

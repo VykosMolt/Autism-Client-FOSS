@@ -149,7 +149,7 @@ public final class L {
    }
 
    public static String write_Str() {
-      return autismclient.util.mm.LocalPrefsStore.init_EventBus().update_Str();
+      return autismclient.util.mm.LocalPrefsStore.getInstance().accountName();
    }
 
    public static boolean read_Z() {
@@ -201,7 +201,7 @@ public final class L {
    }
 
    public static String open() {
-      return autismclient.util.mm.LocalPrefsStore.init_EventBus().sync_Str();
+      return autismclient.util.mm.LocalPrefsStore.getInstance().idToken();
    }
 
    private static String run() {
@@ -883,7 +883,7 @@ public final class L {
       load_Z = false;
       read_Z = false;
       flush = autismclient.e.DataUtil.init(new int[]{-400249055});
-      autismclient.util.mm.LocalPrefsStore.init_EventBus().init_V();
+      autismclient.util.mm.LocalPrefsStore.getInstance().clearSession();
       push = autismclient.e.DataUtil.init(new int[]{-400249053});
    }
 
@@ -1215,7 +1215,7 @@ public final class L {
             && r != null
             && r.has(autismclient.e.DataUtil.init(new int[]{-400249031, -400249005, 477181855, 1907737966}))
             && r.has(autismclient.e.DataUtil.init(new int[]{-400249029, -400248994, 477182046, 1907739884}))) {
-            String stored = autismclient.util.mm.LocalPrefsStore.init_EventBus().write_Str();
+            String stored = autismclient.util.mm.LocalPrefsStore.getInstance().sealedSession();
             if (stored != null && !stored.isEmpty()) {
                update = r.get(autismclient.e.DataUtil.init(new int[]{-400249029, -400249007, 477182033, 1907739880})).getAsString();
                load_J = r.get(autismclient.e.DataUtil.init(new int[]{-400249027, -400249000, 477181980, 1907741806})).getAsLong() * 1000L;
@@ -1280,8 +1280,8 @@ public final class L {
                if (r.has(
                   autismclient.e.DataUtil.init(new int[]{-400249015, -400249056, 477182396, 1907753310, -989191050, -600154272, -1424915905, -1222719358})
                )) {
-                  autismclient.util.mm.LocalPrefsStore.init_EventBus()
-                     .write_V(
+                  autismclient.util.mm.LocalPrefsStore.getInstance()
+                     .setIdToken(
                         r.get(
                               autismclient.e.DataUtil.init(
                                  new int[]{-400249015, -400249056, 477182396, 1907753310, -989191050, -600154272, -1424915905, -1222719358}
@@ -1455,8 +1455,8 @@ public final class L {
       if (!rotated.isEmpty()) {
          byte[] sealed = autismclient.util.mm.a.DataUtil.init(rotated.getBytes(StandardCharsets.UTF_8));
          if (sealed != null) {
-            autismclient.util.mm.LocalPrefsStore.init_EventBus().update_V(Base64.getEncoder().encodeToString(sealed));
-            if (autismclient.util.mm.LocalPrefsStore.init_EventBus().sync_Z()) {
+            autismclient.util.mm.LocalPrefsStore.getInstance().setSealedSession(Base64.getEncoder().encodeToString(sealed));
+            if (autismclient.util.mm.LocalPrefsStore.getInstance().sync_Z()) {
                AutismClientAddon.LOG
                   .info(
                      autismclient.e.DataUtil.init(
@@ -1535,7 +1535,7 @@ public final class L {
    }
 
    private static String get() {
-      String sealedB64 = autismclient.util.mm.LocalPrefsStore.init_EventBus().write_Str();
+      String sealedB64 = autismclient.util.mm.LocalPrefsStore.getInstance().sealedSession();
       if (sealedB64 != null && !sealedB64.isEmpty()) {
          try {
             byte[] plain = autismclient.util.mm.a.DataUtil.read(Base64.getDecoder().decode(sealedB64));
@@ -1545,7 +1545,7 @@ public final class L {
          } catch (Throwable var2) {
          }
 
-         autismclient.util.mm.LocalPrefsStore.init_EventBus().init_V();
+         autismclient.util.mm.LocalPrefsStore.getInstance().clearSession();
          return null;
       } else {
          return null;
@@ -1884,8 +1884,8 @@ public final class L {
                ? r.get(autismclient.e.DataUtil.init(new int[]{-400248975, -400249064, 477183700, 1907791654, -987999586, -563213480, -279749801, -82310278}))
                   .getAsString()
                : autismclient.e.DataUtil.init(new int[]{-400248973});
-            autismclient.util.mm.LocalPrefsStore.init_EventBus()
-               .init_V_Str_2(sealed == null ? autismclient.e.DataUtil.init(new int[]{-400248973}) : Base64.getEncoder().encodeToString(sealed), name, idToken);
+            autismclient.util.mm.LocalPrefsStore.getInstance()
+               .saveSession(sealed == null ? autismclient.e.DataUtil.init(new int[]{-400248973}) : Base64.getEncoder().encodeToString(sealed), name, idToken);
             update = r.get(autismclient.e.DataUtil.init(new int[]{-400248971, -400249057, 477183835, 1907795490})).getAsString();
             load_J = r.get(autismclient.e.DataUtil.init(new int[]{-400248971, -400249072, 477183828, 1907795494})).getAsLong() * 1000L;
             init_Z = r.has(autismclient.e.DataUtil.init(new int[]{-400248969, -400249066, 477183758, 1907797429, -987820734, -557672361}))

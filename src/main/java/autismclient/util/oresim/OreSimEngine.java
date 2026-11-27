@@ -72,7 +72,7 @@ public final class OreSimEngine {
    private OreSimEngine() {
    }
 
-   public static OreSimEngine.Inner_BufferHelper init_StreamUtil_BufferH() {
+   public static OreSimEngine.Inner_BufferHelper status() {
       if (write_Z) {
          return OreSimEngine.Inner_BufferHelper.ERROR;
       } else if (update_Z) {
@@ -88,7 +88,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isReady() {
       return init_ConfigStore != null && !write_Z && !update_Z && !sync_Z;
    }
 
@@ -96,19 +96,19 @@ public final class OreSimEngine {
       return init_Z || load_Z;
    }
 
-   public static boolean read_Z() {
+   public static boolean hasError() {
       return write_Z;
    }
 
-   public static String init_Str() {
+   public static String errorMessage() {
       return init_Str;
    }
 
-   public static int init_I() {
+   public static int simulatedChunkCount() {
       return init_Map.size();
    }
 
-   public static OreSimEngine.Inner_ConfigStore init_StreamUtil_ConfigS() {
+   public static OreSimEngine.Inner_ConfigStore progress() {
       synchronized (init_Obj) {
          if (init_StreamUtil_StreamU == null) {
             return new OreSimEngine.Inner_ConfigStore(load_J, 0, 0);
@@ -133,7 +133,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static int load_I() {
+   public static int positionCount() {
       return push;
    }
 
@@ -141,11 +141,11 @@ public final class OreSimEngine {
       return close_Z;
    }
 
-   public static int read_I() {
+   public static int revision() {
       return init_AtomicInteger.get();
    }
 
-   public static void init_V() {
+   public static void reset() {
       read_J = 0L;
       synchronized (init_Obj) {
          if (init_StreamUtil_StreamU != null
@@ -159,7 +159,7 @@ public final class OreSimEngine {
             || sync_Z
             || !init_Str.isEmpty()
             || !auditIsDisprovenEmpty()
-            || !init_ConfigStore_2.init_Z()) {
+            || !init_ConfigStore_2.isIdle()) {
             load_J++;
             update_V();
             init_StreamUtil_StreamU = null;
@@ -212,7 +212,7 @@ public final class OreSimEngine {
       long since = read_J;
       if (since != 0L && System.nanoTime() - since >= retentionNanos) {
          read_J = 0L;
-         init_V();
+         reset();
          return true;
       } else {
          return false;
@@ -303,7 +303,7 @@ public final class OreSimEngine {
             }
          }
       } else {
-         init_V();
+         reset();
       }
    }
 
@@ -384,7 +384,7 @@ public final class OreSimEngine {
 
                int regionMinX = chunkX - 2;
                int regionMinZ = chunkZ - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 5, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 5, () -> token != load_J);
                long chunkKey = ChunkPos.pack(chunkX, chunkZ);
                ChunkAccess chunk = generated.get(chunkKey);
                if (chunk == null) {
@@ -454,7 +454,7 @@ public final class OreSimEngine {
             } else {
                int regionMinX = tile.init_I() - 2;
                int regionMinZ = tile.load() - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 8, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 8, () -> token != load_J);
                Map<Long, OreSimEngine.Inner_DataUtil> completed = new HashMap<>(16);
 
                for (int dxx = 0; dxx < 4; dxx++) {
@@ -521,7 +521,7 @@ public final class OreSimEngine {
    private static OreSimEngine.Inner_DataUtil init_StreamUtil_DataUti_ChunkAccess_BooleanSupplier(ChunkAccess chunk, BooleanSupplier cancelled) {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
-      autismclient.util.oresim.worldgen.OreSimRegionGenerator.init_V_ChunkAccess(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
+      autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
          int stateId = OreBlockCatalog.Inner_StreamUtil.init(state);
          if (stateId >= 0) {
             positions.add(BlockPos.asLong(x, y, z));
@@ -712,7 +712,7 @@ public final class OreSimEngine {
    private static NearestChunkSelector.Inner_DataUtil init_TaskQueue_DataUtil() {
       int centerX = SectionPos.blockToSectionCoord(close_I);
       int centerZ = SectionPos.blockToSectionCoord(open_I);
-      return NearestChunkSelector.init_TaskQueue_DataUtil_D(
+      return NearestChunkSelector.select(
          close_I + 0.5, open_I + 0.5, centerX, centerZ, poll, key -> init_Map.containsKey(key) || load_Map.containsKey(key)
       );
    }
@@ -768,7 +768,7 @@ public final class OreSimEngine {
             boolean anyDisproven = !init_LongOpenHashSet.isEmpty();
 
             for (int ring = 0; ring <= drawRadius; ring++) {
-               if (nearest.init_Z()) {
+               if (nearest.isFull()) {
                   double ringMin = Math.max(0.0, (ring - 1) * 16.0);
                   if (ringMin * ringMin > nearest.init_D()) {
                      break;
@@ -807,7 +807,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static void init_V_BlockPos_2(BlockPos center, int blockRadius, LongOpenHashSet out) {
+   public static void collectPositions(BlockPos center, int blockRadius, LongOpenHashSet out) {
       if (center != null && out != null && !init_Map.isEmpty()) {
          int minX = center.getX() - blockRadius;
          int maxX = center.getX() + blockRadius;
@@ -838,7 +838,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static void init_V_BlockPos(BlockPos center, int blockRadius, OreSimEngine.Inner_CachePool judge) {
+   public static void forEachPosition(BlockPos center, int blockRadius, OreSimEngine.Inner_CachePool judge) {
       if (center != null && judge != null && !init_Map.isEmpty()) {
          int minX = center.getX() - blockRadius;
          int maxX = center.getX() + blockRadius;
@@ -901,18 +901,18 @@ public final class OreSimEngine {
       boolean shouldDrop(int var1, long var2);
    }
 
-   public record Inner_ConfigStore(long init_J, int init_I, int load) {
+   public record Inner_ConfigStore(long init_J, int done, int load) {
       public Inner_ConfigStore {
          load = Math.max(0, load);
-         init_I = Math.max(0, Math.min(init_I, load));
+         done = Math.max(0, Math.min(done, load));
       }
 
       public double init_D() {
-         return this.load == 0 ? 0.0 : (double)this.init_I / this.load;
+         return this.load == 0 ? 0.0 : (double)this.done / this.load;
       }
 
-      public boolean init_Z() {
-         return this.load > 0 && this.init_I >= this.load;
+      public boolean isComplete() {
+         return this.load > 0 && this.done >= this.load;
       }
    }
 

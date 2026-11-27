@@ -936,11 +936,11 @@ public final class ScaffoldModule extends Module {
       RotationMath.Rotation live = this.load_ce_DataUtil;
       RotationMath.Rotation liveRaw = this.flush_ce_DataUtil;
       float liveSent = f_l_F;
-      boolean tellyLive = autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue);
+      boolean tellyLive = autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue);
       this.load_V_Z(false);
       if (live != null && MC != null && MC.player != null) {
          if (tellyLive) {
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, live);
+            autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, live);
          }
 
          this.load_ce_DataUtil = live;
@@ -950,7 +950,7 @@ public final class ScaffoldModule extends Module {
          this.sync_Z = true;
       }
 
-      PlacedBlockTrailRenderer.init_V();
+      PlacedBlockTrailRenderer.recordScaffoldPlacement();
    }
 
    @Override
@@ -1654,7 +1654,7 @@ public final class ScaffoldModule extends Module {
                                  this.f_aj_I = this.init_Random.nextInt(25);
                                  this.f_l_Z = true;
                                  this.add_Str = "ok";
-                                 autismclient.util.VirtualInputDispatcher.init_V_J(this.put_J);
+                                 autismclient.util.VirtualInputDispatcher.requestScaffold(this.put_J);
                                  ((AutismMinecraftAccessor)MC).autism$setRightClickDelay(0);
                                  this.init_V_Str_aI_TableIndex("PLACE", target);
                               } else {
@@ -3965,7 +3965,7 @@ public final class ScaffoldModule extends Module {
       this.f_bG_I = 0;
       if (this.flush_ce_DataUtil == null) {
          this.flush_ce_DataUtil = RotationMath.ofPlayer(MC.player);
-         this.init_dg.init_V_J(this.init_Random.nextLong());
+         this.init_dg.reseed(this.init_Random.nextLong());
          this.read_ce_DataUtil = null;
          this.pool_F = 0.0F;
       }
@@ -4002,7 +4002,7 @@ public final class ScaffoldModule extends Module {
    static RotationMath.Rotation init_ce_DataUtil_dg(
       SmoothRotationIntegrator smoother, RotationMath.Rotation current, float yawError, float pitchError, float directionChange, double gcd, float maxYawStep, float maxPitchStep
    ) {
-      SmoothRotationIntegrator.Inner_DataUtil step = smoother.init_dg_DataUtil_F_2(yawError, pitchError, gcd, maxYawStep, maxPitchStep, 180.0F, directionChange, 0.35F, true, true);
+      SmoothRotationIntegrator.Inner_DataUtil step = smoother.step(yawError, pitchError, gcd, maxYawStep, maxPitchStep, 180.0F, directionChange, 0.35F, true, true);
       RotationMath.Rotation delta = new SmoothRotationIntegrator.Inner_DataUtil(
             init_J_J(load_J_J(step.init(), maxYawStep, gcd), yawError, gcd), init_J_J(load_J_J(step.load(), maxPitchStep, gcd), pitchError, gcd)
          )
@@ -4340,7 +4340,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void prev_V() {
-      if (MC != null && MC.player != null && autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
+      if (MC != null && MC.player != null && autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue)) {
          LocalPlayer player = MC.player;
          float offset = yawWrapOffset(f_l_F, player.getYRot());
          if (offset != 0.0F && Float.isFinite(offset)) {
@@ -4380,9 +4380,9 @@ public final class ScaffoldModule extends Module {
             float pitchDelta = camera.pitch() - this.flush_ce_DataUtil.pitch();
             float yawCap = this.f_bG_I == 0 ? 20.0F : 37.0F;
             float pitchCap = this.f_bG_I == 0 ? 20.0F : 37.0F;
-            if (autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
+            if (autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue)) {
                this.load_ce_DataUtil = RotationMath.stepQuantized(this.load_ce_DataUtil, camera, 95.0F, 95.0F, gcd);
-               autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.load_ce_DataUtil);
+               autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, this.load_ce_DataUtil);
                this.flush_ce_DataUtil = this.load_ce_DataUtil;
             } else {
                this.flush_ce_DataUtil = init_ce_DataUtil_dg(
@@ -4420,10 +4420,10 @@ public final class ScaffoldModule extends Module {
       this.f_w_I = 0;
       this.f_bG_I = 0;
       this.f_bF_I = 0;
-      this.init_dg.load_V();
+      this.init_dg.reset();
       this.read_ce_DataUtil = null;
       this.pool_F = 0.0F;
-      autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
+      autismclient.util.RotationStreamPlanner.reset(this.init_ap_TaskQueue);
    }
 
    void read_V_12() {
@@ -4608,11 +4608,11 @@ public final class ScaffoldModule extends Module {
       this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
       this.sync_Z = false;
       this.f_bG_I = 0;
-      if (!autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
-         autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.poll_ce_DataUtil());
+      if (!autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue)) {
+         autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, this.poll_ce_DataUtil());
       }
 
-      this.write_ce_DataUtil = autismclient.util.RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue);
+      this.write_ce_DataUtil = autismclient.util.RotationStreamPlanner.currentRotation(this.init_ap_TaskQueue);
       float lookYaw = this.init_F_LocalPlayer(player);
       boolean hadCourse = this.prev_Z && Float.isFinite(this.flags_F);
       float previousAnchor = this.flags_F;
@@ -5518,10 +5518,10 @@ public final class ScaffoldModule extends Module {
 
          this.flush_ce_DataUtil = this.load_ce_DataUtil != null ? this.load_ce_DataUtil : this.poll_ce_DataUtil();
          this.load_ce_DataUtil = this.flush_ce_DataUtil;
-         this.init_dg.init_V_J(this.init_Random.nextLong());
+         this.init_dg.reseed(this.init_Random.nextLong());
          this.read_ce_DataUtil = null;
          this.pool_F = 0.0F;
-         autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
+         autismclient.util.RotationStreamPlanner.reset(this.init_ap_TaskQueue);
          this.sync_Z = false;
          this.f_bG_I = 0;
          this.f_v_I = 5;
@@ -5583,7 +5583,7 @@ public final class ScaffoldModule extends Module {
                && this.init_Z_LocalPlayer(player)) {
                RotationMath.Rotation live = this.load_ce_DataUtil != null ? this.load_ce_DataUtil : this.poll_ce_DataUtil();
                this.block_V();
-               autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, live);
+               autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, live);
                this.write_ce_DataUtil = live;
                this.load_ce_DataUtil = live;
                this.load_aI_TableIndex = null;
@@ -6124,7 +6124,7 @@ public final class ScaffoldModule extends Module {
          if (init_Z_26() && !BlinkPacketManager.isHoldingActionsOnly()) {
             Module module = al.init_Module_Str("scaffold");
             ScaffoldModule scaffold = (ScaffoldModule)module;
-            return autismclient.util.VirtualInputDispatcher.init_Z_J(scaffold.put_J);
+            return autismclient.util.VirtualInputDispatcher.consumeScaffold(scaffold.put_J);
          } else {
             return false;
          }
@@ -6993,11 +6993,11 @@ public final class ScaffoldModule extends Module {
       this.f_z_I = tick;
       this.set_J = -9223372036854775808L;
       if (this.close_Z) {
-         PlacementTickStamp.init_V();
+         PlacementTickStamp.stamp();
       }
 
       MC.hitResult = aimed.init_BlockHitResult();
-      autismclient.util.VirtualInputDispatcher.init_V_J(this.put_J);
+      autismclient.util.VirtualInputDispatcher.requestScaffold(this.put_J);
       return true;
    }
 
@@ -9302,7 +9302,7 @@ public final class ScaffoldModule extends Module {
       this.write_ce_DataUtil = RotationMath.stepQuantized(this.poll_ce_DataUtil(), planned, cap, cap, RotationMath.gcdStep());
       this.init_aM().init(this.write_ce_DataUtil, AutismSessionState.getInstance().getClientTick());
       this.f_U_I = AutismSessionState.getInstance().getClientTick();
-      autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.write_ce_DataUtil);
+      autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, this.write_ce_DataUtil);
       this.f_T_I = AutismSessionState.getInstance().getClientTick();
       this.load_ce_DataUtil = this.write_ce_DataUtil;
       this.f_v_I = 5;
@@ -9312,7 +9312,7 @@ public final class ScaffoldModule extends Module {
    private void read_V_ce_DataUtil(RotationMath.Rotation rotation) {
       this.write_ce_DataUtil = rotation;
       this.init_aM().init(rotation, AutismSessionState.getInstance().getClientTick());
-      autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, rotation);
+      autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, rotation);
       this.load_ce_DataUtil = rotation;
       this.f_v_I = 5;
       this.f_T_I = AutismSessionState.getInstance().getClientTick();
@@ -10464,11 +10464,11 @@ public final class ScaffoldModule extends Module {
    private void frame_V() {
       this.write_ce_DataUtil = null;
       if (!this.sync_Z) {
-         if (this.load_ce_DataUtil != null && autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
+         if (this.load_ce_DataUtil != null && autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue)) {
             this.sync_Z = true;
          } else if (this.load_ce_DataUtil == null) {
             this.f_v_I = 0;
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
+            autismclient.util.RotationStreamPlanner.reset(this.init_ap_TaskQueue);
          }
       }
    }
@@ -10760,7 +10760,7 @@ public final class ScaffoldModule extends Module {
             this.init_AtomicBoolean.set(false);
          } else {
             Path directory = MC.gameDirectory.toPath().resolve("logs");
-            autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("Telly-placement-diagnostics", () -> {
+            autismclient.util.BackgroundTaskExecutor.submit("Telly-placement-diagnostics", () -> {
                try {
                   Files.createDirectories(directory);
                   String json = capture.toJson();
@@ -12604,12 +12604,12 @@ public final class ScaffoldModule extends Module {
          scaffold.f_v_I = 5;
          scaffold.flush_ce_DataUtil = rotation;
          scaffold.read_ce_DataUtil = null;
-         scaffold.init_dg.init_V_J(scaffold.init_Random.nextLong());
+         scaffold.init_dg.reseed(scaffold.init_Random.nextLong());
          scaffold.f_aQ_I = 0;
          scaffold.fill_F = 0.0F / 0.0F;
          if (scaffold.pool_Z()) {
             scaffold.write_ce_DataUtil = rotation;
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(scaffold.init_ap_TaskQueue, rotation);
+            autismclient.util.RotationStreamPlanner.begin(scaffold.init_ap_TaskQueue, rotation);
          }
       }
    }
@@ -13137,7 +13137,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private Input flush(Input input) {
-      boolean tellyWindDown = this.sync_Z && autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue);
+      boolean tellyWindDown = this.sync_Z && autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue);
       if ((this.chunk_Z() || tellyWindDown) && this.load_ce_DataUtil != null && this.f_v_I > 0) {
          if (this.sync_Z) {
             return this.close(input);
@@ -16050,7 +16050,7 @@ public final class ScaffoldModule extends Module {
                return true;
             } else {
                Compat263.swing(MC.player, hand);
-               autismclient.util.ClickRateTracker.load_V();
+               autismclient.util.ClickRateTracker.recordRightClick();
                PlacedBlockTrailRenderer.init(target.load());
                this.init_V_BlockPos_3(target.load(), placementLine, previousFallOff);
                boolean wasStackUsed = !stack.isEmpty() && (stack.getCount() != oldCount || MC.player.hasInfiniteMaterials());
@@ -16276,7 +16276,7 @@ public final class ScaffoldModule extends Module {
             this.f_k_I = slot;
             this.f_l_I = slot;
             this.write_Z = true;
-            autismclient.util.VirtualInputDispatcher.init_V_I(slot);
+            autismclient.util.VirtualInputDispatcher.setSlot(slot);
          } finally {
             autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
@@ -16557,7 +16557,7 @@ public final class ScaffoldModule extends Module {
             } else {
                try {
                   this.f_k_I = this.f_j_I;
-                  autismclient.util.VirtualInputDispatcher.init_V_I(this.f_j_I);
+                  autismclient.util.VirtualInputDispatcher.setSlot(this.f_j_I);
                } finally {
                   autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                }
@@ -17974,7 +17974,7 @@ public final class ScaffoldModule extends Module {
          && MC.player.getInventory().getSelectedSlot() != this.f_j_I
          && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
-            autismclient.util.VirtualInputDispatcher.init_V_I(this.f_j_I);
+            autismclient.util.VirtualInputDispatcher.setSlot(this.f_j_I);
          } finally {
             autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }

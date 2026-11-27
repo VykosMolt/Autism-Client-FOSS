@@ -113,7 +113,7 @@ public final class LoggedPacketActions {
             action.waitForGuiAfter = false;
             action.guiName = "";
             action.packets.add(new AutismSessionState.DelayedPacket(entry.packet, 0, AutismSessionState.ReplayMode.EXACT));
-            macroEditor.init_V_MacroAction_2(action);
+            macroEditor.appendAction(action);
             OverlayManager.getInstance().bringToFront(macroEditor);
             AutismClientMessaging.sendPrefixed("Added send action: " + entry.name);
             return true;
@@ -138,7 +138,7 @@ public final class LoggedPacketActions {
             } else {
                autismclient.util.macro.WaitForPacketAction action = new autismclient.util.macro.WaitForPacketAction(target);
                action.packetNames.add(target);
-               macroEditor.init_V_MacroAction_2(action);
+               macroEditor.appendAction(action);
                OverlayManager.getInstance().bringToFront(macroEditor);
                AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.WaitForPacketAction.write(target));
                return true;
@@ -179,7 +179,7 @@ public final class LoggedPacketActions {
                AutismClientMessaging.sendPrefixed("§cFailed to create payload action from packet.");
                return false;
             } else {
-               macroEditor.init_V_MacroAction_2(action);
+               macroEditor.appendAction(action);
                OverlayManager.getInstance().bringToFront(macroEditor);
                AutismClientMessaging.sendPrefixed("Added payload action: " + entry.name);
                return true;
@@ -199,13 +199,13 @@ public final class LoggedPacketActions {
          return macroEditor;
       }
 
-      macroEditor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+      macroEditor = AutismMacroEditorOverlay.getInstance();
       if (macroEditor == null) {
          return null;
       }
 
       AutismMacro existingMacro = AutismSessionState.getInstance().getEditingMacro();
-      macroEditor.init_V_aM(existingMacro);
+      macroEditor.openEditor(existingMacro);
       OverlayManager.getInstance().bringToFront(macroEditor);
       return macroEditor;
    }

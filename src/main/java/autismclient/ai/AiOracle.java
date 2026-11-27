@@ -330,10 +330,10 @@ final class AiOracle {
       String raw = seedArg == null ? "" : seedArg.strip();
       if (!raw.isEmpty()) {
          autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(raw);
-         if (!parsed.init_Z()) {
+         if (!parsed.isValid()) {
             throw new IllegalArgumentException("seed must be a signed decimal long, got \"" + raw + "\"");
          } else {
-            return new AiOracle.Inner_NetHelper(parsed.init_Long(), "argument");
+            return new AiOracle.Inner_NetHelper(parsed.seed(), "argument");
          }
       } else {
          Long local = probe.init_Long();
@@ -341,9 +341,9 @@ final class AiOracle {
             return new AiOracle.Inner_NetHelper(local, "singleplayer");
          } else {
             autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil stored = autismclient.util.oresim.OreSimSeedParser.init(probe.init_Str());
-            if (stored.init_Z()) {
-               return new AiOracle.Inner_NetHelper(stored.init_Long(), "stored");
-            } else if (stored.init_BufferHelper_Strea() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
+            if (stored.isValid()) {
+               return new AiOracle.Inner_NetHelper(stored.seed(), "stored");
+            } else if (stored.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
                throw new IllegalArgumentException(
                   "The stored oresim-seed for this server is not a signed decimal long; fix the xray module's oresim-seed setting or pass the seed argument"
                );
@@ -366,7 +366,7 @@ final class AiOracle {
 
          @Override
          public String init_Str() {
-            return AutismOreSimSeedStore.init_AutismOreSimSeedSt().init_Str(AutismWaypoints.init_Str_Minecraft(mc), "");
+            return AutismOreSimSeedStore.getInstance().seedFor(AutismWaypoints.scopeFor(mc), "");
          }
       };
    }
@@ -412,18 +412,18 @@ final class AiOracle {
          public AiOperation.Result tick() {
             if (!this.init_Z && mc.player != null && mc.level != null) {
                autismclient.util.oresim.OreSimEngine.init(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
-               if (autismclient.util.oresim.OreSimEngine.read_Z()) {
+               if (autismclient.util.oresim.OreSimEngine.hasError()) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Ore simulation failed (status "
-                        + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH()
+                        + autismclient.util.oresim.OreSimEngine.status()
                         + "): "
-                        + autismclient.util.oresim.OreSimEngine.init_Str(),
+                        + autismclient.util.oresim.OreSimEngine.errorMessage(),
                      new JsonObject()
                   );
                }
 
-               if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
+               if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Ore simulation supports only the Overworld, Nether and End; the current dimension "
@@ -436,18 +436,18 @@ final class AiOracle {
                if (System.nanoTime() > this.init_J) {
                   return this.init(
                      AiOperation.Status.TIMED_OUT,
-                     "Ore simulation did not finish within 60s (status " + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() + ")",
+                     "Ore simulation did not finish within 60s (status " + autismclient.util.oresim.OreSimEngine.status() + ")",
                      this.init()
                   );
                }
 
-               if (!autismclient.util.oresim.OreSimEngine.init_Z()) {
+               if (!autismclient.util.oresim.OreSimEngine.isReady()) {
                   return this.init("Loading vanilla worldgen context for seed simulation");
                }
 
-               autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
-               if (!progress.init_Z() && ++this.init_I < 400) {
-                  return this.init("Simulating ore generation (" + progress.init_I() + "/" + progress.load() + " chunks)");
+               autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.progress();
+               if (!progress.isComplete() && ++this.init_I < 400) {
+                  return this.init("Simulating ore generation (" + progress.done() + "/" + progress.load() + " chunks)");
                }
 
                Vec3 eye = mc.player.getEyePosition();
@@ -458,7 +458,7 @@ final class AiOracle {
                   eye.y,
                   eye.z,
                   8,
-                  stateId -> autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_CachePool_DataUtil(stateId) == kind,
+                  stateId -> autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.kindById(stateId) == kind,
                   cap,
                   outPos,
                   outState
@@ -505,7 +505,7 @@ final class AiOracle {
                      "note",
                      "predicted from world seed simulation; confirm by observation",
                      "simulatedChunks",
-                     progress.init_I(),
+                     progress.done(),
                      "totalChunks",
                      progress.load(),
                      "positions",
@@ -522,9 +522,9 @@ final class AiOracle {
          }
 
          JsonObject init() {
-            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore p = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
+            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore p = autismclient.util.oresim.OreSimEngine.progress();
             return AiJson.objectOf(
-               "engineStatus", autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name(), "simulatedChunks", p.init_I(), "totalChunks", p.load()
+               "engineStatus", autismclient.util.oresim.OreSimEngine.status().name(), "simulatedChunks", p.done(), "totalChunks", p.load()
             );
          }
 
@@ -684,7 +684,7 @@ final class AiOracle {
             return new AiOracle.Inner_BufferHelper(List.of(), null);
          }
 
-         RegistryLookup<Structure> registry = context.init_HolderLookup_Provi().lookupOrThrow(Registries.STRUCTURE);
+         RegistryLookup<Structure> registry = context.registries().lookupOrThrow(Registries.STRUCTURE);
          List<Holder<Structure>> wanted = new ArrayList<>();
 
          for (String id : spec.ids()) {
@@ -730,7 +730,7 @@ final class AiOracle {
    private static List<AiOracle.Inner_JsonUtil> init(
       autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
-      ChunkGeneratorStructureState state = context.init_ChunkGeneratorStru();
+      ChunkGeneratorStructureState state = context.structureState();
       long seed = state.getLevelSeed();
       Map<StructurePlacement, Set<Holder<Structure>>> scans = new LinkedHashMap<>();
 
@@ -805,15 +805,15 @@ final class AiOracle {
       for (Holder<Structure> holder : structures) {
          Structure structure = holder.value();
          GenerationContext generation = new GenerationContext(
-            context.init_RegistryAccess(),
-            context.init_ChunkGenerator(),
-            context.init_BiomeSource(),
-            context.init_RandomState().createClimateSampler(null),
-            context.init_RandomState(),
-            context.init_StructureTemplateM(),
+            context.registryAccess(),
+            context.chunkGenerator(),
+            context.biomeSource(),
+            context.randomState().createClimateSampler(null),
+            context.randomState(),
+            context.structureTemplates(),
             seed,
             candidate,
-            context.init_LevelHeightAccesso(),
+            context.heightAccessor(),
             structure.biomes()::contains
          );
          Optional<GenerationStub> stub = structure.findValidGenerationPoint(generation);
@@ -972,7 +972,7 @@ final class AiOracle {
             return new AiOracle.Inner_StreamUtil(null, null);
          }
 
-         BiomeSource biomeSource = context.init_BiomeSource();
+         BiomeSource biomeSource = context.biomeSource();
          int quartY = origin.getY() >> 2;
          int centerCellX = Math.floorDiv(origin.getX(), 64);
          int centerCellZ = Math.floorDiv(origin.getZ(), 64);
@@ -985,7 +985,7 @@ final class AiOracle {
 
             int x = cell[0] * 64 + 32;
             int z = cell[1] * 64 + 32;
-            Holder<Biome> biome = biomeSource.createCachingResolver(context.init_RandomState()).getNoiseBiome(x >> 2, quartY, z >> 2);
+            Holder<Biome> biome = biomeSource.createCachingResolver(context.randomState()).getNoiseBiome(x >> 2, quartY, z >> 2);
             String sampled = load(biome);
             if (biomeId.equals(sampled)) {
                double dx = x - origin.getX();

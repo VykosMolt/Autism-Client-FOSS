@@ -221,7 +221,7 @@ final class WTapController {
    private long init(ValueRange range, int minimum) {
       ValueRange band = (range == null ? (minimum > 0 ? load_ValueRange : init_ValueRange) : range).clamp(minimum, 200.0);
       this.init_D = this.init_D * 0.92 + this.init_Random.nextGaussian() * 0.035;
-      double style = (autismclient.util.HumanHandProfile.init_am().close() - 0.9) * 0.5;
+      double style = (autismclient.util.HumanHandProfile.shared().close() - 0.9) * 0.5;
       double sample = Math.max(0.0, Math.min(1.0, (this.init_Random.nextDouble() + this.init_Random.nextDouble()) * 0.5 + style + this.init_D));
       return Math.round((band.min() + (band.max() - band.min()) * sample) * 1000000.0);
    }

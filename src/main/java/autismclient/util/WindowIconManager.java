@@ -28,7 +28,7 @@ public final class WindowIconManager {
    private WindowIconManager() {
    }
 
-   public static void init_V(Minecraft client) {
+   public static void apply(Minecraft client) {
       if (!init_Z && client != null && client.getWindow() != null) {
          init_Z = true;
          load(client);

@@ -55,7 +55,7 @@ public final class AutismWaypoints {
    private AutismWaypoints() {
    }
 
-   public static AutismWaypoints init_AutismWaypoints() {
+   public static AutismWaypoints getInstance() {
       AutismWaypoints local = init_AutismWaypoints;
       if (local == null) {
          synchronized (AutismWaypoints.class) {
@@ -70,11 +70,11 @@ public final class AutismWaypoints {
       return local;
    }
 
-   public long init_J() {
+   public long revision() {
       return this.init_AtomicLong.get();
    }
 
-   public static String init_Str_Minecraft(Minecraft mc) {
+   public static String scopeFor(Minecraft mc) {
       if (mc == null) {
          return "unknown";
       }
@@ -124,7 +124,7 @@ public final class AutismWaypoints {
       return "unknown";
    }
 
-   public List<AutismWaypoints.Waypoint> init_List_Str(String scope) {
+   public List<AutismWaypoints.Waypoint> list(String scope) {
       synchronized (this.init_Map) {
          List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
          return list == null ? List.of() : List.copyOf(list);
@@ -161,7 +161,7 @@ public final class AutismWaypoints {
       }
    }
 
-   public boolean init_Z(String scope, String name) {
+   public boolean remove(String scope, String name) {
       if (name != null && !name.isBlank()) {
          boolean removed = false;
          synchronized (this.init_Map) {
@@ -184,7 +184,7 @@ public final class AutismWaypoints {
       }
    }
 
-   public void init_V_Str(String scope) {
+   public void clearScope(String scope) {
       boolean removed;
       synchronized (this.init_Map) {
          removed = this.init_Map.remove(init_Str_Str(scope)) != null;
@@ -195,7 +195,7 @@ public final class AutismWaypoints {
       }
    }
 
-   public AutismWaypoints.Waypoint init_AutismWaypoints_Wa(String scope, String name) {
+   public AutismWaypoints.Waypoint find(String scope, String name) {
       if (name == null) {
          return null;
       }
@@ -216,12 +216,12 @@ public final class AutismWaypoints {
       }
    }
 
-   public int init_I(String scope, String name, int fallback) {
-      AutismWaypoints.Waypoint waypoint = this.init_AutismWaypoints_Wa(scope, name);
+   public int colorOf(String scope, String name, int fallback) {
+      AutismWaypoints.Waypoint waypoint = this.find(scope, name);
       return waypoint == null ? fallback : waypoint.color();
    }
 
-   public boolean init_Z(String scope, String name, int color) {
+   public boolean setColor(String scope, String name, int color) {
       AutismWaypoints.Waypoint updated = null;
       synchronized (this.init_Map) {
          List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
@@ -293,8 +293,8 @@ public final class AutismWaypoints {
       }
    }
 
-   public String init_Str(String var1, String var2) {
-      return AuditDeathWaypoints.nextName(this.init_List_Str(var1), var2);
+   public String nextName(String var1, String var2) {
+      return AuditDeathWaypoints.nextName(this.list(var1), var2);
    }
 
    public AutismWaypoints.Waypoint init(String var1, int var2, int var3, int var4, int var5, long var6, int var8) {

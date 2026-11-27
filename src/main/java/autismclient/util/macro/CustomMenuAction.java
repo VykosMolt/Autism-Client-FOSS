@@ -45,7 +45,7 @@ public final class CustomMenuAction implements MacroAction {
             LockSupport.parkNanos(20000000L);
          } else {
             CustomMenuActionPlanner.Inner_DataUtil prepared = CustomMenuActionPlanner.init(this, snapshot, value -> {
-               String withSecrets = autismclient.util.JoinMacroController.init_Str(value);
+               String withSecrets = autismclient.util.JoinMacroController.fillSecrets(value);
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
                } else {

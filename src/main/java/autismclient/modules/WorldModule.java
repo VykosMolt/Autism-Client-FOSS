@@ -122,7 +122,7 @@ public final class WorldModule extends Module {
    @Override
    public void onDisable() {
       am.init_V();
-      BlockSelectionOutlineRenderer.init_V();
+      BlockSelectionOutlineRenderer.disable();
    }
 
    @Override

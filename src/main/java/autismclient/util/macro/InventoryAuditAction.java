@@ -543,9 +543,9 @@ public class InventoryAuditAction implements MacroAction {
    private void init_V_Minecraft_BlockPos(Minecraft mc, BlockPos pos) {
       mc.execute(() -> {
          if (!autismclient.modules.aD.read_Z() && MacroExecutor.isCurrentRunActive() && mc.player != null && mc.getConnection() != null && pos != null) {
-            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_BlockPos(pos);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofBlock(pos);
             if (target != null) {
-               target.init_Z_Minecraft(mc);
+               target.interact(mc);
             }
          }
       });

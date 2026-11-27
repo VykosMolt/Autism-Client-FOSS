@@ -19,14 +19,14 @@ public abstract class AutismSplashManagerMixin {
    @Inject(method = "prepare", at = @At("HEAD"), cancellable = true)
    private void autism$prepareOnlyVanillaSplashes(ResourceManager manager, ProfilerFiller profiler, CallbackInfoReturnable<List<Component>> cir) {
       if (aD.init_Z()) {
-         cir.setReturnValue(CustomSplashProvider.init_List(Minecraft.getInstance()));
+         cir.setReturnValue(CustomSplashProvider.splashLines(Minecraft.getInstance()));
       }
    }
 
    @Inject(method = "getSplash", at = @At("HEAD"), cancellable = true)
    private void autism$getOnlyVanillaSplash(CallbackInfoReturnable<SplashRenderer> cir) {
       if (aD.init_Z()) {
-         cir.setReturnValue(CustomSplashProvider.init_SplashRenderer(Minecraft.getInstance()));
+         cir.setReturnValue(CustomSplashProvider.splashRenderer(Minecraft.getInstance()));
       }
    }
 }

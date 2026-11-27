@@ -10,19 +10,19 @@ import net.minecraft.util.ArrayListDeque;
 import net.minecraft.world.inventory.Slot;
 
 public final class LauncherQuickActions {
-   public static final String init_Str = "Type message or /command...";
+   public static final String INPUT_PLACEHOLDER = "Type message or /command...";
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
 
    private LauncherQuickActions() {
    }
 
-   public static void init_V() {
+   public static void toggleSendPackets() {
       boolean newValue = !AutismSessionState.getInstance().isSendPacketsEnabled();
       autismclient.modules.ModuleRuntimeManager.getInstance().setAndSaveSendGuiPackets(newValue);
       bi.init("Send Packets " + (newValue ? "on" : "off"), newValue ? -13248397 : -50373);
    }
 
-   public static void load_V() {
+   public static void toggleDelayPackets() {
       boolean newValue = !AutismSessionState.getInstance().isDelayPacketsEnabled();
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       int sent = module.toggleDelayPackets(newValue);
@@ -79,7 +79,7 @@ public final class LauncherQuickActions {
       if (!autismclient.modules.aD.read_Z() && raw != null) {
          String message = raw.trim();
          if (message.isEmpty()) {
-            String last = init_Str();
+            String last = lastSentMessage();
             if (last == null || last.isBlank()) {
                return null;
             }
@@ -115,7 +115,7 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static String init_Str() {
+   public static String lastSentMessage() {
       try {
          if (init_Minecraft.gui != null && init_Minecraft.gui.hud.getChat() != null) {
             ArrayListDeque<String> recent = init_Minecraft.gui.hud.getChat().getRecentChat();
@@ -128,8 +128,8 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static String load_Str() {
-      String last = init_Str();
+   public static String inputPlaceholder() {
+      String last = lastSentMessage();
       return last != null && !last.isBlank() ? last : "Type message or /command...";
    }
 
@@ -146,7 +146,7 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static String[] init_StrArr() {
+   public static String[] containerMetrics() {
       String revision = "--";
       String syncId = "--";
       String slot = "--";
@@ -164,11 +164,11 @@ public final class LauncherQuickActions {
       return new String[]{revision, syncId, slot};
    }
 
-   public static int init_I() {
+   public static int keyColor() {
       return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
-   public static int[] init_IArr() {
+   public static int[] valueColors() {
       return new int[]{
          ThemePaletteManager.recolor(-46518, ThemePaletteManager.ColorRole.ACCENT),
          ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT),

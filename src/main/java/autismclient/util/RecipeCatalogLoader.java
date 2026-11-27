@@ -74,18 +74,18 @@ final class RecipeCatalogLoader {
    private RecipeCatalogLoader() {
    }
 
-   static List<RecipeCatalogLoader.Inner_StreamUtil> init_List(Minecraft mc) {
-      return init_aK_CachePool(mc).init_List();
+   static List<RecipeCatalogLoader.Inner_StreamUtil> craftingRecipes(Minecraft mc) {
+      return catalog(mc).craftingRecipes();
    }
 
-   static List<RecipeCatalogLoader.Inner_DataUtil> load_List(Minecraft mc) {
-      return init_aK_CachePool(mc).load_List();
+   static List<RecipeCatalogLoader.Inner_DataUtil> cookingRecipes(Minecraft mc) {
+      return catalog(mc).cookingRecipes();
    }
 
-   static RecipeCatalogLoader.Inner_CachePool init_aK_CachePool(Minecraft mc) {
+   static RecipeCatalogLoader.Inner_CachePool catalog(Minecraft mc) {
       if (mc != null && mc.level != null) {
          RecipeCatalogLoader.Inner_CachePool server = load_aK_CachePool(mc);
-         return server != null && !server.init_List().isEmpty()
+         return server != null && !server.craftingRecipes().isEmpty()
             ? server
             : init(init_RegistryAccess(mc), init_FeatureFlagSet(mc), SlotDisplayContext.fromLevel(mc.level), mc);
       } else {
@@ -93,7 +93,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   static void init_V(Minecraft mc) {
+   static void preload(Minecraft mc) {
       if (mc != null && mc.level != null) {
          if (mc.getSingleplayerServer() != null) {
             Thread thread = new Thread(() -> {
@@ -120,16 +120,16 @@ final class RecipeCatalogLoader {
    static List<RecipeCatalogLoader.Inner_StreamUtil> read(Minecraft mc) {
       if (mc != null && mc.level != null) {
          RecipeCatalogLoader.Inner_CachePool server = load_aK_CachePool(mc);
-         if (server != null && !server.init_List().isEmpty()) {
-            return server.init_List();
+         if (server != null && !server.craftingRecipes().isEmpty()) {
+            return server.craftingRecipes();
          }
 
          RegistryAccess access = init_RegistryAccess(mc);
          FeatureFlagSet features = init_FeatureFlagSet(mc);
          synchronized (init_Obj) {
             if (init(access, features)) {
-               if (init_aK_CachePool != null && !init_aK_CachePool.init_List().isEmpty()) {
-                  return init_aK_CachePool.init_List();
+               if (init_aK_CachePool != null && !init_aK_CachePool.craftingRecipes().isEmpty()) {
+                  return init_aK_CachePool.craftingRecipes();
                }
 
                if (init_CompletableFuture != null) {
@@ -145,8 +145,8 @@ final class RecipeCatalogLoader {
       }
    }
 
-   static List<RecipeCatalogLoader.Inner_StreamUtil> init_List(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
-      return init(access, features, slotContext, null).init_List();
+   static List<RecipeCatalogLoader.Inner_StreamUtil> buildCraftingRecipes(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
+      return init(access, features, slotContext, null).craftingRecipes();
    }
 
    static int init_I(Minecraft mc) {
@@ -209,7 +209,7 @@ final class RecipeCatalogLoader {
          loaded = null;
       }
 
-      if (loaded != null && !loaded.init_List().isEmpty()) {
+      if (loaded != null && !loaded.craftingRecipes().isEmpty()) {
          return loaded;
       } else {
          return mc == null ? RecipeCatalogLoader.Inner_CachePool.init_aK_CachePool : init(mc.getResourceManager(), access, features, slotContext);
@@ -226,10 +226,10 @@ final class RecipeCatalogLoader {
          RecipeCatalogLoader.Inner_CachePool parsed = init(files, access, features, slotContext, "client jar");
          init_Logger.info(
             "[Autism] recipes: {} crafting + {} cooking from the client jar ({} files, {} skipped) in {} ms",
-            parsed.init_List().size(),
-            parsed.load_List().size(),
-            parsed.init_I(),
-            parsed.load_I(),
+            parsed.craftingRecipes().size(),
+            parsed.cookingRecipes().size(),
+            parsed.filesRead(),
+            parsed.filesSkipped(),
             (System.nanoTime() - started) / 1000000L
          );
          Compat263.vanillaClose(pack);
@@ -256,7 +256,7 @@ final class RecipeCatalogLoader {
             Recipe<?> decoded = Recipe.CODEC.parse(ops, json).getOrThrow(JsonParseException::new).value();
             if (decoded instanceof CraftingRecipe craftingRecipe) {
                for (RecipeCatalogLoader.Inner_StreamUtil recipe : init(recipeId, craftingRecipe, features, slotContext)) {
-                  crafting.put(recipe.init_Str, recipe);
+                  crafting.put(recipe.recipeKey, recipe);
                }
             } else if (decoded instanceof AbstractCookingRecipe cookingRecipe) {
                RecipeCatalogLoader.Inner_DataUtil recipe = init(recipeId, cookingRecipe, decoded, slotContext);
@@ -270,7 +270,7 @@ final class RecipeCatalogLoader {
       }
 
       List<RecipeCatalogLoader.Inner_StreamUtil> craftingList = new ArrayList<>(crafting.values());
-      craftingList.sort(Comparator.comparing(recipex -> recipex.init_Str, String.CASE_INSENSITIVE_ORDER));
+      craftingList.sort(Comparator.comparing(recipex -> recipex.recipeKey, String.CASE_INSENSITIVE_ORDER));
       cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::init_Str, String.CASE_INSENSITIVE_ORDER));
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(craftingList), List.copyOf(cooking), source, files.size(), failed);
    }
@@ -334,7 +334,7 @@ final class RecipeCatalogLoader {
                Recipe<?> decoded = holder.value();
                if (decoded instanceof CraftingRecipe crafting) {
                   for (RecipeCatalogLoader.Inner_StreamUtil recipe : init(recipeId, crafting, enabledFeatures, slotContext)) {
-                     craftingByKey.put(recipe.init_Str, recipe);
+                     craftingByKey.put(recipe.recipeKey, recipe);
                   }
                } else if (decoded instanceof AbstractCookingRecipe cookingRecipe) {
                   RecipeCatalogLoader.Inner_DataUtil recipe = init(recipeId, cookingRecipe, decoded, slotContext);
@@ -347,7 +347,7 @@ final class RecipeCatalogLoader {
       }
 
       List<RecipeCatalogLoader.Inner_StreamUtil> crafting = new ArrayList<>(craftingByKey.values());
-      crafting.sort(Comparator.comparing(recipex -> recipex.init_Str, String.CASE_INSENSITIVE_ORDER));
+      crafting.sort(Comparator.comparing(recipex -> recipex.recipeKey, String.CASE_INSENSITIVE_ORDER));
       cooking.sort(Comparator.comparing(RecipeCatalogLoader.Inner_DataUtil::init_Str, String.CASE_INSENSITIVE_ORDER));
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(crafting), List.copyOf(cooking));
    }
@@ -670,7 +670,7 @@ final class RecipeCatalogLoader {
       return resultKey + "|" + result.getCount() + "|" + (shaped ? "shaped" : "shapeless") + "|" + width + "x" + height + "|" + String.join(";", parts);
    }
 
-   record Inner_CachePool(List<RecipeCatalogLoader.Inner_StreamUtil> init_List, List<RecipeCatalogLoader.Inner_DataUtil> load_List, String init_Str, int init_I, int load_I) {
+   record Inner_CachePool(List<RecipeCatalogLoader.Inner_StreamUtil> craftingRecipes, List<RecipeCatalogLoader.Inner_DataUtil> cookingRecipes, String source, int filesRead, int filesSkipped) {
       static final RecipeCatalogLoader.Inner_CachePool init_aK_CachePool = new RecipeCatalogLoader.Inner_CachePool(List.of(), List.of(), "none", 0, 0);
 
       Inner_CachePool(List<RecipeCatalogLoader.Inner_StreamUtil> crafting, List<RecipeCatalogLoader.Inner_DataUtil> cooking) {
@@ -686,14 +686,14 @@ final class RecipeCatalogLoader {
    }
 
    static final class Inner_StreamUtil {
-      final String init_Str;
-      final ItemStack init_ItemStack;
-      final int init_I;
-      final int load_I;
-      final boolean init_Z;
-      final List<Ingredient> init_List;
-      final List<Ingredient> load_List;
-      final String load_Str;
+      final String recipeKey;
+      final ItemStack result;
+      final int width;
+      final int height;
+      final boolean shaped;
+      final List<Ingredient> gridIngredients;
+      final List<Ingredient> requirements;
+      final String signature;
 
       Inner_StreamUtil(
          String recipeKey,
@@ -705,18 +705,18 @@ final class RecipeCatalogLoader {
          List<Ingredient> requirements,
          String signature
       ) {
-         this.init_Str = recipeKey;
-         this.init_ItemStack = result.copy();
-         this.init_I = width;
-         this.load_I = height;
-         this.init_Z = shaped;
-         this.init_List = RecipeCatalogLoader.init_List(gridIngredients);
-         this.load_List = RecipeCatalogLoader.init_List(requirements);
-         this.load_Str = signature;
+         this.recipeKey = recipeKey;
+         this.result = result.copy();
+         this.width = width;
+         this.height = height;
+         this.shaped = shaped;
+         this.gridIngredients = RecipeCatalogLoader.init_List(gridIngredients);
+         this.requirements = RecipeCatalogLoader.init_List(requirements);
+         this.signature = signature;
       }
 
       boolean init(int gridWidth, int gridHeight) {
-         return !this.init_Z ? this.load_List.size() <= gridWidth * gridHeight : this.init_I <= gridWidth && this.load_I <= gridHeight;
+         return !this.shaped ? this.requirements.size() <= gridWidth * gridHeight : this.width <= gridWidth && this.height <= gridHeight;
       }
    }
 }

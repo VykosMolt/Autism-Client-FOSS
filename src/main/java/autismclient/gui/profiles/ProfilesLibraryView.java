@@ -31,7 +31,7 @@ public final class ProfilesLibraryView {
    private static final int load_I = 4;
    private final Font init_Font;
    private final CharEncoder init_CharEncoder = new CharEncoder();
-   private final AutismProfileManager init_bV = AutismProfileManager.init_bV();
+   private final AutismProfileManager init_bV = AutismProfileManager.getInstance();
    private final ProfileServerIconCache init_DataUtil = new ProfileServerIconCache();
    private final List<ProfilesLibraryView.Inner_DataUtil> init_List = new ArrayList<>();
    private final List<TextInputWidget> load_List = new ArrayList<>();
@@ -74,10 +74,10 @@ public final class ProfilesLibraryView {
    }
 
    public int init(int width) {
-      AutismProfile profile = this.init_bV.init_AutismProfile_Str(this.init_Str);
+      AutismProfile profile = this.init_bV.byId(this.init_Str);
       int innerW = Math.max(0, width - 8);
       int body = profile == null
-         ? Math.min(4 * flush_I(), init_I_I_I(this.init_bV.init_I(), load_I_I(innerW)))
+         ? Math.min(4 * flush_I(), init_I_I_I(this.init_bV.count(), load_I_I(innerW)))
          : Math.min(init_I_AutismProfile_I(profile, innerW), 10 * sync_I());
       int modal = this.init_Z() ? (this.init_AutismProfile != null ? read_I() : this.load_I()) : 0;
       return Math.max(modal + 8, 8 + update_I() + 4 + Math.max(2 * flush_I(), body));
@@ -96,7 +96,7 @@ public final class ProfilesLibraryView {
       boolean modal = this.init_Z();
       this.write_Z = !modal;
       autismclient.gui.f.SyncManager page = modal ? ctx.load_SyncManager() : ctx;
-      AutismProfile profile = this.init_bV.init_AutismProfile_Str(this.init_Str);
+      AutismProfile profile = this.init_bV.byId(this.init_Str);
       if (profile == null && this.init_Str != null) {
          this.read_V();
       }
@@ -122,8 +122,8 @@ public final class ProfilesLibraryView {
    }
 
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager ctx, NetHelper bar, AutismProfile profile) {
-      AutismProfile active = this.init_bV.init_AutismProfile();
-      boolean dirty = active != null && !active.autoSave && this.init_bV.init_Z();
+      AutismProfile active = this.init_bV.active();
+      boolean dirty = active != null && !active.autoSave && this.init_bV.hasUnsavedChanges();
       int right = bar.init();
       if (dirty) {
          int saveW = init_I_SyncManager_Str(ctx, "Save active profile");
@@ -134,7 +134,7 @@ public final class ProfilesLibraryView {
             "Save active profile",
             null,
             CachePool.Inner_DataUtil.write,
-            () -> this.init_bV.init_V_AutismProfile(active)
+            () -> this.init_bV.saveSnapshot(active)
          );
          right -= 4;
       }
@@ -150,7 +150,7 @@ public final class ProfilesLibraryView {
                x,
                ctx.init_PoolEntry().centerTextY(bar),
                right - x,
-               profile.id.equals(this.init_bV.init_Str()) ? this.init_JsonUtil.success : this.init_JsonUtil.textPrimary
+               profile.id.equals(this.init_bV.activeId()) ? this.init_JsonUtil.success : this.init_JsonUtil.textPrimary
             );
       } else {
          int newW = init_I_SyncManager_Str(ctx, "New profile") + 16;
@@ -213,7 +213,7 @@ public final class ProfilesLibraryView {
 
    private List<AutismProfile> init_List() {
       String query = this.init_BitSetUtil.getValue().strip().toLowerCase(Locale.ROOT);
-      List<AutismProfile> profiles = this.init_bV.init_List();
+      List<AutismProfile> profiles = this.init_bV.profiles();
       return query.isEmpty()
          ? profiles
          : profiles.stream()
@@ -242,7 +242,7 @@ public final class ProfilesLibraryView {
       if (profiles.isEmpty()) {
          ctx.init_PoolEntry().drawCentered(ctx.init_GuiGraphicsExtract(), "No matching profiles", NetHelper.init(x, y + 4, w, sync_I()), this.init_JsonUtil.textSecondary);
       } else {
-         String activeId = this.init_bV.init_Str();
+         String activeId = this.init_bV.activeId();
          int cardW = (w - (cols - 1) * 4) / cols;
          int cardH = flush_I() - 4;
 
@@ -299,8 +299,8 @@ public final class ProfilesLibraryView {
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager ctx, AutismProfile p, int x, int y, int w) {
-      boolean active = p.id.equals(this.init_bV.init_Str());
-      boolean canDelete = !AutismProfileManager.init_Z_AutismProfile(p);
+      boolean active = p.id.equals(this.init_bV.activeId());
+      boolean canDelete = !AutismProfileManager.isDefault(p);
       int slots = read_I_I(w);
       int cellW = (w - (slots - 1) * 2) / slots;
       String[] labels = new String[]{active ? "Active" : "Load", "Rename", "Duplicate", "Delete"};
@@ -320,8 +320,8 @@ public final class ProfilesLibraryView {
       }
 
       int cy = y + write(w) + 4;
-      cy = this.init(ctx, x, cy, w, "Auto-save changes", p.autoSave, () -> this.init_bV.init_V_AutismProfile_Z(p, !p.autoSave));
-      cy = this.init(ctx, x, cy, w, "Own macro library", p.ownMacroLibrary, () -> this.init_bV.load_V_AutismProfile_Z(p, !p.ownMacroLibrary));
+      cy = this.init(ctx, x, cy, w, "Auto-save changes", p.autoSave, () -> this.init_bV.setAutoSave(p, !p.autoSave));
+      cy = this.init(ctx, x, cy, w, "Own macro library", p.ownMacroLibrary, () -> this.init_bV.setOwnMacroLibrary(p, !p.ownMacroLibrary));
       cy = this.init(ctx, x, cy, w, "Own theme color", p.ownThemeColor, () -> this.init_bV.read(p, !p.ownThemeColor));
       cy += 2;
       String serverHeading = "Auto-apply on servers";
@@ -422,7 +422,7 @@ public final class ProfilesLibraryView {
       this.init_V_SyncManager_NetHelper(ctx, box);
       NetHelper inner = box.init(6);
       this.init(ctx, "Unsaved changes", inner.read(), inner.write(), inner.update(), this.init_JsonUtil.textPrimary);
-      AutismProfile active = this.init_bV.init_AutismProfile();
+      AutismProfile active = this.init_bV.active();
       String name = active == null ? "the active profile" : active.displayName;
       this.init(ctx, "Save " + name + " before switching?", inner.read(), inner.write() + sync_I(), inner.update(), this.init_JsonUtil.textSecondary);
       int cy = inner.write() + sync_I() * 2 + 4;
@@ -544,9 +544,9 @@ public final class ProfilesLibraryView {
 
    private void load_V_AutismProfile(AutismProfile target) {
       if (target != null) {
-         AutismProfile cur = this.init_bV.init_AutismProfile();
+         AutismProfile cur = this.init_bV.active();
          if (cur == null || !target.id.equals(cur.id)) {
-            if (cur != null && !cur.autoSave && this.init_bV.init_Z()) {
+            if (cur != null && !cur.autoSave && this.init_bV.hasUnsavedChanges()) {
                this.init_AutismProfile = target;
             } else {
                this.init_bV.read(target);
@@ -561,7 +561,7 @@ public final class ProfilesLibraryView {
       this.init_AutismProfile = null;
       if (target != null) {
          if (save) {
-            this.init_bV.init_V_AutismProfile(this.init_bV.init_AutismProfile());
+            this.init_bV.saveSnapshot(this.init_bV.active());
          }
 
          this.init_bV.read(target);
@@ -570,7 +570,7 @@ public final class ProfilesLibraryView {
    }
 
    private void read_V_AutismProfile(AutismProfile p) {
-      if (p != null && this.init_bV.load_Z(p)) {
+      if (p != null && this.init_bV.delete(p)) {
          this.read_V();
          bi.write("Deleted profile: " + p.displayName);
       }
@@ -585,7 +585,7 @@ public final class ProfilesLibraryView {
          this.read_Z = true;
       }
 
-      AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
+      AutismProfile sel = this.init_bV.byId(this.init_Str);
       this.load_BitSetUtil
          .setValue(
             mode == ProfilesLibraryView.Inner_StreamUtil.RENAME && sel != null
@@ -607,7 +607,7 @@ public final class ProfilesLibraryView {
          bi.read("Enter a name.");
       } else {
          String exclude = this.init_StreamUtil_StreamU == ProfilesLibraryView.Inner_StreamUtil.RENAME ? this.init_Str : null;
-         if (this.init_bV.init_Z_Str_Str(name, exclude)) {
+         if (this.init_bV.isNameTaken(name, exclude)) {
             bi.read("Name already in use.");
          } else {
             switch (this.init_StreamUtil_StreamU) {
@@ -619,14 +619,14 @@ public final class ProfilesLibraryView {
                   }
                   break;
                case RENAME:
-                  AutismProfile selx = this.init_bV.init_AutismProfile_Str(this.init_Str);
+                  AutismProfile selx = this.init_bV.byId(this.init_Str);
                   if (selx != null) {
-                     this.init_bV.init_Z_AutismProfile_Str(selx, name);
+                     this.init_bV.rename(selx, name);
                   }
                   break;
                case DUPLICATE:
-                  AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
-                  AutismProfile d = this.init_bV.init_AutismProfile_AutismProfile_Str(sel, name);
+                  AutismProfile sel = this.init_bV.byId(this.init_Str);
+                  AutismProfile d = this.init_bV.duplicate(sel, name);
                   if (d != null) {
                      this.init(d);
                   }
@@ -638,7 +638,7 @@ public final class ProfilesLibraryView {
    }
 
    private void sync_V() {
-      AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
+      AutismProfile sel = this.init_bV.byId(this.init_Str);
       if (sel != null) {
          String pat = this.read_BitSetUtil.getValue() == null ? "" : this.read_BitSetUtil.getValue().strip().toLowerCase(Locale.ROOT);
          if (!pat.isEmpty()) {
@@ -647,7 +647,7 @@ public final class ProfilesLibraryView {
                next.add(pat);
             }
 
-            this.init_bV.init_V_AutismProfile_List(sel, next);
+            this.init_bV.setServerPatterns(sel, next);
             this.read_BitSetUtil.setValue("");
          }
       }
@@ -657,7 +657,7 @@ public final class ProfilesLibraryView {
       if (p != null) {
          List<String> next = new ArrayList<>(p.serverPatterns);
          next.remove(pattern);
-         this.init_bV.init_V_AutismProfile_List(p, next);
+         this.init_bV.setServerPatterns(p, next);
       }
    }
 

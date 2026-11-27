@@ -25,7 +25,7 @@ public class AddressMatchCheck {
    }
 
    private static void expect(String address, String pattern, boolean match) {
-      if (AutismProfileManager.load_Z_Str_Str(address, pattern) != match) {
+      if (AutismProfileManager.matchesAddress(address, pattern) != match) {
          fail("match(" + address + ", " + pattern + ") != " + match);
       }
    }

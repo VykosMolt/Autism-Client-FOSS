@@ -32,8 +32,8 @@ public final class HumanizedTurnPlanner {
       this.init_Random = random;
    }
 
-   public void init_V_F(float yaw, float pitch, float targetYaw, int ticks) {
-      this.init_V();
+   public void start(float yaw, float pitch, float targetYaw, int ticks) {
+      this.reset();
       if (Float.isFinite(yaw) && Float.isFinite(pitch) && Float.isFinite(targetYaw)) {
          this.read = this.set = yaw;
          this.write = this.put = init(pitch, -90.0, 90.0);
@@ -55,15 +55,15 @@ public final class HumanizedTurnPlanner {
       }
    }
 
-   public boolean init_Z() {
+   public boolean isActive() {
       return this.init_Z;
    }
 
-   public double init_D() {
+   public double duration() {
       return this.sync;
    }
 
-   public HumanizedTurnPlanner.Inner_DataUtil init_cM_DataUtil_D(double elapsedTicks, float actualYaw, float actualPitch, double quantum) {
+   public HumanizedTurnPlanner.Inner_DataUtil step(double elapsedTicks, float actualYaw, float actualPitch, double quantum) {
       if (!this.init_Z) {
          return new HumanizedTurnPlanner.Inner_DataUtil(0L, 0L, true);
       }
@@ -71,8 +71,8 @@ public final class HumanizedTurnPlanner {
       if (Double.isFinite(elapsedTicks) && Float.isFinite(actualYaw) && Float.isFinite(actualPitch) && Double.isFinite(quantum) && !(quantum <= 1.0E-8)) {
          this.get = Math.max(this.get, init(elapsedTicks / this.sync, 0.0, 1.0));
          double time = this.get + this.push * Math.sin(6.283185307179586 * this.get) * this.get * (1.0 - this.get);
-         double first = HumanizedAimStepper.init_D_D(Math.pow(init(time / this.flush, 0.0, 1.0), this.poll));
-         double finish = HumanizedAimStepper.init_D_D((time - this.close) / (1.0 - this.close));
+         double first = HumanizedAimStepper.smootherStep(Math.pow(init(time / this.flush, 0.0, 1.0), this.poll));
+         double finish = HumanizedAimStepper.smootherStep((time - this.close) / (1.0 - this.close));
          double along = this.open * first + (1.0 - this.open) * finish;
          double envelope = 64.0 * Math.pow(this.get * (1.0 - this.get), 3.0);
          double pitchArc = envelope * (this.pop + this.tick * Math.sin(9.42477796076938 * this.get + this.run));
@@ -109,7 +109,7 @@ public final class HumanizedTurnPlanner {
       }
    }
 
-   public void init_V() {
+   public void reset() {
       this.init_Z = false;
       this.get = this.add = this.clear = 0.0;
       this.init_J = -9223372036854775808L;
@@ -136,6 +136,6 @@ public final class HumanizedTurnPlanner {
       return angle;
    }
 
-   public record Inner_DataUtil(long init_J, long load, boolean init_Z) {
+   public record Inner_DataUtil(long yawCounts, long load, boolean done) {
    }
 }

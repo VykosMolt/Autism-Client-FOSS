@@ -1021,7 +1021,7 @@ public final class AiVisualization {
                      autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = load_Map.get(g.state);
                      if (model == null && baked < 8 && System.nanoTime() - started < 2000000L) {
                         model = autismclient.util.oresim.OreGhostModelCache.init(g.state);
-                        if (model.init_List().isEmpty()) {
+                        if (model.faces().isEmpty()) {
                            model = init(g.state);
                         }
 
@@ -1039,12 +1039,12 @@ public final class AiVisualization {
                         double oy = p.getY() - f.camera.y;
                         double oz = p.getZ() - f.camera.z;
 
-                        for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.init_List()) {
+                        for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.faces()) {
                            if (quads >= 16384) {
                               break;
                            }
 
-                           Direction d = face.init_Direction();
+                           Direction d = face.cullFace();
                            if (d == null
                               || !solid.contains(p.relative(d).asLong())
                                  && !(
@@ -1053,13 +1053,13 @@ public final class AiVisualization {
                                           + (f.camera.z - p.getZ() - 0.5) * d.getStepZ()
                                        <= 0.0
                                  )) {
-                              BlockTintSource tintSource = face.init_I() < 0 ? null : mc.getBlockColors().getTintSource(g.state, face.init_I());
+                              BlockTintSource tintSource = face.tintIndex() < 0 ? null : mc.getBlockColors().getTintSource(g.state, face.tintIndex());
                               int tint = tintSource == null
                                  ? 16777215
                                  : (g.color == -885830 ? tintSource.color(g.state) : tintSource.colorInWorld(g.state, f.world, p));
                               float shade = face.load() == null ? 1.0F : f.world.cardinalLighting().byFace(face.load());
                               int color = ghostColor(g.color, tint, shade, alpha);
-                              float[] data = face.init_FArr();
+                              float[] data = face.vertices();
 
                               for (int v = 0; v < 4; v++) {
                                  int k = v * 5;

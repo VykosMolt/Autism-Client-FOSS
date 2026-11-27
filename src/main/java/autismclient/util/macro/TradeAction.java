@@ -48,7 +48,7 @@ public final class TradeAction implements ContextMacroAction {
          );
 
          try {
-            Boolean reserved = ctx.callOnClientThread(session::read_Z);
+            Boolean reserved = ctx.callOnClientThread(session::reserve);
             if (!Boolean.TRUE.equals(reserved)) {
                ctx.setVariable("trade_count", 0);
                ctx.setVariable("trade_spent", 0);
@@ -60,25 +60,25 @@ public final class TradeAction implements ContextMacroAction {
             if (this.target == TradeAction.Inner_StreamUtil.OPEN_SCREEN || this.init(ctx)) {
                while (ctx.isActive()) {
                   autismclient.util.villager.VillagerTradeSession.Inner_CachePool state = ctx.callOnClientThread(
-                     () -> ctx.isActive() ? session.init_CachePool_CachePoo_Minecraft(ctx.mc()) : autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
+                     () -> ctx.isActive() ? session.tick(ctx.mc()) : autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
                   );
                   if (state == null) {
                      return;
                   }
 
-                  ctx.setStatus("Trade: " + session.init_I() + " / " + session.init_Str());
-                  if (session.load_Z()) {
-                     ctx.setVariable("trade_count", session.init_I());
-                     ctx.setVariable("trade_spent", session.load_I());
-                     ctx.setVariable("trade_status", session.init_CachePool_CachePoo().name());
-                     if (session.init_CachePool_CachePoo() != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE) {
+                  ctx.setStatus("Trade: " + session.traded() + " / " + session.message());
+                  if (session.isFinished()) {
+                     ctx.setVariable("trade_count", session.traded());
+                     ctx.setVariable("trade_spent", session.spent());
+                     ctx.setVariable("trade_status", session.status().name());
+                     if (session.status() != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE) {
                         ctx.runOnClientThread(
-                           () -> AutismClientMessaging.sendPrefixed("Trade: " + session.init_Str() + " (" + session.init_I() + " completed)")
+                           () -> AutismClientMessaging.sendPrefixed("Trade: " + session.message() + " (" + session.traded() + " completed)")
                         );
                      }
 
                      if (this.closeWhenDone) {
-                        ctx.runOnClientThread(session::init_V);
+                        ctx.runOnClientThread(session::cancel);
                      }
 
                      return;

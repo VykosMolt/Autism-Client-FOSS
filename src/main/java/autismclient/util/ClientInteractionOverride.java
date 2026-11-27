@@ -329,8 +329,8 @@ public final class ClientInteractionOverride {
    private static void applyDeferredKeyReset() {
       if (deferredKeyResetPending && MC != null && MC.options != null) {
          deferredKeyResetPending = false;
-         boolean attackOwned = holdingAttack || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(false);
-         boolean useOwned = holdingUse || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(true);
+         boolean attackOwned = holdingAttack || VirtualInputDispatcher.isHeld(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.isAnyPressed(false);
+         boolean useOwned = holdingUse || VirtualInputDispatcher.isHeld(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.isAnyPressed(true);
          if (!attackOwned) {
             KeyMappingControl.of(MC.options.keyAttack).autism$resetPressedState();
          }
@@ -644,7 +644,7 @@ public final class ClientInteractionOverride {
                attackDispatchPending = true;
             } else if (useHit != null) {
                if (useLook != null) {
-                  PlacementTickStamp.init_V();
+                  PlacementTickStamp.stamp();
                   MC.player.setYRot(useLook.yaw());
                   MC.player.setXRot(useLook.pitch());
                }

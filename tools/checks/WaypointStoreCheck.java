@@ -45,11 +45,11 @@ public class WaypointStoreCheck {
       Files.writeString(new File(folder, "waypoints.json").toPath(), "{\"example.com\": [{\"name\": \"Base\", \"x\": \"oops\"");
       Files.writeString(new File(folder, "waypoints.json.bak").toPath(), new Gson().toJson(backup));
 
-      AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
+      AutismWaypoints store = AutismWaypoints.getInstance();
       String[] corrupt = folder.list((dir, name) -> name.startsWith("waypoints.json.corrupt-"));
       check(corrupt != null && corrupt.length == 1, "corrupt file was not kept aside");
       for (Map.Entry<String, List<AutismWaypoints.Waypoint>> e : backup.entrySet()) {
-         check(store.init_List_Str(e.getKey()).equals(e.getValue()), "backup not restored unchanged under " + e.getKey());
+         check(store.list(e.getKey()).equals(e.getValue()), "backup not restored unchanged under " + e.getKey());
       }
 
       File primary = new File(folder, "waypoints.json");

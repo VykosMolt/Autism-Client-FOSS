@@ -41,7 +41,7 @@ public final class AutismProfileManager {
       AutismConfig.afterPersistenceSnapshot = this::init_V_AutismConfig;
    }
 
-   public static synchronized AutismProfileManager init_bV() {
+   public static synchronized AutismProfileManager getInstance() {
       if (init_bV == null) {
          init_bV = new AutismProfileManager();
       }
@@ -56,7 +56,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized List<AutismProfile> init_List() {
+   public synchronized List<AutismProfile> profiles() {
       List<AutismProfile> out = new ArrayList<>(this.init_List);
       out.sort((a, b) -> {
          boolean da = "default".equals(a.id);
@@ -70,19 +70,19 @@ public final class AutismProfileManager {
       return out;
    }
 
-   public synchronized int init_I() {
+   public synchronized int count() {
       return this.init_List.size();
    }
 
-   public static boolean init_Z_AutismProfile(AutismProfile p) {
+   public static boolean isDefault(AutismProfile p) {
       return p != null && "default".equals(p.id);
    }
 
-   public synchronized String init_Str() {
+   public synchronized String activeId() {
       return this.load_Str;
    }
 
-   public synchronized boolean init_Z() {
+   public synchronized boolean hasUnsavedChanges() {
       return this.init_Z;
    }
 
@@ -90,11 +90,11 @@ public final class AutismProfileManager {
       return this.init_J;
    }
 
-   public synchronized AutismProfile init_AutismProfile() {
-      return this.init_AutismProfile_Str(this.load_Str);
+   public synchronized AutismProfile active() {
+      return this.byId(this.load_Str);
    }
 
-   public synchronized AutismProfile init_AutismProfile_Str(String id) {
+   public synchronized AutismProfile byId(String id) {
       if (id == null) {
          return null;
       }
@@ -109,10 +109,10 @@ public final class AutismProfileManager {
    }
 
    private boolean init_Z_Str(String id) {
-      return this.init_AutismProfile_Str(id) != null;
+      return this.byId(id) != null;
    }
 
-   public synchronized boolean init_Z_Str_Str(String name, String excludeId) {
+   public synchronized boolean isNameTaken(String name, String excludeId) {
       if (name == null) {
          return false;
       }
@@ -136,7 +136,7 @@ public final class AutismProfileManager {
    }
 
    public synchronized AutismProfile init(String name, boolean autoSave, boolean ownMacroLibrary, boolean ownThemeColor) {
-      if (this.init_Z_Str_Str(name, null)) {
+      if (this.isNameTaken(name, null)) {
          return null;
       }
 
@@ -156,12 +156,12 @@ public final class AutismProfileManager {
       return p;
    }
 
-   public synchronized AutismProfile init_AutismProfile_AutismProfile_Str(AutismProfile src, String name) {
+   public synchronized AutismProfile duplicate(AutismProfile src, String name) {
       if (src == null) {
          return this.load_AutismProfile(name);
       }
 
-      if (this.init_Z_Str_Str(name, null)) {
+      if (this.isNameTaken(name, null)) {
          return null;
       }
 
@@ -194,12 +194,12 @@ public final class AutismProfileManager {
       return p;
    }
 
-   public synchronized boolean init_Z_AutismProfile_Str(AutismProfile p, String name) {
+   public synchronized boolean rename(AutismProfile p, String name) {
       if (p == null || name == null || name.isBlank()) {
          return false;
       }
 
-      if (this.init_Z_Str_Str(name, p.id)) {
+      if (this.isNameTaken(name, p.id)) {
          return false;
       }
 
@@ -210,22 +210,22 @@ public final class AutismProfileManager {
       return true;
    }
 
-   public synchronized boolean load_Z(AutismProfile p) {
+   public synchronized boolean delete(AutismProfile p) {
       if (p != null && !"default".equals(p.id) && this.init_List.size() > 1) {
          boolean wasActive = p.id.equals(this.load_Str);
          this.init_List.remove(p);
          this.close(p);
          if (wasActive) {
-            AutismProfile fallback = this.init_AutismProfile_Str("default");
+            AutismProfile fallback = this.byId("default");
             if (fallback == null) {
                fallback = this.init_List.get(0);
             }
 
-            this.load_V(fallback);
+            this.switchTo(fallback);
          }
 
          if (AuditMacroRead.sameFile(MacroLibraryManager.getInstance().getLibraryFile(), this.init_File_AutismProfile(p))) {
-            AutismProfile var10000 = this.init_AutismProfile();
+            AutismProfile var10000 = this.active();
             if (var10000 != null) {
                this.update(var10000);
             } else {
@@ -241,7 +241,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void init_V_AutismProfile_Z(AutismProfile p, boolean autoSave) {
+   public synchronized void setAutoSave(AutismProfile p, boolean autoSave) {
       if (p != null && p.autoSave != autoSave) {
          p.autoSave = autoSave;
          p.updatedAt = System.currentTimeMillis();
@@ -255,7 +255,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void load_V_AutismProfile_Z(AutismProfile p, boolean own) {
+   public synchronized void setOwnMacroLibrary(AutismProfile p, boolean own) {
       if (p != null && p.ownMacroLibrary != own) {
          p.ownMacroLibrary = own;
          p.updatedAt = System.currentTimeMillis();
@@ -285,7 +285,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void init_V_AutismProfile_List(AutismProfile p, List<String> patterns) {
+   public synchronized void setServerPatterns(AutismProfile p, List<String> patterns) {
       if (p != null) {
          List<String> clean = new ArrayList<>();
          if (patterns != null) {
@@ -306,7 +306,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void init_V_AutismProfile(AutismProfile p) {
+   public synchronized void saveSnapshot(AutismProfile p) {
       if (p != null) {
          p.snapshot = this.init_AutismConfig();
          p.updatedAt = System.currentTimeMillis();
@@ -319,7 +319,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void load_V(AutismProfile p) {
+   public synchronized void switchTo(AutismProfile p) {
       if (p != null) {
          AutismConfig.enqueuePendingSaveNow();
          this.read();
@@ -380,7 +380,7 @@ public final class AutismProfileManager {
          AutismClientMessaging.sendPrefixed("§aLoaded profile: " + p.displayName);
          AutismProfile fp = p;
          Runnable mj = macroJob;
-         BackgroundTaskExecutor.init_Future_Str_Runnable("profile-macros", () -> {
+         BackgroundTaskExecutor.submit("profile-macros", () -> {
             // Same monitor as profile delete, so a delete cannot land between the check and the switch.
             synchronized (this) {
                if (this.load_Str.equals(fp.id) && this.init_List.contains(fp)) {
@@ -409,16 +409,16 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void init_V_ServerAddress_ServerData(ServerAddress addr, ServerData data) {
+   public synchronized void onConnect(ServerAddress addr, ServerData data) {
       String address = data != null && data.ip != null && !data.ip.isBlank() ? data.ip : (addr != null ? addr.getHost() + ":" + addr.getPort() : "");
       AutismProfile match = this.read(address);
       if (match != null && !match.id.equals(this.load_Str)) {
-         AutismProfile current = this.init_AutismProfile();
+         AutismProfile current = this.active();
          if (current != null && !current.autoSave && this.init_Z) {
-            this.init_V_AutismProfile(current);
+            this.saveSnapshot(current);
          }
 
-         this.load_V(match);
+         this.switchTo(match);
       }
    }
 
@@ -448,7 +448,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public static boolean load_Z_Str_Str(String address, String pattern) {
+   public static boolean matchesAddress(String address, String pattern) {
       if (address != null && !address.isBlank()) {
          AutismProfileManager.Inner_DataUtil server = init_bV_DataUtil_Str(address, 25565);
          return auditScore(server.init_Str(), server.init_I(), pattern) > 0;
@@ -511,7 +511,7 @@ public final class AutismProfileManager {
 
    private synchronized void write() {
       if (!this.load_Z) {
-         AutismProfile a = this.init_AutismProfile();
+         AutismProfile a = this.active();
          if (a != null) {
             if (a.autoSave) {
                this.init_AutismConfig = null;
@@ -527,7 +527,7 @@ public final class AutismProfileManager {
 
    private synchronized void init_V_AutismConfig(AutismConfig snapshot) {
       if (!this.load_Z && snapshot != null && this.read_Z) {
-         AutismProfile a = this.init_AutismProfile();
+         AutismProfile a = this.active();
          if (a != null && a.autoSave) {
             this.init_AutismConfig = AutismConfig.profileSnapshotFromDetached(snapshot);
          }
@@ -556,7 +556,7 @@ public final class AutismProfileManager {
 
    private void update() {
       this.read_Z = false;
-      AutismProfile a = this.init_AutismProfile();
+      AutismProfile a = this.active();
       if (a != null && a.autoSave) {
          AutismConfig snap = this.init_AutismConfig;
          this.init_AutismConfig = null;
@@ -632,7 +632,7 @@ public final class AutismProfileManager {
                   }
                }
 
-               if (p != null && !p.id.isBlank() && this.init_AutismProfile_Str(p.id) == null) {
+               if (p != null && !p.id.isBlank() && this.byId(p.id) == null) {
                   this.init_List.add(p);
                }
             }
@@ -757,7 +757,7 @@ public final class AutismProfileManager {
          this.init_List.add(def);
          this.load_Str = def.id;
          this.sync(def);
-      } else if (this.init_AutismProfile_Str("default") == null) {
+      } else if (this.byId("default") == null) {
          AutismConfig stock = new AutismConfig();
          stock.applyRuntimeDefaults();
          AutismProfile def = new AutismProfile("default", "Default");
@@ -771,7 +771,7 @@ public final class AutismProfileManager {
 
    private void close() {
       Set<String> taken = new HashSet<>();
-      AutismProfile def = this.init_AutismProfile_Str("default");
+      AutismProfile def = this.byId("default");
       if (def != null && def.displayName != null) {
          taken.add(def.displayName.strip().toLowerCase(Locale.ROOT));
       }
@@ -808,7 +808,7 @@ public final class AutismProfileManager {
          AutismConfig.getGlobal().activeProfileId = this.load_Str;
       }
 
-      AutismProfile a = this.init_AutismProfile();
+      AutismProfile a = this.active();
       if (a != null && !a.autoSave) {
          try {
             String live = this.init_Gson.toJson(this.init_AutismConfig());

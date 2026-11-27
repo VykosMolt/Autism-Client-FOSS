@@ -60,7 +60,7 @@ public final class GuiMovementPassThrough {
       }
    }
 
-   public static void init_V() {
+   public static void tick() {
       if (load_Z()) {
          init(init_Minecraft.options.keyUp);
          init(init_Minecraft.options.keyDown);

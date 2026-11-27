@@ -1060,15 +1060,15 @@ public final class f {
 
       @Override
       public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-         return autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id()) && !this.read_Z_16();
+         return autismclient.util.VirtualInputDispatcher.isTicketOwner(this.id()) && !this.read_Z_16();
       }
 
       @Override
       public boolean onPacketSend(Packet<?> packet) {
          if (packet instanceof ServerboundUseItemPacket usePacket && this.init_Z_InteractionHand(usePacket.hand())) {
-            if (autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id())) {
+            if (autismclient.util.VirtualInputDispatcher.isTicketOwner(this.id())) {
                if (usePacket.hand() == this.init_InteractionHand) {
-                  autismclient.util.VirtualInputDispatcher.init_V_Str(this.id());
+                  autismclient.util.VirtualInputDispatcher.markTicketSent(this.id());
                }
 
                return false;
@@ -1087,7 +1087,7 @@ public final class f {
             }
          } else if (packet instanceof ServerboundUseItemOnPacket useOnPacket) {
             if (!this.init_Z
-               && !autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id())
+               && !autismclient.util.VirtualInputDispatcher.isTicketOwner(this.id())
                && autismclient.util.InventorySlotArbiter.getOpenActionGroupOwner() == null
                && this.init_Z_InteractionHand(useOnPacket.hand())) {
                this.read_V_17();
@@ -1392,18 +1392,18 @@ public final class f {
             }
 
             if (this.init_cM == null) {
-               this.init_cM = new HumanizedTurnPlanner(autismclient.util.HumanHandProfile.init_am().init_am_Random(this.init_Random), this.init_Random);
+               this.init_cM = new HumanizedTurnPlanner(autismclient.util.HumanHandProfile.shared().forSession(this.init_Random), this.init_Random);
             }
 
-            autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
+            autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
             this.init_cM
-               .init_V_F(
+               .start(
                   MC.player.getYRot(),
                   MC.player.getXRot(),
                   this.init_F + (float)(this.read_I * this.decimal("degrees-per-step")),
                   this.integer("movement-duration")
                );
-            this.read_Z = this.init_cM.init_Z();
+            this.read_Z = this.init_cM.isActive();
             this.load_I = 0;
             autismclient.util.MouseMovementRouter.init(this.read_Z);
          }
@@ -1411,7 +1411,7 @@ public final class f {
 
       private void flush() {
          if (this.read_Z && MC.player != null) {
-            if (autismclient.util.MouseMovementRouter.read() && !(this.load_I > Math.ceil(this.init_cM.init_D()) + 20.0)) {
+            if (autismclient.util.MouseMovementRouter.read() && !(this.load_I > Math.ceil(this.init_cM.duration()) + 20.0)) {
                this.init_V_D(this.load_I);
                if (this.read_Z) {
                   this.load_I++;
@@ -1424,11 +1424,11 @@ public final class f {
 
       private void init_V_D(double elapsedTicks) {
          if (this.read_Z && this.init_cM != null && MC.player != null) {
-            HumanizedTurnPlanner.Inner_DataUtil step = this.init_cM.init_cM_DataUtil_D(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), RotationMath.mouseGcd());
-            if (step.init_Z()) {
+            HumanizedTurnPlanner.Inner_DataUtil step = this.init_cM.step(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), RotationMath.mouseGcd());
+            if (step.done()) {
                this.init_V_Z_9(false);
             } else {
-               autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_3(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH, step.init_J(), step.load());
+               autismclient.util.MouseMovementRouter.submitCounts(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH, step.yawCounts(), step.load());
             }
          }
       }
@@ -1437,10 +1437,10 @@ public final class f {
          this.read_Z = false;
          this.load_I = 0;
          if (this.init_cM != null) {
-            this.init_cM.init_V();
+            this.init_cM.reset();
          }
 
-         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
          if (newAnchor) {
             this.write_Z = false;
             this.read_I = 0;
@@ -1726,7 +1726,7 @@ public final class f {
 
       private void run() {
          String macroName = this.value("stop-macro").trim();
-         AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.init_cL_DataUtil(macroName);
+         AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.presetFor(macroName);
          if (preset != null) {
             autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
             if (macro != null) {
@@ -1977,8 +1977,8 @@ public final class f {
       private static final double init_D = 250.0;
       private final ClickerSettingsGroup init_h;
       private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
-      private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.init_StreamUtil();
-      private final autismclient.util.clicker.KeyClickOutput load_StreamUtil = autismclient.util.clicker.KeyClickOutput.load_StreamUtil();
+      private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.attack();
+      private final autismclient.util.clicker.KeyClickOutput load_StreamUtil = autismclient.util.clicker.KeyClickOutput.use();
       private final Random init_Random = new Random();
       private boolean init_Z;
       private long init_J = -9223372036854775808L;
@@ -2039,19 +2039,19 @@ public final class f {
          autismclient.util.clicker.KeyClickOutput other = right ? this.init_StreamUtil : this.load_StreamUtil;
          output.init_V();
          other.init_V();
-         if (other.init_Z()) {
-            other.load_V();
+         if (other.isPressed()) {
+            other.release();
          }
 
          if (!this.load_Z_18() && !"Hold".equals(this.choice("mode"))) {
             boolean holdDown = "Hold Down".equals(this.choice("mode"));
-            boolean physical = output.load_Z();
+            boolean physical = output.isPhysicallyDown();
             autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
-            this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
-            output.init_V_Z(holdDown && physical);
+            this.init_DataUtil.setPersonality(this.init_h.init_DataUtil_ConfigSto());
+            output.setOwnsKey(holdDown && physical);
             if (physical && !this.init_Z) {
                if (holdDown) {
-                  this.init_DataUtil.init_V_J_2(now, profile, output);
+                  this.init_DataUtil.applyProfile(now, profile, output);
                } else {
                   this.init_DataUtil.init_V_J(now);
                }
@@ -2062,7 +2062,7 @@ public final class f {
                this.init_DataUtil.init(now, !holdDown || physical, profile, output);
             }
          } else {
-            output.init_V_Z(false);
+            output.setOwnsKey(false);
             this.init_DataUtil.init_V_J_DataUtil_NetHelper(now, output);
             this.init_Z = false;
             this.init_V_36();
@@ -2086,10 +2086,10 @@ public final class f {
             return false;
          }
 
-         output.load_V();
-         output.init_V_Z(false);
+         output.release();
+         output.setOwnsKey(false);
          this.load_Z = true;
-         autismclient.util.VirtualInputDispatcher.init_V_Z(true);
+         autismclient.util.VirtualInputDispatcher.setAttackHeld(true);
          return true;
       }
 
@@ -2107,7 +2107,7 @@ public final class f {
          this.init_J = -9223372036854775808L;
          if (this.load_Z) {
             this.load_Z = false;
-            autismclient.util.VirtualInputDispatcher.init_V_Z(false);
+            autismclient.util.VirtualInputDispatcher.setAttackHeld(false);
          }
       }
 
@@ -2125,8 +2125,8 @@ public final class f {
       }
 
       private void load_V_26() {
-         this.init_StreamUtil.load_V();
-         this.load_StreamUtil.load_V();
+         this.init_StreamUtil.release();
+         this.load_StreamUtil.release();
          this.init_DataUtil.init_V_J_DataUtil_NetHelper(System.nanoTime(), "Right".equals(this.choice("button")) ? this.load_StreamUtil : this.init_StreamUtil);
          this.init_Z = false;
          this.init_V_36();
@@ -2135,12 +2135,12 @@ public final class f {
 
       private void read() {
          boolean right = "Right".equals(this.choice("button"));
-         autismclient.util.VirtualInputDispatcher.init_V_Z(!right);
+         autismclient.util.VirtualInputDispatcher.setAttackHeld(!right);
          autismclient.util.VirtualInputDispatcher.load(right);
       }
 
       private void write() {
-         autismclient.util.VirtualInputDispatcher.init_V_Z(false);
+         autismclient.util.VirtualInputDispatcher.setAttackHeld(false);
          autismclient.util.VirtualInputDispatcher.load(false);
       }
    }
@@ -4533,9 +4533,9 @@ public final class f {
             this.init_J = -9223372036854775808L;
          } else {
             autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
-            this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
+            this.init_DataUtil.setPersonality(this.init_h.init_DataUtil_ConfigSto());
             if (!this.init_Z) {
-               this.init_DataUtil.init_V_J_2(now, profile, this.init_f_EventBus_DataUti);
+               this.init_DataUtil.applyProfile(now, profile, this.init_f_EventBus_DataUti);
                this.init_J = now;
                this.load_J = this.init_J_8();
             }
@@ -4620,8 +4620,8 @@ public final class f {
       private boolean load_Z_20() {
          if (SilentMovementCoordinator.activeRotation() == null && !SilentMovementCoordinator.isSafeWalkActive() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6()) {
             return this.load_Z
-               ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.VirtualInputDispatcher.init_Z()
-               : this.read && this.sync() && autismclient.util.VirtualInputDispatcher.load_Z();
+               ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.VirtualInputDispatcher.consumeFastExp()
+               : this.read && this.sync() && autismclient.util.VirtualInputDispatcher.consumeFastBlock();
          } else {
             return false;
          }
@@ -4684,11 +4684,11 @@ public final class f {
 
       private void read_V_19() {
          if (this.load_Z) {
-            autismclient.util.VirtualInputDispatcher.sync_V();
+            autismclient.util.VirtualInputDispatcher.releaseFastExp();
          }
 
          if (this.read) {
-            autismclient.util.VirtualInputDispatcher.flush_V();
+            autismclient.util.VirtualInputDispatcher.releaseFastBlock();
          }
 
          this.load_Z = false;
@@ -4707,8 +4707,8 @@ public final class f {
       }
 
       private void update_V_14() {
-         autismclient.util.VirtualInputDispatcher.sync_V();
-         autismclient.util.VirtualInputDispatcher.flush_V();
+         autismclient.util.VirtualInputDispatcher.releaseFastExp();
+         autismclient.util.VirtualInputDispatcher.releaseFastBlock();
          this.load_Z = false;
          this.read = false;
          this.load_V_28();
@@ -4770,9 +4770,9 @@ public final class f {
             }
 
             if (Inner_EventBus.this.load_Z) {
-               autismclient.util.VirtualInputDispatcher.read_V();
+               autismclient.util.VirtualInputDispatcher.requestFastExp();
             } else {
-               autismclient.util.VirtualInputDispatcher.write_V();
+               autismclient.util.VirtualInputDispatcher.requestFastBlock();
             }
 
             return true;
@@ -5466,17 +5466,17 @@ public final class f {
 
       @Override
       public void onEnable() {
-         autismclient.util.AutismHudManager.init_V();
+         autismclient.util.AutismHudManager.ensureInitialized();
          autismclient.util.macro.ServerTickPhaseTracker.reset();
       }
 
       @Override
       protected void onSettingsReset() {
-         autismclient.util.AutismHudManager.update_V();
+         autismclient.util.AutismHudManager.resetAll();
       }
 
       private void init() {
-         autismclient.util.AutismHudManager.init_V();
+         autismclient.util.AutismHudManager.ensureInitialized();
          MC.gui.setScreen(new autismclient.gui.screens.AutismHudEditorScreen(MC.gui.screen()));
       }
    }
@@ -5575,7 +5575,7 @@ public final class f {
 
          AutismConfig.ModuleState configured = AutismConfig.getGlobal().modules.get(this.id());
          String legacy = configured != null && configured.settings != null ? configured.settings.getOrDefault(settingId, "") : "";
-         return AutismOreSimSeedStore.init_AutismOreSimSeedSt().init_Str(AutismWaypoints.init_Str_Minecraft(MC), legacy);
+         return AutismOreSimSeedStore.getInstance().seedFor(AutismWaypoints.scopeFor(MC), legacy);
       }
 
       @Override
@@ -5584,7 +5584,7 @@ public final class f {
             return false;
          }
 
-         AutismOreSimSeedStore.init_AutismOreSimSeedSt().init_V(AutismWaypoints.init_Str_Minecraft(MC), value);
+         AutismOreSimSeedStore.getInstance().setSeed(AutismWaypoints.scopeFor(MC), value);
          return true;
       }
 
@@ -5595,7 +5595,7 @@ public final class f {
          }
 
          if ("oresim-seed".equals(settingId)) {
-            autismclient.util.oresim.OreSimEngine.init_V();
+            autismclient.util.oresim.OreSimEngine.reset();
          }
       }
 
@@ -5632,7 +5632,7 @@ public final class f {
 
       @Override
       public void onGameLeft() {
-         autismclient.util.oresim.OreSimEngine.init_V();
+         autismclient.util.oresim.OreSimEngine.reset();
          autismclient.util.oresim.OreSimEngine.write_V();
          autismclient.util.oresim.OreGhostModelCache.init();
       }
@@ -5670,7 +5670,7 @@ public final class f {
       }
 
       private static String init_Str_12() {
-         return String.join("|", autismclient.util.oresim.OreBlockCatalog.init_List);
+         return String.join("|", autismclient.util.oresim.OreBlockCatalog.ORE_IDS);
       }
    }
 
@@ -7235,7 +7235,7 @@ public final class f {
                      this.close_I = target.getId();
                      this.open_I = -2147483648;
                      this.poll = 0;
-                     autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+                     autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
                   }
 
                   String axis = this.init_Str_14();
@@ -7246,12 +7246,12 @@ public final class f {
                      if (init_Z_Module_2(this)) {
                         this.init_V_LivingEntity(target, eyes, point, current, axis, safe);
                      } else if (safe) {
-                        autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+                        autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
                      } else {
                         RotationMath.Rotation applied = new RotationMath.Rotation(
                            "Vertical".equals(axis) ? current.yaw() : wanted.yaw(), "Horizontal".equals(axis) ? current.pitch() : wanted.pitch()
                         );
-                        autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_4(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, current, applied);
+                        autismclient.util.MouseMovementRouter.submitRotation(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, current, applied);
                      }
                   }
                }
@@ -7281,7 +7281,7 @@ public final class f {
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
          this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.computeAnchorAtHeight(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.clampInsideBox = true;
-         this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
+         this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.isTracking(target)
             ? this.init_cj.init(eyes, this.init_q_DataUtil.targetYaw, AutismSessionState.getInstance().getClientTick())
             : 0.0;
          if (noCooldown) {
@@ -7304,10 +7304,10 @@ public final class f {
          int id = target.getId();
          this.init_q_DataUtil.targetChanged = id != this.write_I;
          this.write_I = id;
-         if (!autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, current);
+         if (!autismclient.util.RotationStreamPlanner.isActive(this.init_ap_TaskQueue)) {
+            autismclient.util.RotationStreamPlanner.begin(this.init_ap_TaskQueue, current);
          } else {
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_3(this.init_ap_TaskQueue, current, this.sync_D, this.flush_D, gcd);
+            autismclient.util.RotationStreamPlanner.resume(this.init_ap_TaskQueue, current, this.sync_D, this.flush_D, gcd);
          }
 
          double[] want = hand.computeStep(this.init_q_DataUtil, current.yaw(), current.pitch(), 40.0, 40.0);
@@ -7321,11 +7321,11 @@ public final class f {
          pitch = pull[1];
          this.update_I = Math.min(this.update_I + 1, 1000);
          if (!inSafeZone && (Math.abs(yaw) > 1.0E-6 || Math.abs(pitch) > 1.0E-6)) {
-            RotationMath.Rotation out = autismclient.util.RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
+            RotationMath.Rotation out = autismclient.util.RotationStreamPlanner.stepBy(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
             double emitYaw = RotationMath.angleDelta(out.yaw(), current.yaw());
             double emitPitch = out.pitch() - current.pitch();
             if (Math.abs(emitYaw) > 1.0E-6 || Math.abs(emitPitch) > 1.0E-6) {
-               autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_2(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
+               autismclient.util.MouseMovementRouter.submitDegrees(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
                this.sync_D = emitYaw;
                this.flush_D = emitPitch;
                this.init(hand, target, out);
@@ -7336,7 +7336,7 @@ public final class f {
          this.sync_D = 0.0;
          this.flush_D = 0.0;
          this.init(hand, target, current);
-         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
       }
 
       static double[] init_DArr_D(double yaw, double pitch, double ownYaw, double ownPitch, double horizontal, double vertical) {
@@ -7417,7 +7417,7 @@ public final class f {
          }
 
          if (this.init_ap_TaskQueue != null) {
-            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
+            autismclient.util.RotationStreamPlanner.reset(this.init_ap_TaskQueue);
          }
 
          this.sync_D = 0.0;
@@ -7427,12 +7427,12 @@ public final class f {
          this.sync_I = -1;
          this.flush_I = -1;
          this.init_Z = false;
-         this.init_cj.init_V();
+         this.init_cj.reset();
          this.load_Z = false;
          this.close_I = -2147483648;
          this.open_I = -2147483648;
          this.poll = 0;
-         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
       }
 
       private LivingEntity init_LivingEntity_4() {
@@ -8005,7 +8005,7 @@ public final class f {
 
       @Override
       public void tick() {
-         autismclient.util.GuiMovementPassThrough.init_V();
+         autismclient.util.GuiMovementPassThrough.tick();
       }
    }
 
@@ -8153,7 +8153,7 @@ public final class f {
 
             try {
                if (forward) {
-                  autismclient.util.VirtualInputDispatcher.init_V_I(clamped);
+                  autismclient.util.VirtualInputDispatcher.setSlot(clamped);
                } else {
                   autismclient.util.VirtualInputDispatcher.init(clamped, this.read_I);
                }
@@ -8230,8 +8230,8 @@ public final class f {
          ItemStack current = MC.player.getInventory().getItem(Math.max(0, Math.min(8, selectedSlot)));
          float candidateSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, candidate, state);
          float currentSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, current, state);
-         return this.bool("prefer-silk-touch") && candidateSpeed > 1.0F && autismclient.util.BlockBreakSpeedHelper.init_Z(MC, candidate)
-            ? !(currentSpeed > 1.0F) || !autismclient.util.BlockBreakSpeedHelper.init_Z(MC, current)
+         return this.bool("prefer-silk-touch") && candidateSpeed > 1.0F && autismclient.util.BlockBreakSpeedHelper.hasSilkTouch(MC, candidate)
+            ? !(currentSpeed > 1.0F) || !autismclient.util.BlockBreakSpeedHelper.hasSilkTouch(MC, current)
             : candidateSpeed > currentSpeed;
       }
 

@@ -1199,7 +1199,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                            this.prev = slot;
                            boolean hand = autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.prev);
                            if (hand && (MC.player.getInventory().getSelectedSlot() != this.prev || reacquiringHand)) {
-                              autismclient.util.VirtualInputDispatcher.init_V_I(this.prev);
+                              autismclient.util.VirtualInputDispatcher.setSlot(this.prev);
                            }
 
                            if (!route.init_k_JsonUtil().init_Z_2() && !route.init_Z()) {
@@ -2922,7 +2922,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    @Override
    public void onDisable() {
-      PlacedBlockTrailRenderer.init_V(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
+      PlacedBlockTrailRenderer.recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
       this.init_i_TaskQueue = null;
       this.poll_I = -2147483648;
       if (this.init_Z) {

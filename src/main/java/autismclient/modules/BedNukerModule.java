@@ -129,7 +129,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    public static boolean read_Z_10() {
       BedNukerModule m = active();
-      return m != null && m.init_Z && autismclient.util.SilentMiningCoordinator.init_Z(m.id());
+      return m != null && m.init_Z && autismclient.util.SilentMiningCoordinator.isOwner(m.id());
    }
 
    static ItemStack init_ItemStack() {
@@ -545,7 +545,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    private void read_V_10() {
       if (this.init_Z) {
          this.init_ValueSink.init();
-         autismclient.util.SilentMiningCoordinator.init_V(this.id());
+         autismclient.util.SilentMiningCoordinator.release(this.id());
          if (this.load_Z) {
             autismclient.util.SilentMiningCoordinator.init(this.load_BlockPos);
          } else {

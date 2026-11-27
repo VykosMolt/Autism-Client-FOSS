@@ -351,7 +351,7 @@ final class AiEquip {
                } else {
                   if (prefer != null && !this.read_Z) {
                      this.read_Z = true;
-                     if (AiEquip.init(autismclient.util.ArmorEvaluationHelper.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), prefer).isEmpty()) {
+                     if (AiEquip.init(autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.init_TaskTimer_BufferHe(), allowCursed, true), prefer).isEmpty()) {
                         JsonObject data = AiJson.objectOf(
                            "what",
                            "armor",
@@ -397,7 +397,7 @@ final class AiEquip {
 
          AiEquip.Inner_StreamUtil init_w_StreamUtil() {
             Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = AiEquip.init(
-               autismclient.util.ArmorEvaluationHelper.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), threshold, prefer
+               autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.init_TaskTimer_BufferHe(), allowCursed, true), threshold, prefer
             );
             if (preferElytra) {
                autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.init_TaskTimer_DataUtil();
@@ -406,24 +406,24 @@ final class AiEquip {
                }
             }
 
-            for (EquipmentSlot slot : autismclient.util.ArmorEvaluationHelper.init_EquipmentSlotArr) {
+            for (EquipmentSlot slot : autismclient.util.ArmorEvaluationHelper.ARMOR_SLOTS) {
                autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
-               if (candidate != null && candidate.init_TaskTimer_StreamUt() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR) {
+               if (candidate != null && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR) {
                   ItemStack wornStack = mc.player.getItemBySlot(slot);
-                  if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.load_Z(wornStack)) {
+                  if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(wornStack)) {
                      int armorMenuSlot = AiEquip.init_Map.get(slot);
                      if (wornStack.isEmpty()) {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
+                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
                            )
                            : new AiEquip.Inner_StreamUtil(
-                              slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
+                              slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
                            );
                      } else {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
+                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
                            )
                            : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.CLEAR_WORN, AiEquip.init(wornStack));
                      }
@@ -473,7 +473,7 @@ final class AiEquip {
          }
 
          int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-            return autismclient.util.InventorySlotHelper.toScreenSlot(mc, candidate.init_I());
+            return autismclient.util.InventorySlotHelper.toScreenSlot(mc, candidate.inventorySlot());
          }
 
          AiOperation.Result init(String message) {
@@ -511,7 +511,7 @@ final class AiEquip {
          List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> kept = new ArrayList<>();
 
          for (autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate : entry.getValue()) {
-            if (prefer.matches(candidate.init_ItemStack())) {
+            if (prefer.matches(candidate.stack())) {
                kept.add(candidate);
             }
          }
@@ -527,9 +527,9 @@ final class AiEquip {
    static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(
       Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, AiItems.ItemSpec prefer
    ) {
-      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(byType, threshold);
+      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.bestBySlot(byType, threshold);
       if (prefer != null) {
-         best.putAll(autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(init(byType, prefer), threshold));
+         best.putAll(autismclient.util.ArmorEvaluationHelper.bestBySlot(init(byType, prefer), threshold));
       }
 
       return best;

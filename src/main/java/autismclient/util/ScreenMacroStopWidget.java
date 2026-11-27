@@ -20,7 +20,7 @@ public final class ScreenMacroStopWidget {
    private ScreenMacroStopWidget() {
    }
 
-   public static boolean init_Z_Minecraft(Minecraft mc) {
+   public static boolean isVisible(Minecraft mc) {
       if (MacroExecutor.hasVisibleActiveRun() && !autismclient.modules.aD.init_Z()) {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          return module == null || !module.isActive() || mc.gui.screen() instanceof LevelLoadingScreen;
@@ -29,10 +29,10 @@ public final class ScreenMacroStopWidget {
       }
    }
 
-   public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY, autismclient.gui.f.NetHelper... avoid) {
+   public static void render(GuiGraphicsExtractor context, Screen screen, int mouseX, int mouseY, autismclient.gui.f.NetHelper... avoid) {
       init_NetHelper = null;
       Minecraft mc = Minecraft.getInstance();
-      int panelH = MacroStatusHudRenderer.init_I(mc.font, 172, 10);
+      int panelH = MacroStatusHudRenderer.layoutHeight(mc.font, 172, 10);
       if (panelH > 0) {
          int x = Math.max(0, cA.init_I() - 172);
          int h = panelH + 3 + 16;
@@ -51,9 +51,9 @@ public final class ScreenMacroStopWidget {
       }
    }
 
-   public static boolean init_Z_D_D(double mouseX, double mouseY) {
+   public static boolean handleClick(double mouseX, double mouseY) {
       autismclient.gui.f.NetHelper stop = init_NetHelper;
-      if (stop != null && init_Z_Minecraft(Minecraft.getInstance())) {
+      if (stop != null && isVisible(Minecraft.getInstance())) {
          if (!stop.init_Z(cA.init_I_D(mouseX), cA.init_I_D(mouseY))) {
             return false;
          }

@@ -141,7 +141,7 @@ public final class PlayerQuitEventTracker {
                   Object argument = translated.getArgs()[0];
                   String display = argument instanceof Component c ? c.getString(96) : (argument instanceof String s ? s : "");
                   if (display.length() <= 96) {
-                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.init_Map.values().stream().filter(mx -> NormalizedTextMatcher.init_Z(display, mx.init_Str)).toList();
+                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.init_Map.values().stream().filter(mx -> NormalizedTextMatcher.matchesName(display, mx.init_Str)).toList();
                      if (matches.size() == 1) {
                         matches.getFirst().write_J = now;
                      }
@@ -159,7 +159,7 @@ public final class PlayerQuitEventTracker {
          if (!canonical) {
             String raw = message.getString(257);
             if (raw.length() <= 256) {
-               String line = NormalizedTextMatcher.init_Str(raw);
+               String line = NormalizedTextMatcher.normalize(raw);
 
                for (String ending : init_List) {
                   if (line.endsWith(ending)) {
@@ -237,7 +237,7 @@ public final class PlayerQuitEventTracker {
       Inner_StreamUtil(UUID id, String name) {
          this.init_UUID = id;
          this.init_Str = name;
-         this.load_Str = NormalizedTextMatcher.init_Str(name);
+         this.load_Str = NormalizedTextMatcher.normalize(name);
       }
 
       void init(long now) {

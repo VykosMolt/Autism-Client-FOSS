@@ -14,12 +14,12 @@ public final class DisplayItemStackFactory {
    private DisplayItemStackFactory() {
    }
 
-   public static ItemStack init_ItemStack(Item item) {
+   public static ItemStack displayStack(Item item) {
       return item != null && item != Items.AIR ? new ItemStack(init_Holder(item)) : ItemStack.EMPTY;
    }
 
    public static ItemStack init(Block block) {
-      return block == null ? ItemStack.EMPTY : init_ItemStack(block.asItem());
+      return block == null ? ItemStack.EMPTY : displayStack(block.asItem());
    }
 
    private static Holder<Item> init_Holder(Item item) {

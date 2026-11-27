@@ -951,8 +951,8 @@ public final class ar {
          load_Z = false;
 
          try {
-            init_P.init_V();
-            load_P.init_V();
+            init_P.release();
+            load_P.release();
          } catch (Throwable var31) {
          }
 
@@ -970,8 +970,8 @@ public final class ar {
       load_Z = false;
       load_I = -2147483648;
       Arrays.fill(init_JArr, 0L);
-      init_P.init_V();
-      load_P.init_V();
+      init_P.release();
+      load_P.release();
    }
 
    private static void init_V_PoseStack_Pose(Pose pose, AutismBufferSource bufferSource, int count, Vec3 cam) {
@@ -987,7 +987,7 @@ public final class ar {
             BlockState state = init_BlockStateArr[i];
             if (state != null) {
                autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil template = autismclient.util.oresim.OreGhostModelCache.init(state);
-               if (!template.init_List().isEmpty()) {
+               if (!template.faces().isEmpty()) {
                   int bx = BlockPos.getX(packed);
                   int by = BlockPos.getY(packed);
                   int bz = BlockPos.getZ(packed);
@@ -998,13 +998,13 @@ public final class ar {
                   double relY = cam.y - (by + 0.5);
                   double relZ = cam.z - (bz + 0.5);
 
-                  for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : template.init_List()) {
-                     Direction cull = face.init_Direction();
+                  for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : template.faces()) {
+                     Direction cull = face.cullFace();
                      if (cull == null
                         || !init_LongOpenHashSet.contains(BlockPos.asLong(bx + cull.getStepX(), by + cull.getStepY(), bz + cull.getStepZ()))
                            && !(relX * cull.getStepX() + relY * cull.getStepY() + relZ * cull.getStepZ() <= 0.0)) {
                         int color = init_I_F(face.load() == null ? 1.0F : lighting.byFace(face.load()));
-                        float[] data = face.init_FArr();
+                        float[] data = face.vertices();
 
                         for (int v = 0; v < 4; v++) {
                            int base = v * 5;
@@ -1449,7 +1449,7 @@ public final class ar {
       int revision = al.init_I();
       BlockPos anchor = player.blockPosition();
       long slot = level.getGameTime() >> 2;
-      int engineRevision = autismclient.util.oresim.OreSimEngine.read_I();
+      int engineRevision = autismclient.util.oresim.OreSimEngine.revision();
       ar.Inner_CachePool cached = run_ar_CachePool;
       if (anchor.equals(load_BlockPos) && cached.init_I() == revision && slot == update_J && engineRevision == get_I) {
          return cached;
@@ -1487,7 +1487,7 @@ public final class ar {
          int candidateCount = 0;
 
          for (int i = 0; i < simCount && candidateCount < 2176; i++) {
-            BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(init_IArr[i]);
+            BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.stateById(init_IArr[i]);
             if (state != null && init_LongOpenHashSet.add(read_JArr[i])) {
                load_JArr[candidateCount] = read_JArr[i];
                init_BlockStateArr[candidateCount] = state;
@@ -1639,8 +1639,8 @@ public final class ar {
    private static ar.Inner_JsonUtil init(Module module, Minecraft mc, ClientLevel level) {
       if (module != null && mc != null && level != null) {
          long gameTime = level.getGameTime();
-         AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
-         long revision = store.init_J();
+         AutismWaypoints store = AutismWaypoints.getInstance();
+         long revision = store.revision();
          String scope = AuditWaypointScope.current(mc);
          float dotSize = init_F_Str(module.value("dot-size"), 3.0F, 1.0F, 10.0F);
          ar.Inner_JsonUtil cached = init_ar_JsonUtil;
@@ -1654,7 +1654,7 @@ public final class ar {
          double discRadius = 0.046 * dotSize;
          int index = 0;
 
-         for (AutismWaypoints.Waypoint waypoint : store.init_List_Str(scope)) {
+         for (AutismWaypoints.Waypoint waypoint : store.list(scope)) {
             double cx = waypoint.x() + 0.5;
             double cy = waypoint.y() + 0.5;
             double cz = waypoint.z() + 0.5;

@@ -90,14 +90,14 @@ public final class ScreenOverlayHost {
 
    private void buildOverlays(Font font) {
       LanSyncManager.getInstance().setOnSessionChanged(() -> {});
-      this.lanSyncOverlay = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
+      this.lanSyncOverlay = AutismLANSyncOverlay.getOrCreate(font);
       this.macroListOverlay = new AutismMacroListOverlay(font);
       this.queueEditorOverlay = new AutismQueueEditorOverlay(font);
       this.customFilterOverlay = new AutismCustomFilterOverlay(font);
       this.customFilterPresetOverlay = this.customFilterOverlay.getPresetOverlay();
-      this.lanSyncOverlay.write_V_10();
-      this.macroListOverlay.update_V_11();
-      this.queueEditorOverlay.sync_V_17();
+      this.lanSyncOverlay.restoreState();
+      this.macroListOverlay.restoreState();
+      this.queueEditorOverlay.restoreState();
       this.customFilterOverlay.loadBounds();
       if (this.customFilterPresetOverlay != null) {
          this.customFilterPresetOverlay.loadBounds();
@@ -105,11 +105,11 @@ public final class ScreenOverlayHost {
 
       Minecraft mc = Minecraft.getInstance();
       boolean inWorld = mc != null && mc.player != null && mc.level != null;
-      this.macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+      this.macroEditorOverlay = AutismMacroEditorOverlay.getInstance();
       if (this.macroEditorOverlay != null) {
-         this.macroEditorOverlay.poll_V_5();
+         this.macroEditorOverlay.restoreState();
          if (this.dialogMode) {
-            this.macroEditorOverlay.load_V_Z_3(!inWorld);
+            this.macroEditorOverlay.setConfigurationOnly(!inWorld);
          }
       }
 
@@ -140,8 +140,8 @@ public final class ScreenOverlayHost {
       this.launcherOverlay = new AutismLauncherOverlay(
          this.macroListOverlay, null, this.lanSyncOverlay, this.queueEditorOverlay, this.packetLoggerOverlay, this.customFilterOverlay
       );
-      this.launcherOverlay.init_V_AutismKeybindOverl(this.keybindOverlay);
-      this.launcherOverlay.init_V_Supplier(() -> {
+      this.launcherOverlay.setKeybindOverlay(this.keybindOverlay);
+      this.launcherOverlay.setPacketLoggerSupplier(() -> {
          if (this.packetLoggerOverlay == null && autismModule != null) {
             this.packetLoggerOverlay = autismModule.getOrCreatePacketLoggerOverlay();
             if (this.packetLoggerOverlay != null) {
@@ -155,7 +155,7 @@ public final class ScreenOverlayHost {
 
          return this.packetLoggerOverlay;
       });
-      this.launcherOverlay.load_V_Supplier(() -> {
+      this.launcherOverlay.setServerInfoSupplier(() -> {
          if (this.serverInfoOverlay == null) {
             ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
             if (mod != null) {
@@ -228,19 +228,19 @@ public final class ScreenOverlayHost {
 
    private void persistOverlays() {
       if (this.lanSyncOverlay != null) {
-         this.lanSyncOverlay.read_V_5();
+         this.lanSyncOverlay.saveState();
       }
 
       if (this.macroListOverlay != null) {
-         this.macroListOverlay.write_V_13();
+         this.macroListOverlay.saveState();
       }
 
       if (this.queueEditorOverlay != null) {
-         this.queueEditorOverlay.update_V_20();
+         this.queueEditorOverlay.saveState();
       }
 
       if (this.macroEditorOverlay != null) {
-         this.macroEditorOverlay.open_V_7();
+         this.macroEditorOverlay.saveState();
       }
 
       if (this.launcherOverlay != null) {

@@ -31,12 +31,12 @@ public final class SilentMiningCoordinator {
       }
    }
 
-   public static boolean init_Z(String requester) {
+   public static boolean isOwner(String requester) {
       return requester != null && requester.equals(init_Str);
    }
 
-   public static void init_V(String requester) {
-      if (init_Z(requester)) {
+   public static void release(String requester) {
+      if (isOwner(requester)) {
          ClientInteractionOverride.releaseHoldOverrides();
       }
    }
@@ -54,7 +54,7 @@ public final class SilentMiningCoordinator {
          return false;
       }
 
-      RotationStreamPlanner.init_V_ap_TaskQueue_3(stream, current, 0.0, 0.0, RotationMath.gcdStep());
+      RotationStreamPlanner.resume(stream, current, 0.0, 0.0, RotationMath.gcdStep());
       return true;
    }
 

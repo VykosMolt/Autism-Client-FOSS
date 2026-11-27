@@ -196,7 +196,7 @@ public class AutismMinecraftClientMixin {
          }
 
          MacroExecutor.onClientTick();
-         VillagerDupeDriver.init_V_Minecraft((Minecraft)(Object)this);
+         VillagerDupeDriver.tickWatchers((Minecraft)(Object)this);
          if (ContainerCloseGuard.hasHolds()) {
             ContainerCloseGuard.expireStale();
          }
@@ -318,7 +318,7 @@ public class AutismMinecraftClientMixin {
                client.hitResult = previous;
             }
          } else if (CombatInteractionController.init_Z(client)) {
-            CombatInteractionController.Inner_DataUtil frame = CombatInteractionController.init_ListPool_DataUtil(client);
+            CombatInteractionController.Inner_DataUtil frame = CombatInteractionController.frame(client);
             if (frame != null) {
                try {
                   original.call();
@@ -367,7 +367,7 @@ public class AutismMinecraftClientMixin {
                   ci.cancel();
                } else if (al.init_Z_HitResult_InteractionHand(client.hitResult, InteractionHand.MAIN_HAND)) {
                   ci.cancel();
-               } else if (f.init_Z() && VirtualInputDispatcher.update_Z()) {
+               } else if (f.init_Z() && VirtualInputDispatcher.hasFastRequest()) {
                   if (!f.read()) {
                      ci.cancel();
                   }
@@ -459,7 +459,7 @@ public class AutismMinecraftClientMixin {
    private void autism$cancelCaptureOnEscape(CallbackInfo ci) {
       ScaffoldModule.write_V_12();
       if (!AutismLiteVariant.enabled()) {
-         CombatInteractionController.init_V((Minecraft)(Object)this);
+         CombatInteractionController.tick((Minecraft)(Object)this);
       }
 
       ManualInteractionYield.tick((Minecraft)(Object)this);
@@ -503,7 +503,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled() && !ci.isCancelled()) {
-            autismclient.util.clicker.KeyClickOutput.read_V();
+            autismclient.util.clicker.KeyClickOutput.flushAll();
          }
       }
    }
@@ -524,7 +524,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            CombatInteractionController.load_V((Minecraft)(Object)this);
+            CombatInteractionController.releaseUse((Minecraft)(Object)this);
          }
       }
    }
@@ -586,7 +586,7 @@ public class AutismMinecraftClientMixin {
    private void autism$onPacketProcessFrame(CallbackInfo ci) {
       al.open_V();
       BlinkPacketManager.processPolicyFlushes();
-      VillagerDupeDriver.load_V_Minecraft((Minecraft)(Object)this);
+      VillagerDupeDriver.tickInstance((Minecraft)(Object)this);
    }
 
    @Inject(method = "runTick", at = @At("TAIL"))

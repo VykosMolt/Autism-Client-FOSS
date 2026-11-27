@@ -167,7 +167,7 @@ public final class ModuleRuntimeManager {
             }
          });
          if (!AutismLiteVariant.enabled()) {
-            this.runInitStepSafely("profiles", () -> AutismProfileManager.init_bV());
+            this.runInitStepSafely("profiles", () -> AutismProfileManager.getInstance());
          }
 
          this.initialized = true;
@@ -223,7 +223,7 @@ public final class ModuleRuntimeManager {
          this.syncConfigToSessionState();
          this.invalidatePayloadFilterCache(filtersChanged);
          autismclient.util.PacketCaptureState.load(this);
-         autismclient.util.AutismHudManager.init_V();
+         autismclient.util.AutismHudManager.ensureInitialized();
          if (themeChanged) {
             ThemePaletteManager.reload();
          }
@@ -282,7 +282,7 @@ public final class ModuleRuntimeManager {
       if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
          autismclient.util.PacketCaptureState.expireIfDue(this);
          if (!AutismLiteVariant.enabled()) {
-            AutismProfileManager.init_bV().load();
+            AutismProfileManager.getInstance().load();
          }
 
          autismclient.util.macro.PingSpoofScheduler.update();
@@ -398,7 +398,7 @@ public final class ModuleRuntimeManager {
    }
 
    public void onGameJoin() {
-      SodiumRegionResourceProbe.init_V();
+      SodiumRegionResourceProbe.invalidate();
       bK.load_V();
       long perf = bK.read_J();
       this.joinedPlayConnection = true;
@@ -445,9 +445,9 @@ public final class ModuleRuntimeManager {
    }
 
    public void onGameLeave() {
-      SodiumRegionResourceProbe.init_V();
+      SodiumRegionResourceProbe.invalidate();
       ar.load_V();
-      autismclient.util.oresim.OreSimEngine.init_V();
+      autismclient.util.oresim.OreSimEngine.reset();
       autismclient.util.oresim.OreSimEngine.write_V();
       this.joinedPlayConnection = false;
       this.spawnedInWorld = false;
@@ -1637,7 +1637,7 @@ public final class ModuleRuntimeManager {
          return false;
       }
 
-      ((AutismProfilesOverlay)overlay).update_V_19();
+      ((AutismProfilesOverlay)overlay).open();
       OverlayManager manager = OverlayManager.getInstance();
       manager.register(overlay);
       manager.bringToFront(overlay);
@@ -1774,7 +1774,7 @@ public final class ModuleRuntimeManager {
          boolean wasSpawned = this.spawnedInWorld;
          this.spawnedInWorld = this.isInLiveWorld();
          if (!wasSpawned && this.spawnedInWorld && !aD.init_Z()) {
-            autismclient.util.JoinMacroController.read_V();
+            autismclient.util.JoinMacroController.onWorldLoaded();
             this.autoProbePending = true;
             this.autoProbeStartedMs = System.currentTimeMillis();
          }

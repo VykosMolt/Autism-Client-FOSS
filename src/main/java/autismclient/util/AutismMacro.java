@@ -100,7 +100,7 @@ public class AutismMacro {
       CompoundTag tag = new CompoundTag();
       tag.putString("name", this.name);
       tag.putString("description", this.description);
-      tag.putString("folder", MacroFolderLayout.init_Str_Str(this.folder));
+      tag.putString("folder", MacroFolderLayout.sanitize(this.folder));
       tag.putBoolean("loop", this.loop);
       tag.putInt("loopCount", this.loopCount);
       tag.putInt("keyCode", this.keyCode);
@@ -118,7 +118,7 @@ public class AutismMacro {
    }
 
    public AutismMacro fromTag(CompoundTag tag) {
-      this.folder = MacroFolderLayout.init_Str_Str(tag.getStringOr("folder", ""));
+      this.folder = MacroFolderLayout.sanitize(tag.getStringOr("folder", ""));
       if (tag.contains("name")) {
          this.name = tag.getStringOr("name", "");
       }

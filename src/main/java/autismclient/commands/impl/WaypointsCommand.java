@@ -91,12 +91,12 @@ public final class WaypointsCommand extends Command {
    private int load() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null) {
-         AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
+         AutismWaypoints store = AutismWaypoints.getInstance();
          String scope = AuditWaypointScope.current(mc);
          int x = (int)Math.floor(mc.player.getX());
          int y = (int)Math.floor(mc.player.getY());
          int z = (int)Math.floor(mc.player.getZ());
-         String name = store.init_Str(scope, "Waypoint");
+         String name = store.nextName(scope, "Waypoint");
          store.init(scope, new AutismWaypoints.Waypoint(name, x, y, z, update(), System.currentTimeMillis()));
          AutismClientMessaging.sendPrefixed("§aWaypoint saved: §f" + name + " §7(" + x + " " + y + " " + z + ")");
          return 1;
@@ -108,12 +108,12 @@ public final class WaypointsCommand extends Command {
 
    private int init(double dx, double dy, double dz) {
       Minecraft mc = Minecraft.getInstance();
-      AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
+      AutismWaypoints store = AutismWaypoints.getInstance();
       String scope = AuditWaypointScope.current(mc);
       int x = init_I_D(dx);
       int y = init_I_D(dy);
       int z = init_I_D(dz);
-      String name = store.init_Str(scope, "Waypoint");
+      String name = store.nextName(scope, "Waypoint");
       store.init(scope, new AutismWaypoints.Waypoint(name, x, y, z, update(), System.currentTimeMillis()));
       AutismClientMessaging.sendPrefixed("§aWaypoint saved: §f" + name + " §7(" + x + " " + y + " " + z + ")");
       return 1;
@@ -126,7 +126,7 @@ public final class WaypointsCommand extends Command {
       }
 
       String scope = AuditWaypointScope.current(Minecraft.getInstance());
-      if (AutismWaypoints.init_AutismWaypoints().init_Z(scope, trimmed)) {
+      if (AutismWaypoints.getInstance().remove(scope, trimmed)) {
          AutismClientMessaging.sendPrefixed("§aWaypoint deleted: §f" + trimmed);
       } else {
          AutismClientMessaging.sendPrefixed("§cNo waypoint named '" + trimmed + "'.");
@@ -137,9 +137,9 @@ public final class WaypointsCommand extends Command {
 
    private int read() {
       String scope = AuditWaypointScope.current(Minecraft.getInstance());
-      AutismWaypoints store = AutismWaypoints.init_AutismWaypoints();
-      int count = store.init_List_Str(scope).size();
-      store.init_V_Str(scope);
+      AutismWaypoints store = AutismWaypoints.getInstance();
+      int count = store.list(scope).size();
+      store.clearScope(scope);
       AutismClientMessaging.sendPrefixed(count == 0 ? "§7No waypoints to clear." : "§aCleared " + count + " waypoint" + (count == 1 ? "" : "s") + ".");
       return 1;
    }
