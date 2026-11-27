@@ -808,7 +808,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int read(String label) {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 36, 78);
+      return autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 36, 78);
    }
 
    private int write(String label) {

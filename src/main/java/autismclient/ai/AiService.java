@@ -290,7 +290,7 @@ public final class AiService {
    }
 
    static boolean init_Z_F(float worstSource) {
-      return worstSource > 0.0F && autismclient.util.ExplosionDamageCalculator.load(worstSource);
+      return worstSource > 0.0F && autismclient.util.ExplosionDamageCalculator.wouldSelfDamageKillWithoutTotem(worstSource);
    }
 
    static boolean isInterruptibleOperation(String id) {
@@ -3986,8 +3986,8 @@ public final class AiService {
          Set<String> inputs = new LinkedHashSet<>();
 
          for (Item cooked : AiItems.resolveItem(spec).items()) {
-            for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, cooked)) {
-               for (Item input : plan.init_List()) {
+            for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, cooked)) {
+               for (Item input : plan.inputs()) {
                   inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
                }
             }

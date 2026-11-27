@@ -5,125 +5,125 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent {
-   private static final int init_I = 4;
-   private autismclient.gui.f.NetHelper init_NetHelper;
-   private autismclient.gui.f.NetHelper load_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private List<String> init_List;
-   private String init_Str;
-   private final Consumer<String> init_Consumer;
-   private int load_I;
-   private int read_I;
-   private boolean init_Z;
-   private long init_J;
-   private boolean load_Z;
-   private int write_I;
-   private ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil;
-   private boolean read_Z = true;
-   private int update = 1;
-   private int sync = -1;
-   private int flush = -1;
-   private int close = -1;
-   private int open = -1;
-   private boolean write_Z;
+   private static final int SCREEN_EDGE_MARGIN = 4;
+   private autismclient.gui.f.NetHelper anchorBounds;
+   private autismclient.gui.f.NetHelper popupBounds = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private List<String> options;
+   private String selectedOption;
+   private final Consumer<String> onSelect;
+   private int scrollRow;
+   private int visibleRows;
+   private boolean open;
+   private long openedNanos;
+   private boolean draggingScrollbar;
+   private int dragAnchorOffsetY;
+   private ScrollbarRenderer.ScrollbarBounds scrollbarBounds;
+   private boolean widthCacheDirty = true;
+   private int cachedPopupWidth = 1;
+   private int cachedWidthScreenW = -1;
+   private int lastScreenWidth = -1;
+   private int lastScreenHeight = -1;
+   private int lastRowHeight = -1;
+   private boolean cachedWidthOverflow;
 
    public DropdownMenu(autismclient.gui.f.NetHelper bounds, List<String> options, String selected, Consumer<String> onSelect) {
-      this.init_NetHelper = bounds == null ? autismclient.gui.f.NetHelper.init(0, 0, 0, 0) : bounds;
-      this.init_List = options == null ? List.of() : List.copyOf(options);
-      this.init_Str = selected == null ? "" : selected;
-      this.init_Consumer = onSelect == null ? ignored -> {} : onSelect;
+      this.anchorBounds = bounds == null ? autismclient.gui.f.NetHelper.init(0, 0, 0, 0) : bounds;
+      this.options = options == null ? List.of() : List.copyOf(options);
+      this.selectedOption = selected == null ? "" : selected;
+      this.onSelect = onSelect == null ? ignored -> {} : onSelect;
    }
 
    @Override
-   public autismclient.gui.f.NetHelper init_NetHelper() {
-      return this.init_NetHelper;
+   public autismclient.gui.f.NetHelper getBounds() {
+      return this.anchorBounds;
    }
 
    @Override
-   public autismclient.gui.f.NetHelper load_NetHelper() {
-      return this.init_Z ? this.init_NetHelper.init(this.load_NetHelper) : this.init_NetHelper;
+   public autismclient.gui.f.NetHelper getInteractiveBounds() {
+      return this.open ? this.anchorBounds.init(this.popupBounds) : this.anchorBounds;
    }
 
    @Override
-   public void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
+   public void setBounds(autismclient.gui.f.NetHelper bounds) {
       if (bounds != null) {
-         if (this.init_NetHelper.update() != bounds.update()) {
-            this.read_Z = true;
+         if (this.anchorBounds.update() != bounds.update()) {
+            this.widthCacheDirty = true;
          }
 
-         this.init_NetHelper = bounds;
+         this.anchorBounds = bounds;
       }
    }
 
-   public boolean init_Z_2() {
-      return this.init_Z;
+   public boolean isOpen() {
+      return this.open;
    }
 
-   public autismclient.gui.f.NetHelper read_NetHelper() {
-      this.read_V();
-      return this.load_NetHelper;
+   public autismclient.gui.f.NetHelper getPopupBounds() {
+      this.updatePopupLayout();
+      return this.popupBounds;
    }
 
-   public int init_I() {
-      return this.load_I;
+   public int getScrollRow() {
+      return this.scrollRow;
    }
 
-   public void init(List<String> options) {
+   public void setOptions(List<String> options) {
       List<String> next = options == null ? List.of() : List.copyOf(options);
-      if (!this.init_List.equals(next)) {
-         this.init_List = next;
-         this.read_Z = true;
-         if (!this.init_List.contains(this.init_Str)) {
-            this.init_Str = this.init_List.isEmpty() ? "" : this.init_List.get(0);
+      if (!this.options.equals(next)) {
+         this.options = next;
+         this.widthCacheDirty = true;
+         if (!this.options.contains(this.selectedOption)) {
+            this.selectedOption = this.options.isEmpty() ? "" : this.options.get(0);
          }
 
-         this.load_I = init_I_I(this.load_I, 0, this.write_I());
-         this.write_V();
+         this.scrollRow = clamp(this.scrollRow, 0, this.maxScrollRow());
+         this.scrollSelectedIntoView();
       }
    }
 
-   public void init(String selected) {
+   public void setSelectedOption(String selected) {
       String next = selected == null ? "" : selected;
-      if (!this.init_Str.equals(next)) {
-         this.init_Str = next;
-         this.write_V();
+      if (!this.selectedOption.equals(next)) {
+         this.selectedOption = next;
+         this.scrollSelectedIntoView();
       }
    }
 
-   public boolean init_Z(int mouseX, int mouseY) {
-      this.read_V();
-      return this.init_Z && this.load_NetHelper.init_Z(mouseX, mouseY);
+   public boolean containsPopupPoint(int mouseX, int mouseY) {
+      this.updatePopupLayout();
+      return this.open && this.popupBounds.init_Z(mouseX, mouseY);
    }
 
-   public void init_V_2() {
-      this.init_Z = true;
-      this.init_J = System.nanoTime();
-      this.read_V();
-      this.write_V();
+   public void open() {
+      this.open = true;
+      this.openedNanos = System.nanoTime();
+      this.updatePopupLayout();
+      this.scrollSelectedIntoView();
    }
 
-   public void load_V_2() {
-      this.init_Z = false;
-      this.init_J = 0L;
-      this.load_Z = false;
+   public void close() {
+      this.open = false;
+      this.openedNanos = 0L;
+      this.draggingScrollbar = false;
    }
 
-   public static void init_V_SyncManager(
+   public static void renderTrigger(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open
    ) {
-      init(context, bounds, label, hovered, open, false, true);
+      renderTriggerInternal(context, bounds, label, hovered, open, false, true);
    }
 
-   public static void init(
+   public static void renderTrigger(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open, boolean enabled
    ) {
-      init(context, bounds, label, hovered, open, false, enabled);
+      renderTriggerInternal(context, bounds, label, hovered, open, false, enabled);
    }
 
-   public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
-      init(context, bounds, label, hovered, open, true, true);
+   public static void renderCenteredTrigger(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
+      renderTriggerInternal(context, bounds, label, hovered, open, true, true);
    }
 
-   private static void init(
+   private static void renderTriggerInternal(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String label,
@@ -136,7 +136,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
       int radius = 3;
       int fill = open && enabled ? colors.inputSurfaceFocused : colors.inputSurface;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, open && enabled ? colors.accent : colors.borderControl);
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && enabled);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered && enabled);
       if (hoverT > 0.001F) {
          autismclient.gui.f.PacketUtil.load(
             context.init_GuiGraphicsExtract(), bounds.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.innerHighlight, hoverT)
@@ -167,40 +167,40 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
    }
 
    @Override
-   public void init_V_SyncManager(autismclient.gui.f.SyncManager context) {
-      if (this.init_Z && !this.init_List.isEmpty()) {
-         int rowHeight = load_I();
-         this.flush = context.init_I();
-         this.close = context.load_I();
-         this.open = rowHeight;
-         this.read_I = this.init_I(context.load_I(), rowHeight);
-         int width = this.init_I(context);
-         this.init(context.init_I(), context.load_I(), rowHeight, width);
+   public void render(autismclient.gui.f.SyncManager context) {
+      if (this.open && !this.options.isEmpty()) {
+         int rowHeight = defaultRowHeight();
+         this.lastScreenWidth = context.init_I();
+         this.lastScreenHeight = context.load_I();
+         this.lastRowHeight = rowHeight;
+         this.visibleRows = this.computeVisibleRows(context.load_I(), rowHeight);
+         int width = this.measurePopupWidth(context);
+         this.layoutPopupBounds(context.init_I(), context.load_I(), rowHeight, width);
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-         float progress = this.init_J == 0L ? 1.0F : Math.max(0.0F, Math.min(1.0F, (float)(System.nanoTime() - this.init_J) / 1.6E8F));
+         float progress = this.openedNanos == 0L ? 1.0F : Math.max(0.0F, Math.min(1.0F, (float)(System.nanoTime() - this.openedNanos) / 1.6E8F));
          float fade = 1.0F - (1.0F - progress) * (1.0F - progress) * (1.0F - progress);
          int radius = 5;
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), this.load_NetHelper, radius, autismclient.gui.f.PacketUtil.init(colors.borderSubtle, fade)
+            context.init_GuiGraphicsExtract(), this.popupBounds, radius, autismclient.gui.f.PacketUtil.init(colors.borderSubtle, fade)
          );
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), this.load_NetHelper.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.popupSurface, fade)
+            context.init_GuiGraphicsExtract(), this.popupBounds.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.popupSurface, fade)
          );
-         int contentWidth = this.init_List.size() > this.read_I ? this.load_NetHelper.update() - 6 - 3 : this.load_NetHelper.update() - 2;
+         int contentWidth = this.options.size() > this.visibleRows ? this.popupBounds.update() - 6 - 3 : this.popupBounds.update() - 2;
 
-         for (int rowIndex = 0; rowIndex < this.read_I; rowIndex++) {
-            int optionIndex = this.load_I + rowIndex;
-            if (optionIndex >= this.init_List.size()) {
+         for (int rowIndex = 0; rowIndex < this.visibleRows; rowIndex++) {
+            int optionIndex = this.scrollRow + rowIndex;
+            if (optionIndex >= this.options.size()) {
                break;
             }
 
-            String option = this.init_List.get(optionIndex);
+            String option = this.options.get(optionIndex);
             autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(
-               this.load_NetHelper.read() + 1, this.load_NetHelper.write() + 1 + rowIndex * rowHeight, Math.max(1, contentWidth), rowHeight
+               this.popupBounds.read() + 1, this.popupBounds.write() + 1 + rowIndex * rowHeight, Math.max(1, contentWidth), rowHeight
             );
             boolean hovered = row.init_Z(context.read(), context.write());
-            boolean active = option.equals(this.init_Str);
-            float hoverT = autismclient.gui.ui.HoverTransitionCache.init("dropdown:" + option, hovered);
+            boolean active = option.equals(this.selectedOption);
+            float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("dropdown:" + option, hovered);
             autismclient.gui.f.NetHelper pill = autismclient.gui.f.NetHelper.init(row.read() + 2, row.write(), Math.max(1, row.update() - 4), row.sync());
             if (active) {
                autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), pill, 4, autismclient.gui.f.PacketUtil.init(colors.accentSoft, fade));
@@ -228,61 +228,61 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
             }
          }
 
-         if (this.init_List.size() > this.read_I) {
+         if (this.options.size() > this.visibleRows) {
             autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(
-               this.load_NetHelper.init() - 6 - 1, this.load_NetHelper.write() + 4, 6, Math.max(1, this.load_NetHelper.sync() - 8)
+               this.popupBounds.init() - 6 - 1, this.popupBounds.write() + 4, 6, Math.max(1, this.popupBounds.sync() - 8)
             );
-            this.init_UtilCore_DataUtil = ScrollbarRenderer.init(track, this.init_List.size() * rowHeight, this.read_I * rowHeight, this.load_I * rowHeight);
+            this.scrollbarBounds = ScrollbarRenderer.init(track, this.options.size() * rowHeight, this.visibleRows * rowHeight, this.scrollRow * rowHeight);
             ScrollbarRenderer.init(
-               context, this.init_UtilCore_DataUtil, this.init_UtilCore_DataUtil.init_NetHelper().init_Z(context.read(), context.write()), this.load_Z
+               context, this.scrollbarBounds, this.scrollbarBounds.init_NetHelper().init_Z(context.read(), context.write()), this.draggingScrollbar
             );
          } else {
-            this.init_UtilCore_DataUtil = null;
+            this.scrollbarBounds = null;
          }
       }
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I_2(int mouseX, int mouseY, int button) {
-      this.read_V();
+   public autismclient.gui.ui.UiInputResult onMouseClicked(int mouseX, int mouseY, int button) {
+      this.updatePopupLayout();
       if (button != 0) {
-         if (!this.init_Z) {
+         if (!this.open) {
             return autismclient.gui.ui.UiInputResult.IGNORED;
          }
 
-         if (!this.init_NetHelper.init_Z(mouseX, mouseY) && !this.load_NetHelper.init_Z(mouseX, mouseY)) {
-            this.load_V_2();
+         if (!this.anchorBounds.init_Z(mouseX, mouseY) && !this.popupBounds.init_Z(mouseX, mouseY)) {
+            this.close();
          }
 
          return autismclient.gui.ui.UiInputResult.HANDLED;
-      } else if (this.init_Z) {
-         if (this.load_NetHelper.init_Z(mouseX, mouseY)) {
-            if (this.init_UtilCore_DataUtil != null && this.init_UtilCore_DataUtil.init_NetHelper().init_Z(mouseX, mouseY)) {
-               this.write_I = this.init_UtilCore_DataUtil.load().init_Z(mouseX, mouseY)
-                  ? mouseY - this.init_UtilCore_DataUtil.load().write()
-                  : this.init_UtilCore_DataUtil.load().sync() / 2;
-               this.load_Z = true;
-               this.init(mouseY);
+      } else if (this.open) {
+         if (this.popupBounds.init_Z(mouseX, mouseY)) {
+            if (this.scrollbarBounds != null && this.scrollbarBounds.init_NetHelper().init_Z(mouseX, mouseY)) {
+               this.dragAnchorOffsetY = this.scrollbarBounds.load().init_Z(mouseX, mouseY)
+                  ? mouseY - this.scrollbarBounds.load().write()
+                  : this.scrollbarBounds.load().sync() / 2;
+               this.draggingScrollbar = true;
+               this.updateScrollFromMouseY(mouseY);
                return autismclient.gui.ui.UiInputResult.HANDLED;
             }
 
-            int index = this.load_I + Math.max(0, (mouseY - this.load_NetHelper.write() - 1) / Math.max(1, this.read_I()));
-            if (index >= 0 && index < this.init_List.size()) {
-               this.init_Str = this.init_List.get(index);
-               this.init_Consumer.accept(this.init_Str);
+            int index = this.scrollRow + Math.max(0, (mouseY - this.popupBounds.write() - 1) / Math.max(1, this.effectiveRowHeight()));
+            if (index >= 0 && index < this.options.size()) {
+               this.selectedOption = this.options.get(index);
+               this.onSelect.accept(this.selectedOption);
             }
 
-            this.load_V_2();
+            this.close();
             return autismclient.gui.ui.UiInputResult.HANDLED;
-         } else if (this.init_NetHelper.init_Z(mouseX, mouseY)) {
-            this.load_V_2();
+         } else if (this.anchorBounds.init_Z(mouseX, mouseY)) {
+            this.close();
             return autismclient.gui.ui.UiInputResult.HANDLED;
          } else {
-            this.load_V_2();
+            this.close();
             return autismclient.gui.ui.UiInputResult.HANDLED;
          }
-      } else if (this.init_NetHelper.init_Z(mouseX, mouseY)) {
-         this.init_V_2();
+      } else if (this.anchorBounds.init_Z(mouseX, mouseY)) {
+         this.open();
          return autismclient.gui.ui.UiInputResult.HANDLED;
       } else {
          return autismclient.gui.ui.UiInputResult.IGNORED;
@@ -290,130 +290,130 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult load(int mouseX, int mouseY, int button) {
-      this.read_V();
-      if (!this.load_Z) {
-         return this.init_Z ? autismclient.gui.ui.UiInputResult.HANDLED : autismclient.gui.ui.UiInputResult.IGNORED;
+   public autismclient.gui.ui.UiInputResult onMouseReleased(int mouseX, int mouseY, int button) {
+      this.updatePopupLayout();
+      if (!this.draggingScrollbar) {
+         return this.open ? autismclient.gui.ui.UiInputResult.HANDLED : autismclient.gui.ui.UiInputResult.IGNORED;
       }
 
-      this.load_Z = false;
+      this.draggingScrollbar = false;
       return autismclient.gui.ui.UiInputResult.HANDLED;
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      this.read_V();
-      if (this.load_Z && button == 0) {
-         this.init(mouseY);
+   public autismclient.gui.ui.UiInputResult onMouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
+      this.updatePopupLayout();
+      if (this.draggingScrollbar && button == 0) {
+         this.updateScrollFromMouseY(mouseY);
          return autismclient.gui.ui.UiInputResult.HANDLED;
       } else {
-         return this.init_Z ? autismclient.gui.ui.UiInputResult.HANDLED : autismclient.gui.ui.UiInputResult.IGNORED;
+         return this.open ? autismclient.gui.ui.UiInputResult.HANDLED : autismclient.gui.ui.UiInputResult.IGNORED;
       }
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I(int mouseX, int mouseY, double amount) {
-      this.read_V();
-      if (!this.init_Z) {
+   public autismclient.gui.ui.UiInputResult onMouseScrolled(int mouseX, int mouseY, double amount) {
+      this.updatePopupLayout();
+      if (!this.open) {
          return autismclient.gui.ui.UiInputResult.IGNORED;
       }
 
-      if (this.load_NetHelper.init_Z(mouseX, mouseY)) {
+      if (this.popupBounds.init_Z(mouseX, mouseY)) {
          int direction = amount < 0.0 ? 1 : (amount > 0.0 ? -1 : 0);
-         this.load_I = init_I_I(this.load_I + direction, 0, this.write_I());
+         this.scrollRow = clamp(this.scrollRow + direction, 0, this.maxScrollRow());
       }
 
       return autismclient.gui.ui.UiInputResult.HANDLED;
    }
 
-   private int init_I(autismclient.gui.f.SyncManager context) {
-      boolean overflow = this.init_List.size() > this.read_I;
-      if (!this.read_Z && this.sync == context.init_I() && this.write_Z == overflow) {
-         return this.update;
+   private int measurePopupWidth(autismclient.gui.f.SyncManager context) {
+      boolean overflow = this.options.size() > this.visibleRows;
+      if (!this.widthCacheDirty && this.cachedWidthScreenW == context.init_I() && this.cachedWidthOverflow == overflow) {
+         return this.cachedPopupWidth;
       }
 
       int chrome = 20 + (overflow ? 7 : 0);
-      int width = Math.max(1, this.init_NetHelper.update());
+      int width = Math.max(1, this.anchorBounds.update());
 
-      for (String option : this.init_List) {
+      for (String option : this.options) {
          width = Math.max(width, context.init_PoolEntry().measureWidth(option) + chrome);
       }
 
-      this.update = Math.min(width, Math.max(1, context.init_I() - 8));
-      this.sync = context.init_I();
-      this.write_Z = overflow;
-      this.read_Z = false;
-      return this.update;
+      this.cachedPopupWidth = Math.min(width, Math.max(1, context.init_I() - 8));
+      this.cachedWidthScreenW = context.init_I();
+      this.cachedWidthOverflow = overflow;
+      this.widthCacheDirty = false;
+      return this.cachedPopupWidth;
    }
 
-   private void read_V() {
-      if (this.init_Z) {
-         int screenWidth = this.flush > 0 ? this.flush : Math.max(1, cA.init_I());
-         int screenHeight = this.close > 0 ? this.close : Math.max(1, cA.load_I());
-         int rowHeight = this.open > 0 ? this.open : load_I();
-         this.read_I = this.init_I(screenHeight, rowHeight);
-         int width = Math.max(1, Math.min(this.update > 1 ? this.update : this.init_NetHelper.update(), screenWidth - 8));
-         this.init(screenWidth, screenHeight, rowHeight, width);
+   private void updatePopupLayout() {
+      if (this.open) {
+         int screenWidth = this.lastScreenWidth > 0 ? this.lastScreenWidth : Math.max(1, cA.init_I());
+         int screenHeight = this.lastScreenHeight > 0 ? this.lastScreenHeight : Math.max(1, cA.load_I());
+         int rowHeight = this.lastRowHeight > 0 ? this.lastRowHeight : defaultRowHeight();
+         this.visibleRows = this.computeVisibleRows(screenHeight, rowHeight);
+         int width = Math.max(1, Math.min(this.cachedPopupWidth > 1 ? this.cachedPopupWidth : this.anchorBounds.update(), screenWidth - 8));
+         this.layoutPopupBounds(screenWidth, screenHeight, rowHeight, width);
       }
    }
 
-   private void init(int screenWidth, int screenHeight, int rowHeight, int width) {
-      this.read_I = Math.max(1, Math.min(this.init_List.size(), this.read_I <= 0 ? this.init_I(screenHeight, rowHeight) : this.read_I));
-      this.load_I = init_I_I(this.load_I, 0, this.write_I());
-      int height = Math.max(1, this.read_I * rowHeight + 2);
-      int x = this.init_NetHelper.read();
-      int below = this.init_NetHelper.load() + 1;
-      int above = this.init_NetHelper.write() - height - 1;
+   private void layoutPopupBounds(int screenWidth, int screenHeight, int rowHeight, int width) {
+      this.visibleRows = Math.max(1, Math.min(this.options.size(), this.visibleRows <= 0 ? this.computeVisibleRows(screenHeight, rowHeight) : this.visibleRows));
+      this.scrollRow = clamp(this.scrollRow, 0, this.maxScrollRow());
+      int height = Math.max(1, this.visibleRows * rowHeight + 2);
+      int x = this.anchorBounds.read();
+      int below = this.anchorBounds.load() + 1;
+      int above = this.anchorBounds.write() - height - 1;
       int availableBelow = screenHeight - 4 - below;
-      int availableAbove = this.init_NetHelper.write() - 4;
+      int availableAbove = this.anchorBounds.write() - 4;
       int y = availableBelow < height && availableBelow < availableAbove ? above : below;
-      this.load_NetHelper = autismclient.gui.f.NetHelper.init(
-         init_I_I(x, 4, Math.max(4, screenWidth - 4 - width)), init_I_I(y, 4, Math.max(4, screenHeight - 4 - height)), width, height
+      this.popupBounds = autismclient.gui.f.NetHelper.init(
+         clamp(x, 4, Math.max(4, screenWidth - 4 - width)), clamp(y, 4, Math.max(4, screenHeight - 4 - height)), width, height
       );
    }
 
-   private int init_I(int screenHeight, int rowHeight) {
-      int below = Math.max(0, (screenHeight - 4 - this.init_NetHelper.load() - 1) / Math.max(1, rowHeight));
-      int above = Math.max(0, (this.init_NetHelper.write() - 4 - 1) / Math.max(1, rowHeight));
+   private int computeVisibleRows(int screenHeight, int rowHeight) {
+      int below = Math.max(0, (screenHeight - 4 - this.anchorBounds.load() - 1) / Math.max(1, rowHeight));
+      int above = Math.max(0, (this.anchorBounds.write() - 4 - 1) / Math.max(1, rowHeight));
       int cap = Math.max(3, screenHeight * 2 / 3 / Math.max(1, rowHeight));
-      return Math.max(1, Math.min(this.init_List.size(), Math.min(cap, Math.max(below, above))));
+      return Math.max(1, Math.min(this.options.size(), Math.min(cap, Math.max(below, above))));
    }
 
-   private static int load_I() {
+   private static int defaultRowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int read_I() {
-      return this.read_I <= 0 ? 1 : Math.max(1, (this.load_NetHelper.sync() - 2) / this.read_I);
+   private int effectiveRowHeight() {
+      return this.visibleRows <= 0 ? 1 : Math.max(1, (this.popupBounds.sync() - 2) / this.visibleRows);
    }
 
-   private int write_I() {
-      return Math.max(0, this.init_List.size() - Math.max(1, this.read_I));
+   private int maxScrollRow() {
+      return Math.max(0, this.options.size() - Math.max(1, this.visibleRows));
    }
 
-   private void write_V() {
-      int index = this.init_List.indexOf(this.init_Str);
+   private void scrollSelectedIntoView() {
+      int index = this.options.indexOf(this.selectedOption);
       if (index >= 0) {
-         if (index < this.load_I) {
-            this.load_I = index;
+         if (index < this.scrollRow) {
+            this.scrollRow = index;
          }
 
-         if (this.read_I > 0 && index >= this.load_I + this.read_I) {
-            this.load_I = index - this.read_I + 1;
+         if (this.visibleRows > 0 && index >= this.scrollRow + this.visibleRows) {
+            this.scrollRow = index - this.visibleRows + 1;
          }
 
-         this.load_I = init_I_I(this.load_I, 0, this.write_I());
+         this.scrollRow = clamp(this.scrollRow, 0, this.maxScrollRow());
       }
    }
 
-   private void init(int mouseY) {
-      if (this.init_UtilCore_DataUtil != null && this.init_UtilCore_DataUtil.init_I() > 0) {
-         int pixelScroll = ScrollbarRenderer.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil, mouseY, this.write_I);
-         this.load_I = init_I_I(Math.round((float)pixelScroll / Math.max(1, this.read_I())), 0, this.write_I());
+   private void updateScrollFromMouseY(int mouseY) {
+      if (this.scrollbarBounds != null && this.scrollbarBounds.init_I() > 0) {
+         int pixelScroll = ScrollbarRenderer.init_I_UtilCore_DataUtil(this.scrollbarBounds, mouseY, this.dragAnchorOffsetY);
+         this.scrollRow = clamp(Math.round((float)pixelScroll / Math.max(1, this.effectiveRowHeight())), 0, this.maxScrollRow());
       }
    }
 
-   private static int init_I_I(int value, int min, int max) {
+   private static int clamp(int value, int min, int max) {
       return Math.max(min, Math.min(value, max));
    }
 }

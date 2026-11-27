@@ -1,101 +1,101 @@
 package autismclient.gui.ui.layout;
 
 public abstract class LayoutNode {
-   private static volatile long init_J = 1L;
-   protected float init_F;
-   protected float load_F;
-   protected float read_F;
-   protected float write;
-   protected boolean init_Z = true;
-   protected boolean load_Z = true;
-   protected boolean read_Z = false;
-   protected float update = 0.0F;
+   private static volatile long layoutRevision = 1L;
+   protected float nodeX;
+   protected float nodeY;
+   protected float nodeWidth;
+   protected float nodeHeight;
+   protected boolean nodeVisible = true;
+   protected boolean nodeEnabled = true;
+   protected boolean nodeGrowX = false;
+   protected float hoverProgress = 0.0F;
 
-   public static long init_J() {
-      return init_J;
+   public static long revision() {
+      return layoutRevision;
    }
 
-   protected void load_V() {
-      init_J++;
+   protected void markLayoutDirty() {
+      layoutRevision++;
    }
 
-   public float load_F() {
-      return this.init_F;
+   public float x() {
+      return this.nodeX;
    }
 
-   public float read_F() {
-      return this.load_F;
+   public float y() {
+      return this.nodeY;
    }
 
-   public float write_F() {
-      return this.read_F;
+   public float width() {
+      return this.nodeWidth;
    }
 
-   public float update_F() {
-      return this.write;
+   public float height() {
+      return this.nodeHeight;
    }
 
-   public LayoutNode init_TableIndex_F(float x, float y, float width, float height) {
+   public LayoutNode setBounds(float x, float y, float width, float height) {
       float nextWidth = Math.max(0.0F, width);
       float nextHeight = Math.max(0.0F, height);
-      if (Float.compare(this.init_F, x) != 0
-         || Float.compare(this.load_F, y) != 0
-         || Float.compare(this.read_F, nextWidth) != 0
-         || Float.compare(this.write, nextHeight) != 0) {
-         this.init_F = x;
-         this.load_F = y;
-         this.read_F = nextWidth;
-         this.write = nextHeight;
-         this.load_V();
+      if (Float.compare(this.nodeX, x) != 0
+         || Float.compare(this.nodeY, y) != 0
+         || Float.compare(this.nodeWidth, nextWidth) != 0
+         || Float.compare(this.nodeHeight, nextHeight) != 0) {
+         this.nodeX = x;
+         this.nodeY = y;
+         this.nodeWidth = nextWidth;
+         this.nodeHeight = nextHeight;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public LayoutNode load_TableIndex_Z(boolean visible) {
-      if (this.init_Z != visible) {
-         this.init_Z = visible;
-         this.load_V();
+   public LayoutNode setVisible(boolean visible) {
+      if (this.nodeVisible != visible) {
+         this.nodeVisible = visible;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public LayoutNode read_TableIndex_Z(boolean enabled) {
-      if (this.load_Z != enabled) {
-         this.load_Z = enabled;
-         this.load_V();
+   public LayoutNode setEnabled(boolean enabled) {
+      if (this.nodeEnabled != enabled) {
+         this.nodeEnabled = enabled;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public LayoutNode init_TableIndex_Z(boolean growX) {
-      if (this.read_Z != growX) {
-         this.read_Z = growX;
-         this.load_V();
+   public LayoutNode setGrowX(boolean growX) {
+      if (this.nodeGrowX != growX) {
+         this.nodeGrowX = growX;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public boolean write_Z() {
-      return this.init_Z;
+   public boolean isVisible() {
+      return this.nodeVisible;
    }
 
-   public boolean update_Z() {
-      return this.load_Z;
+   public boolean isEnabled() {
+      return this.nodeEnabled;
    }
 
-   public boolean sync_Z() {
-      return this.read_Z;
+   public boolean isGrowX() {
+      return this.nodeGrowX;
    }
 
-   public boolean init_Z_F_F(float px, float py) {
-      return this.init_Z && px >= this.init_F && px <= this.init_F + this.read_F && py >= this.load_F && py <= this.load_F + this.write;
+   public boolean containsPoint(float px, float py) {
+      return this.nodeVisible && px >= this.nodeX && px <= this.nodeX + this.nodeWidth && py >= this.nodeY && py <= this.nodeY + this.nodeHeight;
    }
 
-   protected float init_F_F(float current, float target, float speed, float delta) {
+   protected float stepTowards(float current, float target, float speed, float delta) {
       float amount = Math.max(0.04F, delta * speed);
       if (current < target) {
          return Math.min(target, current + amount);
@@ -104,46 +104,46 @@ public abstract class LayoutNode {
       }
    }
 
-   protected float init_F_Z_F(boolean hovered, float delta) {
-      this.update = this.init_F_F(this.update, hovered ? 1.0F : 0.0F, 7.5F, delta);
-      return this.update;
+   protected float stepHover(boolean hovered, float delta) {
+      this.hoverProgress = this.stepTowards(this.hoverProgress, hovered ? 1.0F : 0.0F, 7.5F, delta);
+      return this.hoverProgress;
    }
 
-   public float init_F_SyncManager(LayoutContext context) {
-      return this.read_F;
+   public float measurePreferredWidth(LayoutContext context) {
+      return this.nodeWidth;
    }
 
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      return this.write;
+   public float measureHeight(LayoutContext context, float availableWidth) {
+      return this.nodeHeight;
    }
 
-   public void read_V_SyncManager(LayoutContext context) {
+   public void layout(LayoutContext context) {
    }
 
-   public void init_V_SyncManager(LayoutContext context) {
+   public void render(LayoutContext context) {
    }
 
-   public boolean init_Z_SyncManager_2(LayoutContext context, float mouseX, float mouseY, int button) {
+   public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
       return false;
    }
 
-   public boolean load_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, int button) {
+   public boolean mouseReleased(LayoutContext context, float mouseX, float mouseY, int button) {
       return false;
    }
 
-   public boolean init_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
+   public boolean mouseDragged(LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
       return false;
    }
 
-   public boolean init_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, float amount) {
+   public boolean mouseScrolled(LayoutContext context, float mouseX, float mouseY, float amount) {
       return false;
    }
 
-   public boolean init_Z_SyncManager_3(LayoutContext context, int keyCode, int scanCode, int modifiers) {
+   public boolean keyPressed(LayoutContext context, int keyCode, int scanCode, int modifiers) {
       return false;
    }
 
-   public boolean init_Z_SyncManager_2(LayoutContext context, char chr, int modifiers) {
+   public boolean charTyped(LayoutContext context, char chr, int modifiers) {
       return false;
    }
 }

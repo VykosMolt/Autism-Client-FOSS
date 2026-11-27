@@ -215,7 +215,7 @@ public final class PluginSignatureCatalog {
          return false;
       }
 
-      if (!"S2C".equalsIgnoreCase(snapshot.init_Str())) {
+      if (!"S2C".equalsIgnoreCase(snapshot.direction())) {
          return false;
       }
 
@@ -227,21 +227,21 @@ public final class PluginSignatureCatalog {
       PluginSignatureCatalog.Inner_ConfigStore state = init_Map.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.Inner_ConfigStore());
       state.init_Str = sync(brand);
       boolean changed = false;
-      String channel = write(snapshot.load_Str());
+      String channel = write(snapshot.channel());
       if (!channel.isBlank() && init_Z(channel)) {
-         changed |= state.init(channel, snapshot.init_Str());
+         changed |= state.init(channel, snapshot.direction());
       }
 
       if (load_Z(channel)) {
-         for (String registered : init(snapshot.init_BArr())) {
+         for (String registered : init(snapshot.rawBytes())) {
             if (init_Z(registered)) {
-               changed |= state.load(registered, snapshot.init_Str());
+               changed |= state.load(registered, snapshot.direction());
             }
          }
       } else {
-         for (String embedded : load(snapshot.init_BArr())) {
+         for (String embedded : load(snapshot.rawBytes())) {
             if (init_Z(embedded)) {
-               changed |= state.read(embedded, snapshot.init_Str());
+               changed |= state.read(embedded, snapshot.direction());
             }
          }
       }
@@ -399,8 +399,8 @@ public final class PluginSignatureCatalog {
    }
 
    private static String load_Str(String channel) {
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-         if (PayloadChannelFilterManager.init_Z_bB_CachePool(preset) && PayloadChannelFilterManager.init_Z_bB_CachePool_Str(preset, channel)) {
+      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         if (PayloadChannelFilterManager.isExactPluginChannel(preset) && PayloadChannelFilterManager.matchesPreset(preset, channel)) {
             return preset.load();
          }
       }

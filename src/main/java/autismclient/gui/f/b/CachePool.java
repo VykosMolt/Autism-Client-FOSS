@@ -57,7 +57,7 @@ public final class CachePool {
 
       int toneColor = var10000;
       boolean colored = tone == CachePool.Inner_DataUtil.read || tone == CachePool.Inner_DataUtil.write || tone == CachePool.Inner_DataUtil.update;
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       int fill = UiLayoutMath.lerpColor(colors.buttonSurface, toneColor, colored ? 0.08F + 0.14F * progress : 0.12F * progress);
       int border = colored ? UiLayoutMath.lerpColor(fill, toneColor, 0.5F + 0.5F * progress) : colors.borderControl;
       fill = UiLayoutMath.lerpColor(fill, colors.buttonSurfaceHover, hoverT * 0.6F);

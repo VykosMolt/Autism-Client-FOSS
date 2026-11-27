@@ -18,10 +18,10 @@ final class AiCraftCapacity {
 
    static boolean init_Z_J_CachePool_Z(autismclient.util.AutoCraftingEngine.CraftResult result, boolean allowed) {
       return allowed
-         && !result.init_Z
-         && !result.load
-         && result.init_I == 0
-         && result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL;
+         && !result.success
+         && !result.uncertain
+         && result.craftedAmount == 0
+         && result.failureReason == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL;
    }
 
    static JsonObject init_JsonObject_g_CachePool(AiCraftPlanner.CraftPlan plan, int firstStep, String target, int seconds, AiCraftPlanner.CraftPlan... obligations) {

@@ -1092,8 +1092,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             AutismTitleScreen.init(ThemePaletteManager.recolor(this.init_Z ? -1207302650 : -1873801200, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
-         float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
-            autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
+         float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
+            autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
          );
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.init(
@@ -1201,8 +1201,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             AutismTitleScreen.init(ThemePaletteManager.recolor(-1878391290, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
-         float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
-            autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
+         float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
+            autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
          );
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.init(
@@ -1273,8 +1273,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             AutismTitleScreen.init(ThemePaletteManager.recolor(this.init_Z ? -1727527675 : 1716523024, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
-         float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
-            autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
+         float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
+            autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I)), hovered
          );
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.init(

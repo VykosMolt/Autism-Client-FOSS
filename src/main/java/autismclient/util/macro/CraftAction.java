@@ -52,9 +52,9 @@ public class CraftAction implements MacroAction {
       } else {
          for (CraftAction.Inner_DataUtil entry : this.entries) {
             if (entry != null && entry.init_Z()) {
-               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.findOptionByKey(mc, entry.init_Str);
                if (option == null) {
-                  option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
+                  option = autismclient.util.AutoCraftingEngine.findOptionById(mc, entry.init_I);
                }
 
                if (option == null) {
@@ -62,15 +62,15 @@ public class CraftAction implements MacroAction {
                   return;
                }
 
-               int desiredAmount = autismclient.util.AutoCraftingEngine.init(option, entry.read_I, entry.init_Z);
+               int desiredAmount = autismclient.util.AutoCraftingEngine.resolveTargetAmount(option, entry.read_I, entry.init_Z);
                if (desiredAmount <= 0) {
                   AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.load_Str + ".");
                   return;
                }
 
-               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
-               if (!result.init_Z) {
-                  AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.craft(mc, entry.init_Str, entry.init_I, desiredAmount);
+               if (!result.success) {
+                  AutismClientMessaging.sendPrefixed("§c" + result.message);
                   return;
                }
             }
@@ -218,11 +218,11 @@ public class CraftAction implements MacroAction {
             return entry;
          }
 
-         entry.init_I = option.init_I;
-         entry.init_Str = option.init_Str;
-         entry.load_Str = option.load_Str;
-         entry.read_Str = MacroExecutor.serializeComponentJson(option.init_Component);
-         entry.load_I = Math.max(1, option.init_ItemStack.getCount());
+         entry.init_I = option.recipeKeyHash;
+         entry.init_Str = option.recipeKey;
+         entry.load_Str = option.outputName;
+         entry.read_Str = MacroExecutor.serializeComponentJson(option.outputHoverName);
+         entry.load_I = Math.max(1, option.outputStack.getCount());
          entry.read_I = Math.max(1, amount);
          entry.init_Z = useMaxAmount;
          return entry;

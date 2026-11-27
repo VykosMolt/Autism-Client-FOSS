@@ -265,10 +265,10 @@ public final class PayloadRegistrationManager {
       boolean changed = false;
       Set<String> defaults = new LinkedHashSet<>();
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-         if (PayloadChannelFilterManager.flush(preset)) {
-            String pattern = PayloadChannelFilterManager.init_Str_Str(preset.read());
-            if (PayloadChannelFilterManager.close(preset)) {
+      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
+            String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
+            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                defaults.add(pattern);
             }
          }
@@ -284,10 +284,10 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-         if (PayloadChannelFilterManager.flush(preset)) {
-            String pattern = PayloadChannelFilterManager.init_Str_Str(preset.read());
-            if (PayloadChannelFilterManager.close(preset) && this.read(preset.load(), pattern, "preset")) {
+      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
+            String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
+            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && this.read(preset.load(), pattern, "preset")) {
                changed = true;
             }
          }
@@ -301,10 +301,10 @@ public final class PayloadRegistrationManager {
    public void update() {
       Set<String> defaults = new LinkedHashSet<>();
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-         if (PayloadChannelFilterManager.flush(preset)) {
-            String pattern = PayloadChannelFilterManager.init_Str_Str(preset.read());
-            if (PayloadChannelFilterManager.close(preset)) {
+      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
+            String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
+            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                defaults.add(pattern);
             }
          }
@@ -316,10 +316,10 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-         if (PayloadChannelFilterManager.flush(preset)) {
-            String pattern = PayloadChannelFilterManager.init_Str_Str(preset.read());
-            if (PayloadChannelFilterManager.close(preset)) {
+      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
+            String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
+            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                this.read(preset.load(), pattern, "preset");
             }
          }
@@ -360,7 +360,7 @@ public final class PayloadRegistrationManager {
    private void init_V_Map_List(Map<String, AutismConfig.PayloadChannelRegistrationRule> merged, List<AutismConfig.PayloadChannelFilterRule> filterRules) {
       for (AutismConfig.PayloadChannelFilterRule filter : filterRules) {
          if (filter != null && filter.enabled) {
-            String pattern = PayloadChannelFilterManager.init_Str_Str(filter.pattern);
+            String pattern = PayloadChannelFilterManager.normalizePattern(filter.pattern);
             if (load_Z_Str(pattern)) {
                AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
                rule.channel = pattern;

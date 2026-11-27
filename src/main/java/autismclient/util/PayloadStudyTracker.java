@@ -41,7 +41,7 @@ public final class PayloadStudyTracker {
       update = 0;
       if (studyPatterns != null) {
          for (String pattern : studyPatterns) {
-            String normalized = PayloadChannelFilterManager.init_Str_Str(pattern);
+            String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
             if (!normalized.isBlank() && !init_List.contains(normalized)) {
                init_List.add(normalized);
             }
@@ -123,7 +123,7 @@ public final class PayloadStudyTracker {
 
    public static synchronized boolean init_Z(AutismPayloadSupport.PayloadEntry snapshot) {
       if (init_Z && snapshot != null) {
-         String channel = PayloadRegistrationManager.init_Str_Str(snapshot.load_Str());
+         String channel = PayloadRegistrationManager.init_Str_Str(snapshot.channel());
          if (channel.isBlank()) {
             return false;
          }
@@ -144,8 +144,8 @@ public final class PayloadStudyTracker {
          read_I++;
          PayloadStudyTracker.Inner_DataUtil stats = init_LinkedHashMap.computeIfAbsent(channel, PayloadStudyTracker.Inner_DataUtil::new);
          stats.init_I++;
-         stats.init_J = stats.init_J + Math.max(0, snapshot.init_I());
-         String direction = snapshot.init_Str() == null ? "" : snapshot.init_Str().trim().toUpperCase(Locale.ROOT);
+         stats.init_J = stats.init_J + Math.max(0, snapshot.byteLength());
+         String direction = snapshot.direction() == null ? "" : snapshot.direction().trim().toUpperCase(Locale.ROOT);
          if ("C2S".equals(direction)) {
             stats.load++;
          } else if ("S2C".equals(direction)) {
@@ -155,7 +155,7 @@ public final class PayloadStudyTracker {
          boolean matched = init_List.isEmpty();
 
          for (String pattern : init_List) {
-            if (PayloadChannelFilterManager.init_Z_Str_Str(pattern, channel)) {
+            if (PayloadChannelFilterManager.matchesPattern(pattern, channel)) {
                stats.init_Set.add(pattern);
                matched = true;
             }
@@ -165,7 +165,7 @@ public final class PayloadStudyTracker {
             write++;
          }
 
-         List<String> registerChannels = AutismPayloadSupport.init_List(channel, snapshot.init_BArr());
+         List<String> registerChannels = AutismPayloadSupport.extractRegisteredChannels(channel, snapshot.rawBytes());
          if (!registerChannels.isEmpty()) {
             update++;
 
@@ -253,16 +253,16 @@ public final class PayloadStudyTracker {
    }
 
    private static String init_Str(AutismPayloadSupport.PayloadEntry snapshot) {
-      byte[] bytes = snapshot.init_BArr();
-      return (snapshot.init_Str() == null ? "" : snapshot.init_Str())
+      byte[] bytes = snapshot.rawBytes();
+      return (snapshot.direction() == null ? "" : snapshot.direction())
          + "|"
-         + (snapshot.update() == null ? "" : snapshot.update())
+         + (snapshot.protocolPhase() == null ? "" : snapshot.protocolPhase())
          + "|"
-         + snapshot.load_I()
+         + snapshot.packetId()
          + "|"
-         + (snapshot.load_Str() == null ? "" : snapshot.load_Str())
+         + (snapshot.channel() == null ? "" : snapshot.channel())
          + "|"
-         + snapshot.init_I()
+         + snapshot.byteLength()
          + "|"
          + Arrays.hashCode(bytes);
    }

@@ -244,20 +244,20 @@ public final class PacketInspectorEngine {
    ) {
       String title = entry.load_Str + " [" + entry.init_Str + "]";
       PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
-      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
       builder.init("Meta", UiColorPalette.warmWhite());
       builder.load("Name: " + entry.load_Str, UiColorPalette.softWhite());
       builder.load("Direction: " + entry.init_Str, init_I_Str(entry.init_Str));
       builder.load("Class: " + entry.init_Class.getName(), UiColorPalette.textBody());
       if (payloadSnapshot != null) {
-         builder.load("Payload Channel: " + payloadSnapshot.load_Str(), UiColorPalette.successText());
-         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", UiColorPalette.textBright());
+         builder.load("Payload Channel: " + payloadSnapshot.channel(), UiColorPalette.successText());
+         builder.load("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
          PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(payloadSnapshot);
          if (filter != null) {
-            builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
+            builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
          }
 
-         String source = read_Str_Str(payloadSnapshot.load_Str());
+         String source = read_Str_Str(payloadSnapshot.channel());
          if (source != null && !source.isBlank()) {
             builder.load("Likely Source: " + source, UiColorPalette.textBody());
          }
@@ -362,7 +362,7 @@ public final class PacketInspectorEngine {
       try {
          String title = entry == null ? "Payload Analyzer" : entry.load_Str + " Analyzer";
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
-         AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+         AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
          builder.init("Analyzer", UiColorPalette.mint());
          if (snapshot == null) {
             builder.load("No payload snapshot is available for this packet.", UiColorPalette.errorText());
@@ -370,12 +370,12 @@ public final class PacketInspectorEngine {
          }
 
          if (payloadAnalysis == null) {
-            builder.load("Channel: " + snapshot.load_Str(), UiColorPalette.successText());
+            builder.load("Channel: " + snapshot.channel(), UiColorPalette.successText());
             builder.load(
-               "Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str())
+               "Direction: " + snapshot.direction() + " | Protocol: " + init_Str_Str_Str(snapshot.protocolPhase(), "unknown"), init_I_Str(snapshot.direction())
             );
-            builder.load("Body Size: " + snapshot.init_BArr().length + " bytes", UiColorPalette.textBright());
-            String source = read_Str_Str(snapshot.load_Str());
+            builder.load("Body Size: " + snapshot.rawBytes().length + " bytes", UiColorPalette.textBright());
+            String source = read_Str_Str(snapshot.channel());
             if (source != null && !source.isBlank()) {
                builder.load("What It Looks Like: " + source, UiColorPalette.textBright());
             }
@@ -396,7 +396,7 @@ public final class PacketInspectorEngine {
    }
 
    public static PacketInspectorEngine.PayloadAnalysis init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
-      String channel = snapshot == null ? "payload" : init_Str_Str_Str(snapshot.load_Str(), "payload");
+      String channel = snapshot == null ? "payload" : init_Str_Str_Str(snapshot.channel(), "payload");
       return new PacketInspectorEngine.PayloadAnalysis(
          false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.ColoredLine("Decoder Status: preparing automatic payload analysis", UiColorPalette.textBody()))
       );
@@ -487,12 +487,12 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      byte[] raw = snapshot.init_BArr();
-      String channel = init_Str_Str_Str(snapshot.load_Str(), "unknown");
+      byte[] raw = snapshot.rawBytes();
+      String channel = init_Str_Str_Str(snapshot.channel(), "unknown");
       builder.load("Channel: " + channel, UiColorPalette.successText());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
       String source = read_Str_Str(channel);
@@ -501,19 +501,19 @@ public final class PacketInspectorEngine {
       }
 
       builder.load(
-         "Payload Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str())
+         "Payload Direction: " + snapshot.direction() + " | Protocol: " + init_Str_Str_Str(snapshot.protocolPhase(), "unknown"), init_I_Str(snapshot.direction())
       );
-      if (snapshot.load_I() >= 0) {
-         builder.load("Payload Packet ID: " + snapshot.load_I(), UiColorPalette.textBody());
+      if (snapshot.packetId() >= 0) {
+         builder.load("Payload Packet ID: " + snapshot.packetId(), UiColorPalette.textBody());
       }
 
-      builder.load("Payload Class: " + init_Str_Str_Str(snapshot.write(), "unknown"), UiColorPalette.textBody());
+      builder.load("Payload Class: " + init_Str_Str_Str(snapshot.payloadClassName(), "unknown"), UiColorPalette.textBody());
       builder.load("Payload Size: " + raw.length + " bytes", UiColorPalette.textBright());
-      if (snapshot.init_Integer() != null) {
-         builder.load("CommandApi Value: " + snapshot.init_Integer(), UiColorPalette.successText());
+      if (snapshot.commandApiValue() != null) {
+         builder.load("CommandApi Value: " + snapshot.commandApiValue(), UiColorPalette.successText());
       }
 
-      PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.init_bJ_NetHelper(raw);
+      PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(raw);
       if (load_Z_Str(channel)) {
          List<String> channels = sync(raw, 10);
          if (!channels.isEmpty()) {
@@ -530,16 +530,16 @@ public final class PacketInspectorEngine {
          }
       }
 
-      if (preview.read() != null && !preview.read().startsWith("<")) {
-         builder.load("Minecraft String: " + open(poll(preview.read())), UiColorPalette.successText());
+      if (preview.mcStringPreview() != null && !preview.mcStringPreview().startsWith("<")) {
+         builder.load("Minecraft String: " + open(poll(preview.mcStringPreview())), UiColorPalette.successText());
       }
 
-      if (preview.write() != null && !preview.write().startsWith("<")) {
-         builder.load("Java writeUTF: " + open(poll(preview.write())), UiColorPalette.successText());
+      if (preview.javaUtfPreview() != null && !preview.javaUtfPreview().startsWith("<")) {
+         builder.load("Java writeUTF: " + open(poll(preview.javaUtfPreview())), UiColorPalette.successText());
       }
 
-      if (preview.load() != null && !preview.load().isBlank() && !"<binary>".equals(preview.load())) {
-         builder.load("UTF-8 Guess: " + open(poll(init_Str_Str(preview.load()))), UiColorPalette.successText());
+      if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank() && !"<binary>".equals(preview.utf8Preview())) {
+         builder.load("UTF-8 Guess: " + open(poll(init_Str_Str(preview.utf8Preview()))), UiColorPalette.successText());
       }
 
       List<String> identifiers = sync(raw, 6);
@@ -551,7 +551,7 @@ public final class PacketInspectorEngine {
          }
       }
 
-      builder.load("Payload Hex: " + preview.init(), UiColorPalette.textMuted());
+      builder.load("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
       builder.load("Analyzer: automatic payload decoding runs when this packet is inspected.", UiColorPalette.textBody());
       return true;
    }
@@ -572,7 +572,7 @@ public final class PacketInspectorEngine {
       }
 
       try {
-         return new PayloadChannelFilterManager().init_bB_StreamUtil_AutismPayloadSuppo_Str(snapshot, snapshot.init_Str());
+         return new PayloadChannelFilterManager().findMatchingRuleForEntry(snapshot, snapshot.direction());
       } catch (Throwable ignored) {
          return null;
       }
@@ -773,34 +773,34 @@ public final class PacketInspectorEngine {
          complete = complete && broadKnown.load();
       }
 
-      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
       if (payloadSnapshot != null) {
          wrote = true;
-         builder.load("Channel: " + payloadSnapshot.load_Str(), UiColorPalette.textBright());
-         if (payloadSnapshot.update() != null && !payloadSnapshot.update().isBlank()) {
-            builder.load("Payload Protocol: " + payloadSnapshot.update(), UiColorPalette.textBody());
+         builder.load("Channel: " + payloadSnapshot.channel(), UiColorPalette.textBright());
+         if (payloadSnapshot.protocolPhase() != null && !payloadSnapshot.protocolPhase().isBlank()) {
+            builder.load("Payload Protocol: " + payloadSnapshot.protocolPhase(), UiColorPalette.textBody());
          }
 
-         builder.load("Payload Class: " + payloadSnapshot.write(), UiColorPalette.textBody());
-         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", UiColorPalette.textBright());
-         if (payloadSnapshot.init_Integer() != null) {
-            builder.load("CommandApi Value: " + payloadSnapshot.init_Integer(), UiColorPalette.successText());
+         builder.load("Payload Class: " + payloadSnapshot.payloadClassName(), UiColorPalette.textBody());
+         builder.load("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
+         if (payloadSnapshot.commandApiValue() != null) {
+            builder.load("CommandApi Value: " + payloadSnapshot.commandApiValue(), UiColorPalette.successText());
          }
 
-         PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.init_bJ_NetHelper(payloadSnapshot.init_BArr());
-         if (preview.read() != null && !preview.read().startsWith("<")) {
-            builder.load("Minecraft String: " + preview.read(), UiColorPalette.successText());
+         PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(payloadSnapshot.rawBytes());
+         if (preview.mcStringPreview() != null && !preview.mcStringPreview().startsWith("<")) {
+            builder.load("Minecraft String: " + preview.mcStringPreview(), UiColorPalette.successText());
          }
 
-         if (preview.write() != null && !preview.write().startsWith("<")) {
-            builder.load("Java writeUTF: " + preview.write(), UiColorPalette.successText());
+         if (preview.javaUtfPreview() != null && !preview.javaUtfPreview().startsWith("<")) {
+            builder.load("Java writeUTF: " + preview.javaUtfPreview(), UiColorPalette.successText());
          }
 
-         if (preview.load() != null && !preview.load().isBlank() && !"<binary>".equals(preview.load())) {
-            builder.load("UTF-8 Guess: " + preview.load(), UiColorPalette.successText());
+         if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank() && !"<binary>".equals(preview.utf8Preview())) {
+            builder.load("UTF-8 Guess: " + preview.utf8Preview(), UiColorPalette.successText());
          }
 
-         builder.load("Payload Hex: " + preview.init(), UiColorPalette.textMuted());
+         builder.load("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
          builder.load("Payload Fields: raw bytes preserved; use Edit Payload for typed builder.", UiColorPalette.successText());
          complete = false;
       }
@@ -830,28 +830,28 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      byte[] raw = snapshot.init_BArr();
+      byte[] raw = snapshot.rawBytes();
       boolean decodedStrongly = false;
       boolean decodedAnything = false;
       boolean textualPayload = false;
       boolean completeKnownSchema = false;
       String bestInterpretation = "";
       init_V_bu_ConfigStore(builder, progressSink, 0.06, "Reading payload metadata", false, false);
-      builder.load("Channel: " + snapshot.load_Str(), UiColorPalette.successText());
-      builder.load("Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str()));
+      builder.load("Channel: " + snapshot.channel(), UiColorPalette.successText());
+      builder.load("Direction: " + snapshot.direction() + " | Protocol: " + init_Str_Str_Str(snapshot.protocolPhase(), "unknown"), init_I_Str(snapshot.direction()));
       builder.load("Body Size: " + raw.length + " bytes", UiColorPalette.textBright());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
-      String source = read_Str_Str(snapshot.load_Str());
+      String source = read_Str_Str(snapshot.channel());
       if (source != null && !source.isBlank()) {
          builder.load("What It Looks Like: " + source, UiColorPalette.textBright());
       }
 
-      if (snapshot.init_Integer() != null) {
-         builder.load("CommandApi Int: " + snapshot.init_Integer(), UiColorPalette.successText());
+      if (snapshot.commandApiValue() != null) {
+         builder.load("CommandApi Int: " + snapshot.commandApiValue(), UiColorPalette.successText());
          decodedAnything = true;
       }
 
@@ -863,7 +863,7 @@ public final class PacketInspectorEngine {
       textualPayload |= knownChannel.read();
       completeKnownSchema |= knownChannel.write();
       if (knownChannel.init_Z()) {
-         bestInterpretation = init_Str_Str_Z(snapshot.load_Str(), completeKnownSchema);
+         bestInterpretation = init_Str_Str_Z(snapshot.channel(), completeKnownSchema);
       }
 
       PacketInspectorEngine.PayloadDecodeResult decompressed = PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
@@ -902,7 +902,7 @@ public final class PacketInspectorEngine {
       }
 
       init_V_bu_ConfigStore(builder, progressSink, 0.52, "Trying string codecs", false, false);
-      String minecraftString = completeKnownSchema ? null : AutismPayloadSupport.read(raw);
+      String minecraftString = completeKnownSchema ? null : AutismPayloadSupport.decodeMcString(raw);
       if (!completeKnownSchema) {
          if (minecraftString != null && !minecraftString.isBlank()) {
             builder.load("Decoded As: Minecraft String", UiColorPalette.successText());
@@ -931,7 +931,7 @@ public final class PacketInspectorEngine {
             }
          }
 
-         String javaUtf = AutismPayloadSupport.update(raw);
+         String javaUtf = AutismPayloadSupport.decodeJavaUtf(raw);
          if (javaUtf != null && !javaUtf.isBlank()) {
             builder.load("Decoded As: Java writeUTF", UiColorPalette.successText());
             builder.load("Value: " + open(poll(javaUtf)), UiColorPalette.textBright());
@@ -967,7 +967,7 @@ public final class PacketInspectorEngine {
             }
          }
 
-         String utf8 = AutismPayloadSupport.write(raw);
+         String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
          if (utf8 != null && !utf8.isBlank() && !Objects.equals(utf8, minecraftString) && !Objects.equals(utf8, javaUtf)) {
             builder.load("Readable UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.successText());
             decodedAnything = true;
@@ -989,7 +989,7 @@ public final class PacketInspectorEngine {
          }
 
          List<String> identifiers = sync(raw, 16);
-         if (!identifiers.isEmpty() && !load_Z_Str(snapshot.load_Str())) {
+         if (!identifiers.isEmpty() && !load_Z_Str(snapshot.channel())) {
             builder.load("Identifier Tokens: " + identifiers.size(), UiColorPalette.textBright());
 
             for (String identifier : identifiers) {
@@ -1080,17 +1080,17 @@ public final class PacketInspectorEngine {
          return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
-      String channel = load_Str_Str(snapshot.load_Str());
+      String channel = load_Str_Str(snapshot.channel());
       if (load_Z_Str(channel)) {
          boolean decodedRegister = init_Z_AutismPayloadSuppo_3(snapshot, raw, builder);
          return decodedRegister ? PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper : PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
       if ("minecraft:brand".equals(channel)) {
-         String brand = AutismPayloadSupport.read(raw);
+         String brand = AutismPayloadSupport.decodeMcString(raw);
          String mode = "Minecraft String";
          if (brand == null || brand.isBlank()) {
-            brand = AutismPayloadSupport.write(raw);
+            brand = AutismPayloadSupport.decodePrintableUtf8(raw);
             mode = "raw UTF-8";
          }
 
@@ -1128,7 +1128,7 @@ public final class PacketInspectorEngine {
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
 
-               String utf8 = AutismPayloadSupport.write(raw);
+               String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
                   builder.load("Decoded As: Fabric readable text payload", UiColorPalette.successText());
                   builder.load("Text: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
@@ -1137,7 +1137,7 @@ public final class PacketInspectorEngine {
             }
 
             if (channel.startsWith("worldedit:")) {
-               String utf8 = AutismPayloadSupport.write(raw);
+               String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
                   builder.load("Decoded As: WorldEdit/CUI text payload", UiColorPalette.successText());
                   builder.load("Message: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
@@ -1245,7 +1245,7 @@ public final class PacketInspectorEngine {
          }
 
          if (reader.load_I() > 0) {
-            builder.load("Remaining Bytes: " + reader.load_I() + "B " + AutismPayloadSupport.init_Str(reader.init_BArr(), 48), UiColorPalette.textMuted());
+            builder.load("Remaining Bytes: " + reader.load_I() + "B " + AutismPayloadSupport.toHexPreview(reader.init_BArr(), 48), UiColorPalette.textMuted());
          }
 
          return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, known && reader.load_I() == 0);
@@ -1265,7 +1265,7 @@ public final class PacketInspectorEngine {
          if (decoded != null && decoded.length != 0) {
             builder.load("Decoded As: " + kind.init() + " compressed payload", UiColorPalette.successText());
             builder.load("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.textBright());
-            PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.load_Str(), decoded, builder);
+            PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.channel(), decoded, builder);
             return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
          } else {
             builder.load("Compression Decode: " + kind.init() + " header found, but decompression failed.", UiColorPalette.warningYellow());
@@ -1305,7 +1305,7 @@ public final class PacketInspectorEngine {
          }
       }
 
-      String mcString = AutismPayloadSupport.read(bytes);
+      String mcString = AutismPayloadSupport.decodeMcString(bytes);
       if (mcString != null && !mcString.isBlank()) {
          builder.load("  Nested Minecraft String: " + open(poll(mcString)), UiColorPalette.successText());
          anything = true;
@@ -1341,13 +1341,13 @@ public final class PacketInspectorEngine {
       }
 
       if (!anything) {
-         String utf8 = AutismPayloadSupport.write(bytes);
+         String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (utf8 != null && !utf8.isBlank()) {
             builder.load("  Nested UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
             anything = true;
             textual = true;
          } else {
-            builder.load("  Nested Hex: " + AutismPayloadSupport.init_Str(bytes, 64), UiColorPalette.textMuted());
+            builder.load("  Nested Hex: " + AutismPayloadSupport.toHexPreview(bytes, 64), UiColorPalette.textMuted());
          }
       }
 
@@ -1629,14 +1629,14 @@ public final class PacketInspectorEngine {
          return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       } else if (load_JsonElement_BArr(bytes) != null) {
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
-      } else if (AutismPayloadSupport.read(bytes) != null) {
+      } else if (AutismPayloadSupport.decodeMcString(bytes) != null) {
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (!read_List_BArr_I(bytes, 4).isEmpty()) {
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (!sync(bytes, 4).isEmpty()) {
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
       } else {
-         String utf8 = AutismPayloadSupport.write(bytes);
+         String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (utf8 != null && utf8.length() >= 4) {
             return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
          } else {
@@ -1757,7 +1757,7 @@ public final class PacketInspectorEngine {
 
       int total = Math.max(init_I_BArr(raw), channels.size());
       builder.load(
-         (read_Z_Str(snapshot.load_Str()) ? "Unregistered" : "Registered") + " Channels: " + channels.size() + (total > channels.size() ? "+ shown" : ""),
+         (read_Z_Str(snapshot.channel()) ? "Unregistered" : "Registered") + " Channels: " + channels.size() + (total > channels.size() ? "+ shown" : ""),
          UiColorPalette.successText()
       );
       int shown = 0;
@@ -2245,7 +2245,7 @@ public final class PacketInspectorEngine {
    }
 
    private static JsonElement load_JsonElement_BArr(byte[] raw) {
-      String text = AutismPayloadSupport.write(raw);
+      String text = AutismPayloadSupport.decodePrintableUtf8(raw);
       if (text != null && !text.isBlank()) {
          String stripped = text.strip();
          if (!stripped.startsWith("{") && !stripped.startsWith("[")) {

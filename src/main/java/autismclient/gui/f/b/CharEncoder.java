@@ -104,8 +104,8 @@ public final class CharEncoder {
 
    public autismclient.gui.ui.layout.EdgeInsets init_IoWorker_IoWorker(autismclient.gui.ui.layout.EdgeInsets insets) {
       return insets == null
-         ? autismclient.gui.ui.layout.EdgeInsets.init_IoWorker
-         : new autismclient.gui.ui.layout.EdgeInsets(this.load(insets.read()), this.load(insets.write()), this.load(insets.update()), this.load(insets.sync()));
+         ? autismclient.gui.ui.layout.EdgeInsets.ZERO
+         : new autismclient.gui.ui.layout.EdgeInsets(this.load(insets.read()), this.load(insets.write()), this.load(insets.right()), this.load(insets.bottom()));
    }
 
    public int init_I_l(l tone) {

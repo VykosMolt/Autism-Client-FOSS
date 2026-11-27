@@ -133,15 +133,15 @@ public class WaypointsScreen extends VirtualScaledScreen {
          int listH = this.run();
          autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti(listY, listH);
          this.load(graphics, fieldX, listY, panelW - 8, listH, -1442248437, init_CharEncoder.set());
-         listLayout.init(graphics);
+         listLayout.pushContentClip(graphics);
 
          try {
             this.init(graphics, listLayout, delta, mx, my);
          } finally {
-            listLayout.load(graphics);
+            listLayout.popContentClip(graphics);
          }
 
-         listLayout.init(graphics, mx, my, this.init_Z);
+         listLayout.renderScrollbar(graphics, mx, my, this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -149,15 +149,15 @@ public class WaypointsScreen extends VirtualScaledScreen {
 
    private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, float delta, int mx, int my) {
       List<AutismWaypoints.Waypoint> rows = this.init_List_14();
-      this.get = this.init_I_I_4(this.get, 0, layout.open());
-      int x = layout.init_I() + layout.pop();
-      int w = layout.push();
+      this.get = this.init_I_I_4(this.get, 0, layout.maxScroll());
+      int x = layout.x() + layout.contentInset();
+      int w = layout.contentWidth();
       int rowH = this.close_I_7();
       if (rows.isEmpty()) {
-         this.init(graphics, "No waypoints for this scope.", x + 4, this.init_I_6(layout.load() + layout.pop(), rowH), read_I_17(), w - 8);
+         this.init(graphics, "No waypoints for this scope.", x + 4, this.init_I_6(layout.y() + layout.contentInset(), rowH), read_I_17(), w - 8);
       } else {
          int del = rowH - 2;
-         layout.init(
+         layout.forEachVisibleRow(
             rows.size(),
             (i, rowY) -> {
                AutismWaypoints.Waypoint waypoint = rows.get(i);
@@ -764,21 +764,21 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout init_TextFormat_DataUti(int listY, int listH) {
-      return autismclient.gui.ui.widgets.ScrollListLayout.init(
+      return autismclient.gui.ui.widgets.ScrollListLayout.compute(
          this.get() + 4, listY, this.put() - 8, listH, this.init_List_14().size(), this.close_I_7(), this.open_I_6(), this.get, 4, 8, 2, 6, false
       );
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_8() {
-      return this.init_TextFormat_DataUti(this.tick_I_15(), this.run()).init_PoolEntry_DataUtil();
+      return this.init_TextFormat_DataUti(this.tick_I_15(), this.run()).scrollbar();
    }
 
    private boolean init_Z(int mx, int my) {
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti(this.tick_I_15(), this.run());
-      return mx >= listLayout.init_I() + listLayout.pop()
-         && mx < listLayout.init_I() + listLayout.pop() + listLayout.push()
-         && my >= listLayout.load() + listLayout.pop()
-         && my < listLayout.load() + listLayout.pop() + listLayout.flush();
+      return mx >= listLayout.x() + listLayout.contentInset()
+         && mx < listLayout.x() + listLayout.contentInset() + listLayout.contentWidth()
+         && my >= listLayout.y() + listLayout.contentInset()
+         && my < listLayout.y() + listLayout.contentInset() + listLayout.viewHeight();
    }
 
    private void open_V_6() {
@@ -794,22 +794,22 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.put(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.put(), 6);
    }
 
    private int set() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.load_I(), this.add(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.add(), 6);
    }
 
    private int put() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 340);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 340);
    }
 
    private int add() {
       int cap = Math.max(3, this.load_I() * 65 / 100 / this.open_I_6());
       int shown = Math.max(3, Math.min(cap, this.init_List_14().size()));
       int content = this.pop() + shown * this.open_I_6() + 4 + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, content);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, content);
    }
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {

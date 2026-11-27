@@ -34,7 +34,7 @@ public final class PayloadScriptRunner {
       }
 
       public Identifier init_Identifier() {
-         return AutismPayloadSupport.init_Identifier(this.init_Str);
+         return AutismPayloadSupport.parseChannelId(this.init_Str);
       }
 
       public byte[] init_BArr() {
@@ -59,19 +59,19 @@ public final class PayloadScriptRunner {
       }
 
       public byte[] init(FriendlyByteBuf buf) {
-         return AutismPayloadSupport.init(buf);
+         return AutismPayloadSupport.copyBufferBytes(buf);
       }
 
       public byte[] init(String text) {
-         return AutismPayloadSupport.init_BArr(text);
+         return AutismPayloadSupport.parseHexOrBase64(text);
       }
 
       public String init(byte[] bytes) {
-         return AutismPayloadSupport.init_Str(bytes);
+         return AutismPayloadSupport.toHexString(bytes);
       }
 
       public byte[] init(int value) {
-         return AutismPayloadSupport.init_BArr(this.init_BArr, value);
+         return AutismPayloadSupport.withLeadingBigEndianInt(this.init_BArr, value);
       }
 
       public PayloadScriptRunner.Inner_StreamUtil init(String nextChannel, byte[] bytes) {

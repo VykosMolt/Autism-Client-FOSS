@@ -50,7 +50,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    }
 
    private int read() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 300);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 300);
    }
 
    private int write() {
@@ -58,7 +58,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       int maxRows = Math.max(3, (int)(this.load_I() * 0.65F) / rowH);
       int rows = Math.max(3, Math.min(maxRows, this.init_List.size()));
       int chrome = this.update() + 8 + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, chrome + rows * rowH);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + rows * rowH);
    }
 
    private int update() {
@@ -263,11 +263,11 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    }
 
    private int close() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.read(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.read(), 6);
    }
 
    private int open() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.load_I(), this.write(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.write(), 6);
    }
 
    private record Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil init_SyncManager_Stream, int init_I, int load, int read, int write) {

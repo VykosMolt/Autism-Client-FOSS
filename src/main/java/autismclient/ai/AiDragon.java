@@ -1520,10 +1520,10 @@ final class AiDragon {
                      Vec3 blast = Vec3.atCenterOf(head);
                      BlockState state = mc.level.getBlockState(head);
                      BlockPos foot = head.relative(state.getValue(BedBlock.FACING).getOpposite());
-                     autismclient.util.ExplosionDamageCalculator.SimOptions options = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool
-                        .init(List.of(head, foot))
-                        .init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast));
-                     this.init_D = autismclient.util.ExplosionDamageCalculator.init_D(mc.player, blast, 5.0F, options);
+                     autismclient.util.ExplosionDamageCalculator.SimOptions options = autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT
+                        .withExcludedBlocks(List.of(head, foot))
+                        .withDamageSource(autismclient.util.ExplosionDamageCalculator.bedAnchorDamageSource(mc.level, blast));
+                     this.init_D = autismclient.util.ExplosionDamageCalculator.calculateDamage(mc.player, blast, 5.0F, options);
                      double health = mc.player.getHealth() + mc.player.getAbsorptionAmount();
                      boolean covered = this.pop_BlockPos != null
                         && mc.level

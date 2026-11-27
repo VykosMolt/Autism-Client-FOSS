@@ -15,12 +15,12 @@ public final class IconHeaderNode extends LayoutNode {
    public IconHeaderNode(String text, Identifier icon) {
       this.init_Str = text == null ? "" : text;
       this.init_Identifier = icon;
-      this.write = 14.0F;
+      this.nodeHeight = 14.0F;
    }
 
    public IconHeaderNode init(int iconSize) {
       this.init_I = Math.max(1, iconSize);
-      this.load_V();
+      this.markLayoutDirty();
       return this;
    }
 
@@ -30,28 +30,28 @@ public final class IconHeaderNode extends LayoutNode {
    }
 
    @Override
-   public float init_F_SyncManager(LayoutContext context) {
+   public float measurePreferredWidth(LayoutContext context) {
       int textWidth = autismclient.gui.f.UiHelper.init(context.font()).measureWidth(this.init_Str);
       return textWidth + (this.init_Identifier != null ? this.init_I + this.load_I : 0);
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       return this.write_Z ? autismclient.gui.ui.UiDensityMetrics.scaledHeight(14) : Math.max(11, this.init_I + 1);
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawH = Math.round(this.write);
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawH = Math.round(this.nodeHeight);
          if (this.write_Z) {
             ConnectedButtonRenderer.init(
                autismclient.gui.f.UiHelper.init(
                   context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),
-               autismclient.gui.f.NetHelper.init(drawX, drawY, Math.round(this.read_F), drawH),
+               autismclient.gui.f.NetHelper.init(drawX, drawY, Math.round(this.nodeWidth), drawH),
                this.init_Str,
                this.init_Identifier
             );

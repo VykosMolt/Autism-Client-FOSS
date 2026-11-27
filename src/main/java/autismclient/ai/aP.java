@@ -117,7 +117,7 @@ public final class aP {
             AiVisualization.init(placement, true);
          }
 
-         autismclient.gui.ui.widgets.TextInputWidget.init_V();
+         autismclient.gui.ui.widgets.TextInputWidget.clearGlobalFocus();
          autismclient.util.OverlayScreenController.setScreenExplicit(mc, null);
          mc.mouseHandler.grabMouse();
       }

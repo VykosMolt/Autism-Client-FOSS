@@ -14,8 +14,8 @@ final class AiSessionsDrawer {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search chats");
-   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(96);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search chats");
+   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    boolean init_Z;
@@ -30,7 +30,7 @@ final class AiSessionsDrawer {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.load_BitSetUtil.load_BitSetUtil_Consumer(text -> this.write());
+      this.load_BitSetUtil.setOnSubmit(text -> this.write());
    }
 
    void init_V() {
@@ -47,9 +47,9 @@ final class AiSessionsDrawer {
       this.init_Z = false;
       this.init_Str = null;
       this.load_Str = null;
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
-      this.init_BitSetUtil.init_V_Z(false);
-      this.load_BitSetUtil.init_V_Z(false);
+      this.init_BitSetUtil.setValue("");
+      this.init_BitSetUtil.setFocused(false);
+      this.load_BitSetUtil.setFocused(false);
    }
 
    boolean init_Z_D_D(double x, double y) {
@@ -62,13 +62,13 @@ final class AiSessionsDrawer {
       }
 
       this.init_Str = null;
-      this.load_BitSetUtil.init_V_Z(false);
+      this.load_BitSetUtil.setFocused(false);
       return true;
    }
 
    void init(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       if (this.init_Z && area.sync() >= 30) {
-         if (this.init_Str != null && !this.load_BitSetUtil.load_Z()) {
+         if (this.init_Str != null && !this.load_BitSetUtil.isFocused()) {
             this.init_Str = null;
          }
 
@@ -96,12 +96,12 @@ final class AiSessionsDrawer {
          if (sessions.size() > 8) {
             kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
-         } else if (!this.init_BitSetUtil.init_Str().isEmpty() || this.init_BitSetUtil.load_Z()) {
-            this.init_BitSetUtil.init_BitSetUtil_Str("");
-            this.init_BitSetUtil.init_V_Z(false);
+         } else if (!this.init_BitSetUtil.getValue().isEmpty() || this.init_BitSetUtil.isFocused()) {
+            this.init_BitSetUtil.setValue("");
+            this.init_BitSetUtil.setFocused(false);
          }
 
-         List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.init_BitSetUtil.init_Str());
+         List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.init_BitSetUtil.getValue());
          autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), Math.max(0, inner.load() - y));
          int rowH = AiUiKit.inputHeight();
          int step = rowH + 1;
@@ -233,8 +233,8 @@ final class AiSessionsDrawer {
             }
 
             this.init_Str = id;
-            this.load_BitSetUtil.init_BitSetUtil_Str(meta == null ? "" : init_Str_cd_StreamUtil(meta));
-            this.load_BitSetUtil.init_BitSetUtil();
+            this.load_BitSetUtil.setValue(meta == null ? "" : init_Str_cd_StreamUtil(meta));
+            this.load_BitSetUtil.moveCursorToEnd();
             this.init_AiAssistantOverlay.init(this.load_BitSetUtil);
             break;
          case 1:
@@ -256,9 +256,9 @@ final class AiSessionsDrawer {
 
    private void write() {
       String id = this.init_Str;
-      String text = this.load_BitSetUtil.init_Str().trim();
+      String text = this.load_BitSetUtil.getValue().trim();
       this.init_Str = null;
-      this.load_BitSetUtil.init_V_Z(false);
+      this.load_BitSetUtil.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.init_cc.renameSession(id, text);
          this.init_cF.init_V();

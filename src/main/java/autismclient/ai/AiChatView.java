@@ -16,7 +16,7 @@ final class AiChatView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(16000).flush(true);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(16000).setHistoryNavigationEnabled(true);
    final AiActionMenu init_StreamUtil;
    private final AiTranscriptLayout init_cC = new AiTranscriptLayout();
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(true);
@@ -72,7 +72,7 @@ final class AiChatView {
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
       this.init_StreamUtil = new AiActionMenu(service, view, host, this.init_cE_StreamUtil::scrollToBottom);
-      this.init_BitSetUtil.load_BitSetUtil_Consumer(text -> this.load_V());
+      this.init_BitSetUtil.setOnSubmit(text -> this.load_V());
    }
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil() {
@@ -145,8 +145,8 @@ final class AiChatView {
 
       int ctrl = AiUiKit.toolbarHeight();
       boolean builtIn = this.init_cF.init_AiSettings.builtIn;
-      if (builtIn && this.init_BitSetUtil.load_Z()) {
-         this.init_BitSetUtil.init_V_Z(false);
+      if (builtIn && this.init_BitSetUtil.isFocused()) {
+         this.init_BitSetUtil.setFocused(false);
       }
 
       if (!builtIn) {
@@ -170,7 +170,7 @@ final class AiChatView {
                autismclient.gui.f.NetHelper.init(row.read(), row.write(), row.update() - remove - 2, ctrl),
                file.name() + " (" + file.cells() + " blocks)",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-               () -> this.init_BitSetUtil.init_BitSetUtil_Str("build \"" + file.name() + "\""),
+               () -> this.init_BitSetUtil.setValue("build \"" + file.name() + "\""),
                file.format() + " / " + file.bytes() + " bytes"
             );
             kit.drawIconButton(
@@ -791,7 +791,7 @@ final class AiChatView {
       }
 
       this.init_BitSetUtil
-         .load_BitSetUtil_Str(
+         .setPlaceholder(
             this.init_cF.init_cc_UiHelper != null
                ? "Answer the question..."
                : (
@@ -874,24 +874,24 @@ final class AiChatView {
    }
 
    private String load_Str() {
-      String text = this.init_BitSetUtil.init_Str().trim();
+      String text = this.init_BitSetUtil.getValue().trim();
       if (text.isEmpty()) {
          return null;
       }
 
-      this.init_BitSetUtil.read_BitSetUtil_Str(text);
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
+      this.init_BitSetUtil.pushHistoryEntry(text);
+      this.init_BitSetUtil.setValue("");
       return text;
    }
 
    void load_V() {
-      if (!this.read_Z && (!this.init_BitSetUtil.init_Str().isBlank() || !this.init_ArrayList.isEmpty())) {
+      if (!this.read_Z && (!this.init_BitSetUtil.getValue().isBlank() || !this.init_ArrayList.isEmpty())) {
          if (this.init_cF.init_cc_UiHelper != null) {
             this.init_V_Str(this.load_Str());
          } else if (this.init_cF.init_Z) {
             this.sync();
          } else {
-            String text = AiAttachments.init(this.init_BitSetUtil.init_Str().isBlank() ? "" : this.load_Str(), this.init_ArrayList);
+            String text = AiAttachments.init(this.init_BitSetUtil.getValue().isBlank() ? "" : this.load_Str(), this.init_ArrayList);
             this.init_ArrayList.clear();
             this.init_cc.submitPrompt(text);
             this.init_cE_StreamUtil.scrollToBottom();
@@ -902,7 +902,7 @@ final class AiChatView {
 
    private void write() {
       if (!this.read_Z) {
-         String text = this.init_BitSetUtil.init_Str().isBlank() && !this.init_ArrayList.isEmpty() ? "" : this.load_Str();
+         String text = this.init_BitSetUtil.getValue().isBlank() && !this.init_ArrayList.isEmpty() ? "" : this.load_Str();
          if (text == null) {
             this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
          } else {
@@ -921,7 +921,7 @@ final class AiChatView {
    }
 
    private void sync() {
-      if (this.init_BitSetUtil.init_Str().isBlank()) {
+      if (this.init_BitSetUtil.getValue().isBlank()) {
          this.load_Z = true;
          this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
       } else {

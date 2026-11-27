@@ -179,8 +179,8 @@ public final class AiToolsScreen extends Screen {
          this.sync = autismclient.gui.f.NetHelper.init(x + bw + 2, footerY, w - bw - 2, ctrlH);
          autismclient.gui.f.b.CachePool.init(ctx, this.update, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.update.init_Z(mx, my), false);
          autismclient.gui.f.b.CachePool.init(ctx, this.sync, "Done", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this.sync.init_Z(mx, my), false);
-         this.init_RefQueue.init_V_SyncManager(ctx);
-         this.load_RefQueue.init_V_SyncManager(ctx);
+         this.init_RefQueue.render(ctx);
+         this.load_RefQueue.render(ctx);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -253,8 +253,8 @@ public final class AiToolsScreen extends Screen {
          .drawFitted(
             ctx.init_GuiGraphicsExtract(), label, row.read() + 1, ctx.init_PoolEntry().centerTextY(row), Math.max(1, control.read() - row.read() - 8), colors.textPrimary
          );
-      dropdown.init_V_NetHelper(control);
-      autismclient.gui.ui.widgets.DropdownMenu.init_V_SyncManager(ctx, control, selected, control.init_Z(mx, my), dropdown.init_Z_2());
+      dropdown.setBounds(control);
+      autismclient.gui.ui.widgets.DropdownMenu.renderTrigger(ctx, control, selected, control.init_Z(mx, my), dropdown.isOpen());
    }
 
    @Override
@@ -265,11 +265,11 @@ public final class AiToolsScreen extends Screen {
          return true;
       }
 
-      if (this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.ui.UiInputResult.HANDLED) {
+      if (this.init_RefQueue.onMouseClicked(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.ui.UiInputResult.HANDLED) {
          return true;
       }
 
-      if (this.load_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.ui.UiInputResult.HANDLED) {
+      if (this.load_RefQueue.onMouseClicked(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.ui.UiInputResult.HANDLED) {
          return true;
       }
 
@@ -299,8 +299,8 @@ public final class AiToolsScreen extends Screen {
          this.init_AiToolSettings.useShield = defaults.useShield;
          this.init_AiToolSettings.timeoutSeconds = defaults.timeoutSeconds;
          this.init_AiToolSettings.verbosity = defaults.verbosity;
-         this.init_RefQueue.init(this.init_AiToolSettings.strategy);
-         this.load_RefQueue.init(this.init_AiToolSettings.verbosity);
+         this.init_RefQueue.setSelectedOption(this.init_AiToolSettings.strategy);
+         this.load_RefQueue.setSelectedOption(this.init_AiToolSettings.verbosity);
          return true;
       } else if (this.sync != null && this.sync.init_Z(mx, my)) {
          this.load_V();
@@ -351,11 +351,11 @@ public final class AiToolsScreen extends Screen {
       } else if (this.read_Z) {
          this.read(cA.init_I_D(event.x()));
          return true;
-      } else if (this.init_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
+      } else if (this.init_RefQueue.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
          == autismclient.gui.ui.UiInputResult.HANDLED) {
          return true;
       } else {
-         return this.load_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
+         return this.load_RefQueue.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
                == autismclient.gui.ui.UiInputResult.HANDLED
             ? true
             : true;
@@ -366,8 +366,8 @@ public final class AiToolsScreen extends Screen {
    public boolean mouseReleased(MouseButtonEvent event) {
       this.load_Z = false;
       this.read_Z = false;
-      this.init_RefQueue.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
-      this.load_RefQueue.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      this.init_RefQueue.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      this.load_RefQueue.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
       return true;
    }
 

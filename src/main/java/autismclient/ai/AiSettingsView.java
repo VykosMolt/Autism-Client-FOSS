@@ -102,10 +102,10 @@ final class AiSettingsView {
          }
       });
       this.load_SyncManager = new autismclient.gui.ui.widgets.DropdownWidget(0, 0, 10, 10, List.of(), 0, this::init_V_I);
-      this.load_SyncManager.init_Z = false;
+      this.load_SyncManager.active = false;
       this.sync_List = List.of(this.init_SyncManager, this.load_SyncManager);
-      this.init_BitSetUtil.init_BitSetUtil_Consumer(text -> this.write_V());
-      this.read_BitSetUtil.init_BitSetUtil_Consumer(text -> this.sync_V());
+      this.init_BitSetUtil.setOnChange(text -> this.write_V());
+      this.read_BitSetUtil.setOnChange(text -> this.sync_V());
 
       for (autismclient.gui.ui.widgets.TextInputWidget field : List.of(
          this.init_BitSetUtil,
@@ -117,7 +117,7 @@ final class AiSettingsView {
          this.flush_BitSetUtil,
          this.close
       )) {
-         field.load_BitSetUtil_Consumer(text -> this.close());
+         field.setOnSubmit(text -> this.close());
       }
    }
 
@@ -141,17 +141,17 @@ final class AiSettingsView {
    }
 
    private static autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_I(int max) {
-      return new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(max);
+      return new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(max);
    }
 
    private static autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil() {
-      autismclient.gui.ui.widgets.TextInputWidget field = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(2048);
-      field.init_BitSetUtil_Function(text -> Component.literal("*".repeat(Math.min(64, text.length()))));
+      autismclient.gui.ui.widgets.TextInputWidget field = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(2048);
+      field.setDisplayTextProvider(text -> Component.literal("*".repeat(Math.min(64, text.length()))));
       return field;
    }
 
    private static autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil() {
-      return new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(12).init_BitSetUtil_Predicate(v -> v.chars().allMatch(Character::isDigit));
+      return new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(12).setInputFilter(v -> v.chars().allMatch(Character::isDigit));
    }
 
    void init_V_AiSettings(AiSettings s) {
@@ -160,21 +160,21 @@ final class AiSettingsView {
       this.write_Str = "";
       this.init_AiSettings_Provide = s.provider;
       this.read_Z = s.builtIn;
-      this.init_SyncManager.init_SyncManager_I(this.init_I());
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
-      this.load_BitSetUtil.init_BitSetUtil_Str("");
+      this.init_SyncManager.setSelectedIndex(this.init_I());
+      this.init_BitSetUtil.setValue("");
+      this.load_BitSetUtil.setValue("");
       this.load_Str = s.model == null ? "" : s.model.trim();
-      this.read_BitSetUtil.init_BitSetUtil_Str(s.endpoint);
-      this.write_BitSetUtil.init_BitSetUtil_Str(Integer.toString(s.contextTokens));
-      this.update_BitSetUtil.init_BitSetUtil_Str(Integer.toString(s.outputTokens));
-      this.sync_BitSetUtil.init_BitSetUtil_Str(Integer.toString(s.maxRequests));
-      this.flush_BitSetUtil.init_BitSetUtil_Str(Long.toString(s.maxTokens));
-      this.close.init_BitSetUtil_Str(Integer.toString(s.maxMinutes));
+      this.read_BitSetUtil.setValue(s.endpoint);
+      this.write_BitSetUtil.setValue(Integer.toString(s.contextTokens));
+      this.update_BitSetUtil.setValue(Integer.toString(s.outputTokens));
+      this.sync_BitSetUtil.setValue(Integer.toString(s.maxRequests));
+      this.flush_BitSetUtil.setValue(Long.toString(s.maxTokens));
+      this.close.setValue(Integer.toString(s.maxMinutes));
       this.load_StrArr = this.init_StrArr();
       this.update_Str = "";
       this.write_Z = false;
       this.sync_J = 0L;
-      autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+      autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
       this.load_Z = false;
       this.update_V();
       if (!this.read_Z) {
@@ -189,15 +189,15 @@ final class AiSettingsView {
    private String[] init_StrArr() {
       return new String[]{
          this.read_Z ? "Built-In" : this.init_AiSettings_Provide.name(),
-         this.init_BitSetUtil.init_Str(),
-         this.load_BitSetUtil.init_Str(),
+         this.init_BitSetUtil.getValue(),
+         this.load_BitSetUtil.getValue(),
          this.load_Str,
-         this.read_BitSetUtil.init_Str().trim(),
-         this.write_BitSetUtil.init_Str(),
-         this.update_BitSetUtil.init_Str(),
-         this.sync_BitSetUtil.init_Str(),
-         this.flush_BitSetUtil.init_Str(),
-         this.close.init_Str()
+         this.read_BitSetUtil.getValue().trim(),
+         this.write_BitSetUtil.getValue(),
+         this.update_BitSetUtil.getValue(),
+         this.sync_BitSetUtil.getValue(),
+         this.flush_BitSetUtil.getValue(),
+         this.close.getValue()
       };
    }
 
@@ -209,15 +209,15 @@ final class AiSettingsView {
       AiSettings live = this.init_cF.init_AiSettings;
       return this.read_Z != live.builtIn
          || this.init_AiSettings_Provide != live.provider
-         || !this.init_BitSetUtil.init_Str().isBlank()
+         || !this.init_BitSetUtil.getValue().isBlank()
          || !this.load_Str.equals(live.model)
-         || !this.read_BitSetUtil.init_Str().trim().equals(live.endpoint);
+         || !this.read_BitSetUtil.getValue().trim().equals(live.endpoint);
    }
 
    private void read_V() {
       if (!this.read_Z) {
          this.read_Z = true;
-         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
          this.update_Str = "";
       }
    }
@@ -236,12 +236,12 @@ final class AiSettingsView {
          this.load_Z = true;
          this.init_AiSettings_Provide = next;
          this.load_Str = "";
-         this.update_BitSetUtil.init_BitSetUtil_Str(Integer.toString(AiSettings.defaultOutputTokens(next)));
-         if (AiSettings.shouldAutofillEndpoint(this.read_BitSetUtil.init_Str())) {
-            this.read_BitSetUtil.init_BitSetUtil_Str(next.endpoint);
+         this.update_BitSetUtil.setValue(Integer.toString(AiSettings.defaultOutputTokens(next)));
+         if (AiSettings.shouldAutofillEndpoint(this.read_BitSetUtil.getValue())) {
+            this.read_BitSetUtil.setValue(next.endpoint);
          }
 
-         this.init_BitSetUtil.init_BitSetUtil_Str("");
+         this.init_BitSetUtil.setValue("");
          this.write_Str = "";
          this.sync_J = 0L;
          this.load_Z = false;
@@ -252,7 +252,7 @@ final class AiSettingsView {
 
    private void write_V() {
       if (!this.load_Z) {
-         String typed = this.init_BitSetUtil.init_Str().trim();
+         String typed = this.init_BitSetUtil.getValue().trim();
          if (!typed.isEmpty() && AiKeyResolver.init_Z(typed)) {
             this.load_V_AiSettings_Provide(AiKeyResolver.init_List(typed).getFirst());
          }
@@ -267,13 +267,13 @@ final class AiSettingsView {
          String stockOutput = Integer.toString(AiSettings.defaultOutputTokens(this.init_AiSettings_Provide));
          this.init_AiSettings_Provide = next;
          this.read_Z = false;
-         this.init_SyncManager.init_SyncManager_I(this.init_I());
-         if (this.update_BitSetUtil.init_Str().trim().equals(stockOutput)) {
-            this.update_BitSetUtil.init_BitSetUtil_Str(Integer.toString(AiSettings.defaultOutputTokens(next)));
+         this.init_SyncManager.setSelectedIndex(this.init_I());
+         if (this.update_BitSetUtil.getValue().trim().equals(stockOutput)) {
+            this.update_BitSetUtil.setValue(Integer.toString(AiSettings.defaultOutputTokens(next)));
          }
 
-         if (AiSettings.shouldAutofillEndpoint(this.read_BitSetUtil.init_Str())) {
-            this.read_BitSetUtil.init_BitSetUtil_Str(next.endpoint);
+         if (AiSettings.shouldAutofillEndpoint(this.read_BitSetUtil.getValue())) {
+            this.read_BitSetUtil.setValue(next.endpoint);
          }
 
          this.load_Str = "";
@@ -299,11 +299,11 @@ final class AiSettingsView {
 
    private void update_V() {
       this.flush_List = this.init_av.init_List();
-      this.load_SyncManager.init_SyncManager_List(this.flush_List);
-      this.load_SyncManager.init_SyncManager_I(Math.max(0, this.flush_List.indexOf(this.load_Str)));
-      this.load_SyncManager.init_Z = !this.init_av.load() && !this.flush_List.isEmpty();
+      this.load_SyncManager.setOptions(this.flush_List);
+      this.load_SyncManager.setSelectedIndex(Math.max(0, this.flush_List.indexOf(this.load_Str)));
+      this.load_SyncManager.active = !this.init_av.load() && !this.flush_List.isEmpty();
       this.load_SyncManager
-         .init_SyncManager_Str(
+         .setLabelOverride(
             this.flush_List.contains(this.load_Str)
                ? ""
                : (this.init_av.load() ? "Scanning models..." : (this.flush_List.isEmpty() ? "Scan for models" : "Select a model"))
@@ -313,7 +313,7 @@ final class AiSettingsView {
    private void sync_V() {
       if (!this.load_Z) {
          this.init_av.init_V();
-         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
          this.read_Str = "Scan to load models for this connection";
          this.init_Z = false;
          this.read_J = System.currentTimeMillis() + 700L;
@@ -322,8 +322,8 @@ final class AiSettingsView {
    }
 
    private String init_Str() {
-      if (!this.init_BitSetUtil.init_Str().isBlank()) {
-         return this.init_BitSetUtil.init_Str().trim();
+      if (!this.init_BitSetUtil.getValue().isBlank()) {
+         return this.init_BitSetUtil.getValue().trim();
       }
 
       AiSettings saved = this.init_cc.getSettings();
@@ -334,8 +334,8 @@ final class AiSettingsView {
 
    private void flush_V() {
       try {
-         if (this.init_av.init_Z(AiModelCatalog.Inner_DataUtil.of(this.init_AiSettings_Provide, this.read_BitSetUtil.init_Str(), this.init_Str()))) {
-            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         if (this.init_av.init_Z(AiModelCatalog.Inner_DataUtil.of(this.init_AiSettings_Provide, this.read_BitSetUtil.getValue(), this.init_Str()))) {
+            autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
             this.read_Str = "Scan to load models for this connection";
             this.init_Z = false;
             this.read_J = System.currentTimeMillis() + 700L;
@@ -357,7 +357,7 @@ final class AiSettingsView {
       AiModelCatalog.Inner_DataUtil identity;
       try {
          k = this.init_Str();
-         identity = AiModelCatalog.Inner_DataUtil.of(p, this.read_BitSetUtil.init_Str(), k);
+         identity = AiModelCatalog.Inner_DataUtil.of(p, this.read_BitSetUtil.getValue(), k);
       } catch (RuntimeException ex) {
          this.init_av.init_V();
          this.read_Str = "Check the endpoint and saved credential, then scan again";
@@ -371,7 +371,7 @@ final class AiSettingsView {
          long generation = this.init_av.init_J(identity);
          this.read_Str = "";
          this.init_Z = false;
-         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
          this.update_V();
          if (k.isBlank()) {
             this.init_av.init(generation, identity, new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models"));
@@ -379,8 +379,8 @@ final class AiSettingsView {
             this.init_Z = true;
             this.update_V();
          } else {
-            boolean typed = !this.init_BitSetUtil.init_Str().isBlank();
-            String endpointText = this.read_BitSetUtil.init_Str();
+            boolean typed = !this.init_BitSetUtil.getValue().isBlank();
+            String endpointText = this.read_BitSetUtil.getValue();
             Thread worker = new Thread(
                () -> {
                   AiKeyResolver.Inner_DataUtil resolution = AiKeyResolver.init(k, p, endpointText, typed, () -> {
@@ -393,7 +393,7 @@ final class AiSettingsView {
                      .execute(
                         () -> {
                            try {
-                              if (!identity.equals(AiModelCatalog.Inner_DataUtil.of(this.init_AiSettings_Provide, this.read_BitSetUtil.init_Str(), this.init_Str()))) {
+                              if (!identity.equals(AiModelCatalog.Inner_DataUtil.of(this.init_AiSettings_Provide, this.read_BitSetUtil.getValue(), this.init_Str()))) {
                                  return;
                               }
                            } catch (RuntimeException ignored) {
@@ -411,7 +411,7 @@ final class AiSettingsView {
                                  boolean moved = !identity.endpoint().equals(resolution.endpoint());
                                  if (moved || detected) {
                                     this.load_Z = true;
-                                    this.read_BitSetUtil.init_BitSetUtil_Str(resolution.endpoint());
+                                    this.read_BitSetUtil.setValue(resolution.endpoint());
                                     this.load_Z = false;
                                  }
 
@@ -446,24 +446,24 @@ final class AiSettingsView {
    }
 
    boolean init_Z() {
-      return autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List);
+      return autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List);
    }
 
    boolean init_Z_D_D(double x, double y) {
-      return autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, x, y);
+      return autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, x, y);
    }
 
    boolean init_Z_D_2(double x, double y, int button) {
       this.flush_V();
-      return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, x, y, button);
+      return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.sync_List, x, y, button);
    }
 
    boolean init_Z_D(double x, double y, double amount) {
-      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, x, y, amount)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.sync_List, x, y, amount)) {
          return true;
       }
 
-      autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+      autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
       return false;
    }
 
@@ -477,7 +477,7 @@ final class AiSettingsView {
          this.init_cF.init_V();
       }
 
-      return autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List) || used;
+      return autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List) || used;
    }
 
    boolean load(double x, double y, int button) {
@@ -485,13 +485,13 @@ final class AiSettingsView {
          this.init_V_D(x);
          return true;
       } else {
-         return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, x, y, button);
+         return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.sync_List, x, y, button);
       }
    }
 
    boolean read_Z() {
       boolean used = this.load_Z();
-      return autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List) || used;
+      return autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List) || used;
    }
 
    boolean write_Z() {
@@ -529,7 +529,7 @@ final class AiSettingsView {
    }
 
    void init_V_cE(AiUiKit kit) {
-      autismclient.gui.ui.widgets.DropdownWidget.read(kit.graphics, kit.font, this.sync_List, kit.rawMouseX, kit.rawMouseY);
+      autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(kit.graphics, kit.font, this.sync_List, kit.rawMouseX, kit.rawMouseY);
    }
 
    void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
@@ -566,11 +566,11 @@ final class AiSettingsView {
       y = this.init(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
          autismclient.gui.f.NetHelper field = this.init(kit, "Provider", x, y, w, labelW);
-         this.init_SyncManager.init_SyncManager_I(field.read(), field.write(), field.update(), field.sync());
+         this.init_SyncManager.setBounds(field.read(), field.write(), field.update(), field.sync());
          if (kit.isVisibleInClip(field)) {
             kit.addClickRegion(
                field,
-               () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
+               () -> autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
                )
             );
@@ -580,21 +580,21 @@ final class AiSettingsView {
          if (this.read_Z) {
             kit.drawEllipsizedText("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.colors.textSecondary);
             y += AiUiKit.lineHeight();
-            autismclient.gui.ui.widgets.DropdownWidget.load(kit.graphics, kit.font, List.of(this.init_SyncManager), kit.mouseX, kit.mouseY);
+            autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(kit.graphics, kit.font, List.of(this.init_SyncManager), kit.mouseX, kit.mouseY);
             y += 4;
          }
       }
 
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER) && !this.read_Z) {
-         this.init_BitSetUtil.load_BitSetUtil_Str(hasKey ? "Key saved - type to replace" : "Paste your API key");
+         this.init_BitSetUtil.setPlaceholder(hasKey ? "Key saved - type to replace" : "Paste your API key");
          kit.drawTextInput(this.init_BitSetUtil, this.init(kit, "API key", x, y, w, labelW));
          y += ctrl + 2;
          autismclient.gui.f.NetHelper modelBounds = this.init(kit, "Model", x, y, w - (ctrl + 2), labelW);
-         this.load_SyncManager.init_SyncManager_I(modelBounds.read(), modelBounds.write(), modelBounds.update(), modelBounds.sync());
+         this.load_SyncManager.setBounds(modelBounds.read(), modelBounds.write(), modelBounds.update(), modelBounds.sync());
          if (kit.isVisibleInClip(modelBounds)) {
             kit.addInteractiveRegion(
                modelBounds,
-               () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
+               () -> autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
                ),
                null,
@@ -610,7 +610,7 @@ final class AiSettingsView {
             this.init_av.load() ? "Scanning models..." : "Scan for models",
             () -> this.init_V_Z(true)
          );
-         autismclient.gui.ui.widgets.DropdownWidget.load(kit.graphics, kit.font, this.sync_List, kit.mouseX, kit.mouseY);
+         autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(kit.graphics, kit.font, this.sync_List, kit.mouseX, kit.mouseY);
          y += ctrl + 2;
          String status = this.init_av.load() ? "Scanning models..." : this.read_Str;
          if (!status.isBlank()) {
@@ -710,10 +710,10 @@ final class AiSettingsView {
       y = this.init(kit, AiSettingsView.Inner_CachePool.ADVANCED, x, y, w);
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.ADVANCED)) {
          if (!this.read_Z) {
-            this.read_BitSetUtil.load_BitSetUtil_Str(this.init_AiSettings_Provide.endpoint);
+            this.read_BitSetUtil.setPlaceholder(this.init_AiSettings_Provide.endpoint);
             kit.drawTextInput(this.read_BitSetUtil, this.init(kit, "Endpoint", x, y, w, labelW));
             y += ctrl + 2;
-            this.load_BitSetUtil.load_BitSetUtil_Str(live.hasKey("BRAVE") ? "Key saved - type to replace" : "Brave Search API key");
+            this.load_BitSetUtil.setPlaceholder(live.hasKey("BRAVE") ? "Key saved - type to replace" : "Brave Search API key");
             kit.drawTextInput(this.load_BitSetUtil, this.init(kit, "Search key", x, y, w, labelW));
             y += ctrl + 2;
          }
@@ -781,7 +781,7 @@ final class AiSettingsView {
             this.init_EnumSet.add(section);
          }
 
-         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
       });
       return y + bounds.sync() + 2;
    }
@@ -941,7 +941,7 @@ final class AiSettingsView {
                   next.builtIn = false;
                }
 
-               String e = this.read_BitSetUtil.init_Str().trim();
+               String e = this.read_BitSetUtil.getValue().trim();
                this.flush_V();
                if (!this.flush_List.contains(this.load_Str)) {
                   throw new IllegalArgumentException("Scan and select a model returned for this connection");
@@ -956,12 +956,12 @@ final class AiSettingsView {
             next.maxRequests = init_I_BitSetUtil_Str(this.sync_BitSetUtil, "Requests");
             next.maxTokens = init_J_BitSetUtil_Str(this.flush_BitSetUtil, "Tokens");
             next.maxMinutes = init_I_BitSetUtil_Str(this.close, "Minutes");
-            if (!this.init_BitSetUtil.init_Str().isBlank()) {
-               next.setKey(this.init_AiSettings_Provide.name(), this.init_BitSetUtil.init_Str().trim());
+            if (!this.init_BitSetUtil.getValue().isBlank()) {
+               next.setKey(this.init_AiSettings_Provide.name(), this.init_BitSetUtil.getValue().trim());
             }
 
-            if (!this.load_BitSetUtil.init_Str().isBlank()) {
-               next.setKey("BRAVE", this.load_BitSetUtil.init_Str().trim());
+            if (!this.load_BitSetUtil.getValue().isBlank()) {
+               next.setKey("BRAVE", this.load_BitSetUtil.getValue().trim());
             }
 
             load_V_AiSettings(next);
@@ -972,10 +972,10 @@ final class AiSettingsView {
          }
 
          this.init_cc.saveSettings(next);
-         this.load_BitSetUtil.init_BitSetUtil_Str("");
+         this.load_BitSetUtil.setValue("");
          this.load_Str = next.model;
          this.load_Z = true;
-         this.read_BitSetUtil.init_BitSetUtil_Str(next.endpoint);
+         this.read_BitSetUtil.setValue(next.endpoint);
          this.load_Z = false;
          this.load_StrArr = this.init_StrArr();
          this.update_Str = "";
@@ -1000,7 +1000,7 @@ final class AiSettingsView {
    private void open() {
       if (this.sync_Z() && this.flush_Z()) {
          this.close();
-      } else if (!this.init_cF.read_Z && this.init_BitSetUtil.init_Str().isBlank()) {
+      } else if (!this.init_cF.read_Z && this.init_BitSetUtil.getValue().isBlank()) {
          this.update_Str = "Add an API key first";
       } else {
          this.update_Str = "";
@@ -1017,7 +1017,7 @@ final class AiSettingsView {
          this.sync_J = 0L;
          this.write_Str = this.init_cc.getSettings().keyMarker(this.init_AiSettings_Provide.name());
          this.load_Z = true;
-         this.init_BitSetUtil.init_BitSetUtil_Str("");
+         this.init_BitSetUtil.setValue("");
          this.load_Z = false;
          this.sync_V();
          this.init_cc.removeProviderKey(this.init_AiSettings_Provide.name());
@@ -1051,7 +1051,7 @@ final class AiSettingsView {
 
    private static long init_J_BitSetUtil_Str(autismclient.gui.ui.widgets.TextInputWidget field, String name) {
       try {
-         return Long.parseLong(field.init_Str().trim());
+         return Long.parseLong(field.getValue().trim());
       } catch (NumberFormatException e) {
          throw new IllegalArgumentException(name + " must be a number");
       }

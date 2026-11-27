@@ -210,14 +210,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       Runnable action,
       Runnable secondaryAction
    ) {
-      autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, w, h, Component.literal(label), ignored -> {
+      autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.create(x, y, w, h, Component.literal(label), ignored -> {
          if (action != null) {
             action.run();
          }
       }, secondaryAction == null ? null : ignored -> secondaryAction.run());
-      button.read(w);
-      button.init_ByteReader_ByteReader_StreamU(variant);
-      button.init_Z = enabled;
+      button.setWidth(w);
+      button.setTone(variant);
+      button.active = enabled;
       return button;
    }
 
@@ -296,12 +296,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_V_F(this.init_F_3);
       this.get_I = this.buffer_I();
       this.set_I = this.entry_I();
-      this.init_CharEncoder_2.flush(false);
-      this.init_CharEncoder_2.init(autismclient.gui.f.b.l.load);
-      this.init_CharEncoder_2.init_CharEncoder_Z_Z(true, true);
-      this.init_CharEncoder_2.init_CharEncoder_I_I(this.task_I(), this.pool_I());
-      this.init_CharEncoder_2.init_PacketUtil().init(0).init(autismclient.gui.ui.layout.EdgeInsets.init_IoWorker);
-      this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_BitSetUtil);
+      this.init_CharEncoder_2.setCenterTitle(false);
+      this.init_CharEncoder_2.setTitleTone(autismclient.gui.f.b.l.load);
+      this.init_CharEncoder_2.setHeaderButtons(true, true);
+      this.init_CharEncoder_2.setTitleInsets(this.task_I(), this.pool_I());
+      this.init_CharEncoder_2.body().init(0).init(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+      this.init_CharEncoder_2.body().addChild(this.init_BitSetUtil);
    }
 
    private int push_I_14() {
@@ -3752,7 +3752,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
       this.add_V_5();
       this.parse_V();
-      this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
+      this.init_CharEncoder_2.setExpandedImmediate(!this.pop_Z);
       OverlayManager.getInstance().bringToFront(this);
    }
 
@@ -4038,7 +4038,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.write_Z = visible;
       AutismSessionState.getInstance().setMacroEditorVisible(visible);
       if (visible) {
-         this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
+         this.init_CharEncoder_2.setExpandedImmediate(!this.pop_Z);
          OverlayManager.getInstance().bringToFront(this);
       } else {
          this.push_V();
@@ -4077,7 +4077,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.get_V();
          }
 
-         this.init_CharEncoder_2.write(!collapsed);
+         this.init_CharEncoder_2.setShowBody(!collapsed);
          this.open_V_7();
       }
    }
@@ -4088,7 +4088,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+      if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
          return true;
       }
 
@@ -4150,7 +4150,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      boolean dropdownReleased = autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List);
+      boolean dropdownReleased = autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List);
       if (this.read_k != null && this.read_k.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
@@ -4218,7 +4218,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.tick_I = shared.getMacroEditorX();
       this.run_I = shared.getMacroEditorY();
       this.init_aM = shared.getEditingMacro();
-      this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
+      this.init_CharEncoder_2.setExpandedImmediate(!this.pop_Z);
       if (this.write_Z && this.init_aM != null) {
          this.add_V_5();
          this.bind_V();
@@ -4327,7 +4327,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.bind_V();
          }
       );
-      loopDropdown.init_Z = !stepListLocked;
+      loopDropdown.active = !stepListLocked;
       this.sync_List.add(loopDropdown);
       bx += loopW + gap;
       if (this.add_I == 1) {
@@ -4848,7 +4848,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int panelMouseY = mouseY;
          if (this.init_Z_I_I_2(mouseX, mouseY)
             || this.init_F_3.init(mouseX, mouseY)
-            || !this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+            || !this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             panelMouseX = -10000;
             panelMouseY = -10000;
          }
@@ -4863,7 +4863,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             editorTitle = editorTitle + " (" + this.init_aM.actions.size() + " steps)";
          }
 
-         autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+         autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
          OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.tick_I, this.run_I, this.stop_I_3(), this.prev_I_2(), this.write_Z, this.pop_Z));
          if (clamped.x != this.tick_I || clamped.y != this.run_I || clamped.width != this.get_I || clamped.height != this.set_I) {
             this.tick_I = clamped.x;
@@ -4880,17 +4880,17 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             && uiMouseX < this.tick_I + this.get_I
             && uiMouseY >= this.run_I
             && uiMouseY < this.run_I + this.init_CharEncoder.load();
-         this.init_CharEncoder_2.init(editorTitle);
-         this.init_CharEncoder_2.load_CharEncoder(!this.pop_Z);
-         this.init_CharEncoder_2.update(active);
-         this.init_CharEncoder_2.sync(headerHovered);
+         this.init_CharEncoder_2.setTitle(editorTitle);
+         this.init_CharEncoder_2.setExpanded(!this.pop_Z);
+         this.init_CharEncoder_2.setActive(active);
+         this.init_CharEncoder_2.setHeaderHovered(headerHovered);
          int frameHeight = this.F();
          this.init_BitSetUtil.init(Math.max(0, frameHeight - this.init_CharEncoder.load()));
-         this.init_CharEncoder_2.init_TableIndex_F(this.tick_I, this.run_I, this.get_I, frameHeight);
-         this.init_TextFormat.init(context, mouseX, mouseY, delta);
+         this.init_CharEncoder_2.setBounds(this.tick_I, this.run_I, this.get_I, frameHeight);
+         this.init_TextFormat.render(context, mouseX, mouseY, delta);
          this.init_V_GuiGraphicsExtract_13(context, mouseX, mouseY, this.load_cH());
          int bodyClipTop = this.run_I + this.init_CharEncoder.load();
-         int bodyClipBottom = this.init_CharEncoder_2.init_I_2();
+         int bodyClipBottom = this.init_CharEncoder_2.drawnBottomY();
          if (bodyClipBottom > bodyClipTop + 1) {
             viewport.pushClip(context, this.tick_I, bodyClipTop, this.tick_I + this.get_I, bodyClipBottom);
 
@@ -5146,15 +5146,15 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (!this.sync_List.isEmpty()) {
-                  autismclient.gui.ui.widgets.DropdownWidget.load(context, this.init_Font, this.sync_List, mouseX, mouseY);
+                  autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(context, this.init_Font, this.sync_List, mouseX, mouseY);
                }
             } finally {
                viewport.popClip(context);
             }
 
-            if (!this.pop_Z && !this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+            if (!this.pop_Z && !this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
                context.nextStratum();
-               autismclient.gui.ui.widgets.DropdownWidget.read(context, this.init_Font, this.sync_List, mouseX, mouseY);
+               autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(context, this.init_Font, this.sync_List, mouseX, mouseY);
             }
 
             if (!this.pop_Z && this.load_Str != null) {
@@ -5497,12 +5497,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private int F() {
       this.init_BitSetUtil.init(Math.max(0, this.set_I - this.init_CharEncoder.load()));
-      this.init_CharEncoder_2.load_CharEncoder(!this.pop_Z);
-      autismclient.gui.ui.layout.LayoutContext metrics = this.init_TextFormat.init_SyncManager();
+      this.init_CharEncoder_2.setExpanded(!this.pop_Z);
+      autismclient.gui.ui.layout.LayoutContext metrics = this.init_TextFormat.createMeasureContext();
       if (metrics == null) {
          return this.pop_Z ? this.init_CharEncoder.load() : this.set_I;
       } else {
-         return Math.max(this.init_CharEncoder.load(), Math.round(this.init_CharEncoder_2.init_F_SyncManager_F(metrics, this.get_I)));
+         return Math.max(this.init_CharEncoder.load(), Math.round(this.init_CharEncoder_2.measureHeight(metrics, this.get_I)));
       }
    }
 
@@ -5680,11 +5680,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (!this.sync_List.isEmpty()) {
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, mouseX, mouseY, button)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.sync_List, mouseX, mouseY, button)) {
             return true;
          }
 
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             return true;
          }
       }
@@ -5769,7 +5769,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
                Runnable secondary = i < this.write_List.size() ? this.write_List.get(i) : null;
                autismclient.gui.ui.widgets.OverlayActionButton buttonView = this.init(b[0], b[1], b[2], b[3], label, variant, enabled, this.read_List.get(i), secondary);
-               autismclient.gui.ui.widgets.OverlayActionButton.init(buttonView, mouseX, mouseY, button);
+               autismclient.gui.ui.widgets.OverlayActionButton.handleClick(buttonView, mouseX, mouseY, button);
                return true;
             }
          }
@@ -6250,9 +6250,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          return true;
       } else {
          KeyEvent keyInput = Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers);
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             if (keyCode == 256 || keyCode == 257) {
-               autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+               autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
             }
 
             return true;
@@ -6422,8 +6422,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (!this.sync_List.isEmpty()
-         && (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, mouseX, mouseY))
-         && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, mouseX, mouseY, amount)) {
+         && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, mouseX, mouseY))
+         && autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.sync_List, mouseX, mouseY, amount)) {
          return true;
       }
 
@@ -6459,7 +6459,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-      if (autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, mouseX, mouseY, button)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.sync_List, mouseX, mouseY, button)) {
          return true;
       }
 

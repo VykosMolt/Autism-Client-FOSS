@@ -60,7 +60,7 @@ public final class UiLayerHost {
                UiClipStack.getInstance().clear(context.init_GuiGraphicsExtract());
 
                try {
-                  component.init_V_SyncManager(context);
+                  component.render(context);
                } finally {
                   UiClipStack.getInstance().clear(context.init_GuiGraphicsExtract());
                }
@@ -70,27 +70,27 @@ public final class UiLayerHost {
    }
 
    public UiInputResult init_EventBus_I_2(int mouseX, int mouseY, int button) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.init_EventBus_I_2(mouseX, mouseY, button));
+      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseClicked(mouseX, mouseY, button));
    }
 
    public UiInputResult load(int mouseX, int mouseY, int button) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.load(mouseX, mouseY, button));
+      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseReleased(mouseX, mouseY, button));
    }
 
    public UiInputResult init(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.init_EventBus_I(mouseX, mouseY, button, deltaX, deltaY));
+      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY));
    }
 
    public UiInputResult init_EventBus_I(int mouseX, int mouseY, double amount) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.init_EventBus_I(mouseX, mouseY, amount));
+      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseScrolled(mouseX, mouseY, amount));
    }
 
    public UiInputResult read(int key, int scanCode, int modifiers) {
-      return this.init_EventBus_ByteReader_DataUti(component -> component.read(key, scanCode, modifiers));
+      return this.init_EventBus_ByteReader_DataUti(component -> component.onKeyPressed(key, scanCode, modifiers));
    }
 
    public UiInputResult init_EventBus_C(char chr) {
-      return this.init_EventBus_ByteReader_DataUti(component -> component.init_EventBus_C(chr));
+      return this.init_EventBus_ByteReader_DataUti(component -> component.onCharTyped(chr));
    }
 
    private UiInputResult init_EventBus_ByteReader_DataUti(UiLayerHost.Inner_DataUtil call) {
@@ -124,7 +124,7 @@ public final class UiLayerHost {
          if (components != null && !components.isEmpty()) {
             for (int i = components.size() - 1; i >= 0; i--) {
                UiLayerComponent component = components.get(i);
-               NetHelper bounds = component.load_NetHelper();
+               NetHelper bounds = component.getInteractiveBounds();
                if (bounds != null && bounds.init_Z(mouseX, mouseY) && call.invoke(component) == UiInputResult.HANDLED) {
                   return UiInputResult.HANDLED;
                }

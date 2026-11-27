@@ -316,16 +316,16 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.load_List.clear();
       this.read_List.clear();
       int ctl = this.sync();
-      this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.init(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
+      this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.create(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
       int toggleY = this.get();
       int toggleW = this.write();
       int toggleX = this.pop();
       this.init_List
          .add(
-            autismclient.gui.ui.widgets.OverlayActionButton.init(
+            autismclient.gui.ui.widgets.OverlayActionButton.create(
                   toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.init_V_MapStore_DataUtil(PluginLibraryScreen.Inner_DataUtil.BY_SERVER)
                )
-               .init_ByteReader_ByteReader_StreamU(
+               .setTone(
                   this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
                      ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS
                      : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
@@ -333,7 +333,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          );
       this.init_List
          .add(
-            autismclient.gui.ui.widgets.OverlayActionButton.init(
+            autismclient.gui.ui.widgets.OverlayActionButton.create(
                   toggleX + toggleW + 2,
                   toggleY,
                   toggleW,
@@ -341,7 +341,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   Component.literal("By Plugin"),
                   b -> this.init_V_MapStore_DataUtil(PluginLibraryScreen.Inner_DataUtil.BY_PLUGIN)
                )
-               .init_ByteReader_ByteReader_StreamU(
+               .setTone(
                   this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_PLUGIN
                      ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS
                      : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
@@ -373,9 +373,9 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   cursor -= btnH;
                   this.init_List
                      .add(
-                        autismclient.gui.ui.widgets.OverlayActionButton.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
-                           .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER)
-                           .init_ByteReader_Identifier(GuiIconAtlas.DELETE)
+                        autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
+                           .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER)
+                           .setIcon(GuiIconAtlas.DELETE)
                      );
                   cursor -= 2;
                }
@@ -383,8 +383,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                cursor -= copyW;
                this.init_List
                   .add(
-                     autismclient.gui.ui.widgets.OverlayActionButton.init(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
-                        .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
+                     autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
+                        .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                   );
                this.load_List.add(new PluginLibraryScreen.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.init_Str));
             }
@@ -492,7 +492,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton b : this.init_List) {
-            autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, b, mx, my);
+            autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, b, mx, my);
          }
 
          if (!this.init_Z_6()) {
@@ -593,7 +593,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
 
       for (autismclient.gui.ui.widgets.OverlayActionButton b : this.init_List) {
-         if (autismclient.gui.ui.widgets.OverlayActionButton.init(b, mx, my, Compat263.mouseEventGlfwButton(ve))) {
+         if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(b, mx, my, Compat263.mouseEventGlfwButton(ve))) {
             return true;
          }
       }
@@ -688,11 +688,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int poll() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 440);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 440);
    }
 
    private int push() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.poll(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.poll(), 6);
    }
 
    private int pop() {

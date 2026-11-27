@@ -576,17 +576,17 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       Vec3 delta = MC.player.getDeltaMovement();
       BlockState placed = material.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
       autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(
-            null, eye, reach, autismclient.util.BlockPlacementPlanner.init(material, MC.player, InteractionHand.MAIN_HAND)
+            null, eye, reach, autismclient.util.BlockPlacementPlanner.blockItemValidator(material, MC.player, InteractionHand.MAIN_HAND)
          )
-         .init_U_StateCache_ce_DataUtil(from)
-         .init_U_StateCache_Z(MC.player.isShiftKeyDown())
-         .init_U_StateCache_Vec3(eye.add(delta))
-         .init_U_StateCache_U_StreamUtil(this.init_U_StreamUtil);
+         .withFromRotation(from)
+         .withSneaking(MC.player.isShiftKeyDown())
+         .withLeadEye(eye.add(delta))
+         .withRayBudget(this.init_U_StreamUtil);
 
       for (BlockPos cell : this.init_List) {
          if (!cell.equals(skip) && !this.init(cell, placed, playerBox, delta)) {
-            this.init_U_StreamUtil.init(4);
-            autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(request.init_U_StateCache_BlockPos(cell));
+            this.init_U_StreamUtil.reset(4);
+            autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request.withTargetCell(cell));
             if (candidate != null) {
                return new SurroundModule.Inner_StreamUtil(cell, candidate);
             }
@@ -614,10 +614,10 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             plan.init_BlockPos(),
             eye,
             reach,
-            autismclient.util.BlockPlacementPlanner.init(MC.player.getItemInHand(InteractionHand.MAIN_HAND), MC.player, InteractionHand.MAIN_HAND)
+            autismclient.util.BlockPlacementPlanner.blockItemValidator(MC.player.getItemInHand(InteractionHand.MAIN_HAND), MC.player, InteractionHand.MAIN_HAND)
          )
-         .init_U_StateCache_Z(MC.player.isShiftKeyDown());
-      return autismclient.util.BlockPlacementPlanner.init_BlockHitResult_U_CachePool(plan.init_U_CachePool(), rotation, eye, reach, gate);
+         .withSneaking(MC.player.isShiftKeyDown());
+      return autismclient.util.BlockPlacementPlanner.verifyWithRotation(plan.init_U_CachePool(), rotation, eye, reach, gate);
    }
 
    private boolean close_Z_5() {
@@ -778,7 +778,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
    private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool) {
       RotationMath.Rotation init_ce_DataUtil() {
-         return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
+         return this.init_U_CachePool.aim().goalRotation();
       }
    }
 }

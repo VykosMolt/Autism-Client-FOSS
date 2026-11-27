@@ -133,22 +133,22 @@ final class AiScaffoldWalk {
             boolean read(BlockPos cell) {
                ItemStack stack = mc.player.getInventory().getItem(mc.player.getInventory().getSelectedSlot());
                BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
-                     cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), BlockPlacementPlanner.init(stack, mc.player, InteractionHand.MAIN_HAND)
+                     cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), BlockPlacementPlanner.blockItemValidator(stack, mc.player, InteractionHand.MAIN_HAND)
                   )
-                  .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-                  .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
-               BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool(request);
+                  .withSneaking(mc.player.isShiftKeyDown())
+                  .withRayBudget(new BlockPlacementPlanner.RayBudget(6));
+               BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.plan(request);
                if (candidate == null) {
                   return false;
                }
 
                float prevYaw = mc.player.getYRot();
                float prevPitch = mc.player.getXRot();
-               mc.player.setYRot(candidate.init_U_DataUtil().load().yaw());
-               mc.player.setXRot(candidate.init_U_DataUtil().load().pitch());
+               mc.player.setYRot(candidate.aim().emittedRotation().yaw());
+               mc.player.setXRot(candidate.aim().emittedRotation().pitch());
                autismclient.ai.engine.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
                this.write_Z = true;
-               mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
+               mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.hit());
                return true;
             }
 

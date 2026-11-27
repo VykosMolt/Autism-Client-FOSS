@@ -40,8 +40,8 @@ public final class TargetLeadDamageEstimator {
    }
 
    public static ExplosionDamageCalculator.DamagePair init(LivingEntity target, Vec3 source, float power, ExplosionDamageCalculator.SimOptions options, AABB targetBox) {
-      double targetDamage = ExplosionDamageCalculator.read(target, source, power, options.init(targetBox));
-      double selfDamage = target == Minecraft.getInstance().player ? targetDamage : ExplosionDamageCalculator.read(source, power, options);
+      double targetDamage = ExplosionDamageCalculator.calculateDamageCached(target, source, power, options.withTargetBox(targetBox));
+      double selfDamage = target == Minecraft.getInstance().player ? targetDamage : ExplosionDamageCalculator.calculateSelfDamageCached(source, power, options);
       return new ExplosionDamageCalculator.DamagePair(targetDamage, selfDamage);
    }
 

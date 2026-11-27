@@ -1007,11 +1007,11 @@ final class AiCrystals {
                   return false;
                }
 
-               double damage = autismclient.util.ExplosionDamageCalculator.init_D(
+               double damage = autismclient.util.ExplosionDamageCalculator.calculateDamage(
                   mc.player,
                   crystal.position(),
                   6.0F,
-                  autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, crystal))
+                  autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withDamageSource(Explosion.getDefaultDamageSource(mc.level, crystal))
                );
                return AiCrystals.init(damage, mc.player.getHealth() + mc.player.getAbsorptionAmount(), danger.lethal(), danger.voidFall())
                   && danger.worstSource() <= 4.0F;

@@ -50,62 +50,62 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
 public final class ExplosionDamageCalculator {
-   public static final float init_F = 6.0F;
-   public static final float load_F = 5.0F;
-   public static final float read_F = 5.0F;
-   public static final float write = 9.0F;
-   private static final EquipmentSlot[] init_EquipmentSlotArr = new EquipmentSlot[]{
+   public static final float CRYSTAL_EXPLOSION_POWER = 6.0F;
+   public static final float ANCHOR_EXPLOSION_POWER = 5.0F;
+   public static final float BED_EXPLOSION_POWER = 5.0F;
+   public static final float TERRAIN_BLAST_RESISTANCE = 9.0F;
+   private static final EquipmentSlot[] ARMOR_SLOTS = new EquipmentSlot[]{
       EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
    };
-   private static final int load_I = 256;
-   private static final long init_J = -1L;
-   private static final Object init_Obj = new Object();
-   private static final Map<ExplosionDamageCalculator.EntitySample, Double> init_Map = new LinkedHashMap<ExplosionDamageCalculator.EntitySample, Double>(256, 1.0F, true) {
+   private static final int SAMPLE_CACHE_CAPACITY = 256;
+   private static final long NO_ACTIVE_PASS = -1L;
+   private static final Object CACHE_LOCK = new Object();
+   private static final Map<ExplosionDamageCalculator.EntitySample, Double> DAMAGE_CACHE = new LinkedHashMap<ExplosionDamageCalculator.EntitySample, Double>(256, 1.0F, true) {
       @Override
       protected boolean removeEldestEntry(Entry<ExplosionDamageCalculator.EntitySample, Double> eldest) {
          return this.size() > 256;
       }
    };
-   private static final AtomicLong init_AtomicLong = new AtomicLong();
-   private static long load_J = -1L;
-   private static long read_J = -1L;
-   private static WeakReference<Level> init_WeakReference = new WeakReference<>(null);
-   private static int read_I = -2147483648;
-   public static final int init_I = 10;
-   public static final double init_D = 1.15;
-   public static final double load_D = 2.0;
-   public static final double read_D = 1.0;
+   private static final AtomicLong PASS_SEQUENCE = new AtomicLong();
+   private static long activePassId = -1L;
+   private static long cacheGeneration = -1L;
+   private static WeakReference<Level> cachedLevelRef = new WeakReference<>(null);
+   private static int cachedTick = -2147483648;
+   public static final int HALF_INVULNERABLE_TICKS = 10;
+   public static final double SELF_LETHAL_MULTIPLIER = 1.15;
+   public static final double SELF_LETHAL_HEALTH_BUFFER = 2.0;
+   public static final double TARGET_LETHAL_MULTIPLIER = 1.0;
 
    private ExplosionDamageCalculator() {
    }
 
-   public static double init_D_LivingEntity(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_D(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static double calculateDamage(LivingEntity target, Vec3 explosionPos, float power) {
+      return calculateDamage(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static double init_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options, true);
+   public static double calculateDamage(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return calculateDamageInternal(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.DEFAULT : options, true);
    }
 
-   private static double init(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options, boolean sampleExposure) {
+   private static double calculateDamageInternal(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options, boolean sampleExposure) {
       if (target != null && explosionPos != null && power > 0.0F) {
          Level level = target.level();
-         if (level != null && !init_Z_LivingEntity(target)) {
+         if (level != null && !isEntityImmune(target)) {
             float range = power * 2.0F;
-            double distanceSqr = init_D_LivingEntity_2(target, explosionPos, options);
+            double distanceSqr = distanceToExplosionSqr(target, explosionPos, options);
             if (distanceSqr > (double)range * range) {
                return 0.0;
             }
 
             double decay = 1.0 - Math.sqrt(distanceSqr) / range;
-            double seen = (sampleExposure ? init_F_LivingEntity_2(target, explosionPos, options) : 1.0F) * decay;
+            double seen = (sampleExposure ? sampleExposure(target, explosionPos, options) : 1.0F) * decay;
             double raw = (seen * seen + seen) / 2.0 * 7.0 * range + 1.0;
             if (raw <= 0.0) {
                return 0.0;
             }
 
-            DamageSource source = options.init_DamageSource() != null ? options.init_DamageSource() : init_DamageSource_Level_Vec3(level, explosionPos);
-            return init(target, source, (float)raw, options.load());
+            DamageSource source = options.damageSource() != null ? options.damageSource() : explosionDamageSource(level, explosionPos);
+            return applyMitigations(target, source, (float)raw, options.estimateProtection());
          } else {
             return 0.0;
          }
@@ -114,8 +114,8 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static double init_D_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
-      AABB box = options.init_AABB();
+   private static double distanceToExplosionSqr(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
+      AABB box = options.targetBoxOverride();
       if (box == null) {
          return target.distanceToSqr(explosionPos);
       }
@@ -126,32 +126,32 @@ public final class ExplosionDamageCalculator {
       return dx * dx + dy * dy + dz * dz;
    }
 
-   public static double init_D_Vec3_F(Vec3 explosionPos, float power) {
-      return init_D_Vec3(explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static double calculateSelfDamage(Vec3 explosionPos, float power) {
+      return calculateSelfDamage(explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static double init_D_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init_D(Minecraft.getInstance().player, explosionPos, power, options);
+   public static double calculateSelfDamage(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return calculateDamage(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
-   public static boolean init_Z_LivingEntity_2(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_Z(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static boolean isLethal(LivingEntity target, Vec3 explosionPos, float power) {
+      return isLethal(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static boolean init_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      double health = init_D_LivingEntity(target);
-      return health <= 0.0 ? false : init_D(target, explosionPos, power, options) >= health;
+   public static boolean isLethal(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      double health = effectiveHealth(target);
+      return health <= 0.0 ? false : calculateDamage(target, explosionPos, power, options) >= health;
    }
 
-   public static boolean init_Z_Vec3_F(Vec3 explosionPos, float power) {
-      return init_Z(Minecraft.getInstance().player, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static boolean isLethalToSelf(Vec3 explosionPos, float power) {
+      return isLethal(Minecraft.getInstance().player, explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static double init_D_LivingEntity(LivingEntity target) {
+   public static double effectiveHealth(LivingEntity target) {
       return target != null && !target.isDeadOrDying() ? (double)target.getHealth() + target.getAbsorptionAmount() : 0.0;
    }
 
-   public static boolean init_Z_LivingEntity_DamageSource(LivingEntity target, DamageSource source) {
+   public static boolean isInHurtCooldown(LivingEntity target, DamageSource source) {
       if (target == null) {
          return false;
       } else {
@@ -159,148 +159,148 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static boolean load_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init_Z_LivingEntity(target, init_D(target, explosionPos, power, options), options);
+   public static boolean willKillTarget(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return willDamageKillTarget(target, calculateDamage(target, explosionPos, power, options), options);
    }
 
-   public static boolean init_Z_LivingEntity(LivingEntity target, double predictedDamage, ExplosionDamageCalculator.SimOptions options) {
+   public static boolean willDamageKillTarget(LivingEntity target, double predictedDamage, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && predictedDamage > 0.0) {
-         double health = init_D_LivingEntity(target);
+         double health = effectiveHealth(target);
          if (health <= 0.0) {
             return false;
          } else {
-            return init_Z_LivingEntity_DamageSource(target, options == null ? null : options.init_DamageSource()) ? false : predictedDamage * 1.0 >= health;
+            return isInHurtCooldown(target, options == null ? null : options.damageSource()) ? false : predictedDamage * 1.0 >= health;
          }
       } else {
          return false;
       }
    }
 
-   public static boolean init_Z_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init_Z_D(init_D_Vec3(explosionPos, power, options));
+   public static boolean wouldPopOrKillSelf(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return wouldSelfDamagePopOrKill(calculateSelfDamage(explosionPos, power, options));
    }
 
-   public static boolean init_Z_D(double predictedSelfDamage) {
+   public static boolean wouldSelfDamagePopOrKill(double predictedSelfDamage) {
       LocalPlayer player = Minecraft.getInstance().player;
-      double health = init_D_LivingEntity(player);
+      double health = effectiveHealth(player);
       return health <= 0.0 ? false : predictedSelfDamage * 1.15 + 2.0 >= health;
    }
 
-   public static boolean load(double predictedSelfDamage) {
-      return !init_Z_D(predictedSelfDamage) ? false : !init_Z();
+   public static boolean wouldSelfDamageKillWithoutTotem(double predictedSelfDamage) {
+      return !wouldSelfDamagePopOrKill(predictedSelfDamage) ? false : !isPlayerHoldingTotem();
    }
 
-   private static boolean init_Z() {
+   private static boolean isPlayerHoldingTotem() {
       LocalPlayer player = Minecraft.getInstance().player;
       return player == null ? false : player.getMainHandItem().is(Items.TOTEM_OF_UNDYING) || player.getOffhandItem().is(Items.TOTEM_OF_UNDYING);
    }
 
-   public static ExplosionDamageCalculator.SafetyResult init_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init_S_StreamUtil_S_BufferHelper(init_S_BufferHelper(target, explosionPos, power, options), target, options);
+   public static ExplosionDamageCalculator.SafetyResult evaluateSafety(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return evaluateSafety(calculateDamagePair(target, explosionPos, power, options), target, options);
    }
 
-   public static ExplosionDamageCalculator.SafetyResult load_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init_S_StreamUtil_S_BufferHelper(load_S_BufferHelper(target, explosionPos, power, options), target, options);
+   public static ExplosionDamageCalculator.SafetyResult evaluateSafetyCached(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return evaluateSafety(calculateDamagePairCached(target, explosionPos, power, options), target, options);
    }
 
-   public static ExplosionDamageCalculator.SafetyResult init_S_StreamUtil_S_BufferHelper(ExplosionDamageCalculator.DamagePair ranking, LivingEntity target, ExplosionDamageCalculator.SimOptions options) {
+   public static ExplosionDamageCalculator.SafetyResult evaluateSafety(ExplosionDamageCalculator.DamagePair ranking, LivingEntity target, ExplosionDamageCalculator.SimOptions options) {
       return ranking == null
          ? new ExplosionDamageCalculator.SafetyResult(false, false, 0.0, 0.0)
-         : new ExplosionDamageCalculator.SafetyResult(init_Z_LivingEntity(target, ranking.load(), options), init_Z_D(ranking.read()), ranking.load(), ranking.read());
+         : new ExplosionDamageCalculator.SafetyResult(willDamageKillTarget(target, ranking.load(), options), wouldSelfDamagePopOrKill(ranking.selfDamage()), ranking.load(), ranking.selfDamage());
    }
 
-   public static ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_S_BufferHelper(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static ExplosionDamageCalculator.DamagePair calculateDamagePair(LivingEntity target, Vec3 explosionPos, float power) {
+      return calculateDamagePair(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static ExplosionDamageCalculator.DamagePair init_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      double targetDamage = init_D(target, explosionPos, power, options);
+   public static ExplosionDamageCalculator.DamagePair calculateDamagePair(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      double targetDamage = calculateDamage(target, explosionPos, power, options);
       LocalPlayer player = Minecraft.getInstance().player;
-      double self = target == player ? targetDamage : init_D(player, explosionPos, power, options);
+      double self = target == player ? targetDamage : calculateDamage(player, explosionPos, power, options);
       return new ExplosionDamageCalculator.DamagePair(targetDamage, self);
    }
 
-   public static double load(LivingEntity target, Vec3 explosionPos, float power) {
-      return load_D(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
+   public static double calculateUpperBoundDamage(LivingEntity target, Vec3 explosionPos, float power) {
+      return calculateUpperBoundDamage(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.DEFAULT);
    }
 
-   public static double load_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options, false);
+   public static double calculateUpperBoundDamage(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return calculateDamageInternal(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.DEFAULT : options, false);
    }
 
-   public static double load(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return load_D(Minecraft.getInstance().player, explosionPos, power, options);
+   public static double calculateUpperBoundSelfDamage(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return calculateUpperBoundDamage(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
-   public static ExplosionDamageCalculator.SimScope init_S_ConfigStore() {
+   public static ExplosionDamageCalculator.SimScope beginSimScope() {
       Minecraft mc = Minecraft.getInstance();
       Level level = mc.level;
-      int tick = init_I_Minecraft(mc);
-      synchronized (init_Obj) {
-         load_J = init_AtomicLong.incrementAndGet();
-         init_V_Level_I(level, tick);
-         return new ExplosionDamageCalculator.SimScope(load_J);
+      int tick = currentClientTick(mc);
+      synchronized (CACHE_LOCK) {
+         activePassId = PASS_SEQUENCE.incrementAndGet();
+         resetCacheForTick(level, tick);
+         return new ExplosionDamageCalculator.SimScope(activePassId);
       }
    }
 
-   private static void init_V_J(long passId) {
-      synchronized (init_Obj) {
-         if (load_J == passId) {
-            init_Map.clear();
-            init_AtomicLong.incrementAndGet();
-            load_J = -1L;
-            read_J = -1L;
-            init_WeakReference = new WeakReference<>(null);
-            read_I = -2147483648;
+   private static void endSimScope(long passId) {
+      synchronized (CACHE_LOCK) {
+         if (activePassId == passId) {
+            DAMAGE_CACHE.clear();
+            PASS_SEQUENCE.incrementAndGet();
+            activePassId = -1L;
+            cacheGeneration = -1L;
+            cachedLevelRef = new WeakReference<>(null);
+            cachedTick = -2147483648;
          }
       }
    }
 
-   public static double read(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+   public static double calculateDamageCached(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && explosionPos != null && power > 0.0F) {
-         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options;
+         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.DEFAULT : options;
          Minecraft mc = Minecraft.getInstance();
          Level level = mc.level;
          long generation;
-         synchronized (init_Obj) {
-            if (load_J == -1L) {
+         synchronized (CACHE_LOCK) {
+            if (activePassId == -1L) {
                generation = -1L;
             } else {
-               int tick = init_I_Minecraft(mc);
-               if (init_WeakReference.get() != level || read_I != tick) {
-                  init_V_Level_I(level, tick);
+               int tick = currentClientTick(mc);
+               if (cachedLevelRef.get() != level || cachedTick != tick) {
+                  resetCacheForTick(level, tick);
                }
 
-               generation = read_J;
+               generation = cacheGeneration;
             }
          }
 
          if (generation == -1L) {
-            return init_D(target, explosionPos, power, opts);
+            return calculateDamage(target, explosionPos, power, opts);
          }
 
-         ExplosionDamageCalculator.EntitySample key = new ExplosionDamageCalculator.EntitySample(target, target.getBoundingBox(), explosionPos, power, opts, init_J_LivingEntity(target));
-         synchronized (init_Obj) {
-            if (read_J != generation) {
-               return init_D(target, explosionPos, power, opts);
+         ExplosionDamageCalculator.EntitySample key = new ExplosionDamageCalculator.EntitySample(target, target.getBoundingBox(), explosionPos, power, opts, hashEntityDefenseState(target));
+         synchronized (CACHE_LOCK) {
+            if (cacheGeneration != generation) {
+               return calculateDamage(target, explosionPos, power, opts);
             }
 
-            Double cached = init_Map.get(key);
+            Double cached = DAMAGE_CACHE.get(key);
             if (cached != null) {
                return cached;
             }
          }
 
-         double damage = init_D(target, explosionPos, power, opts);
-         boolean moved = init_Z_S_DataUtil_LivingEntity(key, target);
-         synchronized (init_Obj) {
-            if (read_J != generation) {
+         double damage = calculateDamage(target, explosionPos, power, opts);
+         boolean moved = didEntityStateChange(key, target);
+         synchronized (CACHE_LOCK) {
+            if (cacheGeneration != generation) {
                return damage;
             }
 
-            if (init_WeakReference.get() == level && read_I == init_I_Minecraft(mc)) {
+            if (cachedLevelRef.get() == level && cachedTick == currentClientTick(mc)) {
                if (!moved) {
-                  init_Map.put(key, damage);
+                  DAMAGE_CACHE.put(key, damage);
                }
 
                return damage;
@@ -313,43 +313,43 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static int init_I_Minecraft(Minecraft mc) {
+   private static int currentClientTick(Minecraft mc) {
       return mc.player == null ? -2147483648 : AutismSessionState.getInstance().getClientTick();
    }
 
-   private static void init_V_Level_I(Level level, int tick) {
-      init_Map.clear();
-      read_J = init_AtomicLong.incrementAndGet();
-      init_WeakReference = new WeakReference<>(level);
-      read_I = tick;
+   private static void resetCacheForTick(Level level, int tick) {
+      DAMAGE_CACHE.clear();
+      cacheGeneration = PASS_SEQUENCE.incrementAndGet();
+      cachedLevelRef = new WeakReference<>(level);
+      cachedTick = tick;
    }
 
-   public static double read(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      return read(Minecraft.getInstance().player, explosionPos, power, options);
+   public static double calculateSelfDamageCached(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return calculateDamageCached(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
-   public static ExplosionDamageCalculator.DamagePair load_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
-      double targetDamage = read(target, explosionPos, power, options);
+   public static ExplosionDamageCalculator.DamagePair calculateDamagePairCached(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      double targetDamage = calculateDamageCached(target, explosionPos, power, options);
       LocalPlayer player = Minecraft.getInstance().player;
-      double self = target == player ? targetDamage : read(player, explosionPos, power, options);
+      double self = target == player ? targetDamage : calculateDamageCached(player, explosionPos, power, options);
       return new ExplosionDamageCalculator.DamagePair(targetDamage, self);
    }
 
-   public static void init_V() {
-      synchronized (init_Obj) {
-         init_Map.clear();
-         long generation = init_AtomicLong.incrementAndGet();
-         if (load_J != -1L) {
-            read_J = generation;
+   public static void invalidateCache() {
+      synchronized (CACHE_LOCK) {
+         DAMAGE_CACHE.clear();
+         long generation = PASS_SEQUENCE.incrementAndGet();
+         if (activePassId != -1L) {
+            cacheGeneration = generation;
          }
       }
    }
 
-   private static boolean init_Z_S_DataUtil_LivingEntity(ExplosionDamageCalculator.EntitySample key, LivingEntity target) {
-      return !key.init_AABB().equals(target.getBoundingBox()) ? true : key.init_J() != init_J_LivingEntity(target);
+   private static boolean didEntityStateChange(ExplosionDamageCalculator.EntitySample key, LivingEntity target) {
+      return !key.boundingBox().equals(target.getBoundingBox()) ? true : key.stateHash() != hashEntityDefenseState(target);
    }
 
-   private static long init_J_LivingEntity(LivingEntity target) {
+   private static long hashEntityDefenseState(LivingEntity target) {
       long hash = 17L;
       hash = hash * 31L + (target.isRemoved() ? 1L : 0L);
       hash = hash * 31L + (target.isDeadOrDying() ? 1L : 0L);
@@ -367,16 +367,16 @@ public final class ExplosionDamageCalculator {
       hash = hash * 31L + (resistance == null ? -1L : resistance.getAmplifier());
       hash = hash * 31L + (target.hasEffect(MobEffects.FIRE_RESISTANCE) ? 1L : 0L);
       hash = hash * 31L + Float.floatToIntBits(target.getYHeadRot());
-      hash = hash * 31L + init_J_ItemStack(target.getItemBlockingWith());
+      hash = hash * 31L + hashItemStack(target.getItemBlockingWith());
 
-      for (EquipmentSlot slot : init_EquipmentSlotArr) {
-         hash = hash * 31L + init_J_ItemStack(target.getItemBySlot(slot));
+      for (EquipmentSlot slot : ARMOR_SLOTS) {
+         hash = hash * 31L + hashItemStack(target.getItemBySlot(slot));
       }
 
       return hash;
    }
 
-   private static long init_J_ItemStack(ItemStack stack) {
+   private static long hashItemStack(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          long hash = stack.getItem().hashCode();
          hash = hash * 31L + stack.getDamageValue();
@@ -387,20 +387,20 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static float init_F_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
+   public static float sampleExposure(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && explosionPos != null) {
          Level level = target.level();
          if (level == null) {
             return 0.0F;
          }
 
-         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options;
+         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.DEFAULT : options;
          if (!opts.init_Z()) {
             return ServerExplosion.getSeenPercent(explosionPos, target);
          }
 
-         AABB box = opts.init_AABB() != null ? opts.init_AABB() : target.getBoundingBox();
-         CollisionContext shapeContext = opts.init_AABB() != null ? CollisionContext.withPosition(target, box.minY) : CollisionContext.of(target);
+         AABB box = opts.targetBoxOverride() != null ? opts.targetBoxOverride() : target.getBoundingBox();
+         CollisionContext shapeContext = opts.targetBoxOverride() != null ? CollisionContext.withPosition(target, box.minY) : CollisionContext.of(target);
          double stepX = 1.0 / ((box.maxX - box.minX) * 2.0 + 1.0);
          double stepY = 1.0 / ((box.maxY - box.minY) * 2.0 + 1.0);
          double stepZ = 1.0 / ((box.maxZ - box.minZ) * 2.0 + 1.0);
@@ -417,7 +417,7 @@ public final class ExplosionDamageCalculator {
                         Mth.lerp(x, box.minX, box.maxX) + offsetX, Mth.lerp(y, box.minY, box.maxY), Mth.lerp(z, box.minZ, box.maxZ) + offsetZ
                      );
                      ClipContext clip = new ClipContext(sample, explosionPos, Block.COLLIDER, Fluid.NONE, shapeContext);
-                     if (init_BlockHitResult_Level(level, clip, opts).getType() == Type.MISS) {
+                     if (clipWithOverrides(level, clip, opts).getType() == Type.MISS) {
                         hits++;
                      }
 
@@ -435,10 +435,10 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static BlockHitResult init_BlockHitResult_Level(Level level, ClipContext context, ExplosionDamageCalculator.SimOptions options) {
-      List<BlockPos> exclude = options.init_List();
-      BlockPos include = options.init_BlockPos();
-      Float maxBlastResistance = options.init_Float();
+   private static BlockHitResult clipWithOverrides(Level level, ClipContext context, ExplosionDamageCalculator.SimOptions options) {
+      List<BlockPos> exclude = options.excludedBlocks();
+      BlockPos include = options.placedObsidian();
+      Float maxBlastResistance = options.maxBlastResistance();
       return BlockGetter.traverseBlocks(context.getFrom(), context.getTo(), context, (ctx, pos) -> {
          boolean excluded = !exclude.isEmpty() && exclude.contains(pos);
          BlockState blockState;
@@ -476,7 +476,7 @@ public final class ExplosionDamageCalculator {
       });
    }
 
-   public static double init(LivingEntity target, DamageSource source, float damage, boolean estimateProtection) {
+   public static double applyMitigations(LivingEntity target, DamageSource source, float damage, boolean estimateProtection) {
       if (target != null && source != null) {
          if (((AutismEntityAccessor)target).autism$isInvulnerableToBase(source)) {
             return 0.0;
@@ -512,7 +512,7 @@ public final class ExplosionDamageCalculator {
             return 0.0;
          }
 
-         amount -= init_F_LivingEntity(target, source, amount);
+         amount -= computeBlockedDamage(target, source, amount);
          if (amount <= 0.0F) {
             return 0.0;
          }
@@ -521,7 +521,7 @@ public final class ExplosionDamageCalculator {
          amount = accessor.autism$getDamageAfterArmorAbsorb(source, amount);
          amount = accessor.autism$getDamageAfterMagicAbsorb(source, amount);
          if (estimateProtection) {
-            amount = load(target, source, amount);
+            amount = applyProtectionEstimate(target, source, amount);
          }
 
          return Math.max(amount, 0.0F);
@@ -530,7 +530,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static float init_F_LivingEntity(LivingEntity target, DamageSource source, float amount) {
+   private static float computeBlockedDamage(LivingEntity target, DamageSource source, float amount) {
       if (amount <= 0.0F) {
          return 0.0F;
       } else {
@@ -562,7 +562,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static float load(LivingEntity target, DamageSource source, float amount) {
+   private static float applyProtectionEstimate(LivingEntity target, DamageSource source, float amount) {
       if (amount <= 0.0F) {
          return amount;
       }
@@ -575,11 +575,11 @@ public final class ExplosionDamageCalculator {
          return amount;
       }
 
-      float points = init_F_LivingEntity_DamageSource(target, source);
+      float points = sumProtectionPoints(target, source);
       return points <= 0.0F ? amount : amount * (1.0F - Mth.clamp(points, 0.0F, 20.0F) / 25.0F);
    }
 
-   private static float init_F_LivingEntity_DamageSource(LivingEntity target, DamageSource source) {
+   private static float sumProtectionPoints(LivingEntity target, DamageSource source) {
       boolean explosion = source.is(DamageTypeTags.IS_EXPLOSION);
       boolean generic = !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
       boolean fall = generic && source.is(DamageTypeTags.IS_FALL);
@@ -589,7 +589,7 @@ public final class ExplosionDamageCalculator {
 
       float points = 0.0F;
 
-      for (EquipmentSlot slot : init_EquipmentSlotArr) {
+      for (EquipmentSlot slot : ARMOR_SLOTS) {
          ItemStack stack = target.getItemBySlot(slot);
          if (!stack.isEmpty()) {
             ItemEnchantments enchantments = stack.getEnchantments();
@@ -617,15 +617,15 @@ public final class ExplosionDamageCalculator {
       return points;
    }
 
-   public static DamageSource init_DamageSource_Level_Vec3(Level level, Vec3 explosionPos) {
+   public static DamageSource explosionDamageSource(Level level, Vec3 explosionPos) {
       return new DamageSource(level.damageSources().explosion((Explosion)null).typeHolder(), explosionPos);
    }
 
-   public static DamageSource load(Level level, Vec3 explosionPos) {
+   public static DamageSource bedAnchorDamageSource(Level level, Vec3 explosionPos) {
       return level.damageSources().badRespawnPointExplosion(explosionPos);
    }
 
-   private static boolean init_Z_LivingEntity(LivingEntity target) {
+   private static boolean isEntityImmune(LivingEntity target) {
       if (!target.isRemoved() && !target.isDeadOrDying() && !target.isSpectator()) {
          return target instanceof Player player && player.getAbilities().invulnerable ? true : target.isInvulnerable();
       } else {
@@ -634,15 +634,15 @@ public final class ExplosionDamageCalculator {
    }
 
    public record DamagePair(double init, double load) {
-      public double init_D() {
+      public double netAdvantage() {
          return this.init - this.load;
       }
 
-      public boolean init_Z() {
+      public boolean favorsTarget() {
          return this.init > this.load;
       }
 
-      public boolean init(double minTargetDamage, double maxSelfDamage) {
+      public boolean meetsThresholds(double minTargetDamage, double maxSelfDamage) {
          return this.init >= minTargetDamage && this.load <= maxSelfDamage;
       }
 
@@ -650,74 +650,74 @@ public final class ExplosionDamageCalculator {
          return this.init;
       }
 
-      public double read() {
+      public double selfDamage() {
          return this.load;
       }
    }
 
    public record SimOptions(
-      List<BlockPos> init_List, BlockPos init_BlockPos, Float init_Float, AABB init_AABB, DamageSource init_DamageSource, boolean init_Z
+      List<BlockPos> excludedBlocks, BlockPos placedObsidian, Float maxBlastResistance, AABB targetBoxOverride, DamageSource damageSource, boolean init_Z
    ) {
-      public static final ExplosionDamageCalculator.SimOptions init_S_CachePool = new ExplosionDamageCalculator.SimOptions(List.of(), null, null, null, null, true);
+      public static final ExplosionDamageCalculator.SimOptions DEFAULT = new ExplosionDamageCalculator.SimOptions(List.of(), null, null, null, null, true);
 
       public SimOptions {
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
+         excludedBlocks = excludedBlocks == null ? List.of() : List.copyOf(excludedBlocks);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(List<BlockPos> positions) {
-         return new ExplosionDamageCalculator.SimOptions(positions, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions withExcludedBlocks(List<BlockPos> positions) {
+         return new ExplosionDamageCalculator.SimOptions(positions, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(BlockPos pos) {
-         return new ExplosionDamageCalculator.SimOptions(this.init_List, pos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions withPlacedObsidian(BlockPos pos) {
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, pos, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(Float resistance) {
-         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, resistance, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions withMaxBlastResistance(Float resistance) {
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, resistance, this.targetBoxOverride, this.damageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(boolean terrain) {
-         return this.init(terrain ? 9.0F : null);
+      public ExplosionDamageCalculator.SimOptions withIgnoreTerrain(boolean terrain) {
+         return this.withMaxBlastResistance(terrain ? 9.0F : null);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(AABB box) {
-         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, box, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions withTargetBox(AABB box) {
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, box, this.damageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions init(DamageSource source) {
-         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, source, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions withDamageSource(DamageSource source) {
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, source, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.SimOptions load(boolean estimate) {
-         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, estimate);
+      public ExplosionDamageCalculator.SimOptions withEstimateProtection(boolean estimate) {
+         return new ExplosionDamageCalculator.SimOptions(this.excludedBlocks, this.placedObsidian, this.maxBlastResistance, this.targetBoxOverride, this.damageSource, estimate);
       }
 
       public boolean init_Z() {
-         return !this.init_List.isEmpty() || this.init_BlockPos != null || this.init_Float != null || this.init_AABB != null;
+         return !this.excludedBlocks.isEmpty() || this.placedObsidian != null || this.maxBlastResistance != null || this.targetBoxOverride != null;
       }
 
-      public boolean load() {
+      public boolean estimateProtection() {
          return this.init_Z;
       }
    }
 
    public static final class SimScope implements AutoCloseable {
-      private final long init;
+      private final long passId;
 
       private SimScope(long id) {
-         this.init = id;
+         this.passId = id;
       }
 
       @Override
       public void close() {
-         ExplosionDamageCalculator.init_V_J(this.init);
+         ExplosionDamageCalculator.endSimScope(this.passId);
       }
    }
 
-   private record EntitySample(LivingEntity init_LivingEntity, AABB init_AABB, Vec3 init_Vec3, float init_F, ExplosionDamageCalculator.SimOptions init_S_CachePool, long init_J) {
+   private record EntitySample(LivingEntity entity, AABB boundingBox, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options, long stateHash) {
    }
 
-   public record SafetyResult(boolean init_Z, boolean load_Z, double init_D, double load_D) {
+   public record SafetyResult(boolean init_Z, boolean load_Z, double targetDamage, double selfDamage) {
       public boolean init_Z() {
          return this.init_Z && !this.load_Z;
       }
@@ -726,7 +726,7 @@ public final class ExplosionDamageCalculator {
          return this.init_Z;
       }
 
-      public boolean read() {
+      public boolean killsSelf() {
          return this.load_Z;
       }
    }

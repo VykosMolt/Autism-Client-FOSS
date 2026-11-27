@@ -60,13 +60,13 @@ public final class ProfilesLibraryView {
 
    public ProfilesLibraryView(Font font) {
       this.init_Font = font;
-      this.read_BitSetUtil.load_BitSetUtil_Consumer(ignored -> this.sync_V());
-      this.load_BitSetUtil.load_BitSetUtil_Consumer(ignored -> this.update_V());
-      this.init_BitSetUtil.init_BitSetUtil_Consumer(ignored -> this.write_I = 0);
+      this.read_BitSetUtil.setOnSubmit(ignored -> this.sync_V());
+      this.load_BitSetUtil.setOnSubmit(ignored -> this.update_V());
+      this.init_BitSetUtil.setOnChange(ignored -> this.write_I = 0);
    }
 
    private static TextInputWidget init_BitSetUtil_Str_I(String placeholder, int maxLength) {
-      return new TextInputWidget().load_BitSetUtil_Str(placeholder).init_BitSetUtil_I(maxLength);
+      return new TextInputWidget().setPlaceholder(placeholder).setMaxLength(maxLength);
    }
 
    public int init_I() {
@@ -212,7 +212,7 @@ public final class ProfilesLibraryView {
    }
 
    private List<AutismProfile> init_List() {
-      String query = this.init_BitSetUtil.init_Str().strip().toLowerCase(Locale.ROOT);
+      String query = this.init_BitSetUtil.getValue().strip().toLowerCase(Locale.ROOT);
       List<AutismProfile> profiles = this.init_bV.init_List();
       return query.isEmpty()
          ? profiles
@@ -514,13 +514,13 @@ public final class ProfilesLibraryView {
 
       this.init_Str = profile.id;
       this.write_I = 0;
-      this.read_BitSetUtil.init_BitSetUtil_Str("");
+      this.read_BitSetUtil.setValue("");
       this.load_V();
    }
 
    private void read_V() {
       this.init_Str = null;
-      this.read_BitSetUtil.init_BitSetUtil_Str("");
+      this.read_BitSetUtil.setValue("");
       this.write_I = this.read_I;
       this.load_V();
    }
@@ -533,7 +533,7 @@ public final class ProfilesLibraryView {
       this.write_V();
       this.init_AutismProfile = null;
       this.read_V();
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
+      this.init_BitSetUtil.setValue("");
       this.read_I = this.write_I = 0;
       this.update_Z = false;
       this.init_NetHelper = null;
@@ -587,22 +587,22 @@ public final class ProfilesLibraryView {
 
       AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
       this.load_BitSetUtil
-         .init_BitSetUtil_Str(
+         .setValue(
             mode == ProfilesLibraryView.Inner_StreamUtil.RENAME && sel != null
                ? sel.displayName
                : (mode == ProfilesLibraryView.Inner_StreamUtil.DUPLICATE && sel != null ? sel.displayName + " copy" : "")
          );
-      this.load_BitSetUtil.init_V_Z(true);
+      this.load_BitSetUtil.setFocused(true);
    }
 
    private void write_V() {
       this.init_StreamUtil_StreamU = ProfilesLibraryView.Inner_StreamUtil.NONE;
-      this.load_BitSetUtil.init_V_Z(false);
-      this.load_BitSetUtil.init_BitSetUtil_Str("");
+      this.load_BitSetUtil.setFocused(false);
+      this.load_BitSetUtil.setValue("");
    }
 
    private void update_V() {
-      String name = this.load_BitSetUtil.init_Str() == null ? "" : this.load_BitSetUtil.init_Str().strip();
+      String name = this.load_BitSetUtil.getValue() == null ? "" : this.load_BitSetUtil.getValue().strip();
       if (name.isEmpty()) {
          bi.read("Enter a name.");
       } else {
@@ -640,7 +640,7 @@ public final class ProfilesLibraryView {
    private void sync_V() {
       AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
       if (sel != null) {
-         String pat = this.read_BitSetUtil.init_Str() == null ? "" : this.read_BitSetUtil.init_Str().strip().toLowerCase(Locale.ROOT);
+         String pat = this.read_BitSetUtil.getValue() == null ? "" : this.read_BitSetUtil.getValue().strip().toLowerCase(Locale.ROOT);
          if (!pat.isEmpty()) {
             List<String> next = new ArrayList<>(sel.serverPatterns);
             if (!next.contains(pat)) {
@@ -648,7 +648,7 @@ public final class ProfilesLibraryView {
             }
 
             this.init_bV.init_V_AutismProfile_List(sel, next);
-            this.read_BitSetUtil.init_BitSetUtil_Str("");
+            this.read_BitSetUtil.setValue("");
          }
       }
    }
@@ -665,8 +665,8 @@ public final class ProfilesLibraryView {
       Minecraft mc = Minecraft.getInstance();
       ServerData sd = mc == null ? null : mc.getCurrentServer();
       if (sd != null && sd.ip != null && !sd.ip.isBlank()) {
-         this.read_BitSetUtil.init_BitSetUtil_Str(sd.ip.strip().toLowerCase(Locale.ROOT));
-         this.read_BitSetUtil.init_V_Z(true);
+         this.read_BitSetUtil.setValue(sd.ip.strip().toLowerCase(Locale.ROOT));
+         this.read_BitSetUtil.setFocused(true);
       } else {
          bi.read("Not connected to a server.");
       }
@@ -689,10 +689,10 @@ public final class ProfilesLibraryView {
          autismclient.gui.ui.layout.LayoutContext ctx = this.init_SyncManager_GuiGraphicsExtract(null, mx, my);
 
          for (TextInputWidget input : this.load_List) {
-            if ((input != this.read_BitSetUtil || this.load_NetHelper.init_Z(mx, my)) && input.init_Z_SyncManager_2(ctx, mx, my, button)) {
+            if ((input != this.read_BitSetUtil || this.load_NetHelper.init_Z(mx, my)) && input.mouseClicked(ctx, mx, my, button)) {
                for (TextInputWidget other : this.load_List) {
                   if (other != input) {
-                     other.init_V_Z(false);
+                     other.setFocused(false);
                   }
                }
 
@@ -725,7 +725,7 @@ public final class ProfilesLibraryView {
       autismclient.gui.ui.layout.LayoutContext ctx = this.init_SyncManager_GuiGraphicsExtract(null, mx, my);
 
       for (TextInputWidget input : this.load_List) {
-         if (input.load_Z_SyncManager(ctx, mx, my, button)) {
+         if (input.mouseReleased(ctx, mx, my, button)) {
             return true;
          }
       }
@@ -742,7 +742,7 @@ public final class ProfilesLibraryView {
       autismclient.gui.ui.layout.LayoutContext ctx = this.init_SyncManager_GuiGraphicsExtract(null, mx, my);
 
       for (TextInputWidget input : this.load_List) {
-         if (input.init_Z_SyncManager(ctx, mx, my, button, (float)dx, (float)dy)) {
+         if (input.mouseDragged(ctx, mx, my, button, (float)dx, (float)dy)) {
             return true;
          }
       }
@@ -779,14 +779,14 @@ public final class ProfilesLibraryView {
          }
       } else {
          if (!this.init_Z() && this.init_Str == null && key == 70 && (modifiers & 10) != 0) {
-            this.init_BitSetUtil.init_V_Z(true);
+            this.init_BitSetUtil.setFocused(true);
             return true;
          }
 
          autismclient.gui.ui.layout.LayoutContext ctx = this.init_SyncManager_GuiGraphicsExtract(null, this.sync, this.flush);
 
          for (TextInputWidget input : this.load_List) {
-            if (input.load_Z() && input.init_Z_SyncManager_3(ctx, key, scanCode, modifiers)) {
+            if (input.isFocused() && input.keyPressed(ctx, key, scanCode, modifiers)) {
                return true;
             }
          }
@@ -799,7 +799,7 @@ public final class ProfilesLibraryView {
       autismclient.gui.ui.layout.LayoutContext ctx = this.init_SyncManager_GuiGraphicsExtract(null, this.sync, this.flush);
 
       for (TextInputWidget input : this.load_List) {
-         if (input.load_Z() && input.init_Z_SyncManager_2(ctx, chr, modifiers)) {
+         if (input.isFocused() && input.charTyped(ctx, chr, modifiers)) {
             return true;
          }
       }
@@ -809,7 +809,7 @@ public final class ProfilesLibraryView {
 
    public boolean load_Z() {
       for (TextInputWidget input : this.load_List) {
-         if (input.load_Z()) {
+         if (input.isFocused()) {
             return true;
          }
       }
@@ -818,9 +818,9 @@ public final class ProfilesLibraryView {
    }
 
    public void load_V() {
-      this.load_BitSetUtil.init_V_Z(false);
-      this.read_BitSetUtil.init_V_Z(false);
-      this.init_BitSetUtil.init_V_Z(false);
+      this.load_BitSetUtil.setFocused(false);
+      this.read_BitSetUtil.setFocused(false);
+      this.init_BitSetUtil.setFocused(false);
    }
 
    private autismclient.gui.ui.layout.LayoutContext init_SyncManager_GuiGraphicsExtract(GuiGraphicsExtractor g, int mx, int my) {
@@ -831,8 +831,8 @@ public final class ProfilesLibraryView {
 
    private void init_V_SyncManager_3(autismclient.gui.f.SyncManager ctx, TextInputWidget field, NetHelper box) {
       if (box.update() >= 10 && box.load() > this.read_NetHelper.write() && box.write() < this.read_NetHelper.load()) {
-         field.init_TableIndex_F(box.read(), box.write(), box.update(), box.sync());
-         field.init_V_SyncManager(this.init_SyncManager_GuiGraphicsExtract(ctx.init_GuiGraphicsExtract(), ctx.read(), ctx.write()));
+         field.setBounds(box.read(), box.write(), box.update(), box.sync());
+         field.render(this.init_SyncManager_GuiGraphicsExtract(ctx.init_GuiGraphicsExtract(), ctx.read(), ctx.write()));
          if (this.write_Z) {
             this.load_List.add(field);
          }

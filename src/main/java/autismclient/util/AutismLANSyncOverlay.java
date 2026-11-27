@@ -356,11 +356,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private int tick_I_10() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.run, this.start);
+      return autismclient.gui.ui.layout.PanelLayoutMath.innerWidth(this.run, this.start);
    }
 
    private int init_I_Z(boolean hasScroll) {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.tick_I_10(), hasScroll, 12);
+      return autismclient.gui.ui.layout.PanelLayoutMath.contentWidth(this.tick_I_10(), hasScroll, 12);
    }
 
    private int run_I_10() {
@@ -1376,7 +1376,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                         this.init_Font, truncAssign, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), assignColor
                      );
                      this.init(
-                        ctx, truncAssign, autismclient.gui.f.b.l.read, assignColor, autismclient.gui.ui.layout.PanelLayoutMath.init(lx, rowW - 12, truncAssignW, 4), textY
+                        ctx, truncAssign, autismclient.gui.f.b.l.read, assignColor, autismclient.gui.ui.layout.PanelLayoutMath.alignRightX(lx, rowW - 12, truncAssignW, 4), textY
                      );
                   }
                }

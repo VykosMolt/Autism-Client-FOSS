@@ -3,38 +3,38 @@ import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.SyncManager;
 
 public interface UiLayerComponent {
-   NetHelper init_NetHelper();
+   NetHelper getBounds();
 
-   void init_V_NetHelper(NetHelper var1);
+   void setBounds(NetHelper var1);
 
-   default NetHelper load_NetHelper() {
-      return this.init_NetHelper();
+   default NetHelper getInteractiveBounds() {
+      return this.getBounds();
    }
 
-   default void init_V_SyncManager(SyncManager context) {
+   default void render(SyncManager context) {
    }
 
-   default UiInputResult init_EventBus_I_2(int mouseX, int mouseY, int button) {
+   default UiInputResult onMouseClicked(int mouseX, int mouseY, int button) {
       return UiInputResult.IGNORED;
    }
 
-   default UiInputResult load(int mouseX, int mouseY, int button) {
+   default UiInputResult onMouseReleased(int mouseX, int mouseY, int button) {
       return UiInputResult.IGNORED;
    }
 
-   default UiInputResult init_EventBus_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
+   default UiInputResult onMouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
       return UiInputResult.IGNORED;
    }
 
-   default UiInputResult init_EventBus_I(int mouseX, int mouseY, double amount) {
+   default UiInputResult onMouseScrolled(int mouseX, int mouseY, double amount) {
       return UiInputResult.IGNORED;
    }
 
-   default UiInputResult read(int key, int scanCode, int modifiers) {
+   default UiInputResult onKeyPressed(int key, int scanCode, int modifiers) {
       return UiInputResult.IGNORED;
    }
 
-   default UiInputResult init_EventBus_C(char chr) {
+   default UiInputResult onCharTyped(char chr) {
       return UiInputResult.IGNORED;
    }
 }

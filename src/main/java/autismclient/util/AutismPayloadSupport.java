@@ -34,21 +34,21 @@ import net.minecraft.resources.Identifier;
 
 public final class AutismPayloadSupport {
    // Weak identity keys: payloads and packets are records, so equal-valued instances must not share an entry.
-   private static final Map<CustomPacketPayload, byte[]> init_Map = new MapMaker().weakKeys().makeMap();
-   private static final Map<Packet<?>, String> load_Map = new MapMaker().weakKeys().makeMap();
-   private static final int init_I = 2147483639;
-   private static final int load_I = 64;
-   private static final int read = 32767;
+   private static final Map<CustomPacketPayload, byte[]> CAPTURED_PAYLOAD_BYTES = new MapMaker().weakKeys().makeMap();
+   private static final Map<Packet<?>, String> PACKET_PROTOCOL_PHASES = new MapMaker().weakKeys().makeMap();
+   private static final int COMMAND_API_SENTINEL = 2147483639;
+   private static final int COMMAND_API_SENTINEL_TOLERANCE = 64;
+   private static final int MAX_SERVERBOUND_PAYLOAD_BYTES = 32767;
 
    private AutismPayloadSupport() {
    }
 
-   public static <T extends FriendlyByteBuf, V> StreamCodec<T, V> init(Identifier id, int maxBytes, StreamCodec<T, V> original) {
+   public static <T extends FriendlyByteBuf, V> StreamCodec<T, V> wrapStreamCodec(Identifier id, int maxBytes, StreamCodec<T, V> original) {
       return StreamCodec.of((buf, payload) -> {
-         if (!init_Z()) {
+         if (!isWireCaptureActive()) {
             original.encode(buf, payload);
          } else {
-            byte[] rawBytes = init(payload);
+            byte[] rawBytes = getRawBytesForObject(payload);
             if (rawBytes != null) {
                if (rawBytes.length > maxBytes) {
                   throw new IllegalArgumentException("Payload may not be larger than " + maxBytes + " bytes");
@@ -63,72 +63,72 @@ public final class AutismPayloadSupport {
          int start = buf.readerIndex();
          V decoded = original.decode(buf);
          int end = buf.readerIndex();
-         if (init_Z() && decoded instanceof CustomPacketPayload payload) {
+         if (isWireCaptureActive() && decoded instanceof CustomPacketPayload payload) {
             byte[] rawBytes = new byte[Math.max(0, end - start)];
             if (rawBytes.length > 0) {
                buf.getBytes(start, rawBytes);
             }
 
-            load(payload, rawBytes);
+            storeRawBytes(payload, rawBytes);
          }
 
          return decoded;
       });
    }
 
-   private static boolean init_Z() {
+   private static boolean isWireCaptureActive() {
       return PacketCaptureState.load(PacketCaptureState.load_J());
    }
 
-   public static void init(CustomPacketPayload payload, byte[] rawBytes) {
+   public static void rememberRawBytes(CustomPacketPayload payload, byte[] rawBytes) {
       if (!autismclient.modules.aD.read_Z() && payload != null) {
-         init_Map.put(payload, rawBytes == null ? new byte[0] : (byte[])rawBytes.clone());
+         CAPTURED_PAYLOAD_BYTES.put(payload, rawBytes == null ? new byte[0] : (byte[])rawBytes.clone());
       }
    }
 
-   public static void init_V(CustomPacketPayload payload, String channel, byte[] encodedBytes) {
+   public static void rememberEncodedBytes(CustomPacketPayload payload, String channel, byte[] encodedBytes) {
       if (!autismclient.modules.aD.read_Z() && payload != null) {
-         byte[] body = init(encodedBytes, channel);
-         load(payload, body);
+         byte[] body = stripChannelPrefix(encodedBytes, channel);
+         storeRawBytes(payload, body);
       }
    }
 
-   private static void load(CustomPacketPayload payload, byte[] rawBytes) {
+   private static void storeRawBytes(CustomPacketPayload payload, byte[] rawBytes) {
       if (payload != null) {
-         init_Map.put(payload, rawBytes == null ? PacketCaptureState.init_BArr : rawBytes);
+         CAPTURED_PAYLOAD_BYTES.put(payload, rawBytes == null ? PacketCaptureState.init_BArr : rawBytes);
       }
    }
 
-   public static byte[] init_BArr(CustomPacketPayload payload) {
+   public static byte[] getRememberedBytes(CustomPacketPayload payload) {
       if (payload == null) {
          return null;
       }
 
-      byte[] bytes = init_Map.get(payload);
+      byte[] bytes = CAPTURED_PAYLOAD_BYTES.get(payload);
       return bytes == null ? null : (byte[])bytes.clone();
    }
 
-   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(Packet<?> packet, String direction) {
+   public static AutismPayloadSupport.PayloadEntry inspectPacket(Packet<?> packet, String direction) {
       if (packet == null) {
          return null;
       }
 
-      CustomPacketPayload payload = init(packet);
+      CustomPacketPayload payload = extractPayload(packet);
       if (payload == null) {
          return null;
       }
 
-      String channel = init_Str(payload);
+      String channel = extractChannelId(payload);
       PacketWireCaptureStore.Inner_StreamUtil packetSnapshot = PacketWireCaptureStore.init(packet);
-      AutismPayloadSupport.EncodedBytes payloadBytes = init(packetSnapshot, channel);
+      AutismPayloadSupport.EncodedBytes payloadBytes = extractBodyFromWireSnapshot(packetSnapshot, channel);
       if (payloadBytes == null) {
-         payloadBytes = init_AutismPayloadSuppo(payload);
+         payloadBytes = resolveEncodedBytes(payload);
       }
 
-      byte[] rawBytes = payloadBytes.init_BArr();
-      Integer commandApiValue = init_Integer(payload, channel, rawBytes);
-      String dump = init(direction, channel, rawBytes, commandApiValue);
-      String protocolPhase = packetSnapshot == null ? load_Map.getOrDefault(packet, "") : packetSnapshot.load();
+      byte[] rawBytes = payloadBytes.bytes();
+      Integer commandApiValue = detectCommandApiValue(payload, channel, rawBytes);
+      String dump = formatJsonDump(direction, channel, rawBytes, commandApiValue);
+      String protocolPhase = packetSnapshot == null ? PACKET_PROTOCOL_PHASES.getOrDefault(packet, "") : packetSnapshot.load();
       int packetId = packetSnapshot == null ? -1 : packetSnapshot.init_I();
       if (packetId < 0) {
          packetId = PacketWireCaptureStore.init(protocolPhase, direction, packet.type());
@@ -146,15 +146,15 @@ public final class AutismPayloadSupport {
          payload.getClass().getName(),
          protocolPhase,
          packetId,
-         payloadBytes.init_Str()
+         payloadBytes.provenance()
       );
    }
 
-   public static AutismPayloadSupport.PayloadEntry init(byte[] frameBytes, String direction, String protocolPhase) {
+   public static AutismPayloadSupport.PayloadEntry inspectWireFrame(byte[] frameBytes, String direction, String protocolPhase) {
       if (frameBytes != null && frameBytes.length != 0) {
          byte[] frame = (byte[])frameBytes.clone();
          int[] index = new int[]{0};
-         Integer packetId = init_Integer(frame, index);
+         Integer packetId = readVarInt(frame, index);
          if (packetId != null && packetId >= 0 && index[0] < frame.length) {
             boolean c2s = direction != null && direction.equalsIgnoreCase("C2S");
             boolean s2c = direction != null && direction.equalsIgnoreCase("S2C");
@@ -166,10 +166,10 @@ public final class AutismPayloadSupport {
             }
 
             int channelStart = index[0];
-            String channel = init_Str(frame, index);
+            String channel = readMcString(frame, index);
             if (channel != null && !channel.isBlank()) {
                try {
-                  init_Identifier(channel);
+                  parseChannelId(channel);
                } catch (Throwable ignored) {
                   return null;
                }
@@ -180,9 +180,9 @@ public final class AutismPayloadSupport {
                      System.arraycopy(frame, index[0], body, 0, body.length);
                   }
 
-                  AutismPayloadSupport.RawCustomPacketPayload payload = new AutismPayloadSupport.RawCustomPacketPayload(init_Identifier(channel), body);
-                  Integer commandApiValue = init_Integer(payload, channel, body);
-                  String dump = init(direction, channel, body, commandApiValue);
+                  AutismPayloadSupport.RawCustomPacketPayload payload = new AutismPayloadSupport.RawCustomPacketPayload(parseChannelId(channel), body);
+                  Integer commandApiValue = detectCommandApiValue(payload, channel, body);
+                  String dump = formatJsonDump(direction, channel, body, commandApiValue);
                   String payloadClassName = c2s ? ServerboundCustomPayloadPacket.class.getName() : ClientboundCustomPayloadPacket.class.getName();
                   return new AutismPayloadSupport.PayloadEntry(
                      direction,
@@ -212,13 +212,13 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static void init_V(Packet<?> packet, String protocolPhase) {
+   public static void rememberProtocolPhase(Packet<?> packet, String protocolPhase) {
       if (packet != null && protocolPhase != null && !protocolPhase.isBlank()) {
-         load_Map.put(packet, protocolPhase);
+         PACKET_PROTOCOL_PHASES.put(packet, protocolPhase);
       }
    }
 
-   public static CustomPacketPayload init(Packet<?> packet) {
+   public static CustomPacketPayload extractPayload(Packet<?> packet) {
       if (packet instanceof ServerboundCustomPayloadPacket c2s) {
          return c2s.payload();
       } else {
@@ -226,7 +226,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String init_Str(CustomPacketPayload payload) {
+   public static String extractChannelId(CustomPacketPayload payload) {
       if (payload == null) {
          return "";
       }
@@ -242,22 +242,22 @@ public final class AutismPayloadSupport {
       return payload instanceof DiscardedPayload unknown && unknown.id() != null ? unknown.id().toString() : "";
    }
 
-   public static byte[] load(CustomPacketPayload payload) {
-      return init_AutismPayloadSuppo(payload).init_BArr();
+   public static byte[] encodePayloadBytes(CustomPacketPayload payload) {
+      return resolveEncodedBytes(payload).bytes();
    }
 
-   private static AutismPayloadSupport.EncodedBytes init_AutismPayloadSuppo(CustomPacketPayload payload) {
+   private static AutismPayloadSupport.EncodedBytes resolveEncodedBytes(CustomPacketPayload payload) {
       if (payload == null) {
          return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
       } else if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
          return new AutismPayloadSupport.EncodedBytes(raw.bytes(), PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
-         byte[] remembered = init_BArr(payload);
+         byte[] remembered = getRememberedBytes(payload);
          if (remembered != null) {
             return new AutismPayloadSupport.EncodedBytes(remembered, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
          }
 
-         byte[] codecBytes = read(payload);
+         byte[] codecBytes = encodeWithStreamCodec(payload);
          if (codecBytes != null) {
             return new AutismPayloadSupport.EncodedBytes(codecBytes, PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
@@ -266,14 +266,14 @@ public final class AutismPayloadSupport {
             Method writeMethod = payload.getClass().getMethod("write", FriendlyByteBuf.class);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             writeMethod.invoke(payload, buf);
-            return new AutismPayloadSupport.EncodedBytes(init(buf), PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(copyBufferBytes(buf), PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          } catch (Throwable var5) {
             return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
       }
    }
 
-   private static AutismPayloadSupport.EncodedBytes init(PacketWireCaptureStore.Inner_StreamUtil packetSnapshot, String expectedChannel) {
+   private static AutismPayloadSupport.EncodedBytes extractBodyFromWireSnapshot(PacketWireCaptureStore.Inner_StreamUtil packetSnapshot, String expectedChannel) {
       if (packetSnapshot == null) {
          return null;
       }
@@ -284,9 +284,9 @@ public final class AutismPayloadSupport {
       }
 
       int[] index = new int[]{0};
-      Integer packetId = init_Integer(bytes, index);
+      Integer packetId = readVarInt(bytes, index);
       if (packetId != null && packetId >= 0 && index[0] < bytes.length) {
-         String channel = init_Str(bytes, index);
+         String channel = readMcString(bytes, index);
          if (channel == null || channel.isBlank()) {
             return null;
          }
@@ -306,26 +306,26 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static boolean init_Z(CustomPacketPayload payload) {
+   public static boolean looksLikeCommandApiPayload(CustomPacketPayload payload) {
       if (payload == null) {
          return false;
       }
 
       String className = payload.getClass().getName();
       String simpleName = payload.getClass().getSimpleName();
-      if (write_Z(className)) {
+      if (containsCommandApiKeyword(className)) {
          return true;
       }
 
-      if (write_Z(simpleName)) {
+      if (containsCommandApiKeyword(simpleName)) {
          return true;
       }
 
-      String channel = init_Str(payload);
-      return write_Z(channel) ? true : init_Z(payload.getClass());
+      String channel = extractChannelId(payload);
+      return containsCommandApiKeyword(channel) ? true : isSingleIntRecord(payload.getClass());
    }
 
-   public static boolean init_Z(Class<?> clazz) {
+   public static boolean isSingleIntRecord(Class<?> clazz) {
       if (clazz == null) {
          return false;
       }
@@ -338,39 +338,39 @@ public final class AutismPayloadSupport {
       return components.length != 1 ? false : components[0].getType() == int.class || components[0].getType() == Integer.class;
    }
 
-   public static Integer init_Integer(CustomPacketPayload payload, String channel, byte[] rawBytes) {
-      Integer value = init_Integer(rawBytes);
+   public static Integer detectCommandApiValue(CustomPacketPayload payload, String channel, byte[] rawBytes) {
+      Integer value = readLeadingBigEndianInt(rawBytes);
       if (value == null) {
          return null;
       } else {
-         return init(payload, channel, rawBytes, value) ? value : null;
+         return matchesCommandApiHeuristic(payload, channel, rawBytes, value) ? value : null;
       }
    }
 
-   public static String init(AutismPayloadSupport.PayloadEntry snapshot, boolean includeCommandValue) {
+   public static String formatSummary(AutismPayloadSupport.PayloadEntry snapshot, boolean includeCommandValue) {
       if (snapshot == null) {
          return "";
       }
 
       StringBuilder sb = new StringBuilder();
-      String compactChannel = init_Str(snapshot.load_Str());
+      String compactChannel = compactChannelName(snapshot.channel());
       if (!compactChannel.isBlank()) {
          sb.append('[').append(compactChannel).append(']');
       }
 
-      if (snapshot.init_I() > 0 || sb.isEmpty()) {
+      if (snapshot.byteLength() > 0 || sb.isEmpty()) {
          if (!sb.isEmpty()) {
             sb.append(' ');
          }
 
-         sb.append(snapshot.init_I()).append('B');
+         sb.append(snapshot.byteLength()).append('B');
       }
 
-      if (includeCommandValue && snapshot.init_Integer() != null) {
-         sb.append(" cmd=").append(snapshot.init_Integer());
+      if (includeCommandValue && snapshot.commandApiValue() != null) {
+         sb.append(" cmd=").append(snapshot.commandApiValue());
       }
 
-      String guess = sync(snapshot.init_BArr());
+      String guess = previewTextHint(snapshot.rawBytes());
       if (!guess.isBlank()) {
          sb.append(" ").append(guess);
       }
@@ -378,26 +378,26 @@ public final class AutismPayloadSupport {
       return sb.toString();
    }
 
-   private static String sync(byte[] bytes) {
+   private static String previewTextHint(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
-         String minecraftString = read(bytes);
+         String minecraftString = decodeMcString(bytes);
          if (minecraftString != null && !minecraftString.isBlank()) {
-            return "mc=\"" + load_Str(minecraftString) + "\"";
+            return "mc=\"" + truncatePreview(minecraftString) + "\"";
          }
 
-         String text = load(bytes, 32);
-         return text != null && !text.isBlank() ? "utf8=\"" + load_Str(text) + "\"" : "";
+         String text = decodeUtf8Preview(bytes, 32);
+         return text != null && !text.isBlank() ? "utf8=\"" + truncatePreview(text) + "\"" : "";
       } else {
          return "";
       }
    }
 
-   private static String load_Str(String value) {
+   private static String truncatePreview(String value) {
       String text = value == null ? "" : value.replace('\n', ' ').replace('\r', ' ').trim();
       return text.length() <= 32 ? text : text.substring(0, 29) + "...";
    }
 
-   public static String init_Str(String channel) {
+   public static String compactChannelName(String channel) {
       String value = channel == null ? "" : channel.trim();
       if (!value.isEmpty() && value.length() > 30) {
          int colon = value.indexOf(58);
@@ -418,7 +418,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static byte[] init_BArr(String text) {
+   public static byte[] parseHexOrBase64(String text) {
       String value = text == null ? "" : text.trim();
       if (value.isEmpty()) {
          return new byte[0];
@@ -438,11 +438,11 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static byte[] init(byte[] encodedBytes, String expectedChannel) {
+   public static byte[] stripChannelPrefix(byte[] encodedBytes, String expectedChannel) {
       if (encodedBytes != null && encodedBytes.length != 0) {
          byte[] raw = (byte[])encodedBytes.clone();
          int[] index = new int[]{0};
-         String channel = init_Str(raw, index);
+         String channel = readMcString(raw, index);
          if (channel == null || channel.isBlank()) {
             return raw;
          }
@@ -462,7 +462,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String init_Str(byte[] bytes) {
+   public static String toHexString(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
          StringBuilder sb = new StringBuilder(bytes.length * 3);
 
@@ -480,15 +480,15 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String load(byte[] bytes) {
+   public static String toBase64(byte[] bytes) {
       return bytes != null && bytes.length != 0 ? Base64.getEncoder().encodeToString(bytes) : "";
    }
 
-   public static boolean init_Z(String channel) {
+   public static boolean isBrandChannel(String channel) {
       return channel != null && "minecraft:brand".equals(channel.trim());
    }
 
-   public static String init_Str() {
+   public static String defaultClientBrand() {
       try {
          String brand = ClientBrandRetriever.getClientModName();
          if (brand != null && !brand.isBlank()) {
@@ -500,19 +500,19 @@ public final class AutismPayloadSupport {
       return "vanilla";
    }
 
-   public static byte[] load_BArr(String value) {
+   public static byte[] encodeMcString(String value) {
       byte[] stringBytes = (value == null ? "" : value).getBytes(StandardCharsets.UTF_8);
-      byte[] lengthBytes = init(stringBytes.length);
+      byte[] lengthBytes = encodeVarInt(stringBytes.length);
       byte[] out = new byte[lengthBytes.length + stringBytes.length];
       System.arraycopy(lengthBytes, 0, out, 0, lengthBytes.length);
       System.arraycopy(stringBytes, 0, out, lengthBytes.length, stringBytes.length);
       return out;
    }
 
-   public static String read(byte[] rawBytes) {
+   public static String decodeMcString(byte[] rawBytes) {
       if (rawBytes != null && rawBytes.length != 0) {
          int[] index = new int[]{0};
-         Integer length = init_Integer(rawBytes, index);
+         Integer length = readVarInt(rawBytes, index);
          if (length != null && length >= 0) {
             if (index[0] + length != rawBytes.length) {
                return null;
@@ -531,7 +531,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String init_Str(byte[] bytes, int maxBytes) {
+   public static String toHexPreview(byte[] bytes, int maxBytes) {
       if (bytes != null && bytes.length != 0) {
          int shown = maxBytes <= 0 ? bytes.length : Math.min(bytes.length, maxBytes);
          StringBuilder sb = new StringBuilder(shown * 3 + 16);
@@ -554,16 +554,16 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String write(byte[] bytes) {
+   public static String decodePrintableUtf8(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
          String text = new String(bytes, StandardCharsets.UTF_8);
-         return !update(text) ? "" : text;
+         return !isMostlyPrintable(text) ? "" : text;
       } else {
          return "";
       }
    }
 
-   public static List<String> init_List(String channel, byte[] rawBytes) {
+   public static List<String> extractRegisteredChannels(String channel, byte[] rawBytes) {
       String normalizedChannel = channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
       if (!"minecraft:register".equals(normalizedChannel)
          && !"register".equals(normalizedChannel)
@@ -574,15 +574,15 @@ public final class AutismPayloadSupport {
 
       if (rawBytes != null && rawBytes.length != 0) {
          LinkedHashSet<String> channels = new LinkedHashSet<>();
-         init(channels, write(rawBytes));
-         String mcString = read(rawBytes);
+         collectChannelIdentifiers(channels, decodePrintableUtf8(rawBytes));
+         String mcString = decodeMcString(rawBytes);
          if (mcString != null) {
-            init(channels, mcString);
+            collectChannelIdentifiers(channels, mcString);
          }
 
-         String javaUtf = update(rawBytes);
+         String javaUtf = decodeJavaUtf(rawBytes);
          if (javaUtf != null) {
-            init(channels, javaUtf);
+            collectChannelIdentifiers(channels, javaUtf);
          }
 
          return List.copyOf(channels);
@@ -591,7 +591,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static void init(Set<String> out, String text) {
+   private static void collectChannelIdentifiers(Set<String> out, String text) {
       if (out != null && text != null && !text.isBlank()) {
          String[] parts = text.split("[\\u0000,;\\s]+");
 
@@ -610,8 +610,8 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String load(byte[] bytes, int maxChars) {
-      String text = write(bytes);
+   public static String decodeUtf8Preview(byte[] bytes, int maxChars) {
+      String text = decodePrintableUtf8(bytes);
       if (text.isEmpty()) {
          return "";
       }
@@ -620,49 +620,49 @@ public final class AutismPayloadSupport {
       return maxChars > 0 && normalized.length() > maxChars ? normalized.substring(0, Math.max(0, maxChars - 3)) + "..." : normalized;
    }
 
-   public static ServerboundCustomPayloadPacket init_ServerboundCustomP(String channel, byte[] bytes) {
-      Identifier id = init_Identifier(channel);
+   public static ServerboundCustomPayloadPacket buildServerboundPacket(String channel, byte[] bytes) {
+      Identifier id = parseChannelId(channel);
       PayloadSubscriptionManager.init_V(id.toString());
       AutismPayloadSupport.RawCustomPacketPayload payload = new AutismPayloadSupport.RawCustomPacketPayload(id, bytes);
-      init(payload, bytes);
+      rememberRawBytes(payload, bytes);
       return new ServerboundCustomPayloadPacket(payload);
    }
 
-   public static boolean init_Z(String channel, byte[] bytes) {
-      return init_Z(channel, bytes, "");
+   public static boolean sendCustomPayload(String channel, byte[] bytes) {
+      return sendCustomPayload(channel, bytes, "");
    }
 
-   public static boolean init_Z(String channel, byte[] bytes, String sourceProtocol) {
-      return init(channel, bytes, sourceProtocol, true);
+   public static boolean sendCustomPayload(String channel, byte[] bytes, String sourceProtocol) {
+      return sendCustomPayloadInternal(channel, bytes, sourceProtocol, true);
    }
 
-   public static boolean load(String channel, byte[] bytes, String sourceProtocol) {
-      return init(channel, bytes, sourceProtocol, false);
+   public static boolean sendCustomPayloadSilent(String channel, byte[] bytes, String sourceProtocol) {
+      return sendCustomPayloadInternal(channel, bytes, sourceProtocol, false);
    }
 
-   private static boolean init(String channel, byte[] bytes, String sourceProtocol, boolean notifyUser) {
+   private static boolean sendCustomPayloadInternal(String channel, byte[] bytes, String sourceProtocol, boolean notifyUser) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
 
       try {
-         init_V(channel, bytes, sourceProtocol);
-         ServerboundCustomPayloadPacket packet = init_ServerboundCustomP(channel, bytes);
-         init(packet);
+         validateOutgoingPayload(channel, bytes, sourceProtocol);
+         ServerboundCustomPayloadPacket packet = buildServerboundPacket(channel, bytes);
+         validatePacketEncoding(packet);
          DirectPacketSender.init(packet);
          return true;
       } catch (Throwable t) {
          if (notifyUser) {
-            AutismClientMessaging.sendPrefixed("§cFailed to send payload: " + init(t));
+            AutismClientMessaging.sendPrefixed("§cFailed to send payload: " + describeError(t));
          }
 
          return false;
       }
    }
 
-   private static void init_V(String channel, byte[] bytes, String sourceProtocol) {
-      Identifier id = init_Identifier(channel);
-      if (load_Z(id.toString()) && !PayloadSubscriptionManager.init_Z()) {
+   private static void validateOutgoingPayload(String channel, byte[] bytes, String sourceProtocol) {
+      Identifier id = parseChannelId(channel);
+      if (isRegisterChannel(id.toString()) && !PayloadSubscriptionManager.init_Z()) {
          throw new IllegalStateException("Payload registration is locked. Unlock it in Packet Logger > Payload > Channels.");
       }
 
@@ -671,12 +671,12 @@ public final class AutismPayloadSupport {
          throw new IllegalArgumentException("Payload is " + size + " bytes, max is 32767");
       }
 
-      if (read_Z(sourceProtocol) && load()) {
+      if (isConfigurationProtocol(sourceProtocol) && isInPlayState()) {
          throw new IllegalStateException("Configuration payloads must be sent during join/configuration, not after spawning.");
       }
    }
 
-   private static boolean load_Z(String channel) {
+   private static boolean isRegisterChannel(String channel) {
       String normalized = channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
       return normalized.equals("minecraft:register")
          || normalized.equals("minecraft:unregister")
@@ -684,7 +684,7 @@ public final class AutismPayloadSupport {
          || normalized.equals("unregister");
    }
 
-   private static boolean read_Z(String sourceProtocol) {
+   private static boolean isConfigurationProtocol(String sourceProtocol) {
       if (sourceProtocol != null && !sourceProtocol.isBlank()) {
          String normalized = sourceProtocol.toLowerCase(Locale.ROOT);
          return normalized.contains("config");
@@ -693,12 +693,12 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static boolean load() {
+   private static boolean isInPlayState() {
       Minecraft mc = Minecraft.getInstance();
       return mc != null && mc.level != null && mc.player != null;
    }
 
-   private static void init(ServerboundCustomPayloadPacket packet) {
+   private static void validatePacketEncoding(ServerboundCustomPayloadPacket packet) {
       FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
       try {
@@ -708,7 +708,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static void init(ByteBuf buf, int value) {
+   private static void writeVarInt(ByteBuf buf, int value) {
       while ((value & -128) != 0) {
          buf.writeByte(value & 127 | 128);
          value >>>= 7;
@@ -717,22 +717,22 @@ public final class AutismPayloadSupport {
       buf.writeByte(value);
    }
 
-   private static void init(ByteBuf buf, String value) {
+   private static void writeMcString(ByteBuf buf, String value) {
       byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-      init(buf, bytes.length);
+      writeVarInt(buf, bytes.length);
       buf.writeBytes(bytes);
    }
 
-   public static void init(AutismPayloadSupport.RawCustomPacketPayload payload, ByteBuf buf) {
+   public static void encodeRawPayload(AutismPayloadSupport.RawCustomPacketPayload payload, ByteBuf buf) {
       String channelStr = payload.id().toString();
       byte[] channelBytes = channelStr.getBytes(StandardCharsets.UTF_8);
-      init(buf, channelBytes.length);
+      writeVarInt(buf, channelBytes.length);
       buf.writeBytes(channelBytes);
       byte[] data = payload.bytes();
       buf.writeBytes(data);
    }
 
-   public static Identifier init_Identifier(String channel) {
+   public static Identifier parseChannelId(String channel) {
       if (channel != null && !channel.isBlank()) {
          try {
             return Identifier.parse(channel.trim());
@@ -744,7 +744,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static AutismPayloadSupport.PayloadEntry resolveEntryPayload(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry == null) {
          return null;
       } else {
@@ -752,78 +752,78 @@ public final class AutismPayloadSupport {
          if (entry.init_Packet == null) {
             return cached;
          } else {
-            AutismPayloadSupport.PayloadEntry refreshed = init_AutismPayloadSuppo(entry.init_Packet, entry.init_Str);
+            AutismPayloadSupport.PayloadEntry refreshed = inspectPacket(entry.init_Packet, entry.init_Str);
             if (cached == null) {
                return refreshed;
             } else {
-               return init(cached, refreshed) ? refreshed : cached;
+               return isRicherSnapshot(cached, refreshed) ? refreshed : cached;
             }
          }
       }
    }
 
-   public static autismclient.util.macro.PayloadAction init_H(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      AutismPayloadSupport.PayloadEntry snapshot = init_AutismPayloadSuppo(entry);
+   public static autismclient.util.macro.PayloadAction toPayloadAction(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      AutismPayloadSupport.PayloadEntry snapshot = resolveEntryPayload(entry);
       if (snapshot == null) {
          return null;
       }
 
       autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
-      action.channel = snapshot.load_Str();
-      action.payloadData = init_Str(snapshot.init_BArr());
+      action.channel = snapshot.channel();
+      action.payloadData = toHexString(snapshot.rawBytes());
       action.payloadClassName = "";
-      CustomPacketPayload payload = entry != null && entry.init_Packet != null ? init(entry.init_Packet) : null;
+      CustomPacketPayload payload = entry != null && entry.init_Packet != null ? extractPayload(entry.init_Packet) : null;
       action.payloadJson = PayloadJsonCodec.init(
-         snapshot.init_Str(),
+         snapshot.direction(),
          action.channel,
-         payload == null ? new AutismPayloadSupport.RawCustomPacketPayload(init_Identifier(action.channel), snapshot.init_BArr()) : payload
+         payload == null ? new AutismPayloadSupport.RawCustomPacketPayload(parseChannelId(action.channel), snapshot.rawBytes()) : payload
       );
       action.javaSource = "";
       action.payloadScriptEnabled = false;
-      action.commandApiRecognized = snapshot.init_Integer() != null;
+      action.commandApiRecognized = snapshot.commandApiValue() != null;
       action.commandApiOverride = false;
-      action.commandApiValue = snapshot.init_Integer() == null ? 0 : snapshot.init_Integer();
-      action.sourceDirection = snapshot.init_Str();
-      action.sourceProtocol = snapshot.update();
-      action.payloadDirection = snapshot.init_Str();
-      action.payloadPhase = snapshot.update() != null && snapshot.update().toLowerCase(Locale.ROOT).contains("config") ? "CONFIGURATION" : "PLAY";
-      action.payloadPacketId = snapshot.load_I();
-      action.payloadProvenance = snapshot.sync();
-      action.payloadFields = PayloadFieldCodec.init(init_List(snapshot.init_BArr()));
-      action.payloadEncodingMode = init_Str(action.channel, snapshot.init_BArr());
+      action.commandApiValue = snapshot.commandApiValue() == null ? 0 : snapshot.commandApiValue();
+      action.sourceDirection = snapshot.direction();
+      action.sourceProtocol = snapshot.protocolPhase();
+      action.payloadDirection = snapshot.direction();
+      action.payloadPhase = snapshot.protocolPhase() != null && snapshot.protocolPhase().toLowerCase(Locale.ROOT).contains("config") ? "CONFIGURATION" : "PLAY";
+      action.payloadPacketId = snapshot.packetId();
+      action.payloadProvenance = snapshot.provenance();
+      action.payloadFields = PayloadFieldCodec.formatFields(inferPayloadFields(snapshot.rawBytes()));
+      action.payloadEncodingMode = inferEncodingMode(action.channel, snapshot.rawBytes());
       return action;
    }
 
-   public static List<PayloadFieldCodec.Inner_CachePool> init_List(byte[] bytes) {
+   public static List<PayloadFieldCodec.Inner_CachePool> inferPayloadFields(byte[] bytes) {
       byte[] safeBytes = bytes == null ? new byte[0] : bytes;
-      String mcString = read(safeBytes);
+      String mcString = decodeMcString(safeBytes);
       if (mcString != null) {
          return List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, mcString, true));
       }
 
-      String writeUtf = update(safeBytes);
+      String writeUtf = decodeJavaUtf(safeBytes);
       if (writeUtf != null) {
          return List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF, writeUtf, true));
       }
 
-      String utf8 = write(safeBytes);
+      String utf8 = decodePrintableUtf8(safeBytes);
       return utf8.isBlank() && safeBytes.length != 0
-         ? List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.HEX_BYTES, init_Str(safeBytes), true))
+         ? List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.HEX_BYTES, toHexString(safeBytes), true))
          : List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES, utf8, true));
    }
 
-   public static String init_Str(String channel, byte[] bytes) {
+   public static String inferEncodingMode(String channel, byte[] bytes) {
       byte[] safeBytes = bytes == null ? new byte[0] : bytes;
-      if (read(safeBytes) != null) {
+      if (decodeMcString(safeBytes) != null) {
          return "MINECRAFT_BYTEBUF";
-      } else if (update(safeBytes) != null) {
+      } else if (decodeJavaUtf(safeBytes) != null) {
          return "JAVA_DATA_OUTPUT";
       } else {
-         return write(safeBytes).isBlank() && safeBytes.length != 0 ? "MANUAL_HEX" : "RAW_UTF8";
+         return decodePrintableUtf8(safeBytes).isBlank() && safeBytes.length != 0 ? "MANUAL_HEX" : "RAW_UTF8";
       }
    }
 
-   public static String update(byte[] bytes) {
+   public static String decodeJavaUtf(byte[] bytes) {
       if (bytes != null && bytes.length >= 2) {
          try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
             String value = in.readUTF();
@@ -836,7 +836,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static byte[] init_BArr(byte[] source, int value) {
+   public static byte[] withLeadingBigEndianInt(byte[] source, int value) {
       byte[] bytes = source == null ? new byte[4] : (byte[])source.clone();
       if (bytes.length < 4) {
          bytes = new byte[4];
@@ -846,7 +846,7 @@ public final class AutismPayloadSupport {
       return bytes;
    }
 
-   public static byte[] init(FriendlyByteBuf buf) {
+   public static byte[] copyBufferBytes(FriendlyByteBuf buf) {
       if (buf == null) {
          return new byte[0];
       }
@@ -859,7 +859,7 @@ public final class AutismPayloadSupport {
       return bytes;
    }
 
-   public static String init(Throwable t) {
+   public static String describeError(Throwable t) {
       if (t == null) {
          return "Unknown error";
       }
@@ -868,16 +868,16 @@ public final class AutismPayloadSupport {
       return message != null && !message.isBlank() ? message : t.getClass().getSimpleName();
    }
 
-   private static byte[] init(Object payload) {
+   private static byte[] getRawBytesForObject(Object payload) {
       if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
          return raw.bytes();
       } else {
-         return payload instanceof CustomPacketPayload customPayload ? init_BArr(customPayload) : null;
+         return payload instanceof CustomPacketPayload customPayload ? getRememberedBytes(customPayload) : null;
       }
    }
 
-   private static byte[] read(CustomPacketPayload payload) {
-      StreamCodec codec = init_StreamCodec(payload);
+   private static byte[] encodeWithStreamCodec(CustomPacketPayload payload) {
+      StreamCodec codec = findStreamCodec(payload);
       if (codec == null) {
          return null;
       }
@@ -885,30 +885,30 @@ public final class AutismPayloadSupport {
       try {
          FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
          codec.encode(buf, payload);
-         return init(buf);
+         return copyBufferBytes(buf);
       } catch (Throwable ignored) {
          return null;
       }
    }
 
-   public static StreamCodec<?, ?> init_StreamCodec(CustomPacketPayload payload) {
-      return payload == null ? null : init_StreamCodec(payload.getClass());
+   public static StreamCodec<?, ?> findStreamCodec(CustomPacketPayload payload) {
+      return payload == null ? null : findStreamCodec(payload.getClass());
    }
 
-   public static StreamCodec<?, ?> init_StreamCodec(Class<?> payloadClass) {
+   public static StreamCodec<?, ?> findStreamCodec(Class<?> payloadClass) {
       if (payloadClass == null) {
          return null;
       }
 
-      Object codecValue = init(payloadClass, "CODEC", StreamCodec.class);
+      Object codecValue = readStaticFieldByName(payloadClass, "CODEC", StreamCodec.class);
       if (codecValue == null) {
-         codecValue = init(payloadClass, StreamCodec.class);
+         codecValue = findFirstStaticFieldOfType(payloadClass, StreamCodec.class);
       }
 
       return codecValue instanceof StreamCodec<?, ?> codec ? codec : null;
    }
 
-   private static Object init(Class<?> owner, String fieldName, Class<?> expectedType) {
+   private static Object readStaticFieldByName(Class<?> owner, String fieldName, Class<?> expectedType) {
       if (owner != null && fieldName != null && !fieldName.isBlank() && expectedType != null) {
          for (Class<?> cursor = owner; cursor != null && cursor != Object.class; cursor = cursor.getSuperclass()) {
             try {
@@ -936,7 +936,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static Object init(Class<?> owner, Class<?> expectedType) {
+   private static Object findFirstStaticFieldOfType(Class<?> owner, Class<?> expectedType) {
       if (owner != null && expectedType != null) {
          for (Class<?> cursor = owner; cursor != null && cursor != Object.class; cursor = cursor.getSuperclass()) {
             for (Field field : cursor.getDeclaredFields()) {
@@ -962,24 +962,24 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static boolean init(CustomPacketPayload payload, String channel, byte[] rawBytes, Integer intValue) {
-      if (write_Z(payload == null ? null : payload.getClass().getName())) {
+   private static boolean matchesCommandApiHeuristic(CustomPacketPayload payload, String channel, byte[] rawBytes, Integer intValue) {
+      if (containsCommandApiKeyword(payload == null ? null : payload.getClass().getName())) {
          return true;
-      } else if (write_Z(payload == null ? null : payload.getClass().getSimpleName())) {
+      } else if (containsCommandApiKeyword(payload == null ? null : payload.getClass().getSimpleName())) {
          return true;
-      } else if (write_Z(channel)) {
+      } else if (containsCommandApiKeyword(channel)) {
          return true;
       } else {
          return rawBytes != null && rawBytes.length == 4 && intValue != null ? Math.abs(intValue.intValue() - 2147483639L) <= 64L : false;
       }
    }
 
-   private static boolean write_Z(String value) {
-      String normalized = read_Str(value);
+   private static boolean containsCommandApiKeyword(String value) {
+      String normalized = stripNonAlphanumericLower(value);
       return normalized.isEmpty() ? false : normalized.contains("commandapi") || normalized.contains("command") && normalized.contains("api");
    }
 
-   private static String read_Str(String value) {
+   private static String stripNonAlphanumericLower(String value) {
       if (value != null && !value.isBlank()) {
          StringBuilder sb = new StringBuilder(value.length());
 
@@ -996,7 +996,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static Integer init_Integer(byte[] rawBytes) {
+   private static Integer readLeadingBigEndianInt(byte[] rawBytes) {
       if (rawBytes != null && rawBytes.length >= 4) {
          try {
             return ByteBuffer.wrap(rawBytes, 0, 4).order(ByteOrder.BIG_ENDIAN).getInt();
@@ -1008,7 +1008,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static byte[] init(int value) {
+   private static byte[] encodeVarInt(int value) {
       byte[] out = new byte[5];
       int index = 0;
 
@@ -1023,7 +1023,7 @@ public final class AutismPayloadSupport {
       return trimmed;
    }
 
-   private static Integer init_Integer(byte[] bytes, int[] indexRef) {
+   private static Integer readVarInt(byte[] bytes, int[] indexRef) {
       if (bytes != null && indexRef != null && indexRef.length != 0) {
          int value = 0;
          int position = 0;
@@ -1049,8 +1049,8 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static String init_Str(byte[] bytes, int[] indexRef) {
-      Integer length = init_Integer(bytes, indexRef);
+   private static String readMcString(byte[] bytes, int[] indexRef) {
+      Integer length = readVarInt(bytes, indexRef);
       if (length != null && length >= 0) {
          int index = Math.max(0, indexRef[0]);
          if (index + length > bytes.length) {
@@ -1069,21 +1069,21 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static boolean init(AutismPayloadSupport.PayloadEntry cached, AutismPayloadSupport.PayloadEntry refreshed) {
+   private static boolean isRicherSnapshot(AutismPayloadSupport.PayloadEntry cached, AutismPayloadSupport.PayloadEntry refreshed) {
       if (cached != null && refreshed != null) {
-         if ((cached.load_Str() == null || cached.load_Str().isBlank()) && refreshed.load_Str() != null && !refreshed.load_Str().isBlank()) {
+         if ((cached.channel() == null || cached.channel().isBlank()) && refreshed.channel() != null && !refreshed.channel().isBlank()) {
             return true;
          } else {
-            return (cached.write() == null || cached.write().isBlank()) && refreshed.write() != null && !refreshed.write().isBlank()
+            return (cached.payloadClassName() == null || cached.payloadClassName().isBlank()) && refreshed.payloadClassName() != null && !refreshed.payloadClassName().isBlank()
                ? true
-               : cached.init_BArr().length == 0 && refreshed.init_BArr().length > 0;
+               : cached.rawBytes().length == 0 && refreshed.rawBytes().length > 0;
          }
       } else {
          return false;
       }
    }
 
-   private static boolean update(String text) {
+   private static boolean isMostlyPrintable(String text) {
       if (text != null && !text.isBlank()) {
          int printable = 0;
          int suspicious = 0;
@@ -1107,14 +1107,14 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static String init(String direction, String channel, byte[] rawBytes, Integer commandApiValue) {
+   private static String formatJsonDump(String direction, String channel, byte[] rawBytes, Integer commandApiValue) {
       StringBuilder sb = new StringBuilder();
       sb.append('{');
-      sb.append("\"direction\":\"").append(write_Str(direction)).append("\"");
-      sb.append(",\"channel\":\"").append(write_Str(channel)).append("\"");
+      sb.append("\"direction\":\"").append(escapeJsonString(direction)).append("\"");
+      sb.append(",\"channel\":\"").append(escapeJsonString(channel)).append("\"");
       sb.append(",\"size\":").append(rawBytes == null ? 0 : rawBytes.length);
-      sb.append(",\"payloadHex\":\"").append(write_Str(init_Str(rawBytes))).append("\"");
-      sb.append(",\"payloadBase64\":\"").append(write_Str(load(rawBytes))).append("\"");
+      sb.append(",\"payloadHex\":\"").append(escapeJsonString(toHexString(rawBytes))).append("\"");
+      sb.append(",\"payloadBase64\":\"").append(escapeJsonString(toBase64(rawBytes))).append("\"");
       if (commandApiValue != null) {
          sb.append(",\"commandApiValue\":").append(commandApiValue);
       }
@@ -1123,37 +1123,37 @@ public final class AutismPayloadSupport {
       return sb.toString();
    }
 
-   private static String write_Str(String value) {
+   private static String escapeJsonString(String value) {
       return value != null && !value.isEmpty() ? value.replace("\\", "\\\\").replace("\"", "\\\"") : "";
    }
 
-   private record EncodedBytes(byte[] init_BArr, String init_Str) {
+   private record EncodedBytes(byte[] bytes, String provenance) {
       private EncodedBytes {
-         init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
+         bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
+         provenance = provenance != null && !provenance.isBlank() ? provenance : PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
       }
 
-      public byte[] init_BArr() {
-         return this.init_BArr == null ? new byte[0] : (byte[])this.init_BArr.clone();
+      public byte[] bytes() {
+         return this.bytes == null ? new byte[0] : (byte[])this.bytes.clone();
       }
    }
 
    public record PayloadEntry(
-      String init_Str,
-      String load_Str,
-      byte[] init_BArr,
-      int init_I,
-      Integer init_Integer,
-      String read,
-      boolean init_Z,
-      boolean load_Z,
-      String write,
-      String update,
-      int load_I,
-      String sync
+      String direction,
+      String channel,
+      byte[] rawBytes,
+      int byteLength,
+      Integer commandApiValue,
+      String jsonDump,
+      boolean serverbound,
+      boolean clientbound,
+      String payloadClassName,
+      String protocolPhase,
+      int packetId,
+      String provenance
    ) {
-      public byte[] init_BArr() {
-         return this.init_BArr == null ? new byte[0] : (byte[])this.init_BArr.clone();
+      public byte[] rawBytes() {
+         return this.rawBytes == null ? new byte[0] : (byte[])this.rawBytes.clone();
       }
    }
 

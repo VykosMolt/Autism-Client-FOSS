@@ -12,7 +12,7 @@ public final class PillBadgeRenderer {
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int accentColor, boolean selected, boolean hovered
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       int border = selected ? accentColor : colors.borderControl;
       int fill = selected ? init(accentColor, 0.12F) : init(colors.cardSurface, colors.cardSurfaceElevated, hoverT);
       int radius = bounds.sync() / 2;

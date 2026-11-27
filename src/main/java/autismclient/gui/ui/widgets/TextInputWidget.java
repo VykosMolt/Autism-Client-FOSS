@@ -23,445 +23,445 @@ import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 
 public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode implements FocusableInput {
-   private static final int init_I = 512;
-   private static final long init_J_2 = 320L;
-   private static final float sync_F = 4.0F;
-   private static TextInputWidget init_BitSetUtil;
-   private String init_Str = "";
-   private String load_Str = "";
-   private int load_I = 512;
-   private float flush_F = 56.0F;
-   private float close_F = 3.4028235E38F;
-   private float open_F = -1.0F;
-   private int read_I = 4;
-   private int write_I = -1;
-   private int update_I = 1;
-   private boolean write_Z = true;
-   private boolean update_Z = true;
-   private int sync_I = 3;
-   private boolean sync_Z = true;
-   private boolean flush_Z = true;
-   private int flush_I = 0;
-   private boolean close_Z = false;
-   private int close_I = 0;
-   private int open_I = 0;
-   private int poll_I = 0;
-   private int push_I = 0;
-   private boolean open_Z = false;
-   private int pop_I = 0;
-   private boolean poll_Z = false;
-   private boolean push_Z = false;
-   private boolean pop_Z = false;
-   private long load_J = System.currentTimeMillis();
-   private Identifier init_Identifier = null;
-   private l init_l = l.read;
-   private l load_l = l.write;
-   private Predicate<String> init_Predicate = next -> true;
-   private Consumer<String> init_Consumer;
-   private Consumer<String> load_Consumer;
-   private boolean tick_Z;
-   private Function<String, Component> init_Function;
-   private LongSupplier init_LongSupplier;
-   private boolean run_Z = false;
-   private final List<String> init_List = new ArrayList<>();
-   private Supplier<Collection<String>> init_Supplier;
-   private int tick_I = -1;
-   private String read_Str = "";
-   private boolean get_Z = false;
-   private String write_Str = "";
-   private Function<String, Component> load_Function;
-   private TextInputWidget.Inner_StreamUtil init_BitSetUtil_StreamU;
-   private boolean set_Z;
-   private long read_J = -9223372036854775808L;
-   private long write_J = 1L;
-   private long update_J = 1L;
-   private long sync_J = -9223372036854775808L;
-   private long flush_J = -9223372036854775808L;
-   private Font init_Font;
-   private Identifier load_Identifier;
-   private int run_I = -2147483648;
-   private int get_I;
-   private TextInputWidget.Inner_StreamUtil load_BitSetUtil_StreamU;
-   private boolean put_Z;
-   private int[] init_IArr = new int[]{0};
-   private long close_J = -9223372036854775808L;
-   private long open_J = -9223372036854775808L;
-   private Font load_Font;
-   private Identifier read_Identifier;
-   private int set_I = -2147483648;
-   private int put_I = -2147483648;
-   private boolean add_Z;
-   private TextInputWidget.Inner_StreamUtil read_BitSetUtil_StreamU;
-   private List<TextInputWidget.Inner_CachePool> load_List = List.of();
-   private String update_Str = "";
-   private Font read_Font;
-   private Identifier write_Identifier;
-   private int add_I = -2147483648;
-   private int clear = -2147483648;
-   private List<String> read_List = List.of();
-   private long poll_J = 0L;
-   private float poll_F = 0.0F / 0.0F;
-   private float push_F = 0.0F / 0.0F;
-   private int reset = 0;
+   private static final int DEFAULT_MAX_LENGTH = 512;
+   private static final long MULTI_CLICK_WINDOW_MS = 320L;
+   private static final float MULTI_CLICK_MAX_DISTANCE = 4.0F;
+   private static TextInputWidget focusedWidget;
+   private String value = "";
+   private String placeholder = "";
+   private int maxLength = 512;
+   private float minWidth = 56.0F;
+   private float maxWidth = 3.4028235E38F;
+   private float preferredWidth = -1.0F;
+   private int horizontalPadding = 4;
+   private int fixedHeight = -1;
+   private int textYOffset = 1;
+   private boolean editable = true;
+   private boolean drawBackground = true;
+   private int cornerRadius = 3;
+   private boolean hoverEffectsEnabled = true;
+   private boolean focusEffectsEnabled = true;
+   private int backgroundColorOverride = 0;
+   private boolean focused = false;
+   private int cursorIndex = 0;
+   private int selectionAnchor = 0;
+   private int horizontalScrollIndex = 0;
+   private int verticalScrollLine = 0;
+   private boolean draggingScrollbar = false;
+   private int scrollbarDragOffsetY = 0;
+   private boolean manualScrollPinned = false;
+   private boolean draggingSelection = false;
+   private boolean multiline = false;
+   private long blinkResetMs = System.currentTimeMillis();
+   private Identifier fontId = null;
+   private l textTone = l.read;
+   private l placeholderTone = l.write;
+   private Predicate<String> inputFilter = next -> true;
+   private Consumer<String> onChange;
+   private Consumer<String> onSubmit;
+   private boolean submitOnEnter;
+   private Function<String, Component> displayTextProvider;
+   private LongSupplier displayRevisionProvider;
+   private boolean historyNavigationEnabled = false;
+   private final List<String> historyEntries = new ArrayList<>();
+   private Supplier<Collection<String>> historyProvider;
+   private int historyIndex = -1;
+   private String historyDraftValue = "";
+   private boolean applyingHistoryEntry = false;
+   private String cachedRichSource = "";
+   private Function<String, Component> cachedRichProvider;
+   private TextInputWidget.Inner_StreamUtil cachedRichMetrics;
+   private boolean richCacheValid;
+   private long cachedRichRevision = -9223372036854775808L;
+   private long textVersion = 1L;
+   private long styleVersion = 1L;
+   private long prefixCacheTextVersion = -9223372036854775808L;
+   private long prefixCacheStyleVersion = -9223372036854775808L;
+   private Font prefixCacheFont;
+   private Identifier prefixCacheFontId;
+   private int prefixCacheGeneration = -2147483648;
+   private int prefixCacheColor;
+   private TextInputWidget.Inner_StreamUtil prefixCacheRichMetrics;
+   private boolean prefixCacheUsesMsdf;
+   private int[] prefixWidths = new int[]{0};
+   private long wrapCacheTextVersion = -9223372036854775808L;
+   private long wrapCacheStyleVersion = -9223372036854775808L;
+   private Font wrapCacheFont;
+   private Identifier wrapCacheFontId;
+   private int wrapCacheGeneration = -2147483648;
+   private int wrapCacheWidth = -2147483648;
+   private boolean wrapCacheMultiline;
+   private TextInputWidget.Inner_StreamUtil wrapCacheRichMetrics;
+   private List<TextInputWidget.Inner_CachePool> cachedWrappedLines = List.of();
+   private String placeholderWrapText = "";
+   private Font placeholderWrapFont;
+   private Identifier placeholderWrapFontId;
+   private int placeholderWrapGeneration = -2147483648;
+   private int placeholderWrapWidth = -2147483648;
+   private List<String> cachedPlaceholderLines = List.of();
+   private long lastClickMs = 0L;
+   private float lastClickX = 0.0F / 0.0F;
+   private float lastClickY = 0.0F / 0.0F;
+   private int consecutiveClickCount = 0;
 
    public TextInputWidget() {
-      this.write = 16.0F;
+      this.nodeHeight = 16.0F;
    }
 
-   public TextInputWidget init_BitSetUtil_Str(String value) {
-      String sanitized = this.init_Str_Str(value);
-      if (!Objects.equals(this.init_Str, sanitized)) {
-         this.init_Str = sanitized;
-         this.sync_V();
-         this.load_V();
-         if (this.close_I > this.init_Str.length()) {
-            this.close_I = this.init_Str.length();
+   public TextInputWidget setValue(String value) {
+      String sanitized = this.sanitizeAndFilter(value);
+      if (!Objects.equals(this.value, sanitized)) {
+         this.value = sanitized;
+         this.invalidateTextCaches();
+         this.markLayoutDirty();
+         if (this.cursorIndex > this.value.length()) {
+            this.cursorIndex = this.value.length();
          }
 
-         if (this.open_I > this.init_Str.length()) {
-            this.open_I = this.init_Str.length();
+         if (this.selectionAnchor > this.value.length()) {
+            this.selectionAnchor = this.value.length();
          }
 
-         this.poll_Z = false;
-         if (this.init_Consumer != null) {
-            this.init_Consumer.accept(this.init_Str);
+         this.manualScrollPinned = false;
+         if (this.onChange != null) {
+            this.onChange.accept(this.value);
          }
       }
 
-      this.write_V();
-      this.poll_I = Math.min(this.poll_I, this.init_Str.length());
-      if (this.run_Z && !this.get_Z) {
-         this.tick_I = -1;
-         this.read_Str = this.init_Str;
+      this.clampCursorAndSelection();
+      this.horizontalScrollIndex = Math.min(this.horizontalScrollIndex, this.value.length());
+      if (this.historyNavigationEnabled && !this.applyingHistoryEntry) {
+         this.historyIndex = -1;
+         this.historyDraftValue = this.value;
       }
 
       return this;
    }
 
-   public String init_Str() {
-      return this.init_Str;
+   public String getValue() {
+      return this.value;
    }
 
-   public TextInputWidget load_BitSetUtil_Str(String placeholder) {
+   public TextInputWidget setPlaceholder(String placeholder) {
       String next = placeholder == null ? "" : placeholder;
-      if (!this.load_Str.equals(next)) {
-         this.load_Str = next;
-         this.load_V();
+      if (!this.placeholder.equals(next)) {
+         this.placeholder = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_I(int maxLength) {
-      this.load_I = Math.max(1, maxLength);
-      this.init_BitSetUtil_Str(this.init_Str);
+   public TextInputWidget setMaxLength(int maxLength) {
+      this.maxLength = Math.max(1, maxLength);
+      this.setValue(this.value);
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_F(float minWidth) {
+   public TextInputWidget setMinWidth(float minWidth) {
       float next = Math.max(0.0F, minWidth);
-      if (Float.compare(this.flush_F, next) != 0) {
-         this.flush_F = next;
-         this.load_V();
+      if (Float.compare(this.minWidth, next) != 0) {
+         this.minWidth = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget load_BitSetUtil_F(float maxWidth) {
-      float next = Math.max(this.flush_F, maxWidth);
-      if (Float.compare(this.close_F, next) != 0) {
-         this.close_F = next;
-         this.load_V();
+   public TextInputWidget setMaxWidth(float maxWidth) {
+      float next = Math.max(this.minWidth, maxWidth);
+      if (Float.compare(this.maxWidth, next) != 0) {
+         this.maxWidth = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget read_BitSetUtil_F(float preferredWidth) {
-      if (Float.compare(this.open_F, preferredWidth) != 0) {
-         this.open_F = preferredWidth;
-         this.load_V();
+   public TextInputWidget setPreferredWidth(float preferredWidth) {
+      if (Float.compare(this.preferredWidth, preferredWidth) != 0) {
+         this.preferredWidth = preferredWidth;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget load_BitSetUtil_I(int horizontalPadding) {
+   public TextInputWidget setHorizontalPadding(int horizontalPadding) {
       int next = Math.max(0, horizontalPadding);
-      if (this.read_I != next) {
-         this.read_I = next;
-         this.load_V();
+      if (this.horizontalPadding != next) {
+         this.horizontalPadding = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget read_BitSetUtil_I(int fixedHeight) {
+   public TextInputWidget setFixedHeight(int fixedHeight) {
       int next = Math.max(1, fixedHeight);
-      if (this.write_I != next) {
-         this.write_I = next;
-         this.load_V();
+      if (this.fixedHeight != next) {
+         this.fixedHeight = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget write_BitSetUtil(int textYOffset) {
-      this.update_I = textYOffset;
+   public TextInputWidget setTextYOffset(int textYOffset) {
+      this.textYOffset = textYOffset;
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Z(boolean editable) {
-      this.write_Z = editable;
+   public TextInputWidget setEditable(boolean editable) {
+      this.editable = editable;
       if (!editable) {
-         this.init_V_Z(false);
+         this.setFocused(false);
       }
 
       return this;
    }
 
-   public boolean init_Z() {
-      return this.write_Z;
+   public boolean isEditable() {
+      return this.editable;
    }
 
-   public TextInputWidget load_BitSetUtil_Z(boolean drawBackground) {
-      this.update_Z = drawBackground;
+   public TextInputWidget setDrawBackground(boolean drawBackground) {
+      this.drawBackground = drawBackground;
       return this;
    }
 
-   public TextInputWidget update(int radius) {
-      this.sync_I = Math.max(0, radius);
+   public TextInputWidget setCornerRadius(int radius) {
+      this.cornerRadius = Math.max(0, radius);
       return this;
    }
 
-   public TextInputWidget read_BitSetUtil_Z(boolean hoverEffectsEnabled) {
-      this.sync_Z = hoverEffectsEnabled;
+   public TextInputWidget setHoverEffectsEnabled(boolean hoverEffectsEnabled) {
+      this.hoverEffectsEnabled = hoverEffectsEnabled;
       return this;
    }
 
-   public TextInputWidget write(boolean focusEffectsEnabled) {
-      this.flush_Z = focusEffectsEnabled;
+   public TextInputWidget setFocusEffectsEnabled(boolean focusEffectsEnabled) {
+      this.focusEffectsEnabled = focusEffectsEnabled;
       return this;
    }
 
-   public TextInputWidget sync(int backgroundColorOverride) {
-      this.flush_I = backgroundColorOverride;
+   public TextInputWidget setBackgroundColorOverride(int backgroundColorOverride) {
+      this.backgroundColorOverride = backgroundColorOverride;
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Identifier(Identifier fontId) {
-      if (!Objects.equals(this.init_Identifier, fontId)) {
-         this.init_Identifier = fontId;
-         this.load_V();
+   public TextInputWidget setFontId(Identifier fontId) {
+      if (!Objects.equals(this.fontId, fontId)) {
+         this.fontId = fontId;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_l(l textTone) {
+   public TextInputWidget setTextTone(l textTone) {
       l next = textTone == null ? l.read : textTone;
-      if (this.init_l != next) {
-         this.init_l = next;
-         this.update_J++;
-         this.flush_V();
-         this.load_V();
+      if (this.textTone != next) {
+         this.textTone = next;
+         this.styleVersion++;
+         this.invalidateWrapCache();
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget load_BitSetUtil_l(l placeholderTone) {
+   public TextInputWidget setPlaceholderTone(l placeholderTone) {
       l next = placeholderTone == null ? l.write : placeholderTone;
-      if (this.load_l != next) {
-         this.load_l = next;
-         this.load_V();
+      if (this.placeholderTone != next) {
+         this.placeholderTone = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Predicate(Predicate<String> filter) {
-      this.init_Predicate = filter == null ? next -> true : filter;
+   public TextInputWidget setInputFilter(Predicate<String> filter) {
+      this.inputFilter = filter == null ? next -> true : filter;
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Consumer(Consumer<String> onChange) {
-      this.init_Consumer = onChange;
+   public TextInputWidget setOnChange(Consumer<String> onChange) {
+      this.onChange = onChange;
       return this;
    }
 
-   public TextInputWidget load_BitSetUtil_Consumer(Consumer<String> onSubmit) {
-      this.load_Consumer = onSubmit;
+   public TextInputWidget setOnSubmit(Consumer<String> onSubmit) {
+      this.onSubmit = onSubmit;
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Function(Function<String, Component> displayTextProvider) {
-      if (this.init_Function != displayTextProvider) {
-         this.init_Function = displayTextProvider;
-         this.update_J++;
-         this.update_V();
-         this.flush_V();
+   public TextInputWidget setDisplayTextProvider(Function<String, Component> displayTextProvider) {
+      if (this.displayTextProvider != displayTextProvider) {
+         this.displayTextProvider = displayTextProvider;
+         this.styleVersion++;
+         this.invalidateRichCache();
+         this.invalidateWrapCache();
       }
 
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_LongSupplier(LongSupplier revisionProvider) {
-      if (this.init_LongSupplier != revisionProvider) {
-         this.init_LongSupplier = revisionProvider;
-         this.update_J++;
-         this.update_V();
-         this.flush_V();
+   public TextInputWidget setDisplayRevisionProvider(LongSupplier revisionProvider) {
+      if (this.displayRevisionProvider != revisionProvider) {
+         this.displayRevisionProvider = revisionProvider;
+         this.styleVersion++;
+         this.invalidateRichCache();
+         this.invalidateWrapCache();
       }
 
       return this;
    }
 
-   public TextInputWidget update(boolean multiline) {
-      if (this.pop_Z != multiline) {
-         this.pop_Z = multiline;
+   public TextInputWidget setMultiline(boolean multiline) {
+      if (this.multiline != multiline) {
+         this.multiline = multiline;
          if (multiline) {
-            this.poll_I = 0;
+            this.horizontalScrollIndex = 0;
          } else {
-            this.push_I = 0;
+            this.verticalScrollLine = 0;
          }
 
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public TextInputWidget sync(boolean submitOnEnter) {
-      this.tick_Z = submitOnEnter;
+   public TextInputWidget setSubmitOnEnter(boolean submitOnEnter) {
+      this.submitOnEnter = submitOnEnter;
       return this;
    }
 
-   public int init_I_SyncManager_I(autismclient.gui.ui.layout.LayoutContext context, int fieldWidth) {
-      if (this.init_Str.isEmpty()) {
+   public int measureWrappedLineCount(autismclient.gui.ui.layout.LayoutContext context, int fieldWidth) {
+      if (this.value.isEmpty()) {
          return 1;
       }
 
-      Identifier font = this.init_Identifier_SyncManager(context);
-      int scaledHorizontalPadding = context.theme().load(this.read_I);
+      Identifier font = this.resolveFontId(context);
+      int scaledHorizontalPadding = context.theme().load(this.horizontalPadding);
       int frameInset = context.theme().load(2);
-      int innerW = this.init_I_I(fieldWidth, scaledHorizontalPadding, frameInset);
-      int bodyColor = context.theme().load(this.init_l);
-      return Math.max(1, this.init_List_Font(context.font(), font, bodyColor, innerW, this.init_BitSetUtil_StreamU_Str(this.init_Str)).size());
+      int innerW = this.computeInnerTextWidth(fieldWidth, scaledHorizontalPadding, frameInset);
+      int bodyColor = context.theme().load(this.textTone);
+      return Math.max(1, this.getWrappedLines(context.font(), font, bodyColor, innerW, this.resolveRichMetrics(this.value)).size());
    }
 
-   public int load(autismclient.gui.ui.layout.LayoutContext context, int rows) {
-      int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+   public int heightForRows(autismclient.gui.ui.layout.LayoutContext context, int rows) {
+      int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
       return Math.max(1, rows) * lineHeight + context.theme().load(6);
    }
 
-   public TextInputWidget flush(boolean historyNavigationEnabled) {
-      this.run_Z = historyNavigationEnabled;
+   public TextInputWidget setHistoryNavigationEnabled(boolean historyNavigationEnabled) {
+      this.historyNavigationEnabled = historyNavigationEnabled;
       if (!historyNavigationEnabled) {
-         this.tick_I = -1;
-         this.read_Str = "";
+         this.historyIndex = -1;
+         this.historyDraftValue = "";
       }
 
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil_Supplier(Supplier<Collection<String>> historyProvider) {
-      this.init_Supplier = historyProvider;
-      this.tick_I = -1;
-      this.read_Str = "";
+   public TextInputWidget setHistoryProvider(Supplier<Collection<String>> historyProvider) {
+      this.historyProvider = historyProvider;
+      this.historyIndex = -1;
+      this.historyDraftValue = "";
       return this;
    }
 
-   public TextInputWidget read_BitSetUtil_Str(String entry) {
-      String sanitized = this.init_Str_Str(entry);
+   public TextInputWidget pushHistoryEntry(String entry) {
+      String sanitized = this.sanitizeAndFilter(entry);
       if (sanitized.isEmpty()) {
          return this;
       }
 
-      if (!sanitized.equals(this.init_List.isEmpty() ? null : this.init_List.get(this.init_List.size() - 1))) {
-         this.init_List.add(sanitized);
+      if (!sanitized.equals(this.historyEntries.isEmpty() ? null : this.historyEntries.get(this.historyEntries.size() - 1))) {
+         this.historyEntries.add(sanitized);
 
-         while (this.init_List.size() > 100) {
-            this.init_List.remove(0);
+         while (this.historyEntries.size() > 100) {
+            this.historyEntries.remove(0);
          }
       }
 
-      this.tick_I = -1;
-      this.read_Str = "";
+      this.historyIndex = -1;
+      this.historyDraftValue = "";
       return this;
    }
 
-   public TextInputWidget close(boolean growX) {
-      super.init_TableIndex_Z(growX);
+   public TextInputWidget withGrowX(boolean growX) {
+      super.setGrowX(growX);
       return this;
    }
 
    @Override
-   public float init_F_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      if (this.open_F > 0.0F) {
-         return UiLayoutMath.clamp(this.open_F, this.flush_F, this.close_F);
+   public float measurePreferredWidth(autismclient.gui.ui.layout.LayoutContext context) {
+      if (this.preferredWidth > 0.0F) {
+         return UiLayoutMath.clamp(this.preferredWidth, this.minWidth, this.maxWidth);
       }
 
-      String sample = this.init_Str.isEmpty() ? this.load_Str : this.init_Str;
+      String sample = this.value.isEmpty() ? this.placeholder : this.value;
       if (sample.isEmpty()) {
          sample = "Component";
       }
 
-      Identifier font = this.init_Identifier_SyncManager(context);
-      int color = context.theme().load(this.init_l);
-      return UiLayoutMath.measurePaddedWidthFloat(context.font(), sample, font, color, context.theme().load(this.read_I + 2), this.flush_F, this.close_F);
+      Identifier font = this.resolveFontId(context);
+      int color = context.theme().load(this.textTone);
+      return UiLayoutMath.measurePaddedWidthFloat(context.font(), sample, font, color, context.theme().load(this.horizontalPadding + 2), this.minWidth, this.maxWidth);
    }
 
    @Override
-   public float init_F_SyncManager_F(autismclient.gui.ui.layout.LayoutContext context, float availableWidth) {
-      int resolvedFixedHeight = this.write_I > 0 ? this.write_I : Math.max(context.theme().update(), context.theme().load(16));
-      int contentHeight = context.theme().init_I_l(this.init_l) + context.theme().load(5);
+   public float measureHeight(autismclient.gui.ui.layout.LayoutContext context, float availableWidth) {
+      int resolvedFixedHeight = this.fixedHeight > 0 ? this.fixedHeight : Math.max(context.theme().update(), context.theme().load(16));
+      int contentHeight = context.theme().init_I_l(this.textTone) + context.theme().load(5);
       return Math.max(12, Math.max(resolvedFixedHeight, contentHeight));
    }
 
    @Override
-   public void init_V_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      if (this.init_Z) {
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawW = Math.round(this.read_F);
-         int drawH = Math.round(this.write);
-         boolean hovered = this.init_Z_F_F(context.mouseX(), context.mouseY());
-         float hover = this.init_F_Z_F(hovered, context.delta());
-         Identifier font = this.init_Identifier_SyncManager(context);
-         int fontHeight = context.theme().init_I_l(this.init_l);
-         int scaledHorizontalPadding = context.theme().load(this.read_I);
-         int textYOffsetPx = context.theme().open() + this.update_I - 1;
+   public void render(autismclient.gui.ui.layout.LayoutContext context) {
+      if (this.nodeVisible) {
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawW = Math.round(this.nodeWidth);
+         int drawH = Math.round(this.nodeHeight);
+         boolean hovered = this.containsPoint(context.mouseX(), context.mouseY());
+         float hover = this.stepHover(hovered, context.delta());
+         Identifier font = this.resolveFontId(context);
+         int fontHeight = context.theme().init_I_l(this.textTone);
+         int scaledHorizontalPadding = context.theme().load(this.horizontalPadding);
+         int textYOffsetPx = context.theme().open() + this.textYOffset - 1;
          int contentInset = context.theme().load(3);
          int frameInset = context.theme().load(2);
          int lineSpacing = context.theme().load(1);
-         int bodyColor = context.theme().load(this.init_l);
-         int placeholderColor = context.theme().load(this.load_l);
-         int bg = this.flush_I != 0 ? this.flush_I : (this.close_Z && this.flush_Z ? context.theme().start() : context.theme().reset());
-         int border = this.write_Z && this.close_Z && this.flush_Z ? context.theme().run() : context.theme().set();
-         int innerW = this.init_I_I(drawW, scaledHorizontalPadding, frameInset);
-         TextInputWidget.Inner_StreamUtil richMetrics = this.init_Str.isEmpty() ? null : this.init_BitSetUtil_StreamU_Str(this.init_Str);
-         if (!this.pop_Z) {
-            this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
+         int bodyColor = context.theme().load(this.textTone);
+         int placeholderColor = context.theme().load(this.placeholderTone);
+         int bg = this.backgroundColorOverride != 0 ? this.backgroundColorOverride : (this.focused && this.focusEffectsEnabled ? context.theme().start() : context.theme().reset());
+         int border = this.editable && this.focused && this.focusEffectsEnabled ? context.theme().run() : context.theme().set();
+         int innerW = this.computeInnerTextWidth(drawW, scaledHorizontalPadding, frameInset);
+         TextInputWidget.Inner_StreamUtil richMetrics = this.value.isEmpty() ? null : this.resolveRichMetrics(this.value);
+         if (!this.multiline) {
+            this.ensureHorizontalScrollForCursor(context.font(), font, bodyColor, innerW, richMetrics);
          }
 
          autismclient.gui.f.NetHelper fieldBounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
-         int radius = this.sync_I;
-         if (this.update_Z) {
+         int radius = this.cornerRadius;
+         if (this.drawBackground) {
             autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds, radius, context.applyAlpha(bg), context.applyAlpha(border));
          } else {
             autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds, context.applyAlpha(border));
          }
 
-         if (this.write_Z && this.sync_Z && hover > 0.0F && !this.close_Z) {
+         if (this.editable && this.hoverEffectsEnabled && hover > 0.0F && !this.focused) {
             int hoverTint = ThemePaletteManager.recolor((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.ColorRole.ACCENT);
             autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds.init(1), Math.max(0, radius - 1), context.applyAlpha(hoverTint));
          }
 
-         if (!this.write_Z) {
+         if (!this.editable) {
             autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds.init(1), Math.max(0, radius - 1), context.applyAlpha(1712592152));
-         } else if (this.close_Z && this.flush_Z) {
+         } else if (this.focused && this.focusEffectsEnabled) {
             autismclient.gui.f.PacketUtil.load(
                context.graphics(),
                fieldBounds.init(1),
@@ -471,13 +471,13 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }
 
          int textX = drawX + scaledHorizontalPadding;
-         if (this.init_Str.isEmpty()) {
-            if (this.pop_Z) {
+         if (this.value.isEmpty()) {
+            if (this.multiline) {
                int textY = drawY + contentInset + textYOffsetPx;
                context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
-                  for (String line : this.load(context.font(), font, placeholderColor, this.load_Str, innerW)) {
+                  for (String line : this.wrapPlaceholderLines(context.font(), font, placeholderColor, this.placeholder, innerW)) {
                      if (textY + fontHeight > drawY + drawH - frameInset) {
                         break;
                      }
@@ -489,7 +489,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                   context.viewport().popClip(context.graphics());
                }
 
-               if (this.close_Z && this.flush_Z()) {
+               if (this.focused && this.isCaretBlinkVisible()) {
                   context.graphics()
                      .fill(
                         textX,
@@ -501,9 +501,9 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
             } else {
                int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
-               String displayPlaceholder = k.init(context.font(), this.load_Str, innerW, font, placeholderColor);
+               String displayPlaceholder = k.init(context.font(), this.placeholder, innerW, font, placeholderColor);
                k.init(context.graphics(), context.font(), displayPlaceholder, font, context.applyAlpha(placeholderColor), textX, textY, false);
-               if (this.close_Z && this.flush_Z()) {
+               if (this.focused && this.isCaretBlinkVisible()) {
                   context.graphics()
                      .fill(
                         textX,
@@ -514,14 +514,14 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                      );
                }
             }
-         } else if (this.pop_Z) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+         } else if (this.multiline) {
+            List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
             int lineHeight = fontHeight + lineSpacing;
             int visibleLineCount = Math.max(1, Math.max(1, drawH - context.theme().load(6)) / lineHeight);
-            this.init_V_I_List(visibleLineCount, wrappedLines);
-            int selectionStart = Math.min(this.close_I, this.open_I);
-            int selectionEnd = Math.max(this.close_I, this.open_I);
-            int startLine = Math.min(this.push_I, Math.max(0, wrappedLines.size() - 1));
+            this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
+            int selectionStart = Math.min(this.cursorIndex, this.selectionAnchor);
+            int selectionEnd = Math.max(this.cursorIndex, this.selectionAnchor);
+            int startLine = Math.min(this.verticalScrollLine, Math.max(0, wrappedLines.size() - 1));
             int endLine = Math.min(wrappedLines.size(), startLine + visibleLineCount);
             context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
@@ -531,12 +531,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                for (int lineIndex = startLine; lineIndex < endLine; lineIndex++) {
                   TextInputWidget.Inner_CachePool line = wrappedLines.get(lineIndex);
                   if (selectionStart != selectionEnd) {
-                     int visibleSelectionStart = Math.max(selectionStart, line.init());
-                     int visibleSelectionEnd = Math.min(selectionEnd, line.read());
+                     int visibleSelectionStart = Math.max(selectionStart, line.start());
+                     int visibleSelectionEnd = Math.min(selectionEnd, line.renderEnd());
                      if (visibleSelectionStart < visibleSelectionEnd) {
                         int selectionX = textX
-                           + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleSelectionStart);
-                        int selectionW = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
+                           + this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, line.start(), visibleSelectionStart);
+                        int selectionW = this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, visibleSelectionStart, visibleSelectionEnd);
                         context.graphics()
                            .fill(
                               selectionX,
@@ -549,21 +549,21 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                   }
 
                   if (richMetrics != null) {
-                     this.init(
+                     this.drawStyledSegment(
                         context.graphics(),
                         context.font(),
                         font,
                         bodyColor,
-                        this.init_Str,
+                        this.value,
                         richMetrics,
-                        line.init(),
-                        line.read(),
+                        line.start(),
+                        line.renderEnd(),
                         textX,
                         lineY
                      );
                   } else {
-                     String lineComponent = this.init_Str.substring(line.init(), line.read());
-                     this.init(context.graphics(), context.font(), lineComponent, font, context.applyAlpha(bodyColor), textX, lineY);
+                     String lineComponent = this.value.substring(line.start(), line.renderEnd());
+                     this.drawPlainSegment(context.graphics(), context.font(), lineComponent, font, context.applyAlpha(bodyColor), textX, lineY);
                   }
 
                   lineY += lineHeight;
@@ -572,12 +572,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                context.viewport().popClip(context.graphics());
             }
 
-            if (this.close_Z && this.flush_Z()) {
-               int cursorLine = this.init_I_List_I(wrappedLines, this.close_I);
+            if (this.focused && this.isCaretBlinkVisible()) {
+               int cursorLine = this.findLineIndexForCursor(wrappedLines, this.cursorIndex);
                if (cursorLine >= startLine && cursorLine < endLine) {
                   TextInputWidget.Inner_CachePool line = wrappedLines.get(cursorLine);
-                  int visibleCursor = Math.min(this.close_I, this.init_I_BitSetUtil_CachePo(line));
-                  int caretX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleCursor);
+                  int visibleCursor = Math.min(this.cursorIndex, this.lineContentEnd(line));
+                  int caretX = textX + this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, line.start(), visibleCursor);
                   int caretY = drawY + contentInset + textYOffsetPx + (cursorLine - startLine) * lineHeight;
                   context.graphics()
                      .fill(
@@ -590,18 +590,18 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
             }
 
-            this.init_V_SyncManager(context, drawX, drawY, drawW, drawH, lineHeight, visibleLineCount, wrappedLines.size());
+            this.renderMultilineScrollbar(context, drawX, drawY, drawW, drawH, lineHeight, visibleLineCount, wrappedLines.size());
          } else {
             int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
-            int visibleEnd = this.init_I_Font_2(context.font(), font, bodyColor, innerW, richMetrics);
-            int selectionStart = Math.min(this.close_I, this.open_I);
-            int selectionEnd = Math.max(this.close_I, this.open_I);
+            int visibleEnd = this.findVisibleEndIndex(context.font(), font, bodyColor, innerW, richMetrics);
+            int selectionStart = Math.min(this.cursorIndex, this.selectionAnchor);
+            int selectionEnd = Math.max(this.cursorIndex, this.selectionAnchor);
             if (selectionStart != selectionEnd) {
-               int visibleSelectionStart = Math.max(selectionStart, this.poll_I);
+               int visibleSelectionStart = Math.max(selectionStart, this.horizontalScrollIndex);
                int visibleSelectionEnd = Math.min(selectionEnd, visibleEnd);
                if (visibleSelectionStart < visibleSelectionEnd) {
-                  int selectionX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleSelectionStart);
-                  int selectionW = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
+                  int selectionX = textX + this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, this.horizontalScrollIndex, visibleSelectionStart);
+                  int selectionW = this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, visibleSelectionStart, visibleSelectionEnd);
                   context.graphics()
                      .fill(
                         selectionX,
@@ -617,8 +617,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
-                  this.init(
-                     context.graphics(), context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleEnd, textX, textY
+                  this.drawStyledSegment(
+                     context.graphics(), context.font(), font, bodyColor, this.value, richMetrics, this.horizontalScrollIndex, visibleEnd, textX, textY
                   );
                } finally {
                   context.viewport().popClip(context.graphics());
@@ -627,10 +627,10 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
-                  this.init(
+                  this.drawPlainSegment(
                      context.graphics(),
                      context.font(),
-                     this.init_Str.substring(this.poll_I, visibleEnd),
+                     this.value.substring(this.horizontalScrollIndex, visibleEnd),
                      font,
                      context.applyAlpha(bodyColor),
                      textX,
@@ -641,8 +641,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
             }
 
-            if (this.close_Z && this.flush_Z()) {
-               int caretX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, this.close_I);
+            if (this.focused && this.isCaretBlinkVisible()) {
+               int caretX = textX + this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, this.horizontalScrollIndex, this.cursorIndex);
                context.graphics()
                   .fill(
                      caretX,
@@ -657,125 +657,125 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
-      if (button != 0 || !this.init_Z_F_F(mouseX, mouseY)) {
+   public boolean mouseClicked(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
+      if (button != 0 || !this.containsPoint(mouseX, mouseY)) {
          return false;
       }
 
-      if (this.pop_Z && this.init_Z_SyncManager(context, mouseX, mouseY)) {
-         this.init_V_Z(true);
+      if (this.multiline && this.tryStartScrollbarDrag(context, mouseX, mouseY)) {
+         this.setFocused(true);
          return true;
       }
 
-      if (!this.write_Z) {
+      if (!this.editable) {
          return false;
       }
 
-      this.init_V_Z(true);
-      this.push_Z = true;
-      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
-      Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.theme().load(this.init_l);
-      TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
+      this.setFocused(true);
+      this.draggingSelection = true;
+      int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
+      Identifier font = this.resolveFontId(context);
+      int bodyColor = context.theme().load(this.textTone);
+      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
       int clickCursor;
-      if (this.pop_Z) {
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
-         int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
-         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
-         this.init_V_I_List(visibleLineCount, wrappedLines);
-         clickCursor = this.init_I_Font(
+      if (this.multiline) {
+         List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+         int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
+         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
+         this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
+         clickCursor = this.indexForMultilinePoint(
             context.font(),
             font,
             bodyColor,
-            mouseX - (this.init_F + context.theme().load(this.read_I)),
-            mouseY - this.load_F_SyncManager(context),
+            mouseX - (this.nodeX + context.theme().load(this.horizontalPadding)),
+            mouseY - this.multilineTextOriginY(context),
             lineHeight,
             wrappedLines,
             richMetrics
          );
       } else {
-         this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
-         clickCursor = this.init_I_Font(
-            context.font(), font, bodyColor, mouseX - (this.init_F + context.theme().load(this.read_I)), richMetrics
+         this.ensureHorizontalScrollForCursor(context.font(), font, bodyColor, innerW, richMetrics);
+         clickCursor = this.indexForSingleLineX(
+            context.font(), font, bodyColor, mouseX - (this.nodeX + context.theme().load(this.horizontalPadding)), richMetrics
          );
       }
 
-      int clickCount = this.init_I_F_F(mouseX, mouseY);
+      int clickCount = this.registerClickCount(mouseX, mouseY);
       long handle = Minecraft.getInstance().getWindow().handle();
       boolean extend = CompatGLFW.glfwGetKey(handle, 340) == 1 || CompatGLFW.glfwGetKey(handle, 344) == 1;
       if (extend) {
-         this.close_I = clickCursor;
+         this.cursorIndex = clickCursor;
       } else if (clickCount >= 3) {
-         this.load_V_I(clickCursor);
+         this.selectParagraphAt(clickCursor);
       } else if (clickCount == 2) {
-         this.init_V_I(clickCursor);
+         this.selectWordAt(clickCursor);
       } else {
-         this.close_I = clickCursor;
-         this.open_I = clickCursor;
+         this.cursorIndex = clickCursor;
+         this.selectionAnchor = clickCursor;
       }
 
-      this.poll_Z = false;
-      this.read_V();
+      this.manualScrollPinned = false;
+      this.resetCaretBlink();
       return true;
    }
 
    @Override
-   public boolean load_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
-      if (button == 0 && this.open_Z) {
-         this.open_Z = false;
-         this.pop_I = 0;
+   public boolean mouseReleased(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
+      if (button == 0 && this.draggingScrollbar) {
+         this.draggingScrollbar = false;
+         this.scrollbarDragOffsetY = 0;
          return true;
-      } else if (button == 0 && this.push_Z) {
-         this.push_Z = false;
-         return this.close_Z;
+      } else if (button == 0 && this.draggingSelection) {
+         this.draggingSelection = false;
+         return this.focused;
       } else {
          return false;
       }
    }
 
    @Override
-   public boolean init_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
-      if (button == 0 && this.open_Z) {
-         this.init_V_SyncManager_F(context, mouseY);
+   public boolean mouseDragged(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
+      if (button == 0 && this.draggingScrollbar) {
+         this.updateScrollbarDrag(context, mouseY);
          return true;
       }
 
-      if (this.write_Z && this.close_Z && this.push_Z && button == 0) {
-         Identifier font = this.init_Identifier_SyncManager(context);
-         int bodyColor = context.theme().load(this.init_l);
-         int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
-         TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-         if (this.pop_Z) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
-            int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
-            int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
-            this.init_V_I_List(visibleLineCount, wrappedLines);
-            this.close_I = this.init_I_Font(
+      if (this.editable && this.focused && this.draggingSelection && button == 0) {
+         Identifier font = this.resolveFontId(context);
+         int bodyColor = context.theme().load(this.textTone);
+         int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
+         TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+         if (this.multiline) {
+            List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+            int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
+            int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
+            this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
+            this.cursorIndex = this.indexForMultilinePoint(
                context.font(),
                font,
                bodyColor,
-               mouseX - (this.init_F + context.theme().load(this.read_I)),
-               mouseY - this.load_F_SyncManager(context),
+               mouseX - (this.nodeX + context.theme().load(this.horizontalPadding)),
+               mouseY - this.multilineTextOriginY(context),
                lineHeight,
                wrappedLines,
                richMetrics
             );
          } else {
-            this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
-            this.close_I = this.init_I_Font(
-               context.font(), font, bodyColor, mouseX - (this.init_F + context.theme().load(this.read_I)), richMetrics
+            this.ensureHorizontalScrollForCursor(context.font(), font, bodyColor, innerW, richMetrics);
+            this.cursorIndex = this.indexForSingleLineX(
+               context.font(), font, bodyColor, mouseX - (this.nodeX + context.theme().load(this.horizontalPadding)), richMetrics
             );
          }
 
-         this.poll_Z = false;
-         this.read_V();
+         this.manualScrollPinned = false;
+         this.resetCaretBlink();
          return true;
       } else {
          return false;
       }
    }
 
-   private void init_V_SyncManager(
+   private void renderMultilineScrollbar(
       autismclient.gui.ui.layout.LayoutContext context, int drawX, int drawY, int drawW, int drawH, int lineHeight, int visibleLineCount, int wrappedLineCount
    ) {
       int maxStart = Math.max(0, wrappedLineCount - visibleLineCount);
@@ -787,68 +787,68 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             drawY + 2,
             3,
             Math.max(1, drawH - 4),
-            this.push_I * lineHeight
+            this.verticalScrollLine * lineHeight
          );
-         ScrollbarMetricsHelper.render(context.graphics(), metrics, metrics.containsTrack(context.mouseX(), context.mouseY()), this.open_Z);
+         ScrollbarMetricsHelper.render(context.graphics(), metrics, metrics.containsTrack(context.mouseX(), context.mouseY()), this.draggingScrollbar);
       }
    }
 
-   private boolean init_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY) {
-      TextInputWidget.Inner_DataUtil info = this.init_BitSetUtil_DataUti_SyncManager(context);
-      if (info != null && info.init_PoolEntry_DataUtil().isScrollable() && info.init_PoolEntry_DataUtil().containsTrack(mouseX, mouseY)) {
-         this.open_Z = true;
-         this.pop_I = info.init_PoolEntry_DataUtil().containsThumb(mouseX, mouseY)
-            ? Math.max(0, Math.round(mouseY) - info.init_PoolEntry_DataUtil().thumbY())
-            : info.init_PoolEntry_DataUtil().thumbHeight() / 2;
-         this.init_V_SyncManager_F(context, mouseY);
+   private boolean tryStartScrollbarDrag(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY) {
+      TextInputWidget.Inner_DataUtil info = this.computeScrollbarInfo(context);
+      if (info != null && info.metrics().isScrollable() && info.metrics().containsTrack(mouseX, mouseY)) {
+         this.draggingScrollbar = true;
+         this.scrollbarDragOffsetY = info.metrics().containsThumb(mouseX, mouseY)
+            ? Math.max(0, Math.round(mouseY) - info.metrics().thumbY())
+            : info.metrics().thumbHeight() / 2;
+         this.updateScrollbarDrag(context, mouseY);
          return true;
       } else {
          return false;
       }
    }
 
-   private void init_V_SyncManager_F(autismclient.gui.ui.layout.LayoutContext context, float mouseY) {
-      TextInputWidget.Inner_DataUtil info = this.init_BitSetUtil_DataUti_SyncManager(context);
-      if (info != null && info.init_PoolEntry_DataUtil().isScrollable()) {
-         int pixels = ScrollbarMetricsHelper.scrollOffsetForMouseY(info.init_PoolEntry_DataUtil(), mouseY, this.pop_I);
-         this.push_I = Math.max(0, Math.min(info.load(), Math.round((float)pixels / Math.max(1, info.init_I()))));
-         this.poll_Z = true;
+   private void updateScrollbarDrag(autismclient.gui.ui.layout.LayoutContext context, float mouseY) {
+      TextInputWidget.Inner_DataUtil info = this.computeScrollbarInfo(context);
+      if (info != null && info.metrics().isScrollable()) {
+         int pixels = ScrollbarMetricsHelper.scrollOffsetForMouseY(info.metrics(), mouseY, this.scrollbarDragOffsetY);
+         this.verticalScrollLine = Math.max(0, Math.min(info.maxStartLine(), Math.round((float)pixels / Math.max(1, info.lineHeight()))));
+         this.manualScrollPinned = true;
       }
    }
 
-   private TextInputWidget.Inner_DataUtil init_BitSetUtil_DataUti_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      if (!this.pop_Z) {
+   private TextInputWidget.Inner_DataUtil computeScrollbarInfo(autismclient.gui.ui.layout.LayoutContext context) {
+      if (!this.multiline) {
          return null;
       }
 
-      Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.theme().load(this.init_l);
-      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
-      TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-      List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_Str.isEmpty()
-         ? this.init_List_Font_2(context.font(), font, bodyColor, this.load_Str, innerW)
-         : this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
-      int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
-      int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
+      Identifier font = this.resolveFontId(context);
+      int bodyColor = context.theme().load(this.textTone);
+      int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
+      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+      List<TextInputWidget.Inner_CachePool> wrappedLines = this.value.isEmpty()
+         ? this.wrapPlaceholderAsSpans(context.font(), font, bodyColor, this.placeholder, innerW)
+         : this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+      int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
+      int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
       int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
       ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(
          Math.max(lineHeight, wrappedLines.size() * lineHeight),
          Math.max(lineHeight, visibleLineCount * lineHeight),
-         Math.round(this.init_F + this.read_F) - 5,
-         Math.round(this.load_F) + 2,
+         Math.round(this.nodeX + this.nodeWidth) - 5,
+         Math.round(this.nodeY) + 2,
          3,
-         Math.max(1, Math.round(this.write) - 4),
-         this.push_I * lineHeight
+         Math.max(1, Math.round(this.nodeHeight) - 4),
+         this.verticalScrollLine * lineHeight
       );
       return new TextInputWidget.Inner_DataUtil(metrics, lineHeight, maxStart);
    }
 
-   private List<TextInputWidget.Inner_CachePool> init_List_Font_2(Font renderer, Identifier font, int color, String text, int maxWidth) {
+   private List<TextInputWidget.Inner_CachePool> wrapPlaceholderAsSpans(Font renderer, Identifier font, int color, String text, int maxWidth) {
       String source = text != null && !text.isEmpty() ? text : " ";
       List<TextInputWidget.Inner_CachePool> lines = new ArrayList<>();
       int offset = 0;
 
-      for (String line : this.load(renderer, font, color, source, maxWidth)) {
+      for (String line : this.wrapPlaceholderLines(renderer, font, color, source, maxWidth)) {
          int end = Math.min(source.length(), offset + line.length());
          lines.add(new TextInputWidget.Inner_CachePool(offset, end, end));
          offset = Math.min(source.length(), end + 1);
@@ -862,29 +862,29 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    @Override
-   public boolean init_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, float amount) {
-      if (this.pop_Z && this.init_Z_F_F(mouseX, mouseY)) {
-         Identifier font = this.init_Identifier_SyncManager(context);
-         int bodyColor = context.theme().load(this.init_l);
-         int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
-         TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
-         int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
-         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
+   public boolean mouseScrolled(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, float amount) {
+      if (this.multiline && this.containsPoint(mouseX, mouseY)) {
+         Identifier font = this.resolveFontId(context);
+         int bodyColor = context.theme().load(this.textTone);
+         int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
+         TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+         List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+         int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
+         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
          int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
          if (maxStart <= 0) {
             return false;
          }
 
          int step = Math.max(1, Math.round(Math.abs(amount) * 3.0F));
-         int next = this.push_I + (amount < 0.0F ? step : -step);
+         int next = this.verticalScrollLine + (amount < 0.0F ? step : -step);
          next = Math.max(0, Math.min(maxStart, next));
-         if (next == this.push_I) {
+         if (next == this.verticalScrollLine) {
             return false;
          }
 
-         this.push_I = next;
-         this.poll_Z = true;
+         this.verticalScrollLine = next;
+         this.manualScrollPinned = true;
          return true;
       } else {
          return false;
@@ -892,127 +892,127 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    @Override
-   public boolean init_Z_SyncManager_3(autismclient.gui.ui.layout.LayoutContext context, int keyCode, int scanCode, int modifiers) {
-      if (this.close_Z && this.write_Z) {
+   public boolean keyPressed(autismclient.gui.ui.layout.LayoutContext context, int keyCode, int scanCode, int modifiers) {
+      if (this.focused && this.editable) {
          boolean ctrl = (modifiers & 10) != 0;
          boolean shift = (modifiers & 1) != 0;
          switch (keyCode) {
             case 65:
                if (ctrl) {
-                  this.open_I = 0;
-                  this.close_I = this.init_Str.length();
-                  this.poll_Z = false;
-                  this.read_V();
+                  this.selectionAnchor = 0;
+                  this.cursorIndex = this.value.length();
+                  this.manualScrollPinned = false;
+                  this.resetCaretBlink();
                   return true;
                }
                break;
             case 67:
                if (ctrl) {
-                  this.close_V();
+                  this.copySelectionToClipboard();
                   return true;
                }
                break;
             case 86:
                if (ctrl) {
-                  this.open_V();
+                  this.pasteFromClipboard();
                   return true;
                }
                break;
             case 88:
                if (ctrl) {
-                  this.close_V();
-                  this.open_Z();
+                  this.copySelectionToClipboard();
+                  this.deleteSelection();
                   return true;
                }
                break;
             case 256:
-               this.init_V_Z(false);
+               this.setFocused(false);
                return true;
             case 257:
             case 335:
-               if (!this.pop_Z || this.tick_Z && !shift) {
-                  if (this.load_Consumer != null) {
-                     this.load_Consumer.accept(this.init_Str);
+               if (!this.multiline || this.submitOnEnter && !shift) {
+                  if (this.onSubmit != null) {
+                     this.onSubmit.accept(this.value);
                   }
 
                   return true;
                }
 
-               this.load_V_Str("\n");
+               this.replaceSelection("\n");
                return true;
             case 259:
-               if (this.open_Z()) {
+               if (this.deleteSelection()) {
                   return true;
                }
 
-               if (this.close_I > 0) {
-                  int from = ctrl ? this.init_I_I(this.close_I) : Utf16TextCursor.read(this.init_Str, this.close_I);
-                  this.init_V_I(from, this.close_I, "");
+               if (this.cursorIndex > 0) {
+                  int from = ctrl ? this.findPreviousWordBoundary(this.cursorIndex) : Utf16TextCursor.read(this.value, this.cursorIndex);
+                  this.replaceRange(from, this.cursorIndex, "");
                }
 
                return true;
             case 261:
-               if (this.open_Z()) {
+               if (this.deleteSelection()) {
                   return true;
                }
 
-               if (this.close_I < this.init_Str.length()) {
-                  int to = ctrl ? this.load_I_I(this.close_I) : Utf16TextCursor.write(this.init_Str, this.close_I);
-                  this.init_V_I(this.close_I, to, "");
+               if (this.cursorIndex < this.value.length()) {
+                  int to = ctrl ? this.findNextWordBoundary(this.cursorIndex) : Utf16TextCursor.write(this.value, this.cursorIndex);
+                  this.replaceRange(this.cursorIndex, to, "");
                }
 
                return true;
             case 262:
                if (ctrl) {
-                  this.load(this.load_I_I(this.close_I), shift);
+                  this.moveCursorTo(this.findNextWordBoundary(this.cursorIndex), shift);
                } else {
-                  this.init_V_I_Z(1, shift);
+                  this.moveCursorByCodePoints(1, shift);
                }
 
                return true;
             case 263:
                if (ctrl) {
-                  this.load(this.init_I_I(this.close_I), shift);
+                  this.moveCursorTo(this.findPreviousWordBoundary(this.cursorIndex), shift);
                } else {
-                  this.init_V_I_Z(-1, shift);
+                  this.moveCursorByCodePoints(-1, shift);
                }
 
                return true;
             case 264:
-               if (!this.pop_Z && this.run_Z) {
-                  this.read_V_I(1);
+               if (!this.multiline && this.historyNavigationEnabled) {
+                  this.navigateHistory(1);
                   return true;
                }
 
-               if (this.pop_Z) {
-                  this.init_V_SyncManager(context, 1, shift);
+               if (this.multiline) {
+                  this.moveCursorVertically(context, 1, shift);
                   return true;
                }
                break;
             case 265:
-               if (!this.pop_Z && this.run_Z) {
-                  this.read_V_I(-1);
+               if (!this.multiline && this.historyNavigationEnabled) {
+                  this.navigateHistory(-1);
                   return true;
                }
 
-               if (this.pop_Z) {
-                  this.init_V_SyncManager(context, -1, shift);
+               if (this.multiline) {
+                  this.moveCursorVertically(context, -1, shift);
                   return true;
                }
                break;
             case 268:
-               if (!ctrl && this.pop_Z) {
-                  this.load(this.read_I_I(this.close_I), shift);
+               if (!ctrl && this.multiline) {
+                  this.moveCursorTo(this.findLineStart(this.cursorIndex), shift);
                } else {
-                  this.load(0, shift);
+                  this.moveCursorTo(0, shift);
                }
 
                return true;
             case 269:
-               if (!ctrl && this.pop_Z) {
-                  this.load(this.write_I(this.close_I), shift);
+               if (!ctrl && this.multiline) {
+                  this.moveCursorTo(this.findLineEnd(this.cursorIndex), shift);
                } else {
-                  this.load(this.init_Str.length(), shift);
+                  this.moveCursorTo(this.value.length(), shift);
                }
 
                return true;
@@ -1025,9 +1025,9 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(autismclient.gui.ui.layout.LayoutContext context, char chr, int modifiers) {
-      if (this.close_Z && this.write_Z && this.init_Z_I(chr)) {
-         this.load_V_Str(Character.toString(chr));
+   public boolean charTyped(autismclient.gui.ui.layout.LayoutContext context, char chr, int modifiers) {
+      if (this.focused && this.editable && this.isAllowedCodePoint(chr)) {
+         this.replaceSelection(Character.toString(chr));
          return true;
       } else {
          return false;
@@ -1035,158 +1035,158 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    @Override
-   public boolean load_Z() {
-      return this.close_Z;
+   public boolean isFocused() {
+      return this.focused;
    }
 
    @Override
-   public void init_V_Z(boolean focused) {
-      boolean nextFocused = focused && this.write_Z;
-      if (!nextFocused || this.close_Z != nextFocused) {
-         this.push_Z = false;
+   public void setFocused(boolean focused) {
+      boolean nextFocused = focused && this.editable;
+      if (!nextFocused || this.focused != nextFocused) {
+         this.draggingSelection = false;
       }
 
-      this.close_Z = nextFocused;
+      this.focused = nextFocused;
       if (nextFocused) {
-         TextInputWidget previous = init_BitSetUtil;
+         TextInputWidget previous = focusedWidget;
          if (previous != null && previous != this) {
-            previous.init_V_Z(false);
+            previous.setFocused(false);
          }
 
-         init_BitSetUtil = this;
-      } else if (init_BitSetUtil == this) {
-         init_BitSetUtil = null;
+         focusedWidget = this;
+      } else if (focusedWidget == this) {
+         focusedWidget = null;
       }
 
-      this.read_V();
+      this.resetCaretBlink();
    }
 
-   public static boolean read_Z() {
-      TextInputWidget input = init_BitSetUtil;
-      return input != null && input.load_Z();
+   public static boolean hasAnyFocused() {
+      TextInputWidget input = focusedWidget;
+      return input != null && input.isFocused();
    }
 
-   public static void init_V() {
-      TextInputWidget input = init_BitSetUtil;
+   public static void clearGlobalFocus() {
+      TextInputWidget input = focusedWidget;
       if (input != null) {
-         input.init_V_Z(false);
+         input.setFocused(false);
       }
 
-      init_BitSetUtil = null;
+      focusedWidget = null;
    }
 
-   public TextInputWidget flush(int selectionEnd) {
-      this.close_I = Utf16TextCursor.init_I(this.init_Str, selectionEnd);
-      this.poll_Z = false;
-      this.read_V();
+   public TextInputWidget setSelectionEnd(int selectionEnd) {
+      this.cursorIndex = Utf16TextCursor.init_I(this.value, selectionEnd);
+      this.manualScrollPinned = false;
+      this.resetCaretBlink();
       return this;
    }
 
-   public TextInputWidget init_BitSetUtil() {
-      this.load(this.init_Str.length(), false);
+   public TextInputWidget moveCursorToEnd() {
+      this.moveCursorTo(this.value.length(), false);
       return this;
    }
 
-   public int init_I() {
-      return Math.min(this.close_I, this.open_I);
+   public int getSelectionStart() {
+      return Math.min(this.cursorIndex, this.selectionAnchor);
    }
 
-   public int load_I() {
-      return Math.max(this.close_I, this.open_I);
+   public int getSelectionEnd() {
+      return Math.max(this.cursorIndex, this.selectionAnchor);
    }
 
-   public String load_Str() {
-      return this.init_Str.substring(this.init_I(), this.load_I());
+   public String getSelectedText() {
+      return this.value.substring(this.getSelectionStart(), this.getSelectionEnd());
    }
 
-   public TextInputWidget write(String text) {
-      this.load_V_Str(text == null ? "" : text);
+   public TextInputWidget insertText(String text) {
+      this.replaceSelection(text == null ? "" : text);
       return this;
    }
 
-   private Identifier init_Identifier_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      return this.init_Identifier != null ? this.init_Identifier : context.theme().init_Identifier_l(l.read);
+   private Identifier resolveFontId(autismclient.gui.ui.layout.LayoutContext context) {
+      return this.fontId != null ? this.fontId : context.theme().init_Identifier_l(l.read);
    }
 
-   private boolean flush_Z() {
-      return (System.currentTimeMillis() - this.load_J) / 530L % 2L == 0L;
+   private boolean isCaretBlinkVisible() {
+      return (System.currentTimeMillis() - this.blinkResetMs) / 530L % 2L == 0L;
    }
 
-   private void read_V() {
-      this.load_J = System.currentTimeMillis();
+   private void resetCaretBlink() {
+      this.blinkResetMs = System.currentTimeMillis();
    }
 
-   private void write_V() {
-      this.close_I = Utf16TextCursor.init_I(this.init_Str, this.close_I);
-      this.open_I = Utf16TextCursor.init_I(this.init_Str, this.open_I);
+   private void clampCursorAndSelection() {
+      this.cursorIndex = Utf16TextCursor.init_I(this.value, this.cursorIndex);
+      this.selectionAnchor = Utf16TextCursor.init_I(this.value, this.selectionAnchor);
    }
 
-   private int init_I_Font_2(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
-      this.init_V_Font(renderer, font, color, richMetrics);
-      int start = Utf16TextCursor.init_I(this.init_Str, this.poll_I);
-      int target = this.init_IArr[start] + Math.max(0, availableWidth);
-      return Utf16TextCursor.init_I(this.init_Str, load_I_IArr(this.init_IArr, start, this.init_Str.length(), target));
+   private int findVisibleEndIndex(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
+      this.ensurePrefixWidths(renderer, font, color, richMetrics);
+      int start = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      int target = this.prefixWidths[start] + Math.max(0, availableWidth);
+      return Utf16TextCursor.init_I(this.value, upperBoundInclusive(this.prefixWidths, start, this.value.length(), target));
    }
 
-   private void init_V_Font(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
-      this.write_V();
-      this.init_V_Font(renderer, font, color, richMetrics);
-      int safeCursor = Utf16TextCursor.init_I(this.init_Str, this.close_I);
-      this.poll_I = Utf16TextCursor.init_I(this.init_Str, this.poll_I);
-      if (safeCursor < this.poll_I) {
-         this.poll_I = safeCursor;
+   private void ensureHorizontalScrollForCursor(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
+      this.clampCursorAndSelection();
+      this.ensurePrefixWidths(renderer, font, color, richMetrics);
+      int safeCursor = Utf16TextCursor.init_I(this.value, this.cursorIndex);
+      this.horizontalScrollIndex = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      if (safeCursor < this.horizontalScrollIndex) {
+         this.horizontalScrollIndex = safeCursor;
       }
 
-      int target = this.init_IArr[safeCursor] - Math.max(0, availableWidth);
-      if (this.init_IArr[this.poll_I] < target) {
-         this.poll_I = Utf16TextCursor.load(this.init_Str, init_I_IArr(this.init_IArr, 0, safeCursor, target));
+      int target = this.prefixWidths[safeCursor] - Math.max(0, availableWidth);
+      if (this.prefixWidths[this.horizontalScrollIndex] < target) {
+         this.horizontalScrollIndex = Utf16TextCursor.load(this.value, lowerBound(this.prefixWidths, 0, safeCursor, target));
       }
 
-      int maxOffsetWidth = Math.max(0, this.init_IArr[this.init_Str.length()] - Math.max(0, availableWidth));
-      if (this.init_IArr[this.poll_I] > maxOffsetWidth) {
-         this.poll_I = Utf16TextCursor.init_I(this.init_Str, init_I_IArr(this.init_IArr, 0, this.poll_I, maxOffsetWidth));
+      int maxOffsetWidth = Math.max(0, this.prefixWidths[this.value.length()] - Math.max(0, availableWidth));
+      if (this.prefixWidths[this.horizontalScrollIndex] > maxOffsetWidth) {
+         this.horizontalScrollIndex = Utf16TextCursor.init_I(this.value, lowerBound(this.prefixWidths, 0, this.horizontalScrollIndex, maxOffsetWidth));
       }
 
-      if (this.poll_I == safeCursor && safeCursor > 0) {
-         this.poll_I = Utf16TextCursor.read(this.init_Str, safeCursor);
+      if (this.horizontalScrollIndex == safeCursor && safeCursor > 0) {
+         this.horizontalScrollIndex = Utf16TextCursor.read(this.value, safeCursor);
       }
    }
 
-   private int init_I_Font(Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_StreamUtil richMetrics) {
-      this.init_V_Font(renderer, font, color, richMetrics);
-      int start = Utf16TextCursor.init_I(this.init_Str, this.poll_I);
-      int target = Math.max(0, this.init_IArr[start] + Math.round(mouseInnerX));
-      int candidate = read(this.init_IArr, 0, this.init_Str.length(), target);
-      return Utf16TextCursor.init(this.init_Str, this.init_IArr, candidate, target);
+   private int indexForSingleLineX(Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_StreamUtil richMetrics) {
+      this.ensurePrefixWidths(renderer, font, color, richMetrics);
+      int start = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      int target = Math.max(0, this.prefixWidths[start] + Math.round(mouseInnerX));
+      int candidate = nearestWidthIndex(this.prefixWidths, 0, this.value.length(), target);
+      return Utf16TextCursor.init(this.value, this.prefixWidths, candidate, target);
    }
 
-   private List<String> load(Font renderer, Identifier font, int color, String text, int availableWidth) {
+   private List<String> wrapPlaceholderLines(Font renderer, Identifier font, int color, String text, int availableWidth) {
       if (text != null && !text.isEmpty()) {
          int safeWidth = Math.max(1, availableWidth);
          int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
-         if (Objects.equals(text, this.load_Str)
-            && Objects.equals(this.update_Str, text)
-            && this.read_Font == renderer
-            && Objects.equals(this.write_Identifier, font)
-            && this.add_I == reloadGeneration
-            && this.clear == safeWidth) {
-            return this.read_List;
+         if (Objects.equals(text, this.placeholder)
+            && Objects.equals(this.placeholderWrapText, text)
+            && this.placeholderWrapFont == renderer
+            && Objects.equals(this.placeholderWrapFontId, font)
+            && this.placeholderWrapGeneration == reloadGeneration
+            && this.placeholderWrapWidth == safeWidth) {
+            return this.cachedPlaceholderLines;
          }
 
          List<String> wrapped = new ArrayList<>();
 
-         for (TextInputWidget.Inner_CachePool line : this.init_List_Font(renderer, font, color, text, safeWidth, null)) {
-            wrapped.add(text.substring(line.init(), line.read()));
+         for (TextInputWidget.Inner_CachePool line : this.computeWrappedLines(renderer, font, color, text, safeWidth, null)) {
+            wrapped.add(text.substring(line.start(), line.renderEnd()));
          }
 
          List<String> result = wrapped.isEmpty() ? List.of("") : List.copyOf(wrapped);
-         if (Objects.equals(text, this.load_Str)) {
-            this.update_Str = text;
-            this.read_Font = renderer;
-            this.write_Identifier = font;
-            this.add_I = reloadGeneration;
-            this.clear = safeWidth;
-            this.read_List = result;
+         if (Objects.equals(text, this.placeholder)) {
+            this.placeholderWrapText = text;
+            this.placeholderWrapFont = renderer;
+            this.placeholderWrapFontId = font;
+            this.placeholderWrapGeneration = reloadGeneration;
+            this.placeholderWrapWidth = safeWidth;
+            this.cachedPlaceholderLines = result;
          }
 
          return result;
@@ -1195,22 +1195,22 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private TextInputWidget.Inner_StreamUtil init_BitSetUtil_StreamU_Str(String sourceValue) {
-      if (this.init_Function != null && sourceValue != null && !sourceValue.isEmpty()) {
-         long providerRevision = this.load_J();
-         if (this.set_Z && this.load_Function == this.init_Function && this.read_J == providerRevision && Objects.equals(this.write_Str, sourceValue)) {
-            return this.init_BitSetUtil_StreamU;
+   private TextInputWidget.Inner_StreamUtil resolveRichMetrics(String sourceValue) {
+      if (this.displayTextProvider != null && sourceValue != null && !sourceValue.isEmpty()) {
+         long providerRevision = this.queryDisplayRevision();
+         if (this.richCacheValid && this.cachedRichProvider == this.displayTextProvider && this.cachedRichRevision == providerRevision && Objects.equals(this.cachedRichSource, sourceValue)) {
+            return this.cachedRichMetrics;
          }
 
-         Component richDisplay = this.init_Function.apply(sourceValue);
+         Component richDisplay = this.displayTextProvider.apply(sourceValue);
          if (richDisplay == null) {
-            this.init_V_Str(sourceValue, providerRevision, null);
+            this.storeRichCache(sourceValue, providerRevision, null);
             return null;
          }
 
          String richComponent = richDisplay.getString();
          if (!Objects.equals(richComponent, sourceValue)) {
-            this.init_V_Str(sourceValue, providerRevision, null);
+            this.storeRichCache(sourceValue, providerRevision, null);
             return null;
          }
 
@@ -1228,7 +1228,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }, Style.EMPTY);
          List<Style> charStyles = new ArrayList<>(rawStyles);
          if (charStyles.isEmpty()) {
-            this.init_V_Str(sourceValue, providerRevision, null);
+            this.storeRichCache(sourceValue, providerRevision, null);
             return null;
          }
 
@@ -1241,107 +1241,107 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }
 
          TextInputWidget.Inner_StreamUtil metrics = new TextInputWidget.Inner_StreamUtil(richComponent, charStyles);
-         this.init_V_Str(sourceValue, providerRevision, metrics);
+         this.storeRichCache(sourceValue, providerRevision, metrics);
          return metrics;
       } else {
          return null;
       }
    }
 
-   private long load_J() {
-      if (this.init_LongSupplier == null) {
+   private long queryDisplayRevision() {
+      if (this.displayRevisionProvider == null) {
          return 0L;
       }
 
       try {
-         return this.init_LongSupplier.getAsLong();
+         return this.displayRevisionProvider.getAsLong();
       } catch (RuntimeException ignored) {
          return 0L;
       }
    }
 
-   private void init_V_Str(String sourceValue, long providerRevision, TextInputWidget.Inner_StreamUtil metrics) {
-      this.write_Str = sourceValue == null ? "" : sourceValue;
-      this.load_Function = this.init_Function;
-      this.read_J = providerRevision;
-      this.init_BitSetUtil_StreamU = metrics;
-      this.set_Z = true;
+   private void storeRichCache(String sourceValue, long providerRevision, TextInputWidget.Inner_StreamUtil metrics) {
+      this.cachedRichSource = sourceValue == null ? "" : sourceValue;
+      this.cachedRichProvider = this.displayTextProvider;
+      this.cachedRichRevision = providerRevision;
+      this.cachedRichMetrics = metrics;
+      this.richCacheValid = true;
    }
 
-   private void update_V() {
-      this.write_Str = "";
-      this.load_Function = null;
-      this.read_J = -9223372036854775808L;
-      this.init_BitSetUtil_StreamU = null;
-      this.set_Z = false;
+   private void invalidateRichCache() {
+      this.cachedRichSource = "";
+      this.cachedRichProvider = null;
+      this.cachedRichRevision = -9223372036854775808L;
+      this.cachedRichMetrics = null;
+      this.richCacheValid = false;
    }
 
-   private void sync_V() {
-      this.write_J++;
-      this.update_V();
-      this.sync_J = -9223372036854775808L;
-      this.flush_V();
+   private void invalidateTextCaches() {
+      this.textVersion++;
+      this.invalidateRichCache();
+      this.prefixCacheTextVersion = -9223372036854775808L;
+      this.invalidateWrapCache();
    }
 
-   private void flush_V() {
-      this.close_J = -9223372036854775808L;
-      this.read_BitSetUtil_StreamU = null;
-      this.load_List = List.of();
+   private void invalidateWrapCache() {
+      this.wrapCacheTextVersion = -9223372036854775808L;
+      this.wrapCacheRichMetrics = null;
+      this.cachedWrappedLines = List.of();
    }
 
-   private void init_V_Font(Font renderer, Identifier font, int color, TextInputWidget.Inner_StreamUtil richMetrics) {
+   private void ensurePrefixWidths(Font renderer, Identifier font, int color, TextInputWidget.Inner_StreamUtil richMetrics) {
       int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
-      if (this.sync_J != this.write_J
-         || this.flush_J != this.update_J
-         || this.init_Font != renderer
-         || !Objects.equals(this.load_Identifier, font)
-         || this.run_I != reloadGeneration
-         || this.get_I != color
-         || this.load_BitSetUtil_StreamU != richMetrics
-         || this.init_IArr.length != this.init_Str.length() + 1) {
+      if (this.prefixCacheTextVersion != this.textVersion
+         || this.prefixCacheStyleVersion != this.styleVersion
+         || this.prefixCacheFont != renderer
+         || !Objects.equals(this.prefixCacheFontId, font)
+         || this.prefixCacheGeneration != reloadGeneration
+         || this.prefixCacheColor != color
+         || this.prefixCacheRichMetrics != richMetrics
+         || this.prefixWidths.length != this.value.length() + 1) {
          autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(font);
-         this.put_Z = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.canRender(face, this.init_Str.replace("\n", ""));
-         this.init_IArr = Utf16TextCursor.init(
-            this.init_Str,
+         this.prefixCacheUsesMsdf = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.canRender(face, this.value.replace("\n", ""));
+         this.prefixWidths = Utf16TextCursor.init(
+            this.value,
             (text, start, end) -> {
                String glyph = text.substring(start, end);
                if (glyph.equals("\n")) {
                   return 0.0F;
                }
 
-               if (this.put_Z) {
+               if (this.prefixCacheUsesMsdf) {
                   return autismclient.gui.sdf.MsdfTextRenderer.measureWidthFloat(face, glyph, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face));
                }
 
                if (richMetrics == null) {
-                  return this.init_Str.indexOf(167) >= 0
+                  return this.value.indexOf(167) >= 0
                      ? renderer.getSplitter().stringWidth(text.substring(0, end)) - renderer.getSplitter().stringWidth(text.substring(0, start))
                      : renderer.getSplitter().stringWidth(glyph);
                }
 
-               Style style = richMetrics.init_List().get(Math.min(start, richMetrics.init_List().size() - 1));
+               Style style = richMetrics.charStyles().get(Math.min(start, richMetrics.charStyles().size() - 1));
                return renderer.getSplitter().stringWidth(Component.literal(glyph).setStyle(style == null ? Style.EMPTY : style));
             }
          );
-         this.sync_J = this.write_J;
-         this.flush_J = this.update_J;
-         this.init_Font = renderer;
-         this.load_Identifier = font;
-         this.run_I = reloadGeneration;
-         this.get_I = color;
-         this.load_BitSetUtil_StreamU = richMetrics;
+         this.prefixCacheTextVersion = this.textVersion;
+         this.prefixCacheStyleVersion = this.styleVersion;
+         this.prefixCacheFont = renderer;
+         this.prefixCacheFontId = font;
+         this.prefixCacheGeneration = reloadGeneration;
+         this.prefixCacheColor = color;
+         this.prefixCacheRichMetrics = richMetrics;
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, Font renderer, String text, Identifier font, int color, int x, int y) {
-      if (this.put_Z) {
+   private void drawPlainSegment(GuiGraphicsExtractor graphics, Font renderer, String text, Identifier font, int color, int x, int y) {
+      if (this.prefixCacheUsesMsdf) {
          k.init(graphics, renderer, text, font, color, x, y, false);
       } else {
          graphics.text(renderer, text, x, y, color, false);
       }
    }
 
-   private Component init_Component_Str(String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private Component buildStyledComponent(String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.init_I(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
       if (richMetrics != null && safeStart < safeEnd) {
@@ -1350,7 +1350,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          Style currentStyle = null;
 
          for (int i = safeStart; i < safeEnd; i++) {
-            Style style = richMetrics.init_List().get(Math.min(i, richMetrics.init_List().size() - 1));
+            Style style = richMetrics.charStyles().get(Math.min(i, richMetrics.charStyles().size() - 1));
             if (currentStyle == null) {
                currentStyle = style;
             } else if (!currentStyle.equals(style)) {
@@ -1372,28 +1372,28 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private int init(Font renderer, Identifier font, int color, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private int measureRangeWidth(Font renderer, Identifier font, int color, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.init_I(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
       if (safeStart >= safeEnd) {
          return 0;
-      } else if (Objects.equals(sourceText, this.init_Str)) {
-         this.init_V_Font(renderer, font, color, richMetrics);
-         return this.init_IArr[safeEnd] - this.init_IArr[safeStart];
+      } else if (Objects.equals(sourceText, this.value)) {
+         this.ensurePrefixWidths(renderer, font, color, richMetrics);
+         return this.prefixWidths[safeEnd] - this.prefixWidths[safeStart];
       } else {
          return richMetrics == null
-            ? this.init_I_Font(renderer, font, color, sourceText.substring(safeStart, safeEnd))
-            : this.load(renderer, font, color, sourceText, richMetrics, safeStart, safeEnd);
+            ? this.measurePlainWidth(renderer, font, color, sourceText.substring(safeStart, safeEnd))
+            : this.measureStyledRangeWidth(renderer, font, color, sourceText, richMetrics, safeStart, safeEnd);
       }
    }
 
-   private int load(Font renderer, Identifier font, int fallbackColor, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private int measureStyledRangeWidth(Font renderer, Identifier font, int fallbackColor, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.init_I(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
-      return renderer.width(this.init_Component_Str(sourceText, richMetrics, safeStart, safeEnd));
+      return renderer.width(this.buildStyledComponent(sourceText, richMetrics, safeStart, safeEnd));
    }
 
-   private void init(
+   private void drawStyledSegment(
       GuiGraphicsExtractor context,
       Font renderer,
       Identifier font,
@@ -1408,48 +1408,48 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int safeStart = Utf16TextCursor.init_I(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
       if (safeStart < safeEnd) {
-         context.text(renderer, this.init_Component_Str(sourceText, richMetrics, safeStart, safeEnd), x, y, fallbackColor, false);
+         context.text(renderer, this.buildStyledComponent(sourceText, richMetrics, safeStart, safeEnd), x, y, fallbackColor, false);
       }
    }
 
-   private List<TextInputWidget.Inner_CachePool> init_List_Font(
+   private List<TextInputWidget.Inner_CachePool> getWrappedLines(
       Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics
    ) {
       int safeWidth = Math.max(1, availableWidth);
       int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
-      if (this.close_J == this.write_J
-         && this.open_J == this.update_J
-         && this.load_Font == renderer
-         && Objects.equals(this.read_Identifier, font)
-         && this.set_I == reloadGeneration
-         && this.put_I == safeWidth
-         && this.add_Z == this.pop_Z
-         && this.read_BitSetUtil_StreamU == richMetrics) {
-         return this.load_List;
+      if (this.wrapCacheTextVersion == this.textVersion
+         && this.wrapCacheStyleVersion == this.styleVersion
+         && this.wrapCacheFont == renderer
+         && Objects.equals(this.wrapCacheFontId, font)
+         && this.wrapCacheGeneration == reloadGeneration
+         && this.wrapCacheWidth == safeWidth
+         && this.wrapCacheMultiline == this.multiline
+         && this.wrapCacheRichMetrics == richMetrics) {
+         return this.cachedWrappedLines;
       }
 
-      this.init_V_Font(renderer, font, color, richMetrics);
-      List<TextInputWidget.Inner_CachePool> lines = this.init_List_Font(renderer, font, color, this.init_Str, safeWidth, richMetrics);
-      this.load_List = List.copyOf(lines);
-      this.close_J = this.write_J;
-      this.open_J = this.update_J;
-      this.load_Font = renderer;
-      this.read_Identifier = font;
-      this.set_I = reloadGeneration;
-      this.put_I = safeWidth;
-      this.add_Z = this.pop_Z;
-      this.read_BitSetUtil_StreamU = richMetrics;
-      return this.load_List;
+      this.ensurePrefixWidths(renderer, font, color, richMetrics);
+      List<TextInputWidget.Inner_CachePool> lines = this.computeWrappedLines(renderer, font, color, this.value, safeWidth, richMetrics);
+      this.cachedWrappedLines = List.copyOf(lines);
+      this.wrapCacheTextVersion = this.textVersion;
+      this.wrapCacheStyleVersion = this.styleVersion;
+      this.wrapCacheFont = renderer;
+      this.wrapCacheFontId = font;
+      this.wrapCacheGeneration = reloadGeneration;
+      this.wrapCacheWidth = safeWidth;
+      this.wrapCacheMultiline = this.multiline;
+      this.wrapCacheRichMetrics = richMetrics;
+      return this.cachedWrappedLines;
    }
 
-   private List<TextInputWidget.Inner_CachePool> init_List_Font(
+   private List<TextInputWidget.Inner_CachePool> computeWrappedLines(
       Font renderer, Identifier font, int color, String text, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics
    ) {
       String safeComponent = text == null ? "" : text;
       List<TextInputWidget.Inner_CachePool> lines = new ArrayList<>();
 
       for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.init(
-         safeComponent, availableWidth, (start, end) -> this.init(renderer, font, color, safeComponent, richMetrics, start, end)
+         safeComponent, availableWidth, (start, end) -> this.measureRangeWidth(renderer, font, color, safeComponent, richMetrics, start, end)
       )) {
          lines.add(new TextInputWidget.Inner_CachePool(line.init(), line.load(), line.read()));
       }
@@ -1457,47 +1457,47 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return lines;
    }
 
-   private void init_V_I_List(int visibleLineCount, List<TextInputWidget.Inner_CachePool> wrappedLines) {
+   private void ensureVerticalScrollForCursor(int visibleLineCount, List<TextInputWidget.Inner_CachePool> wrappedLines) {
       if (wrappedLines.isEmpty()) {
-         this.push_I = 0;
+         this.verticalScrollLine = 0;
       } else {
-         int cursorLine = this.init_I_List_I(wrappedLines, this.close_I);
+         int cursorLine = this.findLineIndexForCursor(wrappedLines, this.cursorIndex);
          int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
-         if (this.poll_Z) {
-            this.push_I = Math.max(0, Math.min(this.push_I, maxStart));
+         if (this.manualScrollPinned) {
+            this.verticalScrollLine = Math.max(0, Math.min(this.verticalScrollLine, maxStart));
          } else {
-            if (cursorLine < this.push_I) {
-               this.push_I = cursorLine;
+            if (cursorLine < this.verticalScrollLine) {
+               this.verticalScrollLine = cursorLine;
             }
 
-            if (cursorLine >= this.push_I + visibleLineCount) {
-               this.push_I = cursorLine - visibleLineCount + 1;
+            if (cursorLine >= this.verticalScrollLine + visibleLineCount) {
+               this.verticalScrollLine = cursorLine - visibleLineCount + 1;
             }
 
-            this.push_I = Math.max(0, Math.min(this.push_I, maxStart));
+            this.verticalScrollLine = Math.max(0, Math.min(this.verticalScrollLine, maxStart));
          }
       }
    }
 
-   private int init_I_List_I(List<TextInputWidget.Inner_CachePool> wrappedLines, int index) {
+   private int findLineIndexForCursor(List<TextInputWidget.Inner_CachePool> wrappedLines, int index) {
       if (wrappedLines.isEmpty()) {
          return 0;
       }
 
-      int clamped = Math.max(0, Math.min(index, this.init_Str.length()));
+      int clamped = Math.max(0, Math.min(index, this.value.length()));
 
       for (int i = 0; i < wrappedLines.size(); i++) {
          TextInputWidget.Inner_CachePool line = wrappedLines.get(i);
-         if (clamped < line.load()) {
+         if (clamped < line.end()) {
             return i;
          }
 
-         if (clamped == line.load()) {
+         if (clamped == line.end()) {
             if (i == wrappedLines.size() - 1) {
                return i;
             }
 
-            if (clamped == line.init()) {
+            if (clamped == line.start()) {
                return i;
             }
          }
@@ -1506,11 +1506,11 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return wrappedLines.size() - 1;
    }
 
-   private float load_F_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      return this.load_F + context.theme().load(3) + context.theme().open() + this.update_I - 1.0F;
+   private float multilineTextOriginY(autismclient.gui.ui.layout.LayoutContext context) {
+      return this.nodeY + context.theme().load(3) + context.theme().open() + this.textYOffset - 1.0F;
    }
 
-   private int init_I_Font(
+   private int indexForMultilinePoint(
       Font renderer,
       Identifier font,
       int color,
@@ -1524,153 +1524,153 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          return 0;
       }
 
-      int lineIndex = this.push_I + Math.max(0, (int)Math.floor((double)mouseInnerY / Math.max(1, lineHeight)));
+      int lineIndex = this.verticalScrollLine + Math.max(0, (int)Math.floor((double)mouseInnerY / Math.max(1, lineHeight)));
       lineIndex = Math.max(0, Math.min(lineIndex, wrappedLines.size() - 1));
       TextInputWidget.Inner_CachePool line = wrappedLines.get(lineIndex);
-      return this.init_I_Font(renderer, font, color, mouseInnerX, line, richMetrics);
+      return this.indexForLineX(renderer, font, color, mouseInnerX, line, richMetrics);
    }
 
-   private int init_I_Font(
+   private int indexForLineX(
       Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_CachePool line, TextInputWidget.Inner_StreamUtil richMetrics
    ) {
-      this.init_V_Font(renderer, font, color, richMetrics);
-      int contentEnd = this.init_I_BitSetUtil_CachePo(line);
-      int start = Math.max(0, Math.min(line.init(), this.init_Str.length()));
-      int visibleEnd = Math.max(start, Math.min(contentEnd, this.init_Str.length()));
-      int target = this.init_IArr[start] + Math.max(0, Math.round(mouseInnerX));
-      int candidate = read(this.init_IArr, start, visibleEnd, target);
-      int best = Utf16TextCursor.init(this.init_Str, this.init_IArr, candidate, target);
-      return Math.max(line.init(), Math.min(best, contentEnd));
+      this.ensurePrefixWidths(renderer, font, color, richMetrics);
+      int contentEnd = this.lineContentEnd(line);
+      int start = Math.max(0, Math.min(line.start(), this.value.length()));
+      int visibleEnd = Math.max(start, Math.min(contentEnd, this.value.length()));
+      int target = this.prefixWidths[start] + Math.max(0, Math.round(mouseInnerX));
+      int candidate = nearestWidthIndex(this.prefixWidths, start, visibleEnd, target);
+      int best = Utf16TextCursor.init(this.value, this.prefixWidths, candidate, target);
+      return Math.max(line.start(), Math.min(best, contentEnd));
    }
 
-   private int init_I_BitSetUtil_CachePo(TextInputWidget.Inner_CachePool line) {
-      int end = line.load();
-      if (end > line.init() && end <= this.init_Str.length() && this.init_Str.charAt(end - 1) == '\n') {
+   private int lineContentEnd(TextInputWidget.Inner_CachePool line) {
+      int end = line.end();
+      if (end > line.start() && end <= this.value.length() && this.value.charAt(end - 1) == '\n') {
          end--;
       }
 
       return end;
    }
 
-   private void init_V_SyncManager(autismclient.gui.ui.layout.LayoutContext context, int direction, boolean keepSelection) {
-      Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.theme().load(this.init_l);
-      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
-      TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-      List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+   private void moveCursorVertically(autismclient.gui.ui.layout.LayoutContext context, int direction, boolean keepSelection) {
+      Identifier font = this.resolveFontId(context);
+      int bodyColor = context.theme().load(this.textTone);
+      int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
+      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+      List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
       if (!wrappedLines.isEmpty()) {
-         int currentLineIndex = this.init_I_List_I(wrappedLines, this.close_I);
+         int currentLineIndex = this.findLineIndexForCursor(wrappedLines, this.cursorIndex);
          int targetLineIndex = Math.max(0, Math.min(wrappedLines.size() - 1, currentLineIndex + direction));
          if (targetLineIndex != currentLineIndex) {
             TextInputWidget.Inner_CachePool currentLine = wrappedLines.get(currentLineIndex);
-            int visibleCursor = Math.min(this.close_I, this.init_I_BitSetUtil_CachePo(currentLine));
-            int cursorX = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, currentLine.init(), visibleCursor);
+            int visibleCursor = Math.min(this.cursorIndex, this.lineContentEnd(currentLine));
+            int cursorX = this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, currentLine.start(), visibleCursor);
             TextInputWidget.Inner_CachePool targetLine = wrappedLines.get(targetLineIndex);
-            int targetCursor = this.init_I_Font(context.font(), font, bodyColor, cursorX, targetLine, richMetrics);
-            this.load(targetCursor, keepSelection);
+            int targetCursor = this.indexForLineX(context.font(), font, bodyColor, cursorX, targetLine, richMetrics);
+            this.moveCursorTo(targetCursor, keepSelection);
          }
       }
    }
 
-   private void init_V_I_Z(int delta, boolean keepSelection) {
-      int next = this.close_I;
+   private void moveCursorByCodePoints(int delta, boolean keepSelection) {
+      int next = this.cursorIndex;
       if (delta < 0) {
          for (int i = 0; i < -delta; i++) {
-            next = Utf16TextCursor.read(this.init_Str, next);
+            next = Utf16TextCursor.read(this.value, next);
          }
       } else {
          for (int i = 0; i < delta; i++) {
-            next = Utf16TextCursor.write(this.init_Str, next);
+            next = Utf16TextCursor.write(this.value, next);
          }
       }
 
-      this.load(next, keepSelection);
+      this.moveCursorTo(next, keepSelection);
    }
 
-   private int init_I_I(int totalWidth, int padding, int frameInset) {
-      return Math.max(1, totalWidth - padding * 2 - frameInset - (this.pop_Z ? 5 : 0));
+   private int computeInnerTextWidth(int totalWidth, int padding, int frameInset) {
+      return Math.max(1, totalWidth - padding * 2 - frameInset - (this.multiline ? 5 : 0));
    }
 
-   private int init_I_F_F(float mouseX, float mouseY) {
+   private int registerClickCount(float mouseX, float mouseY) {
       long now = System.currentTimeMillis();
-      boolean closeEnough = !Float.isNaN(this.poll_F) && Math.abs(mouseX - this.poll_F) <= 4.0F && Math.abs(mouseY - this.push_F) <= 4.0F;
-      if (now - this.poll_J <= 320L && closeEnough) {
-         this.reset++;
+      boolean closeEnough = !Float.isNaN(this.lastClickX) && Math.abs(mouseX - this.lastClickX) <= 4.0F && Math.abs(mouseY - this.lastClickY) <= 4.0F;
+      if (now - this.lastClickMs <= 320L && closeEnough) {
+         this.consecutiveClickCount++;
       } else {
-         this.reset = 1;
+         this.consecutiveClickCount = 1;
       }
 
-      this.poll_J = now;
-      this.poll_F = mouseX;
-      this.push_F = mouseY;
-      return this.reset;
+      this.lastClickMs = now;
+      this.lastClickX = mouseX;
+      this.lastClickY = mouseY;
+      return this.consecutiveClickCount;
    }
 
-   private void init_V_I(int index) {
-      int clamped = Math.max(0, Math.min(index, this.init_Str.length()));
-      if (this.init_Str.isEmpty()) {
-         this.close_I = this.open_I = 0;
+   private void selectWordAt(int index) {
+      int clamped = Math.max(0, Math.min(index, this.value.length()));
+      if (this.value.isEmpty()) {
+         this.cursorIndex = this.selectionAnchor = 0;
       } else {
          int probe = clamped;
-         if (probe == this.init_Str.length() && probe > 0) {
+         if (probe == this.value.length() && probe > 0) {
             probe--;
          }
 
-         if (probe < this.init_Str.length() && !this.init_Z_C(this.init_Str.charAt(probe)) && probe > 0 && this.init_Z_C(this.init_Str.charAt(probe - 1))) {
+         if (probe < this.value.length() && !this.isWordChar(this.value.charAt(probe)) && probe > 0 && this.isWordChar(this.value.charAt(probe - 1))) {
             probe--;
          }
 
          int start = probe;
          int end;
-         if (probe < this.init_Str.length() && this.init_Z_C(this.init_Str.charAt(probe))) {
-            while (start > 0 && this.init_Z_C(this.init_Str.charAt(start - 1))) {
+         if (probe < this.value.length() && this.isWordChar(this.value.charAt(probe))) {
+            while (start > 0 && this.isWordChar(this.value.charAt(start - 1))) {
                start--;
             }
 
             end = probe + 1;
 
-            while (end < this.init_Str.length() && this.init_Z_C(this.init_Str.charAt(end))) {
+            while (end < this.value.length() && this.isWordChar(this.value.charAt(end))) {
                end++;
             }
          } else {
-            while (start > 0 && !this.init_Z_C(this.init_Str.charAt(start - 1)) && this.init_Str.charAt(start - 1) != '\n') {
+            while (start > 0 && !this.isWordChar(this.value.charAt(start - 1)) && this.value.charAt(start - 1) != '\n') {
                start--;
             }
 
-            end = Math.min(this.init_Str.length(), probe + 1);
+            end = Math.min(this.value.length(), probe + 1);
 
-            while (end < this.init_Str.length() && !this.init_Z_C(this.init_Str.charAt(end)) && this.init_Str.charAt(end) != '\n') {
+            while (end < this.value.length() && !this.isWordChar(this.value.charAt(end)) && this.value.charAt(end) != '\n') {
                end++;
             }
          }
 
-         this.open_I = Utf16TextCursor.init_I(this.init_Str, start);
-         this.close_I = Utf16TextCursor.load(this.init_Str, Math.max(start, end));
+         this.selectionAnchor = Utf16TextCursor.init_I(this.value, start);
+         this.cursorIndex = Utf16TextCursor.load(this.value, Math.max(start, end));
       }
    }
 
-   private void load_V_I(int index) {
-      int clamped = Math.max(0, Math.min(index, this.init_Str.length()));
-      this.open_I = Utf16TextCursor.init_I(this.init_Str, this.read_I_I(clamped));
-      this.close_I = Utf16TextCursor.init_I(this.init_Str, this.write_I(clamped));
-      if (this.close_I < this.init_Str.length() && this.init_Str.charAt(this.close_I) == '\n') {
-         this.close_I++;
+   private void selectParagraphAt(int index) {
+      int clamped = Math.max(0, Math.min(index, this.value.length()));
+      this.selectionAnchor = Utf16TextCursor.init_I(this.value, this.findLineStart(clamped));
+      this.cursorIndex = Utf16TextCursor.init_I(this.value, this.findLineEnd(clamped));
+      if (this.cursorIndex < this.value.length() && this.value.charAt(this.cursorIndex) == '\n') {
+         this.cursorIndex++;
       }
    }
 
-   private int init_I_I(int index) {
-      int i = Math.max(0, Math.min(index, this.init_Str.length()));
+   private int findPreviousWordBoundary(int index) {
+      int i = Math.max(0, Math.min(index, this.value.length()));
 
-      while (i > 0 && Character.isWhitespace(this.init_Str.charAt(i - 1))) {
+      while (i > 0 && Character.isWhitespace(this.value.charAt(i - 1))) {
          i--;
       }
 
-      if (i > 0 && this.init_Z_C(this.init_Str.charAt(i - 1))) {
-         while (i > 0 && this.init_Z_C(this.init_Str.charAt(i - 1))) {
+      if (i > 0 && this.isWordChar(this.value.charAt(i - 1))) {
+         while (i > 0 && this.isWordChar(this.value.charAt(i - 1))) {
             i--;
          }
       } else {
-         while (i > 0 && !Character.isWhitespace(this.init_Str.charAt(i - 1)) && !this.init_Z_C(this.init_Str.charAt(i - 1))) {
+         while (i > 0 && !Character.isWhitespace(this.value.charAt(i - 1)) && !this.isWordChar(this.value.charAt(i - 1))) {
             i--;
          }
       }
@@ -1678,19 +1678,19 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return i;
    }
 
-   private int load_I_I(int index) {
-      int i = Math.max(0, Math.min(index, this.init_Str.length()));
+   private int findNextWordBoundary(int index) {
+      int i = Math.max(0, Math.min(index, this.value.length()));
 
-      while (i < this.init_Str.length() && Character.isWhitespace(this.init_Str.charAt(i))) {
+      while (i < this.value.length() && Character.isWhitespace(this.value.charAt(i))) {
          i++;
       }
 
-      if (i < this.init_Str.length() && this.init_Z_C(this.init_Str.charAt(i))) {
-         while (i < this.init_Str.length() && this.init_Z_C(this.init_Str.charAt(i))) {
+      if (i < this.value.length() && this.isWordChar(this.value.charAt(i))) {
+         while (i < this.value.length() && this.isWordChar(this.value.charAt(i))) {
             i++;
          }
       } else {
-         while (i < this.init_Str.length() && !Character.isWhitespace(this.init_Str.charAt(i)) && !this.init_Z_C(this.init_Str.charAt(i))) {
+         while (i < this.value.length() && !Character.isWhitespace(this.value.charAt(i)) && !this.isWordChar(this.value.charAt(i))) {
             i++;
          }
       }
@@ -1698,82 +1698,82 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return i;
    }
 
-   private int read_I_I(int index) {
-      int i = Math.max(0, Math.min(index, this.init_Str.length()));
+   private int findLineStart(int index) {
+      int i = Math.max(0, Math.min(index, this.value.length()));
 
-      while (i > 0 && this.init_Str.charAt(i - 1) != '\n') {
+      while (i > 0 && this.value.charAt(i - 1) != '\n') {
          i--;
       }
 
       return i;
    }
 
-   private int write_I(int index) {
-      int i = Math.max(0, Math.min(index, this.init_Str.length()));
+   private int findLineEnd(int index) {
+      int i = Math.max(0, Math.min(index, this.value.length()));
 
-      while (i < this.init_Str.length() && this.init_Str.charAt(i) != '\n') {
+      while (i < this.value.length() && this.value.charAt(i) != '\n') {
          i++;
       }
 
       return i;
    }
 
-   private boolean init_Z_C(char chr) {
+   private boolean isWordChar(char chr) {
       return Character.isLetterOrDigit(chr) || chr == '_' || chr == '-' || chr == ':' || chr == '.';
    }
 
-   private void read_V_I(int direction) {
-      List<String> history = this.init_List();
+   private void navigateHistory(int direction) {
+      List<String> history = this.collectHistory();
       if (!history.isEmpty()) {
-         if (this.tick_I >= history.size()) {
-            this.tick_I = history.size() - 1;
+         if (this.historyIndex >= history.size()) {
+            this.historyIndex = history.size() - 1;
          }
 
          if (direction < 0) {
-            if (this.tick_I == -1) {
-               this.read_Str = this.init_Str;
-               this.tick_I = history.size() - 1;
-            } else if (this.tick_I > 0) {
-               this.tick_I--;
+            if (this.historyIndex == -1) {
+               this.historyDraftValue = this.value;
+               this.historyIndex = history.size() - 1;
+            } else if (this.historyIndex > 0) {
+               this.historyIndex--;
             }
 
-            this.init_V_Str(history.get(this.tick_I));
+            this.applyHistoryValue(history.get(this.historyIndex));
          } else {
-            if (this.tick_I == -1) {
+            if (this.historyIndex == -1) {
                return;
             }
 
-            if (this.tick_I < history.size() - 1) {
-               this.tick_I++;
-               this.init_V_Str(history.get(this.tick_I));
+            if (this.historyIndex < history.size() - 1) {
+               this.historyIndex++;
+               this.applyHistoryValue(history.get(this.historyIndex));
             } else {
-               this.tick_I = -1;
-               this.init_V_Str(this.read_Str);
+               this.historyIndex = -1;
+               this.applyHistoryValue(this.historyDraftValue);
             }
          }
       }
    }
 
-   private List<String> init_List() {
+   private List<String> collectHistory() {
       List<String> out = new ArrayList<>();
-      if (this.init_Supplier != null) {
-         Collection<String> provided = this.init_Supplier.get();
+      if (this.historyProvider != null) {
+         Collection<String> provided = this.historyProvider.get();
          if (provided != null) {
             for (String entry : provided) {
-               this.init_V_List_Str(out, entry);
+               this.appendUniqueHistory(out, entry);
             }
          }
       }
 
-      for (String entry : this.init_List) {
-         this.init_V_List_Str(out, entry);
+      for (String entry : this.historyEntries) {
+         this.appendUniqueHistory(out, entry);
       }
 
       return out;
    }
 
-   private void init_V_List_Str(List<String> out, String entry) {
-      String sanitized = this.init_Str_Str(entry);
+   private void appendUniqueHistory(List<String> out, String entry) {
+      String sanitized = this.sanitizeAndFilter(entry);
       if (!sanitized.isEmpty() && (out.isEmpty() || !sanitized.equals(out.get(out.size() - 1)))) {
          out.add(sanitized);
 
@@ -1783,103 +1783,103 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private void init_V_Str(String nextValue) {
-      this.get_Z = true;
+   private void applyHistoryValue(String nextValue) {
+      this.applyingHistoryEntry = true;
 
       try {
-         this.init_BitSetUtil_Str(nextValue);
+         this.setValue(nextValue);
       } finally {
-         this.get_Z = false;
+         this.applyingHistoryEntry = false;
       }
 
-      this.load(this.init_Str.length(), false);
+      this.moveCursorTo(this.value.length(), false);
    }
 
-   private void load(int nextCursor, boolean keepSelection) {
-      this.close_I = Utf16TextCursor.init_I(this.init_Str, nextCursor);
+   private void moveCursorTo(int nextCursor, boolean keepSelection) {
+      this.cursorIndex = Utf16TextCursor.init_I(this.value, nextCursor);
       if (!keepSelection) {
-         this.open_I = this.close_I;
+         this.selectionAnchor = this.cursorIndex;
       }
 
-      this.poll_Z = false;
-      this.read_V();
+      this.manualScrollPinned = false;
+      this.resetCaretBlink();
    }
 
-   private boolean close_Z() {
-      return this.close_I != this.open_I;
+   private boolean hasSelection() {
+      return this.cursorIndex != this.selectionAnchor;
    }
 
-   private void close_V() {
-      if (this.close_Z()) {
-         int start = Math.min(this.close_I, this.open_I);
-         int end = Math.max(this.close_I, this.open_I);
-         Minecraft.getInstance().keyboardHandler.setClipboard(this.init_Str.substring(start, end));
+   private void copySelectionToClipboard() {
+      if (this.hasSelection()) {
+         int start = Math.min(this.cursorIndex, this.selectionAnchor);
+         int end = Math.max(this.cursorIndex, this.selectionAnchor);
+         Minecraft.getInstance().keyboardHandler.setClipboard(this.value.substring(start, end));
       }
    }
 
-   private void open_V() {
+   private void pasteFromClipboard() {
       String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
       if (clipboard != null && !clipboard.isEmpty()) {
-         this.load_V_Str(clipboard);
+         this.replaceSelection(clipboard);
       }
    }
 
-   private boolean open_Z() {
-      if (!this.close_Z()) {
+   private boolean deleteSelection() {
+      if (!this.hasSelection()) {
          return false;
       }
 
-      int start = Math.min(this.close_I, this.open_I);
-      int end = Math.max(this.close_I, this.open_I);
-      this.init_V_I(start, end, "");
+      int start = Math.min(this.cursorIndex, this.selectionAnchor);
+      int end = Math.max(this.cursorIndex, this.selectionAnchor);
+      this.replaceRange(start, end, "");
       return true;
    }
 
-   private void load_V_Str(String replacement) {
-      int start = Math.min(this.close_I, this.open_I);
-      int end = Math.max(this.close_I, this.open_I);
-      this.init_V_I(start, end, replacement);
+   private void replaceSelection(String replacement) {
+      int start = Math.min(this.cursorIndex, this.selectionAnchor);
+      int end = Math.max(this.cursorIndex, this.selectionAnchor);
+      this.replaceRange(start, end, replacement);
    }
 
-   private void init_V_I(int start, int end, String replacement) {
-      int safeStart = Utf16TextCursor.init_I(this.init_Str, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.load(this.init_Str, end));
-      int capacity = Math.max(0, this.load_I - (this.init_Str.length() - (safeEnd - safeStart)));
-      String sanitizedReplacement = Utf16TextCursor.init_Str(this.load_Str_Str(replacement), capacity);
-      String next = this.init_Str.substring(0, safeStart) + sanitizedReplacement + this.init_Str.substring(safeEnd);
-      if (this.init_Predicate.test(next)) {
-         this.init_Str = next;
-         this.sync_V();
-         this.close_I = Utf16TextCursor.init_I(next, Math.min(next.length(), safeStart + sanitizedReplacement.length()));
-         this.open_I = this.close_I;
-         this.poll_Z = false;
-         this.read_V();
-         if (this.run_Z && !this.get_Z) {
-            this.tick_I = -1;
-            this.read_Str = this.init_Str;
+   private void replaceRange(int start, int end, String replacement) {
+      int safeStart = Utf16TextCursor.init_I(this.value, start);
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.load(this.value, end));
+      int capacity = Math.max(0, this.maxLength - (this.value.length() - (safeEnd - safeStart)));
+      String sanitizedReplacement = Utf16TextCursor.init_Str(this.sanitizeInput(replacement), capacity);
+      String next = this.value.substring(0, safeStart) + sanitizedReplacement + this.value.substring(safeEnd);
+      if (this.inputFilter.test(next)) {
+         this.value = next;
+         this.invalidateTextCaches();
+         this.cursorIndex = Utf16TextCursor.init_I(next, Math.min(next.length(), safeStart + sanitizedReplacement.length()));
+         this.selectionAnchor = this.cursorIndex;
+         this.manualScrollPinned = false;
+         this.resetCaretBlink();
+         if (this.historyNavigationEnabled && !this.applyingHistoryEntry) {
+            this.historyIndex = -1;
+            this.historyDraftValue = this.value;
          }
 
-         if (this.init_Consumer != null) {
-            this.init_Consumer.accept(this.init_Str);
+         if (this.onChange != null) {
+            this.onChange.accept(this.value);
          }
       }
    }
 
-   private String init_Str_Str(String input) {
-      String next = this.load_Str_Str(input);
-      return this.init_Predicate.test(next) ? next : this.init_Str;
+   private String sanitizeAndFilter(String input) {
+      String next = this.sanitizeInput(input);
+      return this.inputFilter.test(next) ? next : this.value;
    }
 
-   private String load_Str_Str(String input) {
+   private String sanitizeInput(String input) {
       if (input != null && !input.isEmpty()) {
          StringBuilder sb = new StringBuilder(input.length());
          int i = 0;
 
-         while (i < input.length() && sb.length() < this.load_I) {
+         while (i < input.length() && sb.length() < this.maxLength) {
             int codePoint = input.codePointAt(i);
             int units = Character.charCount(codePoint);
             i += units;
-            if (this.init_Z_I(codePoint) && sb.length() + units <= this.load_I) {
+            if (this.isAllowedCodePoint(codePoint) && sb.length() + units <= this.maxLength) {
                sb.appendCodePoint(codePoint);
             }
          }
@@ -1890,19 +1890,19 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private boolean init_Z_I(int codePoint) {
+   private boolean isAllowedCodePoint(int codePoint) {
       if (codePoint == 10) {
-         return this.pop_Z;
+         return this.multiline;
       } else {
          return codePoint == 13 ? false : codePoint >= 32 && codePoint != 127;
       }
    }
 
-   private int init_I_Font(Font renderer, Identifier font, int color, String text) {
+   private int measurePlainWidth(Font renderer, Identifier font, int color, String text) {
       return k.init(renderer, text, font, color);
    }
 
-   private static int init_I_IArr(int[] widths, int from, int to, int target) {
+   private static int lowerBound(int[] widths, int from, int to, int target) {
       int low = Math.max(0, from);
       int high = Math.max(low, Math.min(to, widths.length - 1));
 
@@ -1918,7 +1918,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return low;
    }
 
-   private static int load_I_IArr(int[] widths, int from, int to, int target) {
+   private static int upperBoundInclusive(int[] widths, int from, int to, int target) {
       int low = Math.max(0, from);
       int high = Math.max(low, Math.min(to, widths.length - 1));
       int answer = low;
@@ -1936,7 +1936,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return answer;
    }
 
-   private static int read(int[] widths, int from, int to, int target) {
+   private static int nearestWidthIndex(int[] widths, int from, int to, int target) {
       if (target <= widths[from]) {
          return from;
       }
@@ -1945,7 +1945,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          return to;
       }
 
-      int right = init_I_IArr(widths, from, to, target);
+      int right = lowerBound(widths, from, to, target);
       if (right <= from) {
          return from;
       }
@@ -1954,12 +1954,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return target - widths[left] < widths[right] - target ? left : right;
    }
 
-   private record Inner_CachePool(int init, int load, int read) {
+   private record Inner_CachePool(int start, int end, int renderEnd) {
    }
 
-   private record Inner_DataUtil(ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil, int init_I, int load) {
+   private record Inner_DataUtil(ScrollbarMetricsHelper.Metrics metrics, int lineHeight, int maxStartLine) {
    }
 
-   private record Inner_StreamUtil(String init_Str, List<Style> init_List) {
+   private record Inner_StreamUtil(String text, List<Style> charStyles) {
    }
 }

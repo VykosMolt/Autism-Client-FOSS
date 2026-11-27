@@ -41,7 +41,7 @@ public final class AnimatedToggleButtonRenderer {
       float p = init_F_F(progress);
       int fill = UiLayoutMath.lerpColor(colors.buttonSurface, colors.success, 0.22F * p);
       int border = UiLayoutMath.lerpColor(colors.borderControl, colors.success, p);
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       fill = UiLayoutMath.lerpColor(fill, colors.buttonSurfaceHover, hoverT * 0.6F);
       border = UiLayoutMath.lerpColor(border, p > 0.5F ? colors.success : colors.borderStrong, hoverT * 0.65F);
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, fill, border);

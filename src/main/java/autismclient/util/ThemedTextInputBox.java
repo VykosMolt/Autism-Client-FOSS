@@ -19,7 +19,7 @@ public class ThemedTextInputBox {
    private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private final Minecraft mc;
    private final Font font;
-   private final autismclient.gui.ui.widgets.TextInputWidget widget = new autismclient.gui.ui.widgets.TextInputWidget().load_BitSetUtil_I(3).write_BitSetUtil(1);
+   private final autismclient.gui.ui.widgets.TextInputWidget widget = new autismclient.gui.ui.widgets.TextInputWidget().setHorizontalPadding(3).setTextYOffset(1);
    private int x;
    private int y;
    private int width;
@@ -40,7 +40,7 @@ public class ThemedTextInputBox {
       this.width = Math.max(1, width);
       this.height = Math.max(1, height);
       this.submitOnEnter = submitOnEnter;
-      this.widget.init_BitSetUtil_Supplier(() -> this.mc.gui != null ? this.mc.gui.hud.getChat().getRecentChat() : List.of());
+      this.widget.setHistoryProvider(() -> this.mc.gui != null ? this.mc.gui.hud.getChat().getRecentChat() : List.of());
       this.syncWidgetBounds();
    }
 
@@ -53,20 +53,20 @@ public class ThemedTextInputBox {
    }
 
    public void setChangedListener(Consumer<String> changedListener) {
-      this.widget.init_BitSetUtil_Consumer(changedListener);
+      this.widget.setOnChange(changedListener);
    }
 
    public void setDisplayTextProvider(Function<String, Component> displayTextProvider) {
-      this.widget.init_BitSetUtil_Function(displayTextProvider);
+      this.widget.setDisplayTextProvider(displayTextProvider);
    }
 
    public void setRevisionProvider(LongSupplier revisionProvider) {
-      this.widget.init_BitSetUtil_LongSupplier(revisionProvider);
+      this.widget.setDisplayRevisionProvider(revisionProvider);
    }
 
    public void setMultiline(boolean multiline) {
       this.multiline = multiline;
-      this.widget.update(multiline);
+      this.widget.setMultiline(multiline);
    }
 
    public void setEnterInsertsNewline(boolean enterInsertsNewline) {
@@ -74,15 +74,15 @@ public class ThemedTextInputBox {
    }
 
    public void setHoverEffectsEnabled(boolean hoverEffectsEnabled) {
-      this.widget.read_BitSetUtil_Z(hoverEffectsEnabled);
+      this.widget.setHoverEffectsEnabled(hoverEffectsEnabled);
    }
 
    public void setFocusEffectsEnabled(boolean focusEffectsEnabled) {
-      this.widget.write(focusEffectsEnabled);
+      this.widget.setFocusEffectsEnabled(focusEffectsEnabled);
    }
 
    public void setBackgroundColorOverride(int backgroundColorOverride) {
-      this.widget.sync(backgroundColorOverride);
+      this.widget.setBackgroundColorOverride(backgroundColorOverride);
    }
 
    public void setSpaceKeyInsertsSpace(boolean spaceKeyInsertsSpace) {
@@ -90,12 +90,12 @@ public class ThemedTextInputBox {
    }
 
    public void setHistoryNavigationEnabled(boolean historyNavigationEnabled) {
-      this.widget.flush(historyNavigationEnabled);
+      this.widget.setHistoryNavigationEnabled(historyNavigationEnabled);
    }
 
    public void setPlaceholder(Component placeholder) {
       this.placeholderText = placeholder == null ? "" : ThemedTextHelper.init(placeholder.getString());
-      this.widget.load_BitSetUtil_Str(this.placeholderText);
+      this.widget.setPlaceholder(this.placeholderText);
    }
 
    public String getPlaceholder() {
@@ -103,19 +103,19 @@ public class ThemedTextInputBox {
    }
 
    public void setDrawsBackground(boolean drawsBackground) {
-      this.widget.load_BitSetUtil_Z(drawsBackground);
+      this.widget.setDrawBackground(drawsBackground);
    }
 
    public void setEditable(boolean editable) {
-      this.widget.init_BitSetUtil_Z(editable);
+      this.widget.setEditable(editable);
    }
 
    public void setFilter(Predicate<String> filter) {
-      this.widget.init_BitSetUtil_Predicate(filter);
+      this.widget.setInputFilter(filter);
    }
 
    public void setIntegerOnlyFilter(boolean allowNegative) {
-      this.widget.init_BitSetUtil_Predicate(next -> {
+      this.widget.setInputFilter(next -> {
          if (next != null && !next.isEmpty()) {
             for (int i = 0; i < next.length(); i++) {
                char chr = next.charAt(i);
@@ -132,28 +132,28 @@ public class ThemedTextInputBox {
    }
 
    public boolean isFocused() {
-      return this.widget.load_Z();
+      return this.widget.isFocused();
    }
 
    public void setFocused(boolean focused) {
-      this.widget.init_V_Z(focused);
+      this.widget.setFocused(focused);
    }
 
    public void setMaxLength(int maxLength) {
-      this.widget.init_BitSetUtil_I(maxLength);
+      this.widget.setMaxLength(maxLength);
    }
 
    public void setValue(String text) {
-      this.widget.init_BitSetUtil_Str(text);
+      this.widget.setValue(text);
    }
 
    public String getValue() {
-      return this.widget.init_Str();
+      return this.widget.getValue();
    }
 
    public void insertTextIfFocused(String content) {
-      if (content != null && !content.isEmpty() && this.widget.load_Z() && this.widget.init_Z()) {
-         this.widget.write(content);
+      if (content != null && !content.isEmpty() && this.widget.isFocused() && this.widget.isEditable()) {
+         this.widget.insertText(content);
       }
    }
 
@@ -163,10 +163,10 @@ public class ThemedTextInputBox {
       } else {
          this.syncWidgetBounds();
          if (!this.isMouseOver(mouseX, mouseY)) {
-            this.widget.init_V_Z(false);
+            this.widget.setFocused(false);
             return false;
          } else {
-            return this.widget.init_Z_SyncManager_2(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button);
+            return this.widget.mouseClicked(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button);
          }
       }
    }
@@ -177,21 +177,21 @@ public class ThemedTextInputBox {
 
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
       this.syncWidgetBounds();
-      return this.widget.load_Z_SyncManager(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button);
+      return this.widget.mouseReleased(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button);
    }
 
    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       this.syncWidgetBounds();
-      return this.widget.init_Z_SyncManager(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY);
+      return this.widget.mouseDragged(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY);
    }
 
    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       this.syncWidgetBounds();
-      return !this.isMouseOver(mouseX, mouseY) ? false : this.widget.init_Z_SyncManager(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, (float)amount);
+      return !this.isMouseOver(mouseX, mouseY) ? false : this.widget.mouseScrolled(this.createInputLayoutContext(), (float)mouseX, (float)mouseY, (float)amount);
    }
 
    public boolean keyPressed(KeyEvent keyInput) {
-      if (!this.widget.load_Z()) {
+      if (!this.widget.isFocused()) {
          return false;
       }
 
@@ -201,21 +201,21 @@ public class ThemedTextInputBox {
             int mods = Compat263.keyEventGlfwModifiers(keyInput);
             if ((mods & 14) == 0) {
                this.suppressNextSpaceChar = true;
-               return this.widget.init_Z_SyncManager_2(this.createInputLayoutContext(), ' ', mods);
+               return this.widget.charTyped(this.createInputLayoutContext(), ' ', mods);
             }
          }
 
-         return this.widget.init_Z_SyncManager_3(this.createInputLayoutContext(), key, keyInput.keycode(), Compat263.keyEventGlfwModifiers(keyInput));
+         return this.widget.keyPressed(this.createInputLayoutContext(), key, keyInput.keycode(), Compat263.keyEventGlfwModifiers(keyInput));
       } else {
          if (this.submitOnEnter) {
             return this.submitCurrentText();
          }
 
          if (this.multiline && this.enterInsertsNewline) {
-            return this.widget.init_Z_SyncManager_3(this.createInputLayoutContext(), key, keyInput.keycode(), Compat263.keyEventGlfwModifiers(keyInput));
+            return this.widget.keyPressed(this.createInputLayoutContext(), key, keyInput.keycode(), Compat263.keyEventGlfwModifiers(keyInput));
          }
 
-         this.widget.init_V_Z(false);
+         this.widget.setFocused(false);
          return true;
       }
    }
@@ -234,12 +234,12 @@ public class ThemedTextInputBox {
          this.suppressNextSpaceChar = false;
       }
 
-      return this.widget.load_Z() && this.widget.init_Z_SyncManager_2(this.createInputLayoutContext(), (char)charInput.codepoint(), 0);
+      return this.widget.isFocused() && this.widget.charTyped(this.createInputLayoutContext(), (char)charInput.codepoint(), 0);
    }
 
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       this.syncWidgetBounds();
-      this.widget.init_V_SyncManager(this.createRenderLayoutContext(context, mouseX, mouseY, delta));
+      this.widget.render(this.createRenderLayoutContext(context, mouseX, mouseY, delta));
    }
 
    public int getX() {
@@ -279,19 +279,19 @@ public class ThemedTextInputBox {
    }
 
    public void setSelectionEnd(int selectionEnd) {
-      this.widget.flush(selectionEnd);
+      this.widget.setSelectionEnd(selectionEnd);
    }
 
    public String getSelectedText() {
-      return this.widget.load_Str();
+      return this.widget.getSelectedText();
    }
 
    public void insertText(String text) {
-      this.widget.write(text);
+      this.widget.insertText(text);
    }
 
    private void syncWidgetBounds() {
-      this.widget.init_TableIndex_F(this.x, this.y, this.width, this.height);
+      this.widget.setBounds(this.x, this.y, this.width, this.height);
    }
 
    private boolean isMouseOver(double mouseX, double mouseY) {
@@ -311,36 +311,36 @@ public class ThemedTextInputBox {
    }
 
    private boolean submitCurrentText() {
-      String value = this.widget.init_Str().trim();
+      String value = this.widget.getValue().trim();
       if (value.isEmpty()) {
          return true;
       } else if (autismclient.modules.aD.read_Z()) {
-         this.widget.init_BitSetUtil_Str("");
-         this.widget.init_V_Z(false);
+         this.widget.setValue("");
+         this.widget.setFocused(false);
          return true;
       } else {
          boolean sensitive = autismclient.commands.CommandManager.shouldSuppressInHiddenMode(value) || auditIsKeyCommand(value);
          boolean recordBeforeDispatch = this.submitHandler == null && autismclient.commands.CommandManager.hasCommandPrefix(value) && !sensitive;
          if (recordBeforeDispatch) {
             AutismClientMessaging.rememberRecentChat(value);
-            this.widget.read_BitSetUtil_Str(value);
+            this.widget.pushHistoryEntry(value);
          }
 
          boolean submitted = this.submitHandler != null ? this.submitHandler.test(value) : this.dispatchChatOrCommand(value);
          if (!submitted) {
             return true;
          } else if (sensitive) {
-            this.widget.init_BitSetUtil_Str("");
-            this.widget.init_V_Z(false);
+            this.widget.setValue("");
+            this.widget.setFocused(false);
             return true;
          } else {
             if (!recordBeforeDispatch) {
                AutismClientMessaging.rememberRecentChat(value);
-               this.widget.read_BitSetUtil_Str(value);
+               this.widget.pushHistoryEntry(value);
             }
 
-            this.widget.init_BitSetUtil_Str("");
-            this.widget.init_V_Z(false);
+            this.widget.setValue("");
+            this.widget.setFocused(false);
             return true;
          }
       }

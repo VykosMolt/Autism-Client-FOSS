@@ -45,10 +45,10 @@ final class AiActionMenu {
    private final AiAssistantOverlay init_AiAssistantOverlay;
    private final Runnable init_Runnable;
    private final AiIntents.Inner_StreamUtil init_ad_StreamUtil = AiService.createWaypointResolver();
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(64);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(64);
    final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget()
-      .init_BitSetUtil_I(4)
-      .init_BitSetUtil_Predicate(s -> s.chars().allMatch(Character::isDigit));
+      .setMaxLength(4)
+      .setInputFilter(s -> s.chars().allMatch(Character::isDigit));
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private final SearchFilterList<AiActionMenu.Inner_CachePool> init_a = new SearchFilterList<>(AiActionMenu.Inner_CachePool::search);
    private final Map<AiActionMenu.Inner_DataUtil, AiActionMenu.Inner_ConfigStore> init_Map = new EnumMap<>(AiActionMenu.Inner_DataUtil.class);
@@ -101,8 +101,8 @@ final class AiActionMenu {
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
       this.init_Runnable = onRun;
-      this.init_BitSetUtil.load_BitSetUtil_Consumer(text -> this.sync_V());
-      this.load_BitSetUtil.load_BitSetUtil_Consumer(text -> this.sync_V());
+      this.init_BitSetUtil.setOnSubmit(text -> this.sync_V());
+      this.load_BitSetUtil.setOnSubmit(text -> this.sync_V());
    }
 
    List<autismclient.gui.ui.widgets.TextInputWidget> init_List() {
@@ -123,9 +123,9 @@ final class AiActionMenu {
             this.init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil.valueOf(parts[0]));
             if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && query != null && query.contains(",")) {
                this.update = AiMiningTargets.parse(query).types();
-               this.init_BitSetUtil.init_BitSetUtil_Str("");
+               this.init_BitSetUtil.setValue("");
             } else {
-               this.init_BitSetUtil.init_BitSetUtil_Str(query == null ? "" : query);
+               this.init_BitSetUtil.setValue(query == null ? "" : query);
             }
 
             if (parts.length > 1) {
@@ -136,15 +136,15 @@ final class AiActionMenu {
    }
 
    void init_V() {
-      if (this.init_BitSetUtil.load_Z()) {
-         this.init_BitSetUtil.init_V_Z(false);
+      if (this.init_BitSetUtil.isFocused()) {
+         this.init_BitSetUtil.setFocused(false);
       }
 
-      if (this.load_BitSetUtil.load_Z()) {
-         this.load_BitSetUtil.init_V_Z(false);
+      if (this.load_BitSetUtil.isFocused()) {
+         this.load_BitSetUtil.setFocused(false);
       }
 
-      this.write_Map.values().forEach(field -> field.init_V_Z(false));
+      this.write_Map.values().forEach(field -> field.setFocused(false));
    }
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
@@ -328,7 +328,7 @@ final class AiActionMenu {
             break;
          case TARGET:
             int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? kit.measureButtonWidth(this.init_Z ? "Loading..." : "Import") + 2 : 0;
-            this.init_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_DataUti.read_Str);
+            this.init_BitSetUtil.setPlaceholder(this.init_StreamUtil_DataUti.read_Str);
             kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
             if (importW > 0) {
                kit.drawButton(
@@ -656,7 +656,7 @@ final class AiActionMenu {
             kit.colors.textSecondary
          );
          y += line;
-         this.load_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_CachePo == null ? "Auto" : this.write_Str());
+         this.load_BitSetUtil.setPlaceholder(this.init_StreamUtil_CachePo == null ? "Auto" : this.write_Str());
          kit.drawTextInput(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(x, y, w, h));
          y += h + 2;
          String[] values = new String[]{"Auto", "1", "16", "64"};
@@ -666,7 +666,7 @@ final class AiActionMenu {
             String value = values[i];
             kit.drawButton(
                autismclient.gui.f.NetHelper.init(x + i * (cell + 2), y, cell, h), value, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, () -> {
-                  this.load_BitSetUtil.init_BitSetUtil_Str(value.equals("Auto") ? "" : value);
+                  this.load_BitSetUtil.setValue(value.equals("Auto") ? "" : value);
                   this.read_Str = "";
                }
             );
@@ -708,7 +708,7 @@ final class AiActionMenu {
 
          for (Entry<String, AiActionMenu.Inner_CachePool> entry : this.read_Map.entrySet()) {
             autismclient.gui.ui.widgets.TextInputWidget field = this.init_BitSetUtil_Str(entry.getKey());
-            field.load_BitSetUtil_Str(this.load_BitSetUtil.init_Str().isBlank() ? this.write_Str() : this.load_BitSetUtil.init_Str());
+            field.setPlaceholder(this.load_BitSetUtil.getValue().isBlank() ? this.write_Str() : this.load_BitSetUtil.getValue());
             kit.drawCenteredRowText(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.colors.textPrimary);
             kit.drawTextInput(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
             y += h + 2;
@@ -752,7 +752,7 @@ final class AiActionMenu {
          };
       } else {
          String quantity = this.init_StreamUtil_DataUti.init_Z
-            ? "Amount: " + (this.load_BitSetUtil.init_Str().isBlank() ? this.write_Str() + " (automatic)" : this.load_BitSetUtil.init_Str())
+            ? "Amount: " + (this.load_BitSetUtil.getValue().isBlank() ? this.write_Str() + " (automatic)" : this.load_BitSetUtil.getValue())
             : this.init_StreamUtil_DataUti.write_Str;
          lines = new String[]{
             this.init_StreamUtil_DataUti.init_Str + (this.init_StreamUtil_CachePo == null ? "" : ": " + this.read_Str()),
@@ -832,9 +832,9 @@ final class AiActionMenu {
             key,
             k -> {
                autismclient.gui.ui.widgets.TextInputWidget field = new autismclient.gui.ui.widgets.TextInputWidget()
-                  .init_BitSetUtil_I(3)
-                  .init_BitSetUtil_Predicate(s -> s.chars().allMatch(Character::isDigit));
-               field.load_BitSetUtil_Consumer(text -> this.sync_V());
+                  .setMaxLength(3)
+                  .setInputFilter(s -> s.chars().allMatch(Character::isDigit));
+               field.setOnSubmit(text -> this.sync_V());
                return field;
             }
          );
@@ -864,7 +864,7 @@ final class AiActionMenu {
    private void init_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper frame, List<AiActionMenu.Inner_CachePool> rows) {
       if (frame.sync() >= 8) {
          autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(
-            kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.load_Z()
+            kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.isFocused()
          );
          autismclient.gui.f.NetHelper inner = frame.init(2);
          int rowH = AiUiKit.inputHeight();
@@ -956,8 +956,8 @@ final class AiActionMenu {
    }
 
    boolean load_Z() {
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && !this.init_BitSetUtil.init_Str().isEmpty()) {
-         this.init_BitSetUtil.init_BitSetUtil_Str("");
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && !this.init_BitSetUtil.getValue().isEmpty()) {
+         this.init_BitSetUtil.setValue("");
          return true;
       }
 
@@ -1035,8 +1035,8 @@ final class AiActionMenu {
       this.update = List.of();
       if (next != this.init_StreamUtil_DataUti) {
          this.init_StreamUtil_DataUti = next;
-         this.init_BitSetUtil.init_BitSetUtil_Str("");
-         this.load_BitSetUtil.init_BitSetUtil_Str("");
+         this.init_BitSetUtil.setValue("");
+         this.load_BitSetUtil.setValue("");
          this.read_I = 0;
          this.write_List = List.of();
          this.read_List = null;
@@ -1215,7 +1215,7 @@ final class AiActionMenu {
    }
 
    private AiIntents.Inner_BufferHelper init_ad_BufferHelper() {
-      Integer amount = this.init_StreamUtil_DataUti.init_Z ? AiLocalRequest.init(this.load_BitSetUtil.init_Str(), this.write_I()) : null;
+      Integer amount = this.init_StreamUtil_DataUti.init_Z ? AiLocalRequest.init(this.load_BitSetUtil.getValue(), this.write_I()) : null;
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          List<JsonObject> targets = this.read_Map
             .values()
@@ -1228,7 +1228,7 @@ final class AiActionMenu {
 
                JsonObject argsx = stepx.arguments().deepCopy();
                String key = AiJson.getString(argsx, "block", "");
-               Integer custom = AiLocalRequest.init(this.init_BitSetUtil_Str(key).init_Str(), 640);
+               Integer custom = AiLocalRequest.init(this.init_BitSetUtil_Str(key).getValue(), 640);
                if (custom != null) {
                   argsx.addProperty("mineAmount", custom);
                }
@@ -1382,7 +1382,7 @@ final class AiActionMenu {
             } else if (file != null) {
                this.init_Map.remove(AiActionMenu.Inner_DataUtil.BUILD);
                if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD) {
-                  this.init_BitSetUtil.init_BitSetUtil_Str(file.name());
+                  this.init_BitSetUtil.setValue(file.name());
                   this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
                }
             }
@@ -1400,7 +1400,7 @@ final class AiActionMenu {
    }
 
    private String sync_Str() {
-      return this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
+      return this.init_BitSetUtil.getValue().trim().toLowerCase(Locale.ROOT);
    }
 
    private List<AiActionMenu.Inner_CachePool> read_List() {
@@ -1424,7 +1424,7 @@ final class AiActionMenu {
          }
 
          AiActionMenu.Inner_CachePool place = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GOTO
-            ? this.init_StreamUtil_CachePo_Str(this.init_BitSetUtil.init_Str().trim())
+            ? this.init_StreamUtil_CachePo_Str(this.init_BitSetUtil.getValue().trim())
             : null;
          if (place != null) {
             out.add(0, place);

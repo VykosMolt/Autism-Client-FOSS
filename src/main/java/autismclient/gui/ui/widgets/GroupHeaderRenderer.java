@@ -39,7 +39,7 @@ public final class GroupHeaderRenderer {
    }
 
    private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered) {
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       if (hoverT > 0.001F) {
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, Math.round(20.0F * hoverT) << 24 | 16777215);
       }

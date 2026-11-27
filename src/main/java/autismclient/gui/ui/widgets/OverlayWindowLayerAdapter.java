@@ -59,13 +59,13 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    @Override
-   public autismclient.gui.f.NetHelper init_NetHelper() {
+   public autismclient.gui.f.NetHelper getBounds() {
       OverlayBounds bounds = this.init_cX.init_cH();
       return autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, bounds.collapsed ? OverlayLayoutBase.headerHeight() : bounds.height);
    }
 
    @Override
-   public void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
+   public void setBounds(autismclient.gui.f.NetHelper bounds) {
       if (bounds != null) {
          OverlayBounds current = this.init_cX.init_cH();
          this.init_cX.init_V_cH(new OverlayBounds(bounds.read(), bounds.write(), bounds.update(), bounds.sync(), current.visible, current.collapsed));
@@ -73,18 +73,18 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    @Override
-   public autismclient.gui.f.NetHelper load_NetHelper() {
-      return !this.read && this.init_cX.sync_Z() ? this.init_NetHelper() : null;
+   public autismclient.gui.f.NetHelper getInteractiveBounds() {
+      return !this.read && this.init_cX.sync_Z() ? this.getBounds() : null;
    }
 
    @Override
-   public void init_V_SyncManager(autismclient.gui.f.SyncManager context) {
+   public void render(autismclient.gui.f.SyncManager context) {
       if (!this.init_Z) {
          boolean visible = this.init_cX.sync_Z();
          if (this.init_CharEncoder.load_Z(visible)) {
             boolean block = !visible || this.load;
             long perfStart = bK.load_J();
-            autismclient.gui.f.NetHelper b = this.init_NetHelper();
+            autismclient.gui.f.NetHelper b = this.getBounds();
             GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
             int scissorDepth = autismclient.gui.ui.UiClipStack.getInstance().depth();
 
@@ -142,34 +142,34 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I_2(int mouseX, int mouseY, int button) {
+   public autismclient.gui.ui.UiInputResult onMouseClicked(int mouseX, int mouseY, int button) {
       this.init_cX.init_Z_D_3(mouseX, mouseY, button);
       return autismclient.gui.ui.UiInputResult.HANDLED;
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult load(int mouseX, int mouseY, int button) {
+   public autismclient.gui.ui.UiInputResult onMouseReleased(int mouseX, int mouseY, int button) {
       return init_EventBus_Z(this.init_cX.load_Z_D_3(mouseX, mouseY, button));
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
+   public autismclient.gui.ui.UiInputResult onMouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
       return init_EventBus_Z(this.init_cX.init_Z_D(mouseX, mouseY, button, deltaX, deltaY));
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_I(int mouseX, int mouseY, double amount) {
+   public autismclient.gui.ui.UiInputResult onMouseScrolled(int mouseX, int mouseY, double amount) {
       this.init_cX.init_Z_D_2(mouseX, mouseY, amount);
       return autismclient.gui.ui.UiInputResult.HANDLED;
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult read(int key, int scanCode, int modifiers) {
+   public autismclient.gui.ui.UiInputResult onKeyPressed(int key, int scanCode, int modifiers) {
       return init_EventBus_Z(this.init_cX.init_Z_I(key, scanCode, modifiers));
    }
 
    @Override
-   public autismclient.gui.ui.UiInputResult init_EventBus_C(char chr) {
+   public autismclient.gui.ui.UiInputResult onCharTyped(char chr) {
       return this.init(chr, 0);
    }
 

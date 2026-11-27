@@ -39,10 +39,10 @@ public final class ListRowRenderer {
       );
       int buttonX = listX + listWidth - buttonWidth - 2;
       int buttonY = headerY + Math.max(0, (THEME.init_I_l_I(l.load, 1) - buttonHeight) / 2) - 1;
-      OverlayActionButton button = OverlayActionButton.init(buttonX, buttonY, buttonWidth, buttonHeight, Component.literal(label), b -> {});
-      button.init_Z = enabled;
-      button.init_ByteReader_ByteReader_StreamU(enabled ? OverlayActionButton.ButtonTone.SECONDARY : OverlayActionButton.ButtonTone.GHOST);
-      OverlayActionButton.init(context, textRenderer, button, mouseX, mouseY);
+      OverlayActionButton button = OverlayActionButton.create(buttonX, buttonY, buttonWidth, buttonHeight, Component.literal(label), b -> {});
+      button.active = enabled;
+      button.setTone(enabled ? OverlayActionButton.ButtonTone.SECONDARY : OverlayActionButton.ButtonTone.GHOST);
+      OverlayActionButton.render(context, textRenderer, button, mouseX, mouseY);
    }
 
    public static void drawEmptyPlaceholder(GuiGraphicsExtractor context, Font textRenderer, String text, int x, int y, int width) {

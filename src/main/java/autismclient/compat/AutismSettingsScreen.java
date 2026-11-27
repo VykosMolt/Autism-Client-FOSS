@@ -151,8 +151,8 @@ public class AutismSettingsScreen extends Screen {
             this.init_V_NetHelper(metrics.init_NetHelper(), () -> this.init(metrics, my), null);
          }
 
-         if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-            this.init_RefQueue.init_V_SyncManager(this.init_SyncManager);
+         if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+            this.init_RefQueue.render(this.init_SyncManager);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -245,8 +245,8 @@ public class AutismSettingsScreen extends Screen {
       if (this.init_RefQueue == null) {
          this.init_RefQueue = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::setCommandPrefix);
       } else {
-         this.init_RefQueue.init(prefixes);
-         this.init_RefQueue.init(current);
+         this.init_RefQueue.setOptions(prefixes);
+         this.init_RefQueue.setSelectedOption(current);
       }
 
       return (g, rb, mx, my, clickable) -> {
@@ -254,17 +254,17 @@ public class AutismSettingsScreen extends Screen {
          this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          int ctrlW = Math.min(110, rb.update() / 2);
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
-         this.init_RefQueue.init_V_NetHelper(ctrl);
+         this.init_RefQueue.setBounds(ctrl);
          boolean hover = clickable && ctrl.init_Z(mx, my);
-         DropdownMenu.init_V_SyncManager(this.init_SyncManager, ctrl, current, hover, this.init_RefQueue.init_Z_2());
+         DropdownMenu.renderTrigger(this.init_SyncManager, ctrl, current, hover, this.init_RefQueue.isOpen());
          if (clickable) {
             this.init_V_NetHelper(ctrl, () -> {
-               if (!this.init_RefQueue.init_Z_2()) {
-                  this.init_RefQueue.init_V_2();
+               if (!this.init_RefQueue.isOpen()) {
+                  this.init_RefQueue.open();
                }
             }, null);
-         } else if (this.init_RefQueue.init_Z_2()) {
-            this.init_RefQueue.load_V_2();
+         } else if (this.init_RefQueue.isOpen()) {
+            this.init_RefQueue.close();
          }
       };
    }
@@ -370,8 +370,8 @@ public class AutismSettingsScreen extends Screen {
          return true;
       }
 
-      if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-         this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event));
+      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+         this.init_RefQueue.onMouseClicked(mx, my, Compat263.mouseEventGlfwButton(event));
          return true;
       }
 
@@ -393,8 +393,8 @@ public class AutismSettingsScreen extends Screen {
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       this.init_Z = false;
-      if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-         this.init_RefQueue.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+         this.init_RefQueue.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
          return true;
       } else {
          return super.mouseReleased(event);
@@ -406,8 +406,8 @@ public class AutismSettingsScreen extends Screen {
       if (this.init_Z) {
          this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
          return true;
-      } else if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-         this.init_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);
+      } else if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+         this.init_RefQueue.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);
          return true;
       } else {
          return super.mouseDragged(event, dx, dy);
@@ -416,8 +416,8 @@ public class AutismSettingsScreen extends Screen {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-      if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-         this.init_RefQueue.init_EventBus_I(cA.init_I_D(mouseX), cA.init_I_D(mouseY), scrollY);
+      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+         this.init_RefQueue.onMouseScrolled(cA.init_I_D(mouseX), cA.init_I_D(mouseY), scrollY);
          return true;
       }
 
@@ -436,8 +436,8 @@ public class AutismSettingsScreen extends Screen {
       }
 
       if (Compat263.keyEventGlfwKey(event) == 256) {
-         if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-            this.init_RefQueue.load_V_2();
+         if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+            this.init_RefQueue.close();
             return true;
          } else {
             this.onClose();

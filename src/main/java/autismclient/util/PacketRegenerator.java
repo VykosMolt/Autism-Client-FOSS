@@ -182,10 +182,10 @@ public class PacketRegenerator {
             return null;
          }
 
-         String channel = AutismPayloadSupport.init_Str(payload);
-         byte[] rawBytes = AutismPayloadSupport.load(payload);
+         String channel = AutismPayloadSupport.extractChannelId(payload);
+         byte[] rawBytes = AutismPayloadSupport.encodePayloadBytes(payload);
          if (channel != null && !channel.isBlank()) {
-            return AutismPayloadSupport.init_ServerboundCustomP(channel, rawBytes);
+            return AutismPayloadSupport.buildServerboundPacket(channel, rawBytes);
          }
 
          AutismClientAddon.LOG.warn("[Autism] Cannot regenerate ServerboundCustomPayloadPacket - channel is blank");

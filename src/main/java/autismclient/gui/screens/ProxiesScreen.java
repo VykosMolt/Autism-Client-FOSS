@@ -114,10 +114,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int backWidth = this.load_I_Str("Back");
       this.init_List
          .add(
-            autismclient.gui.ui.widgets.OverlayActionButton.init(
+            autismclient.gui.ui.widgets.OverlayActionButton.create(
                   this.open_I(), this.pop_I(), backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                )
-               .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
+               .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
          );
       if (!this.init_Z()) {
          int actionGap = 2;
@@ -135,57 +135,57 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int actionY = this.get_I();
          int[] actionWidths = this.init_IArr_I_2(usableW, actionGap, typeLabel, addLabel, clearLabel, refreshLabel, "Cleanup", importLabel, "Config");
          int actionX = this.open_I();
-         this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.init(actionX, actionY, actionWidths[0], ctl, Component.literal(typeLabel), b -> {
+         this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[0], ctl, Component.literal(typeLabel), b -> {
             this.init_bZ = this.init_bZ == ProxyProtocolType.Socks5 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             this.load_V();
-         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY));
+         }).setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY));
          actionX += actionWidths[0] + actionGap;
-         this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.init(actionX, actionY, actionWidths[1], ctl, Component.literal(addLabel), b -> {
+         this.init_List.add(autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[1], ctl, Component.literal(addLabel), b -> {
             if (this.init_bW == null) {
                this.read_V();
             } else {
                this.write_V();
             }
-         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY));
+         }).setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY));
          actionX += actionWidths[1] + actionGap;
          this.init_List
             .add(
-               autismclient.gui.ui.widgets.OverlayActionButton.init(actionX, actionY, actionWidths[2], ctl, Component.literal(clearLabel), b -> this.get_V())
-                  .init_ByteReader_ByteReader_StreamU(
+               autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[2], ctl, Component.literal(clearLabel), b -> this.get_V())
+                  .setTone(
                      this.init_bW == null ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
                   )
             );
          actionX += actionWidths[2] + actionGap;
-         autismclient.gui.ui.widgets.OverlayActionButton refresh = autismclient.gui.ui.widgets.OverlayActionButton.init(
+         autismclient.gui.ui.widgets.OverlayActionButton refresh = autismclient.gui.ui.widgets.OverlayActionButton.create(
                actionX, actionY, actionWidths[3], ctl, Component.literal(refreshLabel), b -> this.update_V()
             )
-            .init_ByteReader_ByteReader_StreamU(
+            .setTone(
                refreshRunning ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
             );
-         refresh.init_Z = !importRunning;
+         refresh.active = !importRunning;
          this.init_List.add(refresh);
          actionX += actionWidths[3] + actionGap;
-         autismclient.gui.ui.widgets.OverlayActionButton cleanup = autismclient.gui.ui.widgets.OverlayActionButton.init(
+         autismclient.gui.ui.widgets.OverlayActionButton cleanup = autismclient.gui.ui.widgets.OverlayActionButton.create(
                actionX, actionY, actionWidths[4], ctl, Component.literal("Cleanup"), b -> this.sync_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
-         cleanup.init_Z = !refreshRunning && !importRunning;
+            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
+         cleanup.active = !refreshRunning && !importRunning;
          this.init_List.add(cleanup);
          actionX += actionWidths[4] + actionGap;
          this.init_List
             .add(
-               autismclient.gui.ui.widgets.OverlayActionButton.init(actionX, actionY, actionWidths[5], ctl, Component.literal(importLabel), b -> this.open_V())
-                  .init_ByteReader_ByteReader_StreamU(
+               autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[5], ctl, Component.literal(importLabel), b -> this.open_V())
+                  .setTone(
                      importRunning ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
                   )
             );
          actionX += actionWidths[5] + actionGap;
          this.init_List
             .add(
-               autismclient.gui.ui.widgets.OverlayActionButton.init(
+               autismclient.gui.ui.widgets.OverlayActionButton.create(
                      actionX, actionY, actionWidths[6], ctl, Component.literal("Config"), b -> this.minecraft.gui.setScreen(new ProxyConfigScreen(this))
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
+                  .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
             );
          int filterY = this.set_I();
          int filterX = this.open_I();
@@ -201,18 +201,18 @@ public class ProxiesScreen extends VirtualScaledScreen {
          filterX += filterWidths[3] + filterGap;
          this.init_V_I(filterX, filterY, filterWidths[4], ProxiesScreen.Inner_DataUtil.ENABLED, "Enabled");
          filterX += filterWidths[4] + filterGap;
-         autismclient.gui.ui.widgets.OverlayActionButton sort = autismclient.gui.ui.widgets.OverlayActionButton.init(
+         autismclient.gui.ui.widgets.OverlayActionButton sort = autismclient.gui.ui.widgets.OverlayActionButton.create(
                filterX, filterY, filterWidths[5], ctl, Component.literal("Sort"), b -> this.flush_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
-         sort.init_Z = !refreshRunning && !importRunning && manager.close_I() > 1;
+            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
+         sort.active = !refreshRunning && !importRunning && manager.close_I() > 1;
          this.init_List.add(sort);
          filterX += filterWidths[5] + filterGap;
-         autismclient.gui.ui.widgets.OverlayActionButton clearAll = autismclient.gui.ui.widgets.OverlayActionButton.init(
+         autismclient.gui.ui.widgets.OverlayActionButton clearAll = autismclient.gui.ui.widgets.OverlayActionButton.create(
                filterX, filterY, filterWidths[6], ctl, Component.literal("Clear All"), b -> this.close_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER);
-         clearAll.init_Z = !refreshRunning && !importRunning && manager.close_I() > 0;
+            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER);
+         clearAll.active = !refreshRunning && !importRunning && manager.close_I() > 0;
          this.init_List.add(clearAll);
          List<bW> proxies = this.load_List();
          boolean hasActiveSection = proxies.size() > this.init_List().size();
@@ -242,35 +242,35 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int btnH = this.sync_I();
       int btnY = rowY + (this.write_I() - btnH) / 2;
       int toggleW = Math.max(this.load_I_Str("ON"), this.load_I_Str("OFF"));
-      autismclient.gui.ui.widgets.OverlayActionButton toggle = autismclient.gui.ui.widgets.OverlayActionButton.init(
+      autismclient.gui.ui.widgets.OverlayActionButton toggle = autismclient.gui.ui.widgets.OverlayActionButton.create(
          this.cache() + 4, btnY, toggleW, btnH, Component.literal(proxy.init_Z ? "ON" : "OFF"), b -> this.init_V_bW(proxy)
       );
-      toggle.init_ByteReader_ByteReader_StreamU(
+      toggle.setTone(
             proxy.init_Z ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
          )
-         .init_ByteReader_Z(proxy.init_Z)
-         .init_ByteReader_Str("proxy-enabled:" + proxy.read + ":" + proxy.init_I);
+         .setToggleState(proxy.init_Z)
+         .setAnimationKey("proxy-enabled:" + proxy.read + ":" + proxy.init_I);
       int checkW = this.load_I_Str("Check");
       int deleteX = this.state() - 1 - btnH;
       int checkX = deleteX - 2 - checkW;
-      autismclient.gui.ui.widgets.OverlayActionButton check = autismclient.gui.ui.widgets.OverlayActionButton.init(
+      autismclient.gui.ui.widgets.OverlayActionButton check = autismclient.gui.ui.widgets.OverlayActionButton.create(
          checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING ? "..." : "Check"), b -> this.read_V_bW(proxy)
       );
-      check.init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
-      check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
-      autismclient.gui.ui.widgets.OverlayActionButton delete = autismclient.gui.ui.widgets.OverlayActionButton.init(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
-      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER).init_ByteReader_Identifier(GuiIconAtlas.DELETE);
+      check.setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
+      check.active = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
+      autismclient.gui.ui.widgets.OverlayActionButton delete = autismclient.gui.ui.widgets.OverlayActionButton.create(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
+      delete.setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER).setIcon(GuiIconAtlas.DELETE);
       return new ProxiesScreen.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
    }
 
    private void init_V_I(int x, int y, int width, ProxiesScreen.Inner_DataUtil value, String label) {
-      autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, width, this.read_I(), Component.literal(label), b -> {
+      autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.create(x, y, width, this.read_I(), Component.literal(label), b -> {
          this.init_ArrayUtil_DataUtil = value;
          this.update_I = 0;
          this.init_CacheEntry.jumpTo(0, 0);
          this.load_V();
       });
-      button.init_ByteReader_ByteReader_StreamU(
+      button.setTone(
          this.init_ArrayUtil_DataUtil == value ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.FILTER_ON : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.FILTER_OFF
       );
       this.init_List.add(button);
@@ -548,24 +548,24 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private void pop_V() {
-      if (this.init_ByteReader == null || this.init_ByteReader.write() != this.read_I()) {
-         this.init_ByteReader = autismclient.gui.ui.widgets.OverlayActionButton.init(0, 0, 1, this.read_I(), Component.literal("From File"), b -> this.poll_V())
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
+      if (this.init_ByteReader == null || this.init_ByteReader.getHeight() != this.read_I()) {
+         this.init_ByteReader = autismclient.gui.ui.widgets.OverlayActionButton.create(0, 0, 1, this.read_I(), Component.literal("From File"), b -> this.poll_V())
+            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
       }
 
-      if (this.load_ByteReader == null || this.load_ByteReader.write() != this.read_I()) {
-         this.load_ByteReader = autismclient.gui.ui.widgets.OverlayActionButton.init(0, 0, 1, this.read_I(), Component.literal("From Clipboard"), b -> this.push_V())
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
+      if (this.load_ByteReader == null || this.load_ByteReader.getHeight() != this.read_I()) {
+         this.load_ByteReader = autismclient.gui.ui.widgets.OverlayActionButton.create(0, 0, 1, this.read_I(), Component.literal("From Clipboard"), b -> this.push_V())
+            .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY);
       }
    }
 
    private void init_V_NetHelperArr(autismclient.gui.f.NetHelper[] rects) {
-      this.init_ByteReader.init_V_I(rects[1].read());
-      this.init_ByteReader.load(rects[1].write());
-      this.init_ByteReader.read(rects[1].update());
-      this.load_ByteReader.init_V_I(rects[2].read());
-      this.load_ByteReader.load(rects[2].write());
-      this.load_ByteReader.read(rects[2].update());
+      this.init_ByteReader.setX(rects[1].read());
+      this.init_ByteReader.setY(rects[1].write());
+      this.init_ByteReader.setWidth(rects[1].update());
+      this.load_ByteReader.setX(rects[2].read());
+      this.load_ByteReader.setY(rects[2].write());
+      this.load_ByteReader.setWidth(rects[2].update());
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -578,8 +578,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.init_V_GuiGraphicsExtract(
          graphics, "Import proxies from", card.read() + card.update() / 2, this.init_I_I_I(card.write() + 4, 12), GuiColorPalette.flush, true
       );
-      autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, this.init_ByteReader, mouseX, mouseY);
-      autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, this.load_ByteReader, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, this.init_ByteReader, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, this.load_ByteReader, mouseX, mouseY);
    }
 
    private void run_V() {
@@ -703,7 +703,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
-            autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, button, virtualMouseX, virtualMouseY);
+            autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, button, virtualMouseX, virtualMouseY);
          }
 
          if (!this.init_Z()) {
@@ -751,8 +751,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       String region = proxy.load();
       String status = this.init_Str_bW(proxy);
       int ty = this.init_I_I_I(y, h);
-      int nameX = row.init_ByteReader.init_I() + row.init_ByteReader.read() + 4;
-      int metaRight = row.load.init_I() - 4;
+      int nameX = row.init_ByteReader.getX() + row.init_ByteReader.getWidth() + 4;
+      int metaRight = row.load.getX() - 4;
       int statusW = Math.min(this.init_I_Str("Unchecked"), Math.max(20, (metaRight - nameX) / 4));
       int statusX = metaRight - statusW;
       int regionW = Math.min(70, Math.max(20, (metaRight - nameX) / 4));
@@ -768,9 +768,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
       this.init_V_GuiGraphicsExtract(graphics, region, regionX, ty, proxy.init_I(), false, regionW);
       this.init_V_GuiGraphicsExtract(graphics, status, statusX, ty, proxy.init_bW_CachePool.init_I(), false, statusW);
-      autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, row.init_ByteReader, mouseX, mouseY);
-      autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, row.load, mouseX, mouseY);
-      autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, row.read, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.init_ByteReader, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.load, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.read, mouseX, mouseY);
    }
 
    @Override
@@ -790,11 +790,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
          if (Compat263.mouseEventGlfwButton(virtualEvent) == 0) {
             this.pop_V();
             this.init_V_NetHelperArr(this.init_NetHelperArr());
-            if (autismclient.gui.ui.widgets.OverlayActionButton.init(this.init_ByteReader, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+            if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(this.init_ByteReader, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
                return true;
             }
 
-            if (autismclient.gui.ui.widgets.OverlayActionButton.init(this.load_ByteReader, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+            if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(this.load_ByteReader, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
                return true;
             }
 
@@ -828,7 +828,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
-            if (autismclient.gui.ui.widgets.OverlayActionButton.init(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+            if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
                return true;
             }
          }
@@ -857,20 +857,20 @@ public class ProxiesScreen extends VirtualScaledScreen {
             return false;
          }
       } else {
-         autismclient.gui.ui.widgets.OverlayActionButton.init(row.init_ByteReader, x, y, button);
-         autismclient.gui.ui.widgets.OverlayActionButton.init(row.load, x, y, button);
-         autismclient.gui.ui.widgets.OverlayActionButton.init(row.read, x, y, button);
+         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.init_ByteReader, x, y, button);
+         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.load, x, y, button);
+         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.read, x, y, button);
          return true;
       }
    }
 
    private boolean init_Z_ByteReader(autismclient.gui.ui.widgets.OverlayActionButton button, double mouseX, double mouseY) {
       return button != null
-         && button.load_Z
-         && mouseX >= button.init_I()
-         && mouseX < button.init_I() + button.read()
-         && mouseY >= button.load()
-         && mouseY < button.load() + button.write();
+         && button.visible
+         && mouseX >= button.getX()
+         && mouseX < button.getX() + button.getWidth()
+         && mouseY >= button.getY()
+         && mouseY < button.getY() + button.getHeight();
    }
 
    @Override
@@ -1147,11 +1147,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private int flush_I() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.close_I(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.close_I(), 6);
    }
 
    private int close_I() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 530);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 530);
    }
 
    private int open_I() {

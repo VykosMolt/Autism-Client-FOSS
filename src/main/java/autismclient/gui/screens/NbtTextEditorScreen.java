@@ -30,11 +30,11 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    private final Setting<?, ?> init_Setting;
    private final NbtTextEditorScreen.Inner_DataUtil init_BufferHelper_DataU;
    private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget()
-      .update(true)
-      .init_BitSetUtil_I(1048576)
-      .load_BitSetUtil_I(5)
-      .read_BitSetUtil_Z(false)
-      .write(true);
+      .setMultiline(true)
+      .setMaxLength(1048576)
+      .setHorizontalPadding(5)
+      .setHoverEffectsEnabled(false)
+      .setFocusEffectsEnabled(true);
    private autismclient.gui.ui.layout.LayoutContext init_SyncManager;
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    private autismclient.gui.f.NetHelper load_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
@@ -53,15 +53,15 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       this.init_Setting = option;
       this.init_BufferHelper_DataU = mode == null ? NbtTextEditorScreen.Inner_DataUtil.RAW : mode;
       if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
-         this.init_BitSetUtil.init_BitSetUtil_Function(this::init_Component_Str);
-         this.init_BitSetUtil.sync(1376389388);
-         this.init_BitSetUtil.read_BitSetUtil_Z(false);
-         this.init_BitSetUtil.write(false);
+         this.init_BitSetUtil.setDisplayTextProvider(this::init_Component_Str);
+         this.init_BitSetUtil.setBackgroundColorOverride(1376389388);
+         this.init_BitSetUtil.setHoverEffectsEnabled(false);
+         this.init_BitSetUtil.setFocusEffectsEnabled(false);
       }
 
-      this.init_BitSetUtil.init_BitSetUtil_Str(this.load_Str_Str_2(module != null && option != null ? module.value(option.id()) : ""));
-      this.init_BitSetUtil.init_BitSetUtil_Consumer(ignored -> this.init_Str = "");
-      this.init_BitSetUtil.init_V_Z(true);
+      this.init_BitSetUtil.setValue(this.load_Str_Str_2(module != null && option != null ? module.value(option.id()) : ""));
+      this.init_BitSetUtil.setOnChange(ignored -> this.init_Str = "");
+      this.init_BitSetUtil.setFocused(true);
    }
 
    @Override
@@ -107,10 +107,10 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
          int editorY = tipY + Math.max(1, maxTipLines) * lineH + 2;
          int editorH = Math.max(42, footerTop + pad - 2 - editorY);
-         this.init_BitSetUtil.init_TableIndex_F(x + pad, editorY, w - pad * 2, editorH);
+         this.init_BitSetUtil.setBounds(x + pad, editorY, w - pad * 2, editorH);
          autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
          this.init_SyncManager = new autismclient.gui.ui.layout.LayoutContext(graphics, this.font, viewport, init_CharEncoder, mx, my, delta);
-         this.init_BitSetUtil.init_V_SyncManager(this.init_SyncManager);
+         this.init_BitSetUtil.render(this.init_SyncManager);
          int buttonY = footerTop + pad;
          int saveW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Save"));
          int cancelW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Cancel"));
@@ -132,7 +132,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
             autismclient.gui.f.b.CachePool.init(ui, this.flush, "Paste", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.flush.init_Z(mx, my), false);
             buttonY += ctrlH + 2;
             String status = this.init_Str.isBlank()
-               ? this.init_BitSetUtil.init_Str().length() + " / 1,048,576 chars  •  Ctrl+S save  •  Ctrl+Shift+F format"
+               ? this.init_BitSetUtil.getValue().length() + " / 1,048,576 chars  •  Ctrl+S save  •  Ctrl+Shift+F format"
                : this.init_Str;
             ui.init_PoolEntry()
                .drawFitted(
@@ -192,7 +192,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          return true;
       } else {
          return this.init_SyncManager == null
-            || this.init_BitSetUtil.init_Z_SyncManager_2(this.init_SyncManager, mx, my, Compat263.mouseEventGlfwButton(event));
+            || this.init_BitSetUtil.mouseClicked(this.init_SyncManager, mx, my, Compat263.mouseEventGlfwButton(event));
       }
    }
 
@@ -200,14 +200,14 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    public boolean mouseReleased(MouseButtonEvent event) {
       return this.init_SyncManager == null
          || this.init_BitSetUtil
-            .load_Z_SyncManager(this.init_SyncManager, cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+            .mouseReleased(this.init_SyncManager, cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       return this.init_SyncManager == null
          || this.init_BitSetUtil
-            .init_Z_SyncManager(
+            .mouseDragged(
                this.init_SyncManager, cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), (float)dx, (float)dy
             );
    }
@@ -215,7 +215,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       return this.init_SyncManager == null
-         || this.init_BitSetUtil.init_Z_SyncManager(this.init_SyncManager, cA.init_I_D(mouseX), cA.init_I_D(mouseY), (float)scrollY);
+         || this.init_BitSetUtil.mouseScrolled(this.init_SyncManager, cA.init_I_D(mouseX), cA.init_I_D(mouseY), (float)scrollY);
    }
 
    @Override
@@ -235,8 +235,8 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       if (this.init_BufferHelper_DataU != NbtTextEditorScreen.Inner_DataUtil.FULL_NBT
          || !ctrl
          || Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
-         if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && Compat263.keyEventGlfwKey(input) == 258 && this.init_BitSetUtil.load_Z()) {
-            this.init_BitSetUtil.write("  ");
+         if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && Compat263.keyEventGlfwKey(input) == 258 && this.init_BitSetUtil.isFocused()) {
+            this.init_BitSetUtil.insertText("  ");
             return true;
          } else if (Compat263.keyEventGlfwKey(input) == 256) {
             this.onClose();
@@ -244,7 +244,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          } else {
             return this.init_SyncManager == null
                || this.init_BitSetUtil
-                  .init_Z_SyncManager_3(this.init_SyncManager, Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
+                  .keyPressed(this.init_SyncManager, Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
          }
       } else {
          this.init_Z_2();
@@ -254,7 +254,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      return this.init_SyncManager == null || this.init_BitSetUtil.init_Z_SyncManager_2(this.init_SyncManager, (char)input.codepoint(), 0);
+      return this.init_SyncManager == null || this.init_BitSetUtil.charTyped(this.init_SyncManager, (char)input.codepoint(), 0);
    }
 
    @Override
@@ -266,7 +266,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    private void load_V_3() {
       if (this.init_Module != null && this.init_Setting != null) {
-         String value = this.read(this.init_BitSetUtil.init_Str());
+         String value = this.read(this.init_BitSetUtil.getValue());
          if ("nbt-item-components".equals(this.init_Setting.id()) && this.init_Module instanceof f.Inner_DataUtil adminTools) {
             adminTools.load_V_2(value);
          } else if ("nbt-item-stack".equals(this.init_Setting.id()) && this.init_Module instanceof f.Inner_DataUtil adminTools) {
@@ -294,7 +294,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      ItemStack stack = ItemSnbtCodec.init_ItemStack(this.init_BitSetUtil.init_Str());
+      ItemStack stack = ItemSnbtCodec.init_ItemStack(this.init_BitSetUtil.getValue());
       if (stack.isEmpty()) {
          this.init_Z = false;
          this.init_Str = "Invalid ItemStack SNBT";
@@ -316,15 +316,15 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    private void read() {
       if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
-         String repaired = SnbtBraceRepairer.init_Str(this.init_BitSetUtil.init_Str());
+         String repaired = SnbtBraceRepairer.init_Str(this.init_BitSetUtil.getValue());
          ItemStack stack = ItemSnbtCodec.init_ItemStack(repaired);
          if (stack.isEmpty()) {
-            this.init_BitSetUtil.init_BitSetUtil_Str(ItemNbtInspector.init_Str_Str(repaired));
+            this.init_BitSetUtil.setValue(ItemNbtInspector.init_Str_Str(repaired));
             this.init_Z = false;
             this.init_Str = "Formatted (structure repaired — still not a valid ItemStack; check ids/values)";
          } else {
             String error = ItemSnbtCodec.read(stack);
-            this.init_BitSetUtil.init_BitSetUtil_Str(ItemNbtInspector.init_Str_Str(ItemSnbtCodec.load(stack)));
+            this.init_BitSetUtil.setValue(ItemNbtInspector.init_Str_Str(ItemSnbtCodec.load(stack)));
             this.init_Z = error.isBlank();
             this.init_Str = this.init_Z ? "Formatted and valid" : "Formatted — " + error;
          }
@@ -333,15 +333,15 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    private void write() {
       if (this.minecraft != null && this.minecraft.keyboardHandler != null) {
-         String selected = this.init_BitSetUtil.load_Str();
-         this.minecraft.keyboardHandler.setClipboard(selected.isEmpty() ? this.init_BitSetUtil.init_Str() : selected);
+         String selected = this.init_BitSetUtil.getSelectedText();
+         this.minecraft.keyboardHandler.setClipboard(selected.isEmpty() ? this.init_BitSetUtil.getValue() : selected);
          bi.init(selected.isEmpty() ? "Copied full ItemStack NBT." : "Copied selection.");
       }
    }
 
    private void update() {
       if (this.minecraft != null && this.minecraft.keyboardHandler != null) {
-         this.init_BitSetUtil.write(this.minecraft.keyboardHandler.getClipboard());
+         this.init_BitSetUtil.insertText(this.minecraft.keyboardHandler.getClipboard());
       }
    }
 

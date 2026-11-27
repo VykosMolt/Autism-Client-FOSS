@@ -2167,7 +2167,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       if (var3 instanceof BlockHitResult var4 && var3.getType() == Type.BLOCK && var4.getBlockPos().equals(var1.below()) && var4.getDirection() == Direction.UP
          )
        {
-         if (BlockPlacementPlanner.init_Z(this.putAt_Minecraft.level.getBlockState(var4.getBlockPos()), var4.getBlockPos())) {
+         if (BlockPlacementPlanner.requiresSneakToPlace(this.putAt_Minecraft.level.getBlockState(var4.getBlockPos()), var4.getBlockPos())) {
             this.putAt_Minecraft.options.keyShift.setDown(true);
             if (!this.putAt_Minecraft.player.isShiftKeyDown() || !this.putAt_Minecraft.player.getLastSentInput().shift()) {
                return AiWrExecutor.Inner_CacheHelper.fill;
@@ -2851,20 +2851,20 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                var1,
                this.putAt_Minecraft.player.getEyePosition(),
                this.putAt_Minecraft.player.blockInteractionRange(),
-               BlockPlacementPlanner.init(var3, this.putAt_Minecraft.player, InteractionHand.MAIN_HAND)
+               BlockPlacementPlanner.blockItemValidator(var3, this.putAt_Minecraft.player, InteractionHand.MAIN_HAND)
             )
-            .init_U_StateCache_Z(this.putAt_Minecraft.player.isShiftKeyDown() && this.putAt_Minecraft.player.getLastSentInput().shift())
-            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
+            .withSneaking(this.putAt_Minecraft.player.isShiftKeyDown() && this.putAt_Minecraft.player.getLastSentInput().shift())
+            .withRayBudget(new BlockPlacementPlanner.RayBudget(6));
          BlockPlacementPlanner.RejectReason[] var5 = new BlockPlacementPlanner.RejectReason[1];
-         BlockPlacementPlanner.PlacementPlan var6 = BlockPlacementPlanner.init(var4, var5);
+         BlockPlacementPlanner.PlacementPlan var6 = BlockPlacementPlanner.plan(var4, var5);
          if (var6 == null) {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
 
          this.putAt_CacheHelper.setProfile(AiAim.AimProfile.FAST);
-         RotationMath.Rotation var7 = var6.init_U_DataUtil().init_ce_DataUtil();
+         RotationMath.Rotation var7 = var6.aim().goalRotation();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
-         Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
+         Vec3 var9 = var6.aim().point();
          boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.PILLAR;
          if (var10 && var7 != null && var9 != null && Math.hypot(var9.x - var8.x, var9.z - var8.z) < 0.4) {
             this.putAt_CacheHelper.aimAt(var9);
@@ -2875,13 +2875,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          }
 
          this.putAt_CacheHelper.tick();
-         if (!AiAim.isLookingAtBlock(var6.init_BlockHitResult().getBlockPos())) {
+         if (!AiAim.isLookingAtBlock(var6.hit().getBlockPos())) {
             return AiWrExecutor.Inner_CacheHelper.fill;
          }
 
          this.readEx_J = AiServerEvidence.blockRevision(var1);
          this.putAt_Block = ((BlockItem)var3.getItem()).getBlock();
-         InteractionResult var11 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var6.init_BlockHitResult());
+         InteractionResult var11 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var6.hit());
          if (var11.consumesAction() && !this.putAt_Minecraft.level.getBlockState(var1).isAir()) {
             AiRoutePolicy.putAt_V_BlockPos_Block(var1, this.putAt_Block);
          }

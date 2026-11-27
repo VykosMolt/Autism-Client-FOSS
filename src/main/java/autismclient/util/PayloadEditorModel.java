@@ -44,7 +44,7 @@ public final class PayloadEditorModel {
    public static PayloadEditorModel init_bE_H(autismclient.util.macro.PayloadAction action) {
       PayloadEditorModel model = new PayloadEditorModel();
       if (action == null) {
-         model.init_List = new ArrayList<>(PayloadFieldCodec.init_bJ_JsonUtil().init_List());
+         model.init_List = new ArrayList<>(PayloadFieldCodec.defaultBrandTemplate().fields());
          model.init_Z_Z(false);
          return model;
       }
@@ -64,13 +64,13 @@ public final class PayloadEditorModel {
       boolean haveRaw = false;
       if (action.payloadData != null && !action.payloadData.isBlank()) {
          try {
-            raw = AutismPayloadSupport.init_BArr(action.payloadData);
+            raw = AutismPayloadSupport.parseHexOrBase64(action.payloadData);
             haveRaw = true;
          } catch (Throwable var5) {
          }
       }
 
-      List<PayloadFieldCodec.Inner_CachePool> fields = PayloadFieldCodec.init_List(action.payloadFields);
+      List<PayloadFieldCodec.Inner_CachePool> fields = PayloadFieldCodec.parseFields(action.payloadFields);
       if (!fields.isEmpty()) {
          model.init_List = new ArrayList<>(fields);
          if (!model.init_Z_Z(false) && haveRaw) {
@@ -100,8 +100,8 @@ public final class PayloadEditorModel {
       action.payloadPacketId = this.init_I;
       action.payloadProvenance = this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init();
       action.payloadEncodingMode = this.sync();
-      action.payloadFields = PayloadFieldCodec.init(this.init_List);
-      action.payloadData = AutismPayloadSupport.init_Str(this.init_BArr);
+      action.payloadFields = PayloadFieldCodec.formatFields(this.init_List);
+      action.payloadData = AutismPayloadSupport.toHexString(this.init_BArr);
       action.payloadJson = "";
       action.commandApiRecognized = this.init_Z;
       action.commandApiOverride = this.load_Z;
@@ -114,9 +114,9 @@ public final class PayloadEditorModel {
    public PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil() {
       return new PayloadFieldCodec.Inner_JsonUtil(
          this.read_Str,
-         PayloadFieldCodec.Inner_ConfigStore.init(this.init_Str),
-         PayloadFieldCodec.Inner_TaskQueue.init(this.load_Str),
-         PayloadFieldCodec.Inner_StreamUtil.init(this.sync(), this.read_Str),
+         PayloadFieldCodec.Inner_ConfigStore.parse(this.init_Str),
+         PayloadFieldCodec.Inner_TaskQueue.parse(this.load_Str),
+         PayloadFieldCodec.Inner_StreamUtil.parse(this.sync(), this.read_Str),
          this.init_List == null ? List.of() : this.init_List
       );
    }
@@ -166,7 +166,7 @@ public final class PayloadEditorModel {
          }
       }
 
-      parsed.init_List = new ArrayList<>(PayloadFieldCodec.init_List(String.join("\n", writerLines)));
+      parsed.init_List = new ArrayList<>(PayloadFieldCodec.parseFields(String.join("\n", writerLines)));
       if (!parsed.init_Z_Z(true)) {
          this.flush = parsed.flush;
          this.init_V();
@@ -185,7 +185,7 @@ public final class PayloadEditorModel {
          this.flush = "";
          return true;
       } catch (Throwable t) {
-         this.flush = AutismPayloadSupport.init(t);
+         this.flush = AutismPayloadSupport.describeError(t);
          this.init_V();
          return false;
       }
@@ -257,7 +257,7 @@ public final class PayloadEditorModel {
             parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          }
       } catch (Throwable t) {
-         this.flush = AutismPayloadSupport.init(t);
+         this.flush = AutismPayloadSupport.describeError(t);
          this.init_V();
          return false;
       }
@@ -291,7 +291,7 @@ public final class PayloadEditorModel {
       }
 
       sb.append('\n');
-      sb.append(PayloadFieldCodec.init(this.init_List));
+      sb.append(PayloadFieldCodec.formatFields(this.init_List));
       this.open = sb.toString();
       this.load_J = this.init_J;
       return this.open;
@@ -327,7 +327,7 @@ public final class PayloadEditorModel {
          return this.push;
       }
 
-      String text = AutismPayloadSupport.write(this.init_BArr);
+      String text = AutismPayloadSupport.decodePrintableUtf8(this.init_BArr);
       this.push = text == null ? "" : text;
       this.write_J = this.init_J;
       return this.push;
@@ -354,9 +354,9 @@ public final class PayloadEditorModel {
       sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
       sb.append("bodyBytes = ").append(this.init_BArr == null ? 0 : this.init_BArr.length).append('\n');
       sb.append("decoded = ").append(this.update()).append('\n');
-      sb.append("bodyHex = ").append(AutismPayloadSupport.init_Str(this.init_BArr)).append('\n');
+      sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.init_BArr)).append('\n');
       if (this.init_I >= 0) {
-         sb.append("logicalHex = ").append(AutismPayloadSupport.init_Str(this.init_BArr())).append('\n');
+         sb.append("logicalHex = ").append(AutismPayloadSupport.toHexString(this.init_BArr())).append('\n');
       } else {
          sb.append("logicalHex = unavailable; packet id was not captured/resolved\n");
       }
@@ -372,7 +372,7 @@ public final class PayloadEditorModel {
       }
 
       byte[] packet = init_BArr_I(this.init_I);
-      byte[] channelBytes = AutismPayloadSupport.load_BArr(this.read_Str == null ? "" : this.read_Str);
+      byte[] channelBytes = AutismPayloadSupport.encodeMcString(this.read_Str == null ? "" : this.read_Str);
       byte[] body = this.init_BArr == null ? new byte[0] : this.init_BArr;
       byte[] out = new byte[packet.length + channelBytes.length + body.length];
       System.arraycopy(packet, 0, out, 0, packet.length);
@@ -387,20 +387,20 @@ public final class PayloadEditorModel {
 
    private boolean init_Z_Z(boolean strict) {
       PayloadFieldCodec.Inner_JsonUtil template = this.init_bJ_JsonUtil();
-      PayloadFieldCodec.Inner_DataUtil built = template.init_bJ_DataUtil();
-      if (!built.init_Z()) {
-         this.flush = String.join("; ", built.load());
+      PayloadFieldCodec.Inner_DataUtil built = template.encode();
+      if (!built.isValid()) {
+         this.flush = String.join("; ", built.errors());
          if (strict) {
             this.init_V();
             return false;
          }
       }
 
-      this.read_Str = template.init_Str();
-      this.init_Str = template.init_bJ_ConfigStore().name();
-      this.load_Str = template.init_bJ_TaskQueue().name();
-      this.sync = template.init_bJ_StreamUtil().name();
-      this.init_BArr = built.init_BArr();
+      this.read_Str = template.channel();
+      this.init_Str = template.direction().name();
+      this.load_Str = template.phase().name();
+      this.sync = template.encodingMode().name();
+      this.init_BArr = built.bytes();
       this.load_BArr = (byte[])this.init_BArr.clone();
       this.close = init_Str_BArr(this.init_BArr);
       this.load_V();
@@ -412,8 +412,8 @@ public final class PayloadEditorModel {
    private void init_V_BArr_bE_StreamUtil(byte[] bytes, PayloadEditorModel.Inner_StreamUtil source) {
       this.init_BArr = bytes == null ? new byte[0] : (byte[])bytes.clone();
       this.load_BArr = (byte[])this.init_BArr.clone();
-      this.init_List = new ArrayList<>(AutismPayloadSupport.init_List(this.init_BArr));
-      this.sync = AutismPayloadSupport.init_Str(this.read_Str, this.init_BArr);
+      this.init_List = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.init_BArr));
+      this.sync = AutismPayloadSupport.inferEncodingMode(this.read_Str, this.init_BArr);
       this.close = init_Str_BArr(this.init_BArr);
       this.init_bE_StreamUtil = source == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED : source;
       this.load_V();
@@ -422,7 +422,7 @@ public final class PayloadEditorModel {
    }
 
    private void load_V() {
-      Integer parsed = AutismPayloadSupport.init_Integer(null, this.read_Str, this.init_BArr);
+      Integer parsed = AutismPayloadSupport.detectCommandApiValue(null, this.read_Str, this.init_BArr);
       if (parsed != null) {
          this.init_Z = true;
          if (!this.load_Z) {
@@ -434,19 +434,19 @@ public final class PayloadEditorModel {
    }
 
    private String sync() {
-      return this.sync != null && !this.sync.isBlank() ? this.sync : AutismPayloadSupport.init_Str(this.read_Str, this.init_BArr);
+      return this.sync != null && !this.sync.isBlank() ? this.sync : AutismPayloadSupport.inferEncodingMode(this.read_Str, this.init_BArr);
    }
 
    private static String init_Str_BArr(byte[] bytes) {
-      if (AutismPayloadSupport.read(bytes) != null) {
+      if (AutismPayloadSupport.decodeMcString(bytes) != null) {
          return "Minecraft String";
       }
 
-      if (AutismPayloadSupport.update(bytes) != null) {
+      if (AutismPayloadSupport.decodeJavaUtf(bytes) != null) {
          return "Java writeUTF";
       }
 
-      String utf8 = AutismPayloadSupport.write(bytes);
+      String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
       return utf8 != null && !utf8.isBlank() ? "Raw UTF-8" : "Binary Hex";
    }
 

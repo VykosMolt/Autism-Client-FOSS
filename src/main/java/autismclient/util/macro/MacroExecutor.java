@@ -8444,9 +8444,9 @@ public class MacroExecutor {
                      ? "Crafting " + entry.load_Str + " [Max] (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                      : "Crafting " + entry.load_Str + " x" + Math.max(1, entry.read_I) + " (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                );
-               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.findOptionByKey(mc, entry.init_Str);
                if (option == null) {
-                  option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
+                  option = autismclient.util.AutoCraftingEngine.findOptionById(mc, entry.init_I);
                }
 
                if (option == null) {
@@ -8457,17 +8457,17 @@ public class MacroExecutor {
                   return;
                }
 
-               int desiredAmount = autismclient.util.AutoCraftingEngine.init(option, entry.read_I, entry.init_Z);
+               int desiredAmount = autismclient.util.AutoCraftingEngine.resolveTargetAmount(option, entry.read_I, entry.init_Z);
                if (desiredAmount <= 0) {
                   load_V_Str("No space or materials");
                   AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.load_Str + ".");
                   return;
                }
 
-               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
-               load_V_Str(result.init_Str);
-               if (!result.init_Z) {
-                  AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.craft(mc, entry.init_Str, entry.init_I, desiredAmount);
+               load_V_Str(result.message);
+               if (!result.success) {
+                  AutismClientMessaging.sendPrefixed("§c" + result.message);
                   return;
                }
 

@@ -330,8 +330,8 @@ public final class ModulesMenuController {
       int y = hit.init_NetHelper.write() + hit.init_NetHelper.sync() / 2;
       this.init_Z_I_2(x, y, 0);
       this.load_Z_I(x, y, 0);
-      if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
-         return this.init_RefQueue.read_NetHelper();
+      if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
+         return this.init_RefQueue.getPopupBounds();
       } else {
          throw new IllegalStateException("Dropdown did not open");
       }
@@ -544,7 +544,7 @@ public final class ModulesMenuController {
 
    private void init_V_SyncManager_3(SyncManager context, int mouseX, int mouseY) {
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_V_SyncManager(context);
+         this.init_RefQueue.render(context);
       }
 
       if (this.init_NetHelper_2 != null) {
@@ -598,7 +598,7 @@ public final class ModulesMenuController {
       int titleY = context.init_PoolEntry().centerTextY(bar);
       context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), "AUTISM", window.read() + 4 + 3, titleY, this.add - 8, colors.textSecondary);
       context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.textPrimary);
-      float closeT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(close), close.init_Z(context.read(), context.write()));
+      float closeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(close), close.init_Z(context.read(), context.write()));
       PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), init_I_I(colors.textSecondary, colors.danger, closeT));
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.CLOSE, close, null, null, "", -1);
    }
@@ -631,7 +631,7 @@ public final class ModulesMenuController {
       boolean selected = key.equals(flush_Str) && (!"\u0000general".equals(key) || this.update_Z());
       boolean hovered = row.init_Z(context.read(), context.write())
          && (this.init_Deque.peek() == null || this.init_Deque.peek().init_Z(context.read(), context.write()));
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init("rail:" + key, hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("rail:" + key, hovered);
       float selectT = autismclient.gui.ui.ToggleTransitionCache.init("railsel:" + key, selected);
       UiColorScheme colors = context.init_TableIndex().colors();
       if (hoverT > 0.001F || selectT > 0.001F) {
@@ -1017,8 +1017,8 @@ public final class ModulesMenuController {
       }
 
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_EventBus_I_2(mx, my, button);
-         if (!this.init_RefQueue.init_Z_2()) {
+         this.init_RefQueue.onMouseClicked(mx, my, button);
+         if (!this.init_RefQueue.isOpen()) {
             this.push();
          }
 
@@ -1290,8 +1290,8 @@ public final class ModulesMenuController {
 
          return true;
       } else if (this.init_RefQueue != null) {
-         this.init_RefQueue.load(mx, my, button);
-         if (!this.init_RefQueue.init_Z_2()) {
+         this.init_RefQueue.onMouseReleased(mx, my, button);
+         if (!this.init_RefQueue.isOpen()) {
             this.push();
          }
 
@@ -1349,7 +1349,7 @@ public final class ModulesMenuController {
          return true;
       } else {
          if (this.init_RefQueue != null) {
-            this.init_RefQueue.init_EventBus_I(mx, my, button, dx, dy);
+            this.init_RefQueue.onMouseDragged(mx, my, button, dx, dy);
             return true;
          }
 
@@ -1425,7 +1425,7 @@ public final class ModulesMenuController {
       }
 
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_EventBus_I(mx, my, scrollY);
+         this.init_RefQueue.onMouseScrolled(mx, my, scrollY);
          return true;
       }
 
@@ -1894,7 +1894,7 @@ public final class ModulesMenuController {
                this.init_V_Module_2(module, option, value);
             }
          });
-         this.init_RefQueue.init_V_2();
+         this.init_RefQueue.open();
       } else {
          this.push();
       }
@@ -2317,7 +2317,7 @@ public final class ModulesMenuController {
    private void init_V_SyncManager_5(SyncManager context, Module module, NetHelper row, boolean highlightQuery) {
       UiTheme theme = context.init_TableIndex();
       boolean hovered = row.init_Z(context.read(), context.write());
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init("cmod:" + module.id(), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("cmod:" + module.id(), hovered);
       float onT = autismclient.gui.ui.ToggleTransitionCache.init("modon:" + module.id(), module.isEnabled());
       PacketUtil.load(context.init_GuiGraphicsExtract(), row, 4, init_I_I(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT));
       if (onT > 0.001F) {

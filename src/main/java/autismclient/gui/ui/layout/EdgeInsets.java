@@ -1,13 +1,13 @@
 package autismclient.gui.ui.layout;
 
 public record EdgeInsets(int init_I, int load, int read, int write) {
-   public static final EdgeInsets init_IoWorker = new EdgeInsets(0, 0, 0, 0);
+   public static final EdgeInsets ZERO = new EdgeInsets(0, 0, 0, 0);
 
-   public static EdgeInsets init(int value) {
+   public static EdgeInsets uniform(int value) {
       return new EdgeInsets(value, value, value, value);
    }
 
-   public static EdgeInsets init(int horizontal, int vertical) {
+   public static EdgeInsets symmetric(int horizontal, int vertical) {
       return new EdgeInsets(horizontal, vertical, horizontal, vertical);
    }
 
@@ -27,11 +27,11 @@ public record EdgeInsets(int init_I, int load, int read, int write) {
       return this.load;
    }
 
-   public int update() {
+   public int right() {
       return this.read;
    }
 
-   public int sync() {
+   public int bottom() {
       return this.write;
    }
 }

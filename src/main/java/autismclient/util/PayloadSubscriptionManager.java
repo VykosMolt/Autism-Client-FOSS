@@ -125,10 +125,10 @@ public final class PayloadSubscriptionManager {
    }
 
    public static synchronized void init(AutismPayloadSupport.PayloadEntry snapshot) {
-      if (snapshot != null && "S2C".equalsIgnoreCase(snapshot.init_Str())) {
-         load_V(snapshot.load_Str());
+      if (snapshot != null && "S2C".equalsIgnoreCase(snapshot.direction())) {
+         load_V(snapshot.channel());
 
-         for (String channel : AutismPayloadSupport.init_List(snapshot.load_Str(), snapshot.init_BArr())) {
+         for (String channel : AutismPayloadSupport.extractRegisteredChannels(snapshot.channel(), snapshot.rawBytes())) {
             String normalized = init_Str(channel);
             if (init_Z(normalized) && !load_Z(normalized)) {
                init(read_LinkedHashSet, normalized);
@@ -192,7 +192,7 @@ public final class PayloadSubscriptionManager {
                byte[] body = init_BArr(plan.init_List());
                if (body.length != 0) {
                   PayloadSubscriptionManager.Inner_TaskQueue unregister = init_bD_TaskQueue(plan.init_List());
-                  boolean sent = AutismPayloadSupport.load("minecraft:register", body, "play");
+                  boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:register", body, "play");
                   PayloadSubscriptionManager.Inner_BufferHelper newStatus = new PayloadSubscriptionManager.Inner_BufferHelper(
                      plan.init_List().size(),
                      plan.init_I(),
@@ -262,7 +262,7 @@ public final class PayloadSubscriptionManager {
          return new PayloadSubscriptionManager.Inner_TaskQueue(0, true);
       }
 
-      boolean sent = AutismPayloadSupport.load("minecraft:unregister", init_BArr(List.copyOf(removed)), "play");
+      boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:unregister", init_BArr(List.copyOf(removed)), "play");
       if (sent) {
          synchronized (PayloadSubscriptionManager.class) {
             init_LinkedHashSet.removeAll(removed);
@@ -277,7 +277,7 @@ public final class PayloadSubscriptionManager {
    }
 
    public static PayloadSubscriptionManager.Inner_CachePool init_bD_CachePool(String pattern) {
-      String normalized = PayloadChannelFilterManager.init_Str_Str(pattern);
+      String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
       if (normalized.isBlank()) {
          return new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of());
       }
@@ -291,9 +291,9 @@ public final class PayloadSubscriptionManager {
 
          return new PayloadSubscriptionManager.Inner_CachePool(false, !channels.isEmpty(), channels.size(), List.copyOf(channels));
       } else {
-         for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.write_List()) {
-            String presetPattern = PayloadChannelFilterManager.init_Str_Str(preset.read());
-            if (presetPattern.indexOf(42) < 0 && PayloadChannelFilterManager.close(preset) && init(normalized, presetPattern)) {
+         for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+            String presetPattern = PayloadChannelFilterManager.normalizePattern(preset.read());
+            if (presetPattern.indexOf(42) < 0 && PayloadChannelFilterManager.isRegisterableExactPreset(preset) && init(normalized, presetPattern)) {
                channels.add(presetPattern);
             }
          }
@@ -387,7 +387,7 @@ public final class PayloadSubscriptionManager {
    }
 
    private static boolean init(String pattern, String text) {
-      String normalizedPattern = PayloadChannelFilterManager.init_Str_Str(pattern);
+      String normalizedPattern = PayloadChannelFilterManager.normalizePattern(pattern);
       String normalizedText = init_Str(text);
       if (!normalizedPattern.isEmpty() && !normalizedText.isEmpty()) {
          if ("*".equals(normalizedPattern)) {

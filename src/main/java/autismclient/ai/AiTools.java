@@ -2931,33 +2931,33 @@ final class AiTools {
 
             if (id.equals("game:recipes")) {
                autismclient.util.AutoCraftingEngine.CraftContext snapshot = this.init_cc
-                  .init_Obj_J_Supplier(generation, () -> autismclient.util.AutoCraftingEngine.init_J_BufferHelper(Minecraft.getInstance()));
-               List<autismclient.util.AutoCraftingEngine.CraftOption> options = autismclient.util.AutoCraftingEngine.init(snapshot);
+                  .init_Obj_J_Supplier(generation, () -> autismclient.util.AutoCraftingEngine.captureContext(Minecraft.getInstance()));
+               List<autismclient.util.AutoCraftingEngine.CraftOption> options = autismclient.util.AutoCraftingEngine.scanOptions(snapshot);
                String query = AiJson.getString(arguments, "query", "").toLowerCase(Locale.ROOT);
                JsonArray recipes = new JsonArray();
                options.stream()
-                  .filter(o -> o.write_Str.contains(query))
+                  .filter(o -> o.searchText.contains(query))
                   .skip(Math.max(0, AiJson.getInt(arguments, "offset", 0)))
                   .limit(Math.max(1, Math.min(50, AiJson.getInt(arguments, "limit", 20))))
                   .forEach(
                      o -> recipes.add(
                         AiJson.objectOf(
                            "key",
-                           o.init_Str,
+                           o.recipeKey,
                            "item",
-                           o.read_Str,
+                           o.outputItemId,
                            "outputPerCraft",
-                           o.init_ItemStack.getCount(),
+                           o.outputStack.getCount(),
                            "recipeDisplayId",
-                           o.load_I,
+                           o.syncedRecipeIndex,
                            "serverKnown",
-                           o.init(),
+                           o.hasSyncedEntry(),
                            "craftableNow",
-                           o.read_Z,
+                           o.craftable,
                            "maxOutputNow",
-                           o.sync,
+                           o.maxOutputItems,
                            "station",
-                           o.init_J_ConfigStore
+                           o.gridSource
                         )
                      )
                   );

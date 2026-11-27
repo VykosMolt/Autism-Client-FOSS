@@ -202,11 +202,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int run_I_21() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.open_I, this.data());
+      return autismclient.gui.ui.layout.PanelLayoutMath.innerWidth(this.open_I, this.data());
    }
 
    private int init_I(boolean hasScrollbar) {
-      return Math.max(40, autismclient.gui.ui.layout.PanelLayoutMath.init(this.run_I_21(), hasScrollbar, this.size()));
+      return Math.max(40, autismclient.gui.ui.layout.PanelLayoutMath.contentWidth(this.run_I_21(), hasScrollbar, this.size()));
    }
 
    private int get_I_19() {
@@ -214,7 +214,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int init_I_Str_5(String label, int minWidth, int maxWidth) {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, minWidth, maxWidth);
+      return autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, minWidth, maxWidth);
    }
 
    private int init_I(int panelHeight) {
@@ -300,7 +300,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int init(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);
@@ -308,7 +308,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int init(GuiGraphicsExtractor context, int x, int y, int h, String label, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(
          context, this.init_Font, x, y, width, h, label, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY
       );
@@ -318,7 +318,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int load(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 112);
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 112);
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);

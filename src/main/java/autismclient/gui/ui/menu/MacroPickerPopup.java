@@ -90,7 +90,7 @@ final class MacroPickerPopup {
             NetHelper row = NetHelper.init(this.sync.read(), rowY, this.sync.update(), this.read_I);
             if (row.load() >= this.sync.write() && row.write() <= this.sync.load()) {
                boolean hovered = row.init_Z(context.read(), context.write());
-               float hoverT = autismclient.gui.ui.HoverTransitionCache.init("macropick:" + name, hovered);
+               float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("macropick:" + name, hovered);
                if (hoverT > 0.001F) {
                   PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, ModulesMenuController.init_I_I(0, 385875967, hoverT));
                }

@@ -727,7 +727,7 @@ final class ClutchBlockPlanner {
                            Vec3 look = Vec3.directionFromRotation(pitch, yaw);
                            BlockHitResult hit = AABB.clip(init_List, eye, eye.add(look.scale(reach)), support);
                            if (ClutchFallPhysics.init_Z_BlockHitResult(hit, support, face)
-                              && autismclient.util.BlockPlacementPlanner.init_Z_AABB_2(rect, face, hit.getLocation(), margin)
+                              && autismclient.util.BlockPlacementPlanner.isPointInsideFace(rect, face, hit.getLocation(), margin)
                               && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)) {
                               ClutchBlockPlanner.Inner_StreamUtil found = new ClutchBlockPlanner.Inner_StreamUtil(yaw, pitch);
                               if (!result.contains(found)) {
@@ -840,7 +840,7 @@ final class ClutchBlockPlanner {
                               BlockHitResult hit = AABB.clip(init_List, window.init_Vec3(), window.init_Vec3().add(look.scale(reach)), support);
                               BlockHitResult following = AABB.clip(init_List, window.load(), window.load().add(look.scale(reach)), placed);
                               if (ClutchFallPhysics.init_Z_BlockHitResult(hit, support, face)
-                                 && autismclient.util.BlockPlacementPlanner.init_Z_AABB_2(rect, face, hit.getLocation(), margin)
+                                 && autismclient.util.BlockPlacementPlanner.isPointInsideFace(rect, face, hit.getLocation(), margin)
                                  && ClutchFallPhysics.init_Z_BlockHitResult(following, placed, nextFace)) {
                                  ClutchBlockPlanner.Inner_StreamUtil found = new ClutchBlockPlanner.Inner_StreamUtil(yaw, pitch);
                                  if (!result.contains(found)) {

@@ -262,7 +262,7 @@ public final class AiToolsSuggest {
 
    static synchronized List<String> init() {
       Minecraft mc = Minecraft.getInstance();
-      List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> plans = autismclient.util.AutoCraftingEngine.load_List(mc);
+      List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> plans = autismclient.util.AutoCraftingEngine.getResolvedCraftingRecipes(mc);
       if (plans == update) {
          return sync;
       }
@@ -270,11 +270,11 @@ public final class AiToolsSuggest {
       Set<String> ids = new TreeSet<>();
 
       for (autismclient.util.AutoCraftingEngine.ResolvedRecipe plan : plans) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
+         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
-      for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.write(mc)) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
+      for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.getStonecutterRecipes(mc)) {
+         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
       sync = List.copyOf(ids);
@@ -283,7 +283,7 @@ public final class AiToolsSuggest {
    }
 
    static synchronized List<String> load() {
-      List<autismclient.util.AutoCraftingEngine.SmeltRecipe> plans = autismclient.util.AutoCraftingEngine.read(Minecraft.getInstance());
+      List<autismclient.util.AutoCraftingEngine.SmeltRecipe> plans = autismclient.util.AutoCraftingEngine.getSmeltRecipes(Minecraft.getInstance());
       if (plans == flush) {
          return close;
       }
@@ -291,7 +291,7 @@ public final class AiToolsSuggest {
       Set<String> ids = new TreeSet<>();
 
       for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : plans) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
+         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
       close = List.copyOf(ids);

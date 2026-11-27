@@ -32,10 +32,10 @@ public final class WidgetRenderFacade {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
-      DropdownMenu.init_V_SyncManager(context, bounds, label, hovered, open);
+      DropdownMenu.renderTrigger(context, bounds, label, hovered, open);
    }
 
    public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
-      DropdownMenu.load(context, bounds, label, hovered, open);
+      DropdownMenu.renderCenteredTrigger(context, bounds, label, hovered, open);
    }
 }

@@ -99,18 +99,18 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
             int backWidth = this.init_I_Str_6("Back");
             this.init_List
                .add(
-                  autismclient.gui.ui.widgets.OverlayActionButton.init(
+                  autismclient.gui.ui.widgets.OverlayActionButton.create(
                         panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
+                     .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
             int defaultsWidth = this.init_I_Str_6("Defaults");
             this.init_List
                .add(
-                  autismclient.gui.ui.widgets.OverlayActionButton.init(
+                  autismclient.gui.ui.widgets.OverlayActionButton.create(
                         panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.read_V_5()
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
+                     .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
          }
 
@@ -146,17 +146,17 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       if (this.init_Z_I_2(y)) {
          this.init_List
             .add(
-               autismclient.gui.ui.widgets.OverlayActionButton.init(
+               autismclient.gui.ui.widgets.OverlayActionButton.create(
                      this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), Component.literal(enabled ? "Enabled" : "Disabled"), b -> {
                         setter.accept(!enabled);
                         this.load_V_7();
                      }
                   )
-                  .init_ByteReader_ByteReader_StreamU(
+                  .setTone(
                      enabled ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
                   )
-                  .init_ByteReader_Z(enabled)
-                  .init_ByteReader_Str("proxy-config:" + label)
+                  .setToggleState(enabled)
+                  .setAnimationKey("proxy-config:" + label)
             );
       }
    }
@@ -231,8 +231,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
             autismclient.gui.f.NetHelper.init(panelX + 4, this.put(), Math.max(0, panelW - 8), Math.max(0, this.reset() + 4 - this.put())),
             -1206840035
          );
-         boolean suppressUnderlyingPointer = autismclient.gui.ui.widgets.DropdownWidget.init_Z();
-         boolean dropdownMenuHovered = autismclient.gui.ui.widgets.DropdownWidget.init(this.load_List, virtualMouseX, virtualMouseY);
+         boolean suppressUnderlyingPointer = autismclient.gui.ui.widgets.DropdownWidget.isAnyMenuActive();
+         boolean dropdownMenuHovered = autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.load_List, virtualMouseX, virtualMouseY);
          int buttonMouseX = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseX : -2147483648;
          int buttonMouseY = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseY : -2147483648;
          if (this.init_Z_3()) {
@@ -245,12 +245,12 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
-            autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, button, buttonMouseX, buttonMouseY);
+            autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, button, buttonMouseX, buttonMouseY);
          }
 
-         autismclient.gui.ui.widgets.DropdownWidget.load(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.load_List)) {
-            autismclient.gui.ui.widgets.DropdownWidget.read(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.load_List)) {
+            autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -290,7 +290,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.load_List, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.load_List, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
          return true;
       }
 
@@ -299,7 +299,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
 
       for (autismclient.gui.ui.widgets.OverlayActionButton button : this.init_List) {
-         if (autismclient.gui.ui.widgets.OverlayActionButton.init(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+         if (autismclient.gui.ui.widgets.OverlayActionButton.handleClick(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
             return true;
          }
       }
@@ -311,7 +311,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       double virtualX = cA.init_D_D(mouseX);
       double virtualY = cA.init_D_D(mouseY);
-      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.load_List, virtualX, virtualY, scrollY)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.load_List, virtualX, virtualY, scrollY)) {
          return true;
       } else if (!(virtualX < this.close()) && !(virtualX > this.close() + this.open()) && !(virtualY < this.add()) && !(virtualY > this.reset())) {
          this.write_I = Math.max(0, Math.min(this.stop(), this.write_I + (scrollY < 0.0 ? this.flush() : -this.flush())));
@@ -368,11 +368,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int close() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.open(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.open(), 6);
    }
 
    private int open() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, Math.min(380, this.update_I));
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, Math.min(380, this.update_I));
    }
 
    private int poll() {
@@ -406,7 +406,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, this.pop() + this.run());
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, this.pop() + this.run());
    }
 
    private int set() {

@@ -125,7 +125,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private void sync_V_13() {
       if (this.init_AutismPacketLogger != null) {
-         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(this.init_AutismPacketLogger);
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.resolveEntryPayload(this.init_AutismPacketLogger);
          if (snapshot != null && (!this.close_Z || this.init_CompletableFuture == null || this.init_CompletableFuture.isDone())) {
             this.close_Z = true;
             String baseKey = this.init_Str_bu_JsonUtil_AutismPacketLogger(null, this.init_AutismPacketLogger);
@@ -147,7 +147,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   );
                   this.init_V_Str_bu_SyncManager(analysisKey, result);
                } catch (Throwable t) {
-                  this.init_V_Str_bu_SyncManager(analysisKey, PacketInspectorEngine.init_bu_SyncManager_Str(AutismPayloadSupport.init(t)));
+                  this.init_V_Str_bu_SyncManager(analysisKey, PacketInspectorEngine.init_bu_SyncManager_Str(AutismPayloadSupport.describeError(t)));
                }
             }
          );
@@ -751,9 +751,9 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return "";
       }
 
-      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.resolveEntryPayload(entry);
       PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.init_Packet);
-      byte[] payloadBytes = payload == null ? new byte[0] : payload.init_BArr();
+      byte[] payloadBytes = payload == null ? new byte[0] : payload.rawBytes();
       byte[] packetBytes = packet == null ? new byte[0] : packet.init_BArr();
       if (payloadBytes.length == 0 && packetBytes.length == 0) {
          return "";
@@ -767,10 +767,10 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       out.append("Tick: ").append(entry.init_I).append('\n');
       out.append("Time: ").append(Instant.ofEpochMilli(entry.load_J)).append('\n');
       if (payload != null) {
-         out.append("Payload Channel: ").append(payload.load_Str()).append('\n');
-         out.append("Payload Protocol: ").append(payload.update()).append('\n');
-         out.append("Payload Class: ").append(payload.write()).append('\n');
-         out.append("Payload Packet ID: ").append(payload.load_I()).append('\n');
+         out.append("Payload Channel: ").append(payload.channel()).append('\n');
+         out.append("Payload Protocol: ").append(payload.protocolPhase()).append('\n');
+         out.append("Payload Class: ").append(payload.payloadClassName()).append('\n');
+         out.append("Payload Packet ID: ").append(payload.packetId()).append('\n');
       }
 
       if (packet != null) {
@@ -796,7 +796,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          out.append("Hex: ").append(this.init_Str_BArr_Z(bytes, false)).append('\n');
          out.append("Hex Spaced:\n").append(this.init_Str_BArr_I(bytes, 32)).append('\n');
          out.append("Base64: ").append(Base64.getEncoder().encodeToString(bytes)).append('\n');
-         String utf8 = AutismPayloadSupport.write(bytes);
+         String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (utf8 != null && !utf8.isBlank()) {
             out.append("UTF-8 Escaped:\n").append(this.init_Str(utf8)).append('\n');
          }
@@ -1022,8 +1022,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-      if (payload != null && payload.init_BArr().length > 0) {
+      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.resolveEntryPayload(entry);
+      if (payload != null && payload.rawBytes().length > 0) {
          return true;
       }
 
@@ -1142,7 +1142,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private boolean poll_Z_12() {
-      return this.init_AutismPacketLogger != null && AutismPayloadSupport.init_AutismPayloadSuppo(this.init_AutismPacketLogger) != null;
+      return this.init_AutismPacketLogger != null && AutismPayloadSupport.resolveEntryPayload(this.init_AutismPacketLogger) != null;
    }
 
    private int state() {

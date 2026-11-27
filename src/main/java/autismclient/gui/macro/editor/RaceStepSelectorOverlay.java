@@ -71,12 +71,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    public RaceStepSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
-      this.init_CharEncoder_3.flush(false);
-      this.init_CharEncoder_3.init(l.load);
-      this.init_CharEncoder_3.init_CharEncoder_Z_Z(true, true);
-      this.init_CharEncoder_3.init_CharEncoder_I_I(8, pop_I_3());
-      this.init_CharEncoder_3.init_PacketUtil().init(2).init(EdgeInsets.init(4));
-      this.init_BitSetUtil.load_BitSetUtil_Str("Search...").read_BitSetUtil_I(13).close(true).init_BitSetUtil_Consumer(this::init_V_2);
+      this.init_CharEncoder_3.setCenterTitle(false);
+      this.init_CharEncoder_3.setTitleTone(l.load);
+      this.init_CharEncoder_3.setHeaderButtons(true, true);
+      this.init_CharEncoder_3.setTitleInsets(8, pop_I_3());
+      this.init_CharEncoder_3.body().init(2).init(EdgeInsets.uniform(4));
+      this.init_BitSetUtil.setPlaceholder("Search...").setFixedHeight(13).withGrowX(true).setOnChange(this::init_V_2);
       this.write_V_4();
    }
 
@@ -91,17 +91,17 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.init_a.init_V_Str("");
       this.load_List = this.init_a.init_List();
       String shownTitle = title != null && !title.isBlank() ? title : "Race Selector";
-      this.init_CharEncoder_3.init(shownTitle);
+      this.init_CharEncoder_3.setTitle(shownTitle);
       this.reset = this.init_I(shownTitle);
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
-      this.init_BitSetUtil.init_V_Z(true);
+      this.init_BitSetUtil.setValue("");
+      this.init_BitSetUtil.setFocused(true);
       this.write_V_4();
-      LayoutContext metrics = this.init_TextFormat.init_SyncManager();
+      LayoutContext metrics = this.init_TextFormat.createMeasureContext();
       if (metrics != null) {
-         this.start = Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.reset));
+         this.start = Math.round(this.init_CharEncoder_3.measureHeight(metrics, this.reset));
       }
 
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       this.add = Math.max(8, Math.round((viewport.width() - this.reset) / 2.0F));
       this.clear = Math.max(8, Math.round((viewport.height() - this.start) / 2.0F));
       OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
@@ -109,7 +109,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.clear = clamped.y;
       this.reset = clamped.width;
       this.start = clamped.height;
-      this.init_CharEncoder_3.write(true);
+      this.init_CharEncoder_3.setShowBody(true);
       OverlayManager.getInstance().bringOwnerToFront(this);
    }
 
@@ -119,8 +119,8 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.sync_Z = false;
       this.flush_Z = false;
       this.init_Consumer = null;
-      this.init_TextFormat.load();
-      this.init_CharEncoder_3.write(true);
+      this.init_TextFormat.clearFocus();
+      this.init_CharEncoder_3.setShowBody(true);
    }
 
    @Override
@@ -130,7 +130,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean write_Z() {
-      return this.write_Z && this.init_BitSetUtil.load_Z();
+      return this.write_Z && this.init_BitSetUtil.isFocused();
    }
 
    private void init_V_2(String query) {
@@ -145,12 +145,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private void write_V_4() {
-      this.init_CharEncoder_3.init_PacketUtil().init_V_2();
-      this.init_CharEncoder_3.init_PacketUtil().init_TableIndex_TableIndex(this.init_BitSetUtil);
+      this.init_CharEncoder_3.body().clearChildren();
+      this.init_CharEncoder_3.body().addChild(this.init_BitSetUtil);
       this.init_BitSetUtil_2.init(this.init(this.load_List.size()));
-      this.init_CharEncoder_3.init_PacketUtil().init_TableIndex_TableIndex(this.init_BitSetUtil_2);
+      this.init_CharEncoder_3.body().addChild(this.init_BitSetUtil_2);
       this.init_PoolEntry.init(this.load_List.size() + " choices");
-      this.init_CharEncoder_3.init_PacketUtil().init_TableIndex_TableIndex(this.init_PoolEntry);
+      this.init_CharEncoder_3.body().addChild(this.init_PoolEntry);
    }
 
    private int init(int count) {
@@ -159,7 +159,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private int push_I_3() {
-      int screenH = Math.round(this.init_TextFormat.init_RingBuffer().height());
+      int screenH = Math.round(this.init_TextFormat.createViewport().height());
       if (screenH <= 0) {
          return 12;
       }
@@ -206,23 +206,23 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    private void load(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       context.nextStratum();
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       LayoutContext metrics = new LayoutContext(context, init_Minecraft.font, viewport, this.init_CharEncoder_2, uiMouseX, uiMouseY, delta);
-      this.init_CharEncoder_3.load_CharEncoder(!this.update_Z);
-      this.init_CharEncoder_3.update(true);
-      this.init_CharEncoder_3.sync(this.init_Z_F_F(uiMouseX, uiMouseY));
-      this.start = Math.max(this.init_CharEncoder_2.load(), Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.reset)));
+      this.init_CharEncoder_3.setExpanded(!this.update_Z);
+      this.init_CharEncoder_3.setActive(true);
+      this.init_CharEncoder_3.setHeaderHovered(this.init_Z_F_F(uiMouseX, uiMouseY));
+      this.start = Math.max(this.init_CharEncoder_2.load(), Math.round(this.init_CharEncoder_3.measureHeight(metrics, this.reset)));
       OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
       this.add = clamped.x;
       this.clear = clamped.y;
       this.reset = clamped.width;
       this.start = clamped.height;
-      this.init_CharEncoder_3.init_TableIndex_F(this.add, this.clear, this.reset, this.start);
-      this.init_TextFormat.init(context, mouseX, mouseY, delta);
+      this.init_CharEncoder_3.setBounds(this.add, this.clear, this.reset, this.start);
+      this.init_TextFormat.render(context, mouseX, mouseY, delta);
       context.nextStratum();
-      if (this.init_CharEncoder_3.init(context)) {
+      if (this.init_CharEncoder_3.pushBodyClip(context)) {
          try {
             this.init_V_GuiGraphicsExtract(context, uiMouseX, uiMouseY);
          } finally {
@@ -232,10 +232,10 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, float uiMouseX, float uiMouseY) {
-      int x = Math.round(this.init_BitSetUtil_2.load_F());
-      int y = Math.round(this.init_BitSetUtil_2.read_F());
-      int w = Math.round(this.init_BitSetUtil_2.write_F());
-      int h = Math.round(this.init_BitSetUtil_2.update_F());
+      int x = Math.round(this.init_BitSetUtil_2.x());
+      int y = Math.round(this.init_BitSetUtil_2.y());
+      int w = Math.round(this.init_BitSetUtil_2.width());
+      int h = Math.round(this.init_BitSetUtil_2.height());
       if (w > 2 && h > 2) {
          if (this.load_List.isEmpty()) {
             ListRowRenderer.drawEmptyPlaceholder(context, this.init_Font, "Nothing to pick.", x, y, w - 6 - 1);
@@ -292,7 +292,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       if (button == 0 && this.load_Z_F_F(uiMouseX, uiMouseY)) {
@@ -310,17 +310,17 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (!this.update_Z && this.init_TextFormat.init_Z_D_2(mouseX, mouseY, button)) {
+      if (!this.update_Z && this.init_TextFormat.mouseClicked(mouseX, mouseY, button)) {
          return true;
       }
 
       if (!this.update_Z
          && button == 0
          && this.init(
-            this.init_BitSetUtil_2.load_F(),
-            this.init_BitSetUtil_2.read_F(),
-            this.init_BitSetUtil_2.write_F(),
-            this.init_BitSetUtil_2.update_F(),
+            this.init_BitSetUtil_2.x(),
+            this.init_BitSetUtil_2.y(),
+            this.init_BitSetUtil_2.width(),
+            this.init_BitSetUtil_2.height(),
             uiMouseX,
             uiMouseY
          )) {
@@ -328,7 +328,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         int index = (int)((uiMouseY - this.init_BitSetUtil_2.read_F() + (this.init_EventBus == null ? 0 : this.init_EventBus.getScrollOffset())) / 14.0F);
+         int index = (int)((uiMouseY - this.init_BitSetUtil_2.y() + (this.init_EventBus == null ? 0 : this.init_EventBus.getScrollOffset())) / 14.0F);
          if (index >= 0 && index < this.load_List.size()) {
             RaceStepSelectorOverlay.Inner_DataUtil selected = this.load_List.get(index);
             if (this.init_Consumer != null) {
@@ -341,7 +341,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       }
 
       if (!this.init(this.add, this.clear, this.reset, this.start, uiMouseX, uiMouseY)) {
-         this.init_TextFormat.load();
+         this.init_TextFormat.clearFocus();
          return true;
       } else {
          return true;
@@ -350,7 +350,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       if (button == 0 && this.sync_Z) {
@@ -370,7 +370,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
             this.init_EventBus.mouseReleased();
          }
 
-         return !this.update_Z && this.init_TextFormat.load(mouseX, mouseY, button) ? true : this.write_Z;
+         return !this.update_Z && this.init_TextFormat.mouseReleased(mouseX, mouseY, button) ? true : this.write_Z;
       }
    }
 
@@ -380,7 +380,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       if (this.sync_Z && button == 0) {
@@ -403,21 +403,21 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.init_EventBus.mouseDragged(uiMouseX, uiMouseY);
          return true;
       } else {
-         return !this.update_Z && this.init_TextFormat.init(mouseX, mouseY, button, deltaX, deltaY);
+         return !this.update_Z && this.init_TextFormat.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
       }
    }
 
    @Override
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
       if (this.write_Z && !this.update_Z && this.init_EventBus != null) {
-         LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+         LayoutViewport viewport = this.init_TextFormat.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
          float uiMouseY = viewport.toUiY(mouseY);
          if (this.init(
-            this.init_BitSetUtil_2.load_F(),
-            this.init_BitSetUtil_2.read_F(),
-            this.init_BitSetUtil_2.write_F(),
-            this.init_BitSetUtil_2.update_F(),
+            this.init_BitSetUtil_2.x(),
+            this.init_BitSetUtil_2.y(),
+            this.init_BitSetUtil_2.width(),
+            this.init_BitSetUtil_2.height(),
             uiMouseX,
             uiMouseY
          )) {
@@ -439,13 +439,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.load_V_3();
          return true;
       } else {
-         return this.update_Z ? false : this.init_TextFormat.init_Z_I(keyCode, scanCode, modifiers);
+         return this.update_Z ? false : this.init_TextFormat.keyPressed(keyCode, scanCode, modifiers);
       }
    }
 
    @Override
    public boolean init_Z_C_I(char chr, int modifiers) {
-      return this.write_Z && !this.update_Z && this.init_TextFormat.init(chr, modifiers);
+      return this.write_Z && !this.update_Z && this.init_TextFormat.charTyped(chr, modifiers);
    }
 
    @Override
@@ -454,7 +454,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       int renderedHeight = this.update_Z ? this.init_CharEncoder_2.load() : this.start;
@@ -467,7 +467,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       return this.init_Z_F_F(uiMouseX, uiMouseY) && !this.load_Z_F_F(uiMouseX, uiMouseY);
@@ -484,7 +484,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.update_Z = collapsed;
          this.sync_Z = false;
          this.flush_Z = false;
-         this.init_CharEncoder_3.write(!collapsed);
+         this.init_CharEncoder_3.setShowBody(!collapsed);
          if (collapsed) {
             this.get_V();
          }
@@ -508,13 +508,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.start = clamped.height;
          this.write_Z = clamped.visible;
          this.update_Z = clamped.collapsed;
-         this.init_CharEncoder_3.write(!this.update_Z);
+         this.init_CharEncoder_3.setShowBody(!this.update_Z);
       }
    }
 
    @Override
    public void push_V() {
-      this.init_TextFormat.load();
+      this.init_TextFormat.clearFocus();
    }
 
    @Override
@@ -542,7 +542,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private OverlayBounds init_cH(OverlayBounds layout) {
-      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.createViewport();
       int margin = 4;
       int viewportW = Math.round(viewport.width());
       int viewportH = Math.round(viewport.height());

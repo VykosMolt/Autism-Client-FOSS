@@ -36,7 +36,7 @@ public final class ScrollbarRenderer {
             context.init_TableIndex().colors().divider
          );
          autismclient.gui.f.NetHelper thumb = metrics.load();
-         float activeT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(track), hovered || dragging);
+         float activeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(track), hovered || dragging);
          int restWidth = Math.max(2, thumb.update() - 2);
          int width = Math.round(restWidth + (thumb.update() - restWidth) * activeT);
          int x = thumb.read() + (thumb.update() - width) / 2;

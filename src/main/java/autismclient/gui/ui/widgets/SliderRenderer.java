@@ -20,7 +20,7 @@ public final class SliderRenderer {
       autismclient.gui.f.PacketUtil.load(
          context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(track.read(), track.write(), fillW, track.sync()), trackRadius, colors.accent
       );
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       if (hoverT > 0.001F) {
          autismclient.gui.f.PacketUtil.load(
             context.init_GuiGraphicsExtract(), bounds.init(1), Math.max(1, radius - 1), Math.round(20.0F * hoverT) << 24 | 16777215

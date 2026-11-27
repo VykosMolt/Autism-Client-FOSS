@@ -32,7 +32,7 @@ public final class BufferHelper {
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String key, boolean active, boolean hovered) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-      float hover = autismclient.gui.ui.HoverTransitionCache.init(key, hovered);
+      float hover = autismclient.gui.ui.HoverTransitionCache.sample(key, hovered);
       int fill = UiLayoutMath.lerpColor(colors.cardSurface, colors.cardSurfaceElevated, hover);
       if (active) {
          fill = UiLayoutMath.lerpColor(fill, colors.success, 0.09F);

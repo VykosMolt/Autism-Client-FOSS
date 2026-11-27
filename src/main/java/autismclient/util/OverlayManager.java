@@ -984,7 +984,7 @@ public class OverlayManager {
             }
 
             this.bringToFront(topOverlay);
-            this.getOrCreateAdapter(topOverlay).init_EventBus_I_2((int)mouseX, (int)mouseY, button);
+            this.getOrCreateAdapter(topOverlay).onMouseClicked((int)mouseX, (int)mouseY, button);
             this.updateFocusedTextCache(topOverlay);
             return true;
          }
@@ -996,11 +996,11 @@ public class OverlayManager {
       this.bringToFront(topOverlay);
       this.syncLayerInputFlags();
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter topComponent = this.getOrCreateAdapter(topOverlay);
-      autismclient.gui.f.NetHelper topHitBounds = topComponent.load_NetHelper();
+      autismclient.gui.f.NetHelper topHitBounds = topComponent.getInteractiveBounds();
       if (topHitBounds != null && topHitBounds.init_Z((int)mouseX, (int)mouseY)) {
          this.layerInputRouter.init_Z_I_2((int)mouseX, (int)mouseY, button);
       } else {
-         topComponent.init_EventBus_I_2((int)mouseX, (int)mouseY, button);
+         topComponent.onMouseClicked((int)mouseX, (int)mouseY, button);
       }
 
       this.updateFocusedTextCache(topOverlay);
@@ -1054,11 +1054,11 @@ public class OverlayManager {
       }
 
       if (button == 0 && prevDragging != null) {
-         this.getOrCreateAdapter(prevDragging).load((int)mouseX, (int)mouseY, button);
+         this.getOrCreateAdapter(prevDragging).onMouseReleased((int)mouseX, (int)mouseY, button);
       }
 
       if (button == 0 && prevResizing != null && prevResizing != prevDragging) {
-         this.getOrCreateAdapter(prevResizing).load((int)mouseX, (int)mouseY, button);
+         this.getOrCreateAdapter(prevResizing).onMouseReleased((int)mouseX, (int)mouseY, button);
       }
 
       if (shouldToggleHeaderCollapse && this.isVisibleNow(prevDragging)) {
@@ -1083,7 +1083,7 @@ public class OverlayManager {
 
          for (int i = this.overlays.size() - 1; i >= 0; i--) {
             AutismOverlay overlay = this.overlays.get(i);
-            if (this.isVisibleNow(overlay) && this.getOrCreateAdapter(overlay).load((int)mouseX, (int)mouseY, button) == autismclient.gui.ui.UiInputResult.HANDLED) {
+            if (this.isVisibleNow(overlay) && this.getOrCreateAdapter(overlay).onMouseReleased((int)mouseX, (int)mouseY, button) == autismclient.gui.ui.UiInputResult.HANDLED) {
                return true;
             }
          }
@@ -1122,7 +1122,7 @@ public class OverlayManager {
             }
          }
 
-         boolean handled = this.getOrCreateAdapter(this.draggingOverlay).init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY)
+         boolean handled = this.getOrCreateAdapter(this.draggingOverlay).onMouseDragged((int)mouseX, (int)mouseY, button, deltaX, deltaY)
             == autismclient.gui.ui.UiInputResult.HANDLED;
          this.invalidateHoverCache();
          return handled;
@@ -1134,7 +1134,7 @@ public class OverlayManager {
          for (int i = this.overlays.size() - 1; i >= 0; i--) {
             AutismOverlay overlay = this.overlays.get(i);
             if (this.isVisibleNow(overlay)
-               && this.getOrCreateAdapter(overlay).init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY) == autismclient.gui.ui.UiInputResult.HANDLED) {
+               && this.getOrCreateAdapter(overlay).onMouseDragged((int)mouseX, (int)mouseY, button, deltaX, deltaY) == autismclient.gui.ui.UiInputResult.HANDLED) {
                return true;
             }
          }
@@ -1162,11 +1162,11 @@ public class OverlayManager {
       this.bringToFront(topOverlay);
       this.syncLayerInputFlags();
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter topComponent = this.getOrCreateAdapter(topOverlay);
-      autismclient.gui.f.NetHelper topHitBounds = topComponent.load_NetHelper();
+      autismclient.gui.f.NetHelper topHitBounds = topComponent.getInteractiveBounds();
       if (topHitBounds != null && topHitBounds.init_Z((int)mouseX, (int)mouseY)) {
          this.layerInputRouter.init_Z_I((int)mouseX, (int)mouseY, amount);
       } else {
-         topComponent.init_EventBus_I((int)mouseX, (int)mouseY, amount);
+         topComponent.onMouseScrolled((int)mouseX, (int)mouseY, amount);
       }
 
       return true;
@@ -1183,7 +1183,7 @@ public class OverlayManager {
 
       for (int i = this.overlays.size() - 1; i >= 0; i--) {
          AutismOverlay overlay = this.overlays.get(i);
-         if (this.isVisibleNow(overlay) && overlay.e_() && this.getOrCreateAdapter(overlay).read(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
+         if (this.isVisibleNow(overlay) && overlay.e_() && this.getOrCreateAdapter(overlay).onKeyPressed(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
             this.bringToFront(overlay);
             this.updateFocusedTextCache(overlay);
             return true;
@@ -1192,14 +1192,14 @@ public class OverlayManager {
 
       AutismOverlay focusedTextOverlay = this.findFocusedTextOverlay();
       if (focusedTextOverlay != null) {
-         this.getOrCreateAdapter(focusedTextOverlay).read(keyCode, scanCode, modifiers);
+         this.getOrCreateAdapter(focusedTextOverlay).onKeyPressed(keyCode, scanCode, modifiers);
          this.updateFocusedTextCache(focusedTextOverlay);
          this.focusedOverlay = focusedTextOverlay;
          AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.init_Str());
          return true;
       } else {
          AutismOverlay keyboardTarget = this.findKeyboardTarget();
-         if (keyboardTarget != null && this.getOrCreateAdapter(keyboardTarget).read(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
+         if (keyboardTarget != null && this.getOrCreateAdapter(keyboardTarget).onKeyPressed(keyCode, scanCode, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
             this.updateFocusedTextCache(keyboardTarget);
             return true;
          } else {

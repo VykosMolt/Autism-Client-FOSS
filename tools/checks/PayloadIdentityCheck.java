@@ -15,14 +15,14 @@ public class PayloadIdentityCheck {
       if (!first.equals(equalTwin)) {
          throw new IllegalStateException("premise: record payloads should be value-equal");
       }
-      Field field = AutismPayloadSupport.class.getDeclaredField("init_Map");
+      Field field = AutismPayloadSupport.class.getDeclaredField("CAPTURED_PAYLOAD_BYTES");
       field.setAccessible(true);
       ((Map<CustomPacketPayload, byte[]>) field.get(null)).put(first, new byte[]{1, 2, 3});
-      if (AutismPayloadSupport.init_BArr(first) == null) {
+      if (AutismPayloadSupport.getRememberedBytes(first) == null) {
          System.out.println("FAIL: stored payload lost its bytes");
          System.exit(1);
       }
-      if (AutismPayloadSupport.init_BArr(equalTwin) != null) {
+      if (AutismPayloadSupport.getRememberedBytes(equalTwin) != null) {
          System.out.println("FAIL: an equal but different payload got the other payload's bytes");
          System.exit(1);
       }

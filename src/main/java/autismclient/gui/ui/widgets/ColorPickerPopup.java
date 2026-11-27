@@ -90,7 +90,7 @@ public final class ColorPickerPopup {
          );
          autismclient.gui.f.NetHelper close = TitleBarRenderer.load(this.init_NetHelper());
          boolean closeHover = close.init_Z(context.read(), context.write());
-         float closeFade = autismclient.gui.ui.HoverTransitionCache.init("colorpicker-close:" + autismclient.gui.ui.HoverTransitionCache.init(close), closeHover);
+         float closeFade = autismclient.gui.ui.HoverTransitionCache.sample("colorpicker-close:" + autismclient.gui.ui.HoverTransitionCache.boundsKey(close), closeHover);
          if (closeFade > 0.001F) {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), close.init(1), 3, Math.round(34.0F * closeFade) << 24 | 16777215);
          }

@@ -26,7 +26,7 @@ public final class IconButtonRenderer {
          int radius = init(bounds);
          int fill = danger ? ThemePaletteManager.recolor(-868936937, ThemePaletteManager.ColorRole.DANGER) : -1156179423;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.danger : colors.borderControl);
-         float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && active);
+         float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered && active);
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.load(graphics, bounds.init(1), Math.max(1, radius - 1), (int)(32.0F * hoverT) << 24 | 16777215);
          }
@@ -81,7 +81,7 @@ public final class IconButtonRenderer {
          int fill = danger ? -799925730 : -1156179423;
          int borderColor = danger ? -1947062 : colors.borderControl;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, borderColor);
-         float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && active);
+         float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered && active);
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.load(graphics, bounds.init(1), Math.max(1, radius - 1), (int)(32.0F * hoverT) << 24 | 16777215);
          }

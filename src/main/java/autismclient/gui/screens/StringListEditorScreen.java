@@ -187,15 +187,15 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          int listH = this.tick_I_7();
          autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti_I_I(listY, listH);
          this.init(graphics, fieldX, listY, panelW - 8, listH, 5, -1442248437, init_CharEncoder.set());
-         listLayout.init(graphics);
+         listLayout.pushContentClip(graphics);
 
          try {
             this.init(graphics, listLayout, mx, my);
          } finally {
-            listLayout.load(graphics);
+            listLayout.popContentClip(graphics);
          }
 
-         listLayout.init(graphics, mx, my, this.init_Z);
+         listLayout.renderScrollbar(graphics, mx, my, this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -206,19 +206,19 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.load(graphics, layout, mx, my);
       } else {
          List<String> rows = this.init_List_4();
-         this.poll = this.init(this.poll, 0, layout.open());
-         int x = layout.init_I() + layout.pop();
-         int w = layout.push();
-         int rowH = layout.update();
+         this.poll = this.init(this.poll, 0, layout.maxScroll());
+         int x = layout.x() + layout.contentInset();
+         int w = layout.contentWidth();
+         int rowH = layout.rowHeight();
          if (rows.isEmpty()) {
-            this.init(graphics, "No entries.", x + 4, this.init_I_I_I_4(layout.load() + layout.pop(), rowH), read_I_6(), w - 8);
+            this.init(graphics, "No entries.", x + 4, this.init_I_I_I_4(layout.y() + layout.contentInset(), rowH), read_I_6(), w - 8);
          } else {
             List<String> allValues = this.read_List();
             int delH = rowH - 2;
             int delW = delH + 4;
             int delX = x + w - 2 - delW;
             int textW = delX - 2 - x;
-            layout.init(rows.size(), (i, rowY) -> {
+            layout.forEachVisibleRow(rows.size(), (i, rowY) -> {
                String value = rows.get(i);
                boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
                autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
@@ -235,14 +235,14 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
    private void load(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, int mx, int my) {
       List<StringListEditorScreen.Inner_DataUtil> rows = this.write_List();
-      this.poll = this.init(this.poll, 0, layout.open());
-      int x = layout.init_I() + layout.pop();
-      int w = layout.push();
-      int rowH = layout.update();
+      this.poll = this.init(this.poll, 0, layout.maxScroll());
+      int x = layout.x() + layout.contentInset();
+      int w = layout.contentWidth();
+      int rowH = layout.rowHeight();
       if (rows.isEmpty()) {
-         this.init(graphics, "No players found.", x + 4, this.init_I_I_I_4(layout.load() + layout.pop(), rowH), read_I_6(), w - 8);
+         this.init(graphics, "No players found.", x + 4, this.init_I_I_I_4(layout.y() + layout.contentInset(), rowH), read_I_6(), w - 8);
       } else {
-         layout.init(rows.size(), (i, rowY) -> {
+         layout.forEachVisibleRow(rows.size(), (i, rowY) -> {
             StringListEditorScreen.Inner_DataUtil row = rows.get(i);
             boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
             int ty = this.init_I_I_I_4(rowY, rowH - 1);
@@ -1092,15 +1092,15 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private int run() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.set(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.set(), 6);
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.load_I(), this.put(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.put(), 6);
    }
 
    private int set() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 300);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 300);
    }
 
    private int put() {
@@ -1109,7 +1109,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       int maxRows = Math.max(4, (int)(this.load_I() * 0.65F) / rowH);
       int content = this.update_Z() ? this.write_List.size() + this.read_List().size() : this.read_List().size();
       int rows = Math.max(4, Math.min(maxRows, content));
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, chrome + rows * rowH);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + rows * rowH);
    }
 
    private int add() {
@@ -1121,21 +1121,21 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_I(int listY, int listH) {
-      return this.init_TextFormat_DataUti_I_I(listY, listH).init_PoolEntry_DataUtil();
+      return this.init_TextFormat_DataUti_I_I(listY, listH).scrollbar();
    }
 
    private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout init_TextFormat_DataUti_I_I(int listY, int listH) {
-      return autismclient.gui.ui.widgets.ScrollListLayout.init(
+      return autismclient.gui.ui.widgets.ScrollListLayout.compute(
          this.run() + 4, listY, this.set() - 8, listH, this.add(), this.close_I_3(), this.close_I_3(), this.poll, 4, 6, 3, 6, false
       );
    }
 
    private boolean init_Z_I_I(int mx, int my) {
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti_I_I(this.pop(), this.tick_I_7());
-      return mx >= listLayout.init_I() + listLayout.pop()
-         && mx < listLayout.init_I() + listLayout.pop() + listLayout.push()
-         && my >= listLayout.load() + listLayout.pop()
-         && my < listLayout.load() + listLayout.pop() + listLayout.flush();
+      return mx >= listLayout.x() + listLayout.contentInset()
+         && mx < listLayout.x() + listLayout.contentInset() + listLayout.contentWidth()
+         && my >= listLayout.y() + listLayout.contentInset()
+         && my < listLayout.y() + listLayout.contentInset() + listLayout.viewHeight();
    }
 
    private void open_V_2() {

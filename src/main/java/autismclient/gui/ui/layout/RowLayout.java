@@ -11,7 +11,7 @@ public class RowLayout extends LayoutContainer {
    private float sync;
 
    public RowLayout() {
-      this.init_IoWorker = EdgeInsets.init_IoWorker;
+      this.init_IoWorker = EdgeInsets.ZERO;
       this.init_I = 0;
       this.write_Z = false;
       this.load_I = -50373;
@@ -19,10 +19,10 @@ public class RowLayout extends LayoutContainer {
    }
 
    public RowLayout init(EdgeInsets padding) {
-      EdgeInsets next = padding == null ? EdgeInsets.init_IoWorker : padding;
+      EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.init_IoWorker.equals(next)) {
          this.init_IoWorker = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -32,7 +32,7 @@ public class RowLayout extends LayoutContainer {
       int next = Math.max(0, gap);
       if (this.init_I != next) {
          this.init_I = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -49,15 +49,15 @@ public class RowLayout extends LayoutContainer {
    }
 
    @Override
-   public float init_F_SyncManager(LayoutContext context) {
+   public float measurePreferredWidth(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       int scaledGap = context.theme().load(this.init_I);
       float total = scaledPadding.init_I();
       int visibleCount = 0;
 
-      for (LayoutNode child : this.init_List) {
-         if (child != null && child.write_Z()) {
-            total += child.init_F_SyncManager(context);
+      for (LayoutNode child : this.children) {
+         if (child != null && child.isVisible()) {
+            total += child.measurePreferredWidth(context);
             visibleCount++;
          }
       }
@@ -70,38 +70,38 @@ public class RowLayout extends LayoutContainer {
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       float tallest = 0.0F;
 
-      for (LayoutNode child : this.init_List) {
-         if (child != null && child.write_Z()) {
-            tallest = Math.max(tallest, child.init_F_SyncManager_F(context, availableWidth));
+      for (LayoutNode child : this.children) {
+         if (child != null && child.isVisible()) {
+            tallest = Math.max(tallest, child.measureHeight(context, availableWidth));
          }
       }
 
-      return scaledPadding.write() + tallest + scaledPadding.sync();
+      return scaledPadding.write() + tallest + scaledPadding.bottom();
    }
 
    @Override
-   protected void load_V(LayoutContext context) {
+   protected void layoutChildren(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       int scaledGap = context.theme().load(this.init_I);
-      float innerX = this.init_F + scaledPadding.read();
-      float innerY = this.load_F + scaledPadding.write();
-      float innerWidth = Math.max(0.0F, this.read_F - scaledPadding.init_I());
-      float innerHeight = Math.max(0.0F, this.write - scaledPadding.load());
+      float innerX = this.nodeX + scaledPadding.read();
+      float innerY = this.nodeY + scaledPadding.write();
+      float innerWidth = Math.max(0.0F, this.nodeWidth - scaledPadding.init_I());
+      float innerHeight = Math.max(0.0F, this.nodeHeight - scaledPadding.load());
       float fixedWidth = 0.0F;
       int growCount = 0;
       int visibleCount = 0;
 
-      for (LayoutNode child : this.init_List) {
-         if (child != null && child.write_Z()) {
+      for (LayoutNode child : this.children) {
+         if (child != null && child.isVisible()) {
             visibleCount++;
-            if (child.sync_Z()) {
+            if (child.isGrowX()) {
                growCount++;
             } else {
-               fixedWidth += child.init_F_SyncManager(context);
+               fixedWidth += child.measurePreferredWidth(context);
             }
          }
       }
@@ -112,12 +112,12 @@ public class RowLayout extends LayoutContainer {
       float cursorX = innerX;
       this.sync = 0.0F;
 
-      for (LayoutNode child : this.init_List) {
-         if (child != null && child.write_Z()) {
-            float childWidth = child.sync_Z() ? growWidth : child.init_F_SyncManager(context);
-            float childHeight = Math.min(innerHeight, child.init_F_SyncManager_F(context, childWidth));
+      for (LayoutNode child : this.children) {
+         if (child != null && child.isVisible()) {
+            float childWidth = child.isGrowX() ? growWidth : child.measurePreferredWidth(context);
+            float childHeight = Math.min(innerHeight, child.measureHeight(context, childWidth));
             float childY = innerY + Math.max(0.0F, (innerHeight - childHeight) / 2.0F);
-            child.init_TableIndex_F(cursorX, childY, childWidth, childHeight);
+            child.setBounds(cursorX, childY, childWidth, childHeight);
             cursorX += childWidth + scaledGap;
          }
       }
@@ -126,20 +126,20 @@ public class RowLayout extends LayoutContainer {
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         super.init_V_SyncManager(context);
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
+         super.render(context);
          this.write(context);
          if (this.write_Z) {
-            float hover = this.init_F_Z_F(this.init_Z_F_F(context.mouseX(), context.mouseY()), context.delta());
+            float hover = this.stepHover(this.containsPoint(context.mouseX(), context.mouseY()), context.delta());
             if (hover <= 0.0F || context.graphics() == null) {
                return;
             }
 
             EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-            int drawX = Math.round(this.init_F + scaledPadding.read());
-            int drawY = Math.round(this.load_F + this.write - context.theme().load(1));
-            float underlineAreaWidth = Math.max(this.sync, this.read_F - scaledPadding.init_I());
+            int drawX = Math.round(this.nodeX + scaledPadding.read());
+            int drawY = Math.round(this.nodeY + this.nodeHeight - context.theme().load(1));
+            float underlineAreaWidth = Math.max(this.sync, this.nodeWidth - scaledPadding.init_I());
             int underlineWidth = Math.max(1, Math.round(underlineAreaWidth * hover));
             int underlineX = drawX + Math.max(0, Math.round((underlineAreaWidth - underlineWidth) / 2.0F));
             context.graphics()
@@ -159,13 +159,13 @@ public class RowLayout extends LayoutContainer {
          autismclient.gui.f.SyncManager ui = null;
          LayoutNode previous = null;
 
-         for (LayoutNode child : this.init_List) {
-            if (child != null && child.write_Z()) {
+         for (LayoutNode child : this.children) {
+            if (child != null && child.isVisible()) {
                if (previous instanceof ButtonNode left
                   && child instanceof ButtonNode right
                   && left.init_Z_2()
                   && right.init_Z_2()
-                  && Math.abs(left.load_F() + left.write_F() - right.load_F()) <= 0.5F) {
+                  && Math.abs(left.x() + left.width() - right.x()) <= 0.5F) {
                   if (ui == null) {
                      ui = autismclient.gui.f.UiHelper.init(
                         context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
@@ -177,9 +177,9 @@ public class RowLayout extends LayoutContainer {
                   float leftWeight = left.init_F();
                   float rightWeight = right.init_F();
                   int seamColor = ConnectedButtonRenderer.init(leftColor, leftWeight, rightColor, rightWeight);
-                  int seamX = Math.round(right.load_F());
-                  int seamY = Math.round(Math.max(left.read_F(), right.read_F()));
-                  int seamBottom = Math.round(Math.min(left.read_F() + left.update_F(), right.read_F() + right.update_F()));
+                  int seamX = Math.round(right.x());
+                  int seamY = Math.round(Math.max(left.y(), right.y()));
+                  int seamBottom = Math.round(Math.min(left.y() + left.height(), right.y() + right.height()));
                   ConnectedButtonRenderer.init(ui, seamX, seamY, Math.max(0, seamBottom - seamY), seamColor);
                }
 

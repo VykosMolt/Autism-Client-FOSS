@@ -169,7 +169,7 @@ public final class OverlayScreenController {
 
             try {
                Screen previous = FOREGROUND_SLOT.load(isRetainedForegroundScreen(requested) ? requested : null);
-               autismclient.gui.ui.widgets.TextInputWidget.init_V();
+               autismclient.gui.ui.widgets.TextInputWidget.clearGlobalFocus();
                if (previous == actual) {
                   return false;
                }

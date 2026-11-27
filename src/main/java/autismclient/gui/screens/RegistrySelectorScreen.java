@@ -1115,15 +1115,15 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int pop() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.run(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.run(), 6);
    }
 
    private int tick_I_11() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.load_I(), this.get(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.get(), 6);
    }
 
    private int run() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 460);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 460);
    }
 
    private int get() {
@@ -1131,7 +1131,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int maxList = Math.max(minList, (int)(this.load_I() * 0.65F));
       int list = this.init(this.update(), minList, maxList);
       int chrome = this.sync() + 4 + this.flush() + 2 + 4 + this.open() + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, chrome + list);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + list);
    }
 
    private int init(int value, int min, int max) {

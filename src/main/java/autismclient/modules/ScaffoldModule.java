@@ -4745,7 +4745,7 @@ public final class ScaffoldModule extends Module {
          this.state_Z = false;
          BlockPos under = this.init_BlockPos_LocalPlayer(player);
          if (!this.pop_Z && !this.add_Z) {
-            if (under != null && !init_Z_KeyMapping(MC.options.keyShift) && autismclient.util.BlockPlacementPlanner.init_Z(MC.level.getBlockState(under), under)) {
+            if (under != null && !init_Z_KeyMapping(MC.options.keyShift) && autismclient.util.BlockPlacementPlanner.requiresSneakToPlace(MC.level.getBlockState(under), under)) {
                this.flush_V_LocalPlayer_BlockPos(player, under);
             } else if (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RECOVERING) {
                this.sync_V_LocalPlayer_BlockPos(player, under != null ? under : this.sync_BlockPos);
@@ -5992,7 +5992,7 @@ public final class ScaffoldModule extends Module {
                               && !al.init_Z_HitResult(live.init_aI_TableIndex().init_BlockHitResult(), hand, this.id())) {
                               double cost = Vec3.atBottomCenterOf(cell.above()).distanceToSqr(landing)
                                  + init_D_ce_DataUtil_ce_DataUtil(this.poll_ce_DataUtil(), live.init_aI_TableIndex().init_ce_DataUtil()) * 0.001;
-                              if (autismclient.util.BlockPlacementPlanner.init(MC.level.getBlockState(support), support, player.isShiftKeyDown())) {
+                              if (autismclient.util.BlockPlacementPlanner.wouldInteractWithoutSneak(MC.level.getBlockState(support), support, player.isShiftKeyDown())) {
                                  cost++;
                               }
 
@@ -6835,7 +6835,7 @@ public final class ScaffoldModule extends Module {
       }
 
       BlockState supportState = MC.level.getBlockState(live.init_aI_TableIndex().init_BlockPos());
-      if (!autismclient.util.BlockPlacementPlanner.init_Z(supportState, live.init_aI_TableIndex().init_BlockPos())
+      if (!autismclient.util.BlockPlacementPlanner.requiresSneakToPlace(supportState, live.init_aI_TableIndex().init_BlockPos())
          || init_Z_KeyMapping(MC.options.keyShift) && MC.player.isShiftKeyDown()) {
          if (init_Z_BlockPos_AABB_2(live.init_aI_TableIndex().load(), MC.player.getBoundingBox())) {
             return false;
@@ -10139,7 +10139,7 @@ public final class ScaffoldModule extends Module {
             && MC.level.getBlockState(extra).isAir()
             && this.load_Z_BlockState_BlockPos(state, support)
             && state.isCollisionShapeFullBlock(MC.level, support)
-            && !autismclient.util.BlockPlacementPlanner.init_Z(state, support)
+            && !autismclient.util.BlockPlacementPlanner.requiresSneakToPlace(state, support)
             && init_Z_BlockPos_2(support, this.f_aN_I, this.flush_ArrayDeque)) {
             Vec3 forward = this.write_Vec3();
             AABB body = player.getBoundingBox();

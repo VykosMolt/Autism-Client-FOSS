@@ -522,7 +522,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                   init_BlockPlaceContext_Player(
                      mc.player,
                      new ItemStack(this.init_Item),
-                     hit.init_BlockHitResult(),
+                     hit.hit(),
                      init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, mc.player.position(), false)
                   )
                );
@@ -593,12 +593,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
       BlockPlacementPlanner.HitValidator placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
       BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target, eye, reach, placement)
-         .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-         .load(constraint != null)
-         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(rays));
+         .withSneaking(mc.player.isShiftKeyDown())
+         .withAutoSneak(constraint != null)
+         .withRayBudget(new BlockPlacementPlanner.RayBudget(rays));
       if (constraint != null) {
          if (constraint.clickYaw() != null) {
-            request.init_U_StateCache_ce_DataUtil(new RotationMath.Rotation(constraint.clickYaw(), mc.player.getXRot()));
+            request.withFromRotation(new RotationMath.Rotation(constraint.clickYaw(), mc.player.getXRot()));
          }
 
          EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
@@ -609,38 +609,38 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
             }
          }
 
-         request.init_U_StateCache_EnumSet(faces);
+         request.withAllowedFaces(faces);
       }
 
       if (constraint != null && (constraint.highHalf() != null || constraint.crouchForLook())) {
          ArrayList<BlockPlacementPlanner.SupportCandidate> options = new ArrayList<>();
-         BlockPlacementPlanner.init(request, options);
+         BlockPlacementPlanner.collectCandidates(request, options);
          BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
 
          for (BlockPlacementPlanner.SupportCandidate option : options) {
             AABB rect = constraint.highHalf() == null
-               ? option.init_AABB()
-               : init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf());
+               ? option.faceRect()
+               : init_AABB_AABB(option.faceRect(), option.face(), option.supportPos().getY(), constraint.highHalf());
             if (rect != null && constraint.crouchForLook()) {
-               rect = init_AABB_AABB(rect, option.init_Direction(), eye);
+               rect = init_AABB_AABB(rect, option.face(), eye);
             }
 
             if (rect != null) {
                BlockPlacementPlanner.SupportCandidate clipped = new BlockPlacementPlanner.SupportCandidate(
-                  option.init_BlockPos(),
-                  option.load_BlockPos(),
-                  option.init_Direction(),
-                  option.init_I(),
-                  option.init_BlockState(),
+                  option.targetCell(),
+                  option.supportPos(),
+                  option.face(),
+                  option.placementForm(),
+                  option.supportState(),
                   rect,
-                  option.init_D(),
-                  option.load_D(),
-                  option.init_Z(),
-                  option.init_U_BufferHelper()
+                  option.faceArea(),
+                  option.edgeMarginRatio(),
+                  option.requiresSneak(),
+                  option.supportFace()
                );
-               BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.init(clipped, request, refusal);
+               BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.computeAimSample(clipped, request, refusal);
                if (aim != null) {
-                  BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(clipped, aim, request, refusal);
+                  BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.verifyPlacement(clipped, aim, request, refusal);
                   if (candidate != null) {
                      return candidate;
                   }
@@ -654,7 +654,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
          return null;
       } else {
-         return BlockPlacementPlanner.init_U_CachePool(request);
+         return BlockPlacementPlanner.plan(request);
       }
    }
 

@@ -16,8 +16,8 @@ final class AiMemoryView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search memory");
-   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(4000);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
+   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private final Set<String> init_Set = new HashSet<>();
    private final Map<String, AiMemoryView.Inner_StreamUtil> init_Map = new HashMap<>();
@@ -35,11 +35,11 @@ final class AiMemoryView {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.load_BitSetUtil.load_BitSetUtil_Consumer(text -> this.load());
+      this.load_BitSetUtil.setOnSubmit(text -> this.load());
    }
 
    void init_V() {
-      this.init_BitSetUtil.init_BitSetUtil_Str("");
+      this.init_BitSetUtil.setValue("");
       this.load_Str = this.read_Str = this.write_Str = null;
       this.init_Set.clear();
       this.init_Map.clear();
@@ -53,13 +53,13 @@ final class AiMemoryView {
       }
 
       this.load_Str = null;
-      this.load_BitSetUtil.init_V_Z(false);
+      this.load_BitSetUtil.setFocused(false);
       return true;
    }
 
    private void init_V_J(long now) {
       Object source = this.init_cc.getMemoryStore().init_List();
-      String query = this.init_BitSetUtil.init_Str().trim();
+      String query = this.init_BitSetUtil.getValue().trim();
       if (source != this.init_Obj || !query.equals(this.init_Str) || now >= this.read_J) {
          this.init_Obj = source;
          this.init_Str = query;
@@ -76,7 +76,7 @@ final class AiMemoryView {
 
    void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       this.init_V_J(now);
-      if (this.load_Str != null && !this.load_BitSetUtil.load_Z()) {
+      if (this.load_Str != null && !this.load_BitSetUtil.isFocused()) {
          this.load_Str = null;
       }
 
@@ -102,7 +102,7 @@ final class AiMemoryView {
       int top = area.write() + ctrl + 2;
       autismclient.gui.f.NetHelper viewport = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), Math.max(0, footer.write() - 2 - top));
       this.load(kit, viewport, now);
-      if (!this.init_List.isEmpty() || !this.init_BitSetUtil.init_Str().isBlank()) {
+      if (!this.init_List.isEmpty() || !this.init_BitSetUtil.getValue().isBlank()) {
          this.init_V_cE_NetHelper(kit, footer);
       }
    }
@@ -130,7 +130,7 @@ final class AiMemoryView {
       kit.registerScrollPane(this.init_cE_StreamUtil);
       if (this.init_List.isEmpty()) {
          kit.drawEllipsizedText(
-            this.init_BitSetUtil.init_Str().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
+            this.init_BitSetUtil.getValue().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
          );
       } else {
          kit.pushClip(v);
@@ -333,16 +333,16 @@ final class AiMemoryView {
    private void init_V_AiMemoryStore_Memo(AiMemoryStore.Memory memory) {
       this.load_Str = memory.id();
       this.read_Str = null;
-      this.load_BitSetUtil.init_BitSetUtil_Str(memory.text());
-      this.load_BitSetUtil.init_BitSetUtil();
+      this.load_BitSetUtil.setValue(memory.text());
+      this.load_BitSetUtil.moveCursorToEnd();
       this.init_AiAssistantOverlay.init(this.load_BitSetUtil);
    }
 
    private void load() {
       String id = this.load_Str;
-      String text = this.load_BitSetUtil.init_Str().trim();
+      String text = this.load_BitSetUtil.getValue().trim();
       this.load_Str = null;
-      this.load_BitSetUtil.init_V_Z(false);
+      this.load_BitSetUtil.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.init_cc.correctMemory(id, text);
          this.init_Obj = null;

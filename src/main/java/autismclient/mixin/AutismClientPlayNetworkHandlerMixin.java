@@ -329,7 +329,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleContainerContent", at = @At("RETURN"))
    private void autism$aiContentsApplied(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
       VillagerTradeSession.init_V_ClientboundContain(packet);
-      AutoCraftingEngine.init_V(packet.containerId());
+      AutoCraftingEngine.onContainerContentPacket(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.recordContainerContents(packet.containerId(), packet.items());
          AiContainerTransactions.onContainerSetContent(packet.containerId(), packet.items(), packet.carriedItem());

@@ -93,7 +93,7 @@ public final class PacketWireCaptureStore {
    }
 
    public static String init(byte[] bytes, int maxBytes) {
-      return AutismPayloadSupport.init_Str(bytes, maxBytes);
+      return AutismPayloadSupport.toHexPreview(bytes, maxBytes);
    }
 
    private static int init(byte[] bytes) {

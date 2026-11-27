@@ -419,7 +419,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       RotationMath.Rotation rotation = RotationMath.lookAt(Vec3.atCenterOf(cell), eye);
-      return Math.abs(rotation.pitch()) > autismclient.util.BlockPlacementPlanner.init_D()
+      return Math.abs(rotation.pitch()) > autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees()
          ? null
          : new AutoTrapModule.Inner_BufferHelper(false, source.init_I(), new AABB(cell), source.load(), source.init_InteractionHand(), rotation, true);
    }
@@ -935,20 +935,20 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
          new autismclient.util.BlockPlacementPlanner.Query(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
-            .init_U_StateCache_ce_DataUtil(RotationMath.ofPlayer(MC.player))
-            .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
-            .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
-            .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
+            .withFromRotation(RotationMath.ofPlayer(MC.player))
+            .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
+            .withSneaking(MC.player.isSecondaryUseActive())
+            .withAutoSneak(false)
+            .withRayBudget(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
-      return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
+      return candidate == null ? null : candidate.aim().goalRotation();
    }
 
    private autismclient.util.BlockPlacementPlanner.HitValidator init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
       return material.getItem() instanceof BlockItem
-         ? autismclient.util.BlockPlacementPlanner.init(material, MC.player, hand)
+         ? autismclient.util.BlockPlacementPlanner.blockItemValidator(material, MC.player, hand)
          : (hit, target) -> hit.getBlockPos().relative(hit.getDirection()).equals(target);
    }
 
@@ -1031,7 +1031,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       BlockPos clicked = ray.getBlockPos();
-      if (!autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
+      if (!autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
          return null;
       }
 

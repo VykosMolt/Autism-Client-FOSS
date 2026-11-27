@@ -330,10 +330,10 @@ final class AiObtain {
                      && this.load_Set_4()
                         .stream()
                         .anyMatch(
-                           output -> autismclient.util.AutoCraftingEngine.load(mc, output)
+                           output -> autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, output)
                               .stream()
                               .anyMatch(
-                                 p -> p.init_List().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
+                                 p -> p.inputs().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
                                     >= goal - AiItems.countInInventory(this.init_af_DataUtil)
                               )
                         )) {
@@ -521,9 +521,9 @@ final class AiObtain {
                            .filter(this::init_Z)
                            .max(
                               Comparator.comparingInt(
-                                 item -> autismclient.util.AutoCraftingEngine.load(mc, item)
+                                 item -> autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, item)
                                     .stream()
-                                    .flatMap(p -> p.init_List().stream())
+                                    .flatMap(p -> p.inputs().stream())
                                     .mapToInt(i -> AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()))
                                     .max()
                                     .orElse(0)
@@ -561,18 +561,18 @@ final class AiObtain {
                                  nestedSmelt
                               );
                            } else {
-                              autismclient.util.AutoCraftingEngine.SmeltRecipe cooking = autismclient.util.AutoCraftingEngine.load(mc, outputx)
+                              autismclient.util.AutoCraftingEngine.SmeltRecipe cooking = autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, outputx)
                                  .stream()
-                                 .filter(p -> p.init_List().stream().anyMatch(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
-                                 .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.load_Str()) ? 0 : (AiGameState.countInventoryItem(p.load_Str()) > 0 ? 1 : 2)))
+                                 .filter(p -> p.inputs().stream().anyMatch(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
+                                 .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.station()) ? 0 : (AiGameState.countInventoryItem(p.station()) > 0 ? 1 : 2)))
                                  .orElse(null);
                               if (cooking != null && depth < 5) {
-                                 if (!AiSmelt.init_Z(mc, cooking.load_Str()) && AiGameState.countInventoryItem(cooking.load_Str()) == 0 && !visiting.contains(cooking.load_Str())) {
-                                    this.load_Str = "obtain " + cooking.load_Str() + " for " + outputId;
+                                 if (!AiSmelt.init_Z(mc, cooking.station()) && AiGameState.countInventoryItem(cooking.station()) == 0 && !visiting.contains(cooking.station())) {
+                                    this.load_Str = "obtain " + cooking.station() + " for " + outputId;
                                     return AiObtain.init(
                                        AiJson.objectOf(
                                           "item",
-                                          cooking.load_Str(),
+                                          cooking.station(),
                                           "count",
                                           1,
                                           "staged",
@@ -591,17 +591,17 @@ final class AiObtain {
                                     );
                                  }
 
-                                 Item source = cooking.init_List()
+                                 Item source = cooking.inputs()
                                     .stream()
                                     .filter(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0)
                                     .findFirst()
                                     .orElseThrow();
                                  Item fuel = AiSmelt.init("", source, missing);
-                                 int burnDivisor = AiSmelt.init_I(cooking.load_Str());
+                                 int burnDivisor = AiSmelt.init_I(cooking.station());
                                  int burn = fuel == null ? 0 : AiItems.fuelBurnTime(new ItemStack(fuel)) / burnDivisor;
                                  int fuelCount = fuel == null ? 0 : AiSmelt.init(fuel);
                                  int furnaceCount = AiParallelSmelt.init_I_I_3(missing);
-                                 if (fuelCount < AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), burn)) {
+                                 if (fuelCount < AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), burn)) {
                                     ItemStack fuelStack = fuel == null ? ItemStack.EMPTY : new ItemStack(fuel);
                                     boolean coalNearby = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308
                                        && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState());
@@ -610,19 +610,19 @@ final class AiObtain {
                                     if (fuel == null || AiSmelt.init_I(fuelStack) != 1 || fuel != Items.COAL && fuel != Items.CHARCOAL) {
                                        if (coalNearby && allowMining && !visiting.contains("minecraft:coal")) {
                                           fuelId = "minecraft:coal";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
                                        } else if (AiItems.countInInventory(AiItems.resolveItem("log")) <= 0
                                           && AiItems.countInInventory(AiItems.resolveItem("planks")) <= 0
                                           && AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308) {
                                           fuelId = "minecraft:coal";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor);
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor);
                                        } else {
                                           fuelId = "planks";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.reservedWood();
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.reservedWood();
                                        }
                                     } else {
                                        fuelId = BuiltInRegistries.ITEM.getKey(fuel).toString();
-                                       needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), burn) + AiRunResources.mandatoryReservedCount(fuel);
+                                       needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), burn) + AiRunResources.mandatoryReservedCount(fuel);
                                     }
 
                                     if (!visiting.contains(fuelId)) {
@@ -652,9 +652,9 @@ final class AiObtain {
                               this.load_Str = "smelt " + outputId;
 
                               try {
-                                 int largestInput = autismclient.util.AutoCraftingEngine.load(mc, outputx)
+                                 int largestInput = autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, outputx)
                                     .stream()
-                                    .flatMap(p -> p.init_List().stream())
+                                    .flatMap(p -> p.inputs().stream())
                                     .mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()))
                                     .max()
                                     .orElse(0);
@@ -1122,7 +1122,7 @@ final class AiObtain {
 
                   for (Item item : this.init_af_DataUtil.items()) {
                      if (!visiting.contains(BuiltInRegistries.ITEM.getKey(item).toString())) {
-                        boolean known = crafting ? !autismclient.util.AutoCraftingEngine.init(mc, item).isEmpty() : !autismclient.util.AutoCraftingEngine.load(mc, item).isEmpty();
+                        boolean known = crafting ? !autismclient.util.AutoCraftingEngine.getCraftingRecipesFor(mc, item).isEmpty() : !autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, item).isEmpty();
                         if (known) {
                            out.add(item);
                         }
@@ -1149,13 +1149,13 @@ final class AiObtain {
                   String best = null;
                   int bestCount = -1;
 
-                  for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
-                     if (plan.init_List().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
+                  for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, output)) {
+                     if (plan.inputs().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
                         >= goal - AiItems.countInInventory(this.init_af_DataUtil)) {
                         return null;
                      }
 
-                     for (Item input : plan.init_List()) {
+                     for (Item input : plan.inputs()) {
                         String inputId = BuiltInRegistries.ITEM.getKey(input).toString();
                         int count = AiGameState.countInventoryItem(inputId);
                         if (count >= goal - AiItems.countInInventory(this.init_af_DataUtil)) {
@@ -1831,7 +1831,7 @@ final class AiObtain {
             boolean craftable = !inner.init_List(itemId).isEmpty();
             boolean smeltable = BuiltInRegistries.ITEM
                .getOptional(Identifier.parse(itemId))
-               .map(item -> !autismclient.util.AutoCraftingEngine.load(mc, item).isEmpty())
+               .map(item -> !autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, item).isEmpty())
                .orElse(false);
             return AiObtain.init(itemId, mineable, craftable, smeltable);
          }

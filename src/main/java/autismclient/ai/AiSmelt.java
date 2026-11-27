@@ -163,10 +163,10 @@ final class AiSmelt {
             final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
             final String outputId = BuiltInRegistries.ITEM.getKey(resolved.output()).toString();
             final String statusTitle = "Smelting " + resolved.output().getDefaultInstance().getHoverName().getString();
-            final int cookTicksPerItem = autismclient.util.AutoCraftingEngine.load(mc, resolved.output())
+            final int cookTicksPerItem = autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, resolved.output())
                .stream()
-               .filter(p -> p.load_Str().equals(resolved.stationId()) && p.init_List().contains(resolved.input()))
-               .mapToInt(p -> Math.max(1, p.load_I()))
+               .filter(p -> p.station().equals(resolved.stationId()) && p.inputs().contains(resolved.input()))
+               .mapToInt(p -> Math.max(1, p.cookTimeTicks()))
                .min()
                .orElse(200);
             int held = AiGameState.countInventoryItem(outputId);
@@ -806,11 +806,11 @@ final class AiSmelt {
       List<Inner_DataUtil> viable = new ArrayList<>();
 
       for (Item output : outputTarget.items()) {
-         for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
-            tried.add(plan.init_Str());
+         for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, output)) {
+            tried.add(plan.recipeKey());
             Item input = init(plan, inputSpec);
             if (input != null) {
-               viable.add(new Inner_DataUtil(output, plan, input, init_I(mc, plan.load_Str())));
+               viable.add(new Inner_DataUtil(output, plan, input, init_I(mc, plan.station())));
             }
          }
       }
@@ -820,7 +820,7 @@ final class AiSmelt {
       for (Inner_DataUtil candidate : viable) {
          Item fuel = init(fuelSpec, candidate.input(), items);
          if (fuel != null) {
-            return new AiSmelt.Inner_CachePool(candidate.output(), candidate.input(), fuel, candidate.plan().load_Str());
+            return new AiSmelt.Inner_CachePool(candidate.output(), candidate.input(), fuel, candidate.plan().station());
          }
       }
 
@@ -862,17 +862,17 @@ final class AiSmelt {
    static boolean init(Minecraft mc, String output, String input) {
       Item wanted = load(output);
       Item source = load(input);
-      return autismclient.util.AutoCraftingEngine.load(mc, wanted)
+      return autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, wanted)
          .stream()
-         .filter(p -> p.init_List().contains(source))
-         .anyMatch(p -> AiGameState.countInventoryItem(p.load_Str()) > 0 || init_Z(mc, p.load_Str()));
+         .filter(p -> p.inputs().contains(source))
+         .anyMatch(p -> AiGameState.countInventoryItem(p.station()) > 0 || init_Z(mc, p.station()));
    }
 
    private static Item init(autismclient.util.AutoCraftingEngine.SmeltRecipe plan, String inputSpec) {
       if (!inputSpec.isBlank()) {
          AiItems.ItemSpec requested = AiItems.resolveItem(inputSpec);
 
-         for (Item candidate : plan.init_List()) {
+         for (Item candidate : plan.inputs()) {
             if (requested.items().contains(candidate)) {
                return candidate;
             }
@@ -883,7 +883,7 @@ final class AiSmelt {
          Item best = null;
          int bestCount = 0;
 
-         for (Item candidate : plan.init_List()) {
+         for (Item candidate : plan.inputs()) {
             int count = AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(candidate).toString());
             if (count > bestCount) {
                bestCount = count;
@@ -1029,14 +1029,14 @@ final class AiSmelt {
    static JsonArray init(Minecraft mc, Item output) {
       JsonArray out = new JsonArray();
 
-      for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
+      for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, output)) {
          JsonArray inputs = new JsonArray();
 
-         for (Item input : plan.init_List()) {
+         for (Item input : plan.inputs()) {
             inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
          }
 
-         out.add(AiJson.objectOf("recipe", plan.init_Str(), "station", plan.load_Str(), "outputCount", plan.init_I(), "inputs", inputs));
+         out.add(AiJson.objectOf("recipe", plan.recipeKey(), "station", plan.station(), "outputCount", plan.outputCount(), "inputs", inputs));
       }
 
       return out;

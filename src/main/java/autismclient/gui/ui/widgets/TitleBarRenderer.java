@@ -76,7 +76,7 @@ public final class TitleBarRenderer {
       context.init_PoolEntry().drawEllipsized(graphics, title, titleLeft, context.init_PoolEntry().centerTextY(bounds), Math.max(1, titleRight - titleLeft), colors.textPrimary);
       if (close) {
          boolean closeHovered = closeBounds.init_Z(context.read(), context.write());
-         float closeT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(closeBounds), closeHovered);
+         float closeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(closeBounds), closeHovered);
          int icon = 8;
          int ix = closeBounds.read() + (closeBounds.update() - icon) / 2;
          int iy = closeBounds.write() + (closeBounds.sync() - icon) / 2;
@@ -98,7 +98,7 @@ public final class TitleBarRenderer {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int radius = 7;
-      float headerT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float headerT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       int headerFill = init(colors.headerSurface, colors.headerSurfaceActive, headerT);
       if (shapeCollapsed) {
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, headerFill);

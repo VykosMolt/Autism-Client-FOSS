@@ -18,7 +18,7 @@ public abstract class AutismUnknownCustomPayloadMixin {
    ) {
       StreamCodec<T, DiscardedPayload> original = cir.getReturnValue();
       if (original != null) {
-         StreamCodec<T, DiscardedPayload> wrapped = AutismPayloadSupport.init(id, maxBytes, original);
+         StreamCodec<T, DiscardedPayload> wrapped = AutismPayloadSupport.wrapStreamCodec(id, maxBytes, original);
          cir.setReturnValue(wrapped);
       }
    }

@@ -195,15 +195,15 @@ final class AiCraft {
                                     "crafts",
                                     this.init_g_CachePool.steps().get(this.init_I).crafts(),
                                     "success",
-                                    result.init_Z,
+                                    result.success,
                                     "message",
-                                    result.init_Str,
+                                    result.message,
                                     "crafted",
-                                    result.init_I,
+                                    result.craftedAmount,
                                     "uncertain",
-                                    result.load,
+                                    result.uncertain,
                                     "rejection",
-                                    result.init_J_CachePool_DataUt.name(),
+                                    result.failureReason.name(),
                                     "ms",
                                     this.init(this.write_J)
                                  )
@@ -217,14 +217,14 @@ final class AiCraft {
                                  this.init(this.write_J),
                                  this.init(this.load_J)
                               );
-                           if (result.load) {
-                              return this.init(AiOperation.Status.UNCERTAIN, result.init_Str);
+                           if (result.uncertain) {
+                              return this.init(AiOperation.Status.UNCERTAIN, result.message);
                            }
 
-                           if (result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL) {
+                           if (result.failureReason == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL) {
                               AiOperation.Result rejection = AiOperation.Result.failed(
                                  AiFailure.INVENTORY_FULL,
-                                 result.init_Str,
+                                 result.message,
                                  AiJson.objectOf(
                                        "recipe",
                                        this.init_g_CachePool.steps().get(this.init_I).recipe().key(),
@@ -261,8 +261,8 @@ final class AiCraft {
                                  return new AiOperation.Result(ended.status(), ended.message(), ended.dataJson(), rejection.evidence(), rejection.failure());
                               }
                            } else {
-                              if (!result.init_Z && result.init_I <= 0) {
-                                 return this.init(AiOperation.Status.FAILED, "Craft step failed: " + result.init_Str);
+                              if (!result.success && result.craftedAmount <= 0) {
+                                 return this.init(AiOperation.Status.FAILED, "Craft step failed: " + result.message);
                               }
 
                               this.init_I++;
@@ -382,11 +382,11 @@ final class AiCraft {
 
                                  try {
                                     if (this.init_Z) {
-                                       future.complete(autismclient.util.AutoCraftingEngine.CraftResult.init("Craft cancelled"));
+                                       future.complete(autismclient.util.AutoCraftingEngine.CraftResult.failed("Craft cancelled"));
                                        return;
                                     }
 
-                                    future.complete(autismclient.util.AutoCraftingEngine.init(mc, recipeKey, -1, produced, AiClientTick::init_V_Runnable));
+                                    future.complete(autismclient.util.AutoCraftingEngine.craftWithDispatch(mc, recipeKey, -1, produced, AiClientTick::init_V_Runnable));
                                  } catch (Throwable t) {
                                     future.completeExceptionally(t);
                                     return;
@@ -925,34 +925,34 @@ final class AiCraft {
       Minecraft mc = Minecraft.getInstance();
       final Map<String, List<AiCraftPlanner.RecipeSpec>> byOutput = new HashMap<>();
 
-      for (autismclient.util.AutoCraftingEngine.ResolvedRecipe plan : autismclient.util.AutoCraftingEngine.load_List(mc)) {
-         List<List<String>> inputs = new ArrayList<>(plan.init_List().size());
+      for (autismclient.util.AutoCraftingEngine.ResolvedRecipe plan : autismclient.util.AutoCraftingEngine.getResolvedCraftingRecipes(mc)) {
+         List<List<String>> inputs = new ArrayList<>(plan.inputs().size());
 
-         for (autismclient.util.AutoCraftingEngine.IngredientSlot ingredient : plan.init_List()) {
-            List<String> accepts = new ArrayList<>(ingredient.init().size());
+         for (autismclient.util.AutoCraftingEngine.IngredientSlot ingredient : plan.inputs()) {
+            List<String> accepts = new ArrayList<>(ingredient.acceptedItems().size());
 
-            for (Item item : ingredient.init()) {
+            for (Item item : ingredient.acceptedItems()) {
                accepts.add(BuiltInRegistries.ITEM.getKey(item).toString());
             }
 
             inputs.add(accepts);
          }
 
-         String outputId = BuiltInRegistries.ITEM.getKey(plan.init_Item()).toString();
+         String outputId = BuiltInRegistries.ITEM.getKey(plan.outputItem()).toString();
          byOutput.computeIfAbsent(outputId, id -> new ArrayList<>())
-            .add(new AiCraftPlanner.RecipeSpec(plan.init_Str(), outputId, plan.init_I(), plan.init_Z(), inputs));
+            .add(new AiCraftPlanner.RecipeSpec(plan.recipeKey(), outputId, plan.outputCount(), plan.requiresTable(), inputs));
       }
 
-      for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.write(mc)) {
-         List<String> accepts = new ArrayList<>(plan.init_List().size());
+      for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.getStonecutterRecipes(mc)) {
+         List<String> accepts = new ArrayList<>(plan.inputs().size());
 
-         for (Item item : plan.init_List()) {
+         for (Item item : plan.inputs()) {
             accepts.add(BuiltInRegistries.ITEM.getKey(item).toString());
          }
 
-         String outputId = BuiltInRegistries.ITEM.getKey(plan.init_Item()).toString();
+         String outputId = BuiltInRegistries.ITEM.getKey(plan.outputItem()).toString();
          byOutput.computeIfAbsent(outputId, id -> new ArrayList<>())
-            .add(new AiCraftPlanner.RecipeSpec(plan.init_Str(), outputId, plan.init_I(), false, List.of(List.copyOf(accepts)), plan.load()));
+            .add(new AiCraftPlanner.RecipeSpec(plan.recipeKey(), outputId, plan.outputCount(), false, List.of(List.copyOf(accepts)), plan.station()));
       }
 
       final Map<String, Integer> counts = new HashMap<>();
@@ -1177,14 +1177,14 @@ final class AiCraft {
 
       Minecraft mc = Minecraft.getInstance();
 
-      for (autismclient.util.AutoCraftingEngine.CraftOption option : autismclient.util.AutoCraftingEngine.init_List(mc)) {
-         if (option.read_Z && target.items().contains(option.init_ItemStack.getItem())) {
-            return option.init_ItemStack.getItem();
+      for (autismclient.util.AutoCraftingEngine.CraftOption option : autismclient.util.AutoCraftingEngine.scanOptionsForClient(mc)) {
+         if (option.craftable && target.items().contains(option.outputStack.getItem())) {
+            return option.outputStack.getItem();
          }
       }
 
       for (Item item : target.items()) {
-         if (!autismclient.util.AutoCraftingEngine.init(mc, item).isEmpty()) {
+         if (!autismclient.util.AutoCraftingEngine.getCraftingRecipesFor(mc, item).isEmpty()) {
             return item;
          }
       }

@@ -188,11 +188,11 @@ public final class AiBridgeDriver {
       BlockHitResult hit = AiAim.raycastLookBlock();
       if (hit != null && hit.getBlockPos().relative(hit.getDirection()).equals(cell)) {
          BlockState face = this.init_Minecraft.level.getBlockState(hit.getBlockPos());
-         if (BlockPlacementPlanner.init(face, hit.getBlockPos(), true)) {
+         if (BlockPlacementPlanner.wouldInteractWithoutSneak(face, hit.getBlockPos(), true)) {
             return false;
          }
 
-         if (BlockPlacementPlanner.init_Z(face, hit.getBlockPos())) {
+         if (BlockPlacementPlanner.requiresSneakToPlace(face, hit.getBlockPos())) {
             this.init_BlockPos = cell;
             this.init_Minecraft.options.keyShift.setDown(true);
             if (!player.isShiftKeyDown() || !player.getLastSentInput().shift()) {

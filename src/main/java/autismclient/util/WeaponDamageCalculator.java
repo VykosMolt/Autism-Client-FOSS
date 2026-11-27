@@ -103,8 +103,8 @@ public final class WeaponDamageCalculator {
             && !friend.isSpectator()
             && autismclient.modules.TeamsModule.init_Z_Entity_5(friend)
             && !(friend.distanceToSqr(source) > 4.0F * power * power)) {
-            double damage = ExplosionDamageCalculator.read(friend, source, power, options);
-            if (!init_Z_D(damage, maximum, ExplosionDamageCalculator.init_D_LivingEntity(friend))) {
+            double damage = ExplosionDamageCalculator.calculateDamageCached(friend, source, power, options);
+            if (!init_Z_D(damage, maximum, ExplosionDamageCalculator.effectiveHealth(friend))) {
                return false;
             }
          }

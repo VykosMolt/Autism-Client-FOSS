@@ -178,7 +178,7 @@ public final class ConnectedButtonRenderer {
    }
 
    private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered, ConnectedButtonRenderer.Inner_DataUtil edges) {
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       if (!(hoverT <= 0.001F)) {
          int color = Math.round(20.0F * hoverT) << 24 | 16777215;
          int radius = Math.max(1, (edges.update ? 7 : 3) - 1);

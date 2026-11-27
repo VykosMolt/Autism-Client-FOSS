@@ -207,7 +207,7 @@ public final class AiPlacer {
                }
             }
 
-            if (this.currentPlan == null || !mc.level.getBlockState(this.currentPlan.init_U_TaskQueue().load_BlockPos()).canOcclude()) {
+            if (this.currentPlan == null || !mc.level.getBlockState(this.currentPlan.support().supportPos()).canOcclude()) {
                this.currentPlan = this.planPlacement(mc);
                if (this.currentPlan == null) {
                   return ++this.noFaceTicks >= 12 && !this.clicked
@@ -218,18 +218,18 @@ public final class AiPlacer {
                this.noFaceTicks = 0;
             }
 
-            this.aim.aimAt(this.currentPlan.init_U_DataUtil().init_Vec3());
+            this.aim.aimAt(this.currentPlan.aim().point());
             this.aim.tick();
-            if (!AiAim.isLookingAtBlock(this.currentPlan.init_BlockHitResult().getBlockPos())) {
+            if (!AiAim.isLookingAtBlock(this.currentPlan.hit().getBlockPos())) {
                return AiPlacer.PlaceStatus.WORKING;
             }
 
             BlockHitResult ray = AiAim.raycastLookBlock();
             BlockHitResult click = ray != null
-                  && ray.getBlockPos().equals(this.currentPlan.init_BlockHitResult().getBlockPos())
-                  && ray.getDirection() == this.currentPlan.init_BlockHitResult().getDirection()
+                  && ray.getBlockPos().equals(this.currentPlan.hit().getBlockPos())
+                  && ray.getDirection() == this.currentPlan.hit().getDirection()
                ? ray
-               : this.currentPlan.init_BlockHitResult();
+               : this.currentPlan.hit();
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, click);
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
             this.clicked = true;
@@ -265,11 +265,11 @@ public final class AiPlacer {
             this.targetPos,
             eye,
             reach,
-            BlockPlacementPlanner.init(this.exactStack.isEmpty() ? new ItemStack(this.targetItem) : this.exactStack.copy(), mc.player, InteractionHand.MAIN_HAND)
+            BlockPlacementPlanner.blockItemValidator(this.exactStack.isEmpty() ? new ItemStack(this.targetItem) : this.exactStack.copy(), mc.player, InteractionHand.MAIN_HAND)
          )
-         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(48));
+         .withRayBudget(new BlockPlacementPlanner.RayBudget(48));
       BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
-      BlockPlacementPlanner.PlacementPlan best = BlockPlacementPlanner.init(request, refusal);
+      BlockPlacementPlanner.PlacementPlan best = BlockPlacementPlanner.plan(request, refusal);
       if (best == null && refusal[0] != null) {
          this.lastRejectReason = refusal[0];
       }
@@ -294,7 +294,7 @@ public final class AiPlacer {
                : (
                   this.currentPlan == null
                      ? "no face (" + this.lastRejectReason + ")"
-                     : "turning to " + this.currentPlan.init_BlockHitResult().getBlockPos().toShortString()
+                     : "turning to " + this.currentPlan.hit().getBlockPos().toShortString()
                )
          )
          + " after "
@@ -306,10 +306,10 @@ public final class AiPlacer {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null && placeable instanceof BlockItem) {
          BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
-               target, mc.player.getEyePosition(), mc.player.blockInteractionRange(), BlockPlacementPlanner.init(new ItemStack(placeable), mc.player, InteractionHand.MAIN_HAND)
+               target, mc.player.getEyePosition(), mc.player.blockInteractionRange(), BlockPlacementPlanner.blockItemValidator(new ItemStack(placeable), mc.player, InteractionHand.MAIN_HAND)
             )
-            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(1024));
-         return BlockPlacementPlanner.init_U_CachePool(request) != null;
+            .withRayBudget(new BlockPlacementPlanner.RayBudget(1024));
+         return BlockPlacementPlanner.plan(request) != null;
       } else {
          return false;
       }

@@ -18,7 +18,7 @@ public class KeyValueRowNode extends LayoutNode {
    public KeyValueRowNode(String label, String value) {
       this.init_Str = label == null ? "" : label;
       this.load_Str = value == null ? "--" : value;
-      this.write = 12.0F;
+      this.nodeHeight = 12.0F;
    }
 
    public KeyValueRowNode init_TaskQueue_Str(String label) {
@@ -62,11 +62,11 @@ public class KeyValueRowNode extends LayoutNode {
    }
 
    private boolean init_Z_4() {
-      return this.init_Runnable != null && this.load_Z;
+      return this.init_Runnable != null && this.nodeEnabled;
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       int baselineHeight = 12;
       int labelHeight = context.theme().init_I_l(this.init_l) + context.theme().load(3);
       int valueHeight = context.theme().init_I_l(this.load_l) + context.theme().load(3);
@@ -74,18 +74,18 @@ public class KeyValueRowNode extends LayoutNode {
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawW = Math.round(this.read_F);
-         int drawH = Math.round(this.write);
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawW = Math.round(this.nodeWidth);
+         int drawH = Math.round(this.nodeHeight);
          int minSegment = context.theme().load(24);
          int labelW = Math.round(Math.min(this.sync, Math.max(minSegment, drawW - minSegment)));
          int valueX = drawX + labelW;
          int valueW = Math.max(1, drawW - labelW);
          boolean clickable = this.init_Z_4();
-         boolean hovered = clickable && this.init_Z_F_F(context.mouseX(), context.mouseY());
+         boolean hovered = clickable && this.containsPoint(context.mouseX(), context.mouseY());
          if (hovered) {
             context.graphics()
                .fill(drawX, drawY, drawX + drawW, drawY + drawH, context.applyAlpha(ThemePaletteManager.recolor(339024671, ThemePaletteManager.ColorRole.ACCENT)));
@@ -139,8 +139,8 @@ public class KeyValueRowNode extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, float mouseX, float mouseY, int button) {
-      if (button == 0 && this.init_Z_4() && this.init_Z_F_F(mouseX, mouseY)) {
+   public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
+      if (button == 0 && this.init_Z_4() && this.containsPoint(mouseX, mouseY)) {
          this.init_Runnable.run();
          return true;
       } else {

@@ -451,7 +451,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<String> labels = new ArrayList<>();
 
       for (PayloadFieldCodec.Inner_BufferHelper type : get_List) {
-         labels.add(type.init());
+         labels.add(type.label());
       }
 
       return List.copyOf(labels);
@@ -775,8 +775,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox srchF = this.init_k_I(180);
          srchF.setPlaceholder(Component.literal("Search recipes..."));
          this.flush_Map.put("_craft_search", srchF);
-         this.pop_List = AutoCraftingEngine.init_List(init_Minecraft);
-         this.tick_List = AutoCraftingEngine.init(this.pop_List, "");
+         this.pop_List = AutoCraftingEngine.scanOptionsForClient(init_Minecraft);
+         this.tick_List = AutoCraftingEngine.filterOptions(this.pop_List, "");
       }
 
       if (action instanceof WaitForPacketAction waitForPacketAction) {
@@ -1238,7 +1238,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
       } else {
          this.push(true);
-         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
          this.init_AutismPacketSelect.init_V_Z(false);
          this.init_RaceStepSelectorOv.init_V_Z(false);
          this.push_V();
@@ -1255,7 +1255,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.load_Z != value) {
          super.write_V_Z(value);
          if (value) {
-            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+            autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
             this.init_AutismPacketSelect.init_V_Z(false);
             this.init_RaceStepSelectorOv.init_V_Z(false);
             this.valid_List.clear();
@@ -1286,7 +1286,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && (
             this.init_AutismPacketSelect.sync_Z()
                || this.init_RaceStepSelectorOv.sync_Z()
-               || autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)
+               || autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)
                || mx >= this.bind && mx < this.bind + this.f_b_I && my >= this.f_a_I && my < this.f_a_I + (this.load_Z ? 14 : this.f_c_I)
          );
    }
@@ -1577,7 +1577,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;
-         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             mouseX = -2147483648;
             mouseY = -2147483648;
          }
@@ -1615,7 +1615,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (!this.sync_List.isEmpty()) {
-                  autismclient.gui.ui.widgets.DropdownWidget.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+                  autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
                }
             } finally {
                this.endBodyClip(context, true);
@@ -1623,9 +1623,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          this.renderInactiveDim(context, bounds, this.load_Z, this.update_Z);
-         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             context.nextStratum();
-            autismclient.gui.ui.widgets.DropdownWidget.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+            autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
          }
 
          if (this.init_AutismPacketSelect.sync_Z()) {
@@ -2662,7 +2662,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 16;
       String query = srchF != null ? srchF.getValue() : "";
       if (!query.equals(this.update_Str)) {
-         this.tick_List = AutoCraftingEngine.init(this.pop_List != null ? this.pop_List : List.of(), query);
+         this.tick_List = AutoCraftingEngine.filterOptions(this.pop_List != null ? this.pop_List : List.of(), query);
          this.update_Str = query;
          this.f_g_I = 0;
          if (this.init_J_TaskQueue != null && (this.tick_List == null || !this.tick_List.contains(this.init_J_TaskQueue))) {
@@ -2696,16 +2696,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                AutoCraftingEngine.CraftOption opt = filtered.get(i);
                boolean inList = this.push_List
                   .stream()
-                  .anyMatch(e -> opt.init_Str != null && opt.init_Str.equals(e.init_Str) || opt.init_I >= 0 && opt.init_I == e.init_I);
+                  .anyMatch(e -> opt.recipeKey != null && opt.recipeKey.equals(e.init_Str) || opt.recipeKeyHash >= 0 && opt.recipeKeyHash == e.init_I);
                boolean hov = !inList && mx >= x && mx < x + recW && my >= ry && my < ry + 13;
                ListRowRenderer.RowTone tone = inList
                   ? ListRowRenderer.RowTone.READY
-                  : (opt.read_Z ? ListRowRenderer.RowTone.NORMAL : ListRowRenderer.RowTone.MISSING);
+                  : (opt.craftable ? ListRowRenderer.RowTone.NORMAL : ListRowRenderer.RowTone.MISSING);
                autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
-                  ctx, this.init_Font, opt.init_Component, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
+                  ctx, this.init_Font, opt.outputHoverName, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
                );
-               if (opt.init_ItemStack != null && opt.init_ItemStack.getCount() > 1) {
-                  String cnt = "×" + opt.init_ItemStack.getCount();
+               if (opt.outputStack != null && opt.outputStack.getCount() > 1) {
+                  String cnt = "×" + opt.outputStack.getCount();
                   autismclient.gui.f.b.k.init(ctx, this.init_Font, cnt, font, UiColorPalette.textSecondary(), x + recW - this.init_I_Identifier_Str(font, cnt) - 2, ry + 2, false);
                }
 
@@ -2713,7 +2713,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean fInList = inList;
                this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, ry, recW, 13, () -> {
                   if (fInList) {
-                     this.push_List.removeIf(e -> fOpt.init_Str != null && fOpt.init_Str.equals(e.init_Str) || fOpt.init_I >= 0 && fOpt.init_I == e.init_I);
+                     this.push_List.removeIf(e -> fOpt.recipeKey != null && fOpt.recipeKey.equals(e.init_Str) || fOpt.recipeKeyHash >= 0 && fOpt.recipeKeyHash == e.init_I);
                      this.set_V_2();
                   } else {
                      autismclient.util.macro.CraftAction.Inner_DataUtil newEntry = autismclient.util.macro.CraftAction.Inner_DataUtil.init(fOpt, 1, false);
@@ -2734,7 +2734,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void open_V_2() {
-      this.pop_List = AutoCraftingEngine.init_List(init_Minecraft);
+      this.pop_List = AutoCraftingEngine.scanOptionsForClient(init_Minecraft);
       this.update_Str = null;
       this.init_J_TaskQueue = null;
       this.f_g_I = 0;
@@ -3657,7 +3657,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       IntConsumer cb = onSelect;
       autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
          .computeIfAbsent(cacheKey, k -> new autismclient.gui.ui.widgets.DropdownWidget(ctrlX, cy + 2, ctrlW, 13, opts, idx, cb));
-      dd.init_SyncManager_I(ctrlX, cy + 2, ctrlW, 13).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
+      dd.setBounds(ctrlX, cy + 2, ctrlW, 13).setOptions(opts).setSelectedIndex(idx).setOnSelect(cb);
       this.sync_List.add(dd);
       return cy + 14 + 2;
    }
@@ -3668,7 +3668,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          List<String> opts = options;
          IntConsumer cb = onSelect;
          autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map.computeIfAbsent(cacheKey, k -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, h, opts, idx, cb));
-         dd.init_SyncManager_I(x, y, w, h).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
+         dd.setBounds(x, y, w, h).setOptions(opts).setSelectedIndex(idx).setOnSelect(cb);
          this.sync_List.add(dd);
       }
    }
@@ -4106,10 +4106,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.load_Map.put("payload_command_api", this.init_bE.load_Z);
       this.pop(true);
       PayloadFieldCodec.Inner_JsonUtil template = this.load_bJ_JsonUtil();
-      PayloadFieldCodec.Inner_StreamUtil suggestedMode = this.init_bJ_StreamUtil_Str(template.init_Str(), template.init_List(), template.init_bJ_StreamUtil());
+      PayloadFieldCodec.Inner_StreamUtil suggestedMode = this.init_bJ_StreamUtil_Str(template.channel(), template.fields(), template.encodingMode());
       this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(suggestedMode));
       this.read_Map
-         .put("payload_add_type", this.init_I_bJ_BufferHelper(this.init_bJ_BufferHelper_Str(template.init_Str(), suggestedMode, template.init_List())));
+         .put("payload_add_type", this.init_I_bJ_BufferHelper(this.init_bJ_BufferHelper_Str(template.channel(), suggestedMode, template.fields())));
    }
 
    private ActionEditorOverlay.JsonUtil init_ActionEditorOverla_H(PayloadAction seedAction) {
@@ -4123,7 +4123,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean haveBytes = false;
       if (action.payloadData != null && !action.payloadData.isBlank()) {
          try {
-            bytes = AutismPayloadSupport.init_BArr(action.payloadData);
+            bytes = AutismPayloadSupport.parseHexOrBase64(action.payloadData);
             haveBytes = true;
          } catch (Exception ignored) {
             bytes = new byte[0];
@@ -4154,8 +4154,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          channel = "minecraft:brand";
       }
 
-      if (AutismPayloadSupport.init_Z(channel)) {
-         String brandText = AutismPayloadSupport.read(bytes);
+      if (AutismPayloadSupport.isBrandChannel(channel)) {
+         String brandText = AutismPayloadSupport.decodeMcString(bytes);
          if (brandText != null || bytes.length == 0) {
             return new ActionEditorOverlay.JsonUtil(
                channel,
@@ -4163,12 +4163,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                false,
                action.commandApiValue,
                ActionEditorOverlay.TaskQueue.BRAND_STRING,
-               brandText != null ? brandText : AutismPayloadSupport.init_Str()
+               brandText != null ? brandText : AutismPayloadSupport.defaultClientBrand()
             );
          }
       }
 
-      Integer commandValue = AutismPayloadSupport.init_Integer(null, channel, bytes);
+      Integer commandValue = AutismPayloadSupport.detectCommandApiValue(null, channel, bytes);
       boolean commandRecognized = action.commandApiRecognized || commandValue != null;
       int resolvedCommandValue = commandValue != null ? commandValue : action.commandApiValue;
       ActionEditorOverlay.TaskQueue mode = ActionEditorOverlay.TaskQueue.BINARY_REPLAY;
@@ -4177,7 +4177,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          mode = ActionEditorOverlay.TaskQueue.COMMAND_INT;
          contentText = String.valueOf(resolvedCommandValue);
       } else {
-         String readableText = AutismPayloadSupport.write(bytes);
+         String readableText = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (readableText.isBlank() && bytes.length != 0) {
             contentText = "Binary payload (" + bytes.length + " bytes). Safe replay keeps the captured bytes.";
          } else {
@@ -4252,11 +4252,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (rawField != null) {
-                  rawField.setValue(AutismPayloadSupport.init_Str(encoded.init_BArr()));
+                  rawField.setValue(AutismPayloadSupport.toHexString(encoded.init_BArr()));
                }
 
                if (textField != null) {
-                  textField.setValue(AutismPayloadSupport.write(encoded.init_BArr()));
+                  textField.setValue(AutismPayloadSupport.decodePrintableUtf8(encoded.init_BArr()));
                }
 
                this.put_Z = true;
@@ -4266,7 +4266,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.start_Z = false;
             }
 
-            Integer commandValue = AutismPayloadSupport.init_Integer(null, encoded.init_Str(), encoded.init_BArr());
+            Integer commandValue = AutismPayloadSupport.detectCommandApiValue(null, encoded.init_Str(), encoded.init_BArr());
             if (commandValue != null) {
                this.load_Map.put("payload_command_api", true);
                if (commandField != null) {
@@ -4275,7 +4275,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          } catch (Exception e) {
             if (notifyOnError) {
-               AutismClientMessaging.sendPrefixed("§cCould not rebuild payload from JSON: " + AutismPayloadSupport.init(e));
+               AutismClientMessaging.sendPrefixed("§cCould not rebuild payload from JSON: " + AutismPayloadSupport.describeError(e));
             }
          }
       }
@@ -4294,7 +4294,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       } else {
          ThemedTextInputBox contentField = this.init_Map.get("payload_content");
          if (contentField != null) {
-            contentField.setValue(PayloadFieldCodec.init(safeFields));
+            contentField.setValue(PayloadFieldCodec.formatFields(safeFields));
          }
       }
    }
@@ -4312,7 +4312,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       ThemedTextInputBox contentField = this.init_Map.get("payload_content");
-      return PayloadFieldCodec.init_List(contentField == null ? "" : contentField.getValue());
+      return PayloadFieldCodec.parseFields(contentField == null ? "" : contentField.getValue());
    }
 
    private void data() {
@@ -4348,7 +4348,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private PayloadFieldCodec.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel, List<PayloadFieldCodec.Inner_CachePool> fields, PayloadFieldCodec.Inner_StreamUtil fallback) {
       List<PayloadFieldCodec.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
-      if (AutismPayloadSupport.init_Z(channel)) {
+      if (AutismPayloadSupport.isBrandChannel(channel)) {
          return PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF;
       }
 
@@ -4358,7 +4358,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       for (PayloadFieldCodec.Inner_CachePool field : safeFields) {
          if (field != null) {
-            switch (field.init_bJ_BufferHelper()) {
+            switch (field.type()) {
                case HEX_BYTES:
                case RAW_BYTES:
                case BYTE_ARRAY:
@@ -4400,7 +4400,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private PayloadFieldCodec.Inner_BufferHelper init_bJ_BufferHelper_Str(String channel, PayloadFieldCodec.Inner_StreamUtil mode, List<PayloadFieldCodec.Inner_CachePool> fields) {
-      if (AutismPayloadSupport.init_Z(channel)) {
+      if (AutismPayloadSupport.isBrandChannel(channel)) {
          return PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING;
       } else if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip())) {
          return PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF;
@@ -4497,7 +4497,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                channelField.setValue(this.init_bE.read_Str == null ? "" : this.init_bE.read_Str);
             }
 
-            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.init(this.init_bE.sync, this.init_bE.read_Str)));
+            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.parse(this.init_bE.sync, this.init_bE.read_Str)));
             ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
             if (commandField != null && (force || !commandField.isFocused())) {
                commandField.setValue(String.valueOf(this.init_bE.load_I));
@@ -4575,7 +4575,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private PayloadFieldCodec.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel) {
-      int fallback = this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.init(this.init_H == null ? "" : this.init_H.payloadEncodingMode, channel));
+      int fallback = this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.parse(this.init_H == null ? "" : this.init_H.payloadEncodingMode, channel));
       int index = Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", fallback), add_List.size() - 1));
       return add_List.get(index);
    }
@@ -4591,19 +4591,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w);
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, mx, my);
       int dirLabelW = 18;
-      int dirW = this.write_I(template.init_bJ_ConfigStore().name());
+      int dirW = this.write_I(template.direction().name());
       int modeLabelW = 28;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Dir", font, UiColorPalette.textSecondary(), x, cy + 3, false);
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), OverlayActionButton.ButtonTone.SECONDARY, true, mx, my, () -> {
+         ctx, x + dirLabelW, cy, dirW, 13, template.direction().name(), OverlayActionButton.ButtonTone.SECONDARY, true, mx, my, () -> {
             this.push(true);
             if (this.init_bE != null) {
-               this.init_bE.init_Str = PayloadFieldCodec.init_Str(this.init_bE.init_Str);
+               this.init_bE.init_Str = PayloadFieldCodec.toggleDirection(this.init_bE.init_Str);
                this.init_bE.init_V();
                this.init_ActionEditorOverla = null;
                this.pop(false);
             } else if (this.init_H != null) {
-               this.init_H.payloadDirection = PayloadFieldCodec.init_Str(this.init_H.payloadDirection);
+               this.init_H.payloadDirection = PayloadFieldCodec.toggleDirection(this.init_H.payloadDirection);
             }
 
             this.get_Z = true;
@@ -4714,7 +4714,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.run(false);
          ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
          if (hexView != null) {
-            int bytes = this.init_bE == null ? built.init_BArr().length : this.init_bE.init_BArr.length;
+            int bytes = this.init_bE == null ? built.bytes().length : this.init_bE.init_BArr.length;
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "Body Hex - payload body only (" + bytes + " bytes)", font, UiColorPalette.textBody(), x, cy + 2, false);
             cy += 14;
             hexView.setX(x);
@@ -4754,7 +4754,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       String notice = this.load_Str_bJ_DataUtil(built);
       boolean modelBad = this.init_bE != null && this.init_bE.flush != null && !this.init_bE.flush.isBlank();
-      int noticeColor = !modelBad && built.load().isEmpty() ? (!built.init_List().isEmpty() ? -14249 : UiColorPalette.textSecondary()) : UiColorPalette.errorText();
+      int noticeColor = !modelBad && built.errors().isEmpty() ? (!built.warnings().isEmpty() ? -14249 : UiColorPalette.textSecondary()) : UiColorPalette.errorText();
       autismclient.gui.f.b.k.init(
          ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, notice, Math.max(10, w), font, noticeColor), font, noticeColor, x, cy + 2, false
       );
@@ -4762,13 +4762,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String sendLbl = this.close_Z ? "Send: In Game" : "Send";
       int[] sendBtns = this.init_IArr_I(x, w, false, sendLbl, "Reset");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, OverlayActionButton.ButtonTone.SUCCESS, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
+         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, OverlayActionButton.ButtonTone.SUCCESS, !this.close_Z && built.isValid() && !modelBad, mx, my, () -> {
             if (!this.close_Z) {
                try {
                   PayloadAction action = this.load_H();
                   action.execute(init_Minecraft);
                } catch (Exception e) {
-                  AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.init(e));
+                  AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.describeError(e));
                }
             }
          }
@@ -4832,24 +4832,24 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.reset_Z = true;
             this.read_Map.put("payload_add_type", newIdx);
          }));
-      dd.init_SyncManager_I(x, y, w, 13).init_SyncManager_List(set_List).init_SyncManager_I(idx).init_SyncManager_IntConsumer(newIdx -> {
+      dd.setBounds(x, y, w, 13).setOptions(set_List).setSelectedIndex(idx).setOnSelect(newIdx -> {
          this.reset_Z = true;
          this.read_Map.put("payload_add_type", newIdx);
-      }).init_SyncManager_Str("");
+      }).setLabelOverride("");
       this.sync_List.add(dd);
    }
 
    private void read_V(int index) {
       if (index >= 0 && index < get_List.size()) {
          PayloadFieldCodec.Inner_BufferHelper type = get_List.get(index);
-         this.write_V(type.init() + " = " + type.load());
+         this.write_V(type.label() + " = " + type.defaultValue());
          if (!this.clear_Z) {
             this.read_Map
                .put(
                   "payload_mode",
                   this.init_I_bJ_StreamUtil(
                      this.init_bJ_StreamUtil_Str(
-                        this.write_Str(), List.of(new PayloadFieldCodec.Inner_CachePool(type, type.load(), true)), this.init_bJ_StreamUtil_Str(this.write_Str())
+                        this.write_Str(), List.of(new PayloadFieldCodec.Inner_CachePool(type, type.defaultValue(), true)), this.init_bJ_StreamUtil_Str(this.write_Str())
                      )
                   )
                );
@@ -4865,7 +4865,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.start_Z = true;
 
          try {
-            hexView.setValue(this.init_Str_BArr(built.init_BArr()));
+            hexView.setValue(this.init_Str_BArr(built.bytes()));
          } finally {
             this.start_Z = false;
          }
@@ -4902,16 +4902,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String init_Str_bJ_DataUtil(PayloadFieldCodec.Inner_DataUtil built) {
-      PayloadFieldCodec.Inner_NetHelper preview = built.init_bJ_NetHelper();
-      String fullUtf8 = AutismPayloadSupport.write(built.init_BArr());
+      PayloadFieldCodec.Inner_NetHelper preview = built.preview();
+      String fullUtf8 = AutismPayloadSupport.decodePrintableUtf8(built.bytes());
       if (fullUtf8 != null && !fullUtf8.isBlank()) {
          return fullUtf8;
-      } else if (preview.load() != null && !preview.load().isBlank()) {
-         return preview.load();
-      } else if (preview.read() != null && !preview.read().isBlank()) {
-         return preview.read();
+      } else if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank()) {
+         return preview.utf8Preview();
+      } else if (preview.mcStringPreview() != null && !preview.mcStringPreview().isBlank()) {
+         return preview.mcStringPreview();
       } else {
-         return preview.write() != null && !preview.write().isBlank() ? preview.write() : "";
+         return preview.javaUtfPreview() != null && !preview.javaUtfPreview().isBlank() ? preview.javaUtfPreview() : "";
       }
    }
 
@@ -4931,15 +4931,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             try {
                this.init_BArr_Str(hexView.getValue());
             } catch (Exception e) {
-               return "Bad hex: " + this.read_Str(AutismPayloadSupport.init(e));
+               return "Bad hex: " + this.read_Str(AutismPayloadSupport.describeError(e));
             }
          }
       }
 
-      if (!built.load().isEmpty()) {
-         return "Fix: " + this.read_Str(built.load().get(0));
+      if (!built.errors().isEmpty()) {
+         return "Fix: " + this.read_Str(built.errors().get(0));
       } else {
-         return !built.init_List().isEmpty() ? "Warn: " + this.read_Str(built.init_List().get(0)) : "Ready: " + built.init_BArr().length + " bytes";
+         return !built.warnings().isEmpty() ? "Warn: " + this.read_Str(built.warnings().get(0)) : "Ready: " + built.bytes().length + " bytes";
       }
    }
 
@@ -4977,7 +4977,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String load_Str_BArr(byte[] bytes) {
-      String text = AutismPayloadSupport.write(bytes);
+      String text = AutismPayloadSupport.decodePrintableUtf8(bytes);
       if (text != null && !text.isBlank()) {
          for (int i = 0; i < text.length(); i++) {
             char chr = text.charAt(i);
@@ -5224,7 +5224,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          String normalized = token.strip().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
 
          for (PayloadFieldCodec.Inner_BufferHelper type : PayloadFieldCodec.Inner_BufferHelper.values()) {
-            if (type.name().equals(normalized) || type.init().equalsIgnoreCase(token.strip())) {
+            if (type.name().equals(normalized) || type.label().equalsIgnoreCase(token.strip())) {
                return type;
             }
          }
@@ -5258,7 +5258,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_I_2(int x, int y, int w, int mx, int my, PayloadFieldCodec.Inner_JsonUtil template) {
-      int idx = this.init_I_bJ_StreamUtil(template == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
+      int idx = this.init_I_bJ_StreamUtil(template == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : template.encodingMode());
       autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
          .computeIfAbsent("payload_mode", key -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, 13, put_List, idx, newIdx -> {
             if (newIdx >= 0 && newIdx < add_List.size()) {
@@ -5279,7 +5279,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.get_Z = true;
             }
          }));
-      dd.init_SyncManager_I(x, y, w, 13).init_SyncManager_List(put_List).init_SyncManager_I(idx).init_SyncManager_IntConsumer(newIdx -> {
+      dd.setBounds(x, y, w, 13).setOptions(put_List).setSelectedIndex(idx).setOnSelect(newIdx -> {
          if (newIdx >= 0 && newIdx < add_List.size()) {
             this.push(true);
             this.clear_Z = true;
@@ -5313,7 +5313,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox valueField = this.init_Map.get(this.load_Str_I(row));
       if (valueField != null) {
          PayloadFieldCodec.Inner_BufferHelper type = this.init_bJ_BufferHelper_I(row);
-         valueField.setPlaceholder(Component.literal(type.load()));
+         valueField.setPlaceholder(Component.literal(type.defaultValue()));
          valueField.setX(valueX);
          valueField.setY(y + 3);
          valueField.setWidth(valueW);
@@ -5338,10 +5338,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
       autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
          .computeIfAbsent(key, cacheKey -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
-      dd.init_SyncManager_I(x, y, w, 13)
-         .init_SyncManager_List(set_List)
-         .init_SyncManager_I(idx)
-         .init_SyncManager_IntConsumer(newIdx -> this.write_V_I_I(row, newIdx));
+      dd.setBounds(x, y, w, 13)
+         .setOptions(set_List)
+         .setSelectedIndex(idx)
+         .setOnSelect(newIdx -> this.write_V_I_I(row, newIdx));
       this.sync_List.add(dd);
    }
 
@@ -5353,7 +5353,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (previous != newIdx) {
             ThemedTextInputBox valueField = this.init_Map.get(this.load_Str_I(row));
             if (valueField != null && valueField.getValue().isBlank()) {
-               valueField.setValue(get_List.get(newIdx).load());
+               valueField.setValue(get_List.get(newIdx).defaultValue());
             }
 
             this.get_Z = true;
@@ -5399,14 +5399,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       action.payloadPhase = "PLAY";
       action.payloadEncodingMode = this.init_bJ_StreamUtil_Str(action.channel).name();
-      action.payloadFields = PayloadFieldCodec.init(this.load_List());
-      return PayloadFieldCodec.init(action);
+      action.payloadFields = PayloadFieldCodec.formatFields(this.load_List());
+      return PayloadFieldCodec.fromAction(action);
    }
 
    private ActionEditorOverlay.ConfigStore init_ActionEditorOverla() {
       if (this.init_bE == null) {
          PayloadFieldCodec.Inner_JsonUtil template = this.init_bJ_JsonUtil();
-         return new ActionEditorOverlay.ConfigStore(-9223372036854775808L, template, template.init_bJ_DataUtil());
+         return new ActionEditorOverlay.ConfigStore(-9223372036854775808L, template, template.encode());
       }
 
       long revision = this.init_bE.init_J();
@@ -5416,13 +5416,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       PayloadFieldCodec.Inner_JsonUtil template = this.load_bJ_JsonUtil();
-      hit = new ActionEditorOverlay.ConfigStore(revision, template, template.init_bJ_DataUtil());
+      hit = new ActionEditorOverlay.ConfigStore(revision, template, template.encode());
       this.init_ActionEditorOverla = hit;
       return hit;
    }
 
    private PayloadFieldCodec.Inner_JsonUtil load_bJ_JsonUtil() {
-      return this.init_bE == null ? PayloadFieldCodec.init(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
+      return this.init_bE == null ? PayloadFieldCodec.fromAction(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
    }
 
    private void write_V(String line) {
@@ -5437,22 +5437,22 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_bJ_JsonUtil(PayloadFieldCodec.Inner_JsonUtil template) {
       if (template != null) {
          if (this.init_H != null) {
-            this.init_H.channel = template.init_Str();
-            this.init_H.payloadDirection = template.init_bJ_ConfigStore().name();
-            this.init_H.payloadPhase = template.init_bJ_TaskQueue().name();
-            this.init_H.payloadEncodingMode = template.init_bJ_StreamUtil().name();
-            this.init_H.payloadFields = PayloadFieldCodec.init(template.init_List());
+            this.init_H.channel = template.channel();
+            this.init_H.payloadDirection = template.direction().name();
+            this.init_H.payloadPhase = template.phase().name();
+            this.init_H.payloadEncodingMode = template.encodingMode().name();
+            this.init_H.payloadFields = PayloadFieldCodec.formatFields(template.fields());
          }
 
          this.start_Z = true;
 
          try {
             if (this.init_bE != null) {
-               this.init_bE.read_Str = template.init_Str();
-               this.init_bE.init_Str = template.init_bJ_ConfigStore().name();
-               this.init_bE.load_Str = template.init_bJ_TaskQueue().name();
-               this.init_bE.sync = template.init_bJ_StreamUtil().name();
-               this.init_bE.init_List = new ArrayList<>(template.init_List());
+               this.init_bE.read_Str = template.channel();
+               this.init_bE.init_Str = template.direction().name();
+               this.init_bE.load_Str = template.phase().name();
+               this.init_bE.sync = template.encodingMode().name();
+               this.init_bE.init_List = new ArrayList<>(template.fields());
                this.init_bE.init_V();
                this.init_bE.init_Z_Str(this.init_bE.init_Str());
                this.init_ActionEditorOverla = null;
@@ -5460,11 +5460,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
             if (channelField != null) {
-               channelField.setValue(template.init_Str());
+               channelField.setValue(template.channel());
             }
 
             if (this.init_bE == null) {
-               this.load_V_List(template.init_List());
+               this.load_V_List(template.fields());
             } else {
                this.pop(true);
             }
@@ -5579,12 +5579,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             action.channel = "minecraft:brand";
          }
 
-         PayloadFieldCodec.Inner_DataUtil built = this.init_bE.init_bJ_JsonUtil().init_bJ_DataUtil();
-         if (!built.init_Z()) {
-            throw new IllegalArgumentException(String.join("; ", built.load()));
+         PayloadFieldCodec.Inner_DataUtil built = this.init_bE.init_bJ_JsonUtil().encode();
+         if (!built.isValid()) {
+            throw new IllegalArgumentException(String.join("; ", built.errors()));
          }
 
-         action.payloadData = AutismPayloadSupport.init_Str(built.init_BArr());
+         action.payloadData = AutismPayloadSupport.toHexString(built.bytes());
          return action;
       } else {
          PayloadAction action = new PayloadAction();
@@ -5604,27 +5604,27 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         action.payloadFields = PayloadFieldCodec.init(this.load_List());
+         action.payloadFields = PayloadFieldCodec.formatFields(this.load_List());
          if (action.payloadDirection == null || action.payloadDirection.isBlank()) {
             action.payloadDirection = "C2S";
          }
 
          action.payloadPhase = "PLAY";
          action.payloadEncodingMode = this.init_bJ_StreamUtil_Str(action.channel).name();
-         PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.init(action);
-         PayloadFieldCodec.Inner_DataUtil built = template.init_bJ_DataUtil();
-         if (!built.init_Z()) {
-            throw new IllegalArgumentException(String.join("; ", built.load()));
+         PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.fromAction(action);
+         PayloadFieldCodec.Inner_DataUtil built = template.encode();
+         if (!built.isValid()) {
+            throw new IllegalArgumentException(String.join("; ", built.errors()));
          }
 
-         action.channel = template.init_Str();
-         action.payloadDirection = template.init_bJ_ConfigStore().name();
+         action.channel = template.channel();
+         action.payloadDirection = template.direction().name();
          action.payloadPhase = "PLAY";
-         action.payloadEncodingMode = template.init_bJ_StreamUtil().name();
-         action.payloadFields = PayloadFieldCodec.init(template.init_List());
+         action.payloadEncodingMode = template.encodingMode().name();
+         action.payloadFields = PayloadFieldCodec.formatFields(template.fields());
          action.sourceDirection = action.payloadDirection;
          action.sourceProtocol = "";
-         action.payloadData = AutismPayloadSupport.init_Str(built.init_BArr());
+         action.payloadData = AutismPayloadSupport.toHexString(built.bytes());
          action.payloadJson = "";
          action.commandApiRecognized = false;
          action.commandApiOverride = false;
@@ -5743,9 +5743,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ThemedTextInputBox field = this.init_Map.get("payload_data");
             if (field != null) {
                try {
-                  field.setValue(AutismPayloadSupport.init_Str(AutismPayloadSupport.init_BArr(field.getValue())));
+                  field.setValue(AutismPayloadSupport.toHexString(AutismPayloadSupport.parseHexOrBase64(field.getValue())));
                } catch (Exception e) {
-                  AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.init(e));
+                  AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.describeError(e));
                }
             }
          });
@@ -5763,7 +5763,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      PayloadAction action = this.load_H();
                      action.execute(init_Minecraft);
                   } catch (Exception e) {
-                     AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.init(e));
+                     AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.describeError(e));
                   }
                }
             }
@@ -5830,7 +5830,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (action.payloadData == null || action.payloadData.isBlank()) {
             ThemedTextInputBox textField = this.init_Map.get("payload_text");
             if (textField != null && !textField.getValue().isBlank()) {
-               action.payloadData = AutismPayloadSupport.init_Str(textField.getValue().getBytes(StandardCharsets.UTF_8));
+               action.payloadData = AutismPayloadSupport.toHexString(textField.getValue().getBytes(StandardCharsets.UTF_8));
             }
          }
 
@@ -5852,15 +5852,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             try {
                jsonEncoded = PayloadJsonCodec.init_bG_DataUtil(action);
                action.channel = jsonEncoded.init_Str();
-               action.payloadData = AutismPayloadSupport.init_Str(jsonEncoded.init_BArr());
+               action.payloadData = AutismPayloadSupport.toHexString(jsonEncoded.init_BArr());
             } catch (Exception var11) {
             }
          }
 
          if (action.commandApiRecognized) {
             try {
-               byte[] bytes = AutismPayloadSupport.init_BArr(action.payloadData);
-               action.payloadData = AutismPayloadSupport.init_Str(AutismPayloadSupport.init_BArr(bytes, action.commandApiValue));
+               byte[] bytes = AutismPayloadSupport.parseHexOrBase64(action.payloadData);
+               action.payloadData = AutismPayloadSupport.toHexString(AutismPayloadSupport.withLeadingBigEndianInt(bytes, action.commandApiValue));
             } catch (Exception var10) {
             }
          }
@@ -5882,8 +5882,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
       if (rawField != null && commandField != null) {
          try {
-            byte[] bytes = AutismPayloadSupport.init_BArr(rawField.getValue());
-            Integer value = AutismPayloadSupport.init_Integer(null, channelField == null ? "" : channelField.getValue(), bytes);
+            byte[] bytes = AutismPayloadSupport.parseHexOrBase64(rawField.getValue());
+            Integer value = AutismPayloadSupport.detectCommandApiValue(null, channelField == null ? "" : channelField.getValue(), bytes);
             if (value == null) {
                AutismClientMessaging.sendPrefixed("§cCould not parse a CommandApi integer from the current payload bytes.");
                return;
@@ -5892,7 +5892,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.load_Map.put("payload_command_api", true);
             commandField.setValue(String.valueOf(value));
          } catch (Exception e) {
-            AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.init(e));
+            AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.describeError(e));
          }
       }
    }
@@ -5902,12 +5902,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
       if (rawField != null && commandField != null) {
          try {
-            byte[] bytes = AutismPayloadSupport.init_BArr(rawField.getValue());
+            byte[] bytes = AutismPayloadSupport.parseHexOrBase64(rawField.getValue());
             int value = Integer.parseInt(commandField.getValue().strip());
             this.load_Map.put("payload_command_api", true);
-            rawField.setValue(AutismPayloadSupport.init_Str(AutismPayloadSupport.init_BArr(bytes, value)));
+            rawField.setValue(AutismPayloadSupport.toHexString(AutismPayloadSupport.withLeadingBigEndianInt(bytes, value)));
          } catch (Exception e) {
-            AutismClientMessaging.sendPrefixed("§cFailed to sync CommandApi value: " + AutismPayloadSupport.init(e));
+            AutismClientMessaging.sendPrefixed("§cFailed to sync CommandApi value: " + AutismPayloadSupport.describeError(e));
          }
       }
    }
@@ -5917,8 +5917,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox textField = this.init_Map.get("payload_text");
       if (rawField != null && textField != null) {
          try {
-            byte[] bytes = AutismPayloadSupport.init_BArr(rawField.getValue());
-            String text = AutismPayloadSupport.write(bytes);
+            byte[] bytes = AutismPayloadSupport.parseHexOrBase64(rawField.getValue());
+            String text = AutismPayloadSupport.decodePrintableUtf8(bytes);
             if (text.isBlank()) {
                AutismClientMessaging.sendPrefixed("§cThe current payload bytes do not look like readable UTF-8 text.");
                return;
@@ -5926,7 +5926,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             textField.setValue(text);
          } catch (Exception e) {
-            AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.init(e));
+            AutismClientMessaging.sendPrefixed("§cInvalid payload data: " + AutismPayloadSupport.describeError(e));
          }
       }
    }
@@ -5935,7 +5935,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox rawField = this.init_Map.get("payload_data");
       ThemedTextInputBox textField = this.init_Map.get("payload_text");
       if (rawField != null && textField != null) {
-         rawField.setValue(AutismPayloadSupport.init_Str(textField.getValue().getBytes(StandardCharsets.UTF_8)));
+         rawField.setValue(AutismPayloadSupport.toHexString(textField.getValue().getBytes(StandardCharsets.UTF_8)));
       }
    }
 
@@ -6020,16 +6020,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Boolean toggleState,
       String animationKey
    ) {
-      OverlayActionButton button = OverlayActionButton.init(
+      OverlayActionButton button = OverlayActionButton.create(
          x, y, w, h, Component.literal(label), ignored -> action.run(), secondaryAction == null ? null : ignored -> secondaryAction.run()
       );
-      button.init_ByteReader_ByteReader_StreamU(variant);
+      button.setTone(variant);
       if (toggleState != null) {
-         button.init_ByteReader_Z(toggleState).init_ByteReader_Str(animationKey);
+         button.setToggleState(toggleState).setAnimationKey(animationKey);
       }
 
-      button.init_Z = active;
-      OverlayActionButton.init(ctx, this.init_Font, button, mx, my);
+      button.active = active;
+      OverlayActionButton.render(ctx, this.init_Font, button, mx, my);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(button, action));
       return button;
    }
@@ -7161,12 +7161,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          String cacheKey = "__vars_" + key;
          autismclient.gui.ui.widgets.DropdownWidget dropdown = this.run_Map
             .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, width, 13, this.flush_List, 0, index -> {}));
-         dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(this.flush_List).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
+         dropdown.setBounds(x, y, width, 13).setOptions(this.flush_List).setLabelOverride("{}").setOnSelect(index -> {
             if (index >= 0 && index < this.flush_List.size()) {
                textField.insertText(this.flush_List.get(index));
             }
 
-            dropdown.init_V();
+            dropdown.close();
          });
          this.sync_List.add(dropdown);
       }
@@ -7414,10 +7414,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                .computeIfAbsent(
                   key, k -> new autismclient.gui.ui.widgets.DropdownWidget(ctrlX, y + 2, ddW, ddH, displayOpts, idx, newIdx -> this.init_V_FieldDef_I(field, newIdx))
                );
-            dd.init_SyncManager_I(ctrlX, y + 2, ddW, ddH)
-               .init_SyncManager_List(displayOpts)
-               .init_SyncManager_I(idx)
-               .init_SyncManager_IntConsumer(newIdx -> this.init_V_FieldDef_I(field, newIdx));
+            dd.setBounds(ctrlX, y + 2, ddW, ddH)
+               .setOptions(displayOpts)
+               .setSelectedIndex(idx)
+               .setOnSelect(newIdx -> this.init_V_FieldDef_I(field, newIdx));
             this.sync_List.add(dd);
             if (variableW > 0 && bindingField != null) {
                this.load(field, bindingField, ctrlX + ddW + 2, y + 2, variableW);
@@ -7433,14 +7433,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String cacheKey = "__enum_vars_" + field.key();
       autismclient.gui.ui.widgets.DropdownWidget dropdown = this.run_Map
          .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, width, 13, options, 0, index -> {}));
-      dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(options).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
+      dropdown.setBounds(x, y, width, 13).setOptions(options).setLabelOverride("{}").setOnSelect(index -> {
          if (index <= 0) {
             bindingField.setValue("");
          } else if (index < options.size()) {
             bindingField.setValue(options.get(index));
          }
 
-         dropdown.init_V();
+         dropdown.close();
       });
       this.sync_List.add(dropdown);
    }
@@ -7753,10 +7753,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                            this.sync_V(fDestIndex, destValues[newIdx]);
                         }
                      }));
-                  dd.init_SyncManager_I(ddX, ddY, destW, 13)
-                     .init_SyncManager_List(destOptions)
-                     .init_SyncManager_I(selectedDestIndex)
-                     .init_SyncManager_IntConsumer(newIdx -> {
+                  dd.setBounds(ddX, ddY, destW, 13)
+                     .setOptions(destOptions)
+                     .setSelectedIndex(selectedDestIndex)
+                     .setOnSelect(newIdx -> {
                         if (newIdx >= 0 && newIdx < destValues.length) {
                            this.sync_V(fDestIndex, destValues[newIdx]);
                         }
@@ -9089,12 +9089,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int imx = (int)mx;
       int imy = (int)my;
       if (!this.sync_List.isEmpty()) {
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, mx, my, button)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.sync_List, mx, my, button)) {
             OverlayManager.getInstance().bringToFront(this);
             return true;
          }
 
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             return true;
          }
       }
@@ -9271,7 +9271,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          consumed = true;
       }
 
-      if (autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List)) {
          return true;
       }
 
@@ -9301,7 +9301,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, mx, my, button)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.sync_List, mx, my, button)) {
          return true;
       }
 
@@ -9376,8 +9376,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (this.write_Z && this.init_Z_D_D(mx, my)) {
          if (!this.sync_List.isEmpty()
-            && (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, mx, my))
-            && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, mx, my, amount)) {
+            && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, mx, my))
+            && autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.sync_List, mx, my, amount)) {
             return true;
          }
 
@@ -9439,7 +9439,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return this.init_RaceStepSelectorOv.init_Z_I(keyCode, scanCode, modifiers);
       }
 
-      if (!autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+      if (!autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
          if (keyCode == 256) {
             if (this.poll_Z_2()) {
                return true;
@@ -9469,7 +9469,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       } else {
          if (keyCode == 256 || keyCode == 257) {
-            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
+            autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.sync_List);
          }
 
          return true;
@@ -16291,7 +16291,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       private Inner_StreamUtil(OverlayActionButton button, Runnable action) {
-         this(button.init_I(), button.load(), button.read(), button.write(), (mx, my, mouseButton) -> OverlayActionButton.init(button, mx, my, mouseButton));
+         this(button.getX(), button.getY(), button.getWidth(), button.getHeight(), (mx, my, mouseButton) -> OverlayActionButton.handleClick(button, mx, my, mouseButton));
       }
 
       private Inner_StreamUtil(int x, int y, int w, int h, ActionEditorOverlay.Inner_CachePool action) {

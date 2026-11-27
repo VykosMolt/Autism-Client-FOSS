@@ -85,8 +85,8 @@ public final class PayloadNotificationTracker {
    }
 
    private static String init(String channel, PayloadChannelFilterManager.Inner_StreamUtil match) {
-      if (match != null && match.read() != null && !match.read().isBlank()) {
-         String pattern = match.read().trim().toLowerCase(Locale.ROOT);
+      if (match != null && match.pattern() != null && !match.pattern().isBlank()) {
+         String pattern = match.pattern().trim().toLowerCase(Locale.ROOT);
          return pattern.contains("*") ? pattern : channel;
       } else {
          return channel;

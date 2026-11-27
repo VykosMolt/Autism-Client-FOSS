@@ -6,109 +6,109 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 public class CollapsibleWindowNode extends LayoutContainer {
-   private final ColumnLayout init_PacketUtil = new ColumnLayout();
-   private String init_Str;
-   private Identifier init_Identifier;
-   private boolean write_Z = true;
-   private boolean update_Z = true;
-   private boolean sync_Z = false;
-   private boolean flush_Z = true;
-   private boolean close_Z = false;
-   private boolean open = false;
-   private l init_l = l.init;
-   private int init_I = 6;
-   private int load_I = 6;
-   private final autismclient.gui.ui.EaseOutAnimator init_RingBuffer = new autismclient.gui.ui.EaseOutAnimator(1.0F, 180);
-   private float sync_F;
-   private int read_I;
-   private int write_I;
-   private boolean poll;
-   private float flush_F;
-   private float close_F;
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil;
-   private boolean push;
+   private final ColumnLayout body = new ColumnLayout();
+   private String title;
+   private Identifier titleIcon;
+   private boolean expanded = true;
+   private boolean active = true;
+   private boolean headerHovered = false;
+   private boolean centerTitle = true;
+   private boolean showCollapseButton = false;
+   private boolean showCloseButton = false;
+   private l titleTone = l.init;
+   private int titleLeftInset = 6;
+   private int titleRightInset = 6;
+   private final autismclient.gui.ui.EaseOutAnimator revealAnimator = new autismclient.gui.ui.EaseOutAnimator(1.0F, 180);
+   private float bodyViewportHeight;
+   private int lastHeaderHeight;
+   private int lastDrawnHeight;
+   private boolean scrollable;
+   private float scrollOffset;
+   private float bodyContentHeight;
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics;
+   private boolean scrollbarDragging;
 
    public CollapsibleWindowNode(String title) {
-      this.init_Str = title == null ? "" : title;
-      this.init_PacketUtil.init(2).init(EdgeInsets.init(4));
-      this.init_TableIndex_TableIndex(this.init_PacketUtil);
+      this.title = title == null ? "" : title;
+      this.body.init(2).init(EdgeInsets.uniform(4));
+      this.addChild(this.body);
    }
 
-   public ColumnLayout init_PacketUtil() {
-      return this.init_PacketUtil;
+   public ColumnLayout body() {
+      return this.body;
    }
 
-   public CollapsibleWindowNode init_CharEncoder(boolean scrollable) {
-      if (this.poll != scrollable) {
-         this.poll = scrollable;
-         this.flush_F = 0.0F;
-         this.load_V();
+   public CollapsibleWindowNode setScrollable(boolean scrollable) {
+      if (this.scrollable != scrollable) {
+         this.scrollable = scrollable;
+         this.scrollOffset = 0.0F;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public float init_F_2() {
-      return this.poll ? Math.max(0.0F, this.close_F - this.sync_F) : 0.0F;
+   public float maxScroll() {
+      return this.scrollable ? Math.max(0.0F, this.bodyContentHeight - this.bodyViewportHeight) : 0.0F;
    }
 
-   public float sync_F() {
-      return this.flush_F;
+   public float scrollOffset() {
+      return this.scrollOffset;
    }
 
-   public void init(float scroll) {
-      float next = Math.max(0.0F, Math.min(scroll, this.init_F_2()));
-      if (next != this.flush_F) {
-         this.flush_F = next;
-         this.load_V();
+   public void setScrollOffset(float scroll) {
+      float next = Math.max(0.0F, Math.min(scroll, this.maxScroll()));
+      if (next != this.scrollOffset) {
+         this.scrollOffset = next;
+         this.markLayoutDirty();
       }
    }
 
-   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil() {
-      return this.init_PoolEntry_DataUtil;
+   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
+      return this.scrollbarMetrics;
    }
 
-   public CollapsibleWindowNode init(String title) {
+   public CollapsibleWindowNode setTitle(String title) {
       String next = title == null ? "" : title;
-      if (!this.init_Str.equals(next)) {
-         this.init_Str = next;
-         this.load_V();
+      if (!this.title.equals(next)) {
+         this.title = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleWindowNode init(Identifier titleIcon) {
-      this.init_Identifier = titleIcon;
+   public CollapsibleWindowNode setTitleIcon(Identifier titleIcon) {
+      this.titleIcon = titleIcon;
       return this;
    }
 
-   public CollapsibleWindowNode load_CharEncoder(boolean showBody) {
-      if (this.write_Z != showBody) {
-         this.init_RingBuffer.init_F_F(showBody ? 1.0F : 0.0F);
-         this.write_Z = showBody;
-         this.load_V();
+   public CollapsibleWindowNode setExpanded(boolean showBody) {
+      if (this.expanded != showBody) {
+         this.revealAnimator.init_F_F(showBody ? 1.0F : 0.0F);
+         this.expanded = showBody;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleWindowNode read_CharEncoder(boolean showBody) {
-      this.init_RingBuffer.init_V_F(showBody ? 1.0F : 0.0F);
-      if (this.write_Z != showBody) {
-         this.write_Z = showBody;
-         this.load_V();
+   public CollapsibleWindowNode setExpandedImmediate(boolean showBody) {
+      this.revealAnimator.init_V_F(showBody ? 1.0F : 0.0F);
+      if (this.expanded != showBody) {
+         this.expanded = showBody;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleWindowNode write(boolean showBody) {
-      return this.load_CharEncoder(showBody);
+   public CollapsibleWindowNode setShowBody(boolean showBody) {
+      return this.setExpanded(showBody);
    }
 
-   public boolean init(GuiGraphicsExtractor graphics) {
-      if (this.write_I <= this.read_I) {
+   public boolean pushBodyClip(GuiGraphicsExtractor graphics) {
+      if (this.lastDrawnHeight <= this.lastHeaderHeight) {
          return false;
       }
 
@@ -116,175 +116,175 @@ public class CollapsibleWindowNode extends LayoutContainer {
          .push(
             graphics,
             autismclient.gui.f.NetHelper.init(
-               Math.round(this.init_F), Math.round(this.load_F) + this.read_I, Math.round(this.read_F), this.write_I - this.read_I
+               Math.round(this.nodeX), Math.round(this.nodeY) + this.lastHeaderHeight, Math.round(this.nodeWidth), this.lastDrawnHeight - this.lastHeaderHeight
             )
          );
       return true;
    }
 
-   public int init_I_2() {
-      return Math.round(this.load_F) + this.write_I;
+   public int drawnBottomY() {
+      return Math.round(this.nodeY) + this.lastDrawnHeight;
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, float mouseX, float mouseY, int button) {
-      return this.poll && mouseY < this.load_F + this.read_I
+   public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
+      return this.scrollable && mouseY < this.nodeY + this.lastHeaderHeight
          ? false
-         : this.write_Z && mouseY < this.init_I_2() && super.init_Z_SyncManager_2(context, mouseX, mouseY, button);
+         : this.expanded && mouseY < this.drawnBottomY() && super.mouseClicked(context, mouseX, mouseY, button);
    }
 
    @Override
-   public boolean init_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, float amount) {
-      return this.write_Z && mouseY < this.init_I_2() && super.init_Z_SyncManager(context, mouseX, mouseY, amount);
+   public boolean mouseScrolled(LayoutContext context, float mouseX, float mouseY, float amount) {
+      return this.expanded && mouseY < this.drawnBottomY() && super.mouseScrolled(context, mouseX, mouseY, amount);
    }
 
    @Override
-   public boolean init_Z_SyncManager_3(LayoutContext context, int keyCode, int scanCode, int modifiers) {
-      return this.write_Z && super.init_Z_SyncManager_3(context, keyCode, scanCode, modifiers);
+   public boolean keyPressed(LayoutContext context, int keyCode, int scanCode, int modifiers) {
+      return this.expanded && super.keyPressed(context, keyCode, scanCode, modifiers);
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, char chr, int modifiers) {
-      return this.write_Z && super.init_Z_SyncManager_2(context, chr, modifiers);
+   public boolean charTyped(LayoutContext context, char chr, int modifiers) {
+      return this.expanded && super.charTyped(context, chr, modifiers);
    }
 
-   public CollapsibleWindowNode update(boolean active) {
-      this.update_Z = active;
+   public CollapsibleWindowNode setActive(boolean active) {
+      this.active = active;
       return this;
    }
 
-   public CollapsibleWindowNode sync(boolean headerHovered) {
-      this.sync_Z = headerHovered;
+   public CollapsibleWindowNode setHeaderHovered(boolean headerHovered) {
+      this.headerHovered = headerHovered;
       return this;
    }
 
-   public CollapsibleWindowNode flush(boolean centerTitle) {
-      this.flush_Z = centerTitle;
+   public CollapsibleWindowNode setCenterTitle(boolean centerTitle) {
+      this.centerTitle = centerTitle;
       return this;
    }
 
-   public CollapsibleWindowNode init_CharEncoder_Z_Z(boolean collapse, boolean close) {
-      if (this.close_Z != collapse || this.open != close) {
-         this.close_Z = collapse;
-         this.open = close;
-         this.load_V();
+   public CollapsibleWindowNode setHeaderButtons(boolean collapse, boolean close) {
+      if (this.showCollapseButton != collapse || this.showCloseButton != close) {
+         this.showCollapseButton = collapse;
+         this.showCloseButton = close;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleWindowNode init(l titleTone) {
+   public CollapsibleWindowNode setTitleTone(l titleTone) {
       l next = titleTone == null ? l.init : titleTone;
-      if (this.init_l != next) {
-         this.init_l = next;
-         this.load_V();
+      if (this.titleTone != next) {
+         this.titleTone = next;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleWindowNode init_CharEncoder_I_I(int titleLeftInset, int titleRightInset) {
+   public CollapsibleWindowNode setTitleInsets(int titleLeftInset, int titleRightInset) {
       int nextLeft = Math.max(0, titleLeftInset);
       int nextRight = Math.max(0, titleRightInset);
-      if (this.init_I != nextLeft || this.load_I != nextRight) {
-         this.init_I = nextLeft;
-         this.load_I = nextRight;
-         this.load_V();
+      if (this.titleLeftInset != nextLeft || this.titleRightInset != nextRight) {
+         this.titleLeftInset = nextLeft;
+         this.titleRightInset = nextRight;
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
-   private void init(LayoutContext context, int bodyX, int bodyY, int bodyW, int bodyH) {
-      if (this.poll && !(this.init_F_2() <= 0.0F) && bodyH > 0) {
+   private void renderScrollbar(LayoutContext context, int bodyX, int bodyY, int bodyW, int bodyH) {
+      if (this.scrollable && !(this.maxScroll() <= 0.0F) && bodyH > 0) {
          int inset = 2;
-         this.init_PoolEntry_DataUtil = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.computeFloat(
-            Math.round(this.close_F), Math.round(this.sync_F), bodyX + bodyW - 6 - inset, bodyY + inset, 6, Math.max(1, bodyH - inset * 2), this.flush_F
+         this.scrollbarMetrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.computeFloat(
+            Math.round(this.bodyContentHeight), Math.round(this.bodyViewportHeight), bodyX + bodyW - 6 - inset, bodyY + inset, 6, Math.max(1, bodyH - inset * 2), this.scrollOffset
          );
-         boolean hovered = this.init_PoolEntry_DataUtil.containsTrack(context.mouseX(), context.mouseY());
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context.graphics(), this.init_PoolEntry_DataUtil, hovered, this.push);
+         boolean hovered = this.scrollbarMetrics.containsTrack(context.mouseX(), context.mouseY());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context.graphics(), this.scrollbarMetrics, hovered, this.scrollbarDragging);
       } else {
-         this.init_PoolEntry_DataUtil = null;
+         this.scrollbarMetrics = null;
       }
    }
 
-   public void init_V(boolean dragging) {
-      this.push = dragging;
+   public void setScrollbarDragging(boolean dragging) {
+      this.scrollbarDragging = dragging;
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
-      float bodyHeight = this.write_Z ? this.init_PacketUtil.init_F_SyncManager_F(context, availableWidth) : 0.0F;
+   public float measureHeight(LayoutContext context, float availableWidth) {
+      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.titleTone, 4));
+      float bodyHeight = this.expanded ? this.body.measureHeight(context, availableWidth) : 0.0F;
       return headerH + bodyHeight;
    }
 
    @Override
-   protected void load_V(LayoutContext context) {
-      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
-      if (this.write_Z) {
-         this.sync_F = Math.max(0.0F, this.write - headerH);
+   protected void layoutChildren(LayoutContext context) {
+      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.titleTone, 4));
+      if (this.expanded) {
+         this.bodyViewportHeight = Math.max(0.0F, this.nodeHeight - headerH);
       }
 
-      this.init_PacketUtil.load_TableIndex_Z(this.write_Z || this.init_RingBuffer.init_F() > 0.0F);
-      if (this.poll) {
-         float contentH = this.init_PacketUtil.init_F_SyncManager_F(context, this.read_F);
-         float contentW = this.read_F;
-         if (contentH > this.sync_F + 0.5F) {
-            contentW = Math.max(1.0F, this.read_F - 6.0F);
-            contentH = this.init_PacketUtil.init_F_SyncManager_F(context, contentW);
+      this.body.setVisible(this.expanded || this.revealAnimator.init_F() > 0.0F);
+      if (this.scrollable) {
+         float contentH = this.body.measureHeight(context, this.nodeWidth);
+         float contentW = this.nodeWidth;
+         if (contentH > this.bodyViewportHeight + 0.5F) {
+            contentW = Math.max(1.0F, this.nodeWidth - 6.0F);
+            contentH = this.body.measureHeight(context, contentW);
          }
 
-         this.close_F = contentH;
-         this.flush_F = Math.max(0.0F, Math.min(this.flush_F, this.init_F_2()));
-         this.init_PacketUtil.init_TableIndex_F(this.init_F, this.load_F + headerH - this.flush_F, contentW, Math.max(this.sync_F, contentH));
+         this.bodyContentHeight = contentH;
+         this.scrollOffset = Math.max(0.0F, Math.min(this.scrollOffset, this.maxScroll()));
+         this.body.setBounds(this.nodeX, this.nodeY + headerH - this.scrollOffset, contentW, Math.max(this.bodyViewportHeight, contentH));
       } else {
-         this.init_PacketUtil.init_TableIndex_F(this.init_F, this.load_F + headerH, this.read_F, this.sync_F);
+         this.body.setBounds(this.nodeX, this.nodeY + headerH, this.nodeWidth, this.bodyViewportHeight);
       }
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
          LayoutContext drawContext = context;
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawW = Math.round(this.read_F);
-         int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
-         if (this.write_Z) {
-            this.sync_F = Math.max(0.0F, this.write - headerH);
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawW = Math.round(this.nodeWidth);
+         int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.titleTone, 4));
+         if (this.expanded) {
+            this.bodyViewportHeight = Math.max(0.0F, this.nodeHeight - headerH);
          }
 
-         float reveal = this.init_RingBuffer.init_F_F(this.write_Z ? 1.0F : 0.0F);
-         int drawH = headerH + Math.round(this.sync_F * reveal);
-         this.read_I = headerH;
-         this.write_I = drawH;
-         this.init_PacketUtil.load_TableIndex_Z(this.write_Z || reveal > 0.0F);
+         float reveal = this.revealAnimator.init_F_F(this.expanded ? 1.0F : 0.0F);
+         int drawH = headerH + Math.round(this.bodyViewportHeight * reveal);
+         this.lastHeaderHeight = headerH;
+         this.lastDrawnHeight = drawH;
+         this.body.setVisible(this.expanded || reveal > 0.0F);
          WindowFrameRenderer.init(
             autismclient.gui.f.UiHelper.init(
                drawContext.graphics(), drawContext.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             ),
             autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH),
-            this.init_Str,
-            !this.write_Z,
-            this.close_Z,
-            this.open,
-            this.sync_Z,
-            this.update_Z,
-            Math.max(4, context.theme().load(this.init_I)),
-            Math.max(34, context.theme().load(this.load_I)),
+            this.title,
+            !this.expanded,
+            this.showCollapseButton,
+            this.showCloseButton,
+            this.headerHovered,
+            this.active,
+            Math.max(4, context.theme().load(this.titleLeftInset)),
+            Math.max(34, context.theme().load(this.titleRightInset)),
             headerH
          );
          if (reveal > 0.0F) {
-            int clipTop = Math.round(this.load_F + headerH);
+            int clipTop = Math.round(this.nodeY + headerH);
             int clipBottom = drawY + drawH;
             if (clipBottom > clipTop) {
                drawContext.viewport()
-                  .pushClip(drawContext.graphics(), this.init_F, this.load_F + headerH, this.init_F + this.read_F, clipBottom);
+                  .pushClip(drawContext.graphics(), this.nodeX, this.nodeY + headerH, this.nodeX + this.nodeWidth, clipBottom);
 
                try {
-                  super.init_V_SyncManager(drawContext);
-                  this.init(drawContext, drawX, drawY + headerH, drawW, clipBottom - (drawY + headerH));
+                  super.render(drawContext);
+                  this.renderScrollbar(drawContext, drawX, drawY + headerH, drawW, clipBottom - (drawY + headerH));
                } finally {
                   drawContext.viewport().popClip(drawContext.graphics());
                }
@@ -292,10 +292,10 @@ public class CollapsibleWindowNode extends LayoutContainer {
          }
 
          if (reveal <= 0.0F) {
-            this.init_PoolEntry_DataUtil = null;
+            this.scrollbarMetrics = null;
          }
 
-         if (!this.update_Z) {
+         if (!this.active) {
             autismclient.gui.f.PacketUtil.load(
                drawContext.graphics(),
                autismclient.gui.f.NetHelper.init(drawX + 1, drawY + 1, Math.max(0, drawW - 2), Math.max(0, drawH - 2)),

@@ -3,12 +3,12 @@ package autismclient.gui.ui.layout;
 public class SurfaceBox extends LayoutContainer {
    private final ColumnLayout init_PacketUtil = new ColumnLayout();
    private boolean write_Z = true;
-   private EdgeInsets init_IoWorker = EdgeInsets.init(4);
+   private EdgeInsets init_IoWorker = EdgeInsets.uniform(4);
    private boolean update_Z = true;
    private boolean sync = true;
 
    public SurfaceBox() {
-      this.init_TableIndex_TableIndex(this.init_PacketUtil);
+      this.addChild(this.init_PacketUtil);
    }
 
    public ColumnLayout init_PacketUtil_3() {
@@ -21,10 +21,10 @@ public class SurfaceBox extends LayoutContainer {
    }
 
    public SurfaceBox init(EdgeInsets padding) {
-      EdgeInsets next = padding == null ? EdgeInsets.init_IoWorker : padding;
+      EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.init_IoWorker.equals(next)) {
          this.init_IoWorker = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -41,37 +41,37 @@ public class SurfaceBox extends LayoutContainer {
    }
 
    @Override
-   public float init_F_SyncManager(LayoutContext context) {
+   public float measurePreferredWidth(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      return scaledPadding.init_I() + this.init_PacketUtil.init_F_SyncManager(context);
+      return scaledPadding.init_I() + this.init_PacketUtil.measurePreferredWidth(context);
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      return scaledPadding.load() + this.init_PacketUtil.init_F_SyncManager_F(context, Math.max(0.0F, availableWidth - scaledPadding.init_I()));
+      return scaledPadding.load() + this.init_PacketUtil.measureHeight(context, Math.max(0.0F, availableWidth - scaledPadding.init_I()));
    }
 
    @Override
-   protected void load_V(LayoutContext context) {
+   protected void layoutChildren(LayoutContext context) {
       EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       this.init_PacketUtil
-         .init_TableIndex_F(
-            this.init_F + scaledPadding.read(),
-            this.load_F + scaledPadding.write(),
-            Math.max(0.0F, this.read_F - scaledPadding.init_I()),
-            Math.max(0.0F, this.write - scaledPadding.load())
+         .setBounds(
+            this.nodeX + scaledPadding.read(),
+            this.nodeY + scaledPadding.write(),
+            Math.max(0.0F, this.nodeWidth - scaledPadding.init_I()),
+            Math.max(0.0F, this.nodeHeight - scaledPadding.load())
          );
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
          LayoutContext drawContext = context;
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawW = Math.round(this.read_F);
-         int drawH = Math.round(this.write);
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawW = Math.round(this.nodeWidth);
+         int drawH = Math.round(this.nodeHeight);
          int fill = this.write_Z ? drawContext.theme().poll() : drawContext.theme().push();
          int border = this.write_Z ? drawContext.theme().get() : drawContext.theme().set();
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
@@ -83,7 +83,7 @@ public class SurfaceBox extends LayoutContainer {
             autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, 0, drawContext.applyAlpha(border));
          }
 
-         super.init_V_SyncManager(drawContext);
+         super.render(drawContext);
          if (!this.write_Z) {
             autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(603979776));
          }

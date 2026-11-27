@@ -190,7 +190,7 @@ public final class PacketStreamCodecDecoder {
          }
 
          AutismPayloadSupport.RawCustomPacketPayload rawPayload = new AutismPayloadSupport.RawCustomPacketPayload(channel, payload);
-         AutismPayloadSupport.init(rawPayload, payload);
+         AutismPayloadSupport.rememberRawBytes(rawPayload, payload);
          if (packetClass == ServerboundCustomPayloadPacket.class) {
             PayloadSubscriptionManager.init_V(channel.toString());
             return new ServerboundCustomPayloadPacket(rawPayload);

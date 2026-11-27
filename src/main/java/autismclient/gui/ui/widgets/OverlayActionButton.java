@@ -12,29 +12,29 @@ import autismclient.gui.f.b.CharEncoder;
 import autismclient.gui.f.b.l;
 
 public final class OverlayActionButton {
-   private static final CharEncoder init_CharEncoder = new CharEncoder();
-   private static final int init_I = 4;
-   public boolean init_Z = true;
-   public boolean load_Z = true;
-   private int load_I;
-   private int read;
-   private int write;
-   private int update;
-   private Component init_Component;
-   private OverlayActionButton.ButtonTone init_ByteReader_StreamU = OverlayActionButton.ButtonTone.SECONDARY;
-   private l init_l = l.read;
-   private Boolean init_Boolean;
-   private String init_Str;
-   private Identifier init_Identifier;
-   private Boolean load_Boolean;
-   private final OverlayActionButton.PressHandler init_ByteReader_DataUti;
-   private final OverlayActionButton.PressHandler load_ByteReader_DataUti;
+   private static final CharEncoder THEME = new CharEncoder();
+   private static final int HORIZONTAL_PADDING = 4;
+   public boolean active = true;
+   public boolean visible = true;
+   private int x;
+   private int y;
+   private int width;
+   private int height;
+   private Component message;
+   private OverlayActionButton.ButtonTone tone = OverlayActionButton.ButtonTone.SECONDARY;
+   private l textTone = l.read;
+   private Boolean toggleState;
+   private String animationKey;
+   private Identifier icon;
+   private Boolean selected;
+   private final OverlayActionButton.PressHandler primaryAction;
+   private final OverlayActionButton.PressHandler secondaryAction;
 
-   private static Identifier init_Identifier_I(int height) {
-      return init_CharEncoder.init_Identifier_l(l.read);
+   private static Identifier fontForHeight(int height) {
+      return THEME.init_Identifier_l(l.read);
    }
 
-   private static int init(int requestedWidth, int height, Component message) {
+   private static int resolveWidth(int requestedWidth, int height, Component message) {
       if (requestedWidth > 0) {
          return requestedWidth;
       }
@@ -46,62 +46,62 @@ public final class OverlayActionButton {
       }
 
       String label = ThemedTextHelper.init(message == null ? "" : message.getString());
-      Identifier font = init_Identifier_I(height);
-      int measured = UiLayoutMath.measurePaddedWidth(renderer, label, font, init_CharEncoder.load(l.read), 4, requestedWidth, 2147483647);
+      Identifier font = fontForHeight(height);
+      int measured = UiLayoutMath.measurePaddedWidth(renderer, label, font, THEME.load(l.read), 4, requestedWidth, 2147483647);
       return Math.max(requestedWidth, measured);
    }
 
    private OverlayActionButton(
       int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler primaryAction, OverlayActionButton.PressHandler secondaryAction
    ) {
-      this.load_I = x;
-      this.read = y;
-      this.write = width;
-      this.update = height;
-      this.init_Component = message == null ? Component.empty() : message;
-      this.init_ByteReader_DataUti = primaryAction;
-      this.load_ByteReader_DataUti = secondaryAction;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+      this.message = message == null ? Component.empty() : message;
+      this.primaryAction = primaryAction;
+      this.secondaryAction = secondaryAction;
    }
 
-   public static OverlayActionButton init(int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler pressAction) {
-      return new OverlayActionButton(x, y, init(width, height, message), height, message, pressAction, null);
+   public static OverlayActionButton create(int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler pressAction) {
+      return new OverlayActionButton(x, y, resolveWidth(width, height, message), height, message, pressAction, null);
    }
 
-   public static OverlayActionButton init(
+   public static OverlayActionButton create(
       int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler pressAction, OverlayActionButton.PressHandler secondaryPressAction
    ) {
-      return new OverlayActionButton(x, y, init(width, height, message), height, message, pressAction, secondaryPressAction);
+      return new OverlayActionButton(x, y, resolveWidth(width, height, message), height, message, pressAction, secondaryPressAction);
    }
 
-   public OverlayActionButton init_ByteReader_l(l tone) {
-      this.init_l = tone == null ? l.read : tone;
+   public OverlayActionButton setTextTone(l tone) {
+      this.textTone = tone == null ? l.read : tone;
       return this;
    }
 
-   public OverlayActionButton init_ByteReader_Z(boolean toggleState) {
-      this.init_Boolean = toggleState;
+   public OverlayActionButton setToggleState(boolean toggleState) {
+      this.toggleState = toggleState;
       return this;
    }
 
-   public OverlayActionButton init_ByteReader_Str(String animationKey) {
-      this.init_Str = animationKey;
+   public OverlayActionButton setAnimationKey(String animationKey) {
+      this.animationKey = animationKey;
       return this;
    }
 
-   public OverlayActionButton init_ByteReader_Identifier(Identifier icon) {
-      this.init_Identifier = icon;
+   public OverlayActionButton setIcon(Identifier icon) {
+      this.icon = icon;
       return this;
    }
 
-   public OverlayActionButton load(boolean selected) {
-      this.load_Boolean = selected;
+   public OverlayActionButton setSelected(boolean selected) {
+      this.selected = selected;
       return this;
    }
 
-   public static boolean init(OverlayActionButton button, double mouseX, double mouseY, int mouseButton) {
-      if (button != null && button.load_Z && button.init_Z) {
-         if ((mouseButton == 0 || mouseButton == 1) && button.init(mouseX, mouseY)) {
-            OverlayActionButton.PressHandler action = mouseButton == 1 ? button.load_ByteReader_DataUti : button.init_ByteReader_DataUti;
+   public static boolean handleClick(OverlayActionButton button, double mouseX, double mouseY, int mouseButton) {
+      if (button != null && button.visible && button.active) {
+         if ((mouseButton == 0 || mouseButton == 1) && button.containsPoint(mouseX, mouseY)) {
+            OverlayActionButton.PressHandler action = mouseButton == 1 ? button.secondaryAction : button.primaryAction;
             if (action == null) {
                return false;
             }
@@ -116,21 +116,21 @@ public final class OverlayActionButton {
       }
    }
 
-   public static void init(GuiGraphicsExtractor context, Font textRenderer, OverlayActionButton button, int mouseX, int mouseY) {
-      if (button != null && button.load_Z) {
-         if (button.init_Identifier != null) {
-            boolean iconHovered = button.init(mouseX, mouseY);
+   public static void render(GuiGraphicsExtractor context, Font textRenderer, OverlayActionButton button, int mouseX, int mouseY) {
+      if (button != null && button.visible) {
+         if (button.icon != null) {
+            boolean iconHovered = button.containsPoint(mouseX, mouseY);
             IconButtonRenderer.init(
                context,
                textRenderer,
-               autismclient.gui.f.NetHelper.init(button.load_I, button.read, button.write, button.update),
-               button.init_Identifier,
+               autismclient.gui.f.NetHelper.init(button.x, button.y, button.width, button.height),
+               button.icon,
                iconHovered,
-               button.init_Z,
-               button.init_ByteReader_StreamU == OverlayActionButton.ButtonTone.DANGER
+               button.active,
+               button.tone == OverlayActionButton.ButtonTone.DANGER
             );
          } else {
-            String label = ThemedTextHelper.init(button.init_Component.getString());
+            String label = ThemedTextHelper.init(button.message.getString());
             String upperLabel = label.toUpperCase();
             boolean inferredDanger = "x".equalsIgnoreCase(label) || label.toLowerCase().contains("delete") || label.toLowerCase().contains("clear");
             boolean toggleOn = label.startsWith("[x]")
@@ -149,7 +149,7 @@ public final class OverlayActionButton {
                || upperLabel.equals("DISABLE")
                || upperLabel.equals("DISABLED")
                || upperLabel.endsWith(": DISABLED");
-            OverlayActionButton.ButtonTone variant = button.init_ByteReader_StreamU;
+            OverlayActionButton.ButtonTone variant = button.tone;
             if (variant == OverlayActionButton.ButtonTone.SECONDARY && inferredDanger) {
                variant = OverlayActionButton.ButtonTone.DANGER;
             }
@@ -162,22 +162,22 @@ public final class OverlayActionButton {
                variant = OverlayActionButton.ButtonTone.DANGER;
             }
 
-            boolean hovered = button.init(mouseX, mouseY);
+            boolean hovered = button.containsPoint(mouseX, mouseY);
             autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, textRenderer, mouseX, mouseY);
-            autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(button.load_I, button.read, button.write, button.update);
-            boolean allowInferredToggle = button.init_ByteReader_StreamU != OverlayActionButton.ButtonTone.FILTER_ON
-               && button.init_ByteReader_StreamU != OverlayActionButton.ButtonTone.FILTER_OFF;
-            Boolean resolvedToggleState = button.init_Boolean != null
-               ? button.init_Boolean
+            autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(button.x, button.y, button.width, button.height);
+            boolean allowInferredToggle = button.tone != OverlayActionButton.ButtonTone.FILTER_ON
+               && button.tone != OverlayActionButton.ButtonTone.FILTER_OFF;
+            Boolean resolvedToggleState = button.toggleState != null
+               ? button.toggleState
                : (allowInferredToggle ? (toggleOn ? Boolean.TRUE : (toggleOff ? Boolean.FALSE : null)) : null);
             if (resolvedToggleState != null) {
                AnimatedToggleButtonRenderer.init(
-                  ui, bounds, label, resolvedToggleState, hovered && button.init_Z, button.init_Str == null ? init_Str_ByteReader(button) : button.init_Str
+                  ui, bounds, label, resolvedToggleState, hovered && button.active, button.animationKey == null ? defaultAnimationKey(button) : button.animationKey
                );
             } else {
                boolean var10000;
-               if (button.load_Boolean != null) {
-                  var10000 = button.load_Boolean;
+               if (button.selected != null) {
+                  var10000 = button.selected;
                } else {
                   switch (variant) {
                      case DANGER:
@@ -193,10 +193,10 @@ public final class OverlayActionButton {
                }
 
                boolean on = var10000;
-               CachePool.init(ui, bounds, label, init_CachePool_DataUtil_ByteReader_StreamU(variant), hovered && button.init_Z, on);
+               CachePool.init(ui, bounds, label, toButtonStyle(variant), hovered && button.active, on);
             }
 
-            if (!button.init_Z && !Boolean.TRUE.equals(button.load_Boolean)) {
+            if (!button.active && !Boolean.TRUE.equals(button.selected)) {
                int radius = 3;
                autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.recolor(-2009060816, ThemePaletteManager.ColorRole.OUTLINE));
                autismclient.gui.f.PacketUtil.load(context, bounds.init(1), Math.max(1, radius - 1), 1711276032);
@@ -205,56 +205,56 @@ public final class OverlayActionButton {
       }
    }
 
-   public int init_I() {
-      return this.load_I;
+   public int getX() {
+      return this.x;
    }
 
-   public void init_V_I(int x) {
-      this.load_I = x;
+   public void setX(int x) {
+      this.x = x;
    }
 
-   public int load() {
-      return this.read;
+   public int getY() {
+      return this.y;
    }
 
-   public void load(int y) {
-      this.read = y;
+   public void setY(int y) {
+      this.y = y;
    }
 
-   public int read() {
-      return this.write;
+   public int getWidth() {
+      return this.width;
    }
 
-   public void read(int width) {
-      this.write = width;
+   public void setWidth(int width) {
+      this.width = width;
    }
 
-   public int write() {
-      return this.update;
+   public int getHeight() {
+      return this.height;
    }
 
-   public Component init_Component() {
-      return this.init_Component;
+   public Component getMessage() {
+      return this.message;
    }
 
-   public void init_V_Component(Component message) {
-      this.init_Component = message == null ? Component.empty() : message;
+   public void setMessage(Component message) {
+      this.message = message == null ? Component.empty() : message;
    }
 
-   public OverlayActionButton.ButtonTone init_ByteReader_StreamU() {
-      return this.init_ByteReader_StreamU;
+   public OverlayActionButton.ButtonTone getTone() {
+      return this.tone;
    }
 
-   public OverlayActionButton init_ByteReader_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
-      this.init_ByteReader_StreamU = variant == null ? OverlayActionButton.ButtonTone.SECONDARY : variant;
+   public OverlayActionButton setTone(OverlayActionButton.ButtonTone variant) {
+      this.tone = variant == null ? OverlayActionButton.ButtonTone.SECONDARY : variant;
       return this;
    }
 
-   private boolean init(double mouseX, double mouseY) {
-      return mouseX >= this.load_I && mouseX < this.load_I + this.write && mouseY >= this.read && mouseY < this.read + this.update;
+   private boolean containsPoint(double mouseX, double mouseY) {
+      return mouseX >= this.x && mouseX < this.x + this.width && mouseY >= this.y && mouseY < this.y + this.height;
    }
 
-   private static CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
+   private static CachePool.Inner_DataUtil toButtonStyle(OverlayActionButton.ButtonTone variant) {
       CachePool.Inner_DataUtil var10000;
       switch (variant) {
          case SECONDARY:
@@ -279,8 +279,8 @@ public final class OverlayActionButton {
       return var10000;
    }
 
-   private static String init_Str_ByteReader(OverlayActionButton button) {
-      return "overlay-toggle:" + button.load_I + ":" + button.read + ":" + button.write + ":" + button.update + ":" + button.init_l;
+   private static String defaultAnimationKey(OverlayActionButton button) {
+      return "overlay-toggle:" + button.x + ":" + button.y + ":" + button.width + ":" + button.height + ":" + button.textTone;
    }
 
    @FunctionalInterface

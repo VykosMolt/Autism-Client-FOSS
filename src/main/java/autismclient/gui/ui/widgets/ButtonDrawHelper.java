@@ -39,12 +39,12 @@ public final class ButtonDrawHelper {
       int mouseX,
       int mouseY
    ) {
-      OverlayActionButton button = OverlayActionButton.init(x, y, width, height, Component.literal(label), ignored -> {});
-      button.read(width);
-      button.init_ByteReader_ByteReader_StreamU(variant);
-      button.init_ByteReader_l(tone);
-      button.init_Z = enabled;
-      OverlayActionButton.init(graphics, font, button, mouseX, mouseY);
+      OverlayActionButton button = OverlayActionButton.create(x, y, width, height, Component.literal(label), ignored -> {});
+      button.setWidth(width);
+      button.setTone(variant);
+      button.setTextTone(tone);
+      button.active = enabled;
+      OverlayActionButton.render(graphics, font, button, mouseX, mouseY);
    }
 
    public static void init(
@@ -67,12 +67,12 @@ public final class ButtonDrawHelper {
       int mouseX,
       int mouseY
    ) {
-      OverlayActionButton button = OverlayActionButton.init(x, y, width, height, Component.literal(label), ignored -> {});
-      button.read(width);
-      button.init_ByteReader_ByteReader_StreamU(state ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.DANGER);
-      button.init_ByteReader_Z(state).init_ByteReader_Str(animationKey);
-      button.init_Z = enabled;
-      OverlayActionButton.init(graphics, font, button, mouseX, mouseY);
+      OverlayActionButton button = OverlayActionButton.create(x, y, width, height, Component.literal(label), ignored -> {});
+      button.setWidth(width);
+      button.setTone(state ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.DANGER);
+      button.setToggleState(state).setAnimationKey(animationKey);
+      button.active = enabled;
+      OverlayActionButton.render(graphics, font, button, mouseX, mouseY);
    }
 
    public static void init(

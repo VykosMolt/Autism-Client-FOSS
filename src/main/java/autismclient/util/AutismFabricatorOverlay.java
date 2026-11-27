@@ -645,11 +645,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       if (!this.sync_List.isEmpty()) {
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, mouseX, mouseY, button)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.sync_List, mouseX, mouseY, button)) {
             return true;
          }
 
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             return true;
          }
       }
@@ -891,7 +891,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List);
+      autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.sync_List);
       if (button == 0 && this.state != 0) {
          this.state = 0;
          this.read_V_3();
@@ -917,7 +917,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-      if (autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, mouseX, mouseY, button)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.sync_List, mouseX, mouseY, button)) {
          return true;
       }
 
@@ -958,8 +958,8 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
       if (this.sync_Z && !this.update_Z) {
          if (!this.sync_List.isEmpty()
-            && (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, mouseX, mouseY))
-            && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, mouseX, mouseY, amount)) {
+            && (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.isPointInAnyPopup(this.sync_List, mouseX, mouseY))
+            && autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.sync_List, mouseX, mouseY, amount)) {
             return true;
          }
 
@@ -1032,15 +1032,15 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void flush_V_5() {
       long perfStart = bK.init_J();
-      AutoCraftingEngine.CraftContext snapshot = AutoCraftingEngine.init_J_BufferHelper(init_Minecraft);
+      AutoCraftingEngine.CraftContext snapshot = AutoCraftingEngine.captureContext(init_Minecraft);
       bK.load("craft.snapshot", perfStart, 5000000L);
       if (snapshot != null) {
          long generation = this.init_AtomicLong.incrementAndGet();
          this.close_Z = true;
          init_ExecutorService.execute(() -> {
             try {
-               List<AutoCraftingEngine.CraftOption> options = AutoCraftingEngine.init(snapshot);
-               this.init_AtomicReference.set(new AutismFabricatorOverlay.Inner_StreamUtil(generation, snapshot.init_Obj, options));
+               List<AutoCraftingEngine.CraftOption> options = AutoCraftingEngine.scanOptions(snapshot);
+               this.init_AtomicReference.set(new AutismFabricatorOverlay.Inner_StreamUtil(generation, snapshot.connection, options));
             } catch (Throwable t) {
                AutismClientAddon.LOG.warn("[Autism] craft recipe scan failed", t);
             } finally {
@@ -1056,7 +1056,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.valid = 0;
 
       for (AutoCraftingEngine.CraftOption option : this.flush_List) {
-         if (option.read_Z) {
+         if (option.craftable) {
             this.valid++;
          }
       }
@@ -1100,7 +1100,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void init_V_Str_Z(String query, boolean resetScroll) {
       this.update_Str = query == null ? "" : query;
-      this.close_List = AutoCraftingEngine.init(this.flush_List, query);
+      this.close_List = AutoCraftingEngine.filterOptions(this.flush_List, query);
       int maxScroll = Math.max(0, this.close_List.size() - 6);
       this.size = resetScroll ? 0 : Math.max(0, Math.min(maxScroll, this.size));
    }
@@ -1108,13 +1108,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private void close_V_5() {
       if (this.init_J_TaskQueue != null) {
          for (AutoCraftingEngine.CraftOption option : this.flush_List) {
-            if (!option.init_Str.isBlank() && option.init_Str.equalsIgnoreCase(this.init_J_TaskQueue.init_Str)
-               || option.init_I >= 0 && option.init_I == this.init_J_TaskQueue.init_I
-               || option.load_I >= 0 && option.load_I == this.init_J_TaskQueue.load_I) {
+            if (!option.recipeKey.isBlank() && option.recipeKey.equalsIgnoreCase(this.init_J_TaskQueue.recipeKey)
+               || option.recipeKeyHash >= 0 && option.recipeKeyHash == this.init_J_TaskQueue.recipeKeyHash
+               || option.syncedRecipeIndex >= 0 && option.syncedRecipeIndex == this.init_J_TaskQueue.syncedRecipeIndex) {
                this.init_J_TaskQueue = option;
-               this.init_ItemStack = option.init_ItemStack.copy();
-               this.task = option.init_I;
-               this.sync_Str = option.init_Str;
+               this.init_ItemStack = option.outputStack.copy();
+               this.task = option.recipeKeyHash;
+               this.sync_Str = option.recipeKey;
                return;
             }
          }
@@ -1129,25 +1129,25 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private void open_V_5() {
       if (this.sync_Str != null && !this.sync_Str.isBlank() || this.task >= 0) {
          if (this.init_J_TaskQueue != null) {
-            if (!this.sync_Str.isBlank() && this.sync_Str.equalsIgnoreCase(this.init_J_TaskQueue.init_Str)) {
+            if (!this.sync_Str.isBlank() && this.sync_Str.equalsIgnoreCase(this.init_J_TaskQueue.recipeKey)) {
                return;
             }
 
-            if (this.task >= 0 && (this.init_J_TaskQueue.init_I == this.task || this.init_J_TaskQueue.load_I == this.task)) {
+            if (this.task >= 0 && (this.init_J_TaskQueue.recipeKeyHash == this.task || this.init_J_TaskQueue.syncedRecipeIndex == this.task)) {
                return;
             }
          }
 
          for (AutoCraftingEngine.CraftOption option : this.flush_List) {
-            if (!this.sync_Str.isBlank() && this.sync_Str.equalsIgnoreCase(option.init_Str)
-               || this.task >= 0 && option.init_I == this.task
-               || this.task >= 0 && option.load_I == this.task) {
+            if (!this.sync_Str.isBlank() && this.sync_Str.equalsIgnoreCase(option.recipeKey)
+               || this.task >= 0 && option.recipeKeyHash == this.task
+               || this.task >= 0 && option.syncedRecipeIndex == this.task) {
                this.init_J_TaskQueue = option;
-               this.init_ItemStack = option.init_ItemStack.copy();
-               this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.init_ItemStack, -1);
-               this.read_Str = option.load_Str;
-               this.sync_Str = option.init_Str;
-               this.task = option.init_I;
+               this.init_ItemStack = option.outputStack.copy();
+               this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.outputStack, -1);
+               this.read_Str = option.outputName;
+               this.sync_Str = option.recipeKey;
+               this.task = option.recipeKeyHash;
                if (this.load_k != null) {
                   this.load_k.setValue(this.read_Str);
                }
@@ -1208,23 +1208,23 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private void init_V_J_TaskQueue(AutoCraftingEngine.CraftOption option) {
       if (option != null) {
          this.init_J_TaskQueue = option;
-         this.init_ItemStack = option.init_ItemStack.copy();
-         this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.init_ItemStack, -1);
-         this.read_Str = option.load_Str;
-         this.task = option.init_I;
-         this.sync_Str = option.init_Str;
+         this.init_ItemStack = option.outputStack.copy();
+         this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.outputStack, -1);
+         this.read_Str = option.outputName;
+         this.task = option.recipeKeyHash;
+         this.sync_Str = option.recipeKey;
          if (this.load_k != null) {
             this.load_k.setValue(this.read_Str);
          }
 
          this.init_V_Str_ChatFormatting(
             "Selected craft: "
-               + option.load_Str
+               + option.outputName
                + " | "
-               + (option.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2")
+               + (option.gridSource == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2")
                + " | "
-               + AutoCraftingEngine.init_Str(option),
-            option.read_Z ? ChatFormatting.GREEN : ChatFormatting.RED
+               + AutoCraftingEngine.formatStatusLabel(option),
+            option.craftable ? ChatFormatting.GREEN : ChatFormatting.RED
          );
          this.read_V_3();
       }
@@ -1240,7 +1240,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private AutoCraftingEngine.CraftOption init_J_TaskQueue_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
-      return entry == null ? null : AutoCraftingEngine.init(this.flush_List, entry.init_Str, entry.init_I);
+      return entry == null ? null : AutoCraftingEngine.matchOptionInList(this.flush_List, entry.init_Str, entry.init_I);
    }
 
    private autismclient.util.macro.CraftAction.Inner_DataUtil init_SyncManager_DataUt() {
@@ -1368,10 +1368,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (entry != null && entry.init_Z()) {
          AutoCraftingEngine.CraftOption option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
          String amount = entry.init_Z ? "Max" : "x" + Math.max(1, entry.read_I);
-         Component resultName = option != null ? option.init_ItemStack.getHoverName().copy() : Component.literal(entry.load_Str);
+         Component resultName = option != null ? option.outputStack.getHoverName().copy() : Component.literal(entry.load_Str);
          return Component.empty()
             .append(resultName)
-            .append(Component.literal(" | " + amount + (option != null && option.read_Z ? " | x" + option.update : "")));
+            .append(Component.literal(" | " + amount + (option != null && option.craftable ? " | x" + option.maxCrafts : "")));
       } else {
          return Component.literal("(empty)");
       }
@@ -1438,7 +1438,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          this.stop_V_2();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;
-         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
             mouseX = -2147483648;
             mouseY = -2147483648;
          }
@@ -1476,9 +1476,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                this.init_SyncManager
-                  .init_SyncManager_I(fieldX, this.reset_I_2(), fieldWidth, push_I_7())
-                  .init_SyncManager_List(this.load_List)
-                  .init_SyncManager_I(this.next);
+                  .setBounds(fieldX, this.reset_I_2(), fieldWidth, push_I_7())
+                  .setOptions(this.load_List)
+                  .setSelectedIndex(this.next);
                this.sync_List.add(this.init_SyncManager);
 
                for (ThemedTextInputBox field : this.init_List) {
@@ -1518,9 +1518,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         }
 
                         this.load_SyncManager
-                           .init_SyncManager_I(fieldX, this.next_I_2(), fieldWidth, push_I_7())
-                           .init_SyncManager_List(options)
-                           .init_SyncManager_I(clamped);
+                           .setBounds(fieldX, this.next_I_2(), fieldWidth, push_I_7())
+                           .setOptions(options)
+                           .setSelectedIndex(clamped);
                         this.sync_List.add(this.load_SyncManager);
                      } else {
                         List<String> options = update_List;
@@ -1534,9 +1534,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         }
 
                         this.read_SyncManager
-                           .init_SyncManager_I(fieldX, this.next_I_2(), fieldWidth, push_I_7())
-                           .init_SyncManager_List(options)
-                           .init_SyncManager_I(sel);
+                           .setBounds(fieldX, this.next_I_2(), fieldWidth, push_I_7())
+                           .setOptions(options)
+                           .setSelectedIndex(sel);
                         this.sync_List.add(this.read_SyncManager);
                      }
                   }
@@ -1606,7 +1606,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            Component.literal(
                               " x"
                                  + this.init_ItemStack.getCount()
-                                 + (this.init_J_TaskQueue != null && this.init_J_TaskQueue.read_Z ? " | x" + this.init_J_TaskQueue.update : "")
+                                 + (this.init_J_TaskQueue != null && this.init_J_TaskQueue.craftable ? " | x" + this.init_J_TaskQueue.maxCrafts : "")
                            )
                         );
                      ThemedTextHelper.init(context, init_Minecraft.font, summaryText.getString(), UiColorPalette.textMuted(), listX, this.entry(), false);
@@ -1642,10 +1642,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      for (int index = startIndex; index < this.close_List.size() && rowY < listY + this.open_I; rowY += this.close_I) {
                         AutoCraftingEngine.CraftOption option = this.close_List.get(index);
                         boolean hovered = mouseX >= listX && mouseX <= listX + recipeContentWidth && mouseY >= rowY && mouseY < rowY + this.close_I;
-                        boolean selected = this.init_J_TaskQueue != null && option.init_Str.equalsIgnoreCase(this.init_J_TaskQueue.init_Str);
+                        boolean selected = this.init_J_TaskQueue != null && option.recipeKey.equalsIgnoreCase(this.init_J_TaskQueue.recipeKey);
                         Component richLabel = Component.empty()
-                           .append(option.init_ItemStack.getHoverName().copy())
-                           .append(Component.literal(" x" + option.init_ItemStack.getCount() + " | " + AutoCraftingEngine.init_Str(option)));
+                           .append(option.outputStack.getHoverName().copy())
+                           .append(Component.literal(" x" + option.outputStack.getCount() + " | " + AutoCraftingEngine.formatStatusLabel(option)));
                         autismclient.gui.ui.widgets.ListRowRenderer.drawComponentRow(
                            context,
                            init_Minecraft.font,
@@ -1656,7 +1656,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            this.close_I,
                            hovered,
                            selected,
-                           option.read_Z ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.READY : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.MISSING,
+                           option.craftable ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.READY : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.MISSING,
                            true
                         );
                         autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, listX + 2, rowY + this.close_I - 1, recipeContentWidth - 2);
@@ -1727,16 +1727,16 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                if (!this.sync_List.isEmpty()) {
-                  autismclient.gui.ui.widgets.DropdownWidget.load(context, init_Minecraft.font, this.sync_List, rawMouseX, rawMouseY);
+                  autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(context, init_Minecraft.font, this.sync_List, rawMouseX, rawMouseY);
                }
             } finally {
                this.endBodyClip(context, clipBody);
                this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
             }
 
-            if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
+            if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.sync_List)) {
                context.nextStratum();
-               autismclient.gui.ui.widgets.DropdownWidget.read(context, init_Minecraft.font, this.sync_List, rawMouseX, rawMouseY);
+               autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(context, init_Minecraft.font, this.sync_List, rawMouseX, rawMouseY);
             }
          }
       }
@@ -2129,34 +2129,34 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                AutoCraftingEngine.CraftResult result = null;
 
                for (autismclient.util.macro.CraftAction.Inner_DataUtil entryx : entries) {
-                  AutoCraftingEngine.CraftOption optionx = AutoCraftingEngine.init(init_Minecraft, entryx.init_Str);
+                  AutoCraftingEngine.CraftOption optionx = AutoCraftingEngine.findOptionByKey(init_Minecraft, entryx.init_Str);
                   if (optionx == null) {
-                     optionx = AutoCraftingEngine.init(init_Minecraft, entryx.init_I);
+                     optionx = AutoCraftingEngine.findOptionById(init_Minecraft, entryx.init_I);
                   }
 
                   if (optionx == null) {
-                     result = AutoCraftingEngine.CraftResult.init("Recipe not found: " + entryx.load_Str);
+                     result = AutoCraftingEngine.CraftResult.failed("Recipe not found: " + entryx.load_Str);
                      break;
                   }
 
-                  int desiredAmountx = AutoCraftingEngine.init(optionx, entryx.read_I, entryx.init_Z);
+                  int desiredAmountx = AutoCraftingEngine.resolveTargetAmount(optionx, entryx.read_I, entryx.init_Z);
                   if (desiredAmountx <= 0) {
-                     result = AutoCraftingEngine.CraftResult.init("No space or materials for " + entryx.load_Str + ".");
+                     result = AutoCraftingEngine.CraftResult.failed("No space or materials for " + entryx.load_Str + ".");
                      break;
                   }
 
-                  result = AutoCraftingEngine.init_J_CachePool(init_Minecraft, entryx.init_Str, entryx.init_I, desiredAmountx);
-                  if (!result.init_Z) {
+                  result = AutoCraftingEngine.craft(init_Minecraft, entryx.init_Str, entryx.init_I, desiredAmountx);
+                  if (!result.success) {
                      break;
                   }
                }
 
                this.poll_Z = false;
                AutoCraftingEngine.CraftResult finalResult = result;
-               if (finalResult != null && !finalResult.init_Z) {
+               if (finalResult != null && !finalResult.success) {
                   init_Minecraft.execute(() -> {
-                     this.init_V_Str_ChatFormatting(finalResult.init_Str, ChatFormatting.RED);
-                     AutismClientMessaging.sendPrefixed("§c" + finalResult.init_Str);
+                     this.init_V_Str_ChatFormatting(finalResult.message, ChatFormatting.RED);
+                     AutismClientMessaging.sendPrefixed("§c" + finalResult.message);
                   });
                }
             }, "Autism-Fabricator-Craft");
@@ -2167,9 +2167,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          int queuedClicks = 0;
 
          for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
-            AutoCraftingEngine.CraftOption option = AutoCraftingEngine.init(init_Minecraft, entry.init_Str);
+            AutoCraftingEngine.CraftOption option = AutoCraftingEngine.findOptionByKey(init_Minecraft, entry.init_Str);
             if (option == null) {
-               option = AutoCraftingEngine.init(init_Minecraft, entry.init_I);
+               option = AutoCraftingEngine.findOptionById(init_Minecraft, entry.init_I);
             }
 
             if (option == null) {
@@ -2179,7 +2179,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                return;
             }
 
-            int desiredAmount = AutoCraftingEngine.init(option, entry.read_I, entry.init_Z);
+            int desiredAmount = AutoCraftingEngine.resolveTargetAmount(option, entry.read_I, entry.init_Z);
             if (desiredAmount <= 0) {
                String msg = "No space or materials for " + entry.load_Str;
                this.init_V_Str_ChatFormatting(msg, ChatFormatting.RED);
@@ -2187,9 +2187,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                return;
             }
 
-            List<Packet<?>> packets = AutoCraftingEngine.init_List(init_Minecraft, entry.init_Str, entry.init_I, desiredAmount);
+            List<Packet<?>> packets = AutoCraftingEngine.buildCraftPackets(init_Minecraft, entry.init_Str, entry.init_I, desiredAmount);
             if (packets.isEmpty()) {
-               String msg = option.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3
+               String msg = option.gridSource == AutoCraftingEngine.GridSource.TABLE_3X3
                      && (init_Minecraft.player == null || !(init_Minecraft.player.containerMenu instanceof CraftingMenu))
                   ? "Open a crafting table to queue " + entry.load_Str + "."
                   : "Could not plan " + entry.load_Str + " from this inventory.";
@@ -2267,8 +2267,8 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             return planInfo + " | Recipe: none selected";
          }
 
-         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2";
-         String availability = this.init_J_TaskQueue != null ? AutoCraftingEngine.init_Str(this.init_J_TaskQueue) : "Unavailable";
+         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.gridSource == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2";
+         String availability = this.init_J_TaskQueue != null ? AutoCraftingEngine.formatStatusLabel(this.init_J_TaskQueue) : "Unavailable";
          String amountMode = this.push_Z ? "Max" : "x" + Math.max(1, this.store());
          return planInfo + " | Recipe: " + this.init_ItemStack.getHoverName().getString() + " | " + source + " | " + availability + " | " + amountMode;
       } else if (this.init_AutismFabricatorOv.write()) {
@@ -2418,9 +2418,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       if (this.push_Z) {
-         int maxAmount = this.init_J_TaskQueue.sync;
+         int maxAmount = this.init_J_TaskQueue.maxOutputItems;
          if (maxAmount <= 0) {
-            this.init_V_Str_ChatFormatting(this.init_J_TaskQueue.init_Z ? "No room to store crafted items" : "Missing materials", ChatFormatting.RED);
+            this.init_V_Str_ChatFormatting(this.init_J_TaskQueue.hasMaterials ? "No room to store crafted items" : "Missing materials", ChatFormatting.RED);
             return -1;
          } else {
             return maxAmount;

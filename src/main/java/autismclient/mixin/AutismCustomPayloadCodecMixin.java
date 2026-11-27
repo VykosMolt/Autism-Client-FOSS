@@ -37,7 +37,7 @@ public abstract class AutismCustomPayloadCodecMixin {
 
          boolean isRaw = payload instanceof AutismPayloadSupport.RawCustomPacketPayload;
          if (isRaw || capturePayload) {
-            byte[] rememberedBytes = AutismPayloadSupport.init_BArr(payload);
+            byte[] rememberedBytes = AutismPayloadSupport.getRememberedBytes(payload);
             if (rememberedBytes != null || isRaw) {
                Type<?> type = payload.type();
                if (type != null && type.id() != null) {
@@ -70,7 +70,7 @@ public abstract class AutismCustomPayloadCodecMixin {
                if (end > startIndex) {
                   byte[] encodedBytes = new byte[end - startIndex];
                   buf.getBytes(startIndex, encodedBytes);
-                  AutismPayloadSupport.init_V(payload, autism$payloadChannel(payload), encodedBytes);
+                  AutismPayloadSupport.rememberEncodedBytes(payload, autism$payloadChannel(payload), encodedBytes);
                }
             }
          }
@@ -106,7 +106,7 @@ public abstract class AutismCustomPayloadCodecMixin {
                if (end > startIndex) {
                   byte[] encodedBytes = new byte[end - startIndex];
                   buf.getBytes(startIndex, encodedBytes);
-                  AutismPayloadSupport.init_V(payload, autism$payloadChannel(payload), encodedBytes);
+                  AutismPayloadSupport.rememberEncodedBytes(payload, autism$payloadChannel(payload), encodedBytes);
                }
             }
          }

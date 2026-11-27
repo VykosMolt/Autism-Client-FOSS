@@ -411,7 +411,7 @@ final class ModuleSettingsView {
    private void init_V_SyncManager_4(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
       UiTheme theme = context.init_TableIndex();
       boolean hovered = bounds.init_Z(context.read(), context.write());
-      float hoverT = autismclient.gui.ui.HoverTransitionCache.init("set:" + module.id() + ":" + option.id(), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("set:" + module.id() + ":" + option.id(), hovered);
       int rowFill = ModulesMenuController.init_I_I(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT);
       if (this.init_Z) {
          PacketUtil.load(
@@ -491,7 +491,7 @@ final class ModuleSettingsView {
             case ENUM:
                int dropW = this.init_I(module, option, control.update());
                NetHelper dropdown = NetHelper.init(control.init() - dropW, control.write(), dropW, control.sync());
-               DropdownMenu.init_V_SyncManager(context, dropdown, module.displayValue(option), dropdown.init_Z(context.read(), context.write()), false);
+               DropdownMenu.renderTrigger(context, dropdown, module.displayValue(option), dropdown.init_Z(context.read(), context.write()), false);
                this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.DROPDOWN, dropdown, module, option, "", -1);
                break;
             case STRING:

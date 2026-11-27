@@ -362,15 +362,15 @@ final class AiMlg {
                } else {
                   ItemStack stack = player.getInventory().getItem(slot);
                   BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
-                        cell, player.getEyePosition(), Math.max(4.5, player.blockInteractionRange()), BlockPlacementPlanner.init(stack, player, InteractionHand.MAIN_HAND)
+                        cell, player.getEyePosition(), Math.max(4.5, player.blockInteractionRange()), BlockPlacementPlanner.blockItemValidator(stack, player, InteractionHand.MAIN_HAND)
                      )
-                     .init_U_StateCache_Z(player.isShiftKeyDown())
-                     .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
-                  BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool(request);
+                     .withSneaking(player.isShiftKeyDown())
+                     .withRayBudget(new BlockPlacementPlanner.RayBudget(6));
+                  BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.plan(request);
                   if (candidate != null) {
-                     player.setYRot(candidate.init_U_DataUtil().load().yaw());
-                     player.setXRot(candidate.init_U_DataUtil().load().pitch());
-                     this.init_Minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
+                     player.setYRot(candidate.aim().emittedRotation().yaw());
+                     player.setXRot(candidate.aim().emittedRotation().pitch());
+                     this.init_Minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, candidate.hit());
                   } else {
                      Vec3 hitPos = Vec3.atCenterOf(forecast.support()).add(0.0, 0.5, 0.0);
                      AiGameOperations.snapLookAt(hitPos);

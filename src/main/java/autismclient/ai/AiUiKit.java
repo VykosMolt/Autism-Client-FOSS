@@ -150,8 +150,8 @@ final class AiUiKit {
    }
 
    void drawTextInput(autismclient.gui.ui.widgets.TextInputWidget field, autismclient.gui.f.NetHelper bounds) {
-      field.init_TableIndex_F(bounds.read(), bounds.write(), bounds.update(), bounds.sync());
-      field.init_V_SyncManager(this.layoutContext);
+      field.setBounds(bounds.read(), bounds.write(), bounds.update(), bounds.sync());
+      field.render(this.layoutContext);
       autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       if (c.update() > 0 && c.sync() > 0) {
          this.hitRegions.add(new AiUiKit.Inner_DataUtil(c, null, null, null, field));
@@ -252,12 +252,12 @@ final class AiUiKit {
             if (hit.field() != null) {
                for (autismclient.gui.ui.widgets.TextInputWidget other : fields) {
                   if (other != hit.field()) {
-                     other.init_V_Z(false);
+                     other.setFocused(false);
                   }
                }
 
                if (button == 0) {
-                  hit.field().init_Z_SyncManager_2(this.layoutContext, (float)x, (float)y, button);
+                  hit.field().mouseClicked(this.layoutContext, (float)x, (float)y, button);
                }
 
                return true;
@@ -266,7 +266,7 @@ final class AiUiKit {
             Runnable action = button == 1 ? hit.right() : (button == 0 ? hit.left() : null);
             if (action != null || hit.left() != null || hit.right() != null) {
                for (autismclient.gui.ui.widgets.TextInputWidget field : fields) {
-                  field.init_V_Z(false);
+                  field.setFocused(false);
                }
 
                if (action != null) {
@@ -279,7 +279,7 @@ final class AiUiKit {
       }
 
       for (autismclient.gui.ui.widgets.TextInputWidget field : fields) {
-         field.init_V_Z(false);
+         field.setFocused(false);
       }
 
       return false;

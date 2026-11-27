@@ -7,14 +7,14 @@ public class VerticalSpacerNode extends LayoutNode {
       float next = Math.max(0.0F, preferredHeight);
       if (Float.compare(this.sync, next) != 0) {
          this.sync = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       return context.theme().init_F_F(this.sync);
    }
 }

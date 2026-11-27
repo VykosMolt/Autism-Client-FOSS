@@ -43,14 +43,14 @@ public final class LoggedPacketActions {
    }
 
    private static boolean tick(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-      if (snapshot != null && snapshot.load_Str() != null && !snapshot.load_Str().isBlank()) {
-         byte[] rawBytes = snapshot.init_BArr();
-         if (!AutismPayloadSupport.init_Z(snapshot.load_Str(), rawBytes, snapshot.update())) {
+      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.resolveEntryPayload(entry);
+      if (snapshot != null && snapshot.channel() != null && !snapshot.channel().isBlank()) {
+         byte[] rawBytes = snapshot.rawBytes();
+         if (!AutismPayloadSupport.sendCustomPayload(snapshot.channel(), rawBytes, snapshot.protocolPhase())) {
             AutismClientMessaging.sendPrefixed("§cFailed to send payload: " + entry.load_Str);
             return false;
          } else {
-            AutismClientMessaging.sendPrefixed("Sent payload: " + snapshot.load_Str());
+            AutismClientMessaging.sendPrefixed("Sent payload: " + snapshot.channel());
             return true;
          }
       } else {
@@ -152,7 +152,7 @@ public final class LoggedPacketActions {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be edited.");
          return false;
       } else {
-         autismclient.util.macro.PayloadAction action = AutismPayloadSupport.init_H(entry);
+         autismclient.util.macro.PayloadAction action = AutismPayloadSupport.toPayloadAction(entry);
          if (action == null) {
             AutismClientMessaging.sendPrefixed("§cFailed to seed payload editor from packet.");
             return false;
@@ -174,7 +174,7 @@ public final class LoggedPacketActions {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            autismclient.util.macro.PayloadAction action = AutismPayloadSupport.init_H(entry);
+            autismclient.util.macro.PayloadAction action = AutismPayloadSupport.toPayloadAction(entry);
             if (action == null) {
                AutismClientMessaging.sendPrefixed("§cFailed to create payload action from packet.");
                return false;

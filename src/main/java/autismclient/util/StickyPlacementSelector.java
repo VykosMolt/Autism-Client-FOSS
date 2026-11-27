@@ -31,7 +31,7 @@ public final class StickyPlacementSelector {
 
    private record Inner_DataUtil(BlockPos init_BlockPos, BlockPos load, Direction init_Direction, AABB init_AABB) {
       static StickyPlacementSelector.Inner_DataUtil init(BlockPlacementPlanner.SupportCandidate option) {
-         return new StickyPlacementSelector.Inner_DataUtil(option.init_BlockPos().immutable(), option.load_BlockPos().immutable(), option.init_Direction(), option.init_AABB());
+         return new StickyPlacementSelector.Inner_DataUtil(option.targetCell().immutable(), option.supportPos().immutable(), option.face(), option.faceRect());
       }
    }
 }

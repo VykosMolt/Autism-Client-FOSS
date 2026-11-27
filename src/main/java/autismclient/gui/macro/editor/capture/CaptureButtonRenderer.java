@@ -42,7 +42,7 @@ public final class CaptureButtonRenderer {
    ) {
       autismclient.gui.macro.editor.CaptureMode resolvedMode = mode == null ? autismclient.gui.macro.editor.CaptureMode.NONE : mode;
       Runnable resolvedAction = action == null ? () -> {} : action;
-      OverlayActionButton button = OverlayActionButton.init(
+      OverlayActionButton button = OverlayActionButton.create(
          bounds.read(),
          bounds.write(),
          bounds.update(),
@@ -50,9 +50,9 @@ public final class CaptureButtonRenderer {
          Component.literal(init(resolvedMode, capturing, idleLabel, capturingLabel)),
          ignored -> resolvedAction.run()
       );
-      button.init_ByteReader_ByteReader_StreamU(capturing ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.PRIMARY);
-      button.init_Z = active;
-      OverlayActionButton.init(graphics, font, button, mouseX, mouseY);
+      button.setTone(capturing ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.PRIMARY);
+      button.active = active;
+      OverlayActionButton.render(graphics, font, button, mouseX, mouseY);
       return button;
    }
 

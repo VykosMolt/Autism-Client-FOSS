@@ -374,15 +374,15 @@ public final class PickItemScreen extends VirtualScaledScreen {
    }
 
    private int open() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.init_I(), this.push(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.push(), 6);
    }
 
    private int poll() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.load(this.load_I(), this.pop(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.pop(), 6);
    }
 
    private int push() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_I(), 6, 300);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 300);
    }
 
    private int pop() {
@@ -391,7 +391,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       int maxList = Math.max(minList, (int)(this.load_I() * 0.65F));
       int list = init(this.init_List.size() * rowH + 2, minList, maxList);
       int chrome = this.write() + 4 + this.update() + 2 + 6 + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.load_I(), 6, chrome + list);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + list);
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {

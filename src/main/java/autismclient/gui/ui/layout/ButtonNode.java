@@ -36,14 +36,14 @@ public class ButtonNode extends LayoutNode {
       this.init_Str = text == null ? "" : text;
       this.init_ByteReader_StreamU = variant == null ? ButtonNode.Variant.SECONDARY : variant;
       this.init_Runnable = onPress;
-      this.write = 13.0F;
+      this.nodeHeight = 13.0F;
    }
 
    public ButtonNode init_ByteReader_Str(String text) {
       String next = text == null ? "" : text;
       if (!this.init_Str.equals(next)) {
          this.init_Str = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -63,7 +63,7 @@ public class ButtonNode extends LayoutNode {
       float next = Math.max(0.0F, minWidth);
       if (Float.compare(this.sync_F, next) != 0) {
          this.sync_F = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -73,7 +73,7 @@ public class ButtonNode extends LayoutNode {
       float next = Math.max(this.sync_F, maxWidth);
       if (Float.compare(this.flush, next) != 0) {
          this.flush = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -82,7 +82,7 @@ public class ButtonNode extends LayoutNode {
    public ButtonNode read_ByteReader_F(float preferredWidth) {
       if (Float.compare(this.close, preferredWidth) != 0) {
          this.close = preferredWidth;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -92,7 +92,7 @@ public class ButtonNode extends LayoutNode {
       int next = Math.max(0, horizontalPadding);
       if (this.init_I != next) {
          this.init_I = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -102,7 +102,7 @@ public class ButtonNode extends LayoutNode {
       int next = Math.max(1, fixedHeight);
       if (this.load_I != next) {
          this.load_I = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -116,7 +116,7 @@ public class ButtonNode extends LayoutNode {
    public ButtonNode init_ByteReader_Identifier(Identifier leadingIcon) {
       if (!Objects.equals(this.init_Identifier, leadingIcon)) {
          this.init_Identifier = leadingIcon;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -126,7 +126,7 @@ public class ButtonNode extends LayoutNode {
       int next = Math.max(1, iconSize);
       if (this.write_I != next) {
          this.write_I = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -136,7 +136,7 @@ public class ButtonNode extends LayoutNode {
       int next = Math.max(0, iconGap);
       if (this.update_I != next) {
          this.update_I = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -151,7 +151,7 @@ public class ButtonNode extends LayoutNode {
       l next = tone == null ? l.read : tone;
       if (this.init_l != next) {
          this.init_l = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -177,12 +177,12 @@ public class ButtonNode extends LayoutNode {
    }
 
    public ButtonNode read_ByteReader_Z(boolean growX) {
-      super.init_TableIndex_Z(growX);
+      super.setGrowX(growX);
       return this;
    }
 
    @Override
-   public float init_F_SyncManager(LayoutContext context) {
+   public float measurePreferredWidth(LayoutContext context) {
       int measureHeight = this.load_I > 0 ? this.load_I : context.theme().update();
       Identifier font = this.init_Identifier_CharEncoder_I(context.theme(), measureHeight);
       int scaledHorizontalPadding = context.theme().load(this.init_I);
@@ -199,20 +199,20 @@ public class ButtonNode extends LayoutNode {
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       int resolvedFixedHeight = this.load_I > 0 ? this.load_I : context.theme().update();
       int contentHeight = context.theme().init_I_l(this.init_l) + context.theme().load(4);
       return Math.max(12, Math.max(resolvedFixedHeight, contentHeight));
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F);
-         int drawW = Math.round(this.read_F);
-         int drawH = Math.round(this.write);
-         boolean hovered = this.load_Z && this.init_Z_F_F(context.mouseX(), context.mouseY());
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY);
+         int drawW = Math.round(this.nodeWidth);
+         int drawH = Math.round(this.nodeHeight);
+         boolean hovered = this.nodeEnabled && this.containsPoint(context.mouseX(), context.mouseY());
          if (this.write_Z) {
             this.load(context, drawX, drawY, drawW, drawH, hovered);
          } else {
@@ -233,7 +233,7 @@ public class ButtonNode extends LayoutNode {
          autismclient.gui.f.b.CachePool.init(ui, bounds, this.init_Str, this.init_Identifier, buttonTone, hovered, false, 0.0F);
       }
 
-      if (!this.load_Z) {
+      if (!this.nodeEnabled) {
          autismclient.gui.f.PacketUtil.init(context.graphics(), bounds.init(1), 1711276032);
       }
    }
@@ -310,8 +310,8 @@ public class ButtonNode extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, float mouseX, float mouseY, int button) {
-      if (this.load_Z && this.init_Z_F_F(mouseX, mouseY) && button == 0) {
+   public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
+      if (this.nodeEnabled && this.containsPoint(mouseX, mouseY) && button == 0) {
          if (this.init_Runnable != null) {
             this.init_Runnable.run();
          }

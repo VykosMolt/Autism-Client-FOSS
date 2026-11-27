@@ -65,19 +65,19 @@ public class PayloadAction implements MacroAction {
                   : (this.sourceProtocol == null ? "" : this.sourceProtocol);
                byte[] rawBytes;
                if (hasStructuredPayload) {
-                  PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.init(this);
-                  PayloadFieldCodec.Inner_DataUtil built = template.init_bJ_DataUtil();
-                  if (!built.init_Z()) {
-                     throw new IllegalArgumentException(String.join("; ", built.load()));
+                  PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.fromAction(this);
+                  PayloadFieldCodec.Inner_DataUtil built = template.encode();
+                  if (!built.isValid()) {
+                     throw new IllegalArgumentException(String.join("; ", built.errors()));
                   }
 
                   if (!MacroTemplateResolver.containsPlaceholder(this.channel)) {
-                     targetChannel = template.init_Str();
+                     targetChannel = template.channel();
                   }
 
-                  rawBytes = built.init_BArr();
+                  rawBytes = built.bytes();
                   if (sendProtocol.isBlank()) {
-                     sendProtocol = template.init_bJ_TaskQueue().name();
+                     sendProtocol = template.phase().name();
                   }
                } else if (useJsonModel) {
                   PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(this);
@@ -87,26 +87,26 @@ public class PayloadAction implements MacroAction {
 
                   rawBytes = encoded.init_BArr();
                } else {
-                  rawBytes = AutismPayloadSupport.init_BArr(resolvedPayloadData);
+                  rawBytes = AutismPayloadSupport.parseHexOrBase64(resolvedPayloadData);
                }
 
-               if (!useJsonModel && !hasStructuredPayload && !hasRawPayload && AutismPayloadSupport.init_Z(targetChannel)) {
-                  rawBytes = AutismPayloadSupport.load_BArr(AutismPayloadSupport.init_Str());
+               if (!useJsonModel && !hasStructuredPayload && !hasRawPayload && AutismPayloadSupport.isBrandChannel(targetChannel)) {
+                  rawBytes = AutismPayloadSupport.encodeMcString(AutismPayloadSupport.defaultClientBrand());
                }
 
                if (this.commandApiRecognized && this.commandApiOverride) {
-                  rawBytes = AutismPayloadSupport.init_BArr(rawBytes, this.commandApiValue);
+                  rawBytes = AutismPayloadSupport.withLeadingBigEndianInt(rawBytes, this.commandApiValue);
                }
 
                PayloadScriptRunner.Inner_DataUtil context = new PayloadScriptRunner.Inner_DataUtil(
                   targetChannel, rawBytes, this.commandApiRecognized && this.commandApiOverride ? this.commandApiValue : null
                );
                PayloadScriptRunner.Inner_StreamUtil result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
-               if (AutismPayloadSupport.init_Z(result.init_Str(), result.init_BArr(), sendProtocol)) {
+               if (AutismPayloadSupport.sendCustomPayload(result.init_Str(), result.init_BArr(), sendProtocol)) {
                   AutismClientMessaging.sendPrefixed("Sent payload: " + result.init_Str());
                }
             } catch (Exception e) {
-               AutismClientMessaging.sendPrefixed("§cPayload action failed: " + AutismPayloadSupport.init(e));
+               AutismClientMessaging.sendPrefixed("§cPayload action failed: " + AutismPayloadSupport.describeError(e));
             }
          } else {
             AutismClientMessaging.sendPrefixed("§cCannot send payload while disconnected.");

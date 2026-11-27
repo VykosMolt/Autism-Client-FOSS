@@ -5,63 +5,63 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class LayoutContainer extends LayoutNode {
-   protected final List<LayoutNode> init_List = new ArrayList<>();
+   protected final List<LayoutNode> children = new ArrayList<>();
 
-   public <T extends LayoutNode> T init_TableIndex_TableIndex(T child) {
+   public <T extends LayoutNode> T addChild(T child) {
       if (child != null) {
-         this.init_List.add(child);
-         this.load_V();
+         this.children.add(child);
+         this.markLayoutDirty();
       }
 
       return child;
    }
 
-   public void init_V_2() {
-      if (!this.init_List.isEmpty()) {
-         this.init_List.clear();
-         this.load_V();
+   public void clearChildren() {
+      if (!this.children.isEmpty()) {
+         this.children.clear();
+         this.markLayoutDirty();
       }
    }
 
-   public List<LayoutNode> init_List_2() {
-      return Collections.unmodifiableList(this.init_List);
+   public List<LayoutNode> getChildren() {
+      return Collections.unmodifiableList(this.children);
    }
 
-   protected abstract void load_V(LayoutContext var1);
+   protected abstract void layoutChildren(LayoutContext var1);
 
    @Override
-   public void read_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         this.load_V(context);
+   public void layout(LayoutContext context) {
+      if (this.nodeVisible) {
+         this.layoutChildren(context);
 
-         for (LayoutNode child : this.init_List) {
-            if (child != null && child.write_Z()) {
-               child.read_V_SyncManager(context);
+         for (LayoutNode child : this.children) {
+            if (child != null && child.isVisible()) {
+               child.layout(context);
             }
          }
       }
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
-         for (LayoutNode child : this.init_List) {
-            if (child != null && child.write_Z()) {
-               child.init_V_SyncManager(context);
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
+         for (LayoutNode child : this.children) {
+            if (child != null && child.isVisible()) {
+               child.render(context);
             }
          }
       }
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, float mouseX, float mouseY, int button) {
-      if (!this.init_Z) {
+   public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.init_Z_F_F(mouseX, mouseY) && child.init_Z_SyncManager_2(context, mouseX, mouseY, button)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.containsPoint(mouseX, mouseY) && child.mouseClicked(context, mouseX, mouseY, button)) {
             return true;
          }
       }
@@ -70,14 +70,14 @@ public abstract class LayoutContainer extends LayoutNode {
    }
 
    @Override
-   public boolean load_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, int button) {
-      if (!this.init_Z) {
+   public boolean mouseReleased(LayoutContext context, float mouseX, float mouseY, int button) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.load_Z_SyncManager(context, mouseX, mouseY, button)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.mouseReleased(context, mouseX, mouseY, button)) {
             return true;
          }
       }
@@ -86,14 +86,14 @@ public abstract class LayoutContainer extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
-      if (!this.init_Z) {
+   public boolean mouseDragged(LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.init_Z_SyncManager(context, mouseX, mouseY, button, deltaX, deltaY)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.mouseDragged(context, mouseX, mouseY, button, deltaX, deltaY)) {
             return true;
          }
       }
@@ -102,14 +102,14 @@ public abstract class LayoutContainer extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager(LayoutContext context, float mouseX, float mouseY, float amount) {
-      if (!this.init_Z) {
+   public boolean mouseScrolled(LayoutContext context, float mouseX, float mouseY, float amount) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.init_Z_F_F(mouseX, mouseY) && child.init_Z_SyncManager(context, mouseX, mouseY, amount)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.containsPoint(mouseX, mouseY) && child.mouseScrolled(context, mouseX, mouseY, amount)) {
             return true;
          }
       }
@@ -118,14 +118,14 @@ public abstract class LayoutContainer extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager_3(LayoutContext context, int keyCode, int scanCode, int modifiers) {
-      if (!this.init_Z) {
+   public boolean keyPressed(LayoutContext context, int keyCode, int scanCode, int modifiers) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.init_Z_SyncManager_3(context, keyCode, scanCode, modifiers)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.keyPressed(context, keyCode, scanCode, modifiers)) {
             return true;
          }
       }
@@ -134,14 +134,14 @@ public abstract class LayoutContainer extends LayoutNode {
    }
 
    @Override
-   public boolean init_Z_SyncManager_2(LayoutContext context, char chr, int modifiers) {
-      if (!this.init_Z) {
+   public boolean charTyped(LayoutContext context, char chr, int modifiers) {
+      if (!this.nodeVisible) {
          return false;
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         LayoutNode child = this.init_List.get(i);
-         if (child != null && child.write_Z() && child.init_Z_SyncManager_2(context, chr, modifiers)) {
+      for (int i = this.children.size() - 1; i >= 0; i--) {
+         LayoutNode child = this.children.get(i);
+         if (child != null && child.isVisible() && child.charTyped(context, chr, modifiers)) {
             return true;
          }
       }

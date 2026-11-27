@@ -31,34 +31,34 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public final class PayloadFieldCodec {
-   private static final int init = 8192;
-   private static final int load = 32767;
+   private static final int LARGE_PAYLOAD_WARNING_BYTES = 8192;
+   private static final int MAX_SERVERBOUND_BYTES = 32767;
 
    private PayloadFieldCodec() {
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil init(autismclient.util.macro.PayloadAction action) {
+   public static PayloadFieldCodec.Inner_JsonUtil fromAction(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
-         return init_bJ_JsonUtil();
+         return defaultBrandTemplate();
       }
 
       String channel = action.channel != null && !action.channel.isBlank() ? action.channel.strip() : "minecraft:brand";
-      PayloadFieldCodec.Inner_ConfigStore direction = PayloadFieldCodec.Inner_ConfigStore.init(
+      PayloadFieldCodec.Inner_ConfigStore direction = PayloadFieldCodec.Inner_ConfigStore.parse(
          action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection
       );
-      PayloadFieldCodec.Inner_TaskQueue phase = PayloadFieldCodec.Inner_TaskQueue.init(
+      PayloadFieldCodec.Inner_TaskQueue phase = PayloadFieldCodec.Inner_TaskQueue.parse(
          action.payloadPhase != null && !action.payloadPhase.isBlank() ? action.payloadPhase : action.sourceProtocol
       );
-      PayloadFieldCodec.Inner_StreamUtil mode = PayloadFieldCodec.Inner_StreamUtil.init(action.payloadEncodingMode, channel);
-      List<PayloadFieldCodec.Inner_CachePool> fields = init_List(action.payloadFields);
+      PayloadFieldCodec.Inner_StreamUtil mode = PayloadFieldCodec.Inner_StreamUtil.parse(action.payloadEncodingMode, channel);
+      List<PayloadFieldCodec.Inner_CachePool> fields = parseFields(action.payloadFields);
       if (fields.isEmpty() && action.payloadData != null && !action.payloadData.isBlank()) {
          fields = List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.HEX_BYTES, action.payloadData, true));
          mode = PayloadFieldCodec.Inner_StreamUtil.MANUAL_HEX;
       }
 
       if (fields.isEmpty()) {
-         if (AutismPayloadSupport.init_Z(channel)) {
-            fields = List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.init_Str(), true));
+         if (AutismPayloadSupport.isBrandChannel(channel)) {
+            fields = List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.defaultClientBrand(), true));
             mode = PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF;
          } else {
             fields = List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.RAW_UTF8_STRING, "", true));
@@ -68,17 +68,17 @@ public final class PayloadFieldCodec {
       return new PayloadFieldCodec.Inner_JsonUtil(channel, direction, phase, mode, fields);
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil() {
+   public static PayloadFieldCodec.Inner_JsonUtil defaultBrandTemplate() {
       return new PayloadFieldCodec.Inner_JsonUtil(
          "minecraft:brand",
          PayloadFieldCodec.Inner_ConfigStore.C2S,
          PayloadFieldCodec.Inner_TaskQueue.PLAY,
          PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF,
-         List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.init_Str(), true))
+         List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.defaultClientBrand(), true))
       );
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil load() {
+   public static PayloadFieldCodec.Inner_JsonUtil pingTemplate() {
       return new PayloadFieldCodec.Inner_JsonUtil(
          "testmod:ping",
          PayloadFieldCodec.Inner_ConfigStore.C2S,
@@ -88,17 +88,17 @@ public final class PayloadFieldCodec {
       );
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil(String brand) {
+   public static PayloadFieldCodec.Inner_JsonUtil brandTemplate(String brand) {
       return new PayloadFieldCodec.Inner_JsonUtil(
          "minecraft:brand",
          PayloadFieldCodec.Inner_ConfigStore.C2S,
          PayloadFieldCodec.Inner_TaskQueue.PLAY,
          PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF,
-         List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, brand != null && !brand.isBlank() ? brand : AutismPayloadSupport.init_Str(), true))
+         List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, brand != null && !brand.isBlank() ? brand : AutismPayloadSupport.defaultClientBrand(), true))
       );
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil read() {
+   public static PayloadFieldCodec.Inner_JsonUtil bungeeGetServerTemplate() {
       return new PayloadFieldCodec.Inner_JsonUtil(
          "bungeecord:main",
          PayloadFieldCodec.Inner_ConfigStore.C2S,
@@ -108,7 +108,7 @@ public final class PayloadFieldCodec {
       );
    }
 
-   public static PayloadFieldCodec.Inner_JsonUtil write() {
+   public static PayloadFieldCodec.Inner_JsonUtil bungeePlayerCountTemplate() {
       return new PayloadFieldCodec.Inner_JsonUtil(
          "bungeecord:main",
          PayloadFieldCodec.Inner_ConfigStore.C2S,
@@ -118,7 +118,7 @@ public final class PayloadFieldCodec {
       );
    }
 
-   public static String init(List<PayloadFieldCodec.Inner_CachePool> fields) {
+   public static String formatFields(List<PayloadFieldCodec.Inner_CachePool> fields) {
       if (fields != null && !fields.isEmpty()) {
          StringBuilder sb = new StringBuilder();
 
@@ -128,11 +128,11 @@ public final class PayloadFieldCodec {
                   sb.append('\n');
                }
 
-               if (!field.init_Z()) {
+               if (!field.enabled()) {
                   sb.append("# ");
                }
 
-               sb.append(field.init_bJ_BufferHelper().init()).append(" = ").append(field.load());
+               sb.append(field.type().label()).append(" = ").append(field.value());
             }
          }
 
@@ -142,7 +142,7 @@ public final class PayloadFieldCodec {
       }
    }
 
-   public static List<PayloadFieldCodec.Inner_CachePool> init_List(String text) {
+   public static List<PayloadFieldCodec.Inner_CachePool> parseFields(String text) {
       if (text != null && !text.isBlank()) {
          List<PayloadFieldCodec.Inner_CachePool> fields = new ArrayList<>();
          String[] lines = text.replace("\r\n", "\n").replace('\r', '\n').split("\n");
@@ -164,7 +164,7 @@ public final class PayloadFieldCodec {
 
                   String typeText = split < 0 ? "RAW_UTF8_STRING" : line.substring(0, split).strip();
                   String value = split < 0 ? line : line.substring(split + 1).strip();
-                  fields.add(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.init(typeText), value, enabled));
+                  fields.add(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.parse(typeText), value, enabled));
                }
             }
          }
@@ -175,42 +175,42 @@ public final class PayloadFieldCodec {
       }
    }
 
-   public static String init_Str_Str_Str(String currentMode, String channel) {
-      PayloadFieldCodec.Inner_StreamUtil current = PayloadFieldCodec.Inner_StreamUtil.init(currentMode, channel);
+   public static String nextEncodingMode(String currentMode, String channel) {
+      PayloadFieldCodec.Inner_StreamUtil current = PayloadFieldCodec.Inner_StreamUtil.parse(currentMode, channel);
       PayloadFieldCodec.Inner_StreamUtil[] values = PayloadFieldCodec.Inner_StreamUtil.values();
       return values[(current.ordinal() + 1) % values.length].name();
    }
 
-   public static String init_Str(String current) {
-      return PayloadFieldCodec.Inner_ConfigStore.init(current) == PayloadFieldCodec.Inner_ConfigStore.C2S ? PayloadFieldCodec.Inner_ConfigStore.S2C.name() : PayloadFieldCodec.Inner_ConfigStore.C2S.name();
+   public static String toggleDirection(String current) {
+      return PayloadFieldCodec.Inner_ConfigStore.parse(current) == PayloadFieldCodec.Inner_ConfigStore.C2S ? PayloadFieldCodec.Inner_ConfigStore.S2C.name() : PayloadFieldCodec.Inner_ConfigStore.C2S.name();
    }
 
-   public static String load(String current) {
-      return PayloadFieldCodec.Inner_TaskQueue.init(current) == PayloadFieldCodec.Inner_TaskQueue.PLAY ? PayloadFieldCodec.Inner_TaskQueue.CONFIGURATION.name() : PayloadFieldCodec.Inner_TaskQueue.PLAY.name();
+   public static String togglePhase(String current) {
+      return PayloadFieldCodec.Inner_TaskQueue.parse(current) == PayloadFieldCodec.Inner_TaskQueue.PLAY ? PayloadFieldCodec.Inner_TaskQueue.CONFIGURATION.name() : PayloadFieldCodec.Inner_TaskQueue.PLAY.name();
    }
 
-   public static PayloadFieldCodec.Inner_NetHelper init_bJ_NetHelper(byte[] bytes) {
+   public static PayloadFieldCodec.Inner_NetHelper buildPreview(byte[] bytes) {
       byte[] raw = bytes == null ? new byte[0] : bytes;
-      return new PayloadFieldCodec.Inner_NetHelper(AutismPayloadSupport.init_Str(raw, 96), init_Str(raw), load(raw), read(raw));
+      return new PayloadFieldCodec.Inner_NetHelper(AutismPayloadSupport.toHexPreview(raw, 96), previewUtf8(raw), previewMcString(raw), previewJavaUtf(raw));
    }
 
-   public static void init_V_H_bJ_JsonUtil(autismclient.util.macro.PayloadAction action, PayloadFieldCodec.Inner_JsonUtil template) {
+   public static void applyTemplateToAction(autismclient.util.macro.PayloadAction action, PayloadFieldCodec.Inner_JsonUtil template) {
       if (action != null && template != null) {
-         action.channel = template.init_Str();
-         action.payloadDirection = template.init_bJ_ConfigStore().name();
-         action.payloadPhase = template.init_bJ_TaskQueue().name();
-         action.payloadEncodingMode = template.init_bJ_StreamUtil().name();
-         action.payloadFields = init(template.init_List());
+         action.channel = template.channel();
+         action.payloadDirection = template.direction().name();
+         action.payloadPhase = template.phase().name();
+         action.payloadEncodingMode = template.encodingMode().name();
+         action.payloadFields = formatFields(template.fields());
          action.sourceDirection = action.payloadDirection;
          action.sourceProtocol = "";
-         PayloadFieldCodec.Inner_DataUtil result = template.init_bJ_DataUtil();
-         if (result.init_Z()) {
-            action.payloadData = AutismPayloadSupport.init_Str(result.init_BArr());
+         PayloadFieldCodec.Inner_DataUtil result = template.encode();
+         if (result.isValid()) {
+            action.payloadData = AutismPayloadSupport.toHexString(result.bytes());
          }
       }
    }
 
-   private static void init(
+   private static void validateHeader(
       String channel, PayloadFieldCodec.Inner_ConfigStore direction, PayloadFieldCodec.Inner_TaskQueue phase, PayloadFieldCodec.Inner_StreamUtil mode, List<String> warnings, List<String> errors
    ) {
       if (direction == PayloadFieldCodec.Inner_ConfigStore.S2C) {
@@ -222,16 +222,16 @@ public final class PayloadFieldCodec {
       }
 
       try {
-         AutismPayloadSupport.init_Identifier(channel);
+         AutismPayloadSupport.parseChannelId(channel);
       } catch (Exception e) {
-         errors.add(AutismPayloadSupport.init(e));
+         errors.add(AutismPayloadSupport.describeError(e));
       }
 
       if (channel != null && !channel.contains(":")) {
          warnings.add("Use a namespaced channel like namespace:path.");
       }
 
-      if (AutismPayloadSupport.init_Z(channel) && mode != PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
+      if (AutismPayloadSupport.isBrandChannel(channel) && mode != PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
          warnings.add("minecraft:brand normally expects a Minecraft String.");
       }
 
@@ -240,113 +240,113 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static void init(ByteArrayOutputStream out, PayloadFieldCodec.Inner_CachePool field, PayloadFieldCodec.Inner_StreamUtil mode, List<String> warnings) throws Exception {
-      String value = field.load();
-      switch (field.init_bJ_BufferHelper()) {
+   private static void encodeField(ByteArrayOutputStream out, PayloadFieldCodec.Inner_CachePool field, PayloadFieldCodec.Inner_StreamUtil mode, List<String> warnings) throws Exception {
+      String value = field.value();
+      switch (field.type()) {
          case BYTE:
-            out.write((byte)init(value, -128L, 127L));
+            out.write((byte)parseLongInRange(value, -128L, 127L));
             break;
          case UNSIGNED_BYTE:
-            out.write((byte)init(value, 0L, 255L));
+            out.write((byte)parseLongInRange(value, 0L, 255L));
             break;
          case BOOLEAN:
             out.write(Boolean.parseBoolean(value.strip()) ? 1 : 0);
             break;
          case SHORT:
-            init_V_ByteArrayOutputStr_S(out, (short)init(value, -32768L, 32767L));
+            writeBigEndianShort(out, (short)parseLongInRange(value, -32768L, 32767L));
             break;
          case UNSIGNED_SHORT:
-            init_V_ByteArrayOutputStr_S(out, (short)init(value, 0L, 65535L));
+            writeBigEndianShort(out, (short)parseLongInRange(value, 0L, 65535L));
             break;
          case CHAR:
-            init_V_ByteArrayOutputStr_S(out, (short)init_I(value));
+            writeBigEndianShort(out, (short)parseCharCode(value));
             break;
          case INT:
-            init_V_ByteArrayOutputStr_I(out, (int)init(value, -2147483648L, 2147483647L));
+            writeBigEndianInt(out, (int)parseLongInRange(value, -2147483648L, 2147483647L));
             break;
          case LONG:
-            init_V_ByteArrayOutputStr_J(out, init(value, -9223372036854775808L, 9223372036854775807L));
+            writeBigEndianLong(out, parseLongInRange(value, -9223372036854775808L, 9223372036854775807L));
             break;
          case FLOAT:
-            init_V_ByteArrayOutputStr_I(out, Float.floatToIntBits(Float.parseFloat(value.strip())));
+            writeBigEndianInt(out, Float.floatToIntBits(Float.parseFloat(value.strip())));
             break;
          case DOUBLE:
-            init_V_ByteArrayOutputStr_J(out, Double.doubleToLongBits(Double.parseDouble(value.strip())));
+            writeBigEndianLong(out, Double.doubleToLongBits(Double.parseDouble(value.strip())));
             break;
          case JAVA_WRITE_UTF:
             DataOutputStream dos = new DataOutputStream(out);
-            dos.writeUTF(read(value));
+            dos.writeUTF(unescapeString(value));
             dos.flush();
             break;
          case RAW_BYTES:
          case HEX_BYTES:
-            out.write(init_BArr(value));
+            out.write(decodeHexOrBase64(value));
             break;
          case BYTE_ARRAY:
-            write(out, value);
+            writeByteArrayField(out, value);
             break;
          case STRING_BYTES:
          case RAW_UTF8_STRING:
-            out.write(read(value).getBytes(StandardCharsets.UTF_8));
+            out.write(unescapeString(value).getBytes(StandardCharsets.UTF_8));
             break;
          case VAR_INT:
          case ENUM_VAR_INT:
-            load_V_ByteArrayOutputStr_I(out, (int)init(value, -2147483648L, 2147483647L));
+            writeVarInt(out, (int)parseLongInRange(value, -2147483648L, 2147483647L));
             break;
          case VAR_LONG:
-            load_V_ByteArrayOutputStr_J(out, init(value, -9223372036854775808L, 9223372036854775807L));
+            writeVarLong(out, parseLongInRange(value, -9223372036854775808L, 9223372036854775807L));
             break;
          case MINECRAFT_STRING:
          case IDENTIFIER:
-            out.write(AutismPayloadSupport.load_BArr(read(value)));
+            out.write(AutismPayloadSupport.encodeMcString(unescapeString(value)));
             break;
          case UUID_FIELD:
-            init_V_ByteArrayOutputStr_UUID(out, UUID.fromString(value.strip()));
+            writeUuid(out, UUID.fromString(value.strip()));
             break;
          case BLOCK_POS:
-            init_V_ByteArrayOutputStr_J(out, init_J(value));
+            writeBigEndianLong(out, packBlockPos(value));
             break;
          case OPTIONAL_VALUE:
-            init(out, value, mode, warnings);
+            writeOptionalField(out, value, mode, warnings);
             break;
          case NBT:
-            init_V_ByteArrayOutputStr_Str(out, value);
+            writeNbtField(out, value);
             break;
          case ITEM_STACK:
-            read(out, value);
+            writeItemStackField(out, value);
             break;
          case TEXT_COMPONENT:
          case JSON_STRING:
-            load_V_ByteArrayOutputStr_Str(out, value);
+            writeComponentField(out, value);
       }
    }
 
-   private static void init_V_ByteArrayOutputStr_Str(ByteArrayOutputStream out, String value) throws Exception {
+   private static void writeNbtField(ByteArrayOutputStream out, String value) throws Exception {
       String text = value != null && !value.isBlank() ? value.strip() : "{}";
       CompoundTag tag = TagParser.parseCompoundFully(text);
       FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
       try {
          buf.writeNbt(tag);
-         init_V_ByteArrayOutputStr_FriendlyByteBuf(out, buf);
+         writeBufferBytes(out, buf);
       } finally {
          buf.release();
       }
    }
 
-   private static void load_V_ByteArrayOutputStr_Str(ByteArrayOutputStream out, String value) {
-      Component component = init_Component(value);
-      RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), init_RegistryAccess());
+   private static void writeComponentField(ByteArrayOutputStream out, String value) {
+      Component component = parseComponent(value);
+      RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), currentRegistryAccess());
 
       try {
          ComponentSerialization.STREAM_CODEC.encode(buf, component);
-         init_V_ByteArrayOutputStr_FriendlyByteBuf(out, buf);
+         writeBufferBytes(out, buf);
       } finally {
          buf.release();
       }
    }
 
-   private static Component init_Component(String value) {
+   private static Component parseComponent(String value) {
       String text = value != null && !value.isBlank() ? value.strip() : "{\"text\":\"\"}";
 
       try {
@@ -355,41 +355,41 @@ public final class PayloadFieldCodec {
             ? Component.literal(element.getAsString())
             : ComponentSerialization.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow();
       } catch (Throwable ignored) {
-         return Component.literal(read(value));
+         return Component.literal(unescapeString(value));
       }
    }
 
-   private static void read(ByteArrayOutputStream out, String value) {
-      ItemStack stack = init_ItemStack(value);
-      RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), init_RegistryAccess());
+   private static void writeItemStackField(ByteArrayOutputStream out, String value) {
+      ItemStack stack = parseItemStack(value);
+      RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), currentRegistryAccess());
 
       try {
          ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, stack);
-         init_V_ByteArrayOutputStr_FriendlyByteBuf(out, buf);
+         writeBufferBytes(out, buf);
       } finally {
          buf.release();
       }
    }
 
-   private static ItemStack init_ItemStack(String value) {
+   private static ItemStack parseItemStack(String value) {
       String text = value == null ? "" : value.strip();
       if (text.isEmpty() || "{}".equals(text)) {
          return ItemStack.EMPTY;
       }
 
-      if (init_Z(text)) {
-         return init_ItemStack_Str_I(text, 1);
+      if (looksLikeItemId(text)) {
+         return itemStackFromId(text, 1);
       }
 
       try {
          JsonElement json = JsonParser.parseString(text);
          return json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()
-            ? init_ItemStack_Str_I(json.getAsString(), 1)
-            : ItemStack.CODEC.parse(init_RegistryAccess().createSerializationContext(JsonOps.INSTANCE), json).getOrThrow();
+            ? itemStackFromId(json.getAsString(), 1)
+            : ItemStack.CODEC.parse(currentRegistryAccess().createSerializationContext(JsonOps.INSTANCE), json).getOrThrow();
       } catch (Throwable jsonFailure) {
          try {
             Tag tag = TagParser.parseCompoundFully(text);
-            return ItemStack.CODEC.parse(init_RegistryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+            return ItemStack.CODEC.parse(currentRegistryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
          } catch (Throwable snbtFailure) {
             IllegalArgumentException ex = new IllegalArgumentException("Invalid item stack JSON/SNBT/id");
             ex.addSuppressed(jsonFailure);
@@ -399,11 +399,11 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static boolean init_Z(String text) {
+   private static boolean looksLikeItemId(String text) {
       return text != null && text.matches("[a-z0-9_./-]+(:[a-z0-9_./-]+)?");
    }
 
-   private static ItemStack init_ItemStack_Str_I(String rawId, int count) {
+   private static ItemStack itemStackFromId(String rawId, int count) {
       String idText = rawId == null ? "" : rawId.strip();
       Identifier id = Identifier.parse(idText.contains(":") ? idText : "minecraft:" + idText);
       if (!BuiltInRegistries.ITEM.containsKey(id)) {
@@ -418,7 +418,7 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static RegistryAccess init_RegistryAccess() {
+   private static RegistryAccess currentRegistryAccess() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null) {
          return mc.level.registryAccess();
@@ -427,25 +427,25 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static void init_V_ByteArrayOutputStr_FriendlyByteBuf(ByteArrayOutputStream out, FriendlyByteBuf buf) {
-      byte[] bytes = AutismPayloadSupport.init(buf);
+   private static void writeBufferBytes(ByteArrayOutputStream out, FriendlyByteBuf buf) {
+      byte[] bytes = AutismPayloadSupport.copyBufferBytes(buf);
       out.write(bytes, 0, bytes.length);
    }
 
-   private static byte[] init_BArr(String value) {
+   private static byte[] decodeHexOrBase64(String value) {
       String text = value == null ? "" : value.strip();
       if (text.isEmpty()) {
          return new byte[0];
       }
 
       try {
-         return AutismPayloadSupport.init_BArr(text);
+         return AutismPayloadSupport.parseHexOrBase64(text);
       } catch (Exception ignored) {
          return Base64.getDecoder().decode(text);
       }
    }
 
-   private static String read(String value) {
+   private static String unescapeString(String value) {
       if (value != null && !value.isEmpty()) {
          StringBuilder sb = new StringBuilder(value.length());
          boolean escaping = false;
@@ -491,7 +491,7 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static long init(String value, long min, long max) {
+   private static long parseLongInRange(String value, long min, long max) {
       String text = value == null ? "" : value.strip();
       long parsed = Long.decode(text.isEmpty() ? "0" : text);
       if (parsed >= min && parsed <= max) {
@@ -501,16 +501,16 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static int init_I(String value) {
+   private static int parseCharCode(String value) {
       String text = value == null ? "" : value.strip();
       if (text.isEmpty()) {
          return 0;
       } else {
-         return text.length() == 1 ? text.charAt(0) : (int)init(text, 0L, 65535L);
+         return text.length() == 1 ? text.charAt(0) : (int)parseLongInRange(text, 0L, 65535L);
       }
    }
 
-   private static void write(ByteArrayOutputStream out, String value) {
+   private static void writeByteArrayField(ByteArrayOutputStream out, String value) {
       String text = value == null ? "" : value.strip();
       String prefix = "raw";
       String body = text;
@@ -520,18 +520,18 @@ public final class PayloadFieldCodec {
          body = text.substring(split + 1).strip();
       }
 
-      byte[] bytes = init_BArr(body);
+      byte[] bytes = decodeHexOrBase64(body);
       switch (prefix) {
          case "varint":
          case "var":
-            load_V_ByteArrayOutputStr_I(out, bytes.length);
+            writeVarInt(out, bytes.length);
             break;
          case "short":
          case "ushort":
-            init_V_ByteArrayOutputStr_S(out, (short)bytes.length);
+            writeBigEndianShort(out, (short)bytes.length);
             break;
          case "int":
-            init_V_ByteArrayOutputStr_I(out, bytes.length);
+            writeBigEndianInt(out, bytes.length);
          case "raw":
          case "":
             break;
@@ -542,7 +542,7 @@ public final class PayloadFieldCodec {
       out.write(bytes, 0, bytes.length);
    }
 
-   private static void init(ByteArrayOutputStream out, String value, PayloadFieldCodec.Inner_StreamUtil mode, List<String> warnings) throws Exception {
+   private static void writeOptionalField(ByteArrayOutputStream out, String value, PayloadFieldCodec.Inner_StreamUtil mode, List<String> warnings) throws Exception {
       String text = value == null ? "" : value.strip();
       if (!text.isEmpty() && !"false".equalsIgnoreCase(text) && !"empty".equalsIgnoreCase(text)) {
          out.write(1);
@@ -550,35 +550,35 @@ public final class PayloadFieldCodec {
          int split = text.indexOf(58);
          PayloadFieldCodec.Inner_BufferHelper nestedType = PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING;
          if (split > 0) {
-            nestedType = PayloadFieldCodec.Inner_BufferHelper.init(text.substring(0, split));
+            nestedType = PayloadFieldCodec.Inner_BufferHelper.parse(text.substring(0, split));
             body = text.substring(split + 1).strip();
          }
 
-         init(out, new PayloadFieldCodec.Inner_CachePool(nestedType, body, true), mode, warnings);
+         encodeField(out, new PayloadFieldCodec.Inner_CachePool(nestedType, body, true), mode, warnings);
       } else {
          out.write(0);
       }
    }
 
-   private static void init_V_ByteArrayOutputStr_S(ByteArrayOutputStream out, short value) {
+   private static void writeBigEndianShort(ByteArrayOutputStream out, short value) {
       out.write(value >>> 8 & 0xFF);
       out.write(value & 255);
    }
 
-   private static void init_V_ByteArrayOutputStr_I(ByteArrayOutputStream out, int value) {
+   private static void writeBigEndianInt(ByteArrayOutputStream out, int value) {
       out.write(value >>> 24 & 0xFF);
       out.write(value >>> 16 & 0xFF);
       out.write(value >>> 8 & 0xFF);
       out.write(value & 0xFF);
    }
 
-   private static void init_V_ByteArrayOutputStr_J(ByteArrayOutputStream out, long value) {
+   private static void writeBigEndianLong(ByteArrayOutputStream out, long value) {
       for (int shift = 56; shift >= 0; shift -= 8) {
          out.write((int)(value >>> shift & 255L));
       }
    }
 
-   private static void load_V_ByteArrayOutputStr_I(ByteArrayOutputStream out, int value) {
+   private static void writeVarInt(ByteArrayOutputStream out, int value) {
       while ((value & -128) != 0) {
          out.write(value & 127 | 128);
          value >>>= 7;
@@ -587,7 +587,7 @@ public final class PayloadFieldCodec {
       out.write(value);
    }
 
-   private static void load_V_ByteArrayOutputStr_J(ByteArrayOutputStream out, long value) {
+   private static void writeVarLong(ByteArrayOutputStream out, long value) {
       while ((value & -128L) != 0L) {
          out.write((int)(value & 127L) | 128);
          value >>>= 7;
@@ -596,12 +596,12 @@ public final class PayloadFieldCodec {
       out.write((int)value);
    }
 
-   private static void init_V_ByteArrayOutputStr_UUID(ByteArrayOutputStream out, UUID uuid) {
-      init_V_ByteArrayOutputStr_J(out, uuid.getMostSignificantBits());
-      init_V_ByteArrayOutputStr_J(out, uuid.getLeastSignificantBits());
+   private static void writeUuid(ByteArrayOutputStream out, UUID uuid) {
+      writeBigEndianLong(out, uuid.getMostSignificantBits());
+      writeBigEndianLong(out, uuid.getLeastSignificantBits());
    }
 
-   private static long init_J(String value) {
+   private static long packBlockPos(String value) {
       String[] parts = (value == null ? "" : value).split(",");
       if (parts.length != 3) {
          throw new IllegalArgumentException("Block Pos must be x,y,z");
@@ -613,21 +613,21 @@ public final class PayloadFieldCodec {
       return x << 38 | z << 12 | y;
    }
 
-   private static String init_Str(byte[] bytes) {
+   private static String previewUtf8(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
-         String text = AutismPayloadSupport.write(bytes);
-         return text.isBlank() ? "<binary>" : init_Str_Str_I(text.replace('\n', ' '), 96);
+         String text = AutismPayloadSupport.decodePrintableUtf8(bytes);
+         return text.isBlank() ? "<binary>" : truncatePreview(text.replace('\n', ' '), 96);
       } else {
          return "";
       }
    }
 
-   private static String load(byte[] bytes) {
-      String decoded = AutismPayloadSupport.read(bytes);
-      return decoded == null ? "<not a full Minecraft String>" : init_Str_Str_I(decoded, 96);
+   private static String previewMcString(byte[] bytes) {
+      String decoded = AutismPayloadSupport.decodeMcString(bytes);
+      return decoded == null ? "<not a full Minecraft String>" : truncatePreview(decoded, 96);
    }
 
-   private static String read(byte[] bytes) {
+   private static String previewJavaUtf(byte[] bytes) {
       if (bytes != null && bytes.length >= 2) {
          int len = ByteBuffer.wrap(bytes, 0, 2).order(ByteOrder.BIG_ENDIAN).getShort() & '\uffff';
          if (len + 2 != bytes.length) {
@@ -635,7 +635,7 @@ public final class PayloadFieldCodec {
          }
 
          try {
-            return init_Str_Str_I(new String(bytes, 2, len, StandardCharsets.UTF_8), 96);
+            return truncatePreview(new String(bytes, 2, len, StandardCharsets.UTF_8), 96);
          } catch (Throwable ignored) {
             return "<invalid writeUTF>";
          }
@@ -644,7 +644,7 @@ public final class PayloadFieldCodec {
       }
    }
 
-   private static String init_Str_Str_I(String value, int max) {
+   private static String truncatePreview(String value, int max) {
       if (value == null) {
          return "";
       }
@@ -672,7 +672,7 @@ public final class PayloadFieldCodec {
       RAW_UTF8_STRING("writeStringBytes", "hello-from-client"),
       VAR_INT("writeVarInt", "0"),
       VAR_LONG("writeVarLong", "0"),
-      MINECRAFT_STRING("writeMcString", AutismPayloadSupport.init_Str()),
+      MINECRAFT_STRING("writeMcString", AutismPayloadSupport.defaultClientBrand()),
       IDENTIFIER("writeIdentifier", "minecraft:brand"),
       UUID_FIELD("writeUUID", "00000000-0000-0000-0000-000000000000"),
       BLOCK_POS("writeBlockPos", "0,64,0"),
@@ -683,23 +683,23 @@ public final class PayloadFieldCodec {
       TEXT_COMPONENT("writeComponent", "{\"text\":\"hello\"}"),
       JSON_STRING("writeComponent", "{\"text\":\"hello\"}");
 
-      private final String init_Str;
-      private final String load_Str;
+      private final String label;
+      private final String defaultValue;
 
       Inner_BufferHelper(String label, String defaultValue) {
-         this.init_Str = label;
-         this.load_Str = defaultValue;
+         this.label = label;
+         this.defaultValue = defaultValue;
       }
 
-      public String init() {
-         return this.init_Str;
+      public String label() {
+         return this.label;
       }
 
-      public String load() {
-         return this.load_Str;
+      public String defaultValue() {
+         return this.defaultValue;
       }
 
-      public static PayloadFieldCodec.Inner_BufferHelper init(String value) {
+      public static PayloadFieldCodec.Inner_BufferHelper parse(String value) {
          if (value != null && !value.isBlank()) {
             String normalized = value.strip().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
             if ("UUID".equals(normalized)) {
@@ -723,7 +723,7 @@ public final class PayloadFieldCodec {
                   return type;
                }
 
-               if (type.init().equalsIgnoreCase(value.strip())) {
+               if (type.label().equalsIgnoreCase(value.strip())) {
                   return type;
                }
             }
@@ -735,17 +735,17 @@ public final class PayloadFieldCodec {
       }
    }
 
-   public record Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper init_bJ_BufferHelper, String init_Str, boolean init_Z) {
+   public record Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper type, String init_Str, boolean enabled) {
       public Inner_CachePool {
-         init_bJ_BufferHelper = init_bJ_BufferHelper == null ? PayloadFieldCodec.Inner_BufferHelper.RAW_UTF8_STRING : init_bJ_BufferHelper;
+         type = type == null ? PayloadFieldCodec.Inner_BufferHelper.RAW_UTF8_STRING : type;
          init_Str = init_Str == null ? "" : init_Str;
       }
 
       public String init_Str() {
-         return this.init_bJ_BufferHelper.init() + " = " + this.init_Str;
+         return this.type.label() + " = " + this.init_Str;
       }
 
-      public String load() {
+      public String value() {
          return this.init_Str;
       }
    }
@@ -754,7 +754,7 @@ public final class PayloadFieldCodec {
       C2S,
       S2C;
 
-      public static PayloadFieldCodec.Inner_ConfigStore init(String value) {
+      public static PayloadFieldCodec.Inner_ConfigStore parse(String value) {
          if (value == null) {
             return C2S;
          } else {
@@ -763,53 +763,53 @@ public final class PayloadFieldCodec {
       }
    }
 
-   public record Inner_DataUtil(byte[] init_BArr, List<String> init_List, List<String> load, PayloadFieldCodec.Inner_NetHelper init_bJ_NetHelper) {
+   public record Inner_DataUtil(byte[] bytes, List<String> warnings, List<String> errors, PayloadFieldCodec.Inner_NetHelper preview) {
       public Inner_DataUtil {
-         init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
-         load = load == null ? List.of() : List.copyOf(load);
-         init_bJ_NetHelper = init_bJ_NetHelper == null ? PayloadFieldCodec.init_bJ_NetHelper(init_BArr) : init_bJ_NetHelper;
+         bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
+         warnings = warnings == null ? List.of() : List.copyOf(warnings);
+         errors = errors == null ? List.of() : List.copyOf(errors);
+         preview = preview == null ? PayloadFieldCodec.buildPreview(bytes) : preview;
       }
 
-      public byte[] init_BArr() {
-         return (byte[])this.init_BArr.clone();
+      public byte[] bytes() {
+         return (byte[])this.bytes.clone();
       }
 
-      public boolean init_Z() {
-         return this.load.isEmpty();
+      public boolean isValid() {
+         return this.errors.isEmpty();
       }
    }
 
    public record Inner_JsonUtil(
-      String init_Str,
-      PayloadFieldCodec.Inner_ConfigStore init_bJ_ConfigStore,
-      PayloadFieldCodec.Inner_TaskQueue init_bJ_TaskQueue,
-      PayloadFieldCodec.Inner_StreamUtil init_bJ_StreamUtil,
-      List<PayloadFieldCodec.Inner_CachePool> init_List
+      String channel,
+      PayloadFieldCodec.Inner_ConfigStore direction,
+      PayloadFieldCodec.Inner_TaskQueue phase,
+      PayloadFieldCodec.Inner_StreamUtil encodingMode,
+      List<PayloadFieldCodec.Inner_CachePool> fields
    ) {
       public Inner_JsonUtil {
-         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str.strip() : "minecraft:brand";
-         init_bJ_ConfigStore = init_bJ_ConfigStore == null ? PayloadFieldCodec.Inner_ConfigStore.C2S : init_bJ_ConfigStore;
-         init_bJ_TaskQueue = init_bJ_TaskQueue == null ? PayloadFieldCodec.Inner_TaskQueue.PLAY : init_bJ_TaskQueue;
-         init_bJ_StreamUtil = init_bJ_StreamUtil == null ? PayloadFieldCodec.Inner_StreamUtil.init("", init_Str) : init_bJ_StreamUtil;
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
+         channel = channel != null && !channel.isBlank() ? channel.strip() : "minecraft:brand";
+         direction = direction == null ? PayloadFieldCodec.Inner_ConfigStore.C2S : direction;
+         phase = phase == null ? PayloadFieldCodec.Inner_TaskQueue.PLAY : phase;
+         encodingMode = encodingMode == null ? PayloadFieldCodec.Inner_StreamUtil.parse("", channel) : encodingMode;
+         fields = fields == null ? List.of() : List.copyOf(fields);
       }
 
-      public PayloadFieldCodec.Inner_DataUtil init_bJ_DataUtil() {
+      public PayloadFieldCodec.Inner_DataUtil encode() {
          List<String> warnings = new ArrayList<>();
          List<String> errors = new ArrayList<>();
-         PayloadFieldCodec.init(this.init_Str, this.init_bJ_ConfigStore, this.init_bJ_TaskQueue, this.init_bJ_StreamUtil, warnings, errors);
+         PayloadFieldCodec.validateHeader(this.channel, this.direction, this.phase, this.encodingMode, warnings, errors);
          ByteArrayOutputStream out = new ByteArrayOutputStream();
-         List<PayloadFieldCodec.Inner_CachePool> enabledFields = this.init_List.stream().filter(PayloadFieldCodec.Inner_CachePool::init_Z).toList();
+         List<PayloadFieldCodec.Inner_CachePool> enabledFields = this.fields.stream().filter(PayloadFieldCodec.Inner_CachePool::enabled).toList();
          if (enabledFields.isEmpty()) {
             warnings.add("Payload is empty. Some servers reject empty custom payloads.");
          }
 
          for (PayloadFieldCodec.Inner_CachePool field : enabledFields) {
             try {
-               PayloadFieldCodec.init(out, field, this.init_bJ_StreamUtil, warnings);
+               PayloadFieldCodec.encodeField(out, field, this.encodingMode, warnings);
             } catch (Exception e) {
-               errors.add(field.init_bJ_BufferHelper().init() + ": " + AutismPayloadSupport.init(e));
+               errors.add(field.type().label() + ": " + AutismPayloadSupport.describeError(e));
             }
          }
 
@@ -822,12 +822,12 @@ public final class PayloadFieldCodec {
             errors.add("Payload is " + bytes.length + "B; serverbound custom payload max is 32767B.");
          }
 
-         PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.init_bJ_NetHelper(bytes);
+         PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(bytes);
          return new PayloadFieldCodec.Inner_DataUtil(bytes, warnings, errors, preview);
       }
    }
 
-   public record Inner_NetHelper(String init, String load, String read, String write) {
+   public record Inner_NetHelper(String hexPreview, String utf8Preview, String mcStringPreview, String javaUtfPreview) {
    }
 
    public enum Inner_StreamUtil {
@@ -838,17 +838,17 @@ public final class PayloadFieldCodec {
       JSON_TEXT("JSON/Text"),
       ADVANCED_MIXED("Advanced Mixed");
 
-      private final String init_Str;
+      private final String label;
 
       Inner_StreamUtil(String label) {
-         this.init_Str = label;
+         this.label = label;
       }
 
-      public String init() {
-         return this.init_Str;
+      public String label() {
+         return this.label;
       }
 
-      public static PayloadFieldCodec.Inner_StreamUtil init(String value, String channel) {
+      public static PayloadFieldCodec.Inner_StreamUtil parse(String value, String channel) {
          if (value != null && !value.isBlank()) {
             String normalized = value.strip().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
 
@@ -859,7 +859,7 @@ public final class PayloadFieldCodec {
             }
          }
 
-         if (AutismPayloadSupport.init_Z(channel)) {
+         if (AutismPayloadSupport.isBrandChannel(channel)) {
             return MINECRAFT_BYTEBUF;
          } else {
             return "bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip()) ? JAVA_DATA_OUTPUT : ADVANCED_MIXED;
@@ -871,7 +871,7 @@ public final class PayloadFieldCodec {
       PLAY,
       CONFIGURATION;
 
-      public static PayloadFieldCodec.Inner_TaskQueue init(String value) {
+      public static PayloadFieldCodec.Inner_TaskQueue parse(String value) {
          if (value == null) {
             return PLAY;
          }

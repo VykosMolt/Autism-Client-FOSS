@@ -302,7 +302,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("join.surfaceFailures", autismclient.b.DataUtil::load_V);
          runSafe("join.lagWatchdog", LagWatchdogReporter::init);
          runSafe("join.macroEditor", AutismMacroEditorOverlay::close_V_8);
-         runSafe("join.recipes", () -> AutoCraftingEngine.init_V(client));
+         runSafe("join.recipes", () -> AutoCraftingEngine.prewarmCatalog(client));
       });
       ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
          runSafe("leave.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));

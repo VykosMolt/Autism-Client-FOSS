@@ -9,14 +9,14 @@ public final class KeyValueLabelNode extends LayoutNode {
    public KeyValueLabelNode(String key, String value) {
       this.init_Str = key == null ? "" : key;
       this.load_Str = value == null ? "" : value;
-      this.write = 11.0F;
+      this.nodeHeight = 11.0F;
    }
 
    public KeyValueLabelNode init(String value) {
       String next = value == null ? "" : value;
       if (!this.load_Str.equals(next)) {
          this.load_Str = next;
-         this.load_V();
+         this.markLayoutDirty();
       }
 
       return this;
@@ -33,26 +33,26 @@ public final class KeyValueLabelNode extends LayoutNode {
    }
 
    public KeyValueLabelNode init_JsonUtil(boolean growX) {
-      super.init_TableIndex_Z(growX);
+      super.setGrowX(growX);
       return this;
    }
 
    @Override
-   public float init_F_SyncManager(LayoutContext context) {
+   public float measurePreferredWidth(LayoutContext context) {
       return autismclient.gui.f.UiHelper.init(context.font()).measureWidth(this.init_Str + this.load_Str);
    }
 
    @Override
-   public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
+   public float measureHeight(LayoutContext context, float availableWidth) {
       return 11.0F;
    }
 
    @Override
-   public void init_V_SyncManager(LayoutContext context) {
-      if (this.init_Z) {
+   public void render(LayoutContext context) {
+      if (this.nodeVisible) {
          autismclient.gui.ui.UiTextRenderer text = autismclient.gui.f.UiHelper.init(context.font());
-         int drawX = Math.round(this.init_F);
-         int drawY = Math.round(this.load_F) + Math.max(1, (Math.round(this.write) - 9) / 2);
+         int drawX = Math.round(this.nodeX);
+         int drawY = Math.round(this.nodeY) + Math.max(1, (Math.round(this.nodeHeight) - 9) / 2);
          String safeKey = this.init_Str == null ? "" : this.init_Str;
          String safeValue = this.load_Str == null ? "" : this.load_Str;
          text.draw(context.graphics(), safeKey, drawX, drawY, context.applyAlpha(this.init_I));
@@ -62,7 +62,7 @@ public final class KeyValueLabelNode extends LayoutNode {
             safeValue,
             drawX + keyWidth,
             drawY,
-            Math.max(1, Math.round(this.read_F) - keyWidth),
+            Math.max(1, Math.round(this.nodeWidth) - keyWidth),
             context.applyAlpha(this.load_I)
          );
       }

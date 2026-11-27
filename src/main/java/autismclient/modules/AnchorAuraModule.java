@@ -144,7 +144,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    public AnchorAuraModule() {
       super("anchor-aura", "AnchorAura", ae.init_ae, "Blows targets up with respawn anchors.");
-      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool;
+      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT;
       this.load_Map = new HashMap<>();
       this.read_Str = "";
       this.add(new BoolSetting("place", "Place", true).description("Place new respawn anchors.").build());
@@ -486,7 +486,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private void init_V_LivingEntity(LivingEntity previous) {
       if (previous != null
-         && (!previous.isAlive() || previous.isRemoved() || !(autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(previous) > 0.0))
+         && (!previous.isAlive() || previous.isRemoved() || !(autismclient.util.ExplosionDamageCalculator.effectiveHealth(previous) > 0.0))
          && this.bool("stop-on-kill")) {
          this.write_J = System.nanoTime() + this.integer("stop-delay") * 1000000L;
          this.init_JsonUtil.init("Press");
@@ -599,7 +599,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          AnchorAuraModule.Inner_CachePool plan;
-         try (autismclient.util.ExplosionDamageCalculator.SimScope pass = autismclient.util.ExplosionDamageCalculator.init_S_ConfigStore()) {
+         try (autismclient.util.ExplosionDamageCalculator.SimScope pass = autismclient.util.ExplosionDamageCalculator.beginSimScope()) {
             plan = this.init_BufferHelper_Cache_I(tick, range, budget);
             if (plan == null && this.load_BlockPos == null && enemy != null && !caPrime && this.sync()) {
                plan = this.init(enemy, tick, range, budget, higherRung || caCommitted);
@@ -651,7 +651,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                   MC.player,
                   this.init_Obj(),
                   this.decimal("rotation-speed-multiplier"),
-                  pin ? wire : plan.init_U_CachePool().init_U_DataUtil().init_ce_DataUtil(),
+                  pin ? wire : plan.init_U_CachePool().aim().goalRotation(),
                   pin
                );
          }
@@ -1051,7 +1051,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       if (enemy != null && enemy.isAlive() && this.read_Z_BlockPos(cell)) {
          autismclient.util.ExplosionDamageCalculator.SimOptions verify = this.init_S_CachePool_BlockPos(cell);
          if (shield != null || support != null) {
-            verify = verify.init(shield != null ? shield : support);
+            verify = verify.withPlacedObsidian(shield != null ? shield : support);
          }
 
          autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.init_S_BufferHelper_LivingEntity(
@@ -1211,8 +1211,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       ItemStack material = MC.player.getInventory().getItem(slot);
-      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init(
-         this.init_U_StateCache_BlockPos(cell, material, range).init_U_StateCache_U_StreamUtil(budget), outcome
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
+         this.init_U_StateCache_BlockPos(cell, material, range).withRayBudget(budget), outcome
       );
       return candidate == null
          ? null
@@ -1231,8 +1231,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          ItemStack material = MC.player.getInventory().getItem(slot);
-         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-            this.init_U_StateCache_BlockPos(supportCell, material, range).init_U_StateCache_U_StreamUtil(budget)
+         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
+            this.init_U_StateCache_BlockPos(supportCell, material, range).withRayBudget(budget)
          );
          return candidate == null
             ? null
@@ -1277,9 +1277,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       ItemStack stack = MC.player.getInventory().getItem(slot);
-      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
          this.init_U_StateCache_BlockPos(cell, stack, range, this.init_U_NetHelper_BlockPos_ItemStack(this.load_BlockPos, stack))
-            .init_U_StateCache_U_StreamUtil(budget)
+            .withRayBudget(budget)
       );
       return candidate == null
          ? null
@@ -1287,7 +1287,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private autismclient.util.BlockPlacementPlanner.Query init_U_StateCache_BlockPos(BlockPos cell, ItemStack stack, double range) {
-      return this.init_U_StateCache_BlockPos(cell, stack, range, autismclient.util.BlockPlacementPlanner.init(stack, MC.player, InteractionHand.MAIN_HAND));
+      return this.init_U_StateCache_BlockPos(cell, stack, range, autismclient.util.BlockPlacementPlanner.blockItemValidator(stack, MC.player, InteractionHand.MAIN_HAND));
    }
 
    private autismclient.util.BlockPlacementPlanner.Query init_U_StateCache_BlockPos(
@@ -1295,11 +1295,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    ) {
       LocalPlayer player = MC.player;
       autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(cell, player.getEyePosition(), range, placement)
-         .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil())
-         .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
-         .init_U_StateCache_Vec3(player.getEyePosition().add(player.getDeltaMovement()))
-         .init_U_StateCache_Z(player.isSecondaryUseActive())
-         .load(false);
+         .withFromRotation(this.load_ce_DataUtil())
+         .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
+         .withLeadEye(player.getEyePosition().add(player.getDeltaMovement()))
+         .withSneaking(player.isSecondaryUseActive())
+         .withAutoSneak(false);
       return request;
    }
 
@@ -1308,11 +1308,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(
             anchor, player.getEyePosition(), range, new AnchorAuraModule.Inner_DataUtil(anchor)
          )
-         .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil())
-         .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
-         .init_U_StateCache_Vec3(player.getEyePosition().add(player.getDeltaMovement()))
-         .init_U_StateCache_Z(player.isSecondaryUseActive())
-         .load(false);
+         .withFromRotation(this.load_ce_DataUtil())
+         .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
+         .withLeadEye(player.getEyePosition().add(player.getDeltaMovement()))
+         .withSneaking(player.isSecondaryUseActive())
+         .withAutoSneak(false);
       return request;
    }
 
@@ -1332,7 +1332,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          @Override
          public boolean init(BlockState state, BlockPos pos, boolean sneaking) {
             return !(state.getBlock() instanceof RespawnAnchorBlock)
-               ? !autismclient.util.BlockPlacementPlanner.init(state, pos, sneaking)
+               ? !autismclient.util.BlockPlacementPlanner.wouldInteractWithoutSneak(state, pos, sneaking)
                : anchor != null && anchor.equals(pos) && AnchorAuraModule.read_Z_ItemStack(held) && state.getValue(RespawnAnchorBlock.CHARGE) <= 0;
          }
       };
@@ -1350,13 +1350,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return null;
       }
 
-      autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_BlockPos_D(anchor, range).init_U_StateCache_U_StreamUtil(budget);
+      autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_BlockPos_D(anchor, range).withRayBudget(budget);
       Vec3 eye = MC.player.getEyePosition();
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = outcome != null ? outcome : new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       List<AnchorAuraModule.Inner_NetHelper> aims = new ArrayList<>();
 
-      for (Direction face : autismclient.util.BlockPlacementPlanner.init_DirectionArr) {
-         for (AABB rect : autismclient.util.BlockPlacementPlanner.init_AABBArr_BlockState(state, anchor, face, 3)) {
+      for (Direction face : autismclient.util.BlockPlacementPlanner.DEFAULT_FACE_ORDER) {
+         for (AABB rect : autismclient.util.BlockPlacementPlanner.extractFaceRects(state, anchor, face, 3)) {
             autismclient.util.BlockPlacementPlanner.SupportCandidate option = new autismclient.util.BlockPlacementPlanner.SupportCandidate(
                anchor,
                anchor,
@@ -1365,23 +1365,23 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                state,
                rect,
                init_D_AABB_Direction(rect, face),
-               autismclient.util.BlockPlacementPlanner.init(rect, face, eye),
+               autismclient.util.BlockPlacementPlanner.edgeMarginRatio(rect, face, eye),
                false,
                new autismclient.util.BlockPlacementPlanner.SupportFace(anchor, face)
             );
-            autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.init(option, request, refusal);
+            autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.computeAimSample(option, request, refusal);
             if (aim != null) {
                aims.add(new AnchorAuraModule.Inner_NetHelper(option, aim));
             }
          }
       }
 
-      aims.sort(Comparator.comparingDouble(candidatex -> candidatex.init_U_DataUtil().init_F()));
+      aims.sort(Comparator.comparingDouble(candidatex -> candidatex.init_U_DataUtil().turnDegrees()));
       int start = this.init_HashUtil.init(aims, AnchorAuraModule.Inner_NetHelper::init_U_TaskQueue);
 
       for (int step = 0; step < aims.size(); step++) {
          AnchorAuraModule.Inner_NetHelper aim = aims.get((start + step) % aims.size());
-         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(
+         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.verifyPlacement(
             aim.init_U_TaskQueue(), aim.init_U_DataUtil(), request, refusal
          );
          if (candidate != null) {
@@ -1401,8 +1401,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private static double init_D_AABB_Direction(AABB rect, Direction face) {
       Axis normal = face.getAxis();
-      Axis first = autismclient.util.BlockPlacementPlanner.init(normal, true);
-      Axis second = autismclient.util.BlockPlacementPlanner.init(normal, false);
+      Axis first = autismclient.util.BlockPlacementPlanner.tangentAxis(normal, true);
+      Axis second = autismclient.util.BlockPlacementPlanner.tangentAxis(normal, false);
       return (rect.max(first) - rect.min(first)) * (rect.max(second) - rect.min(second));
    }
 
@@ -1431,7 +1431,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       autismclient.util.BlockPlacementPlanner.Query gate = var10000;
-      return autismclient.util.BlockPlacementPlanner.init_BlockHitResult_U_CachePool(plan.init_U_CachePool(), wire, player.getEyePosition(), plan.init_D(), gate);
+      return autismclient.util.BlockPlacementPlanner.verifyWithRotation(plan.init_U_CachePool(), wire, player.getEyePosition(), plan.init_D(), gate);
    }
 
    private void init_V_BufferHelper_Cache(AnchorAuraModule.Inner_CachePool plan, BlockHitResult hit, int tick) {
@@ -1612,7 +1612,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                && this.init_Z_Entity(entity)
                && !AntiBotTracker.load_Z(entity)
                && !TeamsModule.init(entity, "killaura")
-               && autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity) > 0.0
+               && autismclient.util.ExplosionDamageCalculator.effectiveHealth(entity) > 0.0
                && entity.hurtTime <= this.integer("hurt-time")
          );
       if (found.isEmpty()) {
@@ -1653,7 +1653,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       double var10000;
       switch (mode) {
          case "HP":
-            var10000 = autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity);
+            var10000 = autismclient.util.ExplosionDamageCalculator.effectiveHealth(entity);
             break;
          case "FOV":
             var10000 = RotationMath.vectorAngleDegrees(RotationMath.ofPlayer(MC.player), RotationMath.lookAt(entity.getBoundingBox().getCenter(), eye));
@@ -1720,7 +1720,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             if (!this.bool("only-above") || !(centre.y < enemy.getY())) {
                double distanceSq = eye.distanceToSqr(centre);
                if (!(distanceSq > rangeSq)) {
-                  double bound = autismclient.util.ExplosionDamageCalculator.load_D(enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(cursor).init(lead));
+                  double bound = autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(cursor).withTargetBox(lead));
                   if (!(bound < damageFloor)) {
                      candidates.add(new AnchorAuraModule.Inner_StreamUtil(cursor.immutable(), centre, bound, distanceSq));
                   }
@@ -1784,7 +1784,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private static double init_D_S_BufferHelper_Z(autismclient.util.ExplosionDamageCalculator.DamagePair rank, boolean efficient) {
-      return efficient ? rank.load() - 2.5 * rank.read() : rank.load();
+      return efficient ? rank.load() - 2.5 * rank.selfDamage() : rank.load();
    }
 
    private AnchorAuraModule.Inner_CachePool init_BufferHelper_Cache_LivingEntity(LivingEntity enemy, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
@@ -1816,8 +1816,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                if (!(this.bool("only-above") && centre.y < enemy.getY())) {
                   double distanceSq = eye.distanceToSqr(centre);
                   if (!(distanceSq > rangeSq)) {
-                     autismclient.util.ExplosionDamageCalculator.SimOptions supported = this.init_S_CachePool_BlockPos(anchorCell).init(cursor.immutable());
-                     if (!(autismclient.util.ExplosionDamageCalculator.load_D(enemy, centre, 5.0F, supported.init(lead)) < floor)) {
+                     autismclient.util.ExplosionDamageCalculator.SimOptions supported = this.init_S_CachePool_BlockPos(anchorCell).withPlacedObsidian(cursor.immutable());
+                     if (!(autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, centre, 5.0F, supported.withTargetBox(lead)) < floor)) {
                         if (++evaluated > 32) {
                            break;
                         }
@@ -1938,7 +1938,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             Vec3 centre = init_Vec3_BlockPos(cursor);
             if (!this.bool("only-above") || !(centre.y < enemy.getY())) {
                double distanceSq = eye.distanceToSqr(centre);
-               if (!(distanceSq > rangeSq) && !(autismclient.util.ExplosionDamageCalculator.load_D(enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(cursor)) < damageFloor)) {
+               if (!(distanceSq > rangeSq) && !(autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(cursor)) < damageFloor)) {
                   if (evaluated >= 32) {
                      break;
                   }
@@ -1947,7 +1947,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                   autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
                      enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(cursor), autismclient.util.TargetLeadDamageEstimator.init(enemy)
                   );
-                  if (!(rank.load() < damageFloor) && !(rank.read() <= selfCeiling)) {
+                  if (!(rank.load() < damageFloor) && !(rank.selfDamage() <= selfCeiling)) {
                      needsShield.add(new AnchorAuraModule.Inner_BufferHelper(cursor.immutable(), rank, distanceSq));
                   }
                }
@@ -1989,7 +1989,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       autismclient.util.ExplosionDamageCalculator.DamagePair before = autismclient.util.TargetLeadDamageEstimator.init(
          enemy, centre, 5.0F, this.init_S_CachePool_BlockPos(anchorCell), autismclient.util.TargetLeadDamageEstimator.init(enemy)
       );
-      if (before.read() < 2.0) {
+      if (before.selfDamage() < 2.0) {
          return null;
       }
 
@@ -2004,14 +2004,14 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (BlockPos shieldCell : this.init_List_BlockPos(anchorCell)) {
          if (obsidianAvailable && this.init_Z_BlockPos_BlockPos(shieldCell, anchorCell) || glowstoneAvailable && this.update(shieldCell)) {
-            autismclient.util.ExplosionDamageCalculator.SimOptions verify = this.init_S_CachePool_BlockPos(anchorCell).init(shieldCell);
+            autismclient.util.ExplosionDamageCalculator.SimOptions verify = this.init_S_CachePool_BlockPos(anchorCell).withPlacedObsidian(shieldCell);
             autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
                enemy, centre, 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.init(enemy)
             );
-            if (!autismclient.util.ExplosionDamageCalculator.init_Z_D(rank.read())
-               && autismclient.util.BlastShieldPosFinder.init(before.load(), before.read(), rank.load(), rank.read(), damageFloor, selfCeiling, this.bool("efficient"))
+            if (!autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
+               && autismclient.util.BlastShieldPosFinder.init(before.load(), before.selfDamage(), rank.load(), rank.selfDamage(), damageFloor, selfCeiling, this.bool("efficient"))
                && (!this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(centre, 5.0F, verify, this.decimal("max-friend-damage")))) {
-               double value = rank.load() - rank.read();
+               double value = rank.load() - rank.selfDamage();
                if (value > bestValue) {
                   bestValue = value;
                   best = shieldCell;
@@ -2056,13 +2056,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private boolean write(BlockPos cell) {
       BlockPos below = cell.below();
-      return autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(below), below, false);
+      return autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(below), below, false);
    }
 
    private boolean update(BlockPos cell) {
       for (Direction face : Direction.values()) {
          BlockPos support = cell.relative(face);
-         if (autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(support), support, false)) {
+         if (autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(support), support, false)) {
             return true;
          }
       }
@@ -2092,7 +2092,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (Direction side : Direction.values()) {
          BlockPos support = anchor.relative(side);
-         if (!support.equals(cover) && autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(support), support, false)) {
+         if (!support.equals(cover) && autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(support), support, false)) {
             Direction face = side.getOpposite();
             Vec3 point = Vec3.atCenterOf(support).add(face.getStepX() * 0.499, face.getStepY() * 0.499, face.getStepZ() * 0.499);
             if (!(eye.distanceToSqr(point) > range * range) && !box.clip(eye, point).isPresent()) {
@@ -2329,7 +2329,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private void update_V_2() {
-      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(this.bool("terrain")).load(true);
+      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withIgnoreTerrain(this.bool("terrain")).withEstimateProtection(true);
       this.load_Map.clear();
    }
 
@@ -2340,7 +2340,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return cached;
       }
 
-      autismclient.util.ExplosionDamageCalculator.SimOptions options = this.init_S_CachePool.init(List.of(key)).init(autismclient.util.ExplosionDamageCalculator.load(MC.level, init_Vec3_BlockPos(key)));
+      autismclient.util.ExplosionDamageCalculator.SimOptions options = this.init_S_CachePool.withExcludedBlocks(List.of(key)).withDamageSource(autismclient.util.ExplosionDamageCalculator.bedAnchorDamageSource(MC.level, init_Vec3_BlockPos(key)));
       this.load_Map.put(key, options);
       return options;
    }
@@ -2357,20 +2357,20 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return new autismclient.util.ExplosionDamageCalculator.DamagePair(0.0, 1.0 / 0.0);
       }
 
-      double target = autismclient.util.ExplosionDamageCalculator.read(enemy, centre, 5.0F, options.init(lead));
+      double target = autismclient.util.ExplosionDamageCalculator.calculateDamageCached(enemy, centre, 5.0F, options.withTargetBox(lead));
       LocalPlayer player = MC.player;
-      double self = enemy == player ? target : autismclient.util.ExplosionDamageCalculator.read(centre, 5.0F, options);
+      double self = enemy == player ? target : autismclient.util.ExplosionDamageCalculator.calculateSelfDamageCached(centre, 5.0F, options);
       return new autismclient.util.ExplosionDamageCalculator.DamagePair(target, self);
    }
 
    private boolean init_Z_S_BufferHelper(autismclient.util.ExplosionDamageCalculator.DamagePair rank) {
-      return autismclient.util.ExplosionDamageCalculator.init_Z_D(rank.read())
+      return autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
          ? false
-         : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.read(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
+         : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
    }
 
    private boolean sync(BlockPos cell) {
-      return !autismclient.util.ExplosionDamageCalculator.init_Z_D(this.init_D_BlockPos(cell));
+      return !autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(this.init_D_BlockPos(cell));
    }
 
    private boolean flush(BlockPos cell) {
@@ -2383,7 +2383,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private double init_D_BlockPos(BlockPos cell) {
-      return autismclient.util.ExplosionDamageCalculator.read(init_Vec3_BlockPos(cell), 5.0F, this.load_S_CachePool_BlockPos(cell));
+      return autismclient.util.ExplosionDamageCalculator.calculateSelfDamageCached(init_Vec3_BlockPos(cell), 5.0F, this.load_S_CachePool_BlockPos(cell));
    }
 
    private autismclient.util.ExplosionDamageCalculator.SimOptions load_S_CachePool_BlockPos(BlockPos cell) {
@@ -2391,10 +2391,10 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       if (this.poll_BlockPos == null || !cell.equals(this.load_BlockPos)) {
          return options;
       } else if (this.open(cell)) {
-         return options.init(this.poll_BlockPos);
+         return options.withPlacedObsidian(this.poll_BlockPos);
       } else {
          return MC.level.getBlockState(this.poll_BlockPos) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.poll_BlockPos)
-            ? options.init(List.of(cell, this.poll_BlockPos))
+            ? options.withExcludedBlocks(List.of(cell, this.poll_BlockPos))
             : options;
       }
    }
@@ -2418,12 +2418,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       double self = this.init_D_BlockPos(cell);
-      return self <= this.decimal("max-self-damage") && !autismclient.util.ExplosionDamageCalculator.init_Z_D(self) && this.close(cell);
+      return self <= this.decimal("max-self-damage") && !autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(self) && this.close(cell);
    }
 
    private static int init_I_S_BufferHelper_S_BufferHelper(autismclient.util.ExplosionDamageCalculator.DamagePair first, autismclient.util.ExplosionDamageCalculator.DamagePair second) {
       int byBucket = Double.compare(init_D_D(second.load()), init_D_D(first.load()));
-      return byBucket != 0 ? byBucket : Double.compare(first.read(), second.read());
+      return byBucket != 0 ? byBucket : Double.compare(first.selfDamage(), second.selfDamage());
    }
 
    private static double init_D_D(double targetDamage) {

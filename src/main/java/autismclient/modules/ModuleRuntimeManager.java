@@ -612,7 +612,7 @@ public final class ModuleRuntimeManager {
    public void invalidatePayloadFilterCache(boolean refreshSubscriptions) {
       this.payloadFilterRuleCacheValid = false;
       if (this.payloadFilterManager != null) {
-         this.payloadFilterManager.init_V();
+         this.payloadFilterManager.reloadFromConfig();
       }
 
       if (refreshSubscriptions) {
@@ -680,7 +680,7 @@ public final class ModuleRuntimeManager {
 
    public boolean captureCustomPayloadBytes(byte[] frameBytes, String direction, String protocolPhase, String source) {
       if (!aD.init_Z() && frameBytes != null && frameBytes.length != 0) {
-         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init(frameBytes, direction, protocolPhase);
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectWireFrame(frameBytes, direction, protocolPhase);
          if (snapshot == null) {
             return false;
          }
@@ -711,12 +711,12 @@ public final class ModuleRuntimeManager {
 
             captured = true;
          } else if (passiveWork) {
-            PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(snapshot.load_Str(), direction);
+            PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(snapshot.channel(), direction);
             if (filterMatch != null) {
                if (logger != null) {
                   logger.init_V_J(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
                } else {
-                  PayloadNotificationTracker.init(snapshot.load_Str(), direction, filterMatch);
+                  PayloadNotificationTracker.init(snapshot.channel(), direction, filterMatch);
                   this.bufferEarlyPayloadSnapshot(snapshot, direction, payloadClassForDirection(direction));
                }
 
@@ -748,7 +748,7 @@ public final class ModuleRuntimeManager {
 
             return captured;
          } else {
-            CustomPacketPayload payload = AutismPayloadSupport.init(packet);
+            CustomPacketPayload payload = AutismPayloadSupport.extractPayload(packet);
             if (payload == null) {
                return false;
             }
@@ -757,8 +757,8 @@ public final class ModuleRuntimeManager {
                return true;
             }
 
-            String channel = AutismPayloadSupport.init_Str(payload);
-            AutismPayloadSupport.init_V(packet, protocolPhase);
+            String channel = AutismPayloadSupport.extractChannelId(payload);
+            AutismPayloadSupport.rememberProtocolPhase(packet, protocolPhase);
             if (this.shouldStudyPayloads()) {
                this.studyPayloadPacket(packet, direction);
             }
@@ -824,8 +824,8 @@ public final class ModuleRuntimeManager {
          int size = -1;
 
          try {
-            CustomPacketPayload payload = AutismPayloadSupport.init(packet);
-            size = AutismPayloadSupport.load(payload).length;
+            CustomPacketPayload payload = AutismPayloadSupport.extractPayload(packet);
+            size = AutismPayloadSupport.encodePayloadBytes(payload).length;
          } catch (Throwable var8) {
          }
 
@@ -846,10 +846,10 @@ public final class ModuleRuntimeManager {
          AutismClientAddon.LOG
             .info(
                "[Autism Payload] {} {} {} {}B via {}",
-               snapshot.init_Str() == null ? "" : snapshot.init_Str(),
-               snapshot.update() == null ? "" : snapshot.update(),
-               snapshot.load_Str() != null && !snapshot.load_Str().isBlank() ? snapshot.load_Str() : "<unknown>",
-               snapshot.init_I(),
+               snapshot.direction() == null ? "" : snapshot.direction(),
+               snapshot.protocolPhase() == null ? "" : snapshot.protocolPhase(),
+               snapshot.channel() != null && !snapshot.channel().isBlank() ? snapshot.channel() : "<unknown>",
+               snapshot.byteLength(),
                source == null ? "" : source
             );
       }
@@ -867,7 +867,7 @@ public final class ModuleRuntimeManager {
 
    private void bufferEarlyPayloadPacket(Packet<?> packet, String direction) {
       long perf = bK.read_J();
-      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
       if (snapshot != null) {
          this.bufferEarlyPayloadSnapshot(snapshot, direction, packet.getClass());
          bK.load("join.passivePayload.snapshot", perf);
@@ -890,7 +890,7 @@ public final class ModuleRuntimeManager {
    private PayloadChannelFilterManager.Inner_StreamUtil matchPayloadFilter(String channel, String direction) {
       if (channel != null && !channel.isBlank()) {
          PayloadChannelFilterManager listeners = this.getPayloadFilterManager();
-         return listeners.init_Z() ? listeners.init_bB_StreamUtil_Str_Str(channel, direction) : null;
+         return listeners.hasAnyEnabledRule() ? listeners.findMatchingRule(channel, direction) : null;
       } else {
          return null;
       }
@@ -930,17 +930,17 @@ public final class ModuleRuntimeManager {
    private String fingerprintPayloadSnapshot(AutismPayloadSupport.PayloadEntry snapshot) {
       return snapshot == null
          ? ""
-         : (snapshot.init_Str() == null ? "" : snapshot.init_Str())
+         : (snapshot.direction() == null ? "" : snapshot.direction())
             + "|"
-            + (snapshot.update() == null ? "" : snapshot.update())
+            + (snapshot.protocolPhase() == null ? "" : snapshot.protocolPhase())
             + "|"
-            + snapshot.load_I()
+            + snapshot.packetId()
             + "|"
-            + (snapshot.load_Str() == null ? "" : snapshot.load_Str())
+            + (snapshot.channel() == null ? "" : snapshot.channel())
             + "|"
-            + snapshot.init_I()
+            + snapshot.byteLength()
             + "|"
-            + Arrays.hashCode(snapshot.init_BArr());
+            + Arrays.hashCode(snapshot.rawBytes());
    }
 
    private boolean hasSeenPayloadFingerprint(String fingerprint) {
@@ -1062,16 +1062,16 @@ public final class ModuleRuntimeManager {
 
    private void studyPayloadPacket(Packet<?> packet, String direction) {
       if (packet != null && AutismPacketLoggerOverlay.init_Z_Packet(packet)) {
-         CustomPacketPayload payload = AutismPayloadSupport.init(packet);
+         CustomPacketPayload payload = AutismPayloadSupport.extractPayload(packet);
          if (payload != null) {
-            String channel = AutismPayloadSupport.init_Str(payload);
+            String channel = AutismPayloadSupport.extractChannelId(payload);
             boolean inbound = "S2C".equalsIgnoreCase(direction);
             if (inbound) {
                PayloadSubscriptionManager.load_V(channel);
             }
 
             try {
-               AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+               AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
                PayloadStudyTracker.init_Z(snapshot);
                if (inbound) {
                   PayloadSubscriptionManager.init(snapshot);
@@ -1081,7 +1081,7 @@ public final class ModuleRuntimeManager {
 
             if (inbound && PluginSignatureCatalog.init_Z(channel)) {
                try {
-                  AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+                  AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
                   if (snapshot == null) {
                      return;
                   }
@@ -1102,9 +1102,9 @@ public final class ModuleRuntimeManager {
 
    private void studyPayloadSnapshot(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot != null) {
-         String channel = snapshot.load_Str();
+         String channel = snapshot.channel();
          PayloadStudyTracker.init_Z(snapshot);
-         boolean inbound = "S2C".equalsIgnoreCase(snapshot.init_Str());
+         boolean inbound = "S2C".equalsIgnoreCase(snapshot.direction());
          if (inbound) {
             PayloadSubscriptionManager.load_V(channel);
             PayloadSubscriptionManager.init(snapshot);

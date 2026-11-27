@@ -595,10 +595,10 @@ public class MacroClipboardCodec {
 
       if (packet instanceof ServerboundCustomPayloadPacket) {
          tag.putBoolean("customPayloadPacket", true);
-         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, "C2S");
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, "C2S");
          if (snapshot != null) {
-            tag.putString("payloadChannel", snapshot.load_Str());
-            tag.putByteArray("payloadBytes", snapshot.init_BArr());
+            tag.putString("payloadChannel", snapshot.channel());
+            tag.putByteArray("payloadBytes", snapshot.rawBytes());
             return tag;
          }
       }
@@ -615,7 +615,7 @@ public class MacroClipboardCodec {
             String channel = tag.getStringOr("payloadChannel", "");
             byte[] bytes = tag.getByteArray("payloadBytes").orElse(new byte[0]);
             if (!channel.isBlank()) {
-               return AutismPayloadSupport.init_ServerboundCustomP(channel, bytes);
+               return AutismPayloadSupport.buildServerboundPacket(channel, bytes);
             }
          }
 

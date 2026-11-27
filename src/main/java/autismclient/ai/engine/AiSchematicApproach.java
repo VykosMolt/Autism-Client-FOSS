@@ -699,16 +699,16 @@ public final class AiSchematicApproach implements AiOperation {
                if (hit != null) {
                   double height = PlacementGoal.init(this.init_Minecraft, target.pos(), target.item(), target.constraint(), true);
                   if (probe.init_Z
-                     || !new AABB(probe.init_BlockPos.below()).clip(probe.init_Vec3.add(0.0, height, 0.0), hit.init_BlockHitResult().getLocation()).isPresent()
+                     || !new AABB(probe.init_BlockPos.below()).clip(probe.init_Vec3.add(0.0, height, 0.0), hit.hit().getLocation()).isPresent()
                      )
                    {
                      probe.init_Map
                         .put(
                            targetIndex,
                            new PlacementGoal.ClickGeometry(
-                              hit.init_BlockHitResult().getBlockPos(),
-                              hit.init_BlockHitResult().getLocation(),
-                              hit.init_BlockHitResult().getDirection(),
+                              hit.hit().getBlockPos(),
+                              hit.hit().getLocation(),
+                              hit.hit().getDirection(),
                               probe.init_D - 1.0,
                               height + probe.init_D - 1.0
                            )
@@ -1098,7 +1098,7 @@ public final class AiSchematicApproach implements AiOperation {
          double reach = this.init_Minecraft.player.blockInteractionRange() - 0.25;
          BlockPlacementPlanner.HitValidator placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
             && PlacementGoal.init(this.init_Minecraft, cell, target.item(), constraint, eye, body, hitx);
-         BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target.pos(), eye, reach, placement).load(true);
+         BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target.pos(), eye, reach, placement).withAutoSneak(true);
          if (constraint != null) {
             EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
 
@@ -1108,41 +1108,41 @@ public final class AiSchematicApproach implements AiOperation {
                }
             }
 
-            request.init_U_StateCache_EnumSet(faces);
+            request.withAllowedFaces(faces);
             if (constraint.clickYaw() != null) {
-               request.init_U_StateCache_ce_DataUtil(new RotationMath.Rotation(constraint.clickYaw(), 0.0F));
+               request.withFromRotation(new RotationMath.Rotation(constraint.clickYaw(), 0.0F));
             }
          }
 
          ArrayList<BlockPlacementPlanner.SupportCandidate> options = new ArrayList<>();
-         BlockPlacementPlanner.init(request, options);
+         BlockPlacementPlanner.collectCandidates(request, options);
          int rays = 0;
 
          for (BlockPlacementPlanner.SupportCandidate option : options) {
-            if (!clear.contains(option.load_BlockPos())) {
+            if (!clear.contains(option.supportPos())) {
                AABB rect = constraint != null && constraint.highHalf() != null
-                  ? PlacementGoal.init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf())
-                  : option.init_AABB();
+                  ? PlacementGoal.init_AABB_AABB(option.faceRect(), option.face(), option.supportPos().getY(), constraint.highHalf())
+                  : option.faceRect();
                if (rect != null && constraint != null && constraint.crouchForLook()) {
-                  rect = PlacementGoal.init_AABB_AABB(rect, option.init_Direction(), eye);
+                  rect = PlacementGoal.init_AABB_AABB(rect, option.face(), eye);
                }
 
                if (rect != null) {
                   BlockPlacementPlanner.SupportCandidate clipped = new BlockPlacementPlanner.SupportCandidate(
-                     option.init_BlockPos(),
-                     option.load_BlockPos(),
-                     option.init_Direction(),
-                     option.init_I(),
-                     option.init_BlockState(),
+                     option.targetCell(),
+                     option.supportPos(),
+                     option.face(),
+                     option.placementForm(),
+                     option.supportState(),
                      rect,
-                     option.init_D(),
-                     option.load_D(),
-                     option.init_Z(),
-                     option.init_U_BufferHelper()
+                     option.faceArea(),
+                     option.edgeMarginRatio(),
+                     option.requiresSneak(),
+                     option.supportFace()
                   );
-                  BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.init(clipped, request, null);
+                  BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.computeAimSample(clipped, request, null);
                   if (aim != null) {
-                     Vec3 end = eye.add(Vec3.directionFromRotation(aim.load().pitch(), aim.load().yaw()).scale(reach));
+                     Vec3 end = eye.add(Vec3.directionFromRotation(aim.emittedRotation().pitch(), aim.emittedRotation().yaw()).scale(reach));
                      BlockHitResult hit = view.clip(
                         new ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, this.init_Minecraft.player)
                      );

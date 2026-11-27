@@ -7,13 +7,13 @@ public final class ScrollListLayout {
    private ScrollListLayout() {
    }
 
-   public static ScrollListLayout.ListLayout init(
+   public static ScrollListLayout.ListLayout compute(
       int x, int y, int width, int height, int rowCount, int rowHeight, int rowStep, int scrollOffset, int scrollbarWidth, int scrollbarGutter
    ) {
-      return init(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, 2, 5, true);
+      return compute(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, 2, 5, true);
    }
 
-   public static ScrollListLayout.ListLayout init(
+   public static ScrollListLayout.ListLayout compute(
       int x,
       int y,
       int width,
@@ -26,10 +26,10 @@ public final class ScrollListLayout {
       int scrollbarGutter,
       int contentInset
    ) {
-      return init(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, contentInset, 5, true);
+      return compute(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, contentInset, 5, true);
    }
 
-   public static ScrollListLayout.ListLayout init(
+   public static ScrollListLayout.ListLayout compute(
       int x,
       int y,
       int width,
@@ -50,7 +50,7 @@ public final class ScrollListLayout {
       int safeRowStep = Math.max(1, rowStep);
       int safeInset = Math.max(0, contentInset);
       int innerHeight = Math.max(1, safeHeight - safeInset * 2);
-      int viewHeight = alignRows ? init(innerHeight, safeRowStep) : innerHeight;
+      int viewHeight = alignRows ? alignViewHeight(innerHeight, safeRowStep) : innerHeight;
       int contentHeight = Math.max(0, rowCount) * safeRowStep;
       int maxScroll = Math.max(0, contentHeight - viewHeight);
       int clampedScroll = Math.max(0, Math.min(scrollOffset, maxScroll));
@@ -69,7 +69,7 @@ public final class ScrollListLayout {
       );
    }
 
-   private static int init(int innerHeight, int rowStep) {
+   private static int alignViewHeight(int innerHeight, int rowStep) {
       int safeHeight = Math.max(0, innerHeight);
       int safeStep = Math.max(1, rowStep);
       if (safeHeight != 0 && safeStep > 1) {
@@ -81,40 +81,40 @@ public final class ScrollListLayout {
    }
 
    public record ListLayout(
-      int init_I,
-      int load,
-      int read,
-      int write,
-      int update,
-      int sync,
-      int flush,
-      int close,
-      int open,
-      int poll,
-      int push,
-      int pop,
-      ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil
+      int x,
+      int y,
+      int width,
+      int height,
+      int rowHeight,
+      int rowStep,
+      int viewHeight,
+      int contentHeight,
+      int maxScroll,
+      int clampedScroll,
+      int contentWidth,
+      int contentInset,
+      ScrollbarMetricsHelper.Metrics scrollbar
    ) {
-      public void init(GuiGraphicsExtractor graphics, boolean focused) {
-         ListRowRenderer.drawListFrame(graphics, this.init_I, this.load, this.read, this.write, focused);
+      public void drawFrame(GuiGraphicsExtractor graphics, boolean focused) {
+         ListRowRenderer.drawListFrame(graphics, this.x, this.y, this.width, this.height, focused);
       }
 
-      public void init(GuiGraphicsExtractor graphics) {
+      public void pushContentClip(GuiGraphicsExtractor graphics) {
          autismclient.gui.ui.layout.LayoutViewport.create(1.0F)
-            .pushClip(graphics, this.init_I + this.pop, this.load + this.pop, this.init_I + this.pop + this.push, this.load + this.pop + this.flush);
+            .pushClip(graphics, this.x + this.contentInset, this.y + this.contentInset, this.x + this.contentInset + this.contentWidth, this.y + this.contentInset + this.viewHeight);
       }
 
-      public void load(GuiGraphicsExtractor graphics) {
+      public void popContentClip(GuiGraphicsExtractor graphics) {
          autismclient.gui.ui.layout.LayoutViewport.create(1.0F).popClip(graphics);
       }
 
-      public void init(int rowCount, BiConsumer<Integer, Integer> consumer) {
-         int firstVisible = this.poll / this.sync;
-         int rowY = this.load + this.pop - this.poll % this.sync;
-         int rowBottom = this.load + this.pop + this.flush;
+      public void forEachVisibleRow(int rowCount, BiConsumer<Integer, Integer> consumer) {
+         int firstVisible = this.clampedScroll / this.rowStep;
+         int rowY = this.y + this.contentInset - this.clampedScroll % this.rowStep;
+         int rowBottom = this.y + this.contentInset + this.viewHeight;
 
-         for (int index = firstVisible; index < rowCount && rowY < rowBottom; rowY += this.sync) {
-            if (rowY + this.update > this.load + this.pop) {
+         for (int index = firstVisible; index < rowCount && rowY < rowBottom; rowY += this.rowStep) {
+            if (rowY + this.rowHeight > this.y + this.contentInset) {
                consumer.accept(index, rowY);
             }
 
@@ -122,8 +122,8 @@ public final class ScrollListLayout {
          }
       }
 
-      public void init(GuiGraphicsExtractor graphics, double mouseX, double mouseY, boolean dragging) {
-         ScrollbarMetricsHelper.render(graphics, this.init_PoolEntry_DataUtil, this.init_PoolEntry_DataUtil.containsTrack(mouseX, mouseY), dragging);
+      public void renderScrollbar(GuiGraphicsExtractor graphics, double mouseX, double mouseY, boolean dragging) {
+         ScrollbarMetricsHelper.render(graphics, this.scrollbar, this.scrollbar.containsTrack(mouseX, mouseY), dragging);
       }
    }
 }

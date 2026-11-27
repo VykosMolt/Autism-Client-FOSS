@@ -1,7 +1,7 @@
 package autismclient.gui.ui.widgets;
 
 public interface FocusableInput {
-   boolean load_Z();
+   boolean isFocused();
 
-   void init_V_Z(boolean var1);
+   void setFocused(boolean var1);
 }

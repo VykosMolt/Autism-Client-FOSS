@@ -1622,17 +1622,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private RotationMath.Rotation init_ce_DataUtil_BlockPos_ItemStack(BlockPos cell, ItemStack seedStack) {
-      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
          new autismclient.util.BlockPlacementPlanner.Query(
-               cell, MC.player.getEyePosition(), this.init_D_4(), autismclient.util.BlockPlacementPlanner.init(seedStack, MC.player, InteractionHand.MAIN_HAND)
+               cell, MC.player.getEyePosition(), this.init_D_4(), autismclient.util.BlockPlacementPlanner.blockItemValidator(seedStack, MC.player, InteractionHand.MAIN_HAND)
             )
-            .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil_2())
-            .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
-            .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
-            .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
+            .withFromRotation(this.load_ce_DataUtil_2())
+            .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
+            .withSneaking(MC.player.isSecondaryUseActive())
+            .withAutoSneak(false)
+            .withRayBudget(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
-      return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
+      return candidate == null ? null : candidate.aim().goalRotation();
    }
 
    private RotationMath.Rotation read_ce_DataUtil(BlockPos dirt) {
@@ -1655,17 +1655,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private RotationMath.Rotation init_ce_DataUtil_BlockPos_BlockPos(BlockPos dirt, BlockPos cell) {
-      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
          new autismclient.util.BlockPlacementPlanner.Query(
                cell, MC.player.getEyePosition(), this.init_D_4(), (hit, target) -> hit.getBlockPos().equals(dirt) && hit.getDirection() != Direction.DOWN
             )
-            .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil_2())
-            .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
-            .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
-            .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
+            .withFromRotation(this.load_ce_DataUtil_2())
+            .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
+            .withSneaking(MC.player.isSecondaryUseActive())
+            .withAutoSneak(false)
+            .withRayBudget(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
-      return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
+      return candidate == null ? null : candidate.aim().goalRotation();
    }
 
    private void init_V_DirectionArr_BlockPos(Direction[] sides, BlockPos dirt) {
@@ -1856,7 +1856,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             BlockState placed = target.init_Block().getStateForPlacement(context);
             if (placed != null && placed.canSurvive(MC.level, cell) && MC.level.isUnobstructed(placed, cell, CollisionContext.placementContext(MC.player))) {
                BlockPos clicked = ray.getBlockPos();
-               if (!autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
+               if (!autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
                   return null;
                }
 

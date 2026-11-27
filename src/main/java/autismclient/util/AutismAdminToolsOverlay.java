@@ -183,7 +183,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
                   if (this.init_RefQueue != null) {
                      graphics.nextStratum();
-                     this.init_RefQueue.init_V_SyncManager(autismclient.gui.f.UiHelper.init(graphics, mc.font, mouseX, mouseY));
+                     this.init_RefQueue.render(autismclient.gui.f.UiHelper.init(graphics, mc.font, mouseX, mouseY));
                   }
                }
             }
@@ -1084,12 +1084,12 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       int mouseX,
       int mouseY
    ) {
-      boolean open = this.init_RefQueue != null && this.init_Setting == option && this.init_RefQueue.init_NetHelper().equals(bounds);
+      boolean open = this.init_RefQueue != null && this.init_Setting == option && this.init_RefQueue.getBounds().equals(bounds);
       autismclient.gui.ui.widgets.WidgetRenderFacade.init(context, bounds, label, bounds.init_Z(mouseX, mouseY), open);
       this.init_V_AutismAdminToolsOv(
          new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.DROPDOWN, bounds, option, String.join("\u0000", choices))
       );
-      if (!open && this.init_RefQueue != null && this.init_RefQueue.init_NetHelper().equals(bounds)) {
+      if (!open && this.init_RefQueue != null && this.init_RefQueue.getBounds().equals(bounds)) {
          this.init_Setting = option;
       }
    }
@@ -1157,8 +1157,8 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_EventBus_I_2((int)mouseX, (int)mouseY, button);
-         if (!this.init_RefQueue.init_Z_2()) {
+         this.init_RefQueue.onMouseClicked((int)mouseX, (int)mouseY, button);
+         if (!this.init_RefQueue.isOpen()) {
             this.open_V_3();
          }
 
@@ -1217,7 +1217,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                            }
                         }
                      });
-                     this.init_RefQueue.init_V_2();
+                     this.init_RefQueue.open();
                      return true;
                   case KEYBIND:
                      this.load_Setting = hit.init_Setting;
@@ -1514,7 +1514,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.load((int)mouseX, (int)mouseY, button);
+         this.init_RefQueue.onMouseReleased((int)mouseX, (int)mouseY, button);
       }
 
       this.sync_Z = false;
@@ -1542,7 +1542,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY);
+         this.init_RefQueue.onMouseDragged((int)mouseX, (int)mouseY, button, deltaX, deltaY);
          return true;
       }
 
@@ -1576,7 +1576,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.init_EventBus_I((int)mouseX, (int)mouseY, amount);
+         this.init_RefQueue.onMouseScrolled((int)mouseX, (int)mouseY, amount);
          return true;
       }
 
@@ -1893,7 +1893,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
    private void open_V_3() {
       if (this.init_RefQueue != null) {
-         this.init_RefQueue.load_V_2();
+         this.init_RefQueue.close();
       }
 
       this.init_RefQueue = null;

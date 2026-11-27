@@ -87,12 +87,12 @@ public class AutismGuiSetScreenMixin {
 
       if (!AutismLiteVariant.enabled() && screen instanceof JsonUtil) {
          OverlayScreenController.clearRetainedForeground();
-         TextInputWidget.init_V();
+         TextInputWidget.clearGlobalFocus();
       } else if (!this.autism$replacingScreen && OverlayScreenController.interceptSetScreen(this.minecraft, this.screen, screen)) {
          ci.cancel();
       } else {
          if (!OverlayScreenController.shouldInterceptBackgroundScreen()) {
-            TextInputWidget.init_V();
+            TextInputWidget.clearGlobalFocus();
          }
 
          if (!this.autism$replacingScreen) {

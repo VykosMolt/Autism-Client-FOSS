@@ -209,8 +209,8 @@ public final class AiPacketLog {
       }
 
       if (entry.init_AutismPayloadSuppo != null) {
-         out.addProperty("payloadChannel", entry.init_AutismPayloadSuppo.load_Str());
-         out.addProperty("payloadSize", entry.init_AutismPayloadSuppo.init_I());
+         out.addProperty("payloadChannel", entry.init_AutismPayloadSuppo.channel());
+         out.addProperty("payloadSize", entry.init_AutismPayloadSuppo.byteLength());
       }
 
       if (detail) {

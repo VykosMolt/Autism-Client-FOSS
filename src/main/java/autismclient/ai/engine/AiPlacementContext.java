@@ -36,7 +36,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
                BlockPos support = target.relative(direction);
                BlockState state = states.apply(support);
                if (state.hasBlockEntity()
-                  || BlockPlacementPlanner.init_Z(state, support)
+                  || BlockPlacementPlanner.requiresSneakToPlace(state, support)
                   || state.getBlock() instanceof DoorBlock
                   || state.getBlock() instanceof TrapDoorBlock
                   || state.getBlock() instanceof FenceGateBlock) {

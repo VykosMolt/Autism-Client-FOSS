@@ -75,15 +75,15 @@ public final class PayloadJsonCodec {
       root.addProperty("channel", channel == null ? "" : channel);
       if (payload != null) {
          root.addProperty("payloadType", payload.getClass().getSimpleName());
-         byte[] rawBytes = AutismPayloadSupport.load(payload);
-         root.addProperty("payloadHex", AutismPayloadSupport.init_Str(rawBytes));
-         root.addProperty("payloadBase64", AutismPayloadSupport.load(rawBytes));
-         String payloadText = AutismPayloadSupport.write(rawBytes);
+         byte[] rawBytes = AutismPayloadSupport.encodePayloadBytes(payload);
+         root.addProperty("payloadHex", AutismPayloadSupport.toHexString(rawBytes));
+         root.addProperty("payloadBase64", AutismPayloadSupport.toBase64(rawBytes));
+         String payloadText = AutismPayloadSupport.decodePrintableUtf8(rawBytes);
          if (!payloadText.isBlank()) {
             root.addProperty("payloadText", payloadText);
          }
 
-         Integer commandApiValue = AutismPayloadSupport.init_Integer(payload, channel, rawBytes);
+         Integer commandApiValue = AutismPayloadSupport.detectCommandApiValue(payload, channel, rawBytes);
          if (commandApiValue != null) {
             root.addProperty("commandApiValue", commandApiValue);
          }
@@ -108,7 +108,7 @@ public final class PayloadJsonCodec {
 
       if (action.payloadClassName != null && !action.payloadClassName.isBlank() && action.payloadData != null && !action.payloadData.isBlank()) {
          try {
-            CustomPacketPayload payload = init(action.payloadClassName, AutismPayloadSupport.init_BArr(action.payloadData));
+            CustomPacketPayload payload = init(action.payloadClassName, AutismPayloadSupport.parseHexOrBase64(action.payloadData));
             if (payload != null) {
                return init(action.sourceDirection, action.channel, payload);
             }
@@ -154,7 +154,7 @@ public final class PayloadJsonCodec {
 
       byte[] rawFallbackBytes = init(root);
       if (rawFallbackBytes == null) {
-         rawFallbackBytes = action.payloadData != null && !action.payloadData.isBlank() ? AutismPayloadSupport.init_BArr(action.payloadData) : new byte[0];
+         rawFallbackBytes = action.payloadData != null && !action.payloadData.isBlank() ? AutismPayloadSupport.parseHexOrBase64(action.payloadData) : new byte[0];
       }
 
       if (action.payloadClassName != null && !action.payloadClassName.isBlank()) {
@@ -172,7 +172,7 @@ public final class PayloadJsonCodec {
                }
             } catch (Throwable fallbackFailure) {
                IllegalArgumentException error = new IllegalArgumentException(
-                  "Could not rebuild payload " + action.payloadClassName + ": " + AutismPayloadSupport.init(var9)
+                  "Could not rebuild payload " + action.payloadClassName + ": " + AutismPayloadSupport.describeError(var9)
                );
                error.addSuppressed(fallbackFailure);
                throw error;
@@ -203,7 +203,7 @@ public final class PayloadJsonCodec {
          return load(action, root, channel, rawFallbackBytes);
       } else {
          JsonElement payloadElement = root.has("payload") ? root.get("payload") : JsonNull.INSTANCE;
-         if (AutismPayloadSupport.init_Z(init(payloadClass, channel, rawFallbackBytes))) {
+         if (AutismPayloadSupport.looksLikeCommandApiPayload(init(payloadClass, channel, rawFallbackBytes))) {
             return init(action, root, channel, payloadClass, rawFallbackBytes);
          } else {
             return payloadClass.isRecord()
@@ -215,7 +215,7 @@ public final class PayloadJsonCodec {
 
    private static CustomPacketPayload init(Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
-         StreamCodec codec = AutismPayloadSupport.init_StreamCodec(payloadClass);
+         StreamCodec codec = AutismPayloadSupport.findStreamCodec(payloadClass);
          if (codec != null && rawFallbackBytes.length > 0) {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.wrappedBuffer((byte[])rawFallbackBytes.clone()));
             if (codec.decode(buf) instanceof CustomPacketPayload cp) {
@@ -246,7 +246,7 @@ public final class PayloadJsonCodec {
             }
 
             if (intCtor.newInstance(value) instanceof CustomPacketPayload cp) {
-               byte[] bytes = AutismPayloadSupport.load(cp);
+               byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
                if (bytes.length > 0) {
                   return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
                }
@@ -255,7 +255,7 @@ public final class PayloadJsonCodec {
       } catch (Throwable var9) {
       }
 
-      return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.init_BArr(rawFallbackBytes, value));
+      return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
    }
 
    private static Constructor<?> init_Constructor(Class<?> clazz) {
@@ -273,7 +273,7 @@ public final class PayloadJsonCodec {
       try {
          CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
          if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
-            byte[] bytes = AutismPayloadSupport.load(cp);
+            byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
                return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
             }
@@ -289,7 +289,7 @@ public final class PayloadJsonCodec {
       try {
          CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
          if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
-            byte[] bytes = AutismPayloadSupport.load(cp);
+            byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
                return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
             }
@@ -304,10 +304,10 @@ public final class PayloadJsonCodec {
    private static PayloadJsonCodec.Inner_DataUtil load(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          int value = root.get("commandApiValue").getAsInt();
-         return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.init_BArr(rawFallbackBytes, value));
+         return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
       } else {
          return action.commandApiRecognized && action.commandApiOverride
-            ? new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.init_BArr(rawFallbackBytes, action.commandApiValue))
+            ? new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, action.commandApiValue))
             : new PayloadJsonCodec.Inner_DataUtil(channel, rawFallbackBytes);
       }
    }
@@ -320,11 +320,11 @@ public final class PayloadJsonCodec {
       try {
          CustomPacketPayload decoded = init(payloadClass.getName(), rawFallbackBytes);
          if (decoded != null) {
-            StreamCodec codec = AutismPayloadSupport.init_StreamCodec(payloadClass);
+            StreamCodec codec = AutismPayloadSupport.findStreamCodec(payloadClass);
             if (codec != null) {
                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                codec.encode(buf, decoded);
-               return AutismPayloadSupport.init(buf);
+               return AutismPayloadSupport.copyBufferBytes(buf);
             }
          }
       } catch (Throwable var5) {
@@ -356,7 +356,7 @@ public final class PayloadJsonCodec {
 
       try {
          Class<?> payloadClass = Class.forName(payloadClassName);
-         StreamCodec codec = AutismPayloadSupport.init_StreamCodec(payloadClass);
+         StreamCodec codec = AutismPayloadSupport.findStreamCodec(payloadClass);
          if (codec == null) {
             return null;
          }
@@ -384,7 +384,7 @@ public final class PayloadJsonCodec {
 
       String hex = init(root, "payloadHex");
       if (!hex.isBlank()) {
-         return AutismPayloadSupport.init_BArr(hex);
+         return AutismPayloadSupport.parseHexOrBase64(hex);
       }
 
       String base64 = init(root, "payloadBase64");
@@ -430,9 +430,9 @@ public final class PayloadJsonCodec {
          return new JsonPrimitive("<max-depth>");
       }
 
-      if (value instanceof CustomPacketPayload cp && AutismPayloadSupport.init_Z(cp)) {
-         byte[] rawBytes = AutismPayloadSupport.load(cp);
-         Integer cmdVal = AutismPayloadSupport.init_Integer(cp, null, rawBytes);
+      if (value instanceof CustomPacketPayload cp && AutismPayloadSupport.looksLikeCommandApiPayload(cp)) {
+         byte[] rawBytes = AutismPayloadSupport.encodePayloadBytes(cp);
+         Integer cmdVal = AutismPayloadSupport.detectCommandApiValue(cp, null, rawBytes);
          if (cmdVal != null) {
             JsonObject cmdObj = new JsonObject();
             cmdObj.addProperty("commandApiValue", cmdVal);

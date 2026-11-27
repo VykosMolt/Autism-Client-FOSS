@@ -120,7 +120,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, GuiColorPalette.flush, titleX, this.init_I_I_I_2(this.pop(), ctl), false
          );
          this.init(graphics, this.open(), this.tick_I_3(), this.poll());
-         boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.read_List);
+         boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.read_List);
          int hoverX = menuOpen ? -2147483648 : virtualMouseX;
          int hoverY = menuOpen ? -2147483648 : virtualMouseY;
          this.init_k.render(graphics, virtualMouseX, virtualMouseY, delta);
@@ -128,8 +128,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          this.init(graphics, hoverX, hoverY);
          this.load(graphics, hoverX, hoverY);
          this.read(graphics, hoverX, hoverY);
-         autismclient.gui.ui.widgets.DropdownWidget.load(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
-         autismclient.gui.ui.widgets.DropdownWidget.read(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -231,7 +231,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          return new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, h, options, selected, onSelect);
       }
 
-      existing.init_SyncManager_I(x, y, w, h).init_SyncManager_List(options).init_SyncManager_I(selected).init_SyncManager_IntConsumer(onSelect);
+      existing.setBounds(x, y, w, h).setOptions(options).setSelectedIndex(selected).setOnSelect(onSelect);
       return existing;
    }
 
@@ -404,7 +404,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
-      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
@@ -460,7 +460,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
-      if (autismclient.gui.ui.widgets.DropdownWidget.write(this.read_List)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.read_List)) {
          return true;
       } else if (this.load_Z) {
          this.load_Z = false;
@@ -475,7 +475,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
       dx = cA.init_D_D(dx);
       dy = cA.init_D_D(dy);
-      if (autismclient.gui.ui.widgets.DropdownWidget.load(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else if (this.load_Z) {
          this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
@@ -489,7 +489,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       mouseX = cA.init_D_D(mouseX);
       mouseY = cA.init_D_D(mouseY);
-      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.read_List, mouseX, mouseY, scrollY)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.read_List, mouseX, mouseY, scrollY)) {
          return true;
       }
 
@@ -516,7 +516,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
 
       if (Compat263.keyEventGlfwKey(input) == 256) {
-         if (autismclient.gui.ui.widgets.DropdownWidget.read(this.read_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.read_List)) {
             return true;
          }
 

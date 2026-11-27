@@ -4340,11 +4340,11 @@ final class AiBuilder {
                                                    Vec3 eye = mc.player.getEyePosition();
                                                    double reach = mc.player.blockInteractionRange();
                                                    BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
-                                                         pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
+                                                         pos, eye, reach, BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                       )
-                                                      .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-                                                      .load(schematic)
-                                                      .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(4));
+                                                      .withSneaking(mc.player.isShiftKeyDown())
+                                                      .withAutoSneak(schematic)
+                                                      .withRayBudget(new BlockPlacementPlanner.RayBudget(4));
                                                    BlockPlacementPlanner.PlacementPlan candidate = this.load_U_CachePool != null
                                                       ? this.load_U_CachePool
                                                       : (
@@ -4352,32 +4352,32 @@ final class AiBuilder {
                                                             ? autismclient.ai.engine.PlacementGoal.init(
                                                                mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), 72
                                                             )
-                                                            : BlockPlacementPlanner.init_U_CachePool(request)
+                                                            : BlockPlacementPlanner.plan(request)
                                                       );
                                                    if (candidate == null) {
                                                       this.init_V_2("no reachable support face");
                                                       return this.init_AiOperation_Result_5("No reachable support face; re-approaching");
                                                    }
 
-                                                   if (!AiBuilder.init(AiBuilder.init_Boolean(cell, target), candidate.init_BlockHitResult().getDirection())) {
-                                                      BlockPlacementPlanner.PlacementPlan side = BlockPlacementPlanner.init_U_CachePool(
+                                                   if (!AiBuilder.init(AiBuilder.init_Boolean(cell, target), candidate.hit().getDirection())) {
+                                                      BlockPlacementPlanner.PlacementPlan side = BlockPlacementPlanner.plan(
                                                          new BlockPlacementPlanner.Query(
-                                                               pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
+                                                               pos, eye, reach, BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                             )
-                                                            .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-                                                            .load(schematic)
-                                                            .init_U_StateCache_EnumSet(
+                                                            .withSneaking(mc.player.isShiftKeyDown())
+                                                            .withAutoSneak(schematic)
+                                                            .withAllowedFaces(
                                                                EnumSet.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
                                                             )
-                                                            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(4))
+                                                            .withRayBudget(new BlockPlacementPlanner.RayBudget(4))
                                                       );
                                                       if (side != null) {
                                                          candidate = side;
                                                       }
                                                    }
 
-                                                   hit = this.init(cell, pos, target, candidate.init_BlockHitResult());
-                                                   if (!BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
+                                                   hit = this.init(cell, pos, target, candidate.hit());
+                                                   if (!BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                                                       this.init_V_2("shaped click does not land on the target cell");
                                                       return this.init_AiOperation_Result_5("Re-solving the placement click");
                                                    }
@@ -4389,7 +4389,7 @@ final class AiBuilder {
                                                    BlockState supportState = mc.level.getBlockState(hit.getBlockPos());
                                                    boolean secondary = placementSneak
                                                       || supportState.hasBlockEntity()
-                                                      || BlockPlacementPlanner.init_Z(supportState, hit.getBlockPos())
+                                                      || BlockPlacementPlanner.requiresSneakToPlace(supportState, hit.getBlockPos())
                                                       || target instanceof ChestBlock
                                                       || supportState.getBlock() instanceof DoorBlock
                                                       || supportState.getBlock() instanceof TrapDoorBlock
@@ -6524,7 +6524,7 @@ final class AiBuilder {
                                           || !new AABB(feet.below())
                                              .clip(
                                                 position.add(0.0, constraint.crouchForLook() ? 1.27 : mc.player.getEyeHeight(), 0.0),
-                                                proved.init_BlockHitResult().getLocation()
+                                                proved.hit().getLocation()
                                              )
                                              .isPresent()
                                     )) {
@@ -7065,7 +7065,7 @@ final class AiBuilder {
                         } else {
                            this.init_TableIndex_StreamU = cell;
                            if (this.init(cell, pos, job, clear)) {
-                              return this.init_U_CachePool.init_BlockHitResult().getLocation();
+                              return this.init_U_CachePool.hit().getLocation();
                            }
 
                            this.init_TableIndex_SyncMan.init(pos);
@@ -7132,14 +7132,14 @@ final class AiBuilder {
                      BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit != null
                         && AiBuilder.init(
-                           this.init_U_CachePool.init_BlockHitResult().getBlockPos(),
-                           this.init_U_CachePool.init_BlockHitResult().getDirection(),
+                           this.init_U_CachePool.hit().getBlockPos(),
+                           this.init_U_CachePool.hit().getDirection(),
                            hit.getBlockPos(),
                            hit.getDirection()
                         )) {
                         Item item = AiBuilder.init_Block(cell).asItem();
                         if (AiBuilder.init_Z_Item(item, mc.player.getMainHandItem(), init_Z_Minecraft_Item(mc, item))
-                           && BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
+                           && BlockPlacementPlanner.blockItemValidator(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                            BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
                            int beforeSequence = prediction.currentSequence();
                            long revision = AiServerEvidence.blockRevision(pos);
