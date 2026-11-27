@@ -74,7 +74,7 @@ public final class ResourcePackPushValidator {
          return kind == ResourcePackPushValidator.Inner_DataUtil.PASS ? init_RefQueue_StreamUti : new ResourcePackPushValidator.Inner_StreamUtil(kind, reason);
       }
 
-      public ResourcePackPushValidator.Inner_DataUtil init_RefQueue_DataUtil() {
+      public ResourcePackPushValidator.Inner_DataUtil verdict() {
          return this.init_RefQueue_DataUtil;
       }
 

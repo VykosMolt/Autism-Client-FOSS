@@ -25,7 +25,7 @@ final class AiEndPortal {
    private AiEndPortal() {
    }
 
-   static AiEndPortal.Inner_StreamUtil init_t_StreamUtil(BlockPos portal) {
+   static AiEndPortal.Inner_StreamUtil inspect(BlockPos portal) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && portal != null) {
          for (BlockPos p : BlockPos.betweenClosed(portal.offset(-3, 0, -3), portal.offset(3, 0, 3))) {
@@ -140,7 +140,7 @@ final class AiEndPortal {
       return null;
    }
 
-   static AiOperation init_AiOperation(final BlockPos frame) {
+   static AiOperation placeEye(final BlockPos frame) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();

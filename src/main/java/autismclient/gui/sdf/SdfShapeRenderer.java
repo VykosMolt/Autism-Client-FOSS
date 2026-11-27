@@ -48,14 +48,14 @@ public final class SdfShapeRenderer {
    private SdfShapeRenderer() {
    }
 
-   public static boolean init_Z() {
-      return SdfRenderPipelines.init_Z() && init_BufferHelper_Strea() != null;
+   public static boolean isAvailable() {
+      return SdfRenderPipelines.isAvailable() && init_BufferHelper_Strea() != null;
    }
 
    public static void init(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       float r = Math.min(radius, Math.min(w, h) * 0.5F);
       if (!(w <= 0.0F) && !(h <= 0.0F) && (color & 0xFF000000) != 0) {
-         if (!(r < 0.75F) && init_Z()) {
+         if (!(r < 0.75F) && isAvailable()) {
             init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, color, false, false);
          } else {
             graphics.fill(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), color);
@@ -67,7 +67,7 @@ public final class SdfShapeRenderer {
       init(graphics, x, y, w, h, radius, fill);
       if (!(w <= 0.0F) && !(h <= 0.0F) && border >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
-         if (!(r < 0.75F) && init_Z()) {
+         if (!(r < 0.75F) && isAvailable()) {
             init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, border, true, false);
          } else {
             int left = Math.round(x);
@@ -89,12 +89,12 @@ public final class SdfShapeRenderer {
       }
    }
 
-   public static void init_V_GuiGraphicsExtract(
+   public static void drawRoundedRect(
       GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int topFill, int bottomFill, int topBorder, int bottomBorder
    ) {
       if (!(w <= 0.0F) && !(h <= 0.0F)) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
-         if (!(r < 0.75F) && init_Z()) {
+         if (!(r < 0.75F) && isAvailable()) {
             int tile = init_I(r);
             if ((topFill | bottomFill) >>> 24 != 0) {
                init(graphics, tile, x, y, w, h, r, topFill, bottomFill, false, false);
@@ -122,9 +122,9 @@ public final class SdfShapeRenderer {
       }
    }
 
-   public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, float cx, float cy, float r, int color) {
+   public static void drawCircle(GuiGraphicsExtractor graphics, float cx, float cy, float r, int color) {
       if (!(r <= 0.0F) && (color & 0xFF000000) != 0) {
-         if (!init_Z()) {
+         if (!isAvailable()) {
             graphics.fill(Math.round(cx - r), Math.round(cy - r), Math.round(cx + r), Math.round(cy + r), color);
          } else {
             init_V_GuiGraphicsExtract_2(graphics, init_IArr.length - 1, cx - r, cy - r, r * 2.0F, r * 2.0F, r, color, false, false);
@@ -135,7 +135,7 @@ public final class SdfShapeRenderer {
    public static void read(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       if (!(w <= 0.0F) && !(h <= 0.0F) && color >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
-         if (!(r < 0.75F) && init_Z()) {
+         if (!(r < 0.75F) && isAvailable()) {
             init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, color, false, true);
          } else {
             graphics.fill(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), color);
@@ -193,7 +193,7 @@ public final class SdfShapeRenderer {
                init(graphics, centerX - values.getFirst() / 2.0F, y, values.getFirst(), h, r, color);
             } else if (r <= 0.0F) {
                init(graphics, centerX, y, values, heights, color);
-            } else if (!read_Z && init_Z()) {
+            } else if (!read_Z && isAvailable()) {
                SdfShapeRenderer.Inner_DataUtil key = new SdfShapeRenderer.Inner_DataUtil(values, List.copyOf(sizes), r);
                if (!load_Z) {
                   ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -245,7 +245,7 @@ public final class SdfShapeRenderer {
                   quad,
                   1,
                   color,
-                  UiScissorStack.init_ScreenRectangle()
+                  UiScissorStack.peek()
                );
                if (element != null) {
                   ((AutismGuiGraphicsExtractorAccessor)graphics).autism$guiRenderState().addGuiElement(element);
@@ -274,14 +274,14 @@ public final class SdfShapeRenderer {
    }
 
    private static NativeImage init(SteppedRowContour shape) {
-      int width = (int)Math.ceil(shape.init_F) + 20;
+      int width = (int)Math.ceil(shape.width) + 20;
       int height = (int)Math.ceil(shape.load) + 20;
       float[] distances = new float[width * height];
       Arrays.fill(distances, 64.0F);
-      float offsetX = shape.init_F / 2.0F + 10.0F;
+      float offsetX = shape.width / 2.0F + 10.0F;
       float offsetY = 10.0F;
 
-      for (SteppedRowContour.Inner_DataUtil edge : shape.init_List) {
+      for (SteppedRowContour.Inner_DataUtil edge : shape.edges) {
          int minX = Math.max(0, (int)Math.floor(Math.min(edge.init(), edge.init() + edge.read()) + offsetX - 8.0F));
          int maxX = Math.min(width - 1, (int)Math.ceil(Math.max(edge.init(), edge.init() + edge.read()) + offsetX + 8.0F));
          int minY = Math.max(0, (int)Math.floor(Math.min(edge.load(), edge.load() + edge.write()) + offsetY - 8.0F));
@@ -302,7 +302,7 @@ public final class SdfShapeRenderer {
          for (int px = 0; px < width; px++) {
             int i = py * width + px;
             float distance = (float)Math.sqrt(distances[i]);
-            if (shape.init_Path2D_Float.contains(px + 0.5F - offsetX, py + 0.5F - offsetY)) {
+            if (shape.path.contains(px + 0.5F - offsetX, py + 0.5F - offsetY)) {
                distance = -distance;
             }
 
@@ -313,7 +313,7 @@ public final class SdfShapeRenderer {
       return pixels;
    }
 
-   public static void init_V() {
+   public static void reset() {
       read_Z = false;
       init_LinkedHashMap.values().forEach(AbstractTexture::close);
       init_LinkedHashMap.clear();
@@ -419,7 +419,7 @@ public final class SdfShapeRenderer {
          }
 
          AutismGuiGraphicsExtractorAccessor accessor = (AutismGuiGraphicsExtractorAccessor)graphics;
-         ScreenRectangle scissor = UiScissorStack.init_ScreenRectangle();
+         ScreenRectangle scissor = UiScissorStack.peek();
          GuiRenderState renderState = accessor.autism$guiRenderState();
          TexturedQuadRenderState element = TexturedQuadRenderState.init(
             SdfRenderPipelines.load(),

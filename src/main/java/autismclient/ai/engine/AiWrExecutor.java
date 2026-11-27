@@ -647,7 +647,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
    public void state_V() {
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       if (this.putAt_RingCache_TableCac != AiWrExecutor.Inner_TableCache.prevEx) {
@@ -666,7 +666,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       this.state(false);
@@ -786,7 +786,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             }
 
             if (!AutismLiteVariant.enabled()) {
-               AiVisualization.init_V(this);
+               AiVisualization.clearOwner(this);
             }
 
             this.putAt_RingCache_TableCac = AiWrExecutor.Inner_TableCache.readEx;

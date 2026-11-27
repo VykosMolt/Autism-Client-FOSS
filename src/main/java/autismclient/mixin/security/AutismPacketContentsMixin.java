@@ -20,7 +20,7 @@ public class AutismPacketContentsMixin implements PacketOriginDuck {
 
    @Override
    public void autism$setFromPacket() {
-      this.autism$setFromPacket(PacketDecodeOriginStack.init_BufferHelper_Strea());
+      this.autism$setFromPacket(PacketDecodeOriginStack.current());
    }
 
    @Override

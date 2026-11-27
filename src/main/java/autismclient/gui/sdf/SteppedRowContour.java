@@ -7,9 +7,9 @@ import java.util.List;
 
 final class SteppedRowContour {
    private static final float read = 2.0F;
-   final java.awt.geom.Path2D.Float init_Path2D_Float;
-   final List<SteppedRowContour.Inner_DataUtil> init_List;
-   final float init_F;
+   final java.awt.geom.Path2D.Float path;
+   final List<SteppedRowContour.Inner_DataUtil> edges;
+   final float width;
    final float load;
 
    SteppedRowContour(List<Float> widths, List<Float> heights, float radius) {
@@ -21,7 +21,7 @@ final class SteppedRowContour {
          widest = Math.max(widest, value);
       }
 
-      this.init_F = widest;
+      this.width = widest;
       float[] tops = new float[heights.size() + 1];
 
       for (int i = 0; i < heights.size(); i++) {
@@ -50,7 +50,7 @@ final class SteppedRowContour {
          }
       }
 
-      this.init_Path2D_Float = new java.awt.geom.Path2D.Float();
+      this.path = new java.awt.geom.Path2D.Float();
       float[] corners = new float[vertices.size()];
 
       for (int i = 0; i < vertices.size(); i++) {
@@ -81,15 +81,15 @@ final class SteppedRowContour {
          float bx = (float)(v.x + (after.x - v.x) * r / b);
          float by = (float)(v.y + (after.y - v.y) * r / b);
          if (i == 0) {
-            this.init_Path2D_Float.moveTo(ax, ay);
+            this.path.moveTo(ax, ay);
          } else {
-            this.init_Path2D_Float.lineTo(ax, ay);
+            this.path.lineTo(ax, ay);
          }
 
-         this.init_Path2D_Float.quadTo(v.x, v.y, bx, by);
+         this.path.quadTo(v.x, v.y, bx, by);
       }
 
-      this.init_Path2D_Float.closePath();
+      this.path.closePath();
       ArrayList<SteppedRowContour.Inner_DataUtil> lines = new ArrayList<>();
       float[] p = new float[6];
       float startX = 0.0F;
@@ -97,7 +97,7 @@ final class SteppedRowContour {
       float x = 0.0F;
       float y = 0.0F;
 
-      for (PathIterator iterator = this.init_Path2D_Float.getPathIterator(null, 0.04); !iterator.isDone(); iterator.next()) {
+      for (PathIterator iterator = this.path.getPathIterator(null, 0.04); !iterator.isDone(); iterator.next()) {
          int kind = iterator.currentSegment(p);
          if (kind == 0) {
             startX = x = p[0];
@@ -116,7 +116,7 @@ final class SteppedRowContour {
          }
       }
 
-      this.init_List = List.copyOf(lines);
+      this.edges = List.copyOf(lines);
    }
 
    static List<Float> init(List<Float> widths, float radius) {

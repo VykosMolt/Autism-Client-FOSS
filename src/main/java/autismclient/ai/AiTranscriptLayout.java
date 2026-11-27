@@ -28,7 +28,7 @@ final class AiTranscriptLayout {
    private AiService.TranscriptEntry load_cc_JsonUtil;
    private AiTranscriptLayout.Inner_TaskQueue init_cC_TaskQueue;
 
-   List<AiTranscriptLayout.Inner_BufferHelper> init_List() {
+   List<AiTranscriptLayout.Inner_BufferHelper> lines() {
       return this.init_List;
    }
 
@@ -36,7 +36,7 @@ final class AiTranscriptLayout {
       return this.load_List;
    }
 
-   int init_I() {
+   int height() {
       return this.push;
    }
 
@@ -73,11 +73,11 @@ final class AiTranscriptLayout {
       return true;
    }
 
-   void init_V() {
+   void invalidate() {
       this.pop = -1;
    }
 
-   int init_I_I(int y) {
+   int firstLineAt(int y) {
       int lo = 0;
       int hi = this.init_List.size();
 
@@ -94,7 +94,7 @@ final class AiTranscriptLayout {
       return lo;
    }
 
-   int load_I_I(int y) {
+   int firstBlockAt(int y) {
       int lo = 0;
       int hi = this.load_List.size();
 
@@ -111,7 +111,7 @@ final class AiTranscriptLayout {
    }
 
    AiTranscriptLayout.Inner_DataUtil init_cC_DataUtil_I(int y) {
-      int i = this.load_I_I(y);
+      int i = this.firstBlockAt(y);
       if (i >= this.load_List.size()) {
          return null;
       }
@@ -163,7 +163,7 @@ final class AiTranscriptLayout {
       return text.length() <= max ? text : text.substring(0, max);
    }
 
-   static String init_Str_cc_JsonUtil(AiService.TranscriptEntry message) {
+   static String copyText(AiService.TranscriptEntry message) {
       return "tool".equals(message.role()) && !message.detail().isBlank() ? message.text() + "\n" + message.detail() : message.text();
    }
 
@@ -333,7 +333,7 @@ final class AiTranscriptLayout {
    static List<AiTranscriptLayout.Inner_NetHelper> init(String text, int width, int line, AiTranscriptLayout.Inner_ConfigStore measure) {
       List<AiTranscriptLayout.Inner_NetHelper> out = new ArrayList<>();
 
-      for (AiMarkdown.Inner_DataUtil block : AiMarkdown.init_List(text == null ? "" : text)) {
+      for (AiMarkdown.Inner_DataUtil block : AiMarkdown.parse(text == null ? "" : text)) {
          int var10000;
          switch (block.type()) {
             case BULLET:

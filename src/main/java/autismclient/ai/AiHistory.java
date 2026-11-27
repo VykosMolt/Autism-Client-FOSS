@@ -27,7 +27,7 @@ final class AiHistory {
       return AiJson.getString(m, "role", "");
    }
 
-   static boolean init_Z(JsonObject m) {
+   static boolean isAssistant(JsonObject m) {
       String r = init_Str(m);
       return r.equals("assistant") || r.equals("model");
    }
@@ -85,7 +85,7 @@ final class AiHistory {
       return out;
    }
 
-   static List<JsonObject> init_List(AiSettings.Provider provider, List<JsonObject> stored) {
+   static List<JsonObject> forProvider(AiSettings.Provider provider, List<JsonObject> stored) {
       List<JsonObject> out = new ArrayList<>(stored.size());
 
       for (JsonObject m : stored) {
@@ -105,7 +105,7 @@ final class AiHistory {
 
    static List<AiHistory.Inner_DataUtil> init(AiSettings.Provider provider, JsonObject assistant) {
       List<AiHistory.Inner_DataUtil> out = new ArrayList<>();
-      if (!init_Z(assistant)) {
+      if (!isAssistant(assistant)) {
          return out;
       }
 
@@ -195,7 +195,7 @@ final class AiHistory {
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
          Set<String> expected = new LinkedHashSet<>();
-         if (!out.isEmpty() && init_Z(out.getLast())) {
+         if (!out.isEmpty() && isAssistant(out.getLast())) {
             for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.ANTHROPIC, out.getLast())) {
                expected.add(c.id());
             }
@@ -206,7 +206,7 @@ final class AiHistory {
                out.add(init(expected));
             }
 
-            if (init_Z(m)) {
+            if (isAssistant(m)) {
                init_V(m);
             }
 
@@ -280,7 +280,7 @@ final class AiHistory {
          }
       }
 
-      if (!out.isEmpty() && init_Z(out.getLast())) {
+      if (!out.isEmpty() && isAssistant(out.getLast())) {
          Set<String> expected = new LinkedHashSet<>();
 
          for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.ANTHROPIC, out.getLast())) {
@@ -358,7 +358,7 @@ final class AiHistory {
 
             open.clear();
             out.add(m);
-            if (init_Z(m)) {
+            if (isAssistant(m)) {
                for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.OPENAI, m)) {
                   open.add(c.id());
                }
@@ -387,7 +387,7 @@ final class AiHistory {
 
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
-         List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && init_Z(out.getLast()) ? init(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
+         List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && isAssistant(out.getLast()) ? init(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
          if (!load_Z(m)) {
             if (!expected.isEmpty()) {
                out.add(init_JsonObject(expected));
@@ -431,7 +431,7 @@ final class AiHistory {
          }
       }
 
-      if (!out.isEmpty() && init_Z(out.getLast())) {
+      if (!out.isEmpty() && isAssistant(out.getLast())) {
          List<AiHistory.Inner_DataUtil> expected = init(AiSettings.Provider.GEMINI, out.getLast());
          if (!expected.isEmpty()) {
             out.add(init_JsonObject(expected));
@@ -475,7 +475,7 @@ final class AiHistory {
       List<Integer> starts = new ArrayList<>();
 
       for (int i = 0; i < history.size(); i++) {
-         if (init_Z(history.get(i))) {
+         if (isAssistant(history.get(i))) {
             starts.add(i);
          }
       }
@@ -512,7 +512,7 @@ final class AiHistory {
          int last = -1;
          if (keepLastThinking) {
             for (int i = kept.size() - 1; i >= 0; i--) {
-               if (init_Z(kept.get(i))) {
+               if (isAssistant(kept.get(i))) {
                   last = i;
                   break;
                }
@@ -590,7 +590,7 @@ final class AiHistory {
       String lastText = "";
 
       for (JsonObject m : dropped) {
-         if (init_Z(m)) {
+         if (isAssistant(m)) {
             rounds++;
             List<AiHistory.Inner_DataUtil> found = init(provider, m);
             calls += found.size();

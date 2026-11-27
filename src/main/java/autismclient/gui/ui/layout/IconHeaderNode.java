@@ -24,7 +24,7 @@ public final class IconHeaderNode extends LayoutNode {
       return this;
    }
 
-   public IconHeaderNode init_ConfigStore(boolean connectedStyle) {
+   public IconHeaderNode setConnectedStyle(boolean connectedStyle) {
       this.write_Z = connectedStyle;
       return this;
    }

@@ -251,7 +251,7 @@ final class AiCrystals {
                      )
                      && this.init(14.0, 40)) {
                      this.init_V_30();
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] crystals: the dragon is near; off the tower at {}", mc.player.blockPosition().toShortString());
+                     AiSpeedrun.log("[AI] crystals: the dragon is near; off the tower at {}", mc.player.blockPosition().toShortString());
                      return this.init(this.init_h_DataUtil, "dragon_near");
                   }
 
@@ -364,7 +364,7 @@ final class AiCrystals {
                   }
 
                   String chosen = AiCrystals.init(next.caged(), this.init_Z_Entity_3(entity), this.read_Z_11(), this.write_Z_8());
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] crystals: target #{} at {} {} {} caged={} invulnerable={} method={} arrows={}",
                      next.entityId(),
                      next.x(),
@@ -483,7 +483,7 @@ final class AiCrystals {
                   if (!r.terminal()) {
                      return this.load("Shooting crystal #" + this.init_h_DataUtil.entityId() + ": " + r.message());
                   } else {
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] crystals: shot #{} {} - {}", this.init_h_DataUtil.entityId(), r.status(), r.message());
+                     AiSpeedrun.log("[AI] crystals: shot #{} {} - {}", this.init_h_DataUtil.entityId(), r.status(), r.message());
                      this.init_V_30();
                      if (this.init_Entity_h_DataUtil(this.init_h_DataUtil) == null) {
                         return this.poll();
@@ -744,7 +744,7 @@ final class AiCrystals {
                   }
 
                   mc.options.keyUp.setDown(false);
-                  this.init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
+                  this.init_AiOperation = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
                   this.update_Z = true;
                }
 
@@ -998,10 +998,10 @@ final class AiCrystals {
 
             boolean read_Z_11() {
                if (AiThreats.isLegacyCombatEnabled()) {
-                  return !AiDanger.init_i_DataUtil_Minecraft(mc).lethal();
+                  return !AiDanger.assess(mc).lethal();
                }
 
-               AiDanger.Inner_DataUtil danger = AiDanger.init_i_DataUtil_Minecraft(mc);
+               AiDanger.Inner_DataUtil danger = AiDanger.assess(mc);
                Entity crystal = this.init_h_DataUtil == null ? null : this.init_Entity_h_DataUtil(this.init_h_DataUtil);
                if (crystal == null) {
                   return false;

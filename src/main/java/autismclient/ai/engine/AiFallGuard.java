@@ -97,7 +97,7 @@ public final class AiFallGuard {
             boolean drivenNow = System.nanoTime() - init_J < 250000000L;
             if (!drivenNow) {
                AiService service = AiService.getExistingInstance();
-               drivenNow = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.load_Z();
+               drivenNow = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.isDrivingInput();
             }
 
             if (drivenNow) {
@@ -121,7 +121,7 @@ public final class AiFallGuard {
             boolean driven = now - init_J < 250000000L;
             if (!driven) {
                AiService service = AiService.getExistingInstance();
-               driven = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.load_Z();
+               driven = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.isDrivingInput();
             }
 
             if (!driven) {

@@ -171,7 +171,7 @@ final class AiSmelt {
                .orElse(200);
             int held = AiGameState.countInventoryItem(outputId);
             final int target = additional ? held + requested : requested;
-            if (!collect && !loadOnly && !args.has("x") && !AiJson.getBoolean(args, "singleFurnace", false) && AiParallelSmelt.init_I_I_3(target - held) > 1) {
+            if (!collect && !loadOnly && !args.has("x") && !AiJson.getBoolean(args, "singleFurnace", false) && AiParallelSmelt.furnaceCountFor(target - held) > 1) {
                return new AiParallelSmelt(resolved, target, cookTicksPerItem, timeoutSeconds);
             }
 
@@ -213,10 +213,10 @@ final class AiSmelt {
                int sync_I;
 
                AiOperation init(int itemsLeft) {
-                  int divisor = AiSmelt.init_I(resolved.stationId());
+                  int divisor = AiSmelt.burnDivisor(resolved.stationId());
                   long heat = (long)itemsLeft * cookTicksPerItem;
                   int seconds = Math.max(30, Math.min(300, this.init_I_33() - 20));
-                  if (AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())) {
+                  if (AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())) {
                      return AiObtain.init(
                         AiJson.objectOf(
                            "item", "minecraft:coal", "count", (int)Math.ceil(heat / (1600.0 / divisor)), "additional", true, "timeoutSeconds", seconds
@@ -406,7 +406,7 @@ final class AiSmelt {
                                  "cookTicksPerItem",
                                  cookTicksPerItem,
                                  "fuelBurnDivisor",
-                                 AiSmelt.init_I(resolved.stationId()),
+                                 AiSmelt.burnDivisor(resolved.stationId()),
                                  "collect",
                                  collect,
                                  "loadOnly",
@@ -454,7 +454,7 @@ final class AiSmelt {
                         }
 
                         this.init_cn = new AiStationPlacer(
-                           BuiltInRegistries.ITEM.getOptional(Identifier.parse(resolved.stationId())).orElseThrow(), AiProgression.init_Str(resolved.stationId())
+                           BuiltInRegistries.ITEM.getOptional(Identifier.parse(resolved.stationId())).orElseThrow(), AiProgression.displayName(resolved.stationId())
                         );
                         this.read_Z = true;
                      }
@@ -654,7 +654,7 @@ final class AiSmelt {
                public void cancel() {
                   if (!this.write_Z) {
                      this.write_Z = true;
-                     AiVisualization.init_V(this);
+                     AiVisualization.clearOwner(this);
                      this.init_Y.cancel();
                      if (this.init_Q != null) {
                         this.init_Q.cancel();
@@ -721,7 +721,7 @@ final class AiSmelt {
 
    static AiOperation init(JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan, int items) {
       int seconds = Math.max(30, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 600) / 2));
-      final AiOperation fuel = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())
+      final AiOperation fuel = AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())
          ? AiObtain.init(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
          : AiObtain.init(
             AiJson.objectOf(
@@ -785,7 +785,7 @@ final class AiSmelt {
       };
    }
 
-   static int init_I(String station) {
+   static int burnDivisor(String station) {
       return !station.equals("minecraft:smoker") && !station.equals("minecraft:blast_furnace") ? 1 : 2;
    }
 
@@ -834,14 +834,14 @@ final class AiSmelt {
    }
 
    private static int init_I(Minecraft mc, String stationId) {
-      if (init_Z(mc, stationId)) {
+      if (hasStationNearby(mc, stationId)) {
          return 0;
       } else {
          return AiGameState.countInventoryItem(stationId) > 0 ? 1 : 2;
       }
    }
 
-   static boolean init_Z(Minecraft mc, String stationId) {
+   static boolean hasStationNearby(Minecraft mc, String stationId) {
       if (mc.player != null && mc.level != null) {
          Block wanted = AiCraft.requireBlock(stationId);
          BlockPos origin = mc.player.blockPosition();
@@ -865,7 +865,7 @@ final class AiSmelt {
       return autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, wanted)
          .stream()
          .filter(p -> p.inputs().contains(source))
-         .anyMatch(p -> AiGameState.countInventoryItem(p.station()) > 0 || init_Z(mc, p.station()));
+         .anyMatch(p -> AiGameState.countInventoryItem(p.station()) > 0 || hasStationNearby(mc, p.station()));
    }
 
    private static Item init(autismclient.util.AutoCraftingEngine.SmeltRecipe plan, String inputSpec) {

@@ -713,7 +713,7 @@ final class AiParkourRoute implements AiOperation {
 
    private AiOperation.Result readEx(LocalPlayer var1) {
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       autismclient.ai.engine.AiPacePlayback.fill_V_LocalPlayer(var1);
@@ -742,7 +742,7 @@ final class AiParkourRoute implements AiOperation {
 
    private AiOperation.Result putAt(LocalPlayer var1, String var2) {
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       String var3 = "parkourwr hands the course back at checkpoint " + this.pollAt_I + ": " + var2;
@@ -807,7 +807,7 @@ final class AiParkourRoute implements AiOperation {
    @Override
    public void cancel() {
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       this.readEx_Z = true;

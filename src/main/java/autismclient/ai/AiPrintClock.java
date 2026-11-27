@@ -38,7 +38,7 @@ final class AiPrintClock {
 
          @Override
          public int init_I(ItemStack material) {
-            return mc.player == originalPlayer && mc.player != null ? AiInventoryController.init_I_Container_ItemStack_2(mc.player.getInventory(), material) : 0;
+            return mc.player == originalPlayer && mc.player != null ? AiInventoryController.countMatching(mc.player.getInventory(), material) : 0;
          }
 
          @Override

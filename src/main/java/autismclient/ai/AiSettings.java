@@ -397,7 +397,7 @@ public final class AiSettings {
 
    public static String alternateDashScopeEndpoint(String endpoint) {
       try {
-         return AiModels.load(AiSettings.Provider.DASHSCOPE, AiHttp.init_Str(AiSettings.Provider.DASHSCOPE, endpoint));
+         return AiModels.load(AiSettings.Provider.DASHSCOPE, AiHttp.baseUrl(AiSettings.Provider.DASHSCOPE, endpoint));
       } catch (IllegalArgumentException e) {
          return null;
       }
@@ -495,7 +495,7 @@ public final class AiSettings {
    }
 
    public void validate() {
-      AiHttp.init_Str(this.provider, this.endpoint);
+      AiHttp.baseUrl(this.provider, this.endpoint);
       if (this.model != null && !this.model.isBlank()) {
          if (this.model.chars().anyMatch(c -> c <= 32 || c == 127) || this.model.indexOf(63) >= 0 || this.model.indexOf(35) >= 0) {
             throw new IllegalArgumentException("Model ID contains invalid characters; choose a model from Scan models");

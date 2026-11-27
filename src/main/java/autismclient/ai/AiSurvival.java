@@ -51,7 +51,7 @@ final class AiSurvival {
       return unchangedUseTicks > Math.max(1L, consumeTicks) + 40L;
    }
 
-   static Entity init_Entity(Minecraft mc) {
+   static Entity nearestThreat(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
          Entity nearest = null;
          double best = 36.0;
@@ -75,18 +75,18 @@ final class AiSurvival {
       }
    }
 
-   static AiOperation init_AiOperation(Minecraft mc) {
-      return init_AiOperation_Minecraft(mc, AiGuard.GuardPolicy.standard(), 15);
+   static AiOperation defend(Minecraft mc) {
+      return defend(mc, AiGuard.GuardPolicy.standard(), 15);
    }
 
-   static AiOperation init_AiOperation_Minecraft(Minecraft mc, AiGuard.GuardPolicy policy, int seconds) {
+   static AiOperation defend(Minecraft mc, AiGuard.GuardPolicy policy, int seconds) {
       policy = policy.withoutMaintenance();
       if (mc.level.dimension() != Level.OVERWORLD) {
          policy = policy.withoutFlee();
       }
 
       AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-      Entity threat = init_Entity(mc);
+      Entity threat = nearestThreat(mc);
       if (threat != null && AiThreats.classify(threat) == AiThreats.Inner_DataUtil.AVOID) {
          return load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
@@ -345,7 +345,7 @@ final class AiSurvival {
                if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
                   ArrayList<Entity> observed = new ArrayList<>();
                   this.init_Minecraft.level.entitiesForRendering().forEach(observed::add);
-                  List<LivingEntity> close = AiSurvival.init_List_List(observed, this.init_Minecraft.player.position(), radius * 1.5);
+                  List<LivingEntity> close = AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), radius * 1.5);
                   List<Vec3> escapeThreats = close.stream().map(Entity::position).toList();
                   boolean safeHandoff = this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
                   if (close.isEmpty() && safeHandoff) {
@@ -361,7 +361,7 @@ final class AiSurvival {
                      return this.init(AiOperation.Status.TIMED_OUT, "Escape deadline reached with threats still observed");
                   }
 
-                  Creeper immediateBlast = safeHandoff ? AiCombat.init_Creeper(this.init_Minecraft) : null;
+                  Creeper immediateBlast = safeHandoff ? AiCombat.mostDangerousCreeper(this.init_Minecraft) : null;
                   Float retreatYaw = immediateBlast == null ? null : AiBlastEscape.init(this.init_Minecraft, immediateBlast);
                   if (retreatYaw != null) {
                      if (this.init_AiOperation != null) {
@@ -443,7 +443,7 @@ final class AiSurvival {
                      }
 
                      if (this.init_List == null) {
-                        List<LivingEntity> near = AiSurvival.init_List_List(observed, this.init_Minecraft.player.position(), radius);
+                        List<LivingEntity> near = AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), radius);
                         ArrayList<Vec3> positions = new ArrayList<>();
 
                         for (LivingEntity threat : near.isEmpty() ? close : near) {
@@ -478,7 +478,7 @@ final class AiSurvival {
 
                         ArrayList<Vec3> routeThreats = new ArrayList<>();
 
-                        for (LivingEntity threat : AiSurvival.init_List_List(observed, this.init_Minecraft.player.position(), distance + radius)) {
+                        for (LivingEntity threat : AiSurvival.livingWithin(observed, this.init_Minecraft.player.position(), distance + radius)) {
                            routeThreats.add(threat.position());
                         }
 
@@ -497,7 +497,7 @@ final class AiSurvival {
                            && AiSurvival.init_Z_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(grounded), escapeThreats)
                            && AiGoto.isStandableCompat(grounded)
                            && (
-                              AiCombat.init_Z_Minecraft_BlockPos(this.init_Minecraft, grounded)
+                              AiCombat.isSafeStep(this.init_Minecraft, grounded)
                                  || this.init_Minecraft.level.getFluidState(grounded).is(FluidTags.WATER)
                            )) {
                            target = grounded;
@@ -603,7 +603,7 @@ final class AiSurvival {
       return !stack.isEmpty() && stack.has(DataComponents.FOOD) && stack.has(DataComponents.CONSUMABLE);
    }
 
-   static boolean init_Z(int food) {
+   static boolean shouldEat(int food) {
       if (food <= 6) {
          return true;
       }
@@ -761,7 +761,7 @@ final class AiSurvival {
       return risk;
    }
 
-   static List<LivingEntity> init_List_List(List<Entity> entities, Vec3 playerPos, double radius) {
+   static List<LivingEntity> livingWithin(List<Entity> entities, Vec3 playerPos, double radius) {
       ArrayList<LivingEntity> result = new ArrayList<>();
       double limit = radius * radius;
 

@@ -26,7 +26,7 @@ final class AiMarkdown {
       return text == null ? "" : init_Pattern.matcher(text).replaceAll("");
    }
 
-   static List<AiMarkdown.Inner_DataUtil> init_List(String markdown) {
+   static List<AiMarkdown.Inner_DataUtil> parse(String markdown) {
       String text = init_Str(markdown).replace("\r", "");
       List<AiMarkdown.Inner_DataUtil> blocks = new ArrayList<>();
       StringBuilder pending = new StringBuilder();

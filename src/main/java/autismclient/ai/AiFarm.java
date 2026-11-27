@@ -178,7 +178,7 @@ final class AiFarm {
       return -1;
    }
 
-   static boolean init_Z(BlockState state) {
+   static boolean isRipe(BlockState state) {
       int max = load_I(state);
       return max < 0 || init_I(state) >= max;
    }
@@ -510,7 +510,7 @@ final class AiFarm {
                                        this.init_List
                                           .add(AiFarm.Inner_CachePool.harvest(segment, this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(segment))));
                                     }
-                                 } else if (AiFarm.init_Z(state)) {
+                                 } else if (AiFarm.isRipe(state)) {
                                     this.init_List.add(AiFarm.Inner_CachePool.harvest(cell, this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(cell))));
                                  } else if (this.load_Z && AiFarm.load_Z(state)) {
                                     this.load_List.add(AiFarm.Inner_CachePool.bonemeal(cell, this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(cell))));
@@ -574,7 +574,7 @@ final class AiFarm {
                      }
 
                      BlockState state = this.init_Minecraft.level.getBlockState(w.cell());
-                     return kind == AiFarm.Inner_StreamUtil.COLUMN ? state.is(crop) : state.is(crop) && AiFarm.init_Z(state);
+                     return kind == AiFarm.Inner_StreamUtil.COLUMN ? state.is(crop) : state.is(crop) && AiFarm.isRipe(state);
                   case REPLANT:
                      return seed != null && this.init_Minecraft.level.getBlockState(w.cell()).isAir();
                   case BONEMEAL:
@@ -1418,7 +1418,7 @@ final class AiFarm {
                p.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
                if (AiTerrain.isLoaded(mc.level, p)) {
                   BlockState state = mc.level.getBlockState(p);
-                  if (state.is(crop) && init_Z(state)) {
+                  if (state.is(crop) && isRipe(state)) {
                      double sq = p.distSqr(origin);
                      if (sq < best) {
                         best = sq;

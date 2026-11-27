@@ -46,7 +46,7 @@ public final class ToastNotificationStack {
       }
    }
 
-   public boolean init_Z() {
+   public boolean hasToasts() {
       if (!this.init_Z) {
          return false;
       } else {
@@ -60,7 +60,7 @@ public final class ToastNotificationStack {
       }
    }
 
-   public int init_I() {
+   public int count() {
       if (!this.init_Z) {
          return 0;
       }
@@ -73,7 +73,7 @@ public final class ToastNotificationStack {
       return this.init_List.size();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_List.clear();
       this.init_Z = false;
    }

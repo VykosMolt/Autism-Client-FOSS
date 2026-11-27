@@ -30,7 +30,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
 
    @Override
    public void autism$setFromPacket() {
-      this.autism$setFromPacket(PacketDecodeOriginStack.init_BufferHelper_Strea());
+      this.autism$setFromPacket(PacketDecodeOriginStack.current());
    }
 
    @Override
@@ -82,7 +82,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
          return "\u0000__autism_allow__";
       } else {
          ConnectionPrivacyRegistry.ConnectionSession origin = this.autism$packetOrigin;
-         if (origin != null && origin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && !ProtectorFeatureFlags.close() && !PacketComponentOriginTracker.init_Z()) {
+         if (origin != null && origin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && !ProtectorFeatureFlags.close() && !PacketComponentOriginTracker.isDecoding()) {
             return "\u0000__autism_allow__";
          } else {
             return origin != null && !origin.isMultiConnection() && ConnectionPrivacyRegistry.isActive(origin) && origin.connection().isMemoryConnection()

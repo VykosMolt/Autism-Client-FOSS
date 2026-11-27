@@ -50,7 +50,7 @@ final class AiBlazeFight {
    static final int update_I = 4;
    static final double update_D = 4.4;
    static final int sync = 40;
-   static final Map<UUID, Long> init_Map = new ConcurrentHashMap<>();
+   static final Map<UUID, Long> deferredUntil = new ConcurrentHashMap<>();
    private static String init_Str = "";
    private static String load_Str = "";
    static volatile long init_J;
@@ -63,16 +63,16 @@ final class AiBlazeFight {
       String world = AiWorldIdentity.currentWorldKey(mc);
       String dimension = AiWorldIdentity.currentDimensionId(mc);
       if (!world.equals(init_Str) || !dimension.equals(load_Str)) {
-         init_Map.clear();
+         deferredUntil.clear();
          init_Str = world;
          load_Str = dimension;
       }
 
       long now = System.nanoTime();
-      init_Map.entrySet().removeIf(entry -> entry.getValue() <= now);
+      deferredUntil.entrySet().removeIf(entry -> entry.getValue() <= now);
 
-      while (init_Map.size() > 256) {
-         init_Map.remove(init_Map.keySet().iterator().next());
+      while (deferredUntil.size() > 256) {
+         deferredUntil.remove(deferredUntil.keySet().iterator().next());
       }
    }
 
@@ -325,7 +325,7 @@ final class AiBlazeFight {
 
          {
             this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
-            if (AiJson.getBoolean(args, "useShield", false) && !AiDefense.init_Z(mc)) {
+            if (AiJson.getBoolean(args, "useShield", false) && !AiDefense.hasShield(mc)) {
                AiItems.equipOffhand(AiItems.resolveItem("minecraft:shield"));
             }
 
@@ -371,7 +371,7 @@ final class AiBlazeFight {
                AiFallGuard.markDriven();
                this.push++;
                this.init_DataPipe.init(mc);
-               this.load_I = this.init_DataPipe.init_I();
+               this.load_I = this.init_DataPipe.killCount();
                if (System.nanoTime() > this.load_J) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_5(
                      this.load_I >= count ? AiOperation.Status.SUCCEEDED : AiOperation.Status.TIMED_OUT,
@@ -389,7 +389,7 @@ final class AiBlazeFight {
                         living.getHealth(),
                         this.init(1.0F) * 0.95,
                         Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())),
-                        AiDefense.init_D(mc) - 0.05,
+                        AiDefense.attackReach(mc) - 0.05,
                         mc.player.hasLineOfSight(this.init_Entity),
                         this.clear
                      );
@@ -446,7 +446,7 @@ final class AiBlazeFight {
                }
 
                if (!this.open_Z
-                  && (this.init_Entity == null || Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())) > AiDefense.init_D(mc))) {
+                  && (this.init_Entity == null || Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())) > AiDefense.attackReach(mc))) {
                   this.open_Z = true;
                   BlockPos observed = AiWorldScan.findMobSpawners("minecraft:blaze", 1)
                      .stream()
@@ -464,26 +464,26 @@ final class AiBlazeFight {
                }
 
                if ((
-                     this.init_K.init_Z()
+                     this.init_K.hasPendingFire()
                         || (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                            && (this.init_SyncManager == null || this.init_SyncManager.canInterruptNow())
                   )
-                  && (this.init_K.init_Z() || AiEndRun.init_Z(mc))
+                  && (this.init_K.hasPendingFire() || AiEndRun.init_Z(mc))
                   && this.init_K.init(false, null)) {
                   if (this.load_AiOperation != null && this.load_AiOperation.canInterruptNow()) {
                      this.update_V();
                   }
 
-                  return this.init(this.init_K.init_Str());
+                  return this.init(this.init_K.status());
                } else {
-                  Creeper creeper = AiCombat.init_Creeper(mc);
+                  Creeper creeper = AiCombat.mostDangerousCreeper(mc);
                   if (creeper == null && this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;
                   }
 
                   if (creeper != null
-                     && this.init_K.load_Z()
+                     && this.init_K.canInterrupt()
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_SyncManager == null || this.init_SyncManager.canInterruptNow())
                      && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
@@ -556,7 +556,7 @@ final class AiBlazeFight {
                         }
 
                         this.read_V_3();
-                        return this.init(this.init_K.init_Str());
+                        return this.init(this.init_K.status());
                      } else {
                         if (this.size > 0 && --this.size == 0 && this.init_F >= 0.0F && this.init_Blaze != null) {
                            float after = this.init_Blaze.getHealth();
@@ -599,7 +599,7 @@ final class AiBlazeFight {
                         AABB box = this.init_Entity.getBoundingBox();
                         double horizontal = Math.hypot(this.init_Entity.getX() - mc.player.getX(), this.init_Entity.getZ() - mc.player.getZ());
                         boolean seen = mc.player.hasLineOfSight(this.init_Entity);
-                        double reach = AiDefense.init_D(mc) - 0.05;
+                        double reach = AiDefense.attackReach(mc) - 0.05;
                         if (this.add > 0) {
                            this.add--;
                         }
@@ -689,8 +689,8 @@ final class AiBlazeFight {
                                  return this.init("Building up to the blaze");
                               }
 
-                              AiProjectiles.IncomingProjectile coming = AiCombat.init_by_StreamUtil(mc);
-                              boolean hasShield = AiDefense.init_Z(mc);
+                              AiProjectiles.IncomingProjectile coming = AiCombat.nextIncoming(mc);
+                              boolean hasShield = AiDefense.hasShield(mc);
                               double gap = Math.sqrt(box.distanceToSqr(eye));
                               boolean inReach = gap <= reach;
                               float charge = mc.player.getAttackStrengthScale(0.5F);
@@ -949,7 +949,7 @@ final class AiBlazeFight {
                                  );
                               }
 
-                              AiProjectiles.IncomingProjectile onTheWay = AiDefense.init_Z(mc) ? AiCombat.load(mc) : null;
+                              AiProjectiles.IncomingProjectile onTheWay = AiDefense.hasShield(mc) ? AiCombat.load(mc) : null;
                               if (onTheWay == null
                                  || !AiDefense.init(mc, mc.level.getEntity(onTheWay.entityId()))
                                  || !AiDefense.init(mc, AiCombat.init(onTheWay))
@@ -1157,7 +1157,7 @@ final class AiBlazeFight {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof Blaze && entity.isAlive() && entity.distanceToSqr(mc.player) <= radius * radius) {
                      loaded++;
-                     if (AiBlazeFight.init_Map.containsKey(entity.getUUID())) {
+                     if (AiBlazeFight.deferredUntil.containsKey(entity.getUUID())) {
                         deferred++;
                      }
                   }
@@ -1175,12 +1175,12 @@ final class AiBlazeFight {
             double bestScore = 1.7976931348623157E308;
             double dryScore = 1.7976931348623157E308;
             if (this.init_Entity != null) {
-               Long until = AiBlazeFight.init_Map.get(this.init_Entity.getUUID());
+               Long until = AiBlazeFight.deferredUntil.get(this.init_Entity.getUUID());
                boolean deferred = until != null && until > System.nanoTime();
-               boolean keep = AiCombatPriority.init_Z_Z(this.init_Entity.isAlive(), this.init_Entity.distanceTo(mc.player) <= radius, deferred);
-               double reachSq = (AiDefense.init_D(mc) - 0.05) * (AiDefense.init_D(mc) - 0.05);
+               boolean keep = AiCombatPriority.keepTarget(this.init_Entity.isAlive(), this.init_Entity.distanceTo(mc.player) <= radius, deferred);
+               double reachSq = (AiDefense.attackReach(mc) - 0.05) * (AiDefense.attackReach(mc) - 0.05);
                Vec3 eye = mc.player.getEyePosition();
-               double farGap = AiDefense.init_D(mc) + 2.5;
+               double farGap = AiDefense.attackReach(mc) + 2.5;
                if (keep && this.add == 0 && this.init_Entity.getBoundingBox().distanceToSqr(eye) > farGap * farGap) {
                   Entity close = null;
 
@@ -1198,7 +1198,7 @@ final class AiBlazeFight {
                   }
 
                   if (close != null) {
-                     AiBlazeFight.init_Map.remove(close.getUUID());
+                     AiBlazeFight.deferredUntil.remove(close.getUUID());
                      return close;
                   }
                }
@@ -1208,11 +1208,11 @@ final class AiBlazeFight {
                }
             }
 
-            double reachNow = AiDefense.init_D(mc) + 0.25;
+            double reachNow = AiDefense.attackReach(mc) + 0.25;
 
             for (Entity e : mc.level.entitiesForRendering()) {
                if (e instanceof Blaze blaze && e.isAlive() && (!args.has("entityId") || e.getId() == AiJson.getInt(args, "entityId", -1))) {
-                  Long until = AiBlazeFight.init_Map.get(e.getUUID());
+                  Long until = AiBlazeFight.deferredUntil.get(e.getUUID());
                   if (until == null || until <= System.nanoTime()) {
                      double d = e.distanceTo(mc.player);
                      if (!(d > radius)) {
@@ -1424,7 +1424,7 @@ final class AiBlazeFight {
                   reason,
                   hold
                );
-            AiBlazeFight.init_Map.put(this.init_Entity.getUUID(), System.nanoTime() + hold * 1000000000L);
+            AiBlazeFight.deferredUntil.put(this.init_Entity.getUUID(), System.nanoTime() + hold * 1000000000L);
             this.run = 0;
             this.read_Z = false;
             this.update_V();
@@ -1625,7 +1625,7 @@ final class AiBlazeFight {
                && AiBlazeFight.init(
                   this.init_Entity.getBoundingBox(),
                   mc.player.getEyePosition(),
-                  AiDefense.init_D(mc) - 0.05,
+                  AiDefense.attackReach(mc) - 0.05,
                   mc.player.hasLineOfSight(this.init_Entity),
                   this.read_Z_2(),
                   this.open_I < 4 && mc.player.onGround() && this.write_Z()
@@ -1708,7 +1708,7 @@ final class AiBlazeFight {
                "detour",
                this.write_Z,
                "firesExtinguished",
-               this.init_K.init_I(),
+               this.init_K.firesExtinguished(),
                "knockStance",
                this.init_Vec3 != null,
                "knockGrace",
@@ -1755,7 +1755,7 @@ final class AiBlazeFight {
             this.update_V();
             this.write_V_2();
             this.read_V_3();
-            this.init_K.init_V();
+            this.init_K.reset();
             if (this.init_SyncManager != null) {
                this.init_SyncManager.cancel();
                this.init_SyncManager = null;
@@ -1778,7 +1778,7 @@ final class AiBlazeFight {
                         "availability",
                         this.init_JsonObject_21(),
                         "verifiedDeathTypes",
-                        this.init_DataPipe.init_JsonArray(),
+                        this.init_DataPipe.killedTypes(),
                         "swings",
                         this.read_I,
                         "crits",
@@ -1786,7 +1786,7 @@ final class AiBlazeFight {
                         "shieldRaises",
                         this.update_I,
                         "firesExtinguished",
-                        this.init_K.init_I(),
+                        this.init_K.firesExtinguished(),
                         "verifiedBlocks",
                         "not_observable",
                         "requestedKills",
@@ -1813,7 +1813,7 @@ final class AiBlazeFight {
                return false;
             }
 
-            if (!this.init_K.load_Z()) {
+            if (!this.init_K.canInterrupt()) {
                return false;
             }
 

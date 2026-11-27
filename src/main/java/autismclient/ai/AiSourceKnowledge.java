@@ -15,7 +15,7 @@ final class AiSourceKnowledge {
    private static volatile Map<String, String> load = Map.of();
    private static volatile String init_Str = "unloaded";
 
-   static void init_V() throws IOException {
+   static void load() throws IOException {
       try (InputStream in = AiSourceKnowledge.class.getResourceAsStream("/assets/autismclient/ai/source-contracts.json")) {
          if (in == null) {
             throw new IOException("AI source contracts are missing from the full jar");

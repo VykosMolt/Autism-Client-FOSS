@@ -43,8 +43,8 @@ public final class AiToolsScreen extends Screen {
    public AiToolsScreen(Screen parent) {
       super(Component.literal("AI Tools"));
       this.init_Screen = parent;
-      this.init_AiToolSettings = AiDirectOps.init_AiToolSettings().copy();
-      this.init_Z = AiDirectOps.init_AiSettings().aiSilentAim;
+      this.init_AiToolSettings = AiDirectOps.toolSettings().copy();
+      this.init_Z = AiDirectOps.settings().aiSilentAim;
       this.init_RefQueue = new autismclient.gui.ui.widgets.DropdownMenu(
          autismclient.gui.f.NetHelper.init(0, 0, 0, 0),
          List.of("fastest", "safest", "saver"),
@@ -140,7 +140,7 @@ public final class AiToolsScreen extends Screen {
          autismclient.gui.ui.widgets.SliderRenderer.init(
             ctx,
             this.write_NetHelper,
-            autismclient.gui.ui.widgets.SliderRenderer.init_D_D(this.init_AiToolSettings.digReluctance, 0.0, 60.0),
+            autismclient.gui.ui.widgets.SliderRenderer.ratio(this.init_AiToolSettings.digReluctance, 0.0, 60.0),
             this.write_NetHelper.init_Z(mx, my) || this.read_Z
          );
          y += 12 + sectionGap;
@@ -164,7 +164,7 @@ public final class AiToolsScreen extends Screen {
          autismclient.gui.ui.widgets.SliderRenderer.init(
             ctx,
             this.read_NetHelper,
-            autismclient.gui.ui.widgets.SliderRenderer.init_D_D(this.init_AiToolSettings.timeoutSeconds, 30.0, 1800.0),
+            autismclient.gui.ui.widgets.SliderRenderer.ratio(this.init_AiToolSettings.timeoutSeconds, 30.0, 1800.0),
             this.read_NetHelper.init_Z(mx, my) || this.load_Z
          );
          y += 12 + sectionGap;

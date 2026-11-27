@@ -32,7 +32,7 @@ public final class ModNamespaceCatalog {
    private ModNamespaceCatalog() {
    }
 
-   public static void init_V() {
+   public static void initialize() {
       if (init_AtomicBoolean.compareAndSet(false, true)) {
          try {
             for (ModContainer mod : FabricLoader.getInstance().getAllMods()) {

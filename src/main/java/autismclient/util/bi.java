@@ -44,7 +44,7 @@ public final class bi {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
             NameScrapeController.init(graphics);
-            if (init_f.init_Z()) {
+            if (init_f.hasToasts()) {
                int width = Math.min(320, Math.max(120, cA.init_I() - 16));
                int x = Math.max(8, (cA.init_I() - width) / 2);
                init_f.init(autismclient.gui.f.UiHelper.init(graphics, mc.font, -1, -1), x, 8, width);
@@ -54,14 +54,14 @@ public final class bi {
    }
 
    public static boolean init_Z() {
-      return autismclient.modules.aD.write_Z() ? false : init_f.init_Z() || NameScrapeController.init_Z();
+      return autismclient.modules.aD.write_Z() ? false : init_f.hasToasts() || NameScrapeController.init_Z();
    }
 
    public static int init_I() {
-      return init_f.init_I();
+      return init_f.count();
    }
 
    public static void init_V() {
-      init_f.init_V();
+      init_f.clear();
    }
 }

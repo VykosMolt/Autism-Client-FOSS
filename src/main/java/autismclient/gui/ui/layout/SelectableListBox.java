@@ -71,7 +71,7 @@ public final class SelectableListBox<T> {
       this.init_EventBus.setContentHeight(contentHeight);
    }
 
-   public void init_V(int index) {
+   public void select(int index) {
       if (index >= -1 && index < this.init_List.size()) {
          this.init_I = index;
          if (index >= 0 && this.init_BiConsumer != null) {
@@ -84,7 +84,7 @@ public final class SelectableListBox<T> {
       return this.init_I;
    }
 
-   public T init_Obj() {
+   public T selected() {
       return this.init_I >= 0 && this.init_I < this.init_List.size() ? this.init_List.get(this.init_I) : null;
    }
 
@@ -195,7 +195,7 @@ public final class SelectableListBox<T> {
       });
    }
 
-   public boolean init_Z_D_2(double mouseX, double mouseY, int button) {
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
       if (!this.init_Z) {
          return false;
       }
@@ -208,7 +208,7 @@ public final class SelectableListBox<T> {
          int relativeY = (int)Math.round(mouseY) - this.init_EventBus.getY() - 1 + this.init_EventBus.getScrollOffset();
          int rowIndex = relativeY / this.init_EventBus.getRowHeight();
          if (rowIndex >= 0 && rowIndex < this.init_List.size()) {
-            this.init_V(rowIndex);
+            this.select(rowIndex);
             return true;
          }
       }
@@ -216,15 +216,15 @@ public final class SelectableListBox<T> {
       return false;
    }
 
-   public void load_V() {
+   public void mouseReleased() {
       this.init_EventBus.mouseReleased();
    }
 
-   public void init_V(double mouseX, double mouseY) {
+   public void mouseDragged(double mouseX, double mouseY) {
       this.init_EventBus.mouseDragged(mouseX, mouseY);
    }
 
-   public boolean init_Z_D(double mouseX, double mouseY, double amount) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
       return this.init_EventBus.mouseScrolled(mouseX, mouseY, amount);
    }
 
@@ -259,11 +259,11 @@ public final class SelectableListBox<T> {
       return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
    }
 
-   public int read_I() {
+   public int getX() {
       return this.init_EventBus.getX();
    }
 
-   public int write_I() {
+   public int getY() {
       return this.init_EventBus.getY();
    }
 
@@ -295,11 +295,11 @@ public final class SelectableListBox<T> {
       this.init_EventBus.scrollByRows(rows);
    }
 
-   public boolean init_Z(double x, double y) {
+   public boolean containsPoint(double x, double y) {
       return this.init_EventBus.containsPoint(x, y);
    }
 
-   public boolean read_Z() {
+   public boolean isDraggingScrollbar() {
       return this.init_EventBus.isDraggingScrollbar();
    }
 

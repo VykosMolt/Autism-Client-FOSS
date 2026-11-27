@@ -182,7 +182,7 @@ final class AiStrongholdSearch {
             double distance = 1.7976931348623157E308;
 
             for (BlockPos p : BlockPos.betweenClosed(center.offset(-4, -4, -4), center.offset(4, 4, 4))) {
-               if (!this.init_Set.contains(AiStrongholdSearch.init(p)) && !this.load_Set.contains(AiStrongholdSearch.init(p)) && this.load_Z_6(p) && AiCombat.init_Z_Minecraft_BlockPos(mc, p)
+               if (!this.init_Set.contains(AiStrongholdSearch.init(p)) && !this.load_Set.contains(AiStrongholdSearch.init(p)) && this.load_Z_6(p) && AiCombat.isSafeStep(mc, p)
                   )
                 {
                   double d = p.distSqr(center);
@@ -207,7 +207,7 @@ final class AiStrongholdSearch {
                   && !(p.distSqr(feet) < 16.0)
                   && this.load_Z_6(p)
                   && AiStrongholdSearch.init(mc.level.getBlockState(p.below()))
-                  && AiCombat.init_Z_Minecraft_BlockPos(mc, p)) {
+                  && AiCombat.isSafeStep(mc, p)) {
                   double value = Math.sqrt(p.distSqr(feet)) + Math.abs(p.getY() - feet.getY()) * 2;
                   if (value < score) {
                      best = p.immutable();

@@ -40,7 +40,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
    private long read_J = -1L;
    private long write_J = -1L;
 
-   public static LoadingOverlay init_LoadingOverlay_Minecraft(
+   public static LoadingOverlay create(
       Minecraft minecraft, ReloadInstance reload, Consumer<Optional<Throwable>> onFinish, boolean fadeIn
    ) {
       return !aD.init_Z() && !AutismLiteVariant.enabled()

@@ -18,18 +18,18 @@ public final class AiClientTick {
       return init.init();
    }
 
-   static void init_V_Runnable(Runnable action) {
-      init.init_V_Runnable(action);
+   static void execute(Runnable action) {
+      init.execute(action);
    }
 
-   static <T> CompletableFuture<T> init_CompletableFuture_Supplier(Supplier<T> action) {
-      return init.init_CompletableFuture_Supplier(action);
+   static <T> CompletableFuture<T> supply(Supplier<T> action) {
+      return init.supply(action);
    }
 
-   public static void init_V_Minecraft(Minecraft client) {
+   public static void tick(Minecraft client) {
       init.init(() -> {
          try {
-            AiMacroTools.init_V_Minecraft(client);
+            AiMacroTools.tick(client);
             AiDirectOps.init(client);
             AiService service = AiService.getExistingInstance();
             if (service != null) {

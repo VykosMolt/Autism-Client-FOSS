@@ -11,17 +11,17 @@ final class AiModelCatalog {
    private boolean load;
    private String init_Str = "";
 
-   boolean init_Z(AiModelCatalog.Inner_DataUtil next) {
+   boolean retarget(AiModelCatalog.Inner_DataUtil next) {
       if (Objects.equals(this.init_av_DataUtil, next)) {
          return false;
       }
 
-      this.init_V();
+      this.reset();
       this.init_av_DataUtil = next;
       return true;
    }
 
-   void init_V() {
+   void reset() {
       this.init_J++;
       this.init_av_DataUtil = null;
       this.init_List = List.of();
@@ -30,8 +30,8 @@ final class AiModelCatalog {
       this.init_Str = "";
    }
 
-   long init_J(AiModelCatalog.Inner_DataUtil next) {
-      this.init_Z(next);
+   long beginFetch(AiModelCatalog.Inner_DataUtil next) {
+      this.retarget(next);
       long token = ++this.init_J;
       this.init_List = List.of();
       this.init_Z = true;
@@ -71,17 +71,17 @@ final class AiModelCatalog {
       return this.load;
    }
 
-   List<String> init_List() {
+   List<String> models() {
       return this.init_List;
    }
 
-   String init_Str() {
+   String message() {
       return this.init_Str;
    }
 
    record Inner_DataUtil(AiSettings.Provider provider, String endpoint, String credentialDigest) {
       static AiModelCatalog.Inner_DataUtil of(AiSettings.Provider provider, String endpoint, String key) {
-         return new AiModelCatalog.Inner_DataUtil(provider, AiModels.init_Str(provider, endpoint), AiJson.sha256Hex(key == null ? "" : key.trim()));
+         return new AiModelCatalog.Inner_DataUtil(provider, AiModels.baseUrl(provider, endpoint), AiJson.sha256Hex(key == null ? "" : key.trim()));
       }
    }
 }

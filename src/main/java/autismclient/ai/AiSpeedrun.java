@@ -37,7 +37,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 
 final class AiSpeedrun {
-   static final Map<String, Integer> init_Map = load();
+   static final Map<String, Integer> KIT = load();
    static final int init_I = 16;
    static final int load_I = 32;
    static final long init_J = 5000000000L;
@@ -75,7 +75,7 @@ final class AiSpeedrun {
       "minecraft:rabbit",
       "minecraft:rabbit"
    );
-   static final Map<String, String> read_Map = Map.of(
+   static final Map<String, String> COOKED = Map.of(
       "minecraft:beef",
       "minecraft:cooked_beef",
       "minecraft:porkchop",
@@ -130,8 +130,8 @@ final class AiSpeedrun {
    }
 
    static AiCraftPlanner.CraftPlan init_g_CachePool_g_StreamUtil_I(AiCraftPlanner.RecipeGraph graph, int needed) {
-      int held = graph.init_I("minecraft:bread");
-      int goal = init_I_I(held, graph.init_I("minecraft:wheat"), graph.init_I("minecraft:hay_block"), needed);
+      int held = graph.held("minecraft:bread");
+      int goal = init_I_I(held, graph.held("minecraft:wheat"), graph.held("minecraft:hay_block"), needed);
       if (goal <= held) {
          return null;
       }
@@ -162,11 +162,11 @@ final class AiSpeedrun {
          && (current == null || current.canInterruptNow() && !current.requiresReconciliationAfterEmergency());
    }
 
-   static autismclient.ai.engine.AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
+   static autismclient.ai.engine.AiPathfinder.PathGoal surfaceGoal(BlockPos surface) {
       return autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(surface, 2.0);
    }
 
-   static BlockPos init_BlockPos_BlockPos(BlockPos from, int x, int z, Function<BlockPos, BlockPos> observedSurface) {
+   static BlockPos findSurface(BlockPos from, int x, int z, Function<BlockPos, BlockPos> observedSurface) {
       for (int quarter = 4; quarter >= 1; quarter--) {
          int cx = from.getX() + (int)Math.round((x - from.getX()) * quarter / 4.0);
          int cz = from.getZ() + (int)Math.round((z - from.getZ()) * quarter / 4.0);
@@ -202,7 +202,7 @@ final class AiSpeedrun {
       return null;
    }
 
-   static BlockPos init_BlockPos_Minecraft_BlockPos(Minecraft mc, BlockPos column) {
+   static BlockPos observedSurface(Minecraft mc, BlockPos column) {
       if (!mc.level.hasChunkAt(column)) {
          return null;
       }
@@ -246,15 +246,15 @@ final class AiSpeedrun {
       return attemptsByPhase.getOrDefault(phase, 0) <= budget;
    }
 
-   static AiOperation init_AiOperation_JsonObject(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(600, Math.min(14400, AiJson.getInt(args, "timeoutSeconds", 7200)));
-         AiOracle.init_V_Z(true);
+         AiOracle.enable(true);
          AiNetherEntry.init_Z = false;
          AiNetherRun.init_Z = false;
          return new AiOperation() {
-            final AiRunDiagnostics init_bJ = AiRunDiagnostics.init_bJ();
+            final AiRunDiagnostics init_bJ = AiRunDiagnostics.start();
             final Object init_Obj = AiRunResources.beginCampaign();
             final String init_Str = AiWorldIdentity.currentWorldKey(mc);
             final UUID init_UUID = mc.player.getUUID();
@@ -337,7 +337,7 @@ final class AiSpeedrun {
                int food = mc.player.getFoodData().getFoodLevel();
                if (this.init_F >= 0.0F && health < this.init_F - 0.01F) {
                   DamageSource source = mc.player.getLastDamageSource();
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] speedrun hurt {} -> {} by {} in {} at {}",
                      String.format("%.1f", this.init_F),
                      String.format("%.1f", health),
@@ -351,7 +351,7 @@ final class AiSpeedrun {
                }
 
                if (food != this.push_I && (food <= 14 || this.push_I <= 14)) {
-                  AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun food {} (health {})", food, String.format("%.1f", health));
+                  AiSpeedrun.log("[AI] speedrun food {} (health {})", food, String.format("%.1f", health));
                }
 
                this.init_F = health;
@@ -382,11 +382,11 @@ final class AiSpeedrun {
 
                if (!mc.player.onGround() && mc.player.fallDistance > 6.0 && !this.poll_Z) {
                   this.poll_Z = true;
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] speedrun falling {} in {} during '{}': {}",
                      String.format("%.1f", mc.player.fallDistance),
                      this.init_cl_BufferHelper,
-                     AiSpeedrun.init_Str_Str(this.write_Str),
+                     AiSpeedrun.clip(this.write_Str),
                      String.join(" | ", this.init_ArrayDeque)
                   );
                } else if (mc.player.onGround()) {
@@ -431,13 +431,13 @@ final class AiSpeedrun {
                      this.init_V_26();
                      if (++this.pop_I >= 600) {
                         this.pop_I = 0;
-                        AiSpeedrun.init_V_Str_ObjArr(
+                        AiSpeedrun.log(
                            "[AI] speedrun heartbeat {} at {} health {} after {} s: {} [endermen {}, piglins {}, pearls {}, rods {}, eyes {}, food {}, time {}]",
                            this.init_cl_BufferHelper,
                            mc.player.blockPosition().toShortString(),
                            String.format("%.1f", mc.player.getHealth()),
                            this.init_J_2(),
-                           AiSpeedrun.init_Str_Str(this.write_Str),
+                           AiSpeedrun.clip(this.write_Str),
                            AiWorldScan.findEntitiesByType("minecraft:enderman", 64.0).size(),
                            AiWorldScan.findEntitiesByType("minecraft:piglin", 64.0).size(),
                            AiCraft.countItem("minecraft:ender_pearl"),
@@ -452,7 +452,7 @@ final class AiSpeedrun {
                         ? AiForage.read(32.0)
                         : null;
                      if (pearlOp != null) {
-                        AiSpeedrun.init_V_Str_ObjArr(
+                        AiSpeedrun.log(
                            "[AI] speedrun: an enderman within {} blocks in {}; hunting it for a pearl ({} held)",
                            16,
                            this.init_cl_BufferHelper,
@@ -466,7 +466,7 @@ final class AiSpeedrun {
                      }
 
                      if (this.init_AiOperation != null && this.load_Z_14()) {
-                        AiSpeedrun.init_V_Str_ObjArr(
+                        AiSpeedrun.log(
                            "[AI] speedrun: health {} in {} with nothing hostile near; healing before going on",
                            String.format("%.1f", mc.player.getHealth()),
                            this.init_cl_BufferHelper
@@ -481,7 +481,7 @@ final class AiSpeedrun {
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.NETHER
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.STRONGHOLD
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.END) {
-                        this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", "campaign emergency", AiGuardLayer.createEmergencyEscapeOp(mc));
+                        this.load_AiOperation = AiRunDiagnostics.trace("survival", "campaign emergency", AiGuardLayer.createEmergencyEscapeOp(mc));
                         if (this.load_AiOperation != null) {
                            this.tick_Z = this.init_AiOperation.requiresReconciliationAfterEmergency();
                            this.init_AiOperation.cancel();
@@ -501,7 +501,7 @@ final class AiSpeedrun {
                               key.setDown(false);
                            }
 
-                           AiSpeedrun.init_V_Str_ObjArr(
+                           AiSpeedrun.log(
                               "[AI] speedrun: {} at {} in {}; answering it first",
                               mc.player.isInLava() ? "in lava" : (AiBreathe.init(mc.player) ? "out of air" : "on fire"),
                               mc.player.blockPosition().toShortString(),
@@ -547,7 +547,7 @@ final class AiSpeedrun {
                            this.sync_I = r.status() == AiOperation.Status.SUCCEEDED ? 0 : this.sync_I + 1;
                         }
 
-                        AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun step {} in {}: {}", r.status(), this.init_cl_BufferHelper, AiSpeedrun.init_Str_Str(r.message()));
+                        AiSpeedrun.log("[AI] speedrun step {} in {}: {}", r.status(), this.init_cl_BufferHelper, AiSpeedrun.clip(r.message()));
                         if (this.close_Z) {
                            this.close_Z = false;
                            if (r.status() != AiOperation.Status.SUCCEEDED) {
@@ -563,7 +563,7 @@ final class AiSpeedrun {
                                  "status",
                                  r.status().name(),
                                  "message",
-                                 AiSpeedrun.init_Str_Str(r.message()),
+                                 AiSpeedrun.clip(r.message()),
                                  "seconds",
                                  (System.nanoTime() - this.poll_J) / 1000000000L,
                                  "tick",
@@ -584,9 +584,9 @@ final class AiSpeedrun {
 
                         if (r.status() == AiOperation.Status.UNCERTAIN
                            && AiSpeedrun.init_Z_Map(this.read_Map, this.write_Map, this.update_Map, this.init_cl_BufferHelper, 3, System.nanoTime())) {
-                           AiSpeedrun.init_V_Str_ObjArr(
+                           AiSpeedrun.log(
                               "[AI] speedrun: {} could not be established in {} ({} of {}); observing the world again",
-                              AiSpeedrun.init_Str_Str(r.message()),
+                              AiSpeedrun.clip(r.message()),
                               this.init_cl_BufferHelper,
                               this.read_Map.get(this.init_cl_BufferHelper),
                               3
@@ -615,7 +615,7 @@ final class AiSpeedrun {
                               AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), AiJson.getInt(legEvidence, "pearlsNeeded", 1)
                            );
                            this.flush_Z = true;
-                           AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: bounded surface pearl search exhausted; Nether recovery for {} total eyes/pearls", this.poll_I);
+                           AiSpeedrun.log("[AI] speedrun: bounded surface pearl search exhausted; Nether recovery for {} total eyes/pearls", this.poll_I);
                         }
 
                         if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.END
@@ -647,7 +647,7 @@ final class AiSpeedrun {
                         if (stuck && this.set < 6 && !wasPearlLeg) {
                            this.set++;
                            this.init_BlockPos = null;
-                           AiSpeedrun.init_V_Str_ObjArr(
+                           AiSpeedrun.log(
                               "[AI] speedrun: {} failed at once twice from {}; moving off first ({} of {})",
                               this.init_cl_BufferHelper,
                               feetNow.toShortString(),
@@ -671,9 +671,9 @@ final class AiSpeedrun {
                            && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.COOK
                            && !wasPearlLeg
                            && !pearlRouteChange) {
-                           this.read_Str = this.init_cl_BufferHelper + ": " + AiSpeedrun.init_Str_Str(r.message());
+                           this.read_Str = this.init_cl_BufferHelper + ": " + AiSpeedrun.clip(r.message());
                            int n = this.init_Map.merge(this.init_cl_BufferHelper, 1, Integer::sum);
-                           int same = this.load_Map.merge(this.init_cl_BufferHelper + ": " + AiSpeedrun.init_Str_Str(r.message()), 1, Integer::sum);
+                           int same = this.load_Map.merge(this.init_cl_BufferHelper + ": " + AiSpeedrun.clip(r.message()), 1, Integer::sum);
                            if (n >= 6 || same >= 3) {
                               return this.init(
                                  AiOperation.Status.FAILED,
@@ -682,7 +682,7 @@ final class AiSpeedrun {
                                     + " failed "
                                     + (same >= 3 ? same + " times the same way" : n + " times")
                                     + ": "
-                                    + AiSpeedrun.init_Str_Str(r.message())
+                                    + AiSpeedrun.clip(r.message())
                               );
                            }
                         }
@@ -726,7 +726,7 @@ final class AiSpeedrun {
                      return false;
                   }
 
-                  if (AiForage.init_Entity_Minecraft(mc, "minecraft:enderman", 16.0) != null) {
+                  if (AiForage.findEntity(mc, "minecraft:enderman", 16.0) != null) {
                      return true;
                   }
 
@@ -770,7 +770,7 @@ final class AiSpeedrun {
                         && mc.level.dimension() == Level.OVERWORLD
                         && System.nanoTime() > this.flush_J) {
                         this.flush_J = System.nanoTime() + 180000000000L;
-                        return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                        return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(10, 240), null);
                      } else if (this.run_I > 0) {
                         this.close_J = System.nanoTime() + 10000000000L;
                         AiOperation.Result rest = this.init(AiSpeedrun.Inner_BufferHelper.HEAL, AiCombat.init(200), null);
@@ -897,7 +897,7 @@ final class AiSpeedrun {
                   if (clear != null) {
                      this.get_I++;
                      this.run_Z = true;
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: stepping clear of the portal to {}", clear.toShortString());
+                     AiSpeedrun.log("[AI] speedrun: stepping clear of the portal to {}", clear.toShortString());
                      return this.init(
                         this.init_cl_BufferHelper == null ? AiSpeedrun.Inner_BufferHelper.WOOD : this.init_cl_BufferHelper,
                         AiGoto.travelToCompat(clear, 0.6, true, false, false, 20),
@@ -924,7 +924,7 @@ final class AiSpeedrun {
                if (dimension == Level.NETHER) {
                   return this.init(
                      AiSpeedrun.Inner_BufferHelper.NETHER,
-                     AiNetherRun.init_AiOperation(
+                     AiNetherRun.create(
                         AiJson.objectOf(
                            "rods",
                            8,
@@ -949,13 +949,13 @@ final class AiSpeedrun {
                   boolean night = dayTime > 13000L && dayTime < 23000L;
                   if (this.load_I_13() < 10 && night && this.read_I >= 1 && this.write_I < 1 && AiBurrow.init()) {
                      this.write_I++;
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: home for food at night (day time {}); a hole until dawn", dayTime);
+                     AiSpeedrun.log("[AI] speedrun: home for food at night (day time {}); a hole until dawn", dayTime);
                      return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiBurrow.init(AiJson.objectOf("timeoutSeconds", 600)), null);
                   }
 
                   if (this.load_I_13() < 10 && this.read_I < 3) {
                      this.read_I++;
-                     return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                     return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(10, 240), null);
                   }
 
                   AiOperation.Result cook = this.read_AiOperation_Result_11();
@@ -966,7 +966,7 @@ final class AiSpeedrun {
                   if (AiRunResources.totalSafeFoodNutrition() < 32) {
                      return this.flush_I++ >= 4
                         ? this.init(AiOperation.Status.FAILED, "Nether revisit blocked: safe food reserve is still insufficient")
-                        : this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(this.load_I_13() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6), 240), null);
+                        : this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(this.load_I_13() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6), 240), null);
                   }
 
                   if (AiCraft.countItem("minecraft:water_bucket") < 2) {
@@ -1027,7 +1027,7 @@ final class AiSpeedrun {
                            return cooked;
                         }
 
-                        Map<String, Integer> bootstrap = AiSpeedrun.init_Map_bx_CachePool(AiProgression.init_bx_CachePool(mc), AiCraft.countItem("minecraft:iron_pickaxe"), missing);
+                        Map<String, Integer> bootstrap = AiSpeedrun.init_Map_bx_CachePool(AiProgression.bestTier(mc), AiCraft.countItem("minecraft:iron_pickaxe"), missing);
                         if (AiSpeedrun.init_Z_Z(this.sync_Z, AiRunResources.totalSafeFoodNutrition(), this.read_I_6(), missing, bootstrap)) {
                            this.sync_Z = true;
                            String first = bootstrap.containsKey("minecraft:iron_pickaxe") ? "minecraft:iron_pickaxe" : "minecraft:shield";
@@ -1038,14 +1038,14 @@ final class AiSpeedrun {
                                  earlyKit.addProperty(id, n);
                               }
                            });
-                           AiSpeedrun.init_V_Str_ObjArr(
+                           AiSpeedrun.log(
                               "[AI] speedrun: prepare required iron gear before the diamond food reserve ({} nutrition, {} s maximum)",
                               AiRunResources.totalSafeFoodNutrition(),
                               Math.min(600, this.read_I_6())
                            );
                            return this.init(
                               AiSpeedrun.Inner_BufferHelper.KIT,
-                              AiProgression.init_AiOperation_JsonObject(
+                              AiProgression.obtain(
                                  AiJson.objectOf(
                                     "kit",
                                     earlyKit,
@@ -1066,7 +1066,7 @@ final class AiSpeedrun {
                            && mc.level.getOverworldClockTime() % 24000L > 13000L
                            && mc.level.getOverworldClockTime() % 24000L < 23000L
                            && this.sync_J != mc.level.getOverworldClockTime() / 24000L
-                           && !AiSpeedrun.init_Z_Minecraft_D(mc, 48.0)
+                           && !AiSpeedrun.hasHuntable(mc, 48.0)
                            && AiBurrow.init()) {
                            this.close_Z = true;
                            return this.init(
@@ -1078,7 +1078,7 @@ final class AiSpeedrun {
                            this.load_I++;
                            this.load_Z = true;
                            int foodGoal = this.load_I_13() + Math.max(4, (nutritionGoal - AiRunResources.totalSafeFoodNutrition() + 5) / 6);
-                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(foodGoal, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(foodGoal, 240), null);
                         }
 
                         if (AiRunResources.totalSafeFoodNutrition() < Math.min(nutritionGoal, 12)) {
@@ -1090,7 +1090,7 @@ final class AiSpeedrun {
 
                         if (AiRunResources.totalSafeFoodNutrition() < nutritionGoal && !this.open_Z) {
                            this.open_Z = true;
-                           AiSpeedrun.init_V_Str_ObjArr(
+                           AiSpeedrun.log(
                               "[AI] speedrun: {} nutrition of the {} wanted after {} food trips; going on with the kit", AiRunResources.totalSafeFoodNutrition(), nutritionGoal, this.load_I
                            );
                         }
@@ -1104,7 +1104,7 @@ final class AiSpeedrun {
                         });
                         return this.init(
                            AiSpeedrun.Inner_BufferHelper.KIT,
-                           AiProgression.init_AiOperation_JsonObject(
+                           AiProgression.obtain(
                               AiJson.objectOf("kit", kit, "kitPlanks", 8, "timeoutSeconds", this.read_I_6()), main, missing.getOrDefault(main, 1)
                            ),
                            null
@@ -1118,7 +1118,7 @@ final class AiSpeedrun {
 
                         if (this.load_I_13() < (AiSpeedrun.init_Z_Minecraft_I(mc, 8) ? 6 : 2) && System.nanoTime() > this.flush_J) {
                            this.flush_J = System.nanoTime() + 600000000000L;
-                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(10, 240), null);
                         }
 
                         AiOperation.Result cook = this.read_AiOperation_Result_11();
@@ -1132,7 +1132,7 @@ final class AiSpeedrun {
                            }
 
                            int goal = this.load_I_13() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6);
-                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(goal, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.secureFood(goal, 240), null);
                         } else if (AiCraft.countItem("minecraft:water_bucket") < 2) {
                            return this.init(AiSpeedrun.Inner_BufferHelper.KIT, AiObsidian.init(2, Math.min(180, this.read_I_6())), null);
                         } else {
@@ -1166,7 +1166,7 @@ final class AiSpeedrun {
             }
 
             AiOperation.Result read_AiOperation_Result_11() {
-               if (AiSpeedrun.init_Map().isEmpty()) {
+               if (AiSpeedrun.rawMeatCounts().isEmpty()) {
                   return null;
                }
 
@@ -1174,7 +1174,7 @@ final class AiSpeedrun {
                   return this.init(AiOperation.Status.FAILED, "Cooking repeatedly failed; raw food cannot satisfy the safe nutrition reserve");
                }
 
-               AiOperation cooking = AiForage.init_AiOperation_I(Math.min(600, this.read_I_6()));
+               AiOperation cooking = AiForage.cook(Math.min(600, this.read_I_6()));
                return cooking == null ? null : this.init(AiSpeedrun.Inner_BufferHelper.COOK, cooking, null);
             }
 
@@ -1194,7 +1194,7 @@ final class AiSpeedrun {
             int init_I_34() {
                int n = 0;
 
-               for (String id : AiProgression.init_List) {
+               for (String id : AiProgression.PICKAXES) {
                   n += AiCraft.countItem(id);
                }
 
@@ -1213,7 +1213,7 @@ final class AiSpeedrun {
 
                   this.init_cl_BufferHelper = next;
                   this.write_J = System.nanoTime();
-                  AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun phase {}: at {} after {} s", next, mc.player.blockPosition().toShortString(), this.init_J_2());
+                  AiSpeedrun.log("[AI] speedrun phase {}: at {} after {} s", next, mc.player.blockPosition().toShortString(), this.init_J_2());
                   AiRunTrace.emitServiceEvent(
                      "speedrun_phase",
                      AiJson.objectOf(
@@ -1237,7 +1237,7 @@ final class AiSpeedrun {
                   return this.init(AiOperation.Status.FAILED, "Reached phase " + next + ", but " + notBuilt);
                }
 
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("campaign", next.name(), op);
+               this.init_AiOperation = AiRunDiagnostics.trace("campaign", next.name(), op);
                this.pop_Z = false;
                this.poll_J = System.nanoTime();
                return this.init_AiOperation_Result_13(next + ": starting");
@@ -1281,11 +1281,11 @@ final class AiSpeedrun {
                   "resources",
                   AiRunResources.inventorySnapshotJson(),
                   "memoryCapabilities",
-                  AiWorldMemory.init_JsonObject(),
+                  AiWorldMemory.snapshotJson(),
                   "requiredNetherRouteVerified",
                   AiNetherRun.load_Z(),
                   "seedFree",
-                  AiOracle.init_Z(),
+                  AiOracle.isActive(),
                   "ironBootstrapTried",
                   this.sync_Z,
                   "pearlRecoveryPending",
@@ -1316,7 +1316,7 @@ final class AiSpeedrun {
                this.get_Z = true;
                AiGoal.init(this);
                JsonObject debug = this.init_bJ
-                  .init_JsonObject_Str(status.name(), this.init_cl_BufferHelper == null ? "START" : this.init_cl_BufferHelper.name(), message);
+                  .snapshot(status.name(), this.init_cl_BufferHelper == null ? "START" : this.init_cl_BufferHelper.name(), message);
                if (this.init_AiOperation != null) {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
@@ -1333,14 +1333,14 @@ final class AiSpeedrun {
                finalData.add("diagnostics", debug);
                AiRunTrace.emitServiceEvent("speedrun_outcome", AiJson.objectOf("status", status.name(), "message", message, "report", finalData));
                this.load_V_13();
-               AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun {} after {} s: {}", status, this.init_J_2(), message);
+               AiSpeedrun.log("[AI] speedrun {} after {} s: {}", status, this.init_J_2(), message);
                return AiGameOperations.result(status, message, finalData);
             }
 
             void load_V_13() {
                if (!this.write_Z) {
                   this.write_Z = true;
-                  AiOracle.init_V_Z(false);
+                  AiOracle.enable(false);
                   AiRunResources.endCampaign(this.init_Obj);
                }
             }
@@ -1364,7 +1364,7 @@ final class AiSpeedrun {
                AiGoal.init(this);
                if (!this.get_Z) {
                   this.get_Z = true;
-                  this.init_bJ.init_JsonObject_Str("CANCELLED", this.init_cl_BufferHelper == null ? "START" : this.init_cl_BufferHelper.name(), this.write_Str);
+                  this.init_bJ.snapshot("CANCELLED", this.init_cl_BufferHelper == null ? "START" : this.init_cl_BufferHelper.name(), this.write_Str);
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;
@@ -1400,7 +1400,7 @@ final class AiSpeedrun {
       return false;
    }
 
-   static AiOperation init_AiOperation_D(double range, int items, int seconds) {
+   static AiOperation hunt(double range, int items, int seconds) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          Entity best = null;
@@ -1426,7 +1426,7 @@ final class AiSpeedrun {
          }
 
          int count = AiCraft.countItem(drop) + 1;
-         init_V_Str_ObjArr("[AI] speedrun food: {} {} in sight, hunting for {} {}", herd, type, count, drop);
+         log("[AI] speedrun food: {} {} in sight, hunting for {} {}", herd, type, count, drop);
          return AiObtain.init(
             AiJson.objectOf(
                "item", drop, "count", count, "allowCombat", true, "staged", true, "radius", (int)Math.ceil(range), "timeoutSeconds", seconds
@@ -1487,7 +1487,7 @@ final class AiSpeedrun {
       return nearest[0];
    }
 
-   static AiOperation init_AiOperation_I_I(final int items, final int seconds) {
+   static AiOperation secureFood(final int items, final int seconds) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          long init_J = System.nanoTime() + seconds * 1000000000L;
@@ -1537,14 +1537,14 @@ final class AiSpeedrun {
 
             if (!this.init_Str.equals("cook") && !this.init_Y.isActive() && mc.player.getFoodData().getFoodLevel() <= 16) {
                AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-               int raw = AiSpeedrun.init_Map().values().stream().mapToInt(Integer::intValue).sum();
+               int raw = AiSpeedrun.rawMeatCounts().values().stream().mapToInt(Integer::intValue).sum();
                boolean quiet = this.init_Y.canInterruptNow()
                   && !this.init_Y.requiresReconciliation()
                   && vitals.hostilesNear() == 0
                   && !vitals.underAttack()
                   && mc.player.getHealth() >= 10.0F
                   && !mc.player.isOnFire()
-                  && !AiLavaEscape.init_Z(mc)
+                  && !AiLavaEscape.isInLava(mc)
                   && !AiBreathe.init(mc.player);
                if (AiSpeedrun.init_Z_I(vitals.food(), AiRunResources.totalSafeFoodNutrition(), raw, this.read_I, this.init_I_35(), quiet, this.init_AiOperation)) {
                   AiOperation cooking = this.init_AiOperation_5();
@@ -1593,7 +1593,7 @@ final class AiSpeedrun {
                   boolean seen = this.init_Str.startsWith("walk")
                      && this.init_AiOperation.canInterruptNow()
                      && !this.init_AiOperation.requiresReconciliationAfterEmergency()
-                     && AiSpeedrun.init_Z_Minecraft_D(mc, 48.0);
+                     && AiSpeedrun.hasHuntable(mc, 48.0);
                   if (!r.terminal() && !seen) {
                      return this.init(this.init_Str + ": " + r.message());
                   }
@@ -1610,7 +1610,7 @@ final class AiSpeedrun {
                      && mc.player.blockPosition().distSqr(this.init_cl_StreamUtil.stand()) <= 4.0) {
                      int needed = Math.max(1, (items - AiRunResources.totalSafeFoodItems() + 2) / 3);
                      int target = AiCraft.countItem("minecraft:hay_block") + Math.min(4, needed);
-                     this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
+                     this.init_Supplier = () -> AiRunDiagnostics.trace(
                         "food_trip",
                         "gather observed hay",
                         autismclient.ai.engine.AiBlockMine.create(
@@ -1648,7 +1648,7 @@ final class AiSpeedrun {
                   this.update++;
                   this.init_Set.add(this.init_cl_StreamUtil.block().asLong());
                   BlockPos stand = this.init_cl_StreamUtil.stand();
-                  this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
+                  this.init_Supplier = () -> AiRunDiagnostics.trace(
                      "food_trip",
                      "walk to observed hay",
                      AiGoto.travelToCompat(
@@ -1672,18 +1672,18 @@ final class AiSpeedrun {
 
                AiFoodHuntBudget.Inner_DataUtil admission = AiFoodHuntBudget.init(this.init_J, System.nanoTime(), this.init_Z);
                if (admission.admitted()) {
-                  AiOperation hunt = AiSpeedrun.init_AiOperation_D(48.0, Math.max(1, items - have), admission.childSeconds());
+                  AiOperation hunt = AiSpeedrun.hunt(48.0, Math.max(1, items - have), admission.childSeconds());
                   if (hunt != null) {
                      this.init_J = admission.deadlineNanos();
                      this.init_Z = admission.graceUsed();
-                     this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("food_trip", "hunt " + have + "/" + items, hunt);
+                     this.init_AiOperation = AiRunDiagnostics.trace("food_trip", "hunt " + have + "/" + items, hunt);
                      this.init_Str = "hunt";
                      return this.init("Hunting food");
                   }
 
                   if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.load_I < 2) {
                      this.load_I++;
-                     this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
+                     this.init_Supplier = () -> AiRunDiagnostics.trace(
                         "food_trip",
                         "surface for animals",
                         autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", Math.min(120, this.init_I_35())))
@@ -1707,12 +1707,12 @@ final class AiSpeedrun {
                   double a = this.init_I++ * 2.399;
                   int x = this.init_BlockPos.getX() + (int)Math.round(Math.cos(a) * 64.0);
                   int z = this.init_BlockPos.getZ() + (int)Math.round(Math.sin(a) * 64.0);
-                  BlockPos surface = AiSpeedrun.init_BlockPos_BlockPos(mc.player.blockPosition(), x, z, column -> AiSpeedrun.init_BlockPos_Minecraft_BlockPos(mc, column));
+                  BlockPos surface = AiSpeedrun.findSurface(mc.player.blockPosition(), x, z, column -> AiSpeedrun.observedSurface(mc, column));
                   if (surface == null) {
                      return this.init("No observed safe surface in this direction; trying another bearing");
                   }
 
-                  this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
+                  this.init_Supplier = () -> AiRunDiagnostics.trace(
                      "food_trip",
                      "explore " + x + "," + z,
                      AiGoto.travelToCompat(
@@ -1725,7 +1725,7 @@ final class AiSpeedrun {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         true,
                         2.0,
-                        AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
+                        AiSpeedrun.surfaceGoal(surface),
                         AiGoto.GotoOptions.DEFAULT
                      )
                   );
@@ -1775,13 +1775,13 @@ final class AiSpeedrun {
 
          AiOperation init_AiOperation_5() {
             if (this.read_I < 6 && this.init_I_35() >= 60) {
-               AiOperation cooking = AiForage.init_AiOperation_I(Math.min(120, this.init_I_35()));
+               AiOperation cooking = AiForage.cook(Math.min(120, this.init_I_35()));
                if (cooking == null) {
                   return null;
                }
 
                this.read_I++;
-               return AiRunDiagnostics.init_AiOperation_Str("food_trip", "cook gathered meat", cooking);
+               return AiRunDiagnostics.trace("food_trip", "cook gathered meat", cooking);
             } else {
                return null;
             }
@@ -1798,7 +1798,7 @@ final class AiSpeedrun {
             }
 
             this.write++;
-            return AiRunDiagnostics.init_AiOperation_Str("food_trip", "bread from held wheat or hay", bread);
+            return AiRunDiagnostics.trace("food_trip", "bread from held wheat or hay", bread);
          }
 
          void init_V_27() {
@@ -1817,7 +1817,7 @@ final class AiSpeedrun {
             this.init_cl_CachePool.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
             AiOperation.Result result = this.init_cl_CachePool.init(status, message, receipt, actual);
             this.cancel();
-            AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun food trip {}: {}", result.status(), result.message());
+            AiSpeedrun.log("[AI] speedrun food trip {}: {}", result.status(), result.message());
             return result;
          }
 
@@ -1854,7 +1854,7 @@ final class AiSpeedrun {
       }
    }
 
-   static boolean init_Z_Minecraft_D(Minecraft mc, double range) {
+   static boolean hasHuntable(Minecraft mc, double range) {
       if (mc.player != null && mc.level != null) {
          for (Entity e : mc.level.entitiesForRendering()) {
             if (init_Z_Minecraft(mc, e, range)) {
@@ -1882,7 +1882,7 @@ final class AiSpeedrun {
       return false;
    }
 
-   static String init_Str_I(int items) {
+   static String fuelFor(int items) {
       long needed = items * 200L;
 
       for (String coal : List.of("minecraft:coal", "minecraft:charcoal")) {
@@ -1901,10 +1901,10 @@ final class AiSpeedrun {
       return null;
    }
 
-   static Map<String, Integer> init_Map() {
+   static Map<String, Integer> rawMeatCounts() {
       Map<String, Integer> out = new LinkedHashMap<>();
 
-      for (String raw : read_Map.keySet()) {
+      for (String raw : COOKED.keySet()) {
          int n = AiCraft.countItem(raw);
          if (n > 0) {
             out.put(raw, n);
@@ -1914,11 +1914,11 @@ final class AiSpeedrun {
       return out;
    }
 
-   static void init_V_Str_ObjArr(String format, Object... args) {
+   static void log(String format, Object... args) {
       AutismClientAddon.LOG.info(format, args);
    }
 
-   static String init_Str_Str(String s) {
+   static String clip(String s) {
       return s == null ? "" : (s.length() > 300 ? s.substring(0, 300) + "..." : s);
    }
 

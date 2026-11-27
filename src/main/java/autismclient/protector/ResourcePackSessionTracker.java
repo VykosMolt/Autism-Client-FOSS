@@ -127,7 +127,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static ResourcePackSessionTracker.PackSession init_FileCache_BufferHe(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static ResourcePackSessionTracker.PackSession sessionFor(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context == null) {
          return null;
       }
@@ -149,7 +149,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean init_Z(ResourcePackSessionTracker.PackSession session) {
+   public static boolean isActive(ResourcePackSessionTracker.PackSession session) {
       if (session != null && session.load_Z) {
          synchronized (init_Obj) {
             ConnectionPrivacyRegistry.ConnectionSession context = session.init_BufferHelper_Strea;
@@ -168,8 +168,8 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean init_Z(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
-      if (init_Z(session) && packId != null) {
+   public static boolean isCurrent(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
+      if (isActive(session) && packId != null) {
          synchronized (init_Obj) {
             ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
             return push != null && !push.pop && push.init_J == generation;
@@ -189,15 +189,15 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   static long init_J(ResourcePackSessionTracker.PackSession session) {
+   static long revision(ResourcePackSessionTracker.PackSession session) {
       synchronized (init_Obj) {
-         return init_Z(session) ? session.update : -1L;
+         return isActive(session) ? session.update : -1L;
       }
    }
 
    public static long init(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId, ResourcePackSessionTracker.PackPolicy policy) {
       if (context != null && packId != null && policy != null) {
-         ResourcePackSessionTracker.PackSession session = init_FileCache_BufferHe(context);
+         ResourcePackSessionTracker.PackSession session = sessionFor(context);
          if (session == null) {
             session = init(context, null, null, null);
          }
@@ -275,7 +275,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static ResourcePackSessionTracker.PackPolicy init_FileCache_DataUtil(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   public static ResourcePackSessionTracker.PackPolicy policyFor(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          synchronized (init_Obj) {
             ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
@@ -286,7 +286,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static long init_J(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   public static long generation(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          synchronized (init_Obj) {
             ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
@@ -321,7 +321,7 @@ public final class ResourcePackSessionTracker {
                return 0L;
             }
 
-            if (!init_Z(session, packId, push.init_J) || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.DECLINE || push.close || push.push) {
+            if (!isCurrent(session, packId, push.init_J) || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.DECLINE || push.close || push.push) {
                return -1L;
             }
 
@@ -345,7 +345,7 @@ public final class ResourcePackSessionTracker {
    }
 
    public static boolean load(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
-      return init_Z(session, packId, generation);
+      return isCurrent(session, packId, generation);
    }
 
    public static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, Update update, PackLoadFeedback vanilla) {
@@ -353,7 +353,7 @@ public final class ResourcePackSessionTracker {
          boolean progress = false;
          synchronized (init_Obj) {
             ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !init_Z(session, packId, push.init_J)) {
+            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.init_J)) {
                return false;
             }
 
@@ -388,7 +388,7 @@ public final class ResourcePackSessionTracker {
          boolean progress = false;
          synchronized (init_Obj) {
             ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !init_Z(session, packId, push.init_J)) {
+            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.init_J)) {
                return false;
             }
 
@@ -542,7 +542,7 @@ public final class ResourcePackSessionTracker {
       List<ResourcePackSessionTracker.ResponseEvent> sends = new ArrayList<>();
       synchronized (init_Obj) {
          for (ResourcePackSessionTracker.PackSession session : init_Map.values()) {
-            if ((includePrimary || session.init_BufferHelper_Strea.isMultiConnection()) && init_Z(session)) {
+            if ((includePrimary || session.init_BufferHelper_Strea.isMultiConnection()) && isActive(session)) {
                for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
                   Action action = init_ServerboundResourc(push);
                   if (action != null) {
@@ -643,7 +643,7 @@ public final class ResourcePackSessionTracker {
 
    private static boolean init_Z(ResourcePackSessionTracker.ResponseEvent send) {
       synchronized (init_Obj) {
-         if (!init_Z(send.init_FileCache_BufferHe, send.init_UUID, send.init_J)) {
+         if (!isCurrent(send.init_FileCache_BufferHe, send.init_UUID, send.init_J)) {
             return false;
          }
 
@@ -740,7 +740,7 @@ public final class ResourcePackSessionTracker {
       if (session != null && packId != null && future != null && restore != null) {
          boolean current;
          synchronized (init_Obj) {
-            current = init_Z(session, packId, generation);
+            current = isCurrent(session, packId, generation);
             if (current) {
                session.init_List.add(new ResourcePackSessionTracker.PendingWait(session, packId, generation, future, restore));
             }
@@ -797,7 +797,7 @@ public final class ResourcePackSessionTracker {
    }
 
    public static void init(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId) {
-      ResourcePackSessionTracker.PackSession session = init_FileCache_BufferHe(context);
+      ResourcePackSessionTracker.PackSession session = sessionFor(context);
       if (session != null) {
          init_V(session, packId);
       }
@@ -830,7 +830,7 @@ public final class ResourcePackSessionTracker {
    }
 
    public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
-      load_V(init_FileCache_BufferHe(context));
+      load_V(sessionFor(context));
    }
 
    public static void load_V(ResourcePackSessionTracker.PackSession session) {
@@ -894,7 +894,7 @@ public final class ResourcePackSessionTracker {
    }
 
    private static boolean write_Z(ResourcePackSessionTracker.PackSession session) {
-      if (!init_Z(session)) {
+      if (!isActive(session)) {
          return false;
       }
 
@@ -987,7 +987,7 @@ public final class ResourcePackSessionTracker {
          return this.init_J;
       }
 
-      public ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
+      public ConnectionPrivacyRegistry.ConnectionSession context() {
          return this.init_BufferHelper_Strea;
       }
 

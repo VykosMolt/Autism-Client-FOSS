@@ -24,7 +24,7 @@ public final class RegistrySuggestions {
    private RegistrySuggestions() {
    }
 
-   public static String init_Str(String spec) {
+   public static String normalize(String spec) {
       return spec == null ? "" : spec.trim().toLowerCase(Locale.ROOT).replace('-', '_').replaceAll("\\s+", "_");
    }
 
@@ -32,7 +32,7 @@ public final class RegistrySuggestions {
       return id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
    }
 
-   public static List<String> init_List(String path) {
+   public static List<String> singularForms(String path) {
       List<String> forms = new ArrayList<>(2);
       if (path.endsWith("es") && path.length() > 3) {
          forms.add(path.substring(0, path.length() - 2));
@@ -45,8 +45,8 @@ public final class RegistrySuggestions {
       return forms;
    }
 
-   public static Identifier init_Identifier(String spec) {
-      String clean = init_Str(spec);
+   public static Identifier parseId(String spec) {
+      String clean = normalize(spec);
       if (!clean.isEmpty() && !clean.startsWith("#")) {
          int colon = clean.indexOf(58);
          String namespace = colon < 0 ? "minecraft" : clean.substring(0, colon);
@@ -56,7 +56,7 @@ public final class RegistrySuggestions {
             return exact;
          }
 
-         for (String form : init_List(path)) {
+         for (String form : singularForms(path)) {
             Identifier id = init(namespace, form);
             if (id != null) {
                return id;
@@ -65,7 +65,7 @@ public final class RegistrySuggestions {
 
          List<String> forms = new ArrayList<>();
          forms.add(path);
-         forms.addAll(init_List(path));
+         forms.addAll(singularForms(path));
 
          for (String form : forms) {
             String hit = init().get(namespace + ":" + form.replace("_", ""));
@@ -80,8 +80,8 @@ public final class RegistrySuggestions {
       }
    }
 
-   public static Item init_Item(String spec) {
-      Identifier id = init_Identifier(spec);
+   public static Item resolveItem(String spec) {
+      Identifier id = parseId(spec);
       if (id == null) {
          return null;
       }
@@ -95,14 +95,14 @@ public final class RegistrySuggestions {
       return block != null && block.asItem() != Items.AIR ? block.asItem() : null;
    }
 
-   public static Block init_Block(String spec) {
-      Identifier id = init_Identifier(spec);
+   public static Block resolveBlock(String spec) {
+      Identifier id = parseId(spec);
       return id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
    }
 
    public static Item init(Minecraft mc, String spec) {
       if (mc != null && mc.player != null) {
-         String clean = init_Str(spec);
+         String clean = normalize(spec);
          if (clean.isEmpty()) {
             return null;
          }
@@ -116,7 +116,7 @@ public final class RegistrySuggestions {
             }
          }
 
-         Identifier id = init_Identifier(clean);
+         Identifier id = parseId(clean);
          if (id != null) {
             for (ItemStack stack : stacks) {
                if (BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(id)) {
@@ -129,7 +129,7 @@ public final class RegistrySuggestions {
          Item prefix = null;
 
          for (ItemStack stack : stacks) {
-            String name = init_Str(stack.getHoverName().getString());
+            String name = normalize(stack.getHoverName().getString());
             if (name.equals(clean) || name.replace("_", "").equals(squashed)) {
                return stack.getItem();
             }

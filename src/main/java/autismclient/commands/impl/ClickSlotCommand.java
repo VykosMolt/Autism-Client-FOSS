@@ -34,7 +34,7 @@ public final class ClickSlotCommand extends Command {
       if (mc.player != null && mc.player.containerMenu != null) {
          int visibleSlot = autismclient.commands.arguments.SlotArgumentType.init(context, "slot");
          int handlerSlot = InventorySlotHelper.toScreenSlot(mc, visibleSlot);
-         return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.arguments.SlotArgumentType.init_Str_I(visibleSlot));
+         return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.arguments.SlotArgumentType.slotName(visibleSlot));
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");
          return 1;

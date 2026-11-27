@@ -87,9 +87,9 @@ public final class IsolatedPackDownloader {
             }
          } else {
             try {
-               ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.init_UiHelper_BufferHel(manager);
+               ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.snapshot(manager);
                if (vanillaRequests.isEmpty()) {
-                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.init_UiHelper_CachePool(snapshot)) {
+                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
                      original.download(controlledRequests, ResourcePackDownloadScope.init(snapshot, result -> {
                         if (init(session, result, controlled, omitted)) {
                            output.accept(result);
@@ -100,7 +100,7 @@ public final class IsolatedPackDownloader {
                   IsolatedPackDownloader.Inner_TaskQueue mixed = new IsolatedPackDownloader.Inner_TaskQueue(session, controlled, omitted, output);
                   load(session, manager, original, vanillaRequests, mixed::init);
 
-                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.init_UiHelper_CachePool(snapshot)) {
+                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
                      original.download(controlledRequests, mixed::load);
                   }
                }
@@ -123,8 +123,8 @@ public final class IsolatedPackDownloader {
       Map<UUID, Long> generations = new LinkedHashMap<>();
       if (session != null && requests != null) {
          for (UUID id : requests.keySet()) {
-            if (ResourcePackSessionTracker.init_FileCache_DataUtil(session, id) == ResourcePackSessionTracker.PackPolicy.FULL) {
-               generations.put(id, ResourcePackSessionTracker.init_J(session, id));
+            if (ResourcePackSessionTracker.policyFor(session, id) == ResourcePackSessionTracker.PackPolicy.FULL) {
+               generations.put(id, ResourcePackSessionTracker.generation(session, id));
             }
          }
       }
@@ -133,9 +133,9 @@ public final class IsolatedPackDownloader {
          original.download(requests, output);
       } else {
          try {
-            ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.init_UiHelper_BufferHel(manager);
+            ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.snapshot(manager);
 
-            try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.init_UiHelper_CachePool(snapshot)) {
+            try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
                original.download(requests, ResourcePackDownloadScope.init(snapshot, result -> {
                   if (result != null) {
                      for (Entry<UUID, Long> entry : generations.entrySet()) {
@@ -185,7 +185,7 @@ public final class IsolatedPackDownloader {
          return false;
       }
 
-      if (ResourcePackSessionTracker.init_Z(session) && ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId) != null) {
+      if (ResourcePackSessionTracker.isActive(session) && ResourcePackSessionTracker.policyFor(session, packId) != null) {
          ResourcePackSessionTracker.init(session, packId, update, vanilla);
       }
 
@@ -197,7 +197,7 @@ public final class IsolatedPackDownloader {
          return false;
       }
 
-      if (ResourcePackSessionTracker.init_Z(session) && ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId) != null) {
+      if (ResourcePackSessionTracker.isActive(session) && ResourcePackSessionTracker.policyFor(session, packId) != null) {
          ResourcePackSessionTracker.init(session, packId, result, vanilla);
       }
 
@@ -227,7 +227,7 @@ public final class IsolatedPackDownloader {
          return false;
       }
 
-      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
       return policy == ResourcePackSessionTracker.PackPolicy.FULL ? false : policy != null || ResourcePackSessionTracker.init_Z(session, packId);
    }
 
@@ -236,13 +236,13 @@ public final class IsolatedPackDownloader {
          return ordinary.get();
       }
 
-      long generation = ResourcePackSessionTracker.init_J(session, packId);
-      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+      long generation = ResourcePackSessionTracker.generation(session, packId);
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
       IsolatedPackDownloader.Inner_ConfigStore isolation = new IsolatedPackDownloader.Inner_ConfigStore(session, packId, generation, path);
       if (path != null
-         && ResourcePackSessionTracker.init_Z(session)
+         && ResourcePackSessionTracker.isActive(session)
          && policy != ResourcePackSessionTracker.PackPolicy.DECLINE
-         && (policy == null || ResourcePackSessionTracker.init_Z(session, packId, generation))
+         && (policy == null || ResourcePackSessionTracker.isCurrent(session, packId, generation))
          && (policy != null || !ResourcePackSessionTracker.load_Z(session) || ServerPackSelectionRegistry.init(session, packId, path))) {
          if (policy != ResourcePackSessionTracker.PackPolicy.ISOLATED) {
             return ordinary.get();
@@ -259,7 +259,7 @@ public final class IsolatedPackDownloader {
          IsolatedResourcePack.Inner_DataUtil snapshot = IsolatedResourcePack.Inner_DataUtil.init(path);
          FileResourcesSupplier supplier = new IsolatedPackDownloader.Inner_CachePool(path, snapshot, isolation);
          synchronized (init_Obj) {
-            if (!ResourcePackSessionTracker.init_Z(session, packId, generation)) {
+            if (!ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
                return new IsolatedPackDownloader.Inner_CachePool(path, IsolatedResourcePack.Inner_DataUtil.init(), isolation);
             }
 
@@ -348,7 +348,7 @@ public final class IsolatedPackDownloader {
       }
    }
 
-   record Inner_ConfigStore(ResourcePackSessionTracker.PackSession init_FileCache_BufferHe, UUID init_UUID, long init_J, Path init_Path) {
+   record Inner_ConfigStore(ResourcePackSessionTracker.PackSession session, UUID packId, long generation, Path path) {
    }
 
    private record Inner_DataUtil(long init_J, Path init_Path, FileResourcesSupplier init_FilePackResources_) {

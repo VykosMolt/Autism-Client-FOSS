@@ -29,7 +29,7 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
       return ctx.getArgument(name, Integer.class);
    }
 
-   public static String init_Str_I(int code) {
+   public static String keyName(int code) {
       if (code < 0) {
          return "NONE";
       }

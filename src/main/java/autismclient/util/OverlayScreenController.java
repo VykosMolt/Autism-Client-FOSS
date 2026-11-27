@@ -46,7 +46,7 @@ public final class OverlayScreenController {
    }
 
    public static Screen resolveEffectiveScreen(Screen actual) {
-      return rawScreenReadDepth > 0 || modalScreen != null && actual == modalScreen ? actual : FOREGROUND_SLOT.init_Obj(actual);
+      return rawScreenReadDepth > 0 || modalScreen != null && actual == modalScreen ? actual : FOREGROUND_SLOT.orElse(actual);
    }
 
    public static Screen getActualScreen(Minecraft client) {
@@ -123,14 +123,14 @@ public final class OverlayScreenController {
          modalScreen = null;
          modalParentScreen = null;
          modalLevel = null;
-         if (previous != null && previous != FOREGROUND_SLOT.init_Obj()) {
+         if (previous != null && previous != FOREGROUND_SLOT.get()) {
             previous.removed();
          }
       }
    }
 
    public static boolean hasRetainedForeground() {
-      return FOREGROUND_SLOT.init_Z();
+      return FOREGROUND_SLOT.isSet();
    }
 
    public static boolean shouldInterceptBackgroundScreen() {
@@ -142,10 +142,10 @@ public final class OverlayScreenController {
    }
 
    public static void captureRetainedForegroundIfNeeded(Minecraft client) {
-      if (!FOREGROUND_SLOT.init_Z() && client != null && !autismclient.modules.aD.init_Z()) {
+      if (!FOREGROUND_SLOT.isSet() && client != null && !autismclient.modules.aD.init_Z()) {
          Screen current = client.gui.screen();
          if (isRetainedForegroundScreen(current)) {
-            FOREGROUND_SLOT.init_V(current);
+            FOREGROUND_SLOT.setIfEmpty(current);
          }
       }
    }
@@ -160,8 +160,8 @@ public final class OverlayScreenController {
             discardModalScreen(actual);
          }
 
-         if (FOREGROUND_SLOT.init_Z() && (explicitTransitionDepth > 0 || isRetainedForegroundScreen(requested))) {
-            if (requested == FOREGROUND_SLOT.init_Obj()) {
+         if (FOREGROUND_SLOT.isSet() && (explicitTransitionDepth > 0 || isRetainedForegroundScreen(requested))) {
+            if (requested == FOREGROUND_SLOT.get()) {
                return true;
             }
 
@@ -178,7 +178,7 @@ public final class OverlayScreenController {
                   previous.removed();
                }
 
-               if (FOREGROUND_SLOT.init_Z()) {
+               if (FOREGROUND_SLOT.isSet()) {
                   requested.added();
                   requested.init(client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
                   return true;
@@ -214,11 +214,11 @@ public final class OverlayScreenController {
    }
 
    public static boolean shouldPreserveOnRemove(Screen screen) {
-      return modalScreen != null && modalTransitionInProgress && screen == modalParentScreen || FOREGROUND_SLOT.init_Z() && screen == FOREGROUND_SLOT.init_Obj() && !switchingRetainedScreen;
+      return modalScreen != null && modalTransitionInProgress && screen == modalParentScreen || FOREGROUND_SLOT.isSet() && screen == FOREGROUND_SLOT.get() && !switchingRetainedScreen;
    }
 
    public static void tickRetainedForeground(Screen actual) {
-      Screen retained = FOREGROUND_SLOT.init_Obj();
+      Screen retained = FOREGROUND_SLOT.get();
       if (retained != null && retained != actual) {
          retained.tick();
       }

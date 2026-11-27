@@ -787,7 +787,7 @@ public final class AiBlockDigger {
 
    public void stop() {
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       this.aimStallTicks = 0;

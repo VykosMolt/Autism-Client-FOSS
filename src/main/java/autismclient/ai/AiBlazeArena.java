@@ -173,12 +173,12 @@ final class AiBlazeArena implements AiOperation {
                }
             }
 
-            if (AiCombat.init_by_StreamUtil(this.init_Minecraft) != null) {
+            if (AiCombat.nextIncoming(this.init_Minecraft) != null) {
                return this.init(AiOperation.Status.SUCCEEDED, "Incoming shot; hand control back to combat");
             }
 
             if (this.init_K.init(false, null)) {
-               return this.init_AiOperation_Result_Str_4(this.init_K.init_Str());
+               return this.init_AiOperation_Result_Str_4(this.init_K.status());
             }
          }
 
@@ -348,7 +348,7 @@ final class AiBlazeArena implements AiOperation {
          return "body/exit clearance";
       }
 
-      if (!AiCombat.init_Z_Minecraft_BlockPos(this.init_Minecraft, this.init_Minecraft.player.blockPosition())) {
+      if (!AiCombat.isSafeStep(this.init_Minecraft, this.init_Minecraft.player.blockPosition())) {
          return "unsafe current footing";
       }
 
@@ -440,7 +440,7 @@ final class AiBlazeArena implements AiOperation {
    @Override
    public boolean canInterruptNow() {
       return !this.init_Z_7()
-         && this.init_K.load_Z()
+         && this.init_K.canInterrupt()
          && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
          && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
    }
@@ -457,7 +457,7 @@ final class AiBlazeArena implements AiOperation {
    public void cancel() {
       this.load_Z = true;
       this.init_DataPipe.reset();
-      this.init_K.init_V();
+      this.init_K.reset();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
       }

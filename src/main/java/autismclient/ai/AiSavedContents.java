@@ -32,7 +32,7 @@ public final class AiSavedContents {
    private AiSavedContents() {
    }
 
-   static boolean init_Z(BlockState state) {
+   static boolean isContainer(BlockState state) {
       Block block = state.getBlock();
       return block instanceof ChestBlock
          || block instanceof BarrelBlock
@@ -54,7 +54,7 @@ public final class AiSavedContents {
       return !typedSource || autismclient.ai.print.PrintRules.matchesLayout(expected, actual);
    }
 
-   static int init_I(BlockState state) {
+   static int slotCount(BlockState state) {
       Block block = state.getBlock();
       if (block instanceof HopperBlock) {
          return 5;

@@ -14,7 +14,7 @@ final class AiPlaybooks {
    private static volatile List<AiPlaybooks.Inner_DataUtil> init_List = List.of();
    private static volatile String init_Str;
 
-   static void init_V() throws IOException {
+   static void load() throws IOException {
       try (InputStream in = AiPlaybooks.class.getResourceAsStream("/assets/autismclient/ai/playbooks.json")) {
          if (in == null) {
             throw new IOException("AI playbooks are missing from the full jar");

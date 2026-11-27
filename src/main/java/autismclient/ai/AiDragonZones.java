@@ -32,7 +32,7 @@ public final class AiDragonZones {
       return part.inflate(1.0);
    }
 
-   static AiDragonZones.Inner_DataUtil init_r_DataUtil(Minecraft mc) {
+   static AiDragonZones.Inner_DataUtil zones(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
          List<AABB> push = new ArrayList<>();
          List<AABB> strike = new ArrayList<>();
@@ -56,15 +56,15 @@ public final class AiDragonZones {
       }
    }
 
-   static AABB init_AABB_I(int x, int y, int z) {
+   static AABB cellBox(int x, int y, int z) {
       return new AABB(x + 0.2, y, z + 0.2, x + 0.8, y + 1.8, z + 0.8);
    }
 
-   static AABB init_AABB_D(double x, double feetY, double z) {
+   static AABB bodyBox(double x, double feetY, double z) {
       return new AABB(x - 0.3, feetY, z - 0.3, x + 0.3, feetY + 1.8, z + 0.3);
    }
 
-   static EnderDragon init_EnderDragon(Minecraft mc) {
+   static EnderDragon perchedDragon(Minecraft mc) {
       if (mc.level == null) {
          return null;
       }
@@ -81,12 +81,12 @@ public final class AiDragonZones {
       return null;
    }
 
-   static boolean init_Z(Minecraft mc) {
-      return init_EnderDragon(mc) != null;
+   static boolean isDragonPerched(Minecraft mc) {
+      return perchedDragon(mc) != null;
    }
 
-   static Vec3 init_Vec3(Minecraft mc) {
-      EnderDragon dragon = init_EnderDragon(mc);
+   static Vec3 facing(Minecraft mc) {
+      EnderDragon dragon = perchedDragon(mc);
       if (dragon == null) {
          return null;
       }
@@ -101,8 +101,8 @@ public final class AiDragonZones {
       return null;
    }
 
-   static Entity init_Entity(Minecraft mc) {
-      EnderDragon dragon = init_EnderDragon(mc);
+   static Entity head(Minecraft mc) {
+      EnderDragon dragon = perchedDragon(mc);
       if (dragon == null) {
          return null;
       }
@@ -116,25 +116,25 @@ public final class AiDragonZones {
       return null;
    }
 
-   static double[] init_DArr(Minecraft mc) {
-      Entity head = init_Entity(mc);
-      Vec3 facing = init_Vec3(mc);
+   static double[] breath(Minecraft mc) {
+      Entity head = head(mc);
+      Vec3 facing = facing(mc);
       return head != null && facing != null ? new double[]{head.getX() + facing.x * 2.5, head.getZ() + facing.z * 2.5, 5.0} : null;
    }
 
    static boolean init(AiDragonZones.Inner_DataUtil zones, double[] breath, List<double[]> clouds, int x, int y, int z) {
-      if (zones.hits(init_AABB_I(x, y, z), 1.0)) {
+      if (zones.hits(cellBox(x, y, z), 1.0)) {
          return false;
       }
 
       double cx = x + 0.5;
       double cz = z + 0.5;
-      return breath != null && Math.hypot(cx - breath[0], cz - breath[1]) < breath[2] + 1.0 ? false : AiDragon.init_Z_D(cx, cz, clouds, 0.5);
+      return breath != null && Math.hypot(cx - breath[0], cz - breath[1]) < breath[2] + 1.0 ? false : AiDragon.isClearOfClouds(cx, cz, clouds, 0.5);
    }
 
    static AiOperation init_AiOperation(final Minecraft mc) {
       if (mc.player != null && mc.player.onGround() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
-         List<double[]> clouds = AiDragon.init_List(mc);
+         List<double[]> clouds = AiDragon.breathClouds(mc);
          if (clouds.isEmpty()) {
             return null;
          }
@@ -157,7 +157,7 @@ public final class AiDragonZones {
          final double uz = len < 0.001 ? 0.0 : dz / len;
          return new AiOperation() {
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            AiOperation init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
+            AiOperation init_AiOperation = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
             int init_I;
             boolean init_Z;
 
@@ -206,16 +206,16 @@ public final class AiDragonZones {
       }
    }
 
-   public static autismclient.ai.engine.AiPathfinder.ThreatField init_ClassCache_PoolEnt(Minecraft mc) {
-      AiDragonZones.Inner_DataUtil zones = init_r_DataUtil(mc);
-      List<double[]> clouds = new ArrayList<>(AiDragon.init_List(mc));
-      double[] breath = init_DArr(mc);
+   public static autismclient.ai.engine.AiPathfinder.ThreatField threatField(Minecraft mc) {
+      AiDragonZones.Inner_DataUtil zones = zones(mc);
+      List<double[]> clouds = new ArrayList<>(AiDragon.breathClouds(mc));
+      double[] breath = breath(mc);
       if (breath != null) {
          clouds.add(breath);
       }
 
       return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.ThreatField.NONE_COMPAT : (x, y, z) -> {
-         if (zones.hits(init_AABB_I(x, y, z), 1.0)) {
+         if (zones.hits(cellBox(x, y, z), 1.0)) {
             return 400.0;
          }
 
@@ -234,20 +234,20 @@ public final class AiDragonZones {
    }
 
    static AiOperation init(Minecraft mc, double clearance) {
-      AiDragonZones.Inner_DataUtil zones = init_r_DataUtil(mc);
+      AiDragonZones.Inner_DataUtil zones = zones(mc);
       if (!zones.isEmpty() && zones.hits(mc.player.getBoundingBox(), 0.6)) {
-         List<double[]> clouds = AiDragon.init_List(mc);
+         List<double[]> clouds = AiDragon.breathClouds(mc);
          BlockPos feet = mc.player.blockPosition();
          BlockPos best = null;
          double bestD = 1.7976931348623157E308;
 
          for (BlockPos p : BlockPos.betweenClosed(feet.offset(-10, -3, -10), feet.offset(10, 3, 10))) {
-            if (!zones.hits(init_AABB_I(p.getX(), p.getY(), p.getZ()), clearance) && AiDragon.init_Z_D(p.getX() + 0.5, p.getZ() + 0.5, clouds, 0.0)) {
+            if (!zones.hits(cellBox(p.getX(), p.getY(), p.getZ()), clearance) && AiDragon.isClearOfClouds(p.getX() + 0.5, p.getZ() + 0.5, clouds, 0.0)) {
                BlockPos below = p.below();
                if (!mc.level.getBlockState(below).getCollisionShape(mc.level, below).isEmpty()
                   && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
                   && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
-                  && AiCombat.init_Z_Minecraft_BlockPos(mc, p)) {
+                  && AiCombat.isSafeStep(mc, p)) {
                   double d = p.distSqr(feet);
                   if (d < bestD) {
                      bestD = d;

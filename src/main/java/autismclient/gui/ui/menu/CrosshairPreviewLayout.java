@@ -2,7 +2,7 @@ package autismclient.gui.ui.menu;
 
 import autismclient.gui.f.NetHelper;
 
-record CrosshairPreviewLayout(NetHelper init_NetHelper, NetHelper load) {
+record CrosshairPreviewLayout(NetHelper listArea, NetHelper load) {
    static final int init_I = 140;
 
    static CrosshairPreviewLayout init(NetHelper body) {

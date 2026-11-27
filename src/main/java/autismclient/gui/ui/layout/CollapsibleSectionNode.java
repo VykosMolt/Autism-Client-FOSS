@@ -19,7 +19,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
       this.addChild(this.init_PacketUtil);
    }
 
-   public ColumnLayout init_PacketUtil_2() {
+   public ColumnLayout getContent() {
       return this.init_PacketUtil;
    }
 
@@ -33,27 +33,27 @@ public class CollapsibleSectionNode extends LayoutContainer {
       return this;
    }
 
-   public CollapsibleSectionNode init_DataUtil(boolean expanded) {
+   public CollapsibleSectionNode setExpanded(boolean expanded) {
       if (this.write_Z != expanded) {
          this.write_Z = expanded;
-         this.init_RingBuffer.init_F_F(expanded ? 1.0F : 0.0F);
+         this.init_RingBuffer.animateTo(expanded ? 1.0F : 0.0F);
          this.markLayoutDirty();
       }
 
       return this;
    }
 
-   public CollapsibleSectionNode load_DataUtil(boolean expanded) {
+   public CollapsibleSectionNode snapExpanded(boolean expanded) {
       if (this.write_Z != expanded) {
          this.write_Z = expanded;
          this.markLayoutDirty();
       }
 
-      this.init_RingBuffer.init_V_F(expanded ? 1.0F : 0.0F);
+      this.init_RingBuffer.snapTo(expanded ? 1.0F : 0.0F);
       return this;
    }
 
-   public boolean init_Z_3() {
+   public boolean isExpanded() {
       return this.write_Z;
    }
 
@@ -108,7 +108,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
 
       float contentY = this.nodeY + scaledHeaderHeight + scaledContentTopGap;
       float contentH = Math.max(0.0F, this.sync - scaledContentTopGap);
-      this.init_PacketUtil.setVisible(this.write_Z || this.init_RingBuffer.init_F() > 0.0F);
+      this.init_PacketUtil.setVisible(this.write_Z || this.init_RingBuffer.value() > 0.0F);
       this.init_PacketUtil.setBounds(this.nodeX, contentY, this.nodeWidth, contentH);
    }
 
@@ -127,7 +127,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
             this.sync = Math.max(0.0F, this.nodeHeight - drawHeaderH);
          }
 
-         float shown = this.init_RingBuffer.init_F_F(this.write_Z ? 1.0F : 0.0F);
+         float shown = this.init_RingBuffer.animateTo(this.write_Z ? 1.0F : 0.0F);
          int drawH = drawHeaderH + Math.round(this.sync * shown);
          this.init_PacketUtil.setVisible(this.write_Z || shown > 0.0F);
          WindowFrameRenderer.init(
@@ -164,7 +164,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
    public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
       int scaledHeaderHeight = Math.max(context.theme().load(this.init_I), context.theme().init_I_l_I(l.load, 4));
       if (button == 0 && mouseX >= this.nodeX && mouseX <= this.nodeX + this.nodeWidth && mouseY >= this.nodeY && mouseY <= this.nodeY + scaledHeaderHeight) {
-         this.init_DataUtil(!this.write_Z);
+         this.setExpanded(!this.write_Z);
          return true;
       } else {
          return this.write_Z && super.mouseClicked(context, mouseX, mouseY, button);

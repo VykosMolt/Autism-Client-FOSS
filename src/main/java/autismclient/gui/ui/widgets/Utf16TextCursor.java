@@ -25,7 +25,7 @@ public final class Utf16TextCursor {
       return widths;
    }
 
-   public static int init_I(String text, int index) {
+   public static int clampIndex(String text, int index) {
       String value = text == null ? "" : text;
       int clamped = Math.max(0, Math.min(index, value.length()));
       return clamped > 0 && clamped < value.length() && Character.isHighSurrogate(value.charAt(clamped - 1)) && Character.isLowSurrogate(value.charAt(clamped))
@@ -43,7 +43,7 @@ public final class Utf16TextCursor {
 
    public static int read(String text, int index) {
       String value = text == null ? "" : text;
-      int boundary = init_I(value, index);
+      int boundary = clampIndex(value, index);
       return boundary <= 0 ? 0 : value.offsetByCodePoints(boundary, -1);
    }
 
@@ -56,7 +56,7 @@ public final class Utf16TextCursor {
    static int init(String text, int[] widths, int candidate, int targetWidth) {
       String value = text == null ? "" : text;
       int clamped = Math.max(0, Math.min(candidate, value.length()));
-      int left = init_I(value, clamped);
+      int left = clampIndex(value, clamped);
       int right = load(value, clamped);
       if (left == right) {
          return left;
@@ -65,9 +65,9 @@ public final class Utf16TextCursor {
       }
    }
 
-   static String init_Str(String text, int maxUtf16Units) {
+   static String truncate(String text, int maxUtf16Units) {
       String value = text == null ? "" : text;
-      return value.length() <= maxUtf16Units ? value : value.substring(0, init_I(value, Math.max(0, maxUtf16Units)));
+      return value.length() <= maxUtf16Units ? value : value.substring(0, clampIndex(value, Math.max(0, maxUtf16Units)));
    }
 
    @FunctionalInterface

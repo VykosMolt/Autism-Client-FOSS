@@ -113,8 +113,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       this.init_List.clear();
       this.load_List.clear();
       this.read_List.clear();
-      int sw = this.init_I();
-      int sh = this.load_I();
+      int sw = this.virtualWidth();
+      int sh = this.virtualHeight();
       int w = Math.max(1, Math.min(540, sw - 12));
       int h = Math.max(1, Math.min(344, sh - 12));
       int x = (sw - w) / 2;
@@ -413,7 +413,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          autismclient.gui.ui.widgets.SliderRenderer.init(
             context,
             opacityBounds,
-            autismclient.gui.ui.widgets.SliderRenderer.init_D_D(this.pop, 5.0, 100.0),
+            autismclient.gui.ui.widgets.SliderRenderer.ratio(this.pop, 5.0, 100.0),
             this.init_NetHelper_2 == null && (this.update_Z || opacityBounds.init_Z(mx, my))
          );
          String status = this.stop >= 0 ? this.init_NetHelper_ConfigSt.read_Str + "   " + this.stop + ", " + this.next : this.init_NetHelper_ConfigSt.read_Str;
@@ -430,8 +430,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
          if (this.init_NetHelper_2 != null) {
             graphics.nextStratum();
-            this.init_NetHelper_2.init_V_SyncManager(autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my));
-            if (!this.init_NetHelper_2.init_Z()) {
+            this.init_NetHelper_2.render(autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my));
+            if (!this.init_NetHelper_2.isOpen()) {
                this.init_NetHelper_2 = null;
             }
          }
@@ -613,8 +613,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int my = cA.init_I_D(event.y());
       int button = Compat263.mouseEventGlfwButton(event);
       if (this.init_NetHelper_2 != null) {
-         this.init_NetHelper_2.init_Z_I_2(mx, my, button);
-         if (!this.init_NetHelper_2.init_Z()) {
+         this.init_NetHelper_2.mouseClicked(mx, my, button);
+         if (!this.init_NetHelper_2.isOpen()) {
             this.init_NetHelper_2 = null;
          }
 
@@ -667,7 +667,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_NetHelper_2 != null) {
-         this.init_NetHelper_2.init_Z_I(mx, my, Compat263.mouseEventGlfwButton(event), cA.init_D_D(dragX), cA.init_D_D(dragY));
+         this.init_NetHelper_2.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), cA.init_D_D(dragX), cA.init_D_D(dragY));
          return true;
       }
 
@@ -693,7 +693,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int my = cA.init_I_D(event.y());
       if (this.init_NetHelper_2 != null) {
          this.init_NetHelper_2.load(mx, my, Compat263.mouseEventGlfwButton(event));
-         if (!this.init_NetHelper_2.init_Z()) {
+         if (!this.init_NetHelper_2.isOpen()) {
             this.init_NetHelper_2 = null;
          }
 
@@ -730,7 +730,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    public boolean keyPressed(KeyEvent event) {
       if (this.init_NetHelper_2 != null) {
          this.init_NetHelper_2.read(Compat263.keyEventGlfwKey(event), event.keycode(), Compat263.keyEventGlfwModifiers(event));
-         if (!this.init_NetHelper_2.init_Z()) {
+         if (!this.init_NetHelper_2.isOpen()) {
             this.init_NetHelper_2 = null;
          }
 
@@ -832,7 +832,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void update() {
       this.init_NetHelper_2 = new autismclient.gui.ui.widgets.ColorPickerPopup(
-         this.init_NetHelper, 0xFF000000 | this.push, -1, this.init_I(), this.load_I(), this::init_V_I_7
+         this.init_NetHelper, 0xFF000000 | this.push, -1, this.virtualWidth(), this.virtualHeight(), this::init_V_I_7
       );
    }
 

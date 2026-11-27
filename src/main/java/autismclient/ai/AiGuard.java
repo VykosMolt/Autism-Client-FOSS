@@ -219,7 +219,7 @@ final class AiGuard {
          return new AiGuard.GuardDecision(AiGuard.GuardAction.FIGHT, vitals.hostilesNear() + " hostile(s) within 7 blocks");
       } else if (threatened && policy.flee()) {
          return new AiGuard.GuardDecision(AiGuard.GuardAction.FLEE, "under attack with nothing to fight back with");
-      } else if (policy.eat() && vitals.hasFood() && vitals.food() <= policy.eatFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
+      } else if (policy.eat() && vitals.hasFood() && vitals.food() <= policy.eatFood() && vitals.hostilesNear() == 0 && AiSurvival.shouldEat(vitals.food())) {
          return new AiGuard.GuardDecision(AiGuard.GuardAction.EAT, "food " + vitals.food() + "/20");
       } else {
          return policy.tidy() && vitals.freeSlots() == 0 && vitals.hostilesNear() == 0
@@ -1000,13 +1000,13 @@ final class AiGuard {
                BlockPos feet = mc.player.blockPosition();
                if (mc.level.getBlockState(feet).canBeReplaced() && !mc.level.getBlockState(feet.below()).getCollisionShape(mc.level, feet.below()).isEmpty()) {
                   lastEndermanWaterWardNanos = System.nanoTime();
-                  return AiNetherRun.init_AiOperation_AiOperation_Supplier(
+                  return AiNetherRun.sequence(
                      AiBucket.init(
                         AiJson.objectOf(
                            "action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5
                         )
                      ),
-                     () -> AiNetherRun.init_AiOperation_AiOperation_Supplier(
+                     () -> AiNetherRun.sequence(
                         AiCombat.init(100), () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
                      )
                   );
@@ -1126,7 +1126,7 @@ final class AiGuard {
             entities.add(e);
          }
 
-         return AiSurvival.init_List_List(entities, mc.player.position(), 24.0).isEmpty();
+         return AiSurvival.livingWithin(entities, mc.player.position(), 24.0).isEmpty();
       } else {
          return false;
       }

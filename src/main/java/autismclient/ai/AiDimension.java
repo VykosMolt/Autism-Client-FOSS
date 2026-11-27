@@ -52,9 +52,9 @@ final class AiDimension {
    private static final int update = 40;
    private static final int sync = 48;
    static final int[] init_IArr = new int[]{1, 0, 2, -1};
-   static volatile BlockPos init_BlockPos;
+   static volatile BlockPos frameOrigin;
    static volatile BlockPos load_BlockPos;
-   static volatile Direction init_Direction;
+   static volatile Direction frameAxis;
    static volatile String init_Str = "";
    static volatile String load_Str = "";
    static volatile Object init_Obj;
@@ -64,26 +64,26 @@ final class AiDimension {
    private static final int flush = 120;
    private static final int close = 40;
    static final int read = 10;
-   static final Set<String> load_Set = Set.of("minecraft:golden_helmet", "minecraft:golden_chestplate", "minecraft:golden_leggings", "minecraft:golden_boots");
+   static final Set<String> GOLD_ARMOR = Set.of("minecraft:golden_helmet", "minecraft:golden_chestplate", "minecraft:golden_leggings", "minecraft:golden_boots");
    private static final Map<String, Block> init_Map = new LinkedHashMap<>();
 
    private AiDimension() {
    }
 
-   static void init_V() {
+   static void refreshWorld() {
       Minecraft mc = Minecraft.getInstance();
       if (!init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || !load_Str.equals(init_Str()) || init_Obj != mc.getConnection()) {
-         init_BlockPos = null;
-         init_Direction = null;
+         frameOrigin = null;
+         frameAxis = null;
          load_BlockPos = null;
          init_Set.clear();
       }
    }
 
-   static Set<Long> init_Set(BlockPos origin, Direction axis) {
+   static Set<Long> frameCells(BlockPos origin, Direction axis) {
       Set<Long> cells = new HashSet<>();
       if (origin != null && axis != null) {
-         for (BlockPos cell : init_List(origin, axis)) {
+         for (BlockPos cell : frameBlocks(origin, axis)) {
             cells.add(cell.asLong());
          }
 
@@ -97,11 +97,11 @@ final class AiDimension {
       }
    }
 
-   static int init_I() {
-      init_V();
+   static int framedObsidian() {
+      refreshWorld();
       Minecraft mc = Minecraft.getInstance();
-      BlockPos origin = init_BlockPos;
-      Direction axis = init_Direction;
+      BlockPos origin = frameOrigin;
+      Direction axis = frameAxis;
       if (mc.level != null && origin != null && axis != null && init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) && load_Str.equals(init_Str()) && AiTerrain.isLoaded(mc.level, origin)) {
          if (mc.level.getBlockState(origin).is(Blocks.NETHER_PORTAL)) {
             return 0;
@@ -109,7 +109,7 @@ final class AiDimension {
 
          int n = 0;
 
-         for (BlockPos cell : init_List(origin, axis)) {
+         for (BlockPos cell : frameBlocks(origin, axis)) {
             if (mc.level.getBlockState(cell).is(Blocks.OBSIDIAN)) {
                n++;
             }
@@ -123,7 +123,7 @@ final class AiDimension {
 
    static boolean init(List<String> armorItemIds) {
       for (String id : armorItemIds) {
-         if (load_Set.contains(id)) {
+         if (GOLD_ARMOR.contains(id)) {
             return true;
          }
       }
@@ -135,7 +135,7 @@ final class AiDimension {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiDimension.Inner_DataUtil action = init_n_DataUtil(AiJson.getString(args, "action", "enter"));
-         init_V();
+         refreshWorld();
          final String target = init_Str(AiJson.getString(args, "target", "minecraft:the_nether"));
          final boolean build = AiJson.getBoolean(args, "build", false);
          final int timeoutSeconds = Math.max(10, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 300)));
@@ -249,7 +249,7 @@ final class AiDimension {
                      }
                   }
 
-                  return AiRunDiagnostics.init_AiOperation_Str(
+                  return AiRunDiagnostics.trace(
                      "dimension",
                      "approach portal " + this.load_BlockPos.toShortString(),
                      AiGoto.travelToCompat(
@@ -487,7 +487,7 @@ final class AiDimension {
                }
 
                String init_Str_19() {
-                  return AiPortalLinks.init_Str();
+                  return AiPortalLinks.arrivalHazard();
                }
 
                JsonObject init_JsonObject_59() {
@@ -553,13 +553,13 @@ final class AiDimension {
                   }
 
                   this.read_BlockPos = site;
-                  AiDimension.init_BlockPos = site.immutable();
-                  AiDimension.init_Direction = this.init_Direction;
+                  AiDimension.frameOrigin = site.immutable();
+                  AiDimension.frameAxis = this.init_Direction;
                   AiDimension.init_Str = this.load_Str;
                   AiDimension.load_Str = this.init_Str;
                   AiDimension.init_Obj = mc.getConnection();
                   this.init_List.clear();
-                  this.init_List.addAll(AiDimension.init_List(site, this.init_Direction));
+                  this.init_List.addAll(AiDimension.frameBlocks(site, this.init_Direction));
                   this.read_Set.clear();
 
                   for (BlockPos corner : AiDimension.load(site, this.init_Direction)) {
@@ -645,7 +645,7 @@ final class AiDimension {
                               this.load_V_14();
                               this.load_I = 0;
                               this.read_AiOperation = AiGoto.approachToPlaceCompat(
-                                 cell, block, 20, null, false, AiDimension.init_Set(this.read_BlockPos, this.init_Direction), this.init_Set_8()
+                                 cell, block, 20, null, false, AiDimension.frameCells(this.read_BlockPos, this.init_Direction), this.init_Set_8()
                               );
                               return this.init("Moving to reach the frame's corner " + cell.toShortString());
                            }
@@ -734,7 +734,7 @@ final class AiDimension {
                            this.load_V_14();
                            this.load_I = 0;
                            this.read_AiOperation = AiGoto.approachToPlaceCompat(
-                              cell, Items.OBSIDIAN, 20, null, false, AiDimension.init_Set(this.read_BlockPos, this.init_Direction), this.init_Set_8()
+                              cell, Items.OBSIDIAN, 20, null, false, AiDimension.frameCells(this.read_BlockPos, this.init_Direction), this.init_Set_8()
                            );
                            return this.init("Moving to reach frame block " + (this.init_I + 1));
                         }
@@ -970,7 +970,7 @@ final class AiDimension {
                int init_I(BlockPos origin, Direction axis) {
                   int cnt = 0;
 
-                  for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                      if (mc.level.getBlockState(cell).is(Blocks.OBSIDIAN)) {
                         cnt++;
                      }
@@ -1016,16 +1016,16 @@ final class AiDimension {
                }
 
                boolean init_Z(BlockPos origin, Direction axis) {
-                  for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                      if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.init_Z_9(cell)) {
                         return false;
                      }
                   }
 
-                  Set<BlockPos> site = new HashSet<>(AiDimension.init_List(origin, axis));
+                  Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(origin, axis));
                   site.addAll(AiDimension.write(origin, axis));
 
-                  for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                      if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.write(cell)) {
                         boolean supportable = false;
 
@@ -1081,7 +1081,7 @@ final class AiDimension {
                }
 
                boolean init(BlockPos origin, Direction axis, boolean ignorePlayer) {
-                  for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                      if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && (ignorePlayer ? !this.init_Z_9(cell) : !this.update(cell))) {
                         return false;
                      }
@@ -1175,7 +1175,7 @@ final class AiDimension {
                                     BlockPos origin = feet.offset(dx, dy, dz);
                                     List<BlockPos> digs = new ArrayList<>();
                                     boolean ok = true;
-                                    List<BlockPos> cells = new ArrayList<>(AiDimension.init_List(origin, axis));
+                                    List<BlockPos> cells = new ArrayList<>(AiDimension.frameBlocks(origin, axis));
                                     cells.addAll(AiDimension.write(origin, axis));
 
                                     for (BlockPos cell : cells) {
@@ -1263,7 +1263,7 @@ final class AiDimension {
                }
 
                BlockPos init_BlockPos(BlockPos origin, Direction axis) {
-                  Set<BlockPos> site = new HashSet<>(AiDimension.init_List(origin, axis));
+                  Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(origin, axis));
                   site.addAll(AiDimension.write(origin, axis));
                   site.addAll(AiDimension.load(origin, axis));
                   BlockPos best = null;
@@ -1293,7 +1293,7 @@ final class AiDimension {
                }
 
                BlockPos load_BlockPos_4(BlockPos cell) {
-                  Set<BlockPos> site = new HashSet<>(AiDimension.init_List(this.read_BlockPos, this.init_Direction));
+                  Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(this.read_BlockPos, this.init_Direction));
                   site.addAll(AiDimension.write(this.read_BlockPos, this.init_Direction));
                   BlockPos below = cell.below();
                   if (!site.contains(below) && this.init_Z_9(below) && this.write(below)) {
@@ -1346,7 +1346,7 @@ final class AiDimension {
                }
 
                Set<Long> init_Set_8() {
-                  Set<Long> cells = AiDimension.init_Set(this.read_BlockPos, this.init_Direction);
+                  Set<Long> cells = AiDimension.frameCells(this.read_BlockPos, this.init_Direction);
 
                   for (BlockPos corner : AiDimension.load(this.read_BlockPos, this.init_Direction)) {
                      cells.add(corner.asLong());
@@ -1387,7 +1387,7 @@ final class AiDimension {
                List<BlockPos> load_List_4() {
                   List<BlockPos> missing = new ArrayList<>();
 
-                  for (BlockPos cell : AiDimension.init_List(this.read_BlockPos, this.init_Direction)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(this.read_BlockPos, this.init_Direction)) {
                      if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN)) {
                         missing.add(cell);
                      }
@@ -1399,7 +1399,7 @@ final class AiDimension {
                String load_Str_4() {
                   StringBuilder sb = new StringBuilder();
 
-                  for (BlockPos cell : AiDimension.init_List(this.read_BlockPos, this.init_Direction)) {
+                  for (BlockPos cell : AiDimension.frameBlocks(this.read_BlockPos, this.init_Direction)) {
                      BlockState state = mc.level.getBlockState(cell);
                      if (!state.is(Blocks.OBSIDIAN)) {
                         sb.append(" frame ").append(cell.toShortString()).append('=').append(state.getBlock().getDescriptionId());
@@ -1465,7 +1465,7 @@ final class AiDimension {
                      "lit",
                      this.read_Z,
                      "observedLinks",
-                     AiPortalLinks.init_JsonArray()
+                     AiPortalLinks.snapshotJson()
                   );
                   out.add("arrivalSearchPrediction", AiPortalLinks.init(this.init_Vec3, this.init_Str, target));
                   if (this.load_BlockPos != null) {
@@ -1602,7 +1602,7 @@ final class AiDimension {
       }
    }
 
-   static List<BlockPos> init_List(BlockPos origin, Direction axis) {
+   static List<BlockPos> frameBlocks(BlockPos origin, Direction axis) {
       List<BlockPos> cells = new ArrayList<>(10);
 
       for (int step = 0; step < 2; step++) {

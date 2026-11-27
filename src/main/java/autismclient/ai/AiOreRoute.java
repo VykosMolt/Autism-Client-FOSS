@@ -14,7 +14,7 @@ final class AiOreRoute {
    static final int init_I = 6;
    static final int load = 8;
    static final int read = 20;
-   static final boolean init_Z = Boolean.getBoolean("autism.ai.legitMining");
+   static final boolean LEGIT_MINING = Boolean.getBoolean("autism.ai.legitMining");
 
    private AiOreRoute() {
    }
@@ -34,7 +34,7 @@ final class AiOreRoute {
    }
 
    static AiOperation init(String family, String drop, int targetHeld, int blocks, int seconds) {
-      return !init_Z ? load(family, drop, targetHeld, 48, -2147483648, seconds) : init(family, drop, targetHeld, blocks, -2147483648, seconds, true);
+      return !LEGIT_MINING ? load(family, drop, targetHeld, 48, -2147483648, seconds) : init(family, drop, targetHeld, blocks, -2147483648, seconds, true);
    }
 
    static AiOperation init(String family, String drop, int targetHeld, int blocks, int bestY, int seconds) {
@@ -42,7 +42,7 @@ final class AiOreRoute {
    }
 
    static AiOperation init(String family, String drop, int targetHeld, int blocks, int bestY, int seconds, BlockPos focus) {
-      if (!init_Z) {
+      if (!LEGIT_MINING) {
          JsonObject args = AiJson.objectOf("block", family, "drop", drop, "held", targetHeld, "radius", 64, "timeoutSeconds", Math.max(60, seconds));
          if (bestY != -2147483648) {
             args.addProperty("exploreY", bestY);
@@ -122,13 +122,13 @@ final class AiOreRoute {
                            family,
                            this.init_aH_DataUtil,
                            r.status(),
-                           AiProgression.load_Str(r.message()),
+                           AiProgression.clip(r.message()),
                            mc.player.getBlockY(),
                            AiCraft.countItem(drop),
                            targetHeld
                         );
                      return this.init(r);
-                  } else if (AiProgression.init_I(mc) < 3) {
+                  } else if (AiProgression.freeSlots(mc) < 3) {
                      this.init_AiOperation = AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.init_JsonArray()));
                      return this.init("Making room in the bag");
                   } else {
@@ -230,8 +230,8 @@ final class AiOreRoute {
                   keep.add(id);
                }
 
-               AiProgression.init_Set.forEach(keep::add);
-               AiProgression.init_List.forEach(keep::add);
+               AiProgression.KEEP_ITEMS.forEach(keep::add);
+               AiProgression.PICKAXES.forEach(keep::add);
                return keep;
             }
 

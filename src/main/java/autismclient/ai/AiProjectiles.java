@@ -51,7 +51,7 @@ final class AiProjectiles {
    private AiProjectiles() {
    }
 
-   static boolean init_Z(Entity entity) {
+   static boolean isProjectile(Entity entity) {
       return entity instanceof AbstractArrow
          || entity instanceof AbstractHurtingProjectile
          || entity instanceof ThrowableProjectile
@@ -88,7 +88,7 @@ final class AiProjectiles {
             List<AiProjectiles.IncomingProjectile> out = new ArrayList<>();
 
             for (Entity entity : mc.level.entitiesForRendering()) {
-               if (init_Z(entity)
+               if (isProjectile(entity)
                   && !(entity.distanceToSqr(mc.player) > 1024.0)
                   && !(entity instanceof Projectile projectile && projectile.getOwner() == mc.player)) {
                   Vec3 velocity = entity.getDeltaMovement();

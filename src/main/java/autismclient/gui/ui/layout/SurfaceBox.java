@@ -11,11 +11,11 @@ public class SurfaceBox extends LayoutContainer {
       this.addChild(this.init_PacketUtil);
    }
 
-   public ColumnLayout init_PacketUtil_3() {
+   public ColumnLayout getContent() {
       return this.init_PacketUtil;
    }
 
-   public SurfaceBox init_StateCache(boolean active) {
+   public SurfaceBox setActive(boolean active) {
       this.write_Z = active;
       return this;
    }
@@ -30,12 +30,12 @@ public class SurfaceBox extends LayoutContainer {
       return this;
    }
 
-   public SurfaceBox load_StateCache(boolean drawBorder) {
+   public SurfaceBox setDrawBorder(boolean drawBorder) {
       this.update_Z = drawBorder;
       return this;
    }
 
-   public SurfaceBox read_StateCache(boolean drawFill) {
+   public SurfaceBox setDrawFill(boolean drawFill) {
       this.sync = drawFill;
       return this;
    }

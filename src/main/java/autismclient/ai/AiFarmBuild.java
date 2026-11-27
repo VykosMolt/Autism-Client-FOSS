@@ -154,7 +154,7 @@ final class AiFarmBuild {
    }
 
    static boolean init(String substrate, int sourceCount, int waterHeld, boolean infiniteSource, boolean automaticSite) {
-      return !AiFarmArea.init_Z(substrate) && !infiniteSource && (automaticSite || waterHeld < sourceCount);
+      return !AiFarmArea.isSoulSand(substrate) && !infiniteSource && (automaticSite || waterHeld < sourceCount);
    }
 
    static AiFarmBuild.Inner_DataUtil init(Function<BlockPos, BlockState> at, int x, int z, int fromY, int toY) {
@@ -386,12 +386,12 @@ final class AiFarmBuild {
          throw new IllegalArgumentException(cropBlock + " is not planted from a seed item; build a wheat, carrot, potato, beetroot or nether-wart farm");
       }
 
-      final AiFarmArea.Inner_DataUtil selectedArea = AiFarmArea.init_C_DataUtil(args);
-      final String substrate = AiFarmArea.init_Str(args, cropBlock);
+      final AiFarmArea.Inner_DataUtil selectedArea = AiFarmArea.fromArgs(args);
+      final String substrate = AiFarmArea.substrateFor(args, cropBlock);
       AiFarmBuild.Inner_StreamUtil sized = init(AiJson.getInt(args, "count", 80), AiJson.getInt(args, "width", 0), AiJson.getInt(args, "length", 0));
       final AiFarmBuild.Inner_StreamUtil layout = selectedArea != null
          ? selectedArea.layout(substrate)
-         : (AiFarmArea.init_Z(substrate) ? new AiFarmBuild.Inner_StreamUtil(sized.width(), sized.length(), List.of()) : sized);
+         : (AiFarmArea.isSoulSand(substrate) ? new AiFarmBuild.Inner_StreamUtil(sized.width(), sized.length(), List.of()) : sized);
       if (selectedArea != null) {
          String issue = selectedArea.validate(substrate);
          if (!issue.isEmpty()) {
@@ -408,7 +408,7 @@ final class AiFarmBuild {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          final JsonArray init_JsonArray = new JsonArray();
          final String init_Str = substrate;
-         final boolean init_Z = AiFarmArea.init_Z(substrate);
+         final boolean init_Z = AiFarmArea.isSoulSand(substrate);
          final AiFarmArea.Inner_DataUtil init_C_DataUtil = selectedArea;
          final BlockPos init_BlockPos = this.init_C_DataUtil == null ? autismclient.ai.engine.AiStance.init(mc) : this.init_C_DataUtil.origin();
          boolean load_Z;
@@ -1080,7 +1080,7 @@ final class AiFarmBuild {
 
          AiOperation.Result push() {
             if (this.write_J == 0L) {
-               this.write_J = System.nanoTime() + AiGameplay.init_I(mc) * 50000000L;
+               this.write_J = System.nanoTime() + AiGameplay.pingMs(mc) * 50000000L;
                return this.init_AiOperation_Result_3("Confirming the pool's floor with the server");
             }
 
@@ -1164,7 +1164,7 @@ final class AiFarmBuild {
             BlockPos c = this.init_D_ConfigStore.waterCells().get(this.load_I);
             if (this.load(c)) {
                if (this.read_J == 0L) {
-                  this.read_J = System.nanoTime() + AiGameplay.init_I(mc) * 50000000L;
+                  this.read_J = System.nanoTime() + AiGameplay.pingMs(mc) * 50000000L;
                   return this.init_AiOperation_Result_3("Confirming the water hole with the server");
                }
 
@@ -1296,7 +1296,7 @@ final class AiFarmBuild {
 
          AiOperation.Result clear() {
             if (this.load_J == 0L) {
-               this.load_J = System.nanoTime() + AiGameplay.init_I(mc) * 50000000L;
+               this.load_J = System.nanoTime() + AiGameplay.pingMs(mc) * 50000000L;
                return this.init_AiOperation_Result_3("Confirming the field with the server");
             }
 

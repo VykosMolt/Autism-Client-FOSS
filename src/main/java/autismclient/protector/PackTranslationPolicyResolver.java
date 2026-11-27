@@ -24,15 +24,15 @@ public final class PackTranslationPolicyResolver {
 
    public static PackTranslationPolicyResolver.Inner_StreamUtil init(ResourceManager resourceManager) {
       try {
-         ProtectorFeatureFlags.init_V();
+         ProtectorFeatureFlags.refresh();
          Object policyIdentity = null;
          ConnectionPrivacyRegistry.PrivacyMode mode = null;
          boolean stable = false;
 
          for (int attempt = 0; attempt < 4; attempt++) {
-            policyIdentity = ProtectorFeatureFlags.init_Obj();
+            policyIdentity = ProtectorFeatureFlags.identity();
             mode = init(ConnectionPrivacyRegistry.getByListener(init_PacketListener()));
-            if (policyIdentity == ProtectorFeatureFlags.init_Obj()) {
+            if (policyIdentity == ProtectorFeatureFlags.identity()) {
                stable = true;
                break;
             }
@@ -84,11 +84,11 @@ public final class PackTranslationPolicyResolver {
          PacketListener listener = currentListener.get();
          ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
          ConnectionPrivacyRegistry.PrivacyMode effectiveMode = context == null ? mode : context.privacyMode();
-         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
+         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionFor(context);
          IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> serverBindings = new IdentityHashMap<>();
 
          for (PackResources pack : selectedPacks) {
-            ServerPackSelectionRegistry.Inner_StreamUtil provenance = ServerPackSelectionRegistry.init_CharEncoder_Stream(session, pack);
+            ServerPackSelectionRegistry.Inner_StreamUtil provenance = ServerPackSelectionRegistry.provenanceOf(session, pack);
             if (provenance != null) {
                serverBindings.put(
                   pack, new PackTranslationPolicyResolver.Inner_BufferHelper(context, context.lifecycleId(), listener, context.serverEndpoint(), session, provenance)
@@ -249,7 +249,7 @@ public final class PackTranslationPolicyResolver {
                   return this.load();
                }
 
-               if (PackTranslationPolicyResolver.init(context) == this.init_BufferHelper_Cache && this.init_Obj == ProtectorFeatureFlags.init_Obj()) {
+               if (PackTranslationPolicyResolver.init(context) == this.init_BufferHelper_Cache && this.init_Obj == ProtectorFeatureFlags.identity()) {
                   PackTranslationPolicyResolver.Inner_BufferHelper server = this.load_IdentityHashMap.get(pack);
                   if (this.init_BufferHelper_Cache == ConnectionPrivacyRegistry.PrivacyMode.VANILLA && server == null) {
                      return false;
@@ -302,9 +302,9 @@ public final class PackTranslationPolicyResolver {
             && context.packetListener() == server.init_PacketListener()
             && Objects.equals(context.serverEndpoint(), server.init_BufferHelper_Buffe())) {
             ResourcePackSessionTracker.PackSession session = server.init_FileCache_BufferHe();
-            if (ResourcePackSessionTracker.init_FileCache_BufferHe(context) == session && ResourcePackSessionTracker.init_Z(session)) {
+            if (ResourcePackSessionTracker.sessionFor(context) == session && ResourcePackSessionTracker.isActive(session)) {
                ServerPackSelectionRegistry.Inner_StreamUtil captured = server.init_CharEncoder_Stream();
-               return captured.equals(ServerPackSelectionRegistry.init_CharEncoder_Stream(session, pack));
+               return captured.equals(ServerPackSelectionRegistry.provenanceOf(session, pack));
             } else {
                return false;
             }

@@ -57,7 +57,7 @@ public final class MsdfFontAtlas {
       this.init_NativeImage = pixels;
    }
 
-   public static MsdfFontAtlas init_StreamUtil_Str(String baseName) {
+   public static MsdfFontAtlas load(String baseName) {
       Identifier jsonId = Identifier.fromNamespaceAndPath("autismclient", "font/msdf/" + baseName + ".mtsdf");
       Identifier pngId = Identifier.fromNamespaceAndPath("autismclient", "font/msdf/" + baseName + ".png");
 
@@ -129,7 +129,7 @@ public final class MsdfFontAtlas {
       }
    }
 
-   public double init_D() {
+   public double lineHeight() {
       return this.init_D;
    }
 
@@ -149,7 +149,7 @@ public final class MsdfFontAtlas {
       return this.init_Int2ObjectOpenHash.containsKey(codePoint);
    }
 
-   public boolean init_Z_Str(String text) {
+   public boolean canRender(String text) {
       int i = 0;
 
       while (i < text.length()) {
@@ -211,7 +211,7 @@ public final class MsdfFontAtlas {
       return (float)(top + height * 0.5 - inkCenter - this.load() * size);
    }
 
-   public String init_Str_Str(String text, float size, float maxWidth) {
+   public String truncate(String text, float size, float maxWidth) {
       float width = 0.0F;
       int end = 0;
 
@@ -236,7 +236,7 @@ public final class MsdfFontAtlas {
 
    public String load(String text, float size, float maxWidth) {
       if (text != null && !text.isEmpty() && !(maxWidth <= 0.0F)) {
-         String fitted = this.init_Str_Str(text, size, maxWidth);
+         String fitted = this.truncate(text, size, maxWidth);
          return this.init(fitted, size) <= maxWidth ? fitted : "";
       } else {
          return "";
@@ -283,7 +283,7 @@ public final class MsdfFontAtlas {
       return this.init_Identifier;
    }
 
-   public MsdfFontAtlas.Inner_DataUtil init_StreamUtil_DataUti() {
+   public MsdfFontAtlas.Inner_DataUtil texture() {
       if (this.init_StreamUtil_DataUti == null && !this.init_Z) {
          try {
             this.init_StreamUtil_DataUti = new MsdfFontAtlas.Inner_DataUtil(this.init_NativeImage != null ? this.init_NativeImage : new NativeImage(1, 1, false));
@@ -301,7 +301,7 @@ public final class MsdfFontAtlas {
       return this.init_StreamUtil_DataUti;
    }
 
-   public void init_V() {
+   public void release() {
       if (this.init_StreamUtil_DataUti != null) {
          try {
             Minecraft.getInstance().getTextureManager().release(this.init_Identifier);

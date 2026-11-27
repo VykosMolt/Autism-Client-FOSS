@@ -84,7 +84,7 @@ public final class AiToolsSuggest {
 
       try {
          if (sub.equals("parkour")) {
-            List<String> completed = AiToolCallParser.init_List(remaining.substring(0, cursor.offset()));
+            List<String> completed = AiToolCallParser.tokenize(remaining.substring(0, cursor.offset()));
             AiToolCallParser.Inner_CachePool flags = AiToolCallParser.parseParkourFlags(completed);
             List<String> destination = completed.stream().filter(token -> !AiToolCallParser.isParkourFlag(token)).toList();
             if (!flags.noFall()) {
@@ -104,7 +104,7 @@ public final class AiToolsSuggest {
             if (pos >= 3 && pos < 96) {
                try {
                   for (String coord : destination.subList(destination.size() - pos, destination.size())) {
-                     AiToolCallParser.init_I_Str_D(coord, 0.0);
+                     AiToolCallParser.parseBlockCoord(coord, 0.0);
                   }
 
                   init(at, cursor.current(), List.of("~"));
@@ -167,8 +167,8 @@ public final class AiToolsSuggest {
       try {
          Set<String> families = new TreeSet<>();
 
-         for (AiCatalog.Entry entry : AiDirectOps.init_AiCatalog_Snapshot().entries()) {
-            if (AiDirectOps.load_Z(entry.contract().id())) {
+         for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
+            if (AiDirectOps.isToolId(entry.contract().id())) {
                families.add(entry.contract().family());
             }
          }
@@ -324,12 +324,12 @@ public final class AiToolsSuggest {
       }
 
       Set<String> ids = new TreeSet<>(load);
-      ids.addAll(autismclient.commands.CommandSuggestions.init_List());
+      ids.addAll(autismclient.commands.CommandSuggestions.blockIds());
       return open = List.copyOf(ids);
    }
 
    static boolean init(Block block) {
-      return autismclient.commands.CommandSuggestions.init_Z_Block(block);
+      return autismclient.commands.CommandSuggestions.isPlaceableBlock(block);
    }
 
    static List<String> update() {
@@ -395,8 +395,8 @@ public final class AiToolsSuggest {
    static List<String> poll() {
       List<String> ids = new ArrayList<>();
 
-      for (AiCatalog.Entry entry : AiDirectOps.init_AiCatalog_Snapshot().entries()) {
-         if (AiDirectOps.load_Z(entry.contract().id())) {
+      for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
+         if (AiDirectOps.isToolId(entry.contract().id())) {
             ids.add(entry.contract().id());
          }
       }
@@ -405,7 +405,7 @@ public final class AiToolsSuggest {
    }
 
    static List<String> init(String rawId, String current) {
-      AiCatalog.Entry entry = AiDirectOps.init_AiCatalog_Entry(AiDirectOps.init_Str(rawId));
+      AiCatalog.Entry entry = AiDirectOps.catalogEntry(AiDirectOps.resolveToolId(rawId));
       if (entry == null) {
          return List.of();
       }
@@ -452,10 +452,10 @@ public final class AiToolsSuggest {
 
    static List<String> push() {
       Set<String> names = new TreeSet<>();
-      init(AiDirectOps.load_Path(), names, ".json", true);
-      init(AiDirectOps.read_Path(), names, ".schem", false);
-      init(AiDirectOps.read_Path(), names, ".schematic", false);
-      init(AiDirectOps.read_Path(), names, ".litematic", false);
+      init(AiDirectOps.blueprintsDir(), names, ".json", true);
+      init(AiDirectOps.schematicsDir(), names, ".schem", false);
+      init(AiDirectOps.schematicsDir(), names, ".schematic", false);
+      init(AiDirectOps.schematicsDir(), names, ".litematic", false);
       return List.copyOf(names);
    }
 

@@ -48,7 +48,7 @@ final class AiEndRun {
       return false;
    }
 
-   static AiOperation init_AiOperation(Minecraft mc) {
+   static AiOperation douseFire(Minecraft mc) {
       if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) || AiGameState.countInventoryItem("minecraft:water_bucket") <= 0) {
          return null;
       }
@@ -58,7 +58,7 @@ final class AiEndRun {
       }
 
       BlockPos feet = mc.player.blockPosition();
-      return AiNetherRun.init_AiOperation_AiOperation_Supplier(
+      return AiNetherRun.sequence(
          AiBucket.init(
             AiJson.objectOf("action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5)
          ),
@@ -270,7 +270,7 @@ final class AiEndRun {
                         if (this.load_Z && this.read_Z) {
                            this.write_Z = true;
                            credits.onClose();
-                           AiSpeedrun.init_V_Str_ObjArr("[AI] end: credits closed; respawning in the overworld");
+                           AiSpeedrun.log("[AI] end: credits closed; respawning in the overworld");
                            return this.init("Past the credits");
                         } else {
                            return this.init(AiOperation.Status.UNCERTAIN, "Credits appeared without a verified central-exit attempt");
@@ -285,7 +285,7 @@ final class AiEndRun {
                            return this.init("Verifying supported Overworld arrival after the central exit");
                         }
 
-                        String hazard = AiPortalLinks.init_Str();
+                        String hazard = AiPortalLinks.arrivalHazard();
                         AiPortalLinks.init("minecraft:the_end", this.init_BlockPos, "minecraft:overworld", mc.player.blockPosition(), hazard == null, this.load_JsonObject);
                         return this.init(
                            hazard == null ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
@@ -330,9 +330,9 @@ final class AiEndRun {
                            r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, r);
                            this.init_AiOperation_Result = r;
                            this.init_AiOperation = null;
-                           AiSpeedrun.init_V_Str_ObjArr("[AI] end step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.init_Str_Str(r.message()));
+                           AiSpeedrun.log("[AI] end step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.clip(r.message()));
                            this.init_JsonArray
-                              .add(AiJson.objectOf("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.init_Str_Str(r.message())));
+                              .add(AiJson.objectOf("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.clip(r.message())));
                            if (r.status() == AiOperation.Status.CANCELLED) {
                               return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.load_Str, r);
                            }
@@ -360,7 +360,7 @@ final class AiEndRun {
                               && r.failure() != AiFailure.LOW_HEALTH
                               && ++this.read_I >= 3
                               && !this.load_Z) {
-                              return this.init(AiOperation.Status.FAILED, "The dragon fight failed " + this.read_I + " times: " + AiSpeedrun.init_Str_Str(r.message()));
+                              return this.init(AiOperation.Status.FAILED, "The dragon fight failed " + this.read_I + " times: " + AiSpeedrun.clip(r.message()));
                            }
                         }
 
@@ -369,7 +369,7 @@ final class AiEndRun {
                         }
 
                         if ((mc.player.isOnFire() || AiEndRun.init_Z(mc)) && !mc.player.isInWater()) {
-                           AiOperation out = AiEndRun.init_AiOperation(mc);
+                           AiOperation out = AiEndRun.douseFire(mc);
                            if (out == null && AiEndRun.init_Z(mc)) {
                               out = AiEndRun.load_AiOperation(mc);
                            }
@@ -413,7 +413,7 @@ final class AiEndRun {
                   if (System.nanoTime() < this.write_J) {
                      return this.init(
                         "wait to walk to the heal spot (health " + String.format("%.0f", mc.player.getHealth()) + ")",
-                        AiNetherRun.init_AiOperation_I_AiOperation(20, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "waited", new JsonObject()))
+                        AiNetherRun.delayThen(20, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "waited", new JsonObject()))
                      );
                   }
 
@@ -433,7 +433,7 @@ final class AiEndRun {
                } else {
                   return this.init(
                      "rest to heal (health " + String.format("%.0f", mc.player.getHealth()) + ")",
-                     AiNetherRun.init_AiOperation_I_AiOperation(100, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "rested", new JsonObject()))
+                     AiNetherRun.delayThen(100, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "rested", new JsonObject()))
                   );
                }
             }
@@ -590,7 +590,7 @@ final class AiEndRun {
                int beds = AiItems.countInInventory(AiItems.resolve("bed"));
                return this.init(
                   "fight the dragon",
-                  AiDragon.init_AiOperation(
+                  AiDragon.create(
                      AiJson.objectOf(
                         "beds",
                         beds,
@@ -649,8 +649,8 @@ final class AiEndRun {
             AiOperation.Result init(String label, AiOperation op) {
                this.load_Str = label;
                this.init_AiOperation_Result = null;
-               AiSpeedrun.init_V_Str_ObjArr("[AI] end: {}", label);
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("end", label, op);
+               AiSpeedrun.log("[AI] end: {}", label);
+               this.init_AiOperation = AiRunDiagnostics.trace("end", label, op);
                return this.init(label);
             }
 

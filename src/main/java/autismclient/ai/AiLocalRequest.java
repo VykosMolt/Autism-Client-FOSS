@@ -44,7 +44,7 @@ final class AiLocalRequest {
             }
          }
 
-         return AiMiningQuota.init_JsonObject_JsonObject(AiJson.objectOf("block", types, "count", count, "counts", overrides));
+         return AiMiningQuota.normalizeArgs(AiJson.objectOf("block", types, "count", count, "counts", overrides));
       } else {
          throw new IllegalArgumentException("Choose an amount from 1 to 640");
       }
@@ -103,11 +103,11 @@ final class AiLocalRequest {
          || AiJson.getString(stored, "placementWorld", "").equals(world) && AiJson.getString(stored, "placementDimension", "").equals(dimension);
    }
 
-   static void init_V(JsonObject stored, Path file) throws IOException {
+   static void stampSource(JsonObject stored, Path file) throws IOException {
       stored.add("sourceRevision", AiJson.objectOf("size", Files.size(file), "modified", Files.getLastModifiedTime(file).toMillis()));
    }
 
-   static boolean init_Z(JsonObject stored, Path file) {
+   static boolean isSourceUnchanged(JsonObject stored, Path file) {
       if (!stored.has("sourceRevision")) {
          return true;
       }

@@ -69,12 +69,12 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
 
             autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.init(context.privacyMode(), sharedBypass, serializedBypass);
             ResourcePackPushValidator.Inner_StreamUtil verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
-            if (verdict.init_RefQueue_DataUtil() != ResourcePackPushValidator.Inner_DataUtil.PASS) {
-               if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.INVALID_URL) {
+            if (verdict.verdict() != ResourcePackPushValidator.Inner_DataUtil.PASS) {
+               if (verdict.verdict() == ResourcePackPushValidator.Inner_DataUtil.INVALID_URL) {
                   this.send(new ServerboundResourcePackPacket(packet.id(), Action.INVALID_URL));
                   ci.cancel();
-               } else if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.BYPASS_SUCCESS || verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE) {
-                  autismclient.protector.ResourcePackSessionTracker.PackPolicy policy = verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
+               } else if (verdict.verdict() == ResourcePackPushValidator.Inner_DataUtil.BYPASS_SUCCESS || verdict.verdict() == ResourcePackPushValidator.Inner_DataUtil.DECLINE) {
+                  autismclient.protector.ResourcePackSessionTracker.PackPolicy policy = verdict.verdict() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
                      ? autismclient.protector.ResourcePackSessionTracker.PackPolicy.DECLINE
                      : selectedPolicy;
 

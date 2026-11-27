@@ -17,7 +17,7 @@ public class AutismProtectorPayloadTypeRegistryImplMixin {
    private void autism$trackPayloadDefaultMod(Type<?> type, StreamCodec<?, ?> codec, CallbackInfoReturnable<TypeAndCodec<?, ?>> cir) {
       for (String mod : CallerModInspector.init()) {
          ModNamespaceCatalog.read_V(mod);
-         ModNamespaceCatalog.init(CallerModInspector.init_Set(mod));
+         ModNamespaceCatalog.init(CallerModInspector.dependenciesOf(mod));
       }
    }
 }

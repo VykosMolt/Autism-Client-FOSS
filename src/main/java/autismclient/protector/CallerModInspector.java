@@ -50,7 +50,7 @@ public final class CallerModInspector {
       return mods;
    }
 
-   public static Set<String> init_Set(String modId) {
+   public static Set<String> dependenciesOf(String modId) {
       Set<String> dependencies = new HashSet<>();
       Set<String> queued = new HashSet<>();
       ArrayDeque<String> stack = new ArrayDeque<>();

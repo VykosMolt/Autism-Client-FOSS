@@ -1976,8 +1976,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private void value() {
-      ActionEditorOverlay editor = ActionEditorOverlay.init_ActionEditorOverla_2();
-      editor.init_V_H(new autismclient.util.macro.PayloadAction());
+      ActionEditorOverlay editor = ActionEditorOverlay.getInstance();
+      editor.openPayload(new autismclient.util.macro.PayloadAction());
       OverlayManager.getInstance().bringToFront(editor);
    }
 

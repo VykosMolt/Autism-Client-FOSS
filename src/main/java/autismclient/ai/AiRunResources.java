@@ -88,7 +88,7 @@ public final class AiRunResources {
       Map<String, Integer> out = new LinkedHashMap<>();
       Map<String, Integer> kit = new LinkedHashMap<>();
       kit.put("minecraft:diamond_pickaxe", 1);
-      kit.putAll(AiSpeedrun.init_Map);
+      kit.putAll(AiSpeedrun.KIT);
       kit.forEach(
          (id, count) -> {
             int have = id.equals("minecraft:bucket")
@@ -163,7 +163,7 @@ public final class AiRunResources {
          ItemStack stack = mc.player.getInventory().getItem(slot);
          FoodProperties food = stack.get(DataComponents.FOOD);
          String id = itemIdOf(stack);
-         if (isSafeFood(stack) && !AiSpeedrun.read_Map.containsKey(id)) {
+         if (isSafeFood(stack) && !AiSpeedrun.COOKED.containsKey(id)) {
             total += food.nutrition() * stack.getCount();
          }
       }
@@ -260,7 +260,7 @@ public final class AiRunResources {
          next.put("minecraft:obsidian", 10);
          next.put("minecraft:diamond", missingMandatoryGear().isEmpty() ? 0 : countUsableItem("minecraft:diamond", 0));
 
-         for (String id : AiSpeedrun.init_Map.keySet()) {
+         for (String id : AiSpeedrun.KIT.keySet()) {
             next.put(id, id.equals("minecraft:bucket") ? 3 : 1);
             String better = netheriteUpgradeId(id);
             if (better != null) {
@@ -374,7 +374,7 @@ public final class AiRunResources {
       try {
          return json != null && !json.isBlank() ? AiJson.parseObject(json) : new JsonObject();
       } catch (RuntimeException malformed) {
-         return AiJson.objectOf("unparsedEvidence", json == null ? "" : AiSpeedrun.init_Str_Str(json));
+         return AiJson.objectOf("unparsedEvidence", json == null ? "" : AiSpeedrun.clip(json));
       }
    }
 
@@ -383,7 +383,7 @@ public final class AiRunResources {
       out.remove("steps");
       out.remove("trail");
       out.remove("transfers");
-      return out.toString().length() <= 12000 ? out : AiJson.objectOf("detail", AiSpeedrun.init_Str_Str(json), "evidenceTruncated", true);
+      return out.toString().length() <= 12000 ? out : AiJson.objectOf("detail", AiSpeedrun.clip(json), "evidenceTruncated", true);
    }
 
    static void endCampaign(Object token) {

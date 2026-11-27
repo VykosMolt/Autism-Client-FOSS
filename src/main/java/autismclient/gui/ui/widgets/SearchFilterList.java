@@ -17,7 +17,7 @@ public final class SearchFilterList<T> {
       this.init_Function = Objects.requireNonNull(searchText);
    }
 
-   public void init_V_List(List<T> items) {
+   public void setItems(List<T> items) {
       List<T> next = items != null && !items.isEmpty() ? List.copyOf(items) : List.of();
       if (!this.init_List.equals(next)) {
          this.init_List = next;
@@ -25,7 +25,7 @@ public final class SearchFilterList<T> {
       }
    }
 
-   public void init_V_Str(String query) {
+   public void setQuery(String query) {
       String next = init_Str_Str(query);
       if (!this.init_Str.equals(next)) {
          this.init_Str = next;
@@ -33,13 +33,13 @@ public final class SearchFilterList<T> {
       }
    }
 
-   public List<T> init_List() {
+   public List<T> filtered() {
       this.init_V();
       return this.load;
    }
 
    public int init_I() {
-      return this.init_List().size();
+      return this.filtered().size();
    }
 
    private void init_V() {

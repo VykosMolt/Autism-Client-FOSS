@@ -34,7 +34,7 @@ final class SlotClickCommandHelper {
             "swap-hotbar", IntegerArgumentType.integer(1, 9)
          )
          .suggests(
-            (context, builder) -> autismclient.commands.CommandSuggestions.init_CompletableFuture_SuggestionsBuilder_StrArr(
+            (context, builder) -> autismclient.commands.CommandSuggestions.suggest(
                builder, "1", "2", "3", "4", "5", "6", "7", "8", "9"
             )
          )

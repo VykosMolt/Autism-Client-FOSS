@@ -88,8 +88,8 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         int sw = this.init_I();
-         int sh = this.load_I();
+         int sw = this.virtualWidth();
+         int sh = this.virtualHeight();
          int margin = 6;
          int pad = 4;
          int headerH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);

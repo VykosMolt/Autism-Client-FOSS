@@ -85,7 +85,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
 
    public CollapsibleWindowNode setExpanded(boolean showBody) {
       if (this.expanded != showBody) {
-         this.revealAnimator.init_F_F(showBody ? 1.0F : 0.0F);
+         this.revealAnimator.animateTo(showBody ? 1.0F : 0.0F);
          this.expanded = showBody;
          this.markLayoutDirty();
       }
@@ -94,7 +94,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
    }
 
    public CollapsibleWindowNode setExpandedImmediate(boolean showBody) {
-      this.revealAnimator.init_V_F(showBody ? 1.0F : 0.0F);
+      this.revealAnimator.snapTo(showBody ? 1.0F : 0.0F);
       if (this.expanded != showBody) {
          this.expanded = showBody;
          this.markLayoutDirty();
@@ -226,7 +226,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
          this.bodyViewportHeight = Math.max(0.0F, this.nodeHeight - headerH);
       }
 
-      this.body.setVisible(this.expanded || this.revealAnimator.init_F() > 0.0F);
+      this.body.setVisible(this.expanded || this.revealAnimator.value() > 0.0F);
       if (this.scrollable) {
          float contentH = this.body.measureHeight(context, this.nodeWidth);
          float contentW = this.nodeWidth;
@@ -255,7 +255,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
             this.bodyViewportHeight = Math.max(0.0F, this.nodeHeight - headerH);
          }
 
-         float reveal = this.revealAnimator.init_F_F(this.expanded ? 1.0F : 0.0F);
+         float reveal = this.revealAnimator.animateTo(this.expanded ? 1.0F : 0.0F);
          int drawH = headerH + Math.round(this.bodyViewportHeight * reveal);
          this.lastHeaderHeight = headerH;
          this.lastDrawnHeight = drawH;

@@ -145,7 +145,7 @@ final class AiDanger {
       return Math.round((1.0F - clamped) * 30.0F);
    }
 
-   static double init_D_D(double motionY, double gravity, boolean slowFalling) {
+   static double nextMotionY(double motionY, double gravity, boolean slowFalling) {
       double my = motionY - (motionY <= 0.0 && slowFalling ? Math.min(gravity, 0.01) : gravity);
       return my * 0.98;
    }
@@ -192,7 +192,7 @@ final class AiDanger {
       return out;
    }
 
-   static AiDanger.Inner_DataUtil init_i_DataUtil_Minecraft(Minecraft mc) {
+   static AiDanger.Inner_DataUtil assess(Minecraft mc) {
       try {
          return init_i_BufferHelper_Minecraft(mc).assessment();
       } catch (Throwable t) {
@@ -200,7 +200,7 @@ final class AiDanger {
       }
    }
 
-   static JsonObject init_JsonObject_Minecraft_I(Minecraft mc, int cap) {
+   static JsonObject snapshotJson(Minecraft mc, int cap) {
       try {
          AiDanger.Inner_BufferHelper snap = init_i_BufferHelper_Minecraft(mc);
          AiDanger.Inner_DataUtil a = snap.assessment();
@@ -251,9 +251,9 @@ final class AiDanger {
       }
    }
 
-   static AiOperation init_AiOperation_JsonObject(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       int cap = args == null ? 12 : AiJson.getInt(args, "cap", 12);
-      return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", init_JsonObject_Minecraft_I(Minecraft.getInstance(), cap));
+      return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", snapshotJson(Minecraft.getInstance(), cap));
    }
 
    private static AiDanger.Inner_BufferHelper init_i_BufferHelper_Minecraft(Minecraft mc) {
@@ -454,7 +454,7 @@ final class AiDanger {
 
       for (int tick = 1; tick <= 20; tick++) {
          Vec3 start = new Vec3(x, y, z);
-         my = init_D_D(my, gravity, slowFalling);
+         my = nextMotionY(my, gravity, slowFalling);
          mx *= 0.91;
          mz *= 0.91;
          if (my < 0.0) {

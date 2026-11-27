@@ -80,7 +80,7 @@ final class AiEnchant {
       return xpLevel < levelNeeded ? "XP level deficit: option " + button + " requires experience level " + levelNeeded + ", player level is " + xpLevel : null;
    }
 
-   static JsonObject init_JsonObject(JsonObject args) {
+   static JsonObject readTable(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          if (mc.player.containerMenu instanceof EnchantmentMenu menu) {
@@ -146,7 +146,7 @@ final class AiEnchant {
       );
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       if (args.has("button") && !args.get("button").isJsonNull()) {
          final int button = AiJson.getInt(args, "button", -1);
          if (button >= 0 && button < 3) {

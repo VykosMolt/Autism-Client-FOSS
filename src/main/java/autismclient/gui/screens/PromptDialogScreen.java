@@ -63,9 +63,9 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
    }
 
    private autismclient.gui.f.NetHelper init_NetHelper_2() {
-      int width = Math.max(1, Math.min(this.init_Str == null ? 268 : 220, this.init_I() - 12));
+      int width = Math.max(1, Math.min(this.init_Str == null ? 268 : 220, this.virtualWidth() - 12));
       int height = 52 + (this.init_Str == null ? this.init_List.size() * 12 : 16);
-      return autismclient.gui.f.NetHelper.init((this.init_I() - width) / 2, (this.load_I() - height) / 2, width, height);
+      return autismclient.gui.f.NetHelper.init((this.virtualWidth() - width) / 2, (this.virtualHeight() - height) / 2, width, height);
    }
 
    private autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper panel, int index) {
@@ -119,7 +119,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          return false;
       }
 
-      MouseButtonEvent mouse = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent mouse = toVirtual(event);
       autismclient.gui.f.NetHelper p = this.init_NetHelper_2();
       if (autismclient.gui.ui.widgets.DialogFrameRenderer.init(p, 17, (int)mouse.x(), (int)mouse.y())) {
          this.onClose();
@@ -138,13 +138,13 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      MouseButtonEvent mouse = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent mouse = toVirtual(event);
       return this.init_k != null && this.init_k.mouseReleased(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      MouseButtonEvent mouse = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent mouse = toVirtual(event);
       return this.init_k != null && this.init_k.mouseDragged(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse), cA.init_D_D(dx), cA.init_D_D(dy));
    }
 

@@ -16,8 +16,8 @@ final class AiChatView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(16000).setHistoryNavigationEnabled(true);
-   final AiActionMenu init_StreamUtil;
+   final autismclient.gui.ui.widgets.TextInputWidget input = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(16000).setHistoryNavigationEnabled(true);
+   final AiActionMenu actionMenu;
    private final AiTranscriptLayout init_cC = new AiTranscriptLayout();
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(true);
    private final Map<AiService.TranscriptEntry, Boolean> init_Map = new IdentityHashMap<>();
@@ -46,24 +46,24 @@ final class AiChatView {
    private boolean sync_Z;
    private long init_J;
 
-   void init_V_Str_Str(String action, String query) {
-      this.init_StreamUtil.init_V_Str_Str(action, query);
+   void openAction(String action, String query) {
+      this.actionMenu.openAction(action, query);
    }
 
-   void init_V_Z(boolean enabled) {
+   void setAttachmentsEnabled(boolean enabled) {
       this.write_Z = enabled;
       if (!enabled) {
          this.init_ArrayList.clear();
       }
    }
 
-   int init_I() {
+   int preferredHeight() {
       if (this.init_cF.settings.builtIn) {
-         return this.init_StreamUtil.init_I() + AiUiKit.toolbarHeight() + AiUiKit.rowHeight() * 2 + 6;
+         return this.actionMenu.preferredHeight() + AiUiKit.toolbarHeight() + AiUiKit.rowHeight() * 2 + 6;
       }
 
       int rows = this.write_Z ? Math.max(2, this.init_ArrayList.size()) : this.init_ArrayList.size();
-      int composer = this.init_cF.settings.builtIn ? this.init_StreamUtil.init_I() : AiUiKit.toolbarHeight();
+      int composer = this.init_cF.settings.builtIn ? this.actionMenu.preferredHeight() : AiUiKit.toolbarHeight();
       return AiUiKit.lineHeight() * 3 + 2 + composer + 2 + AiUiKit.rowHeight() + rows * (AiUiKit.toolbarHeight() + 2);
    }
 
@@ -71,22 +71,22 @@ final class AiChatView {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.init_StreamUtil = new AiActionMenu(service, view, host, this.init_cE_StreamUtil::scrollToBottom);
-      this.init_BitSetUtil.setOnSubmit(text -> this.load_V());
+      this.actionMenu = new AiActionMenu(service, view, host, this.init_cE_StreamUtil::scrollToBottom);
+      this.input.setOnSubmit(text -> this.load_V());
    }
 
-   autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil() {
-      return this.init_cF.settings.builtIn ? this.init_StreamUtil.init_BitSetUtil : this.init_BitSetUtil;
+   autismclient.gui.ui.widgets.TextInputWidget activeInput() {
+      return this.init_cF.settings.builtIn ? this.actionMenu.searchInput : this.input;
    }
 
    boolean init_Z_I_BitSetUtil(int key, autismclient.gui.ui.widgets.TextInputWidget focused) {
-      return this.init_cF.settings.builtIn && (focused == null || this.init_StreamUtil.init_List().contains(focused))
-         ? this.init_StreamUtil.init_Z_I_Z(key, focused != null)
+      return this.init_cF.settings.builtIn && (focused == null || this.actionMenu.inputs().contains(focused))
+         ? this.actionMenu.init_Z_I_Z(key, focused != null)
          : false;
    }
 
    boolean init_Z() {
-      return this.init_cF.settings.builtIn && (this.init_Z || this.init_StreamUtil.init_Z());
+      return this.init_cF.settings.builtIn && (this.init_Z || this.actionMenu.isOpen());
    }
 
    boolean load_Z() {
@@ -96,13 +96,13 @@ final class AiChatView {
          this.init_Z = false;
          return true;
       } else {
-         return this.init_StreamUtil.load_Z();
+         return this.actionMenu.load_Z();
       }
    }
 
-   int init_I_I(int width) {
+   int bodyHeight(int width) {
       if (this.init_cF.settings.builtIn && !this.init_Z && this.init_cF.pendingQuestion == null) {
-         int height = this.init_StreamUtil.init_I_I(width);
+         int height = this.actionMenu.heightFor(width);
          return height == 0 ? 0 : height + AiUiKit.toolbarHeight() + AiUiKit.rowHeight() * 2 + 8;
       } else {
          return 0;
@@ -110,18 +110,18 @@ final class AiChatView {
    }
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
-      return this.init_cF.settings.builtIn ? this.init_StreamUtil.init_BitSetUtil_C(c) : null;
+      return this.init_cF.settings.builtIn ? this.actionMenu.init_BitSetUtil_C(c) : null;
    }
 
    autismclient.gui.f.NetHelper init_NetHelper() {
       return this.init_NetHelper;
    }
 
-   void init_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
+   void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       if (!this.init_cF.activeSessionId.equals(this.init_Str)) {
          this.init_Str = this.init_cF.activeSessionId;
          this.init_Map.clear();
-         this.init_cC.init_V();
+         this.init_cC.invalidate();
          this.init_cE_StreamUtil.scrollToBottom();
          this.init_Z = false;
          this.load_Z = false;
@@ -145,20 +145,20 @@ final class AiChatView {
 
       int ctrl = AiUiKit.toolbarHeight();
       boolean builtIn = this.init_cF.settings.builtIn;
-      if (builtIn && this.init_BitSetUtil.isFocused()) {
-         this.init_BitSetUtil.setFocused(false);
+      if (builtIn && this.input.isFocused()) {
+         this.input.setFocused(false);
       }
 
       if (!builtIn) {
-         this.init_StreamUtil.init_V();
-         this.init_StreamUtil.load_V();
+         this.actionMenu.blur();
+         this.actionMenu.cancel();
       }
 
       autismclient.gui.f.NetHelper status = autismclient.gui.f.NetHelper.init(area.read(), area.load() - AiUiKit.rowHeight(), area.update(), AiUiKit.rowHeight());
       if (builtIn) {
          this.init_V_cE_2(kit, area, status, now);
       } else {
-         int composerH = builtIn ? this.init_StreamUtil.init_I_cE(kit, area.update(), status.write() - 2 - area.write() - AiUiKit.lineHeight() * 3 - 2) : ctrl;
+         int composerH = builtIn ? this.actionMenu.composerHeight(kit, area.update(), status.write() - 2 - area.write() - AiUiKit.lineHeight() * 3 - 2) : ctrl;
          autismclient.gui.f.NetHelper composer = autismclient.gui.f.NetHelper.init(area.read(), status.write() - 2 - composerH, area.update(), composerH);
          int bottom = composer.write() - 2;
 
@@ -170,7 +170,7 @@ final class AiChatView {
                autismclient.gui.f.NetHelper.init(row.read(), row.write(), row.update() - remove - 2, ctrl),
                file.name() + " (" + file.cells() + " blocks)",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-               () -> this.init_BitSetUtil.setValue("build \"" + file.name() + "\""),
+               () -> this.input.setValue("build \"" + file.name() + "\""),
                file.format() + " / " + file.bytes() + " bytes"
             );
             kit.drawIconButton(
@@ -224,7 +224,7 @@ final class AiChatView {
 
          this.load_V_cE_2(kit, autismclient.gui.f.NetHelper.init(area.read(), area.write(), area.update(), Math.max(0, bottom - area.write())), now);
          if (builtIn) {
-            this.init_StreamUtil.init_V_cE(kit, composer, now);
+            this.actionMenu.render(kit, composer, now);
          } else {
             this.load(kit, composer);
          }
@@ -300,7 +300,7 @@ final class AiChatView {
          kit.drawButton(close, "Back to actions", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, () -> this.init_Z = false);
          this.load_V_cE_2(kit, autismclient.gui.f.NetHelper.init(area.read(), close.load() + 2, area.update(), Math.max(0, bottom - close.load() - 2)), now);
       } else {
-         this.init_StreamUtil.init_V_cE(kit, this.init_NetHelper, now);
+         this.actionMenu.render(kit, this.init_NetHelper, now);
       }
 
       this.read(kit, status);
@@ -323,18 +323,18 @@ final class AiChatView {
 
             int contentW = Math.max(40, v.update() - 6 - 3);
             AiTranscriptLayout.Inner_TaskQueue m = this.init_cC_TaskQueue_cE(kit);
-            this.init_cC.init(this.init_cF.transcript, contentW, load_I(), m, this.init_Map, this.read_I, this.init_cC_ConfigStore);
+            this.init_cC.init(this.init_cF.transcript, contentW, textEpoch(), m, this.init_Map, this.read_I, this.init_cC_ConfigStore);
             boolean live = this.init_cF.isWorking();
             int liveH = AiUiKit.lineHeight() + 2;
-            int liveY = this.init_cC.init_I() + (this.init_cC.init_I() > 0 ? m.blockGap() : 0);
-            this.init_cE_StreamUtil.layout(v, (live ? liveY + liveH : this.init_cC.init_I()) + 2);
+            int liveY = this.init_cC.height() + (this.init_cC.height() > 0 ? m.blockGap() : 0);
+            this.init_cE_StreamUtil.layout(v, (live ? liveY + liveH : this.init_cC.height()) + 2);
             kit.registerScrollPane(this.init_cE_StreamUtil);
             kit.pushClip(v);
             int top = v.write() - this.init_cE_StreamUtil.offset;
             int viewBottom = this.init_cE_StreamUtil.offset + v.sync();
             List<AiTranscriptLayout.Inner_DataUtil> blocks = this.init_cC.load();
 
-            for (int i = this.init_cC.load_I_I(this.init_cE_StreamUtil.offset); i < blocks.size(); i++) {
+            for (int i = this.init_cC.firstBlockAt(this.init_cE_StreamUtil.offset); i < blocks.size(); i++) {
                AiTranscriptLayout.Inner_DataUtil block = blocks.get(i);
                if (block.top() >= viewBottom) {
                   break;
@@ -357,9 +357,9 @@ final class AiChatView {
                kit.addInteractiveRegion(bounds, toggle, () -> init_V_cc_JsonUtil(message), null);
             }
 
-            List<AiTranscriptLayout.Inner_BufferHelper> lines = this.init_cC.init_List();
+            List<AiTranscriptLayout.Inner_BufferHelper> lines = this.init_cC.lines();
 
-            for (int i = this.init_cC.init_I_I(this.init_cE_StreamUtil.offset); i < lines.size(); i++) {
+            for (int i = this.init_cC.firstLineAt(this.init_cE_StreamUtil.offset); i < lines.size(); i++) {
                AiTranscriptLayout.Inner_BufferHelper line = lines.get(i);
                if (line.y() >= viewBottom) {
                   break;
@@ -428,7 +428,7 @@ final class AiChatView {
       }
    }
 
-   static int load_I() {
+   static int textEpoch() {
       return autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration() * 31 + Float.floatToIntBits(autismclient.gui.sdf.MsdfTextRenderer.fontScale());
    }
 
@@ -540,7 +540,7 @@ final class AiChatView {
             autismclient.gui.f.NetHelper.init(card.read() + 5, y, kit.measureButtonWidth("Open settings"), ctrl),
             "Open settings",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-            this.init_AiAssistantOverlay::load_V
+            this.init_AiAssistantOverlay::showSettings
          );
       } else {
          int x = v.read() + 4;
@@ -569,7 +569,7 @@ final class AiChatView {
    private static void init_V_cc_JsonUtil(AiService.TranscriptEntry message) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.keyboardHandler != null) {
-         mc.keyboardHandler.setClipboard(AiTranscriptLayout.init_Str_cc_JsonUtil(message));
+         mc.keyboardHandler.setClipboard(AiTranscriptLayout.copyText(message));
          autismclient.util.bi.init("Message copied");
       }
    }
@@ -586,7 +586,7 @@ final class AiChatView {
       int x = card.read() + 5;
       int w = card.update() - 10;
       if (lines > 0) {
-         int epoch = load_I();
+         int epoch = textEpoch();
          if (this.update_I != w || this.sync_I != epoch || !this.read_Str.equals(this.load_Str)) {
             this.init_List = kit.renderContext.init_PoolEntry().wrapLines(this.load_Str, w);
             this.update_I = w;
@@ -628,7 +628,7 @@ final class AiChatView {
    }
 
    private List<String> init_List_cE(AiUiKit kit, AiService.UserPromptQuestion q, int w) {
-      int epoch = load_I();
+      int epoch = textEpoch();
       if (this.flush != w || this.close != epoch || !this.write_Str.equals(q.text())) {
          this.read_List = kit.renderContext.init_PoolEntry().wrapLines(AiUiKit.flattenSingleLine(q.text()), Math.max(20, w));
          this.flush = w;
@@ -790,7 +790,7 @@ final class AiChatView {
          right -= 2;
       }
 
-      this.init_BitSetUtil
+      this.input
          .setPlaceholder(
             this.init_cF.pendingQuestion != null
                ? "Answer the question..."
@@ -804,7 +804,7 @@ final class AiChatView {
                      )
                )
          );
-      kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(fieldX, c.write(), Math.max(20, right - fieldX), h));
+      kit.drawTextInput(this.input, autismclient.gui.f.NetHelper.init(fieldX, c.write(), Math.max(20, right - fieldX), h));
    }
 
    private void read_V() {
@@ -825,7 +825,7 @@ final class AiChatView {
                autismclient.util.bi.write("Could not attach schematic: " + cause.getMessage());
             } else if (file != null && draftSession.equals(this.init_Str) && !this.init_ArrayList.contains(file)) {
                this.init_ArrayList.add(file);
-               this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+               this.init_AiAssistantOverlay.init(this.input);
             }
          }));
       }
@@ -874,24 +874,24 @@ final class AiChatView {
    }
 
    private String load_Str() {
-      String text = this.init_BitSetUtil.getValue().trim();
+      String text = this.input.getValue().trim();
       if (text.isEmpty()) {
          return null;
       }
 
-      this.init_BitSetUtil.pushHistoryEntry(text);
-      this.init_BitSetUtil.setValue("");
+      this.input.pushHistoryEntry(text);
+      this.input.setValue("");
       return text;
    }
 
    void load_V() {
-      if (!this.read_Z && (!this.init_BitSetUtil.getValue().isBlank() || !this.init_ArrayList.isEmpty())) {
+      if (!this.read_Z && (!this.input.getValue().isBlank() || !this.init_ArrayList.isEmpty())) {
          if (this.init_cF.pendingQuestion != null) {
             this.init_V_Str(this.load_Str());
          } else if (this.init_cF.awaitingPlanApproval) {
             this.sync();
          } else {
-            String text = AiAttachments.init(this.init_BitSetUtil.getValue().isBlank() ? "" : this.load_Str(), this.init_ArrayList);
+            String text = AiAttachments.init(this.input.getValue().isBlank() ? "" : this.load_Str(), this.init_ArrayList);
             this.init_ArrayList.clear();
             this.init_cc.submitPrompt(text);
             this.init_cE_StreamUtil.scrollToBottom();
@@ -902,9 +902,9 @@ final class AiChatView {
 
    private void write() {
       if (!this.read_Z) {
-         String text = this.init_BitSetUtil.getValue().isBlank() && !this.init_ArrayList.isEmpty() ? "" : this.load_Str();
+         String text = this.input.getValue().isBlank() && !this.init_ArrayList.isEmpty() ? "" : this.load_Str();
          if (text == null) {
-            this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+            this.init_AiAssistantOverlay.init(this.input);
          } else {
             this.init_cc.enqueueObjective(AiAttachments.init(text, this.init_ArrayList));
             this.init_ArrayList.clear();
@@ -921,9 +921,9 @@ final class AiChatView {
    }
 
    private void sync() {
-      if (this.init_BitSetUtil.getValue().isBlank()) {
+      if (this.input.getValue().isBlank()) {
          this.load_Z = true;
-         this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+         this.init_AiAssistantOverlay.init(this.input);
       } else {
          String text = this.load_Str();
          this.init_cc.rejectPlan(text);
@@ -1047,10 +1047,10 @@ final class AiChatView {
    }
 
    private int init_I_cE(AiUiKit kit) {
-      return this.init_cF.pendingQuestion == null && !this.init_cF.awaitingPlanApproval ? init_I_cE_Str(kit, this.init_cF.runState.name()) : -14249;
+      return this.init_cF.pendingQuestion == null && !this.init_cF.awaitingPlanApproval ? stateColor(kit, this.init_cF.runState.name()) : -14249;
    }
 
-   static int init_I_cE_Str(AiUiKit kit, String state) {
+   static int stateColor(AiUiKit kit, String state) {
       int var10000;
       switch (state) {
          case "RUNNING":

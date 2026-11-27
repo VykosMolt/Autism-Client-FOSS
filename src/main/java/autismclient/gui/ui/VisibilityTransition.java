@@ -17,48 +17,48 @@ public final class VisibilityTransition {
       this.init_RingBuffer = new EaseOutAnimator(visible ? 1.0F : 0.0F, 150, clock);
    }
 
-   public void init_V(boolean visible) {
+   public void animateTo(boolean visible) {
       if (this.init_Z) {
          this.init_Z = false;
          if (visible) {
-            this.init_RingBuffer.init_V_F(0.0F);
+            this.init_RingBuffer.snapTo(0.0F);
          }
       }
 
-      this.init_RingBuffer.init_F_F(visible ? 1.0F : 0.0F);
+      this.init_RingBuffer.animateTo(visible ? 1.0F : 0.0F);
    }
 
-   public void load_V(boolean visible) {
+   public void snapTo(boolean visible) {
       if (this.init_Z) {
          this.init_Z = false;
          if (visible) {
-            this.init_RingBuffer.init_V_F(0.0F);
-            this.init_RingBuffer.init_F_F(1.0F);
+            this.init_RingBuffer.snapTo(0.0F);
+            this.init_RingBuffer.animateTo(1.0F);
             return;
          }
       }
 
-      this.init_RingBuffer.init_V_F(visible ? 1.0F : 0.0F);
+      this.init_RingBuffer.snapTo(visible ? 1.0F : 0.0F);
    }
 
-   public void init_V() {
+   public void restart() {
       this.init_Z = true;
    }
 
    public float init_F() {
-      return this.init_RingBuffer.init_F();
+      return this.init_RingBuffer.value();
    }
 
-   public boolean init_Z(boolean visible) {
-      return !visible && this.init_RingBuffer.init_F() > 0.001F;
+   public boolean isFadingOut(boolean visible) {
+      return !visible && this.init_RingBuffer.value() > 0.001F;
    }
 
-   public boolean load_Z(boolean visible) {
-      return visible || this.init_Z(visible);
+   public boolean shouldRender(boolean visible) {
+      return visible || this.isFadingOut(visible);
    }
 
    public boolean init_Z() {
-      return this.init_RingBuffer.init_Z();
+      return this.init_RingBuffer.isAnimating();
    }
 
    public float load() {
@@ -75,7 +75,7 @@ public final class VisibilityTransition {
          draw.run();
       } else {
          float scale = 0.8F + 0.19999999F * value;
-         int alphaDepth = UiAlphaStack.init_I();
+         int alphaDepth = UiAlphaStack.depth();
          graphics.pose().pushMatrix();
 
          try {
@@ -87,10 +87,10 @@ public final class VisibilityTransition {
                graphics.pose().translate(-cx, -cy);
             }
 
-            UiAlphaStack.init_V_F(value);
+            UiAlphaStack.push(value);
             draw.run();
          } finally {
-            UiAlphaStack.init_V_I(alphaDepth);
+            UiAlphaStack.popTo(alphaDepth);
             graphics.pose().popMatrix();
          }
       }

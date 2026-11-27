@@ -46,13 +46,13 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
       ResourceManager resourceManager, List<String> languageStack, boolean defaultRightToLeft, Operation<ClientLanguage> original
    ) {
       PackTranslationPolicyResolver.Inner_StreamUtil token = PackTranslationPolicyResolver.init(resourceManager);
-      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.init_ClassCache_DataUti_ResourceManager(resourceManager);
+      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.begin(resourceManager);
       boolean success = false;
 
       try {
          ModNamespaceCatalog.load();
          ClientLanguage language = original.call(resourceManager, languageStack, defaultRightToLeft);
-         ((TranslationSnapshotDuck)language).autism$setTranslationSnapshot(builder.init_ClassCache());
+         ((TranslationSnapshotDuck)language).autism$setTranslationSnapshot(builder.build());
          success = true;
          return language;
       } finally {
@@ -88,7 +88,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
    }
 
    private static BiConsumer<String, String> snapshotOutput(BiConsumer<String, String> output, Resource resource) {
-      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.init_ClassCache_DataUti();
+      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.current();
       return builder == null ? output : (key, value) -> {
          try {
             builder.init(resource.source(), resource.sourcePackId(), key, value);

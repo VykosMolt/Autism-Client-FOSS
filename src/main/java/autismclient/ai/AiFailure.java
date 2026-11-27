@@ -40,11 +40,11 @@ public enum AiFailure {
       this.init_List = List.of(suggestedActions);
    }
 
-   public boolean init_Z() {
+   public boolean isRecoverable() {
       return this.init_Z;
    }
 
-   public List<String> init_List() {
+   public List<String> suggestedActions() {
       return this.init_List;
    }
 }

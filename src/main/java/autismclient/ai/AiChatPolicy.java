@@ -116,7 +116,7 @@ final class AiChatPolicy {
             }
          }
 
-         String text = load_Str(entry.text());
+         String text = normalize(entry.text());
          if (!text.isEmpty() && !text.startsWith("/")) {
             if (text.length() > 512) {
                text = text.substring(0, 512);
@@ -160,7 +160,7 @@ final class AiChatPolicy {
       }
 
       String sender = init(entry);
-      String text = load_Str(entry.text());
+      String text = normalize(entry.text());
       if (text.isEmpty() || text.startsWith("/")) {
          return null;
       }
@@ -250,7 +250,7 @@ final class AiChatPolicy {
       return init_Set.contains(cleaned.toLowerCase(Locale.ROOT)) ? "" : cleaned;
    }
 
-   static boolean init_Z(String value) {
+   static boolean isPlayerName(String value) {
       return value != null && value.matches("[A-Za-z_][A-Za-z0-9_]{2,15}");
    }
 
@@ -492,7 +492,7 @@ final class AiChatPolicy {
       return last == null || now - last >= perSenderGap;
    }
 
-   static String load_Str(String text) {
+   static String normalize(String text) {
       return text == null ? "" : text.replace('\r', ' ').replace('\n', ' ').replaceAll("\\s+", " ").strip();
    }
 
@@ -583,7 +583,7 @@ final class AiChatPolicy {
 
       private static void addPlayer(List<String> out, String raw) {
          String player = AiChatPolicy.init_Str(raw);
-         if (!player.isEmpty() && AiChatPolicy.init_Z(player)) {
+         if (!player.isEmpty() && AiChatPolicy.isPlayerName(player)) {
             for (String seen : out) {
                if (seen.equalsIgnoreCase(player)) {
                   return;

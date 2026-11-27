@@ -48,15 +48,15 @@ final class MacroPickerPopup {
       this.read_I = UiDensityMetrics.scaledHeight(12);
       int controlH = UiDensityMetrics.scaledHeight(13);
       int pad = 3;
-      int width = Math.min(Math.max(this.init_NetHelper.update(), ModulesMenuController.init_I_I(150)), Math.max(120, context.init_I() - 8));
+      int width = Math.min(Math.max(this.init_NetHelper.update(), ModulesMenuController.scaled(150)), Math.max(120, context.init_I() - 8));
       int rows = Math.max(1, Math.min(8, Math.max(this.init_List.size(), 1)));
       int listH = rows * this.read_I;
       int height = pad + controlH + 2 + controlH + 2 + listH + pad;
-      int x = ModulesMenuController.init_I_I_2(this.init_NetHelper.read(), 4, Math.max(4, context.init_I() - width - 4));
+      int x = ModulesMenuController.clampInt(this.init_NetHelper.read(), 4, Math.max(4, context.init_I() - width - 4));
       int below = this.init_NetHelper.load() + 2;
       int above = this.init_NetHelper.write() - height - 2;
       int y = below + height > context.load_I() - 4 && above >= 4 ? above : below;
-      y = ModulesMenuController.init_I_I_2(y, 4, Math.max(4, context.load_I() - height - 4));
+      y = ModulesMenuController.clampInt(y, 4, Math.max(4, context.load_I() - height - 4));
       this.load_NetHelper = NetHelper.init(x, y, width, height);
       this.read_NetHelper = NetHelper.init(x + pad, y + pad, width - pad * 2, controlH);
       int half = (width - pad * 2 - 2) / 2;
@@ -67,13 +67,13 @@ final class MacroPickerPopup {
       TextFieldRenderer.init(
          context,
          this.read_NetHelper,
-         this.init_StreamUtil.init_Str,
+         this.init_StreamUtil.text,
          "Search macros",
          true,
-         this.init_StreamUtil.init_I,
-         this.init_StreamUtil.init_I(),
-         this.init_StreamUtil.load_I(),
-         this.init_StreamUtil.init(this.read_NetHelper.update() - 8, fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.init_Str, fragment))
+         this.init_StreamUtil.cursor,
+         this.init_StreamUtil.selectionStart(),
+         this.init_StreamUtil.selectionEnd(),
+         this.init_StreamUtil.init(this.read_NetHelper.update() - 8, fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.text, fragment))
       );
       autismclient.gui.f.b.CachePool.init(
          context, this.write, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.write.init_Z(context.read(), context.write()), false
@@ -92,7 +92,7 @@ final class MacroPickerPopup {
                boolean hovered = row.init_Z(context.read(), context.write());
                float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("macropick:" + name, hovered);
                if (hoverT > 0.001F) {
-                  PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, ModulesMenuController.init_I_I(0, 385875967, hoverT));
+                  PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, ModulesMenuController.lerpColor(0, 385875967, hoverT));
                }
 
                context.init_PoolEntry()
@@ -143,7 +143,7 @@ final class MacroPickerPopup {
       }
 
       if (this.write.init_Z(mouseX, mouseY)) {
-         this.init_ConfigStore.init_V_Module_2(this.init_Module, this.init_Setting, "");
+         this.init_ConfigStore.setValue(this.init_Module, this.init_Setting, "");
          return false;
       }
 
@@ -155,7 +155,7 @@ final class MacroPickerPopup {
       if (this.sync.init_Z(mouseX, mouseY)) {
          int index = (mouseY - this.sync.write() + this.load_I) / this.read_I;
          if (index >= 0 && index < this.init_List.size()) {
-            this.init_ConfigStore.init_V_Module_2(this.init_Module, this.init_Setting, this.init_List.get(index));
+            this.init_ConfigStore.setValue(this.init_Module, this.init_Setting, this.init_List.get(index));
             return false;
          }
       }
@@ -181,25 +181,25 @@ final class MacroPickerPopup {
 
    private int init(int mouseX) {
       return this.init_PoolEntry == null
-         ? this.init_StreamUtil.init_I
+         ? this.init_StreamUtil.cursor
          : this.init_StreamUtil
-            .init_I_F(
+            .indexAt(
                mouseX,
-               this.read_NetHelper.read() + 4 - this.init_StreamUtil.read_I(),
-               fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.init_Str, fragment)
+               this.read_NetHelper.read() + 4 - this.init_StreamUtil.scroll(),
+               fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.text, fragment)
             );
    }
 
-   boolean init_Z_I(int mouseX, int mouseY, double amount) {
+   boolean mouseScrolled(int mouseX, int mouseY, double amount) {
       int max = Math.max(0, this.init_List.size() * this.read_I - this.sync.sync());
-      this.load_I = ModulesMenuController.init_I_I_2(this.load_I - (int)Math.round(amount * this.read_I), 0, max);
+      this.load_I = ModulesMenuController.clampInt(this.load_I - (int)Math.round(amount * this.read_I), 0, max);
       return true;
    }
 
    boolean read(int key, int scanCode, int modifiers) {
-      String before = this.init_StreamUtil.init_Str;
+      String before = this.init_StreamUtil.text;
       this.init_StreamUtil.init(key, modifiers);
-      if (!before.equals(this.init_StreamUtil.init_Str)) {
+      if (!before.equals(this.init_StreamUtil.text)) {
          this.init();
       }
 
@@ -207,9 +207,9 @@ final class MacroPickerPopup {
    }
 
    boolean init(char chr) {
-      String before = this.init_StreamUtil.init_Str;
-      this.init_StreamUtil.init_V_C(chr);
-      if (!before.equals(this.init_StreamUtil.init_Str)) {
+      String before = this.init_StreamUtil.text;
+      this.init_StreamUtil.typeChar(chr);
+      if (!before.equals(this.init_StreamUtil.text)) {
          this.init();
       }
 
@@ -218,7 +218,7 @@ final class MacroPickerPopup {
 
    private void init() {
       List<String> names = new ArrayList<>();
-      String needle = this.init_StreamUtil.init_Str.toLowerCase(Locale.ROOT);
+      String needle = this.init_StreamUtil.text.toLowerCase(Locale.ROOT);
       if (this.init_Setting != null && this.init_Setting.displayMode() == DisplayMode.CONDITIONAL_MACRO_PICKER) {
          for (String preset : new String[]{"AutoFish - Free Slots Stop", "AutoFish - Durability Stop", "AutoFish - Custom Stop"}) {
             if (needle.isEmpty() || preset.toLowerCase(Locale.ROOT).contains(needle)) {

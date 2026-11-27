@@ -63,7 +63,7 @@ public class MsdfEditBox extends EditBox {
 
    private void init_V() {
       String value = this.getValue();
-      int cursor = Utf16TextCursor.init_I(value, this.getCursorPosition());
+      int cursor = Utf16TextCursor.clampIndex(value, this.getCursorPosition());
       float available = Math.max(1, this.getInnerWidth() - 1);
       float caret = this.init(value.substring(0, cursor));
       float maxScroll = Math.max(0.0F, this.init(value) - available);
@@ -141,7 +141,7 @@ public class MsdfEditBox extends EditBox {
       }
 
       this.init_V();
-      int end = Utf16TextCursor.init_I(this.getValue(), charIndex);
+      int end = Utf16TextCursor.clampIndex(this.getValue(), charIndex);
       return Math.round(this.init_F() - this.init_F + this.init(this.getValue().substring(0, end)));
    }
 
@@ -168,8 +168,8 @@ public class MsdfEditBox extends EditBox {
                );
             }
 
-            int cursor = Utf16TextCursor.init_I(value, acc.autism$cursorPos());
-            int highlight = Utf16TextCursor.init_I(value, acc.autism$highlightPos());
+            int cursor = Utf16TextCursor.clampIndex(value, acc.autism$cursorPos());
+            int highlight = Utf16TextCursor.clampIndex(value, acc.autism$highlightPos());
             if (cursor != this.init_I || !value.equals(this.init_Str)) {
                this.init_I = cursor;
                this.init_Str = value;

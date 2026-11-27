@@ -52,7 +52,7 @@ public final class OverlaySuiteController {
          manager.register(this.init_AutismMacroEditorO);
       }
 
-      manager.register(ActionEditorOverlay.init_ActionEditorOverla_2());
+      manager.register(ActionEditorOverlay.getInstance());
       AutismItemNbtInspectOverlay itemNbtInspectOverlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(font);
       if (itemNbtInspectOverlay != null) {
          manager.register(itemNbtInspectOverlay);
@@ -60,7 +60,7 @@ public final class OverlaySuiteController {
 
       autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (!AutismLiteVariant.enabled()) {
-         autismclient.ai.AiAssistant.init_ConfigStore().load_V();
+         autismclient.ai.AiAssistant.getInstance().restoreOverlay();
          autismclient.ai.SchematicWorkspace.restoreWindow();
       }
 

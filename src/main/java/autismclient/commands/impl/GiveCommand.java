@@ -78,7 +78,7 @@ public class GiveCommand extends Command {
          return 1;
       }
 
-      Item item = autismclient.commands.RegistrySuggestions.init_Item(itemId);
+      Item item = autismclient.commands.RegistrySuggestions.resolveItem(itemId);
       if (item == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown item: §f" + itemId);
          return 1;

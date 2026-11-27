@@ -68,7 +68,7 @@ public final class AiProvider implements AutoCloseable {
       }
 
       try {
-         return "api.openai.com".equalsIgnoreCase(URI.create(AiHttp.init_Str(s.provider, s.endpoint)).getHost());
+         return "api.openai.com".equalsIgnoreCase(URI.create(AiHttp.baseUrl(s.provider, s.endpoint)).getHost());
       } catch (RuntimeException e) {
          return false;
       }
@@ -78,15 +78,15 @@ public final class AiProvider implements AutoCloseable {
       this.load_J = millis;
    }
 
-   public AiSettings.Provider init_AiSettings_Provide() {
+   public AiSettings.Provider provider() {
       return this.init_AiSettings.provider;
    }
 
-   public String init_Str() {
+   public String model() {
       return this.init_AiSettings.model;
    }
 
-   public synchronized void init_V_AiSettings(AiSettings live) {
+   public synchronized void applySettings(AiSettings live) {
       if (live != null) {
          this.init_AiSettings.effort = AiSettings.normalizeEffort(live.effort);
          if (live.outputTokens >= 256 && live.outputTokens <= this.init_AiSettings.contextTokens / 2) {
@@ -103,13 +103,13 @@ public final class AiProvider implements AutoCloseable {
       return AiSettings.nearestEffort(AiSettings.effortLevels(this.init_AiSettings.provider, this.init_AiSettings.model), this.init_AiSettings.effort);
    }
 
-   public JsonObject init_JsonObject_Str(String text) {
+   public JsonObject userMessage(String text) {
       return this.init_AiSettings.provider == AiSettings.Provider.GEMINI
          ? AiJson.objectOf("role", "user", "parts", List.of(AiJson.objectOf("text", text)))
          : AiJson.objectOf("role", "user", "content", text);
    }
 
-   public void init_V_List_Str(List<JsonObject> history, String text) {
+   public void appendUserText(List<JsonObject> history, String text) {
       JsonObject last = history.isEmpty() ? null : history.getLast();
       boolean lastIsUser = last != null && "user".equals(AiJson.getString(last, "role", ""));
       if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
@@ -120,7 +120,7 @@ public final class AiProvider implements AutoCloseable {
 
             last.getAsJsonArray("parts").add(AiJson.objectOf("text", text));
          } else {
-            history.add(this.init_JsonObject_Str(text));
+            history.add(this.userMessage(text));
          }
       } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
          if (lastIsUser) {
@@ -142,11 +142,11 @@ public final class AiProvider implements AutoCloseable {
       } else if (lastIsUser && last.has("content") && last.get("content").isJsonArray()) {
          last.getAsJsonArray("content").add(AiJson.objectOf("type", "text", "text", text));
       } else {
-         history.add(this.init_JsonObject_Str(text));
+         history.add(this.userMessage(text));
       }
    }
 
-   public List<JsonObject> init_List_List_List(List<AiProvider.Inner_DataUtil> calls, List<JsonObject> results) {
+   public List<JsonObject> toolResults(List<AiProvider.Inner_DataUtil> calls, List<JsonObject> results) {
       if (results.stream().anyMatch(r -> r.has("imagePngBase64"))) {
          List<JsonObject> clean = new ArrayList<>();
          List<String> pictures = new ArrayList<>();
@@ -160,7 +160,7 @@ public final class AiProvider implements AutoCloseable {
             clean.add(copy);
          }
 
-         List<JsonObject> out = new ArrayList<>(this.init_List_List_List(calls, clean));
+         List<JsonObject> out = new ArrayList<>(this.toolResults(calls, clean));
          JsonArray content = new JsonArray();
          if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
             content.add(AiJson.objectOf("text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
@@ -526,7 +526,7 @@ public final class AiProvider implements AutoCloseable {
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
       String system, List<JsonObject> history, JsonArray functions, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.init_bA_BufferHelper_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, call -> {});
+      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, call -> {});
    }
 
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str_2(
@@ -537,13 +537,13 @@ public final class AiProvider implements AutoCloseable {
       BooleanSupplier cancelled,
       Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.init_bA_BufferHelper_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, onCallReady);
+      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, onCallReady);
    }
 
-   public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
+   public AiProvider.Inner_BufferHelper complete(
       String system, List<JsonObject> history, JsonArray functions, String toolChoice, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.init_bA_BufferHelper_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, call -> {});
+      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, call -> {});
    }
 
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
@@ -555,10 +555,10 @@ public final class AiProvider implements AutoCloseable {
       BooleanSupplier cancelled,
       Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.init_bA_BufferHelper_c_StreamUtil(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, onCallReady);
+      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, onCallReady);
    }
 
-   public AiProvider.Inner_BufferHelper init_bA_BufferHelper_c_StreamUtil(
+   public AiProvider.Inner_BufferHelper completeWithContext(
       AiContext.Inner_StreamUtil prompt,
       List<JsonObject> history,
       JsonArray functions,
@@ -571,14 +571,14 @@ public final class AiProvider implements AutoCloseable {
       boolean responses = this.load_Z;
       JsonObject body = this.init_JsonObject_c_StreamUtil(prompt, history, functions, toolChoice);
       String beta = init_Str_AiSettings_JsonObject(this.init_AiSettings, body);
-      String base = AiHttp.init_Str(this.init_AiSettings.provider, this.init_AiSettings.endpoint);
+      String base = AiHttp.baseUrl(this.init_AiSettings.provider, this.init_AiSettings.endpoint);
       String suffix = this.init_AiSettings.provider == AiSettings.Provider.GEMINI
          ? "/models/"
             + URLEncoder.encode(this.init_AiSettings.model.replaceFirst("^models/", ""), StandardCharsets.UTF_8).replace("+", "%20")
             + ":streamGenerateContent?alt=sse"
          : (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC ? "/messages" : (responses ? "/responses" : "/chat/completions"));
       String key = this.init_AiSettings.key(this.init_AiSettings.provider.name());
-      Map<String, String> auth = AiHttp.init_Map(this.init_AiSettings.provider, key);
+      Map<String, String> auth = AiHttp.authHeaders(this.init_AiSettings.provider, key);
 
       for (int attempt = 0; attempt < 6; attempt++) {
          if (cancelled.getAsBoolean() || this.init_Z) {

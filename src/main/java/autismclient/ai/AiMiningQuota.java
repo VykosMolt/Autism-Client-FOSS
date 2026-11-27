@@ -16,7 +16,7 @@ public final class AiMiningQuota {
       requested.keySet().forEach(k -> this.load.put(k, 0));
    }
 
-   public static JsonObject init_JsonObject_JsonObject(JsonObject args) {
+   public static JsonObject normalizeArgs(JsonObject args) {
       AiMiningTargets targets = AiMiningTargets.parse(AiJson.getString(args, "block", ""));
       int count = init(args.has("count") ? args.get("count") : new JsonPrimitive(1), "default");
       LinkedHashMap<String, Integer> overrides = new LinkedHashMap<>(targets.counts());
@@ -64,18 +64,18 @@ public final class AiMiningQuota {
       throw new IllegalArgumentException("Choose an amount from 1 to 640 for " + type);
    }
 
-   public static AiMiningQuota init_as_JsonObject(JsonObject args) {
+   public static AiMiningQuota fromArgs(JsonObject args) {
       if (!args.has("counts")) {
          return null;
       }
 
-      JsonObject normalized = init_JsonObject_JsonObject(args);
+      JsonObject normalized = normalizeArgs(args);
       LinkedHashMap<String, Integer> counts = new LinkedHashMap<>();
       normalized.getAsJsonObject("counts").entrySet().forEach(e -> counts.put(e.getKey(), e.getValue().getAsInt()));
       return new AiMiningQuota(counts);
    }
 
-   public boolean init_Z_Str(String id) {
+   public boolean covers(String id) {
       return this.init_Str_Str(id) != null;
    }
 
@@ -106,15 +106,15 @@ public final class AiMiningQuota {
       return true;
    }
 
-   public boolean init_Z() {
+   public boolean isMet() {
       return this.init.entrySet().stream().allMatch(e -> this.load.get(e.getKey()) >= e.getValue());
    }
 
-   public int init_I() {
+   public int totalCount() {
       return this.init.values().stream().mapToInt(Integer::intValue).sum();
    }
 
-   public JsonObject init_JsonObject() {
+   public JsonObject brokenByBlock() {
       JsonObject out = new JsonObject();
       this.load.forEach(out::addProperty);
       return out;
@@ -131,7 +131,7 @@ public final class AiMiningQuota {
    }
 
    public static JsonObject init(JsonObject args, JsonObject data) {
-      JsonObject normalized = init_JsonObject_JsonObject(args);
+      JsonObject normalized = normalizeArgs(args);
       JsonObject progress = data.has("brokenByBlock") && data.get("brokenByBlock").isJsonObject() ? data.getAsJsonObject("brokenByBlock") : new JsonObject();
       JsonObject left = new JsonObject();
 

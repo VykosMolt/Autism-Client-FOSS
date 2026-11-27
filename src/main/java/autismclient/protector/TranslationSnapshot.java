@@ -89,13 +89,13 @@ public final class TranslationSnapshot {
          this.init_ClassCache_DataUti = previous;
       }
 
-      public static TranslationSnapshot.Inner_DataUtil init_ClassCache_DataUti_ResourceManager(ResourceManager resourceManager) {
+      public static TranslationSnapshot.Inner_DataUtil begin(ResourceManager resourceManager) {
          TranslationSnapshot.Inner_DataUtil builder = new TranslationSnapshot.Inner_DataUtil(resourceManager, TranslationSnapshot.init_ThreadLocal.get());
          TranslationSnapshot.init_ThreadLocal.set(builder);
          return builder;
       }
 
-      public static TranslationSnapshot.Inner_DataUtil init_ClassCache_DataUti() {
+      public static TranslationSnapshot.Inner_DataUtil current() {
          return TranslationSnapshot.init_ThreadLocal.get();
       }
 
@@ -164,7 +164,7 @@ public final class TranslationSnapshot {
          }
       }
 
-      public TranslationSnapshot init_ClassCache() {
+      public TranslationSnapshot build() {
          return new TranslationSnapshot(this.init_ResourceManager, Map.copyOf(this.init_Map), Map.copyOf(this.load));
       }
 

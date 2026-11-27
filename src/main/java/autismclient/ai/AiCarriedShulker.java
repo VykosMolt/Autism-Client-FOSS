@@ -189,7 +189,7 @@ final class AiCarriedShulker implements AiOperation {
       return null;
    }
 
-   static Map<Item, Integer> init_Map_Container_Z(Container inventory, boolean includeBoxes) {
+   static Map<Item, Integer> countItems(Container inventory, boolean includeBoxes) {
       HashMap<Item, Integer> counts = new HashMap<>();
 
       for (int slot = 0; slot < Math.min(41, inventory.getContainerSize()); slot++) {
@@ -627,7 +627,7 @@ final class AiCarriedShulker implements AiOperation {
    private int init_I() {
       return this.load_ItemStack.isEmpty()
          ? AiPrintSupply.init(this.init_Minecraft.player.getInventory(), this.init_Item)
-         : AiInventoryController.init_I_Container_ItemStack_2(this.init_Minecraft.player.getInventory(), this.load_ItemStack);
+         : AiInventoryController.countMatching(this.init_Minecraft.player.getInventory(), this.load_ItemStack);
    }
 
    @Override
@@ -1144,7 +1144,7 @@ final class AiCarriedShulker implements AiOperation {
 
    private AiOperation.Result write() {
       this.read_ItemStack = init_ItemStack_ItemStack_List(this.init_ItemStack, this.init_List());
-      if (!AiMenuClose.init_Z()) {
+      if (!AiMenuClose.closeMenu()) {
          return this.init_AiOperation_Result_AiOperation_Status_Str(
             AiOperation.Status.UNCERTAIN, "The stock menu could not close with a reconciled empty cursor"
          );

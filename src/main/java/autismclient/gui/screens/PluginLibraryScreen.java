@@ -58,7 +58,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.init_EditBox.setMaxLength(128);
       this.init_EditBox.setValue(this.init_Str);
       this.init_EditBox.setResponder(value -> {
-         this.init_Str = init_Str_Str(value);
+         this.init_Str = trim(value);
          this.update = 0;
          this.load_V_13();
       });
@@ -442,7 +442,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
       if (!text.isBlank() && this.minecraft != null) {
          this.minecraft.keyboardHandler.setClipboard(text);
-         this.init_V_Str_I(note, GuiColorPalette.open);
+         this.toast(note, GuiColorPalette.open);
       }
    }
 
@@ -453,9 +453,9 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -15987181);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.push(), this.run(), this.poll(), this.set(), -401402080);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.reset(), this.clear(), this.start(), this.stop(), -1206840035);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
+         this.drawCard(graphics, this.push(), this.run(), this.poll(), this.set(), -401402080);
+         this.drawCard(graphics, this.reset(), this.clear(), this.start(), this.stop(), -1206840035);
          String count = this.write_I
             + (
                this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
@@ -578,7 +578,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          return super.mouseClicked(event, doubleClick);
       }
 
-      MouseButtonEvent ve = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent ve = toVirtual(event);
       double mx = ve.x();
       double my = ve.y();
       if (Compat263.mouseEventGlfwButton(ve) == 0 && !this.init_Z_6()) {
@@ -616,13 +616,13 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          this.init_Z = false;
          return true;
       } else {
-         return super.mouseReleased(init_MouseButtonEvent_MouseButtonEvent(event));
+         return super.mouseReleased(toVirtual(event));
       }
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
-      MouseButtonEvent ve = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent ve = toVirtual(event);
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
          this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, ve.y(), this.sync);
@@ -688,11 +688,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int poll() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 440);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 440);
    }
 
    private int push() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.poll(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.poll(), 6);
    }
 
    private int pop() {
@@ -737,10 +737,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
    private int stop() {
       int header = 18;
-      int cap = Math.max(3, this.load_I() * 65 / 100 / this.close());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.close());
       int shown = Math.max(3, Math.min(cap, this.write_List.size()));
       int content = header + shown * this.close() - 2 + 4;
-      int available = Math.max(header + this.flush() + 4, this.load_I() - 6 - this.clear());
+      int available = Math.max(header + this.flush() + 4, this.virtualHeight() - 6 - this.clear());
       return Math.min(available, content);
    }
 
@@ -778,7 +778,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private boolean init_Z_6() {
-      return this.poll() < 260 || this.load_I() < this.next() + this.close() * 2;
+      return this.poll() < 260 || this.virtualHeight() < this.next() + this.close() * 2;
    }
 
    private enum Inner_BufferHelper {

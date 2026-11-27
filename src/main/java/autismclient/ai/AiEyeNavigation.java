@@ -13,7 +13,7 @@ final class AiEyeNavigation {
    private AiEyeNavigation.Inner_DataUtil init_z_DataUtil;
    private int init_I;
 
-   void init_V_Vec3_Vec3(Vec3 origin, Vec3 displacement) {
+   void addThrow(Vec3 origin, Vec3 displacement) {
       double length = Math.hypot(displacement.x, displacement.z);
       if (!(length < 4.0)) {
          AiEyeNavigation.Inner_CachePool ray = new AiEyeNavigation.Inner_CachePool(origin, new Vec3(displacement.x / length, 0.0, displacement.z / length));
@@ -42,7 +42,7 @@ final class AiEyeNavigation {
       }
    }
 
-   AiEyeNavigation.Inner_DataUtil init_z_DataUtil() {
+   AiEyeNavigation.Inner_DataUtil getLocated() {
       return this.init_z_DataUtil;
    }
 
@@ -86,11 +86,11 @@ final class AiEyeNavigation {
       return best;
    }
 
-   Vec3 init_Vec3_Vec3_Vec3(Vec3 at, Vec3 bearing) {
+   Vec3 sidestepTarget(Vec3 at, Vec3 bearing) {
       return this.init_z_DataUtil == null ? at.add(-bearing.z * 64.0, 0.0, bearing.x * 64.0) : null;
    }
 
-   JsonObject init_JsonObject() {
+   JsonObject statusJson() {
       return this.init_z_DataUtil == null
          ? AiJson.objectOf("rays", this.init_List.size(), "triangulated", false, "possibleTargetChanges", this.init_I)
          : AiJson.objectOf(
@@ -149,13 +149,13 @@ final class AiEyeNavigation {
             this.write += z * z;
             this.update += x * z;
             this.sync = Math.max(this.sync, d);
-            return this.sync >= 8.0 && this.init_I >= 6 ? this.init_Vec3() : null;
+            return this.sync >= 8.0 && this.init_I >= 6 ? this.fitLine() : null;
          } else {
             return null;
          }
       }
 
-      Vec3 init_Vec3() {
+      Vec3 fitLine() {
          if (this.init_I < 2) {
             return null;
          }

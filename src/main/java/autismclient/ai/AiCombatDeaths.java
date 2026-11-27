@@ -64,11 +64,11 @@ final class AiCombatDeaths {
       }
    }
 
-   int init_I() {
+   int killCount() {
       return this.load.size();
    }
 
-   JsonArray init_JsonArray() {
+   JsonArray killedTypes() {
       return this.init_JsonArray.deepCopy();
    }
 }

@@ -68,11 +68,11 @@ public final class ColorPickerPopup {
       this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, 224, 171).init_NetHelper(Math.max(1, screenWidth - 4), Math.max(1, screenHeight - 4));
    }
 
-   public boolean init_Z() {
+   public boolean isOpen() {
       return this.init_Z;
    }
 
-   public void init_V() {
+   public void dismiss() {
       this.init_Z = false;
    }
 
@@ -80,7 +80,7 @@ public final class ColorPickerPopup {
       return this.init_Z && this.init_NetHelper.init_Z(mouseX, mouseY);
    }
 
-   public void init_V_SyncManager(autismclient.gui.f.SyncManager context) {
+   public void render(autismclient.gui.f.SyncManager context) {
       if (this.init_Z) {
          autismclient.gui.f.PacketUtil.init(
             context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(0, 0, context.init_I(), context.load_I()), -1728053248
@@ -137,7 +137,7 @@ public final class ColorPickerPopup {
       }
    }
 
-   public boolean init_Z_I_2(int mouseX, int mouseY, int button) {
+   public boolean mouseClicked(int mouseX, int mouseY, int button) {
       if (!this.init_Z) {
          return false;
       }
@@ -147,12 +147,12 @@ public final class ColorPickerPopup {
       }
 
       if (!this.init_NetHelper.init_Z(mouseX, mouseY)) {
-         this.init_V();
+         this.dismiss();
          return true;
       }
 
       if (TitleBarRenderer.load(this.init_NetHelper()).init_Z(mouseX, mouseY) || this.poll().init_Z(mouseX, mouseY)) {
-         this.init_V();
+         this.dismiss();
          return true;
       }
 
@@ -209,7 +209,7 @@ public final class ColorPickerPopup {
       return this.init_Z;
    }
 
-   public boolean init_Z_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
+   public boolean mouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
       if (this.init_Z && button == 0) {
          switch (this.init_NetHelper_DataUtil) {
             case SV:
@@ -237,7 +237,7 @@ public final class ColorPickerPopup {
       }
    }
 
-   public boolean init_Z_I(int mouseX, int mouseY, double amount) {
+   public boolean mouseScrolled(int mouseX, int mouseY, double amount) {
       return this.init_Z;
    }
 
@@ -247,7 +247,7 @@ public final class ColorPickerPopup {
       }
 
       if (key == 256) {
-         this.init_V();
+         this.dismiss();
          return true;
       }
 
@@ -308,7 +308,7 @@ public final class ColorPickerPopup {
       }
    }
 
-   public boolean init_Z_C(char chr) {
+   public boolean charTyped(char chr) {
       if (this.init_Z && this.load_Z) {
          if (load_Z_C(chr)) {
             if (this.load_Z()) {

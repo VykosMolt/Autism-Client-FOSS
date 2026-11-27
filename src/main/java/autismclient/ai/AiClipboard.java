@@ -26,7 +26,7 @@ final class AiClipboard {
       return AutismClientAddon.FOLDER.toPath().resolve("ai").resolve("clipboard");
    }
 
-   static String init_Str(String name) {
+   static String validateName(String name) {
       String clean = name == null ? "" : name.trim();
       if (clean.isEmpty() || clean.length() > 128) {
          throw new IllegalArgumentException("clipboard name must be 1..128 characters");
@@ -56,7 +56,7 @@ final class AiClipboard {
       }
    }
 
-   static synchronized List<AiBuilder.CellSpec> init_List(String name) {
+   static synchronized List<AiBuilder.CellSpec> load(String name) {
       return init(name, init());
    }
 

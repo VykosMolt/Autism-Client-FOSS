@@ -209,7 +209,7 @@ public final class AiPacketSend {
       );
    }
 
-   public static AiOperation init_AiOperation(final JsonObject args) {
+   public static AiOperation send(final JsonObject args) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {

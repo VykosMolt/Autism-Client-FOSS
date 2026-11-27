@@ -17,7 +17,7 @@ final class AiPlan {
    private AiPlan() {
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          List<AiPlanRunner.Inner_BufferHelper> declared = init_List(args);
@@ -86,7 +86,7 @@ final class AiPlan {
                      this.init_aU_StreamUtil.attempts++;
 
                      try {
-                        this.init_AiOperation = AiTools.init_AiOperation_Str_JsonObject(
+                        this.init_AiOperation = AiTools.operation(
                            this.init_aU_StreamUtil.step.capability(),
                            AiJson.parseObject(this.init_aU_StreamUtil.step.argumentsJson()).getAsJsonObject()
                         );
@@ -305,7 +305,7 @@ final class AiPlan {
       }
 
       if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
-         List<String> tokens = new ArrayList<>(AiToolCallParser.init_List(element.getAsString().trim()));
+         List<String> tokens = new ArrayList<>(AiToolCallParser.tokenize(element.getAsString().trim()));
          if (!tokens.isEmpty()) {
             LocalPlayer player = Minecraft.getInstance().player;
             String sub = tokens.remove(0).toLowerCase(Locale.ROOT);
@@ -327,7 +327,7 @@ final class AiPlan {
    }
 
    private static void init(String id, String capability, JsonObject arguments) {
-      AiCatalog.Entry entry = AiDirectOps.init_AiCatalog_Snapshot().get(capability);
+      AiCatalog.Entry entry = AiDirectOps.catalogSnapshot().get(capability);
       if (entry != null) {
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          if (schema.has("type") || schema.has("properties")) {

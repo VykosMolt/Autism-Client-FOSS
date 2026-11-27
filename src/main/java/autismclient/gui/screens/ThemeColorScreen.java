@@ -465,7 +465,7 @@ public class ThemeColorScreen extends Screen {
 
       for (int i = 0; i < preview.size() && y + this.open() <= contentLimit; i++) {
          Module m = preview.get(i);
-         String key = m.keybind() >= 0 ? autismclient.commands.arguments.KeyBindArgumentType.init_Str_I(m.keybind()) : "";
+         String key = m.keybind() >= 0 ? autismclient.commands.arguments.KeyBindArgumentType.keyName(m.keybind()) : "";
          y = this.init(g, x, y, innerW, m.name(), key, m.isEnabled(), i == 0, i == 1);
       }
 
@@ -745,7 +745,7 @@ public class ThemeColorScreen extends Screen {
 
    private void init_V_I(int my) {
       if (this.init_UtilCore_DataUtil != null) {
-         this.write_I = Math.round((float)autismclient.gui.ui.widgets.ScrollbarRenderer.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil, my, this.flush_I) / this.sync_I);
+         this.write_I = Math.round((float)autismclient.gui.ui.widgets.ScrollbarRenderer.scrollForDrag(this.init_UtilCore_DataUtil, my, this.flush_I) / this.sync_I);
       }
    }
 

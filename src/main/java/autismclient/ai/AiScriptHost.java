@@ -73,7 +73,7 @@ final class AiScriptHost implements AutoCloseable {
          );
          Path checks = this.init_Path.resolve("script-checks");
          AiJson.writeAtomicJson(checks.resolve(AiJson.sha256Hex(source) + ".json"), report);
-         AiMemoryStore.init_V_Path_I(checks, 100);
+         AiMemoryStore.prune(checks, 100);
          return report;
       } else {
          throw new IllegalArgumentException("Provide at most four bounded fixtures (64,000 characters total)");
@@ -117,7 +117,7 @@ final class AiScriptHost implements AutoCloseable {
          Path saved = scripts.resolve(fingerprint + ".js");
          AiJson.auditPrivateFile(saved);
          Files.writeString(saved, source);
-         AiMemoryStore.init_V_Path_I(scripts, 100);
+         AiMemoryStore.prune(scripts, 100);
          Path jar = this.init_Path.resolve("runtime").resolve("worker.jar");
          Files.createDirectories(jar.getParent());
 

@@ -80,12 +80,12 @@ final class AiProgression {
       "minecraft:netherite_scrap",
       "minecraft:ancient_debris"
    );
-   static final Set<String> init_Set;
+   static final Set<String> KEEP_ITEMS;
    private static volatile long read_J = -1L;
    private static volatile long write_J;
    private static volatile long update_J = -1L;
    private static volatile int update_I;
-   static final List<String> init_List = List.of(
+   static final List<String> PICKAXES = List.of(
       "minecraft:wooden_pickaxe", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe", "minecraft:diamond_pickaxe", "minecraft:netherite_pickaxe"
    );
    static final int init_I = 14;
@@ -147,7 +147,7 @@ final class AiProgression {
    }
 
    static boolean init(String target, String oreDrop) {
-      return !init_Set.contains(target) || !target.equals(oreDrop);
+      return !KEEP_ITEMS.contains(target) || !target.equals(oreDrop);
    }
 
    static String init(AiProgression.Inner_CachePool tier) {
@@ -211,7 +211,7 @@ final class AiProgression {
    }
 
    static boolean init_Z(String itemId, int goal) {
-      if (init_List.contains(itemId) && load_bx_CachePool(itemId).ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
+      if (PICKAXES.contains(itemId) && load_bx_CachePool(itemId).ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
          return true;
       }
 
@@ -239,18 +239,18 @@ final class AiProgression {
    static Map<String, Integer> init_Map(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
       AiCraftPlanner.RecipeGraph raw = new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
-            return AiProgression.init_Set.contains(id) ? List.of() : live.init_List(id);
+         public List<AiCraftPlanner.RecipeSpec> recipesFor(String id) {
+            return AiProgression.KEEP_ITEMS.contains(id) ? List.of() : live.recipesFor(id);
          }
 
          @Override
-         public int init_I(String id) {
-            return AiProgression.init_Set.contains(id) ? 0 : live.init_I(id);
+         public int held(String id) {
+            return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.held(id);
          }
 
          @Override
          public int load_I(String id) {
-            return AiProgression.init_Set.contains(id) ? 0 : live.load_I(id);
+            return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.load_I(id);
          }
 
          @Override
@@ -260,11 +260,11 @@ final class AiProgression {
       };
       Map<String, Integer> total = new LinkedHashMap<>();
       goals.forEach((id, n) -> {
-         if (init_Set.contains(id)) {
+         if (KEEP_ITEMS.contains(id)) {
             total.merge(id, n, Integer::sum);
          } else {
             AiCraftPlanner.init(raw, id, n).missing().forEach((m, k) -> {
-               if (init_Set.contains(m)) {
+               if (KEEP_ITEMS.contains(m)) {
                   total.merge(m, k, Integer::sum);
                }
             });
@@ -272,7 +272,7 @@ final class AiProgression {
       });
       Map<String, Integer> out = new LinkedHashMap<>();
       total.forEach((m, n) -> {
-         int left = n - live.init_I(m);
+         int left = n - live.held(m);
          if (left > 0) {
             out.put(m, left);
          }
@@ -282,7 +282,7 @@ final class AiProgression {
 
    static AiProgression.Inner_DataUtil init(AiCraftPlanner.RecipeGraph live, Map<String, Integer> kit, String main, int target) {
       Map<String, Integer> goals = new LinkedHashMap<>(kit);
-      if (!init_List.contains(main) && !init_Set.contains(main)) {
+      if (!PICKAXES.contains(main) && !KEEP_ITEMS.contains(main)) {
          goals.merge(main, target, Math::max);
       }
 
@@ -292,17 +292,17 @@ final class AiProgression {
    static AiProgression.Inner_DataUtil init_bx_DataUtil(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
       AiCraftPlanner.RecipeGraph raw = new AiCraftPlanner.RecipeGraph() {
          boolean load_Z(String id) {
-            return AiProgression.init_Set.contains(id) || AiProgression.read(id) || id.equals("minecraft:stick");
+            return AiProgression.KEEP_ITEMS.contains(id) || AiProgression.read(id) || id.equals("minecraft:stick");
          }
 
          @Override
-         public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
-            return this.load_Z(id) ? List.of() : live.init_List(id);
+         public List<AiCraftPlanner.RecipeSpec> recipesFor(String id) {
+            return this.load_Z(id) ? List.of() : live.recipesFor(id);
          }
 
          @Override
-         public int init_I(String id) {
-            return this.load_Z(id) ? 0 : live.init_I(id);
+         public int held(String id) {
+            return this.load_Z(id) ? 0 : live.held(id);
          }
 
          @Override
@@ -319,7 +319,7 @@ final class AiProgression {
       int sticks = 0;
 
       for (Entry<String, Integer> goal : goals.entrySet()) {
-         if (live.init_I(goal.getKey()) < goal.getValue()) {
+         if (live.held(goal.getKey()) < goal.getValue()) {
             AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(raw, goal.getKey(), goal.getValue());
             if (plan.missing().containsKey(goal.getKey())) {
                return null;
@@ -348,25 +348,25 @@ final class AiProgression {
    }
 
    static Map<String, Integer> init_Map(String itemId, int goal) {
-      if (init_Set.contains(itemId)) {
+      if (KEEP_ITEMS.contains(itemId)) {
          int held = AiCraft.countItem(itemId);
          return held >= goal ? Map.of() : Map.of(itemId, goal - held);
       } else {
          final AiCraftPlanner.RecipeGraph live = AiCraft.buildRecipeGraph();
          AiCraftPlanner.RecipeGraph leaves = new AiCraftPlanner.RecipeGraph() {
             @Override
-            public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
-               return AiProgression.init_Set.contains(id) ? List.of() : live.init_List(id);
+            public List<AiCraftPlanner.RecipeSpec> recipesFor(String id) {
+               return AiProgression.KEEP_ITEMS.contains(id) ? List.of() : live.recipesFor(id);
             }
 
             @Override
-            public int init_I(String id) {
-               return live.init_I(id);
+            public int held(String id) {
+               return live.held(id);
             }
 
             @Override
             public int load_I(String id) {
-               return AiProgression.init_Set.contains(id) ? 0 : live.load_I(id);
+               return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.load_I(id);
             }
 
             @Override
@@ -376,7 +376,7 @@ final class AiProgression {
          };
          Map<String, Integer> out = new LinkedHashMap<>();
          AiCraftPlanner.init(leaves, itemId, goal).missing().forEach((id, n) -> {
-            if (init_Set.contains(id)) {
+            if (KEEP_ITEMS.contains(id)) {
                out.merge(id, n, Integer::sum);
             }
          });
@@ -384,7 +384,7 @@ final class AiProgression {
       }
    }
 
-   static AiProgression.Inner_CachePool init_bx_CachePool(Minecraft mc) {
+   static AiProgression.Inner_CachePool bestTier(Minecraft mc) {
       AiProgression.Inner_CachePool best = AiProgression.Inner_CachePool.NONE;
       Inventory inventory = mc.player.getInventory();
 
@@ -429,7 +429,7 @@ final class AiProgression {
       return best;
    }
 
-   static int init_I(Minecraft mc) {
+   static int freeSlots(Minecraft mc) {
       int free = 0;
       Inventory inventory = mc.player.getInventory();
 
@@ -554,7 +554,7 @@ final class AiProgression {
       return false;
    }
 
-   static AiOperation init_AiOperation_JsonObject(JsonObject args, final String itemId, final int goal) {
+   static AiOperation obtain(JsonObject args, final String itemId, final int goal) {
       final Minecraft mc = Minecraft.getInstance();
       final int timeoutSeconds = Math.max(60, Math.min(7200, AiJson.getInt(args, "timeoutSeconds", 3600)));
       final Map<String, Integer> kit = new LinkedHashMap<>();
@@ -657,7 +657,7 @@ final class AiProgression {
          }
 
          AiProgression.Inner_CachePool init_bx_CachePool() {
-            AiProgression.Inner_CachePool have = AiProgression.init_bx_CachePool(mc);
+            AiProgression.Inner_CachePool have = AiProgression.bestTier(mc);
             AiProgression.Inner_CachePool worn = AiProgression.Inner_CachePool.NONE;
             Inventory inventory = mc.player.getInventory();
 
@@ -776,7 +776,7 @@ final class AiProgression {
                AiVisualization.init(this, this.init_Str, AiTaskStatus.init(result.message(), "Preparing materials"), AiCraft.countItem(itemId), goal);
                AiGoal.init(this, 1, this.init_Str, AiGoal.read(this.write_Str), "");
             } else {
-               AiVisualization.init_V(this);
+               AiVisualization.clearOwner(this);
                AiGoal.init(this);
             }
 
@@ -817,7 +817,7 @@ final class AiProgression {
                autismclient.ai.engine.AiRestock.reserveWoodForJob(this.sync_I);
                autismclient.ai.engine.AiRestock.reserveStoneForJob(this.flush_I);
                boolean preservingIron = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-                  && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON;
+                  && AiProgression.bestTier(mc) == AiProgression.Inner_CachePool.IRON;
                autismclient.ai.engine.AiRestock.reserveStrikesForJob(preservingIron ? 48 : 0);
                if (System.nanoTime() > this.init_J) {
                   return this.init(
@@ -928,7 +928,7 @@ final class AiProgression {
                      }
 
                      this.init_AiOperation = null;
-                     JsonObject outcome = AiJson.objectOf("step", this.update_Str, "status", r.status().name(), "message", AiProgression.load_Str(r.message()));
+                     JsonObject outcome = AiJson.objectOf("step", this.update_Str, "status", r.status().name(), "message", AiProgression.clip(r.message()));
                      if (furnaceStep) {
                         outcome.add("receipt", this.init_JsonObject.deepCopy());
                      }
@@ -943,7 +943,7 @@ final class AiProgression {
                            "[AI] ladder step {}: {} - {}{}",
                            r.status(),
                            this.update_Str,
-                           AiProgression.load_Str(r.message()),
+                           AiProgression.clip(r.message()),
                            r.status() == AiOperation.Status.SUCCEEDED
                               ? ""
                               : " data " + (r.dataJson().length() > 2500 ? r.dataJson().substring(0, 2500) : r.dataJson())
@@ -953,7 +953,7 @@ final class AiProgression {
                         if (r.status() != AiOperation.Status.SUCCEEDED && ++AiProgression.update_I < 3) {
                            AiProgression.read_J = -1L;
                            AiProgression.write_J = System.nanoTime() + 20000000000L;
-                           return this.load_AiOperation_Result_2("No shelter yet (" + AiProgression.load_Str(r.message()) + "); trying again shortly");
+                           return this.load_AiOperation_Result_2("No shelter yet (" + AiProgression.clip(r.message()) + "); trying again shortly");
                         } else {
                            return this.load_AiOperation_Result_2("Morning; back to the ladder");
                         }
@@ -985,14 +985,14 @@ final class AiProgression {
 
                               if (r.status() != AiOperation.Status.SUCCEEDED) {
                                  if (this.write_Str.equals("ore:minecraft:obsidian") && AiCraft.countItem(itemId) < goal) {
-                                    return this.init(r.status(), "Contained obsidian acquisition stopped: " + AiProgression.load_Str(r.message()));
+                                    return this.init(r.status(), "Contained obsidian acquisition stopped: " + AiProgression.clip(r.message()));
                                  }
 
                                  int n = this.init_Map.merge(this.write_Str, 1, Integer::sum);
-                                 this.flush_Str = this.update_Str + ": " + AiProgression.load_Str(r.message());
+                                 this.flush_Str = this.update_Str + ": " + AiProgression.clip(r.message());
                                  if (n >= 3) {
                                     return this.init(
-                                       AiOperation.Status.FAILED, "Could not " + this.update_Str + " after 3 tries (" + AiProgression.load_Str(r.message()) + ")"
+                                       AiOperation.Status.FAILED, "Could not " + this.update_Str + " after 3 tries (" + AiProgression.clip(r.message()) + ")"
                                     );
                                  }
                               }
@@ -1055,14 +1055,14 @@ final class AiProgression {
          }
 
          AiOperation.Result load_AiOperation_Result_15() {
-            if (AiProgression.init_I(mc) < 3 && System.nanoTime() - this.write_J > 30000000000L) {
+            if (AiProgression.freeSlots(mc) < 3 && System.nanoTime() - this.write_J > 30000000000L) {
                this.write_J = System.nanoTime();
                return this.init(
                   "tidy", "make room in the bag", AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 3, "keep", this.init_JsonArray_2()))
                );
             }
 
-            AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
+            AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
             if (death != null
                && !AiDeathLog.init_Z()
                && death.remainingMillis() > 20000L
@@ -1125,14 +1125,14 @@ final class AiProgression {
 
             if (mc.player.getFoodData().getFoodLevel() <= 12 && AiSurvival.init(mc.player.getInventory()) < 0 && System.nanoTime() - this.update_J > 600000000000L) {
                this.update_J = System.nanoTime();
-               AiOperation hunt = AiSpeedrun.init_AiOperation_D(48.0, 4, Math.min(120, this.load_I_12()));
+               AiOperation hunt = AiSpeedrun.hunt(48.0, 4, Math.min(120, this.load_I_12()));
                if (hunt != null) {
                   return this.init("food", "hunt for food", hunt);
                }
             }
 
             Map<String, Integer> needs = this.init_Map_4();
-            AiProgression.Inner_CachePool needed = AiProgression.init_List.contains(itemId)
+            AiProgression.Inner_CachePool needed = AiProgression.PICKAXES.contains(itemId)
                ? AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.NONE.ordinal(), AiProgression.load_bx_CachePool(itemId).ordinal() - 1)]
                : AiProgression.Inner_CachePool.NONE;
 
@@ -1216,29 +1216,29 @@ final class AiProgression {
 
                   List<String> unfinished = new ArrayList<>();
                   if (AiCraft.countItem(itemId) < goal) {
-                     unfinished.add(AiProgression.init_Str(itemId));
+                     unfinished.add(AiProgression.displayName(itemId));
                   }
 
                   kit.forEach((id, count) -> {
                      if (this.init_I_Str_2(id) < count) {
-                        unfinished.add(AiProgression.init_Str(id));
+                        unfinished.add(AiProgression.displayName(id));
                      }
                   });
-                  return this.init(needs, "for " + (unfinished.isEmpty() ? AiProgression.init_Str(itemId) : String.join(", ", unfinished)));
+                  return this.init(needs, "for " + (unfinished.isEmpty() ? AiProgression.displayName(itemId) : String.join(", ", unfinished)));
                } else {
                   if (AiProgression.load_Z(itemId)) {
                      return this.read_AiOperation_Result_10();
                   }
 
                   if (AiCraft.countItem(itemId) < goal) {
-                     return this.init("final", "make " + goal + " " + AiProgression.init_Str(itemId), this.init_AiOperation(itemId, goal));
+                     return this.init("final", "make " + goal + " " + AiProgression.displayName(itemId), this.init_AiOperation(itemId, goal));
                   }
 
                   for (Entry<String, Integer> e : kit.entrySet()) {
                      if (this.init_I_Str_2(e.getKey()) < e.getValue()) {
                         return this.init(
                            "final:" + e.getKey(),
-                           "make " + e.getValue() + " " + AiProgression.init_Str(e.getKey()),
+                           "make " + e.getValue() + " " + AiProgression.displayName(e.getKey()),
                            this.init_AiOperation(e.getKey(), e.getValue() - this.load_I(e.getKey()))
                         );
                      }
@@ -1249,13 +1249,13 @@ final class AiProgression {
             } else {
                Map<String, Integer> pickNeeds = AiProgression.init_Map(pick, 1);
                return !pickNeeds.isEmpty() && AiProgression.load_bx_CachePool(pick).ordinal() > AiProgression.Inner_CachePool.STONE.ordinal()
-                  ? this.init(this.init(pick, pickNeeds), "for a " + AiProgression.init_Str(pick))
-                  : this.init("pick:" + pick, "make a " + AiProgression.init_Str(pick), this.init_AiOperation(pick, AiCraft.countItem(pick) + 1));
+                  ? this.init(this.init(pick, pickNeeds), "for a " + AiProgression.displayName(pick))
+                  : this.init("pick:" + pick, "make a " + AiProgression.displayName(pick), this.init_AiOperation(pick, AiCraft.countItem(pick) + 1));
             }
          }
 
          AiProgression.Inner_CachePool load_bx_CachePool() {
-            if (AiProgression.init_List.contains(itemId)) {
+            if (AiProgression.PICKAXES.contains(itemId)) {
                return AiProgression.load_bx_CachePool(itemId) == AiProgression.Inner_CachePool.NETHERITE ? AiProgression.Inner_CachePool.DIAMOND : AiProgression.load_bx_CachePool(itemId);
             }
 
@@ -1276,7 +1276,7 @@ final class AiProgression {
 
          int init(AiProgression.Inner_CachePool neededTier, boolean tableHeld, int sticksHeld) {
             AiProgression.Inner_CachePool have = this.init_bx_CachePool();
-            AiProgression.Inner_CachePool last = AiProgression.init_List.contains(itemId) ? this.load_bx_CachePool() : neededTier;
+            AiProgression.Inner_CachePool last = AiProgression.PICKAXES.contains(itemId) ? this.load_bx_CachePool() : neededTier;
             int smelts = 0;
             if (last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
                smelts += Math.max(0, (this.sync_Z_5() ? 6 : 3) - AiCraft.countItem("minecraft:iron_ingot"));
@@ -1307,18 +1307,18 @@ final class AiProgression {
          AiOperation.Result read_AiOperation_Result_10() {
             String diamond = itemId.replace("minecraft:netherite_", "minecraft:diamond_");
             if (AiCraft.countItem(diamond) == 0) {
-               return this.init("smith-base", "make a " + AiProgression.init_Str(diamond) + " to upgrade", this.init_AiOperation(diamond, 1));
+               return this.init("smith-base", "make a " + AiProgression.displayName(diamond) + " to upgrade", this.init_AiOperation(diamond, 1));
             } else if (AiCraft.countItem("minecraft:netherite_ingot") == 0) {
                return this.init(
                   "smith-ingot",
                   "make a netherite ingot",
-                  AiProgression.init_AiOperation_JsonObject(AiJson.objectOf("timeoutSeconds", this.load_I_12()), "minecraft:netherite_ingot", 1)
+                  AiProgression.obtain(AiJson.objectOf("timeoutSeconds", this.load_I_12()), "minecraft:netherite_ingot", 1)
                );
             } else if (AiCraft.countItem("minecraft:netherite_upgrade_smithing_template") == 0) {
                return this.init(
                   AiOperation.Status.FAILED,
                   "Ready to upgrade: "
-                     + AiProgression.init_Str(diamond)
+                     + AiProgression.displayName(diamond)
                      + " and a netherite ingot are in the bag, but the upgrade needs a netherite upgrade smithing template, which only generates in bastion remnant chests - loot one (or ask the AI to raid a bastion) and ask again"
                );
             } else {
@@ -1326,7 +1326,7 @@ final class AiProgression {
                   ? this.init("smith-table", "make a smithing table", this.init_AiOperation("minecraft:smithing_table", 1))
                   : this.init(
                      "smith",
-                     "upgrade the " + AiProgression.init_Str(diamond) + " to " + AiProgression.init_Str(itemId),
+                     "upgrade the " + AiProgression.displayName(diamond) + " to " + AiProgression.displayName(itemId),
                      AiSmith.init(
                         AiJson.objectOf(
                            "base",
@@ -1385,7 +1385,7 @@ final class AiProgression {
                         this.init_Set.clear();
                         return this.init(
                            "smelt-load:" + material,
-                           "load the furnace with " + AiProgression.init_Str(raw) + " " + why + " and work on while it smelts",
+                           "load the furnace with " + AiProgression.displayName(raw) + " " + why + " and work on while it smelts",
                            AiSmelt.load(
                               AiJson.objectOf(
                                  "item",
@@ -1406,7 +1406,7 @@ final class AiProgression {
                      } else {
                         return this.init(
                            "smelt:" + material,
-                           "smelt " + batch + " " + AiProgression.init_Str(material) + " " + why,
+                           "smelt " + batch + " " + AiProgression.displayName(material) + " " + why,
                            AiSmelt.init(
                               AiJson.objectOf(
                                  "item",
@@ -1474,7 +1474,7 @@ final class AiProgression {
 
             if (material.equals("minecraft:iron_ingot")
                && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()
+               && AiProgression.bestTier(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()
                && AiCraft.countItem("minecraft:diamond") < 3) {
                return AiProgression.init_Map.get("minecraft:diamond");
             }
@@ -1531,7 +1531,7 @@ final class AiProgression {
                      "[AI] ladder for {}: {} {} cooking at {}, ready in {} s",
                      itemId,
                      cooking,
-                     AiProgression.init_Str(this.close_Str),
+                     AiProgression.displayName(this.close_Str),
                      at.toShortString(),
                      (this.read_J - System.nanoTime()) / 1000000000L
                   );
@@ -1552,12 +1552,12 @@ final class AiProgression {
             }
 
             if (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
+               && AiProgression.bestTier(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
                resources.merge("minecraft:diamond", 3, Math::max);
             }
 
             resources.put("minecraft:coal", Math.max(2, Math.min(8, this.write_I)));
-            Map<String, Integer> crafts = this.load_bx_CachePool().ordinal() > AiProgression.init_bx_CachePool(mc).ordinal() ? Map.of("minecraft:stick", 2) : Map.of();
+            Map<String, Integer> crafts = this.load_bx_CachePool().ordinal() > AiProgression.bestTier(mc).ordinal() ? Map.of("minecraft:stick", 2) : Map.of();
             return new AiFurnaceWork.Inner_DataUtil(resources, crafts);
          }
 
@@ -1568,7 +1568,7 @@ final class AiProgression {
                if (this.load_BlockPos != null) {
                   return this.init(
                      "prework",
-                     "mine more resources along a clear return route while the " + AiProgression.init_Str(this.close_Str) + " cooks",
+                     "mine more resources along a clear return route while the " + AiProgression.displayName(this.close_Str) + " cooks",
                      new AiFurnaceWork(
                         this.init_BlockPos,
                         this.load_BlockPos,
@@ -1611,7 +1611,7 @@ final class AiProgression {
                : new AiFurnaceReturn(this.init_BlockPos, "Collect the background batch after productive work");
             return this.init(
                "collect:" + this.close_Str,
-               "collect the " + AiProgression.init_Str(this.close_Str) + " from the furnace at " + this.init_BlockPos.toShortString(),
+               "collect the " + AiProgression.displayName(this.close_Str) + " from the furnace at " + this.init_BlockPos.toShortString(),
                back == null ? collect : this.init(back, collect)
             );
          }
@@ -1949,7 +1949,7 @@ final class AiProgression {
                            Math.max(0L, (read_J - System.nanoTime()) / 1000000000L),
                            init_J_BlockPos(init_BlockPos) / 1000000000L
                         );
-                     return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Time to go back for the " + AiProgression.init_Str(close_Str), init_JsonObject_45());
+                     return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Time to go back for the " + AiProgression.displayName(close_Str), init_JsonObject_45());
                   } else {
                      return inner.tick();
                   }
@@ -2001,7 +2001,7 @@ final class AiProgression {
                   : this.init("expedition-water", "fill both water buckets before diamond descent", AiObsidian.init(2, Math.min(180, this.load_I_12())));
             } else {
                if (itemId.equals("minecraft:obsidian") && drop.equals("minecraft:diamond") && AiCraft.countItem("minecraft:water_bucket") == 0) {
-                  return this.init("obsidian-water", "fill the obsidian bucket before descending for diamonds", AiObsidian.init_AiOperation_I(this.load_I_12()));
+                  return this.init("obsidian-water", "fill the obsidian bucket before descending for diamonds", AiObsidian.fetchOne(this.load_I_12()));
                }
 
                if (drop.equals("minecraft:obsidian")) {
@@ -2045,10 +2045,10 @@ final class AiProgression {
                         );
                      }
 
-                     AiItems.ensureInHotbar(AiItems.resolveItem(AiProgression.init(AiProgression.init_bx_CachePool(mc))));
+                     AiItems.ensureInHotbar(AiItems.resolveItem(AiProgression.init(AiProgression.bestTier(mc))));
                      return this.init(
                         "ore:" + drop,
-                        "mine " + count + " " + AiProgression.init_Str(drop) + " " + why,
+                        "mine " + count + " " + AiProgression.displayName(drop) + " " + why,
                         AiOreRoute.init(
                            ore.family(), drop, AiCraft.countItem(drop) + count, AiProgression.init(ore, count), ore.bestY(), this.load_I_12(), this.load_Map.remove(ore.family())
                         )
@@ -2147,9 +2147,9 @@ final class AiProgression {
             this.sync_I = this.init(this.load_bx_CachePool(), AiCraft.countItem("minecraft:crafting_table") > 0);
             autismclient.ai.engine.AiRestock.reserveWoodForJob(this.sync_I);
             this.flush_I = this.init_I_29()
-               + (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal() && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON ? 3 : 0);
+               + (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal() && AiProgression.bestTier(mc) == AiProgression.Inner_CachePool.IRON ? 3 : 0);
             autismclient.ai.engine.AiRestock.reserveStoneForJob(this.flush_I);
-            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("progression", key + ": " + label, op);
+            this.init_AiOperation = AiRunDiagnostics.trace("progression", key + ": " + label, op);
             this.write_Str = key;
             this.update_Str = label;
             AutismClientAddon.LOG
@@ -2157,7 +2157,7 @@ final class AiProgression {
                   "[AI] ladder for {}: {} (pickaxe {}, y {}, {} s left; wood {} planks' worth, {} sticks, {} held back)",
                   itemId,
                   label,
-                  AiProgression.init_bx_CachePool(mc),
+                  AiProgression.bestTier(mc),
                   mc.player.getBlockY(),
                   this.load_I_12(),
                   AiProgression.load(),
@@ -2182,7 +2182,7 @@ final class AiProgression {
                return null;
             }
 
-            long time = AiSleep.init_J();
+            long time = AiSleep.dayTime();
             long day = mc.level.getOverworldClockTime() / 24000L;
             if (time >= 12500L && time <= 22000L && day != AiProgression.read_J && System.nanoTime() >= AiProgression.write_J) {
                if (day != AiProgression.update_J) {
@@ -2199,7 +2199,7 @@ final class AiProgression {
                   return null;
                }
 
-               if (AiOracle.init_Z() && AiItems.countInInventory(AiItems.resolve("bed")) == 0) {
+               if (AiOracle.isActive() && AiItems.countInInventory(AiItems.resolve("bed")) == 0) {
                   AiProgression.read_J = day;
                   return null;
                }
@@ -2252,7 +2252,7 @@ final class AiProgression {
                   AiGuard.noteRetreatBlocked();
                }
 
-               AutismClientAddon.LOG.info("[AI] ladder for {}: guard {} after {}: {}", itemId, r.status(), this.sync_Str, AiProgression.load_Str(r.message()));
+               AutismClientAddon.LOG.info("[AI] ladder for {}: guard {} after {}: {}", itemId, r.status(), this.sync_Str, AiProgression.clip(r.message()));
                return this.load_AiOperation_Result_2("Back to the ladder after " + this.sync_Str);
             } else if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
                AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
@@ -2290,7 +2290,7 @@ final class AiProgression {
                "held",
                AiCraft.countItem(itemId),
                "pickaxe",
-               AiProgression.init_bx_CachePool(mc).name(),
+               AiProgression.bestTier(mc).name(),
                "steps",
                this.init_JsonArray,
                "furnaceStepEvidence",
@@ -2318,7 +2318,7 @@ final class AiProgression {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
-            AiVisualization.init_V(this);
+            AiVisualization.clearOwner(this);
             autismclient.ai.engine.AiRestock.reserveWoodForJob(0);
             autismclient.ai.engine.AiRestock.reserveStoneForJob(0);
             autismclient.ai.engine.AiRestock.reserveStrikesForJob(0);
@@ -2367,7 +2367,7 @@ final class AiProgression {
          @Override
          public void cancel() {
             this.push_Z = true;
-            AiVisualization.init_V(this);
+            AiVisualization.clearOwner(this);
             autismclient.ai.engine.AiRestock.reserveWoodForJob(0);
             autismclient.ai.engine.AiRestock.reserveStoneForJob(0);
             autismclient.ai.engine.AiRestock.reserveStrikesForJob(0);
@@ -2515,7 +2515,7 @@ final class AiProgression {
                            return this.init(
                               AiGameOperations.result(
                                  AiOperation.Status.SUCCEEDED,
-                                 "Observed the carried " + AiProgression.init_Str(item),
+                                 "Observed the carried " + AiProgression.displayName(item),
                                  AiJson.objectOf("item", item, "held", AiCraft.countItem(item))
                               )
                            );
@@ -2544,7 +2544,7 @@ final class AiProgression {
                      return this.init(
                         AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
-                           "Picked the " + AiProgression.init_Str(item) + " back up",
+                           "Picked the " + AiProgression.displayName(item) + " back up",
                            AiJson.objectOf("item", item, "held", AiCraft.countItem(item))
                         )
                      );
@@ -2560,7 +2560,7 @@ final class AiProgression {
                   }
 
                   if (++this.load_I < 10 && !drop) {
-                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for the " + AiProgression.init_Str(item) + " to drop", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for the " + AiProgression.displayName(item) + " to drop", new JsonObject());
                   }
 
                   int remaining = (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
@@ -2674,15 +2674,15 @@ final class AiProgression {
             "minecraft:lava_bucket"
          )
       );
-      ids.addAll(init_Set);
+      ids.addAll(KEEP_ITEMS);
       return ids;
    }
 
-   static String init_Str(String itemId) {
+   static String displayName(String itemId) {
       return itemId.replace("minecraft:", "").replace('_', ' ');
    }
 
-   static String load_Str(String text) {
+   static String clip(String text) {
       if (text == null) {
          return "";
       } else {
@@ -2693,7 +2693,7 @@ final class AiProgression {
    static {
       Set<String> base = new LinkedHashSet<>(init_Map.keySet());
       base.addAll(load_Map.keySet());
-      init_Set = Set.copyOf(base);
+      KEEP_ITEMS = Set.copyOf(base);
    }
 
    enum Inner_CachePool {

@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 final class AiParallelSmelt implements AiOperation {
-   static final int init_I = 8;
+   static final int MAX_FURNACES = 8;
    private final Minecraft init_Minecraft = Minecraft.getInstance();
    private final Object init_Obj = this.init_Minecraft.level;
    private final Object load_Obj = this.init_Minecraft.getConnection();
@@ -50,7 +50,7 @@ final class AiParallelSmelt implements AiOperation {
    private int open;
    private String write_Str = "Choose nearby furnaces before making any";
 
-   static int init_I_I_3(int items) {
+   static int furnaceCountFor(int items) {
       return Math.max(1, Math.min(8, items / 16));
    }
 
@@ -69,10 +69,10 @@ final class AiParallelSmelt implements AiOperation {
    static boolean init_Z(int items, int existing, int cookTicks, int setupTicks) {
       int before = (items + Math.max(1, existing) - 1) / Math.max(1, existing);
       int after = (items + existing) / (existing + 1);
-      return existing < init_I_I_3(items) && (long)(before - after) * cookTicks > setupTicks;
+      return existing < furnaceCountFor(items) && (long)(before - after) * cookTicks > setupTicks;
    }
 
-   static int init_I(int items, int furnaces, int cookTicks, int burnTicks) {
+   static int fuelNeeded(int items, int furnaces, int cookTicks, int burnTicks) {
       if (burnTicks <= 0) {
          return 2147483647;
       }
@@ -100,7 +100,7 @@ final class AiParallelSmelt implements AiOperation {
       this.read_Str = "Smelting " + recipe.output().getDefaultInstance().getHoverName().getString();
       this.load_Str = BuiltInRegistries.ITEM.getKey(recipe.input()).toString();
       this.init_J = System.nanoTime() + seconds * 1000000000L;
-      this.flush = init_I_I_3(target - AiGameState.countInventoryItem(this.init_Str));
+      this.flush = furnaceCountFor(target - AiGameState.countInventoryItem(this.init_Str));
       BlockPos origin = this.init_Minecraft.player.blockPosition();
       Block block = AiCraft.requireBlock(recipe.stationId());
 
@@ -442,7 +442,7 @@ final class AiParallelSmelt implements AiOperation {
    @Override
    public void cancel() {
       this.load_Z = true;
-      AiVisualization.init_V(this);
+      AiVisualization.clearOwner(this);
       this.init_Y.cancel();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();

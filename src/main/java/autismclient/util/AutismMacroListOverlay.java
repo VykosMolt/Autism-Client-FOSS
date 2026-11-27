@@ -172,7 +172,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder_2
             .body()
             .addChild(
-               new autismclient.gui.ui.layout.LabelNode("No macros match the current filter.", autismclient.gui.f.b.l.write).load_PoolEntry(true)
+               new autismclient.gui.ui.layout.LabelNode("No macros match the current filter.", autismclient.gui.f.b.l.write).setTrimToBounds(true)
             );
       } else {
          this.init_BitSetUtil_2.init(this.init_I_I_7(this.update_List.size()));
@@ -199,7 +199,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder_2
             .body()
             .addChild(
-               new autismclient.gui.ui.layout.LabelNode("Name the new macro made from the copied steps.", autismclient.gui.f.b.l.write).load_PoolEntry(true)
+               new autismclient.gui.ui.layout.LabelNode("Name the new macro made from the copied steps.", autismclient.gui.f.b.l.write).setTrimToBounds(true)
             );
       } else {
          boolean grow = !this.init_Z_StrArr("Create New", "Paste", "Folder", "Move", "Copy");
@@ -217,7 +217,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          actions.addChild(this.load_ByteReader);
          this.init_CharEncoder_2.body().addChild(actions);
          if (!this.update_List.isEmpty()) {
-            this.init_CharEncoder_2.body().addChild(this.init_PoolEntry.load_PoolEntry(true));
+            this.init_CharEncoder_2.body().addChild(this.init_PoolEntry.setTrimToBounds(true));
          }
 
          this.next_V_4();
@@ -726,12 +726,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       boolean draggedRow = localRow
          && (this.run_Z && this.load_Set.contains(MacroNameNormalizer.init(item.init_aM.name)) || this.poll_Z && this.load_Z_Str_3(item.init_aM.folder));
       if (draggedRow) {
-         autismclient.gui.ui.UiAlphaStack.init_V_F(0.35F);
+         autismclient.gui.ui.UiAlphaStack.push(0.35F);
 
          try {
             this.init_V_GuiGraphicsExtract_9(context, rowContext, item, x, y, width, localRow, true);
          } finally {
-            autismclient.gui.ui.UiAlphaStack.init_V();
+            autismclient.gui.ui.UiAlphaStack.pop();
          }
       } else {
          this.init_V_GuiGraphicsExtract_9(context, rowContext, item, x, y, width, localRow, false);
@@ -1553,12 +1553,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor graphics, autismclient.gui.ui.layout.LayoutContext context, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
    ) {
       if (this.poll_Z && item.load == null && this.load_Z_Str_3(item.init_Str)) {
-         autismclient.gui.ui.UiAlphaStack.init_V_F(0.35F);
+         autismclient.gui.ui.UiAlphaStack.push(0.35F);
 
          try {
             this.write(graphics, context, item, x, y, width);
          } finally {
-            autismclient.gui.ui.UiAlphaStack.init_V();
+            autismclient.gui.ui.UiAlphaStack.pop();
          }
       } else {
          this.write(graphics, context, item, x, y, width);
@@ -2494,7 +2494,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
 
       if (folder != null) {
-         autismclient.gui.ui.UiAlphaStack.init_V_F(0.9F);
+         autismclient.gui.ui.UiAlphaStack.push(0.9F);
 
          try {
             autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, this.get_I_11());
@@ -2502,7 +2502,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             autismclient.gui.ui.widgets.GroupHeaderRenderer.load(ui, bounds, folder.init_cY_DataUtil.init_Str(), folder.init_cY_DataUtil.load_Z(), true);
             autismclient.gui.f.PacketUtil.load(context, bounds, ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE));
          } finally {
-            autismclient.gui.ui.UiAlphaStack.init_V();
+            autismclient.gui.ui.UiAlphaStack.pop();
          }
       }
    }

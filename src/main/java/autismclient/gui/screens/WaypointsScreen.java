@@ -88,7 +88,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          this.init_List.clear();
          this.init_NetHelper = null;
          this.load_List.clear();
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -872086265);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.get();
          int y = this.set();
          int panelW = this.put();
@@ -794,22 +794,22 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.put(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.put(), 6);
    }
 
    private int set() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.add(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.add(), 6);
    }
 
    private int put() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 340);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 340);
    }
 
    private int add() {
-      int cap = Math.max(3, this.load_I() * 65 / 100 / this.open_I_6());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.open_I_6());
       int shown = Math.max(3, Math.min(cap, this.init_List_14().size()));
       int content = this.pop() + shown * this.open_I_6() + 4 + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, content);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, content);
    }
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {

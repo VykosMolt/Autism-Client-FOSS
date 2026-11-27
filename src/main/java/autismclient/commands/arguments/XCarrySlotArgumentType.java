@@ -30,7 +30,7 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
       return ctx.getArgument(name, Integer.class);
    }
 
-   public static String init_Str_I(int slotId) {
+   public static String slotName(int slotId) {
       for (Entry<String, Integer> e : init_Map.entrySet()) {
          if (e.getValue() == slotId) {
             return e.getKey();

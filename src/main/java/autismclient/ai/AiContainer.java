@@ -86,7 +86,7 @@ final class AiContainer {
       return new AiOperation.Result(route.status(), "Container navigation stopped: " + route.message(), data.toString(), route.evidence(), route.failure());
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       return init(args, Set.of());
    }
 
@@ -335,7 +335,7 @@ final class AiContainer {
 
             AiOperation.Result load() {
                AbstractContainerMenu menu = mc.player.containerMenu;
-               if (!AiContainer.init_Z(menu)) {
+               if (!AiContainer.isStorageMenu(menu)) {
                   return this.init(
                      AiOperation.Status.FAILED, "The open menu is not a storage container (chest, barrel, shulker box, hopper or dispenser); close it first"
                   );
@@ -535,7 +535,7 @@ final class AiContainer {
       return out;
    }
 
-   static boolean init_Z(AbstractContainerMenu menu) {
+   static boolean isStorageMenu(AbstractContainerMenu menu) {
       return menu instanceof ChestMenu
          || menu instanceof ShulkerBoxMenu
          || menu instanceof HopperMenu

@@ -694,7 +694,7 @@ public final class SchematicWorkspace {
             );
             this.open = p.id();
             SchematicWorkspace.Inner_StreamUtil preview = this.load_Map.get(p.id());
-            AiVisualization.init_V(preview.init_cV_CachePool == null ? preview : preview.init_cV_CachePool);
+            AiVisualization.clearOwner(preview.init_cV_CachePool == null ? preview : preview.init_cV_CachePool);
             this.init_Map.put(p.id(), p.checkpoint(this.init_cT.progress.checkpoint()));
             this.push();
             this.close = "";
@@ -738,7 +738,7 @@ public final class SchematicWorkspace {
                      "mirror",
                      p.mirror()
                   );
-                  this.init_cV_DataUtil = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.init_k_StreamUtil("game:build", args));
+                  this.init_cV_DataUtil = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.start("game:build", args));
                   autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);
                } catch (Exception e) {
                   this.read(SchematicLibrary.describeError(e));
@@ -781,7 +781,7 @@ public final class SchematicWorkspace {
       if (this.activeRecording != null && !keepRecording) {
          this.activeRecording.fill_V();
          this.activeRecording = null;
-         AiVisualization.init_V(this.recordingVisOwner);
+         AiVisualization.clearOwner(this.recordingVisOwner);
          this.flush = "Recording cancelled";
       }
 
@@ -850,7 +850,7 @@ public final class SchematicWorkspace {
             } else {
                SchematicRecording finished = this.activeRecording;
                this.activeRecording = null;
-               AiVisualization.init_V(this.recordingVisOwner);
+               AiVisualization.clearOwner(this.recordingVisOwner);
                if (finished.putAt_Path != null) {
                   this.refresh();
                   if (finished.fill_Z()) {
@@ -890,7 +890,7 @@ public final class SchematicWorkspace {
 
                this.init_cT = null;
                this.open = null;
-               AiVisualization.init_V(this.init_Obj);
+               AiVisualization.clearOwner(this.init_Obj);
                if (!progress.error().isEmpty()) {
                   this.read(progress.error());
                } else {
@@ -933,7 +933,7 @@ public final class SchematicWorkspace {
                SchematicLibrary.Inner_StreamUtil p = row;
                SchematicWorkspace.Inner_StreamUtil data = oldest;
                Object owner = data.init_cV_CachePool == null ? data : data.init_cV_CachePool;
-               AiVisualization.init_V_Obj_2(
+               AiVisualization.showCells(
                   owner, init_BlockPos_cR_StreamUtil(p), data.init_cQ_StreamUtil.cells(), at -> data.init_cQ.isSolidAt(at, p.rotation(), p.mirror())
                );
             }
@@ -944,9 +944,9 @@ public final class SchematicWorkspace {
    private void load_V_Str(String id) {
       SchematicWorkspace.Inner_StreamUtil data = this.load_Map.remove(id);
       if (data != null) {
-         AiVisualization.init_V(data);
+         AiVisualization.clearOwner(data);
          if (data.init_cV_CachePool != null) {
-            AiVisualization.init_V(data.init_cV_CachePool);
+            AiVisualization.clearOwner(data.init_cV_CachePool);
          }
       }
    }
@@ -1047,7 +1047,7 @@ public final class SchematicWorkspace {
          this.init_cV = workspace;
          this.init_Str = id;
          SchematicWorkspace.Inner_StreamUtil data = workspace.load_Map.get(id);
-         AiVisualization.init_V(data);
+         AiVisualization.clearOwner(data);
       }
 
       private SchematicLibrary.Inner_StreamUtil init_cR_StreamUtil() {

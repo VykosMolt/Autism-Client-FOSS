@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class AiSessionsDrawer {
-   static final String[] init_StrArr = new String[]{"Rename", "Branch", "Delete"};
+   static final String[] MENU_ITEMS = new String[]{"Rename", "Branch", "Delete"};
    private static final int init_I = 8;
    private static final long init_J = 3000L;
    private static final int load_I = 4;
@@ -14,11 +14,11 @@ final class AiSessionsDrawer {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search chats");
-   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96);
+   final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search chats");
+   final autismclient.gui.ui.widgets.TextInputWidget renameInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   boolean init_Z;
+   boolean open;
    private String init_Str;
    private String load_Str;
    private long load_J;
@@ -30,12 +30,12 @@ final class AiSessionsDrawer {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.load_BitSetUtil.setOnSubmit(text -> this.write());
+      this.renameInput.setOnSubmit(text -> this.write());
    }
 
-   void init_V() {
-      this.init_Z = !this.init_Z;
-      if (this.init_Z) {
+   void toggle() {
+      this.open = !this.open;
+      if (this.open) {
          this.init_cF.invalidate();
          this.init_cE_StreamUtil.scrollToTop();
       } else {
@@ -44,31 +44,31 @@ final class AiSessionsDrawer {
    }
 
    void load() {
-      this.init_Z = false;
+      this.open = false;
       this.init_Str = null;
       this.load_Str = null;
-      this.init_BitSetUtil.setValue("");
-      this.init_BitSetUtil.setFocused(false);
-      this.load_BitSetUtil.setFocused(false);
+      this.searchInput.setValue("");
+      this.searchInput.setFocused(false);
+      this.renameInput.setFocused(false);
    }
 
-   boolean init_Z_D_D(double x, double y) {
-      return this.init_Z && this.init_NetHelper.init_Z((int)x, (int)y);
+   boolean contains(double x, double y) {
+      return this.open && this.init_NetHelper.init_Z((int)x, (int)y);
    }
 
-   boolean init_Z() {
+   boolean cancelRename() {
       if (this.init_Str == null) {
          return false;
       }
 
       this.init_Str = null;
-      this.load_BitSetUtil.setFocused(false);
+      this.renameInput.setFocused(false);
       return true;
    }
 
    void init(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
-      if (this.init_Z && area.sync() >= 30) {
-         if (this.init_Str != null && !this.load_BitSetUtil.isFocused()) {
+      if (this.open && area.sync() >= 30) {
+         if (this.init_Str != null && !this.renameInput.isFocused()) {
             this.init_Str = null;
          }
 
@@ -94,14 +94,14 @@ final class AiSessionsDrawer {
          y += ctrl + 2;
          List<AiSessions.Inner_StreamUtil> sessions = this.init_cF.sessions;
          if (sessions.size() > 8) {
-            kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
+            kit.drawTextInput(this.searchInput, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
-         } else if (!this.init_BitSetUtil.getValue().isEmpty() || this.init_BitSetUtil.isFocused()) {
-            this.init_BitSetUtil.setValue("");
-            this.init_BitSetUtil.setFocused(false);
+         } else if (!this.searchInput.getValue().isEmpty() || this.searchInput.isFocused()) {
+            this.searchInput.setValue("");
+            this.searchInput.setFocused(false);
          }
 
-         List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.init_BitSetUtil.getValue());
+         List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.searchInput.getValue());
          autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), Math.max(0, inner.load() - y));
          int rowH = AiUiKit.inputHeight();
          int step = rowH + 1;
@@ -142,12 +142,12 @@ final class AiSessionsDrawer {
 
       kit.addInteractiveRegion(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
       kit.drawStatusDot(
-         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.init_I_cE_Str(kit, active ? this.init_cF.runState.name() : meta.state())
+         row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.stateColor(kit, active ? this.init_cF.runState.name() : meta.state())
       );
       int textX = row.read() + 11;
       int icon = row.sync() - 2;
       if (id.equals(this.init_Str)) {
-         kit.drawTextInput(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(textX - 2, row.write(), row.init() - textX + 2, row.sync()));
+         kit.drawTextInput(this.renameInput, autismclient.gui.f.NetHelper.init(textX - 2, row.write(), row.init() - textX + 2, row.sync()));
       } else {
          int right = row.init() - 3;
          if (!hovered && !armed) {
@@ -221,7 +221,7 @@ final class AiSessionsDrawer {
       }
    }
 
-   void init_V_Str_I(String id, int index) {
+   void onMenuAction(String id, int index) {
       switch (index) {
          case 0:
             AiSessions.Inner_StreamUtil meta = null;
@@ -233,9 +233,9 @@ final class AiSessionsDrawer {
             }
 
             this.init_Str = id;
-            this.load_BitSetUtil.setValue(meta == null ? "" : init_Str_cd_StreamUtil(meta));
-            this.load_BitSetUtil.moveCursorToEnd();
-            this.init_AiAssistantOverlay.init(this.load_BitSetUtil);
+            this.renameInput.setValue(meta == null ? "" : init_Str_cd_StreamUtil(meta));
+            this.renameInput.moveCursorToEnd();
+            this.init_AiAssistantOverlay.init(this.renameInput);
             break;
          case 1:
             if (!this.init_cc.branchSession(id)) {
@@ -256,9 +256,9 @@ final class AiSessionsDrawer {
 
    private void write() {
       String id = this.init_Str;
-      String text = this.load_BitSetUtil.getValue().trim();
+      String text = this.renameInput.getValue().trim();
       this.init_Str = null;
-      this.load_BitSetUtil.setFocused(false);
+      this.renameInput.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.init_cc.renameSession(id, text);
          this.init_cF.invalidate();

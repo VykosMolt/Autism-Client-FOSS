@@ -37,12 +37,12 @@ public class AutismProtectorDownloadQueueMixin {
    private CompletableFuture autism$scopedBatch(
       Supplier supplier, Executor executor, Operation<CompletableFuture> original, @Local(argsOnly = true) BatchConfig config
    ) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.init_UiHelper_BufferHel();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.current();
       if (snapshot == null) {
          return original.call(supplier, executor);
       }
 
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       ResourcePackDownloadScope.Inner_DataUtil registration = ResourcePackDownloadScope.init(config, snapshot);
 
       CompletableFuture future;
@@ -79,7 +79,7 @@ public class AutismProtectorDownloadQueueMixin {
             throw new IOException("Resource-pack worker and batch scopes do not match");
          }
 
-         registered.init_V();
+         registered.ensureCurrent();
 
          try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.load(registered)) {
             original.call(requests, action);
@@ -99,7 +99,7 @@ public class AutismProtectorDownloadQueueMixin {
       if (snapshot == null) {
          return original.call(cacheDir, name);
       } else {
-         snapshot.init_V();
+         snapshot.ensureCurrent();
          if (config != null && packId != null && packId.toString().equals(name)) {
             return ResourcePackDownloadScope.init(cacheDir, snapshot, packId, config.hashFunction());
          } else {
@@ -136,9 +136,9 @@ public class AutismProtectorDownloadQueueMixin {
       lock.lockInterruptibly();
 
       try {
-         snapshot.init_V();
+         snapshot.ensureCurrent();
          Path result = original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, autism$guardedProgress(snapshot, listener));
-         snapshot.init_V();
+         snapshot.ensureCurrent();
          return ResourcePackDownloadScope.init(targetDir.getParent(), result);
       } finally {
          lock.unlock();
@@ -149,28 +149,28 @@ public class AutismProtectorDownloadQueueMixin {
       return new DownloadProgressListener() {
          @Override
          public void requestStart() {
-            if (snapshot.load_Z()) {
+            if (snapshot.isCurrent()) {
                listener.requestStart();
             }
          }
 
          @Override
          public void downloadStart(OptionalLong sizeBytes) {
-            if (snapshot.load_Z()) {
+            if (snapshot.isCurrent()) {
                listener.downloadStart(sizeBytes);
             }
          }
 
          @Override
          public void downloadedBytes(long bytesSoFar) {
-            if (snapshot.load_Z()) {
+            if (snapshot.isCurrent()) {
                listener.downloadedBytes(bytesSoFar);
             }
          }
 
          @Override
          public void requestFinished(boolean success) {
-            if (snapshot.load_Z()) {
+            if (snapshot.isCurrent()) {
                listener.requestFinished(success);
             }
          }

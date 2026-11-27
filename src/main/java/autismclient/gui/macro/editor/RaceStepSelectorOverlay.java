@@ -46,7 +46,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Race Selector");
    private final LayoutTreeHost init_TextFormat = new LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
    private final TextInputWidget init_BitSetUtil = new TextInputWidget();
-   private final LabelNode init_PoolEntry = new LabelNode("", l.write).load_PoolEntry(true);
+   private final LabelNode init_PoolEntry = new LabelNode("", l.write).setTrimToBounds(true);
    private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
    private ScrollableListView init_EventBus;
    private final SearchFilterList<RaceStepSelectorOverlay.Inner_DataUtil> init_a = new SearchFilterList<>(
@@ -80,16 +80,16 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.write_V_4();
    }
 
-   public void init_V_Str_4(String title, List<RaceStepSelectorOverlay.Inner_DataUtil> options, Consumer<RaceStepSelectorOverlay.Inner_DataUtil> onSelect) {
+   public void openSelector(String title, List<RaceStepSelectorOverlay.Inner_DataUtil> options, Consumer<RaceStepSelectorOverlay.Inner_DataUtil> onSelect) {
       this.write_Z = true;
       this.update_Z = false;
       this.sync_Z = false;
       this.flush_Z = false;
       this.init_Consumer = onSelect;
       this.init_List = options == null ? List.of() : List.copyOf(options);
-      this.init_a.init_V_List(this.init_List);
-      this.init_a.init_V_Str("");
-      this.load_List = this.init_a.init_List();
+      this.init_a.setItems(this.init_List);
+      this.init_a.setQuery("");
+      this.load_List = this.init_a.filtered();
       String shownTitle = title != null && !title.isBlank() ? title : "Race Selector";
       this.init_CharEncoder_3.setTitle(shownTitle);
       this.reset = this.init_I(shownTitle);
@@ -113,7 +113,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       OverlayManager.getInstance().bringOwnerToFront(this);
    }
 
-   public void load_V_3() {
+   public void dismiss() {
       this.write_Z = false;
       this.update_Z = false;
       this.sync_Z = false;
@@ -134,9 +134,9 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_2(String query) {
-      this.init_a.init_V_List(this.init_List);
-      this.init_a.init_V_Str(query);
-      this.load_List = this.init_a.init_List();
+      this.init_a.setItems(this.init_List);
+      this.init_a.setQuery(query);
+      this.load_List = this.init_a.filtered();
       if (this.init_EventBus != null) {
          this.init_EventBus.setScrollOffset(0);
       }
@@ -191,8 +191,8 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      this.init_CharEncoder.init_V(this.write_Z);
-      if (this.init_CharEncoder.load_Z(this.write_Z) && init_Minecraft != null && init_Minecraft.font != null) {
+      this.init_CharEncoder.animateTo(this.write_Z);
+      if (this.init_CharEncoder.shouldRender(this.write_Z) && init_Minecraft != null && init_Minecraft.font != null) {
          boolean closing = !this.write_Z;
          this.init_CharEncoder
             .init(
@@ -296,7 +296,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       if (button == 0 && this.load_Z_F_F(uiMouseX, uiMouseY)) {
-         this.load_V_3();
+         this.dismiss();
          return true;
       }
 
@@ -335,7 +335,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
                this.init_Consumer.accept(selected);
             }
 
-            this.load_V_3();
+            this.dismiss();
             return true;
          }
       }
@@ -436,7 +436,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       if (!this.write_Z) {
          return false;
       } else if (keyCode == 256) {
-         this.load_V_3();
+         this.dismiss();
          return true;
       } else {
          return this.update_Z ? false : this.init_TextFormat.keyPressed(keyCode, scanCode, modifiers);

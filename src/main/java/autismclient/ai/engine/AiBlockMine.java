@@ -507,8 +507,8 @@ public final class AiBlockMine {
          final int held = AiJson.getInt(args, "held", 0);
          final int heldMin = Math.max(0, AiJson.getInt(args, "heldMin", 0));
          final int nearRadius = Math.max(0, AiJson.getInt(args, "nearRadius", 0));
-         final AiMiningQuota quota = AiMiningQuota.init_as_JsonObject(args);
-         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.init_I();
+         final AiMiningQuota quota = AiMiningQuota.fromArgs(args);
+         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.totalCount();
          final int radius = Math.max(16, Math.min(128, AiJson.getInt(args, "radius", 64)));
          final boolean explore = AiJson.getBoolean(args, "explore", !AiJson.getBoolean(args, "dropsOnly", false));
          final boolean dropsOnly = AiJson.getBoolean(args, "dropsOnly", false);
@@ -2187,7 +2187,7 @@ public final class AiBlockMine {
 
             boolean load_Z_7() {
                return quota != null
-                  ? quota.init_Z()
+                  ? quota.isMet()
                   : this.update_I >= count || treeLimit > 0 && this.sync_I >= treeLimit && this.write_Set.isEmpty() && this.update_I > 0;
             }
 
@@ -3030,7 +3030,7 @@ public final class AiBlockMine {
 
             boolean init(BlockState state) {
                return this.init_Map.computeIfAbsent(state.getBlock(), this.init_Predicate::test)
-                  && (quota == null || quota.init_Z_Str(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()));
+                  && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()));
             }
 
             boolean init_Z_3(String id) {
@@ -3425,7 +3425,7 @@ public final class AiBlockMine {
                   this.load_Z
                );
                if (quota != null) {
-                  out.add("brokenByBlock", quota.init_JsonObject());
+                  out.add("brokenByBlock", quota.brokenByBlock());
                   out.add("remainingByBlock", quota.load());
                }
 
@@ -3469,7 +3469,7 @@ public final class AiBlockMine {
                }
 
                if (!AutismLiteVariant.enabled()) {
-                  AiVisualization.init_V(this);
+                  AiVisualization.clearOwner(this);
                }
 
                if (this.poll_Z) {

@@ -20,13 +20,13 @@ public final class ScrollbarRenderer {
       }
    }
 
-   public static void init_V_SyncManager(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean dragging) {
+   public static void draw(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean dragging) {
       init(context, metrics, false, dragging);
    }
 
    public static void init(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean hovered, boolean dragging) {
-      if (metrics != null && metrics.init_I() > 0) {
-         autismclient.gui.f.NetHelper track = metrics.init_NetHelper();
+      if (metrics != null && metrics.maxScroll() > 0) {
+         autismclient.gui.f.NetHelper track = metrics.track();
          int trackWidth = Math.min(3, track.update());
          int trackX = track.read() + (track.update() - trackWidth) / 2;
          autismclient.gui.f.PacketUtil.load(
@@ -49,11 +49,11 @@ public final class ScrollbarRenderer {
       }
    }
 
-   public static int init_I_UtilCore_DataUtil(ScrollbarRenderer.ScrollbarBounds metrics, int mouseY, int grabOffset) {
-      if (metrics != null && metrics.init_I() > 0) {
-         int available = Math.max(1, metrics.init_NetHelper().sync() - metrics.load().sync());
-         int y = Math.max(0, Math.min(available, mouseY - grabOffset - metrics.init_NetHelper().write()));
-         return (int)Math.round(metrics.init_I() * ((double)y / available));
+   public static int scrollForDrag(ScrollbarRenderer.ScrollbarBounds metrics, int mouseY, int grabOffset) {
+      if (metrics != null && metrics.maxScroll() > 0) {
+         int available = Math.max(1, metrics.track().sync() - metrics.load().sync());
+         int y = Math.max(0, Math.min(available, mouseY - grabOffset - metrics.track().write()));
+         return (int)Math.round(metrics.maxScroll() * ((double)y / available));
       } else {
          return 0;
       }
@@ -75,9 +75,9 @@ public final class ScrollbarRenderer {
       return a << 24 | r << 16 | g << 8 | b;
    }
 
-   public record ScrollbarBounds(autismclient.gui.f.NetHelper init_NetHelper, autismclient.gui.f.NetHelper load, int init_I) {
+   public record ScrollbarBounds(autismclient.gui.f.NetHelper track, autismclient.gui.f.NetHelper load, int maxScroll) {
       public boolean init(int x, int y) {
-         return this.init_NetHelper.init_Z(x, y);
+         return this.track.init_Z(x, y);
       }
 
       public boolean load(int x, int y) {

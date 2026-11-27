@@ -62,7 +62,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    @Override
    public void setVisible(boolean v) {
       if (!v && this.windowVisible) {
-         this.init_StreamUtil.init_V();
+         this.init_StreamUtil.reset();
       }
 
       if (!v && this.update_Z) {
@@ -103,12 +103,12 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean hasFocusedTextInput() {
-      return this.init_StreamUtil.load_Z();
+      return this.init_StreamUtil.hasFocusedInput();
    }
 
    @Override
    public void clearInputFocus() {
-      this.init_StreamUtil.load_V();
+      this.init_StreamUtil.blurInputs();
    }
 
    @Override
@@ -117,7 +117,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          if (this.update_Z) {
             this.load(ctx, mx, my, delta);
          } else {
-            this.windowWidth = this.init_StreamUtil.init_I() + 2;
+            this.windowWidth = this.init_StreamUtil.preferredWidth() + 2;
             int want = this.init_StreamUtil.init(this.windowWidth - 2) + 14 + 1;
             int maxH = Math.min(cA.load_I() - 16, 380);
             this.windowHeight = Math.max(this.getMinHeight(), Math.min(want, maxH));
@@ -148,7 +148,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       int margin = 6;
       int headerHeight = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
       int availableHeight = Math.max(1, sh - autismclient.gui.ui.UiDensityMetrics.scaledHeight(44));
-      this.windowWidth = Math.max(1, Math.min(sw - margin * 2, this.init_StreamUtil.init_I() + 2));
+      this.windowWidth = Math.max(1, Math.min(sw - margin * 2, this.init_StreamUtil.preferredWidth() + 2));
       this.windowHeight = Math.min(availableHeight, this.init_StreamUtil.init(this.windowWidth - 2) + headerHeight + 1);
       this.windowX = (sw - this.windowWidth) / 2;
       this.windowY = (availableHeight - this.windowHeight) / 2;
@@ -175,7 +175,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.UiClipStack.getInstance().push(context.init_GuiGraphicsExtract(), body);
 
          try {
-            this.init_StreamUtil.init_V_SyncManager(context, body, delta);
+            this.init_StreamUtil.render(context, body, delta);
          } finally {
             autismclient.gui.ui.UiClipStack.getInstance().pop(context.init_GuiGraphicsExtract());
          }
@@ -200,7 +200,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          } else if (this.windowCollapsed) {
             return false;
          } else {
-            return this.init_StreamUtil.init_Z_I_2((int)Math.round(mx), (int)Math.round(my), button) ? true : this.containsPoint(mx, my);
+            return this.init_StreamUtil.mouseClicked((int)Math.round(mx), (int)Math.round(my), button) ? true : this.containsPoint(mx, my);
          }
       }
    }
@@ -226,13 +226,13 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          this.windowY = c.y;
          return true;
       } else {
-         return this.windowCollapsed ? false : this.init_StreamUtil.init_Z_I((int)Math.round(mx), (int)Math.round(my), button, dx, dy);
+         return this.windowCollapsed ? false : this.init_StreamUtil.mouseDragged((int)Math.round(mx), (int)Math.round(my), button, dx, dy);
       }
    }
 
    @Override
    public boolean mouseScrolled(double mx, double my, double amount) {
-      return this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my) ? this.init_StreamUtil.init_Z_I((int)Math.round(mx), (int)Math.round(my), amount) : false;
+      return this.windowVisible && !this.windowCollapsed && this.containsPoint(mx, my) ? this.init_StreamUtil.mouseScrolled((int)Math.round(mx), (int)Math.round(my), amount) : false;
    }
 
    @Override
@@ -242,6 +242,6 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean charTyped(char chr, int modifiers) {
-      return this.windowVisible && !this.windowCollapsed && this.init_StreamUtil.init_Z_C_I(chr, modifiers);
+      return this.windowVisible && !this.windowCollapsed && this.init_StreamUtil.charTyped(chr, modifiers);
    }
 }

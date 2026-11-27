@@ -459,7 +459,7 @@ public final class AiGoto {
                } else {
                   Minecraft var2 = Minecraft.getInstance();
                   if (var2.level != null && AiGoto.isInteractableStationBlock(var2.level.getBlockState(var1).getBlock())) {
-                     this.fill = AiOps.init_AiOperation(var1);
+                     this.fill = AiOps.interact(var1);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Arrived at target; opening the block", "{}", List.of());
                   } else {
                      return var1x;
@@ -1535,7 +1535,7 @@ public final class AiGoto {
                               }
 
                               if (var14 && !AutismLiteVariant.enabled()) {
-                                 AiVisualization.init_V(this.fill_Obj);
+                                 AiVisualization.clearOwner(this.fill_Obj);
                               }
 
                               if (var11x.movements().isEmpty()) {
@@ -2089,7 +2089,7 @@ public final class AiGoto {
                }
 
                if (!AutismLiteVariant.enabled()) {
-                  AiVisualization.init_V(this.fill_Obj);
+                  AiVisualization.clearOwner(this.fill_Obj);
                }
             }
 
@@ -2246,7 +2246,7 @@ public final class AiGoto {
                      this.putAt_RingCache.pollAt_Z();
                      this.putAt_RingCache.value_V();
                      if (var14 && !AutismLiteVariant.enabled()) {
-                        AiVisualization.init_V(this.fill_Obj);
+                        AiVisualization.clearOwner(this.fill_Obj);
                      }
                   } else {
                      this.fill_Z = true;
@@ -3041,7 +3041,7 @@ public final class AiGoto {
                if (AutismLiteVariant.enabled()) {
                   $outerCost = AiPathfinder.ThreatField.NONE;
                } else {
-                  $outerCost = autismclient.ai.AiDragonZones.init_ClassCache_PoolEnt(this.putAt_Minecraft);
+                  $outerCost = autismclient.ai.AiDragonZones.threatField(this.putAt_Minecraft);
                }
 
                if (var7 != AiPathfinder.RouteStrategy.SAFEST) {
@@ -3817,7 +3817,7 @@ public final class AiGoto {
                   this.putAt_FileStore_TaskStat.close();
                   this.putAt_RingCache.state_V();
                   if (var14 && !AutismLiteVariant.enabled()) {
-                     AiVisualization.init_V(this.fill_Obj);
+                     AiVisualization.clearOwner(this.fill_Obj);
                   }
 
                   if (this.putAt_Minecraft.player != null && this.putAt_Minecraft.player.getInventory().getSelectedSlot() != this.flowTemp) {

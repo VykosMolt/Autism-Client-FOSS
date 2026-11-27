@@ -146,7 +146,7 @@ final class AiShield {
       return best;
    }
 
-   static boolean init_Z(Minecraft mc, double radius) {
+   static boolean hasEnemyWithin(Minecraft mc, double radius) {
       for (Entity entity : mc.level.entitiesForRendering()) {
          if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.init(entity) && entity.distanceTo(mc.player) <= radius) {
             return true;
@@ -156,7 +156,7 @@ final class AiShield {
       return false;
    }
 
-   static Entity init_Entity(Minecraft mc, double beyond) {
+   static Entity rangedShooterBeyond(Minecraft mc, double beyond) {
       for (Entity entity : mc.level.entitiesForRendering()) {
          if (entity instanceof Mob mob && mob instanceof Enemy && mob.isAlive() && autismclient.ai.engine.AiSight.init(mob)) {
             double d = mob.distanceTo(mc.player);

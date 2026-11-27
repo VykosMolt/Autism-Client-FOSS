@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismGuiAlphaMixin {
    @ModifyVariable(method = "innerFill", at = @At("HEAD"), argsOnly = true, ordinal = 4)
    private int autism$fadeFill(int color) {
-      return UiAlphaStack.init_I_I(color);
+      return UiAlphaStack.apply(color);
    }
 
    @ModifyVariable(method = "innerFill", at = @At("HEAD"), argsOnly = true)
    private Integer autism$fadeFillGradient(Integer color) {
-      return color == null ? null : UiAlphaStack.init_I_I(color);
+      return color == null ? null : UiAlphaStack.apply(color);
    }
 
    @ModifyVariable(
@@ -30,12 +30,12 @@ public abstract class AutismGuiAlphaMixin {
       ordinal = 4
    )
    private int autism$fadeBlit(int color) {
-      return UiAlphaStack.init_I_I(color);
+      return UiAlphaStack.apply(color);
    }
 
    @ModifyVariable(method = "innerTiledBlit", at = @At("HEAD"), argsOnly = true, ordinal = 6)
    private int autism$fadeTiledBlit(int color) {
-      return UiAlphaStack.init_I_I(color);
+      return UiAlphaStack.apply(color);
    }
 
    @ModifyVariable(
@@ -45,7 +45,7 @@ public abstract class AutismGuiAlphaMixin {
       ordinal = 2
    )
    private int autism$fadeText(int color) {
-      return UiAlphaStack.init_I_I(color);
+      return UiAlphaStack.apply(color);
    }
 
    @Inject(
@@ -54,14 +54,14 @@ public abstract class AutismGuiAlphaMixin {
       cancellable = true
    )
    private void autism$skipFadedItem(LivingEntity owner, Level level, ItemStack stack, int x, int y, int seed, CallbackInfo ci) {
-      if (UiAlphaStack.init_F() < 0.5F) {
+      if (UiAlphaStack.current() < 0.5F) {
          ci.cancel();
       }
    }
 
    @Inject(method = {"entity", "skin"}, at = @At("HEAD"), cancellable = true)
    private void autism$skipFadedPreview(CallbackInfo ci) {
-      if (UiAlphaStack.init_F() < 0.5F) {
+      if (UiAlphaStack.current() < 0.5F) {
          ci.cancel();
       }
    }

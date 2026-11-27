@@ -17,17 +17,17 @@ public enum MsdfFontFace {
       this.init_F = defaultSize;
    }
 
-   public float init_F() {
+   public float baseScale() {
       return this.init_F;
    }
 
-   public MsdfFontAtlas init_StreamUtil() {
+   public MsdfFontAtlas atlas() {
       MsdfFontAtlas font = this.init_StreamUtil;
       if (font == null && !this.init_Z) {
          synchronized (this) {
             font = this.init_StreamUtil;
             if (font == null && !this.init_Z) {
-               font = MsdfFontAtlas.init_StreamUtil_Str(this.init_Str);
+               font = MsdfFontAtlas.load(this.init_Str);
                if (font == null) {
                   this.init_Z = true;
                } else {
@@ -37,7 +37,7 @@ public enum MsdfFontFace {
          }
       }
 
-      return font == null && this != BODY ? BODY.init_StreamUtil() : font;
+      return font == null && this != BODY ? BODY.atlas() : font;
    }
 
    public static MsdfFontFace init(Identifier fontId) {
@@ -50,15 +50,15 @@ public enum MsdfFontFace {
 
    public static void prewarm() {
       for (MsdfFontFace font : values()) {
-         font.init_StreamUtil();
+         font.atlas();
       }
    }
 
-   public static void init_V() {
+   public static void releaseAll() {
       for (MsdfFontFace font : values()) {
          MsdfFontAtlas old = font.init_StreamUtil;
          if (old != null) {
-            old.init_V();
+            old.release();
          }
 
          font.init_StreamUtil = null;

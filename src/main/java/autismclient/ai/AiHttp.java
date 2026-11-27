@@ -23,12 +23,12 @@ import java.util.concurrent.Flow.Subscription;
 
 final class AiHttp {
    private static final HttpClient init_HttpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15L)).followRedirects(Redirect.NEVER).build();
-   static final String init_Str = "This is a Claude sign-in token (Claude Code / Claude app subscription), which Anthropic only accepts inside its own apps. Paste an Anthropic Console API key instead (console.anthropic.com, API keys)";
+   static final String CLAUDE_TOKEN_MESSAGE = "This is a Claude sign-in token (Claude Code / Claude app subscription), which Anthropic only accepts inside its own apps. Paste an Anthropic Console API key instead (console.anthropic.com, API keys)";
 
    private AiHttp() {
    }
 
-   static Map<String, String> init_Map(AiSettings.Provider provider, String credential) {
+   static Map<String, String> authHeaders(AiSettings.Provider provider, String credential) {
       String key = credential == null ? "" : credential.trim();
       if (key.isEmpty()) {
          throw new IllegalArgumentException("Enter an API key in AI settings");
@@ -55,7 +55,7 @@ final class AiHttp {
       return key != null && key.trim().startsWith("sk-ant-oat");
    }
 
-   static String init_Str(AiSettings.Provider provider, String endpoint) {
+   static String baseUrl(AiSettings.Provider provider, String endpoint) {
       if (provider == null) {
          throw new IllegalArgumentException("Choose an AI provider");
       }

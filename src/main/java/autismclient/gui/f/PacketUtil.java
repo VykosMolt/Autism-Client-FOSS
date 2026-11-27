@@ -105,7 +105,7 @@ public final class PacketUtil {
    }
 
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, float cx, float cy, float r, int color) {
-      autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(graphics, cx, cy, r, color);
+      autismclient.gui.sdf.SdfShapeRenderer.drawCircle(graphics, cx, cy, r, color);
    }
 
    public static void init(GuiGraphicsExtractor graphics, float centerX, float top, float[] widths, float rowHeight, float radius, int color) {
@@ -135,7 +135,7 @@ public final class PacketUtil {
          int topBorder = UiLayoutMath.lerpColor(border, border & 0xFF000000 | 16777215, 0.28F);
          topBorder = Math.min(255, Math.round((border >>> 24) * 1.4F)) << 24 | topBorder & 16777215;
          int bottomBorder = init(border, 0.55F);
-         autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(
+         autismclient.gui.sdf.SdfShapeRenderer.drawRoundedRect(
             graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, topFill, bottomFill, topBorder, bottomBorder
          );
       }

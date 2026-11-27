@@ -35,14 +35,14 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             super.write(ctx, msg, promise);
          } else {
             OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(this.init_Connection, packet);
-            switch (verdict.init_ConfigStore_DataUt) {
+            switch (verdict.kind) {
                case PASS:
                   ProtectorFeatureFlags.load(packet);
                   super.write(ctx, msg, promise);
                   break;
                case REPLACE:
                   ProtectorFeatureFlags.load(packet);
-                  super.write(ctx, verdict.init_Packet, promise);
+                  super.write(ctx, verdict.replacement, promise);
                   break;
                case DROP:
                   ProtectorFeatureFlags.load(packet);
@@ -56,12 +56,12 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       if (connection != null && init(channel) && (packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket)) {
          OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(connection, packet);
          Packet var10000;
-         switch (verdict.init_ConfigStore_DataUt) {
+         switch (verdict.kind) {
             case PASS:
                var10000 = packet;
                break;
             case REPLACE:
-               var10000 = verdict.init_Packet;
+               var10000 = verdict.replacement;
                break;
             case DROP:
                var10000 = null;
@@ -115,7 +115,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
 
       OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(connection, packet);
       ProtectorFeatureFlags.load(packet);
-      switch (verdict.init_ConfigStore_DataUt) {
+      switch (verdict.kind) {
          case PASS:
             boolean marked = false;
 
@@ -133,7 +133,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
                throw failure;
             }
          case REPLACE:
-            Packet<?> replacement = verdict.init_Packet;
+            Packet<?> replacement = verdict.replacement;
             if (replacement != null && init(channel)) {
                boolean markedRep = false;
 

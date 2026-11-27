@@ -23,7 +23,7 @@ final class AiWorldCreate {
    private AiWorldCreate() {
    }
 
-   static AiOperation init_AiOperation(final JsonObject args) {
+   static AiOperation create(final JsonObject args) {
       final String name = AiJson.getString(args, "name", "").trim();
       if (name.isBlank() || name.length() > 64) {
          throw new IllegalArgumentException("name required (1..64 characters)");
@@ -143,7 +143,7 @@ final class AiWorldCreate {
       };
    }
 
-   static JsonObject init_JsonObject(JsonObject args) {
+   static JsonObject listWorlds(JsonObject args) {
       JsonArray worlds = new JsonArray();
 
       try {

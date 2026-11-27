@@ -35,7 +35,7 @@ final class AiDeathLog {
       }
    }
 
-   static AiDeathLog.Inner_DataUtil init_j_DataUtil() {
+   static AiDeathLog.Inner_DataUtil lastDeath() {
       return init_j_DataUtil;
    }
 
@@ -52,7 +52,7 @@ final class AiDeathLog {
       init_Z = false;
    }
 
-   static JsonObject init_JsonObject() {
+   static JsonObject statusJson() {
       AiDeathLog.Inner_DataUtil death = init_j_DataUtil;
       if (death == null) {
          return AiJson.objectOf("recorded", false);

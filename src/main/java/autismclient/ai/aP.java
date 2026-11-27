@@ -75,7 +75,7 @@ public final class aP {
    private static void init_V_aR_Runnable(AiPlacementSession placement, Runnable done) {
       Minecraft mc = Minecraft.getInstance();
       AiService service = AiService.getExistingInstance();
-      if (placement.isActive() && !AiDirectOps.load_Z() && (service == null || !service.isActivelyDriving())) {
+      if (placement.isActive() && !AiDirectOps.isDrivingInput() && (service == null || !service.isActivelyDriving())) {
          if (!init_Z) {
             init_Z = true;
             ClientTickEvents.END_CLIENT_TICK.register(client -> load_V());
@@ -110,7 +110,7 @@ public final class aP {
          }
 
          if (!init_Z_aR(placement)) {
-            AiAssistant.init_ConfigStore().poll();
+            AiAssistant.getInstance().poll();
          }
 
          if (load(placement)) {
@@ -394,7 +394,7 @@ public final class aP {
          } else if (review && this.init_aR.isActive()) {
             autismclient.util.OverlayScreenController.setScreenExplicit(mc, this.init_Screen);
             if (!init_Z_aR(this.init_aR)) {
-               AiAssistant.init_ConfigStore().write_V();
+               AiAssistant.getInstance().openOverlay();
             } else {
                SchematicWorkspace.getInstance().showOverlay();
             }

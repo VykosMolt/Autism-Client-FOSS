@@ -29,7 +29,7 @@ final class AiObsidian {
    private AiObsidian() {
    }
 
-   static AiOperation init_AiOperation_I(int seconds) {
+   static AiOperation fetchOne(int seconds) {
       return init(1, seconds);
    }
 
@@ -291,7 +291,7 @@ final class AiObsidian {
                   held
                );
             } else {
-               AiVisualization.init_V(this);
+               AiVisualization.clearOwner(this);
             }
 
             return result;
@@ -309,7 +309,7 @@ final class AiObsidian {
 
          @Override
          public void cancel() {
-            AiVisualization.init_V(this);
+            AiVisualization.clearOwner(this);
             acquisition.cancel();
          }
       };
@@ -515,7 +515,7 @@ final class AiObsidian {
 
                switch (this.init_aD_DataUtil) {
                   case WATER:
-                     this.init_AiOperation = AiObsidian.init_AiOperation_I(AiObsidian.init_I_J(this.init_J));
+                     this.init_AiOperation = AiObsidian.fetchOne(AiObsidian.init_I_J(this.init_J));
                      break;
                   case SOURCE:
                      List<BlockPos> exposed = AiTerrain.findFluidSources(this.init_Minecraft, Blocks.LAVA, 96, 72)
@@ -779,7 +779,7 @@ final class AiObsidian {
                }
 
                if (this.init_AiOperation != null) {
-                  this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("obsidian", this.init_aD_DataUtil.name(), this.init_AiOperation);
+                  this.init_AiOperation = AiRunDiagnostics.trace("obsidian", this.init_aD_DataUtil.name(), this.init_AiOperation);
                }
 
                if (this.init_AiOperation != null && this.write_I < 4) {

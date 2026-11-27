@@ -62,8 +62,8 @@ public final class AiMine {
             throw new IllegalArgumentException("block must be a registry id or a suffix family like \"log\"");
          }
 
-         final AiMiningQuota quota = AiMiningQuota.init_as_JsonObject(args);
-         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.init_I();
+         final AiMiningQuota quota = AiMiningQuota.fromArgs(args);
+         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.totalCount();
          final int radius = Math.max(8, Math.min(96, AiJson.getInt(args, "radius", 48)));
          final boolean backfill = AiJson.getBoolean(args, "backfill", false);
          final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300))) * 1000000000L;
@@ -147,7 +147,7 @@ public final class AiMine {
                }
 
                this.init_ClassCache_StreamU.scanStepCompat();
-               if ((quota == null ? this.close >= count : quota.init_Z())
+               if ((quota == null ? this.close >= count : quota.isMet())
                   && this.init_AiOperation == null
                   && this.init_TokenStore_1_DataU != Inner_DataUtil.COLLECT) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
@@ -169,7 +169,7 @@ public final class AiMine {
                      JsonObject data = JsonParser.parseString(r.dataJson()).getAsJsonObject();
                      data.addProperty("broken", this.close);
                      if (quota != null) {
-                        data.add("brokenByBlock", quota.init_JsonObject());
+                        data.add("brokenByBlock", quota.brokenByBlock());
                         data.add("remainingByBlock", quota.load());
                      }
 
@@ -309,7 +309,7 @@ public final class AiMine {
                   }
 
                   if (this.load_BlockPos == null) {
-                     if (quota == null ? this.close >= count : quota.init_Z()) {
+                     if (quota == null ? this.close >= count : quota.isMet()) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
                      }
 
@@ -454,7 +454,7 @@ public final class AiMine {
 
             boolean init(Block block) {
                return this.load_Map.computeIfAbsent(block, b -> AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
-                  && (quota == null || quota.init_Z_Str(BuiltInRegistries.BLOCK.getKey(block).toString()));
+                  && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(block).toString()));
             }
 
             ItemStack[] init_ItemStackArr_2() {
@@ -662,7 +662,7 @@ public final class AiMine {
                }
 
                String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-               boolean wanted = match && (quota == null || quota.init_Z_Str(id)) && !this.load_Z_4(pos);
+               boolean wanted = match && (quota == null || quota.covers(id)) && !this.load_Z_4(pos);
                if (wanted && quota != null) {
                   this.read_Map.put(pos.asLong(), id);
                }
@@ -820,7 +820,7 @@ public final class AiMine {
             JsonObject init_JsonObject_28() {
                return AiJson.objectOf(
                   "brokenByBlock",
-                  quota == null ? null : quota.init_JsonObject(),
+                  quota == null ? null : quota.brokenByBlock(),
                   "remainingByBlock",
                   quota == null ? null : quota.load(),
                   "block",

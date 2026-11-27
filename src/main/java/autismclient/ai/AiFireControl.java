@@ -39,19 +39,19 @@ final class AiFireControl {
       this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
    }
 
-   int init_I() {
+   int firesExtinguished() {
       return this.load;
    }
 
-   String init_Str() {
+   String status() {
       return this.init_Str;
    }
 
-   boolean init_Z() {
+   boolean hasPendingFire() {
       return this.init_BlockPos != null;
    }
 
-   boolean load_Z() {
+   boolean canInterrupt() {
       return this.init_BlockPos == null && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
    }
 
@@ -214,7 +214,7 @@ final class AiFireControl {
       }
    }
 
-   void init_V() {
+   void reset() {
       this.init_DataUtil.clear();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();

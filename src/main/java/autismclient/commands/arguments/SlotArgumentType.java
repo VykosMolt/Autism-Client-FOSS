@@ -88,7 +88,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       if (menu != null) {
          for (int handlerSlot = 0; handlerSlot < menu.slots.size(); handlerSlot++) {
             int visible = InventorySlotHelper.toVisibleSlot(mc, handlerSlot);
-            values.add(init_Str_I(visible));
+            values.add(slotName(visible));
             values.add(String.valueOf(visible));
          }
       } else {
@@ -103,7 +103,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       return init_List;
    }
 
-   public static String init_Str_I(int visibleSlot) {
+   public static String slotName(int visibleSlot) {
       if (visibleSlot >= 100) {
          return "gui" + (visibleSlot - 100 + 1);
       }

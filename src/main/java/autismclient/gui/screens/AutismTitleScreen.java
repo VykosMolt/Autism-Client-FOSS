@@ -359,7 +359,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    }
 
    @Override
-   public Map<String, autismclient.gui.f.NetHelper> init_Map() {
+   public Map<String, autismclient.gui.f.NetHelper> buttonBounds() {
       this.read_V();
       double sx = cA.init_I() == 0 ? 1.0 : (double)this.width / cA.init_I();
       double sy = cA.load_I() == 0 ? 1.0 : (double)this.height / cA.load_I();

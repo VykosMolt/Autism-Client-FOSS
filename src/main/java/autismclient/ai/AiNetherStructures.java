@@ -42,12 +42,12 @@ final class AiNetherStructures {
       }
    }
 
-   static void init_V(Minecraft mc, Piglin partner) {
+   static void recordBarter(Minecraft mc, Piglin partner) {
       init(mc);
       init_aC_StreamUtil.init(partner.getUUID(), System.nanoTime());
    }
 
-   static boolean init_Z(Minecraft mc, Piglin partner) {
+   static boolean canBarter(Minecraft mc, Piglin partner) {
       if (mc.player != null && mc.level != null && partner.isAlive() && partner.isAdult() && !partner.isConverting() && !partner.isAggressive()) {
          init(mc);
          double reach = Math.min(3.0, mc.player.entityInteractionRange());
@@ -97,7 +97,7 @@ final class AiNetherStructures {
                || state.is(Blocks.POLISHED_BLACKSTONE_BRICKS)
                || state.is(Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS)
                || state.is(Blocks.CHISELED_POLISHED_BLACKSTONE)) {
-               return init_aC_DataUtil(at).confidence() >= 0.5;
+               return bastionAt(at).confidence() >= 0.5;
             }
          }
       }
@@ -105,7 +105,7 @@ final class AiNetherStructures {
       return false;
    }
 
-   static AiNetherStructures.Inner_DataUtil init_aC_DataUtil(BlockPos at) {
+   static AiNetherStructures.Inner_DataUtil bastionAt(BlockPos at) {
       Minecraft mc = Minecraft.getInstance();
       if (init_aC_DataUtil != null
          && init_WeakReference.get() == mc.level
@@ -129,7 +129,7 @@ final class AiNetherStructures {
             partial = true;
          } else {
             BlockState state = mc.level.getBlockState(p);
-            if (AiNetherRun.read_Predicate.test(state)) {
+            if (AiNetherRun.BASTION_BLOCK.test(state)) {
                bricks++;
                if (mc.level.getBlockState(p.above()).isAir()) {
                   floors.add(p.getY());
@@ -156,7 +156,7 @@ final class AiNetherStructures {
          for (int distance = 1; distance <= 10; distance++) {
             BlockPos p = at.relative(axis, distance);
             if (AiTerrain.isLoaded(mc.level, p)
-               && AiNetherRun.read_Predicate.test(mc.level.getBlockState(p.below()))
+               && AiNetherRun.BASTION_BLOCK.test(mc.level.getBlockState(p.below()))
                && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()) {
                floor++;
             }

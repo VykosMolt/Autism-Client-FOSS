@@ -53,19 +53,19 @@ public abstract class OverlayLayoutBase {
          this.collapseAnimator = new autismclient.gui.ui.EaseOutAnimator(target, 180);
       }
 
-      float reveal = this.collapseAnimator.init_F_F(target);
+      float reveal = this.collapseAnimator.animateTo(target);
       this.animatedHeight = 14 + Math.round((full - 14) * reveal);
       return this.animatedHeight;
    }
 
    protected void snapCollapseState(boolean collapsed) {
       if (this.collapseAnimator != null) {
-         this.collapseAnimator.init_V_F(collapsed ? 0.0F : 1.0F);
+         this.collapseAnimator.snapTo(collapsed ? 0.0F : 1.0F);
       }
    }
 
    public boolean isCollapseAnimating() {
-      return this.collapseAnimator != null && this.collapseAnimator.init_Z();
+      return this.collapseAnimator != null && this.collapseAnimator.isAnimating();
    }
 
    public int lastAnimatedHeight() {

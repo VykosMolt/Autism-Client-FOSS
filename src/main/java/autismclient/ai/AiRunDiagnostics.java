@@ -43,7 +43,7 @@ final class AiRunDiagnostics {
       this.init_LongSupplier = clock;
    }
 
-   static AiRunDiagnostics init_bJ() {
+   static AiRunDiagnostics start() {
       if (init_bJ != null) {
          init_bJ.init_Z = true;
       }
@@ -57,7 +57,7 @@ final class AiRunDiagnostics {
       return init_bJ;
    }
 
-   static AiOperation init_AiOperation_Str(String controller, String decision, AiOperation op) {
+   static AiOperation trace(String controller, String decision, AiOperation op) {
       return init_bJ != null && !init_bJ.init_Z && op != null ? init_bJ.load(controller, decision, op) : op;
    }
 
@@ -282,7 +282,7 @@ final class AiRunDiagnostics {
       }
    }
 
-   JsonObject init_JsonObject_Str(String status, String phase, String message) {
+   JsonObject snapshot(String status, String phase, String message) {
       JsonObject snapshot;
       try {
          snapshot = this.init_JsonObject_Str_2(phase, message, true);

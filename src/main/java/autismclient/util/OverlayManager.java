@@ -144,10 +144,10 @@ public class OverlayManager {
       if (overlay != null) {
          autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(overlay);
          if (adapter != null && this.overlays.contains(overlay) && !overlay.isVisible()) {
-            adapter.init_V();
+            adapter.animateVisibility();
             Minecraft mc = Minecraft.getInstance();
             Screen screen = mc == null ? null : mc.gui.screen();
-            if (adapter.init_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen)) {
+            if (adapter.isFadingOut() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen)) {
                this.closingOverlays.add(overlay);
                if (this.focusedOverlay == overlay) {
                   this.focusedOverlay = null;
@@ -236,8 +236,8 @@ public class OverlayManager {
          return false;
       }
 
-      adapter.init_V();
-      return adapter.init_Z();
+      adapter.animateVisibility();
+      return adapter.isFadingOut();
    }
 
    public void clearNonPersistent() {
@@ -760,7 +760,7 @@ public class OverlayManager {
             for (AutismOverlay overlay : this.overlays) {
                if (!this.isVisibleOnScreen(overlay, screen)) {
                   autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(overlay);
-                  if (adapter != null && adapter.load_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen)) {
+                  if (adapter != null && adapter.shouldRender() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen)) {
                      anyOverlayAnimating = true;
                      break;
                   }
@@ -795,7 +795,7 @@ public class OverlayManager {
                for (AutismOverlay overlay : this.overlays) {
                   autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.getOrCreateAdapter(overlay);
                   boolean interactive = this.isVisibleOnScreen(overlay, screen);
-                  boolean animating = !interactive && adapter.load_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
+                  boolean animating = !interactive && adapter.shouldRender() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
                   adapter.load(!interactive && !animating);
                   adapter.write(!interactive);
                   adapter.read(interactive && hoveredOverlayIndex > visibleIndex);
@@ -811,7 +811,7 @@ public class OverlayManager {
                   autismclient.gui.ui.UiClipStack.getInstance().clear(context);
 
                   try {
-                     this.layerHost.init_V_SyncManager(uiContext);
+                     this.layerHost.render(uiContext);
                   } catch (Throwable t) {
                      autismclient.gui.ui.UiClipStack.getInstance().clear(context);
                      this.logRenderFailure(t);
@@ -998,7 +998,7 @@ public class OverlayManager {
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter topComponent = this.getOrCreateAdapter(topOverlay);
       autismclient.gui.f.NetHelper topHitBounds = topComponent.getInteractiveBounds();
       if (topHitBounds != null && topHitBounds.init_Z((int)mouseX, (int)mouseY)) {
-         this.layerInputRouter.init_Z_I_2((int)mouseX, (int)mouseY, button);
+         this.layerInputRouter.mouseClicked((int)mouseX, (int)mouseY, button);
       } else {
          topComponent.onMouseClicked((int)mouseX, (int)mouseY, button);
       }
@@ -1164,7 +1164,7 @@ public class OverlayManager {
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter topComponent = this.getOrCreateAdapter(topOverlay);
       autismclient.gui.f.NetHelper topHitBounds = topComponent.getInteractiveBounds();
       if (topHitBounds != null && topHitBounds.init_Z((int)mouseX, (int)mouseY)) {
-         this.layerInputRouter.init_Z_I((int)mouseX, (int)mouseY, amount);
+         this.layerInputRouter.mouseScrolled((int)mouseX, (int)mouseY, amount);
       } else {
          topComponent.onMouseScrolled((int)mouseX, (int)mouseY, amount);
       }
@@ -1293,7 +1293,7 @@ public class OverlayManager {
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(overlay);
       if (adapter == null) {
          adapter = new autismclient.gui.ui.widgets.OverlayWindowLayerAdapter(overlay);
-         adapter.init_V_Z(!this.isStepPickerOverlay(overlay));
+         adapter.setZoomEnabled(!this.isStepPickerOverlay(overlay));
          this.adapters.put(overlay, adapter);
       }
 
@@ -1315,9 +1315,9 @@ public class OverlayManager {
 
       for (autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter : this.adapters.values()) {
          if (contextSwitch) {
-            adapter.load_V();
+            adapter.snapVisibility();
          } else {
-            adapter.init_V();
+            adapter.animateVisibility();
          }
       }
 
@@ -1326,7 +1326,7 @@ public class OverlayManager {
             autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.adapters.get(pending);
             if (pending.isVisible()) {
                this.closingOverlays.remove(pending);
-            } else if (adapter == null || !adapter.load_Z()) {
+            } else if (adapter == null || !adapter.shouldRender()) {
                this.removeImmediate(pending);
             }
          }

@@ -27,9 +27,9 @@ final class AiRecover {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
+         final AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
          if (death == null) {
-            return AiGameOperations.immediate(AiOperation.Status.FAILED, "No death has been recorded this session; there is nothing to recover", AiDeathLog.init_JsonObject());
+            return AiGameOperations.immediate(AiOperation.Status.FAILED, "No death has been recorded this session; there is nothing to recover", AiDeathLog.statusJson());
          }
 
          final int timeoutSeconds = Math.max(15, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 300)));
@@ -237,7 +237,7 @@ final class AiRecover {
             }
 
             JsonObject init_JsonObject_39() {
-               JsonObject out = AiJson.objectOf("grave", AiDeathLog.init_JsonObject(), "arrived", this.init_Z);
+               JsonObject out = AiJson.objectOf("grave", AiDeathLog.statusJson(), "arrived", this.init_Z);
                if (this.read) {
                   out.addProperty(
                      "warning",
@@ -302,8 +302,8 @@ final class AiRecover {
       }
    }
 
-   static AiOperation init_AiOperation() {
-      AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
+   static AiOperation create() {
+      AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
       return AiGameOperations.immediate(
          AiOperation.Status.SUCCEEDED,
          death == null
@@ -315,12 +315,12 @@ final class AiRecover {
                + "; "
                + death.remainingMillis() / 1000L
                + "s before the drops despawn",
-         AiDeathLog.init_JsonObject()
+         AiDeathLog.statusJson()
       );
    }
 
    static BlockPos init_BlockPos() {
-      AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
+      AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
       return death == null ? null : death.position();
    }
 }

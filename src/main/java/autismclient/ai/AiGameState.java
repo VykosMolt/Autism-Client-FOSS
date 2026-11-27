@@ -68,7 +68,7 @@ final class AiGameState {
          state.addProperty("food", mc.player.getFoodData().getFoodLevel());
          state.addProperty("dimension", mc.level.dimension().identifier().toString());
          state.addProperty("gameTick", mc.level.getGameTime());
-         state.addProperty("eventsPending", AiEventLog.init_x().init_I());
+         state.addProperty("eventsPending", AiEventLog.getInstance().pendingCount());
          state.addProperty("biome", mc.level.getBiome(mc.player.blockPosition()).unwrapKey().map(key -> key.identifier().toString()).orElse("unknown"));
          state.addProperty("weather", mc.level.isThundering() ? "thunder" : (mc.level.isRaining() ? "rain" : "clear"));
          long dayTime = mc.level.getOverworldClockTime();
@@ -114,16 +114,16 @@ final class AiGameState {
          }
 
          state.add("inventory", inventory);
-         state.add("scoreboard", AiWorldReaders.init_JsonArray(mc));
-         state.add("tabList", AiWorldReaders.load_JsonArray(mc));
-         state.add("tabDecoration", AiWorldReaders.init_JsonObject(mc));
+         state.add("scoreboard", AiWorldReaders.scoreboard(mc));
+         state.add("tabList", AiWorldReaders.tabList(mc));
+         state.add("tabDecoration", AiWorldReaders.tabDecoration(mc));
          state.add("bossBars", AiWorldReaders.read(mc));
-         state.add("vitals", AiWorldReaders.load_JsonObject(mc));
+         state.add("vitals", AiWorldReaders.vitals(mc));
          state.add("customMenu", AiGameplay.init());
          state.add("recentServerMessages", AiJson.GSON.toJsonTree(AiServerEvidence.recentServerMessages(6)));
          JsonArray chatLines = new JsonArray();
 
-         for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(8)) {
+         for (AiChatLedger.ChatEntry entry : AiChatLedger.recent(8)) {
             JsonArray actions = new JsonArray();
 
             for (AiChatLedger.ClickAction click : entry.clicks()) {
@@ -237,7 +237,7 @@ final class AiGameState {
          }
 
          state.add("projectiles", projectiles);
-         state.add("danger", AiDanger.init_JsonObject_Minecraft_I(mc, 8));
+         state.add("danger", AiDanger.snapshotJson(mc, 8));
          JsonArray blocks = new JsonArray();
          BlockPos origin = mc.player.blockPosition();
          List<BlockPos> solid = new ArrayList<>();

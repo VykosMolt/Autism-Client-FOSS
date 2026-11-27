@@ -181,10 +181,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    public void load_V_Z_3(boolean configurationOnly) {
       if (this.set_Z != configurationOnly) {
          this.set_Z = configurationOnly;
-         ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();
+         ActionEditorOverlay actionEditor = ActionEditorOverlay.getExisting();
          if (actionEditor != null) {
-            actionEditor.read_V(configurationOnly);
-            actionEditor.load_V_Z(this.cache_Z());
+            actionEditor.setConfigurationOnly(configurationOnly);
+            actionEditor.setCaptureAllowed(this.cache_Z());
          }
 
          if (this.write_Z) {
@@ -1113,10 +1113,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void init_V_I_MacroAction(int index, MacroAction primary) {
       if (primary != null && this.read_Z(primary)) {
          List<MacroAction> targets = this.init_List_MacroAction(primary);
-         ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
-         actionEditor.load_V_Z(this.cache_Z());
-         actionEditor.init_V_aM_I(this.init_aM, index);
-         actionEditor.init_V_MacroAction(primary, this::count_V, () -> this.init_V_MacroAction_List(primary, targets), targets.size());
+         ActionEditorOverlay actionEditor = ActionEditorOverlay.getInstance();
+         actionEditor.setCaptureAllowed(this.cache_Z());
+         actionEditor.setContext(this.init_aM, index);
+         actionEditor.openAction(primary, this::count_V, () -> this.init_V_MacroAction_List(primary, targets), targets.size());
       }
    }
 
@@ -1364,7 +1364,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             return false;
          }
 
-         ActionEditorOverlay editor = ActionEditorOverlay.load_ActionEditorOverla();
+         ActionEditorOverlay editor = ActionEditorOverlay.getExisting();
          this.count_V();
          TreeSet<Integer> deleteIndices = new TreeSet<>();
 
@@ -1390,7 +1390,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          for (int i : deleteIndices.descendingSet()) {
             if (i >= 0 && i < this.init_aM.actions.size()) {
                if (editor != null) {
-                  editor.init_V_MacroAction(this.init_aM.actions.get(i));
+                  editor.closeIfEditing(this.init_aM.actions.get(i));
                }
 
                this.init_aM.actions.remove(i);
@@ -2173,7 +2173,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.close_List = Collections.emptyList();
       this.open_List = Collections.emptyList();
       this.init_Map = Collections.emptyMap();
-      this.init_a.init_V_List(Collections.emptyList());
+      this.init_a.setItems(Collections.emptyList());
       if (this.read_k != null) {
          this.read_k.setFocused(false);
       }
@@ -2211,7 +2211,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean read_Z(MacroAction action) {
-      return ActionEditorOverlay.init_Z_MacroAction(action);
+      return ActionEditorOverlay.isEditable(action);
    }
 
    private boolean write_Z(MacroAction action) {
@@ -3313,8 +3313,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.reset_V_3();
          this.init_AutismMacroEditorO_3 = mode;
          List<AutismMacroEditorOverlay.PaletteEntry> entries = this.init_List_AutismMacroEditorO(mode);
-         this.init_a.init_V_List(entries);
-         this.init_a.init_V_Str("");
+         this.init_a.setItems(entries);
+         this.init_a.setQuery("");
          this.read_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, 0, 0, 1, 16, false);
          this.read_k.setPlaceholder(Component.literal("Search..."));
          this.read_k.setChangedListener(ignored -> this.task_V());
@@ -3345,8 +3345,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void task_V() {
       String query = this.read_k == null ? "" : this.read_k.getValue();
-      this.init_a.init_V_Str(query);
-      this.open_List = this.init_a.init_List();
+      this.init_a.setQuery(query);
+      this.open_List = this.init_a.filtered();
       this.close_List = this.init_List_AutismMacroEditorO_List(this.init_AutismMacroEditorO_3, this.open_List);
       Map<String, List<AutismMacroEditorOverlay.PaletteEntry>> grouped = new LinkedHashMap<>();
 
@@ -3712,7 +3712,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_Consumer = onSaveComplete;
       this.write_Z = true;
       AutismSessionState.getInstance().setMacroEditorVisible(true);
-      ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(this.cache_Z());
+      ActionEditorOverlay.getInstance().setCaptureAllowed(this.cache_Z());
       if (macroToEdit == null) {
          this.init_aM = new AutismMacro("");
          this.read_aM = null;
@@ -3848,7 +3848,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.sync_Z = false;
       this.init_AutismMacroEditorO = AutismMacroEditorOverlay.EditorMode.NORMAL;
       this.init_Consumer = null;
-      ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(true);
+      ActionEditorOverlay.getInstance().setCaptureAllowed(true);
       this.next_V_3();
       this.clearInputFocus();
       this.flush_Z = false;
@@ -3963,16 +3963,16 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void mark_V() {
-      ActionEditorOverlay overlay = ActionEditorOverlay.load_ActionEditorOverla();
+      ActionEditorOverlay overlay = ActionEditorOverlay.getExisting();
       if (overlay != null && this.init_aM != null) {
-         overlay.init_V_List(this.init_aM.actions);
+         overlay.onActionsChanged(this.init_aM.actions);
       }
    }
 
    private void scan_V() {
-      ActionEditorOverlay overlay = ActionEditorOverlay.load_ActionEditorOverla();
+      ActionEditorOverlay overlay = ActionEditorOverlay.getExisting();
       if (overlay != null && this.init_aM != null) {
-         overlay.init_V_List(List.of());
+         overlay.onActionsChanged(List.of());
       }
    }
 
@@ -4625,10 +4625,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_aM.actions.add(action);
          this.fill_V();
          if (this.read_Z(action)) {
-            ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
-            actionEditor.load_V_Z(this.cache_Z());
-            actionEditor.init_V_aM_I(this.init_aM, this.init_aM.actions.indexOf(action));
-            actionEditor.init_V_MacroAction(action, this::count_V, () -> this.load_V_MacroAction_2(action));
+            ActionEditorOverlay actionEditor = ActionEditorOverlay.getInstance();
+            actionEditor.setCaptureAllowed(this.cache_Z());
+            actionEditor.setContext(this.init_aM, this.init_aM.actions.indexOf(action));
+            actionEditor.openAction(action, this::count_V, () -> this.load_V_MacroAction_2(action));
          }
       }
    }
@@ -5973,13 +5973,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void flush_V(int index) {
       if (!this.queue_Z() && this.init_aM != null && index >= 0 && index < this.init_aM.actions.size() && !this.flush_Z(index)) {
          MacroAction action = this.init_aM.actions.get(index);
-         ActionEditorOverlay editor = ActionEditorOverlay.load_ActionEditorOverla();
+         ActionEditorOverlay editor = ActionEditorOverlay.getExisting();
          if (action instanceof autismclient.util.macro.RaceAction race) {
             int count = race.init_I_List_I(this.init_aM.actions, index);
             int end = Math.min(this.init_aM.actions.size(), index + count + 1);
             if (editor != null) {
                for (int i = index; i < end; i++) {
-                  editor.init_V_MacroAction(this.init_aM.actions.get(i));
+                  editor.closeIfEditing(this.init_aM.actions.get(i));
                }
             }
 
@@ -5990,7 +5990,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             int end = Math.min(this.init_aM.actions.size(), index + count + 1);
             if (editor != null) {
                for (int i = index; i < end; i++) {
-                  editor.init_V_MacroAction(this.init_aM.actions.get(i));
+                  editor.closeIfEditing(this.init_aM.actions.get(i));
                }
             }
 
@@ -6001,7 +6001,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             int end = Math.min(this.init_aM.actions.size(), index + count + 1);
             if (editor != null) {
                for (int i = index; i < end; i++) {
-                  editor.init_V_MacroAction(this.init_aM.actions.get(i));
+                  editor.closeIfEditing(this.init_aM.actions.get(i));
                }
             }
 
@@ -6009,14 +6009,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.fill_V();
          } else if (action instanceof autismclient.util.macro.MultiAction) {
             if (editor != null) {
-               editor.init_V_MacroAction(action);
+               editor.closeIfEditing(action);
             }
 
             this.init_aM.actions.remove(index);
             this.fill_V();
          } else {
             if (editor != null) {
-               editor.init_V_MacroAction(action);
+               editor.closeIfEditing(action);
             }
 
             int header = this.read_I_2(index);

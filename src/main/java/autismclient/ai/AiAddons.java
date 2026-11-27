@@ -70,7 +70,7 @@ public final class AiAddons {
       return override != null ? override : AutismClientAddon.FOLDER.toPath().resolve("addons");
    }
 
-   public static AiOperation init_AiOperation(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       String action = AiJson.getString(args, "action", "").toLowerCase(Locale.ROOT);
       if (("build".equals(action) || "load".equals(action) || "install".equals(action)) && !auditAddonExecutionAllowed()) {
          return init_AiOperation(

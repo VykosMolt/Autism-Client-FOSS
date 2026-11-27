@@ -17,7 +17,7 @@ public final class SdfRenderPipelines {
    private SdfRenderPipelines() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isAvailable() {
       init_V();
       return init_RenderPipeline != null && load_RenderPipeline != null;
    }

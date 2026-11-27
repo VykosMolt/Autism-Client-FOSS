@@ -81,13 +81,13 @@ final class AiObtain {
             int want = AiJson.getBoolean(args, "additional", false)
                ? AiItems.countInInventory(target) + AiJson.getInt(args, "count", 1)
                : AiJson.getInt(args, "count", 1);
-            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal();
+            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.bestTier(mc).ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal();
             if (equippedObsidian && want >= 1 && want <= 2304 && AiItems.countInInventory(target) < want) {
                return AiObsidian.load(want, AiJson.getInt(args, "timeoutSeconds", 600));
             }
 
             if (!equippedObsidian && AiProgression.init_Z(only, want)) {
-               return AiProgression.init_AiOperation_JsonObject(args, only, want);
+               return AiProgression.obtain(args, only, want);
             }
 
             if (only.equals("minecraft:water_bucket") && want >= 1 && want <= 16 && AiItems.countInInventory(target) < want) {
@@ -177,7 +177,7 @@ final class AiObtain {
                                  !this.init_Set_6().isEmpty(),
                                  !this.load_Set_4().isEmpty(),
                                  !this.init_List_6().isEmpty(),
-                                 AiProspect.init_Z(target),
+                                 AiProspect.canProspect(target),
                                  !this.load_List_3().isEmpty()
                               )
                               : "every strategy was tried";
@@ -185,7 +185,7 @@ final class AiObtain {
                               AiOperation.Status.FAILED, "No remaining route to " + spec + " (" + AiItems.countInInventory(this.init_af_DataUtil) + "/" + goal + "); " + why
                            );
                         } else {
-                           this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
+                           this.init_AiOperation = AiRunDiagnostics.trace(
                               "obtain", next.name() + " " + spec + " " + AiItems.countInInventory(this.init_af_DataUtil) + "/" + goal, this.init_AiOperation(next)
                            );
                            if (this.init_AiOperation == null) {
@@ -221,7 +221,7 @@ final class AiObtain {
                         if (result.status() != AiOperation.Status.SUCCEEDED) {
                            AiOperation detour = this.init(result);
                            if (detour != null) {
-                              this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("obtain", "station detour for " + spec, detour);
+                              this.init_AiOperation = AiRunDiagnostics.trace("obtain", "station detour for " + spec, detour);
                               return this.init_AiOperation_Result_9(
                                  this.load_Z && this.init_aE_DataUtil == AiObtain.Inner_DataUtil.SMELT
                                     ? "Smelting needs a furnace; making one first"
@@ -247,7 +247,7 @@ final class AiObtain {
                                  this.read_Set = null;
                                  this.load_List = null;
                                  this.read_List = null;
-                                 this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
+                                 this.init_AiOperation = AiRunDiagnostics.trace(
                                     "obtain", "family fallback " + family, this.init(Math.max(15, this.init_I_19()))
                                  );
                                  if (this.init_AiOperation == null) {
@@ -308,7 +308,7 @@ final class AiObtain {
                         this.init_aE_DataUtil = null;
                      }
 
-                     this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", "obtain: " + this.init_Str, action);
+                     this.load_AiOperation = AiRunDiagnostics.trace("survival", "obtain: " + this.init_Str, action);
                      return this.init_AiOperation_Result_9("Interrupted: " + this.init_Str);
                   } else {
                      return null;
@@ -397,7 +397,7 @@ final class AiObtain {
                         var10000 = this.load_Str_3() != null;
                         break;
                      case PROSPECT:
-                        var10000 = AiProspect.init_Z(target) && !AiOracle.init_Z();
+                        var10000 = AiProspect.canProspect(target) && !AiOracle.isActive();
                         break;
                      case HUNT:
                         var10000 = !this.load_List_3().isEmpty();
@@ -467,7 +467,7 @@ final class AiObtain {
                         );
                      case CRAFT:
                         AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
-                        Item output = AiObtain.init(this.init_Set_6(), goal, graph, AiObtain::init_D);
+                        Item output = AiObtain.init(this.init_Set_6(), goal, graph, AiObtain::nearestSourceDistance);
                         if (output == null) {
                            return null;
                         } else {
@@ -477,7 +477,7 @@ final class AiObtain {
                               Entry<String, Integer> shortfall = this.init(plan);
                               if (shortfall != null) {
                                  String want = shortfall.getKey();
-                                 if (want.endsWith("_log") && AiObtain.init_D(want) == 1.7976931348623157E308 && !visiting.contains("log")) {
+                                 if (want.endsWith("_log") && AiObtain.nearestSourceDistance(want) == 1.7976931348623157E308 && !visiting.contains("log")) {
                                     want = "log";
                                  }
 
@@ -564,10 +564,10 @@ final class AiObtain {
                               autismclient.util.AutoCraftingEngine.SmeltRecipe cooking = autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, outputx)
                                  .stream()
                                  .filter(p -> p.inputs().stream().anyMatch(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
-                                 .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.station()) ? 0 : (AiGameState.countInventoryItem(p.station()) > 0 ? 1 : 2)))
+                                 .min(Comparator.comparingInt(p -> AiSmelt.hasStationNearby(mc, p.station()) ? 0 : (AiGameState.countInventoryItem(p.station()) > 0 ? 1 : 2)))
                                  .orElse(null);
                               if (cooking != null && depth < 5) {
-                                 if (!AiSmelt.init_Z(mc, cooking.station()) && AiGameState.countInventoryItem(cooking.station()) == 0 && !visiting.contains(cooking.station())) {
+                                 if (!AiSmelt.hasStationNearby(mc, cooking.station()) && AiGameState.countInventoryItem(cooking.station()) == 0 && !visiting.contains(cooking.station())) {
                                     this.load_Str = "obtain " + cooking.station() + " for " + outputId;
                                     return AiObtain.init(
                                        AiJson.objectOf(
@@ -597,32 +597,32 @@ final class AiObtain {
                                     .findFirst()
                                     .orElseThrow();
                                  Item fuel = AiSmelt.init("", source, missing);
-                                 int burnDivisor = AiSmelt.init_I(cooking.station());
+                                 int burnDivisor = AiSmelt.burnDivisor(cooking.station());
                                  int burn = fuel == null ? 0 : AiItems.fuelBurnTime(new ItemStack(fuel)) / burnDivisor;
                                  int fuelCount = fuel == null ? 0 : AiSmelt.init(fuel);
-                                 int furnaceCount = AiParallelSmelt.init_I_I_3(missing);
-                                 if (fuelCount < AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), burn)) {
+                                 int furnaceCount = AiParallelSmelt.furnaceCountFor(missing);
+                                 if (fuelCount < AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), burn)) {
                                     ItemStack fuelStack = fuel == null ? ItemStack.EMPTY : new ItemStack(fuel);
-                                    boolean coalNearby = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308
+                                    boolean coalNearby = AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308
                                        && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState());
                                     String fuelId;
                                     int needed;
                                     if (fuel == null || AiSmelt.init_I(fuelStack) != 1 || fuel != Items.COAL && fuel != Items.CHARCOAL) {
                                        if (coalNearby && allowMining && !visiting.contains("minecraft:coal")) {
                                           fuelId = "minecraft:coal";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
+                                          needed = AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
                                        } else if (AiItems.countInInventory(AiItems.resolveItem("log")) <= 0
                                           && AiItems.countInInventory(AiItems.resolveItem("planks")) <= 0
-                                          && AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308) {
+                                          && AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308) {
                                           fuelId = "minecraft:coal";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor);
+                                          needed = AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor);
                                        } else {
                                           fuelId = "planks";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.reservedWood();
+                                          needed = AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.reservedWood();
                                        }
                                     } else {
                                        fuelId = BuiltInRegistries.ITEM.getKey(fuel).toString();
-                                       needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.cookTimeTicks(), burn) + AiRunResources.mandatoryReservedCount(fuel);
+                                       needed = AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), burn) + AiRunResources.mandatoryReservedCount(fuel);
                                     }
 
                                     if (!visiting.contains(fuelId)) {
@@ -729,7 +729,7 @@ final class AiObtain {
                }
 
                boolean init_Z_18() {
-                  return AiItems.countInInventory(AiItems.resolveItem("log")) > 0 || AiItems.countInInventory(AiItems.resolveItem("planks")) >= 2 || AiObtain.init_D("log") <= 1024.0;
+                  return AiItems.countInInventory(AiItems.resolveItem("log")) > 0 || AiItems.countInInventory(AiItems.resolveItem("planks")) >= 2 || AiObtain.nearestSourceDistance("log") <= 1024.0;
                }
 
                AiOperation init(List<EntityType<?>> mobs, JsonObject fightArgs, int legSeconds) {
@@ -737,7 +737,7 @@ final class AiObtain {
                   if (far != null && mc.player.distanceTo(far) > 40.0) {
                      this.load_Str = "walk to the " + BuiltInRegistries.ENTITY_TYPE.getKey(far.getType()).getPath() + " and hunt";
                      AiOperation walk = AiGoto.travelToCompat(far.blockPosition(), 8.0, true, true, true, legSeconds);
-                     return this.init(AiNetherRun.init_AiOperation_AiOperation_Supplier(walk, () -> this.init(mobs, fightArgs)));
+                     return this.init(AiNetherRun.sequence(walk, () -> this.init(mobs, fightArgs)));
                   } else {
                      return this.init(this.init(mobs, fightArgs));
                   }
@@ -766,7 +766,7 @@ final class AiObtain {
                         depth + 1,
                         nested
                      );
-                     return AiNetherRun.init_AiOperation_AiOperation_Supplier(sword, () -> AiCombat.init(fightArgs));
+                     return AiNetherRun.sequence(sword, () -> AiCombat.init(fightArgs));
                   } else {
                      return AiCombat.init(fightArgs);
                   }
@@ -1004,7 +1004,7 @@ final class AiObtain {
                }
 
                AiOperation init(final String blockId, final int count, final int timeoutSecondsx) {
-                  return !AiOreRoute.init_Z
+                  return !AiOreRoute.LEGIT_MINING
                      ? this.init(timeoutSeconds)
                      : new AiOperation() {
                         final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -1174,7 +1174,7 @@ final class AiObtain {
                }
 
                boolean read_Z_8() {
-                  if (!AiOreRoute.init_Z) {
+                  if (!AiOreRoute.LEGIT_MINING) {
                      return false;
                   }
 
@@ -1347,7 +1347,7 @@ final class AiObtain {
                public void cancel() {
                   if (!this.sync) {
                      this.sync = true;
-                     AiVisualization.init_V(this);
+                     AiVisualization.clearOwner(this);
                      if (this.load_AiOperation != null) {
                         this.load_AiOperation.cancel();
                         this.load_AiOperation = null;
@@ -1561,7 +1561,7 @@ final class AiObtain {
             double a = this.init_I++ * 2.399;
             int x = this.init_BlockPos.getX() + (int)Math.round(Math.cos(a) * 64.0);
             int z = this.init_BlockPos.getZ() + (int)Math.round(Math.sin(a) * 64.0);
-            BlockPos surface = AiSpeedrun.init_BlockPos_BlockPos(mc.player.blockPosition(), x, z, column -> AiSpeedrun.init_BlockPos_Minecraft_BlockPos(mc, column));
+            BlockPos surface = AiSpeedrun.findSurface(mc.player.blockPosition(), x, z, column -> AiSpeedrun.observedSurface(mc, column));
             if (surface == null) {
                return this.init(AiOperation.Status.RUNNING, "No safe ground that way; trying another bearing");
             }
@@ -1576,7 +1576,7 @@ final class AiObtain {
                autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                true,
                2.0,
-               AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
+               AiSpeedrun.surfaceGoal(surface),
                AiGoto.GotoOptions.DEFAULT
             );
             return this.init(AiOperation.Status.RUNNING, "Looking for " + what);
@@ -1612,7 +1612,7 @@ final class AiObtain {
       return best;
    }
 
-   static double init_D(String itemId) {
+   static double nearestSourceDistance(String itemId) {
       Minecraft mc = Minecraft.getInstance();
       AiItems.ItemSpec target = AiItems.resolveItem(itemId);
       List<Block> sources = new ArrayList<>(target.blocks());
@@ -1660,7 +1660,7 @@ final class AiObtain {
                int slotHeld = 0;
 
                for (String accepted : slot) {
-                  slotHeld = Math.max(slotHeld, Math.max(0, graph.init_I(accepted)));
+                  slotHeld = Math.max(slotHeld, Math.max(0, graph.held(accepted)));
                }
 
                held += Math.min(slotHeld, step.crafts());
@@ -1778,7 +1778,7 @@ final class AiObtain {
          return true;
       }
 
-      List<AiCraftPlanner.RecipeSpec> recipes = graph.init_List(outputId);
+      List<AiCraftPlanner.RecipeSpec> recipes = graph.recipesFor(outputId);
       return !recipes.isEmpty() && recipes.get(0).requiresTable();
    }
 
@@ -1817,18 +1817,18 @@ final class AiObtain {
       final Map<String, Double> distances = new HashMap<>();
       return new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.RecipeSpec> init_List(String itemId) {
-            return inner.init_List(itemId);
+         public List<AiCraftPlanner.RecipeSpec> recipesFor(String itemId) {
+            return inner.recipesFor(itemId);
          }
 
          @Override
-         public int init_I(String itemId) {
-            return inner.init_I(itemId);
+         public int held(String itemId) {
+            return inner.held(itemId);
          }
 
          @Override
          public int load_I(String itemId) {
-            boolean craftable = !inner.init_List(itemId).isEmpty();
+            boolean craftable = !inner.recipesFor(itemId).isEmpty();
             boolean smeltable = BuiltInRegistries.ITEM
                .getOptional(Identifier.parse(itemId))
                .map(item -> !autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, item).isEmpty())
@@ -1849,7 +1849,7 @@ final class AiObtain {
          @Override
          public double init_D(String itemId) {
             return mc != null && mc.player != null && mc.level != null ? distances.computeIfAbsent(itemId, id -> {
-               double distance = AiObtain.init_D(id);
+               double distance = AiObtain.nearestSourceDistance(id);
                return distance == 1.7976931348623157E308 ? 256.0 : 1.0 + Math.sqrt(distance);
             }) : inner.init_D(itemId);
          }

@@ -90,7 +90,7 @@ final class AiOracle {
    private AiOracle() {
    }
 
-   static void init_V_Z(boolean on) {
+   static void enable(boolean on) {
       if (on) {
          init_AtomicInteger.incrementAndGet();
       } else {
@@ -98,16 +98,16 @@ final class AiOracle {
       }
    }
 
-   static boolean init_Z() {
+   static boolean isActive() {
       return init_AtomicInteger.get() > 0;
    }
 
-   static AiOperation init_AiOperation_JsonObject(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       AiOracle.Inner_ConfigStore q = init_aG_ConfigStore_Str(AiJson.getString(args, "query", ""));
       int cap = init_I_I(AiJson.getInt(args, "cap", 8));
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         if (!init_Z() || q.subject() != AiOracle.Inner_SyncManager.ORE && q.subject() != AiOracle.Inner_SyncManager.STRUCTURE) {
+         if (!isActive() || q.subject() != AiOracle.Inner_SyncManager.ORE && q.subject() != AiOracle.Inner_SyncManager.STRUCTURE) {
             AiOperation var10000;
             switch (q.subject()) {
                case LAVA:
@@ -845,7 +845,7 @@ final class AiOracle {
          throw new IllegalArgumentException("Biome location requires a connected living player");
       }
 
-      if (init_Z()) {
+      if (isActive()) {
          throw new IllegalArgumentException("No seed knowledge in a seed-free run: find the biome by exploration");
       }
 
@@ -1372,7 +1372,7 @@ final class AiOracle {
             if (!this.init && mc.player != null && mc.level != null) {
                List<Entity> observed = new ArrayList<>();
                mc.level.entitiesForRendering().forEach(observed::add);
-               List<LivingEntity> close = AiSurvival.init_List_List(observed, mc.player.position(), 24.0);
+               List<LivingEntity> close = AiSurvival.livingWithin(observed, mc.player.position(), 24.0);
                close.sort(Comparator.comparingDouble(ex -> ex.distanceToSqr(mc.player)));
                JsonArray threats = new JsonArray();
 

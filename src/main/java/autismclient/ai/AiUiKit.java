@@ -374,7 +374,7 @@ final class AiUiKit {
             String part = text.substring(start, end);
             autismclient.gui.sdf.MsdfFontFace face = AiUiKit.fontFaceForStyle(style);
             if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, part)) {
-               autismclient.gui.sdf.MsdfFontAtlas msdf = face.init_StreamUtil();
+               autismclient.gui.sdf.MsdfFontAtlas msdf = face.atlas();
                if (msdf != null) {
                   return (int)Math.ceil(msdf.init(part, AiUiKit.fontSizeForStyle(style)) - 1.0E-4);
                }

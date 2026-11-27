@@ -56,7 +56,7 @@ final class AiChatMode {
       this.init_Executor = Objects.requireNonNull(executor, "executor");
    }
 
-   void init_V() {
+   void start() {
       synchronized (this) {
          if (this.init_Z) {
             return;
@@ -79,7 +79,7 @@ final class AiChatMode {
          Collections.reverse(oldestFirst);
 
          for (AiChatLedger.ChatEntry entry : oldestFirst) {
-            AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, this.init_FieldCache_BufferH.init_Str());
+            AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, this.init_FieldCache_BufferH.playerName());
             if (line != null) {
                this.init_Deque.addLast(line);
             }
@@ -89,10 +89,10 @@ final class AiChatMode {
       }
 
       this.init_FieldCache_BufferH.init_V();
-      this.init_FieldCache_BufferH.init(this.init_JsonObject());
+      this.init_FieldCache_BufferH.init(this.statusJson());
    }
 
-   boolean init_Z() {
+   boolean isActive() {
       return this.init_Z;
    }
 
@@ -106,13 +106,13 @@ final class AiChatMode {
                this.update_Deque.removeFirst();
             }
 
-            this.init_Deque.addLast(new AiChatPolicy.Inner_StreamUtil(0L, "SELF", this.init_FieldCache_BufferH.init_Str(), clean));
+            this.init_Deque.addLast(new AiChatPolicy.Inner_StreamUtil(0L, "SELF", this.init_FieldCache_BufferH.playerName(), clean));
             this.update();
          }
       }
    }
 
-   void init_V_PathHelper_DataUti(AiChatPolicy.Inner_DataUtil next) {
+   void applyPolicy(AiChatPolicy.Inner_DataUtil next) {
       if (next != null) {
          synchronized (this) {
             if (this.init_PathHelper_DataUti.equals(next)) {
@@ -125,13 +125,13 @@ final class AiChatMode {
             this.read_Deque.removeIf(line -> !this.init_Z_PathHelper_StreamU(line));
          }
 
-         this.init_FieldCache_BufferH.init(this.init_JsonObject());
+         this.init_FieldCache_BufferH.init(this.statusJson());
       }
    }
 
-   void load_V() {
+   void tick() {
       if (this.init_Z) {
-         if (!this.init_FieldCache_BufferH.init_Z()) {
+         if (!this.init_FieldCache_BufferH.canSend()) {
             this.load("Chat mode stopped: no connection");
          } else {
             long revision = this.init_FieldCache_BufferH.load_J();
@@ -154,7 +154,7 @@ final class AiChatMode {
                }
 
                fresh.sort(Comparator.comparingLong(AiChatLedger.ChatEntry::revision));
-               String self = this.init_FieldCache_BufferH.init_Str();
+               String self = this.init_FieldCache_BufferH.playerName();
 
                for (AiChatLedger.ChatEntry entry : fresh) {
                   this.init_J = Math.max(this.init_J, entry.revision());
@@ -167,10 +167,10 @@ final class AiChatMode {
                      }
 
                      if (wasEmpty) {
-                        this.read_J = this.init_FieldCache_BufferH.init_J();
+                        this.read_J = this.init_FieldCache_BufferH.now();
                      }
 
-                     this.load_J = this.init_FieldCache_BufferH.init_J();
+                     this.load_J = this.init_FieldCache_BufferH.now();
                      this.load_Str = line.sender();
                   }
                }
@@ -207,11 +207,11 @@ final class AiChatMode {
       }
 
       String message = reason != null && !reason.isBlank() ? reason : "Chat mode stopped";
-      this.init_FieldCache_BufferH.init(this.init_JsonObject());
+      this.init_FieldCache_BufferH.init(this.statusJson());
       this.init_FieldCache_BufferH.load(message);
    }
 
-   String init_Str() {
+   String statusLine() {
       synchronized (this) {
          if (!this.init_Z) {
             return "Chat mode off";
@@ -235,7 +235,7 @@ final class AiChatMode {
       }
    }
 
-   JsonObject init_JsonObject() {
+   JsonObject statusJson() {
       synchronized (this) {
          return AiJson.objectOf(
             "active",
@@ -293,10 +293,10 @@ final class AiChatMode {
             return;
          }
 
-         long now = this.init_FieldCache_BufferH.init_J();
+         long now = this.init_FieldCache_BufferH.now();
          long debounce = this.load_Deque.isEmpty()
             ? 0L
-            : AiChatPolicy.init(this.init_PathHelper_DataUti, new ArrayList<>(this.load_Deque), this.init_FieldCache_BufferH.init_Str());
+            : AiChatPolicy.init(this.init_PathHelper_DataUti, new ArrayList<>(this.load_Deque), this.init_FieldCache_BufferH.playerName());
          boolean settled = this.load_Deque.isEmpty() || now - this.load_J >= debounce;
          boolean heldTooLong = !this.load_Deque.isEmpty() && this.read_J != 0L && now - this.read_J >= 5000L;
          if (!settled && !heldTooLong) {
@@ -355,7 +355,7 @@ final class AiChatMode {
                   .toList();
                requestConfig = this.init_PathHelper_DataUti;
                requestVersion = this.close;
-               self = this.init_FieldCache_BufferH.init_Str();
+               self = this.init_FieldCache_BufferH.playerName();
                if (this.init_FieldCache_StreamU == null) {
                   this.init_FieldCache_StreamU = this.init_FieldCache_CachePo.create();
                }
@@ -379,7 +379,7 @@ final class AiChatMode {
             boolean skip = AiChatPolicy.update(answer == null ? null : answer.text()) || clean.isEmpty();
             boolean send = false;
             String privateTarget = null;
-            long now = this.init_FieldCache_BufferH.init_J();
+            long now = this.init_FieldCache_BufferH.now();
             synchronized (this) {
                if (!this.init_Z) {
                   return;
@@ -416,7 +416,7 @@ final class AiChatMode {
                   if (skip) {
                      this.load_I++;
                      this.update_J = now + Math.max(500L, this.init_PathHelper_DataUti.minGapMs() / 2L);
-                  } else if (this.init_FieldCache_BufferH.init_Z()) {
+                  } else if (this.init_FieldCache_BufferH.canSend()) {
                      if (!init_Str_PathHelper_StreamU(batch.getFirst()).isEmpty()) {
                         privateTarget = batch.getFirst().sender();
                      }
@@ -445,7 +445,7 @@ final class AiChatMode {
                }
             }
 
-            if (send && this.init_Z && this.init_FieldCache_BufferH.init_Z()) {
+            if (send && this.init_Z && this.init_FieldCache_BufferH.canSend()) {
                try {
                   if (privateTarget != null) {
                      this.init_FieldCache_BufferH.init(privateTarget, clean, current);
@@ -464,7 +464,7 @@ final class AiChatMode {
                }
             }
 
-            init_V_Runnable(() -> this.init_FieldCache_BufferH.init(this.init_JsonObject()));
+            init_V_Runnable(() -> this.init_FieldCache_BufferH.init(this.statusJson()));
          } catch (Exception var57) {
             Exception error = var57;
             synchronized (this) {
@@ -483,7 +483,7 @@ final class AiChatMode {
                this.read_I++;
                this.init_Str = init_Str_Exception(error);
                long backoff = Math.min(60000L, 2000L << Math.min(5, this.read_I - 1));
-               this.update_J = this.init_FieldCache_BufferH.init_J() + backoff;
+               this.update_J = this.init_FieldCache_BufferH.now() + backoff;
                if (!committed) {
                   this.load(batch);
                }
@@ -493,7 +493,7 @@ final class AiChatMode {
                }
             }
 
-            init_V_Runnable(() -> this.init_FieldCache_BufferH.init(this.init_JsonObject()));
+            init_V_Runnable(() -> this.init_FieldCache_BufferH.init(this.statusJson()));
          }
       } finally {
          synchronized (this) {
@@ -527,7 +527,7 @@ final class AiChatMode {
    private boolean init_Z_PathHelper_StreamU(AiChatPolicy.Inner_StreamUtil line) {
       return AiChatPolicy.init(
             new AiChatLedger.ChatEntry(0L, line.revision(), line.source(), line.sender(), line.text(), List.of(), ""),
-            this.init_FieldCache_BufferH.init_Str(),
+            this.init_FieldCache_BufferH.playerName(),
             this.init_PathHelper_DataUti
          )
          != null;
@@ -544,13 +544,13 @@ final class AiChatMode {
    }
 
    private boolean init_Z_Str(String text) {
-      String normalised = AiChatPolicy.load_Str(text).toLowerCase(Locale.ROOT);
+      String normalised = AiChatPolicy.normalize(text).toLowerCase(Locale.ROOT);
       if (normalised.isEmpty()) {
          return false;
       }
 
       for (String sent : this.update_Deque) {
-         String reply = AiChatPolicy.load_Str(sent).toLowerCase(Locale.ROOT);
+         String reply = AiChatPolicy.normalize(sent).toLowerCase(Locale.ROOT);
          if (!reply.isEmpty() && normalised.contains(reply)) {
             return true;
          }
@@ -575,11 +575,11 @@ final class AiChatMode {
    }
 
    interface Inner_BufferHelper {
-      long init_J();
+      long now();
 
-      String init_Str();
+      String playerName();
 
-      boolean init_Z();
+      boolean canSend();
 
       long load_J();
 
@@ -637,8 +637,8 @@ final class AiChatMode {
       @Override
       public AiChatMode.Inner_DataUtil init(String system, String user, BooleanSupplier cancelled) throws IOException, InterruptedException, ExecutionException, TimeoutException {
          AiProvider.Inner_BufferHelper reply = this.init
-            .init_bA_BufferHelper_c_StreamUtil(
-               AiContext.Inner_StreamUtil.of(system), List.of(this.init.init_JsonObject_Str(user)), new JsonArray(), "none", delta -> {}, cancelled, call -> {}
+            .completeWithContext(
+               AiContext.Inner_StreamUtil.of(system), List.of(this.init.userMessage(user)), new JsonArray(), "none", delta -> {}, cancelled, call -> {}
             );
          AiProvider.Inner_TaskQueue usage = reply.usage();
          String text = reply.text();

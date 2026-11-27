@@ -32,7 +32,7 @@ public final class AiSessions {
    private final Set<String> init_Set = new HashSet<>();
 
    public static boolean init_Z_cd_DataUtil(AiSessions.Inner_DataUtil d) {
-      return d.sync_Str.isBlank() && d.init_List.isEmpty() && d.load_List.stream().noneMatch(m -> "user".equals(m.role()));
+      return d.objective.isBlank() && d.queue.isEmpty() && d.messages.stream().noneMatch(m -> "user".equals(m.role()));
    }
 
    public AiSessions(Path aiDirectory) {
@@ -43,7 +43,7 @@ public final class AiSessions {
       return this.init_Path;
    }
 
-   public synchronized void init_V() throws IOException {
+   public synchronized void reloadIndex() throws IOException {
       this.init_Map.clear();
       this.init_Set.clear();
       if (Files.isDirectory(this.init_Path)) {
@@ -60,11 +60,11 @@ public final class AiSessions {
    }
 
    private void load(AiSessions.Inner_DataUtil d) {
-      this.init_Map.put(d.init_Str, init_cd_StreamUtil_cd_DataUtil(d));
+      this.init_Map.put(d.id, init_cd_StreamUtil_cd_DataUtil(d));
       if (init_Z_cd_DataUtil(d)) {
-         this.init_Set.add(d.init_Str);
+         this.init_Set.add(d.id);
       } else {
-         this.init_Set.remove(d.init_Str);
+         this.init_Set.remove(d.id);
       }
    }
 
@@ -72,11 +72,11 @@ public final class AiSessions {
       return this.init_Set.contains(id);
    }
 
-   public synchronized List<String> init_List() throws IOException {
+   public synchronized List<String> purgeDeleted() throws IOException {
       List<String> removed = new ArrayList<>(this.init_Set);
 
       for (String id : removed) {
-         this.init_V_Str(id);
+         this.delete(id);
       }
 
       return removed;
@@ -88,12 +88,12 @@ public final class AiSessions {
 
    public synchronized AiSessions.Inner_DataUtil init_cd_DataUtil() throws IOException {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
-      d.init_J = d.load_J = System.currentTimeMillis();
-      this.init_V_cd_DataUtil(d);
+      d.createdAt = d.lastActiveAt = System.currentTimeMillis();
+      this.save(d);
       return d;
    }
 
-   public synchronized AiSessions.Inner_DataUtil init_cd_DataUtil_Str(String id) throws IOException {
+   public synchronized AiSessions.Inner_DataUtil readSession(String id) throws IOException {
       Path file = this.init_Path_Str(id);
       if (!Files.isRegularFile(file)) {
          throw new IOException("Unknown session " + id);
@@ -102,12 +102,12 @@ public final class AiSessions {
       }
    }
 
-   public synchronized void init_V_cd_DataUtil(AiSessions.Inner_DataUtil d) throws IOException {
-      AiJson.writeAtomicJson(this.init_Path_Str(d.init_Str), init_JsonObject_cd_DataUtil(d));
+   public synchronized void save(AiSessions.Inner_DataUtil d) throws IOException {
+      AiJson.writeAtomicJson(this.init_Path_Str(d.id), init_JsonObject_cd_DataUtil(d));
       this.load(d);
    }
 
-   public synchronized void init_V_Str(String id) throws IOException {
+   public synchronized void delete(String id) throws IOException {
       this.init_Map.remove(id);
       this.init_Set.remove(id);
       Files.deleteIfExists(this.init_Path_Str(id));
@@ -115,41 +115,41 @@ public final class AiSessions {
       Files.deleteIfExists(this.read(id));
    }
 
-   public synchronized AiSessions.Inner_DataUtil load_cd_DataUtil(String id) throws IOException {
-      AiSessions.Inner_DataUtil parent = this.init_cd_DataUtil_Str(id);
+   public synchronized AiSessions.Inner_DataUtil fork(String id) throws IOException {
+      AiSessions.Inner_DataUtil parent = this.readSession(id);
       AiSessions.Inner_DataUtil child = init_cd_DataUtil_JsonObject(init_JsonObject_cd_DataUtil(parent).deepCopy());
-      child.init_Str = UUID.randomUUID().toString();
-      child.read_Str = id;
-      String base = parent.load_Str;
+      child.id = UUID.randomUUID().toString();
+      child.parentId = id;
+      String base = parent.title;
       if (base.length() > 48 - " (branch)".length() - 1) {
          base = base.substring(0, 48 - " (branch)".length() - 1).trim() + "…";
       }
 
-      child.load_Str = base + " (branch)";
-      child.init_J = child.load_J = System.currentTimeMillis();
-      this.init_V_cd_DataUtil(child);
+      child.title = base + " (branch)";
+      child.createdAt = child.lastActiveAt = System.currentTimeMillis();
+      this.save(child);
       if (Files.isRegularFile(this.load_Path(id))) {
-         Files.copy(this.load_Path(id), this.load_Path(child.init_Str), StandardCopyOption.REPLACE_EXISTING);
+         Files.copy(this.load_Path(id), this.load_Path(child.id), StandardCopyOption.REPLACE_EXISTING);
       }
 
       if (Files.isRegularFile(this.read(id))) {
-         Files.copy(this.read(id), this.read(child.init_Str), StandardCopyOption.REPLACE_EXISTING);
+         Files.copy(this.read(id), this.read(child.id), StandardCopyOption.REPLACE_EXISTING);
       }
 
       return child;
    }
 
-   public synchronized void init_V_Str_Str(String id, String title) throws IOException {
+   public synchronized void rename(String id, String title) throws IOException {
       if (title != null && !title.isBlank()) {
-         AiSessions.Inner_DataUtil d = this.init_cd_DataUtil_Str(id);
-         d.load_Str = title.trim();
-         this.init_V_cd_DataUtil(d);
+         AiSessions.Inner_DataUtil d = this.readSession(id);
+         d.title = title.trim();
+         this.save(d);
       } else {
          throw new IllegalArgumentException("Session title is blank");
       }
    }
 
-   public synchronized void init_V_Str_JsonObject(String id, JsonObject line) throws IOException {
+   public synchronized void appendLine(String id, JsonObject line) throws IOException {
       Path file = this.load_Path(id);
       Files.createDirectories(this.init_Path);
       AiJson.auditPrivateFile(file);
@@ -159,7 +159,7 @@ public final class AiSessions {
       }
    }
 
-   public synchronized void init_V_Str_List(String id, List<JsonObject> lines) throws IOException {
+   public synchronized void writeLines(String id, List<JsonObject> lines) throws IOException {
       StringBuilder text = new StringBuilder();
 
       for (JsonObject line : lines) {
@@ -277,7 +277,7 @@ public final class AiSessions {
       }
    }
 
-   public static String init_Str_Str(String firstUserMessage) {
+   public static String titleFor(String firstUserMessage) {
       if (firstUserMessage == null) {
          return "New session";
       }
@@ -302,26 +302,26 @@ public final class AiSessions {
 
    public static AiSessions.Inner_DataUtil init(JsonObject legacy, String newId, long now, int defaultTaskMinutes) {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
-      d.init_Str = newId;
-      d.init_J = d.load_J = now;
-      d.sync_Str = AiJson.getString(legacy, "objective", "");
-      d.load_Str = d.sync_Str.isBlank() ? "First session" : init_Str_Str(d.sync_Str);
-      d.flush_Str = AiJson.getString(legacy, "taskState", "");
-      d.close_Str = AiJson.getString(legacy, "scope", "");
-      d.update_Str = AiJson.getString(legacy, "taskId", UUID.randomUUID().toString());
-      d.write_Str = AiJson.getString(legacy, "state", "PAUSED");
-      d.read_J = legacy.has("requests") ? legacy.get("requests").getAsLong() : 0L;
-      d.write_J = legacy.has("tokens") ? legacy.get("tokens").getAsLong() : 0L;
-      d.update_J = legacy.has("elapsedMillis") ? legacy.get("elapsedMillis").getAsLong() : 0L;
-      d.load_I = AiJson.getInt(legacy, "wheatBaseline", -1);
-      d.init_I = legacy.has("taskMinutes") ? AiJson.getInt(legacy, "taskMinutes", defaultTaskMinutes) : defaultTaskMinutes;
+      d.id = newId;
+      d.createdAt = d.lastActiveAt = now;
+      d.objective = AiJson.getString(legacy, "objective", "");
+      d.title = d.objective.isBlank() ? "First session" : titleFor(d.objective);
+      d.taskState = AiJson.getString(legacy, "taskState", "");
+      d.scope = AiJson.getString(legacy, "scope", "");
+      d.taskId = AiJson.getString(legacy, "taskId", UUID.randomUUID().toString());
+      d.state = AiJson.getString(legacy, "state", "PAUSED");
+      d.requests = legacy.has("requests") ? legacy.get("requests").getAsLong() : 0L;
+      d.tokens = legacy.has("tokens") ? legacy.get("tokens").getAsLong() : 0L;
+      d.elapsedMillis = legacy.has("elapsedMillis") ? legacy.get("elapsedMillis").getAsLong() : 0L;
+      d.wheatBaseline = AiJson.getInt(legacy, "wheatBaseline", -1);
+      d.taskMinutes = legacy.has("taskMinutes") ? AiJson.getInt(legacy, "taskMinutes", defaultTaskMinutes) : defaultTaskMinutes;
       if (legacy.has("structuredTask")) {
-         d.init_JsonObject = legacy.getAsJsonObject("structuredTask");
+         d.structuredTask = legacy.getAsJsonObject("structuredTask");
       }
 
       if (legacy.has("queue")) {
          for (JsonElement item : legacy.getAsJsonArray("queue")) {
-            d.init_List.add(item.getAsString());
+            d.queue.add(item.getAsString());
          }
       }
 
@@ -329,7 +329,7 @@ public final class AiSessions {
    }
 
    public static AiSessions.Inner_StreamUtil init_cd_StreamUtil_cd_DataUtil(AiSessions.Inner_DataUtil d) {
-      return new AiSessions.Inner_StreamUtil(d.init_Str, d.load_Str, d.init_J, d.load_J, d.read_Str, d.write_Str, d.load_List.size());
+      return new AiSessions.Inner_StreamUtil(d.id, d.title, d.createdAt, d.lastActiveAt, d.parentId, d.state, d.messages.size());
    }
 
    static JsonObject init_JsonObject_cd_StreamUtil(AiSessions.Inner_StreamUtil m) {
@@ -383,12 +383,12 @@ public final class AiSessions {
 
    static JsonObject init_JsonObject_cd_DataUtil(AiSessions.Inner_DataUtil d) {
       JsonArray queue = new JsonArray();
-      d.init_List.forEach(queue::add);
+      d.queue.forEach(queue::add);
       JsonArray updates = new JsonArray();
-      d.read_List.forEach(updates::add);
+      d.updates.forEach(updates::add);
       JsonArray messages = new JsonArray();
 
-      for (AiService.TranscriptEntry m : init_List_List_I(d.load_List, 1000000)) {
+      for (AiService.TranscriptEntry m : init_List_List_I(d.messages, 1000000)) {
          messages.add(AiJson.objectOf("at", m.at(), "role", m.role(), "text", m.text(), "detail", m.detail()));
       }
 
@@ -396,89 +396,89 @@ public final class AiSessions {
          "version",
          2,
          "id",
-         d.init_Str,
+         d.id,
          "title",
-         d.load_Str,
+         d.title,
          "parentId",
-         d.read_Str == null ? "" : d.read_Str,
+         d.parentId == null ? "" : d.parentId,
          "createdAt",
-         d.init_J,
+         d.createdAt,
          "lastActiveAt",
-         d.load_J,
+         d.lastActiveAt,
          "state",
-         d.write_Str,
+         d.state,
          "taskId",
-         d.update_Str,
+         d.taskId,
          "objective",
-         d.sync_Str,
+         d.objective,
          "taskState",
-         d.flush_Str,
+         d.taskState,
          "structuredTask",
-         d.init_JsonObject,
+         d.structuredTask,
          "queue",
          queue,
          "scope",
-         d.close_Str,
+         d.scope,
          "requests",
-         d.read_J,
+         d.requests,
          "tokens",
-         d.write_J,
+         d.tokens,
          "elapsedMillis",
-         d.update_J,
+         d.elapsedMillis,
          "wheatBaseline",
-         d.load_I,
+         d.wheatBaseline,
          "taskMinutes",
-         d.init_I,
+         d.taskMinutes,
          "attemptedAction",
-         d.init_Z,
+         d.attemptedAction,
          "messages",
          messages,
          "updates",
          updates,
          "usage",
          AiJson.objectOf(
-            "input", d.sync_J, "cachedInput", d.flush_J, "cacheWrite", d.close_J, "output", d.open_J, "requests", d.poll, "lastPrompt", d.push
+            "input", d.inputTokens, "cachedInput", d.cachedInputTokens, "cacheWrite", d.cacheWriteTokens, "output", d.outputTokens, "requests", d.poll, "lastPrompt", d.push
          ),
          "wireProvider",
-         d.open_Str == null ? "" : d.open_Str
+         d.wire == null ? "" : d.wire
       );
    }
 
    static AiSessions.Inner_DataUtil init_cd_DataUtil_JsonObject(JsonObject o) {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
-      d.init_Str = AiJson.getString(o, "id", UUID.randomUUID().toString());
-      d.load_Str = AiJson.getString(o, "title", "New session");
+      d.id = AiJson.getString(o, "id", UUID.randomUUID().toString());
+      d.title = AiJson.getString(o, "title", "New session");
       String parent = AiJson.getString(o, "parentId", "");
-      d.read_Str = parent.isBlank() ? null : parent;
-      d.init_J = o.has("createdAt") ? o.get("createdAt").getAsLong() : 0L;
-      d.load_J = o.has("lastActiveAt") ? o.get("lastActiveAt").getAsLong() : d.init_J;
-      d.write_Str = AiJson.getString(o, "state", "IDLE");
-      d.update_Str = AiJson.getString(o, "taskId", UUID.randomUUID().toString());
-      d.sync_Str = AiJson.getString(o, "objective", "");
-      d.flush_Str = AiJson.getString(o, "taskState", "");
-      d.close_Str = AiJson.getString(o, "scope", "");
+      d.parentId = parent.isBlank() ? null : parent;
+      d.createdAt = o.has("createdAt") ? o.get("createdAt").getAsLong() : 0L;
+      d.lastActiveAt = o.has("lastActiveAt") ? o.get("lastActiveAt").getAsLong() : d.createdAt;
+      d.state = AiJson.getString(o, "state", "IDLE");
+      d.taskId = AiJson.getString(o, "taskId", UUID.randomUUID().toString());
+      d.objective = AiJson.getString(o, "objective", "");
+      d.taskState = AiJson.getString(o, "taskState", "");
+      d.scope = AiJson.getString(o, "scope", "");
       if (o.has("structuredTask")) {
-         d.init_JsonObject = o.getAsJsonObject("structuredTask");
+         d.structuredTask = o.getAsJsonObject("structuredTask");
       }
 
-      d.init_I = AiJson.getInt(o, "taskMinutes", 60);
-      d.load_I = AiJson.getInt(o, "wheatBaseline", -1);
-      d.read_J = o.has("requests") ? o.get("requests").getAsLong() : 0L;
-      d.write_J = o.has("tokens") ? o.get("tokens").getAsLong() : 0L;
-      d.update_J = o.has("elapsedMillis") ? o.get("elapsedMillis").getAsLong() : 0L;
-      d.init_Z = AiJson.getBoolean(o, "attemptedAction", false);
-      d.init_List = new ArrayList<>();
+      d.taskMinutes = AiJson.getInt(o, "taskMinutes", 60);
+      d.wheatBaseline = AiJson.getInt(o, "wheatBaseline", -1);
+      d.requests = o.has("requests") ? o.get("requests").getAsLong() : 0L;
+      d.tokens = o.has("tokens") ? o.get("tokens").getAsLong() : 0L;
+      d.elapsedMillis = o.has("elapsedMillis") ? o.get("elapsedMillis").getAsLong() : 0L;
+      d.attemptedAction = AiJson.getBoolean(o, "attemptedAction", false);
+      d.queue = new ArrayList<>();
       if (o.has("queue")) {
          for (JsonElement item : o.getAsJsonArray("queue")) {
-            d.init_List.add(item.getAsString());
+            d.queue.add(item.getAsString());
          }
       }
 
-      d.load_List = new ArrayList<>();
+      d.messages = new ArrayList<>();
       if (o.has("messages")) {
          for (JsonElement item : o.getAsJsonArray("messages")) {
             JsonObject m = item.getAsJsonObject();
-            d.load_List
+            d.messages
                .add(
                   new AiService.TranscriptEntry(
                      m.has("at") ? m.get("at").getAsLong() : 0L,
@@ -490,25 +490,25 @@ public final class AiSessions {
          }
       }
 
-      d.read_List = new ArrayList<>();
+      d.updates = new ArrayList<>();
       if (o.has("updates")) {
          for (JsonElement item : o.getAsJsonArray("updates")) {
-            d.read_List.add(item.getAsString());
+            d.updates.add(item.getAsString());
          }
       }
 
       if (o.has("usage") && o.get("usage").isJsonObject()) {
          JsonObject u = o.getAsJsonObject("usage");
-         d.sync_J = init_J_JsonObject_Str(u, "input");
-         d.flush_J = init_J_JsonObject_Str(u, "cachedInput");
-         d.close_J = init_J_JsonObject_Str(u, "cacheWrite");
-         d.open_J = init_J_JsonObject_Str(u, "output");
+         d.inputTokens = init_J_JsonObject_Str(u, "input");
+         d.cachedInputTokens = init_J_JsonObject_Str(u, "cachedInput");
+         d.cacheWriteTokens = init_J_JsonObject_Str(u, "cacheWrite");
+         d.outputTokens = init_J_JsonObject_Str(u, "output");
          d.poll = init_J_JsonObject_Str(u, "requests");
          d.push = init_J_JsonObject_Str(u, "lastPrompt");
       }
 
       String wire = AiJson.getString(o, "wireProvider", "");
-      d.open_Str = wire.isBlank() ? null : wire;
+      d.wire = wire.isBlank() ? null : wire;
       return d;
    }
 
@@ -529,33 +529,33 @@ public final class AiSessions {
    }
 
    public static final class Inner_DataUtil {
-      public String init_Str = UUID.randomUUID().toString();
-      public String load_Str = "New session";
-      public String read_Str;
-      public long init_J;
-      public long load_J;
-      public String write_Str = "IDLE";
-      public String update_Str = UUID.randomUUID().toString();
-      public String sync_Str = "";
-      public String flush_Str = "";
-      public String close_Str = "";
-      public JsonObject init_JsonObject = new JsonObject();
-      public int init_I = 60;
-      public int load_I = -1;
-      public long read_J;
-      public long write_J;
-      public long update_J;
-      public boolean init_Z;
-      public List<String> init_List = new ArrayList<>();
-      public List<AiService.TranscriptEntry> load_List = new ArrayList<>();
-      public List<String> read_List = new ArrayList<>();
-      public long sync_J;
-      public long flush_J;
-      public long close_J;
-      public long open_J;
+      public String id = UUID.randomUUID().toString();
+      public String title = "New session";
+      public String parentId;
+      public long createdAt;
+      public long lastActiveAt;
+      public String state = "IDLE";
+      public String taskId = UUID.randomUUID().toString();
+      public String objective = "";
+      public String taskState = "";
+      public String scope = "";
+      public JsonObject structuredTask = new JsonObject();
+      public int taskMinutes = 60;
+      public int wheatBaseline = -1;
+      public long requests;
+      public long tokens;
+      public long elapsedMillis;
+      public boolean attemptedAction;
+      public List<String> queue = new ArrayList<>();
+      public List<AiService.TranscriptEntry> messages = new ArrayList<>();
+      public List<String> updates = new ArrayList<>();
+      public long inputTokens;
+      public long cachedInputTokens;
+      public long cacheWriteTokens;
+      public long outputTokens;
       public long poll;
       public long push;
-      public String open_Str;
+      public String wire;
    }
 
    public record Inner_StreamUtil(String id, String title, long createdAt, long lastActiveAt, String parentId, String state, int messageCount) {

@@ -16,8 +16,8 @@ final class AiMemoryView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
-   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
+   final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
+   final autismclient.gui.ui.widgets.TextInputWidget editInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private final Set<String> init_Set = new HashSet<>();
    private final Map<String, AiMemoryView.Inner_StreamUtil> init_Map = new HashMap<>();
@@ -35,11 +35,11 @@ final class AiMemoryView {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.load_BitSetUtil.setOnSubmit(text -> this.load());
+      this.editInput.setOnSubmit(text -> this.load());
    }
 
-   void init_V() {
-      this.init_BitSetUtil.setValue("");
+   void reset() {
+      this.searchInput.setValue("");
       this.load_Str = this.read_Str = this.write_Str = null;
       this.init_Set.clear();
       this.init_Map.clear();
@@ -47,19 +47,19 @@ final class AiMemoryView {
       this.init_cE_StreamUtil.scrollToTop();
    }
 
-   boolean init_Z() {
+   boolean cancelEdit() {
       if (this.load_Str == null) {
          return false;
       }
 
       this.load_Str = null;
-      this.load_BitSetUtil.setFocused(false);
+      this.editInput.setFocused(false);
       return true;
    }
 
    private void init_V_J(long now) {
-      Object source = this.init_cc.getMemoryStore().init_List();
-      String query = this.init_BitSetUtil.getValue().trim();
+      Object source = this.init_cc.getMemoryStore().memories();
+      String query = this.searchInput.getValue().trim();
       if (source != this.init_Obj || !query.equals(this.init_Str) || now >= this.read_J) {
          this.init_Obj = source;
          this.init_Str = query;
@@ -74,9 +74,9 @@ final class AiMemoryView {
       }
    }
 
-   void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
+   void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       this.init_V_J(now);
-      if (this.load_Str != null && !this.load_BitSetUtil.isFocused()) {
+      if (this.load_Str != null && !this.editInput.isFocused()) {
          this.load_Str = null;
       }
 
@@ -93,7 +93,7 @@ final class AiMemoryView {
       String count = this.init_List.size() == 1 ? "1 memory" : this.init_List.size() + " memories";
       int countW = kit.measureTextWidth(count);
       kit.drawTextInput(
-         this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.max(40, area.update() - countW - 8), ctrl)
+         this.searchInput, autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.max(40, area.update() - countW - 8), ctrl)
       );
       kit.drawCenteredRowText(
          count, autismclient.gui.f.NetHelper.init(area.init() - countW - 2, area.write(), countW + 2, ctrl), area.init() - countW - 2, countW + 2, colors.textSecondary
@@ -102,7 +102,7 @@ final class AiMemoryView {
       int top = area.write() + ctrl + 2;
       autismclient.gui.f.NetHelper viewport = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), Math.max(0, footer.write() - 2 - top));
       this.load(kit, viewport, now);
-      if (!this.init_List.isEmpty() || !this.init_BitSetUtil.getValue().isBlank()) {
+      if (!this.init_List.isEmpty() || !this.searchInput.getValue().isBlank()) {
          this.init_V_cE_NetHelper(kit, footer);
       }
    }
@@ -130,7 +130,7 @@ final class AiMemoryView {
       kit.registerScrollPane(this.init_cE_StreamUtil);
       if (this.init_List.isEmpty()) {
          kit.drawEllipsizedText(
-            this.init_BitSetUtil.getValue().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
+            this.searchInput.getValue().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
          );
       } else {
          kit.pushClip(v);
@@ -165,7 +165,7 @@ final class AiMemoryView {
    }
 
    private List<String> init_List_cE(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW) {
-      int epoch = AiChatView.load_I();
+      int epoch = AiChatView.textEpoch();
       AiMemoryView.Inner_StreamUtil wrap = this.init_Map.get(entry.memory().id());
       if (wrap == null || wrap.width() != textW || wrap.epoch() != epoch || !wrap.text().equals(entry.text())) {
          wrap = new AiMemoryView.Inner_StreamUtil(entry.text(), textW, epoch, kit.renderContext.init_PoolEntry().wrapLines(entry.text(), textW));
@@ -206,7 +206,7 @@ final class AiMemoryView {
       int x = row.read() + textX;
       if (id.equals(this.load_Str)) {
          int right = row.init() - (icon + 2) * 2;
-         kit.drawTextInput(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(x - 2, row.write(), Math.max(20, right - x), rowH));
+         kit.drawTextInput(this.editInput, autismclient.gui.f.NetHelper.init(x - 2, row.write(), Math.max(20, right - x), rowH));
          kit.drawIconButton(
             autismclient.gui.f.NetHelper.init(right + 2, row.write() + 1, icon, icon), autismclient.util.GuiIconAtlas.CHECK, false, false, "Save (Enter)", this::load
          );
@@ -333,16 +333,16 @@ final class AiMemoryView {
    private void init_V_AiMemoryStore_Memo(AiMemoryStore.Memory memory) {
       this.load_Str = memory.id();
       this.read_Str = null;
-      this.load_BitSetUtil.setValue(memory.text());
-      this.load_BitSetUtil.moveCursorToEnd();
-      this.init_AiAssistantOverlay.init(this.load_BitSetUtil);
+      this.editInput.setValue(memory.text());
+      this.editInput.moveCursorToEnd();
+      this.init_AiAssistantOverlay.init(this.editInput);
    }
 
    private void load() {
       String id = this.load_Str;
-      String text = this.load_BitSetUtil.getValue().trim();
+      String text = this.editInput.getValue().trim();
       this.load_Str = null;
-      this.load_BitSetUtil.setFocused(false);
+      this.editInput.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.init_cc.correctMemory(id, text);
          this.init_Obj = null;

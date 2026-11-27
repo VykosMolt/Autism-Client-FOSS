@@ -128,8 +128,8 @@ public final class ScreenOverlayHost {
       }
 
       if (this.dialogMode) {
-         ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
-         actionEditor.load_V_Z(inWorld);
+         ActionEditorOverlay actionEditor = ActionEditorOverlay.getInstance();
+         actionEditor.setCaptureAllowed(inWorld);
          manager.register(actionEditor);
       }
 

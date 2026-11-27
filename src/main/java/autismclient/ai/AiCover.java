@@ -485,7 +485,7 @@ final class AiCover {
             }
 
             boolean init_Z_25() {
-               return AiShield.init_Z(mc, 6.0);
+               return AiShield.hasEnemyWithin(mc, 6.0);
             }
 
             List<Vec3> init_List_2(List<Entity> shooters) {

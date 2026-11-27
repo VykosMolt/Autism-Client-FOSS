@@ -32,7 +32,7 @@ final class AiProspect {
    private AiProspect() {
    }
 
-   static boolean init_Z(AiItems.ItemSpec target) {
+   static boolean canProspect(AiItems.ItemSpec target) {
       return init_Str(target) != null;
    }
 
@@ -196,7 +196,7 @@ final class AiProspect {
                         return this.init("Site exhausted; trying the next prediction");
                      }
                   } else if (this.init_bz_1_DataUtil == Inner_DataUtil.LOCATE) {
-                     this.init_AiOperation = AiOracle.init_AiOperation_JsonObject(AiJson.objectOf("query", kind, "cap", 16));
+                     this.init_AiOperation = AiOracle.create(AiJson.objectOf("query", kind, "cap", 16));
                      return this.init("Predicting " + kind + " positions from the world seed");
                   } else if (this.init_bz_1_DataUtil == Inner_DataUtil.EXTRACT) {
                      this.load_AiOperation = autismclient.ai.engine.AiMine.init(

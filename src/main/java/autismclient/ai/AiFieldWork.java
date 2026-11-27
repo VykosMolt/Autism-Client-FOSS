@@ -292,7 +292,7 @@ final class AiFieldWork {
                   BlockPos at = ground.above();
                   BlockState state = mc.level.getBlockState(at);
                   long key = ground.asLong();
-                  boolean ripeHere = !enough && !this.load_Set.contains(key) && state.is(crop) && AiFarm.init_Z(state);
+                  boolean ripeHere = !enough && !this.load_Set.contains(key) && state.is(crop) && AiFarm.isRipe(state);
                   boolean sow = replant
                      && !ripeHere
                      && seedAvailable

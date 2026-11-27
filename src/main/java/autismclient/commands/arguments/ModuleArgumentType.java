@@ -17,7 +17,7 @@ public class ModuleArgumentType implements ArgumentType<String> {
    private static volatile int init_I = -2147483648;
    private static volatile List<ModuleArgumentType.Inner_DataUtil> init_List = List.of();
 
-   public static ModuleArgumentType init_ConfigStore() {
+   public static ModuleArgumentType module() {
       return new ModuleArgumentType();
    }
 

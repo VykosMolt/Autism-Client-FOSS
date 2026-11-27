@@ -66,7 +66,7 @@ public final class AiGoal {
          init_W_StreamUtil.init();
          init_Str = "";
          init_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
-         AiVisualization.init_V(init_Obj);
+         AiVisualization.clearOwner(init_Obj);
       } else {
          String goal = init_W_StreamUtil.init(deepest.goal, now, 3000000000L);
          if (!goal.equals(init_cs_StreamUtil.activity())) {

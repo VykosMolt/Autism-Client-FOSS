@@ -126,7 +126,7 @@ public class GhostBlockCommand extends Command {
          Identifier id = Identifier.tryParse(value.contains(":") ? value : "minecraft:" + value);
          Block block = id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
          if (block == null) {
-            block = autismclient.commands.RegistrySuggestions.init_Block(value);
+            block = autismclient.commands.RegistrySuggestions.resolveBlock(value);
          }
 
          if (block == null) {

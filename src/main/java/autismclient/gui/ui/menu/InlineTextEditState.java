@@ -6,79 +6,79 @@ import java.util.function.ToIntFunction;
 import net.minecraft.client.Minecraft;
 
 final class InlineTextEditState {
-   final Object init_Obj;
+   final Object owner;
    private final String load_Str;
    private final InlineTextEditState.Inner_DataUtil init_StreamUtil_DataUti;
-   String init_Str;
-   int init_I;
+   String text;
+   int cursor;
    private int load_I;
    private int read;
 
    InlineTextEditState(Object owner, String initial, InlineTextEditState.Inner_DataUtil sink) {
-      this.init_Obj = owner;
+      this.owner = owner;
       this.init_StreamUtil_DataUti = sink;
       this.load_Str = initial == null ? "" : initial;
-      this.init_Str = this.load_Str;
-      this.init_I = this.init_Str.length();
-      this.load_I = this.init_I;
+      this.text = this.load_Str;
+      this.cursor = this.text.length();
+      this.load_I = this.cursor;
    }
 
-   int init_I() {
-      return Math.min(this.init_I, this.load_I);
+   int selectionStart() {
+      return Math.min(this.cursor, this.load_I);
    }
 
-   int load_I() {
-      return Math.max(this.init_I, this.load_I);
+   int selectionEnd() {
+      return Math.max(this.cursor, this.load_I);
    }
 
-   boolean init_Z() {
-      return this.init_I != this.load_I;
+   boolean hasSelection() {
+      return this.cursor != this.load_I;
    }
 
-   int read_I() {
+   int scroll() {
       return this.read;
    }
 
    int init(int availableWidth, ToIntFunction<String> widths) {
-      this.read = TextFieldRenderer.init(this.init_Str, this.init_I, availableWidth, widths, this.read);
+      this.read = TextFieldRenderer.init(this.text, this.cursor, availableWidth, widths, this.read);
       return this.read;
    }
 
-   void init_V() {
-      this.init_StreamUtil_DataUti.accept(this.init_Str);
+   void commit() {
+      this.init_StreamUtil_DataUti.accept(this.text);
    }
 
    void load_V() {
       this.init_StreamUtil_DataUti.accept(this.load_Str);
    }
 
-   int init_I_F(float x, float fieldX, InlineTextEditState.Inner_StreamUtil widths) {
+   int indexAt(float x, float fieldX, InlineTextEditState.Inner_StreamUtil widths) {
       float best = 3.4028235E38F;
       int bestIndex = 0;
       int i = 0;
 
-      while (i <= this.init_Str.length()) {
-         float cx = fieldX + widths.width(this.init_Str.substring(0, i));
+      while (i <= this.text.length()) {
+         float cx = fieldX + widths.width(this.text.substring(0, i));
          float distance = Math.abs(cx - x);
          if (distance < best) {
             best = distance;
             bestIndex = i;
          }
 
-         if (i == this.init_Str.length()) {
+         if (i == this.text.length()) {
             break;
          }
 
-         i = Utf16TextCursor.write(this.init_Str, i);
+         i = Utf16TextCursor.write(this.text, i);
       }
 
       return bestIndex;
    }
 
    void init(int position, boolean extendSelection) {
-      this.init_I = Utf16TextCursor.init_I(this.init_Str, position);
+      this.cursor = Utf16TextCursor.clampIndex(this.text, position);
       if (!extendSelection) {
-         this.load_I = this.init_I;
+         this.load_I = this.cursor;
       }
    }
 
@@ -89,7 +89,7 @@ final class InlineTextEditState {
          switch (key) {
             case 65:
                this.load_I = 0;
-               this.init_I = this.init_Str.length();
+               this.cursor = this.text.length();
                return true;
             case 67:
                this.read_V();
@@ -113,33 +113,33 @@ final class InlineTextEditState {
       switch (key) {
          case 257:
          case 335:
-            this.init_V();
+            this.commit();
             return true;
          case 259:
-            if (!this.load_Z() && this.init_I > 0) {
-               this.init_V_I(ctrl ? this.write_I() : Utf16TextCursor.read(this.init_Str, this.init_I), this.init_I, "");
+            if (!this.load_Z() && this.cursor > 0) {
+               this.init_V_I(ctrl ? this.write_I() : Utf16TextCursor.read(this.text, this.cursor), this.cursor, "");
             }
 
             return true;
          case 261:
-            if (!this.load_Z() && this.init_I < this.init_Str.length()) {
-               this.init_V_I(this.init_I, ctrl ? this.update() : Utf16TextCursor.write(this.init_Str, this.init_I), "");
+            if (!this.load_Z() && this.cursor < this.text.length()) {
+               this.init_V_I(this.cursor, ctrl ? this.update() : Utf16TextCursor.write(this.text, this.cursor), "");
             }
 
             return true;
          case 262:
-            if (this.init_Z() && !shift) {
-               this.init(this.load_I(), false);
+            if (this.hasSelection() && !shift) {
+               this.init(this.selectionEnd(), false);
             } else {
-               this.init(Utf16TextCursor.write(this.init_Str, this.init_I), shift);
+               this.init(Utf16TextCursor.write(this.text, this.cursor), shift);
             }
 
             return true;
          case 263:
-            if (this.init_Z() && !shift) {
-               this.init(this.init_I(), false);
+            if (this.hasSelection() && !shift) {
+               this.init(this.selectionStart(), false);
             } else {
-               this.init(Utf16TextCursor.read(this.init_Str, this.init_I), shift);
+               this.init(Utf16TextCursor.read(this.text, this.cursor), shift);
             }
 
             return true;
@@ -147,46 +147,46 @@ final class InlineTextEditState {
             this.init(0, shift);
             return true;
          case 269:
-            this.init(this.init_Str.length(), shift);
+            this.init(this.text.length(), shift);
             return true;
          default:
             return false;
       }
    }
 
-   void init_V_C(char chr) {
+   void typeChar(char chr) {
       if (chr >= ' ' && chr != 127) {
-         this.init_V_I(this.init_I(), this.load_I(), Character.toString(chr));
+         this.init_V_I(this.selectionStart(), this.selectionEnd(), Character.toString(chr));
       }
    }
 
    private boolean load_Z() {
-      if (!this.init_Z()) {
+      if (!this.hasSelection()) {
          return false;
       }
 
-      this.init_V_I(this.init_I(), this.load_I(), "");
+      this.init_V_I(this.selectionStart(), this.selectionEnd(), "");
       return true;
    }
 
    private void init_V_I(int start, int end, String insert) {
-      start = Utf16TextCursor.init_I(this.init_Str, start);
-      end = Utf16TextCursor.load(this.init_Str, end);
-      this.init_Str = this.init_Str.substring(0, start) + insert + this.init_Str.substring(end);
-      this.init_I = start + insert.length();
-      this.load_I = this.init_I;
+      start = Utf16TextCursor.clampIndex(this.text, start);
+      end = Utf16TextCursor.load(this.text, end);
+      this.text = this.text.substring(0, start) + insert + this.text.substring(end);
+      this.cursor = start + insert.length();
+      this.load_I = this.cursor;
    }
 
    private void read_V() {
-      if (this.init_Z()) {
-         Minecraft.getInstance().keyboardHandler.setClipboard(this.init_Str.substring(this.init_I(), this.load_I()));
+      if (this.hasSelection()) {
+         Minecraft.getInstance().keyboardHandler.setClipboard(this.text.substring(this.selectionStart(), this.selectionEnd()));
       }
    }
 
    private void write_V() {
       String clip = Minecraft.getInstance().keyboardHandler.getClipboard();
       if (clip != null && !clip.isEmpty()) {
-         this.init_V_I(this.init_I(), this.load_I(), init_Str_Str(clip));
+         this.init_V_I(this.selectionStart(), this.selectionEnd(), init_Str_Str(clip));
       }
    }
 
@@ -204,13 +204,13 @@ final class InlineTextEditState {
    }
 
    private int write_I() {
-      int i = this.init_I;
+      int i = this.cursor;
 
-      while (i > 0 && !init_Z_C(this.init_Str.charAt(i - 1))) {
+      while (i > 0 && !init_Z_C(this.text.charAt(i - 1))) {
          i--;
       }
 
-      while (i > 0 && init_Z_C(this.init_Str.charAt(i - 1))) {
+      while (i > 0 && init_Z_C(this.text.charAt(i - 1))) {
          i--;
       }
 
@@ -218,13 +218,13 @@ final class InlineTextEditState {
    }
 
    private int update() {
-      int i = this.init_I;
+      int i = this.cursor;
 
-      while (i < this.init_Str.length() && init_Z_C(this.init_Str.charAt(i))) {
+      while (i < this.text.length() && init_Z_C(this.text.charAt(i))) {
          i++;
       }
 
-      while (i < this.init_Str.length() && !init_Z_C(this.init_Str.charAt(i))) {
+      while (i < this.text.length() && !init_Z_C(this.text.charAt(i))) {
          i++;
       }
 

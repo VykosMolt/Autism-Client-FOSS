@@ -185,7 +185,7 @@ public final class UiTextRenderer {
       String display = this.ellipsize(text, bounds.update());
       if (!display.isEmpty() && bounds.sync() > 0) {
          if (autismclient.gui.sdf.MsdfTextRenderer.canRender(BODY_FONT, display)) {
-            autismclient.gui.sdf.MsdfFontAtlas msdf = BODY_FONT.init_StreamUtil();
+            autismclient.gui.sdf.MsdfFontAtlas msdf = BODY_FONT.atlas();
             if (msdf != null) {
                float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(BODY_FONT);
                autismclient.gui.sdf.MsdfTextRenderer.draw(
@@ -255,7 +255,7 @@ public final class UiTextRenderer {
    }
 
    private float centerTextYFloat(NetHelper bounds) {
-      if (BODY_FONT.init_StreamUtil() == null) {
+      if (BODY_FONT.atlas() == null) {
          int spareHeight = Math.max(0, bounds.sync() - 9);
          return bounds.write() + Math.max(1, (spareHeight + 1) / 2 + 1);
       } else {

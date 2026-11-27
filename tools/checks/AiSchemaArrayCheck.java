@@ -15,7 +15,7 @@ public class AiSchemaArrayCheck {
    }
 
    static JsonObject schemaFor(String id) {
-      for (AiCapabilityDescriptor d : AiTools.init_List()) {
+      for (AiCapabilityDescriptor d : AiTools.capabilities()) {
          if (d.id().equals(id)) {
             return JsonParser.parseString(d.inputSchema()).getAsJsonObject();
          }

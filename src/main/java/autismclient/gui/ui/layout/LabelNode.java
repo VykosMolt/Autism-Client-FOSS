@@ -41,7 +41,7 @@ public class LabelNode extends LayoutNode {
       return this;
    }
 
-   public LabelNode load_PoolEntry(boolean trimToBounds) {
+   public LabelNode setTrimToBounds(boolean trimToBounds) {
       this.update_Z = trimToBounds;
       return this;
    }

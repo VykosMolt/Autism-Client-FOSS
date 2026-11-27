@@ -73,7 +73,7 @@ public final class CustomPayloadFilter {
             return init_IoWorker_DataUtil;
          }
 
-         if (ProtectorFeatureFlags.init_Z(packet)) {
+         if (ProtectorFeatureFlags.isDirect(packet)) {
             init(connection, id);
             return init_IoWorker_DataUtil;
          }
@@ -92,7 +92,7 @@ public final class CustomPayloadFilter {
             }
          } else {
             CustomPayloadFilter.Inner_DataUtil verdict = init(connection, payload);
-            if ("register".equals(path) && verdict.init_IoWorker_DataUtil_ != CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.DROP) {
+            if ("register".equals(path) && verdict.kind != CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.DROP) {
                LateRegisterSynthesizer.init_V(connection);
             }
 
@@ -193,12 +193,12 @@ public final class CustomPayloadFilter {
    }
 
    public static final class Inner_DataUtil {
-      public final CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2 init_IoWorker_DataUtil_;
-      public final Packet<?> init_Packet;
+      public final CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2 kind;
+      public final Packet<?> replacement;
 
       private Inner_DataUtil(CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2 kind, Packet<?> replacement) {
-         this.init_IoWorker_DataUtil_ = kind;
-         this.init_Packet = replacement;
+         this.kind = kind;
+         this.replacement = replacement;
       }
 
       public enum Inner_DataUtil_2 {

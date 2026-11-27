@@ -13,7 +13,7 @@ final class AiTickQueue {
       return this.init_Thread == Thread.currentThread();
    }
 
-   void init_V_Runnable(Runnable action) {
+   void execute(Runnable action) {
       if (this.init()) {
          action.run();
       } else {
@@ -21,9 +21,9 @@ final class AiTickQueue {
       }
    }
 
-   <T> CompletableFuture<T> init_CompletableFuture_Supplier(Supplier<T> action) {
+   <T> CompletableFuture<T> supply(Supplier<T> action) {
       CompletableFuture<T> result = new CompletableFuture<>();
-      this.init_V_Runnable(() -> {
+      this.execute(() -> {
          if (!result.isDone()) {
             try {
                result.complete(action.get());

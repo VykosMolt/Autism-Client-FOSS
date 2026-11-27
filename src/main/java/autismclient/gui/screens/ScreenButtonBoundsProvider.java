@@ -3,5 +3,5 @@ package autismclient.gui.screens;
 import java.util.Map;
 
 public interface ScreenButtonBoundsProvider {
-   Map<String, autismclient.gui.f.NetHelper> init_Map();
+   Map<String, autismclient.gui.f.NetHelper> buttonBounds();
 }

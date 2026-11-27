@@ -18,7 +18,7 @@ public final class PacketDecodeOriginStack {
          || packet instanceof ClientboundLevelChunkWithLightPacket;
    }
 
-   public static boolean init_Z() {
+   public static boolean isDecoding() {
       return init.get().init_I != 0;
    }
 
@@ -31,14 +31,14 @@ public final class PacketDecodeOriginStack {
       state.init_BufferHelper_StreaArr[state.init_I++] = context;
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
+   public static ConnectionPrivacyRegistry.ConnectionSession current() {
       PacketDecodeOriginStack.Inner_DataUtil state = init.get();
       return state.init_I == 0 ? null : state.init_BufferHelper_StreaArr[state.init_I - 1];
    }
 
    public static void init(boolean value) {
       if (value) {
-         init(init_BufferHelper_Strea());
+         init(current());
       } else {
          PacketDecodeOriginStack.Inner_DataUtil state = init.get();
          if (state.init_I > 0) {

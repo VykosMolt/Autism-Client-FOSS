@@ -49,12 +49,12 @@ final class AiForage {
       return init_I() >= 4 || AiRunResources.countUsableItem("minecraft:bow", 12) > 0 && AiRunResources.totalArrowCount() >= 12;
    }
 
-   static AiOperation init_AiOperation_I(int seconds) {
+   static AiOperation cook(int seconds) {
       Minecraft mc = Minecraft.getInstance();
-      Map<String, Integer> raw = AiSpeedrun.init_Map();
+      Map<String, Integer> raw = AiSpeedrun.rawMeatCounts();
       if (!raw.isEmpty() && mc.player != null && mc.level != null) {
          Entry<String, Integer> meat = raw.entrySet().stream().max(Entry.comparingByValue()).orElseThrow();
-         if (AiCraft.countItem("minecraft:furnace") == 0 && !AiSmelt.init_Z(mc, "minecraft:furnace")) {
+         if (AiCraft.countItem("minecraft:furnace") == 0 && !AiSmelt.hasStationNearby(mc, "minecraft:furnace")) {
             if (AiItems.countFreeSlots() < 2) {
                return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 2, "timeoutSeconds", Math.min(60, seconds)));
             } else {
@@ -69,9 +69,9 @@ final class AiForage {
                }
             }
          } else {
-            String fuel = AiSpeedrun.init_Str_I(meat.getValue());
+            String fuel = AiSpeedrun.fuelFor(meat.getValue());
             if (fuel != null) {
-               String output = AiSpeedrun.read_Map.get(meat.getKey());
+               String output = AiSpeedrun.COOKED.get(meat.getKey());
                return AiSmelt.load(
                   AiJson.objectOf(
                      "item",
@@ -110,11 +110,11 @@ final class AiForage {
       }
    }
 
-   static AiOperation init_AiOperation_D(double range) {
+   static AiOperation forageFood(double range) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          if (AiRunResources.totalSafeFoodItems() < 8) {
-            AiOperation hunt = AiSpeedrun.init_AiOperation_D(range, 4, 45);
+            AiOperation hunt = AiSpeedrun.hunt(range, 4, 45);
             if (hunt != null) {
                return hunt;
             }
@@ -175,13 +175,13 @@ final class AiForage {
             if (bed != null && bed.distSqr(mc.player.blockPosition()) <= range * range * 4.0) {
                String id = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(bed).getBlock().asItem()).toString();
                int want = AiCraft.countItem(id) + 1;
-               return AiNetherRun.init_AiOperation_AiOperation_Supplier(
+               return AiNetherRun.sequence(
                   AiGameOperations.blockAction("break", AiJson.objectOf("x", bed.getX(), "y", bed.getY(), "z", bed.getZ(), "timeoutSeconds", 60, "requireDrops", false)),
                   () -> AiGameplay.write(AiJson.objectOf("item", id, "count", want, "radius", 8, "timeoutSeconds", 15))
                );
             }
 
-            Entity sheep = init_Entity_Minecraft(mc, "minecraft:sheep", range);
+            Entity sheep = findEntity(mc, "minecraft:sheep", range);
             if (sheep != null) {
                return init_AiOperation_Str("minecraft:sheep", "wool", range);
             }
@@ -190,18 +190,18 @@ final class AiForage {
          boolean bow = AiRunResources.countUsableItem("minecraft:bow", 24) > 0;
          if (!bow && AiCraft.countItem("minecraft:string") < 3) {
             for (String spider : List.of("minecraft:spider", "minecraft:cave_spider")) {
-               if (init_Entity_Minecraft(mc, spider, range / 2.0) != null) {
+               if (findEntity(mc, spider, range / 2.0) != null) {
                   return init_AiOperation_Str(spider, "minecraft:string", range / 2.0);
                }
             }
          }
 
          if (AiRunResources.totalArrowCount() < 24) {
-            if (init_Entity_Minecraft(mc, "minecraft:skeleton", range / 2.0) != null) {
+            if (findEntity(mc, "minecraft:skeleton", range / 2.0) != null) {
                return init_AiOperation_Str("minecraft:skeleton", "minecraft:arrow", range / 2.0);
             }
 
-            if (AiCraft.countItem("minecraft:feather") < 6 && init_Entity_Minecraft(mc, "minecraft:chicken", range / 2.0) != null) {
+            if (AiCraft.countItem("minecraft:feather") < 6 && findEntity(mc, "minecraft:chicken", range / 2.0) != null) {
                return init_AiOperation_Str("minecraft:chicken", "minecraft:feather", range / 2.0);
             }
          }
@@ -239,7 +239,7 @@ final class AiForage {
          }
 
          BlockPos source = best;
-         return AiNetherRun.init_AiOperation_AiOperation_Supplier(
+         return AiNetherRun.sequence(
             AiGoto.travelToCompat(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true),
             () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
@@ -248,7 +248,7 @@ final class AiForage {
       }
    }
 
-   static Entity init_Entity_Minecraft(Minecraft mc, String type, double range) {
+   static Entity findEntity(Minecraft mc, String type, double range) {
       for (Entity e : AiWorldScan.findEntitiesByType(type, range)) {
          if (!(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e)) {
             return e;
@@ -268,7 +268,7 @@ final class AiForage {
       );
    }
 
-   static AiOperation init_AiOperation_I(final int enderman, final Predicate<BlockPos> safe, final Runnable refused) {
+   static AiOperation huntEnderman(final int enderman, final Predicate<BlockPos> safe, final Runnable refused) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -466,7 +466,7 @@ final class AiForage {
          for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", range)) {
             if (Math.abs(e.getY() - mc.player.getY()) <= 12.0 && mc.player.hasLineOfSight(e)) {
                return AiNetherRun.init(
-                  init_AiOperation_I(e.getId(), p -> write(mc, p), () -> {}),
+                  huntEnderman(e.getId(), p -> write(mc, p), () -> {}),
                   "minecraft:ender_pearl",
                   () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
                );
@@ -511,7 +511,7 @@ final class AiForage {
       return true;
    }
 
-   static String init_Str() {
+   static String kitSummary() {
       return init_I() + " beds, " + (AiCraft.countItem("minecraft:bow") > 0 ? "a bow" : "no bow") + ", " + AiCraft.countItem("minecraft:arrow") + " arrows";
    }
 }

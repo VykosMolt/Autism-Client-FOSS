@@ -264,7 +264,7 @@ public final class AiServerIntel {
       return value == null ? "" : value;
    }
 
-   public static AiOperation init_AiOperation(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       final String address = init_Str(mc);
       String precondition = init(!address.isBlank());
@@ -357,7 +357,7 @@ public final class AiServerIntel {
       };
    }
 
-   public static JsonObject init_JsonObject(JsonObject args) {
+   public static JsonObject cachedScan(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       AutismConfig config = AutismConfig.getGlobal();
       String requested = AiJson.getString(args, "address", "").trim().toLowerCase(Locale.ROOT);

@@ -34,11 +34,11 @@ public final class AiCatalog {
    private volatile AiCatalog.Snapshot init_AiCatalog_Snapshot = new AiCatalog.Snapshot("empty", List.of());
    private static final int init_I = 40;
 
-   public AiCatalog.Snapshot init_AiCatalog_Snapshot() {
+   public AiCatalog.Snapshot snapshot() {
       return this.init_AiCatalog_Snapshot;
    }
 
-   public void init_V() {
+   public void refresh() {
       long source = Objects.hash(
          autismclient.modules.al.init_I(),
          autismclient.commands.CommandManager.getRegistryVersion(),
@@ -177,7 +177,7 @@ public final class AiCatalog {
             );
          }
 
-         for (AiCapabilityDescriptor d : AiTools.init_List()) {
+         for (AiCapabilityDescriptor d : AiTools.capabilities()) {
             init(entries, d, "{}");
          }
 

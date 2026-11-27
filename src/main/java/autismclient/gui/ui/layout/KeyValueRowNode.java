@@ -31,7 +31,7 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode init_TaskQueue_F(float labelWidth) {
+   public KeyValueRowNode setLabelWidth(float labelWidth) {
       this.sync = Math.max(24.0F, labelWidth);
       return this;
    }
@@ -46,7 +46,7 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode init_TaskQueue_Integer(Integer valueColorOverride) {
+   public KeyValueRowNode setValueColor(Integer valueColorOverride) {
       this.init_Integer = valueColorOverride;
       return this;
    }
@@ -56,7 +56,7 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode init_TaskQueue_Runnable(Runnable onPress) {
+   public KeyValueRowNode setOnPress(Runnable onPress) {
       this.init_Runnable = onPress;
       return this;
    }

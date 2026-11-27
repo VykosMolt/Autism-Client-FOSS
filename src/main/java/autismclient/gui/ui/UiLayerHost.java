@@ -45,7 +45,7 @@ public final class UiLayerHost {
       }
    }
 
-   public void init_V_SyncManager(SyncManager context) {
+   public void render(SyncManager context) {
       boolean first = true;
 
       for (UiLayer layer : UiLayer.values()) {
@@ -69,7 +69,7 @@ public final class UiLayerHost {
       }
    }
 
-   public UiInputResult init_EventBus_I_2(int mouseX, int mouseY, int button) {
+   public UiInputResult dispatchClick(int mouseX, int mouseY, int button) {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseClicked(mouseX, mouseY, button));
    }
 
@@ -81,7 +81,7 @@ public final class UiLayerHost {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY));
    }
 
-   public UiInputResult init_EventBus_I(int mouseX, int mouseY, double amount) {
+   public UiInputResult dispatchScroll(int mouseX, int mouseY, double amount) {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseScrolled(mouseX, mouseY, amount));
    }
 
@@ -89,7 +89,7 @@ public final class UiLayerHost {
       return this.init_EventBus_ByteReader_DataUti(component -> component.onKeyPressed(key, scanCode, modifiers));
    }
 
-   public UiInputResult init_EventBus_C(char chr) {
+   public UiInputResult dispatchChar(char chr) {
       return this.init_EventBus_ByteReader_DataUti(component -> component.onCharTyped(chr));
    }
 

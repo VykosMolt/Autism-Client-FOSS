@@ -64,7 +64,7 @@ public class XCarryCommand extends Command {
             }
 
             String itemName = heldStack.getHoverName().getString();
-            String slotName = autismclient.commands.arguments.XCarrySlotArgumentType.init_Str_I(targetSlot);
+            String slotName = autismclient.commands.arguments.XCarrySlotArgumentType.slotName(targetSlot);
             LinkedHashSet<Integer> forcedSlots = init(shared);
             boolean forcedCursor = shared.isXCarryForced() && shared.isXCarryCarryCursor();
             if (targetSlot == -2147483648) {

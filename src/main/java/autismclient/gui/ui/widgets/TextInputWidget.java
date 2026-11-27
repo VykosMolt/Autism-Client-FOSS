@@ -1076,7 +1076,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    public TextInputWidget setSelectionEnd(int selectionEnd) {
-      this.cursorIndex = Utf16TextCursor.init_I(this.value, selectionEnd);
+      this.cursorIndex = Utf16TextCursor.clampIndex(this.value, selectionEnd);
       this.manualScrollPinned = false;
       this.resetCaretBlink();
       return this;
@@ -1117,22 +1117,22 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private void clampCursorAndSelection() {
-      this.cursorIndex = Utf16TextCursor.init_I(this.value, this.cursorIndex);
-      this.selectionAnchor = Utf16TextCursor.init_I(this.value, this.selectionAnchor);
+      this.cursorIndex = Utf16TextCursor.clampIndex(this.value, this.cursorIndex);
+      this.selectionAnchor = Utf16TextCursor.clampIndex(this.value, this.selectionAnchor);
    }
 
    private int findVisibleEndIndex(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
-      int start = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      int start = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       int target = this.prefixWidths[start] + Math.max(0, availableWidth);
-      return Utf16TextCursor.init_I(this.value, upperBoundInclusive(this.prefixWidths, start, this.value.length(), target));
+      return Utf16TextCursor.clampIndex(this.value, upperBoundInclusive(this.prefixWidths, start, this.value.length(), target));
    }
 
    private void ensureHorizontalScrollForCursor(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
       this.clampCursorAndSelection();
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
-      int safeCursor = Utf16TextCursor.init_I(this.value, this.cursorIndex);
-      this.horizontalScrollIndex = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      int safeCursor = Utf16TextCursor.clampIndex(this.value, this.cursorIndex);
+      this.horizontalScrollIndex = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       if (safeCursor < this.horizontalScrollIndex) {
          this.horizontalScrollIndex = safeCursor;
       }
@@ -1144,7 +1144,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       int maxOffsetWidth = Math.max(0, this.prefixWidths[this.value.length()] - Math.max(0, availableWidth));
       if (this.prefixWidths[this.horizontalScrollIndex] > maxOffsetWidth) {
-         this.horizontalScrollIndex = Utf16TextCursor.init_I(this.value, lowerBound(this.prefixWidths, 0, this.horizontalScrollIndex, maxOffsetWidth));
+         this.horizontalScrollIndex = Utf16TextCursor.clampIndex(this.value, lowerBound(this.prefixWidths, 0, this.horizontalScrollIndex, maxOffsetWidth));
       }
 
       if (this.horizontalScrollIndex == safeCursor && safeCursor > 0) {
@@ -1154,7 +1154,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
    private int indexForSingleLineX(Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_StreamUtil richMetrics) {
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
-      int start = Utf16TextCursor.init_I(this.value, this.horizontalScrollIndex);
+      int start = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       int target = Math.max(0, this.prefixWidths[start] + Math.round(mouseInnerX));
       int candidate = nearestWidthIndex(this.prefixWidths, 0, this.value.length(), target);
       return Utf16TextCursor.init(this.value, this.prefixWidths, candidate, target);
@@ -1342,8 +1342,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private Component buildStyledComponent(String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
-      int safeStart = Utf16TextCursor.init_I(sourceText, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
+      int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       if (richMetrics != null && safeStart < safeEnd) {
          MutableComponent out = Component.empty();
          StringBuilder segment = new StringBuilder();
@@ -1373,8 +1373,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private int measureRangeWidth(Font renderer, Identifier font, int color, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
-      int safeStart = Utf16TextCursor.init_I(sourceText, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
+      int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       if (safeStart >= safeEnd) {
          return 0;
       } else if (Objects.equals(sourceText, this.value)) {
@@ -1388,8 +1388,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private int measureStyledRangeWidth(Font renderer, Identifier font, int fallbackColor, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
-      int safeStart = Utf16TextCursor.init_I(sourceText, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
+      int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       return renderer.width(this.buildStyledComponent(sourceText, richMetrics, safeStart, safeEnd));
    }
 
@@ -1405,8 +1405,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int x,
       int y
    ) {
-      int safeStart = Utf16TextCursor.init_I(sourceText, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.init_I(sourceText, end));
+      int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       if (safeStart < safeEnd) {
          context.text(renderer, this.buildStyledComponent(sourceText, richMetrics, safeStart, safeEnd), x, y, fallbackColor, false);
       }
@@ -1644,15 +1644,15 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             }
          }
 
-         this.selectionAnchor = Utf16TextCursor.init_I(this.value, start);
+         this.selectionAnchor = Utf16TextCursor.clampIndex(this.value, start);
          this.cursorIndex = Utf16TextCursor.load(this.value, Math.max(start, end));
       }
    }
 
    private void selectParagraphAt(int index) {
       int clamped = Math.max(0, Math.min(index, this.value.length()));
-      this.selectionAnchor = Utf16TextCursor.init_I(this.value, this.findLineStart(clamped));
-      this.cursorIndex = Utf16TextCursor.init_I(this.value, this.findLineEnd(clamped));
+      this.selectionAnchor = Utf16TextCursor.clampIndex(this.value, this.findLineStart(clamped));
+      this.cursorIndex = Utf16TextCursor.clampIndex(this.value, this.findLineEnd(clamped));
       if (this.cursorIndex < this.value.length() && this.value.charAt(this.cursorIndex) == '\n') {
          this.cursorIndex++;
       }
@@ -1796,7 +1796,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private void moveCursorTo(int nextCursor, boolean keepSelection) {
-      this.cursorIndex = Utf16TextCursor.init_I(this.value, nextCursor);
+      this.cursorIndex = Utf16TextCursor.clampIndex(this.value, nextCursor);
       if (!keepSelection) {
          this.selectionAnchor = this.cursorIndex;
       }
@@ -1842,15 +1842,15 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private void replaceRange(int start, int end, String replacement) {
-      int safeStart = Utf16TextCursor.init_I(this.value, start);
+      int safeStart = Utf16TextCursor.clampIndex(this.value, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.load(this.value, end));
       int capacity = Math.max(0, this.maxLength - (this.value.length() - (safeEnd - safeStart)));
-      String sanitizedReplacement = Utf16TextCursor.init_Str(this.sanitizeInput(replacement), capacity);
+      String sanitizedReplacement = Utf16TextCursor.truncate(this.sanitizeInput(replacement), capacity);
       String next = this.value.substring(0, safeStart) + sanitizedReplacement + this.value.substring(safeEnd);
       if (this.inputFilter.test(next)) {
          this.value = next;
          this.invalidateTextCaches();
-         this.cursorIndex = Utf16TextCursor.init_I(next, Math.min(next.length(), safeStart + sanitizedReplacement.length()));
+         this.cursorIndex = Utf16TextCursor.clampIndex(next, Math.min(next.length(), safeStart + sanitizedReplacement.length()));
          this.selectionAnchor = this.cursorIndex;
          this.manualScrollPinned = false;
          this.resetCaretBlink();

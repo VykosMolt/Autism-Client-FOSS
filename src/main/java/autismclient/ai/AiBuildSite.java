@@ -141,8 +141,8 @@ final class AiBuildSite {
             Item item;
             byte dependencies;
             try {
-               kind = AiBuildIntent.init_IoWorker_CachePool(cell);
-               item = AiBuildIntent.init_Item(cell, kind);
+               kind = AiBuildIntent.kindOf(cell);
+               item = AiBuildIntent.itemFor(cell, kind);
                dependencies = init_B_TableIndex_StreamU_IoWorker_CachePool(cell, kind);
                standable = init_Z_TableIndex_StreamU(cell);
             } catch (RuntimeException unknown) {
@@ -349,11 +349,11 @@ final class AiBuildSite {
    }
 
    AiBuilder.CellSpec load_TableIndex_StreamU_I(int index) {
-      return AiBuildIntent.init_TableIndex_StreamU(this.init_TableIndex_StreamUArr[index]);
+      return AiBuildIntent.unpoweredLever(this.init_TableIndex_StreamUArr[index]);
    }
 
    boolean init_Z_I(int index) {
-      return AiBuildIntent.read_Z(this.init_TableIndex_StreamUArr[index]);
+      return AiBuildIntent.isPoweredLever(this.init_TableIndex_StreamUArr[index]);
    }
 
    boolean load_Z_I(int index) {
@@ -411,7 +411,7 @@ final class AiBuildSite {
          AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
 
          for (int i = 0; i < this.pop; i++) {
-            if (AiBuildIntent.read_Z(this.init_TableIndex_StreamUArr[i])) {
+            if (AiBuildIntent.isPoweredLever(this.init_TableIndex_StreamUArr[i])) {
                found.init(i);
             }
          }
@@ -1358,7 +1358,7 @@ final class AiBuildSite {
    }
 
    private static byte init_B_TableIndex_StreamU_IoWorker_CachePool(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
-      List<BlockPos> offsets = AiBuildIntent.init_List(cell, kind);
+      List<BlockPos> offsets = AiBuildIntent.offsetsFor(cell, kind);
       if (offsets.isEmpty()) {
          return 0;
       }
@@ -1550,7 +1550,7 @@ final class AiBuildSite {
       if (AiBuildIntent.init(cell, live)) {
          return true;
       } else {
-         return AiBuildIntent.read_Z(cell) && AiBuildIntent.init(AiBuildIntent.init_TableIndex_StreamU(cell), live) ? true : AiBuildIntent.init(cell, live, this.init_Map);
+         return AiBuildIntent.isPoweredLever(cell) && AiBuildIntent.init(AiBuildIntent.unpoweredLever(cell), live) ? true : AiBuildIntent.init(cell, live, this.init_Map);
       }
    }
 

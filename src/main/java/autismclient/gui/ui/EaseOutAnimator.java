@@ -38,7 +38,7 @@ public final class EaseOutAnimator {
       }
    }
 
-   public float init_F_F(float nextTarget) {
+   public float animateTo(float nextTarget) {
       long now = this.init_LongSupplier.getAsLong();
       if (Float.compare(nextTarget, this.load_F) != 0) {
          this.init_F = this.init_F_J(now);
@@ -49,7 +49,7 @@ public final class EaseOutAnimator {
       return this.init_F_J(now);
    }
 
-   public float init_F() {
+   public float value() {
       return this.init_F_J(this.init_LongSupplier.getAsLong());
    }
 
@@ -57,12 +57,12 @@ public final class EaseOutAnimator {
       return this.load_F;
    }
 
-   public void init_V_F(float value) {
+   public void snapTo(float value) {
       this.init_F = this.load_F = value;
       this.read = 0L;
    }
 
-   public boolean init_Z() {
+   public boolean isAnimating() {
       return this.init_F != this.load_F && this.init_LongSupplier.getAsLong() - this.read < this.load_J;
    }
 

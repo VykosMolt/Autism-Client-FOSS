@@ -22,11 +22,11 @@ final class ProfileServerIconCache {
    private final Map<String, Optional<ServerData>> init_Map = new HashMap<>();
    private final Map<ServerData, ProfileServerIconCache.Inner_DataUtil> load = new HashMap<>();
 
-   ServerData init_ServerData_Str(String pattern) {
+   ServerData serverFor(String pattern) {
       if (pattern != null && !pattern.isBlank() && !pattern.equals("*")) {
          ServerData current = Minecraft.getInstance().getCurrentServer();
          boolean currentMatches = current != null && AutismProfileManager.load_Z_Str_Str(current.ip, pattern);
-         return currentMatches && this.init_Z_ServerData(current)
+         return currentMatches && this.hasIcon(current)
             ? current
             : this.init_Map.computeIfAbsent(pattern, key -> Optional.ofNullable(this.load(key))).orElse(currentMatches ? current : null);
       } else {
@@ -41,14 +41,14 @@ final class ProfileServerIconCache {
       }
 
       ServerData firstMatch = this.init_ServerList.get(pattern);
-      if (this.init_Z_ServerData(firstMatch)) {
+      if (this.hasIcon(firstMatch)) {
          return firstMatch;
       }
 
       for (int i = 0; i < this.init_ServerList.size(); i++) {
          ServerData server = this.init_ServerList.get(i);
          if (AutismProfileManager.load_Z_Str_Str(server.ip, pattern)) {
-            if (this.init_Z_ServerData(server)) {
+            if (this.hasIcon(server)) {
                return server;
             }
 
@@ -61,7 +61,7 @@ final class ProfileServerIconCache {
       return firstMatch;
    }
 
-   boolean init_Z_ServerData(ServerData server) {
+   boolean hasIcon(ServerData server) {
       return this.init_Identifier_ServerData(server) != null;
    }
 

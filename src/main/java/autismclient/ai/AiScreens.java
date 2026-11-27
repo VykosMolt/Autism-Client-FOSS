@@ -42,7 +42,7 @@ final class AiScreens {
    private AiScreens() {
    }
 
-   static JsonObject init_JsonObject(Minecraft mc) {
+   static JsonObject describe(Minecraft mc) {
       JsonObject out = new JsonObject();
 
       try {
@@ -74,7 +74,7 @@ final class AiScreens {
             }
 
             if (screen instanceof autismclient.gui.screens.ScreenButtonBoundsProvider access && !widgetsTruncated) {
-               for (Entry<String, autismclient.gui.f.NetHelper> entry : access.init_Map().entrySet()) {
+               for (Entry<String, autismclient.gui.f.NetHelper> entry : access.buttonBounds().entrySet()) {
                   if (index >= 80) {
                      break;
                   }
@@ -127,7 +127,7 @@ final class AiScreens {
       return out;
    }
 
-   static JsonObject init_JsonObject(JsonObject args) {
+   static JsonObject click(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       AiScreens.Inner_DataUtil live = init_bY_DataUtil(mc);
       int position = init(live.infos(), args);
@@ -140,7 +140,7 @@ final class AiScreens {
             throw new IllegalArgumentException("Click was not accepted by button \"" + init(target.label(), 64) + "\"");
          }
 
-         JsonObject customOut = init_JsonObject(mc);
+         JsonObject customOut = describe(mc);
          customOut.add("clicked", target.json());
          return customOut;
       } else {
@@ -165,13 +165,13 @@ final class AiScreens {
             throw new IllegalArgumentException("Click was not accepted by widget \"" + init(target.label(), 64) + "\"");
          }
 
-         JsonObject out = init_JsonObject(mc);
+         JsonObject out = describe(mc);
          out.add("clicked", target.json());
          return out;
       }
    }
 
-   static JsonObject load_JsonObject(JsonObject args) {
+   static JsonObject closeScreen(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       Screen screen = mc.gui.screen();
       if (screen == null) {
@@ -187,7 +187,7 @@ final class AiScreens {
          );
       }
 
-      JsonObject out = init_JsonObject(mc);
+      JsonObject out = describe(mc);
       out.addProperty("closed", title);
       out.addProperty("sendPacket", sendPacket);
       return out;
@@ -205,7 +205,7 @@ final class AiScreens {
                   throw new IllegalStateException("The screen could not be stored (no container or no player)");
                }
 
-               JsonObject out = init_JsonObject(mc);
+               JsonObject out = describe(mc);
                out.addProperty("stored", true);
                return out;
             }
@@ -215,7 +215,7 @@ final class AiScreens {
                throw new IllegalStateException("No stored GUI to restore");
             }
 
-            JsonObject out = init_JsonObject(mc);
+            JsonObject out = describe(mc);
             out.addProperty("restored", true);
             return out;
          default:
@@ -245,7 +245,7 @@ final class AiScreens {
             live.screen().setFocused(previousFocus);
          }
 
-         JsonObject out = init_JsonObject(mc);
+         JsonObject out = describe(mc);
          out.add("typed", AiJson.objectOf("index", position, "value", init(box.getValue(), 256), "truncated", !box.getValue().equals(requested)));
          return out;
       } else {
@@ -314,7 +314,7 @@ final class AiScreens {
       }
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation joinServer(JsonObject args) {
       final String address = load_Str(args);
       String name = init(AiJson.getString(args, "name", "").trim(), 64);
       if (name.isEmpty()) {
@@ -364,7 +364,7 @@ final class AiScreens {
                   return AiGameOperations.result(
                      AiOperation.Status.TIMED_OUT,
                      "Connection to " + address + " not established within " + timeout + "s",
-                     AiJson.objectOf("server", address, "screen", AiScreens.init_JsonObject(mc))
+                     AiJson.objectOf("server", address, "screen", AiScreens.describe(mc))
                   );
                } else {
                   return AiGameOperations.result(
@@ -399,7 +399,7 @@ final class AiScreens {
 
       boolean wasMultiplayer = !mc.isLocalServer();
       mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
-      JsonObject out = init_JsonObject(mc);
+      JsonObject out = describe(mc);
       out.addProperty("disconnected", true);
       out.addProperty("wasMultiplayer", wasMultiplayer);
       return out;
@@ -525,7 +525,7 @@ final class AiScreens {
       if (screen instanceof autismclient.gui.screens.ScreenButtonBoundsProvider access) {
          int index = infos.size();
 
-         for (Entry<String, autismclient.gui.f.NetHelper> entry : access.init_Map().entrySet()) {
+         for (Entry<String, autismclient.gui.f.NetHelper> entry : access.buttonBounds().entrySet()) {
             if (infos.size() >= 80) {
                break;
             }

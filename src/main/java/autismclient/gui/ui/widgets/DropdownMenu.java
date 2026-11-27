@@ -234,7 +234,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
             );
             this.scrollbarBounds = ScrollbarRenderer.init(track, this.options.size() * rowHeight, this.visibleRows * rowHeight, this.scrollRow * rowHeight);
             ScrollbarRenderer.init(
-               context, this.scrollbarBounds, this.scrollbarBounds.init_NetHelper().init_Z(context.read(), context.write()), this.draggingScrollbar
+               context, this.scrollbarBounds, this.scrollbarBounds.track().init_Z(context.read(), context.write()), this.draggingScrollbar
             );
          } else {
             this.scrollbarBounds = null;
@@ -257,7 +257,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
          return autismclient.gui.ui.UiInputResult.HANDLED;
       } else if (this.open) {
          if (this.popupBounds.init_Z(mouseX, mouseY)) {
-            if (this.scrollbarBounds != null && this.scrollbarBounds.init_NetHelper().init_Z(mouseX, mouseY)) {
+            if (this.scrollbarBounds != null && this.scrollbarBounds.track().init_Z(mouseX, mouseY)) {
                this.dragAnchorOffsetY = this.scrollbarBounds.load().init_Z(mouseX, mouseY)
                   ? mouseY - this.scrollbarBounds.load().write()
                   : this.scrollbarBounds.load().sync() / 2;
@@ -407,8 +407,8 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
    }
 
    private void updateScrollFromMouseY(int mouseY) {
-      if (this.scrollbarBounds != null && this.scrollbarBounds.init_I() > 0) {
-         int pixelScroll = ScrollbarRenderer.init_I_UtilCore_DataUtil(this.scrollbarBounds, mouseY, this.dragAnchorOffsetY);
+      if (this.scrollbarBounds != null && this.scrollbarBounds.maxScroll() > 0) {
+         int pixelScroll = ScrollbarRenderer.scrollForDrag(this.scrollbarBounds, mouseY, this.dragAnchorOffsetY);
          this.scrollRow = clamp(Math.round((float)pixelScroll / Math.max(1, this.effectiveRowHeight())), 0, this.maxScrollRow());
       }
    }

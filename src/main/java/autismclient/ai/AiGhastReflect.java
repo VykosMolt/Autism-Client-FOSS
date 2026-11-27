@@ -80,7 +80,7 @@ final class AiGhastReflect {
       this.read_Obj = mc.getConnection();
    }
 
-   boolean init_Z() {
+   boolean isTracking() {
       return this.read_I >= 0 && !this.init_Z;
    }
 
@@ -92,7 +92,7 @@ final class AiGhastReflect {
       return this.init_Z && this.update_I >= 0;
    }
 
-   boolean init_Z_I(int id) {
+   boolean isReflected(int id) {
       UUID identity = this.read_Map.get(id);
       Entity current = this.init_Minecraft.level == null ? null : this.init_Minecraft.level.getEntity(id);
       return identity != null && (current == null || current.getUUID().equals(identity));
@@ -100,10 +100,10 @@ final class AiGhastReflect {
 
    static JsonObject init_JsonObject_UUID(UUID projectile) {
       AiGhastReflect active = init_Map.get(projectile);
-      return active == null ? load_Map.get(projectile) : active.init_JsonObject();
+      return active == null ? load_Map.get(projectile) : active.statusJson();
    }
 
-   static void init_V() {
+   static void tickAll() {
       for (AiGhastReflect observer : List.copyOf(init_Map.values())) {
          observer.read();
       }
@@ -167,7 +167,7 @@ final class AiGhastReflect {
       }
    }
 
-   String init_Str_List(List<AiProjectiles.IncomingProjectile> threats) {
+   String plan(List<AiProjectiles.IncomingProjectile> threats) {
       if (this.read_I < 0) {
          this.init_V_List(threats);
       }
@@ -182,7 +182,7 @@ final class AiGhastReflect {
       LargeFireball ball = projectile instanceof LargeFireball b && b.getUUID().equals(this.init_UUID) ? b : null;
       if (this.update_I >= 0) {
          this.read();
-         return this.init_Z() && threats.isEmpty() ? "Awaiting server fireball redirection" : null;
+         return this.isTracking() && threats.isEmpty() ? "Awaiting server fireball redirection" : null;
       }
 
       if (ball != null && ball.isAlive()) {
@@ -208,7 +208,7 @@ final class AiGhastReflect {
                   ghast.getBoundingBox(),
                   this.read_Vec3,
                   0,
-                  AiDefense.init_D(this.init_Minecraft)
+                  AiDefense.attackReach(this.init_Minecraft)
                )
                : null;
             if (immediate != null && this.init_Z_Vec3(ball.position(), immediate, ball)) {
@@ -250,7 +250,7 @@ final class AiGhastReflect {
             }
 
             Vec3 direction = Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
-            if (!init_Z_Vec3(eye, direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.init_D(this.init_Minecraft))) {
+            if (!init_Z_Vec3(eye, direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.attackReach(this.init_Minecraft))) {
                return null;
             }
 
@@ -303,7 +303,7 @@ final class AiGhastReflect {
             }
 
             if (this.init_Minecraft.player.isWithinAttackRange(this.init_Minecraft.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
-               && init_Z_Vec3(eye, this.init_V_StreamUtil.flight.direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.init_D(this.init_Minecraft))
+               && init_Z_Vec3(eye, this.init_V_StreamUtil.flight.direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.attackReach(this.init_Minecraft))
                )
              {
                return this.init_Str();
@@ -327,9 +327,9 @@ final class AiGhastReflect {
                "projectileBox",
                ball.getBoundingBox().toString(),
                "reach",
-               AiDefense.init_D(this.init_Minecraft)
+               AiDefense.attackReach(this.init_Minecraft)
             );
-            AiSpeedrun.init_V_Str_ObjArr("[AI] ghast reflection rejected attack: {}", this.init_JsonObject);
+            AiSpeedrun.log("[AI] ghast reflection rejected attack: {}", this.init_JsonObject);
             this.init_Set.add(this.init_UUID);
             this.load("live_attack_ray_or_range_rejected; emergency defense");
             return null;
@@ -417,8 +417,8 @@ final class AiGhastReflect {
       AiGhastReflect.Inner_DataUtil best = null;
       double score = -1.7976931348623157E308;
 
-      for (Vec3 direction : init_List_Vec3(eye, pick, AiDefense.init_D(this.init_Minecraft))) {
-         if (this.init_Z_Vec3_2(eye, eye.add(direction.scale(AiDefense.init_D(this.init_Minecraft))), ball)) {
+      for (Vec3 direction : init_List_Vec3(eye, pick, AiDefense.attackReach(this.init_Minecraft))) {
+         if (this.init_Z_Vec3_2(eye, eye.add(direction.scale(AiDefense.attackReach(this.init_Minecraft))), ball)) {
             Vec3 position = ball.position();
             Vec3 velocity = direction;
             boolean safe = true;
@@ -495,7 +495,7 @@ final class AiGhastReflect {
    private AiGhastReflect.Inner_StreamUtil init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
       this.update_Map.clear();
       Vec3 eye = this.init_Minecraft.player.getEyePosition();
-      double reach = AiDefense.init_D(this.init_Minecraft);
+      double reach = AiDefense.attackReach(this.init_Minecraft);
       AiGhastReflect.Inner_DataUtil now = init(eye, ball.position(), ball.getBoundingBox().inflate(ball.getPickRadius()), ghast.getBoundingBox(), this.read_Vec3, 0, reach);
       if (now != null
          && this.init_Minecraft.player.isWithinAttackRange(this.init_Minecraft.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
@@ -757,7 +757,7 @@ final class AiGhastReflect {
 
    private void init(String next, String why) {
       if (!this.init_Str.equals(next)) {
-         AiSpeedrun.init_V_Str_ObjArr("[AI] ghast reflection: {} ball={} ghast={} ({})", next, this.read_I, this.write_I, why);
+         AiSpeedrun.log("[AI] ghast reflection: {} ball={} ghast={} ({})", next, this.read_I, this.write_I, why);
       }
 
       this.init_Str = next;
@@ -799,7 +799,7 @@ final class AiGhastReflect {
       this.init_V_StreamUtil = null;
       if (this.init_UUID != null) {
          init_Map.remove(this.init_UUID);
-         load_Map.put(this.init_UUID, this.init_JsonObject());
+         load_Map.put(this.init_UUID, this.statusJson());
 
          while (load_Map.size() > 32) {
             load_Map.remove(load_Map.keySet().iterator().next());
@@ -807,7 +807,7 @@ final class AiGhastReflect {
       }
    }
 
-   JsonObject init_JsonObject() {
+   JsonObject statusJson() {
       JsonObject out = AiJson.objectOf(
          "phase",
          this.init_Str,
@@ -896,7 +896,7 @@ final class AiGhastReflect {
       }
    }
 
-   void load_V() {
+   void tick() {
       this.update();
    }
 

@@ -138,7 +138,7 @@ final class AiMlg {
       return !eyeSubmerged || airSupply >= 90;
    }
 
-   static AiOperation init_AiOperation_JsonObject(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final String requested = AiJson.getString(args, "method", "auto").toLowerCase(Locale.ROOT);
@@ -630,7 +630,7 @@ final class AiMlg {
 
       for (int tick = 1; tick <= 20; tick++) {
          Vec3 start = new Vec3(x, y, z);
-         my = AiDanger.init_D_D(my, gravity, slowFalling);
+         my = AiDanger.nextMotionY(my, gravity, slowFalling);
          mx *= 0.91;
          mz *= 0.91;
          if (my < 0.0) {

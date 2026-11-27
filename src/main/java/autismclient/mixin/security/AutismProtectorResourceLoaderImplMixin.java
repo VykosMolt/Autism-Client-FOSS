@@ -24,7 +24,7 @@ public class AutismProtectorResourceLoaderImplMixin {
       if (cir.getReturnValueZ() && container != null) {
          String mod = container.getMetadata().getId();
          ModNamespaceCatalog.read_V(mod);
-         ModNamespaceCatalog.init(CallerModInspector.init_Set(mod));
+         ModNamespaceCatalog.init(CallerModInspector.dependenciesOf(mod));
       }
    }
 }

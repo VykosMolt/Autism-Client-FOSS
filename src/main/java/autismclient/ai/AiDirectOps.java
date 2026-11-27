@@ -38,15 +38,15 @@ public final class AiDirectOps {
    private AiDirectOps() {
    }
 
-   public static void init_V() {
+   public static void reloadToolSettings() {
       init_AiToolSettings = AiToolSettings.load(init_Path());
    }
 
    static void init(Minecraft client) {
       try {
-         AiGhastReflect.init_V();
-         if (++load_I % 20 == 0 || init_AiCatalog.init_AiCatalog_Snapshot().entries().isEmpty()) {
-            init_AiCatalog.init_V();
+         AiGhastReflect.tickAll();
+         if (++load_I % 20 == 0 || init_AiCatalog.snapshot().entries().isEmpty()) {
+            init_AiCatalog.refresh();
          }
 
          for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
@@ -63,32 +63,32 @@ public final class AiDirectOps {
       }
    }
 
-   public static AiCatalog.Snapshot init_AiCatalog_Snapshot() {
-      init_AiCatalog.init_V();
-      return init_AiCatalog.init_AiCatalog_Snapshot();
+   public static AiCatalog.Snapshot catalogSnapshot() {
+      init_AiCatalog.refresh();
+      return init_AiCatalog.snapshot();
    }
 
-   public static AiCatalog.Entry init_AiCatalog_Entry(String id) {
-      return id == null ? null : init_AiCatalog_Snapshot().get(id);
+   public static AiCatalog.Entry catalogEntry(String id) {
+      return id == null ? null : catalogSnapshot().get(id);
    }
 
-   public static boolean load_Z(String id) {
+   public static boolean isToolId(String id) {
       return id != null && id.contains(":") && !id.startsWith("module:") && !id.startsWith("command:") && !id.startsWith("macro:") && !id.startsWith("menu:");
    }
 
-   public static String init_Str(String raw) {
+   public static String resolveToolId(String raw) {
       if (raw != null && !raw.isBlank()) {
          String id = raw.trim();
-         if (init_AiCatalog_Entry(id) != null) {
+         if (catalogEntry(id) != null) {
             return id;
          }
 
          if (!id.contains(":")) {
-            if (init_AiCatalog_Entry("game:" + id) != null) {
+            if (catalogEntry("game:" + id) != null) {
                return "game:" + id;
             }
 
-            if (init_AiCatalog_Entry("client:" + id) != null) {
+            if (catalogEntry("client:" + id) != null) {
                return "client:" + id;
             }
          }
@@ -99,11 +99,11 @@ public final class AiDirectOps {
       }
    }
 
-   public static String load_Str(String purpose) {
-      return AiTools.init_Str_Str(purpose);
+   public static String summarizePurpose(String purpose) {
+      return AiTools.shortPurpose(purpose);
    }
 
-   public static boolean init_Z() {
+   public static boolean isRunning() {
       return init_o_DataUtil != null;
    }
 
@@ -112,17 +112,17 @@ public final class AiDirectOps {
       return a == null ? "" : a.init_Str;
    }
 
-   public static void init_V(String id, JsonObject args) {
-      init_k_StreamUtil(id, args);
+   public static void run(String id, JsonObject args) {
+      start(id, args);
    }
 
-   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil(String id, JsonObject args) {
+   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil start(String id, JsonObject args) {
       AiDirectOps.Inner_DataUtil running = init_o_DataUtil;
       if (running != null && !id.equals("client:run_macro")) {
          throw new IllegalStateException("Already running " + running.init_Str + " (" + init_Str(running) + ") - " + load_Str() + " stop first");
       }
 
-      AiCatalog.Entry entry = init_AiCatalog_Snapshot().get(id);
+      AiCatalog.Entry entry = catalogSnapshot().get(id);
       if (entry == null) {
          throw new IllegalArgumentException("Unknown capability " + id);
       }
@@ -132,7 +132,7 @@ public final class AiDirectOps {
             throw new IllegalArgumentException(id + " is discover-only; it documents alternatives but performs nothing");
          }
 
-         AiSettings ai = init_AiSettings();
+         AiSettings ai = settings();
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          JsonObject effective = init(id, args, schema);
          if (schema.has("type") || schema.has("properties")) {
@@ -155,7 +155,7 @@ public final class AiDirectOps {
          Runnable prepare = () -> {
             if (requiredResources.contains("INPUT")) {
                autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
-               AiAssistant.init_ConfigStore().pop();
+               AiAssistant.getInstance().pop();
             }
 
             if (action && id.startsWith("game:")) {
@@ -163,9 +163,9 @@ public final class AiDirectOps {
             }
          };
          AutoCloseable lease = id.equals("client:run_macro") ? () -> {} : MacroExecutor.acquireExternalResources(entry.contract().resources());
-         AiOperation op = AiModuleScope.init_AiOperation_Supplier(() -> {
+         AiOperation op = AiModuleScope.wrap(() -> {
             prepare.run();
-            return AiTools.init_AiOperation_Str(id, effective, ai, null);
+            return AiTools.operationFor(id, effective, ai, null);
          });
          Minecraft mc = Minecraft.getInstance();
          AiDirectOps.Inner_DataUtil created = new AiDirectOps.Inner_DataUtil(id, op, lease, requiredResources, mc.level, ai.emergencyKey);
@@ -185,7 +185,7 @@ public final class AiDirectOps {
          }
 
          init_AiOperation_Result = null;
-         AiEventLog.init_x().init("op_started", AiJson.objectOf("id", id, "source", "direct"));
+         AiEventLog.getInstance().init("op_started", AiJson.objectOf("id", id, "source", "direct"));
          AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + read_Str() + "§7 cancels");
          return created.init_k_StreamUtil;
       } else {
@@ -195,7 +195,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil() {
+   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil currentHandle() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       return a != null ? a.init_k_StreamUtil : (init_k_StreamUtil != null ? init_k_StreamUtil : load_k_StreamUtil);
    }
@@ -214,7 +214,7 @@ public final class AiDirectOps {
    }
 
    private static JsonObject init(String id, JsonObject args, JsonObject schema) {
-      AiToolSettings s = init_AiToolSettings();
+      AiToolSettings s = toolSettings();
       JsonObject out = args.deepCopy();
       if (id.equals("game:goto") || id.equals("game:navigate")) {
          init(schema, out, "strategy", s.strategy);
@@ -262,12 +262,12 @@ public final class AiDirectOps {
       return schema.has("properties") && schema.getAsJsonObject("properties").has(key);
    }
 
-   public static void load_V() {
+   public static void stop() {
       init_V("");
    }
 
    public static void init_V(String reason) {
-      AiMacroTools.init_V_Str("Tools stopped");
+      AiMacroTools.cancelAll("Tools stopped");
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
 
       for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
@@ -282,7 +282,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static void read_V() {
+   public static void pause() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
@@ -298,7 +298,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static void write_V() {
+   public static void resume() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
@@ -316,7 +316,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static List<String> init_List() {
+   public static List<String> statusLines() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       if (a == null) {
          return List.of("§7No tool operation running.");
@@ -328,7 +328,7 @@ public final class AiDirectOps {
          lines.add("§7Progress: §f" + a.read);
       }
 
-      if (init_AiToolSettings().verbosityLevel().includesData() && !a.write.isBlank() && !a.write.equals("{}")) {
+      if (toolSettings().verbosityLevel().includesData() && !a.write.isBlank() && !a.write.equals("{}")) {
          lines.add("§8" + init(a.write, 200));
       }
 
@@ -383,8 +383,8 @@ public final class AiDirectOps {
                         AiFailure.THREAT_INTERRUPT,
                         "incoming projectile while eating"
                      );
-                  } else if (a.load_AiOperation.canInterruptNow() && (AiGuard.sampleStatus().hostilesNear() > 0 || AiSurvival.init_Entity(mc) != null)) {
-                     init(a, AiSurvival.init_AiOperation(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
+                  } else if (a.load_AiOperation.canInterruptNow() && (AiGuard.sampleStatus().hostilesNear() > 0 || AiSurvival.nearestThreat(mc) != null)) {
+                     init(a, AiSurvival.defend(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
                   }
                }
 
@@ -418,10 +418,10 @@ public final class AiDirectOps {
                   } else if (a.init_AiOperation.canInterruptNow()) {
                      AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                      boolean movingPast = AiGuard.canSprintPastThreats(mc, mc.player.getDeltaMovement());
-                     boolean unsafeMeal = a.init_Str.equals("game:eat") && AiSurvival.init_Entity(mc) != null;
+                     boolean unsafeMeal = a.init_Str.equals("game:eat") && AiSurvival.nearestThreat(mc) != null;
                      if (unsafeMeal || !movingPast && vitals.hostilesNear() > 0 && (vitals.underAttack() || a.init_Str.equals("game:eat"))) {
                         AiOperation defense = a.init_Str.equals("game:eat")
-                           ? AiSurvival.init_AiOperation(mc)
+                           ? AiSurvival.defend(mc)
                            : AiGuard.createResponseOperation(AiGuard.GuardPolicy.standard(), vitals, 15);
                         if (defense != null) {
                            init(
@@ -471,7 +471,7 @@ public final class AiDirectOps {
                init_V(a);
                init_AiOperation_Result = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
                init(a, true, init_AiOperation_Result);
-               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
+               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
                AutismClientMessaging.sendPrefixed(
                   "§c" + a.init_Str + " failed [UNKNOWN]: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage())
                );
@@ -511,7 +511,7 @@ public final class AiDirectOps {
 
       a.load_AiOperation = defense;
       a.load_Str = kind;
-      AiEventLog.init_x()
+      AiEventLog.getInstance()
          .init(
             "tools_survival_priority",
             AiJson.objectOf(
@@ -565,7 +565,7 @@ public final class AiDirectOps {
          init_V(a);
          init_AiOperation_Result = result;
          init(a, true, result);
-         AiEventLog.init_x()
+         AiEventLog.getInstance()
             .init(
                "op_failed",
                AiJson.objectOf(
@@ -583,31 +583,31 @@ public final class AiDirectOps {
          init_V(a);
          init_AiOperation_Result = result;
          init(a, false, result);
-         AiToolSettings.Verbosity verbosity = init_AiToolSettings().verbosityLevel();
+         AiToolSettings.Verbosity verbosity = toolSettings().verbosityLevel();
          String data = a.write == null ? "{}" : a.write;
          switch (result.status()) {
             case SUCCEEDED:
-               AiEventLog.init_x().init("op_completed", AiJson.objectOf("id", a.init_Str, "status", "SUCCEEDED"));
+               AiEventLog.getInstance().init("op_completed", AiJson.objectOf("id", a.init_Str, "status", "SUCCEEDED"));
                AutismClientMessaging.sendPrefixed("§a" + a.init_Str + ": " + result.message());
                if (!data.isBlank() && !data.equals("{}")) {
                   AutismClientMessaging.sendPrefixed("§8" + init(data, init(verbosity)));
                }
                break;
             case UNCERTAIN:
-               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "UNCERTAIN", "failure", result.failure().name()));
+               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "UNCERTAIN", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " uncertain: " + result.message() + "§7 - reobserve before retrying");
                break;
             case CANCELLED:
-               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "CANCELLED", "failure", result.failure().name()));
+               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "CANCELLED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " cancelled: " + result.message());
                break;
             case TIMED_OUT:
                AiFailure failure = result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
-               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "TIMED_OUT", "failure", failure.name()));
+               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "TIMED_OUT", "failure", failure.name()));
                AutismClientMessaging.sendPrefixed(init(a.init_Str, "timed out", failure, result.message(), verbosity));
                break;
             case FAILED:
-               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", result.failure().name()));
+               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed(init(a.init_Str, "failed", result.failure(), result.message(), verbosity));
          }
       }
@@ -615,14 +615,14 @@ public final class AiDirectOps {
 
    private static String init(String id, String verb, AiFailure failure, String message, AiToolSettings.Verbosity verbosity) {
       String line = "§c" + id + " " + verb + " [" + failure.name() + "]: " + message;
-      if (verbosity.includesFailureSuggestions() && failure.init_Z() && !failure.init_List().isEmpty()) {
-         line = line + " §7(recoverable - try: " + String.join(", ", failure.init_List()) + ")";
+      if (verbosity.includesFailureSuggestions() && failure.isRecoverable() && !failure.suggestedActions().isEmpty()) {
+         line = line + " §7(recoverable - try: " + String.join(", ", failure.suggestedActions()) + ")";
       }
 
       return line;
    }
 
-   public static boolean load_Z() {
+   public static boolean isDrivingInput() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       return init_I > 0 || a != null && a.init_AutoCloseable != null && a.init_List.contains("INPUT");
    }
@@ -634,7 +634,7 @@ public final class AiDirectOps {
       }
 
       load(a);
-      AiClientTick.init_V_Runnable(() -> {
+      AiClientTick.execute(() -> {
          try {
             init(a, cancel);
          } finally {
@@ -648,7 +648,7 @@ public final class AiDirectOps {
    }
 
    private static void init_V(AiDirectOps.Inner_DataUtil a) {
-      AiVisualization.init_V(a);
+      AiVisualization.clearOwner(a);
       if (init_o_DataUtil == a) {
          init_o_DataUtil = null;
       }
@@ -703,15 +703,15 @@ public final class AiDirectOps {
       return AutismClientAddon.FOLDER.toPath().resolve("ai");
    }
 
-   public static Path load_Path() {
+   public static Path blueprintsDir() {
       return init_Path().resolve("blueprints");
    }
 
-   public static Path read_Path() {
+   public static Path schematicsDir() {
       return AiSchematic.init();
    }
 
-   public static AiToolSettings init_AiToolSettings() {
+   public static AiToolSettings toolSettings() {
       AiToolSettings s = init_AiToolSettings;
       if (s == null) {
          s = AiToolSettings.load(init_Path());
@@ -732,7 +732,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static AiSettings init_AiSettings() {
+   public static AiSettings settings() {
       AiService existing = AiService.getExistingInstance();
       if (existing != null) {
          return existing.getSettings();
@@ -773,7 +773,7 @@ public final class AiDirectOps {
 
    private static String read_Str() {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
-      int key = a == null ? init_AiSettings().emergencyKey : a.init_I;
+      int key = a == null ? settings().emergencyKey : a.init_I;
       return load_Str() + " stop or " + (key == 299 ? "F10" : "key " + key);
    }
 
@@ -783,7 +783,7 @@ public final class AiDirectOps {
 
    private static String write_Str() {
       String var10000;
-      switch (init_AiToolSettings().verbosityLevel()) {
+      switch (toolSettings().verbosityLevel()) {
          case QUIET:
             var10000 = "";
             break;

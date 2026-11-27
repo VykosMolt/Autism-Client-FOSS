@@ -91,11 +91,11 @@ public final class OutboundChannelPolicy {
 
    public static void init_V(Connection connection) {
       if (connection != null) {
-         init_V(ConnectionPrivacyRegistry.getActive(connection));
+         forget(ConnectionPrivacyRegistry.getActive(connection));
       }
    }
 
-   public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static void forget(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null) {
          synchronized (init_Map) {
             init_Map.remove(context);
@@ -129,7 +129,7 @@ public final class OutboundChannelPolicy {
 
       CustomPayloadFilter.Inner_DataUtil verdict = CustomPayloadFilter.init(connection, packet, false);
       OutboundChannelPolicy.Inner_DataUtil var10000;
-      switch (verdict.init_IoWorker_DataUtil_) {
+      switch (verdict.kind) {
          case PASS:
             var10000 = init_ConfigStore_DataUt;
             break;
@@ -137,7 +137,7 @@ public final class OutboundChannelPolicy {
             var10000 = load_ConfigStore_DataUt;
             break;
          case REPLACE:
-            var10000 = init(verdict.init_Packet);
+            var10000 = init(verdict.replacement);
             break;
          default:
             throw new MatchException(null, null);
@@ -180,16 +180,16 @@ public final class OutboundChannelPolicy {
          init_Map.clear();
       }
 
-      LateRegisterSynthesizer.init_V();
+      LateRegisterSynthesizer.reset();
    }
 
    public static final class Inner_DataUtil {
-      public final OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2 init_ConfigStore_DataUt;
-      public final Packet<?> init_Packet;
+      public final OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2 kind;
+      public final Packet<?> replacement;
 
       private Inner_DataUtil(OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2 kind, Packet<?> replacement) {
-         this.init_ConfigStore_DataUt = kind;
-         this.init_Packet = replacement;
+         this.kind = kind;
+         this.replacement = replacement;
       }
 
       public enum Inner_DataUtil_2 {

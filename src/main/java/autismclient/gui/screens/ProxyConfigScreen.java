@@ -114,8 +114,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
                );
          }
 
-         this.sync = this.init_I();
-         this.flush = this.load_I();
+         this.sync = this.virtualWidth();
+         this.flush = this.virtualHeight();
       }
    }
 
@@ -210,11 +210,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         if (this.sync != this.init_I() || this.flush != this.load_I()) {
+         if (this.sync != this.virtualWidth() || this.flush != this.virtualHeight()) {
             this.load_V_7();
          }
 
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -15987181);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
          int panelX = this.close();
          int panelW = this.open();
          int panelTop = this.push();
@@ -278,7 +278,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-      MouseButtonEvent virtualEvent = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent virtualEvent = toVirtual(event);
       if (Compat263.mouseEventGlfwButton(virtualEvent) == 0
          && autismclient.gui.ui.widgets.DialogFrameRenderer.init(
             autismclient.gui.f.NetHelper.init(this.close(), this.push(), this.open(), this.set() - this.push()),
@@ -368,11 +368,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int close() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.open(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.open(), 6);
    }
 
    private int open() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, Math.min(380, this.update_I));
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, Math.min(380, this.update_I));
    }
 
    private int poll() {
@@ -396,7 +396,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int tick_I_6() {
-      int available = this.load_I() - 12 - this.pop();
+      int available = this.virtualHeight() - 12 - this.pop();
       return Math.max(0, Math.min(8, (available + 2) / this.flush()));
    }
 
@@ -406,7 +406,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, this.pop() + this.run());
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, this.pop() + this.run());
    }
 
    private int set() {

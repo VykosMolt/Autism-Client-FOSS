@@ -90,7 +90,7 @@ public class AutismProtectorConnectionTrackingMixin {
 
    @Unique
    private static void autism$disconnectExactContext(ConnectionPrivacyRegistry.ConnectionSession context) {
-      autismclient.protector.OutboundChannelPolicy.init_V(context);
+      autismclient.protector.OutboundChannelPolicy.forget(context);
    }
 
    private ConnectionPrivacyRegistry.ConnectionSession autism$context(SocketAddress peerAddress, boolean multiChannel) {

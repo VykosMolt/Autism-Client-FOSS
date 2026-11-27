@@ -10,11 +10,11 @@ final class AiCombatPriority {
    private AiCombatPriority() {
    }
 
-   static boolean init_Z_Z(boolean alive, boolean inRadius, boolean deferred) {
+   static boolean keepTarget(boolean alive, boolean inRadius, boolean deferred) {
       return alive && inRadius && !deferred;
    }
 
-   static boolean init_Z_D_2(double currentGap, double otherGap, int heldTicks, boolean currentHittable, boolean otherHittable) {
+   static boolean shouldSwitchTarget(double currentGap, double otherGap, int heldTicks, boolean currentHittable, boolean otherHittable) {
       if (!otherHittable) {
          return false;
       } else if (!currentHittable) {
@@ -24,7 +24,7 @@ final class AiCombatPriority {
       }
    }
 
-   static boolean init_Z_I(int killed, int requested, boolean untilClear, boolean noThreatsObserved) {
+   static boolean isKillGoalMet(int killed, int requested, boolean untilClear, boolean noThreatsObserved) {
       return killed >= requested || untilClear && noThreatsObserved;
    }
 

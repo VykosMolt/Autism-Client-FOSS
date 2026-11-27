@@ -16,7 +16,7 @@ public final class AiMenuClose {
    private AiMenuClose() {
    }
 
-   public static boolean init_Z() {
+   public static boolean closeMenu() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
@@ -72,7 +72,7 @@ public final class AiMenuClose {
       return init != null;
    }
 
-   public static AiMenuClose.Inner_StreamUtil init_aq_StreamUtil() {
+   public static AiMenuClose.Inner_StreamUtil receiptState() {
       AiMenuClose.Inner_DataUtil receipt = init;
       if (receipt == null) {
          return AiMenuClose.Inner_StreamUtil.READY;
@@ -101,7 +101,7 @@ public final class AiMenuClose {
       }
    }
 
-   static void init_V() {
+   static void reset() {
       load = null;
       init = null;
    }

@@ -91,10 +91,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
          ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             AiSchematicPlacement preview = init_bW;
             if (preview != null) {
-               if (mc.level == preview.init_ClientLevel && mc.player != null && AiAssistant.init_ConfigStore().init_Z()) {
+               if (mc.level == preview.init_ClientLevel && mc.player != null && AiAssistant.getInstance().isShown()) {
                   preview.poll();
                } else {
-                  AiAssistant.init_ConfigStore().push();
+                  AiAssistant.getInstance().push();
                   preview.cancel();
                }
             }
@@ -185,7 +185,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.update_Z = false;
       this.init_aj.close();
       if (!handoff) {
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
 
       this.init_AABB = null;
@@ -201,7 +201,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
    @Override
    boolean isReadyToConfirm() {
-      return this.isActive() && !this.init_aj.init_Z();
+      return this.isActive() && !this.init_aj.isUpdating();
    }
 
    boolean isSearching() {
@@ -274,7 +274,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          return "Loading schematic...";
       } else if (!this.read_Str.isEmpty()) {
          return this.read_Str;
-      } else if (this.init_aj.init_Z()) {
+      } else if (this.init_aj.isUpdating()) {
          return "Updating schematic orientation...";
       } else if (this.update_Z) {
          return "Preparing nearby placement comparison...";

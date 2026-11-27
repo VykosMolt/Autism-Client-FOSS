@@ -116,7 +116,7 @@ public class DropCommand extends Command {
 
       Item item = autismclient.commands.RegistrySuggestions.init(mc, spec);
       if (item == null) {
-         item = autismclient.commands.RegistrySuggestions.init_Item(spec);
+         item = autismclient.commands.RegistrySuggestions.resolveItem(spec);
       }
 
       if (item == null) {
@@ -232,7 +232,7 @@ public class DropCommand extends Command {
       }
 
       if (item == null) {
-         item = autismclient.commands.RegistrySuggestions.init_Item(rawItemId);
+         item = autismclient.commands.RegistrySuggestions.resolveItem(rawItemId);
       }
 
       if (item == null) {

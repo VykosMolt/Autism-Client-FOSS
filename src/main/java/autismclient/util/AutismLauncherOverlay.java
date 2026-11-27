@@ -136,7 +136,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.write_V_11();
       this.loadBounds();
       if (this.init_DataUtil != null) {
-         this.init_DataUtil.load_DataUtil(this.init_DataUtil.init_Z_3());
+         this.init_DataUtil.snapExpanded(this.init_DataUtil.isExpanded());
       }
    }
 
@@ -186,12 +186,12 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void write_V_11() {
-      this.init_StateCache.init(autismclient.gui.ui.layout.EdgeInsets.uniform(0)).load_StateCache(false).read_StateCache(false);
-      this.init_StateCache.init_PacketUtil_3().clearChildren();
-      this.init_StateCache.init_PacketUtil_3().init(autismclient.gui.ui.layout.EdgeInsets.ZERO).init(0);
-      this.init_DataUtil = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").init(this.prev()).load(this.valid()).init_DataUtil(true);
-      this.init_DataUtil.init_PacketUtil_2().init(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).init(this.get_I_9());
-      this.init_StateCache.init_PacketUtil_3().addChild(this.init_DataUtil);
+      this.init_StateCache.init(autismclient.gui.ui.layout.EdgeInsets.uniform(0)).setDrawBorder(false).setDrawFill(false);
+      this.init_StateCache.getContent().clearChildren();
+      this.init_StateCache.getContent().init(autismclient.gui.ui.layout.EdgeInsets.ZERO).init(0);
+      this.init_DataUtil = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").init(this.prev()).load(this.valid()).setExpanded(true);
+      this.init_DataUtil.getContent().init(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).init(this.get_I_9());
+      this.init_StateCache.getContent().addChild(this.init_DataUtil);
       autismclient.gui.ui.layout.ButtonNode macrosButton = this.init(
          "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
@@ -208,7 +208,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       );
       if (this.write_Z) {
          this.init_V_PacketUtil(
-            this.init_DataUtil.init_PacketUtil_2(),
+            this.init_DataUtil.getContent(),
             macrosButton,
             this.init("Fabricator", autismclient.gui.f.a.DataUtil.flush, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                if (this.init_AutismFabricatorOv != null) {
@@ -217,11 +217,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             })
          );
       } else {
-         this.init_DataUtil.init_PacketUtil_2().addChild(macrosButton);
+         this.init_DataUtil.getContent().addChild(macrosButton);
       }
 
       this.init_V_PacketUtil(
-         this.init_DataUtil.init_PacketUtil_2(),
+         this.init_DataUtil.getContent(),
          this.init("LAN Sync", autismclient.gui.f.a.DataUtil.update, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             if (this.init_AutismLANSyncOverl != null) {
                this.init_V_cX(this.init_AutismLANSyncOverl);
@@ -234,7 +234,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          })
       );
       this.init_V_PacketUtil(
-         this.init_DataUtil.init_PacketUtil_2(),
+         this.init_DataUtil.getContent(),
          this.init("Logger", autismclient.gui.f.a.DataUtil.open, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismPacketLoggerOverlay overlay = this.init_AutismPacketLogger();
             this.init_V_cX(overlay);
@@ -246,7 +246,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          })
       );
       this.init_V_PacketUtil(
-         this.init_DataUtil.init_PacketUtil_2(),
+         this.init_DataUtil.getContent(),
          this.init("Server Info", autismclient.gui.f.a.DataUtil.push, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismServerInfoOverlay overlay = this.init_AutismServerInfoOv();
             this.init_V_cX(overlay);
@@ -259,10 +259,10 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       );
       if (!AutismLiteVariant.enabled()) {
          this.init_V_PacketUtil(
-            this.init_DataUtil.init_PacketUtil_2(),
+            this.init_DataUtil.getContent(),
             this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
-                  autismclient.ai.AiAssistant.init_ConfigStore().read();
+                  autismclient.ai.AiAssistant.getInstance().read();
                }
             }),
             this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
@@ -276,26 +276,26 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.init_V_Str_Identifier("PACKET", autismclient.gui.f.a.DataUtil.tick);
       this.init_ByteReader = this.init("Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::update_V_9).setConnectedToggle(true);
       this.load_ByteReader = this.init("Delay", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::sync_V_8).setConnectedToggle(true);
-      this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), this.init_ByteReader, this.load_ByteReader);
+      this.init_V_PacketUtil(this.init_DataUtil.getContent(), this.init_ByteReader, this.load_ByteReader);
       this.init_V_PacketUtil(
-         this.init_DataUtil.init_PacketUtil_2(),
+         this.init_DataUtil.getContent(),
          this.init("Flush", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::flush_V_8),
          this.init("Clear", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::close_V_7)
       );
       if (this.update_Z) {
          this.init_V_Str_Identifier("SCREEN", autismclient.gui.f.a.DataUtil.run);
          this.init_V_PacketUtil(
-            this.init_DataUtil.init_PacketUtil_2(),
+            this.init_DataUtil.getContent(),
             this.init("Close", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this.init_Runnable != null ? this.init_Runnable : LauncherQuickActions::update),
             this.init("De-sync", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.load_Runnable != null ? this.load_Runnable : this::open_V_6)
          );
          this.init_V_PacketUtil(
-            this.init_DataUtil.init_PacketUtil_2(),
+            this.init_DataUtil.getContent(),
             this.init("Save", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::poll_V_4),
             this.init("Load", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::set_V_4)
          );
          this.init_V_PacketUtil(
-            this.init_DataUtil.init_PacketUtil_2(),
+            this.init_DataUtil.getContent(),
             this.init("Title", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, LauncherQuickActions::open),
             this.init("Disc+Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::put_V_3)
          );
@@ -312,25 +312,25 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             .setHistoryNavigationEnabled(true)
             .setHistoryProvider(() -> init_Minecraft.gui != null ? init_Minecraft.gui.hud.getChat().getRecentChat() : List.of())
             .setOnSubmit(this::init_V_Str_6);
-         this.init_DataUtil.init_PacketUtil_2().addChild(this.init_BitSetUtil);
-         this.init_DataUtil.init_PacketUtil_2().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
+         this.init_DataUtil.getContent().addChild(this.init_BitSetUtil);
+         this.init_DataUtil.getContent().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
          autismclient.gui.ui.layout.RowLayout syncRow = new autismclient.gui.ui.layout.RowLayout()
             .init(this.value())
             .init(new autismclient.gui.ui.layout.EdgeInsets(4, 0, 2, 0))
-            .init_StreamUtil(false);
+            .setUnderlineOnHover(false);
          syncRow.setGrowX(true);
          int keyColor = LauncherQuickActions.init_I();
          int[] valueColors = LauncherQuickActions.init_IArr();
          this.init_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").init(keyColor).load(valueColors[0]).init_JsonUtil(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").init(keyColor).load(valueColors[0]).withGrowX(true)
          );
          this.load_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("SyncID: ", "--").init(keyColor).load(valueColors[1]).init_JsonUtil(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("SyncID: ", "--").init(keyColor).load(valueColors[1]).withGrowX(true)
          );
          this.read_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("Slot: ", "--").init(keyColor).load(valueColors[2]).init_JsonUtil(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("Slot: ", "--").init(keyColor).load(valueColors[2]).withGrowX(true)
          );
-         this.init_DataUtil.init_PacketUtil_2().addChild(syncRow);
+         this.init_DataUtil.getContent().addChild(syncRow);
       } else {
          this.init_BitSetUtil = null;
          this.init_JsonUtil = null;
@@ -338,8 +338,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.read_JsonUtil = null;
       }
 
-      if (!this.sync_Z && !this.init_DataUtil.init_PacketUtil_2().getChildren().isEmpty()) {
-         autismclient.gui.ui.layout.LayoutNode last = this.init_DataUtil.init_PacketUtil_2().getChildren().getLast();
+      if (!this.sync_Z && !this.init_DataUtil.getContent().getChildren().isEmpty()) {
+         autismclient.gui.ui.layout.LayoutNode last = this.init_DataUtil.getContent().getChildren().getLast();
          if (last instanceof autismclient.gui.ui.layout.ButtonNode button) {
             button.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(true, true));
          } else if (last instanceof autismclient.gui.ui.layout.RowLayout pair) {
@@ -374,13 +374,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Str_Identifier(String label, Identifier icon) {
-      if (!this.init_DataUtil.init_PacketUtil_2().getChildren().isEmpty()) {
-         this.init_DataUtil.init_PacketUtil_2().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, this.run_I_11()));
+      if (!this.init_DataUtil.getContent().getChildren().isEmpty()) {
+         this.init_DataUtil.getContent().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, this.run_I_11()));
       }
 
       this.init_DataUtil
-         .init_PacketUtil_2()
-         .addChild(new autismclient.gui.ui.layout.IconHeaderNode(label, icon).init(this.reset()).init_ConfigStore(true));
+         .getContent()
+         .addChild(new autismclient.gui.ui.layout.IconHeaderNode(label, icon).init(this.reset()).setConnectedStyle(true));
    }
 
    private autismclient.gui.ui.layout.ButtonNode init(autismclient.gui.ui.layout.ColumnLayout parent, String label, Identifier icon, Runnable action) {
@@ -393,7 +393,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.layout.RowLayout row = new autismclient.gui.ui.layout.RowLayout()
          .init(this.get_I_9())
          .init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
-         .init_StreamUtil(false);
+         .setUnderlineOnHover(false);
       left.withGrowX(true);
       right.withGrowX(true);
       row.addChild(left.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write));
@@ -438,7 +438,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.init_Z_3());
+      return new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.isExpanded());
    }
 
    @Override
@@ -451,7 +451,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.valid = clamped.height;
          this.flush_Z = clamped.visible;
          if (this.init_DataUtil != null) {
-            this.init_DataUtil.load_DataUtil(!clamped.collapsed);
+            this.init_DataUtil.snapExpanded(!clamped.collapsed);
          }
       }
    }
@@ -530,13 +530,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          );
          this.valid = Math.max(this.getMinHeight(), Math.round(this.init_StateCache.measureHeight(metrics, this.prev)));
          OverlayBounds clamped = this.init_cH_cH_2(
-            new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
+            new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.isExpanded())
          );
          this.stop = clamped.x;
          this.next = clamped.y;
          this.prev = clamped.width;
          this.valid = clamped.height;
-         this.init_StateCache.init_StateCache(true);
+         this.init_StateCache.setActive(true);
          this.init_StateCache.setBounds(this.stop, this.next, this.prev, this.valid);
          this.init_TextFormat.render(context, mouseX, mouseY, delta);
       }
@@ -593,7 +593,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.prev,
             this.valid,
             this.flush_Z,
-            this.init_DataUtil != null && !this.init_DataUtil.init_Z_3()
+            this.init_DataUtil != null && !this.init_DataUtil.isExpanded()
          )
       );
       this.stop = clamped.x;
@@ -648,7 +648,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.close_Z = false;
          this.open_Z = false;
       } else if (this.init_DataUtil != null) {
-         this.init_DataUtil.load_DataUtil(this.init_DataUtil.init_Z_3());
+         this.init_DataUtil.snapExpanded(this.init_DataUtil.isExpanded());
       }
    }
 
@@ -681,14 +681,14 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isCollapsed() {
-      return this.init_DataUtil != null && !this.init_DataUtil.init_Z_3();
+      return this.init_DataUtil != null && !this.init_DataUtil.isExpanded();
    }
 
    @Override
    public void setCollapsed(boolean collapsed) {
       if (this.isCollapsed() != collapsed) {
          if (this.init_DataUtil != null) {
-            this.init_DataUtil.init_DataUtil(!collapsed);
+            this.init_DataUtil.setExpanded(!collapsed);
          }
 
          if (collapsed) {

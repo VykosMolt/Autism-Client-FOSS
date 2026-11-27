@@ -215,7 +215,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && aiPlan) {
-                        AiVisualization.init_V(context);
+                        AiVisualization.renderHud(context);
                      }
 
                      y = 0;
@@ -387,7 +387,7 @@ public abstract class AutismInGameHudMixin {
       if (shared == null) {
          return false;
       } else if (!shared.isTimedCaptureMode() && !shared.hasCaptureCancelCallback() && !shared.hasAttackCaptureCallback() && !shared.hasBlockCaptureCallback() && !shared.hasEntityCaptureCallback() && !shared.isGbreakCapturing()) {
-         ActionEditorOverlay editor = ActionEditorOverlay.load_ActionEditorOverla();
+         ActionEditorOverlay editor = ActionEditorOverlay.getExisting();
          return editor != null && editor.push_Z_2();
       } else {
          return true;

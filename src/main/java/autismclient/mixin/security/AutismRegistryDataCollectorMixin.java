@@ -51,7 +51,7 @@ public abstract class AutismRegistryDataCollectorMixin {
          return null;
       }
 
-      ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.init_BufferHelper_Strea();
+      ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.current();
       TimelineTagCompatFix.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.connection()));
       if (connection == null) {
          return entries;
@@ -98,7 +98,7 @@ public abstract class AutismRegistryDataCollectorMixin {
    private static List<PendingComponents<?>> autism$buildRemoteComponentsCompat(
       DataComponentInitializers initializers, Provider context, Operation<List<PendingComponents<?>>> original
    ) {
-      ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.init_BufferHelper_Strea();
+      ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.current();
       RegistryCompatGuard.load(connection);
 
       try {

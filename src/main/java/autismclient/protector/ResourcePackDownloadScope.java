@@ -44,7 +44,7 @@ public final class ResourcePackDownloadScope {
    private ResourcePackDownloadScope() {
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper init_UiHelper_BufferHel(ServerPackManager manager) throws IOException {
+   public static ResourcePackDownloadScope.Inner_BufferHelper snapshot(ServerPackManager manager) throws IOException {
       Objects.requireNonNull(manager, "manager");
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByPackManager(manager);
       if (context != null
@@ -53,7 +53,7 @@ public final class ResourcePackDownloadScope {
          && context.peerAddress() != null
          && context.packetListener() != null
          && context.serverType() != null) {
-         String peer = PackUrlValidator.init_Str_SocketAddress(context.peerAddress());
+         String peer = PackUrlValidator.peerKey(context.peerAddress());
          Connection connection = context.connection();
          Minecraft minecraft = Minecraft.getInstance();
          boolean integrated = connection.isMemoryConnection()
@@ -74,7 +74,7 @@ public final class ResourcePackDownloadScope {
          ResourcePackDownloadScope.Inner_BufferHelper snapshot = new ResourcePackDownloadScope.Inner_BufferHelper(
             context, manager, context.accountIdentity().profileId(), origin, peer, connectionIdentity, integrated, multiLoopbackFixture
          );
-         snapshot.init_V();
+         snapshot.ensureCurrent();
          return snapshot;
       } else {
          throw new IOException("Resource-pack download has no complete connection scope");
@@ -82,12 +82,12 @@ public final class ResourcePackDownloadScope {
    }
 
    static String init(ConnectionPrivacyRegistry.ConnectionSession context, boolean integrated) throws IOException {
-      return integrated && context.isLocalOrMemory() ? "integrated:" + context.lifecycleId() : PackUrlValidator.init_Str_BufferHelper_Buffe(context.serverEndpoint());
+      return integrated && context.isLocalOrMemory() ? "integrated:" + context.lifecycleId() : PackUrlValidator.endpointKey(context.serverEndpoint());
    }
 
-   public static ResourcePackDownloadScope.Inner_CachePool init_UiHelper_CachePool(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
+   public static ResourcePackDownloadScope.Inner_CachePool enter(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       ResourcePackDownloadScope.Inner_BufferHelper previous = init_ThreadLocal.get();
       init_ThreadLocal.set(snapshot);
       return () -> init(init_ThreadLocal, previous);
@@ -95,7 +95,7 @@ public final class ResourcePackDownloadScope {
 
    public static ResourcePackDownloadScope.Inner_CachePool load(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       ResourcePackDownloadScope.Inner_BufferHelper previous = load_ThreadLocal.get();
       if (previous == snapshot) {
          return () -> {};
@@ -107,7 +107,7 @@ public final class ResourcePackDownloadScope {
 
    public static ResourcePackDownloadScope.Inner_CachePool init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, String username, String password) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       PackUrlValidator.Inner_ConfigStore target = init(host, port);
       byte[] usernameBytes = init(username);
 
@@ -119,7 +119,7 @@ public final class ResourcePackDownloadScope {
          throw e;
       }
 
-      ResourcePackDownloadScope.Inner_ConfigStore authentication = new ResourcePackDownloadScope.Inner_ConfigStore(snapshot, target.load(), target.init_I(), usernameBytes, passwordBytes);
+      ResourcePackDownloadScope.Inner_ConfigStore authentication = new ResourcePackDownloadScope.Inner_ConfigStore(snapshot, target.load(), target.port(), usernameBytes, passwordBytes);
       ResourcePackDownloadScope.Inner_ConfigStore previous = read.get();
 
       try {
@@ -137,13 +137,13 @@ public final class ResourcePackDownloadScope {
    }
 
    static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_BufferHelper route) {
-      if (snapshot != null && route != null && route.init_Proxy_Type() == Type.SOCKS && route.init_Z()) {
+      if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.init_Z()) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = read.get();
          return authentication != null
                && authentication.init_Z
                && authentication.init_UiHelper_BufferHel == snapshot
-               && authentication.init_I == route.init_TextFormat_CachePo().init_I()
-               && authentication.init_Str.equalsIgnoreCase(route.init_TextFormat_CachePo().load())
+               && authentication.init_I == route.endpoint().port()
+               && authentication.init_Str.equalsIgnoreCase(route.endpoint().load())
             ? authentication
             : null;
       } else {
@@ -156,7 +156,7 @@ public final class ResourcePackDownloadScope {
          String literal = host.indexOf(58) >= 0 && !host.startsWith("[") ? "[" + host + "]" : host;
 
          try {
-            return PackUrlValidator.init_TextFormat_ConfigS_URI(new URI("http://" + literal + ":" + port + "/"));
+            return PackUrlValidator.parseUri(new URI("http://" + literal + ":" + port + "/"));
          } catch (URISyntaxException e) {
             throw new IOException("Invalid configured SOCKS5 proxy endpoint", e);
          }
@@ -187,7 +187,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper init_UiHelper_BufferHel() {
+   public static ResourcePackDownloadScope.Inner_BufferHelper current() {
       return init_ThreadLocal.get();
    }
 
@@ -208,7 +208,7 @@ public final class ResourcePackDownloadScope {
          throw new IOException("Unscoped resource-pack batch creation is refused");
       }
 
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       return snapshot;
    }
 
@@ -218,7 +218,7 @@ public final class ResourcePackDownloadScope {
          throw new IOException("Unscoped resource-pack network access is refused");
       }
 
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       return snapshot;
    }
 
@@ -226,7 +226,7 @@ public final class ResourcePackDownloadScope {
       synchronized (init_Obj) {
          ResourcePackDownloadScope.Inner_StreamUtil token = init_Map.get(config);
          if (token != null && token.init_Z) {
-            token.init_UiHelper_BufferHel.init_V();
+            token.init_UiHelper_BufferHel.ensureCurrent();
             return token.init_UiHelper_BufferHel;
          } else {
             throw new IOException("Unregistered resource-pack batch");
@@ -237,7 +237,7 @@ public final class ResourcePackDownloadScope {
    public static ResourcePackDownloadScope.Inner_DataUtil init(BatchConfig config, ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
       Objects.requireNonNull(config, "config");
       Objects.requireNonNull(snapshot, "snapshot");
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       ResourcePackDownloadScope.Inner_StreamUtil token;
       synchronized (init_Obj) {
          if (init_Map.containsKey(config)) {
@@ -258,7 +258,7 @@ public final class ResourcePackDownloadScope {
    public static <T> Consumer<T> init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Consumer<T> output) {
       Objects.requireNonNull(output, "output");
       return value -> {
-         if (snapshot.load_Z()) {
+         if (snapshot.isCurrent()) {
             output.accept(value);
          }
       };
@@ -305,11 +305,11 @@ public final class ResourcePackDownloadScope {
       Objects.requireNonNull(snapshot, "snapshot");
       Objects.requireNonNull(packId, "packId");
       Objects.requireNonNull(hashFunction, "hashFunction");
-      snapshot.init_V();
+      snapshot.ensureCurrent();
       String scopeHash = init(snapshot.init_Str(), snapshot.load_Str());
       String mode = snapshot.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA ? "vanilla-neutral-v1" : "modded-full-v1";
-      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(snapshot.init_BufferHelper_Strea());
-      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionFor(snapshot.init_BufferHelper_Strea());
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
       String protection = policy == ResourcePackSessionTracker.PackPolicy.ISOLATED ? "isolated-v1" : "full-v1";
       Path base = cacheDir.normalize();
       Path result = base.resolve("autism-v2")
@@ -473,7 +473,7 @@ public final class ResourcePackDownloadScope {
          return this.init_Str;
       }
 
-      public SocketAddress init_SocketAddress() {
+      public SocketAddress peerAddress() {
          return this.init_SocketAddress;
       }
 
@@ -485,11 +485,11 @@ public final class ResourcePackDownloadScope {
          return this.init_BufferHelper_Cache;
       }
 
-      public ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi() {
+      public ConnectionPrivacyRegistry.ProxyEndpoint proxyEndpoint() {
          return this.init_BufferHelper_Confi;
       }
 
-      public net.minecraft.client.multiplayer.ServerData.Type init_ServerData_Type() {
+      public net.minecraft.client.multiplayer.ServerData.Type serverType() {
          return this.init_ServerData_Type;
       }
 
@@ -497,7 +497,7 @@ public final class ResourcePackDownloadScope {
          return this.init_Z || this.load_Z;
       }
 
-      public boolean load_Z() {
+      public boolean isCurrent() {
          if (this.read || !ConnectionPrivacyRegistry.isCurrentDownload(this.init_BufferHelper_Strea, this.init_J, this.init_ServerPackManager, this.init_PacketListener, this.load_J)) {
             return false;
          }
@@ -513,8 +513,8 @@ public final class ResourcePackDownloadScope {
             && minecraft.getConnection() == this.init_PacketListener;
       }
 
-      public void init_V() throws IOException {
-         if (!this.load_Z()) {
+      public void ensureCurrent() throws IOException {
+         if (!this.isCurrent()) {
             throw new IOException("The resource-pack download is no longer current");
          }
       }
@@ -523,9 +523,9 @@ public final class ResourcePackDownloadScope {
          Objects.requireNonNull(socket, "socket");
          boolean close = false;
          synchronized (this.init_Set) {
-            if (!this.read && this.load_Z()) {
+            if (!this.read && this.isCurrent()) {
                ConnectionPrivacyRegistry.trackDownloadSocket(this.init_BufferHelper_Strea, this.load_J, socket);
-               if (!this.read && this.load_Z()) {
+               if (!this.read && this.isCurrent()) {
                   this.init_Set.add(socket);
                } else {
                   ConnectionPrivacyRegistry.untrackDownloadSocket(this.init_BufferHelper_Strea, socket);
@@ -599,7 +599,7 @@ public final class ResourcePackDownloadScope {
          this.load = password;
       }
 
-      byte[] init_BArr() {
+      byte[] usernameBytes() {
          return Arrays.copyOf(this.init_BArr, this.init_BArr.length);
       }
 

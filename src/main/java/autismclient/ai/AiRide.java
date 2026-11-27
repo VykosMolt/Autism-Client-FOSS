@@ -210,7 +210,7 @@ final class AiRide {
                   BlockPos feet = mc.player.blockPosition();
 
                   for (BlockPos cell : List.of(feet, feet.north(), feet.south(), feet.east(), feet.west())) {
-                     if (AiCombat.init_Z_Minecraft_BlockPos(mc, cell)) {
+                     if (AiCombat.isSafeStep(mc, cell)) {
                         return true;
                      }
                   }

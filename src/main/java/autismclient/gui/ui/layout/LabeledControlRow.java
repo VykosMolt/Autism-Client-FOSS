@@ -17,7 +17,7 @@ public class LabeledControlRow extends LayoutContainer {
       this.load_TableIndex = this.addChild(controlNode);
    }
 
-   public LabeledControlRow init_CachePool_IoWorker(EdgeInsets padding) {
+   public LabeledControlRow setPadding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.init_IoWorker.equals(next)) {
          this.init_IoWorker = next;
@@ -27,7 +27,7 @@ public class LabeledControlRow extends LayoutContainer {
       return this;
    }
 
-   public LabeledControlRow init_CachePool_I(int gap) {
+   public LabeledControlRow setGap(int gap) {
       int next = Math.max(0, gap);
       if (this.init_I != next) {
          this.init_I = next;
@@ -37,7 +37,7 @@ public class LabeledControlRow extends LayoutContainer {
       return this;
    }
 
-   public LabeledControlRow init_CachePool_F(float labelWidth) {
+   public LabeledControlRow setLabelWidth(float labelWidth) {
       float next = Math.max(0.0F, labelWidth);
       if (Float.compare(this.sync, next) != 0) {
          this.sync = next;
@@ -47,7 +47,7 @@ public class LabeledControlRow extends LayoutContainer {
       return this;
    }
 
-   public LabeledControlRow init_CachePool_Z(boolean alignControlEnd) {
+   public LabeledControlRow setAlignControlEnd(boolean alignControlEnd) {
       if (this.write_Z != alignControlEnd) {
          this.write_Z = alignControlEnd;
          this.markLayoutDirty();
@@ -56,11 +56,11 @@ public class LabeledControlRow extends LayoutContainer {
       return this;
    }
 
-   public LayoutNode init_TableIndex() {
+   public LayoutNode getLabel() {
       return this.init_TableIndex;
    }
 
-   public LayoutNode load_TableIndex() {
+   public LayoutNode getControl() {
       return this.load_TableIndex;
    }
 

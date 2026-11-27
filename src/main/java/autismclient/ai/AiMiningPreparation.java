@@ -765,7 +765,7 @@ public final class AiMiningPreparation {
       return AiCraftPlanner.init(
          new AiCraftPlanner.RecipeGraph() {
             @Override
-            public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
+            public List<AiCraftPlanner.RecipeSpec> recipesFor(String id) {
                return id.equals("autism:prepared_mining_tool")
                   ? List.of(
                      new AiCraftPlanner.RecipeSpec(
@@ -776,12 +776,12 @@ public final class AiMiningPreparation {
                         tableHeld ? List.of(List.of(tool)) : List.of(List.of("minecraft:crafting_table"), List.of(tool))
                      )
                   )
-                  : graph.init_List(id);
+                  : graph.recipesFor(id);
             }
 
             @Override
-            public int init_I(String id) {
-               return !id.equals("autism:prepared_mining_tool") && !id.equals(tool) ? graph.init_I(id) + (id.equals(log) ? extraLogs : 0) : 0;
+            public int held(String id) {
+               return !id.equals("autism:prepared_mining_tool") && !id.equals(tool) ? graph.held(id) + (id.equals(log) ? extraLogs : 0) : 0;
             }
 
             @Override

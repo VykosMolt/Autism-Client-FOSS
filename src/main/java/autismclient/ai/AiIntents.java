@@ -209,7 +209,7 @@ final class AiIntents {
    static final int init_I = 9;
    static final int load_I = 25;
    static final int read_I = 80;
-   static final List<String> init_List = List.of("Wheat", "Carrots", "Potatoes", "Beetroots", "Nether wart");
+   static final List<String> CROPS = List.of("Wheat", "Carrots", "Potatoes", "Beetroots", "Nether wart");
    static final List<String> load_List = List.of("Small (about 10 crops)", "Medium (about 25 crops)", "Large (9x9, 80 crops around one water block)");
 
    private AiIntents() {
@@ -223,7 +223,7 @@ final class AiIntents {
       );
    }
 
-   static AiIntents.Inner_CachePool init_ad_CachePool(String objective, AiIntents.Inner_StreamUtil lookups) {
+   static AiIntents.Inner_CachePool plan(String objective, AiIntents.Inner_StreamUtil lookups) {
       AiIntents.Inner_BufferHelper schematic = init_ad_BufferHelper(objective);
       if (schematic != null) {
          return new AiIntents.Inner_CachePool(List.of(schematic), "");
@@ -923,7 +923,7 @@ final class AiIntents {
       if (crop != null) {
          args.addProperty("crop", crop);
       } else {
-         asks.add(new AiIntents.Inner_DataUtil("crop", "Which crop should the farm grow?", init_List));
+         asks.add(new AiIntents.Inner_DataUtil("crop", "Which crop should the farm grow?", CROPS));
       }
 
       if (!args.has("count")) {

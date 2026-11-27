@@ -50,7 +50,7 @@ final class AiProcedures {
       }
    }
 
-   synchronized JsonObject init_JsonObject_JsonObject(JsonObject args) throws IOException {
+   synchronized JsonObject save(JsonObject args) throws IOException {
       String name = AiJson.getString(args, "name", "");
       if (!name.isBlank() && name.length() <= 256) {
          JsonArray ids = args.getAsJsonArray("evidenceIds");
@@ -100,7 +100,7 @@ final class AiProcedures {
       }
    }
 
-   JsonObject init_JsonObject_Str(String id) {
+   JsonObject describe(String id) {
       AiMemoryStore.Memory record = this.init_AiMemoryStore_Memo_Str(id);
       JsonObject payload = AiJson.parseObject(record.payload());
       JsonArray reasons = new JsonArray();
@@ -127,7 +127,7 @@ final class AiProcedures {
       );
    }
 
-   JsonObject init_JsonObject_Str_2(String id, long generation, AiTools tools) throws Exception {
+   JsonObject run(String id, long generation, AiTools tools) throws Exception {
       AiMemoryStore.Memory record = this.init_AiMemoryStore_Memo_Str(id);
       JsonObject payload = AiJson.parseObject(record.payload());
       if (AiJson.getInt(payload, "version", 0) == 1 && AiJson.getString(payload, "kind", "").equals("verified-operations")) {
@@ -135,11 +135,11 @@ final class AiProcedures {
             init(step.getAsJsonObject(), this.init_cc.getCatalogSnapshot());
          }
 
-         this.init_cc.init_AiObservation_J_Str(generation, "procedure-revalidation");
+         this.init_cc.observe(generation, "procedure-revalidation");
          JsonArray results = new JsonArray();
          Path checkpoint = this.init_cc
             .getMemoryStore()
-            .init_Path()
+            .directory()
             .resolve("procedure-runs")
             .resolve(AiJson.sha256Hex(this.init_cc.read_Str() + this.init_cc.getDimensionId() + id) + ".json");
          JsonArray steps = payload.getAsJsonArray("steps");
@@ -149,11 +149,11 @@ final class AiProcedures {
          for (int index = resume.nextStep(); index < steps.size(); index++) {
             JsonElement raw = steps.get(index);
             AiJson.writeAtomicJson(checkpoint, init_JsonObject_Str(fingerprint, index, true));
-            AiMemoryStore.init_V_Path_I(checkpoint.getParent(), 64);
-            this.init_cc.init_V_J(generation);
+            AiMemoryStore.prune(checkpoint.getParent(), 64);
+            this.init_cc.checkGeneration(generation);
             JsonObject step = raw.getAsJsonObject();
             init(step, this.init_cc.getCatalogSnapshot());
-            JsonObject result = tools.init_JsonObject_Str(
+            JsonObject result = tools.call(
                "perform",
                AiJson.objectOf("id", step.get("id"), "fingerprint", step.get("fingerprint"), "arguments", step.get("arguments")),
                generation
@@ -237,7 +237,7 @@ final class AiProcedures {
    private AiMemoryStore.Memory init_AiMemoryStore_Memo_Str(String id) {
       return this.init_cc
          .getMemoryStore()
-         .init_List()
+         .memories()
          .stream()
          .filter(m -> m.id().equals(id) && m.scope().equals(this.init_cc.getDimensionId()) && m.kind() == AiMemoryStore.Inner_DataUtil.PROCEDURE)
          .findFirst()

@@ -22,7 +22,7 @@ public class ToggleCommand extends Command {
          return 1;
       });
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("module", autismclient.commands.arguments.ModuleArgumentType.init_ConfigStore())
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("module", autismclient.commands.arguments.ModuleArgumentType.module())
                .executes(ctx -> init(autismclient.commands.arguments.ModuleArgumentType.init(ctx, "module"), ak.Inner_StreamUtil.init)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())

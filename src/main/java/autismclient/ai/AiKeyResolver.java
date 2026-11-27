@@ -11,7 +11,7 @@ final class AiKeyResolver {
    private AiKeyResolver() {
    }
 
-   static List<AiSettings.Provider> init_List(String key) {
+   static List<AiSettings.Provider> providersFor(String key) {
       String k = key == null ? "" : key.trim();
       if (k.startsWith("sk-ant-")) {
          return List.of(AiSettings.Provider.ANTHROPIC);
@@ -28,8 +28,8 @@ final class AiKeyResolver {
       }
    }
 
-   static boolean init_Z(String key) {
-      return init_List(key).size() == 1;
+   static boolean isUnambiguous(String key) {
+      return providersFor(key).size() == 1;
    }
 
    static AiKeyResolver.Inner_DataUtil init(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
@@ -50,7 +50,7 @@ final class AiKeyResolver {
 
       boolean custom = !AiSettings.shouldAutofillEndpoint(endpoint);
       // A key is never sent to several vendors: only one that matches a single vendor overrides the choice.
-      AiSettings.Provider only = chosen == null || !custom && raceOthers && init_Z(k) ? init_List(k).getFirst() : chosen;
+      AiSettings.Provider only = chosen == null || !custom && raceOthers && isUnambiguous(k) ? providersFor(k).getFirst() : chosen;
       AiModels.Inner_CachePool result = init(only, custom ? endpoint : only.endpoint, k, fetch, checkpoint);
       return result.ok() ? init(only, result) : AiKeyResolver.Inner_DataUtil.failed(result.error());
    }

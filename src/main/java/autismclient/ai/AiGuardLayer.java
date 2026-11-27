@@ -43,7 +43,7 @@ final class AiGuardLayer {
    boolean canInterruptNow() {
       return !this.reconciliationPending
          && (this.activeGuardOp == null || this.activeGuardOp.canInterruptNow())
-         && (this.fireControl == null || this.fireControl.load_Z())
+         && (this.fireControl == null || this.fireControl.canInterrupt())
          && (this.waterDouseOp == null || this.waterDouseOp.canInterruptNow());
    }
 
@@ -73,15 +73,15 @@ final class AiGuardLayer {
          Vec3 motion = this.sampleAverageVelocity(zoneClient.player.position());
          boolean environmentDamage = AiService.isPlayerVulnerable(zoneClient.player);
          boolean interruptedMeal = false;
-         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && zoneClient.player != null && AiLavaEscape.init_Z(zoneClient)) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && zoneClient.player != null && AiLavaEscape.isInLava(zoneClient)) {
             this.preemptForHazard(leg, cancelLeg);
             this.activeFlee = false;
             this.activeCombat = false;
             this.activeReason = "in lava";
-            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, AiLavaEscape.init());
+            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiLavaEscape.init());
             this.activeHazardEscape = true;
             this.activeLavaEscape = true;
-            AiSpeedrun.init_V_Str_ObjArr("[AI] {}: in lava at {}; swimming out", this.ownerLabel, zoneClient.player.blockPosition().toShortString());
+            AiSpeedrun.log("[AI] {}: in lava at {}; swimming out", this.ownerLabel, zoneClient.player.blockPosition().toShortString());
             return this.tickActiveGuardOp();
          }
 
@@ -90,12 +90,12 @@ final class AiGuardLayer {
             this.activeFlee = false;
             this.activeCombat = false;
             this.activeReason = "out of air";
-            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+            this.activeGuardOp = AiRunDiagnostics.trace(
                "survival", this.ownerLabel + ": " + this.activeReason, AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25))
             );
             this.activeHazardEscape = true;
             this.activeBreatheEscape = true;
-            AiSpeedrun.init_V_Str_ObjArr(
+            AiSpeedrun.log(
                "[AI] {}: out of air at {} (air {}); swimming up",
                this.ownerLabel,
                zoneClient.player.blockPosition().toShortString(),
@@ -104,20 +104,20 @@ final class AiGuardLayer {
             return this.tickActiveGuardOp();
          }
 
-         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && !this.activeBreatheEscape && !this.activePowderEscape && AiPowderEscape.init_Z(zoneClient)) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && !this.activeBreatheEscape && !this.activePowderEscape && AiPowderEscape.isInPowderSnow(zoneClient)) {
             this.preemptForHazard(leg, cancelLeg);
             this.activeFlee = this.activeCombat = false;
             this.activeReason = "in powder snow";
-            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, AiPowderEscape.init());
+            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiPowderEscape.init());
             this.activeHazardEscape = this.activePowderEscape = true;
             return this.tickActiveGuardOp();
          }
 
          if (!AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null) {
-            AiOperation out = AiDragonZones.init_Z(zoneClient) ? AiDragonZones.load(zoneClient) : null;
+            AiOperation out = AiDragonZones.isDragonPerched(zoneClient) ? AiDragonZones.load(zoneClient) : null;
             boolean cloud = false;
-            if (out == null && !zoneClient.player.isInWater() && AiDragon.init_Z(zoneClient)) {
-               out = AiDragon.init_AiOperation(zoneClient);
+            if (out == null && !zoneClient.player.isInWater() && AiDragon.isInBreath(zoneClient)) {
+               out = AiDragon.escapeBreath(zoneClient);
                if (out == null) {
                   out = AiDragonZones.init_AiOperation(zoneClient);
                }
@@ -130,9 +130,9 @@ final class AiGuardLayer {
                this.activeFlee = false;
                this.activeCombat = false;
                this.activeReason = cloud ? "in a lingering cloud" : "in the dragon's wing push";
-               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, out);
                this.activeHazardEscape = true;
-               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: {} at {}; stepping out", this.ownerLabel, this.activeReason, zoneClient.player.blockPosition().toShortString());
+               AiSpeedrun.log("[AI] {}: {} at {}; stepping out", this.ownerLabel, this.activeReason, zoneClient.player.blockPosition().toShortString());
                return this.tickActiveGuardOp();
             }
          }
@@ -142,7 +142,7 @@ final class AiGuardLayer {
             && zoneClient.player != null
             && !zoneClient.player.isInWater()
             && (zoneClient.player.isOnFire() || AiEndRun.init_Z(zoneClient))) {
-            this.waterDouseOp = AiEndRun.init_AiOperation(zoneClient);
+            this.waterDouseOp = AiEndRun.douseFire(zoneClient);
          }
 
          if (this.waterDouseOp != null) {
@@ -158,11 +158,11 @@ final class AiGuardLayer {
             this.waterDouseOp.cancel();
             this.waterDouseOp = null;
             if (doused.status() != AiOperation.Status.SUCCEEDED) {
-               AiSpeedrun.init_V_Str_ObjArr("[AI] guard: water douse failed ({}); falling back to fire control", doused.message());
+               AiSpeedrun.log("[AI] guard: water douse failed ({}); falling back to fire control", doused.message());
             }
          }
 
-         boolean pendingBodyFire = this.fireControl != null && this.fireControl.init_Z();
+         boolean pendingBodyFire = this.fireControl != null && this.fireControl.hasPendingFire();
          if (!AiThreats.isLegacyCombatEnabled()
             && !this.activeHazardEscape
             && zoneClient.player != null
@@ -183,14 +183,14 @@ final class AiGuardLayer {
             if (this.fireControl.init(false, null)) {
                return AiGameOperations.result(
                   AiOperation.Status.RUNNING,
-                  "Extinguish body fire before resuming " + this.ownerLabel + ": " + this.fireControl.init_Str(),
-                  AiJson.objectOf("firesExtinguished", this.fireControl.init_I(), "legPreserved", true)
+                  "Extinguish body fire before resuming " + this.ownerLabel + ": " + this.fireControl.status(),
+                  AiJson.objectOf("firesExtinguished", this.fireControl.firesExtinguished(), "legPreserved", true)
                );
             }
          }
 
-         if (this.fireControl != null && !this.fireControl.init_Z()) {
-            this.fireControl.init_V();
+         if (this.fireControl != null && !this.fireControl.hasPendingFire()) {
+            this.fireControl.reset();
             this.fireControl = null;
          }
 
@@ -202,7 +202,7 @@ final class AiGuardLayer {
                this.activeFlee = false;
                this.activeCombat = false;
                this.activeReason = "standing in fire";
-               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, out);
                this.activeHazardEscape = true;
                return this.tickActiveGuardOp();
             }
@@ -214,7 +214,7 @@ final class AiGuardLayer {
 
          Minecraft client = Minecraft.getInstance();
          if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && !client.player.isInWater() && (AiEndRun.init_Z(client) || client.player.isOnFire())) {
-            AiOperation out = client.player.isOnFire() ? AiEndRun.init_AiOperation(client) : null;
+            AiOperation out = client.player.isOnFire() ? AiEndRun.douseFire(client) : null;
             if (out == null && AiEndRun.init_Z(client) && System.nanoTime() - this.lastFireStepFailNanos >= 3000000000L) {
                out = AiEndRun.load_AiOperation(client);
             }
@@ -230,7 +230,7 @@ final class AiGuardLayer {
                this.activeReason = "on fire";
                this.preemptForHazard(leg, cancelLeg);
                this.activeHazardEscape = true;
-               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, out);
                return this.tickActiveGuardOp();
             }
          }
@@ -239,7 +239,7 @@ final class AiGuardLayer {
             this.preemptForHazard(leg, cancelLeg);
             this.activeCombat = this.activeFlee = false;
             this.activeReason = "incoming projectile during maintenance";
-            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+            this.activeGuardOp = AiRunDiagnostics.trace(
                "survival", this.ownerLabel + ": " + this.activeReason, AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
             );
             return this.tickActiveGuardOp();
@@ -253,14 +253,14 @@ final class AiGuardLayer {
             AiGuard.StatusSnapshot live = AiGuard.sampleStatus();
             AiGuard.GuardAction next = AiGuard.decide(this.effectivePolicy(zoneClient), live).action();
             if (AiCombatPriority.init_Z_X_DataUtil(this.activeGuardAction, next, live.hostilesNear())
-               || this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null) {
+               || this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.nearestThreat(zoneClient) != null) {
                AiRunTrace.emitServiceEvent(
                   "survival_reprioritize",
                   AiJson.objectOf(
                      "owner", this.ownerLabel, "from", this.activeGuardAction.name(), "to", next.name(), "health", live.health(), "hostiles", live.hostilesNear()
                   )
                );
-               interruptedMeal = this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null;
+               interruptedMeal = this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.nearestThreat(zoneClient) != null;
                this.activeGuardOp.cancel();
                this.activeGuardOp = null;
                this.activeGuardAction = AiGuard.GuardAction.NONE;
@@ -284,21 +284,21 @@ final class AiGuardLayer {
                   cancelLeg.run();
                }
 
-               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+               this.activeGuardOp = AiRunDiagnostics.trace(
                   "survival", this.ownerLabel + ": projectile dodge", AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
                );
                return this.tickActiveGuardOp();
             } else if (!AiThreats.isLegacyCombatEnabled() && vitals.hostilesNear() > 0 && leg != null && vitals.health() >= 8.0F && AiGuard.canSprintPastThreats(Minecraft.getInstance(), motion)) {
                if (!this.loggedSprintPast) {
-                  AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard leaves {} behind (on the move)", this.ownerLabel, AiGuard.threatSummary);
+                  AiSpeedrun.log("[AI] {}: guard leaves {} behind (on the move)", this.ownerLabel, AiGuard.threatSummary);
                }
 
                this.loggedSprintPast = true;
                return null;
             } else {
                this.loggedSprintPast = false;
-               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.init_Z(Minecraft.getInstance())) {
-                  AiOperation out = AiDragon.init_AiOperation(Minecraft.getInstance());
+               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.isInBreath(Minecraft.getInstance())) {
+                  AiOperation out = AiDragon.escapeBreath(Minecraft.getInstance());
                   if (out != null) {
                      this.activeFlee = false;
                      this.activeCombat = false;
@@ -308,16 +308,16 @@ final class AiGuardLayer {
                         cancelLeg.run();
                      }
 
-                     this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+                     this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, out);
                      return this.tickActiveGuardOp();
                   }
                }
 
                Minecraft mc = Minecraft.getInstance();
                AiGuard.GuardPolicy policy = this.effectivePolicy(mc);
-               boolean unsafeMeal = interruptedMeal || AiGuard.decide(policy, vitals).action() == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(mc) != null;
+               boolean unsafeMeal = interruptedMeal || AiGuard.decide(policy, vitals).action() == AiGuard.GuardAction.EAT && AiSurvival.nearestThreat(mc) != null;
                AiOperation action = unsafeMeal
-                  ? AiSurvival.init_AiOperation_Minecraft(mc, policy, remainingSeconds.getAsInt())
+                  ? AiSurvival.defend(mc, policy, remainingSeconds.getAsInt())
                   : AiGuard.createResponseOperation(policy, vitals, remainingSeconds.getAsInt());
                if (action == null) {
                   return null;
@@ -331,13 +331,13 @@ final class AiGuardLayer {
 
                this.activeCombat = !this.activeFlee && this.activeGuardAction == AiGuard.GuardAction.FIGHT;
                this.activeReason = unsafeMeal ? "nearby enemy prevents a safe meal" : AiGuard.decisionReason(policy, vitals);
-               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard steps in ({}, health {})", this.ownerLabel, this.activeReason, (int)vitals.health());
+               AiSpeedrun.log("[AI] {}: guard steps in ({}, health {})", this.ownerLabel, this.activeReason, (int)vitals.health());
                if (leg != null) {
                   this.reconciliationPending = this.reconciliationPending | leg.requiresReconciliationAfterEmergency();
                   cancelLeg.run();
                }
 
-               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, action);
+               this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, action);
                return this.tickActiveGuardOp();
             }
          } else {
@@ -383,7 +383,7 @@ final class AiGuardLayer {
       }
 
       if (this.fireControl != null) {
-         this.fireControl.init_V();
+         this.fireControl.reset();
          this.fireControl = null;
       }
 
@@ -427,7 +427,7 @@ final class AiGuardLayer {
             AiGuard.noteRetreatBlocked();
          }
 
-         AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard {} after {}: {}", this.ownerLabel, r.status(), this.activeReason, AiSpeedrun.init_Str_Str(r.message()));
+         AiSpeedrun.log("[AI] {}: guard {} after {}: {}", this.ownerLabel, r.status(), this.activeReason, AiSpeedrun.clip(r.message()));
          return runningResult("Back to work after " + this.activeReason);
       } else {
          AiOperation.Result uncertain = wrapUncertainResult(this.reconciliationPending, this.activeReason, r);
@@ -444,7 +444,7 @@ final class AiGuardLayer {
       }
 
       if (this.fireControl != null) {
-         this.fireControl.init_V();
+         this.fireControl.reset();
          this.fireControl = null;
       }
 
@@ -498,18 +498,18 @@ final class AiGuardLayer {
    static AiOperation createEmergencyEscapeOp(Minecraft mc) {
       if (mc.player == null || mc.level == null || !AiService.isPlayerVulnerable(mc.player) || AiThreats.isLegacyCombatEnabled()) {
          return null;
-      } else if (AiLavaEscape.init_Z(mc)) {
+      } else if (AiLavaEscape.isInLava(mc)) {
          return AiLavaEscape.init();
       } else if (AiBreathe.init(mc.player)) {
          return AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
-      } else if (AiPowderEscape.init_Z(mc)) {
+      } else if (AiPowderEscape.isInPowderSnow(mc)) {
          return AiPowderEscape.init();
       } else if (mc.player.isInWater()) {
          return null;
       } else if (AiEndRun.init_Z(mc)) {
          return AiEndRun.load_AiOperation(mc);
       } else {
-         return mc.player.isOnFire() ? AiEndRun.init_AiOperation(mc) : null;
+         return mc.player.isOnFire() ? AiEndRun.douseFire(mc) : null;
       }
    }
 

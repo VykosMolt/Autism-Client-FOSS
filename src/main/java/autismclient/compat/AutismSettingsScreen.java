@@ -148,7 +148,7 @@ public class AutismSettingsScreen extends Screen {
          if (needsBar) {
             ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil();
             ScrollbarRenderer.init(this.init_SyncManager, metrics, metrics.init(mx, my), this.init_Z);
-            this.init_V_NetHelper(metrics.init_NetHelper(), () -> this.init(metrics, my), null);
+            this.init_V_NetHelper(metrics.track(), () -> this.init(metrics, my), null);
          }
 
          if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
@@ -316,8 +316,8 @@ public class AutismSettingsScreen extends Screen {
 
    private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
       this.init_Z = true;
-      this.run = metrics.load(metrics.init_NetHelper().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
-      this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, my, this.run));
+      this.run = metrics.load(metrics.track().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+      this.tick = this.init_I(ScrollbarRenderer.scrollForDrag(metrics, my, this.run));
    }
 
    private int init(int argb, ThemePaletteManager.ColorRole ch) {
@@ -404,7 +404,7 @@ public class AutismSettingsScreen extends Screen {
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       if (this.init_Z) {
-         this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
+         this.tick = this.init_I(ScrollbarRenderer.scrollForDrag(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
          return true;
       } else if (this.init_RefQueue != null && this.init_RefQueue.isOpen()) {
          this.init_RefQueue.onMouseDragged(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);

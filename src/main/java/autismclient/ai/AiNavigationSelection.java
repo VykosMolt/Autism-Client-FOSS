@@ -79,7 +79,7 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    void write() {
       try {
-         AiDirectOps.init_V("game:goto", this.buildArgs(this.init_j_StreamUtil.stance()));
+         AiDirectOps.run("game:goto", this.buildArgs(this.init_j_StreamUtil.stance()));
       } catch (IllegalArgumentException | IllegalStateException e) {
          autismclient.util.bi.write(e.getMessage());
       }

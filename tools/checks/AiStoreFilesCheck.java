@@ -30,13 +30,13 @@ public class AiStoreFilesCheck {
       AiSessions store = new AiSessions(dir);
       String big = "x".repeat(900000);
       for (int i = 0; i < 5; i++) {
-         store.init_V_Str_JsonObject("s", user("old-" + i + big));
+         store.appendLine("s", user("old-" + i + big));
       }
 
       Path archive = dir.resolve("sessions/s.transcript.jsonl.1");
       Path live = dir.resolve("sessions/s.transcript.jsonl");
       check(Files.isRegularFile(archive) && !Files.exists(live), "transcript rotated");
-      store.init_V_Str_JsonObject("s", user("new"));
+      store.appendLine("s", user("new"));
       List<JsonObject> replay = store.init("s", 100000000L, false);
       check(replay.size() == 6, "replay holds archive + live, got " + replay.size());
       check(replay.get(0).get("content").getAsString().startsWith("old-0"), "archive lines come first");
@@ -57,7 +57,7 @@ public class AiStoreFilesCheck {
       check(ownerOnly(trace), "trace is owner-only");
 
       // D4: the journal is owner-only
-      new AiMemoryStore(dir).init_V_Str_JsonElement("probe", new JsonPrimitive(1));
+      new AiMemoryStore(dir).journal("probe", new JsonPrimitive(1));
       try (var files = Files.list(dir)) {
          Path journal = files.filter(p -> p.getFileName().toString().startsWith("journal-")).findFirst().orElseThrow();
          check(ownerOnly(journal), "journal is owner-only");

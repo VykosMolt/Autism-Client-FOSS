@@ -12,7 +12,7 @@ final class AiPowderEscape {
    private AiPowderEscape() {
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean isInPowderSnow(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
          return mc.level.getBlockState(feet).is(Blocks.POWDER_SNOW) || mc.level.getBlockState(feet.above()).is(Blocks.POWDER_SNOW);
@@ -66,7 +66,7 @@ final class AiPowderEscape {
                return this.init(AiOperation.Status.CANCELLED, "Left the world");
             }
 
-            if (!AiPowderEscape.init_Z(mc) && mc.player.onGround()) {
+            if (!AiPowderEscape.isInPowderSnow(mc) && mc.player.onGround()) {
                return this.init(AiOperation.Status.SUCCEEDED, "Out of the powder snow");
             }
 

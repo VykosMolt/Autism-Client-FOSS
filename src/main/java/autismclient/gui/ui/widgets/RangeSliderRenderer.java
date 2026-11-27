@@ -65,7 +65,7 @@ public final class RangeSliderRenderer {
       return track.read() + (int)Math.round(track.update() * init(ratio));
    }
 
-   public static int init_I_D(double mouseX, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio) {
+   public static int pickHandle(double mouseX, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio) {
       autismclient.gui.f.NetHelper track = init(bounds);
       int lowX = init(track, minRatio);
       int highX = init(track, maxRatio);

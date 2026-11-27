@@ -89,7 +89,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.sync_EditBox = this.init_EditBox_I(this.clear(), this.pop_I(), this.reset(), "Search proxies");
       this.sync_EditBox.setHint(Component.literal("Search name/address..."));
       this.sync_EditBox.setResponder(value -> {
-         this.init_Str = init_Str_Str(value);
+         this.init_Str = trim(value);
          this.update_I = 0;
          this.init_CacheEntry.jumpTo(0, 0);
          this.load_V();
@@ -301,10 +301,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
          if (ProxyListManager.getInstance().addProxy(proxy)) {
             this.init_bW = null;
             this.run_V();
-            this.init_V_Str_I("Added proxy " + proxy.read + ":" + proxy.init_I + ".", GuiColorPalette.open);
+            this.toast("Added proxy " + proxy.read + ":" + proxy.init_I + ".", GuiColorPalette.open);
             this.read_V_bW(proxy);
          } else {
-            this.init_V_Str_I("Proxy already exists or is invalid.", GuiColorPalette.poll);
+            this.toast("Proxy already exists or is invalid.", GuiColorPalette.poll);
          }
 
          this.load_V();
@@ -316,10 +316,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
          bW updated = this.init_bW();
          if (updated != null) {
             if (ProxyListManager.getInstance().updateProxy(this.init_bW, updated)) {
-               this.init_V_Str_I("Updated " + this.init_bW.init_Str() + ".", GuiColorPalette.open);
+               this.toast("Updated " + this.init_bW.init_Str() + ".", GuiColorPalette.open);
                this.get_V();
             } else {
-               this.init_V_Str_I("Proxy already exists or is invalid.", GuiColorPalette.poll);
+               this.toast("Proxy already exists or is invalid.", GuiColorPalette.poll);
                this.load_V();
             }
          }
@@ -331,7 +331,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int sectionsBefore = this.load_List().size() - this.init_List().size();
          ProxyListManager.getInstance().setProxyEnabled(proxy, !proxy.init_Z);
          this.init_V_I(sectionsBefore);
-         this.init_V_Str_I(proxy.init_Z ? "Enabled " + proxy.init_Str() + "." : "Disabled proxy.", proxy.init_Z ? GuiColorPalette.open : GuiColorPalette.close);
+         this.toast(proxy.init_Z ? "Enabled " + proxy.init_Str() + "." : "Disabled proxy.", proxy.init_Z ? GuiColorPalette.open : GuiColorPalette.close);
          this.load_V();
       }
    }
@@ -352,7 +352,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             this.init_bW = null;
          }
 
-         this.init_V_Str_I("Deleted " + proxy.init_Str() + ".", GuiColorPalette.close);
+         this.toast("Deleted " + proxy.init_Str() + ".", GuiColorPalette.close);
          this.load_V();
       }
    }
@@ -366,7 +366,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             proxy.init_I_I(ProxyListManager.getInstance().getTimeoutMs());
             if (this.minecraft != null) {
                this.minecraft.execute(() -> {
-                  this.init_V_Str_I(proxy.init_Str() + " is " + this.init_Str_bW(proxy) + ".", proxy.init_bW_CachePool.init_I());
+                  this.toast(proxy.init_Str() + " is " + this.init_Str_bW(proxy) + ".", proxy.init_bW_CachePool.init_I());
                   this.load_V();
                });
             }
@@ -377,28 +377,28 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void update_V() {
       ProxyListManager manager = ProxyListManager.getInstance();
       if (manager.getImportStatus().running()) {
-         this.init_V_Str_I("Finish import before refreshing.", -14249);
+         this.toast("Finish import before refreshing.", -14249);
       } else {
          ProxyListManager.Inner_TaskQueue currentStatus = manager.getRefreshStatus();
          if (currentStatus.running()) {
             if (manager.cancelRefresh()) {
-               this.init_V_Str_I("Proxy refresh canceled.", -14249);
+               this.toast("Proxy refresh canceled.", -14249);
                this.load_V();
             }
          } else if (manager.size() == 0) {
-            this.init_V_Str_I("No proxies to refresh.", -14249);
+            this.toast("No proxies to refresh.", -14249);
          } else if (!manager.startRefresh(true)) {
-            this.init_V_Str_I("Proxy refresh could not start.", -14249);
+            this.toast("Proxy refresh could not start.", -14249);
          } else {
             long generation = manager.getRefreshStatus().generation();
-            this.init_V_Str_I("Refreshing proxies...", -7429889);
+            this.toast("Refreshing proxies...", -7429889);
             this.load_V();
             autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Refresh-Watch", () -> !manager.getRefreshStatus().running(), () -> {
                if (this.minecraft != null) {
                   this.minecraft.execute(() -> {
                      ProxyListManager.Inner_TaskQueue finished = manager.getRefreshStatus();
                      if (finished.generation() == generation && finished.checkedCount() >= finished.totalCount()) {
-                        this.init_V_Str_I("Proxy refresh finished.", GuiColorPalette.open);
+                        this.toast("Proxy refresh finished.", GuiColorPalette.open);
                      }
 
                      this.load_V();
@@ -412,14 +412,14 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void sync_V() {
       ProxyListManager manager = ProxyListManager.getInstance();
       if (manager.getRefreshStatus().running()) {
-         this.init_V_Str_I("Cancel refresh before cleanup.", -14249);
+         this.toast("Cancel refresh before cleanup.", -14249);
       } else if (manager.getImportStatus().running()) {
-         this.init_V_Str_I("Finish import before cleanup.", -14249);
+         this.toast("Finish import before cleanup.", -14249);
       } else {
          int before = manager.size();
          manager.pruneAndSort();
          int removed = Math.max(0, before - manager.size());
-         this.init_V_Str_I(
+         this.toast(
             removed == 0 ? "Cleanup finished. Nothing removed." : "Cleanup removed " + removed + " proxies.", removed == 0 ? GuiColorPalette.close : GuiColorPalette.open
          );
          this.load_V();
@@ -429,14 +429,14 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void flush_V() {
       ProxyListManager manager = ProxyListManager.getInstance();
       if (manager.getRefreshStatus().running()) {
-         this.init_V_Str_I("Cancel refresh before sorting proxies.", -14249);
+         this.toast("Cancel refresh before sorting proxies.", -14249);
       } else if (manager.getImportStatus().running()) {
-         this.init_V_Str_I("Finish import before sorting proxies.", -14249);
+         this.toast("Finish import before sorting proxies.", -14249);
       } else {
          if (manager.sortNow()) {
-            this.init_V_Str_I("Sorted proxies by latency.", GuiColorPalette.open);
+            this.toast("Sorted proxies by latency.", GuiColorPalette.open);
          } else {
-            this.init_V_Str_I("Nothing to sort.", GuiColorPalette.close);
+            this.toast("Nothing to sort.", GuiColorPalette.close);
          }
 
          this.load_V();
@@ -446,16 +446,16 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void close_V() {
       ProxyListManager manager = ProxyListManager.getInstance();
       if (manager.getRefreshStatus().running()) {
-         this.init_V_Str_I("Cancel refresh before clearing proxies.", -14249);
+         this.toast("Cancel refresh before clearing proxies.", -14249);
       } else if (manager.getImportStatus().running()) {
-         this.init_V_Str_I("Finish import before clearing proxies.", -14249);
+         this.toast("Finish import before clearing proxies.", -14249);
       } else {
          int removed = manager.clearAllProxies();
          this.init_bW = null;
          this.run_V();
          this.update_I = 0;
          this.init_CacheEntry.jumpTo(0, 0);
-         this.init_V_Str_I(removed == 0 ? "Proxy list is already empty." : "Cleared " + removed + " proxies.", removed == 0 ? GuiColorPalette.close : GuiColorPalette.open);
+         this.toast(removed == 0 ? "Proxy list is already empty." : "Cleared " + removed + " proxies.", removed == 0 ? GuiColorPalette.close : GuiColorPalette.open);
          this.load_V();
       }
    }
@@ -465,11 +465,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
       ProxyListManager.Inner_BufferHelper status = manager.getImportStatus();
       if (status.running()) {
          if (manager.cancelImport()) {
-            this.init_V_Str_I("Proxy import canceled.", -14249);
+            this.toast("Proxy import canceled.", -14249);
             this.load_V();
          }
       } else if (manager.getRefreshStatus().running()) {
-         this.init_V_Str_I("Cancel refresh before importing.", -14249);
+         this.toast("Cancel refresh before importing.", -14249);
       } else {
          this.load_Z = true;
       }
@@ -487,7 +487,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          if (selectedFile != null) {
             File file = new File(selectedFile);
             if (!manager.importFromFileAsync(file)) {
-               this.init_V_Str_I("Proxy import could not start.", -14249);
+               this.toast("Proxy import could not start.", -14249);
             } else {
                this.init_V_bY_J(manager, manager.getImportStatus().generation());
             }
@@ -502,23 +502,23 @@ public class ProxiesScreen extends VirtualScaledScreen {
       ProxyListManager manager = ProxyListManager.getInstance();
       String clipboard = this.minecraft != null ? this.minecraft.keyboardHandler.getClipboard() : null;
       if (clipboard == null || clipboard.isBlank()) {
-         this.init_V_Str_I("Clipboard is empty.", -14249);
+         this.toast("Clipboard is empty.", -14249);
       } else if (!manager.importFromTextAsync(clipboard)) {
-         this.init_V_Str_I("Proxy import could not start.", -14249);
+         this.toast("Proxy import could not start.", -14249);
       } else {
          this.init_V_bY_J(manager, manager.getImportStatus().generation());
       }
    }
 
    private void init_V_bY_J(ProxyListManager manager, long generation) {
-      this.init_V_Str_I("Importing proxies...", -7429889);
+      this.toast("Importing proxies...", -7429889);
       this.load_V();
       autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Import-Watch", () -> !manager.getImportStatus().running(), () -> {
          if (this.minecraft != null) {
             this.minecraft.execute(() -> {
                ProxyListManager.Inner_BufferHelper finished = manager.getImportStatus();
                if (finished.generation() == generation && !finished.canceled()) {
-                  this.init_V_Str_I("Imported " + finished.addedCount() + " proxies.", finished.addedCount() > 0 ? GuiColorPalette.open : -14249);
+                  this.toast("Imported " + finished.addedCount() + " proxies.", finished.addedCount() > 0 ? GuiColorPalette.open : -14249);
                   this.update_I = 0;
                   this.init_CacheEntry.jumpTo(0, 0);
                }
@@ -535,8 +535,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int cardW = btnW + 8;
       int titleH = 12;
       int cardH = 4 + titleH + 2 + btnH * 2 + 2 + 4;
-      int cardX = (this.init_I() - cardW) / 2;
-      int cardY = (this.load_I() - cardH) / 2;
+      int cardX = (this.virtualWidth() - cardW) / 2;
+      int cardY = (this.virtualHeight() - cardH) / 2;
       int btnX = cardX + 4;
       int fileY = cardY + 4 + titleH + 2;
       int clipY = fileY + btnH + 2;
@@ -573,7 +573,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       autismclient.gui.f.NetHelper[] rects = this.init_NetHelperArr();
       this.init_V_NetHelperArr(rects);
       autismclient.gui.f.NetHelper card = rects[0];
-      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -939524096);
+      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -939524096);
       autismclient.gui.f.PacketUtil.load(graphics, card, 5, -401402080, load_I_I(GuiColorPalette.update));
       this.init_V_GuiGraphicsExtract(
          graphics, "Import proxies from", card.read() + card.update() / 2, this.init_I_I_I(card.write() + 4, 12), GuiColorPalette.flush, true
@@ -599,25 +599,25 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
    private bW init_bW() {
       bW proxy = new bW();
-      proxy.load_Str = init_Str_Str(this.init_EditBox.getValue());
-      proxy.read = init_Str_Str(this.load_EditBox.getValue());
-      proxy.write = init_Str_Str(this.write_EditBox.getValue());
+      proxy.load_Str = trim(this.init_EditBox.getValue());
+      proxy.read = trim(this.load_EditBox.getValue());
+      proxy.write = trim(this.write_EditBox.getValue());
       proxy.update = this.update_EditBox.getValue();
       proxy.init_bZ = this.init_bZ;
       if (proxy.read.isBlank()) {
-         this.init_V_Str_I("Enter a proxy address first.", -14249);
+         this.toast("Enter a proxy address first.", -14249);
          return null;
       }
 
       try {
-         proxy.init_I = Integer.parseInt(init_Str_Str(this.read_EditBox.getValue()));
+         proxy.init_I = Integer.parseInt(trim(this.read_EditBox.getValue()));
       } catch (NumberFormatException e) {
-         this.init_V_Str_I("Invalid proxy port.", -14249);
+         this.toast("Invalid proxy port.", -14249);
          return null;
       }
 
       if (!proxy.init_Z()) {
-         this.init_V_Str_I("Proxy must have a valid address and port.", -14249);
+         this.toast("Proxy must have a valid address and port.", -14249);
          return null;
       } else {
          return proxy;
@@ -631,10 +631,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -15987181);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
          int panelX = this.flush_I();
-         this.init_V_GuiGraphicsExtract_2(graphics, panelX, this.push_I(), this.close_I(), this.put(), -401402080);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.stop(), this.start(), this.next(), this.prev(), -1206840035);
+         this.drawCard(graphics, panelX, this.push_I(), this.close_I(), this.put(), -401402080);
+         this.drawCard(graphics, this.stop(), this.start(), this.next(), this.prev(), -1206840035);
          int headerTextY = this.init_I_I_I(this.pop_I(), this.read_I());
          this.init_V_GuiGraphicsExtract(graphics, "Proxies", this.add(), headerTextY, GuiColorPalette.flush, false);
          if (this.init_Z()) {
@@ -785,7 +785,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-      MouseButtonEvent virtualEvent = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent virtualEvent = toVirtual(event);
       if (this.load_Z) {
          if (Compat263.mouseEventGlfwButton(virtualEvent) == 0) {
             this.pop_V();
@@ -879,13 +879,13 @@ public class ProxiesScreen extends VirtualScaledScreen {
          this.init_Z = false;
          return true;
       } else {
-         return super.mouseReleased(init_MouseButtonEvent_MouseButtonEvent(event));
+         return super.mouseReleased(toVirtual(event));
       }
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      MouseButtonEvent virtualEvent = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent virtualEvent = toVirtual(event);
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I(this.load_List().size());
          this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
@@ -929,10 +929,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void write(bW proxy) {
       this.init_bW = proxy;
       if (proxy != null) {
-         this.init_EditBox.setValue(init_Str_Str(proxy.load_Str));
-         this.load_EditBox.setValue(init_Str_Str(proxy.read));
+         this.init_EditBox.setValue(trim(proxy.load_Str));
+         this.load_EditBox.setValue(trim(proxy.read));
          this.read_EditBox.setValue(proxy.init_I <= 0 ? "" : Integer.toString(proxy.init_I));
-         this.write_EditBox.setValue(init_Str_Str(proxy.write));
+         this.write_EditBox.setValue(trim(proxy.write));
          this.update_EditBox.setValue(proxy.update == null ? "" : proxy.update);
          this.init_bZ = proxy.init_bZ == null ? ProxyProtocolType.Socks5 : proxy.init_bZ;
       }
@@ -1044,7 +1044,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             + " "
             + proxy.init_bW_CachePool
             + " "
-            + init_Str_Str(proxy.write)
+            + trim(proxy.write)
             + " "
             + proxy.read()
       );
@@ -1147,11 +1147,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private int flush_I() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.close_I(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.close_I(), 6);
    }
 
    private int close_I() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 530);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 530);
    }
 
    private int open_I() {
@@ -1216,10 +1216,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
    private int prev() {
       int header = this.valid() - this.start();
-      int cap = Math.max(3, this.load_I() * 65 / 100 / this.update_I());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.update_I());
       int shown = Math.max(3, Math.min(cap, this.load_List().size()));
       int content = header + shown * this.update_I() - 2 + 4;
-      int available = Math.max(1, this.load_I() - 6 - this.start());
+      int available = Math.max(1, this.virtualHeight() - 6 - this.start());
       return Math.min(available, content);
    }
 
@@ -1266,7 +1266,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private boolean init_Z() {
-      return this.close_I() < 300 || this.load_I() < this.valid() + this.update_I() * 2;
+      return this.close_I() < 300 || this.virtualHeight() < this.valid() + this.update_I() * 2;
    }
 
    private void init_V_Z(boolean visible) {
@@ -1387,7 +1387,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private static String load_Str_Str(String value) {
-      return init_Str_Str(value).toLowerCase(Locale.ROOT);
+      return trim(value).toLowerCase(Locale.ROOT);
    }
 
    private static int load_I_I(int argb) {

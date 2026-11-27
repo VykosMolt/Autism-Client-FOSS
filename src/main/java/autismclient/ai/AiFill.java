@@ -187,7 +187,7 @@ final class AiFill {
          : !blockId.equals("minecraft:air") && !blockId.equals("minecraft:cave_air") && !blockId.equals("minecraft:void_air");
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          AiFill.Inner_DataUtil box = init_J_DataUtil(args);
@@ -244,7 +244,7 @@ final class AiFill {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
-         String name = AiClipboard.init_Str(AiJson.getString(args, "name", ""));
+         String name = AiClipboard.validateName(AiJson.getString(args, "name", ""));
          List<AiBuilder.CellSpec> cells = init(box, Minecraft.getInstance().level);
          AiClipboard.init(name, List.copyOf(cells));
          return AiGameOperations.immediate(
@@ -295,8 +295,8 @@ final class AiFill {
    static AiOperation read(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         String name = AiClipboard.init_Str(AiJson.getString(args, "name", ""));
-         List<AiBuilder.CellSpec> stored = AiClipboard.init_List(name);
+         String name = AiClipboard.validateName(AiJson.getString(args, "name", ""));
+         List<AiBuilder.CellSpec> stored = AiClipboard.load(name);
          AiBuilder.BuildOptions power = AiBuilder.parseBuildOptions(args);
          if (power.repeat() == null && !power.layers() && power.substitutes().isEmpty()) {
             boolean air = AiJson.getBoolean(args, "air", false);
@@ -665,7 +665,7 @@ final class AiFill {
                   );
                }
 
-               String name = AiClipboard.init_Str(store);
+               String name = AiClipboard.validateName(store);
                List<AiBuilder.CellSpec> cells = init(out, client.level);
                AiClipboard.init(name, List.copyOf(cells));
                data.addProperty("name", name);
@@ -681,8 +681,8 @@ final class AiFill {
                   );
                }
 
-               String name = AiClipboard.init_Str(clipboard);
-               AiFill.Inner_CachePool transformed = init(AiClipboard.init_List(name), action, step, amount, 4096);
+               String name = AiClipboard.validateName(clipboard);
+               AiFill.Inner_CachePool transformed = init(AiClipboard.load(name), action, step, amount, 4096);
                AiClipboard.init(name, transformed.cells());
                int[] extents = init(transformed.cells());
                return AiGameOperations.immediate(

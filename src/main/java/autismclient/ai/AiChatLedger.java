@@ -25,7 +25,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.entity.player.Player;
 
 public final class AiChatLedger {
-   public static final int init_I = 64;
+   public static final int CAPACITY = 64;
    private static final int load = 2048;
    private static final int read = 512;
    private static final int write = 16;
@@ -117,7 +117,7 @@ public final class AiChatLedger {
       return "";
    }
 
-   public static List<AiChatLedger.ChatEntry> init_List(int n) {
+   public static List<AiChatLedger.ChatEntry> recent(int n) {
       synchronized (init_Obj) {
          List<AiChatLedger.ChatEntry> out = new ArrayList<>(Math.min(n, init_Deque.size()));
 
@@ -133,7 +133,7 @@ public final class AiChatLedger {
       }
    }
 
-   public static AiChatLedger.ChatEntry init_TokenStore_StreamU(int index) {
+   public static AiChatLedger.ChatEntry entry(int index) {
       synchronized (init_Obj) {
          if (index >= 0 && index < init_Deque.size()) {
             int i = 0;
@@ -151,19 +151,19 @@ public final class AiChatLedger {
       }
    }
 
-   public static int init_I() {
+   public static int size() {
       synchronized (init_Obj) {
          return init_Deque.size();
       }
    }
 
-   public static long init_J() {
+   public static long revision() {
       synchronized (init_Obj) {
          return init_J;
       }
    }
 
-   public static void init_V() {
+   public static void clear() {
       synchronized (init_Obj) {
          init_Deque.clear();
          init_J++;

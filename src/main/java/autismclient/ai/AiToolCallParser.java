@@ -39,7 +39,7 @@ public final class AiToolCallParser {
    private AiToolCallParser() {
    }
 
-   public static List<String> init_List(String input) {
+   public static List<String> tokenize(String input) {
       List<String> tokens = new ArrayList<>();
       if (input != null && !input.isBlank()) {
          StringBuilder current = new StringBuilder();
@@ -108,8 +108,8 @@ public final class AiToolCallParser {
       }
    }
 
-   public static JsonObject init_JsonObject(String input) {
-      return init_JsonObject(init_List(input));
+   public static JsonObject parse(String input) {
+      return init_JsonObject(tokenize(input));
    }
 
    public static JsonObject init_JsonObject(List<String> tokens) {
@@ -423,7 +423,7 @@ public final class AiToolCallParser {
       }
    }
 
-   public static int init_I_Str_D(String token, double base) {
+   public static int parseBlockCoord(String token, double base) {
       return (int)Math.floor(init_D_Str_D(token, base));
    }
 
@@ -438,7 +438,7 @@ public final class AiToolCallParser {
             break;
          case "mine":
             AiToolCallParser.Inner_StreamUtil mine = init(args, "game:mine", "block", "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]");
-            var10000 = new AiToolCallParser.Inner_StreamUtil("game:mine", AiMiningQuota.init_JsonObject_JsonObject(mine.arguments()));
+            var10000 = new AiToolCallParser.Inner_StreamUtil("game:mine", AiMiningQuota.normalizeArgs(mine.arguments()));
             break;
          case "chop":
             var10000 = init(args, "game:chop", "block", "Usage: .tools chop <block> [count]");
@@ -579,9 +579,9 @@ public final class AiToolCallParser {
 
    private static JsonObject parseCoordsObject(List<String> coords, double px, double py, double pz) {
       JsonObject out = new JsonObject();
-      out.addProperty("x", init_I_Str_D(coords.get(0), px));
-      out.addProperty("y", init_I_Str_D(coords.get(1), py));
-      out.addProperty("z", init_I_Str_D(coords.get(2), pz));
+      out.addProperty("x", parseBlockCoord(coords.get(0), px));
+      out.addProperty("y", parseBlockCoord(coords.get(1), py));
+      out.addProperty("z", parseBlockCoord(coords.get(2), pz));
       return out;
    }
 
@@ -666,9 +666,9 @@ public final class AiToolCallParser {
 
       if (args.size() >= 3 && args.size() <= 5) {
          JsonObject out = new JsonObject();
-         out.addProperty("x", init_I_Str_D(args.get(0), px));
-         out.addProperty("y", init_I_Str_D(args.get(1), py));
-         out.addProperty("z", init_I_Str_D(args.get(2), pz));
+         out.addProperty("x", parseBlockCoord(args.get(0), px));
+         out.addProperty("y", parseBlockCoord(args.get(1), py));
+         out.addProperty("z", parseBlockCoord(args.get(2), pz));
          if (args.size() >= 4) {
             double radius;
             try {
@@ -736,12 +736,12 @@ public final class AiToolCallParser {
    private static AiToolCallParser.Inner_StreamUtil read(List<String> args, double px, double py, double pz) {
       if (args.size() >= 7 && args.size() <= 8) {
          JsonObject out = new JsonObject();
-         out.addProperty("x", init_I_Str_D(args.get(0), px));
-         out.addProperty("y", init_I_Str_D(args.get(1), py));
-         out.addProperty("z", init_I_Str_D(args.get(2), pz));
-         out.addProperty("x2", init_I_Str_D(args.get(3), px));
-         out.addProperty("y2", init_I_Str_D(args.get(4), py));
-         out.addProperty("z2", init_I_Str_D(args.get(5), pz));
+         out.addProperty("x", parseBlockCoord(args.get(0), px));
+         out.addProperty("y", parseBlockCoord(args.get(1), py));
+         out.addProperty("z", parseBlockCoord(args.get(2), pz));
+         out.addProperty("x2", parseBlockCoord(args.get(3), px));
+         out.addProperty("y2", parseBlockCoord(args.get(4), py));
+         out.addProperty("z2", parseBlockCoord(args.get(5), pz));
          out.addProperty("block", args.get(6));
          if (args.size() == 8) {
             String shape = args.get(7).toLowerCase(Locale.ROOT);

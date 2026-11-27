@@ -121,9 +121,9 @@ public final class AutismClientMod implements ClientModInitializer {
       qualificationFlags();
       AutismClientAddon.FOLDER.mkdirs();
       runSafe("initialize", () -> ModuleRuntimeManager.getInstance().initialize());
-      ModNamespaceCatalog.init_V();
+      ModNamespaceCatalog.initialize();
       if (!ProtectorFeatureFlags.read()) {
-         VanillaTranslationKeyLoader.init_V();
+         VanillaTranslationKeyLoader.loadAsync();
       }
 
       if (ProtectorFeatureFlags.load()) {
@@ -148,9 +148,9 @@ public final class AutismClientMod implements ClientModInitializer {
       HoleEspModule.init_V_12();
       autismclient.commands.CommandManager.initialize();
       if (!AutismLiteVariant.enabled()) {
-         AiDirectOps.init_V();
-         AiMacroTools.init_V();
-         AiAssistant.init_V();
+         AiDirectOps.reloadToolSettings();
+         AiMacroTools.install();
+         AiAssistant.initialize();
          SchematicWorkspace.registerEvents();
       }
 
@@ -331,8 +331,8 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       runSafe("init.mapPreview", MapTooltipPreview::init_V);
       ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
-         autismclient.protector.TooltipNbtGuard.init_I(lines);
-         autismclient.protector.TooltipNbtGuard.init_Z(lines);
+         autismclient.protector.TooltipNbtGuard.sanitize(lines);
+         autismclient.protector.TooltipNbtGuard.truncate(lines);
          ModuleRuntimeManager.getInstance().appendItemTooltipLines(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {

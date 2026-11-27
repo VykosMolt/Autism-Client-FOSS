@@ -140,7 +140,7 @@ final class CrosshairVectorPipeline {
          quad,
          1,
          0xFF000000 | mode << 16,
-         autismclient.gui.sdf.UiScissorStack.init_ScreenRectangle()
+         autismclient.gui.sdf.UiScissorStack.peek()
       );
       if (element != null) {
          ((AutismGuiGraphicsExtractorAccessor)graphics).autism$guiRenderState().addGuiElement(element);

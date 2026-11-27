@@ -89,7 +89,7 @@ final class AiClientConfig {
       }
    }
 
-   static JsonObject init_JsonObject(JsonObject args) {
+   static JsonObject profiles(JsonObject args) {
       String action = init(args, "list");
       return init(
          () -> {

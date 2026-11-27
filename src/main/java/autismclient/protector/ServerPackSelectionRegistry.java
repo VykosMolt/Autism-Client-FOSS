@@ -21,8 +21,8 @@ public final class ServerPackSelectionRegistry {
    }
 
    public static void init(ResourcePackSessionTracker.PackSession session, Collection<IdAndPath> requested, Collection<Pack> loaded) {
-      if (loaded != null && session != null && ResourcePackSessionTracker.init_Z(session)) {
-         long revision = ResourcePackSessionTracker.init_J(session);
+      if (loaded != null && session != null && ResourcePackSessionTracker.isActive(session)) {
+         long revision = ResourcePackSessionTracker.revision(session);
          if (loaded.isEmpty()) {
             init(session, revision);
          } else {
@@ -43,7 +43,7 @@ public final class ServerPackSelectionRegistry {
             }
 
             synchronized (init_Obj) {
-               if (revision >= 0L && revision == ResourcePackSessionTracker.init_J(session)) {
+               if (revision >= 0L && revision == ResourcePackSessionTracker.revision(session)) {
                   ServerPackSelectionRegistry.Inner_CachePool selection = init_Map.computeIfAbsent(session, ignored -> new ServerPackSelectionRegistry.Inner_CachePool());
                   selection.init.clear();
                   selection.init.putAll(replacement);
@@ -86,8 +86,8 @@ public final class ServerPackSelectionRegistry {
                return null;
             }
 
-            long generation = ResourcePackSessionTracker.init_J(session, packId);
-            ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+            long generation = ResourcePackSessionTracker.generation(session, packId);
+            ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
 
             try (Stream<PackResources> stream = pack.open()) {
                for (PackResources resources : stream.toList()) {
@@ -98,10 +98,10 @@ public final class ServerPackSelectionRegistry {
                   if (resources instanceof IsolatedPackDownloader.Inner_BufferHelper isolated) {
                      IsolatedPackDownloader.Inner_ConfigStore binding = isolated.init();
                      if (policy != ResourcePackSessionTracker.PackPolicy.ISOLATED
-                        || binding.init_FileCache_BufferHe() != session
-                        || !packId.equals(binding.init_UUID())
-                        || binding.init_J() != generation
-                        || !Objects.equals(path, binding.init_Path())) {
+                        || binding.session() != session
+                        || !packId.equals(binding.packId())
+                        || binding.generation() != generation
+                        || !Objects.equals(path, binding.path())) {
                         return init_CharEncoder_DataUt;
                      }
                   }
@@ -113,7 +113,7 @@ public final class ServerPackSelectionRegistry {
             if (policy == null) {
                generation = 0L;
                policy = ResourcePackSessionTracker.PackPolicy.FULL;
-            } else if (!ResourcePackSessionTracker.init_Z(session, packId, generation)) {
+            } else if (!ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
                return null;
             }
 
@@ -126,15 +126,15 @@ public final class ServerPackSelectionRegistry {
       }
    }
 
-   public static ServerPackSelectionRegistry.Inner_StreamUtil init_CharEncoder_Stream(ResourcePackSessionTracker.PackSession session, PackResources resources) {
+   public static ServerPackSelectionRegistry.Inner_StreamUtil provenanceOf(ResourcePackSessionTracker.PackSession session, PackResources resources) {
       if (resources != null && resources.location() != null) {
          ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources.location().id());
          if (provenance != null && resources instanceof IsolatedPackDownloader.Inner_BufferHelper isolated) {
             IsolatedPackDownloader.Inner_ConfigStore binding = isolated.init();
             if (provenance.init_FileCache_DataUtil() != ResourcePackSessionTracker.PackPolicy.ISOLATED
-               || binding.init_FileCache_BufferHe() != session
-               || !provenance.init_UUID().equals(binding.init_UUID())
-               || provenance.init_J() != binding.init_J()) {
+               || binding.session() != session
+               || !provenance.init_UUID().equals(binding.packId())
+               || provenance.init_J() != binding.generation()) {
                return null;
             }
          }
@@ -148,7 +148,7 @@ public final class ServerPackSelectionRegistry {
    public static ServerPackSelectionRegistry.Inner_StreamUtil init_CharEncoder_Stream(ResourcePackSessionTracker.PackSession session, String repositoryId) {
       if (session != null && repositoryId != null) {
          synchronized (init_Obj) {
-            if (!ResourcePackSessionTracker.init_Z(session)) {
+            if (!ResourcePackSessionTracker.isActive(session)) {
                return null;
             } else {
                ServerPackSelectionRegistry.Inner_CachePool selection = init_Map.get(session);
@@ -158,8 +158,8 @@ public final class ServerPackSelectionRegistry {
                   ServerPackSelectionRegistry.Inner_DataUtil pack = selection.init.get(repositoryId);
                   if (pack != null
                      && pack.init_J() > 0L
-                     && ResourcePackSessionTracker.init_FileCache_DataUtil(session, pack.init_UUID()) != null
-                     && !ResourcePackSessionTracker.init_Z(session, pack.init_UUID(), pack.init_J())) {
+                     && ResourcePackSessionTracker.policyFor(session, pack.init_UUID()) != null
+                     && !ResourcePackSessionTracker.isCurrent(session, pack.init_UUID(), pack.init_J())) {
                      return null;
                   } else {
                      return pack == null
@@ -176,7 +176,7 @@ public final class ServerPackSelectionRegistry {
 
    static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, Path path) {
       synchronized (init_Obj) {
-         if (!ResourcePackSessionTracker.init_Z(session)) {
+         if (!ResourcePackSessionTracker.isActive(session)) {
             return false;
          }
 
@@ -200,14 +200,14 @@ public final class ServerPackSelectionRegistry {
 
    private static void init(ResourcePackSessionTracker.PackSession session, long revision) {
       synchronized (init_Obj) {
-         if (revision >= 0L && revision == ResourcePackSessionTracker.init_J(session)) {
+         if (revision >= 0L && revision == ResourcePackSessionTracker.revision(session)) {
             init_V(session, null);
          }
       }
    }
 
    public static ResourcePackSessionTracker.PackPolicy init_FileCache_DataUtil(ResourcePackSessionTracker.PackSession session, PackResources resources) {
-      ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources);
+      ServerPackSelectionRegistry.Inner_StreamUtil provenance = provenanceOf(session, resources);
       return provenance == null ? null : provenance.init_FileCache_DataUtil();
    }
 
@@ -217,7 +217,7 @@ public final class ServerPackSelectionRegistry {
    }
 
    public static boolean init_Z(ResourcePackSessionTracker.PackSession session, PackResources resources) {
-      return init_CharEncoder_Stream(session, resources) != null;
+      return provenanceOf(session, resources) != null;
    }
 
    public static boolean init_Z(ResourcePackSessionTracker.PackSession session, String repositoryId) {

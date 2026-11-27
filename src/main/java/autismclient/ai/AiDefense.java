@@ -15,7 +15,7 @@ final class AiDefense {
    private AiDefense() {
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean hasShield(Minecraft mc) {
       if (mc.player == null) {
          return false;
       }
@@ -44,7 +44,7 @@ final class AiDefense {
    }
 
    static boolean init(Minecraft mc, double ticksUntilImpact) {
-      if (!init_Z(mc)) {
+      if (!hasShield(mc)) {
          return false;
       }
 
@@ -53,7 +53,7 @@ final class AiDefense {
    }
 
    static boolean init(Minecraft mc, Entity projectile) {
-      if (init_Z(mc) && projectile != null) {
+      if (hasShield(mc) && projectile != null) {
          if (projectile instanceof AbstractArrow arrow && arrow.getPierceLevel() > 0) {
             return false;
          } else {
@@ -111,7 +111,7 @@ final class AiDefense {
          && (aim == null ? autismclient.ai.engine.AiAim.isLookingAtEntity(target) : aim.isAimedAtEntity(target));
    }
 
-   static double init_D(Minecraft mc) {
+   static double attackReach(Minecraft mc) {
       return mc.player == null ? 0.0 : mc.player.getAttackRangeWith(mc.player.getMainHandItem()).effectiveMaxRange(mc.player);
    }
 }

@@ -14,15 +14,15 @@ public final class RegistryCompatGuard {
    private RegistryCompatGuard() {
    }
 
-   public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static void enter(ConnectionPrivacyRegistry.ConnectionSession context) {
       load.set(context);
    }
 
-   public static void init_V() {
+   public static void exit() {
       load.remove();
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
+   public static ConnectionPrivacyRegistry.ConnectionSession current() {
       ConnectionPrivacyRegistry.ConnectionSession context = load.get();
       if (context == null || context.isLocalOrMemory()) {
          return null;

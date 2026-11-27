@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismGuiScissorMirrorMixin {
    @Inject(method = "<init>", at = @At("TAIL"))
    private void autism$freshExtractor(CallbackInfo ci) {
-      UiScissorStack.load_V();
+      UiScissorStack.clear();
    }
 
    @Inject(method = "enableScissor", at = @At("HEAD"), cancellable = true)
@@ -34,6 +34,6 @@ public abstract class AutismGuiScissorMirrorMixin {
 
    @Inject(method = "disableScissor", at = @At("HEAD"))
    private void autism$mirrorPop(CallbackInfo ci) {
-      UiScissorStack.init_V();
+      UiScissorStack.pop();
    }
 }

@@ -26,17 +26,17 @@ public final class PackUrlValidator {
    private PackUrlValidator() {
    }
 
-   public static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_URL(URL url) throws MalformedURLException {
+   public static PackUrlValidator.Inner_ConfigStore parseUrl(URL url) throws MalformedURLException {
       Objects.requireNonNull(url, "url");
 
       try {
-         return init_TextFormat_ConfigS_URI(url.toURI());
+         return parseUri(url.toURI());
       } catch (URISyntaxException e) {
          throw init_MalformedURLExcept_Str_Exception(url.toExternalForm(), e);
       }
    }
 
-   public static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_URI(URI uri) throws MalformedURLException {
+   public static PackUrlValidator.Inner_ConfigStore parseUri(URI uri) throws MalformedURLException {
       Objects.requireNonNull(uri, "uri");
       String text = uri.toASCIIString();
       if (text.equals(uri.toString()) && !init_Z_Str(text) && !uri.isOpaque()) {
@@ -109,10 +109,10 @@ public final class PackUrlValidator {
    }
 
    public static PackUrlValidator.Inner_CachePool init_TextFormat_CachePo_URL(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
-      return init_TextFormat_CachePo_TextFormat_ConfigS(init_TextFormat_ConfigS_URL(url), snapshot, resolver);
+      return resolveEndpoint(parseUrl(url), snapshot, resolver);
    }
 
-   public static PackUrlValidator.Inner_CachePool init_TextFormat_CachePo_TextFormat_ConfigS(
+   public static PackUrlValidator.Inner_CachePool resolveEndpoint(
       PackUrlValidator.Inner_ConfigStore target, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver
    ) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
@@ -120,15 +120,15 @@ public final class PackUrlValidator {
       PackUrlValidator.Inner_DataUtil kind = init_TextFormat_DataUti_List(addresses);
 
       for (InetAddress address : addresses) {
-         if (!init_Z_InetAddress(address, target.init_I(), kind, snapshot)) {
+         if (!init_Z_InetAddress(address, target.port(), kind, snapshot)) {
             throw new IOException("Resource-pack address is outside the connected server's allowed scope");
          }
       }
 
-      return new PackUrlValidator.Inner_CachePool(target.init_URI(), target.load(), target.init_I(), addresses);
+      return new PackUrlValidator.Inner_CachePool(target.uri(), target.load(), target.port(), addresses);
    }
 
-   public static PackUrlValidator.Inner_BufferHelper init_TextFormat_BufferH_Proxy_TextFormat_StreamU(Proxy proxy, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
+   public static PackUrlValidator.Inner_BufferHelper routeFor(Proxy proxy, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
       if (proxy != null && proxy.type() != Type.DIRECT) {
          if (proxy.address() instanceof InetSocketAddress socketAddress) {
             PackUrlValidator.Inner_ConfigStore target = init_TextFormat_ConfigS_InetSocketAddress(socketAddress);
@@ -139,7 +139,7 @@ public final class PackUrlValidator {
             } else {
                return new PackUrlValidator.Inner_BufferHelper(
                   proxy.type(),
-                  new PackUrlValidator.Inner_CachePool(target.init_URI(), target.load(), target.init_I(), addresses),
+                  new PackUrlValidator.Inner_CachePool(target.uri(), target.load(), target.port(), addresses),
                   proxy.type().name().toLowerCase(Locale.ROOT) + "://" + target.read(),
                   true
                );
@@ -152,7 +152,7 @@ public final class PackUrlValidator {
       }
    }
 
-   public static PackUrlValidator.Inner_BufferHelper init_TextFormat_BufferH_Str(
+   public static PackUrlValidator.Inner_BufferHelper routeForLocation(
       String location, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver
    ) throws IOException, MalformedURLException {
       if (location != null && !location.isBlank()) {
@@ -163,7 +163,7 @@ public final class PackUrlValidator {
             throw init_MalformedURLExcept_Str_Exception(location, e);
          }
 
-         PackUrlValidator.Inner_ConfigStore target = init_TextFormat_ConfigS_URI(uri);
+         PackUrlValidator.Inner_ConfigStore target = parseUri(uri);
          if (!target.init_Str().equals("http")
             || uri.getRawQuery() != null
             || uri.getRawFragment() != null
@@ -171,14 +171,14 @@ public final class PackUrlValidator {
             throw new IOException("HTTP 305 requires an unambiguous HTTP proxy URI");
          }
 
-         PackUrlValidator.Inner_CachePool endpoint = init_TextFormat_CachePo_TextFormat_ConfigS(target, snapshot, resolver);
+         PackUrlValidator.Inner_CachePool endpoint = resolveEndpoint(target, snapshot, resolver);
          return new PackUrlValidator.Inner_BufferHelper(Type.HTTP, endpoint, "http://" + target.read(), false);
       } else {
          throw new IOException("HTTP 305 has no proxy URI");
       }
    }
 
-   public static String init_Str_BufferHelper_Buffe(ConnectionPrivacyRegistry.ServerEndpoint endpoint) throws IOException {
+   public static String endpointKey(ConnectionPrivacyRegistry.ServerEndpoint endpoint) throws IOException {
       Objects.requireNonNull(endpoint, "endpoint");
       String host = endpoint.host();
       if (host != null && !host.isBlank() && !init_Z_Str(host) && host.indexOf(37) < 0) {
@@ -226,7 +226,7 @@ public final class PackUrlValidator {
       }
    }
 
-   public static String init_Str_SocketAddress(SocketAddress socketAddress) throws IOException {
+   public static String peerKey(SocketAddress socketAddress) throws IOException {
       Objects.requireNonNull(socketAddress, "peerAddress");
       if (socketAddress instanceof InetSocketAddress inet) {
          InetAddress address = inet.getAddress();
@@ -250,8 +250,8 @@ public final class PackUrlValidator {
       return init_Str_Str(address.getHostAddress(), port, defaultPort);
    }
 
-   public static boolean init_Z_TextFormat_ConfigS_TextFormat_ConfigS(PackUrlValidator.Inner_ConfigStore first, PackUrlValidator.Inner_ConfigStore second) {
-      return first.init_Str().equals(second.init_Str()) && first.load().equalsIgnoreCase(second.load()) && first.init_I() == second.init_I();
+   public static boolean sameAuthority(PackUrlValidator.Inner_ConfigStore first, PackUrlValidator.Inner_ConfigStore second) {
+      return first.init_Str().equals(second.init_Str()) && first.load().equalsIgnoreCase(second.load()) && first.port() == second.port();
    }
 
    private static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_InetSocketAddress(InetSocketAddress address) throws IOException {
@@ -261,7 +261,7 @@ public final class PackUrlValidator {
          String literal = host.indexOf(58) >= 0 && !host.startsWith("[") ? "[" + host + "]" : host;
 
          try {
-            return init_TextFormat_ConfigS_URI(new URI("http://" + literal + ":" + port + "/"));
+            return parseUri(new URI("http://" + literal + ":" + port + "/"));
          } catch (URISyntaxException e) {
             throw init_MalformedURLExcept_Str_Exception(address.toString(), e);
          }
@@ -315,12 +315,12 @@ public final class PackUrlValidator {
          return kind == PackUrlValidator.Inner_DataUtil.LOOPBACK;
       }
 
-      if (snapshot.init_SocketAddress() instanceof InetSocketAddress peer && peer.getAddress() != null) {
+      if (snapshot.peerAddress() instanceof InetSocketAddress peer && peer.getAddress() != null) {
          boolean sameIp = Arrays.equals(peer.getAddress().getAddress(), address.getAddress());
          if (!sameIp) {
             return false;
          } else {
-            return snapshot.init_ServerData_Type() == net.minecraft.client.multiplayer.ServerData.Type.LAN
+            return snapshot.serverType() == net.minecraft.client.multiplayer.ServerData.Type.LAN
                ? kind == PackUrlValidator.Inner_DataUtil.PRIVATE || kind == PackUrlValidator.Inner_DataUtil.LINK_LOCAL
                : kind == PackUrlValidator.Inner_DataUtil.PRIVATE && port == peer.getPort();
          }
@@ -481,12 +481,12 @@ public final class PackUrlValidator {
       return exception;
    }
 
-   public record Inner_BufferHelper(Type init_Proxy_Type, PackUrlValidator.Inner_CachePool init_TextFormat_CachePo, String init_Str, boolean init_Z) {
+   public record Inner_BufferHelper(Type proxyType, PackUrlValidator.Inner_CachePool endpoint, String init_Str, boolean init_Z) {
    }
 
-   public record Inner_CachePool(URI init_URI, String init_Str, int init_I, List<InetAddress> init_List) {
+   public record Inner_CachePool(URI init_URI, String init_Str, int port, List<InetAddress> addresses) {
       public Inner_CachePool {
-         init_List = List.copyOf(init_List);
+         addresses = List.copyOf(addresses);
       }
 
       public String init_Str() {
@@ -495,7 +495,7 @@ public final class PackUrlValidator {
 
       public PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS() {
          try {
-            return PackUrlValidator.init_TextFormat_ConfigS_URI(this.init_URI);
+            return PackUrlValidator.parseUri(this.init_URI);
          } catch (IOException e) {
             throw new IllegalStateException(e);
          }
@@ -506,9 +506,9 @@ public final class PackUrlValidator {
       }
    }
 
-   public record Inner_ConfigStore(URI init_URI, String init_Str, int init_I, String load, String read) {
+   public record Inner_ConfigStore(URI uri, String init_Str, int port, String load, String read) {
       public String init_Str() {
-         return this.init_URI.getScheme().toLowerCase(Locale.ROOT);
+         return this.uri.getScheme().toLowerCase(Locale.ROOT);
       }
 
       public String load() {

@@ -23,7 +23,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
    private AiMacroTools() {
    }
 
-   public static void init_V() {
+   public static void install() {
       autismclient.util.macro.MacroToolBridge.init(init_am);
       init_am.load_V_Minecraft(Minecraft.getInstance());
    }
@@ -40,15 +40,15 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    @Override
    public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil() {
-      return AiDirectOps.init_k_StreamUtil();
+      return AiDirectOps.currentHandle();
    }
 
    static boolean init_Z_Str(String id) {
-      return AiDirectOps.load_Z(id) && !"client:run_macro".equals(id);
+      return AiDirectOps.isToolId(id) && !"client:run_macro".equals(id);
    }
 
    private void load_V_Minecraft(Minecraft mc) {
-      AiCatalog.Snapshot snapshot = AiDirectOps.init_AiCatalog_Snapshot();
+      AiCatalog.Snapshot snapshot = AiDirectOps.catalogSnapshot();
       if (!this.init_Str.equals(snapshot.revision())) {
          this.init_List = snapshot.entries()
             .stream()
@@ -111,8 +111,8 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       }
 
       AiMacroTools.Inner_DataUtil request = new AiMacroTools.Inner_DataUtil(id, argumentsJson);
-      request.init_k_StreamUtil.init(() -> AiClientTick.init_V_Runnable(() -> this.init_V_am_DataUtil(request)));
-      AiClientTick.init_V_Runnable(() -> {
+      request.init_k_StreamUtil.init(() -> AiClientTick.execute(() -> this.init_V_am_DataUtil(request)));
+      AiClientTick.execute(() -> {
          if (!request.init_k_StreamUtil.load().isDone()) {
             request.init_Obj = Minecraft.getInstance().level;
             this.init_ArrayDeque.add(request);
@@ -130,7 +130,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       }
    }
 
-   static void init_V_Str(String reason) {
+   static void cancelAll(String reason) {
       List<AiMacroTools.Inner_DataUtil> cancelled = List.copyOf(init_am.init_ArrayDeque);
       init_am.init_ArrayDeque.clear();
 
@@ -146,7 +146,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       } else if (!List.of("STOP", "PAUSE", "RESUME").contains(operation)) {
          return CompletableFuture.failedFuture(new IllegalArgumentException("Unknown tool operation: " + operation));
       } else if ("STOP".equals(operation)) {
-         AiClientTick.init_V_Runnable(() -> {
+         AiClientTick.execute(() -> {
             if (this.init_am_DataUtil != null && this.init_am_DataUtil.load == job) {
                this.init_am_DataUtil.init_k_StreamUtil.init_V();
             } else {
@@ -155,7 +155,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
          });
          return job.load();
       } else {
-         return AiClientTick.init_CompletableFuture_Supplier(
+         return AiClientTick.supply(
             () -> {
                AiMacroTools.Inner_DataUtil queued = this.init_ArrayDeque.stream().filter(r -> r.init_k_StreamUtil == job).findFirst().orElse(null);
                if (queued != null) {
@@ -172,15 +172,15 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                autismclient.util.macro.MacroToolBridge.Inner_StreamUtil inner = this.init_am_DataUtil != null && this.init_am_DataUtil.init_k_StreamUtil == job
                   ? this.init_am_DataUtil.load
                   : job;
-               if (AiDirectOps.init_k_StreamUtil() == inner && AiDirectOps.init_Z()) {
+               if (AiDirectOps.currentHandle() == inner && AiDirectOps.isRunning()) {
                   if ("PAUSE".equals(operation)) {
-                     AiDirectOps.read_V();
+                     AiDirectOps.pause();
                   } else {
                      if (!"RESUME".equals(operation)) {
                         throw new IllegalArgumentException("Unknown tool operation: " + operation);
                      }
 
-                     AiDirectOps.write_V();
+                     AiDirectOps.resume();
                   }
 
                   if (this.init_am_DataUtil != null && this.init_am_DataUtil.load == inner) {
@@ -201,7 +201,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
       request.init_k_StreamUtil.init(result.init_k_ConfigStore(), result.init_Str(), result.load());
    }
 
-   public static void init_V_Minecraft(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       init_am.load_V_Minecraft(mc);
       if (init_am.init_am_DataUtil != null) {
          load_V_am_DataUtil(init_am.init_am_DataUtil);
@@ -218,13 +218,13 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
             return requestx.init_k_StreamUtil.load().isDone();
          }
       });
-      if (init_am.init_am_DataUtil == null && !AiDirectOps.init_Z()) {
+      if (init_am.init_am_DataUtil == null && !AiDirectOps.isRunning()) {
          AiMacroTools.Inner_DataUtil request = init_am.init_ArrayDeque.peek();
          if (request != null && !request.init_Z) {
             init_am.init_ArrayDeque.remove();
 
             try {
-               request.load = AiDirectOps.init_k_StreamUtil(request.init_k_StreamUtil.init_Str(), JsonParser.parseString(request.init_Str).getAsJsonObject());
+               request.load = AiDirectOps.start(request.init_k_StreamUtil.init_Str(), JsonParser.parseString(request.init_Str).getAsJsonObject());
                init_am.init_am_DataUtil = request;
                request.load.load().whenComplete((outcome, error) -> {
                   if (error != null) {

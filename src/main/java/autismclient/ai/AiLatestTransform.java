@@ -31,7 +31,7 @@ final class AiLatestTransform<I, O> implements AutoCloseable {
       }
    }
 
-   boolean init_Z() {
+   boolean isUpdating() {
       return this.init_Z;
    }
 

@@ -355,7 +355,7 @@ final class AiWorldMemory {
       }
    }
 
-   static JsonObject init_JsonObject() {
+   static JsonObject snapshotJson() {
       Minecraft mc = Minecraft.getInstance();
       return AiJson.objectOf(
          "world",
@@ -492,7 +492,7 @@ final class AiWorldMemory {
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity.isAlive() && !(entity.distanceToSqr(mc.player) > radius * radius) && entities.size() < limit) {
                String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
-               if (entity instanceof LivingEntity || AiProjectiles.init_Z(entity) || entity instanceof EndCrystal) {
+               if (entity instanceof LivingEntity || AiProjectiles.isProjectile(entity) || entity instanceof EndCrystal) {
                   JsonObject observed = AiJson.objectOf(
                      "world",
                      init_Str,
@@ -542,7 +542,7 @@ final class AiWorldMemory {
 
          return AiJson.objectOf(
             "capabilities",
-            init_JsonObject(),
+            snapshotJson(),
             "indexRevision",
             load_J,
             "terrainRevision",
@@ -665,7 +665,7 @@ final class AiWorldMemory {
             if (AiTerrain.isLoaded(mc.level, stand)
                && AiTerrain.isLoaded(mc.level, stand.below())
                && AiTerrain.isLoaded(mc.level, stand.above())
-               && AiCombat.init_Z_Minecraft_BlockPos(mc, stand)
+               && AiCombat.isSafeStep(mc, stand)
                && !autismclient.ai.engine.AiEnvironmentHazards.init(mc.level, stand)
                && !mc.level.getBlockState(stand.below()).getCollisionShape(mc.level, stand.below()).isEmpty()
                && mc.level.getBlockState(stand).getCollisionShape(mc.level, stand).isEmpty()

@@ -91,7 +91,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
       try {
          this.init_List.clear();
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -872086265);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.run();
          int y = this.get();
          int panelW = this.set();
@@ -558,7 +558,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private boolean init_Z_4() {
-      return this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.init_Z_5();
+      return this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.isTitleSetup();
    }
 
    private void init_V_Str_2(String value) {
@@ -1092,24 +1092,24 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private int run() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.set(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.set(), 6);
    }
 
    private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.put(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.put(), 6);
    }
 
    private int set() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 300);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 300);
    }
 
    private int put() {
       int rowH = this.close_I_3();
       int chrome = this.sync_I_4() + 4 + (this.flush_I_4() + 2) * 3 + 6 + 4;
-      int maxRows = Math.max(4, (int)(this.load_I() * 0.65F) / rowH);
+      int maxRows = Math.max(4, (int)(this.virtualHeight() * 0.65F) / rowH);
       int content = this.update_Z() ? this.write_List.size() + this.read_List().size() : this.read_List().size();
       int rows = Math.max(4, Math.min(maxRows, content));
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + rows * rowH);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + rows * rowH);
    }
 
    private int add() {

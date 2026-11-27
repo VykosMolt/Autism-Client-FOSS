@@ -7,8 +7,8 @@ public final class UiLayerInputRouter {
       this.init = layers;
    }
 
-   public boolean init_Z_I_2(int mouseX, int mouseY, int button) {
-      return this.init.init_EventBus_I_2(mouseX, mouseY, button) == UiInputResult.HANDLED;
+   public boolean mouseClicked(int mouseX, int mouseY, int button) {
+      return this.init.dispatchClick(mouseX, mouseY, button) == UiInputResult.HANDLED;
    }
 
    public boolean load(int mouseX, int mouseY, int button) {
@@ -19,8 +19,8 @@ public final class UiLayerInputRouter {
       return this.init.init(mouseX, mouseY, button, deltaX, deltaY) == UiInputResult.HANDLED;
    }
 
-   public boolean init_Z_I(int mouseX, int mouseY, double amount) {
-      return this.init.init_EventBus_I(mouseX, mouseY, amount) == UiInputResult.HANDLED;
+   public boolean mouseScrolled(int mouseX, int mouseY, double amount) {
+      return this.init.dispatchScroll(mouseX, mouseY, amount) == UiInputResult.HANDLED;
    }
 
    public boolean read(int key, int scanCode, int modifiers) {
@@ -28,6 +28,6 @@ public final class UiLayerInputRouter {
    }
 
    public boolean init(char chr) {
-      return this.init.init_EventBus_C(chr) == UiInputResult.HANDLED;
+      return this.init.dispatchChar(chr) == UiInputResult.HANDLED;
    }
 }

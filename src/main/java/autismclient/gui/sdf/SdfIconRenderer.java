@@ -643,7 +643,7 @@ public final class SdfIconRenderer {
 
          Integer tileObj = TILE_INDEX.get(name);
          int tile = tileObj != null ? tileObj : -1;
-         if (tile < 0 || !SdfRenderPipelines.init_Z()) {
+         if (tile < 0 || !SdfRenderPipelines.isAvailable()) {
             return false;
          }
 
@@ -665,7 +665,7 @@ public final class SdfIconRenderer {
                new float[]{left, top, left + size, top + size, u, 0.0F, u1, 1.0F},
                1,
                color,
-               UiScissorStack.init_ScreenRectangle()
+               UiScissorStack.peek()
             );
             if (element != null) {
                ((AutismGuiGraphicsExtractorAccessor)graphics).autism$guiRenderState().addGuiElement(element);
@@ -696,7 +696,7 @@ public final class SdfIconRenderer {
       }
    }
 
-   public static void init_V() {
+   public static void releaseAll() {
       SdfIconRenderer.Inner_StreamUtil toRelease;
       synchronized (SdfIconRenderer.class) {
          toRelease = init_CachePool_StreamUt;

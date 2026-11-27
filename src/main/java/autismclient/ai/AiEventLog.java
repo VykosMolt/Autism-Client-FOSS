@@ -18,7 +18,7 @@ final class AiEventLog {
    private long auditLastEvictedSeq;
    private Object auditConnection;
 
-   static AiEventLog init_x() {
+   static AiEventLog getInstance() {
       return init_x;
    }
 
@@ -48,7 +48,7 @@ final class AiEventLog {
       this.init_ArrayDeque.addLast(new AiEventLog.Inner_DataUtil(++this.init_J, load(), kind, data));
    }
 
-   synchronized List<AiEventLog.Inner_DataUtil> init_List(long since, Set<String> kinds, int limit) {
+   synchronized List<AiEventLog.Inner_DataUtil> read(long since, Set<String> kinds, int limit) {
       List<AiEventLog.Inner_DataUtil> out = new ArrayList<>(Math.min(limit, this.init_ArrayDeque.size()));
 
       for (AiEventLog.Inner_DataUtil event : this.init_ArrayDeque) {
@@ -65,15 +65,15 @@ final class AiEventLog {
       return out;
    }
 
-   synchronized long init_J_J(long since) {
+   synchronized long droppedSince(long since) {
       return Math.max(0L, Math.min(this.load, this.auditLastEvictedSeq - since));
    }
 
-   synchronized long init_J() {
+   synchronized long nextSeq() {
       return this.init_J;
    }
 
-   synchronized int init_I() {
+   synchronized int pendingCount() {
       int pending = 0;
 
       for (AiEventLog.Inner_DataUtil event : this.init_ArrayDeque) {
@@ -88,14 +88,14 @@ final class AiEventLog {
    synchronized JsonObject init_JsonObject(long since, Set<String> kinds, int limit) {
       JsonArray array = new JsonArray();
 
-      for (AiEventLog.Inner_DataUtil event : this.init_List(since, kinds, limit)) {
+      for (AiEventLog.Inner_DataUtil event : this.read(since, kinds, limit)) {
          array.add(AiJson.objectOf("seq", event.seq(), "tick", event.tick(), "kind", event.kind(), "data", event.data()));
       }
 
-      return AiJson.objectOf("events", array, "latestSeq", this.init_J, "dropped", this.init_J_J(since));
+      return AiJson.objectOf("events", array, "latestSeq", this.init_J, "dropped", this.droppedSince(since));
    }
 
-   static JsonObject init_JsonObject_JsonObject(JsonObject args) {
+   static JsonObject readJson(JsonObject args) {
       long since = Math.max(0, AiJson.getInt(args, "since", 0));
       int limit = Math.max(1, Math.min(256, AiJson.getInt(args, "limit", 50)));
       Set<String> kinds = null;

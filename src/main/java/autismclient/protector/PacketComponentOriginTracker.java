@@ -33,7 +33,7 @@ public final class PacketComponentOriginTracker {
       return new PacketComponentOriginTracker.Inner_DataUtil();
    }
 
-   public static boolean init_Z() {
+   public static boolean isDecoding() {
       int[] depth = init.get();
       return depth != null && depth[0] != 0;
    }
@@ -48,8 +48,8 @@ public final class PacketComponentOriginTracker {
       return context == null || context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA;
    }
 
-   public static void init_V(Component component) {
-      ConnectionPrivacyRegistry.ConnectionSession origin = PacketDecodeOriginStack.init_BufferHelper_Strea();
+   public static void tag(Component component) {
+      ConnectionPrivacyRegistry.ConnectionSession origin = PacketDecodeOriginStack.current();
       init(component, origin == null ? init_BufferHelper_Strea(component) : origin);
    }
 

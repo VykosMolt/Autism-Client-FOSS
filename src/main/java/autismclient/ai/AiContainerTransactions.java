@@ -154,7 +154,7 @@ public final class AiContainerTransactions {
    static void clearAll() {
       activeReceipt = null;
       ignoreNextSwapUpdatesForTest = false;
-      AiMenuClose.init_V();
+      AiMenuClose.reset();
    }
 
    public static void sendPredictedClick(int containerId, int slot, int button, ContainerInput type) {

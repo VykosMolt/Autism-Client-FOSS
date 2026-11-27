@@ -22,7 +22,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       this.init_CharEncoder = new autismclient.gui.ui.VisibilityTransition(overlay.isVisible());
    }
 
-   public void init_V_Z(boolean zoom) {
+   public void setZoomEnabled(boolean zoom) {
       this.write = zoom;
    }
 
@@ -30,24 +30,24 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       this.init_Z = renderSuppressed;
    }
 
-   public void init_V() {
-      this.init_CharEncoder.init_V(this.init_cX.isVisible());
+   public void animateVisibility() {
+      this.init_CharEncoder.animateTo(this.init_cX.isVisible());
    }
 
-   public void load_V() {
-      this.init_CharEncoder.load_V(this.init_cX.isVisible());
+   public void snapVisibility() {
+      this.init_CharEncoder.snapTo(this.init_cX.isVisible());
    }
 
    public void read() {
-      this.init_CharEncoder.init_V();
+      this.init_CharEncoder.restart();
    }
 
-   public boolean init_Z() {
-      return this.init_CharEncoder.init_Z(this.init_cX.isVisible());
+   public boolean isFadingOut() {
+      return this.init_CharEncoder.isFadingOut(this.init_cX.isVisible());
    }
 
-   public boolean load_Z() {
-      return this.init_CharEncoder.load_Z(this.init_cX.isVisible());
+   public boolean shouldRender() {
+      return this.init_CharEncoder.shouldRender(this.init_cX.isVisible());
    }
 
    public void read(boolean hoverBlocked) {
@@ -81,7 +81,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    public void render(autismclient.gui.f.SyncManager context) {
       if (!this.init_Z) {
          boolean visible = this.init_cX.isVisible();
-         if (this.init_CharEncoder.load_Z(visible)) {
+         if (this.init_CharEncoder.shouldRender(visible)) {
             boolean block = !visible || this.load;
             long perfStart = bK.load_J();
             autismclient.gui.f.NetHelper b = this.getBounds();

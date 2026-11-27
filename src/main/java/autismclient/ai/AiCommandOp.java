@@ -138,13 +138,13 @@ public final class AiCommandOp {
       return names;
    }
 
-   public static AiOperation init_AiOperation(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       final AiCommandOp.Inner_StreamUtil parsed = init_UtilCore_StreamUti(args);
       if (Minecraft.getInstance() != null && Minecraft.getInstance().getConnection() != null) {
          final AiCommandOp.Inner_DataUtil matcher = init(parsed);
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final long init_J = AiChatLedger.init_J();
+            final long init_J = AiChatLedger.revision();
             final long load_J = System.nanoTime() + parsed.timeoutSeconds() * 1000000000L;
             final List<AiChatLedger.ChatEntry> init_List = new ArrayList<>();
             final List<AiChatLedger.ChatEntry> load_List = new ArrayList<>();
@@ -175,7 +175,7 @@ public final class AiCommandOp {
                   this.init_V_12();
                   if (!this.load_List.isEmpty()) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Observed a chat response matching the correlation pattern");
-                  } else if (matcher != null || AiChatLedger.init_J() <= this.init_J && System.nanoTime() - this.write < 2000000000L) {
+                  } else if (matcher != null || AiChatLedger.revision() <= this.init_J && System.nanoTime() - this.write < 2000000000L) {
                      return System.nanoTime() > this.load_J
                         ? this.init(
                            AiOperation.Status.TIMED_OUT,
@@ -202,7 +202,7 @@ public final class AiCommandOp {
             void init_V_12() {
                List<AiChatLedger.ChatEntry> fresh = new ArrayList<>();
 
-               for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(16)) {
+               for (AiChatLedger.ChatEntry entry : AiChatLedger.recent(16)) {
                   if (entry.revision() <= this.read) {
                      break;
                   }

@@ -208,7 +208,7 @@ final class AiPrintOp implements AiOperation {
          return this.init_AiOperation_Result_AiOperation_Status_Str_8(AiOperation.Status.TIMED_OUT, "Requested build deadline reached");
       }
 
-      AiMenuClose.Inner_StreamUtil menuClose = AiMenuClose.init_aq_StreamUtil();
+      AiMenuClose.Inner_StreamUtil menuClose = AiMenuClose.receiptState();
       if (menuClose != AiMenuClose.Inner_StreamUtil.READY) {
          this.init_DataUtil.releaseControls();
          return menuClose == AiMenuClose.Inner_StreamUtil.UNCERTAIN
@@ -297,7 +297,7 @@ final class AiPrintOp implements AiOperation {
          this.init_AiOperation.cancel();
          this.init_AiOperation = null;
          if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
-            AiMenuClose.init_Z();
+            AiMenuClose.closeMenu();
          }
 
          this.read_V_8();
@@ -316,7 +316,7 @@ final class AiPrintOp implements AiOperation {
             && this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu
             && this.init_DataUtil.hasRecentClick()) {
             AiPrintOp.Inner_DataUtil.init("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
-            AiMenuClose.init_Z();
+            AiMenuClose.closeMenu();
             this.init_DataUtil.clearRecentClick();
             this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
@@ -338,7 +338,7 @@ final class AiPrintOp implements AiOperation {
             && this.init_Minecraft.player.getFoodData().getFoodLevel() <= 14
             && !this.init_UiHelper.isRestingOnGround()) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-            if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
+            if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.shouldEat(vitals.food())) {
                return this.load("Settling before a meal");
             }
          }
@@ -782,7 +782,7 @@ final class AiPrintOp implements AiOperation {
          )
        {
          if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
-            AiMenuClose.init_Z();
+            AiMenuClose.closeMenu();
          }
 
          if (this.init_BlockPos != null) {

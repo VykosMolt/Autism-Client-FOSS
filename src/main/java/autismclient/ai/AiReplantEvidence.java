@@ -8,7 +8,7 @@ final class AiReplantEvidence {
    }
 
    static boolean init(BlockState before, BlockState after, Block crop) {
-      return before.is(crop) && AiFarm.init_Z(before) && after.isAir();
+      return before.is(crop) && AiFarm.isRipe(before) && after.isAir();
    }
 
    static boolean init(BlockState current, AiServerEvidence.Inner_DataUtil update, long brokenRevision, int now, int brokenAt, int latencyMillis, boolean ownClickPending) {
@@ -21,7 +21,7 @@ final class AiReplantEvidence {
    }
 
    static AiReplantEvidence.Inner_DataUtil init(BlockState current, AiServerEvidence.Inner_DataUtil update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
-      if (current.is(crop) && update != null && update.revision() > brokenRevision && update.state().is(crop) && !AiFarm.init_Z(update.state())) {
+      if (current.is(crop) && update != null && update.revision() > brokenRevision && update.state().is(crop) && !AiFarm.isRipe(update.state())) {
          return ownReplantClick ? AiReplantEvidence.Inner_DataUtil.LOCAL : AiReplantEvidence.Inner_DataUtil.EXTERNAL;
       } else {
          return current.isAir() && seedsHeld <= 0 && !ownReplantClick ? AiReplantEvidence.Inner_DataUtil.MISSING : AiReplantEvidence.Inner_DataUtil.PENDING;

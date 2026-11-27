@@ -66,7 +66,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          host -> Arrays.asList(InetAddress.getAllByName(host)),
          Socket::new,
          (plain, host, port, autoClose) -> ((SSLSocketFactory)SSLSocketFactory.getDefault()).createSocket(plain, host, port, autoClose),
-         snapshot::load_Z
+         snapshot::isCurrent
       );
    }
 
@@ -81,7 +81,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    ) throws IOException {
       super(Objects.requireNonNull(url, "url"));
       this.init_UiHelper_BufferHel = Objects.requireNonNull(snapshot, "snapshot");
-      ConnectionPrivacyRegistry.ProxyEndpoint connectionProxy = snapshot.init_BufferHelper_Confi();
+      ConnectionPrivacyRegistry.ProxyEndpoint connectionProxy = snapshot.proxyEndpoint();
       this.init_Proxy = connectionProxy == null
          ? (proxy == null ? Proxy.NO_PROXY : proxy)
          : new Proxy(Type.SOCKS, InetSocketAddress.createUnresolved(connectionProxy.host(), connectionProxy.port()));
@@ -89,8 +89,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       this.init_RenderState_NetHel = Objects.requireNonNull(socketFactory, "socketFactory");
       this.init_RenderState_SyncMa = Objects.requireNonNull(tlsFactory, "tlsFactory");
       this.init_BooleanSupplier = Objects.requireNonNull(currency, "currency");
-      PackUrlValidator.init_TextFormat_ConfigS_URL(url);
-      snapshot.init_V();
+      PackUrlValidator.parseUrl(url);
+      snapshot.ensureCurrent();
    }
 
    @Override
@@ -337,7 +337,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
          this.load_Z = true;
          this.read();
-         PackUrlValidator.Inner_ConfigStore target = PackUrlValidator.init_TextFormat_ConfigS_URL(this.url);
+         PackUrlValidator.Inner_ConfigStore target = PackUrlValidator.parseUrl(this.url);
          PackUrlValidator.Inner_ConfigStore initialTarget = target;
          PackUrlValidator.Inner_ConfigStore previousTarget = null;
          PackUrlValidator.Inner_CachePool endpoint = null;
@@ -348,7 +348,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          while (true) {
             this.read();
             if (endpoint == null) {
-               endpoint = PackUrlValidator.init_TextFormat_CachePo_TextFormat_ConfigS(target, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
+               endpoint = PackUrlValidator.resolveEndpoint(target, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
             }
 
             Socket socket = this.init_Socket_TextFormat_CachePo_TextFormat_BufferH(endpoint, route);
@@ -357,7 +357,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
             try {
                if ("https".equals(target.init_Str())) {
-                  if (route != null && route.init_Proxy_Type() == Type.HTTP) {
+                  if (route != null && route.proxyType() == Type.HTTP) {
                      this.init(socket, target, route);
                   }
 
@@ -372,7 +372,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   this.init_RenderState_JsonUt = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
                   this.responseCode = response.init_I;
                   this.responseMessage = response.load_Str;
-                  this.url = target.init_URI().toURL();
+                  this.url = target.uri().toURL();
                   this.connected = true;
                   return;
                }
@@ -392,7 +392,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                      throw new ProtocolException("Repeated HTTP 305 proxy routes are refused");
                   }
 
-                  route = PackUrlValidator.init_TextFormat_BufferH_Str(location, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
+                  route = PackUrlValidator.routeForLocation(location, this.init_UiHelper_BufferHel, this.init_TextFormat_StreamU);
                   used305 = true;
                } else {
                   PackUrlValidator.Inner_ConfigStore next = init_TextFormat_ConfigS_TextFormat_ConfigS_Str(target, location);
@@ -400,7 +400,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                      throw new ProtocolException("Resource-pack redirect changed URL scheme");
                   }
 
-                  if (!PackUrlValidator.init_Z_TextFormat_ConfigS_TextFormat_ConfigS(initialTarget, next)) {
+                  if (!PackUrlValidator.sameAuthority(initialTarget, next)) {
                      this.init_LinkedHashMap.entrySet().removeIf(e -> {
                         String n = e.getKey();
                         return n != null
@@ -427,7 +427,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private PackUrlValidator.Inner_BufferHelper init_TextFormat_BufferH() throws IOException {
       if (!this.write_Z) {
-         this.init_TextFormat_BufferH = PackUrlValidator.init_TextFormat_BufferH_Proxy_TextFormat_StreamU(this.init_Proxy, this.init_TextFormat_StreamU);
+         this.init_TextFormat_BufferH = PackUrlValidator.routeFor(this.init_Proxy, this.init_TextFormat_StreamU);
          this.write_Z = true;
       }
 
@@ -435,10 +435,10 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private Socket init_Socket_TextFormat_CachePo_TextFormat_BufferH(PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
-      PackUrlValidator.Inner_CachePool connectionEndpoint = route == null ? target : route.init_TextFormat_CachePo();
+      PackUrlValidator.Inner_CachePool connectionEndpoint = route == null ? target : route.endpoint();
       IOException last = null;
 
-      for (InetAddress address : connectionEndpoint.init_List()) {
+      for (InetAddress address : connectionEndpoint.addresses()) {
          this.read();
          Socket socket = null;
 
@@ -448,11 +448,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             this.init_InputStream = null;
             ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, socket);
             socket.setSoTimeout(init_I_I_Str(this.sync, "sun.net.client.defaultReadTimeout"));
-            InetSocketAddress selected = new InetSocketAddress(address, connectionEndpoint.init_I());
+            InetSocketAddress selected = new InetSocketAddress(address, connectionEndpoint.port());
             socket.connect(selected, init_I_I_Str(this.update, "sun.net.client.defaultConnectTimeout"));
             this.init_V_Socket_InetSocketAddress(socket, selected);
             this.init_InputStream = new BufferedInputStream(socket.getInputStream());
-            if (route != null && route.init_Proxy_Type() == Type.SOCKS) {
+            if (route != null && route.proxyType() == Type.SOCKS) {
                this.init(socket, target, route);
             }
 
@@ -493,7 +493,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private Socket init_Socket_Socket_TextFormat_ConfigS(Socket plain, PackUrlValidator.Inner_ConfigStore target) throws IOException {
-      Socket layered = this.init_RenderState_SyncMa.create(plain, target.load(), target.init_I(), true);
+      Socket layered = this.init_RenderState_SyncMa.create(plain, target.load(), target.port(), true);
       if (layered == null) {
          throw new IOException("TLS factory returned no socket");
       }
@@ -523,11 +523,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private void init(Socket socket, PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       OutputStream output = socket.getOutputStream();
       InputStream input = this.init_InputStream_Socket(socket);
-      ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.init_UiHelper_BufferHel.init_BufferHelper_Confi();
+      ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.init_UiHelper_BufferHel.proxyEndpoint();
       if (frozen == null
          || route.init_Z()
-            && frozen.port() == route.init_TextFormat_CachePo().init_I()
-            && frozen.host().equalsIgnoreCase(route.init_TextFormat_CachePo().load())) {
+            && frozen.port() == route.endpoint().port()
+            && frozen.host().equalsIgnoreCase(route.endpoint().load())) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, route) : null;
          byte[] username = null;
          byte[] password = null;
@@ -542,12 +542,12 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                if (frozen.type() == ProxyProtocolType.Socks4) {
-                  byte[] address = target.init_List().getFirst().getAddress();
+                  byte[] address = target.addresses().getFirst().getAddress();
                   if (address.length != 4) {
                      throw new IOException("SOCKS4 resource packs require an IPv4 target");
                   }
 
-                  output.write(new byte[]{4, 1, (byte)(target.init_I() >>> 8), (byte)target.init_I()});
+                  output.write(new byte[]{4, 1, (byte)(target.port() >>> 8), (byte)target.port()});
                   output.write(address);
                   output.write(username);
                   output.write(0);
@@ -577,7 +577,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                if (authentication != null) {
-                  username = authentication.init_BArr();
+                  username = authentication.usernameBytes();
                   password = authentication.load();
                }
 
@@ -601,7 +601,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                throw new IOException("SOCKS5 proxy requires unsupported authentication");
             }
 
-            InetAddress address = target.init_List().getFirst();
+            InetAddress address = target.addresses().getFirst();
             byte[] raw = address.getAddress();
             ScopedHttpUrlConnection.Inner_StreamUtil request = new ScopedHttpUrlConnection.Inner_StreamUtil(7 + raw.length);
             request.init(5);
@@ -609,8 +609,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             request.init(0);
             request.init(raw.length == 4 ? 1 : 4);
             request.init(raw);
-            request.init(target.init_I() >>> 8);
-            request.init(target.init_I() & 0xFF);
+            request.init(target.port() >>> 8);
+            request.init(target.port() & 0xFF);
             output.write(request.init_BArr(), 0, request.init_I());
             output.flush();
             byte[] reply = init_BArr_InputStream_I(input, 4);
@@ -660,7 +660,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private void init(Socket socket, PackUrlValidator.Inner_ConfigStore target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       String host = target.load().indexOf(58) >= 0 ? "[" + target.load() + "]" : target.load();
-      String connectAuthority = host + ":" + target.init_I();
+      String connectAuthority = host + ":" + target.port();
       StringBuilder request = new StringBuilder("CONNECT ").append(connectAuthority).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
       this.init(request, "Accept", "*/*");
       this.init(request, "Proxy-Connection", "keep-alive");
@@ -678,13 +678,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private void init(Socket socket, PackUrlValidator.Inner_ConfigStore target, PackUrlValidator.Inner_ConfigStore previousTarget, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       String requestTarget = target.write();
-      boolean plainHttpProxy = route != null && route.init_Proxy_Type() == Type.HTTP && "http".equals(target.init_Str());
+      boolean plainHttpProxy = route != null && route.proxyType() == Type.HTTP && "http".equals(target.init_Str());
       if (plainHttpProxy) {
-         requestTarget = target.init_Str() + "://" + target.init_URI().getRawAuthority() + target.write();
+         requestTarget = target.init_Str() + "://" + target.uri().getRawAuthority() + target.write();
       }
 
       StringBuilder request = new StringBuilder("GET ").append(requestTarget).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
-      boolean authorityChanged = previousTarget != null && !PackUrlValidator.init_Z_TextFormat_ConfigS_TextFormat_ConfigS(previousTarget, target);
+      boolean authorityChanged = previousTarget != null && !PackUrlValidator.sameAuthority(previousTarget, target);
 
       for (Entry<String, List<String>> entry : this.init_LinkedHashMap.entrySet()) {
          String name = entry.getKey();
@@ -922,8 +922,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_TextFormat_ConfigS_Str(PackUrlValidator.Inner_ConfigStore current, String location) throws MalformedURLException {
       try {
-         URI resolved = current.init_URI().resolve(new URI(location));
-         return PackUrlValidator.init_TextFormat_ConfigS_URI(resolved);
+         URI resolved = current.uri().resolve(new URI(location));
+         return PackUrlValidator.parseUri(resolved);
       } catch (URISyntaxException | IllegalArgumentException e) {
          MalformedURLException malformed = new MalformedURLException("Invalid resource-pack redirect");
          malformed.initCause(e);
@@ -969,7 +969,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private void read() throws IOException {
-      if (this.init_Z || !this.init_BooleanSupplier.getAsBoolean() || !this.init_UiHelper_BufferHel.load_Z()) {
+      if (this.init_Z || !this.init_BooleanSupplier.getAsBoolean() || !this.init_UiHelper_BufferHel.isCurrent()) {
          throw new IOException("The resource-pack connection is no longer current");
       }
    }

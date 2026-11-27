@@ -72,7 +72,7 @@ public final class VanillaTranslationKeyLoader {
       }
    }
 
-   public static void init_V() {
+   public static void loadAsync() {
       Thread t = new Thread(VanillaTranslationKeyLoader::init_Set, "AutismProtector-Vanilla-Keys");
       t.setDaemon(true);
       t.start();

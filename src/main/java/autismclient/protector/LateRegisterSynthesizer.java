@@ -200,7 +200,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static void init_V() {
+   static void reset() {
       synchronized (init_Map) {
          init_Map.clear();
          load_J = 0L;

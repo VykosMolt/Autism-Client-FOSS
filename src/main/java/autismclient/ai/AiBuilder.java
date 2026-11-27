@@ -2286,7 +2286,7 @@ final class AiBuilder {
    }
 
    static JsonObject missingMaterialsForContainer(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
-      Map<Item, Integer> counts = AiCarriedShulker.init_Map_Container_Z(inventory, carriedStock);
+      Map<Item, Integer> counts = AiCarriedShulker.countItems(inventory, carriedStock);
       return solveMissingMaterialsFlow(plans, Map.of(), spec -> AiItems.resolveItem(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
    }
 
@@ -3044,7 +3044,7 @@ final class AiBuilder {
                   },
                   owner -> {
                      autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
-                     AiVisualization.init_V(owner);
+                     AiVisualization.clearOwner(owner);
                   }
                );
             }
@@ -8154,7 +8154,7 @@ final class AiBuilder {
 
             @Override
             public void cancel() {
-               AiVisualization.init_V(this);
+               AiVisualization.clearOwner(this);
                if (!this.clear_Z) {
                   if (this.init_Y != null) {
                      this.init_Y.cancel();

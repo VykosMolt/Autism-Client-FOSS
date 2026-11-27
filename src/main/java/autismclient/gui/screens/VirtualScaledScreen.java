@@ -12,29 +12,29 @@ public abstract class VirtualScaledScreen extends Screen {
       super(title);
    }
 
-   protected static String init_Str_Str(String value) {
+   protected static String trim(String value) {
       return value == null ? "" : value.trim();
    }
 
-   protected static MouseButtonEvent init_MouseButtonEvent_MouseButtonEvent(MouseButtonEvent event) {
+   protected static MouseButtonEvent toVirtual(MouseButtonEvent event) {
       return new MouseButtonEvent(cA.init_D_D(event.x()), cA.init_D_D(event.y()), event.buttonInfo());
    }
 
-   protected int init_I() {
+   protected int virtualWidth() {
       int width = cA.init_I();
       return width <= 0 ? this.width : width;
    }
 
-   protected int load_I() {
+   protected int virtualHeight() {
       int height = cA.load_I();
       return height <= 0 ? this.height : height;
    }
 
-   protected void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill) {
+   protected void drawCard(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill) {
       autismclient.gui.ui.widgets.SectionCardRenderer.init(autismclient.gui.f.UiHelper.init(graphics, this.font, -10000, -10000), autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
    }
 
-   protected void init_V_Str_I(String message, int accentColor) {
+   protected void toast(String message, int accentColor) {
       if (message != null && !message.isBlank() && this.minecraft != null) {
          this.minecraft.execute(() -> bi.init(message, accentColor));
       }

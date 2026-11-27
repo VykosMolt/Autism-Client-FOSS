@@ -139,8 +139,8 @@ public class HudElementSettingsScreen extends Screen {
 
          if (this.init_NetHelper != null) {
             graphics.nextStratum();
-            this.init_NetHelper.init_V_SyncManager(autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my));
-            if (!this.init_NetHelper.init_Z()) {
+            this.init_NetHelper.render(autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my));
+            if (!this.init_NetHelper.isOpen()) {
                this.load_V();
             }
          }
@@ -264,7 +264,7 @@ public class HudElementSettingsScreen extends Screen {
       int fieldW = 40;
       int sliderW = this.write(w);
       int fieldX = x + sliderW + 4;
-      double ratio = autismclient.gui.ui.widgets.SliderRenderer.init_D_D(value, row.init_D, row.load_D);
+      double ratio = autismclient.gui.ui.widgets.SliderRenderer.ratio(value, row.init_D, row.load_D);
       autismclient.gui.ui.widgets.SliderRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, x, y), autismclient.gui.f.NetHelper.init(x, y, sliderW, h), ratio, editing
       );
@@ -389,8 +389,8 @@ public class HudElementSettingsScreen extends Screen {
       }
 
       if (this.init_NetHelper != null) {
-         this.init_NetHelper.init_Z_I_2(mx, my, Compat263.mouseEventGlfwButton(event));
-         if (!this.init_NetHelper.init_Z()) {
+         this.init_NetHelper.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event));
+         if (!this.init_NetHelper.isOpen()) {
             this.load_V();
          }
 
@@ -480,7 +480,7 @@ public class HudElementSettingsScreen extends Screen {
          int mx = cA.init_I_D(event.x());
          int my = cA.init_I_D(event.y());
          this.init_NetHelper.load(mx, my, Compat263.mouseEventGlfwButton(event));
-         if (!this.init_NetHelper.init_Z()) {
+         if (!this.init_NetHelper.isOpen()) {
             this.load_V();
          }
 
@@ -516,8 +516,8 @@ public class HudElementSettingsScreen extends Screen {
       }
 
       if (this.init_NetHelper != null) {
-         this.init_NetHelper.init_Z_I(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy);
-         if (!this.init_NetHelper.init_Z()) {
+         this.init_NetHelper.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy);
+         if (!this.init_NetHelper.isOpen()) {
             this.load_V();
          }
 
@@ -551,7 +551,7 @@ public class HudElementSettingsScreen extends Screen {
       double virtualX = cA.init_D_D(mouseX);
       double virtualY = cA.init_D_D(mouseY);
       if (this.init_NetHelper != null) {
-         this.init_NetHelper.init_Z_I((int)Math.round(virtualX), (int)Math.round(virtualY), scrollY);
+         this.init_NetHelper.mouseScrolled((int)Math.round(virtualX), (int)Math.round(virtualY), scrollY);
          return true;
       } else if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.init_List, virtualX, virtualY, scrollY)) {
          return true;
@@ -570,7 +570,7 @@ public class HudElementSettingsScreen extends Screen {
    public boolean keyPressed(KeyEvent input) {
       if (this.init_NetHelper != null) {
          this.init_NetHelper.read(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
-         if (!this.init_NetHelper.init_Z()) {
+         if (!this.init_NetHelper.isOpen()) {
             this.load_V();
          }
 
@@ -604,8 +604,8 @@ public class HudElementSettingsScreen extends Screen {
    @Override
    public boolean charTyped(CharacterEvent input) {
       if (this.init_NetHelper != null) {
-         this.init_NetHelper.init_Z_C((char)input.codepoint());
-         if (!this.init_NetHelper.init_Z()) {
+         this.init_NetHelper.charTyped((char)input.codepoint());
+         if (!this.init_NetHelper.isOpen()) {
             this.load_V();
          }
 
@@ -675,7 +675,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private void load_V() {
       if (this.init_NetHelper != null) {
-         this.init_NetHelper.init_V();
+         this.init_NetHelper.dismiss();
       }
 
       this.init_NetHelper = null;

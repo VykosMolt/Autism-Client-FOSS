@@ -30,7 +30,7 @@ final class AiLavaEscape {
    private AiLavaEscape() {
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean isInLava(Minecraft mc) {
       return mc.player != null && mc.player.isInLava();
    }
 

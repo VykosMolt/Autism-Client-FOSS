@@ -14,11 +14,11 @@ final class AiHazardEscape {
    static String init(Minecraft mc) {
       if (mc.player == null || mc.level == null) {
          return null;
-      } else if (AiLavaEscape.init_Z(mc)) {
+      } else if (AiLavaEscape.isInLava(mc)) {
          return "in lava";
       } else if (AiBreathe.init(mc.player)) {
          return "out of air";
-      } else if (AiPowderEscape.init_Z(mc)) {
+      } else if (AiPowderEscape.isInPowderSnow(mc)) {
          return "in powder snow";
       } else if (!mc.player.isInWater() && AiEndRun.init_Z(mc)) {
          return "standing in fire";

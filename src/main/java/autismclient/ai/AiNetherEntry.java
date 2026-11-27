@@ -394,7 +394,7 @@ final class AiNetherEntry {
    }
 
    static AiOperation init(JsonObject args) {
-      AiDimension.init_V();
+      AiDimension.refreshWorld();
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          if (args.has("villageX") != args.has("villageZ")) {
@@ -673,7 +673,7 @@ final class AiNetherEntry {
                      this.read_AiOperation = null;
                   }
 
-                  this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.read_Str, action);
+                  this.load_AiOperation = AiRunDiagnostics.trace("survival", this.read_Str, action);
                   this.sync_J = System.nanoTime();
                   return this.write("Interrupted: " + this.read_Str);
                } else {
@@ -739,15 +739,15 @@ final class AiNetherEntry {
                   return this.write("Resuming after the night (" + this.write_Str + ")");
                } else {
                   boolean sleepable = this.read_I_5() > 0 && this.poll_J != this.init_J();
-                  if (AiOracle.init_Z() && !sleepable) {
+                  if (AiOracle.isActive() && !sleepable) {
                      return null;
                   }
 
-                  if (!AiNetherEntry.init(AiSleep.init_J(), this.load_Z_9(), false, this.open_J, this.init_J(), this.push_J, System.currentTimeMillis())) {
+                  if (!AiNetherEntry.init(AiSleep.dayTime(), this.load_Z_9(), false, this.open_J, this.init_J(), this.push_J, System.currentTimeMillis())) {
                      return null;
                   }
 
-                  String action = AiNetherEntry.init_Str_J(AiSleep.init_J(), true, sleepable);
+                  String action = AiNetherEntry.init_Str_J(AiSleep.dayTime(), true, sleepable);
                   if (action == null) {
                      return null;
                   }
@@ -948,7 +948,7 @@ final class AiNetherEntry {
                }
 
                if (this.init_AiOperation == null) {
-                  AiOperation hunt = AiSpeedrun.init_AiOperation_D(48.0, 12, this.load_I(180));
+                  AiOperation hunt = AiSpeedrun.hunt(48.0, 12, this.load_I(180));
                   if (hunt == null) {
                      this.write_Z = true;
                      return this.init("skipped", "no food animal in sight");
@@ -1334,9 +1334,9 @@ final class AiNetherEntry {
                      return this.write("Filling a water bucket before the lava");
                   }
 
-                  if (this.init_I == 0 && AiDimension.init_I() > 0 && this.close_Z_2()) {
+                  if (this.init_I == 0 && AiDimension.framedObsidian() > 0 && this.close_Z_2()) {
                      this.init(AiNetherEntry.Inner_CachePool.PORTAL);
-                     return this.load_AiOperation_Result("the frame begun at " + AiDimension.init_BlockPos.toShortString() + " holds " + AiDimension.init_I() + " obsidian");
+                     return this.load_AiOperation_Result("the frame begun at " + AiDimension.frameOrigin.toShortString() + " holds " + AiDimension.framedObsidian() + " obsidian");
                   }
 
                   if (AiNetherEntry.load(this.flush_Z_3(), this.init_AiOperation != null)) {
@@ -1395,7 +1395,7 @@ final class AiNetherEntry {
                         return this.write("Open lava observed at " + hit.toShortString());
                      }
 
-                     if (AiOracle.init_Z()) {
+                     if (AiOracle.isActive()) {
                         if (this.run_I >= 8) {
                            return this.init_AiOperation_Result_A(AiFailure.TARGET_NOT_FOUND, "No open lava after " + this.run_I + " exploration legs", null);
                         }
@@ -1711,11 +1711,11 @@ final class AiNetherEntry {
                         );
                      }
 
-                     Map<String, Integer> raw = AiSpeedrun.init_Map();
+                     Map<String, Integer> raw = AiSpeedrun.rawMeatCounts();
                      if (!raw.isEmpty()) {
-                        this.update_AiOperation = AiForage.init_AiOperation_I(this.load_I(this.init_I_2(180)));
+                        this.update_AiOperation = AiForage.cook(this.load_I(this.init_I_2(180)));
                      } else {
-                        this.update_AiOperation = AiSpeedrun.init_AiOperation_I_I(AiRunResources.totalSafeFoodItems() + 12, 180);
+                        this.update_AiOperation = AiSpeedrun.secureFood(AiRunResources.totalSafeFoodItems() + 12, 180);
                      }
 
                      return this.write("Securing safe nutrition before Nether entry");
@@ -1744,7 +1744,7 @@ final class AiNetherEntry {
 
                if (this.init_AiOperation == null && this.pop_I < 3 && this.load_I_10() < 14) {
                   this.pop_I++;
-                  this.update_AiOperation = this.pop_I == 1 && this.read_Z(8) ? AiSpeedrun.init_AiOperation_I_I(14, 180) : AiSpeedrun.init_AiOperation_D(48.0, 14, 90);
+                  this.update_AiOperation = this.pop_I == 1 && this.read_Z(8) ? AiSpeedrun.secureFood(14, 180) : AiSpeedrun.hunt(48.0, 14, 90);
                   if (this.update_AiOperation != null) {
                      return this.write("Food for the Nether");
                   }
@@ -1914,13 +1914,13 @@ final class AiNetherEntry {
                         var10004 = AiBucket.init(legArgs);
                         break;
                      case "game:oracle":
-                        var10004 = AiOracle.init_AiOperation_JsonObject(legArgs);
+                        var10004 = AiOracle.create(legArgs);
                         break;
                      case "game:find":
                         var10004 = AiGameplay.sync(legArgs);
                         break;
                      case "game:container":
-                        var10004 = AiContainer.init_AiOperation(legArgs);
+                        var10004 = AiContainer.create(legArgs);
                         break;
                      case "game:break":
                         var10004 = AiGameOperations.blockAction("break", legArgs);
@@ -1940,7 +1940,7 @@ final class AiNetherEntry {
                   this.init_AiOperation = AiGameOperations.immediate(AiOperation.Status.FAILED, "Leg " + id + " refused: " + refused.getMessage(), new JsonObject());
                }
 
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("nether_entry", id + " " + AiRunResources.compactEvidenceJson(legArgs.toString()), this.init_AiOperation);
+               this.init_AiOperation = AiRunDiagnostics.trace("nether_entry", id + " " + AiRunResources.compactEvidenceJson(legArgs.toString()), this.init_AiOperation);
             }
 
             AiOperation init_AiOperation_Str(String id, JsonObject legArgs, AiOperation op) {
@@ -2137,7 +2137,7 @@ final class AiNetherEntry {
             }
 
             boolean read_Z_6() {
-               return AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal();
+               return AiProgression.bestTier(mc).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal();
             }
 
             boolean write_Z_5() {
@@ -2189,17 +2189,17 @@ final class AiNetherEntry {
 
             AiOperation.Result push() {
                if (this.init_I == 20) {
-                  int framed = AiDimension.init_I();
+                  int framed = AiDimension.framedObsidian();
                   if (this.init_AiOperation == null && this.init_I("minecraft:obsidian") + framed >= 10) {
                      this.init_I = 21;
-                     return this.write(framed > 0 ? "Obsidian for the frame begun at " + AiDimension.init_BlockPos.toShortString() : "Ten obsidian held");
+                     return this.write(framed > 0 ? "Obsidian for the frame begun at " + AiDimension.frameOrigin.toShortString() : "Ten obsidian held");
                   }
 
                   if (this.init_AiOperation == null) {
                      this.load_Str = "game:obtain";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:obtain", "STARTED", "", null));
                      this.start = this.init_I("minecraft:obsidian");
-                     this.init_AiOperation = AiObsidian.load(Math.max(1, 10 - AiDimension.init_I()), this.read_I(300));
+                     this.init_AiOperation = AiObsidian.load(Math.max(1, 10 - AiDimension.framedObsidian()), this.read_I(300));
                   }
 
                   AiOperation.Result r = this.poll_AiOperation_Result();
@@ -2212,8 +2212,8 @@ final class AiNetherEntry {
                   }
 
                   int held = this.init_I("minecraft:obsidian");
-                  held += AiDimension.init_I();
-                  if (held < 10 && held - AiDimension.init_I() > this.start && this.stop < 4) {
+                  held += AiDimension.framedObsidian();
+                  if (held < 10 && held - AiDimension.framedObsidian() > this.start && this.stop < 4) {
                      this.stop++;
                      AutismClientAddon.LOG.info("[AI] nether entry: obsidian {} of 10 ({}); casting on", held, r.message());
                      return this.write("Obsidian " + held + "/10; casting on");
@@ -2236,7 +2236,7 @@ final class AiNetherEntry {
                   this.init_I = 21;
                   return this.write("Ten obsidian held");
                } else if (this.init_I == 21) {
-                  BlockPos begun = AiDimension.init_I() > 0 ? AiDimension.init_BlockPos : null;
+                  BlockPos begun = AiDimension.framedObsidian() > 0 ? AiDimension.frameOrigin : null;
                   if (begun != null && this.init_AiOperation == null && mc.player.blockPosition().distSqr(begun) <= 16.0) {
                      this.init_I = 22;
                      return this.write("At the frame begun");
@@ -2257,7 +2257,7 @@ final class AiNetherEntry {
                            true,
                            2.0,
                            AiGoto.protectingCellsCompat(
-                              autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
+                              autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(begun, 3.0), AiDimension.frameCells(begun, AiDimension.frameAxis)
                            )
                         );
                      }
@@ -2310,7 +2310,7 @@ final class AiNetherEntry {
                      if (this.init_AiOperation == null) {
                         int seconds = this.init_aA_StreamUtil.init_I(this.init_J);
                         if (seconds == 0) {
-                           this.init_I = AiDimension.init_I() > 0 ? 22 : 21;
+                           this.init_I = AiDimension.framedObsidian() > 0 ? 22 : 21;
                            return this.write(this.init_I == 22 ? "Finishing the local frame begun" : "Local frame budget exhausted; up to open ground");
                         }
 
@@ -2328,7 +2328,7 @@ final class AiNetherEntry {
                         return this.get();
                      } else if (this.init_BlockPos_Block(Blocks.NETHER_PORTAL, 8, 6) != null) {
                         return this.init("succeeded", "portal built locally from obsidian");
-                     } else if (AiDimension.init_I() > 0) {
+                     } else if (AiDimension.framedObsidian() > 0) {
                         this.init_I = 22;
                         return this.write("Finishing the local frame begun");
                      } else if (AiNetherEntry.init_Z_AiOperation_Result(r, 0, this.init_aA_DataUtil.init_Z())) {
@@ -2387,7 +2387,7 @@ final class AiNetherEntry {
                   } else {
                      this.load_Str = "game:bucket";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:bucket", "STARTED", "", null));
-                     this.init_AiOperation = AiObsidian.init_AiOperation_I(this.read_I(240));
+                     this.init_AiOperation = AiObsidian.fetchOne(this.read_I(240));
                   }
                }
 

@@ -29,17 +29,17 @@ public final class UiScissorStack {
       init.addLast(rectangle != null ? rectangle : ScreenRectangle.empty());
    }
 
-   public static void init_V() {
+   public static void pop() {
       if (!init.isEmpty()) {
          init.removeLast();
       }
    }
 
-   public static ScreenRectangle init_ScreenRectangle() {
+   public static ScreenRectangle peek() {
       return init.peekLast();
    }
 
-   public static void load_V() {
+   public static void clear() {
       init.clear();
    }
 

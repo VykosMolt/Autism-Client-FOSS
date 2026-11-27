@@ -42,8 +42,8 @@ final class AiModels {
 
       if (key != null && !key.isBlank()) {
          try {
-            String base = init_Str(provider, endpoint);
-            AiHttp.init_Map(provider, key);
+            String base = baseUrl(provider, endpoint);
+            AiHttp.authHeaders(provider, key);
             Set<String> ids = new LinkedHashSet<>();
             switch (provider) {
                case GEMINI:
@@ -114,8 +114,8 @@ final class AiModels {
       }
    }
 
-   static String init_Str(AiSettings.Provider provider, String endpoint) {
-      return AiHttp.init_Str(provider, endpoint);
+   static String baseUrl(AiSettings.Provider provider, String endpoint) {
+      return AiHttp.baseUrl(provider, endpoint);
    }
 
    static List<String> init_List(AiSettings.Provider provider, String key) {
@@ -318,7 +318,7 @@ final class AiModels {
 
    private static JsonObject init(String url, AiSettings.Provider provider, String key, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       Builder request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20L)).header("Accept", "application/json").GET();
-      AiHttp.init_Map(provider, key).forEach(request::header);
+      AiHttp.authHeaders(provider, key).forEach(request::header);
       HttpResponse<byte[]> response = AiHttp.init(request.build(), 2097152, checkpoint);
       String body = new String(response.body(), StandardCharsets.UTF_8);
       if (response.statusCode() != 200) {

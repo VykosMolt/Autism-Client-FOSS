@@ -24,7 +24,7 @@ final class AiSleep {
    private static final int read = 120;
    private static final int write = 300;
    private static final int update = 40;
-   private static final long init_J = 12542L;
+   private static final long SLEEP_START_TICK = 12542L;
    private static final long load_J = 23460L;
 
    private AiSleep() {
@@ -38,7 +38,7 @@ final class AiSleep {
          final boolean requireNight = AiJson.getBoolean(args, "requireNight", true);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final long load_J = AiSleep.init_J();
+            final long load_J = AiSleep.dayTime();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
             AiOperation init_AiOperation;
@@ -64,11 +64,11 @@ final class AiSleep {
                      this.read_I++;
                      if (!AiSleep.load()) {
                         mc.player.stopSleeping();
-                        return this.init(AiOperation.Status.SUCCEEDED, "Slept through; day time is now " + AiSleep.init_J());
+                        return this.init(AiOperation.Status.SUCCEEDED, "Slept through; day time is now " + AiSleep.dayTime());
                      } else if (this.read_I > 300) {
                         mc.player.stopSleeping();
                         return this.init(
-                           AiOperation.Status.UNCERTAIN, "Still dark after 300 ticks asleep (day time " + AiSleep.init_J() + "); the sleep did not complete"
+                           AiOperation.Status.UNCERTAIN, "Still dark after 300 ticks asleep (day time " + AiSleep.dayTime() + "); the sleep did not complete"
                         );
                      } else {
                         return this.init("Sleeping (" + this.read_I + " ticks)");
@@ -77,7 +77,7 @@ final class AiSleep {
                      if (this.load_Z) {
                         return this.init(
                            AiSleep.load() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
-                           AiSleep.load() ? "Woke early and it is still dark; the sleep did not complete" : "Woke up; day time is now " + AiSleep.init_J()
+                           AiSleep.load() ? "Woke early and it is still dark; the sleep did not complete" : "Woke up; day time is now " + AiSleep.dayTime()
                         );
                      }
 
@@ -92,7 +92,7 @@ final class AiSleep {
                         return this.init(
                            AiOperation.Status.FAILED,
                            "It is not dark enough to sleep (day time "
-                              + AiSleep.init_J()
+                              + AiSleep.dayTime()
                               + "); beds work at night and during a thunderstorm. Pass requireNight:false to try anyway."
                         );
                      }
@@ -142,7 +142,7 @@ final class AiSleep {
                            this.init_DataUtil.aimAt(interactionHit.getLocation());
                            this.init_DataUtil.tick();
                            if (++this.init_I > 80) {
-                              String refusal = AiSleep.init(AiChatLedger.init_List(16), this.read_J);
+                              String refusal = AiSleep.init(AiChatLedger.recent(16), this.read_J);
                               return this.init(
                                  AiOperation.Status.FAILED,
                                  refusal.isEmpty()
@@ -161,7 +161,7 @@ final class AiSleep {
                            }
 
                            if (this.read_J < 0L) {
-                              this.read_J = AiChatLedger.init_J();
+                              this.read_J = AiChatLedger.revision();
                            }
 
                            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
@@ -249,7 +249,7 @@ final class AiSleep {
             JsonObject init_JsonObject_48() {
                JsonObject out = AiJson.objectOf(
                   "dayTime",
-                  AiSleep.init_J(),
+                  AiSleep.dayTime(),
                   "night",
                   AiSleep.init_Z(),
                   "canSleep",
@@ -306,13 +306,13 @@ final class AiSleep {
       }
    }
 
-   static long init_J() {
+   static long dayTime() {
       Minecraft mc = Minecraft.getInstance();
       return mc.level == null ? 0L : mc.level.getOverworldClockTime() % 24000L;
    }
 
    static boolean init_Z() {
-      long time = init_J();
+      long time = dayTime();
       return time >= 12542L && time <= 23460L;
    }
 

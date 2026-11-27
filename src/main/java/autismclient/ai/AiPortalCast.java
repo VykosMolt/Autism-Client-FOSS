@@ -148,7 +148,7 @@ final class AiPortalCast {
                      if (plan.blocked() != null) {
                         Set<BlockPos> need = new HashSet<>(AiDimension.write(origin, axis));
 
-                        for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                        for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                            need.add(cell);
                            need.add(cell.above());
                         }
@@ -227,13 +227,13 @@ final class AiPortalCast {
    }
 
    static List<BlockPos> init_List(BlockPos origin, Direction axis) {
-      List<BlockPos> cells = new ArrayList<>(AiDimension.init_List(origin, axis));
+      List<BlockPos> cells = new ArrayList<>(AiDimension.frameBlocks(origin, axis));
       cells.sort(Comparator.<BlockPos>comparingInt(p -> p.getY()).thenComparingInt(p -> p.getX()).thenComparingInt(p -> p.getZ()));
       return cells;
    }
 
    static Set<BlockPos> init_Set(BlockPos origin, Direction axis) {
-      Set<BlockPos> reserved = new HashSet<>(AiDimension.init_List(origin, axis));
+      Set<BlockPos> reserved = new HashSet<>(AiDimension.frameBlocks(origin, axis));
       reserved.addAll(AiDimension.write(origin, axis));
       return reserved;
    }
@@ -701,7 +701,7 @@ final class AiPortalCast {
                   this.init_Direction = bestAxis;
                   this.init_aX_StreamUtil = bestPlan;
                   this.load_Set = AiPortalCast.init_Set(this.load_BlockPos, this.init_Direction);
-                  this.read_Set = new HashSet<>(AiDimension.init_List(this.load_BlockPos, this.init_Direction));
+                  this.read_Set = new HashSet<>(AiDimension.frameBlocks(this.load_BlockPos, this.init_Direction));
                   JsonObject missing = AiPortalCast.init(
                      this.write_I,
                      this.update_I,
@@ -1686,7 +1686,7 @@ final class AiPortalCast {
                            if (tried.add(origin.asLong())) {
                               Set<BlockPos> need = new LinkedHashSet<>(AiDimension.write(origin, axis));
 
-                              for (BlockPos cell : AiDimension.init_List(origin, axis)) {
+                              for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                                  need.add(cell);
                                  need.add(cell.above());
                               }

@@ -381,7 +381,7 @@ final class AiPlanMesh implements AutoCloseable {
                               BlockTintSource tintSource = face.init_I() < 0 ? null : mc.getBlockColors().getTintSource(state, face.init_I());
                               int tint = tintSource == null ? 16777215 : tintSource.colorInWorld(state, world, at);
                               float shade = face.load() == null ? 1.0F : world.cardinalLighting().byFace(face.load());
-                              int color = AiVisualization.init_I_I(classification, tint, shade, alpha);
+                              int color = AiVisualization.ghostColor(classification, tint, shade, alpha);
                               float[] data = face.init_FArr();
 
                               for (int v = 0; v < 4; v++) {

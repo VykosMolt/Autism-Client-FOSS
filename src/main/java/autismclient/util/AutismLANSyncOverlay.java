@@ -1201,8 +1201,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.buffer = this.tick_I_10() + 4;
          this.entry = this.load(localMacros.size());
          if (this.init_RenderState == null
-            || this.init_RenderState.read_I() != this.state
-            || this.init_RenderState.write_I() != this.queue
+            || this.init_RenderState.getX() != this.state
+            || this.init_RenderState.getY() != this.queue
             || this.init_RenderState.update() != this.buffer
             || this.init_RenderState.sync() != this.entry) {
             this.init_RenderState = new autismclient.gui.ui.layout.SelectableListBox<>(
@@ -1216,14 +1216,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                int actionCount = macro.actions != null ? macro.actions.size() : 0;
                return "(" + actionCount + ")";
             });
-            this.init_RenderState.init_V(-1);
+            this.init_RenderState.select(-1);
          }
 
          this.init_RenderState.init(localMacros);
 
          for (int i = 0; i < localMacros.size(); i++) {
             if (localMacros.get(i).name.equals(this.init_Str_2)) {
-               this.init_RenderState.init_V(i);
+               this.init_RenderState.select(i);
                break;
             }
          }
@@ -1850,10 +1850,10 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             && this.valid == 2
             && !this.open_Z
             && this.poll_Z_7()
-            && this.init_RenderState.init_Z(mouseX, mouseY)
-            && this.init_RenderState.init_Z_D_2(mouseX, mouseY, button)) {
-            if (!this.init_RenderState.read_Z()) {
-               AutismMacro selected = this.init_RenderState.init_Obj();
+            && this.init_RenderState.containsPoint(mouseX, mouseY)
+            && this.init_RenderState.mouseClicked(mouseX, mouseY, button)) {
+            if (!this.init_RenderState.isDraggingScrollbar()) {
+               AutismMacro selected = this.init_RenderState.selected();
                if (selected != null) {
                   this.init_Str_2 = selected.name;
                   this.read_V_5();
@@ -1889,7 +1889,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0) {
          if (this.poll_Z_7()) {
-            this.init_RenderState.load_V();
+            this.init_RenderState.mouseReleased();
          }
 
          if (this.push_Z_6()) {
@@ -1921,8 +1921,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.size = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.cache);
          this.init_CacheEntry.jumpTo(this.size, scrollbarMetrics.maxScroll());
          return true;
-      } else if (this.poll_Z_7() && this.init_RenderState.read_Z()) {
-         this.init_RenderState.init_V(mouseX, mouseY);
+      } else if (this.poll_Z_7() && this.init_RenderState.isDraggingScrollbar()) {
+         this.init_RenderState.mouseDragged(mouseX, mouseY);
          return true;
       } else if (this.push_Z_6() && this.init_EventBus.isDraggingScrollbar()) {
          this.init_EventBus.mouseDragged(mouseX, mouseY);
@@ -1961,7 +1961,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       if (this.valid == 2 && !this.open_Z && this.poll_Z_7()) {
-         return this.init_RenderState.init_Z_D(mouseX, mouseY, amount);
+         return this.init_RenderState.mouseScrolled(mouseX, mouseY, amount);
       }
 
       if (this.valid == 2 && this.open_Z && this.push_Z_6()) {

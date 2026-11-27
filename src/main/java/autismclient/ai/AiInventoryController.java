@@ -123,7 +123,7 @@ public final class AiInventoryController implements AiOperation {
             );
          }
 
-         if (!AiContainer.init_Z(menu)) {
+         if (!AiContainer.isStorageMenu(menu)) {
             return this.init_AiOperation_Result_AiOperation_Status_Str_7(
                AiOperation.Status.FAILED, "Open a storage chest, barrel, shulker box, hopper or dispenser first"
             );
@@ -379,7 +379,7 @@ public final class AiInventoryController implements AiOperation {
       return true;
    }
 
-   static int init_I_Container_ItemStack_2(Container inventory, ItemStack wanted) {
+   static int countMatching(Container inventory, ItemStack wanted) {
       int count = 0;
 
       for (int slot = 0; slot < Math.min(36, inventory.getContainerSize()); slot++) {
@@ -395,7 +395,7 @@ public final class AiInventoryController implements AiOperation {
    private int init_I_23() {
       return this.update_ItemStack.isEmpty()
          ? AiGameState.countInventoryItem(this.init_Str)
-         : init_I_Container_ItemStack_2(this.init_Minecraft.player.getInventory(), this.update_ItemStack);
+         : countMatching(this.init_Minecraft.player.getInventory(), this.update_ItemStack);
    }
 
    private boolean init(ItemStack stack) {
@@ -411,7 +411,7 @@ public final class AiInventoryController implements AiOperation {
       return this.init_AiOperation_Result_AiOperation_Status_Str_7(AiOperation.Status.RUNNING, text);
    }
 
-   String init_Str_13() {
+   String receiptJson() {
       JsonObject data = AiJson.objectOf(
          "containerId",
          this.load_I,

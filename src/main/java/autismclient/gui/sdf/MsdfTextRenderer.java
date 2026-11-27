@@ -48,16 +48,16 @@ public final class MsdfTextRenderer {
          return false;
       }
 
-      if (!SdfRenderPipelines.init_Z()) {
+      if (!SdfRenderPipelines.isAvailable()) {
          return false;
       }
 
-      MsdfFontAtlas msdf = font.init_StreamUtil();
-      return msdf != null && msdf.init_Z_Str(text);
+      MsdfFontAtlas msdf = font.atlas();
+      return msdf != null && msdf.canRender(text);
    }
 
    public static float scaledFontSize(MsdfFontFace font) {
-      return font.init_F() * fontScale();
+      return font.baseScale() * fontScale();
    }
 
    public static float fontScale() {
@@ -75,7 +75,7 @@ public final class MsdfTextRenderer {
          return 0.0F;
       }
 
-      MsdfFontAtlas msdf = font.init_StreamUtil();
+      MsdfFontAtlas msdf = font.atlas();
       if (msdf == null) {
          return 0.0F;
       }
@@ -100,8 +100,8 @@ public final class MsdfTextRenderer {
    }
 
    public static float lineHeight(MsdfFontFace font, float size) {
-      MsdfFontAtlas msdf = font.init_StreamUtil();
-      return (float)((msdf != null ? msdf.init_D() : 1.275) * size);
+      MsdfFontAtlas msdf = font.atlas();
+      return (float)((msdf != null ? msdf.lineHeight() : 1.275) * size);
    }
 
    public static String trimToWidth(MsdfFontFace font, String text, float size, float maxWidth) {
@@ -111,7 +111,7 @@ public final class MsdfTextRenderer {
             return safe;
          }
 
-         MsdfFontAtlas msdf = font.init_StreamUtil();
+         MsdfFontAtlas msdf = font.atlas();
          return msdf != null ? msdf.load(safe, size, maxWidth) : "";
       } else {
          return "";
@@ -131,12 +131,12 @@ public final class MsdfTextRenderer {
             return trimToWidth(font, safe, size, maxWidth);
          }
 
-         MsdfFontAtlas msdf = font.init_StreamUtil();
+         MsdfFontAtlas msdf = font.atlas();
          if (msdf == null) {
             return "";
          }
 
-         String base = msdf.init_Str_Str(safe, size, maxWidth - ellipsisWidth);
+         String base = msdf.truncate(safe, size, maxWidth - ellipsisWidth);
 
          while (!base.isEmpty() && measureWidthFloat(font, base + ellipsis, size) > maxWidth) {
             base = base.substring(0, base.length() - 1);
@@ -149,7 +149,7 @@ public final class MsdfTextRenderer {
    }
 
    public static float alignToVanillaTop(MsdfFontFace font, float vanillaTop, float size) {
-      MsdfFontAtlas msdf = font.init_StreamUtil();
+      MsdfFontAtlas msdf = font.atlas();
       if (msdf == null) {
          return vanillaTop + 7.0F - (float)(0.97 * size);
       }
@@ -160,12 +160,12 @@ public final class MsdfTextRenderer {
    }
 
    public static float glyphBoxHeight(MsdfFontFace font, float size) {
-      MsdfFontAtlas msdf = font.init_StreamUtil();
+      MsdfFontAtlas msdf = font.atlas();
       return msdf == null ? 9.0F : (float)((msdf.write() + msdf.read()) * size);
    }
 
    public static float centerVertically(MsdfFontFace font, float top, float height, float size) {
-      MsdfFontAtlas msdf = font.init_StreamUtil();
+      MsdfFontAtlas msdf = font.atlas();
       if (msdf == null) {
          float spare = Math.max(0.0F, height - 9.0F);
          return top + Math.max(1.0F, (float)Math.floor((spare + 1.0F) * 0.5F) + 1.0F);
@@ -179,7 +179,7 @@ public final class MsdfTextRenderer {
 
    public static void draw(GuiGraphicsExtractor graphics, MsdfFontFace font, String text, float x, float y, float size, int color, boolean shadow) {
       if (text != null && !text.isEmpty() && (color & 0xFF000000) != 0) {
-         MsdfFontAtlas msdf = font.init_StreamUtil();
+         MsdfFontAtlas msdf = font.atlas();
          if (msdf != null) {
             if (shadow) {
                float offset = Math.max(0.5F, size * 0.11F);
@@ -196,13 +196,13 @@ public final class MsdfTextRenderer {
    }
 
    private static void drawAtlasQuads(GuiGraphicsExtractor graphics, MsdfFontAtlas msdf, String text, float x, float y, float size, int color) {
-      MsdfFontAtlas.Inner_DataUtil atlas = msdf.init_StreamUtil_DataUti();
+      MsdfFontAtlas.Inner_DataUtil atlas = msdf.texture();
       if (atlas != null) {
          float[] quads = new float[text.length() * 8];
          int quadCount = msdf.init(text, x, y, size, quads, 0);
          if (quadCount > 0) {
             AutismGuiGraphicsExtractorAccessor accessor = (AutismGuiGraphicsExtractorAccessor)graphics;
-            ScreenRectangle scissor = UiScissorStack.init_ScreenRectangle();
+            ScreenRectangle scissor = UiScissorStack.peek();
             GuiRenderState renderState = accessor.autism$guiRenderState();
             TexturedQuadRenderState element = TexturedQuadRenderState.init(
                SdfRenderPipelines.init_RenderPipeline(),
@@ -225,9 +225,9 @@ public final class MsdfTextRenderer {
          WIDTH_CACHE.clear();
       }
 
-      MsdfFontFace.init_V();
-      SdfShapeRenderer.init_V();
-      SdfIconRenderer.init_V();
+      MsdfFontFace.releaseAll();
+      SdfShapeRenderer.reset();
+      SdfIconRenderer.releaseAll();
       fontGeneration++;
    }
 

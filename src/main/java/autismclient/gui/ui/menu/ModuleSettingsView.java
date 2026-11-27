@@ -57,26 +57,26 @@ final class ModuleSettingsView {
       this.init_ConfigStore = controller;
    }
 
-   void init_V_Z(boolean classic) {
+   void setClassic(boolean classic) {
       this.init_Z = classic;
    }
 
-   void init_V_Module(Module module) {
+   void onModuleOpened(Module module) {
       this.load_Map.clear();
       this.init_Str = "";
-      this.init_ConfigStore.init_V_Str_F("settings", 0.0F);
+      this.init_ConfigStore.setScroll("settings", 0.0F);
    }
 
-   String init_Str() {
+   String getQuery() {
       return this.init_Str;
    }
 
-   void init_V_Str(String query) {
+   void setQuery(String query) {
       this.init_Str = query == null ? "" : query;
-      this.init_ConfigStore.init_V_Str_F("settings", 0.0F);
+      this.init_ConfigStore.setScroll("settings", 0.0F);
    }
 
-   boolean init_Z_Module(Module module) {
+   boolean hasVisibleSettings(Module module) {
       if (module == null) {
          return false;
       }
@@ -93,12 +93,12 @@ final class ModuleSettingsView {
    private boolean init_Z_Setting(Setting<?, ?> option) {
       Minecraft minecraft = Minecraft.getInstance();
       boolean inWorld = minecraft != null && minecraft.level != null;
-      boolean inContainer = this.init_ConfigStore.init_ConfigStore_Buffer().init_Screen() instanceof AbstractContainerScreen;
+      boolean inContainer = this.init_ConfigStore.getHost().screen() instanceof AbstractContainerScreen;
       return option.isAvailable(inWorld, inContainer);
    }
 
-   void init_V_SyncManager_2(SyncManager context, NetHelper content, Module module, float frameSeconds) {
-      if (!this.init_Z_Module(module)) {
+   void render(SyncManager context, NetHelper content, Module module, float frameSeconds) {
+      if (!this.hasVisibleSettings(module)) {
          this.load(context, content, module, frameSeconds);
       } else {
          UiTheme theme = context.init_TableIndex();
@@ -122,24 +122,24 @@ final class ModuleSettingsView {
 
          CrosshairPreviewLayout preview = module instanceof CrosshairModule ? CrosshairPreviewLayout.init(listArea) : null;
          if (preview != null) {
-            listArea = preview.init_NetHelper();
+            listArea = preview.listArea();
          }
 
          List<ModuleSettingsView.Inner_StreamUtil> rows = this.init_List_Module(module);
          int contentHeight = this.init_I_List(rows) + 4;
          int scroll = this.init_I_Str("settings", listArea, contentHeight, frameSeconds);
          int y = listArea.write() + 2 - scroll;
-         this.init_ConfigStore.init_V_SyncManager_NetHelper(context, listArea);
+         this.init_ConfigStore.pushClip(context, listArea);
 
          try {
             for (ModuleSettingsView.Inner_StreamUtil row : rows) {
                if (row.init_Str() != null) {
                   NetHelper bounds = NetHelper.init(listArea.read() + 3, y, listArea.update() - 6 - (contentHeight > listArea.sync() ? 6 : 0), groupH);
                   if (bounds.load() >= listArea.write() && bounds.write() <= listArea.load()) {
-                     boolean collapsed = this.init_ConfigStore.init_Z_Module_Str(module, row.init_Str());
+                     boolean collapsed = this.init_ConfigStore.isCollapsed(module, row.init_Str());
                      boolean hovered = bounds.init_Z(context.read(), context.write());
                      GroupHeaderRenderer.init(context, bounds, row.init_Str(), collapsed, hovered);
-                     this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.GROUP, bounds, module, null, row.init_Str(), -1);
+                     this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.GROUP, bounds, module, null, row.init_Str(), -1);
                   }
 
                   y += groupH + 1;
@@ -154,7 +154,7 @@ final class ModuleSettingsView {
                }
             }
          } finally {
-            this.init_ConfigStore.init_V_SyncManager(context);
+            this.init_ConfigStore.popClip(context);
          }
 
          this.init_V_SyncManager(context, listArea, contentHeight, scroll);
@@ -169,11 +169,11 @@ final class ModuleSettingsView {
       int controlH = UiDensityMetrics.scaledHeight(13);
       int rowH = controlH + 8;
       int x = content.read() + pad;
-      int contentHeight = this.init_I_Module(module);
+      int contentHeight = this.contentHeight(module);
       int scroll = this.init_I_Str("settings", content, contentHeight, frameSeconds);
       int w = Math.max(1, content.update() - pad * 2 - (contentHeight > content.sync() ? 6 : 0));
       int y = content.write() + pad - scroll;
-      this.init_ConfigStore.init_V_SyncManager_NetHelper(context, content);
+      this.init_ConfigStore.pushClip(context, content);
 
       try {
          if (!this.init_Z) {
@@ -181,7 +181,7 @@ final class ModuleSettingsView {
             autismclient.gui.f.b.CachePool.init(
                context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
             );
-            this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BACK, back, module, null, "", -1);
+            this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BACK, back, module, null, "", -1);
             y += rowH;
          }
 
@@ -191,9 +191,9 @@ final class ModuleSettingsView {
                .draw(
                   context.init_GuiGraphicsExtract(), "Enabled", x, context.init_PoolEntry().centerTextY(row), context.init_TableIndex().colors().textPrimary
                );
-            NetHelper toggle = ModulesMenuController.init_NetHelper_NetHelper_I(row, row.init());
+            NetHelper toggle = ModulesMenuController.togglePillBounds(row, row.init());
             ToggleSwitchRenderer.init(context, toggle, module.isEnabled(), toggle.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
-            this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, toggle, module, null, "", -1);
+            this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, toggle, module, null, "", -1);
             y += rowH;
          }
 
@@ -202,7 +202,7 @@ final class ModuleSettingsView {
             .draw(
                context.init_GuiGraphicsExtract(), "Keybind", x, context.init_PoolEntry().centerTextY(row), context.init_TableIndex().colors().textPrimary
             );
-         boolean listening = this.init_ConfigStore.init_Z_Module(module);
+         boolean listening = this.init_ConfigStore.isListeningForBind(module);
          String label = listening ? "Press a key" : (module.keybind() == -1 ? "Unbound" : ValueSink.init_Str(module.keybind()));
          int bindW = Math.min(Math.max(70, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(label))), Math.max(1, w / 2));
          NetHelper bind = NetHelper.init(row.init() - bindW, y + 4, bindW, controlH);
@@ -214,7 +214,7 @@ final class ModuleSettingsView {
             bind.init_Z(context.read(), context.write()),
             listening
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
          y += rowH + 4;
          String hint = listening ? "Esc, Backspace or Delete clears the bind" : "Click the keybind to change it";
          context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), hint, x, y, w, context.init_TableIndex().colors().textSecondary);
@@ -223,9 +223,9 @@ final class ModuleSettingsView {
          autismclient.gui.f.b.CachePool.init(
             context, macro, "Create toggle macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       } finally {
-         this.init_ConfigStore.init_V_SyncManager(context);
+         this.init_ConfigStore.popClip(context);
       }
 
       this.init_V_SyncManager(context, content, contentHeight, scroll);
@@ -240,8 +240,8 @@ final class ModuleSettingsView {
       autismclient.gui.f.b.CachePool.init(
          context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BACK, back, module, null, "", -1);
-      NetHelper pill = ModulesMenuController.init_NetHelper_NetHelper_I(strip, content.init() - 4);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BACK, back, module, null, "", -1);
+      NetHelper pill = ModulesMenuController.togglePillBounds(strip, content.init() - 4);
       int right = pill.read() - 4;
       NetHelper bind = NetHelper.init(right - 34, controlY, 34, controlH);
       right = bind.read() - 2;
@@ -253,18 +253,18 @@ final class ModuleSettingsView {
       autismclient.gui.f.b.CachePool.init(
          context, macro, "+Macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, reset, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, reset.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
-      KeybindButtonRenderer.init(context, bind, module.keybind(), this.init_ConfigStore.init_Z_Module(module), bind.init_Z(context.read(), context.write()));
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
+      KeybindButtonRenderer.init(context, bind, module.keybind(), this.init_ConfigStore.isListeningForBind(module), bind.init_Z(context.read(), context.write()));
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
       if (module.hasActivationToggle()) {
          ToggleSwitchRenderer.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
       }
 
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
          context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.colors().divider
       );
@@ -298,26 +298,26 @@ final class ModuleSettingsView {
             active.init_Z(context.read(), context.write()),
             on
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, active, module, null, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, active, module, null, "", -1);
          x = active.init() + gap;
       }
 
-      boolean binding = this.init_ConfigStore.init_Z_Module(module);
+      boolean binding = this.init_ConfigStore.isListeningForBind(module);
       String bindLabel = binding ? "Press key" : "Bind " + ValueSink.init_Str(module.keybind());
       int bindW = Math.max(1, Math.min(actionsLeft - x, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(bindLabel))));
       NetHelper bind = NetHelper.init(x, y, bindW, controlH);
       autismclient.gui.f.b.CachePool.init(
          context, bind, bindLabel, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, bind.init_Z(context.read(), context.write()), binding
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, reset, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, reset.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, macro, "Macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, macro.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
          context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.colors().divider
       );
@@ -357,7 +357,7 @@ final class ModuleSettingsView {
             }
 
             rows.add(new ModuleSettingsView.Inner_StreamUtil(group, null));
-         } while (this.init_ConfigStore.init_Z_Module_Str(module, group));
+         } while (this.init_ConfigStore.isCollapsed(module, group));
 
          for (Setting<?, ?> option : entry.getValue()) {
             rows.add(new ModuleSettingsView.Inner_StreamUtil(null, option));
@@ -365,8 +365,8 @@ final class ModuleSettingsView {
       }
    }
 
-   int init_I_Module(Module module) {
-      if (!this.init_Z_Module(module)) {
+   int contentHeight(Module module) {
+      if (!this.hasVisibleSettings(module)) {
          int controlH = UiDensityMetrics.scaledHeight(13);
          int rows = 1 + (module.hasActivationToggle() ? 1 : 0) + (this.init_Z ? 0 : 1);
          return 24 + rows * (controlH + 8) + UiDensityMetrics.scaledHeight(12) + controlH;
@@ -412,10 +412,10 @@ final class ModuleSettingsView {
       UiTheme theme = context.init_TableIndex();
       boolean hovered = bounds.init_Z(context.read(), context.write());
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("set:" + module.id() + ":" + option.id(), hovered);
-      int rowFill = ModulesMenuController.init_I_I(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT);
+      int rowFill = ModulesMenuController.lerpColor(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT);
       if (this.init_Z) {
          PacketUtil.load(
-            context.init_GuiGraphicsExtract(), bounds, 4, rowFill, ModulesMenuController.init_I_I(theme.colors().divider, theme.colors().borderSubtle, hoverT)
+            context.init_GuiGraphicsExtract(), bounds, 4, rowFill, ModulesMenuController.lerpColor(theme.colors().divider, theme.colors().borderSubtle, hoverT)
          );
       } else {
          PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 4, rowFill);
@@ -429,14 +429,14 @@ final class ModuleSettingsView {
          && option.displayMode() != DisplayMode.RANGE_SLIDER;
       int controlH = this.init_Z ? Math.min(UiDensityMetrics.scaledHeight(13), bounds.sync() - 2) : Math.max(11, bounds.sync() - 2);
       int controlW = macroDisplay
-         ? Math.min(ModulesMenuController.init_I_I(170), Math.max(ModulesMenuController.init_I_I(120), bounds.update() / 2))
+         ? Math.min(ModulesMenuController.scaled(170), Math.max(ModulesMenuController.scaled(120), bounds.update() / 2))
          : (
             plainToggle
-               ? ModulesMenuController.init_NetHelper_NetHelper_I(bounds, bounds.init()).update()
+               ? ModulesMenuController.togglePillBounds(bounds, bounds.init()).update()
                : (
                   load_Z_Setting(option)
-                     ? Math.min(ModulesMenuController.init_I_I(190), Math.max(ModulesMenuController.init_I_I(110), bounds.update() * 3 / 5))
-                     : Math.min(ModulesMenuController.init_I_I(120), Math.max(ModulesMenuController.init_I_I(90), bounds.update() / 3))
+                     ? Math.min(ModulesMenuController.scaled(190), Math.max(ModulesMenuController.scaled(110), bounds.update() * 3 / 5))
+                     : Math.min(ModulesMenuController.scaled(120), Math.max(ModulesMenuController.scaled(90), bounds.update() / 3))
                )
          );
       int labelX = bounds.read() + 5;
@@ -474,7 +474,7 @@ final class ModuleSettingsView {
       } else {
          switch (option.kind()) {
             case BOOLEAN:
-               NetHelper toggle = ModulesMenuController.init_NetHelper_NetHelper_I(bounds, control.init());
+               NetHelper toggle = ModulesMenuController.togglePillBounds(bounds, control.init());
                ToggleSwitchRenderer.init(
                   context,
                   toggle,
@@ -482,7 +482,7 @@ final class ModuleSettingsView {
                   hovered || toggle.init_Z(context.read(), context.write()),
                   module.id() + "/" + option.id()
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.OPTION, bounds, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.OPTION, bounds, module, option, "", -1);
                break;
             case INTEGER:
             case DOUBLE:
@@ -492,11 +492,11 @@ final class ModuleSettingsView {
                int dropW = this.init_I(module, option, control.update());
                NetHelper dropdown = NetHelper.init(control.init() - dropW, control.write(), dropW, control.sync());
                DropdownMenu.renderTrigger(context, dropdown, module.displayValue(option), dropdown.init_Z(context.read(), context.write()), false);
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.DROPDOWN, dropdown, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.DROPDOWN, dropdown, module, option, "", -1);
                break;
             case STRING:
                this.init(context, control, module, option, "<empty>");
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
                break;
             case COLOR:
                this.write(context, module, option, control);
@@ -514,7 +514,7 @@ final class ModuleSettingsView {
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Edit", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, edit.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.LIST_EDITOR, edit, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.LIST_EDITOR, edit, module, option, "", -1);
                break;
             }
             case PACKET_LIST: {
@@ -525,12 +525,12 @@ final class ModuleSettingsView {
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, edit.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.PACKET_EDITOR, edit, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.PACKET_EDITOR, edit, module, option, "", -1);
                break;
             }
             case KEYBIND:
-               Font font = this.init_ConfigStore.init_ConfigStore_Buffer().init_Font();
-               String bindName = ValueSink.init_Str(ModulesMenuController.init_I_Str_I(module.value(option.id()), -1));
+               Font font = this.init_ConfigStore.getHost().font();
+               String bindName = ValueSink.init_Str(ModulesMenuController.parseInt(module.value(option.id()), -1));
                int bindW = UiDensityMetrics.buttonWidthForText(k.init(font, bindName, autismclient.gui.f.a.DataUtil.init, 0));
                int clearW = UiDensityMetrics.buttonWidthForText(k.init(font, "Clear", autismclient.gui.f.a.DataUtil.init, 0));
                NetHelper clear = NetHelper.init(control.init() - clearW, control.write(), clearW, control.sync());
@@ -542,21 +542,21 @@ final class ModuleSettingsView {
                autismclient.gui.f.b.CachePool.init(
                   context, clear, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, clear.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BIND_OPTION, bind, module, option, "", -1);
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RESET_OPTION_BIND, clear, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.BIND_OPTION, bind, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.RESET_OPTION_BIND, clear, module, option, "", -1);
                break;
             case ACTION:
                String buttonLabel = option instanceof ActionSetting action ? action.buttonLabel() : "Run";
                autismclient.gui.f.b.CachePool.init(
                   context, control, buttonLabel, autismclient.gui.f.b.CachePool.Inner_DataUtil.read, control.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.OPTION, control, module, option, "", -1);
+               this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.OPTION, control, module, option, "", -1);
          }
       }
    }
 
    private int init_I(Module module, Setting<?, ?> option, int maxWidth) {
-      Font font = this.init_ConfigStore.init_ConfigStore_Buffer().init_Font();
+      Font font = this.init_ConfigStore.getHost().font();
       int widest = k.init(font, module.displayValue(option), autismclient.gui.f.a.DataUtil.init, 0);
 
       for (String choice : option.choices()) {
@@ -569,18 +569,18 @@ final class ModuleSettingsView {
    private void load(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       if (option.displayMode() == DisplayMode.NUMERIC_TEXT_FIELD) {
          this.init(context, control, module, option, "");
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
       } else {
          double current = option.kind() == Kind.INTEGER
-            ? ModulesMenuController.init_I_Str_I(module.value(option.id()), ModulesMenuController.init_I_Str_I(option.defaultValue(), 0))
-            : ModulesMenuController.init_D_Str_D(module.value(option.id()), ModulesMenuController.init_D_Str_D(option.defaultValue(), 0.0));
+            ? ModulesMenuController.parseInt(module.value(option.id()), ModulesMenuController.parseInt(option.defaultValue(), 0))
+            : ModulesMenuController.parseDouble(module.value(option.id()), ModulesMenuController.parseDouble(option.defaultValue(), 0.0));
          String unit = option.unit(current);
          int unitWidth = unit.isEmpty() ? 0 : context.init_PoolEntry().measureWidth(unit);
          int reservedUnitWidth = Math.max(
             unitWidth, Math.max(context.init_PoolEntry().measureWidth(option.unit(option.sliderMin())), context.init_PoolEntry().measureWidth(option.unit(option.sliderMax())))
          );
          int unitSpace = reservedUnitWidth == 0 ? 0 : reservedUnitWidth + 3;
-         int valueW = ModulesMenuController.init_I_I(34);
+         int valueW = ModulesMenuController.scaled(34);
          int tail = 4 + valueW + unitSpace;
          NetHelper slider = NetHelper.init(control.read(), control.write(), Math.max(40, control.update() - tail), control.sync());
          NetHelper value = NetHelper.init(control.init() - unitSpace - valueW, control.write(), valueW, control.sync());
@@ -599,16 +599,16 @@ final class ModuleSettingsView {
                );
          }
 
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.SLIDER, slider, module, option, "", -1);
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TEXT_FIELD, value, module, option, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.SLIDER, slider, module, option, "", -1);
+         this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.TEXT_FIELD, value, module, option, "", -1);
       }
    }
 
    private void init(SyncManager context, NetHelper bounds, Module module, Setting<?, ?> option, String placeholder) {
-      boolean focused = this.init_ConfigStore.init_Z_Module_Setting(module, option);
-      String shown = focused ? this.init_ConfigStore.init_StreamUtil_2.init_Str : module.value(option.id());
+      boolean focused = this.init_ConfigStore.isEditing(module, option);
+      String shown = focused ? this.init_ConfigStore.textEdit.text : module.value(option.id());
       if (focused) {
-         this.init_ConfigStore.init_NetHelper = bounds;
+         this.init_ConfigStore.textEditBounds = bounds;
       }
 
       TextFieldRenderer.init(
@@ -617,11 +617,11 @@ final class ModuleSettingsView {
          shown,
          placeholder,
          focused,
-         focused ? this.init_ConfigStore.init_StreamUtil_2.init_I : shown.length(),
-         focused ? this.init_ConfigStore.init_StreamUtil_2.init_I() : -1,
-         focused ? this.init_ConfigStore.init_StreamUtil_2.load_I() : -1,
+         focused ? this.init_ConfigStore.textEdit.cursor : shown.length(),
+         focused ? this.init_ConfigStore.textEdit.selectionStart() : -1,
+         focused ? this.init_ConfigStore.textEdit.selectionEnd() : -1,
          focused
-            ? this.init_ConfigStore.init_StreamUtil_2.init(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
+            ? this.init_ConfigStore.textEdit.init(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
    }
@@ -630,7 +630,7 @@ final class ModuleSettingsView {
       String unit = option.unit() == null ? "" : option.unit();
       ValueRange range = this.init_ValueRange_Module_Setting(module, option);
       String label = range.format(option.step()) + (unit.isEmpty() ? "" : " " + unit);
-      int tailW = ModulesMenuController.init_I_I(62);
+      int tailW = ModulesMenuController.scaled(62);
       NetHelper slider = NetHelper.init(control.read(), control.write(), Math.max(40, control.update() - tailW), control.sync());
       NetHelper value = NetHelper.init(slider.init() + 4, control.write(), tailW - 4, control.sync());
       double lo = option.sliderMin();
@@ -647,7 +647,7 @@ final class ModuleSettingsView {
             value.update(),
             context.init_TableIndex().colors().textPrimary
          );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RANGE_SLIDER, slider, module, option, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.RANGE_SLIDER, slider, module, option, "", -1);
    }
 
    private void write(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
@@ -655,7 +655,7 @@ final class ModuleSettingsView {
       int pickW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Pick"));
       NetHelper pick = NetHelper.init(control.init() - pickW, control.write(), pickW, control.sync());
       NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - pickW - 4), control.sync());
-      int color = ModulesMenuController.load_I_Str_I(module.value(option.id()), ModulesMenuController.load_I_Str_I(option.defaultValue(), -1));
+      int color = ModulesMenuController.parseColor(module.value(option.id()), ModulesMenuController.parseColor(option.defaultValue(), -1));
       PacketUtil.load(context.init_GuiGraphicsExtract(), value, 4, theme.colors().inputSurface, theme.colors().borderSubtle);
       NetHelper swatch = NetHelper.init(value.read() + 3, value.write() + 2, 14, Math.max(1, value.sync() - 4));
       PacketUtil.load(context.init_GuiGraphicsExtract(), swatch, 2, color | 0xFF000000, theme.colors().borderSubtle);
@@ -672,8 +672,8 @@ final class ModuleSettingsView {
       autismclient.gui.f.b.CachePool.init(
          context, pick, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, pick.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.COLOR_PICKER, pick, module, option, "", -1);
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.COLOR_PICKER, value, module, option, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.COLOR_PICKER, pick, module, option, "", -1);
+      this.init_ConfigStore.addHit(ModulesMenuController.Inner_CachePool.COLOR_PICKER, value, module, option, "", -1);
    }
 
    private void init(
@@ -691,7 +691,7 @@ final class ModuleSettingsView {
       this.update(context, module, option, value);
       autismclient.gui.f.b.CachePool.init(context, button, buttonText, tone, button.init_Z(context.read(), context.write()), false);
       Setting<?, ?> linked = option.linkedActionId().isBlank() ? option : module.setting(option.linkedActionId());
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(hitType, button, module, linked == null ? option : linked, "", -1);
+      this.init_ConfigStore.addHit(hitType, button, module, linked == null ? option : linked, "", -1);
    }
 
    private void update(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
@@ -878,41 +878,41 @@ final class ModuleSettingsView {
    }
 
    int init_I_ConfigStore_Stream_I(ModulesMenuController.Inner_StreamUtil hit, int mx) {
-      Setting<?, ?> option = hit.init_Setting();
-      Module module = hit.init_Module();
+      Setting<?, ?> option = hit.setting();
+      Module module = hit.module();
       ValueRange range = this.init_ValueRange_Module_Setting(module, option);
-      return RangeSliderRenderer.init_I_D(
+      return RangeSliderRenderer.pickHandle(
          mx,
-         hit.init_NetHelper(),
+         hit.bounds(),
          RangeSliderRenderer.init(range.min(), option.sliderMin(), option.sliderMax()),
          RangeSliderRenderer.init(range.max(), option.sliderMin(), option.sliderMax())
       );
    }
 
    void init_V_ConfigStore_Stream_I(ModulesMenuController.Inner_StreamUtil hit, int mx) {
-      Module module = hit.init_Module();
-      Setting<?, ?> option = hit.init_Setting();
+      Module module = hit.module();
+      Setting<?, ?> option = hit.setting();
       if (module != null && option != null) {
-         double ratio = (double)(mx - hit.init_NetHelper().read()) / Math.max(1, hit.init_NetHelper().update());
+         double ratio = (double)(mx - hit.bounds().read()) / Math.max(1, hit.bounds().update());
          ratio = Math.max(0.0, Math.min(1.0, ratio));
-         if (hit.init_ConfigStore_CacheP() == ModulesMenuController.Inner_CachePool.RANGE_SLIDER) {
+         if (hit.type() == ModulesMenuController.Inner_CachePool.RANGE_SLIDER) {
             this.init_V_ConfigStore_Stream_D(hit, ratio);
          } else {
             double value = option.sliderMin() + ratio * (option.sliderMax() - option.sliderMin());
             double step = Math.max(1.0E-4, option.step());
             value = option.sliderMin() + Math.round((value - option.sliderMin()) / step) * step;
             if (option.kind() == Kind.INTEGER) {
-               this.init_ConfigStore.load_V_Module_2(module, option, Integer.toString((int)Math.round(value)));
+               this.init_ConfigStore.setValueTransient(module, option, Integer.toString((int)Math.round(value)));
             } else {
-               this.init_ConfigStore.load_V_Module_2(module, option, String.format(Locale.ROOT, "%.2f", value));
+               this.init_ConfigStore.setValueTransient(module, option, String.format(Locale.ROOT, "%.2f", value));
             }
          }
       }
    }
 
    private void init_V_ConfigStore_Stream_D(ModulesMenuController.Inner_StreamUtil hit, double ratio) {
-      Module module = hit.init_Module();
-      Setting<?, ?> option = hit.init_Setting();
+      Module module = hit.module();
+      Setting<?, ?> option = hit.setting();
       ValueRange current = this.init_ValueRange_Module_Setting(module, option);
       double value = option.sliderMin() + ratio * (option.sliderMax() - option.sliderMin());
       double step = Math.max(1.0E-4, option.step());
@@ -921,13 +921,13 @@ final class ModuleSettingsView {
       double lo = thumb == 1 ? current.min() : value;
       double hi = thumb == 1 ? value : current.max();
       ValueRange next = new ValueRange(Math.min(lo, hi), Math.max(lo, hi));
-      this.init_ConfigStore.load_V_Module_2(module, option, next.toString());
+      this.init_ConfigStore.setValueTransient(module, option, next.toString());
    }
 
-   void init_V(Module module, Setting<?, ?> option, int button) {
+   void clickSetting(Module module, Setting<?, ?> option, int button) {
       if (option != null) {
          if (option.kind() == Kind.BOOLEAN && button == 0) {
-            this.init_ConfigStore.init_V_Module_2(module, option, Boolean.toString(!Boolean.parseBoolean(module.value(option.id()))));
+            this.init_ConfigStore.setValue(module, option, Boolean.toString(!Boolean.parseBoolean(module.value(option.id()))));
          } else if (option.kind() == Kind.ACTION && button == 0 && option.action() != null) {
             option.action().run();
          }
@@ -936,14 +936,14 @@ final class ModuleSettingsView {
 
    private int init_I_Str(String key, NetHelper viewport, int contentHeight, float frameSeconds) {
       int max = Math.max(0, contentHeight - viewport.sync());
-      this.init_ConfigStore.init_V_Str(key, viewport.sync(), max);
-      float target = ModulesMenuController.init_F_F(this.init_ConfigStore.init_F_Str(key), 0.0F, max);
-      float render = this.init_ConfigStore.init_F_Str(key, target, frameSeconds);
+      this.init_ConfigStore.recordScrollMetrics(key, viewport.sync(), max);
+      float target = ModulesMenuController.clampFloat(this.init_ConfigStore.scrollTarget(key), 0.0F, max);
+      float render = this.init_ConfigStore.smoothScroll(key, target, frameSeconds);
       return Math.round(render);
    }
 
    private void init_V_SyncManager(SyncManager context, NetHelper viewport, int contentHeight, int scroll) {
-      this.init_ConfigStore.init_V_Str("settings", context, viewport, contentHeight, scroll);
+      this.init_ConfigStore.drawScrollbar("settings", context, viewport, contentHeight, scroll);
    }
 
    private record Inner_DataUtil(String init_Str, int init_I) {

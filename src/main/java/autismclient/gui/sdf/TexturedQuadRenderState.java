@@ -67,8 +67,8 @@ public record TexturedQuadRenderState(
          }
       }
 
-      topColor = autismclient.gui.ui.UiAlphaStack.init_I_I(topColor);
-      bottomColor = autismclient.gui.ui.UiAlphaStack.init_I_I(bottomColor);
+      topColor = autismclient.gui.ui.UiAlphaStack.apply(topColor);
+      bottomColor = autismclient.gui.ui.UiAlphaStack.apply(bottomColor);
       return new TexturedQuadRenderState(
          pipeline, textureSetup, pose, quads, quadCount, topColor, bottomColor, gradientY, Math.max(0.001F, gradientHeight), scissorArea, bounds
       );

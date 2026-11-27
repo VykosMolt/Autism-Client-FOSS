@@ -52,7 +52,7 @@ final class AiWorldReaders {
    private AiWorldReaders() {
    }
 
-   static JsonArray init_JsonArray(Minecraft mc) {
+   static JsonArray scoreboard(Minecraft mc) {
       JsonArray rows = new JsonArray();
 
       try {
@@ -86,7 +86,7 @@ final class AiWorldReaders {
       return rows;
    }
 
-   static JsonArray load_JsonArray(Minecraft mc) {
+   static JsonArray tabList(Minecraft mc) {
       JsonArray players = new JsonArray();
 
       try {
@@ -105,7 +105,7 @@ final class AiWorldReaders {
       return players;
    }
 
-   static JsonObject init_JsonObject(Minecraft mc) {
+   static JsonObject tabDecoration(Minecraft mc) {
       JsonObject decoration = new JsonObject();
 
       try {
@@ -147,7 +147,7 @@ final class AiWorldReaders {
       return bars;
    }
 
-   static JsonObject load_JsonObject(Minecraft mc) {
+   static JsonObject vitals(Minecraft mc) {
       JsonObject vitals = new JsonObject();
 
       try {

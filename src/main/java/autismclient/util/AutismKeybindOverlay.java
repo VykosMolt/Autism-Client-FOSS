@@ -224,7 +224,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.layout.RowLayout settingsPages = new autismclient.gui.ui.layout.RowLayout()
             .init(0)
             .init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
-            .init_StreamUtil(false);
+            .setUnderlineOnHover(false);
          settingsPages.setGrowX(true);
          settingsPages.addChild(
             new autismclient.gui.ui.layout.ButtonNode("Theme Color", autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY, this::update_V_7)
@@ -849,7 +849,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       private Inner_BufferHelper(int index, AutismKeybindOverlay.Inner_CachePool entry) {
          super(
-            new autismclient.gui.ui.layout.LabelNode(entry.init_Str, autismclient.gui.f.b.l.read).load_PoolEntry(true),
+            new autismclient.gui.ui.layout.LabelNode(entry.init_Str, autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new AutismKeybindOverlay.Inner_StreamUtil(
                entry.init_IntSupplier,
                () -> AutismKeybindOverlay.this.put == index,
@@ -860,11 +860,11 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_AutismKeybindOverl = entry;
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
-         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.init_TableIndex();
-         this.init_CachePool_F(AutismKeybindOverlay.this.push_I_11());
-         this.init_CachePool_I(AutismKeybindOverlay.this.data());
-         this.init_CachePool_Z(true);
-         this.init_CachePool_IoWorker(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.getLabel();
+         this.setLabelWidth(AutismKeybindOverlay.this.push_I_11());
+         this.setGap(AutismKeybindOverlay.this.data());
+         this.setAlignControlEnd(true);
+         this.setPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       }
 
       @Override
@@ -914,20 +914,20 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       private Inner_ConfigStore() {
          super(
-            new autismclient.gui.ui.layout.LabelNode("Menu Style", autismclient.gui.f.b.l.read).load_PoolEntry(true),
+            new autismclient.gui.ui.layout.LabelNode("Menu Style", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.RowLayout().init(2).init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
          );
-         autismclient.gui.ui.layout.RowLayout choices = (autismclient.gui.ui.layout.RowLayout)this.load_TableIndex();
+         autismclient.gui.ui.layout.RowLayout choices = (autismclient.gui.ui.layout.RowLayout)this.getControl();
          this.init_ByteReader = this.init("DEFAULT", "DEFAULT", AutismKeybindOverlay.this.init_I_Str_I_3("DEFAULT", 47));
          this.load_ByteReader = this.init("CSGO", "CSGO", AutismKeybindOverlay.this.init_I_Str_I_3("CSGO", 34));
          choices.addChild(this.init_ByteReader);
          choices.addChild(this.load_ByteReader);
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
-         this.init_CachePool_F(AutismKeybindOverlay.this.push_I_11());
-         this.init_CachePool_I(AutismKeybindOverlay.this.data());
-         this.init_CachePool_Z(true);
-         this.init_CachePool_IoWorker(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+         this.setLabelWidth(AutismKeybindOverlay.this.push_I_11());
+         this.setGap(AutismKeybindOverlay.this.data());
+         this.setAlignControlEnd(true);
+         this.setPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       }
 
       private autismclient.gui.ui.layout.ButtonNode init(String label, String style, int width) {
@@ -970,7 +970,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       private Inner_DataUtil() {
          super(
-            new autismclient.gui.ui.layout.LabelNode("Font Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
+            new autismclient.gui.ui.layout.LabelNode("Font Scale", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .setPreferredWidth(AutismKeybindOverlay.this.value())
                .setMinWidth(AutismKeybindOverlay.this.value())
@@ -980,15 +980,15 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init)
                .setTextYOffset(0)
          );
-         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.init_TableIndex();
-         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.load_TableIndex();
+         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.getLabel();
+         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.getControl();
          this.init_ByteReader.setOnPress(() -> this.init_V_I_2(1));
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
-         this.init_CachePool_F(AutismKeybindOverlay.this.push_I_11());
-         this.init_CachePool_I(AutismKeybindOverlay.this.data());
-         this.init_CachePool_Z(true);
-         this.init_CachePool_IoWorker(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+         this.setLabelWidth(AutismKeybindOverlay.this.push_I_11());
+         this.setGap(AutismKeybindOverlay.this.data());
+         this.setAlignControlEnd(true);
+         this.setPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       }
 
       private void init_V_I_2(int direction) {
@@ -1056,7 +1056,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       private Inner_JsonUtil(String label, String tooltip, BooleanSupplier getter, Consumer<Boolean> setter) {
          super(
-            new autismclient.gui.ui.layout.LabelNode(label, autismclient.gui.f.b.l.read).load_PoolEntry(true),
+            new autismclient.gui.ui.layout.LabelNode(label, autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("OFF", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .setConnectedToggle(true)
                .setPreferredWidth(22.0F)
@@ -1070,18 +1070,18 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_BooleanSupplier = getter;
          this.init_Consumer = setter;
          this.init_Str = tooltip;
-         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.init_TableIndex();
-         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.load_TableIndex();
+         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.getLabel();
+         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.getControl();
          this.init_ByteReader.setOnPress(() -> {
             setter.accept(!getter.getAsBoolean());
             AutismKeybindOverlay.this.init_AutismConfig().save();
          });
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
-         this.init_CachePool_F(AutismKeybindOverlay.this.push_I_11());
-         this.init_CachePool_I(AutismKeybindOverlay.this.data());
-         this.init_CachePool_Z(true);
-         this.init_CachePool_IoWorker(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+         this.setLabelWidth(AutismKeybindOverlay.this.push_I_11());
+         this.setGap(AutismKeybindOverlay.this.data());
+         this.setAlignControlEnd(true);
+         this.setPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       }
 
       @Override
@@ -1123,7 +1123,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       private Inner_NetHelper() {
          super(
-            new autismclient.gui.ui.layout.LabelNode("Overlay Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
+            new autismclient.gui.ui.layout.LabelNode("Overlay Scale", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .setPreferredWidth(AutismKeybindOverlay.this.value())
                .setMinWidth(AutismKeybindOverlay.this.value())
@@ -1133,18 +1133,18 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init)
                .setTextYOffset(0)
          );
-         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.init_TableIndex();
-         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.load_TableIndex();
+         this.init_PoolEntry = (autismclient.gui.ui.layout.LabelNode)this.getLabel();
+         this.init_ByteReader = (autismclient.gui.ui.layout.ButtonNode)this.getControl();
          this.init_ByteReader.setOnPress(() -> {
             cA.init_V_D(cA.load_D());
             AutismKeybindOverlay.this.init_TextFormat.invalidateLayout();
          });
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
-         this.init_CachePool_F(AutismKeybindOverlay.this.push_I_11());
-         this.init_CachePool_I(AutismKeybindOverlay.this.data());
-         this.init_CachePool_Z(true);
-         this.init_CachePool_IoWorker(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+         this.setLabelWidth(AutismKeybindOverlay.this.push_I_11());
+         this.setGap(AutismKeybindOverlay.this.data());
+         this.setAlignControlEnd(true);
+         this.setPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       }
 
       @Override

@@ -157,8 +157,8 @@ public final class LoggedPacketActions {
             AutismClientMessaging.sendPrefixed("§cFailed to seed payload editor from packet.");
             return false;
          } else {
-            ActionEditorOverlay.init_ActionEditorOverla_2().init_V_H(action);
-            OverlayManager.getInstance().bringToFront(ActionEditorOverlay.init_ActionEditorOverla_2());
+            ActionEditorOverlay.getInstance().openPayload(action);
+            OverlayManager.getInstance().bringToFront(ActionEditorOverlay.getInstance());
             return true;
          }
       }

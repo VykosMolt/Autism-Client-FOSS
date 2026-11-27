@@ -266,7 +266,7 @@ public final class AiItems {
    }
 
    static String normalizeSpec(String spec) {
-      return autismclient.commands.RegistrySuggestions.init_Str(spec);
+      return autismclient.commands.RegistrySuggestions.normalize(spec);
    }
 
    static String resolveLooseSpec(String clean) {
@@ -275,14 +275,14 @@ public final class AiItems {
       }
 
       if (clean.indexOf(58) < 0) {
-         for (String form : autismclient.commands.RegistrySuggestions.init_List(clean)) {
+         for (String form : autismclient.commands.RegistrySuggestions.singularForms(clean)) {
             if (FAMILY_ALIASES.containsKey(form)) {
                return form;
             }
          }
       }
 
-      Identifier id = autismclient.commands.RegistrySuggestions.init_Identifier(clean);
+      Identifier id = autismclient.commands.RegistrySuggestions.parseId(clean);
       return id == null ? null : id.toString();
    }
 

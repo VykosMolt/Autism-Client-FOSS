@@ -933,9 +933,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void init_V_Str_2(String label, String value, Integer valueColor, Runnable onPress) {
       autismclient.gui.ui.layout.KeyValueRowNode row = new autismclient.gui.ui.layout.KeyValueRowNode(label, value)
-         .init_TaskQueue_F(this.push_I_24())
-         .init_TaskQueue_Integer(valueColor)
-         .init_TaskQueue_Runnable(onPress);
+         .setLabelWidth(this.push_I_24())
+         .setValueColor(valueColor)
+         .setOnPress(onPress);
       if (this.init_PacketUtil != null) {
          this.init_PacketUtil.addChild(row);
       } else {
@@ -974,7 +974,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          .addChild(new autismclient.gui.ui.layout.LabelNode("Start probing manually", autismclient.gui.f.b.l.write));
       this.init_CharEncoder_2
          .body()
-         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.state + " ms").init_TaskQueue_F(this.frame_I_2()));
+         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.state + " ms").setLabelWidth(this.frame_I_2()));
       this.init_CharEncoder_2.body().addChild(this.init_AutismServerInfoOv_5);
       this.init_CharEncoder_2.body().addChild(new autismclient.gui.ui.layout.LabelNode("Default: 50 ms", autismclient.gui.f.b.l.write));
       this.init_CharEncoder_2
@@ -1005,38 +1005,38 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("State:", this.update_Str_3()).init_TaskQueue_F(this.block_I_2()).init_TaskQueue_Integer(this.node_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("State:", this.update_Str_3()).setLabelWidth(this.block_I_2()).setValueColor(this.node_I_2())
          );
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Sent:", this.state_I_2() + "/" + Math.max(1, this.cache_I_2())).init_TaskQueue_F(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Sent:", this.state_I_2() + "/" + Math.max(1, this.cache_I_2())).setLabelWidth(this.block_I_2())
          );
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Replies:", this.queue_I_2() + "/" + Math.max(1, this.cache_I_2())).init_TaskQueue_F(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Replies:", this.queue_I_2() + "/" + Math.max(1, this.cache_I_2())).setLabelWidth(this.block_I_2())
          );
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Retries:", Integer.toString(session == null ? 0 : session.write_I)).init_TaskQueue_F(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Retries:", Integer.toString(session == null ? 0 : session.write_I)).setLabelWidth(this.block_I_2())
          );
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.update)).init_TaskQueue_F(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.update)).setLabelWidth(this.block_I_2())
          );
       int foundCount = this.entry_I_2();
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Found:", foundCount + " plugin" + (foundCount == 1 ? "" : "s")).init_TaskQueue_F(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Found:", foundCount + " plugin" + (foundCount == 1 ? "" : "s")).setLabelWidth(this.block_I_2())
          );
       this.init_CharEncoder_2
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Progress:", progressPercent + "%").init_TaskQueue_F(this.block_I_2()).init_TaskQueue_Integer(this.node_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Progress:", progressPercent + "%").setLabelWidth(this.block_I_2()).setValueColor(this.node_I_2())
          );
       this.init_CharEncoder_2.body().addChild(this.init_AutismServerInfoOv_2);
    }
@@ -5280,7 +5280,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void write_V_3(String channel) {
       String target = channel == null ? "" : channel.trim();
       if (!target.isBlank()) {
-         ActionEditorOverlay existing = ActionEditorOverlay.load_ActionEditorOverla();
+         ActionEditorOverlay existing = ActionEditorOverlay.getExisting();
          if (existing == null || !existing.init_Z_Str(target)) {
             autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
             action.channel = target;
@@ -5289,8 +5289,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             action.payloadPhase = "PLAY";
             action.sourceProtocol = "play";
             action.payloadProvenance = "serverInfoChannel";
-            ActionEditorOverlay editor = ActionEditorOverlay.init_ActionEditorOverla_2();
-            editor.init_V_H(action);
+            ActionEditorOverlay editor = ActionEditorOverlay.getInstance();
+            editor.openPayload(action);
             OverlayManager.getInstance().bringToFront(editor);
          }
       }
@@ -7288,7 +7288,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.SyncManager uiContext = autismclient.gui.f.UiHelper.init(
                context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             );
-            SliderRenderer.init(uiContext, bounds, SliderRenderer.init_D_D(this.close, this.sync, this.flush), this.containsPoint(context.mouseX(), context.mouseY()) || this.write_Z);
+            SliderRenderer.init(uiContext, bounds, SliderRenderer.ratio(this.close, this.sync, this.flush), this.containsPoint(context.mouseX(), context.mouseY()) || this.write_Z);
          }
       }
 

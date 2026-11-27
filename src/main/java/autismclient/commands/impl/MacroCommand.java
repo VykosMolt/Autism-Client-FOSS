@@ -40,7 +40,7 @@ public class MacroCommand extends Command {
                   }
                ))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.init_CachePool())
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
                   .executes(
                      ctx -> {
                         String name = autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name");
@@ -62,7 +62,7 @@ public class MacroCommand extends Command {
          return 1;
       }));
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.init_CachePool())
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
                .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"), 1, 0)))
             .then(
                ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))

@@ -32,7 +32,7 @@ public final class KeyValueLabelNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueLabelNode init_JsonUtil(boolean growX) {
+   public KeyValueLabelNode withGrowX(boolean growX) {
       super.setGrowX(growX);
       return this;
    }

@@ -51,7 +51,7 @@ public final class TextFieldRenderer {
 
       try {
          if (focused && selectionStart >= 0 && selectionEnd > selectionStart) {
-            int start = Utf16TextCursor.init_I(value, selectionStart);
+            int start = Utf16TextCursor.clampIndex(value, selectionStart);
             int end = Utf16TextCursor.load(value, selectionEnd);
             int selectX = textX + widths.applyAsInt(value.substring(0, start));
             int selectW = Math.max(1, widths.applyAsInt(value.substring(0, end)) - widths.applyAsInt(value.substring(0, start)));
@@ -65,7 +65,7 @@ public final class TextFieldRenderer {
          context.init_PoolEntry()
             .draw(context.init_GuiGraphicsExtract(), shown, textX, textY, value.isEmpty() ? colors.textSecondary : colors.textPrimary);
          if (focused) {
-            String before = value.substring(0, Utf16TextCursor.init_I(value, cursor));
+            String before = value.substring(0, Utf16TextCursor.clampIndex(value, cursor));
             int caret = Math.min(bounds.init() - 3, textX + widths.applyAsInt(before));
             autismclient.gui.f.PacketUtil.init(
                context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(caret, bounds.write() + 3, 1, Math.max(1, bounds.sync() - 6)), colors.textPrimary
@@ -82,7 +82,7 @@ public final class TextFieldRenderer {
 
    public static int init(String text, int cursor, int availableWidth, ToIntFunction<String> widths, int previousScroll) {
       String value = text == null ? "" : text;
-      int boundary = Utf16TextCursor.init_I(value, cursor);
+      int boundary = Utf16TextCursor.clampIndex(value, cursor);
       int width = Math.max(1, availableWidth);
       int caret = widths.applyAsInt(value.substring(0, boundary));
       int maxScroll = Math.max(0, widths.applyAsInt(value) - width);

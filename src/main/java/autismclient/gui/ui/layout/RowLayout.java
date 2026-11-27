@@ -38,7 +38,7 @@ public class RowLayout extends LayoutContainer {
       return this;
    }
 
-   public RowLayout init_StreamUtil(boolean underlineOnHover) {
+   public RowLayout setUnderlineOnHover(boolean underlineOnHover) {
       this.write_Z = underlineOnHover;
       return this;
    }

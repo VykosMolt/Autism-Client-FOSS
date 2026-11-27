@@ -16,7 +16,7 @@ final class AiCraftCapacity {
    private AiCraftCapacity() {
    }
 
-   static boolean init_Z_J_CachePool_Z(autismclient.util.AutoCraftingEngine.CraftResult result, boolean allowed) {
+   static boolean isCapacityFailure(autismclient.util.AutoCraftingEngine.CraftResult result, boolean allowed) {
       return allowed
          && !result.success
          && !result.uncertain
@@ -24,7 +24,7 @@ final class AiCraftCapacity {
          && result.failureReason == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL;
    }
 
-   static JsonObject init_JsonObject_g_CachePool(AiCraftPlanner.CraftPlan plan, int firstStep, String target, int seconds, AiCraftPlanner.CraftPlan... obligations) {
+   static JsonObject tidyPlan(AiCraftPlanner.CraftPlan plan, int firstStep, String target, int seconds, AiCraftPlanner.CraftPlan... obligations) {
       Set<String> keep = new LinkedHashSet<>();
       keep.add(target);
       keep.add("minecraft:crafting_table");
@@ -55,7 +55,7 @@ final class AiCraftCapacity {
       return AiJson.objectOf("action", "drop", "freeSlots", 2, "maxDrops", 2, "timeoutSeconds", Math.max(5, Math.min(15, seconds)), "keep", ids);
    }
 
-   static AiOperation init_AiOperation_AiOperation_Result(
+   static AiOperation tidyThenRetry(
       final AiOperation.Result rejection, final AiOperation tidy, final Supplier<AiOperation> retry, final IntSupplier freeSlots
    ) {
       return new AiOperation() {

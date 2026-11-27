@@ -74,7 +74,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
    private void autism$registerPackSession(Connection connection, PackPromptStatus promptStatus, CallbackInfo ci) {
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
       if (context != null) {
-         ResourcePackSessionTracker.PackSession contextSession = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
+         ResourcePackSessionTracker.PackSession contextSession = ResourcePackSessionTracker.sessionFor(context);
          ResourcePackSessionTracker.PackSession sourceSession = ResourcePackSessionTracker.init(this);
          ResourcePackSessionTracker.init_V(contextSession);
          if (sourceSession != null && sourceSession != contextSession) {
@@ -130,7 +130,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "createPackResponseSender", at = @At("RETURN"), cancellable = true)
    private static void autism$scopePackResponses(Connection connection, CallbackInfoReturnable<PackLoadFeedback> cir) {
-      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(ConnectionPrivacyRegistry.getActive(connection));
+      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionFor(ConnectionPrivacyRegistry.getActive(connection));
       if (session != null) {
          cir.setReturnValue(IsolatedPackDownloader.init(session, cir.getReturnValue()));
       }
@@ -139,9 +139,9 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
    @Inject(method = "waitForPackFeedback", at = @At("HEAD"), cancellable = true)
    private void autism$scopedPackWait(final UUID packId, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
       final ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(this);
-      final long generation = ResourcePackSessionTracker.init_J(session, packId);
-      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
-      if (policy != null && policy != ResourcePackSessionTracker.PackPolicy.FULL && ResourcePackSessionTracker.init_Z(session, packId, generation)) {
+      final long generation = ResourcePackSessionTracker.generation(session, packId);
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
+      if (policy != null && policy != ResourcePackSessionTracker.PackPolicy.FULL && ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
          final CompletableFuture<Void> future = new CompletableFuture<>();
          @SuppressWarnings("unchecked")
          final java.util.function.BiConsumer<UUID, FinalResult>[] callbackRef = new java.util.function.BiConsumer[1];
@@ -156,7 +156,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
                if (this.autism$waitCallbacks.isEmpty()
                   && this.packFeedback == this.autism$waitRouter
-                  && ResourcePackSessionTracker.init_FileCache_BufferHe(session.init_BufferHelper_Strea()) == session) {
+                  && ResourcePackSessionTracker.sessionFor(session.context()) == session) {
                   this.packFeedback = this.autism$waitRouterBase;
                   this.autism$waitRouterBase = null;
                }

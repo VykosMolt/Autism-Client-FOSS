@@ -133,7 +133,7 @@ public final class AiContext {
    private AiContext() {
    }
 
-   static long init_J(long characters) {
+   static long estimateTokens(long characters) {
       return (long)Math.ceil(characters / 3.5);
    }
 

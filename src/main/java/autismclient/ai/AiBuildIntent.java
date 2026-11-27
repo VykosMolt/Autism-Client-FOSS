@@ -42,7 +42,7 @@ final class AiBuildIntent {
    private AiBuildIntent() {
    }
 
-   static AiBuildSite.Inner_CachePool init_IoWorker_CachePool(AiBuilder.CellSpec cell) {
+   static AiBuildSite.Inner_CachePool kindOf(AiBuilder.CellSpec cell) {
       if (AiBuilder.isTransientPistonCell(cell)) {
          return AiBuildSite.Inner_CachePool.DERIVED;
       } else if (AiBuilder.isOmittedSchematicCell(cell)) {
@@ -57,7 +57,7 @@ final class AiBuildIntent {
          return AiBuildSite.Inner_CachePool.SPECIAL;
       } else if (write(cell)) {
          return AiBuildSite.Inner_CachePool.INTERACT;
-      } else if (read_Z(cell)) {
+      } else if (isPoweredLever(cell)) {
          return AiBuildSite.Inner_CachePool.SIMPLE;
       } else {
          return sync(cell) ? AiBuildSite.Inner_CachePool.INTERACT : AiBuildSite.Inner_CachePool.SIMPLE;
@@ -65,10 +65,10 @@ final class AiBuildIntent {
    }
 
    static Item init_Item(AiBuilder.CellSpec cell) {
-      return init_Item(cell, init_IoWorker_CachePool(cell));
+      return itemFor(cell, kindOf(cell));
    }
 
-   static Item init_Item(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
+   static Item itemFor(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
       if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return Items.AIR;
       }
@@ -101,10 +101,10 @@ final class AiBuildIntent {
    }
 
    static List<BlockPos> load_List(AiBuilder.CellSpec cell) {
-      return init_List(cell, init_IoWorker_CachePool(cell));
+      return offsetsFor(cell, kindOf(cell));
    }
 
-   static List<BlockPos> init_List(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
+   static List<BlockPos> offsetsFor(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
       if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return List.of();
       } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
@@ -136,7 +136,7 @@ final class AiBuildIntent {
    }
 
    static Float init_Float(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
+      AiBuildSite.Inner_CachePool kind = kindOf(cell);
       if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
       }
@@ -151,7 +151,7 @@ final class AiBuildIntent {
    }
 
    static Predicate<Direction> init_Predicate(AiBuilder.CellSpec cell, BlockPos target) {
-      AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
+      AiBuildSite.Inner_CachePool kind = kindOf(cell);
       if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
       } else {
@@ -167,7 +167,7 @@ final class AiBuildIntent {
    }
 
    static Boolean init_Boolean(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
+      AiBuildSite.Inner_CachePool kind = kindOf(cell);
       return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, init_Block(cell));
    }
 
@@ -197,7 +197,7 @@ final class AiBuildIntent {
    }
 
    static boolean init_Z(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
+      AiBuildSite.Inner_CachePool kind = kindOf(cell);
       return kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT;
    }
 
@@ -242,12 +242,12 @@ final class AiBuildIntent {
       }
    }
 
-   static boolean read_Z(AiBuilder.CellSpec cell) {
+   static boolean isPoweredLever(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:lever") && "true".equals(cell.properties().get("powered"));
    }
 
-   static AiBuilder.CellSpec init_TableIndex_StreamU(AiBuilder.CellSpec cell) {
-      if (!read_Z(cell)) {
+   static AiBuilder.CellSpec unpoweredLever(AiBuilder.CellSpec cell) {
+      if (!isPoweredLever(cell)) {
          return cell;
       }
 
@@ -264,7 +264,7 @@ final class AiBuildIntent {
       ArrayList<AiBuilder.CellSpec> controls = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         if (read_Z(cell)) {
+         if (isPoweredLever(cell)) {
             controls.add(cell);
          }
       }

@@ -19,7 +19,7 @@ public final class AiCraftPlanner {
    }
 
    public static AiCraftPlanner.CraftPlan init(AiCraftPlanner.RecipeGraph graph, String itemId, int quantity) {
-      int held = Math.max(0, graph.init_I(itemId));
+      int held = Math.max(0, graph.held(itemId));
       if (quantity > 0 && held < quantity) {
          AiCraftPlanner.StockLedger state = new AiCraftPlanner.StockLedger(graph);
          state.init_Map.put(itemId, held);
@@ -145,7 +145,7 @@ public final class AiCraftPlanner {
       }
 
       int init_I(String itemId) {
-         return this.init_Map.computeIfAbsent(itemId, id -> Math.max(0, this.init_g_StreamUtil.init_I(id)));
+         return this.init_Map.computeIfAbsent(itemId, id -> Math.max(0, this.init_g_StreamUtil.held(id)));
       }
 
       void init(String itemId, int amount) {
@@ -176,7 +176,7 @@ public final class AiCraftPlanner {
             AiCraftPlanner.PlanBranch complete = null;
 
             try {
-               for (AiCraftPlanner.RecipeSpec recipe : AiCraftPlanner.load(this.init_g_StreamUtil.init_List(itemId))) {
+               for (AiCraftPlanner.RecipeSpec recipe : AiCraftPlanner.load(this.init_g_StreamUtil.recipesFor(itemId))) {
                   int perCraft = Math.max(1, recipe.outputCount());
                   int crafts = (need + perCraft - 1) / perCraft;
                   List<AiCraftPlanner.CraftStep> attemptSteps = new ArrayList<>();
@@ -384,7 +384,7 @@ public final class AiCraftPlanner {
       }
 
       private boolean init_Z(String itemId) {
-         for (AiCraftPlanner.RecipeSpec recipe : this.init_g_StreamUtil.init_List(itemId)) {
+         for (AiCraftPlanner.RecipeSpec recipe : this.init_g_StreamUtil.recipesFor(itemId)) {
             boolean covered = !recipe.inputs().isEmpty();
 
             for (List<String> slot : recipe.inputs()) {
@@ -416,12 +416,12 @@ public final class AiCraftPlanner {
    }
 
    public interface RecipeGraph {
-      List<AiCraftPlanner.RecipeSpec> init_List(String var1);
+      List<AiCraftPlanner.RecipeSpec> recipesFor(String var1);
 
-      int init_I(String var1);
+      int held(String var1);
 
       default int load_I(String itemId) {
-         return this.init_List(itemId).isEmpty() ? 2 : 1;
+         return this.recipesFor(itemId).isEmpty() ? 2 : 1;
       }
 
       default String init(Set<String> variantIds) {

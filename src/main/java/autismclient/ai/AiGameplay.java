@@ -187,7 +187,7 @@ final class AiGameplay {
       }
    }
 
-   static JsonObject init_JsonObject(JsonObject args) {
+   static JsonObject readItemText(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AbstractContainerMenu menu = mc.player.containerMenu;
@@ -245,7 +245,7 @@ final class AiGameplay {
       return text.substring(0, Math.min(4096, text.length()));
    }
 
-   static JsonObject load_JsonObject(JsonObject args) {
+   static JsonObject readSignText(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       BlockPos pos = AiGameOperations.requireBlockPos(args);
       if (AiTerrain.isLoaded(mc.level, pos) && !(pos.distSqr(mc.player.blockPosition()) > 1024.0)) {
@@ -455,7 +455,7 @@ final class AiGameplay {
       final String item = AiJson.getString(args, "item", "");
       int amount = AiJson.getInt(args, "count", 1);
       if (!item.isBlank() && amount >= 1 && amount <= 2304) {
-         final List<String> ids = init_List(item);
+         final List<String> ids = expandIds(item);
          int baseline = init_I(ids);
          final int target = amount + (AiJson.getBoolean(args, "additional", false) ? baseline : 0);
          final Minecraft mc = Minecraft.getInstance();
@@ -527,9 +527,9 @@ final class AiGameplay {
                   );
                }
 
-               if (ids.contains("minecraft:blaze_rod") && (this.init_K.init_Z() || this.init_AiOperation.canInterruptNow()) && this.init_K.init(true, null)) {
+               if (ids.contains("minecraft:blaze_rod") && (this.init_K.hasPendingFire() || this.init_AiOperation.canInterruptNow()) && this.init_K.init(true, null)) {
                   return AiGameOperations.result(
-                     AiOperation.Status.RUNNING, this.init_K.init_Str(), AiJson.objectOf("firesExtinguished", this.init_K.init_I())
+                     AiOperation.Status.RUNNING, this.init_K.status(), AiJson.objectOf("firesExtinguished", this.init_K.firesExtinguished())
                   );
                } else {
                   AiOperation.Result r = this.init_bb.tickChild(this.init_AiOperation);
@@ -558,14 +558,14 @@ final class AiGameplay {
                data.addProperty("item", item);
                data.addProperty("count", AiGameplay.init_I(ids));
                data.addProperty("target", target);
-               data.addProperty("firesExtinguished", this.init_K.init_I());
+               data.addProperty("firesExtinguished", this.init_K.firesExtinguished());
                this.cancel();
                return new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure());
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_bb.requiresReconciliation(this.init()) && this.init_K.load_Z() && (this.init() == null || this.init().canInterruptNow());
+               return !this.init_bb.requiresReconciliation(this.init()) && this.init_K.canInterrupt() && (this.init() == null || this.init().canInterruptNow());
             }
 
             @Override
@@ -578,7 +578,7 @@ final class AiGameplay {
                if (!this.init_Z) {
                   this.init_Z = true;
                   this.init_bb.markReconciliationPending(this.init_K.read());
-                  this.init_K.init_V();
+                  this.init_K.reset();
                   this.init_bb.cancelChild(this.init_AiOperation);
                   this.init_bb.cancelChild(this.init_T_DataUtil);
                }
@@ -684,7 +684,7 @@ final class AiGameplay {
       }
    }
 
-   static List<String> init_List(String spec) {
+   static List<String> expandIds(String spec) {
       String id = spec.contains(":") ? spec : "minecraft:" + spec;
       Identifier parsed = Identifier.tryParse(id);
       if (parsed != null && BuiltInRegistries.ITEM.containsKey(parsed)) {
@@ -717,7 +717,7 @@ final class AiGameplay {
       return total;
    }
 
-   static int init_I(Minecraft mc) {
+   static int pingMs(Minecraft mc) {
       int ms = 0;
       ClientPacketListener connection = mc.getConnection();
       if (connection != null && mc.player != null) {

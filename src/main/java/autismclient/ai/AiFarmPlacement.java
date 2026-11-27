@@ -41,7 +41,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       if (mc.player != null && mc.level != null) {
          this.init_ClientLevel = mc.level;
          this.init_Str = cropBlock;
-         this.load_Str = AiFarmArea.init_Str(AiJson.objectOf("substrate", substrate), cropBlock);
+         this.load_Str = AiFarmArea.substrateFor(AiJson.objectOf("substrate", substrate), cropBlock);
          this.read_BlockPos = previous == null ? null : previous.from();
          this.write = previous == null ? mc.player.blockPosition().below() : previous.to();
          this.load_Z = previous != null;
@@ -132,7 +132,7 @@ final class AiFarmPlacement extends AiPlacementSession {
             + " / "
             + area.layout(this.load_Str).plots()
             + " plots / "
-            + (AiFarmArea.init_Z(this.load_Str) ? "soul sand" : "dirt and water");
+            + (AiFarmArea.isSoulSand(this.load_Str) ? "soul sand" : "dirt and water");
    }
 
    String update() {
@@ -299,7 +299,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    public void cancel() {
       if (!this.read_Z) {
          this.read_Z = true;
-         AiVisualization.init_V(this);
+         AiVisualization.clearOwner(this);
       }
    }
 

@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismGuiRenderStateResetMixin {
    @Inject(method = "reset", at = @At("HEAD"))
    private void autism$clearScissorMirror(CallbackInfo ci) {
-      UiScissorStack.load_V();
+      UiScissorStack.clear();
       SubpixelScissorTracker.init();
-      autismclient.gui.ui.UiAlphaStack.init_V_I(0);
+      autismclient.gui.ui.UiAlphaStack.popTo(0);
    }
 }

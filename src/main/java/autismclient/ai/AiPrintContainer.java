@@ -120,7 +120,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       this.write_Z = inspectEmpty;
       this.update_Z = requireInitiallyEmpty;
       this.load_Z = this.init_BlockState.is(Blocks.HOPPER) && !this.init_BlockState.getValue(BlockStateProperties.ENABLED);
-      int size = AiSavedContents.init_I(this.init_BlockState);
+      int size = AiSavedContents.slotCount(this.init_BlockState);
       if (!inspectEmpty && this.init_Map.isEmpty() || size == 0 || this.init_Map.keySet().stream().anyMatch(index -> index < 0 || index >= size)) {
          throw new IllegalArgumentException("Invalid saved container slots at " + this.init_BlockPos.toShortString());
       }
@@ -624,7 +624,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   return this.init_BitSetUtil_DataUti;
                }
 
-               this.load_Str = this.init_ae.init_Str_13();
+               this.load_Str = this.init_ae.receiptJson();
                if (progress.status() != AiOperation.Status.SUCCEEDED
                   || !this.init_AbstractContainerM.getSlot(this.init_I).getItem().isEmpty()
                   || !this.init_AbstractContainerM.getCarried().isEmpty()) {
@@ -703,7 +703,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
                               this.init_I = index;
                               this.load_ItemStack = stack.copy();
-                              int count = AiInventoryController.init_I_Container_ItemStack_2(this.init_Minecraft.player.getInventory(), this.load_ItemStack);
+                              int count = AiInventoryController.countMatching(this.init_Minecraft.player.getInventory(), this.load_ItemStack);
                               this.init_ae = new AiInventoryController(
                                  this.init_AbstractContainerM.containerId, this.load_ItemStack, count + this.load_ItemStack.getCount(), Set.of(index), null
                               );
@@ -797,7 +797,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   return this.init_BitSetUtil_DataUti;
                }
 
-               this.load_Str = this.init_ae.init_Str_13();
+               this.load_Str = this.init_ae.receiptJson();
                if (progress.status() != AiOperation.Status.SUCCEEDED) {
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN, this.init_Str);
                }
@@ -926,7 +926,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    private void update_V() {
       if (this.init_Minecraft.player.containerMenu == this.init_AbstractContainerM && this.init_AbstractContainerM.getCarried().isEmpty()) {
-         AiMenuClose.init_Z();
+         AiMenuClose.closeMenu();
          this.init_DataUtil.clearRecentClick();
       }
    }
@@ -970,7 +970,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          "currentTargetSlot",
          this.read_List != null && this.read_I < this.read_List.size() ? this.read_List.get(this.read_I).getKey() : -1
       );
-      receipt.add("transfer", JsonParser.parseString(this.init_ae == null ? this.load_Str : this.init_ae.init_Str_13()));
+      receipt.add("transfer", JsonParser.parseString(this.init_ae == null ? this.load_Str : this.init_ae.receiptJson()));
       return receipt.toString();
    }
 

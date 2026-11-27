@@ -87,11 +87,11 @@ public final class ProtectorFeatureFlags {
       return init(256);
    }
 
-   public static void init_V() {
-      init_V(AutismConfig.getGlobal());
+   public static void refresh() {
+      refresh(AutismConfig.getGlobal());
    }
 
-   public static void init_V(AutismConfig config) {
+   public static void refresh(AutismConfig config) {
       if (config == null) {
          load_HashUtil_DataUtil = init_HashUtil_DataUtil;
       } else {
@@ -113,7 +113,7 @@ public final class ProtectorFeatureFlags {
          return state;
       }
 
-      init_V(AutismConfig.getGlobal());
+      refresh(AutismConfig.getGlobal());
       return load_HashUtil_DataUtil;
    }
 
@@ -171,11 +171,11 @@ public final class ProtectorFeatureFlags {
       }
    }
 
-   static Object init_Obj() {
+   static Object identity() {
       return load_HashUtil_DataUtil;
    }
 
-   public static void init_V(Packet<?> packet) {
+   public static void markDirect(Packet<?> packet) {
       if (packet != null) {
          synchronized (init_Map) {
             if (init_Map.size() >= 1024) {
@@ -191,7 +191,7 @@ public final class ProtectorFeatureFlags {
       }
    }
 
-   public static boolean init_Z(Packet<?> packet) {
+   public static boolean isDirect(Packet<?> packet) {
       return packet == null ? false : init_Map.containsKey(packet);
    }
 

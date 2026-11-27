@@ -161,7 +161,7 @@ final class AiDragon {
       return init(bx, bz, px, pz, distance);
    }
 
-   static List<double[]> init_List(Minecraft mc) {
+   static List<double[]> breathClouds(Minecraft mc) {
       List<double[]> out = new ArrayList<>();
       if (mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -179,17 +179,17 @@ final class AiDragon {
       }
    }
 
-   static boolean init_Z(Minecraft mc) {
-      return mc.player != null && !init_Z_D(mc.player.getX(), mc.player.getZ(), init_List(mc), -0.45);
+   static boolean isInBreath(Minecraft mc) {
+      return mc.player != null && !isClearOfClouds(mc.player.getX(), mc.player.getZ(), breathClouds(mc), -0.45);
    }
 
-   static AiOperation init_AiOperation(Minecraft mc) {
+   static AiOperation escapeBreath(Minecraft mc) {
       return init_AiOperation_Minecraft_D(mc, 1.0);
    }
 
    static AiOperation init_AiOperation_Minecraft_D(Minecraft mc, double extra) {
-      List<double[]> clouds = init_List(mc);
-      AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_Z(mc) ? AiDragonZones.init_r_DataUtil(mc) : AiDragonZones.Inner_DataUtil.NONE;
+      List<double[]> clouds = breathClouds(mc);
+      AiDragonZones.Inner_DataUtil zones = AiDragonZones.isDragonPerched(mc) ? AiDragonZones.zones(mc) : AiDragonZones.Inner_DataUtil.NONE;
       if (clouds.isEmpty()) {
          return null;
       }
@@ -199,12 +199,12 @@ final class AiDragon {
       double bestD = 1.7976931348623157E308;
 
       for (BlockPos p : BlockPos.betweenClosed(feet.offset(-8, -2, -8), feet.offset(8, 2, 8))) {
-         if (init_Z_D(p.getX() + 0.5, p.getZ() + 0.5, clouds, extra) && !zones.hits(AiDragonZones.init_AABB_I(p.getX(), p.getY(), p.getZ()), 1.0)) {
+         if (isClearOfClouds(p.getX() + 0.5, p.getZ() + 0.5, clouds, extra) && !zones.hits(AiDragonZones.cellBox(p.getX(), p.getY(), p.getZ()), 1.0)) {
             BlockPos below = p.below();
             if (!mc.level.getBlockState(below).getCollisionShape(mc.level, below).isEmpty()
                && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
                && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
-               && AiCombat.init_Z_Minecraft_BlockPos(mc, p)) {
+               && AiCombat.isSafeStep(mc, p)) {
                double d = p.distSqr(feet);
                if (d < bestD) {
                   bestD = d;
@@ -218,10 +218,10 @@ final class AiDragon {
    }
 
    static boolean init_Z(double x, double z, List<double[]> clouds) {
-      return init_Z_D(x, z, clouds, 0.0);
+      return isClearOfClouds(x, z, clouds, 0.0);
    }
 
-   static boolean init_Z_D(double x, double z, List<double[]> clouds, double extra) {
+   static boolean isClearOfClouds(double x, double z, List<double[]> clouds, double extra) {
       for (double[] cloud : clouds) {
          double dx = x - cloud[0];
          double dz = z - cloud[1];
@@ -273,7 +273,7 @@ final class AiDragon {
       return statMet || portalActive;
    }
 
-   static AiOperation init_AiOperation(final JsonObject args) {
+   static AiOperation create(final JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          if (mc.level.dimension() != Level.END) {
@@ -590,7 +590,7 @@ final class AiDragon {
                            if (!mc.level.getBlockState(below).getCollisionShape(mc.level, below).isEmpty()
                               && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
                               && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
-                              && AiCombat.init_Z_Minecraft_BlockPos(mc, p)
+                              && AiCombat.isSafeStep(mc, p)
                               && AiDragon.init_Z(p.getX() + 0.5, p.getZ() + 0.5, this.init_List_11())) {
                               double score = p.distSqr(feet);
                               if (score < bestScore) {
@@ -612,7 +612,7 @@ final class AiDragon {
 
                      this.load_V_15();
                      this.sync_AiOperation = AiGoto.travelToCompat(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true);
-                     AiSpeedrun.init_V_Str_ObjArr(
+                     AiSpeedrun.log(
                         "[AI] dragon: charging at the player ({} off its line); stepping to {}", String.format(Locale.ROOT, "%.1f", off), best.toShortString()
                      );
                      return this.init("The dragon charges; stepping out of its line");
@@ -644,8 +644,8 @@ final class AiDragon {
                      return null;
                   }
 
-                  boolean inZone = AiDragonZones.init_Z(mc) && AiDragonZones.init_r_DataUtil(mc).hits(mc.player.getBoundingBox(), 0.6);
-                  boolean clouded = this.init_q_1_DataUtil != Inner_DataUtil.DETONATE && !mc.player.isInWater() && AiDragon.init_Z(mc);
+                  boolean inZone = AiDragonZones.isDragonPerched(mc) && AiDragonZones.zones(mc).hits(mc.player.getBoundingBox(), 0.6);
+                  boolean clouded = this.init_q_1_DataUtil != Inner_DataUtil.DETONATE && !mc.player.isInWater() && AiDragon.isInBreath(mc);
                   if (!inZone && !clouded) {
                      return null;
                   }
@@ -692,7 +692,7 @@ final class AiDragon {
                   }
 
                   this.update_AiOperation = out;
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] dragon: inside the wing push or the breath at {} ({}); stepping out",
                      mc.player.blockPosition().toShortString(),
                      this.init_q_1_DataUtil
@@ -751,8 +751,8 @@ final class AiDragon {
                   this.write_AiOperation = null;
                   return this.init("Fire handled");
                } else if (this.init_q_1_DataUtil != Inner_DataUtil.DETONATE && !mc.player.isInWater()) {
-                  if (AiDragon.init_Z(mc)) {
-                     AiOperation out = AiDragon.init_AiOperation(mc);
+                  if (AiDragon.isInBreath(mc)) {
+                     AiOperation out = AiDragon.escapeBreath(mc);
                      if (out != null) {
                         this.load_V_15();
                         this.write_AiOperation = out;
@@ -765,7 +765,7 @@ final class AiDragon {
                      return null;
                   }
 
-                  AiOperation op = AiEndRun.init_AiOperation(mc);
+                  AiOperation op = AiEndRun.douseFire(mc);
                   if (op == null && inFire) {
                      op = AiEndRun.load_AiOperation(mc);
                   }
@@ -839,7 +839,7 @@ final class AiDragon {
                }
 
                if (!action.equals(this.write_Str)) {
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] dragon: {} (perch {}, phase {}, health {}, beds {} usable {}, fountain {}, armed {}, bow {})",
                      action,
                      this.init_q_CachePool,
@@ -952,7 +952,7 @@ final class AiDragon {
                      return this.init("Crystals cleared; engaging the dragon");
                   } else {
                      this.init_V(r);
-                     AiSpeedrun.init_V_Str_ObjArr(
+                     AiSpeedrun.log(
                         "[AI] dragon: crystal outcomes {}",
                         String.valueOf(JsonParser.parseString(r.dataJson() == null ? "{}" : r.dataJson()).getAsJsonObject().get("outcomes"))
                      );
@@ -1013,7 +1013,7 @@ final class AiDragon {
                   return this.init("The perch window closed; re-planning");
                }
 
-               EnderDragon sitter = AiDragonZones.init_EnderDragon(mc);
+               EnderDragon sitter = AiDragonZones.perchedDragon(mc);
                double fromFountain = this.init_BlockPos == null
                   ? 0.0
                   : Math.hypot(mc.player.getX() - this.init_BlockPos.getX() - 0.5, mc.player.getZ() - this.init_BlockPos.getZ() - 0.5);
@@ -1058,7 +1058,7 @@ final class AiDragon {
                         this.write_BlockPos = null;
                         this.close_BlockPos = null;
                         this.init_q_1_DataUtil = Inner_DataUtil.RETREAT;
-                        AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: a bed already stands at {}; arming it", standing.toShortString());
+                        AiSpeedrun.log("[AI] dragon: a bed already stands at {}; arming it", standing.toShortString());
                         return this.init("A bed already stands by the fountain; backing out of the blast");
                      }
                   }
@@ -1068,16 +1068,16 @@ final class AiDragon {
                         return this.init("Waiting for the dragon to turn; no bed cell clear of its wings yet");
                      }
 
-                     this.write_BlockPos = AiDragonZones.init_Z(mc) ? this.write_BlockPos_2() : this.read_BlockPos_5();
+                     this.write_BlockPos = AiDragonZones.isDragonPerched(mc) ? this.write_BlockPos_2() : this.read_BlockPos_5();
                      this.run = 0;
-                     if (this.write_BlockPos == null && AiDragonZones.init_Z(mc)) {
+                     if (this.write_BlockPos == null && AiDragonZones.isDragonPerched(mc)) {
                         this.sync_J = System.nanoTime() + 500000000L;
                         return this.init("Waiting for the dragon to turn; no bed cell clear of its wings yet");
                      }
 
                      if (this.write_BlockPos == null) {
                         this.poll_Z = false;
-                        AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "No placeable bed cell by the fountain; falling back to melee and bow");
+                        AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "No placeable bed cell by the fountain; falling back to melee and bow");
                         this.init_q_1_DataUtil = Inner_DataUtil.SELECT;
                         return this.init("No placeable bed cell by the fountain; falling back to melee and bow");
                      }
@@ -1089,7 +1089,7 @@ final class AiDragon {
                         this.write_BlockPos = null;
                         this.update_BlockPos = null;
                         this.poll_Z = false;
-                        AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "No bed can be brought to hand; falling back to melee and bow");
+                        AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "No bed can be brought to hand; falling back to melee and bow");
                         this.init_q_1_DataUtil = Inner_DataUtil.SELECT;
                         return this.init("No bed can be brought to hand; falling back to melee and bow");
                      }
@@ -1169,7 +1169,7 @@ final class AiDragon {
 
                      this.poll_Z = false;
                      this.read_Z = true;
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "three unconfirmed bed clicks (until the next perch)");
+                     AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "three unconfirmed bed clicks (until the next perch)");
                      return this.init("Bed click unconfirmed three times; falling back to melee and bow");
                   } else {
                      if (this.update_Z) {
@@ -1187,7 +1187,7 @@ final class AiDragon {
                            this.init_Set.add(triedSupport.asLong());
                         }
 
-                        AiSpeedrun.init_V_Str_ObjArr(
+                        AiSpeedrun.log(
                            "[AI] dragon: bed placement failed at {} ({}: {}), failure {}",
                            triedSupport == null ? "?" : triedSupport.toShortString(),
                            r.status(),
@@ -1201,7 +1201,7 @@ final class AiDragon {
 
                         this.poll_Z = false;
                         this.read_Z = true;
-                        AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "three bed placements failed (until the next perch)");
+                        AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "three bed placements failed (until the next perch)");
                         return this.init("Bed placement failed (" + r.message() + "); falling back to melee and bow");
                      } else {
                         this.load_BlockPos = this.update_BlockPos;
@@ -1230,8 +1230,8 @@ final class AiDragon {
                   if (bedState.hasProperty(BedBlock.FACING)) {
                      Direction back = bedState.getValue(BedBlock.FACING).getOpposite();
                      Direction side = back.getClockWise();
-                     AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_r_DataUtil(mc);
-                     double[] breath = AiDragonZones.init_DArr(mc);
+                     AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+                     double[] breath = AiDragonZones.breath(mc);
                      List<double[]> lying = this.init_List_11();
                      if (this.open_BlockPos != null
                         && AiDragonZones.init(zones, breath, lying, this.open_BlockPos.getX(), this.open_BlockPos.getY(), this.open_BlockPos.getZ())) {
@@ -1303,10 +1303,10 @@ final class AiDragon {
                this.init_q_StreamUtil.load(AiDragon.Inner_DataUtil.LEG, this.init_AiOperation);
                this.init_AiOperation = null;
                this.read_BlockPos = null;
-               if (AiDanger.init_i_DataUtil_Minecraft(mc).lethal()) {
+               if (AiDanger.assess(mc).lethal()) {
                   this.load_BlockPos = null;
                   this.poll_Z = false;
-                  AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "The blast at click range would be lethal; leaving beds out of the plan");
+                  AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "The blast at click range would be lethal; leaving beds out of the plan");
                   this.init_q_1_DataUtil = Inner_DataUtil.SELECT;
                   return this.init("The blast at click range would be lethal; leaving beds out of the plan");
                }
@@ -1364,7 +1364,7 @@ final class AiDragon {
 
                this.init_q_StreamUtil.load(AiDragon.Inner_DataUtil.LEG, this.init_AiOperation);
                this.init_AiOperation = null;
-               AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: cover block in {}: {} ({})", this.sync_BlockPos.toShortString(), r.status(), AiSpeedrun.init_Str_Str(r.message()));
+               AiSpeedrun.log("[AI] dragon: cover block in {}: {} ({})", this.sync_BlockPos.toShortString(), r.status(), AiSpeedrun.clip(r.message()));
                if (r.status() != AiOperation.Status.SUCCEEDED && ++this.reset < 2 && mc.level.getBlockState(this.sync_BlockPos).canBeReplaced()) {
                   return this.init("Cover not confirmed; setting it again");
                }
@@ -1426,7 +1426,7 @@ final class AiDragon {
                      Math.clamp(eye.z, this.load_BlockPos.getZ(), this.load_BlockPos.getZ() + 1.0)
                   )
                );
-               if (!AiDanger.init_i_DataUtil_Minecraft(mc).lethal() && AiDragon.init_Z(mc.player.getX(), mc.player.getZ(), this.init_List_11()) && !(distance > reach - 0.3)) {
+               if (!AiDanger.assess(mc).lethal() && AiDragon.init_Z(mc.player.getX(), mc.player.getZ(), this.init_List_11()) && !(distance > reach - 0.3)) {
                   return this.init("Bed armed; waiting for the head (" + this.init_Str + ")");
                }
 
@@ -1451,10 +1451,10 @@ final class AiDragon {
                } else {
                   this.init_q_StreamUtil.load(AiDragon.Inner_DataUtil.LEG, this.init_AiOperation);
                   this.init_AiOperation = null;
-                  if (AiDanger.init_i_DataUtil_Minecraft(mc).lethal()) {
+                  if (AiDanger.assess(mc).lethal()) {
                      this.load_BlockPos = null;
                      this.poll_Z = false;
-                     AiSpeedrun.init_V_Str_ObjArr("[AI] dragon: beds out of the plan: {}", "Stand-off is no longer survivable; leaving beds out of the plan");
+                     AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "Stand-off is no longer survivable; leaving beds out of the plan");
                      this.init_q_1_DataUtil = Inner_DataUtil.SELECT;
                      return this.init("Stand-off is no longer survivable; leaving beds out of the plan");
                   } else if (r.status() != AiOperation.Status.SUCCEEDED && ++this.poll_I >= 3) {
@@ -1535,8 +1535,8 @@ final class AiDragon {
                      double expectedSelfDamage = Math.max(this.init_D, 8.0);
                      boolean safeBlast = (covered || this.init_D > 0.0)
                         && health - expectedSelfDamage >= 11.5
-                        && !AiDanger.init_i_DataUtil_Minecraft(mc).lethal()
-                        && !AiDragon.init_Z(mc)
+                        && !AiDanger.assess(mc).lethal()
+                        && !AiDragon.isInBreath(mc)
                         && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse();
                      if (safeBlast) {
                         this.init_DataUtil.aimAt(Vec3.atCenterOf(this.load_BlockPos));
@@ -1560,7 +1560,7 @@ final class AiDragon {
                            this.start = 0;
                            return this.init("Bed clicked; waiting for observed removal and dragon damage");
                         }
-                     } else if (!AiDragon.init_Z(mc) && !AiDanger.init_i_DataUtil_Minecraft(mc).lethal()) {
+                     } else if (!AiDragon.isInBreath(mc) && !AiDanger.assess(mc).lethal()) {
                         if (this.init_D > 0.0 && expectedSelfDamage + 11.5 > mc.player.getMaxHealth() + mc.player.getAbsorptionAmount()) {
                            if (++this.prev <= 3) {
                               this.pop_BlockPos = null;
@@ -1650,7 +1650,7 @@ final class AiDragon {
 
                EnderDragonPhase<?> dragonPhase = this.init_EnderDragon.getPhaseManager().getCurrentPhase().getPhase();
                List<double[]> clouds = this.init_List_11();
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_r_DataUtil(mc);
+               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
                boolean window = dragonPhase == EnderDragonPhase.SITTING_SCANNING || dragonPhase == EnderDragonPhase.SITTING_ATTACKING;
                if (!window) {
                   this.flush_BlockPos = null;
@@ -1659,12 +1659,12 @@ final class AiDragon {
                   }
 
                   List<double[]> danger = new ArrayList<>(clouds);
-                  double[] breath = AiDragonZones.init_DArr(mc);
+                  double[] breath = AiDragonZones.breath(mc);
                   if (breath != null) {
                      danger.add(breath);
                   }
 
-                  if (this.init_AiOperation == null && !AiDragon.init_Z_D(mc.player.getX(), mc.player.getZ(), danger, 1.0)) {
+                  if (this.init_AiOperation == null && !AiDragon.isClearOfClouds(mc.player.getX(), mc.player.getZ(), danger, 1.0)) {
                      BlockPos out = this.init(danger, zones);
                      if (out != null) {
                         this.init_AiOperation = AiGuard.allowDuringLowHealth(
@@ -1758,7 +1758,7 @@ final class AiDragon {
                      Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                      mc.player.resetAttackStrengthTicker();
                      this.read_I++;
-                     AiSpeedrun.init_V_Str_ObjArr(
+                     AiSpeedrun.log(
                         "[AI] dragon: struck the head ({}); dragon health {}",
                         this.read_I,
                         String.format(Locale.ROOT, "%.0f", this.init_EnderDragon.getHealth())
@@ -1782,10 +1782,10 @@ final class AiDragon {
                   if (!mc.level.getBlockState(below).getCollisionShape(mc.level, below).isEmpty()
                      && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
                      && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
-                     && !zones.hits(AiDragonZones.init_AABB_I(p.getX(), p.getY(), p.getZ()), 0.8)
-                     && AiDragon.init_Z_D(p.getX() + 0.5, p.getZ() + 0.5, clouds, 0.5)) {
+                     && !zones.hits(AiDragonZones.cellBox(p.getX(), p.getY(), p.getZ()), 0.8)
+                     && AiDragon.isClearOfClouds(p.getX() + 0.5, p.getZ() + 0.5, clouds, 0.5)) {
                      Vec3 eye = new Vec3(p.getX() + 0.5, p.getY() + mc.player.getEyeHeight(), p.getZ() + 0.5);
-                     if (!(headBox.distanceToSqr(eye) > reach * reach) && AiCombat.init_Z_Minecraft_BlockPos(mc, p)) {
+                     if (!(headBox.distanceToSqr(eye) > reach * reach) && AiCombat.isSafeStep(mc, p)) {
                         BlockHitResult ray = mc.level.clip(new ClipContext(eye, headBox.getCenter(), Block.COLLIDER, Fluid.NONE, mc.player));
                         if (ray.getType() != Type.BLOCK) {
                            double score = mc.player.distanceToSqr(p.getX() + 0.5, p.getY(), p.getZ() + 0.5);
@@ -1807,12 +1807,12 @@ final class AiDragon {
                double bestD = 1.7976931348623157E308;
 
                for (BlockPos p : BlockPos.betweenClosed(feet.offset(-8, -2, -8), feet.offset(8, 2, 8))) {
-                  if (AiDragon.init_Z_D(p.getX() + 0.5, p.getZ() + 0.5, danger, 1.5) && !zones.hits(AiDragonZones.init_AABB_I(p.getX(), p.getY(), p.getZ()), 1.0)) {
+                  if (AiDragon.isClearOfClouds(p.getX() + 0.5, p.getZ() + 0.5, danger, 1.5) && !zones.hits(AiDragonZones.cellBox(p.getX(), p.getY(), p.getZ()), 1.0)) {
                      BlockPos below = p.below();
                      if (!mc.level.getBlockState(below).getCollisionShape(mc.level, below).isEmpty()
                         && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
                         && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
-                        && AiCombat.init_Z_Minecraft_BlockPos(mc, p)) {
+                        && AiCombat.isSafeStep(mc, p)) {
                         double d = p.distSqr(feet);
                         if (d < bestD) {
                            bestD = d;
@@ -2027,7 +2027,7 @@ final class AiDragon {
                      && !this.write_Z
                      && this.init_Z_27()) {
                      this.write_Z = true;
-                     AiSpeedrun.init_V_Str_ObjArr(
+                     AiSpeedrun.log(
                         "[AI] dragon: healed from {} to {} between perches; crystals first while it flies",
                         String.format(Locale.ROOT, "%.0f", this.init_F),
                         String.format(Locale.ROOT, "%.0f", this.init_EnderDragon.getHealth())
@@ -2106,13 +2106,13 @@ final class AiDragon {
                double ux = len < 1.0E-6 ? 1.0 : dx / len;
                double uz = len < 1.0E-6 ? 0.0 : dz / len;
                List<double[]> dirs = new ArrayList<>();
-               Vec3 facing = AiDragonZones.init_Vec3(mc);
+               Vec3 facing = AiDragonZones.facing(mc);
                if (facing != null && facing.x * ux + facing.z * uz > 0.35) {
                   dirs.add(new double[]{facing.x, facing.z});
                }
 
                dirs.add(new double[]{ux, uz});
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_r_DataUtil(mc);
+               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
                BlockPos fallback = null;
                List<double[]> clouds = this.init_List_11();
 
@@ -2124,7 +2124,7 @@ final class AiDragon {
                         if (zones.isEmpty() || this.init(cx, cz, dir, radius, support.getY() + 1, zones)) {
                            if (AiDragon.init_Z(support.getX() + 0.5, support.getZ() + 0.5, clouds)) {
                               this.update_BlockPos = support.above();
-                              AiSpeedrun.init_V_Str_ObjArr(
+                              AiSpeedrun.log(
                                  "[AI] dragon: bed cell {} at {} blocks from the fountain{}",
                                  support.above().toShortString(),
                                  radius,
@@ -2151,13 +2151,13 @@ final class AiDragon {
             }
 
             BlockPos write_BlockPos_2() {
-               Entity head = AiDragonZones.init_Entity(mc);
+               Entity head = AiDragonZones.head(mc);
                if (head == null) {
                   return null;
                }
 
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_r_DataUtil(mc);
-               double[] breath = AiDragonZones.init_DArr(mc);
+               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               double[] breath = AiDragonZones.breath(mc);
                List<double[]> clouds = this.init_List_11();
                Vec3 h = head.getBoundingBox().getCenter();
                BlockPos me = mc.player.blockPosition();
@@ -2179,7 +2179,7 @@ final class AiDragon {
                         BlockPos ground = this.init(sx, sz);
                         if (ground != null) {
                            BlockPos stance = ground.above();
-                           if (AiDragonZones.init(zones, breath, clouds, sx, stance.getY(), sz) && AiCombat.init_Z_Minecraft_BlockPos(mc, stance)) {
+                           if (AiDragonZones.init(zones, breath, clouds, sx, stance.getY(), sz) && AiCombat.isSafeStep(mc, stance)) {
                               safeStances++;
                               double walk = Math.hypot(sx - me.getX(), sz - me.getZ());
 
@@ -2228,7 +2228,7 @@ final class AiDragon {
                if (bestFoot == null) {
                   if (mc.player.tickCount - this.clear > 100) {
                      this.clear = mc.player.tickCount;
-                     AiSpeedrun.init_V_Str_ObjArr(
+                     AiSpeedrun.log(
                         "[AI] dragon: no bed plan: {} safe stances, beds out of reach {}, blasts too close {}, too far from the head {}",
                         safeStances,
                         farBeds,
@@ -2242,7 +2242,7 @@ final class AiDragon {
                   this.close_BlockPos = bestStance;
                   this.open_BlockPos = bestStance;
                   this.update_BlockPos = bestFoot;
-                  AiSpeedrun.init_V_Str_ObjArr(
+                  AiSpeedrun.log(
                      "[AI] dragon: bed plan: stance {}, bed {}, blast {} from the head",
                      bestStance.toShortString(),
                      bestFoot.toShortString(),
@@ -2256,11 +2256,11 @@ final class AiDragon {
                for (double k = 2.0; k <= 4.0; k += 0.25) {
                   double x = cx + dir[0] * (radius + k);
                   double z = cz + dir[1] * (radius + k);
-                  if (!zones.hits(AiDragonZones.init_AABB_D(x, feetY, z), 1.0)) {
+                  if (!zones.hits(AiDragonZones.bodyBox(x, feetY, z), 1.0)) {
                      BlockPos ground = this.init(Mth.floor(x), Mth.floor(z));
                      if (ground != null
                         && Math.abs(ground.getY() + 1 - feetY) <= 1
-                        && !zones.hits(AiDragonZones.init_AABB_I(ground.getX(), ground.getY() + 1, ground.getZ()), 1.0)) {
+                        && !zones.hits(AiDragonZones.cellBox(ground.getX(), ground.getY() + 1, ground.getZ()), 1.0)) {
                         this.close_BlockPos = ground.above();
                         return true;
                      }
@@ -2293,8 +2293,8 @@ final class AiDragon {
                double len = Math.hypot(dx, dz);
                double ux = len < 1.0 ? 1.0 : dx / len;
                double uz = len < 1.0 ? 0.0 : dz / len;
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.init_r_DataUtil(mc);
-               double[] breath = AiDragonZones.init_DArr(mc);
+               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               double[] breath = AiDragonZones.breath(mc);
                List<double[]> lying = this.init_List_11();
 
                for (double r = 12.0; r <= 15.0; r++) {
@@ -2308,7 +2308,7 @@ final class AiDragon {
                         BlockPos ground = this.init(x, z);
                         if (ground != null) {
                            BlockPos stand = ground.above();
-                           if (autismclient.ai.AiDragonZones.init(zones, breath, lying, x, stand.getY(), z) && AiCombat.init_Z_Minecraft_BlockPos(mc, stand)) {
+                           if (autismclient.ai.AiDragonZones.init(zones, breath, lying, x, stand.getY(), z) && AiCombat.isSafeStep(mc, stand)) {
                               return stand;
                            }
                         }

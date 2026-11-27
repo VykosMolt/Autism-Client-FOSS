@@ -17,7 +17,7 @@ import net.minecraft.network.protocol.Packet;
 public class PacketNameArgumentType implements ArgumentType<String> {
    private static volatile List<PacketNameArgumentType.Inner_DataUtil> init;
 
-   public static PacketNameArgumentType init_JsonUtil() {
+   public static PacketNameArgumentType packetName() {
       return new PacketNameArgumentType();
    }
 

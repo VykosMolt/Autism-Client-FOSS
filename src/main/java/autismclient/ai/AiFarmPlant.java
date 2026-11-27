@@ -50,8 +50,8 @@ final class AiFarmPlant {
          throw new IllegalArgumentException(cropBlock + " is not planted from a seed item; plant wheat, carrots, potatoes, beetroots or nether wart");
       }
 
-      String substrate = AiFarmArea.init_Str(args, cropBlock);
-      final boolean soulSand = AiFarmArea.init_Z(substrate);
+      String substrate = AiFarmArea.substrateFor(args, cropBlock);
+      final boolean soulSand = AiFarmArea.isSoulSand(substrate);
       final int width = Math.max(0, Math.min(15, AiJson.getInt(args, "width", 0)));
       final int length = Math.max(0, Math.min(15, AiJson.getInt(args, "length", 0)));
       final int requested = Math.max(1, Math.min(128, AiJson.getInt(args, "count", width > 0 && length > 0 ? width * length : 9)));

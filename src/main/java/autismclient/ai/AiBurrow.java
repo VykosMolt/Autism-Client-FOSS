@@ -731,11 +731,11 @@ final class AiBurrow {
                            : AiBurrow.Inner_DataUtil.EXIT_DIG;
                         return this.init("Healed to " + (int)mc.player.getHealth() + "; leaving cover");
                      } else {
-                        if (!AiBurrow.init_Z_F_J(healTo, AiSleep.init_J()) && System.nanoTime() <= this.init_J) {
+                        if (!AiBurrow.init_Z_F_J(healTo, AiSleep.dayTime()) && System.nanoTime() <= this.init_J) {
                            return this.init(
                               healTo > 0.0F
                                  ? "Healing in the sealed shelter (" + (int)mc.player.getHealth() + "/" + (int)healTo + ")"
-                                 : "Hiding until dawn (day time " + AiSleep.init_J() + ")"
+                                 : "Hiding until dawn (day time " + AiSleep.dayTime() + ")"
                            );
                         }
 
@@ -957,7 +957,7 @@ final class AiBurrow {
 
                boolean unbreakable = state.getDestroySpeed(mc.level, pos) < 0.0F;
                boolean open = state.getCollisionShape(mc.level, pos).isEmpty();
-               boolean safeFloor = AiCombat.init_Z_Minecraft_BlockPos(mc, pos.below()) && !this.init(pos, 3.0);
+               boolean safeFloor = AiCombat.isSafeStep(mc, pos.below()) && !this.init(pos, 3.0);
 
                for (Direction side : Plane.HORIZONTAL) {
                   BlockPos wall = pos.relative(side);
@@ -1084,7 +1084,7 @@ final class AiBurrow {
                   "phase",
                   this.init_RingBuffer_DataUti.name(),
                   "dayTime",
-                  AiSleep.init_J(),
+                  AiSleep.dayTime(),
                   "meals",
                   this.update_I,
                   "coverBlocksConfirmed",

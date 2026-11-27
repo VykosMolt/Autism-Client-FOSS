@@ -8,7 +8,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 
 final class AiFarmArea {
-   static final String init_Str = "farmland";
+   static final String FARMLAND = "farmland";
    static final String load = "soul_sand";
    private static final Set<String> init_Set = Set.of("minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots");
 
@@ -25,12 +25,12 @@ final class AiFarmArea {
       }
    }
 
-   static AiFarmArea.Inner_DataUtil init_C_DataUtil(JsonObject args) {
+   static AiFarmArea.Inner_DataUtil fromArgs(JsonObject args) {
       return !init_Z(args) ? null : new AiFarmArea.Inner_DataUtil(init_BlockPos(args.getAsJsonObject("from"), "from"), init_BlockPos(args.getAsJsonObject("to"), "to"));
    }
 
-   static String init_Str(JsonObject args, String cropBlock) {
-      String expected = init_Str(cropBlock);
+   static String substrateFor(JsonObject args, String cropBlock) {
+      String expected = defaultSubstrate(cropBlock);
       String raw = AiJson.getString(args, "substrate", expected).trim().toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
       String var10000;
       switch (raw) {
@@ -67,7 +67,7 @@ final class AiFarmArea {
       }
    }
 
-   static String init_Str(String cropBlock) {
+   static String defaultSubstrate(String cropBlock) {
       if ("minecraft:nether_wart".equals(cropBlock)) {
          return "soul_sand";
       } else if (init_Set.contains(cropBlock)) {
@@ -77,16 +77,16 @@ final class AiFarmArea {
       }
    }
 
-   static boolean init_Z(String substrate) {
+   static boolean isSoulSand(String substrate) {
       return "soul_sand".equals(substrate);
    }
 
    static String load(String substrate) {
-      return init_Z(substrate) ? "minecraft:soul_sand" : "minecraft:dirt";
+      return isSoulSand(substrate) ? "minecraft:soul_sand" : "minecraft:dirt";
    }
 
    static String read(String substrate) {
-      return init_Z(substrate) ? "minecraft:soul_sand" : "minecraft:farmland";
+      return isSoulSand(substrate) ? "minecraft:soul_sand" : "minecraft:farmland";
    }
 
    private static BlockPos init_BlockPos(JsonObject value, String name) {

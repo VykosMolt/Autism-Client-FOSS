@@ -69,7 +69,7 @@ final class AiWeb {
       }
    }
 
-   static JsonObject init_JsonObject(String url, Runnable checkpoint) throws IOException, Exception {
+   static JsonObject fetch(String url, Runnable checkpoint) throws IOException, Exception {
       URI uri = URI.create(url);
 
       for (int redirect = 0; redirect < 4; redirect++) {

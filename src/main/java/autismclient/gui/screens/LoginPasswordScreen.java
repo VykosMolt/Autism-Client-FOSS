@@ -110,8 +110,8 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
    }
 
    private LoginPasswordScreen.Layout computeLayout() {
-      int sw = this.init_I();
-      int sh = this.load_I();
+      int sw = this.virtualWidth();
+      int sh = this.virtualHeight();
       int margin = sw < 224 || sh < 150 ? 4 : 12;
       int panelW = Math.max(1, Math.min(360, sw - margin * 2));
       int panelX = Math.max(0, (sw - panelW) / 2);
@@ -212,17 +212,17 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-      return super.mouseClicked(init_MouseButtonEvent_MouseButtonEvent(event), doubled);
+      return super.mouseClicked(toVirtual(event), doubled);
    }
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      return super.mouseReleased(init_MouseButtonEvent_MouseButtonEvent(event));
+      return super.mouseReleased(toVirtual(event));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
-      return super.mouseDragged(init_MouseButtonEvent_MouseButtonEvent(event), cA.init_D_D(deltaX), cA.init_D_D(deltaY));
+      return super.mouseDragged(toVirtual(event), cA.init_D_D(deltaX), cA.init_D_D(deltaY));
    }
 
    @Override
@@ -233,7 +233,7 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
 
       try {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ThemePaletteManager.recolor(-15987181, ThemePaletteManager.ColorRole.BACKDROP)
+            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), ThemePaletteManager.recolor(-15987181, ThemePaletteManager.ColorRole.BACKDROP)
          );
          LoginPasswordScreen.Layout l = this.computeLayout();
          int border = ThemePaletteManager.recolor(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE);

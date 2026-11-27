@@ -234,7 +234,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       if (this.start > body.sync()) {
          autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(body.init() - 6, body.write(), 6, body.sync());
          autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = autismclient.gui.ui.widgets.ScrollbarRenderer.init(track, this.start, body.sync(), this.reset);
-         autismclient.gui.ui.widgets.ScrollbarRenderer.init_V_SyncManager(context, metrics, this.update_Z);
+         autismclient.gui.ui.widgets.ScrollbarRenderer.draw(context, metrics, this.update_Z);
          this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.SCROLLBAR, track, null, ""));
       }
    }
@@ -1058,7 +1058,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       double current = option.kind() == Kind.INTEGER
          ? init_I_Str_I_2(module.value(option.id()), init_I_Str_I_2(option.defaultValue(), 0))
          : init_D_Str_D(module.value(option.id()), init_D_Str_D(option.defaultValue(), 0.0));
-      SliderRenderer.init(context, slider, SliderRenderer.init_D_D(current, option.sliderMin(), option.sliderMax()), slider.init_Z(mouseX, mouseY));
+      SliderRenderer.init(context, slider, SliderRenderer.ratio(current, option.sliderMin(), option.sliderMax()), slider.init_Z(mouseX, mouseY));
       boolean focused = this.init_AutismAdminToolsOv != null && this.init_AutismAdminToolsOv.init_Setting == option;
       TextFieldRenderer.init(
          context,
@@ -1230,10 +1230,10 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                      return true;
                   case SCROLLBAR:
                      autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_2();
-                     if (metrics != null && metrics.init_I() > 0) {
+                     if (metrics != null && metrics.maxScroll() > 0) {
                         this.stop = metrics.load().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.load().write() : metrics.load().sync() / 2;
                         this.update_Z = true;
-                        this.reset = autismclient.gui.ui.widgets.ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
+                        this.reset = autismclient.gui.ui.widgets.ScrollbarRenderer.scrollForDrag(metrics, (int)mouseY, this.stop);
                      }
 
                      return true;
@@ -1549,7 +1549,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       if (this.update_Z) {
          autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_2();
          if (metrics != null) {
-            this.reset = autismclient.gui.ui.widgets.ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
+            this.reset = autismclient.gui.ui.widgets.ScrollbarRenderer.scrollForDrag(metrics, (int)mouseY, this.stop);
          }
 
          return true;
@@ -1748,7 +1748,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             this.init_AutismAdminToolsOv.read = this.init_AutismAdminToolsOv.init_I;
          }
 
-         this.init_AutismAdminToolsOv.init_I = autismclient.gui.ui.widgets.Utf16TextCursor.init_I(this.init_AutismAdminToolsOv.init_Str, cursor);
+         this.init_AutismAdminToolsOv.init_I = autismclient.gui.ui.widgets.Utf16TextCursor.clampIndex(this.init_AutismAdminToolsOv.init_Str, cursor);
          if (!extendSelection) {
             this.init_AutismAdminToolsOv.init_V();
          }
@@ -2011,7 +2011,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       private Inner_StreamUtil(Setting<?, ?> option, String text, int cursor) {
          this.init_Setting = option;
          this.init_Str = text == null ? "" : text;
-         this.init_I = autismclient.gui.ui.widgets.Utf16TextCursor.init_I(this.init_Str, cursor);
+         this.init_I = autismclient.gui.ui.widgets.Utf16TextCursor.clampIndex(this.init_Str, cursor);
       }
 
       private boolean init_Z() {

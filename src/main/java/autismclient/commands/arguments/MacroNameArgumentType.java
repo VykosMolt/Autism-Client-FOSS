@@ -18,7 +18,7 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    private static volatile long init_J = -9223372036854775808L;
    private static volatile List<MacroNameArgumentType.Inner_DataUtil> init_List = List.of();
 
-   public static MacroNameArgumentType init_CachePool() {
+   public static MacroNameArgumentType macroName() {
       return new MacroNameArgumentType();
    }
 

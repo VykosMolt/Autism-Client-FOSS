@@ -76,7 +76,7 @@ public final class AiMemoryStore {
       this.init_Path = directory;
    }
 
-   public synchronized void init_V() throws IOException {
+   public synchronized void reload() throws IOException {
       this.write();
       Path file = this.init_Path.resolve("memory.json");
       if (Files.exists(file)) {
@@ -161,7 +161,7 @@ public final class AiMemoryStore {
       }
    }
 
-   static void init_V_Path_I(Path directory, int keep) {
+   static void prune(Path directory, int keep) {
       try (Stream<Path> entries = Files.list(directory)) {
          for (Path path : entries.filter(x$0 -> Files.isRegularFile(x$0))
             .sorted(Comparator.<Path>comparingLong(p -> p.toFile().lastModified()).reversed())
@@ -176,19 +176,19 @@ public final class AiMemoryStore {
       }
    }
 
-   public List<AiMemoryStore.Memory> init_List() {
+   public List<AiMemoryStore.Memory> memories() {
       return this.init_List;
    }
 
-   public String init_Str() {
+   public String systemNote() {
       return this.init_Str;
    }
 
-   public String init_Str(String world) {
+   public String epochKey(String world) {
       return world + "/epoch/" + this.write_Map.getOrDefault(world, 0);
    }
 
-   public synchronized void init_V(String world) throws IOException {
+   public synchronized void startEpoch(String world) throws IOException {
       Integer previous = this.load_Map.get(world);
       this.load_Map.merge(world, 1, Integer::sum);
 
@@ -212,7 +212,7 @@ public final class AiMemoryStore {
          this.read_Map.remove(this.read_Map.keySet().iterator().next());
       }
 
-      this.init_V_Str_JsonElement("observation", AiJson.GSON.toJsonTree(observation));
+      this.journal("observation", AiJson.GSON.toJsonTree(observation));
    }
 
    public synchronized AiMemoryStore.Memory init(
@@ -299,7 +299,7 @@ public final class AiMemoryStore {
          .toList();
    }
 
-   public List<AiMemoryStore.Memory> init_List_Str_Str(String scope, String query) {
+   public List<AiMemoryStore.Memory> recall(String scope, String query) {
       List<AiMemoryStore.Memory> all = this.init_List;
       List<AiMemoryStore.Memory> users = all.stream()
          .filter(m -> m.kind() == AiMemoryStore.Inner_DataUtil.USER && "user".equals(m.scope()))
@@ -350,7 +350,7 @@ public final class AiMemoryStore {
       return n;
    }
 
-   public synchronized void load_V_Str(String id) throws IOException {
+   public synchronized void forget(String id) throws IOException {
       LinkedHashMap<String, AiMemoryStore.Memory> before = new LinkedHashMap<>(this.init_Map);
       this.init_Map.remove(id);
 
@@ -391,7 +391,7 @@ public final class AiMemoryStore {
       this.write_Map = Map.copyOf(this.load_Map);
    }
 
-   public synchronized void init_V_Str_JsonElement(String event, JsonElement data) throws IOException {
+   public synchronized void journal(String event, JsonElement data) throws IOException {
       Files.createDirectories(this.init_Path);
       Path file = this.init_Path.resolve("journal-" + LocalDate.now() + ".jsonl");
       AiJson.auditPrivateFile(file);
@@ -403,7 +403,7 @@ public final class AiMemoryStore {
       );
    }
 
-   public Path init_Path() {
+   public Path directory() {
       return this.init_Path;
    }
 

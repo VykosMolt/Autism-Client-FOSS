@@ -404,7 +404,7 @@ public final class AiService {
       } else if (!(p.getDeltaMovement().y > -0.5) && !(p.fallDistance < 3.0)) {
          boolean water = AiGameState.countInventoryItem("minecraft:water_bucket") > 0
             && !mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES);
-         return !water && AiGameState.countInventoryItem("minecraft:cobweb") <= 0 ? false : AiDanger.init_i_DataUtil_Minecraft(mc).fallDamage() >= 4.0F;
+         return !water && AiGameState.countInventoryItem("minecraft:cobweb") <= 0 ? false : AiDanger.assess(mc).fallDamage() >= 4.0F;
       } else {
          return false;
       }
@@ -505,29 +505,29 @@ public final class AiService {
                try {
                   // a bad settings file blocks tasks until settings are saved, but must not stop the session store from loading
                   try {
-                     this.init_AiSettings = AiSettings.load(this.init_AiMemoryStore.init_Path());
+                     this.init_AiSettings = AiSettings.load(this.init_AiMemoryStore.directory());
                   } catch (Exception e) {
                      this.push_Str = "AI settings: " + e.getMessage();
                      this.appendTranscript("error", this.push_Str);
                   }
 
-                  this.init_AiMemoryStore.init_V();
-                  this.init_AiRegions.init(this.init_AiMemoryStore.init_Path());
-                  AiSourceKnowledge.init_V();
-                  AiPlaybooks.init_V();
+                  this.init_AiMemoryStore.reload();
+                  this.init_AiRegions.init(this.init_AiMemoryStore.directory());
+                  AiSourceKnowledge.load();
+                  AiPlaybooks.load();
                   autismclient.util.PacketSchemaRegistry.init_I();
-                  AiMemoryStore.init_V_Path_I(this.init_AiMemoryStore.init_Path().resolve("images"), 32);
+                  AiMemoryStore.prune(this.init_AiMemoryStore.directory().resolve("images"), 32);
                   synchronized (this) {
-                     this.init_cd = new AiSessions(this.init_AiMemoryStore.init_Path());
-                     this.init_cd.init_V();
+                     this.init_cd = new AiSessions(this.init_AiMemoryStore.directory());
+                     this.init_cd.reloadIndex();
 
                      try {
-                        this.init_cd.init_List();
+                        this.init_cd.purgeDeleted();
                      } catch (Exception e) {
                         this.appendTranscript("error", "Could not remove empty sessions: " + e.getMessage());
                      }
 
-                     Path task = this.init_AiMemoryStore.init_Path().resolve("task.json");
+                     Path task = this.init_AiMemoryStore.directory().resolve("task.json");
                      if (Files.exists(task)) {
                         try {
                            AiSessions.Inner_DataUtil migrated = AiSessions.init(
@@ -536,9 +536,9 @@ public final class AiService {
                               System.currentTimeMillis(),
                               this.init_AiSettings.maxMinutes
                            );
-                           this.init_cd.init_V_cd_DataUtil(migrated);
+                           this.init_cd.save(migrated);
                            Files.delete(task);
-                           this.appendTranscript("system", "Previous task migrated into session '" + migrated.load_Str + "'");
+                           this.appendTranscript("system", "Previous task migrated into session '" + migrated.title + "'");
                         } catch (Exception e) {
                            this.appendTranscript("error", "Could not migrate previous task.json: " + e.getMessage());
                         }
@@ -549,10 +549,10 @@ public final class AiService {
                      if (!metas.isEmpty()) {
                         boolean keepPreliminary = !init_Z_cc_RenderState(preliminary);
                         if (keepPreliminary) {
-                           this.init_cd.init_V_cd_DataUtil(this.init_cd_DataUtil_cc_RenderState(preliminary));
+                           this.init_cd.save(this.init_cd_DataUtil_cc_RenderState(preliminary));
                         }
 
-                        AiService.SessionState restored = this.init_cc_RenderState_cd_DataUtil(this.init_cd.init_cd_DataUtil_Str(metas.get(0).id()));
+                        AiService.SessionState restored = this.init_cc_RenderState_cd_DataUtil(this.init_cd.readSession(metas.get(0).id()));
                         if (!keepPreliminary) {
                            restored.load_List.addAll(preliminary.load_List);
                            this.init_Map.remove(preliminary.init_Str);
@@ -567,8 +567,8 @@ public final class AiService {
                      }
                   }
 
-                  if (!this.init_AiMemoryStore.init_Str().isBlank()) {
-                     this.appendTranscript("system", this.init_AiMemoryStore.init_Str());
+                  if (!this.init_AiMemoryStore.systemNote().isBlank()) {
+                     this.appendTranscript("system", this.init_AiMemoryStore.systemNote());
                   }
                } catch (Exception e) {
                   this.push_Str = e.getMessage();
@@ -590,18 +590,18 @@ public final class AiService {
 
    public boolean isChatModeActive() {
       AiChatMode lane = this.init_FieldCache;
-      return lane != null && lane.init_Z();
+      return lane != null && lane.isActive();
    }
 
    public String getChatModeSummary() {
       AiChatMode lane = this.init_FieldCache;
-      return lane == null ? "Chat mode off" : lane.init_Str();
+      return lane == null ? "Chat mode off" : lane.statusLine();
    }
 
    public JsonObject getChatModeStatusJson() {
       AiChatMode lane = this.init_FieldCache;
       if (lane != null) {
-         return lane.init_JsonObject();
+         return lane.statusJson();
       }
 
       JsonObject saved = this.init_JsonObject;
@@ -625,7 +625,7 @@ public final class AiService {
                   }
 
                   AiJson.writeAtomicJson(
-                     this.init_AiMemoryStore.init_Path().resolve("qualification-smoke.json"),
+                     this.init_AiMemoryStore.directory().resolve("qualification-smoke.json"),
                      AiJson.objectOf(
                         "at",
                         System.currentTimeMillis(),
@@ -760,7 +760,7 @@ public final class AiService {
    }
 
    public AiCatalog.Snapshot getCatalogSnapshot() {
-      return this.init_AiCatalog.init_AiCatalog_Snapshot();
+      return this.init_AiCatalog.snapshot();
    }
 
    public String getDimensionId() {
@@ -771,7 +771,7 @@ public final class AiService {
       return this.init_AiObservation;
    }
 
-   String push_Str() {
+   String lastObservationId() {
       AiObservation u = this.load_AiObservation;
       return u == null ? null : u.id();
    }
@@ -920,7 +920,7 @@ public final class AiService {
       this.load_Map.clear();
       this.read_Map.clear();
       this.update_Str = null;
-      this.init_cz.init_V();
+      this.init_cz.reset();
       this.read_V_cc_RenderState(target);
    }
 
@@ -936,7 +936,7 @@ public final class AiService {
                this.load_ExecutorService.execute(() -> {
                   AiService.SessionState target;
                   try {
-                     target = this.init_cc_RenderState_cd_DataUtil(storeRef.init_cd_DataUtil_Str(id));
+                     target = this.init_cc_RenderState_cd_DataUtil(storeRef.readSession(id));
                   } catch (Exception e) {
                      this.appendTranscript("error", "Could not load session: " + e.getMessage());
                      return;
@@ -987,7 +987,7 @@ public final class AiService {
             this.load_ExecutorService.execute(() -> {
                if (!this.load_Set.contains(id)) {
                   try {
-                     storeRef.init_V_Str_Str(id, name);
+                     storeRef.rename(id, name);
                   } catch (Exception e) {
                      this.appendTranscript("error", "Rename session: " + e.getMessage());
                   }
@@ -1021,7 +1021,7 @@ public final class AiService {
             AiSessions storeRef = this.init_cd;
             this.load_ExecutorService.execute(() -> {
                try {
-                  storeRef.init_V_Str(id);
+                  storeRef.delete(id);
                } catch (Exception e) {
                   this.appendTranscript("error", "Delete session: " + e.getMessage());
                }
@@ -1059,7 +1059,7 @@ public final class AiService {
          this.load_ExecutorService.execute(() -> {
             AiService.SessionState fork;
             try {
-               fork = this.init_cc_RenderState_cd_DataUtil(storeRef.load_cd_DataUtil(id));
+               fork = this.init_cc_RenderState_cd_DataUtil(storeRef.fork(id));
             } catch (Exception e) {
                this.appendTranscript("error", "Branch session: " + e.getMessage());
                return;
@@ -1125,7 +1125,7 @@ public final class AiService {
 
       if (capability.equals("game:build") && arguments.has("schematic")) {
          try {
-            AiLocalRequest.init_V(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
+            AiLocalRequest.stampSource(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
          } catch (IOException e) {
             throw new IllegalArgumentException("Schematic is no longer available: " + e.getMessage(), e);
          }
@@ -1205,7 +1205,7 @@ public final class AiService {
                   this.load_Map.clear();
                   this.read_Map.clear();
                   this.update_Str = null;
-                  this.init_cz.init_V();
+                  this.init_cz.reset();
                   s.read_J = s.write_J = s.update_J = 0L;
                   s.sync_J = 0L;
                   s.load_I = -1;
@@ -1228,9 +1228,9 @@ public final class AiService {
                   s.flush_Str = "";
                   s.init_List.clear();
                   s.init(this.init_AiSettings.planMode && !this.init_AiSettings.builtIn);
-                  AiRunTrace.startSession(this.init_AiMemoryStore.init_Path(), s.init_Str).recordTaskStart(prompt, s.init_I);
+                  AiRunTrace.startSession(this.init_AiMemoryStore.directory(), s.init_Str).recordTaskStart(prompt, s.init_I);
                   if (s.load_Str.isBlank() || s.load_Str.equals("New session")) {
-                     s.load_Str = AiSessions.init_Str_Str(prompt);
+                     s.load_Str = AiSessions.titleFor(prompt);
                   }
 
                   this.appendTranscript("user", prompt);
@@ -1319,14 +1319,14 @@ public final class AiService {
          }
 
          AiChatMode lane = this.init_FieldCache;
-         if (lane != null && lane.init_Z()) {
-            lane.init_V_PathHelper_DataUti(config);
+         if (lane != null && lane.isActive()) {
+            lane.applyPolicy(config);
             this.appendTranscript(
                "system",
                note != null && !note.isBlank() ? note : "Chat mode updated; it keeps answering player chat in the background without touching movement."
             );
             this.put_V();
-            return lane.init_JsonObject();
+            return lane.statusJson();
          }
 
          AiService.ChatModeHost host = new AiService.ChatModeHost();
@@ -1336,7 +1336,7 @@ public final class AiService {
          this.init_FieldCache = fresh;
 
          try {
-            fresh.init_V();
+            fresh.start();
          } catch (RuntimeException | Error failure) {
             this.init_FieldCache = null;
             if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
@@ -1358,7 +1358,7 @@ public final class AiService {
                )
          );
          this.put_V();
-         return fresh.init_JsonObject();
+         return fresh.statusJson();
       } else {
          throw new IllegalStateException("Join a server with a player before starting chat mode");
       }
@@ -1382,7 +1382,7 @@ public final class AiService {
          if (config.instructions().isBlank()) {
             throw new IllegalArgumentException("chat_keep start needs instructions: the persona and what to keep talking about");
          } else {
-            return this.init_Obj_J_Supplier(
+            return this.onClientThread(
                g, () -> this.init_JsonObject_Str_JsonObject("Chat mode is active", this.init_JsonObject_PathHelper_DataUti(config, null, false))
             );
          }
@@ -1398,7 +1398,7 @@ public final class AiService {
          if (text.isEmpty()) {
             throw new IllegalArgumentException("chat_send needs one non-blank chat line");
          } else {
-            return this.init_Obj_J_Supplier(g, () -> {
+            return this.onClientThread(g, () -> {
                Minecraft mc = Minecraft.getInstance();
                if (mc.getConnection() == null) {
                   throw new IllegalStateException("chat_send requires a connected server session");
@@ -1422,7 +1422,7 @@ public final class AiService {
 
    void forwardChatMessage(String text) {
       AiChatMode lane = this.init_FieldCache;
-      if (lane != null && lane.init_Z()) {
+      if (lane != null && lane.isActive()) {
          lane.init_V_Str(text);
       }
    }
@@ -1497,7 +1497,7 @@ public final class AiService {
       this.write_J = System.nanoTime();
       this.sync_Str = resume ? "Reobserving before resuming" : "Preparing client context";
       if (resume) {
-         this.init_cz.init_V();
+         this.init_cz.reset();
       }
 
       this.init_ExecutorService.execute(() -> this.init_V_J(g, resume, note));
@@ -1660,14 +1660,14 @@ public final class AiService {
             }
 
             AiServerEvidence.clearAll();
-            AiChatLedger.init_V();
+            AiChatLedger.clear();
             autismclient.ai.engine.AiGridRevisions.resetAll();
             AiScaffold.reset();
             this.init_Obj = mc.level;
             this.flush_Str = UUID.randomUUID().toString();
             this.update_Map = null;
-            AiEventLog.init_x().auditReset(mc.getConnection());
-            AiEventLog.init_x().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.currentDimensionId(mc)));
+            AiEventLog.getInstance().auditReset(mc.getConnection());
+            AiEventLog.getInstance().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.currentDimensionId(mc)));
             AiRunTrace trace = AiRunTrace.current();
             if (trace != null && (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED)) {
                String nowDimension = AiWorldIdentity.currentDimensionId(mc);
@@ -1693,7 +1693,7 @@ public final class AiService {
                   Thread.ofVirtual().start(active_scripts::init);
                }
 
-               this.init_cz.init_V();
+               this.init_cz.reset();
                this.init_cc_RenderState().flush_Str = "";
                this.appendTranscript("system", "World/session changed; the objective continues and the scope re-bases on the next observation.");
                String note = this.init_cc_RenderState().sync_Str
@@ -1703,13 +1703,13 @@ public final class AiService {
                this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "World/session changed");
             }
 
-            this.pop_Str = mc.player == null ? "offline" : this.init_AiMemoryStore.init_Str(AiWorldIdentity.currentWorldKey(mc));
+            this.pop_Str = mc.player == null ? "offline" : this.init_AiMemoryStore.epochKey(AiWorldIdentity.currentWorldKey(mc));
             this.close_Str = this.pop_Str + "/dimension/" + AiWorldIdentity.currentDimensionId(mc);
          }
 
          if (this.load_Z) {
             AiChatMode chatLane = this.init_FieldCache;
-            if (chatLane != null && chatLane.init_Z()) {
+            if (chatLane != null && chatLane.isActive()) {
                if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
                   this.stopChatMode("Chat mode stopped: Autism is locked");
                } else if (this.init_AiSettings.builtIn) {
@@ -1721,13 +1721,13 @@ public final class AiService {
                      this.pop_V();
                   }
 
-                  chatLane.load_V();
+                  chatLane.tick();
                }
             }
 
-            if (++this.update_I % 20 == 0 || this.init_AiCatalog.init_AiCatalog_Snapshot().entries().isEmpty()) {
+            if (++this.update_I % 20 == 0 || this.init_AiCatalog.snapshot().entries().isEmpty()) {
                try {
-                  this.init_AiCatalog.init_V();
+                  this.init_AiCatalog.refresh();
                } catch (Exception e) {
                   this.appendTranscript("error", "Catalog: " + e.getMessage());
                }
@@ -1863,7 +1863,7 @@ public final class AiService {
                      this.load_JsonObject = this.init_aM.init();
                      if (Boolean.getBoolean("autism.ai.smoke")) {
                         try {
-                           AiJson.writeAtomicJson(this.init_AiMemoryStore.init_Path().resolve("qualification-performance.json"), this.load_JsonObject);
+                           AiJson.writeAtomicJson(this.init_AiMemoryStore.directory().resolve("qualification-performance.json"), this.load_JsonObject);
                         } catch (Exception ex) {
                            this.appendTranscript("error", ex.getMessage());
                         }
@@ -1871,7 +1871,7 @@ public final class AiService {
                   });
                   this.load_ExecutorService.execute(() -> {
                      try {
-                        this.init_AiRegions.load(this.init_AiMemoryStore.init_Path());
+                        this.init_AiRegions.load(this.init_AiMemoryStore.directory());
                      } catch (Exception ex) {
                         this.appendTranscript("error", "Region persistence: " + ex.getMessage());
                      }
@@ -1892,7 +1892,7 @@ public final class AiService {
                      float health = mc.player.getHealth();
                      if (this.init_F >= 0.0F && health < this.init_F - 0.01F) {
                         this.pop_J = System.currentTimeMillis();
-                        AiEventLog.init_x()
+                        AiEventLog.getInstance()
                            .init(
                               "player_damaged",
                               AiJson.objectOf(
@@ -1941,7 +1941,7 @@ public final class AiService {
                            this.init_cc_SyncManager = null;
                         }
 
-                        AiEventLog.init_x().init("hazard_reflex", AiJson.objectOf("hazard", urgentHazard, "priority", "before-combat"));
+                        AiEventLog.getInstance().init("hazard_reflex", AiJson.objectOf("hazard", urgentHazard, "priority", "before-combat"));
                         if (this.init_Z_Minecraft(
                            mc,
                            "game:escape_hazard",
@@ -1969,7 +1969,7 @@ public final class AiService {
                            this.init_V_cc_SyncManager_Z(threatPending, true);
                            threatPending.result().complete(interrupted);
                            this.init_cc_SyncManager = null;
-                           AiEventLog.init_x().init("hazard_interrupt", AiJson.objectOf("hazard", hazard));
+                           AiEventLog.getInstance().init("hazard_interrupt", AiJson.objectOf("hazard", hazard));
                            AiRunTrace trace = AiRunTrace.current();
                            if (trace != null) {
                               trace.recordOpInterrupt("hazard");
@@ -2006,10 +2006,10 @@ public final class AiService {
                            }
                         }
 
-                        AiDanger.Inner_DataUtil danger = AiDanger.init_i_DataUtil_Minecraft(mc);
+                        AiDanger.Inner_DataUtil danger = AiDanger.assess(mc);
                         boolean lethalImminent = init_Z_F(danger.worstSource());
                         boolean projectileThreat = AiProjectiles.init(mc).stream().anyMatch(AiProjectiles::init);
-                        boolean unsafeMeal = threatPending.id().equals("game:eat") && (AiCombatPriority.init(hostiles, ranged) || AiSurvival.init_Entity(mc) != null);
+                        boolean unsafeMeal = threatPending.id().equals("game:eat") && (AiCombatPriority.init(hostiles, ranged) || AiSurvival.nearestThreat(mc) != null);
                         if ((
                               init_Z_I(hostiles, health, now - this.pop_J)
                                  || init_Z_I(ranged, health, now - this.pop_J)
@@ -2034,7 +2034,7 @@ public final class AiService {
                            this.init_V_cc_SyncManager_Z(threatPending, true);
                            threatPending.result().complete(interrupted);
                            this.init_cc_SyncManager = null;
-                           AiEventLog.init_x()
+                           AiEventLog.getInstance()
                               .init(
                                  "threat_interrupt",
                                  AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
@@ -2124,7 +2124,7 @@ public final class AiService {
                                  )
                               );
                            this.init_cc_SyncManager = null;
-                           AiEventLog.init_x().init("hunger_interrupt", AiJson.objectOf("food", food));
+                           AiEventLog.getInstance().init("hunger_interrupt", AiJson.objectOf("food", food));
                            this.init_Z_Minecraft(
                               mc,
                               "game:eat",
@@ -2169,14 +2169,14 @@ public final class AiService {
                            }
                         }
 
-                        boolean lethalImminent = init_Z_F(AiDanger.init_i_DataUtil_Minecraft(mc).worstSource());
+                        boolean lethalImminent = init_Z_F(AiDanger.assess(mc).worstSource());
                         boolean projectileThreat = AiProjectiles.init(mc).stream().anyMatch(AiProjectiles::init);
                         if (init_Z_I(hostiles, health, idleNow - this.pop_J)
                            || init_Z_I(ranged, health, idleNow - this.pop_J)
                            || lethalImminent
                            || projectileThreat) {
                            this.set_J = idleNow;
-                           AiEventLog.init_x()
+                           AiEventLog.getInstance()
                               .init(
                                  "idle_threat",
                                  AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
@@ -2202,9 +2202,9 @@ public final class AiService {
                   if (duskPending == null
                      && mc.player != null
                      && mc.player.isAlive()
-                     && init_Z_J(AiSleep.init_J())
+                     && init_Z_J(AiSleep.dayTime())
                      && init_Z_J(
-                        AiSleep.init_J(),
+                        AiSleep.dayTime(),
                         read_Z_Minecraft(mc),
                         write_Z_Minecraft(mc),
                         duskPending != null && !duskPending.hostParked(),
@@ -2288,7 +2288,7 @@ public final class AiService {
                      boolean liveOperation = this.init_cc_FileCache == AiService.RunState.RUNNING
                         || this.init_cc_FileCache == AiService.RunState.CHATTING && current.hostParked();
                      if (current.generation() == this.init_AtomicLong.get() && liveOperation) {
-                        AiCatalog.Entry contract = this.init_AiCatalog.init_AiCatalog_Snapshot().get(current.id());
+                        AiCatalog.Entry contract = this.init_AiCatalog.snapshot().get(current.id());
                         if (contract != null && contract.fingerprint().equals(current.fingerprint())) {
                            try {
                               if (this.init_AiSettings.stopOnInput && !Boolean.getBoolean("autism.ai.livetask") && this.load_Z_Minecraft(mc)) {
@@ -2412,12 +2412,12 @@ public final class AiService {
          if (!mc.player.isAlive() && this.write_Z) {
             this.write_Z = false;
             BlockPos p = mc.player.blockPosition();
-            AiEventLog.init_x()
+            AiEventLog.getInstance()
                .init("death", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ(), "dimension", mc.level.dimension().identifier().toString()));
          } else if (mc.player.isAlive() && !this.write_Z) {
             this.write_Z = true;
             BlockPos p = mc.player.blockPosition();
-            AiEventLog.init_x().init("respawn", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
+            AiEventLog.getInstance().init("respawn", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
          }
 
          if (this.update_I % 5 == 0) {
@@ -2427,7 +2427,7 @@ public final class AiService {
                if (e instanceof Monster m && e.isAlive() && m.getTarget() == mc.player) {
                   now.add(e.getId());
                   if (this.read_Set.add(e.getId())) {
-                     AiEventLog.init_x()
+                     AiEventLog.getInstance()
                         .init(
                            "entity_attacking", AiJson.objectOf("id", e.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString())
                         );
@@ -2453,9 +2453,9 @@ public final class AiService {
                this.update_Map.forEach((item, count) -> merged.merge(item, -count, Integer::sum));
                merged.forEach((item, delta) -> {
                   if (delta > 0) {
-                     AiEventLog.init_x().init("item_obtained", AiJson.objectOf("item", item, "count", delta));
+                     AiEventLog.getInstance().init("item_obtained", AiJson.objectOf("item", item, "count", delta));
                   } else if (delta < 0) {
-                     AiEventLog.init_x().init("item_lost", AiJson.objectOf("item", item, "count", -delta));
+                     AiEventLog.getInstance().init("item_lost", AiJson.objectOf("item", item, "count", -delta));
                   }
                });
             }
@@ -2467,7 +2467,7 @@ public final class AiService {
 
    private void run_V() {
       if (!AiClientTick.init()) {
-         AiClientTick.init_V_Runnable(this::run_V);
+         AiClientTick.execute(this::run_V);
       } else {
          AiService.ActiveOperation current = this.init_cc_SyncManager;
          this.init_cc_SyncManager = null;
@@ -2480,7 +2480,7 @@ public final class AiService {
 
    private void get_V() {
       if (!AiClientTick.init()) {
-         AiClientTick.init_V_Runnable(this::get_V);
+         AiClientTick.execute(this::get_V);
       } else {
          this.run_V();
 
@@ -2507,7 +2507,7 @@ public final class AiService {
 
    private void init_V_cc_SyncManager_Z(AiService.ActiveOperation current, boolean cancel) {
       if (!AiClientTick.init()) {
-         AiClientTick.init_V_Runnable(() -> this.init_V_cc_SyncManager_Z(current, cancel));
+         AiClientTick.execute(() -> this.init_V_cc_SyncManager_Z(current, cancel));
       } else {
          boolean input = current.resources().contains("INPUT");
          if (input) {
@@ -2587,7 +2587,7 @@ public final class AiService {
       String reflex = init_Str_F(
          health, armed, this.init_AiSettings.planMode, interrupted != null && interrupted.hostParked() && !interrupted.id().equals("game:eat")
       );
-      Entity mealThreat = interrupted != null && interrupted.id().equals("game:eat") ? AiSurvival.init_Entity(mc) : null;
+      Entity mealThreat = interrupted != null && interrupted.id().equals("game:eat") ? AiSurvival.nearestThreat(mc) : null;
       if (mealThreat != null && AiThreats.classify(mealThreat) == AiThreats.Inner_DataUtil.AVOID && !reflex.isEmpty()) {
          reflex = "game:flee";
       }
@@ -2639,7 +2639,7 @@ public final class AiService {
       if (entry != null && this.init_cc_SyncManager == null) {
          LocalPlayer rider = mc.player;
          if (rider != null && !rider.isPassenger() && !rider.isFallFlying()) {
-            AiAssistant.init_ConfigStore().pop();
+            AiAssistant.getInstance().pop();
             AutoCloseable lease = MacroExecutor.acquireExternalResources(entry.contract().resources());
             if (lease == null) {
                return false;
@@ -2649,7 +2649,7 @@ public final class AiService {
             try {
                inner = AiModuleScope.load(() -> {
                   AiModuleScope.init();
-                  return AiGuard.allowDuringLowHealth(Objects.requireNonNull(AiTools.init_AiOperation_Str_JsonObject(id, args)));
+                  return AiGuard.allowDuringLowHealth(Objects.requireNonNull(AiTools.operation(id, args)));
                });
             } catch (Exception e) {
                try {
@@ -2708,7 +2708,7 @@ public final class AiService {
       return s == null ? 0L : s.update_J + (s.init_Str.equals(this.write_Str) && this.write_J != 0L ? System.nanoTime() - this.write_J : 0L);
    }
 
-   void init_V_J(long g) {
+   void checkGeneration(long g) {
       if (g == this.init_AtomicLong.get() && init_Z_cc_FileCache(this.init_cc_FileCache)) {
          if (this.update_J != 0L && System.nanoTime() > this.update_J) {
             throw new IllegalStateException("Script deadline reached");
@@ -2723,13 +2723,13 @@ public final class AiService {
       }
    }
 
-   <T> T init_Obj_J_Supplier(long g, Supplier<T> action) throws InterruptedException, ExecutionException {
-      this.init_V_J(g);
-      CompletableFuture<T> result = AiClientTick.init_CompletableFuture_Supplier(() -> {
+   <T> T onClientThread(long g, Supplier<T> action) throws InterruptedException, ExecutionException {
+      this.checkGeneration(g);
+      CompletableFuture<T> result = AiClientTick.supply(() -> {
          long start = System.nanoTime();
 
          try {
-            this.init_V_J(g);
+            this.checkGeneration(g);
             return action.get();
          } finally {
             this.init_aM.init(System.nanoTime() - start);
@@ -2738,7 +2738,7 @@ public final class AiService {
 
       try {
          while (true) {
-            this.init_V_J(g);
+            this.checkGeneration(g);
 
             try {
                return result.get(200L, TimeUnit.MILLISECONDS);
@@ -2750,9 +2750,9 @@ public final class AiService {
       }
    }
 
-   AiObservation init_AiObservation_J_Str(long g, String source) throws InterruptedException, ExecutionException {
+   AiObservation observe(long g, String source) throws InterruptedException, ExecutionException {
       AiService.SessionState s = this.init_cc_RenderState();
-      AiObservation o = this.init_Obj_J_Supplier(g, () -> {
+      AiObservation o = this.onClientThread(g, () -> {
          if (s.flush_Str.isBlank() || s.flush_Str.equals("offline")) {
             s.flush_Str = this.pop_Str;
          }
@@ -2788,7 +2788,7 @@ public final class AiService {
             return;
          }
 
-         this.init_V_J(g);
+         this.checkGeneration(g);
          if (!p.id().equals(shown)) {
             shown = p.id();
             this.sync_Str = "Waiting for the survival reflex (" + p.id() + ") to finish";
@@ -2798,13 +2798,13 @@ public final class AiService {
       }
    }
 
-   JsonObject init_JsonObject_J_2(long g, String id, String fingerprint, Supplier<AiOperation> factory) throws InterruptedException, ExecutionException {
+   JsonObject runOperation(long g, String id, String fingerprint, Supplier<AiOperation> factory) throws InterruptedException, ExecutionException {
       if (!AutismLiteVariant.enabled() && !PacketUtil.init()) {
          throw new IllegalStateException("Autism is locked: early access requires the donator role.");
       }
 
       this.load_V_J(g);
-      CompletableFuture<AiOperation.Result> future = this.init_Obj_J_Supplier(
+      CompletableFuture<AiOperation.Result> future = this.onClientThread(
          g,
          () -> {
             AiCatalog.Entry fresh = this.getCatalogSnapshot().get(id);
@@ -2829,7 +2829,7 @@ public final class AiService {
 
             if (fresh.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE
                && (id.startsWith("game:") || id.startsWith("macro:") || id.equals("client:run_macro"))) {
-               AiAssistant.init_ConfigStore().pop();
+               AiAssistant.getInstance().pop();
             }
 
             AutoCloseable lease = () -> {};
@@ -2872,11 +2872,11 @@ public final class AiService {
             }
          }
       );
-      AiEventLog.init_x().init("op_started", AiJson.objectOf("id", id));
+      AiEventLog.getInstance().init("op_started", AiJson.objectOf("id", id));
 
       AiOperation.Result result;
       while (true) {
-         this.init_V_J(g);
+         this.checkGeneration(g);
 
          try {
             result = future.get(200L, TimeUnit.MILLISECONDS);
@@ -2886,12 +2886,12 @@ public final class AiService {
       }
 
       if (result.status() == AiOperation.Status.SUCCEEDED) {
-         AiEventLog.init_x().init("op_completed", AiJson.objectOf("id", id, "status", result.status().name()));
+         AiEventLog.getInstance().init("op_completed", AiJson.objectOf("id", id, "status", result.status().name()));
       } else {
-         AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", id, "status", result.status().name(), "failure", result.failure().name()));
+         AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", id, "status", result.status().name(), "failure", result.failure().name()));
       }
 
-      AiObservation full = this.init_AiObservation_J_Str(g, result.status() == AiOperation.Status.SUCCEEDED ? "verified-operation" : "operation-result");
+      AiObservation full = this.observe(g, result.status() == AiOperation.Status.SUCCEEDED ? "verified-operation" : "operation-result");
       AiObservation evidence = new AiObservation(
          full.id(),
          full.session(),
@@ -2934,7 +2934,7 @@ public final class AiService {
          AiFailure failure = result.status() == AiOperation.Status.TIMED_OUT && result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
          output.add(
             "failure",
-            AiJson.objectOf("code", failure.name(), "recoverable", failure.init_Z(), "suggestedActions", AiJson.GSON.toJsonTree(failure.init_List()))
+            AiJson.objectOf("code", failure.name(), "recoverable", failure.isRecoverable(), "suggestedActions", AiJson.GSON.toJsonTree(failure.suggestedActions()))
          );
       }
 
@@ -2943,7 +2943,7 @@ public final class AiService {
          journaled.add("evidence", AiJson.GSON.toJsonTree(evidence));
          JsonObject entry = AiJson.objectOf("capability", id, "result", journaled);
          entry.addProperty("sessionId", this.write_Str);
-         this.init_AiMemoryStore.init_V_Str_JsonElement("operation", entry);
+         this.init_AiMemoryStore.journal("operation", entry);
       } catch (IOException e) {
          this.appendTranscript("error", "Operation journal write failed: " + e.getMessage());
       }
@@ -2951,7 +2951,7 @@ public final class AiService {
       return output;
    }
 
-   AiOperation init_AiOperation_Str_JsonObject(String id, final JsonObject args) {
+   AiOperation moduleOperation(String id, final JsonObject args) {
       final Module m = autismclient.modules.al.init_Module_Str(id);
       if (m != null && m.settingsShareable() && !id.equals("ai-assistant")) {
          if (AiJson.getBoolean(args, "enabled", false)) {
@@ -3153,7 +3153,7 @@ public final class AiService {
       this.put_V();
    }
 
-   void init_V_JsonObject(JsonObject value) {
+   void setTaskState(JsonObject value) {
       if (value.toString().length() > 12000) {
          throw new IllegalArgumentException("Task state too long");
       }
@@ -3185,7 +3185,7 @@ public final class AiService {
 
    private AiService.PromptContextBundle init_cc_NetHelper_cc_RenderState(AiService.SessionState s, boolean planning, int promptBudget) {
       AiCatalog.Snapshot contracts = this.getCatalogSnapshot();
-      List<AiMemoryStore.Memory> memories = this.init_AiMemoryStore.init_List_Str_Str(this.close_Str, s.update_Str + " " + String.join(" ", s.init_List));
+      List<AiMemoryStore.Memory> memories = this.init_AiMemoryStore.recall(this.close_Str, s.update_Str + " " + String.join(" ", s.init_List));
       int systemChars = (int)Math.min(2147483647L, (long)(promptBudget * 3.5 * 0.6));
       AiContext.Inner_StreamUtil prompt = AiContext.init(
          contracts,
@@ -3213,21 +3213,21 @@ public final class AiService {
    }
 
    private static long init_J_cc_NetHelper_List(AiService.PromptContextBundle epoch, List<JsonObject> history) {
-      return AiContext.init_J(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history)));
+      return AiContext.estimateTokens(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history)));
    }
 
    private boolean init_Z_cc_RenderState(AiService.SessionState s, String sid, List<JsonObject> history, AiProvider transport, long budgetTokens, boolean forced) {
       long total = AiContext.init(AiJson.GSON.toJsonTree(history));
-      boolean keepLastThinking = transport.init_AiSettings_Provide() == AiSettings.Provider.ANTHROPIC
-         && AiSettings.anthropicThinking(transport.init_Str()) == AiSettings.Thinking.BUDGET;
+      boolean keepLastThinking = transport.provider() == AiSettings.Provider.ANTHROPIC
+         && AiSettings.anthropicThinking(transport.model()) == AiSettings.Thinking.BUDGET;
       AiHistory.Inner_StreamUtil cut = AiHistory.init(
-         transport.init_AiSettings_Provide(), history, (long)(0.35 * budgetTokens * 3.5), (long)(0.6 * budgetTokens * 3.5), keepLastThinking
+         transport.provider(), history, (long)(0.35 * budgetTokens * 3.5), (long)(0.6 * budgetTokens * 3.5), keepLastThinking
       );
       if (cut == null) {
          return false;
       }
 
-      if (!forced && cut.dropped().stream().noneMatch(AiHistory::init_Z)) {
+      if (!forced && cut.dropped().stream().noneMatch(AiHistory::isAssistant)) {
          return false;
       }
 
@@ -3242,13 +3242,13 @@ public final class AiService {
             "truncated", archived.length() > 200000, "history", archived.length() > 200000 ? archived.substring(0, 200000) + " [truncated]" : archived
          );
          entry.addProperty("sessionId", sid);
-         this.init_AiMemoryStore.init_V_Str_JsonElement("archived-provider-history", entry);
+         this.init_AiMemoryStore.journal("archived-provider-history", entry);
       } catch (IOException e) {
          this.init_V_cc_RenderState(s, "error", "Archived history retained in session; journal write failed: " + e.getMessage());
       }
 
       history.clear();
-      history.add(transport.init_JsonObject_Str(AiHistory.init(s.update_Str, List.copyOf(s.init_List), s.sync_Str, cut.digest())));
+      history.add(transport.userMessage(AiHistory.init(s.update_Str, List.copyOf(s.init_List), s.sync_Str, cut.digest())));
       history.addAll(cut.kept());
       this.init_V_cc_RenderState(s, "system", "Conversation compacted to fit the context window (" + cut.dropped().size() + " older messages summarized)");
       return true;
@@ -3304,7 +3304,7 @@ public final class AiService {
                }
 
                try {
-                  history.addAll(AiHistory.init_List(pinned.provider, storeRef.init(sid, replay, false)));
+                  history.addAll(AiHistory.forProvider(pinned.provider, storeRef.init(sid, replay, false)));
                } catch (Exception e) {
                   this.init_V_cc_RenderState(s, "error", "Transcript could not be loaded; continuing from the saved task state: " + e.getMessage());
                }
@@ -3316,14 +3316,14 @@ public final class AiService {
             transcript.init();
             if (!history.isEmpty()) {
                if (!resume) {
-                  transport.init_V_List_Str(history, "New objective: " + s.update_Str + (hostNote == null ? "" : "\n\n" + hostNote));
+                  transport.appendUserText(history, "New objective: " + s.update_Str + (hostNote == null ? "" : "\n\n" + hostNote));
                } else if (note != null) {
-                  transport.init_V_List_Str(history, note);
+                  transport.appendUserText(history, note);
                }
             } else {
                boolean continuation = resume && !s.sync_Str.isBlank() && !s.sync_Str.equals("Not started");
                history.add(
-                  transport.init_JsonObject_Str(
+                  transport.userMessage(
                      continuation
                         ? s.update_Str + "\nContinue from this factual task state and current observations: " + s.sync_Str
                         : (hostNote == null ? s.update_Str : s.update_Str + "\n\n" + hostNote)
@@ -3340,12 +3340,12 @@ public final class AiService {
             String toolChoice = null;
 
             while (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-               this.init_V_J(g);
-               AiObservation current = this.init_AiObservation_J_Str(g, "game");
+               this.checkGeneration(g);
+               AiObservation current = this.observe(g, "game");
 
                String amendment;
                while ((amendment = s.init_Queue.poll()) != null) {
-                  transport.init_V_List_Str(history, "User update to active objective: " + amendment);
+                  transport.appendUserText(history, "User update to active objective: " + amendment);
                   this.set(amendment);
                }
 
@@ -3365,7 +3365,7 @@ public final class AiService {
                }
 
                String revision = this.getCatalogSnapshot().revision();
-               transport.init_V_List_Str(
+               transport.appendUserText(
                   history,
                   AiContext.init(
                      epoch.host(),
@@ -3380,7 +3380,7 @@ public final class AiService {
                   )
                );
                transcript.init(history);
-               transport.init_V_AiSettings(this.init_AiSettings);
+               transport.applySettings(this.init_AiSettings);
                this.sync_Str = "Thinking";
                s.read_J++;
                s.push++;
@@ -3392,7 +3392,7 @@ public final class AiService {
 
                AiProvider.Inner_BufferHelper reply;
                try {
-                  reply = transport.init_bA_BufferHelper_c_StreamUtil(epoch.prompt(), history, AiTools.init_JsonArray_Z(this.init_Z), toolChoice, delta -> {
+                  reply = transport.completeWithContext(epoch.prompt(), history, AiTools.toolDefinitions(this.init_Z), toolChoice, delta -> {
                      live.append(delta);
                      this.sync_Str = live.length() > 240 ? live.substring(live.length() - 240) : live.toString();
                   }, () -> g != this.init_AtomicLong.get(), ready -> {
@@ -3413,22 +3413,22 @@ public final class AiService {
 
                   String error = Objects.toString(e.getMessage(), "");
                   if ((error.startsWith("Model output limit reached") || error.startsWith("Provider output exceeded limit")) && outputLimitRecoveries++ < 3) {
-                     transport.init_V_List_Str(history, init_Str_List(executedCalls));
-                     this.init_V_J(g);
+                     transport.appendUserText(history, init_Str_List(executedCalls));
+                     this.checkGeneration(g);
                      continue;
                   }
 
                   if (AiProvider.init_Z_Str(error) && executedCalls.isEmpty() && contextRecoveries++ < 2) {
                      forceCompact = true;
                      this.init_V_cc_RenderState(s, "system", "The conversation no longer fits the context window; compacting and retrying");
-                     this.init_V_J(g);
+                     this.checkGeneration(g);
                      continue;
                   }
 
                   if (!executedCalls.isEmpty() && init_Z_cc_FileCache(this.init_cc_FileCache) && streamRecoveries++ < 3) {
                      this.init_V_cc_RenderState(s, "system", "The provider connection dropped after the step ran; continuing from its result");
-                     transport.init_V_List_Str(history, load_Str_List(executedCalls));
-                     this.init_V_J(g);
+                     transport.appendUserText(history, load_Str_List(executedCalls));
+                     this.checkGeneration(g);
                      continue;
                   }
 
@@ -3448,14 +3448,14 @@ public final class AiService {
                s.close_J = s.close_J + usage.cachedInputTokens();
                s.open_J = s.open_J + usage.cacheWriteTokens();
                s.poll = s.poll + usage.outputTokens();
-               s.pop = usage.promptTokens() > 0L ? usage.promptTokens() : AiContext.init_J(sent);
+               s.pop = usage.promptTokens() > 0L ? usage.promptTokens() : AiContext.estimateTokens(sent);
                AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
                   trace.recordProviderRequest((System.nanoTime() - providerStarted) / 1000000L, estTokens);
                }
 
                if (!finishedByTool[0]) {
-                  this.init_V_J(g);
+                  this.checkGeneration(g);
                }
 
                history.add(reply.wireMessage());
@@ -3469,9 +3469,9 @@ public final class AiService {
                boolean normalStop = reply.finish().isBlank() || Set.of("stop", "STOP", "end_turn", "tool_calls", "tool_use").contains(reply.finish());
                if (reply.calls().isEmpty() && normalStop && textOnlyNudges++ < 2) {
                   this.init_V_cc_RenderState(s, "system", "The reply had no action; asking the model to act instead of describing steps");
-                  transport.init_V_List_Str(history, init_Str_Z(this.init_cc_FileCache == AiService.RunState.PLANNING));
+                  transport.appendUserText(history, init_Str_Z(this.init_cc_FileCache == AiService.RunState.PLANNING));
                   toolChoice = "required";
-                  this.init_V_J(g);
+                  this.checkGeneration(g);
                } else {
                   if (!reply.calls().isEmpty()) {
                      textOnlyNudges = 0;
@@ -3516,7 +3516,7 @@ public final class AiService {
                         reply.calls().size(),
                         AiJson.objectOf("status", "CANCELLED", "message", "Turn ended by an earlier finish call; not dispatched")
                      );
-                     history.addAll(transport.init_List_List_List(reply.calls(), aligned));
+                     history.addAll(transport.toolResults(reply.calls(), aligned));
                      open[0] = null;
                      this.read_V_cc_RenderState(s);
                      break;
@@ -3539,7 +3539,7 @@ public final class AiService {
             if (round != null) {
                try {
                   history.addAll(
-                     transport.init_List_List_List(
+                     transport.toolResults(
                         round.calls(),
                         round.gate()
                            .init_List(
@@ -3637,7 +3637,7 @@ public final class AiService {
    }
 
    private JsonObject init_JsonObject_cc_RenderState(AiService.SessionState s, String sid, AiProvider.Inner_DataUtil call, long g) {
-      this.init_V_J(g);
+      this.checkGeneration(g);
       AiRunTrace trace = AiRunTrace.current();
       long toolStarted = System.nanoTime();
       if (trace != null) {
@@ -3652,7 +3652,7 @@ public final class AiService {
       } else {
          try {
             result = s.init_Queue.isEmpty()
-               ? this.init_cz.init_JsonObject_Str(call.name(), call.arguments(), g)
+               ? this.init_cz.call(call.name(), call.arguments(), g)
                : AiJson.objectOf("status", "CANCELLED", "message", "The user amended the objective; this earlier planned call was not dispatched");
          } catch (CancellationException e) {
             throw e;
@@ -3678,7 +3678,7 @@ public final class AiService {
       try {
          JsonObject entry = AiJson.objectOf("name", call.name(), "result", detail);
          entry.addProperty("sessionId", sid);
-         this.init_AiMemoryStore.init_V_Str_JsonElement("tool", entry);
+         this.init_AiMemoryStore.journal("tool", entry);
       } catch (IOException e) {
          this.init_V_cc_RenderState(s, "error", "Tool result retained in session; journal write failed: " + e.getMessage());
       }
@@ -3709,7 +3709,7 @@ public final class AiService {
 
             boolean unchanged;
             try {
-               unchanged = AiLocalRequest.init_Z(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
+               unchanged = AiLocalRequest.isSourceUnchanged(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
             } catch (IllegalArgumentException missing) {
                unchanged = false;
             }
@@ -3724,7 +3724,7 @@ public final class AiService {
 
       AiIntents.Inner_CachePool plan = builtIn && s.init_JsonObject.has("builtInAction")
          ? AiLocalRequest.init(s.init_JsonObject.getAsJsonObject("builtInAction"))
-         : AiIntents.init_ad_CachePool(s.update_Str, createWaypointResolver());
+         : AiIntents.plan(s.update_Str, createWaypointResolver());
       if (plan.steps().isEmpty()) {
          return new AiService.CompletionNote(false, null);
       }
@@ -3766,7 +3766,7 @@ public final class AiService {
          }
 
          for (int i = 0; i < steps.size(); i++) {
-            this.init_V_J(g);
+            this.checkGeneration(g);
             AiIntents.Inner_BufferHelper step = steps.get(i);
             String failure = null;
             int prerequisiteIndex = 0;
@@ -3796,7 +3796,7 @@ public final class AiService {
                done.add(init_Str_ad_BufferHelper_JsonObject(step, r));
                AiIntents.Inner_BufferHelper gather = load_Z_JsonObject(r) ? null : init_ad_BufferHelper_ad_BufferHelper_JsonObject(step, r);
                if (gather != null) {
-                  this.init_V_J(g);
+                  this.checkGeneration(g);
                   r = this.init_JsonObject_J(g, s, gather, i + "/fallback");
                   done.add(init_Str_ad_BufferHelper_JsonObject(gather, r));
                }
@@ -3807,7 +3807,7 @@ public final class AiService {
                      break;
                   }
 
-                  this.init_V_J(g);
+                  this.checkGeneration(g);
                   JsonObject got = this.init_JsonObject_J(g, s, tool, i + "/tool/" + retool);
                   done.add(init_Str_ad_BufferHelper_JsonObject(tool, got));
                   if (!load_Z_JsonObject(got)) {
@@ -3815,7 +3815,7 @@ public final class AiService {
                   }
 
                   step = read_ad_BufferHelper_ad_BufferHelper_JsonObject(step, r);
-                  this.init_V_J(g);
+                  this.checkGeneration(g);
                   r = this.init_JsonObject_J(g, s, step, i + "/retool/" + retool);
                   done.add(init_Str_ad_BufferHelper_JsonObject(step, r));
                }
@@ -3905,7 +3905,7 @@ public final class AiService {
          JsonObject targets = current.has("hostGetTargets") ? current.getAsJsonObject("hostGetTargets") : new JsonObject();
          if (!targets.has(key)) {
             JsonObject requested = arguments;
-            JsonObject target = this.init_Obj_J_Supplier(
+            JsonObject target = this.onClientThread(
                g, () -> AiLocalRequest.init(requested, AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(requested, "item", ""))), 2304)
             );
             synchronized (s) {
@@ -3959,7 +3959,7 @@ public final class AiService {
       Thread.sleep(500L);
 
       while (this.init_cc_SyncManager != null && System.nanoTime() < until) {
-         this.init_V_J(g);
+         this.checkGeneration(g);
          Thread.sleep(250L);
       }
    }
@@ -3981,7 +3981,7 @@ public final class AiService {
       JsonObject args = step.arguments().deepCopy();
       args.remove("cookHeld");
       String spec = AiJson.getString(args, "item", "cooked_food");
-      int raw = this.init_Obj_J_Supplier(g, () -> {
+      int raw = this.onClientThread(g, () -> {
          Minecraft mc = Minecraft.getInstance();
          Set<String> inputs = new LinkedHashSet<>();
 
@@ -4030,7 +4030,7 @@ public final class AiService {
 
          String id = item.contains(":") ? item : "minecraft:" + item;
          int count = Math.max(1, AiJson.getInt(step.arguments(), "count", 1));
-         return this.init_Obj_J_Supplier(gen, () -> {
+         return this.onClientThread(gen, () -> {
             AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), id, count);
             return plan.complete() && (!plan.requiresTable() || AiCraft.canAccessCraftingTable());
          });
@@ -4152,7 +4152,7 @@ public final class AiService {
       if (step.capability().equals("game:farm") && "plant".equals(AiJson.getString(step.arguments(), "action", ""))) {
          String seed = AiFarm.load(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
          int want = Math.max(1, AiJson.getInt(step.arguments(), "count", 9));
-         int[] have = this.init_Obj_J_Supplier(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
+         int[] have = this.onClientThread(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
          List<AiIntents.Inner_BufferHelper> out = new ArrayList<>();
          if (have[0] == 0) {
             out.add(
@@ -4185,7 +4185,7 @@ public final class AiService {
       String item = AiJson.getString(before.arguments(), "item", "");
       return !item.endsWith("seeds") && !item.endsWith("carrot") && !item.endsWith("potato")
          ? false
-         : this.init_Obj_J_Supplier(g, () -> AiGameState.countInventoryItem(item)) > 0;
+         : this.onClientThread(g, () -> AiGameState.countInventoryItem(item)) > 0;
    }
 
    static String init_Str_JsonObject(JsonObject args) {
@@ -4317,7 +4317,7 @@ public final class AiService {
 
          if (this.init_Z || own) {
             JsonObject p = this.init_Z ? this.init_JsonObject_JsonObject(args) : args.getAsJsonObject("postcondition");
-            String unmet = this.init_Obj_J_Supplier(g, () -> this.read_Str_JsonObject(p));
+            String unmet = this.onClientThread(g, () -> this.read_Str_JsonObject(p));
             if (unmet != null && (this.init_Z || last != null && !last.equals("SUCCEEDED"))) {
                throw new IllegalArgumentException("Objective postcondition is not verified: " + unmet);
             }
@@ -4411,7 +4411,7 @@ public final class AiService {
                return "no macro named " + AiJson.getString(p, "name", "");
             }
 
-            return AiJson.sha256Hex(AiTools.init_JsonObject_aM(macro).toString()).equals(AiJson.getString(p, "fingerprint", ""))
+            return AiJson.sha256Hex(AiTools.macroJson(macro).toString()).equals(AiJson.getString(p, "fingerprint", ""))
                ? null
                : "the macro changed since the given fingerprint";
          case "stat": {
@@ -4519,7 +4519,7 @@ public final class AiService {
 
       try {
          while (true) {
-            this.init_V_J(g);
+            this.checkGeneration(g);
             synchronized (this.load_Obj) {
                if (this.set_Str != null) {
                   String a = this.set_Str;
@@ -4596,7 +4596,7 @@ public final class AiService {
    }
 
    JsonObject update(JsonObject args, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
-      try (AiScriptHost host = new AiScriptHost(this.init_AiMemoryStore.init_Path(), (name, input) -> {
+      try (AiScriptHost host = new AiScriptHost(this.init_AiMemoryStore.directory(), (name, input) -> {
             throw new IllegalStateException("Fixture checks never call live game tools");
          })) {
          this.init_bZ = host;
@@ -4617,7 +4617,7 @@ public final class AiService {
 
       boolean liveStarted = false;
 
-      try (AiScriptHost host = new AiScriptHost(this.init_AiMemoryStore.init_Path(), (name, input) -> this.init_cz.init_JsonObject_Str(name, input, g, true))) {
+      try (AiScriptHost host = new AiScriptHost(this.init_AiMemoryStore.directory(), (name, input) -> this.init_cz.call(name, input, g, true))) {
          this.init_bZ = host;
          this.update_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800))) * 1000000000L;
          String source = AiJson.getString(args, "source", "");
@@ -4654,9 +4654,9 @@ public final class AiService {
       }
    }
 
-   JsonObject init_JsonObject_Str_J(String query, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   JsonObject search(String query, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (this.init_AiSettings.nativeSearch && AiNativeSearch.init(this.init_AiSettings.provider)) {
-         this.init_V_J(g);
+         this.checkGeneration(g);
          AiService.SessionState s = this.init_cc_RenderState();
          if (s.read_J >= this.init_AiSettings.maxRequests) {
             throw new IllegalStateException("Task request limit reached");
@@ -4664,22 +4664,22 @@ public final class AiService {
 
          s.read_J++;
          s.push++;
-         JsonObject result = AiNativeSearch.init(this.init_AiSettings, query, () -> this.init_V_J(g));
+         JsonObject result = AiNativeSearch.init(this.init_AiSettings, query, () -> this.checkGeneration(g));
          s.write_J = s.write_J + result.get("tokens").getAsLong();
-         this.init_V_J(g);
+         this.checkGeneration(g);
          return result;
       } else {
-         return AiWeb.init(this.init_AiSettings, query, () -> this.init_V_J(g));
+         return AiWeb.init(this.init_AiSettings, query, () -> this.checkGeneration(g));
       }
    }
 
-   JsonObject init_JsonObject_J(long g) throws InterruptedException, TimeoutException, ExecutionException {
+   JsonObject screenshot(long g) throws InterruptedException, TimeoutException, ExecutionException {
       if (!this.init_AiSettings.vision) {
          throw new IllegalStateException("Enable vision in provider settings only for a model supporting images");
       }
 
       CompletableFuture<String> captured = new CompletableFuture<>();
-      this.init_Obj_J_Supplier(
+      this.onClientThread(
          g,
          () -> {
             Minecraft mc = Minecraft.getInstance();
@@ -4702,7 +4702,7 @@ public final class AiService {
                      throw new CancellationException();
                   }
 
-                  Path dir = this.init_AiMemoryStore.init_Path().resolve("images");
+                  Path dir = this.init_AiMemoryStore.directory().resolve("images");
                   Files.createDirectories(dir);
                   Path path = dir.resolve(UUID.randomUUID() + ".png");
                   image.writeToFile(path);
@@ -4710,7 +4710,7 @@ public final class AiService {
                      throw new IllegalStateException("Screenshot exceeds 1 MB");
                   }
 
-                  AiMemoryStore.init_V_Path_I(dir, 32);
+                  AiMemoryStore.prune(dir, 32);
                   captured.complete(Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
                } catch (Throwable e) {
                   captured.completeExceptionally(e);
@@ -4722,7 +4722,7 @@ public final class AiService {
       long deadline = System.nanoTime() + 10000000000L;
 
       while (true) {
-         this.init_V_J(g);
+         this.checkGeneration(g);
          if (System.nanoTime() > deadline) {
             throw new TimeoutException("Screenshot readback timed out");
          }
@@ -4739,10 +4739,10 @@ public final class AiService {
       }
    }
 
-   void read_V_Str_Str(String name, String serialized) throws IOException {
-      Path revisions = this.init_AiMemoryStore.init_Path().resolve("revisions");
+   void saveMacroRevision(String name, String serialized) throws IOException {
+      Path revisions = this.init_AiMemoryStore.directory().resolve("revisions");
       AiJson.writeAtomicJson(revisions.resolve(AiJson.sha256Hex(name) + "-" + System.currentTimeMillis() + ".json"), AiJson.parseObject(serialized));
-      AiMemoryStore.init_V_Path_I(revisions, 100);
+      AiMemoryStore.prune(revisions, 100);
    }
 
    static JsonObject init_JsonObject_cc_RenderState(AiService.SessionState s) {
@@ -4773,72 +4773,72 @@ public final class AiService {
 
    private AiSessions.Inner_DataUtil init_cd_DataUtil_cc_RenderState(AiService.SessionState s) {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
-      d.init_Str = s.init_Str;
-      d.load_Str = s.load_Str;
-      d.read_Str = s.read_Str;
-      d.init_J = s.init_J;
-      d.load_J = s.load_J;
+      d.id = s.init_Str;
+      d.title = s.load_Str;
+      d.parentId = s.read_Str;
+      d.createdAt = s.init_J;
+      d.lastActiveAt = s.load_J;
       String liveState = s.init_Str.equals(this.write_Str) ? this.init_cc_FileCache.name() : s.write_Str;
       if ("CHATTING".equals(liveState)) {
          liveState = this.load_cc_FileCache == null ? "IDLE" : this.load_cc_FileCache.name();
       }
 
-      d.write_Str = liveState;
-      d.update_Str = s.close_Str;
-      d.sync_Str = s.update_Str;
-      d.flush_Str = s.sync_Str;
-      d.close_Str = s.flush_Str;
-      d.init_JsonObject = init_JsonObject_cc_RenderState(s);
-      d.init_I = s.init_I;
-      d.load_I = s.load_I;
-      d.read_J = s.read_J;
-      d.write_J = s.write_J;
-      d.update_J = this.init_J_cc_RenderState(s) / 1000000L;
-      d.init_Z = s.init_Z;
-      d.init_List = List.copyOf(s.init_Deque);
-      d.load_List = List.copyOf(s.load_List);
-      d.read_List = List.copyOf(s.init_List);
-      d.sync_J = s.flush_J;
-      d.flush_J = s.close_J;
-      d.close_J = s.open_J;
-      d.open_J = s.poll;
+      d.state = liveState;
+      d.taskId = s.close_Str;
+      d.objective = s.update_Str;
+      d.taskState = s.sync_Str;
+      d.scope = s.flush_Str;
+      d.structuredTask = init_JsonObject_cc_RenderState(s);
+      d.taskMinutes = s.init_I;
+      d.wheatBaseline = s.load_I;
+      d.requests = s.read_J;
+      d.tokens = s.write_J;
+      d.elapsedMillis = this.init_J_cc_RenderState(s) / 1000000L;
+      d.attemptedAction = s.init_Z;
+      d.queue = List.copyOf(s.init_Deque);
+      d.messages = List.copyOf(s.load_List);
+      d.updates = List.copyOf(s.init_List);
+      d.inputTokens = s.flush_J;
+      d.cachedInputTokens = s.close_J;
+      d.cacheWriteTokens = s.open_J;
+      d.outputTokens = s.poll;
       d.poll = s.push;
       d.push = s.pop;
-      d.open_Str = s.open_Str;
+      d.wire = s.open_Str;
       return d;
    }
 
    private AiService.SessionState init_cc_RenderState_cd_DataUtil(AiSessions.Inner_DataUtil d) {
-      AiService.SessionState s = new AiService.SessionState(d.init_Str, d.init_J == 0L ? System.currentTimeMillis() : d.init_J);
-      s.load_Str = d.load_Str;
-      s.read_Str = d.read_Str;
-      s.load_J = d.load_J;
-      s.write_Str = d.write_Str;
-      s.close_Str = d.update_Str;
-      s.update_Str = d.sync_Str;
-      s.sync_Str = d.flush_Str;
-      s.flush_Str = d.close_Str;
-      init_V_cc_RenderState_JsonObject(s, d.init_JsonObject);
-      s.init_I = d.init_I;
-      s.load_I = d.load_I;
-      s.read_J = d.read_J;
-      s.write_J = d.write_J;
-      s.update_J = d.update_J * 1000000L;
-      s.init_Z = d.init_Z;
-      s.init_Deque.addAll(d.init_List);
-      s.load_List.addAll(d.load_List);
+      AiService.SessionState s = new AiService.SessionState(d.id, d.createdAt == 0L ? System.currentTimeMillis() : d.createdAt);
+      s.load_Str = d.title;
+      s.read_Str = d.parentId;
+      s.load_J = d.lastActiveAt;
+      s.write_Str = d.state;
+      s.close_Str = d.taskId;
+      s.update_Str = d.objective;
+      s.sync_Str = d.taskState;
+      s.flush_Str = d.scope;
+      init_V_cc_RenderState_JsonObject(s, d.structuredTask);
+      s.init_I = d.taskMinutes;
+      s.load_I = d.wheatBaseline;
+      s.read_J = d.requests;
+      s.write_J = d.tokens;
+      s.update_J = d.elapsedMillis * 1000000L;
+      s.init_Z = d.attemptedAction;
+      s.init_Deque.addAll(d.queue);
+      s.load_List.addAll(d.messages);
 
-      for (String u : d.read_List) {
+      for (String u : d.updates) {
          s.init(u);
       }
 
-      s.flush_J = d.sync_J;
-      s.close_J = d.flush_J;
-      s.open_J = d.close_J;
-      s.poll = d.open_J;
+      s.flush_J = d.inputTokens;
+      s.close_J = d.cachedInputTokens;
+      s.open_J = d.cacheWriteTokens;
+      s.poll = d.outputTokens;
       s.push = d.poll;
       s.pop = d.push;
-      s.open_Str = d.open_Str;
+      s.open_Str = d.wire;
       return s;
    }
 
@@ -4853,9 +4853,9 @@ public final class AiService {
          if (!init_Z_cc_RenderState(s)) {
             AiSessions.Inner_DataUtil data = this.init_cd_DataUtil_cc_RenderState(s);
             this.load_ExecutorService.execute(() -> {
-               if (!this.load_Set.contains(data.init_Str)) {
+               if (!this.load_Set.contains(data.id)) {
                   try {
-                     storeRef.init_V_cd_DataUtil(data);
+                     storeRef.save(data);
                   } catch (Exception e) {
                      this.appendTranscript("error", "Could not save session: " + e.getMessage());
                   }
@@ -4878,7 +4878,7 @@ public final class AiService {
                draft.effort = AiSettings.normalizeEffort(draft.effort);
                AiSettings previous = this.init_AiSettings;
                boolean connectionChanged = !previous.sameConnection(draft);
-               draft.save(this.init_AiMemoryStore.init_Path());
+               draft.save(this.init_AiMemoryStore.directory());
                if (previous.maxMinutes != draft.maxMinutes) {
                   AiService.SessionState s = this.init_cc_RenderState();
                   if (s != null) {
@@ -4986,7 +4986,7 @@ public final class AiService {
          try {
             AiSettings next = this.init_AiSettings.copy();
             edit.accept(next);
-            next.save(this.init_AiMemoryStore.init_Path());
+            next.save(this.init_AiMemoryStore.directory());
             this.init_AiSettings = next.copy();
          } catch (Exception e) {
             this.appendTranscript("error", "Could not save AI settings: " + e.getMessage());
@@ -5073,7 +5073,7 @@ public final class AiService {
             }
 
             next.endpoint = to;
-            next.save(this.init_AiMemoryStore.init_Path());
+            next.save(this.init_AiMemoryStore.directory());
             this.init_AiSettings = next.copy();
          } catch (Exception e) {
             this.appendTranscript("error", "DashScope region worked but could not be saved: " + e.getMessage());
@@ -5086,12 +5086,12 @@ public final class AiService {
          JsonArray declarations = new JsonArray();
          declarations.add(
             AiJson.objectOf(
-               "name", "connection_probe", "description", "Return the token provided by the user", "parameters", AiTools.init_JsonObject_ObjArr("token", "string")
+               "name", "connection_probe", "description", "Return the token provided by the user", "parameters", AiTools.schema("token", "string")
             )
          );
          String token = UUID.randomUUID().toString();
          String system = "Call the connection_probe tool exactly once with the token from the user message, without answering in text. After the tool result arrives, reply with a short confirmation and no tools.";
-         AiProvider.Inner_BufferHelper reply = p.init_bA_BufferHelper_Str(system, List.of(p.init_JsonObject_Str(token)), declarations, "required", s -> {}, expired);
+         AiProvider.Inner_BufferHelper reply = p.complete(system, List.of(p.userMessage(token)), declarations, "required", s -> {}, expired);
          if (reply.calls().size() != 1
             || !reply.calls().get(0).name().equals("connection_probe")
             || !AiJson.getString(reply.calls().get(0).arguments(), "token", "").equals(token)) {
@@ -5099,10 +5099,10 @@ public final class AiService {
          }
 
          ArrayList<JsonObject> history = new ArrayList<>();
-         history.add(p.init_JsonObject_Str(token));
+         history.add(p.userMessage(token));
          history.add(reply.wireMessage());
-         history.addAll(p.init_List_List_List(reply.calls(), List.of(AiJson.objectOf("verified", true))));
-         AiProvider.Inner_BufferHelper confirmation = p.init_bA_BufferHelper_Str(system, history, declarations, "none", s -> {}, expired);
+         history.addAll(p.toolResults(reply.calls(), List.of(AiJson.objectOf("verified", true))));
+         AiProvider.Inner_BufferHelper confirmation = p.complete(system, history, declarations, "none", s -> {}, expired);
          if (confirmation.text().isBlank() || !confirmation.calls().isEmpty()) {
             throw new IllegalStateException("Model did not acknowledge the completed tool round trip");
          }
@@ -5120,7 +5120,7 @@ public final class AiService {
                try {
                   AiSettings next = this.init_AiSettings.copy();
                   next.setKey(providerId, "");
-                  next.save(this.init_AiMemoryStore.init_Path());
+                  next.save(this.init_AiMemoryStore.directory());
                   this.init_AiSettings = next.copy();
                   this.push_Str = "";
                   this.appendTranscript(
@@ -5153,7 +5153,7 @@ public final class AiService {
    public void forgetMemory(String id) {
       this.load_ExecutorService.execute(() -> {
          try {
-            this.init_AiMemoryStore.load_V_Str(id);
+            this.init_AiMemoryStore.forget(id);
          } catch (Exception e) {
             this.appendTranscript("error", e.getMessage());
          }
@@ -5162,7 +5162,7 @@ public final class AiService {
 
    void saveSpeedrunCheckpoint(JsonObject snapshot) {
       JsonObject saved = snapshot.deepCopy();
-      Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-checkpoint.json");
+      Path destination = this.init_AiMemoryStore.directory().resolve("speedrun-checkpoint.json");
       this.load_ExecutorService.execute(() -> {
          try {
             AiJson.writeAtomicJson(destination, saved);
@@ -5174,7 +5174,7 @@ public final class AiService {
 
    void saveSpeedrunDiagnostics(JsonObject snapshot) {
       JsonObject saved = snapshot.deepCopy();
-      Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-debug-latest.json");
+      Path destination = this.init_AiMemoryStore.directory().resolve("speedrun-debug-latest.json");
       this.load_ExecutorService.execute(() -> {
          try {
             AiJson.writeAtomicJson(destination, saved);
@@ -5210,7 +5210,7 @@ public final class AiService {
 
    private void init_V_Str(String folder, String world, String field, JsonArray records) {
       if (this.load_Z && this.init_AiMemoryStore != null && !world.equals("offline")) {
-         Path directory = this.init_AiMemoryStore.init_Path().resolve(folder);
+         Path directory = this.init_AiMemoryStore.directory().resolve(folder);
          Path destination = directory.resolve(AiJson.sha256Hex(world) + ".json");
          JsonObject saved = AiJson.objectOf("version", 1, "world", world, field, records.deepCopy());
          this.load_ExecutorService
@@ -5247,7 +5247,7 @@ public final class AiService {
 
    private boolean init_Z_Str(String folder, String world, String field, Consumer<JsonArray> loaded) {
       if (this.load_Z && this.init_AiMemoryStore != null && !world.equals("offline")) {
-         Path source = this.init_AiMemoryStore.init_Path().resolve(folder).resolve(AiJson.sha256Hex(world) + ".json");
+         Path source = this.init_AiMemoryStore.directory().resolve(folder).resolve(AiJson.sha256Hex(world) + ".json");
          this.load_ExecutorService
             .execute(
                () -> {
@@ -5301,7 +5301,7 @@ public final class AiService {
             () -> {
                try {
                   AiMemoryStore.Memory old = this.init_AiMemoryStore
-                     .init_List()
+                     .memories()
                      .stream()
                      .filter(m -> m.id().equals(id))
                      .findFirst()
@@ -5326,7 +5326,7 @@ public final class AiService {
                      );
                   if (!saved.id().equals(id)) {
                      try {
-                        this.init_AiMemoryStore.load_V_Str(id);
+                        this.init_AiMemoryStore.forget(id);
                      } catch (Exception e) {
                         this.appendTranscript(
                            "error",
@@ -5360,7 +5360,7 @@ public final class AiService {
                   List<AiService.AttachmentRef> found = new ArrayList<>();
 
                   for (String folder : List.of("scripts", "revisions")) {
-                     Path path = this.init_AiMemoryStore.init_Path().resolve(folder);
+                     Path path = this.init_AiMemoryStore.directory().resolve(folder);
                      if (Files.isDirectory(path)) {
                         try (Stream<Path> entries = Files.list(path)) {
                            entries.filter(x$0 -> Files.isRegularFile(x$0))
@@ -5384,7 +5384,7 @@ public final class AiService {
    public void loadAttachmentPreview(String relative) {
       this.load_ExecutorService.execute(() -> {
          try {
-            Path root = this.init_AiMemoryStore.init_Path().toAbsolutePath().normalize();
+            Path root = this.init_AiMemoryStore.directory().toAbsolutePath().normalize();
             Path path = root.resolve(relative).normalize();
             if (!path.startsWith(root) || this.load_List.stream().noneMatch(a -> a.relativePath().equals(relative))) {
                throw new IllegalArgumentException("Unknown artifact");
@@ -5408,11 +5408,11 @@ public final class AiService {
 
       String worldKey = Minecraft.getInstance().player == null ? "offline" : AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
       String dimension = AiWorldIdentity.currentDimensionId(Minecraft.getInstance());
-      AiPortalLinks.init_V(worldOnly ? worldKey : null);
+      AiPortalLinks.reset(worldOnly ? worldKey : null);
       AiWorldMemory.init(worldOnly ? worldKey : null);
       this.load_ExecutorService.execute(() -> {
          try {
-            Path portalDirectory = this.init_AiMemoryStore.init_Path().resolve("portal-memory");
+            Path portalDirectory = this.init_AiMemoryStore.directory().resolve("portal-memory");
             if (worldOnly) {
                Files.deleteIfExists(portalDirectory.resolve(AiJson.sha256Hex(worldKey) + ".json"));
             } else if (Files.isDirectory(portalDirectory)) {
@@ -5423,7 +5423,7 @@ public final class AiService {
                }
             }
 
-            Path discoveryDirectory = this.init_AiMemoryStore.init_Path().resolve("discovery-memory");
+            Path discoveryDirectory = this.init_AiMemoryStore.directory().resolve("discovery-memory");
             if (Files.isDirectory(discoveryDirectory)) {
                try (Stream<Path> files = Files.list(discoveryDirectory)) {
                   for (Path file : files.filter(x$0 -> Files.isRegularFile(x$0)).filter(p -> p.toString().endsWith(".json")).toList()) {
@@ -5442,11 +5442,11 @@ public final class AiService {
             }
 
             if (worldOnly) {
-               this.init_AiMemoryStore.init_V(worldKey);
+               this.init_AiMemoryStore.startEpoch(worldKey);
                Minecraft.getInstance().execute(() -> {
                   Minecraft mc = Minecraft.getInstance();
                   if (mc.player != null && AiWorldIdentity.currentWorldKey(mc).equals(worldKey) && AiWorldIdentity.currentDimensionId(mc).equals(dimension)) {
-                     this.pop_Str = this.init_AiMemoryStore.init_Str(worldKey);
+                     this.pop_Str = this.init_AiMemoryStore.epochKey(worldKey);
                      this.close_Str = this.pop_Str + "/dimension/" + dimension;
                   }
                });
@@ -5488,12 +5488,12 @@ public final class AiService {
       }
 
       @Override
-      public long init_J() {
+      public long now() {
          return System.currentTimeMillis();
       }
 
       @Override
-      public String init_Str() {
+      public String playerName() {
          LocalPlayer player = Minecraft.getInstance().player;
          if (player == null) {
             return "";
@@ -5504,10 +5504,10 @@ public final class AiService {
       }
 
       @Override
-      public boolean init_Z() {
+      public boolean canSend() {
          Minecraft mc = Minecraft.getInstance();
          return this.load_Z()
-            && this.init_FieldCache.init_Z()
+            && this.init_FieldCache.isActive()
             && mc.player != null
             && this.init_ClientPacketListen != null
             && !autismclient.modules.aD.init_Z();
@@ -5515,12 +5515,12 @@ public final class AiService {
 
       @Override
       public long load_J() {
-         return AiChatLedger.init_J();
+         return AiChatLedger.revision();
       }
 
       @Override
       public List<AiChatLedger.ChatEntry> init(int max) {
-         return AiChatLedger.init_List(max);
+         return AiChatLedger.recent(max);
       }
 
       @Override
@@ -5532,7 +5532,7 @@ public final class AiService {
       public void init(String text, BooleanSupplier valid) {
          Minecraft mc = Minecraft.getInstance();
          mc.execute(() -> {
-            if (valid.getAsBoolean() && this.init_Z()) {
+            if (valid.getAsBoolean() && this.canSend()) {
                ClientPacketListener connection = mc.getConnection();
                if (connection != null) {
                   connection.sendChat(text);
@@ -5548,13 +5548,13 @@ public final class AiService {
 
       @Override
       public void init(String player, String text, BooleanSupplier valid) {
-         if (AiChatPolicy.init_Z(player)) {
+         if (AiChatPolicy.isPlayerName(player)) {
             String prefix = "msg " + player + " ";
             String body = text.length() + prefix.length() > 256 ? text.substring(0, 256 - prefix.length()).strip() : text;
             if (!body.isEmpty()) {
                Minecraft mc = Minecraft.getInstance();
                mc.execute(() -> {
-                  if (valid.getAsBoolean() && this.init_Z()) {
+                  if (valid.getAsBoolean() && this.canSend()) {
                      ClientPacketListener connection = mc.getConnection();
                      if (connection != null) {
                         connection.sendCommand(prefix + body);
@@ -5830,10 +5830,10 @@ public final class AiService {
                   if (!AiService.this.load_Set.contains(this.init_Str)) {
                      try {
                         if (whole) {
-                           storeRef.init_V_Str_List(this.init_Str, lines);
+                           storeRef.writeLines(this.init_Str, lines);
                         } else {
                            for (JsonObject line : lines) {
-                              storeRef.init_V_Str_JsonObject(this.init_Str, line);
+                              storeRef.appendLine(this.init_Str, line);
                            }
                         }
                      } catch (Exception e) {

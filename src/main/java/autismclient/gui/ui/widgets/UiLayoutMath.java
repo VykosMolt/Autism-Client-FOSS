@@ -47,7 +47,7 @@ public final class UiLayoutMath {
 
    public static int centerTextY(int boxY, int boxHeight, int fontHeight, int offset) {
       autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.BODY;
-      if (face.init_StreamUtil() != null) {
+      if (face.atlas() != null) {
          return Math.round(autismclient.gui.sdf.MsdfTextRenderer.centerVertically(face, boxY, boxHeight, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face)));
       }
 

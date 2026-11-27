@@ -17,18 +17,18 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    private long init_J;
    private AiAssistantOverlay init_AiAssistantOverlay;
 
-   public static AiAssistant init_ConfigStore() {
+   public static AiAssistant getInstance() {
       return init_ConfigStore;
    }
 
    private AiAssistant() {
    }
 
-   public static void init_V() {
-      AiAssistant assistant = init_ConfigStore();
+   public static void initialize() {
+      AiAssistant assistant = getInstance();
       if (!assistant.init_Z) {
          assistant.init_Z = true;
-         AiVisualization.init_V();
+         AiVisualization.initialize();
          AiSchematicPlacement.ensureTickHandler();
          AutismConfig config = AutismConfig.getGlobal();
          AutismConfig.ModuleState legacy = config.modules.remove("ai-assistant");
@@ -43,7 +43,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
          ClientTickEvents.END_CLIENT_TICK.register(client -> {
             try {
                if (AiMenuClose.load()) {
-                  AiMenuClose.init_aq_StreamUtil();
+                  AiMenuClose.receiptState();
                }
 
                AiContainerTransactions.tickActiveSwap();
@@ -60,11 +60,11 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   public AutismOverlay init_cX() {
+   public AutismOverlay getOverlay() {
       return this.init_AiAssistantOverlay;
    }
 
-   public void load_V() {
+   public void restoreOverlay() {
       if (this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.isVisible()) {
          OverlayManager.getInstance().register(this.init_AiAssistantOverlay);
       }
@@ -78,11 +78,11 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
          && !manager.isHidden(this.init_AiAssistantOverlay)) {
          this.init_AiAssistantOverlay.setVisible(false);
       } else {
-         this.write_V();
+         this.openOverlay();
       }
    }
 
-   public void write_V() {
+   public void openOverlay() {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.SyncManager.init()) {
          if (this.init_AiAssistantOverlay == null) {
             this.init_AiAssistantOverlay = new AiAssistantOverlay(AiService.getInstance());
@@ -101,18 +101,18 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    }
 
    public void init(String view) {
-      this.write_V();
+      this.openOverlay();
       this.init_AiAssistantOverlay.load(view);
    }
 
    public void update_V() {
-      this.write_V();
+      this.openOverlay();
       this.init_AiAssistantOverlay.sync_V();
    }
 
    public void init(String action, String query) {
-      this.write_V();
-      this.init_AiAssistantOverlay.init_V_Str_Str(action, query);
+      this.openOverlay();
+      this.init_AiAssistantOverlay.openAction(action, query);
    }
 
    public void sync() {
@@ -147,11 +147,11 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    void poll() {
       if (this.init_AiAssistantOverlay != null) {
-         this.init_AiAssistantOverlay.open_V();
+         this.init_AiAssistantOverlay.hide();
       }
    }
 
-   boolean init_Z() {
+   boolean isShown() {
       return this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.isVisible() || aP.init_Z();
    }
 

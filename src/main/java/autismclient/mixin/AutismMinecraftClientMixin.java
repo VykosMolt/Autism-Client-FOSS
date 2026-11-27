@@ -156,7 +156,7 @@ public class AutismMinecraftClientMixin {
    private static LoadingOverlay autism$replaceLoadingOverlay(
       Minecraft minecraft, ReloadInstance reload, Consumer<Optional<Throwable>> onFinish, boolean fadeIn
    ) {
-      return AutismLoadingOverlay.init_LoadingOverlay_Minecraft(minecraft, reload, onFinish, fadeIn);
+      return AutismLoadingOverlay.create(minecraft, reload, onFinish, fadeIn);
    }
 
    @Inject(method = "createTitle", at = @At("HEAD"), cancellable = true)
@@ -183,7 +183,7 @@ public class AutismMinecraftClientMixin {
       am.read_V();
       if (!AutismLiteVariant.enabled()) {
          SilentMiningCoordinator.load();
-         AiClientTick.init_V_Minecraft((Minecraft)(Object)this);
+         AiClientTick.tick((Minecraft)(Object)this);
       }
 
       if (aD.read_Z()) {
@@ -494,7 +494,7 @@ public class AutismMinecraftClientMixin {
                return;
             }
 
-            ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();
+            ActionEditorOverlay actionEditor = ActionEditorOverlay.getExisting();
             if (actionEditor != null && actionEditor.poll_Z_2()) {
                ClientInteractionOverride.cleanupAfterInputTick();
                VirtualInputDispatcher.poll();
@@ -538,7 +538,7 @@ public class AutismMinecraftClientMixin {
          } else if (AutismSessionState.getInstance().triggerCaptureCancelCallback()) {
             ci.cancel();
          } else {
-            ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();
+            ActionEditorOverlay actionEditor = ActionEditorOverlay.getExisting();
             if (actionEditor != null && actionEditor.push_Z_2()) {
                if (actionEditor.poll_Z_2()) {
                   ci.cancel();

@@ -14,7 +14,7 @@ final class AiModuleScope implements AiOperation {
    private boolean init_Z;
    private boolean load;
 
-   static AiOperation init_AiOperation_Supplier(Supplier<AiOperation> factory) {
+   static AiOperation wrap(Supplier<AiOperation> factory) {
       return load(() -> new AiDeferredOperation(factory));
    }
 

@@ -29,7 +29,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Select Packet");
    private final autismclient.gui.ui.layout.LayoutTreeHost init_TextFormat = new autismclient.gui.ui.layout.LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
    private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget();
-   private final autismclient.gui.ui.layout.LabelNode init_PoolEntry = new autismclient.gui.ui.layout.LabelNode("", autismclient.gui.f.b.l.write).load_PoolEntry(true);
+   private final autismclient.gui.ui.layout.LabelNode init_PoolEntry = new autismclient.gui.ui.layout.LabelNode("", autismclient.gui.f.b.l.write).setTrimToBounds(true);
    private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
    private autismclient.gui.ui.layout.ScrollableListView init_EventBus = null;
    private final List<Class<? extends Packet<?>>> init_List = new ArrayList<>();
@@ -261,17 +261,17 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
    private void init_V_Str_10(String query) {
       List<Class<? extends Packet<?>>> pool = this.init_List_List_3(this.update_List);
-      this.init_a.init_V_List(pool);
-      this.init_a.init_V_Str(query);
-      this.sync_List = this.init_a.init_List();
+      this.init_a.setItems(pool);
+      this.init_a.setQuery(query);
+      this.sync_List = this.init_a.filtered();
       this.set = this.sync_List.size() * this.pop_I_22();
       this.sync_V_16();
    }
 
    @Override
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      this.init_CharEncoder.init_V(this.write_Z);
-      if (this.init_CharEncoder.load_Z(this.write_Z) && init_Minecraft != null && init_Minecraft.font != null) {
+      this.init_CharEncoder.animateTo(this.write_Z);
+      if (this.init_CharEncoder.shouldRender(this.write_Z) && init_Minecraft != null && init_Minecraft.font != null) {
          boolean closing = !this.write_Z;
          this.init_CharEncoder
             .init(

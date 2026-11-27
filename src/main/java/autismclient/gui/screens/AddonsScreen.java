@@ -53,7 +53,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       this.init_EditBox.setHint(Component.literal("Search addons..."));
       this.init_EditBox.setMaxLength(96);
       this.init_EditBox.setResponder(value -> {
-         this.load_Str = init_Str_Str(value);
+         this.load_Str = trim(value);
          this.init_Z = true;
       });
       this.addRenderableWidget(this.init_EditBox);
@@ -223,10 +223,10 @@ public final class AddonsScreen extends VirtualScaledScreen {
             this.load_V_5();
          }
 
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -15987181);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.poll(), this.push(), this.open(), this.tick_I_4(), -401402080);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.set(), this.run(), this.get(), this.prev(), -1206840035);
-         this.init_V_GuiGraphicsExtract_2(graphics, this.put(), this.run(), this.add(), this.prev(), -1206840035);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
+         this.drawCard(graphics, this.poll(), this.push(), this.open(), this.tick_I_4(), -401402080);
+         this.drawCard(graphics, this.set(), this.run(), this.get(), this.prev(), -1206840035);
+         this.drawCard(graphics, this.put(), this.run(), this.add(), this.prev(), -1206840035);
          int ctl = this.sync_I_2();
          int titleX = this.write_I_3() + this.read_I_3() + 4;
          int titleY = this.init_I_I_I_3(this.pop(), ctl);
@@ -389,7 +389,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-      MouseButtonEvent virtual = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent virtual = toVirtual(event);
       if (Compat263.mouseEventGlfwButton(virtual) != 0) {
          return super.mouseClicked(virtual, doubleClick);
       }
@@ -426,13 +426,13 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.load_Z = false;
          return true;
       } else {
-         return super.mouseReleased(init_MouseButtonEvent_MouseButtonEvent(event));
+         return super.mouseReleased(toVirtual(event));
       }
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      MouseButtonEvent virtual = init_MouseButtonEvent_MouseButtonEvent(event);
+      MouseButtonEvent virtual = toVirtual(event);
       if (this.load_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
          this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.maxScroll());
@@ -676,11 +676,11 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private int open() {
-      return Math.max(200, Math.min(560, this.init_I() - 12));
+      return Math.max(200, Math.min(560, this.virtualWidth() - 12));
    }
 
    private int poll() {
-      return (this.init_I() - this.open()) / 2;
+      return (this.virtualWidth() - this.open()) / 2;
    }
 
    private int push() {
@@ -736,8 +736,8 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private int prev() {
-      int available = Math.max(60, this.load_I() - 6 - this.run());
-      int maxRows = Math.max(3, this.load_I() * 65 / 100 / this.close_I_2());
+      int available = Math.max(60, this.virtualHeight() - 6 - this.run());
+      int maxRows = Math.max(3, this.virtualHeight() * 65 / 100 / this.close_I_2());
       int rows = Math.max(3, Math.min(maxRows, this.init_List_3().size()));
       int list = this.start() - this.run() + this.load_I_I_2(rows) + 4;
       autismclient.b.DataUtil.StreamUtil selected = this.init_DataUtil_StreamUti();
@@ -772,6 +772,6 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private static String load_Str_Str_3(String value) {
-      return init_Str_Str(value).toLowerCase(Locale.ROOT);
+      return trim(value).toLowerCase(Locale.ROOT);
    }
 }

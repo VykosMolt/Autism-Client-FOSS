@@ -45,7 +45,7 @@ final class AiActionMenu {
    private final AiAssistantOverlay init_AiAssistantOverlay;
    private final Runnable init_Runnable;
    private final AiIntents.Inner_StreamUtil init_ad_StreamUtil = AiService.createWaypointResolver();
-   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(64);
+   final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(64);
    final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget()
       .setMaxLength(4)
       .setInputFilter(s -> s.chars().allMatch(Character::isDigit));
@@ -101,17 +101,17 @@ final class AiActionMenu {
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
       this.init_Runnable = onRun;
-      this.init_BitSetUtil.setOnSubmit(text -> this.sync_V());
+      this.searchInput.setOnSubmit(text -> this.sync_V());
       this.load_BitSetUtil.setOnSubmit(text -> this.sync_V());
    }
 
-   List<autismclient.gui.ui.widgets.TextInputWidget> init_List() {
-      ArrayList<autismclient.gui.ui.widgets.TextInputWidget> fields = new ArrayList<>(List.of(this.init_BitSetUtil, this.load_BitSetUtil));
+   List<autismclient.gui.ui.widgets.TextInputWidget> inputs() {
+      ArrayList<autismclient.gui.ui.widgets.TextInputWidget> fields = new ArrayList<>(List.of(this.searchInput, this.load_BitSetUtil));
       fields.addAll(this.write_Map.values());
       return fields;
    }
 
-   void init_V_Str_Str(String actionName, String query) {
+   void openAction(String actionName, String query) {
       this.load_StreamUtil_BufferH = null;
       if ("HOME".equals(actionName)) {
          this.open();
@@ -123,9 +123,9 @@ final class AiActionMenu {
             this.init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil.valueOf(parts[0]));
             if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && query != null && query.contains(",")) {
                this.update = AiMiningTargets.parse(query).types();
-               this.init_BitSetUtil.setValue("");
+               this.searchInput.setValue("");
             } else {
-               this.init_BitSetUtil.setValue(query == null ? "" : query);
+               this.searchInput.setValue(query == null ? "" : query);
             }
 
             if (parts.length > 1) {
@@ -135,9 +135,9 @@ final class AiActionMenu {
       }
    }
 
-   void init_V() {
-      if (this.init_BitSetUtil.isFocused()) {
-         this.init_BitSetUtil.setFocused(false);
+   void blur() {
+      if (this.searchInput.isFocused()) {
+         this.searchInput.setFocused(false);
       }
 
       if (this.load_BitSetUtil.isFocused()) {
@@ -149,15 +149,15 @@ final class AiActionMenu {
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
       return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && (Character.isLetterOrDigit(c) || c == ' ' || c == '-')
-         ? this.init_BitSetUtil
+         ? this.searchInput
          : null;
    }
 
-   boolean init_Z() {
+   boolean isOpen() {
       return this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME;
    }
 
-   void load_V() {
+   void cancel() {
       if (this.init_bW != null) {
          this.init_bW.cancel();
       }
@@ -174,7 +174,7 @@ final class AiActionMenu {
       }
    }
 
-   int init_I() {
+   int preferredHeight() {
       int target = AiUiKit.toolbarHeight() * 2
          + AiUiKit.rowHeight() * 3
          + 3 * AiUiKit.inputHeight()
@@ -219,7 +219,7 @@ final class AiActionMenu {
       }
    }
 
-   int init_I_I(int width) {
+   int heightFor(int width) {
       int h = AiUiKit.toolbarHeight();
       int line = AiUiKit.rowHeight();
       int var10000;
@@ -250,11 +250,11 @@ final class AiActionMenu {
       return var10000;
    }
 
-   int init_I_cE(AiUiKit kit, int width, int room) {
-      return Math.max(this.init_I(), room);
+   int composerHeight(AiUiKit kit, int width, int room) {
+      return Math.max(this.preferredHeight(), room);
    }
 
-   void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
+   void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       if (!this.update.isEmpty() && this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET) {
          List<AiActionMenu.Inner_CachePool> rows = this.read_List();
 
@@ -328,8 +328,8 @@ final class AiActionMenu {
             break;
          case TARGET:
             int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? kit.measureButtonWidth(this.init_Z ? "Loading..." : "Import") + 2 : 0;
-            this.init_BitSetUtil.setPlaceholder(this.init_StreamUtil_DataUti.read_Str);
-            kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
+            this.searchInput.setPlaceholder(this.init_StreamUtil_DataUti.read_Str);
+            kit.drawTextInput(this.searchInput, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
             if (importW > 0) {
                kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - importW + 2, body.write(), importW - 2, h),
@@ -531,11 +531,11 @@ final class AiActionMenu {
          kit.drawToggleSwitch(
             autismclient.gui.f.NetHelper.init(x, var23, w, h),
             "Soul sand for nether wart",
-            AiFarmArea.init_Z(this.write_Str),
+            AiFarmArea.isSoulSand(this.write_Str),
             "local-farm-substrate",
             () -> {
-               this.write_Str = AiFarmArea.init_Z(this.write_Str) ? "farmland" : "soul_sand";
-               if (AiFarmArea.init_Z(this.write_Str)) {
+               this.write_Str = AiFarmArea.isSoulSand(this.write_Str) ? "farmland" : "soul_sand";
+               if (AiFarmArea.isSoulSand(this.write_Str)) {
                   this.load_StreamUtil_CachePo = this.init_StreamUtil_CachePo;
                   this.init_StreamUtil_CachePo = init_StreamUtil_CachePo_Str_Item("nether wart", Items.NETHER_WART);
                } else {
@@ -557,7 +557,7 @@ final class AiActionMenu {
             kit,
             autismclient.gui.f.NetHelper.init(x, var24, w, h),
             this.init_E == null ? "Choose two corners" : "Change corners",
-            !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
+            !this.init_cF.isWorking() && !AiDirectOps.isDrivingInput(),
             this::flush
          );
          int var25 = var24 + h + 2;
@@ -570,7 +570,7 @@ final class AiActionMenu {
          );
          y = var25 + line + 2;
          kit.drawCenteredRowText(
-            AiFarmArea.init_Z(this.write_Str) ? "No water, slabs or hoe needed." : "Farmland crops use dirt, water and a hoe.",
+            AiFarmArea.isSoulSand(this.write_Str) ? "No water, slabs or hoe needed." : "Farmland crops use dirt, water and a hoe.",
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
@@ -592,10 +592,10 @@ final class AiActionMenu {
             kit,
             autismclient.gui.f.NetHelper.init(x, y, half, h),
             "Choose in world",
-            this.init_bW.isReadyToConfirm() && !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
+            this.init_bW.isReadyToConfirm() && !this.init_cF.isWorking() && !AiDirectOps.isDrivingInput(),
             () -> aP.init_V_bW_Runnable(this.init_bW, () -> {})
          );
-         if (this.init_cF.isWorking() || AiDirectOps.load_Z()) {
+         if (this.init_cF.isWorking() || AiDirectOps.isDrivingInput()) {
             kit.addTooltipRegion(autismclient.gui.f.NetHelper.init(x, y, half, h), "Pause the current action before choosing a placement in world");
          }
 
@@ -732,7 +732,7 @@ final class AiActionMenu {
          AiFarmArea.Inner_DataUtil farmArea = this.init_E.getArea();
          lines = new String[]{
             this.init_StreamUtil_CachePo.label(),
-            "Soil: " + (AiFarmArea.init_Z(this.write_Str) ? "soul sand" : "dirt and water"),
+            "Soil: " + (AiFarmArea.isSoulSand(this.write_Str) ? "soul sand" : "dirt and water"),
             "Area: " + farmArea.width() + "x" + farmArea.length() + " / " + farmArea.layout(this.write_Str).plots() + " plots",
             "First: " + this.init_Str_BlockPos(farmArea.from()),
             "Second: " + this.init_Str_BlockPos(farmArea.to()),
@@ -864,7 +864,7 @@ final class AiActionMenu {
    private void init_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper frame, List<AiActionMenu.Inner_CachePool> rows) {
       if (frame.sync() >= 8) {
          autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(
-            kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.isFocused()
+            kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.searchInput.isFocused()
          );
          autismclient.gui.f.NetHelper inner = frame.init(2);
          int rowH = AiUiKit.inputHeight();
@@ -956,8 +956,8 @@ final class AiActionMenu {
    }
 
    boolean load_Z() {
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && !this.init_BitSetUtil.getValue().isEmpty()) {
-         this.init_BitSetUtil.setValue("");
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && !this.searchInput.getValue().isEmpty()) {
+         this.searchInput.setValue("");
          return true;
       }
 
@@ -1011,7 +1011,7 @@ final class AiActionMenu {
          this.read_Str = "";
       }
 
-      this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+      this.init_AiAssistantOverlay.init(this.searchInput);
    }
 
    private void init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil next) {
@@ -1035,7 +1035,7 @@ final class AiActionMenu {
       this.update = List.of();
       if (next != this.init_StreamUtil_DataUti) {
          this.init_StreamUtil_DataUti = next;
-         this.init_BitSetUtil.setValue("");
+         this.searchInput.setValue("");
          this.load_BitSetUtil.setValue("");
          this.read_I = 0;
          this.write_List = List.of();
@@ -1046,9 +1046,9 @@ final class AiActionMenu {
       this.init_StreamUtil_BufferH = next.init() ? AiActionMenu.Inner_BufferHelper.TARGET : AiActionMenu.Inner_BufferHelper.REVIEW;
       this.read_cE_StreamUtil.scrollToTop();
       if (next.init()) {
-         this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+         this.init_AiAssistantOverlay.init(this.searchInput);
       } else {
-         this.init_V();
+         this.blur();
       }
    }
 
@@ -1078,7 +1078,7 @@ final class AiActionMenu {
 
                this.write_Z = "build".equals(AiJson.getString(farmStep.arguments(), "action", "build"));
                this.load_StreamUtil_CachePo = null;
-               this.write_Str = AiFarmArea.init_Str(AiJson.getString(farmStep.arguments(), "crop", "minecraft:wheat"));
+               this.write_Str = AiFarmArea.defaultSubstrate(AiJson.getString(farmStep.arguments(), "crop", "minecraft:wheat"));
                if (this.init_E != null) {
                   this.init_E.cancel();
                }
@@ -1126,7 +1126,7 @@ final class AiActionMenu {
             }
          }
 
-         this.init_V();
+         this.blur();
          this.read_cE_StreamUtil.scrollToTop();
       }
    }
@@ -1144,7 +1144,7 @@ final class AiActionMenu {
    }
 
    private void flush() {
-      if (!this.init_cF.isWorking() && !AiDirectOps.load_Z()) {
+      if (!this.init_cF.isWorking() && !AiDirectOps.isDrivingInput()) {
          try {
             AiIntents.Inner_BufferHelper step = this.init_ad_BufferHelper_Str_Str(
                this.init_StreamUtil_CachePo.request().apply(null), this.init_StreamUtil_DataUti.load_Str
@@ -1155,7 +1155,7 @@ final class AiActionMenu {
             }
 
             String crop = AiJson.getString(step.arguments(), "crop", "minecraft:wheat");
-            AiFarmArea.init_Str(AiJson.objectOf("substrate", this.write_Str), crop);
+            AiFarmArea.substrateFor(AiJson.objectOf("substrate", this.write_Str), crop);
             if (this.init_E == null || !this.init_E.getCrop().equals(crop) || !this.init_E.getSubstrate().equals(this.write_Str)) {
                this.init_E = new AiFarmPlacement(crop, this.write_Str);
             }
@@ -1171,7 +1171,7 @@ final class AiActionMenu {
 
    private void close() {
       this.read_Str = "";
-      this.init_V();
+      this.blur();
       this.read_cE_StreamUtil.scrollToTop();
       if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW) {
          this.init_StreamUtil_BufferH = this.init_StreamUtil_DataUti.init() ? AiActionMenu.Inner_BufferHelper.OPTIONS : AiActionMenu.Inner_BufferHelper.HOME;
@@ -1207,7 +1207,7 @@ final class AiActionMenu {
       this.init_StreamUtil_CachePo = null;
       this.load_Obj = null;
       this.read_Str = "";
-      this.init_V();
+      this.blur();
       this.read_Map.clear();
       this.write_Map.clear();
       this.read_Z = false;
@@ -1257,8 +1257,8 @@ final class AiActionMenu {
          JsonObject selectedArea = this.init_E.areaJson();
          selectedArea.entrySet().forEach(entry -> args.add(entry.getKey(), entry.getValue()));
          String crop = AiJson.getString(args, "crop", "minecraft:wheat");
-         AiFarmArea.init_Str(args, crop);
-         AiFarmArea.Inner_DataUtil area = AiFarmArea.init_C_DataUtil(args);
+         AiFarmArea.substrateFor(args, crop);
+         AiFarmArea.Inner_DataUtil area = AiFarmArea.fromArgs(args);
          String issue = area.validate(this.write_Str);
          if (!issue.isEmpty()) {
             throw new IllegalArgumentException(issue);
@@ -1331,7 +1331,7 @@ final class AiActionMenu {
       }
    }
 
-   void read_V() {
+   void confirm() {
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          this.flush();
       } else if (this.init_bW != null && this.init_bW.isReadyToConfirm()) {
@@ -1351,7 +1351,7 @@ final class AiActionMenu {
       this.poll();
    }
 
-   JsonObject init_JsonObject() {
+   JsonObject statusJson() {
       return this.init_E != null ? this.init_E.statusJson() : (this.init_bW == null ? new JsonObject() : this.init_bW.statusJson());
    }
 
@@ -1382,8 +1382,8 @@ final class AiActionMenu {
             } else if (file != null) {
                this.init_Map.remove(AiActionMenu.Inner_DataUtil.BUILD);
                if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD) {
-                  this.init_BitSetUtil.setValue(file.name());
-                  this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
+                  this.searchInput.setValue(file.name());
+                  this.init_AiAssistantOverlay.init(this.searchInput);
                }
             }
          }));
@@ -1400,7 +1400,7 @@ final class AiActionMenu {
    }
 
    private String sync_Str() {
-      return this.init_BitSetUtil.getValue().trim().toLowerCase(Locale.ROOT);
+      return this.searchInput.getValue().trim().toLowerCase(Locale.ROOT);
    }
 
    private List<AiActionMenu.Inner_CachePool> read_List() {
@@ -1410,13 +1410,13 @@ final class AiActionMenu {
       }
 
       if (base != this.load_List) {
-         this.init_a.init_V_List(base);
+         this.init_a.setItems(base);
          this.load_List = base;
       }
 
       String q = this.sync_Str();
-      this.init_a.init_V_Str(q);
-      List<AiActionMenu.Inner_CachePool> filtered = this.init_a.init_List();
+      this.init_a.setQuery(q);
+      List<AiActionMenu.Inner_CachePool> filtered = this.init_a.filtered();
       if (filtered != this.read_List || !q.equals(this.init_Str)) {
          List<AiActionMenu.Inner_CachePool> out = new ArrayList<>(filtered);
          if (!q.isEmpty()) {
@@ -1424,7 +1424,7 @@ final class AiActionMenu {
          }
 
          AiActionMenu.Inner_CachePool place = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GOTO
-            ? this.init_StreamUtil_CachePo_Str(this.init_BitSetUtil.getValue().trim())
+            ? this.init_StreamUtil_CachePo_Str(this.searchInput.getValue().trim())
             : null;
          if (place != null) {
             out.add(0, place);
@@ -1541,7 +1541,7 @@ final class AiActionMenu {
 
    private AiIntents.Inner_BufferHelper init_ad_BufferHelper_Str_Str(String text, String capability) {
       try {
-         AiIntents.Inner_CachePool plan = AiIntents.init_ad_CachePool(text, this.init_ad_StreamUtil);
+         AiIntents.Inner_CachePool plan = AiIntents.plan(text, this.init_ad_StreamUtil);
          if (plan.steps().size() == 1 && plan.handledAll()) {
             AiIntents.Inner_BufferHelper step = plan.steps().get(0);
             return capability.equals(step.capability()) && step.asks().isEmpty() ? step : null;
@@ -1582,7 +1582,7 @@ final class AiActionMenu {
 
       for (AiActionMenu.Inner_DataUtil a : AiActionMenu.Inner_DataUtil.values()) {
          try {
-            if (AiDirectOps.init_AiCatalog_Entry(a.load_Str) == null) {
+            if (AiDirectOps.catalogEntry(a.load_Str) == null) {
                continue;
             }
          } catch (RuntimeException e) {
@@ -1751,7 +1751,7 @@ final class AiActionMenu {
             }
             break;
          case FARM:
-            for (String option : AiIntents.init_List) {
+            for (String option : AiIntents.CROPS) {
                String crop = option.toLowerCase(Locale.ROOT);
                String one = AiIntents.sync(crop);
                String id = AiIntents.update(crop);

@@ -142,7 +142,7 @@ public final class AutismConfig implements Cloneable {
    public static synchronized void setGlobal(AutismConfig config) {
       bK.init(config);
       autismclient.modules.aD.init(config);
-      autismclient.protector.ProtectorFeatureFlags.init_V(config);
+      autismclient.protector.ProtectorFeatureFlags.refresh(config);
       globalInstance = config;
    }
 
@@ -226,7 +226,7 @@ public final class AutismConfig implements Cloneable {
    public void save() {
       bK.init(this);
       autismclient.modules.aD.init(this);
-      autismclient.protector.ProtectorFeatureFlags.init_V(this);
+      autismclient.protector.ProtectorFeatureFlags.refresh(this);
       AutismConfigPersistence.init(this);
       Runnable hook = AuditConfigSafety.deferHook(afterSave);
       if (hook != null) {

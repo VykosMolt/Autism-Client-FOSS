@@ -31,7 +31,7 @@ public final class CommandSuggestions {
    private CommandSuggestions() {
    }
 
-   public static <S> CompletableFuture<Suggestions> init_CompletableFuture_SuggestionsBuilder_StrArr(SuggestionsBuilder builder, String... values) {
+   public static <S> CompletableFuture<Suggestions> suggest(SuggestionsBuilder builder, String... values) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (String value : values) {
@@ -46,51 +46,51 @@ public final class CommandSuggestions {
    public static <S> CompletableFuture<Suggestions> init_CompletableFuture_CommandContext_SuggestionsBuilder(
       CommandContext<S> ignored, SuggestionsBuilder builder
    ) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "on", "off", "toggle", "enable", "disable");
+      return suggest(builder, "on", "off", "toggle", "enable", "disable");
    }
 
    public static <S> CompletableFuture<Suggestions> load(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "5", "10", "50", "100", "-1", "-5", "-10", "-50", "-100");
+      return suggest(builder, "1", "5", "10", "50", "100", "-1", "-5", "-10", "-50", "-100");
    }
 
    public static <S> CompletableFuture<Suggestions> read(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "5", "10", "20", "50");
+      return suggest(builder, "1", "5", "10", "20", "50");
    }
 
    public static <S> CompletableFuture<Suggestions> write(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "5", "10", "20", "40", "100");
+      return suggest(builder, "1", "5", "10", "20", "40", "100");
    }
 
    public static <S> CompletableFuture<Suggestions> update(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "2", "4", "8", "20");
+      return suggest(builder, "1", "2", "4", "8", "20");
    }
 
    public static <S> CompletableFuture<Suggestions> sync(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "16", "32", "64", "1000", "10000", "100000");
+      return suggest(builder, "1", "16", "32", "64", "1000", "10000", "100000");
    }
 
    public static <S> CompletableFuture<Suggestions> flush(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "true", "false");
+      return suggest(builder, "true", "false");
    }
 
    public static <S> CompletableFuture<Suggestions> close(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "1", "5", "10", "50", "100", "1000");
+      return suggest(builder, "1", "5", "10", "50", "100", "1000");
    }
 
    public static <S> CompletableFuture<Suggestions> open(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "0", "5", "10", "20", "40", "100", "200");
+      return suggest(builder, "0", "5", "10", "20", "40", "100", "200");
    }
 
    public static <S> CompletableFuture<Suggestions> poll(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "15", "30", "45", "60", "90", "120");
+      return suggest(builder, "15", "30", "45", "60", "90", "120");
    }
 
    public static <S> CompletableFuture<Suggestions> push(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "5", "10", "20", "50");
+      return suggest(builder, "5", "10", "20", "50");
    }
 
    public static <S> CompletableFuture<Suggestions> pop(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "~");
+      return suggest(builder, "~");
    }
 
    public static <S> CompletableFuture<Suggestions> tick(CommandContext<S> ignored, SuggestionsBuilder builder) {
@@ -128,12 +128,12 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   public static boolean init_Z_Block(Block block) {
+   public static boolean isPlaceableBlock(Block block) {
       BlockState state = block.defaultBlockState();
       return !state.isAir() && !(block instanceof LiquidBlock) && block.asItem() != Items.AIR && block.defaultDestroyTime() >= 0.0F;
    }
 
-   public static List<String> init_List() {
+   public static List<String> blockIds() {
       List<String> cached = init_List;
       if (cached != null) {
          return cached;
@@ -142,7 +142,7 @@ public final class CommandSuggestions {
       TreeSet<String> ids = new TreeSet<>();
 
       for (Block block : BuiltInRegistries.BLOCK) {
-         if (init_Z_Block(block)) {
+         if (isPlaceableBlock(block)) {
             ids.add(RegistrySuggestions.init(BuiltInRegistries.BLOCK.getKey(block)));
          }
       }
@@ -198,15 +198,15 @@ public final class CommandSuggestions {
    }
 
    public static <S> CompletableFuture<Suggestions> set(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "survival", "creative", "adventure", "spectator", "reset", "0", "1", "2", "3");
+      return suggest(builder, "survival", "creative", "adventure", "spectator", "reset", "0", "1", "2", "3");
    }
 
    public static <S> CompletableFuture<Suggestions> put(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, "survival", "creative", "adventure", "spectator", "0", "1", "2", "3");
+      return suggest(builder, "survival", "creative", "adventure", "spectator", "0", "1", "2", "3");
    }
 
    public static <S> CompletableFuture<Suggestions> add(CommandContext<S> ignored, SuggestionsBuilder builder) {
-      return init_CompletableFuture_SuggestionsBuilder_StrArr(builder, ".", "%", "-", "_", "*", "#", "@", "&", "=");
+      return suggest(builder, ".", "%", "-", "_", "*", "#", "@", "&", "=");
    }
 
    public static <S> CompletableFuture<Suggestions> clear(CommandContext<S> ignored, SuggestionsBuilder builder) {

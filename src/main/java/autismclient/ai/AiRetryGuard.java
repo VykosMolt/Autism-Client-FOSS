@@ -35,10 +35,10 @@ final class AiRetryGuard {
    }
 
    synchronized void init_V_Str(String key) {
-      this.init_V_Str_Z(key, true);
+      this.beginDispatch(key, true);
    }
 
-   synchronized void init_V_Str_Z(String key, boolean latchUncertain) {
+   synchronized void beginDispatch(String key, boolean latchUncertain) {
       if (latchUncertain && this.init_Set.contains(key)) {
          throw new IllegalStateException("Previous dispatch was uncertain; observe to see whether it took effect, then retry only if it did not");
       }
@@ -48,7 +48,7 @@ final class AiRetryGuard {
       }
    }
 
-   synchronized void init_V_Str_Str(String key, String status) {
+   synchronized void recordResult(String key, String status) {
       if (status.equals("UNCERTAIN")) {
          this.init_Set.add(key);
       }
@@ -81,14 +81,14 @@ final class AiRetryGuard {
       return stamps.size();
    }
 
-   static boolean init_Z_JsonObject(JsonObject result) {
+   static boolean isInterrupt(JsonObject result) {
       return result != null && result.has("failure") && result.get("failure").isJsonObject()
          ? Set.of("THREAT_INTERRUPT", "HUNGER", "LOW_HEALTH", "ENVIRONMENTAL_HAZARD")
             .contains(AiJson.getString(result.getAsJsonObject("failure"), "code", ""))
          : false;
    }
 
-   static String init_Str_Str_JsonObject(String tool, JsonObject args) {
+   static String keyFor(String tool, JsonObject args) {
       JsonObject copy = args.deepCopy();
       if (tool.equals("perform")) {
          copy.remove("fingerprint");

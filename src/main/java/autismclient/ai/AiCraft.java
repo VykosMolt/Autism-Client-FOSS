@@ -236,15 +236,15 @@ final class AiCraft {
                                     .toString()
                               );
                               int remaining = (int)Math.max(0L, (this.init_J - System.nanoTime()) / 1000000000L);
-                              if (AiCraftCapacity.init_Z_J_CachePool_Z(result, capacityRecoveryAllowed) && remaining >= 5 && mc.player.containerMenu.getCarried().isEmpty()) {
+                              if (AiCraftCapacity.isCapacityFailure(result, capacityRecoveryAllowed) && remaining >= 5 && mc.player.containerMenu.getCarried().isEmpty()) {
                                  if (mc.player.containerMenu != mc.player.inventoryMenu) {
                                     mc.player.closeContainer();
                                  }
 
-                                 JsonObject tidy = AiCraftCapacity.init_JsonObject_g_CachePool(
+                                 JsonObject tidy = AiCraftCapacity.tidyPlan(
                                     this.init_g_CachePool, this.init_I, outputId, remaining, AiCraftPlanner.init(AiCraft.buildRecipeGraph(), outputId, target)
                                  );
-                                 this.load_AiOperation = AiCraftCapacity.init_AiOperation_AiOperation_Result(rejection, AiTidy.init(tidy), () -> {
+                                 this.load_AiOperation = AiCraftCapacity.tidyThenRetry(rejection, AiTidy.init(tidy), () -> {
                                     JsonObject retry = args.deepCopy();
                                     retry.addProperty("count", target);
                                     retry.addProperty("additional", false);
@@ -313,7 +313,7 @@ final class AiCraft {
                               if (!this.init_g_CachePool.complete()) {
                                  StringBuilder inputs = new StringBuilder();
 
-                                 for (AiCraftPlanner.RecipeSpec recipe : AiCraft.buildRecipeGraph().init_List(outputId)) {
+                                 for (AiCraftPlanner.RecipeSpec recipe : AiCraft.buildRecipeGraph().recipesFor(outputId)) {
                                     inputs.append(recipe.key()).append(recipe.inputs()).append(' ');
                                  }
 
@@ -386,7 +386,7 @@ final class AiCraft {
                                        return;
                                     }
 
-                                    future.complete(autismclient.util.AutoCraftingEngine.craftWithDispatch(mc, recipeKey, -1, produced, AiClientTick::init_V_Runnable));
+                                    future.complete(autismclient.util.AutoCraftingEngine.craftWithDispatch(mc, recipeKey, -1, produced, AiClientTick::execute));
                                  } catch (Throwable t) {
                                     future.completeExceptionally(t);
                                     return;
@@ -606,7 +606,7 @@ final class AiCraft {
                   if (!this.init_Z) {
                      this.load_Z = this.load_Z | this.requiresReconciliationAfterEmergency();
                      this.init_Z = true;
-                     AiVisualization.init_V(this);
+                     AiVisualization.clearOwner(this);
                      this.init_DataPipe.reset();
                      if (this.init_cn != null) {
                         this.init_cn.cancel();
@@ -958,12 +958,12 @@ final class AiCraft {
       final Map<String, Integer> counts = new HashMap<>();
       return AiObtain.init(new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.RecipeSpec> init_List(String itemId) {
+         public List<AiCraftPlanner.RecipeSpec> recipesFor(String itemId) {
             return byOutput.getOrDefault(itemId, List.of());
          }
 
          @Override
-         public int init_I(String itemId) {
+         public int held(String itemId) {
             return counts.computeIfAbsent(itemId, AiCraft::countItem);
          }
       });

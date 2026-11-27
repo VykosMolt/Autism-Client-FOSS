@@ -34,7 +34,7 @@ public final class SliderRenderer {
       );
    }
 
-   public static double init_D_D(double value, double min, double max) {
+   public static double ratio(double value, double min, double max) {
       return max <= min ? 0.0 : Math.max(0.0, Math.min(1.0, (value - min) / (max - min)));
    }
 

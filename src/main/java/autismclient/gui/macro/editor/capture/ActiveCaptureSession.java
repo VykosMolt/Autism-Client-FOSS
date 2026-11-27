@@ -3,11 +3,11 @@ package autismclient.gui.macro.editor.capture;
 public final class ActiveCaptureSession {
    private String init;
 
-   public String init_Str() {
+   public String key() {
       return this.init;
    }
 
-   public boolean init_Z() {
+   public boolean isActive() {
       return this.init != null;
    }
 
@@ -45,7 +45,7 @@ public final class ActiveCaptureSession {
       }
    }
 
-   public void init_V() {
+   public void clear() {
       this.init = null;
    }
 }

@@ -304,7 +304,7 @@ final class AiPortalLinks {
       }
    }
 
-   static void init_V(String resetWorld) {
+   static void reset(String resetWorld) {
       if (resetWorld == null || resetWorld.equals(init_Str)) {
          init_List.clear();
          init_Z = true;
@@ -312,7 +312,7 @@ final class AiPortalLinks {
       }
    }
 
-   static String init_Str() {
+   static String arrivalHazard() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null || mc.player == null) {
          return "arrival player or terrain is unavailable";
@@ -375,7 +375,7 @@ final class AiPortalLinks {
       }
    }
 
-   static JsonArray init_JsonArray() {
+   static JsonArray snapshotJson() {
       init_V();
       return load();
    }

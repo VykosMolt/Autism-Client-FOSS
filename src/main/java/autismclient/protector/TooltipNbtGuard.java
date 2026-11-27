@@ -17,7 +17,7 @@ public final class TooltipNbtGuard {
    private TooltipNbtGuard() {
    }
 
-   public static boolean init_Z(List<Component> lines) {
+   public static boolean truncate(List<Component> lines) {
       if (lines != null && lines.size() > 512) {
          int hidden = lines.size() - 511;
          lines.subList(511, lines.size()).clear();
@@ -28,9 +28,9 @@ public final class TooltipNbtGuard {
       }
    }
 
-   public static int init_I(List<Component> lines) {
+   public static int sanitize(List<Component> lines) {
       if (lines != null && !lines.isEmpty()) {
-         init_Z(lines);
+         truncate(lines);
          int replaced = 0;
 
          for (int i = 0; i < lines.size(); i++) {

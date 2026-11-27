@@ -27,7 +27,7 @@ public abstract class AutismFramerateLimitTrackerMixin {
 
       if (minecraft != null) {
          boolean ours = !AutismLiteVariant.enabled()
-            && (minecraft.gui.screen() instanceof AutismTitleScreen || minecraft.gui.screen() instanceof AutismModulesScreen screen && screen.init_Z_5());
+            && (minecraft.gui.screen() instanceof AutismTitleScreen || minecraft.gui.screen() instanceof AutismModulesScreen screen && screen.isTitleSetup());
          if (ours) {
             FramerateLimitTracker tracker = (FramerateLimitTracker)(Object)this;
             if (tracker.getThrottleReason() == FramerateThrottleReason.OUT_OF_LEVEL_MENU) {

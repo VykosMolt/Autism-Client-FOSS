@@ -15,9 +15,9 @@ public final class AiChatOps {
    public static AiOperation init(JsonObject args) {
       int index = AiJson.getInt(args, "index", 0);
       int actionIndex = AiJson.getInt(args, "actionIndex", 0);
-      int size = AiChatLedger.init_I();
+      int size = AiChatLedger.size();
       if (index >= 0 && index < size) {
-         AiChatLedger.ChatEntry entry = AiChatLedger.init_TokenStore_StreamU(index);
+         AiChatLedger.ChatEntry entry = AiChatLedger.entry(index);
          if (actionIndex >= 0 && actionIndex < entry.clicks().size()) {
             AiChatLedger.ClickAction action = entry.clicks().get(actionIndex);
             AiOperation var10000;
@@ -74,7 +74,7 @@ public final class AiChatOps {
       } else {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final long init_J = AiChatLedger.init_J();
+            final long init_J = AiChatLedger.revision();
             final long load_J = System.nanoTime() + 5000000000L;
             final int init_I = this.init_Minecraft.player != null ? this.init_Minecraft.player.containerMenu.containerId : -1;
             final Screen init_Screen = this.init_Minecraft.gui.screen();
@@ -94,7 +94,7 @@ public final class AiChatOps {
                } else {
                   boolean menuChanged = this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu.containerId != this.init_I;
                   boolean screenChanged = this.init_Minecraft.gui.screen() != this.init_Screen;
-                  if (AiChatLedger.init_J() <= this.init_J && !menuChanged && !screenChanged) {
+                  if (AiChatLedger.revision() <= this.init_J && !menuChanged && !screenChanged) {
                      return System.nanoTime() > this.load_J
                         ? AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
@@ -137,7 +137,7 @@ public final class AiChatOps {
    private static JsonArray init(long baseline) {
       JsonArray out = new JsonArray();
 
-      for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(4)) {
+      for (AiChatLedger.ChatEntry entry : AiChatLedger.recent(4)) {
          if (entry.revision() > baseline) {
             out.add(AiJson.objectOf("source", entry.source(), "sender", entry.sender(), "text", entry.text()));
          }

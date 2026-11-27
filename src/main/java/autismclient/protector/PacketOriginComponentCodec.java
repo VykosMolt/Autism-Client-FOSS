@@ -10,8 +10,8 @@ public record PacketOriginComponentCodec(Codec<Component> init) implements Codec
    @Override
    public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
       DataResult<Pair<Component, T>> result = this.init.decode(ops, input);
-      return !PacketDecodeOriginStack.init_Z() ? result : result.map(pair -> pair.mapFirst(c -> {
-         PacketComponentOriginTracker.init_V(c);
+      return !PacketDecodeOriginStack.isDecoding() ? result : result.map(pair -> pair.mapFirst(c -> {
+         PacketComponentOriginTracker.tag(c);
          return (Component)c;
       }));
    }

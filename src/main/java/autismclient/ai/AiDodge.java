@@ -153,7 +153,7 @@ final class AiDodge {
                            }
                         }
 
-                        if (!stillThreat && !this.load_Set.contains(id) && this.init_List.stream().noneMatch(r -> r.init_Z_I(id)) && this.read_F == 0.0F) {
+                        if (!stillThreat && !this.load_Set.contains(id) && this.init_List.stream().noneMatch(r -> r.isReflected(id)) && this.read_F == 0.0F) {
                            this.flush++;
                         }
                      }
@@ -166,14 +166,14 @@ final class AiDodge {
                         if (this.init_V.load_Z()
                            && threats.stream()
                               .anyMatch(
-                                 tx -> this.init_Minecraft.level.getEntity(tx.entityId()) instanceof LargeFireball && !this.init_V.init_Z_I(tx.entityId())
+                                 tx -> this.init_Minecraft.level.getEntity(tx.entityId()) instanceof LargeFireball && !this.init_V.isReflected(tx.entityId())
                               )) {
                            this.init_V = new AiGhastReflect(this.init_Minecraft);
                            this.init_List.add(this.init_V);
                         }
 
-                        String reflection = this.init_V.init_Str_List(threats);
-                        threats.removeIf(tx -> this.init_List.stream().anyMatch(r -> r.init_Z_I(tx.entityId())));
+                        String reflection = this.init_V.plan(threats);
+                        threats.removeIf(tx -> this.init_List.stream().anyMatch(r -> r.isReflected(tx.entityId())));
                         if (this.read_Z && !this.init_Minecraft.options.keyUse.isDown()) {
                            this.read_Z = false;
                         }
@@ -191,7 +191,7 @@ final class AiDodge {
                         }
                      }
 
-                     if (threats.isEmpty() && !this.init_V.init_Z()) {
+                     if (threats.isEmpty() && !this.init_V.isTracking()) {
                         return this.init(
                            AiOperation.Status.SUCCEEDED,
                            this.init_Set.isEmpty() && this.load_Set.isEmpty()
@@ -220,7 +220,7 @@ final class AiDodge {
                            boolean onLine = back != null
                               && fireball.getBoundingBox().inflate(0.2).clip(eye, eye.add(back.subtract(eye).normalize().scale(6.0))).isPresent();
                            AiGameOperations.snapLookAt(onLine ? back : fireball.getBoundingBox().getCenter());
-                           double reach = AiDefense.init_D(this.init_Minecraft);
+                           double reach = AiDefense.attackReach(this.init_Minecraft);
                            BlockHitResult blockRay = this.init_Minecraft
                               .level
                               .clip(new ClipContext(eye, fireball.getBoundingBox().getCenter(), Block.COLLIDER, Fluid.NONE, this.init_Minecraft.player));
@@ -395,7 +395,7 @@ final class AiDodge {
 
                for (int ahead = 1; ahead <= 3; ahead++) {
                   BlockPos cell = feet.offset((int)Math.round(dir.x * ahead), 0, (int)Math.round(dir.z * ahead));
-                  if (!AiCombat.init_Z_Minecraft_BlockPos(this.init_Minecraft, cell)) {
+                  if (!AiCombat.isSafeStep(this.init_Minecraft, cell)) {
                      return false;
                   }
 
@@ -438,15 +438,15 @@ final class AiDodge {
                   );
                }
 
-               JsonObject reflection = this.init_V.init_JsonObject();
+               JsonObject reflection = this.init_V.statusJson();
                JsonArray shots = new JsonArray();
 
                for (AiGhastReflect controller : this.init_List) {
-                  shots.add(controller.init_JsonObject());
+                  shots.add(controller.statusJson());
                }
 
                for (String counter : List.of("serverConfirmedReflections", "ghastDeathsObserved", "missedAttempts", "defensiveBats", "movementTicks")) {
-                  reflection.addProperty(counter, this.init_List.stream().mapToInt(r -> AiJson.getInt(r.init_JsonObject(), counter, 0)).sum());
+                  reflection.addProperty(counter, this.init_List.stream().mapToInt(r -> AiJson.getInt(r.statusJson(), counter, 0)).sum());
                }
 
                reflection.add("shots", shots);
@@ -512,7 +512,7 @@ final class AiDodge {
                   this.init_Z = true;
                   this.load();
                   this.read();
-                  this.init_V.load_V();
+                  this.init_V.tick();
                   if (this.read_Z && this.init_Minecraft.options != null) {
                      this.init_Minecraft.options.keyUse.setDown(false);
                   }

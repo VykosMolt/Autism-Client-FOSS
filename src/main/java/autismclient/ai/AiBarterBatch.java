@@ -151,7 +151,7 @@ final class AiBarterBatch {
 
                      if (this.load_Piglin != null) {
                         if (result.status() != AiOperation.Status.SUCCEEDED) {
-                           AiNetherStructures.init_V(mc, this.load_Piglin);
+                           AiNetherStructures.recordBarter(mc, this.load_Piglin);
                         }
 
                         this.load_Piglin = null;
@@ -486,7 +486,7 @@ final class AiBarterBatch {
    private static boolean init_Z(Minecraft mc) {
       for (EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET)) {
          ItemStack stack = mc.player.getItemBySlot(slot);
-         if (AiRunResources.hasMinDurability(stack, 8) && AiDimension.load_Set.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+         if (AiRunResources.hasMinDurability(stack, 8) && AiDimension.GOLD_ARMOR.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
             return true;
          }
       }
@@ -507,8 +507,8 @@ final class AiBarterBatch {
             && piglin.getOffhandItem().isEmpty()
             && !busy.contains(piglin.getUUID())
             && !skipped.contains(piglin.getUUID())
-            && AiNetherStructures.init_Z(mc, piglin)
-            && AiCombat.init_Z_Minecraft_BlockPos(mc, piglin.blockPosition())
+            && AiNetherStructures.canBarter(mc, piglin)
+            && AiCombat.isSafeStep(mc, piglin.blockPosition())
             && !init(mc, piglin.blockPosition())) {
             double d = piglin.distanceToSqr(mc.player);
             if (d < distance) {

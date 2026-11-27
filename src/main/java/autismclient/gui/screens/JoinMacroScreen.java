@@ -83,7 +83,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          this.update_V_2();
          this.load_List.clear();
          this.read_List.clear();
-         graphics.fill(0, 0, this.init_I(), this.load_I(), -15987181);
+         graphics.fill(0, 0, this.virtualWidth(), this.virtualHeight(), -15987181);
          int x = this.flush();
          int panelW = this.close();
          int ctl = this.write_I_2();
@@ -403,7 +403,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-      event = init_MouseButtonEvent_MouseButtonEvent(event);
+      event = toVirtual(event);
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
@@ -459,7 +459,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      event = init_MouseButtonEvent_MouseButtonEvent(event);
+      event = toVirtual(event);
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.read_List)) {
          return true;
       } else if (this.load_Z) {
@@ -472,7 +472,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      event = init_MouseButtonEvent_MouseButtonEvent(event);
+      event = toVirtual(event);
       dx = cA.init_D_D(dx);
       dy = cA.init_D_D(dy);
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
@@ -646,11 +646,11 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int flush() {
-      return Math.max(6, (this.init_I() - this.close()) / 2);
+      return Math.max(6, (this.virtualWidth() - this.close()) / 2);
    }
 
    private int close() {
-      return Math.max(1, Math.min(382, this.init_I() - 12));
+      return Math.max(1, Math.min(382, this.virtualWidth() - 12));
    }
 
    private int open() {
@@ -724,8 +724,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int valid() {
-      int available = Math.max(this.prev() + this.update_I_2() + 4, this.load_I() - 6 - this.stop());
-      int cap = Math.max(3, this.load_I() * 65 / 100 / this.sync());
+      int available = Math.max(this.prev() + this.update_I_2() + 4, this.virtualHeight() - 6 - this.stop());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.sync());
       int shown = Math.max(3, Math.min(cap, this.init_List.size()));
       return Math.min(available, this.prev() + shown * this.sync() - 2 + 4);
    }

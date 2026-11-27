@@ -153,7 +153,7 @@ public final class AiSchematicMachinePlan {
          if (saved != null) {
             kept.put(key, saved);
             BlockState state = AiBuilder.toBlockState(cell);
-            if (AiSavedContents.init_Z(state)) {
+            if (AiSavedContents.isContainer(state)) {
                storage.put(key, state);
             }
 

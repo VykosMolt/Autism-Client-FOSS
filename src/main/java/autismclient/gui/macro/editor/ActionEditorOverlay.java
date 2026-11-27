@@ -457,7 +457,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return List.copyOf(labels);
    }
 
-   public static ActionEditorOverlay init_ActionEditorOverla_2() {
+   public static ActionEditorOverlay getInstance() {
       if (init_ActionEditorOverla_4 == null) {
          init_ActionEditorOverla_4 = new ActionEditorOverlay(init_Minecraft.font);
          OverlayManager.getInstance().register(init_ActionEditorOverla_4);
@@ -495,7 +495,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return init_Z_StreamGate(this.init_MacroAction == null ? null : this.init_MacroAction.getType()) ? 56 : 64;
    }
 
-   public static boolean init_Z_MacroAction(MacroAction action) {
+   public static boolean isEditable(MacroAction action) {
       if (action == null) {
          return false;
       }
@@ -529,7 +529,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   public static ActionEditorOverlay load_ActionEditorOverla() {
+   public static ActionEditorOverlay getExisting() {
       return init_ActionEditorOverla_4;
    }
 
@@ -537,17 +537,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return this.write_Z && !this.run_Z && this.init_MacroAction == action;
    }
 
-   public void load_V_Z(boolean allowed) {
+   public void setCaptureAllowed(boolean allowed) {
       this.flush_Z = allowed;
       if (!allowed) {
          this.poll_Z_2();
       }
    }
 
-   public void read_V(boolean configurationOnly) {
+   public void setConfigurationOnly(boolean configurationOnly) {
       this.close_Z = configurationOnly;
       if (configurationOnly) {
-         this.load_V_Z(false);
+         this.setCaptureAllowed(false);
       }
    }
 
@@ -579,13 +579,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return mode == CaptureMode.CUSTOM_MENU_BUTTON ? true : mode == CaptureMode.PACKET_NAME || this.clear_Z();
    }
 
-   public void init_V_List(List<MacroAction> actions) {
+   public void onActionsChanged(List<MacroAction> actions) {
       if (this.write_Z && !this.run_Z && this.init_MacroAction != null && actions != null && !actions.contains(this.init_MacroAction)) {
          this.set(false);
       }
    }
 
-   public void init_V_MacroAction(MacroAction action) {
+   public void closeIfEditing(MacroAction action) {
       if (this.load_Z_MacroAction(action)) {
          this.set(false);
       }
@@ -597,17 +597,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_RaceStepSelectorOv = new RaceStepSelectorOverlay(textRenderer);
    }
 
-   public void init_V_aM_I(AutismMacro macro, int actionIndex) {
+   public void setContext(AutismMacro macro, int actionIndex) {
       this.init_aM = macro;
       this.f_f_I = actionIndex;
       this.task();
    }
 
-   public void init_V_MacroAction(MacroAction action, Runnable onPreSave, Runnable onSave) {
-      this.init_V_MacroAction(action, onPreSave, onSave, 1);
+   public void openAction(MacroAction action, Runnable onPreSave, Runnable onSave) {
+      this.openAction(action, onPreSave, onSave, 1);
    }
 
-   public void init_V_MacroAction(MacroAction action, Runnable onPreSave, Runnable onSave, int editCount) {
+   public void openAction(MacroAction action, Runnable onPreSave, Runnable onSave, int editCount) {
       this.variableWarningStale = true;
       this.flags();
       this.get(true);
@@ -645,7 +645,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       this.init_MapStore = null;
-      this.init_StreamUtil.init_V();
+      this.init_StreamUtil.clear();
       this.f_j_I = -1;
       this.f_k_I = -1;
       if (action instanceof ItemAction ia) {
@@ -1137,8 +1137,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       OverlayManager.getInstance().bringToFront(this);
    }
 
-   public void init_V_H(PayloadAction action) {
-      this.init_V_MacroAction(action, null, null);
+   public void openPayload(PayloadAction action) {
+      this.openAction(action, null, null);
       this.run_Z = true;
    }
 
@@ -1338,11 +1338,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean close_Z() {
-      return this.init_StreamUtil.init_Z();
+      return this.init_StreamUtil.isActive();
    }
 
    public boolean open_Z() {
-      return this.init_StreamUtil.init_Z();
+      return this.init_StreamUtil.isActive();
    }
 
    public String load_Str_2() {
@@ -1350,7 +1350,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public String read_Str() {
-      String activeCaptureKey = this.init_StreamUtil.init_Str();
+      String activeCaptureKey = this.init_StreamUtil.key();
       if ("_item_entries".equals(activeCaptureKey) || "_drop_entries".equals(activeCaptureKey)) {
          return "Right-click a slot to set the item. Esc = cancel";
       } else if ("_wsc_entries".equals(activeCaptureKey)) {
@@ -1385,7 +1385,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    public boolean push_Z_2() {
       AutismSessionState state = AutismSessionState.getInstance();
-      return this.init_StreamUtil.init_Z()
+      return this.init_StreamUtil.isActive()
          || this.write_Str != null
          || this.poll_List != null
          || this.sync_Z
@@ -1406,23 +1406,23 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.variableWarningStale = true;
       int visibleSlot = slot != null ? autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, slot) : -1;
       MacroItemTarget capturedTarget = this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot);
-      if (this.init_StreamUtil.init_Z() && (!itemName.isEmpty() || visibleSlot >= 0)) {
+      if (this.init_StreamUtil.isActive() && (!itemName.isEmpty() || visibleSlot >= 0)) {
          boolean useSlot = slotMode && visibleSlot >= 0;
          if (useSlot) {
             capturedTarget = MacroItemTarget.ofSlot(Math.max(0, visibleSlot));
          }
 
-         String key = this.init_StreamUtil.init_Str();
+         String key = this.init_StreamUtil.key();
          if ("_item_entries".equals(key) && this.init_MapStore != null) {
             this.load_V_ArrayUtil(capturedTarget);
-            this.init_StreamUtil.init_V();
+            this.init_StreamUtil.clear();
             this.init_V_Z_Z(false, false);
             return true;
          }
 
          if ("_drop_entries".equals(key) && this.init_PacketUtil != null) {
             this.read(capturedTarget);
-            this.init_StreamUtil.init_V();
+            this.init_StreamUtil.clear();
             this.init_V_Z_Z(false, false);
             return true;
          }
@@ -1465,7 +1465,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          } else {
             if ("wait_inventory_slot".equals(key)) {
                this.poll(Math.max(0, visibleSlot));
-               this.init_StreamUtil.init_V();
+               this.init_StreamUtil.clear();
                this.init_V_Z_Z(false, false);
                this.init_V_Str_I("Slot set: " + Math.max(0, visibleSlot), -10035062);
                return true;
@@ -1497,7 +1497,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.init_V_Str_I("Nothing to capture from that slot", -38037);
                }
 
-               this.init_StreamUtil.init_V();
+               this.init_StreamUtil.clear();
                this.init_V_Z_Z(false, false);
                return true;
             } else if (this.write_Map.containsKey(key)) {
@@ -1558,7 +1558,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               this.init_StreamUtil.init_V();
+               this.init_StreamUtil.clear();
                this.init_V_Z_Z(false, false);
                return true;
             }
@@ -6859,7 +6859,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<RaceStepSelectorOverlay.Inner_DataUtil> options = condition
          ? this.init_List_List_Str(close_List, "CONDITION")
          : this.init_List_List_Str(actions, "ACTION");
-      this.init_RaceStepSelectorOv.init_V_Str_4(condition ? "Condition Selector" : "Action Selector", options, option -> {
+      this.init_RaceStepSelectorOv.openSelector(condition ? "Condition Selector" : "Action Selector", options, option -> {
          if (option != null && option.load() != null && !option.load().isBlank()) {
             values.add((condition ? "CONDITION:" : "ACTION:") + option.load());
             this.fill();
@@ -8304,7 +8304,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       this.init_AutismPacketSelect.write_V_21();
-      this.init_RaceStepSelectorOv.load_V_3();
+      this.init_RaceStepSelectorOv.dismiss();
       this.write_Z = false;
       this.init_MacroAction = null;
       this.f_d_I = 1;
@@ -8315,7 +8315,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_CompoundTag = null;
       this.init_ActionFieldSchema = null;
       this.init_MapStore = null;
-      this.init_StreamUtil.init_V();
+      this.init_StreamUtil.clear();
       if (this.write_Str != null) {
          ContainerCloseGuard.read();
          this.write_Str = null;
@@ -8340,7 +8340,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void level() {
-      this.init_f.init_V();
+      this.init_f.clear();
    }
 
    private void init_V_Str_I(String message, int accentColor) {
@@ -8348,7 +8348,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean run_Z() {
-      return this.init_f.init_Z();
+      return this.init_f.hasToasts();
    }
 
    public void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int anchorX, int anchorY, int anchorWidth) {
@@ -16211,7 +16211,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String clear_Str() {
-      String activeCaptureKey = this.init_StreamUtil.init_Str();
+      String activeCaptureKey = this.init_StreamUtil.key();
       if (!"_item_entries".equals(activeCaptureKey) && !"_drop_entries".equals(activeCaptureKey) && !"_wsc_entries".equals(activeCaptureKey)) {
          FieldDef field = this.read_FieldDef(activeCaptureKey);
          return field != null ? field.label() : "Slot";

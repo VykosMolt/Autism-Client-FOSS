@@ -105,7 +105,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
       try {
          this.load_List.clear();
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), -872086265);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.pop();
          int y = this.tick_I_11();
          int panelW = this.run();
@@ -435,7 +435,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       List<String> out = new ArrayList<>(valid);
       out.addAll(invalid);
       String encoded = PipeDelimitedListUtil.init(out);
-      if (this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.init_Z_5()) {
+      if (this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.isTitleSetup()) {
          this.init_Module.setConfiguredValue(this.init_Setting.id(), encoded);
       } else {
          this.init_Module.setValue(this.init_Setting.id(), encoded);
@@ -1115,23 +1115,23 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int pop() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.init_I(), this.run(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.run(), 6);
    }
 
    private int tick_I_11() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.load_I(), this.get(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.get(), 6);
    }
 
    private int run() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.init_I(), 6, 460);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 460);
    }
 
    private int get() {
       int minList = 4 * this.poll();
-      int maxList = Math.max(minList, (int)(this.load_I() * 0.65F));
+      int maxList = Math.max(minList, (int)(this.virtualHeight() * 0.65F));
       int list = this.init(this.update(), minList, maxList);
       int chrome = this.sync() + 4 + this.flush() + 2 + 4 + this.open() + 4;
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.load_I(), 6, chrome + list);
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + list);
    }
 
    private int init(int value, int min, int max) {

@@ -20,7 +20,7 @@ public final class MovementModuleHooks {
    }
 
    public static boolean init_Z(Entity entity) {
-      return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.AiDirectOps.init_Z()
+      return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.AiDirectOps.isRunning()
          ? false
          : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
    }

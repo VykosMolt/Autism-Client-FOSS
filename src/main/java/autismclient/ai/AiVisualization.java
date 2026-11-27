@@ -96,7 +96,7 @@ public final class AiVisualization {
    private AiVisualization() {
    }
 
-   public static void init_V() {
+   public static void initialize() {
       if (!init_Z) {
          init_Z = true;
          ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -110,7 +110,7 @@ public final class AiVisualization {
                if (s != null) {
                   init_AiSettings = s.getSettings();
                } else if (!init_Map.isEmpty() && System.nanoTime() - sync_J > 5000000000L) {
-                  init_AiSettings = AiDirectOps.init_AiSettings();
+                  init_AiSettings = AiDirectOps.settings();
                   sync_J = System.nanoTime();
                }
             }
@@ -134,7 +134,7 @@ public final class AiVisualization {
                      autismclient.util.cA.init_V_GuiGraphicsExtract(graphics);
 
                      try {
-                        init_V(graphics);
+                        renderHud(graphics);
                      } finally {
                         autismclient.util.cA.load_V_GuiGraphicsExtract(graphics);
                      }
@@ -161,7 +161,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init_V(Object owner) {
+   public static void clearOwner(Object owner) {
       AiVisualization.Inner_CachePool l = init_Map.remove(owner);
       if (l != null) {
          l.init();
@@ -679,7 +679,7 @@ public final class AiVisualization {
       init(owner, origin, cells, cursor, preview, preview);
    }
 
-   static void init_V_Obj_2(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
+   static void showCells(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null) {
          l.init_Predicate = hiddenSolid;
@@ -704,7 +704,7 @@ public final class AiVisualization {
             init(l, origin, cells, cursor, preview);
          } else {
             l.init();
-            int cap = preview ? cells.size() : init_I(init_AiSettings.visualizationBlocks);
+            int cap = preview ? cells.size() : clampGhostLimit(init_AiSettings.visualizationBlocks);
             int stride = preview ? 1 : (fullPlan ? Math.max(1, (cells.size() + cap - 1) / cap) : 1);
             l.init_cs_StreamUtil = preview
                ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
@@ -813,7 +813,7 @@ public final class AiVisualization {
       }
    }
 
-   static int init_I(int value) {
+   static int clampGhostLimit(int value) {
       return Math.max(64, Math.min(4096, value));
    }
 
@@ -821,7 +821,7 @@ public final class AiVisualization {
       return Math.max(0, Math.min(100, value));
    }
 
-   static void init_V(int value) {
+   static void setGhostLimit(int value) {
       reset = load(value);
       update_J = System.nanoTime() + 2000000000L;
    }
@@ -830,7 +830,7 @@ public final class AiVisualization {
       long started = System.nanoTime();
       Minecraft mc = Minecraft.getInstance();
       if ((!init_Map.isEmpty() || aP.init_cU() != null) && mc.level != null && !autismclient.modules.aD.init_Z() && autismclient.e.ListPool.init()) {
-         int cap = init_I(init_AiSettings.visualizationBlocks);
+         int cap = clampGhostLimit(init_AiSettings.visualizationBlocks);
          int distance = Math.max(16, Math.min(256, init_AiSettings.visualizationDistance));
          double range = (double)distance * distance;
          Map<Long, AiVisualization.Inner_StreamUtil> ghosts = new LinkedHashMap<>();
@@ -962,7 +962,7 @@ public final class AiVisualization {
       return List.copyOf(quietTargets);
    }
 
-   public static boolean init_Z() {
+   public static boolean hasContent() {
       return init_cG_DataUtil.world != null
          && (
             !init_cG_DataUtil.ghosts.isEmpty()
@@ -1058,7 +1058,7 @@ public final class AiVisualization {
                                  ? 16777215
                                  : (g.color == -885830 ? tintSource.color(g.state) : tintSource.colorInWorld(g.state, f.world, p));
                               float shade = face.load() == null ? 1.0F : f.world.cardinalLighting().byFace(face.load());
-                              int color = init_I_I(g.color, tint, shade, alpha);
+                              int color = ghostColor(g.color, tint, shade, alpha);
                               float[] data = face.init_FArr();
 
                               for (int v = 0; v < 4; v++) {
@@ -1254,7 +1254,7 @@ public final class AiVisualization {
       return var10000;
    }
 
-   static int init_I_I(int status, int tint, float shade, int alpha) {
+   static int ghostColor(int status, int tint, float shade, int alpha) {
       int r = Math.round(((status >> 16 & 0xFF) * 0.38F + 158.1F) * (tint >> 16 & 0xFF) / 255.0F * shade);
       int g = Math.round(((status >> 8 & 0xFF) * 0.38F + 158.1F) * (tint >> 8 & 0xFF) / 255.0F * shade);
       int b = Math.round(((status & 0xFF) * 0.38F + 158.1F) * (tint & 0xFF) / 255.0F * shade);
@@ -1347,7 +1347,7 @@ public final class AiVisualization {
          "hudContentWidth",
          next,
          "blockBudget",
-         init_I(init_AiSettings.visualizationBlocks),
+         clampGhostLimit(init_AiSettings.visualizationBlocks),
          "quadBudget",
          16384,
          "opacity",
@@ -1424,7 +1424,7 @@ public final class AiVisualization {
       return bounds;
    }
 
-   public static void init_V(GuiGraphicsExtractor g) {
+   public static void renderHud(GuiGraphicsExtractor g) {
       if (aP.init_Z()) {
          aP.init_V_GuiGraphicsExtract(g);
       } else if (load_Z()) {
