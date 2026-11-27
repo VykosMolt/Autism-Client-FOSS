@@ -108,6 +108,7 @@ Keep these files in lockstep with any class/package rename:
 - `src/main/resources/META-INF/services/autismclient.util.mm.guardian.Guardian` (frozen)
 - `src/main/resources/assets/autismclient/ai/source-contracts.json`
 - `tools/checks/*Check.java` (44 test files — many use package-private access!)
+  - Check-local subclasses (e.g. `StoreRecoveryCheck$Store extends AtomicNbtListStore`) must carry the same override renames in the plan; class-file override scans of `build/classes/java/main` miss them, and `AstBatchRenamer` writes no `mappings/disambig.tsv` rows for them since they never ship.
 
 ## 9. Mandatory Verification Chain & Adversarial Convergence Gate
 See [GEMINI.md](../GEMINI.md) (Sections 3–4) for the authoritative workflow. Every deobfuscation batch MUST pass all 5 gates and independent adversarial review before pushing:
