@@ -513,7 +513,7 @@ public final class AiBlockDigger {
       }
    }
 
-   private static boolean consumeAttackTick(Minecraft var0) {
+   private static boolean wasAttackTickAlreadyConsumed(Minecraft var0) {
       if (lastAttackTick == var0.player.tickCount) {
          return true;
       }
@@ -524,7 +524,7 @@ public final class AiBlockDigger {
    }
 
    private void continueBreakingBlock(BlockPos var1, Direction var2) {
-      if (!consumeAttackTick(this.minecraft)) {
+      if (!wasAttackTickAlreadyConsumed(this.minecraft)) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
          Direction var4 = var3 != null && var3.getBlockPos().equals(var1) ? var3.getDirection() : var2;
          if (this.minecraft.gameMode.continueDestroyBlock(var1, var4)) {
@@ -535,7 +535,7 @@ public final class AiBlockDigger {
    }
 
    public static boolean continueBreakingBlock(Minecraft var0, BlockPos var1, Direction var2) {
-      if (var0.player != null && var0.level != null && var0.gameMode != null && !consumeAttackTick(var0)) {
+      if (var0.player != null && var0.level != null && var0.gameMode != null && !wasAttackTickAlreadyConsumed(var0)) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
          Direction var4 = var3 != null && var3.getBlockPos().equals(var1) ? var3.getDirection() : var2;
          if (!var0.gameMode.continueDestroyBlock(var1, var4)) {
@@ -553,7 +553,7 @@ public final class AiBlockDigger {
    public static void tickDestroyDelay(Minecraft var0) {
       if (var0.player != null && var0.level != null && var0.gameMode instanceof AutismMultiPlayerGameModeAccessor var1 && var1.autism$getDestroyDelay() > 0) {
          BlockHitResult var3 = AiAim.raycastLookBlock();
-         if (var3 != null && !var0.level.getBlockState(var3.getBlockPos()).isAir() && !consumeAttackTick(var0)) {
+         if (var3 != null && !var0.level.getBlockState(var3.getBlockPos()).isAir() && !wasAttackTickAlreadyConsumed(var0)) {
             if (var0.gameMode.continueDestroyBlock(var3.getBlockPos(), var3.getDirection())) {
                Compat263.swing(var0.player, InteractionHand.MAIN_HAND);
             }

@@ -726,7 +726,7 @@ public final class ExplosionDamageCalculator {
          return this.init_Z;
       }
 
-      public boolean killsSelf() {
+      public boolean popsOrKillsSelf() {
          return this.load_Z;
       }
    }

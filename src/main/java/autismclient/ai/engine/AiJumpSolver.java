@@ -24,10 +24,10 @@ public final class AiJumpSolver {
    private static final int[] RELEASE_TICK_CANDIDATES = new int[]{2147483647, 1, 3, 5, 7, 9};
    private static final int[] ALT_RELEASE_TICK_CANDIDATES = new int[]{2147483647, 1, 3, 5, 7, 9};
    private static final float[] CLEAR_COLLISION_YAW_OFFSETS = new float[]{-4.0F, 4.0F, -8.0F, 8.0F, -12.0F, 12.0F, -16.0F, 16.0F, -20.0F, 20.0F};
-   private static final int[] CHAIN_TURN_ANGLES = new int[]{0, -18, 18, -36, 36, -60, 60, -84, 84};
+   private static final int[] CURVE_RUNUP_YAW_OFFSETS = new int[]{0, -18, 18, -36, 36, -60, 60, -84, 84};
    private static final int[] CURVE_ENTRY_ANGLES = new int[]{0, -7, 7, -14, 14};
    private static final int[] WIDE_CURVE_ANGLES = new int[]{0, -7, 7, -14, 14, -21, 21};
-   private static final int[] TURN_DELAY_TICKS = new int[]{4, 6, 8};
+   private static final int[] CURVE_COAST_AFTER_TICKS = new int[]{4, 6, 8};
    private static final float[] PACE_YAW_OFFSETS = new float[]{0.0F, -8.0F, 8.0F, -16.0F, 16.0F, -24.0F, 24.0F};
    private static final ConcurrentHashMap<Integer, Double> DEFAULT_REACH_CACHE = new ConcurrentHashMap<>();
    private static final ConcurrentHashMap<AiJumpSolver.ArcSpeed, Double> SPEED_REACH_CACHE = new ConcurrentHashMap<>();
@@ -1359,10 +1359,10 @@ public final class AiJumpSolver {
          if (!(var13 < 2.0) && !(var13 > 8.0)) {
             float var15 = AiPhysics.yawBetween(var1.x(), var1.z(), var5, var7);
             if (var1.vx() * var9 + var1.vz() * var11 >= -0.035 * var13) {
-               AiJumpSolver.TurnSchedule[] var16 = new AiJumpSolver.TurnSchedule[CHAIN_TURN_ANGLES.length];
+               AiJumpSolver.TurnSchedule[] var16 = new AiJumpSolver.TurnSchedule[CURVE_RUNUP_YAW_OFFSETS.length];
 
                for (int var17 = 0; var17 < var16.length; var17++) {
-                  var16[var17] = new AiJumpSolver.TurnSchedule(null, 0, AiPhysics.MoveInput.run(var15 + CHAIN_TURN_ANGLES[var17], true));
+                  var16[var17] = new AiJumpSolver.TurnSchedule(null, 0, AiPhysics.MoveInput.run(var15 + CURVE_RUNUP_YAW_OFFSETS[var17], true));
                }
 
                AiJumpSolver.JumpPlan var35 = solveScheduledTurnJump(var0, var1, var2, var3, var16, 17, false);
@@ -1444,7 +1444,7 @@ public final class AiJumpSolver {
                               }
 
                               if (var7 && !isSettledAtSurface(var35, var3)) {
-                                 for (int var39 : TURN_DELAY_TICKS) {
+                                 for (int var39 : CURVE_COAST_AFTER_TICKS) {
                                     AiJumpSolver.ArcResult var40 = simulateJumpArc(
                                        var0, var17, var34, var34, var39, var24, var2, var3
                                     );

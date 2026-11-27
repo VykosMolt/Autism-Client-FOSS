@@ -2180,7 +2180,7 @@ public final class AiPathfinder {
                               var131,
                               var3,
                               var64,
-                              (var95 ? 3.2 : 4.5 + var100) * var110 + var121 + portalAndWebPenalty(var0, var3, var64, var95) + var0.tightWidthPenalty(var64)
+                              (var95 ? 3.2 : 4.5 + var100) * var110 + var121 + portalAndWebPenalty(var0, var3, var64, var95) + var0.adjacentContactHazardPenalty(var64)
                            )
                         );
                      }
@@ -2191,8 +2191,8 @@ public final class AiPathfinder {
                         && !var141.passable()
                         && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT_JUMP)
                         && canSprintJumpFlat(var0, var3, var64)
-                        && !var0.isTightWidthCell(var64)
-                        && !var0.isTightWidthCell(var137)) {
+                        && !var0.hasAdjacentContactHazard(var64)
+                        && !var0.hasAdjacentContactHazard(var137)) {
                         var4.add(
                            AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.SPRINT_JUMP, var3, var64, hasLowCeilingSprintJump(var0, var3, var64) ? 2.2 : 2.9000000000000004)
                         );
@@ -2245,7 +2245,7 @@ public final class AiPathfinder {
                            var64,
                            var81,
                            List.of(),
-                           AiPathfinder.MoveCosts.digTunnelCost(var89) + var0.tightWidthPenalty(var64),
+                           AiPathfinder.MoveCosts.digTunnelCost(var89) + var0.adjacentContactHazardPenalty(var64),
                            var101
                         )
                      );
@@ -2292,7 +2292,7 @@ public final class AiPathfinder {
                                  AiPathfinder.MoveType.STEP_UP_1,
                                  var3,
                                  var102,
-                                 var138 + portalAndWebPenalty(var0, var3, var102, false) + var0.tightWidthPenalty(var102)
+                                 var138 + portalAndWebPenalty(var0, var3, var102, false) + var0.adjacentContactHazardPenalty(var102)
                               )
                            );
                         }
@@ -2539,7 +2539,7 @@ public final class AiPathfinder {
                                  (var83 ? 4.5 : 6.4 + var91) * var103
                                     + (var67.thorny() ? 25.0 : 0.0)
                                     + portalAndWebPenalty(var0, var3, var65, var83)
-                                    + var0.tightWidthPenalty(var65)
+                                    + var0.adjacentContactHazardPenalty(var65)
                               )
                            );
                         }
@@ -3074,7 +3074,7 @@ public final class AiPathfinder {
                   ? DROP_JUMP_OFFSETS
                   : (var22 > 5 ? SPEED_JUMP_OFFSETS : BASE_JUMP_OFFSETS);
                int var24 = var73 ? -((int)var0.fallPolicy.maxDropBlocks) : -4;
-               if (var73 && var0.useDropJumpOffsets) {
+               if (var73 && var0.limitJumpDropDepth) {
                   var24 = -8;
                }
 
@@ -3107,7 +3107,7 @@ public final class AiPathfinder {
                         AiPathfinder.CellInfo var40 = var0.probePos(var75.below());
                         if (var40.loaded() && !var40.passable()) {
                            boolean var41 = (var40.top16() > 16 || var0.fullPhysicsParkour) && isTightLandingStandable(var0, var75, null);
-                           if (var32 == 1 && !var41 && !var10 && (var30 == 0 || var31 == 0 || !isFlatRunupPath(var0, var3, var75, var5))) {
+                           if (var32 == 1 && !var41 && !var10 && (var30 == 0 || var31 == 0 || !hasNonFlatGapOnPath(var0, var3, var75, var5))) {
                               break;
                            }
 
@@ -3714,7 +3714,7 @@ public final class AiPathfinder {
             : false;
       }
 
-      static boolean isFlatRunupPath(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, double var3) {
+      static boolean hasNonFlatGapOnPath(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, double var3) {
          int var5 = var2.getX() - var1.getX();
          int var6 = var2.getZ() - var1.getZ();
          int var7 = Math.max(Math.abs(var5), Math.abs(var6));
@@ -3979,7 +3979,7 @@ public final class AiPathfinder {
          return true;
       }
 
-      public static boolean withinStepUpHeight(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
+      public static boolean withinStepDownHeight(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var2.below());
          return !var3.passable() && !var4.passable() ? surfaceY(var1.getY(), var3) - surfaceY(var2.getY(), var4) <= 0.562501 : false;
@@ -4338,7 +4338,7 @@ public final class AiPathfinder {
          private boolean quickJumpMode;
          private boolean reducedJumpMode;
          boolean allowManeuverShortcuts;
-         private boolean useDropJumpOffsets;
+         private boolean limitJumpDropDepth;
          AiPathfinder.FallPolicy fallPolicy;
          private Consumer<AiPathfinder.MoveGenerator.JumpCandidate> deferredJumpSink;
          static final long NORMAL_JUMP_BUDGET_NANOS = 65000000L;
@@ -4351,7 +4351,7 @@ public final class AiPathfinder {
          static final int DOOR_NONE = 0;
          static final int DOOR_X_AXIS = 1;
          static final int DOOR_Z_AXIS = 2;
-         private final Long2ByteOpenHashMap narrowClearanceCache;
+         private final Long2ByteOpenHashMap adjacentContactHazardCache;
          private final Map<Long, Object> fallLandingCache;
          static final int MAX_FALL_SIM_TICKS = 120;
          private static final AiPathfinder.CellInfo PLACED_SOLID_CELL = AiPathfinder.CellInfo.fullBlock(1.0 / 0.0);
@@ -4399,7 +4399,7 @@ public final class AiPathfinder {
 
          CachedGrid(AiPathfinder.GridView var1, int var2, double var3) {
             this.fallPolicy = AiPathfinder.FallPolicy.STANDARD;
-            this.narrowClearanceCache = new Long2ByteOpenHashMap();
+            this.adjacentContactHazardCache = new Long2ByteOpenHashMap();
             this.fallLandingCache = new HashMap<>();
             this.overlayKeys = new long[16];
             this.overlayValues = new AiPathfinder.CellInfo[16];
@@ -4483,9 +4483,9 @@ public final class AiPathfinder {
             return this.plannerWorld;
          }
 
-         boolean isTightWidthCell(BlockPos var1) {
+         boolean hasAdjacentContactHazard(BlockPos var1) {
             long var2 = var1.asLong();
-            byte var4 = this.narrowClearanceCache.get(var2);
+            byte var4 = this.adjacentContactHazardCache.get(var2);
             if (var4 != 0) {
                return var4 == 2;
             }
@@ -4500,12 +4500,12 @@ public final class AiPathfinder {
                }
             }
 
-            this.narrowClearanceCache.put(var2, (byte)(var5 ? 2 : 1));
+            this.adjacentContactHazardCache.put(var2, (byte)(var5 ? 2 : 1));
             return var5;
          }
 
-         double tightWidthPenalty(BlockPos var1) {
-            return this.isTightWidthCell(var1) ? 2.0 : 0.0;
+         double adjacentContactHazardPenalty(BlockPos var1) {
+            return this.hasAdjacentContactHazard(var1) ? 2.0 : 0.0;
          }
 
          BlockPos simulateStepOffLanding(BlockPos var1, double var2, int var4, int var5) {
@@ -4515,7 +4515,7 @@ public final class AiPathfinder {
                return var8 == NULL_SENTINEL ? null : (BlockPos)var8;
             }
 
-            if (!this.hasDeepDropAhead(var1, var4, var5)) {
+            if (!this.hasWaterDropAhead(var1, var4, var5)) {
                this.fallLandingCache.put(var6, NULL_SENTINEL);
                return null;
             }
@@ -4552,7 +4552,7 @@ public final class AiPathfinder {
             return var13;
          }
 
-         private boolean hasDeepDropAhead(BlockPos var1, int var2, int var3) {
+         private boolean hasWaterDropAhead(BlockPos var1, int var2, int var3) {
             for (int var4 = 1; var4 <= 3; var4++) {
                int var5 = var1.getX() + var2 * var4;
                int var6 = var1.getZ() + var3 * var4;
@@ -4652,7 +4652,7 @@ public final class AiPathfinder {
                long var15 = System.nanoTime();
                AiPlannerWorld var17 = this.plannerWorld();
                long var18 = var17.putAt_J;
-               boolean var20 = this.fullPhysicsParkour && this.fallPolicy == AiPathfinder.FallPolicy.PARKOUR_SAFE && this.hasDropGapBetween(var1, var2, var4, var5);
+               boolean var20 = this.fullPhysicsParkour && this.fallPolicy == AiPathfinder.FallPolicy.PARKOUR_SAFE && this.hasTwoHighWallOnDrop(var1, var2, var4, var5);
                boolean var21 = this.fullPhysicsParkour
                   && Math.abs(var4.getX() - var1.getX()) == 1
                   && Math.abs(var4.getZ() - var1.getZ()) == 1
@@ -4864,7 +4864,7 @@ public final class AiPathfinder {
             return var25;
          }
 
-         private boolean hasDropGapBetween(BlockPos var1, double var2, BlockPos var4, double var5) {
+         private boolean hasTwoHighWallOnDrop(BlockPos var1, double var2, BlockPos var4, double var5) {
             int var7 = var4.getX() - var1.getX();
             int var8 = var4.getZ() - var1.getZ();
             int var9 = Math.max(Math.abs(var7), Math.abs(var8));
@@ -5102,7 +5102,7 @@ public final class AiPathfinder {
       private static final int CORRIDOR_FLOOR_PAD = 14;
       private boolean routeProofMode;
       private boolean destinationUnknown;
-      private boolean skippedBlacklistedMove;
+      private boolean hitSearchBoxLimit;
       private boolean worldRecordMode;
       private boolean trackHeadingState;
       private AiPathfinder.PathBounds searchBounds;
@@ -5513,7 +5513,7 @@ public final class AiPathfinder {
                   var3.quickJumpMode = this.cachedGrid.quickJumpMode;
                   var3.fallPolicy = this.cachedGrid.fallPolicy;
                   var3.fastPassMode = this.cachedGrid.fastPassMode;
-                  var3.useDropJumpOffsets = this.cachedGrid.useDropJumpOffsets;
+                  var3.limitJumpDropDepth = this.cachedGrid.limitJumpDropDepth;
                   var3.localJumpCache = this.cachedGrid.localJumpCache;
                }
 
@@ -5594,7 +5594,7 @@ public final class AiPathfinder {
                      break;
                   }
 
-                  if (this.routeProofMode && this.destinationUnknown && this.canStandOnStartOrTarget(var5, var4.init_D) && this.isAtUnknownTerrainEdge(var5)) {
+                  if (this.routeProofMode && this.destinationUnknown && this.isAtOrCloserThanStart(var5, var4.init_D) && this.isAtUnknownTerrainEdge(var5)) {
                      this.bestUnknownEdgeNode = var4;
                      this.finished = true;
                      break;
@@ -5646,7 +5646,7 @@ public final class AiPathfinder {
          return this.finished;
       }
 
-      private boolean canStandOnStartOrTarget(BlockPos var1, double var2) {
+      private boolean isAtOrCloserThanStart(BlockPos var1, double var2) {
          if (var1.equals(this.startPos)) {
             return true;
          }
@@ -5685,7 +5685,7 @@ public final class AiPathfinder {
                if (this.goal.putAt_Z_BlockPos(var20)) {
                   if (!this.isWithinSearchBox(var20)) {
                      if (this.routeProofMode) {
-                        this.skippedBlacklistedMove = true;
+                        this.hitSearchBoxLimit = true;
                         this.exhaustedSearch = true;
                      }
                   } else {
@@ -5950,16 +5950,16 @@ public final class AiPathfinder {
       public static final double SPRINT_COST = 3.2;
       public static final double SPRINT_DIAGONAL_COST = 4.5;
       public static final double SPRINT_JUMP_COST = 2.9000000000000004;
-      public static final double ICE_SPRINT_JUMP_COST = 2.2;
+      public static final double LOW_CEILING_SPRINT_JUMP_COST = 2.2;
       private static final ConcurrentHashMap<Long, Double> SPEED_SCALE_CACHE = new ConcurrentHashMap<>();
-      public static final double ICE_SPRINT_COST = 2.5;
-      public static final double ICE_SPRINT_DIAGONAL_COST = 3.6;
+      public static final double SLOW_FLOOR_COST_MULTIPLIER = 2.5;
+      public static final double SLIME_COST_MULTIPLIER = 3.6;
       public static final double THORNY_PENALTY = 25.0;
       public static final double SPRINT_WEB_COST = 32.0;
       public static final double WALK_WEB_COST = 41.0;
       public static final double FALL_WEB_COST = 255.0;
       public static final double PORTAL_PENALTY = 400.0;
-      public static final double DOOR_STEP_PENALTY = 2.0;
+      public static final double ADJACENT_CONTACT_HAZARD_PENALTY = 2.0;
       public static final double DEEP_DROP_THRESHOLD = 14.0;
       public static final double STEP_UP_COST = 5.0;
       public static final double SPRINT_STEP_UP_COST = 3.6;
@@ -5987,7 +5987,7 @@ public final class AiPathfinder {
       public static final int MIN_PARKOUR_GAP = 2;
       public static final double THREAT_MAX_SURCHARGE = 60.0;
       public static final double THREAT_RADIUS = 12.0;
-      public static final double SAFEST_WATER_EXTRA_PENALTY = 8.0;
+      public static final double ADJACENT_LAVA_SURCHARGE = 8.0;
       public static final double GOAL_PLACE_COST_CAP = 40.0;
       public static final double UNEDITED_PLACE_PENALTY = 12.0;
       public static final double SIGHT_LINE_SURCHARGE = 10.0;
@@ -7198,7 +7198,7 @@ public final class AiPathfinder {
             boolean var18 = isPressurePlate(var5);
             boolean var19 = var5.is(Blocks.SWEET_BERRY_BUSH);
             boolean var20 = isFloorHazard(var5);
-            boolean var21 = !var20 && !var11 && !isNarrowFootingShape(var10);
+            boolean var21 = !var20 && !var11 && !hasCenterFootingShape(var10);
             boolean var22 = isPortalBlock(var5);
             String var23 = BuiltInRegistries.BLOCK.getKey(var12).getPath();
             int var24 = Math.round(fallDamageMultiplier(var23, var8) * 10.0F);
@@ -7268,7 +7268,7 @@ public final class AiPathfinder {
          }
       }
 
-      public static boolean isNarrowFootingShape(VoxelShape var0) {
+      public static boolean hasCenterFootingShape(VoxelShape var0) {
          if (var0.isEmpty()) {
             return false;
          }
@@ -8131,7 +8131,7 @@ public final class AiPathfinder {
             var60.cachedGrid.quickJumpMode = var27 && !var60.destinationUnknown;
             var60.cachedGrid.reducedJumpMode = var20 && !var19 && !var60.destinationUnknown;
             var60.cachedGrid.allowManeuverShortcuts = var24 && !var19 && !var60.destinationUnknown;
-            var60.cachedGrid.useDropJumpOffsets = var28 || var60.slopedCorridorFloor || var25 && var60.cachedGrid.reducedJumpMode;
+            var60.cachedGrid.limitJumpDropDepth = var28 || var60.slopedCorridorFloor || var25 && var60.cachedGrid.reducedJumpMode;
             if (var19 && var23 && var22 >= 16) {
                var60.openSet.init(1.45);
             }
@@ -8161,7 +8161,7 @@ public final class AiPathfinder {
 
                var60.cachedGrid.requireJumpRunup = var35 == 2;
                var60.openSet.init(var35 == 1 ? 1.55 : 2.05);
-               var60.cachedGrid.useDropJumpOffsets = false;
+               var60.cachedGrid.limitJumpDropDepth = false;
                var60.cachedGrid.quickJumpMode = false;
                var60.cachedGrid.allowManeuverShortcuts = false;
             }
@@ -8267,7 +8267,7 @@ public final class AiPathfinder {
                      continue;
                   }
 
-                  if (var19 && var60.skippedBlacklistedMove && !var40) {
+                  if (var19 && var60.hitSearchBoxLimit && !var40) {
                      var40 = true;
                      continue;
                   }
@@ -8276,7 +8276,7 @@ public final class AiPathfinder {
                      var27 = false;
                   } else if (var19) {
                      var19 = false;
-                  } else if (var60.cachedGrid.useDropJumpOffsets) {
+                  } else if (var60.cachedGrid.limitJumpDropDepth) {
                      var25 = false;
                   } else if (var60.cachedGrid.reducedJumpMode) {
                      var20 = false;

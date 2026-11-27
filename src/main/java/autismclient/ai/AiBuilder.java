@@ -266,7 +266,7 @@ final class AiBuilder {
       return mc.gameDirectory.toPath().resolve("config/autism/ai/scaffold-jobs").resolve(world).resolve(AiJson.sha256Hex(identity.toString()) + ".json");
    }
 
-   static int pickNearestScaffoldIndex(List<BlockPos> cells, Vec3 worker, Predicate<BlockPos> reachable) {
+   static int pickTopScaffoldTeardownIndex(List<BlockPos> cells, Vec3 worker, Predicate<BlockPos> reachable) {
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("No scaffold remains");
       }
@@ -295,7 +295,7 @@ final class AiBuilder {
    private AiBuilder() {
    }
 
-   static List<BlockPos> filterCommittedOutsideLookahead(
+   static List<BlockPos> filterCommittedInLookahead(
       List<BlockPos> committed, List<AiBuilder.CellSpec> order, int cursor, BlockPos origin, Map<Long, AiBuilder.CellSpec> wantedCells
    ) {
       Set<Long> unprocessed = new HashSet<>();
@@ -1765,7 +1765,7 @@ final class AiBuilder {
          }
       }
 
-      return orderByAttachmentSupport(seeded);
+      return orderFluidsAfterContainment(seeded);
    }
 
    static List<AiBuilder.CellSpec> orderByFacingSupport(List<AiBuilder.CellSpec> ordered) {
@@ -1872,7 +1872,7 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.CellSpec> orderByAttachmentSupport(List<AiBuilder.CellSpec> ordered) {
+   static List<AiBuilder.CellSpec> orderFluidsAfterContainment(List<AiBuilder.CellSpec> ordered) {
       HashMap<Long, Integer> index = new HashMap<>();
 
       for (int i = 0; i < ordered.size(); i++) {
@@ -5089,7 +5089,7 @@ final class AiBuilder {
                      if (this.close_List.isEmpty() || drainNow - this.write_J <= 5000L && drainNow - this.update_J <= 60000L) {
                         if (!this.close_List.isEmpty() && this.store < (schematic ? 2097152 : 30)) {
                            BlockPos candidate = this.close_List
-                              .remove(AiBuilder.pickNearestScaffoldIndex(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, cell) != null));
+                              .remove(AiBuilder.pickTopScaffoldTeardownIndex(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, cell) != null));
                            long candidateNow = System.currentTimeMillis();
                            int drainAttempts = this.write_Map.getOrDefault(candidate.asLong(), 0);
                            if (candidateNow < this.update_Map.getOrDefault(candidate.asLong(), 0L)) {
@@ -7030,7 +7030,7 @@ final class AiBuilder {
                this.init_TableIndex_SyncMan
                   .sync(
                      this,
-                     AiBuilder.filterCommittedOutsideLookahead(this.write_List, this.init_List, this.data, blueprint.origin(), this.load_Map),
+                     AiBuilder.filterCommittedInLookahead(this.write_List, this.init_List, this.data, blueprint.origin(), this.load_Map),
                      excluded,
                      this.init_TableIndex_StateCa.pendingPos()
                   );

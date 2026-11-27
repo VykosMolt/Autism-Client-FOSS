@@ -554,7 +554,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          boolean var13 = AiPathfinder.LiveGridView.isPressurePlate(var0);
          boolean var14 = var0.is(Blocks.SWEET_BERRY_BUSH);
          boolean var15 = AiPathfinder.LiveGridView.isFloorHazard(var0);
-         boolean var16 = !var15 && !var7 && !AiPathfinder.LiveGridView.isNarrowFootingShape(var6);
+         boolean var16 = !var15 && !var7 && !AiPathfinder.LiveGridView.hasCenterFootingShape(var6);
          boolean var17 = AiPathfinder.LiveGridView.isPortalBlock(var0);
          String var18 = BuiltInRegistries.BLOCK.getKey(var4).getPath();
          int var19 = Math.round(AiPathfinder.LiveGridView.fallDamageMultiplier(var18, var2) * 10.0F);

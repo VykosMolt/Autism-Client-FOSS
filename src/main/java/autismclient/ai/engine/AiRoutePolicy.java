@@ -176,7 +176,7 @@ public final class AiRoutePolicy {
             var10000 = putAt_Z_BlockPos_Function(var0.to(), var1)
                && !((AiPathfinder.CellInfo)var1.apply(var0.to().below())).farmland()
                && (
-                  AiPathfinder.MoveGenerator.withinStepUpHeight(var1, var0.from(), var0.to())
+                  AiPathfinder.MoveGenerator.withinStepDownHeight(var1, var0.from(), var0.to())
                      || AiPathfinder.MoveGenerator.hasSafeOvershootAhead(
                         var1,
                         var0.to(),
