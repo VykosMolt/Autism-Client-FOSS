@@ -278,7 +278,7 @@ public class ThemedTextInputBox {
       this.syncWidgetBounds();
    }
 
-   public void setCursorToEnd(int selectionEnd) {
+   public void setSelectionEnd(int selectionEnd) {
       this.widget.flush(selectionEnd);
    }
 

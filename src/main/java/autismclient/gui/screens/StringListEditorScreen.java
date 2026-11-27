@@ -1080,7 +1080,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private void write(String value) {
       this.flush_V_4();
       this.init_k.setValue(value == null ? "" : value);
-      this.init_k.setCursorToEnd(this.init_k.getValue().length());
+      this.init_k.setSelectionEnd(this.init_k.getValue().length());
    }
 
    private String write_Str() {

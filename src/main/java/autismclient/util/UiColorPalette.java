@@ -12,7 +12,7 @@ public class UiColorPalette {
    private static final int COLOR_TEXT_MUTED = -6388344;
    private static final int COLOR_DANGER = -1938838;
    private static final int COLOR_SUCCESS = -11018872;
-   private static final int COLOR_TEAL = -8592483;
+   private static final int COLOR_MINT = -8592483;
    private static final int COLOR_MAGENTA = -27948;
    private static final int COLOR_AMBER = -19091;
    private static final int COLOR_BLUE = -8340993;
@@ -149,7 +149,7 @@ public class UiColorPalette {
       return ThemePaletteManager.recolor(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
-   public static int teal() {
+   public static int mint() {
       return -8592483;
    }
 
@@ -205,7 +205,7 @@ public class UiColorPalette {
       return ThemePaletteManager.recolor(-10035062, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
-   public static int toggleDisabled() {
+   public static int toggleActiveDark() {
       return ThemePaletteManager.recolor(-12531347, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
@@ -295,11 +295,11 @@ public class UiColorPalette {
       return boostAlphaStrong(822083583);
    }
 
-   public static int violetAccent() {
+   public static int coolGrayLight() {
       return -4668985;
    }
 
-   public static int pinkAccent() {
+   public static int iceWhite() {
       return -1511694;
    }
 

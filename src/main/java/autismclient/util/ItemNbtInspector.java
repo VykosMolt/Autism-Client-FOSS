@@ -193,7 +193,7 @@ public final class ItemNbtInspector {
          BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
          if (container != null || bundle != null) {
             builder.init_V();
-            builder.init("Contents", UiColorPalette.teal());
+            builder.init("Contents", UiColorPalette.mint());
             if (container != null) {
                long count = container.nonEmptyItemCopyStream().count();
                builder.load("Container Items: " + count, UiColorPalette.textBody());
@@ -208,7 +208,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Containers / Projectiles",
-            UiColorPalette.teal(),
+            UiColorPalette.mint(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CONTAINER, "Container"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.BUNDLE_CONTENTS, "Bundle Contents"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CHARGED_PROJECTILES, "Charged Projectiles"),
@@ -399,7 +399,7 @@ public final class ItemNbtInspector {
 
       if (!ids.isEmpty()) {
          builder.init_V();
-         builder.init("Identity / IDs", UiColorPalette.teal());
+         builder.init("Identity / IDs", UiColorPalette.mint());
          ids.forEach((key, value) -> builder.init(key + ": " + value));
       }
    }
@@ -696,7 +696,7 @@ public final class ItemNbtInspector {
                      }
                   }
 
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), UiColorPalette.teal()));
+                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), UiColorPalette.mint()));
                   break;
                }
             }

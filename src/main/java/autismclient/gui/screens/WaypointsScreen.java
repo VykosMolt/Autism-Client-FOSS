@@ -527,7 +527,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       ThemedTextInputBox field = this.init_Map.get(name);
       if (field != null) {
          field.setFocused(true);
-         field.setCursorToEnd(field.getValue().length());
+         field.setSelectionEnd(field.getValue().length());
       }
 
       if (this.init_k != null) {
@@ -723,7 +723,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private void flush(String value) {
       this.flush_V_9();
       this.init_k.setValue(value == null ? "" : value);
-      this.init_k.setCursorToEnd(this.init_k.getValue().length());
+      this.init_k.setSelectionEnd(this.init_k.getValue().length());
    }
 
    private int sync_I_11() {

@@ -296,7 +296,7 @@ public class HudElementSettingsScreen extends Screen {
 
       this.init_k.setValue(value == null ? "" : value);
       this.init_k.setFocused(true);
-      this.init_k.setCursorToEnd(this.init_k.getValue().length());
+      this.init_k.setSelectionEnd(this.init_k.getValue().length());
    }
 
    private void init(GuiGraphicsExtractor graphics, boolean checked, int x, int y, int boxH, String animationKey) {

@@ -24,7 +24,7 @@ import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 
 /**
  * Verifies MC 26.3 Blink packet classification, bundle & disconnect handling,
- * mid-blink toggle flush, and init_Set/init_AtomicInteger cleanup.
+ * mid-blink toggle flush, and reinjectingOutgoingPackets/reinjectingOutgoingCount cleanup.
  */
 public final class BlinkCheck {
    static int checks, failures;
@@ -68,16 +68,16 @@ public final class BlinkCheck {
       check("ServerboundAttackPacket held", (Boolean) write.invoke(null, new ServerboundAttackPacket(42)));
       check("ServerboundPunchPacket held", (Boolean) write.invoke(null, ServerboundPunchPacket.INSTANCE));
 
-      // 2. Signed chat commands are exempt in open()
+      // 2. Signed chat commands are exempt in isExemptOutgoingChatPacket()
       Packet<?> signedCmd = new ServerboundChatCommandSignedPacket(
          "msg friend hi", Instant.EPOCH, 0L, ArgumentSignatures.EMPTY, new LastSeenMessages.Update(0, new BitSet(), (byte) 0));
-      check("ServerboundChatCommandSignedPacket exempt in open()", (Boolean) openPred.invoke(null, signedCmd));
+      check("ServerboundChatCommandSignedPacket exempt in isExemptOutgoingChatPacket()", (Boolean) openPred.invoke(null, signedCmd));
 
-      // 3. ClientboundBundlePacket inspects inner packets for close()
+      // 3. ClientboundBundlePacket inspects inner packets for triggersIncomingFlush()
       Packet<ClientGamePacketListener> lethal = new ClientboundSetHealthPacket(0.0F, 20, 0.0F);
       Packet<ClientGamePacketListener> alive = new ClientboundSetHealthPacket(20.0F, 20, 5.0F);
-      check("bundled lethal health triggers close()", (Boolean) closePred.invoke(null, new ClientboundBundlePacket(List.of(alive, lethal))));
-      check("bundled alive health does not trigger close()", !(Boolean) closePred.invoke(null, new ClientboundBundlePacket(List.of(alive))));
+      check("bundled lethal health triggers triggersIncomingFlush()", (Boolean) closePred.invoke(null, new ClientboundBundlePacket(List.of(alive, lethal))));
+      check("bundled alive health does not trigger triggersIncomingFlush()", !(Boolean) closePred.invoke(null, new ClientboundBundlePacket(List.of(alive))));
 
       // 4. Bare and bundled ClientboundDisconnectPacket drop queues and pass through (never cancelled)
       BlinkPacketManager.setHoldDirections(true, true);
@@ -104,9 +104,9 @@ public final class BlinkCheck {
       BlinkPacketManager.setHoldDirections(false, false);
       check("disabling incoming/outgoing drains stranded queues", inQueue.isEmpty() && outQueue.isEmpty());
       check("auditHoldingMovement false when outgoing disabled", !BlinkPacketManager.auditHoldingMovement());
-      check("init_Set and counter clean after drain", inSet.isEmpty() && counter.get() == 0);
+      check("reinjectingOutgoingPackets and counter clean after drain", inSet.isEmpty() && counter.get() == 0);
 
-      // 6. Mid-blink unchecking hold-movement or hold-actions drains load_Queue
+      // 6. Mid-blink unchecking hold-movement or hold-actions drains outgoingQueue
       BlinkPacketManager.setHoldDirections(false, true);
       BlinkPacketManager.setOutgoingHoldTypes(true, true);
       outQueue.add(new ServerboundAttackPacket(10));
@@ -133,9 +133,9 @@ public final class BlinkCheck {
       check("bundled ClientboundStartConfigurationPacket passes through", !heldBundledStartConfig);
       check("bundled ClientboundStartConfigurationPacket clears queues", inQueue.isEmpty() && outQueue.isEmpty());
 
-      // 8. Bundled keep-alive exempt in flush()
+      // 8. Bundled keep-alive exempt in isExemptIncomingKeepAlivePacket()
       Packet<?> bundledKeepAlive = new ClientboundBundlePacket(List.of(alive, new ClientboundKeepAlivePacket(123L)));
-      check("bundled keepalive exempt in flush()", (Boolean) flushPred.invoke(null, bundledKeepAlive));
+      check("bundled keepalive exempt in isExemptIncomingKeepAlivePacket()", (Boolean) flushPred.invoke(null, bundledKeepAlive));
 
       BlinkPacketManager.auditDisconnect();
 

@@ -23,9 +23,9 @@ public final class AiPhysics {
    public static final double CRAWL_HEIGHT = 0.6;
    public static final double STEP_HEIGHT = 0.6;
    public static final int POSE_STANDING = 0;
-   public static final int POSE_CROUCH_AIR = 1;
+   public static final int POSE_CROUCH_AIR_OR_CEILING = 1;
    public static final int POSE_CRAWLING = 2;
-   public static final int POSE_CROUCH_FORCED = 3;
+   public static final int POSE_CROUCH_UNKNOWN = 3;
    public static final int POSE_CROUCH_GROUND = 4;
    public static final double GRAVITY = 0.08;
    public static final double JUMP_IMPULSE = 0.42;

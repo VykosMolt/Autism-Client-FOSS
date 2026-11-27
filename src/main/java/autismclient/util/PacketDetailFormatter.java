@@ -68,7 +68,7 @@ public final class PacketDetailFormatter {
       Packet<?> packet = wireDecode.init_Packet != null ? wireDecode.init_Packet : entry.init_Packet;
       if (packet == null) {
          if (wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.teal() : UiColorPalette.warningYellow());
+            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          }
 
          return out.init(false, "fallback");
@@ -131,7 +131,7 @@ public final class PacketDetailFormatter {
 
    private static boolean init_Z_Packet(Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out, PacketDetailFormatter.Inner_CachePool wireDecode) {
       if (wireDecode != null && wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.teal() : UiColorPalette.warningYellow());
+         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
       }
 
       PacketSchemaSnapshot view = PacketSchemaSnapshot.init_br_Packet(packet);
@@ -146,7 +146,7 @@ public final class PacketDetailFormatter {
          out.init("No packet object was available.", UiColorPalette.errorText());
       } else {
          PacketSchemaRegistry.Inner_StreamUtil schema = view.init_bx_StreamUtil();
-         out.init("Status: " + view.init_Str(), view.read() ? UiColorPalette.teal() : UiColorPalette.warningYellow());
+         out.init("Status: " + view.init_Str(), view.read() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          if (schema != null) {
             out.init("Schema: " + (view.load_Z() ? "Minecraft source-backed schema" : "reflection fallback"), UiColorPalette.textBright());
             out.init("Protocol: " + schema.read() + " | Direction: " + schema.write(), UiColorPalette.textBody());
@@ -361,14 +361,14 @@ public final class PacketDetailFormatter {
       PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.init_bq_CachePool();
       PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.load();
       if (packet instanceof ClientboundOpenScreenPacket open) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server opened a handled screen", UiColorPalette.textBright());
          out.init("Container Id: " + open.getContainerId(), UiColorPalette.blue());
          out.init("Screen Type: " + load(open.getType()), UiColorPalette.textBright());
          out.init("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server replaced full container contents", UiColorPalette.textBright());
          out.init("Container Id: " + content.containerId(), UiColorPalette.blue());
          out.init("State Id: " + content.stateId(), UiColorPalette.textBody());
@@ -378,7 +378,7 @@ public final class PacketDetailFormatter {
          load(content.items(), out);
          return true;
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server updated one container slot", UiColorPalette.textBright());
          out.init("Container Id: " + slot.getContainerId(), UiColorPalette.blue());
          out.init("State Id: " + slot.getStateId(), UiColorPalette.textBody());
@@ -387,26 +387,26 @@ public final class PacketDetailFormatter {
          out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server updated carried cursor item", UiColorPalette.textBright());
          out.init("Before: " + before.read_Str(), UiColorPalette.textMuted());
          out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server updated a player inventory slot", UiColorPalette.textBright());
          out.init("Inventory Slot: " + inventory.slot(), UiColorPalette.blue());
          out.init("Before: " + before.load_Map().getOrDefault(inventory.slot(), "unknown"), UiColorPalette.textMuted());
          out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server selected held hotbar slot", UiColorPalette.textBright());
          out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
          out.init("After: " + held.slot(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCarriedItemPacket carried) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: client selected hotbar slot", UiColorPalette.textBright());
          out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
          out.init("After: " + carried.getSlot(), UiColorPalette.successText());
@@ -415,13 +415,13 @@ public final class PacketDetailFormatter {
          init_V_ServerboundContain(click, before, after, out);
          return false;
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client clicked a handled-screen button", UiColorPalette.textBright());
          out.init("Container Id: " + init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
          out.init("Button Id: " + init_Obj_Obj_StrArr(button, "buttonId", "getButtonId"), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init(
             "Meaning: " + (packet instanceof ServerboundContainerClosePacket ? "client closed a handled screen" : "server closed a handled screen"), UiColorPalette.textBright()
          );
@@ -435,20 +435,20 @@ public final class PacketDetailFormatter {
 
          return true;
       } else if (packet instanceof ClientboundContainerSetDataPacket data) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server updated container property/data", UiColorPalette.textBright());
          out.init("Container Id: " + init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
          out.init("Property: " + init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"), UiColorPalette.textBright());
          out.init("Value: " + init_Obj_Obj_StrArr(data, "value", "getValue"), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCreativeModeSlotPacket creative) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client set a creative inventory slot", UiColorPalette.textBright());
          out.init("Slot: " + init_Obj_Obj_StrArr(creative, "slot", "getSlot"), UiColorPalette.blue());
          out.init("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSelectBundleItemPacket bundle) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client selected an item inside a bundle", UiColorPalette.textBright());
          out.init("Slot: " + init_Obj_Obj_StrArr(bundle, "slot", "getSlot"), UiColorPalette.blue());
          out.init("Selected Item Index: " + init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex"), UiColorPalette.textBright());
@@ -460,7 +460,7 @@ public final class PacketDetailFormatter {
          init_V_ServerboundMovePla(move, before, after, out);
          return true;
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
-         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: client acknowledged server teleport/correction", UiColorPalette.textBright());
          out.init("Teleport Id: " + ack.id(), UiColorPalette.blue());
          if (before.sync() >= 0) {
@@ -472,7 +472,7 @@ public final class PacketDetailFormatter {
          init_V_ClientboundLoginPa_bh_StreamUtil(login, out);
          return true;
       } else if (packet instanceof ClientboundRespawnPacket respawn) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: respawn or dimension/world change", UiColorPalette.textBright());
          out.init("Dimension: " + respawn.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
          out.init("Game Mode: " + respawn.commonPlayerSpawnInfo().gameType(), UiColorPalette.textBright());
@@ -480,35 +480,35 @@ public final class PacketDetailFormatter {
          out.init("Keep Data Mask: " + respawn.dataToKeep(), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundTransferPacket transfer) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server requested client transfer", UiColorPalette.textBright());
          out.init("Target: " + transfer.host() + ":" + transfer.port(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundStartConfigurationPacket) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: play connection is switching into configuration phase", UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundFinishConfigurationPacket) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: configuration phase finished", UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundSetChunkCacheCenterPacket center) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server changed chunk cache center", UiColorPalette.textBright());
          out.init("Chunk Center: " + center.getX() + ", " + center.getZ(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetChunkCacheRadiusPacket radius) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server changed chunk render/cache radius", UiColorPalette.textBright());
          out.init("Radius: " + radius.getRadius(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetSimulationDistancePacket simulation) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server changed simulation distance", UiColorPalette.textBright());
          out.init("Simulation Distance: " + simulation.simulationDistance(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundForgetLevelChunkPacket forget) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: client should unload a chunk", UiColorPalette.textBright());
          out.init("Chunk: " + forget.pos().x() + ", " + forget.pos().z(), UiColorPalette.successText());
          return true;
@@ -520,13 +520,13 @@ public final class PacketDetailFormatter {
          out.init("Light Data: " + load(chunk.lightData()), UiColorPalette.textBody());
          return false;
       } else if (packet instanceof ClientboundGameEventPacket gameEvent) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: game/world event", UiColorPalette.textBright());
          out.init("Event: " + load(gameEvent.getEvent()), UiColorPalette.textBright());
          out.init("Value: " + gameEvent.getParam(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundResourcePackPushPacket pack) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server requested resource pack", UiColorPalette.textBright());
          out.init("Id: " + pack.id(), UiColorPalette.blue());
          out.init("Url: " + pack.url(), UiColorPalette.successText());
@@ -535,12 +535,12 @@ public final class PacketDetailFormatter {
          pack.prompt().ifPresent(component -> out.init("Prompt: " + init_Str_Str(component.getString()), UiColorPalette.textBright()));
          return true;
       } else if (packet instanceof ClientboundResourcePackPopPacket pack) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server removed resource pack", UiColorPalette.textBright());
          out.init("Id: " + pack.id().map(Object::toString).orElse("latest / top"), UiColorPalette.blue());
          return true;
       } else if (packet instanceof ClientboundDisconnectPacket disconnect) {
-         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server disconnected the client", UiColorPalette.textBright());
          out.init("Reason: " + load(disconnect.reason()), UiColorPalette.errorText());
          return true;
@@ -552,7 +552,7 @@ public final class PacketDetailFormatter {
    private static void init_V_ServerboundContain(
       ServerboundContainerClickPacket click, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
    ) {
-      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Status: context-aware", UiColorPalette.mint());
       out.init("Meaning: client clicked inside a handled screen", UiColorPalette.textBright());
       out.init("Container Id: " + click.containerId(), UiColorPalette.blue());
       out.init("State Id: " + click.stateId(), UiColorPalette.textBody());
@@ -584,7 +584,7 @@ public final class PacketDetailFormatter {
       ClientboundPlayerPositionPacket position, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
    ) {
       PositionMoveRotation change = position.change();
-      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Status: context-aware", UiColorPalette.mint());
       out.init("Meaning: server corrected/teleported local player", UiColorPalette.textBright());
       out.init("Teleport Id: " + position.id(), UiColorPalette.blue());
       out.init("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.textBright());
@@ -603,7 +603,7 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_ServerboundMovePla(ServerboundMovePlayerPacket move, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out) {
-      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Status: context-aware", UiColorPalette.mint());
       out.init("Meaning: client player movement update", UiColorPalette.textBright());
       out.init("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.textBright());
       out.init("Has Position: " + move.hasPosition(), UiColorPalette.textBright());
@@ -623,7 +623,7 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_ClientboundLoginPa_bh_StreamUtil(ClientboundLoginPacket login, PacketDetailFormatter.Inner_StreamUtil out) {
-      out.init("Status: complete", UiColorPalette.teal());
+      out.init("Status: complete", UiColorPalette.mint());
       out.init("Meaning: entered play world", UiColorPalette.textBright());
       out.init("Player Entity Id: " + login.playerId(), UiColorPalette.blue());
       out.init("Dimension: " + login.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
@@ -640,7 +640,7 @@ public final class PacketDetailFormatter {
       if (capture != null && capture.init_Z()) {
          PacketStateDeltaTracker.Inner_CachePool before = capture.init_bq_CachePool();
          PacketStateDeltaTracker.Inner_CachePool after = capture.load();
-         out.load("Context Status: " + (before.init_Z() ? "tracked" : "started mid-stream / partial"), before.init_Z() ? UiColorPalette.teal() : UiColorPalette.warningYellow());
+         out.load("Context Status: " + (before.init_Z() ? "tracked" : "started mid-stream / partial"), before.init_Z() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          if (!after.update_Str().isBlank()) {
             out.load("Protocol State: " + after.update_Str(), UiColorPalette.textBright());
          }

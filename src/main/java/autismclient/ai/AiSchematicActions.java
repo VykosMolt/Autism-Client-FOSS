@@ -657,7 +657,7 @@ final class AiSchematicActions {
                   autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                   true,
                   2.0,
-                  AiGoto.protectingCellsAboveYCompat(
+                  AiGoto.protectingCellsBelowYCompat(
                      autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
                   )
                );
@@ -1418,7 +1418,7 @@ final class AiSchematicActions {
                                     autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                     true,
                                     2.0,
-                                    AiGoto.protectingCellsAboveYCompat(
+                                    AiGoto.protectingCellsBelowYCompat(
                                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
                                        protectedCells,
                                        target.getY()
@@ -1596,7 +1596,7 @@ final class AiSchematicActions {
 
    static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
-      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsAboveYCompat(
+      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsBelowYCompat(
          autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
       );
       final Supplier<AiOperation> climb = () -> AiGoto.travelToCompat(

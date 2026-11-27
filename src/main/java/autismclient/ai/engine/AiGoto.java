@@ -953,7 +953,7 @@ public final class AiGoto {
    }
 
    public static AiPathfinder.PathGoal protectingCells(AiPathfinder.PathGoal var0, Set<Long> var1) {
-      return protectingCellsAboveY(var0, var1, -2147483648);
+      return protectingCellsBelowY(var0, var1, -2147483648);
    }
 
    static AiPathfinder.PathGoal unwrapGoal(AiPathfinder.PathGoal var0) {
@@ -965,7 +965,7 @@ public final class AiGoto {
       return var0;
    }
 
-   public static AiPathfinder.PathGoal protectingCellsAboveY(
+   public static AiPathfinder.PathGoal protectingCellsBelowY(
       final AiPathfinder.PathGoal var0, final Set<Long> var1, final int var2
    ) {
       return var1.isEmpty() && var2 == -2147483648 ? var0 : new AiGoto.WrappedGoal() {
@@ -1026,7 +1026,7 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1x) {
-            return AiGoto.protectingCellsAboveY(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1, var2);
+            return AiGoto.protectingCellsBelowY(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1, var2);
          }
 
          @Override
@@ -4285,8 +4285,8 @@ public final class AiGoto {
       return approachSchematicPlacement(target, item, timeoutSeconds, volume, cells);
    }
    public static AiPathfinder.PathGoal protectingCellsCompat(AiPathfinder.PathGoal delegate, Set<Long> cells) { return protectingCells(delegate, cells); }
-   public static AiPathfinder.PathGoal protectingCellsAboveYCompat(final AiPathfinder.PathGoal delegate, final Set<Long> cells, final int minimumDigY) {
-      return protectingCellsAboveY(delegate, cells, minimumDigY);
+   public static AiPathfinder.PathGoal protectingCellsBelowYCompat(final AiPathfinder.PathGoal delegate, final Set<Long> cells, final int minimumDigY) {
+      return protectingCellsBelowY(delegate, cells, minimumDigY);
    }
    public static AiOperation approachSchematicPlacementCompat(BlockPos target, Item item, int timeoutSeconds, AABB volume, Set<Long> cells, PlacementGoal.PlaceConstraint constraint) {
       return approachSchematicPlacement(target, item, timeoutSeconds, volume, cells, constraint);

@@ -254,7 +254,7 @@ public final class PacketInspectorEngine {
          builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", UiColorPalette.textBright());
          PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(payloadSnapshot);
          if (filter != null) {
-            builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.teal());
+            builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
          }
 
          String source = read_Str_Str(payloadSnapshot.load_Str());
@@ -292,7 +292,7 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
-               builder.init("Analyzer", UiColorPalette.teal());
+               builder.init("Analyzer", UiColorPalette.mint());
                builder.init(analyzerBuilder);
             }
          }
@@ -334,7 +334,7 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
-               builder.init("Analyzer", UiColorPalette.teal());
+               builder.init("Analyzer", UiColorPalette.mint());
                builder.init(analyzerBuilder);
             }
          }
@@ -363,7 +363,7 @@ public final class PacketInspectorEngine {
          String title = entry == null ? "Payload Analyzer" : entry.load_Str + " Analyzer";
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
          AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-         builder.init("Analyzer", UiColorPalette.teal());
+         builder.init("Analyzer", UiColorPalette.mint());
          if (snapshot == null) {
             builder.load("No payload snapshot is available for this packet.", UiColorPalette.errorText());
             return builder.init_bu_JsonUtil();
@@ -492,7 +492,7 @@ public final class PacketInspectorEngine {
       builder.load("Channel: " + channel, UiColorPalette.successText());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.teal());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
       }
 
       String source = read_Str_Str(channel);
@@ -842,7 +842,7 @@ public final class PacketInspectorEngine {
       builder.load("Body Size: " + raw.length + " bytes", UiColorPalette.textBright());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.teal());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.mint());
       }
 
       String source = read_Str_Str(snapshot.load_Str());
@@ -4161,13 +4161,13 @@ public final class PacketInspectorEngine {
 
    private static int init_I_Obj(Object value) {
       if (value instanceof Boolean bool) {
-         return bool ? UiColorPalette.teal() : UiColorPalette.magenta();
+         return bool ? UiColorPalette.mint() : UiColorPalette.magenta();
       } else if (value instanceof Entity || value instanceof UUID) {
          return UiColorPalette.cyan();
       } else if (value instanceof BlockState || value instanceof BlockPos || value instanceof Vec3) {
          return UiColorPalette.warningYellow();
       } else if (value instanceof ItemStack || value instanceof Component || value instanceof String) {
-         return UiColorPalette.teal();
+         return UiColorPalette.mint();
       } else if (value instanceof Enum) {
          return UiColorPalette.amber();
       } else if (value instanceof Identifier) {
@@ -4779,7 +4779,7 @@ public final class PacketInspectorEngine {
    private static int load_I_Str_Obj(String label, Object value) {
       String normalized = sync_Str(label);
       if (value instanceof Boolean bool) {
-         return bool ? UiColorPalette.teal() : UiColorPalette.magenta();
+         return bool ? UiColorPalette.mint() : UiColorPalette.magenta();
       } else {
          if (normalized.contains("sender")
             || normalized.contains("author")
@@ -4804,7 +4804,7 @@ public final class PacketInspectorEngine {
             || normalized.contains("recipe")
             || normalized.contains("item")
             || normalized.contains("stack")) {
-            return UiColorPalette.teal();
+            return UiColorPalette.mint();
          }
 
          if (normalized.equals("kind")
@@ -4851,7 +4851,7 @@ public final class PacketInspectorEngine {
             if (text.contains("fully filtered")) {
                return UiColorPalette.magenta();
             } else {
-               return text.contains("pass-through") ? UiColorPalette.teal() : UiColorPalette.warningYellow();
+               return text.contains("pass-through") ? UiColorPalette.mint() : UiColorPalette.warningYellow();
             }
          } else {
             return init_I_Obj(value);

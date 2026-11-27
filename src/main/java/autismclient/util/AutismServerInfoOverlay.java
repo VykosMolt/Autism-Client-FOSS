@@ -1909,7 +1909,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int var10000;
       switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
-            var10000 = UiColorPalette.teal();
+            var10000 = UiColorPalette.mint();
             break;
          case STRONG:
             var10000 = UiColorPalette.cyan();
@@ -5134,7 +5134,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          } else if (this.sync_Z_2(lower)) {
             return -7371387;
          } else if (lower.contains("[registered")) {
-            return UiColorPalette.teal();
+            return UiColorPalette.mint();
          } else {
             return lower.contains("[live") ? UiColorPalette.cyan() : UiColorPalette.cyan();
          }

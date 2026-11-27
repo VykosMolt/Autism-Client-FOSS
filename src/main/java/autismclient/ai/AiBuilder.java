@@ -3858,7 +3858,7 @@ final class AiBuilder {
                               autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                               true,
                               2.0,
-                              AiGoto.protectingCellsAboveYCompat(
+                              AiGoto.protectingCellsBelowYCompat(
                                  autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.25),
                                  keep,
                                  blueprint.origin().getY() - 2
@@ -5361,7 +5361,7 @@ final class AiBuilder {
                            autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                            true,
                            2.0,
-                           AiGoto.protectingCellsAboveYCompat(
+                           AiGoto.protectingCellsBelowYCompat(
                               autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(exit, 0.25),
                               this.load_Set(),
                               blueprint.origin().getY()
@@ -5395,7 +5395,7 @@ final class AiBuilder {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
-                        AiGoto.protectingCellsAboveYCompat(
+                        AiGoto.protectingCellsBelowYCompat(
                            autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(doorExit, 0.25),
                            this.load_Set(),
                            blueprint.origin().getY()
@@ -6575,7 +6575,7 @@ final class AiBuilder {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                      true,
                      2.0,
-                     AiGoto.protectingCellsAboveYCompat(
+                     AiGoto.protectingCellsBelowYCompat(
                         autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(best, 0.35), protectedNow, blueprint.origin().getY()
                      )
                   );
@@ -7285,7 +7285,7 @@ final class AiBuilder {
                                  autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                  true,
                                  2.0,
-                                 AiGoto.protectingCellsAboveYCompat(
+                                 AiGoto.protectingCellsBelowYCompat(
                                     autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(pos, 0.45), this.init_Set_2(), pos.getY()
                                  )
                               );

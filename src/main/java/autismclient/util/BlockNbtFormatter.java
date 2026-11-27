@@ -36,7 +36,7 @@ public final class BlockNbtFormatter {
 
       if (!items.isEmpty() || root.getBooleanOr("contents_available", false)) {
          init_V(nice);
-         init(nice, "Contents", UiColorPalette.teal());
+         init(nice, "Contents", UiColorPalette.mint());
          load(nice, "Slots: " + root.getIntOr("container_slots", items.size()), UiColorPalette.textBody());
          int nonEmpty = 0;
 
