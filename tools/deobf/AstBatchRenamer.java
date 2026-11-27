@@ -433,7 +433,7 @@ public final class AstBatchRenamer {
 
         // 5. Simulate disambig.tsv update
         Path mappingsPath = repo.resolve("mappings/disambig.tsv");
-        List<String> updatedMappings = computeUpdatedDisambig(mappingsPath, enumRenames, classRenames, fieldRenames, methodRenames, recordCompRenames);
+        List<String> updatedMappings = computeUpdatedDisambig(repo, mappingsPath, enumRenames, classRenames, fieldRenames, methodRenames, recordCompRenames);
         System.out.printf("mappings/disambig.tsv: %d -> %d lines%n",
             Files.readAllLines(mappingsPath, StandardCharsets.UTF_8).size(), updatedMappings.size());
 
@@ -1546,7 +1546,15 @@ public final class AstBatchRenamer {
         return single.equals(right) ? null : single;
     }
 
+    // Classes declared only in tools/checks never ship, so their renames get no disambig.tsv rows.
+    private static boolean isCheckLocal(Path repo, String owner) {
+        String top = owner.contains("$") ? owner.substring(0, owner.indexOf('$')) : owner;
+        return !Files.exists(repo.resolve("src/main/java/" + top + ".java"))
+            && Files.exists(repo.resolve("tools/checks/" + simpleName(top) + ".java"));
+    }
+
     private static List<String> computeUpdatedDisambig(
+        Path repo,
         Path mappingsPath,
         Map<String, EnumRename> enumRenames,
         Map<String, ClassRename> classRenames,
@@ -1657,6 +1665,7 @@ public final class AstBatchRenamer {
 
         // Add new F rows for renamed fields that weren't previously in disambig.tsv
         for (FieldRename fr : fieldRenames.values()) {
+            if (isCheckLocal(repo, fr.curOwner)) continue;
             String origKey = fr.origOwner + "\t" + fr.origName + "\t" + fr.origDesc;
             if (seenFieldKeys.add(origKey)) {
                 String newOwner = remapClassPrefix(fr.curOwner, classRenames);
@@ -1667,6 +1676,7 @@ public final class AstBatchRenamer {
 
         // Add new F and M rows for renamed record components that weren't previously in disambig.tsv
         for (RecordCompRename rr : recordCompRenames.values()) {
+            if (isCheckLocal(repo, rr.curRecord)) continue;
             String fOrigKey = rr.origRecord + "\t" + rr.origFieldName + "\t" + rr.origDesc;
             if (seenFieldKeys.add(fOrigKey)) {
                 String newOwner = remapClassPrefix(rr.curRecord, classRenames);
@@ -1684,6 +1694,7 @@ public final class AstBatchRenamer {
 
         // Add new M rows for renamed methods that weren't previously in disambig.tsv
         for (MethodRename mr : methodRenames.values()) {
+            if (isCheckLocal(repo, mr.curOwner)) continue;
             String origKey = mr.origOwner + "\t" + mr.origName + "\t" + mr.origDesc;
             if (seenMethodKeys.add(origKey)) {
                 String newOwner = remapClassPrefix(mr.curOwner, classRenames);
