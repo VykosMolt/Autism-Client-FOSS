@@ -425,7 +425,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          LeafDupePacketTracker.load(packet);
       }
 
-      autismclient.util.villager.BlockChangeAckTracker.init_V(Minecraft.getInstance().level, packet.sequence());
+      autismclient.util.villager.BlockChangeAckTracker.acknowledge(Minecraft.getInstance().level, packet.sequence());
    }
 
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))
@@ -568,7 +568,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (module != null) {
          AutismServerInfoOverlay overlay = module.getServerInfoOverlay();
          if (overlay != null) {
-            overlay.set_V_9();
+            overlay.onCommandTreeReceived();
          }
       }
    }

@@ -27,7 +27,7 @@ public final class RemoteViewCommand extends Command {
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> init());
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         if (!RemoteViewController.init_Z()) {
+         if (!RemoteViewController.isActive()) {
             AutismClientMessaging.sendPrefixed("§7Remote view is not active.");
          } else {
             RemoteViewController.init(false);
@@ -51,7 +51,7 @@ public final class RemoteViewCommand extends Command {
       }
 
       if (entity instanceof Player player) {
-         init(RemoteViewController.init_cd_DataUtil(player));
+         init(RemoteViewController.startViewing(player));
          return 1;
       } else {
          AutismClientMessaging.sendPrefixed("§cLook at a loaded player first.");
@@ -65,7 +65,7 @@ public final class RemoteViewCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cPlayer is not loaded: §f" + requested.trim());
          return 1;
       } else {
-         init(RemoteViewController.init_cd_DataUtil(player));
+         init(RemoteViewController.startViewing(player));
          return 1;
       }
    }
@@ -94,15 +94,15 @@ public final class RemoteViewCommand extends Command {
    }
 
    private static void init(RemoteViewController.Inner_DataUtil result) {
-      AutismClientMessaging.sendPrefixed((result.init_Z() ? "§a" : "§c") + result.init_Str());
+      AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
    }
 
    private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {
-         if (player.init_Str().toLowerCase(Locale.ROOT).startsWith(remaining)) {
-            builder.suggest(player.init_Str());
+         if (player.name().toLowerCase(Locale.ROOT).startsWith(remaining)) {
+            builder.suggest(player.name());
          }
       }
 

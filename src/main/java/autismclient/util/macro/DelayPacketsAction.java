@@ -46,7 +46,7 @@ public class DelayPacketsAction implements MacroAction {
          for (Class<?> clz : PacketTypeRegistry.getC2sPackets()) {
             String registryName = PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)clz);
             if (registryName != null && (registryName.equals(target) || registryName.equals(targetNoSuffix))) {
-               this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
+               this.c2sPacketNames.add(PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)clz));
                break;
             }
          }
@@ -59,11 +59,11 @@ public class DelayPacketsAction implements MacroAction {
       AutismSessionState shared = AutismSessionState.getInstance();
 
       for (Class<?> clz : shared.getCustomC2sPackets()) {
-         this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
+         this.c2sPacketNames.add(PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)clz));
       }
 
       for (Class<?> clz : shared.getCustomS2cPackets()) {
-         this.s2cPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
+         this.s2cPacketNames.add(PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)clz));
       }
    }
 
@@ -104,7 +104,7 @@ public class DelayPacketsAction implements MacroAction {
             String withSuffix = trimmed.endsWith("Packet") ? trimmed : trimmed + "Packet";
 
             for (Class<? extends Packet<?>> clazz : pool) {
-               String friendlyName = PacketNameResolver.init_Str_Class(clazz);
+               String friendlyName = PacketNameResolver.nameOfClass(clazz);
                if (friendlyName.equalsIgnoreCase(trimmed)
                   || friendlyName.equalsIgnoreCase(withSuffix)
                   || clazz.getSimpleName().equalsIgnoreCase(trimmed)

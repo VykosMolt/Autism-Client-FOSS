@@ -35,7 +35,7 @@ public class PacketAction implements MacroAction {
                   AutismClientMessaging.sendPrefixed("§cPacket data is empty!");
                } else {
                   try {
-                     Packet<?> packet = autismclient.util.MacroClipboardCodec.init_Packet(resolvedPacketData);
+                     Packet<?> packet = autismclient.util.MacroClipboardCodec.decodePacket(resolvedPacketData);
                      if (packet == null) {
                         AutismClientMessaging.sendPrefixed("§cFailed to deserialize packet! Invalid data.");
                         return;

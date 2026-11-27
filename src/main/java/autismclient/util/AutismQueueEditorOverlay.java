@@ -494,7 +494,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                int rowRight = leftX + rowWidth;
                int bx = leftX;
                bx = this.init(context, bx, row1Y, this.next(), "Copy", mouseX, mouseY, "Copy queue to clipboard (serialized)", () -> {
-                  MacroClipboardCodec.init_V(this.init_List_12());
+                  MacroClipboardCodec.copyQueue(this.init_List_12());
                   bi.init("Queue copied.");
                }) + gap;
                bx = this.init(context, bx, row1Y, this.next(), "Paste", mouseX, mouseY, "Replace queue from clipboard", () -> {
@@ -848,7 +848,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            selected,
                            grouped ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                         );
-                        String label = "#" + packet.getId() + " " + PacketNameResolver.init_Str_Packet(packet.packet);
+                        String label = "#" + packet.getId() + " " + PacketNameResolver.nameOf(packet.packet);
                         String delayText = String.valueOf(packet.getDelay());
                         int labelMaxWidth = this.open(rowX, rowW);
                         String trimmed = autismclient.gui.f.b.k.init(
@@ -1103,7 +1103,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
             if (queue.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cQueue is empty");
             } else {
-               String queueData = MacroClipboardCodec.init_Str(queue);
+               String queueData = MacroClipboardCodec.encodeQueue(queue);
                if (queueData == null) {
                   AutismClientMessaging.sendPrefixed("§cFailed to serialize queue");
                } else {

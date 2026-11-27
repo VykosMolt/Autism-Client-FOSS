@@ -9,7 +9,7 @@ public final class BlockChangeAckTracker {
    private BlockChangeAckTracker() {
    }
 
-   public static void init_V(Object level, int value) {
+   public static void acknowledge(Object level, int value) {
       if (init_WeakReference.get() != level) {
          init_WeakReference = new WeakReference<>(level);
          init_I = value;
@@ -18,7 +18,7 @@ public final class BlockChangeAckTracker {
       }
    }
 
-   public static boolean init_Z(Object level, int value) {
+   public static boolean isAcknowledged(Object level, int value) {
       return value >= 0 && init_WeakReference.get() == level && init_I >= value;
    }
 }

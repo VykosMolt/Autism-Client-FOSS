@@ -357,7 +357,7 @@ public abstract class AutismClientConnectionMixin {
                            return;
                         }
 
-                        if (!requiredClose && ContainerCloseGuard.init_Z(closeForHold.getContainerId())) {
+                        if (!requiredClose && ContainerCloseGuard.isHeldOpen(closeForHold.getContainerId())) {
                            ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
                            ci.cancel();
                            return;
@@ -688,7 +688,7 @@ public abstract class AutismClientConnectionMixin {
                      return;
                   }
 
-                  if (!requiredClose && ContainerCloseGuard.init_Z(closeForHold.getContainerId())) {
+                  if (!requiredClose && ContainerCloseGuard.isHeldOpen(closeForHold.getContainerId())) {
                      ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
                      ci.cancel();
                      return;
@@ -722,7 +722,7 @@ public abstract class AutismClientConnectionMixin {
    @Unique
    private void autism$clearRuntimeConnectionStateOnDisconnect(Packet<?> packet) {
       if (autism$isDisconnectPacket(packet)) {
-         ContainerCloseGuard.init_V();
+         ContainerCloseGuard.clear();
          autismclient.util.macro.PacketGateManager.clearAll();
          PingSpoofScheduler.write();
          BlinkPacketManager.auditDisconnect();

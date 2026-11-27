@@ -613,30 +613,30 @@ final class AiClientConfig {
                case "presets":
                   JsonArray presets = new JsonArray();
 
-                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.init_bT().init_List()) {
+                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().builtInPresets()) {
                      presets.add(init(e));
                   }
 
-                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.init_bT().load_List()) {
+                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().userPresets()) {
                      presets.add(init(e));
                   }
 
                   return AiJson.objectOf("presets", presets);
                case "loadPreset":
-                  if (!PacketPresetManager.init_bT().read_Z(load(args, "name"))) {
+                  if (!PacketPresetManager.getInstance().loadPreset(load(args, "name"))) {
                      throw new IllegalArgumentException("Unknown preset; action presets lists them");
                   }
 
                   return init(module);
                case "savePreset":
                   String name = load(args, "name");
-                  if (!PacketPresetManager.init_bT().init_Z(name)) {
+                  if (!PacketPresetManager.getInstance().savePreset(name)) {
                      throw new IllegalArgumentException("The preset name is reserved or invalid");
                   }
 
                   return AiJson.objectOf("saved", name);
                case "deletePreset":
-                  if (!PacketPresetManager.init_bT().write_Z(load(args, "name"))) {
+                  if (!PacketPresetManager.getInstance().deletePreset(load(args, "name"))) {
                      throw new IllegalArgumentException("Unknown or built-in preset");
                   }
 
@@ -679,7 +679,7 @@ final class AiClientConfig {
    }
 
    private static JsonObject init(PacketPresetManager.Inner_DataUtil e) {
-      return AiJson.objectOf("name", e.init_Str(), "c2s", e.init_I(), "s2c", e.load_I(), "builtIn", e.load_Z());
+      return AiJson.objectOf("name", e.name(), "c2s", e.c2sCount(), "s2c", e.s2cCount(), "builtIn", e.isBuiltIn());
    }
 
    static JsonObject sync(JsonObject args) {
@@ -990,7 +990,7 @@ final class AiClientConfig {
             }
             case "export": {
                autismclient.util.AutismMacro macro = init(m, args);
-               return AiJson.objectOf("name", macro.name, "share", autismclient.util.MacroClipboardCodec.init_Str(macro));
+               return AiJson.objectOf("name", macro.name, "share", autismclient.util.MacroClipboardCodec.encodeMacro(macro));
             }
             case "stop":
                String name = AiJson.getString(args, "name", "").trim();

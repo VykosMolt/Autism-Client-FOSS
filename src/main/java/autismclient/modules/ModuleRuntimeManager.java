@@ -280,7 +280,7 @@ public final class ModuleRuntimeManager {
 
    private void runTickWork() {
       if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
-         autismclient.util.PacketCaptureState.init_V_PoolEntry(this);
+         autismclient.util.PacketCaptureState.expireIfDue(this);
          if (!AutismLiteVariant.enabled()) {
             AutismProfileManager.init_bV().load();
          }
@@ -292,11 +292,11 @@ public final class ModuleRuntimeManager {
          if (hidden) {
             this.autoProbePending = false;
             this.joinProbeWindowUntilMs = 0L;
-            PayloadStudyTracker.init_V();
+            PayloadStudyTracker.reset();
             PayloadNotificationTracker.load();
             AutismServerInfoOverlay hiddenServerInfo = this.getServerInfoOverlay();
             if (hiddenServerInfo != null) {
-               hiddenServerInfo.poll_V_9();
+               hiddenServerInfo.hardLock();
             }
          }
 
@@ -337,8 +337,8 @@ public final class ModuleRuntimeManager {
 
          this.refreshXCarryActiveState();
          AutismServerInfoOverlay serverInfo = this.getServerInfoOverlay();
-         if (!hidden && serverInfo != null && (serverInfo.isVisible() || serverInfo.run_Z_5())) {
-            serverInfo.close_V_15();
+         if (!hidden && serverInfo != null && (serverInfo.isVisible() || serverInfo.isScanRunning())) {
+            serverInfo.tickScan();
          }
 
          if (shared.isDelayPacketsEnabled() && MC.getConnection() != null) {
@@ -364,7 +364,7 @@ public final class ModuleRuntimeManager {
          this.packetLoggerTick++;
          AutismPacketLoggerOverlay logger = this.getPacketLoggerOverlay();
          if (logger != null) {
-            logger.init_V_I_8(this.packetLoggerTick);
+            logger.setCurrentTick(this.packetLoggerTick);
          }
 
          if (!hidden && AddonEvents.hasTickListeners()) {
@@ -388,11 +388,11 @@ public final class ModuleRuntimeManager {
                || shared.hasAttackCaptureCallback()
                || shared.hasBlockCaptureCallback()
                || shared.hasEntityCaptureCallback()
-               || PayloadStudyTracker.init_Z()
+               || PayloadStudyTracker.isActive()
                || am.add()
                || AntiVanishModule.isHudVisible()
                || autismclient.util.bi.init_Z()
-               || serverInfo != null && serverInfo.run_Z_5()
+               || serverInfo != null && serverInfo.isScanRunning()
          );
       cf.init_V_J_Z(2048L, active);
    }
@@ -413,7 +413,7 @@ public final class ModuleRuntimeManager {
          }
 
          this.extendJoinProbeWindow();
-         PayloadSubscriptionManager.init_V();
+         PayloadSubscriptionManager.requestSync();
       }
 
       this.resetTransientSessionFlags();
@@ -457,7 +457,7 @@ public final class ModuleRuntimeManager {
       PayloadSubscriptionManager.load();
       AutismServerInfoOverlay leftOverlay = this.getServerInfoOverlay();
       if (leftOverlay != null) {
-         leftOverlay.flush_V_17();
+         leftOverlay.resetForDisconnect();
       }
 
       this.joinProbeWindowUntilMs = 0L;
@@ -507,8 +507,8 @@ public final class ModuleRuntimeManager {
          return ModuleRuntimeManager.Inner_DataUtil.none();
       }
 
-      long captureState = autismclient.util.PacketCaptureState.init_J();
-      boolean loggerCapture = autismclient.util.PacketCaptureState.init_Z_J(captureState);
+      long captureState = autismclient.util.PacketCaptureState.getState();
+      boolean loggerCapture = autismclient.util.PacketCaptureState.isLoggerCapture(captureState);
       boolean passivePayloadCapture = autismclient.util.PacketCaptureState.load(captureState);
       if (!this.isActive()) {
          return !loggerCapture && !passivePayloadCapture
@@ -534,7 +534,7 @@ public final class ModuleRuntimeManager {
    }
 
    public boolean hasPassivePayloadWork() {
-      return !aD.init_Z() && (this.isJoinProbeWindowActive() || this.hasActivePayloadFilterRule() || PayloadStudyTracker.init_Z());
+      return !aD.init_Z() && (this.isJoinProbeWindowActive() || this.hasActivePayloadFilterRule() || PayloadStudyTracker.isActive());
    }
 
    public boolean isLoggerCaptureEnabled() {
@@ -542,7 +542,7 @@ public final class ModuleRuntimeManager {
    }
 
    public boolean needsAnyPayloadHook() {
-      return aD.init_Z() ? false : this.isPacketLoggerCapturing() || this.hasPassivePayloadWork() || this.needsServerInfoObservation() || PayloadStudyTracker.init_Z();
+      return aD.init_Z() ? false : this.isPacketLoggerCapturing() || this.hasPassivePayloadWork() || this.needsServerInfoObservation() || PayloadStudyTracker.isActive();
    }
 
    private boolean needsServerInfoObservation() {
@@ -551,7 +551,7 @@ public final class ModuleRuntimeManager {
       }
 
       AutismServerInfoOverlay overlay = this.getServerInfoOverlay();
-      return overlay != null && overlay.put_Z_4();
+      return overlay != null && overlay.hasPendingWork();
    }
 
    public boolean shouldObserveServerInfoPackets() {
@@ -571,7 +571,7 @@ public final class ModuleRuntimeManager {
       if (this.shouldObserveServerInfoPackets() && packet != null) {
          AutismServerInfoOverlay overlay = this.getOrCreateAutoProbeServerInfo();
          if (overlay != null) {
-            overlay.init_V_Packet(packet);
+            overlay.onOutgoingPacket(packet);
             overlay.load(packet);
          }
       }
@@ -582,7 +582,7 @@ public final class ModuleRuntimeManager {
          AutismServerInfoOverlay overlay = this.getOrCreateAutoProbeServerInfo();
          if (overlay != null) {
             if (packet instanceof ClientboundCommandSuggestionsPacket suggestions) {
-               overlay.init_V_I_ClientboundCommand(suggestions.id(), suggestions);
+               overlay.onCommandSuggestions(suggestions.id(), suggestions);
             }
 
             if (packet instanceof ClientboundOpenScreenPacket) {
@@ -602,7 +602,7 @@ public final class ModuleRuntimeManager {
    }
 
    private boolean shouldStudyPayloads() {
-      return this.isJoinProbeWindowActive() || this.needsServerInfoObservation() || this.isPacketLoggerCapturing() || PayloadStudyTracker.init_Z();
+      return this.isJoinProbeWindowActive() || this.needsServerInfoObservation() || this.isPacketLoggerCapturing() || PayloadStudyTracker.isActive();
    }
 
    public void invalidatePayloadFilterCache() {
@@ -616,7 +616,7 @@ public final class ModuleRuntimeManager {
       }
 
       if (refreshSubscriptions) {
-         PayloadSubscriptionManager.init_V();
+         PayloadSubscriptionManager.requestSync();
       }
 
       autismclient.util.PacketCaptureState.load(this);
@@ -650,7 +650,7 @@ public final class ModuleRuntimeManager {
 
    public void extendJoinProbeWindowAndRefresh() {
       this.extendJoinProbeWindow();
-      PayloadSubscriptionManager.init_V();
+      PayloadSubscriptionManager.requestSync();
    }
 
    public boolean isJoinProbeWindowActive() {
@@ -667,7 +667,7 @@ public final class ModuleRuntimeManager {
       }
 
       AutismPacketLoggerOverlay logger = this.getPacketLoggerOverlay();
-      return logger != null ? !logger.push_Z_10() : this.config != null && this.config.packetLoggerCapturing;
+      return logger != null ? !logger.isPaused() : this.config != null && this.config.packetLoggerCapturing;
    }
 
    public boolean captureCustomPayloadPacket(Packet<?> packet, String direction, String protocolPhase) {
@@ -706,7 +706,7 @@ public final class ModuleRuntimeManager {
             if (logger == null) {
                this.bufferEarlyPayloadSnapshot(snapshot, direction, payloadClassForDirection(direction));
             } else {
-               logger.init_V_J(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
+               logger.logPayload(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
             }
 
             captured = true;
@@ -714,7 +714,7 @@ public final class ModuleRuntimeManager {
             PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(snapshot.channel(), direction);
             if (filterMatch != null) {
                if (logger != null) {
-                  logger.init_V_J(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
+                  logger.logPayload(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
                } else {
                   PayloadNotificationTracker.init(snapshot.channel(), direction, filterMatch);
                   this.bufferEarlyPayloadSnapshot(snapshot, direction, payloadClassForDirection(direction));
@@ -775,7 +775,7 @@ public final class ModuleRuntimeManager {
                if (logger == null) {
                   this.bufferEarlyPayloadPacket(packet, direction);
                } else {
-                  logger.load_V_Packet_Str(packet, direction);
+                  logger.logPayloadPacket(packet, direction);
                }
 
                captured = true;
@@ -783,7 +783,7 @@ public final class ModuleRuntimeManager {
                PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(channel, direction);
                if (filterMatch != null) {
                   if (logger != null) {
-                     logger.load_V_Packet_Str(packet, direction);
+                     logger.logPayloadPacket(packet, direction);
                   } else {
                      PayloadNotificationTracker.init(channel, direction, filterMatch);
                      this.bufferEarlyPayloadPacket(packet, direction);
@@ -1013,8 +1013,8 @@ public final class ModuleRuntimeManager {
             return false;
          }
 
-         if (!payloadLoggedEarly && !logger.init_Z_Class(packet.getClass())) {
-            logger.init_V_Packet_Str(packet, "C2S");
+         if (!payloadLoggedEarly && !logger.isBlocked(packet.getClass())) {
+            logger.logPacket(packet, "C2S");
          }
 
          return false;
@@ -1050,8 +1050,8 @@ public final class ModuleRuntimeManager {
             return false;
          }
 
-         if (!payloadLoggedEarly && !logger.init_Z_Class(packet.getClass())) {
-            logger.init_V_Packet_Str(packet, "S2C");
+         if (!payloadLoggedEarly && !logger.isBlocked(packet.getClass())) {
+            logger.logPacket(packet, "S2C");
          }
 
          return false;
@@ -1061,25 +1061,25 @@ public final class ModuleRuntimeManager {
    }
 
    private void studyPayloadPacket(Packet<?> packet, String direction) {
-      if (packet != null && AutismPacketLoggerOverlay.init_Z_Packet(packet)) {
+      if (packet != null && AutismPacketLoggerOverlay.isPayloadPacket(packet)) {
          CustomPacketPayload payload = AutismPayloadSupport.extractPayload(packet);
          if (payload != null) {
             String channel = AutismPayloadSupport.extractChannelId(payload);
             boolean inbound = "S2C".equalsIgnoreCase(direction);
             if (inbound) {
-               PayloadSubscriptionManager.load_V(channel);
+               PayloadSubscriptionManager.learnObservedChannel(channel);
             }
 
             try {
                AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
-               PayloadStudyTracker.init_Z(snapshot);
+               PayloadStudyTracker.recordPayload(snapshot);
                if (inbound) {
                   PayloadSubscriptionManager.init(snapshot);
                }
             } catch (Throwable var10) {
             }
 
-            if (inbound && PluginSignatureCatalog.init_Z(channel)) {
+            if (inbound && PluginSignatureCatalog.isKnownPluginChannel(channel)) {
                try {
                   AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
                   if (snapshot == null) {
@@ -1090,7 +1090,7 @@ public final class ModuleRuntimeManager {
                   if (changed) {
                      AutismServerInfoOverlay overlay = this.getServerInfoOverlay();
                      if (overlay != null) {
-                        overlay.put_V_8();
+                        overlay.onSignaturesChanged();
                      }
                   }
                } catch (Throwable var9) {
@@ -1103,20 +1103,20 @@ public final class ModuleRuntimeManager {
    private void studyPayloadSnapshot(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot != null) {
          String channel = snapshot.channel();
-         PayloadStudyTracker.init_Z(snapshot);
+         PayloadStudyTracker.recordPayload(snapshot);
          boolean inbound = "S2C".equalsIgnoreCase(snapshot.direction());
          if (inbound) {
-            PayloadSubscriptionManager.load_V(channel);
+            PayloadSubscriptionManager.learnObservedChannel(channel);
             PayloadSubscriptionManager.init(snapshot);
          }
 
-         if (inbound && PluginSignatureCatalog.init_Z(channel)) {
+         if (inbound && PluginSignatureCatalog.isKnownPluginChannel(channel)) {
             try {
                boolean changed = PluginSignatureCatalog.init(this.getCurrentServerAddress(), this.getCurrentServerBrand(), snapshot);
                if (changed) {
                   AutismServerInfoOverlay overlay = this.getServerInfoOverlay();
                   if (overlay != null) {
-                     overlay.put_V_8();
+                     overlay.onSignaturesChanged();
                   }
                }
             } catch (Throwable var6) {
@@ -1169,7 +1169,7 @@ public final class ModuleRuntimeManager {
    public AutismPacketLoggerOverlay getOrCreatePacketLoggerOverlay() {
       if (this.packetLoggerOverlay == null && MC != null && MC.font != null) {
          this.packetLoggerOverlay = new AutismPacketLoggerOverlay(MC.font);
-         this.packetLoggerOverlay.flush_V_13();
+         this.packetLoggerOverlay.restoreState();
          this.drainEarlyPayloadsToLogger(this.packetLoggerOverlay);
       }
 
@@ -1193,7 +1193,7 @@ public final class ModuleRuntimeManager {
          }
 
          for (ModuleRuntimeManager.Inner_StreamUtil capture : captures) {
-            logger.init_V_J(capture.timestampMs(), capture.tick(), capture.direction(), capture.packetClass(), capture.payload());
+            logger.logPayload(capture.timestampMs(), capture.tick(), capture.direction(), capture.packetClass(), capture.payload());
          }
       }
    }
@@ -1201,7 +1201,7 @@ public final class ModuleRuntimeManager {
    public AutismServerInfoOverlay getOrCreateServerInfoOverlay() {
       if (this.serverInfoOverlay == null && MC != null && MC.font != null) {
          this.serverInfoOverlay = new AutismServerInfoOverlay(MC.font);
-         this.serverInfoOverlay.update_V_21();
+         this.serverInfoOverlay.restoreState();
       }
 
       return this.serverInfoOverlay;
@@ -1366,7 +1366,7 @@ public final class ModuleRuntimeManager {
 
    public void setCommandPrefix(String prefix) {
       if (this.config != null) {
-         this.config.commandPrefix = autismclient.util.CommandPrefixHelper.init_Str(prefix);
+         this.config.commandPrefix = autismclient.util.CommandPrefixHelper.normalizePrefix(prefix);
          this.saveConfig();
       }
    }
@@ -1580,7 +1580,7 @@ public final class ModuleRuntimeManager {
       }
 
       OverlayManager.getInstance().register(overlay);
-      overlay.close_V_12();
+      overlay.toggleVisible();
       return true;
    }
 
@@ -1792,7 +1792,7 @@ public final class ModuleRuntimeManager {
             this.autoProbePending = false;
          } else if (this.spawnedInWorld) {
             AutismServerInfoOverlay overlay = this.getOrCreateServerInfoOverlay();
-            if (overlay != null && overlay.push_Z_12() && (overlay.pop_Z_7() || waited >= 2000L) && overlay.tick_Z_6()) {
+            if (overlay != null && overlay.hasServer() && (overlay.hasCommandTree() || waited >= 2000L) && overlay.startAutoScan()) {
                this.autoProbePending = false;
             }
          }

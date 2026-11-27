@@ -1047,7 +1047,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                   return;
                }
 
-               if (MacroClipboardCodec.init_Z(List.of(item.init_aM), false)) {
+               if (MacroClipboardCodec.copyMacros(List.of(item.init_aM), false)) {
                   bi.init("Copied macro: " + item.init_aM.name);
                } else {
                   bi.write("Failed to copy macro.");
@@ -1121,7 +1121,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void set_V_6() {
-      switch (MacroClipboardCodec.init_o_DataUtil()) {
+      switch (MacroClipboardCodec.clipboardKind()) {
          case MACROS:
             this.clear_Z_3();
             break;
@@ -1153,7 +1153,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("§cA macro with that name already exists.");
          return true;
       } else {
-         AutismMacro pasted = MacroClipboardCodec.init_aM();
+         AutismMacro pasted = MacroClipboardCodec.pasteMacro();
          if (pasted == null) {
             bi.write("Clipboard has no macro steps.");
             return true;
@@ -1896,7 +1896,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (MacroClipboardCodec.init_Z(selected, false)) {
+      if (MacroClipboardCodec.copyMacros(selected, false)) {
          bi.init("Copied " + load_Str_I_2(selected.size()) + ".");
       } else {
          bi.write("Failed to copy macros.");
@@ -1910,7 +1910,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
          return true;
-      } else if (!MacroClipboardCodec.init_Z(selected, true)) {
+      } else if (!MacroClipboardCodec.copyMacros(selected, true)) {
          bi.write("Failed to copy macros.");
          return true;
       } else {
@@ -1922,14 +1922,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean clear_Z_3() {
-      MacroClipboardCodec.Inner_StreamUtil paste = MacroClipboardCodec.init_o_StreamUtil();
-      if (paste.init_List().isEmpty()) {
+      MacroClipboardCodec.Inner_StreamUtil paste = MacroClipboardCodec.pasteMacros();
+      if (paste.macros().isEmpty()) {
          bi.read("Clipboard has no macros.");
          return true;
       } else {
          List<AutismMacro> selected = this.load_List_4();
          AutismMacro anchor = selected.isEmpty() ? null : selected.get(selected.size() - 1);
-         List<AutismMacro> added = MacroLibraryManager.getInstance().insertMacros(paste.init_List(), !paste.init_Z(), anchor);
+         List<AutismMacro> added = MacroLibraryManager.getInstance().insertMacros(paste.macros(), !paste.fromInternalCopy(), anchor);
          if (added.isEmpty()) {
             bi.write("Failed to paste macros.");
             return true;

@@ -104,7 +104,7 @@ public final class LivePrintEnv implements PrintEnv {
             .init(
                this.mc.level,
                this.mc.player,
-               autismclient.util.villager.BlockChangeAckTracker.init_Z(this.mc.level, this.interactionReceipt.init()),
+               autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(this.mc.level, this.interactionReceipt.init()),
                this.nanoTime()
             );
    }

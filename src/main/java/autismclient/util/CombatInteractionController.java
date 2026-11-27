@@ -88,7 +88,7 @@ public final class CombatInteractionController {
          && mc.gui.overlay() == null
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
@@ -337,7 +337,7 @@ public final class CombatInteractionController {
          && !f.load()
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.isActive()
-         && !RemoteViewController.init_Z()) {
+         && !RemoteViewController.isActive()) {
          AutismSessionState state = AutismSessionState.getInstance();
          return !state.hasEntityCaptureCallback() && !state.hasBlockCaptureCallback();
       } else {

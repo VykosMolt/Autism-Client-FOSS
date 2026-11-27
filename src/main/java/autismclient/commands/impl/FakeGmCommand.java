@@ -32,12 +32,12 @@ public class FakeGmCommand extends Command {
                return 1;
             }
 
-            result = FakeGamemodeManager.init_W_DataUtil(resolved);
+            result = FakeGamemodeManager.applyFake(resolved);
          } else {
-            result = FakeGamemodeManager.init_W_DataUtil();
+            result = FakeGamemodeManager.clearFake();
          }
 
-         AutismClientMessaging.sendPrefixed((result.init_Z() ? "§a" : "§c") + result.init_Str());
+         AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
          return 1;
       }));
    }

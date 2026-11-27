@@ -55,7 +55,7 @@ public final class CombatAimSpeedController {
    }
 
    public void load(Object enemy, int tick, int latencyMs) {
-      this.init(enemy, tick, LatencyTickWindow.init_I_I(latencyMs) + 2);
+      this.init(enemy, tick, LatencyTickWindow.windowTicks(latencyMs) + 2);
    }
 
    public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {

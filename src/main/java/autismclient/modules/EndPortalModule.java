@@ -92,7 +92,7 @@ public final class EndPortalModule extends Module {
 
    @Override
    public boolean hasDisabledTickWork() {
-      return this.init_cR.init_Z();
+      return this.init_cR.hasMemory();
    }
 
    @Override
@@ -120,7 +120,7 @@ public final class EndPortalModule extends Module {
    }
 
    private void init_V_4() {
-      this.init_cU.init_V();
+      this.init_cU.reset();
       this.load_V_3();
    }
 
@@ -150,8 +150,8 @@ public final class EndPortalModule extends Module {
 
          if (this.init_cU.init(MC.level, MC.getConnection(), server, MC.level.dimension().identifier().toString())) {
             this.load_V_3();
-            this.init_cR_DataUtil = this.init_cU.init_cR_DataUtil();
-            this.init_cR_DataUtil.init_cS.init_V_Z_Z(true, false);
+            this.init_cR_DataUtil = this.init_cU.getMemory();
+            this.init_cR_DataUtil.triangulator.init_V_Z_Z(true, false);
             this.init_J = init_J_2() + 2000L;
          }
 
@@ -162,11 +162,11 @@ public final class EndPortalModule extends Module {
    }
 
    static boolean load_Z() {
-      return MC.level != null && EndPortalSessionTracker.init_Z_Z_Z(MC.level.dimensionType().hasSkyLight(), MC.level.dimensionType().hasEnderDragonFight());
+      return MC.level != null && EndPortalSessionTracker.isStrongholdDimension(MC.level.dimensionType().hasSkyLight(), MC.level.dimensionType().hasEnderDragonFight());
    }
 
    private boolean pop() {
-      return this.init_cU.init_Z_Obj_Obj(MC.level, MC.getConnection());
+      return this.init_cU.isSameSession(MC.level, MC.getConnection());
    }
 
    @Override
@@ -184,8 +184,8 @@ public final class EndPortalModule extends Module {
             this.update_V();
          }
 
-         if (this.init_cR_DataUtil.init_cS.init_cS_BufferHelper() == null
-            && this.init_cR_DataUtil.init_Map.isEmpty()
+         if (this.init_cR_DataUtil.triangulator.init_cS_BufferHelper() == null
+            && this.init_cR_DataUtil.frames.isEmpty()
             && this.init_Map.isEmpty()
             && load_Z()
             && MC.gui.screen() == null
@@ -225,14 +225,14 @@ public final class EndPortalModule extends Module {
          if (eye instanceof EyeOfEnder && eye.isAlive() && eye.getUUID().equals(tracked.init_UUID) && age >= 0 && age <= 60) {
             StrongholdTriangulator.Inner_BufferHelper ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
             if (ray != null) {
-               boolean added = this.init_cR_DataUtil.init_cS.init_Z_Vec3_Vec3(ray.init(), ray.load().scale(8.0));
+               boolean added = this.init_cR_DataUtil.triangulator.init_Z_Vec3_Vec3(ray.init(), ray.load().scale(8.0));
                if (added) {
-                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.init_cS.init_cT_StreamUtil();
+                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.triangulator.init_cT_StreamUtil();
                   autismclient.util.bi.read(
                      prediction != null
                         ? "EndPortal: stronghold location estimated."
                         : (
-                           this.init_cR_DataUtil.init_cS.init_cS_DataUtil() == null
+                           this.init_cR_DataUtil.triangulator.init_cS_DataUtil() == null
                               ? "EndPortal: direction recorded."
                               : "EndPortal: stronghold position estimated; find the portal room nearby."
                         )
@@ -296,7 +296,7 @@ public final class EndPortalModule extends Module {
             }
 
             this.init_cR_DataUtil
-               .init_Map
+               .frames
                .values()
                .removeIf(f -> f.init_BlockPos().getX() >> 4 == x && f.init_BlockPos().getZ() >> 4 == z && !current.contains(f.init_BlockPos().asLong()));
          }
@@ -330,7 +330,7 @@ public final class EndPortalModule extends Module {
 
    private void update_V() {
       List<BlockPos> shown = new ArrayList<>();
-      Iterator<Entry<Long, StrongholdTriangulator.Inner_CachePool>> iterator = this.init_cR_DataUtil.init_Map.entrySet().iterator();
+      Iterator<Entry<Long, StrongholdTriangulator.Inner_CachePool>> iterator = this.init_cR_DataUtil.frames.entrySet().iterator();
       int view = am.init_I();
 
       while (iterator.hasNext()) {
@@ -354,16 +354,16 @@ public final class EndPortalModule extends Module {
 
       shown.sort(Comparator.comparingDouble(p -> p.distToCenterSqr(MC.player.position())));
       this.read_List = List.copyOf(shown);
-      if (!this.load_Map.equals(this.init_cR_DataUtil.init_Map)) {
-         this.load_List = StrongholdTriangulator.init_List_Collection(this.init_cR_DataUtil.init_Map.values());
-         this.load_Map = Map.copyOf(this.init_cR_DataUtil.init_Map);
+      if (!this.load_Map.equals(this.init_cR_DataUtil.frames)) {
+         this.load_List = StrongholdTriangulator.init_List_Collection(this.init_cR_DataUtil.frames.values());
+         this.load_Map = Map.copyOf(this.init_cR_DataUtil.frames);
       }
 
       this.init_Vec3 = this.load_List.stream().min(Comparator.comparingDouble(p -> p.distanceToSqr(MC.player.position()))).orElse(null);
       this.load_Vec3 = this.init_Vec3 != null
          ? this.init_Vec3
          : this.init_cR_DataUtil
-            .init_Map
+            .frames
             .values()
             .stream()
             .min(Comparator.comparingDouble(fx -> fx.init_BlockPos().distToCenterSqr(MC.player.position())))
@@ -409,24 +409,24 @@ public final class EndPortalModule extends Module {
       } else if (this.load_Vec3 != null) {
          return this.load_Vec3;
       } else {
-         return load_Z() ? this.init_cR_DataUtil.init_cS.init_Vec3_Vec3(MC.player.position()) : null;
+         return load_Z() ? this.init_cR_DataUtil.triangulator.init_Vec3_Vec3(MC.player.position()) : null;
       }
    }
 
    boolean close() {
-      return this.pop() && this.init_cR_DataUtil != null && !this.init_cR_DataUtil.init_Map.isEmpty();
+      return this.pop() && this.init_cR_DataUtil != null && !this.init_cR_DataUtil.frames.isEmpty();
    }
 
    boolean open() {
-      return this.pop() && !this.close() && this.init_cR_DataUtil != null && this.init_cR_DataUtil.init_cS.init_cS_DataUtil() != null;
+      return this.pop() && !this.close() && this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.init_cS_DataUtil() != null;
    }
 
    boolean poll() {
-      return this.open() && this.init_cR_DataUtil.init_cS.init_cT_StreamUtil() != null;
+      return this.open() && this.init_cR_DataUtil.triangulator.init_cT_StreamUtil() != null;
    }
 
    double init_D_2() {
-      return this.open() ? this.init_cR_DataUtil.init_cS.init_cS_DataUtil().init_D() : 0.0;
+      return this.open() ? this.init_cR_DataUtil.triangulator.init_cS_DataUtil().init_D() : 0.0;
    }
 
    String init_Str() {
@@ -434,9 +434,9 @@ public final class EndPortalModule extends Module {
          ? (this.init_Vec3 != null ? "Portal ring observed" : "Portal frame observed")
          : (
             this.open()
-               ? (this.poll() ? (this.init_cR_DataUtil.init_cS.init_I() == 1 ? "One-Eye estimate" : "Generation estimate") : "Stronghold estimate")
+               ? (this.poll() ? (this.init_cR_DataUtil.triangulator.init_I() == 1 ? "One-Eye estimate" : "Generation estimate") : "Stronghold estimate")
                : (
-                  this.init_cR_DataUtil != null && this.init_cR_DataUtil.init_cS.init_cS_BufferHelper() != null
+                  this.init_cR_DataUtil != null && this.init_cR_DataUtil.triangulator.init_cS_BufferHelper() != null
                      ? "Eye bearing / distance unknown"
                      : "No Eye data"
                )

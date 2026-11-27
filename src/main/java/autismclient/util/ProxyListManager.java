@@ -782,10 +782,10 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
    private static ProxyListManager.Inner_ConfigStore probeProxy(bW proxy, int timeout, String destinationHost, int destinationPort) {
       if (destinationHost != null && !destinationHost.isBlank() && destinationPort > 0) {
          ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(proxy, destinationHost, destinationPort, timeout);
-         bW.Inner_DataUtil result = verified.init_Z()
-            ? new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.init_J(), 1)
+         bW.Inner_DataUtil result = verified.success()
+            ? new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.latencyMs(), 1)
             : new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
-         return new ProxyListManager.Inner_ConfigStore(result, verified.init_bZ());
+         return new ProxyListManager.Inner_ConfigStore(result, verified.protocol());
       } else {
          return new ProxyListManager.Inner_ConfigStore(proxy.init_bW_DataUtil_I(timeout), null);
       }

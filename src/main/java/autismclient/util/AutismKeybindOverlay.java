@@ -731,7 +731,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Str_5(String requested) {
-      String selected = CommandPrefixHelper.init_Str(requested);
+      String selected = CommandPrefixHelper.normalizePrefix(requested);
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (module != null) {
          module.setCommandPrefix(selected);
@@ -1281,7 +1281,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             Math.max(1, rowW - controlW - AutismKeybindOverlay.this.data()),
             false
          );
-         String value = CommandPrefixHelper.init_Str();
+         String value = CommandPrefixHelper.currentPrefix();
          autismclient.gui.ui.widgets.WidgetRenderFacade.init(
             autismclient.gui.f.UiHelper.init(context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())),
             this.init_NetHelper,
@@ -1295,7 +1295,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       public boolean mouseClicked(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
          if (button == 0 && this.init_NetHelper.init_Z(Math.round(mouseX), Math.round(mouseY))) {
             AutismKeybindOverlay.this.init_RefQueue = new autismclient.gui.ui.widgets.DropdownMenu(
-               this.init_NetHelper, CommandPrefixHelper.init_List, CommandPrefixHelper.init_Str(), AutismKeybindOverlay.this::init_V_Str_5
+               this.init_NetHelper, CommandPrefixHelper.ALLOWED_PREFIXES, CommandPrefixHelper.currentPrefix(), AutismKeybindOverlay.this::init_V_Str_5
             );
             AutismKeybindOverlay.this.init_RefQueue.open();
             return true;

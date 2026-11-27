@@ -79,13 +79,13 @@ public final class PayloadScriptRunner {
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, byte[] init_BArr) {
+   public record Inner_StreamUtil(String channel, byte[] bytes) {
       public Inner_StreamUtil {
-         init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
+         bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       }
 
-      public byte[] init_BArr() {
-         return (byte[])this.init_BArr.clone();
+      public byte[] bytes() {
+         return (byte[])this.bytes.clone();
       }
    }
 }

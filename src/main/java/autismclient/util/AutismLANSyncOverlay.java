@@ -1087,7 +1087,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       if (!this.flush_Z) {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> {
             try {
-               String queueData = MacroClipboardCodec.init_Str(AutismSessionState.getInstance().getDelayedPackets());
+               String queueData = MacroClipboardCodec.encodeQueue(AutismSessionState.getInstance().getDelayedPackets());
                sync.broadcastQueueData(queueData);
                AutismClientMessaging.sendPrefixed("§aQueue broadcasted to " + (sync.getConnectedClientCount() - 1) + " peers");
             } catch (Exception e) {

@@ -33,12 +33,12 @@ public final class CustomMenuAction implements MacroAction {
             return;
          }
 
-         long seenGeneration = autismclient.util.custommenu.CustomMenuTracker.init_J();
-         CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
+         long seenGeneration = autismclient.util.custommenu.CustomMenuTracker.generation();
+         CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.snapshot();
          if (snapshot != null) {
             seenGeneration = snapshot.generation();
          } else {
-            snapshot = autismclient.util.custommenu.DialogScreenBridge.init_CustomMenuSnapshot(mc);
+            snapshot = autismclient.util.custommenu.DialogScreenBridge.snapshot(mc);
          }
 
          if (snapshot == null) {
@@ -68,7 +68,7 @@ public final class CustomMenuAction implements MacroAction {
                return;
             }
 
-            Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
+            Screen answered = autismclient.util.custommenu.DialogScreenBridge.currentScreen(mc);
             CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
             if (!result.success()) {
                this.init(result.error());

@@ -226,11 +226,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return true;
    }
 
-   public void write_V_18() {
+   public void saveState() {
       this.saveBounds();
    }
 
-   public synchronized String load_Str_9() {
+   public synchronized String debugSummary() {
       return "capturing="
          + !this.write_Z
          + " all="
@@ -245,7 +245,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          + this.init_List.size();
    }
 
-   public synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> init_List_Str_3(String category, int offset, int limit) {
+   public synchronized List<AutismPacketLoggerOverlay.LoggedPacketEntry> queryEntries(String category, int offset, int limit) {
       String key = category == null ? "" : category.trim().toUpperCase(Locale.ROOT);
       Deque var10002;
       switch (key) {
@@ -271,7 +271,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return new ArrayList<>(newestFirst.subList(from, to));
    }
 
-   public synchronized void init_V_Str_5(String searchText, String direction, String category) {
+   public synchronized void applyFilters(String searchText, String direction, String category) {
       if (searchText != null) {
          this.init_k.setValue(searchText);
          this.load_Str = this.init_k.getValue();
@@ -322,7 +322,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.pop_Z = true;
    }
 
-   public synchronized JsonObject init_JsonObject_2() {
+   public synchronized JsonObject stateJson() {
       JsonObject state = new JsonObject();
       state.addProperty("paused", this.write_Z);
       state.addProperty("configurationOnly", this.update_Z);
@@ -343,22 +343,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return state;
    }
 
-   public synchronized void init_V_Str_9(String name) {
+   public synchronized void unblock(String name) {
       this.read(name);
    }
 
-   public synchronized void sync_V_14() {
+   public synchronized void clearEntries() {
       this.cache();
    }
 
-   public void flush_V_13() {
+   public void restoreState() {
       this.loadBounds();
       this.init_bB.reloadFromConfig();
-      this.init_bC.init_V();
+      this.init_bC.reloadFromConfig();
       this.pop_Z = true;
    }
 
-   public static boolean poll_Z_13() {
+   public static boolean isSavedVisible() {
       OverlayBounds layout = AutismSessionState.getInstance().getOverlayBounds("AutismPacketLoggerOverlay");
       return layout != null && layout.visible;
    }
@@ -409,11 +409,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void init_V_I_8(int t) {
+   public void setCurrentTick(int t) {
       this.size = t;
    }
 
-   public boolean push_Z_10() {
+   public boolean isPaused() {
       return this.write_Z;
    }
 
@@ -425,7 +425,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       if (leavingOfflineSetup) {
-         this.init_AutismPacketInspec.write_V_17();
+         this.init_AutismPacketInspec.clearInspection();
          this.init_AutismPacketLogger.setVisible(false);
          this.init_AutismPacketLogger_3.setVisible(false);
       }
@@ -450,22 +450,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void init_V_Packet_Str(Packet<?> packet, String direction) {
+   public void logPacket(Packet<?> packet, String direction) {
       this.init_V_Packet(packet, direction, false, false);
    }
 
-   public void load_V_Packet_Str(Packet<?> packet, String direction) {
+   public void logPayloadPacket(Packet<?> packet, String direction) {
       this.init_V_Packet(packet, direction, true, true);
    }
 
-   public void init_V_J(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payloadSnapshot) {
+   public void logPayload(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payloadSnapshot) {
       if (payloadSnapshot != null) {
          synchronized (this) {
             String name = packetClass != null && Packet.class.isAssignableFrom(packetClass) ? init_Str_Class(packetClass) : "Custom Payload";
             boolean isInventory = init_Z_Str_Set(name, read_Set);
             boolean isMovement = init_Z_Str_Set(name, write_Set);
             AutismPacketLoggerOverlay.LoggedPacketEntry e = new AutismPacketLoggerOverlay.LoggedPacketEntry(
-               timestampMs, tick, direction, name, packetClass, null, isInventory, isMovement, true, null, null, payloadSnapshot, PacketStateDeltaTracker.init_bq_DataUtil
+               timestampMs, tick, direction, name, packetClass, null, isInventory, isMovement, true, null, null, payloadSnapshot, PacketStateDeltaTracker.EMPTY_CAPTURE
             );
             this.init_List.add(e);
             this.flush(true);
@@ -475,7 +475,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    private static String init_Str_Class(Class<?> packetClass) {
       try {
-         return PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)packetClass);
+         return PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)packetClass);
       } catch (Throwable ignored) {
          return packetClass == null ? "Custom Payload" : packetClass.getSimpleName();
       }
@@ -486,12 +486,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          synchronized (this) {
             if (ignorePaused || !this.write_Z) {
                Class<?> cls = packet.getClass();
-               String name = PacketNameResolver.init_Str_Packet_Str(packet, direction);
+               String name = PacketNameResolver.directionalName(packet, direction);
                boolean isInventory = init_Z_Str_Set(name, read_Set);
                boolean isMovement = init_Z_Str_Set(name, write_Set);
                boolean isPayload = init_Z_Class_Str(cls, name);
                if ((payloadOnly && isPayload || !this.load_Z_Class_Str(cls, name)) && (!payloadOnly || isPayload)) {
-                  PacketStateDeltaTracker.Inner_DataUtil packetContext = this.init_bq.init_bq_DataUtil_Packet_Str(packet, direction);
+                  PacketStateDeltaTracker.Inner_DataUtil packetContext = this.init_bq.capture(packet, direction);
                   AutismPacketLoggerOverlay.CaptureContext captureContext = init_AutismPacketLogger_Packet(packet);
                   AutismPayloadSupport.PayloadEntry payloadSnapshot = isPayload ? AutismPayloadSupport.inspectPacket(packet, direction) : null;
                   if (payloadSnapshot != null) {
@@ -578,7 +578,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public boolean init_Z_Class(Class<?> cls) {
+   public boolean isBlocked(Class<?> cls) {
       return this.load(cls);
    }
 
@@ -760,7 +760,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       if (Packet.class.isAssignableFrom(cls)) {
          Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)cls;
-         if (this.flush_Set.contains(init_Str_Str_5(PacketNameResolver.init_Str_Class(packetClass)))) {
+         if (this.flush_Set.contains(init_Str_Str_5(PacketNameResolver.nameOfClass(packetClass)))) {
             return true;
          }
       }
@@ -872,14 +872,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private synchronized void clear_V_6() {
-      this.init_Deque.removeIf(e -> this.load_Z_Class_Str(e.init_Class, e.load_Str));
-      this.load_Deque.removeIf(e -> this.load_Z_Class_Str(e.init_Class, e.load_Str));
-      this.read_Deque.removeIf(e -> this.load_Z_Class_Str(e.init_Class, e.load_Str));
-      this.write_Deque.removeIf(e -> this.load_Z_Class_Str(e.init_Class, e.load_Str));
+      this.init_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
+      this.load_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
+      this.read_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
+      this.write_Deque.removeIf(e -> this.load_Z_Class_Str(e.packetClass, e.name));
       this.pop_Z = true;
    }
 
-   public static boolean init_Z_Packet(Packet<?> packet) {
+   public static boolean isPayloadPacket(Packet<?> packet) {
       if (packet == null) {
          return false;
       }
@@ -889,7 +889,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       Class<?> cls = packet.getClass();
-      return init_Z_Class_Str(cls, PacketNameResolver.init_Str_Packet_Str(packet, ""));
+      return init_Z_Class_Str(cls, PacketNameResolver.directionalName(packet, ""));
    }
 
    private static void init_V_Deque(Deque<AutismPacketLoggerOverlay.LoggedPacketEntry> buf, AutismPacketLoggerOverlay.LoggedPacketEntry e, int cap) {
@@ -933,15 +933,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (!this.init_List.isEmpty()) {
          for (AutismPacketLoggerOverlay.LoggedPacketEntry e : this.init_List) {
             init_V_Deque(this.init_Deque, e, 800);
-            if (e.init_Z) {
+            if (e.inventoryPacket) {
                init_V_Deque(this.load_Deque, e, 400);
             }
 
-            if (e.load_Z) {
+            if (e.movementPacket) {
                init_V_Deque(this.read_Deque, e, 200);
             }
 
-            if (e.read_Z) {
+            if (e.payloadPacket) {
                init_V_Deque(this.write_Deque, e, 400);
             }
          }
@@ -961,13 +961,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.init_F_2.init_V();
          OverlayManager.getInstance().bringToFront(this);
       } else {
-         this.init_AutismPacketInspec.write_V_17();
+         this.init_AutismPacketInspec.clearInspection();
       }
 
       this.saveBounds();
    }
 
-   public void close_V_12() {
+   public void toggleVisible() {
       this.setVisible(!this.windowVisible);
    }
 
@@ -1143,8 +1143,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       String summary = this.write_Z ? "Paused  " + total : Integer.toString(total);
       if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
-         PayloadSubscriptionManager.Inner_BufferHelper subscriptionStatus = PayloadSubscriptionManager.init_bD_BufferHelper();
-         String channelStatus = subscriptionStatus == null ? "" : subscriptionStatus.init_Str();
+         PayloadSubscriptionManager.Inner_BufferHelper subscriptionStatus = PayloadSubscriptionManager.status();
+         String channelStatus = subscriptionStatus == null ? "" : subscriptionStatus.describe();
          if (!channelStatus.isBlank()) {
             summary = summary + "  " + channelStatus;
          }
@@ -1347,19 +1347,19 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.reset - 4, this.put_I_6(), true, false);
       }
 
-      int color = e.init_Str.equals("C2S") ? -12268289 : -21948;
-      this.init_V_GuiGraphicsExtract_8(ctx, e.init_Str.equals("C2S") ? ">" : "<", autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
+      int color = e.direction.equals("C2S") ? -12268289 : -21948;
+      this.init_V_GuiGraphicsExtract_8(ctx, e.direction.equals("C2S") ? ">" : "<", autismclient.gui.f.b.l.read, color, x, this.init_I_I_8(y));
       x += 12;
-      String time = init_DateTimeFormatter.format(Instant.ofEpochMilli(e.load_J));
+      String time = init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs));
       this.init_V_GuiGraphicsExtract_8(ctx, time, autismclient.gui.f.b.l.write, -4809052, x, this.init_I_I_8(y));
       x += autismclient.gui.f.b.k.init(this.init_Font, time, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), -4809052) + 4;
-      String tick = "T" + e.init_I;
+      String tick = "T" + e.tick;
       this.init_V_GuiGraphicsExtract_8(ctx, tick, autismclient.gui.f.b.l.write, -6114880, x, this.init_I_I_8(y));
       x += autismclient.gui.f.b.k.init(this.init_Font, tick, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), -6114880) + 4;
       int maxW = this.reset - (x - this.windowX) - 30;
-      String name = e.load_Str;
-      if (e.init_AutismPayloadSuppo != null) {
-         String summary = AutismPayloadSupport.formatSummary(e.init_AutismPayloadSuppo, true);
+      String name = e.name;
+      if (e.payloadSnapshot != null) {
+         String summary = AutismPayloadSupport.formatSummary(e.payloadSnapshot, true);
          if (!summary.isBlank()) {
             name = name + " " + summary;
          }
@@ -1422,8 +1422,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private String[] init_StrArr_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry e) {
-      boolean isC2S = e != null && "C2S".equalsIgnoreCase(e.init_Str);
-      boolean isPayload = e != null && e.read_Z;
+      boolean isC2S = e != null && "C2S".equalsIgnoreCase(e.direction);
+      boolean isPayload = e != null && e.payloadPacket;
       String[] base;
       if (this.update_Z) {
          if (isC2S && isPayload) {
@@ -1623,7 +1623,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.DisplayRowKind.GROUP) {
             int bx = this.windowX + this.reset - 28;
             if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.init_Class != null) {
-               String n = PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)row.init_Class);
+               String n = PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)row.init_Class);
                this.load(n);
                return true;
             }
@@ -1658,8 +1658,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (!this.update_Z || !"Send".equals(action) && !"Replay".equals(action)) {
          switch (action) {
             case "Block":
-               this.load(e.load_Str);
-               AutismClientMessaging.sendPrefixed("Blocked + purged from logger: " + e.load_Str);
+               this.load(e.name);
+               AutismClientMessaging.sendPrefixed("Blocked + purged from logger: " + e.name);
                break;
             case "Queue":
                LoggedPacketActions.close(e);
@@ -1681,9 +1681,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                break;
             case "+ Filter":
                AutismSessionState shared = AutismSessionState.getInstance();
-               Class<? extends Packet<?>> pktCls = (Class<? extends Packet<?>>)e.init_Class;
+               Class<? extends Packet<?>> pktCls = (Class<? extends Packet<?>>)e.packetClass;
                boolean added;
-               if (e.init_Str.equals("C2S")) {
+               if (e.direction.equals("C2S")) {
                   added = shared.getCustomC2sPackets().add(pktCls);
                } else {
                   added = shared.getCustomS2cPackets().add(pktCls);
@@ -1691,35 +1691,35 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
                shared.setUseCustomPackets(true);
                AutismClientMessaging.sendPrefixed(
-                  added ? "Added to custom " + e.init_Str + " filter: " + e.load_Str : "Already present in custom " + e.init_Str + " filter: " + e.load_Str
+                  added ? "Added to custom " + e.direction + " filter: " + e.name : "Already present in custom " + e.direction + " filter: " + e.name
                );
                break;
             case "- Filter":
                AutismSessionState sharedRem = AutismSessionState.getInstance();
-               Class<? extends Packet<?>> pktClsRem = (Class<? extends Packet<?>>)e.init_Class;
+               Class<? extends Packet<?>> pktClsRem = (Class<? extends Packet<?>>)e.packetClass;
                boolean removed;
-               if (e.init_Str.equals("C2S")) {
+               if (e.direction.equals("C2S")) {
                   removed = sharedRem.getCustomC2sPackets().remove(pktClsRem);
                } else {
                   removed = sharedRem.getCustomS2cPackets().remove(pktClsRem);
                }
 
                AutismClientMessaging.sendPrefixed(
-                  removed ? "Removed from custom " + e.init_Str + " filter: " + e.load_Str : "Not present in custom " + e.init_Str + " filter: " + e.load_Str
+                  removed ? "Removed from custom " + e.direction + " filter: " + e.name : "Not present in custom " + e.direction + " filter: " + e.name
                );
                break;
             case "Replay":
-               if (e.init_Packet != null && e.init_Str.equals("C2S")) {
+               if (e.packet != null && e.direction.equals("C2S")) {
                   LoggedPacketActions.read(e);
                }
                break;
             case "Copy":
-               String line = e.init_Str + " " + init_DateTimeFormatter.format(Instant.ofEpochMilli(e.load_J)) + " T" + e.init_I + " " + e.load_Str;
+               String line = e.direction + " " + init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs)) + " T" + e.tick + " " + e.name;
                init_Minecraft.keyboardHandler.setClipboard(line);
                bi.init("Copied packet info.");
                break;
             case "Inspect":
-               this.init_AutismPacketInspec.init_V_AutismPacketLogger(e, this.windowX + this.reset + 10, this.windowY + 8);
+               this.init_AutismPacketInspec.inspect(e, this.windowX + this.reset + 10, this.windowY + 8);
          }
       }
    }
@@ -1836,8 +1836,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      return entry != null && entry.read_Z && entry.init_AutismPayloadSuppo != null
-         ? this.init_bB.findMatchingRuleForEntry(entry.init_AutismPayloadSuppo, entry.init_Str)
+      return entry != null && entry.payloadPacket && entry.payloadSnapshot != null
+         ? this.init_bB.findMatchingRuleForEntry(entry.payloadSnapshot, entry.direction)
          : null;
    }
 
@@ -1860,15 +1860,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> filtered = new ArrayList<>();
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : source) {
-         if (!this.load(e.init_Class)
+         if (!this.load(e.packetClass)
             && (
                this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
                   || !this.poll_Z
                   || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
             )
             && (ls.isEmpty() || this.init_Str_AutismPacketLogger(e).contains(ls))
-            && (this.valid != 1 || e.init_Str.equals("C2S"))
-            && (this.valid != 2 || e.init_Str.equals("S2C"))) {
+            && (this.valid != 1 || e.direction.equals("C2S"))
+            && (this.valid != 2 || e.direction.equals("S2C"))) {
             filtered.add(e);
          }
       }
@@ -1878,10 +1878,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       Map<String, Class<?>> classes = new LinkedHashMap<>();
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : filtered) {
-         String key = e.read_Str;
+         String key = e.key;
          counts.merge(key, 1, Integer::sum);
-         dirs.put(key, e.init_Str);
-         classes.put(key, e.init_Class);
+         dirs.put(key, e.direction);
+         classes.put(key, e.packetClass);
       }
 
       Set<String> groupedKeys = new HashSet<>();
@@ -1899,7 +1899,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       Set<String> added = new LinkedHashSet<>();
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : reversed) {
-         String key = e.read_Str;
+         String key = e.key;
          if (groupedKeys.contains(key) && added.add(key)) {
             AutismPacketLoggerOverlay.DisplayRow h = new AutismPacketLoggerOverlay.DisplayRow();
             h.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.GROUP;
@@ -1907,11 +1907,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             h.init_I = counts.get(key);
             h.load = dirs.get(key);
             h.init_Class = classes.get(key);
-            h.init_AutismPayloadSuppo = e.init_AutismPayloadSuppo;
+            h.init_AutismPayloadSuppo = e.payloadSnapshot;
             rows.add(h);
             if (this.close_Set.contains(key)) {
                for (AutismPacketLoggerOverlay.LoggedPacketEntry child : reversed) {
-                  if (child.read_Str.equals(key)) {
+                  if (child.key.equals(key)) {
                      AutismPacketLoggerOverlay.DisplayRow r = new AutismPacketLoggerOverlay.DisplayRow();
                      r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
                      r.init_AutismPacketLogger = child;
@@ -1923,7 +1923,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : reversed) {
-         if (!groupedKeys.contains(e.read_Str)) {
+         if (!groupedKeys.contains(e.key)) {
             AutismPacketLoggerOverlay.DisplayRow r = new AutismPacketLoggerOverlay.DisplayRow();
             r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.DisplayRowKind.ENTRY;
             r.init_AutismPacketLogger = e;
@@ -1967,7 +1967,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int sw = cA.init_I();
       int sh = cA.load_I();
       this.init_bB.reloadFromConfig();
-      this.init_bC.init_V();
+      this.init_bC.reloadFromConfig();
       this.init_AutismPacketLogger_3.windowX = Math.max(4, (sw - this.init_AutismPacketLogger_3.windowWidth) / 2);
       this.init_AutismPacketLogger_3.windowY = Math.max(4, (sh - this.init_AutismPacketLogger_3.windowHeight) / 2);
       this.init_AutismPacketLogger_3.setVisible(true);
@@ -1987,7 +1987,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.load_Deque.clear();
       this.read_Deque.clear();
       this.write_Deque.clear();
-      this.init_bq.init_V();
+      this.init_bq.reset();
       this.load_List.clear();
       this.next = 0;
       this.init_CacheEntry.jumpTo(0, 0);
@@ -2014,18 +2014,18 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int count = 0;
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry e : source) {
-         if (!this.load(e.init_Class)
+         if (!this.load(e.packetClass)
             && (
                this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.LogCategory.PAYLOAD
                   || !this.poll_Z
                   || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
             )
             && (ls.isEmpty() || this.init_Str_AutismPacketLogger(e).contains(ls))
-            && (this.valid != 1 || e.init_Str.equals("C2S"))
-            && (this.valid != 2 || e.init_Str.equals("S2C"))) {
-            String copiedName = e.load_Str;
-            if (e.init_AutismPayloadSuppo != null) {
-               String summary = AutismPayloadSupport.formatSummary(e.init_AutismPayloadSuppo, true);
+            && (this.valid != 1 || e.direction.equals("C2S"))
+            && (this.valid != 2 || e.direction.equals("S2C"))) {
+            String copiedName = e.name;
+            if (e.payloadSnapshot != null) {
+               String summary = AutismPayloadSupport.formatSummary(e.payloadSnapshot, true);
                if (!summary.isBlank()) {
                   copiedName = copiedName + " " + summary;
                }
@@ -2039,9 +2039,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             sb.append(
                String.format(
                   "%-5s %-14s %-8s %s%n",
-                  e.init_Str.equals("C2S") ? "->" : "<-",
-                  init_DateTimeFormatter.format(Instant.ofEpochMilli(e.load_J)),
-                  "T" + e.init_I,
+                  e.direction.equals("C2S") ? "->" : "<-",
+                  init_DateTimeFormatter.format(Instant.ofEpochMilli(e.timestampMs)),
+                  "T" + e.tick,
                   copiedName
                )
             );
@@ -2160,7 +2160,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.init_k.setChangedListener(value -> this.flush_Z = true);
          List<Class<? extends Packet<?>>> c2s = new ArrayList<>(PacketTypeRegistry.getC2sPackets());
          List<Class<? extends Packet<?>>> s2c = new ArrayList<>(PacketTypeRegistry.getS2cPackets());
-         Comparator<Class<? extends Packet<?>>> byName = Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER);
+         Comparator<Class<? extends Packet<?>>> byName = Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER);
          c2s.sort(byName);
          s2c.sort(byName);
          this.init_Set.addAll(c2s);
@@ -2182,7 +2182,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private String init(Class<? extends Packet<?>> cls) {
          String name = PacketTypeRegistry.getPacketName(cls);
-         return name != null ? name : PacketNameResolver.init_Str_Class(cls);
+         return name != null ? name : PacketNameResolver.nameOfClass(cls);
       }
 
       @Override
@@ -2274,7 +2274,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      int ry = base + i * rowHeight;
                      Class<? extends Packet<?>> cls = this.load_List.get(i);
                      boolean c2s = this.init_Set.contains(cls);
-                     boolean blocked = AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.init_Str_Class(cls));
+                     boolean blocked = AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls));
                      boolean hover = mx >= this.windowX + 4
                         && mx < this.windowX + this.windowWidth - 8
                         && my >= ry
@@ -2286,7 +2286,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      }
 
                      int color = UiColorPalette.packetRowAccent(c2s, i);
-                     String name = PacketNameResolver.init_Str_Class(cls);
+                     String name = PacketNameResolver.nameOfClass(cls);
                      String label = autismclient.gui.f.b.k.init(
                         AutismPacketLoggerOverlay.this.init_Font,
                         name,
@@ -2317,9 +2317,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.load_List.clear();
 
          for (Class<? extends Packet<?>> cls : this.init_List) {
-            if (!this.update_Z || AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.init_Str_Class(cls))) {
+            if (!this.update_Z || AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls))) {
                if (!query.isEmpty()) {
-                  String hay = (PacketNameResolver.init_Str_Class(cls) + " " + cls.getSimpleName()).toLowerCase(Locale.ROOT);
+                  String hay = (PacketNameResolver.nameOfClass(cls) + " " + cls.getSimpleName()).toLowerCase(Locale.ROOT);
                   if (!hay.contains(query)) {
                      continue;
                   }
@@ -2405,8 +2405,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             if (index >= 0 && index < this.load_List.size()) {
                Class<? extends Packet<?>> cls = this.load_List.get(index);
                String key = this.init(cls);
-               if (AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.init_Str_Class(cls))) {
-                  AutismPacketLoggerOverlay.this.init_V_Class_Str(cls, PacketNameResolver.init_Str_Class(cls));
+               if (AutismPacketLoggerOverlay.this.load_Z_Class_Str(cls, PacketNameResolver.nameOfClass(cls))) {
+                  AutismPacketLoggerOverlay.this.init_V_Class_Str(cls, PacketNameResolver.nameOfClass(cls));
                } else {
                   AutismPacketLoggerOverlay.this.load(key);
                }
@@ -2583,21 +2583,21 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    public static class LoggedPacketEntry {
       public final long init_J = AutismPacketLoggerOverlay.read_J++;
-      public final long load_J;
-      public final int init_I;
-      public final String init_Str;
-      public final String load_Str;
+      public final long timestampMs;
+      public final int tick;
+      public final String direction;
+      public final String name;
       private volatile String sync;
-      public final String read_Str;
-      public final Class<?> init_Class;
-      public final Packet<?> init_Packet;
-      public final boolean init_Z;
-      public final boolean load_Z;
-      public final boolean read_Z;
+      public final String key;
+      public final Class<?> packetClass;
+      public final Packet<?> packet;
+      public final boolean inventoryPacket;
+      public final boolean movementPacket;
+      public final boolean payloadPacket;
       public final String write;
       public final String update;
-      public final AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo;
-      public final PacketStateDeltaTracker.Inner_DataUtil init_bq_DataUtil;
+      public final AutismPayloadSupport.PayloadEntry payloadSnapshot;
+      public final PacketStateDeltaTracker.Inner_DataUtil packetContext;
 
       public LoggedPacketEntry(
          long ts,
@@ -2614,29 +2614,29 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          AutismPayloadSupport.PayloadEntry payloadSnapshot,
          PacketStateDeltaTracker.Inner_DataUtil packetContext
       ) {
-         this.load_J = ts;
-         this.init_I = tick;
-         this.init_Str = dir;
-         this.load_Str = name;
-         this.init_AutismPayloadSuppo = payloadSnapshot;
-         this.read_Str = dir + ":" + name;
-         this.init_Class = cls;
-         this.init_Packet = ref;
-         this.init_Z = inv;
-         this.load_Z = mov;
-         this.read_Z = payload;
+         this.timestampMs = ts;
+         this.tick = tick;
+         this.direction = dir;
+         this.name = name;
+         this.payloadSnapshot = payloadSnapshot;
+         this.key = dir + ":" + name;
+         this.packetClass = cls;
+         this.packet = ref;
+         this.inventoryPacket = inv;
+         this.movementPacket = mov;
+         this.payloadPacket = payload;
          this.write = capturedBlockState;
          this.update = capturedScreen;
-         this.init_bq_DataUtil = packetContext == null ? PacketStateDeltaTracker.init_bq_DataUtil : packetContext;
+         this.packetContext = packetContext == null ? PacketStateDeltaTracker.EMPTY_CAPTURE : packetContext;
       }
 
       public String init() {
          String key = this.sync;
          if (key == null) {
-            String payloadSearch = this.init_AutismPayloadSuppo == null
+            String payloadSearch = this.payloadSnapshot == null
                ? ""
-               : " " + this.init_AutismPayloadSuppo.channel() + " " + this.init_AutismPayloadSuppo.jsonDump();
-            key = (this.load_Str == null ? "" : this.load_Str).concat(payloadSearch).toLowerCase(Locale.ROOT);
+               : " " + this.payloadSnapshot.channel() + " " + this.payloadSnapshot.jsonDump();
+            key = (this.name == null ? "" : this.name).concat(payloadSearch).toLowerCase(Locale.ROOT);
             this.sync = key;
          }
 
@@ -2732,7 +2732,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          for (PayloadChannelFilterManager.Inner_CachePool preset : this.init_List) {
             if (preset != null) {
                String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-               if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+               if (PayloadRegistrationManager.isExactChannel(pattern)) {
                   channels.add(pattern);
                }
             }
@@ -2884,7 +2884,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int data() {
-         String label = PayloadSubscriptionManager.init_Z() ? "Registration : On" : "Registration : Off";
+         String label = PayloadSubscriptionManager.isRegistrationUnlocked() ? "Registration : On" : "Registration : Off";
          return AutismPacketLoggerOverlay.this.init_I_Str_6(label);
       }
 
@@ -2926,7 +2926,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void update_V_17() {
          AutismPacketLoggerOverlay.this.init_bB.syncToConfig(false);
-         AutismPacketLoggerOverlay.this.init_bC.init_V_Z(false);
+         AutismPacketLoggerOverlay.this.init_bC.save(false);
       }
 
       private void sync_V_15() {
@@ -3118,13 +3118,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      mx,
                      my
                   );
-                  PayloadSubscriptionManager.Inner_BufferHelper subscriptionStatus = PayloadSubscriptionManager.init_bD_BufferHelper();
-                  String sub = subscriptionStatus == null ? "Registered 0/96" : subscriptionStatus.init_Str();
-                  if (subscriptionStatus != null && !subscriptionStatus.load_Z() && subscriptionStatus.init_I() > 0 && !subscriptionStatus.init_Z()) {
+                  PayloadSubscriptionManager.Inner_BufferHelper subscriptionStatus = PayloadSubscriptionManager.status();
+                  String sub = subscriptionStatus == null ? "Registered 0/96" : subscriptionStatus.describe();
+                  if (subscriptionStatus != null && !subscriptionStatus.locked() && subscriptionStatus.registered() > 0 && !subscriptionStatus.sent()) {
                      sub = sub + " pending";
                   }
 
-                  boolean registrationUnlocked = PayloadSubscriptionManager.init_Z();
+                  boolean registrationUnlocked = PayloadSubscriptionManager.isRegistrationUnlocked();
                   int lockW = this.data();
                   int lockX = this.windowX + this.windowWidth - 8 - lockW;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
@@ -3334,13 +3334,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void open_V_11() {
          this.flush_V_14();
-         PayloadSubscriptionManager.init_V(AutismPacketLoggerOverlay.init_Minecraft);
+         PayloadSubscriptionManager.lockRegistration(AutismPacketLoggerOverlay.init_Minecraft);
          this.put_V_7();
          bi.read("Payload registration locked.");
       }
 
       private boolean push_Z_11() {
-         if (PayloadSubscriptionManager.init_Z()) {
+         if (PayloadSubscriptionManager.isRegistrationUnlocked()) {
             return true;
          }
 
@@ -3443,7 +3443,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
 
                String label = rule != null && rule.label != null && !rule.label.isBlank() ? rule.label.trim() : "";
-               String channel = rule == null ? "" : PayloadRegistrationManager.init_Str_Str(rule.channel);
+               String channel = rule == null ? "" : PayloadRegistrationManager.normalize(rule.channel);
                String text = !label.isBlank() && !label.equals(channel) ? label + "  " + channel : channel;
                boolean editable = this.init_Z(rule);
                int removeX = editable ? right - 14 : right;
@@ -3472,7 +3472,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   ctx,
                   autismclient.gui.f.b.k.init(
                      AutismPacketLoggerOverlay.this.init_Font,
-                     PayloadRegistrationManager.load_Str_Str(rule == null ? "" : rule.source),
+                     PayloadRegistrationManager.sourceLabel(rule == null ? "" : rule.source),
                      sourceW,
                      AutismPacketLoggerOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                      UiColorPalette.textBody()
@@ -3640,9 +3640,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void init_V_GuiGraphicsExtract_11(GuiGraphicsExtractor ctx, String pattern, int x, int y) {
          PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
-         boolean core = impact.init_I() <= 0 && this.init_Z_3(pattern);
-         String label = impact.init_I() > 0 ? impact.init_Str() : (core ? "Core" : "Highlight");
-         int color = impact.init_I() <= 0 && !core ? UiColorPalette.textSecondary() : -7346000;
+         boolean core = impact.channelCount() <= 0 && this.init_Z_3(pattern);
+         String label = impact.channelCount() > 0 ? impact.label() : (core ? "Core" : "Highlight");
+         int color = impact.channelCount() <= 0 && !core ? UiColorPalette.textSecondary() : -7346000;
          this.init_V_GuiGraphicsExtract_9(ctx, label, color, x, y);
       }
 
@@ -3654,7 +3654,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             String label;
             int color;
             if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
-               label = impact.init_I() > 0 ? impact.init_Str() : "Exact";
+               label = impact.channelCount() > 0 ? impact.label() : "Exact";
                color = -7346000;
             } else if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.CORE) {
                label = preset.kind().badge();
@@ -3753,7 +3753,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-         return this.read_Set.contains(preset.init_Str()) || PayloadRegistrationManager.load_Z_Str(pattern) && this.write_Set.contains(pattern);
+         return this.read_Set.contains(preset.init_Str()) || PayloadRegistrationManager.isExactChannel(pattern) && this.write_Set.contains(pattern);
       }
 
       private int init_I(AutismPacketLoggerOverlay.ChannelFamilyBucket family) {
@@ -3827,10 +3827,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       private void poll_V_8() {
          this.write_Set.clear();
 
-         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.init_List()) {
+         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.rules()) {
             if (rule != null && rule.enabled) {
-               String channel = PayloadRegistrationManager.init_Str_Str(rule.channel);
-               if (PayloadRegistrationManager.load_Z_Str(channel)) {
+               String channel = PayloadRegistrationManager.normalize(rule.channel);
+               if (PayloadRegistrationManager.isExactChannel(channel)) {
                   this.write_Set.add(channel);
                }
             }
@@ -3880,7 +3880,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             for (PayloadChannelFilterManager.Inner_CachePool preset : category.init_List) {
                if (preset != null) {
                   String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-                  if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+                  if (PayloadRegistrationManager.isExactChannel(pattern)) {
                      exact.add(pattern);
                   }
                }
@@ -3895,9 +3895,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.poll_V_8();
          String query = this.init_k.getValue() == null ? "" : this.init_k.getValue().trim().toLowerCase(Locale.ROOT);
          this.init_List.clear();
-         boolean registrationUnlocked = PayloadSubscriptionManager.init_Z();
+         boolean registrationUnlocked = PayloadSubscriptionManager.isRegistrationUnlocked();
          String registeredHeader = registrationUnlocked ? "Registered Channels" : "Saved Channels (Locked)";
-         List<AutismConfig.PayloadChannelRegistrationRule> registrations = AutismPacketLoggerOverlay.this.init_bC.init_List();
+         List<AutismConfig.PayloadChannelRegistrationRule> registrations = AutismPacketLoggerOverlay.this.init_bC.rules();
          Map<String, List<AutismPacketLoggerOverlay.ChannelListRow>> registeredGroups = new LinkedHashMap<>();
 
          for (int i = 0; i < registrations.size(); i++) {
@@ -3936,7 +3936,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          for (AutismConfig.PayloadChannelRegistrationRule rule : registrations) {
             if (rule != null) {
-               knownRegistrationChannels.add(PayloadRegistrationManager.init_Str_Str(rule.channel));
+               knownRegistrationChannels.add(PayloadRegistrationManager.normalize(rule.channel));
             }
          }
 
@@ -3947,7 +3947,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             AutismConfig.PayloadChannelFilterRule rule = active.get(i);
             if (rule != null && !rule.preset && !this.load_Set.contains(PayloadChannelFilterManager.normalizePattern(rule.pattern)) && (!this.sync_Z || rule.enabled)) {
                String normalizedPattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
-               if (!PayloadRegistrationManager.load_Z_Str(normalizedPattern) || !knownRegistrationChannels.contains(normalizedPattern)) {
+               if (!PayloadRegistrationManager.isExactChannel(normalizedPattern) || !knownRegistrationChannels.contains(normalizedPattern)) {
                   String hay = ((rule.label == null ? "" : rule.label) + " " + rule.pattern).toLowerCase(Locale.ROOT);
                   if (query.isEmpty() || hay.contains(query)) {
                      if (!customHeaderAdded) {
@@ -3963,7 +3963,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          boolean availableHeader = false;
          if (!this.sync_Z) {
-            for (String learned : PayloadSubscriptionManager.init_List()) {
+            for (String learned : PayloadSubscriptionManager.learnedChannels()) {
                if (learned != null
                   && !learned.isBlank()
                   && !knownRegistrationChannels.contains(learned)
@@ -4049,7 +4049,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                this.update_Map.put(preset, (preset.write() + " " + preset.load() + " " + preset.read()).toLowerCase(Locale.ROOT));
                if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
                   String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-                  if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+                  if (PayloadRegistrationManager.isExactChannel(pattern)) {
                      PayloadChannelFilterManager.Inner_CachePool existing = this.write_Map.get(pattern);
                      if (existing == null || this.load_I(preset) < this.load_I(existing)) {
                         this.write_Map.put(pattern, preset);
@@ -4102,7 +4102,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       private AutismPacketLoggerOverlay.ChannelFamilyKey init_AutismPacketLogger(PayloadChannelFilterManager.Inner_CachePool preset) {
          if (preset != null && PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-            if (!PayloadRegistrationManager.load_Z_Str(pattern)) {
+            if (!PayloadRegistrationManager.isExactChannel(pattern)) {
                return null;
             }
 
@@ -4114,7 +4114,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private String load_Str(String channel) {
-         String normalized = PayloadRegistrationManager.init_Str_Str(channel);
+         String normalized = PayloadRegistrationManager.normalize(channel);
          int colon = normalized.indexOf(58);
          if (colon <= 0) {
             return "";
@@ -4184,8 +4184,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int init_I_AutismPacketLogger_AutismPacketLogger(AutismPacketLoggerOverlay.ChannelListRow a, AutismPacketLoggerOverlay.ChannelListRow b) {
-         String ac = a != null && a.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.init_Str_Str(a.init_AutismConfig_Paylo_2.channel) : "";
-         String bc = b != null && b.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.init_Str_Str(b.init_AutismConfig_Paylo_2.channel) : "";
+         String ac = a != null && a.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.normalize(a.init_AutismConfig_Paylo_2.channel) : "";
+         String bc = b != null && b.init_AutismConfig_Paylo_2 != null ? PayloadRegistrationManager.normalize(b.init_AutismConfig_Paylo_2.channel) : "";
          return String.CASE_INSENSITIVE_ORDER.compare(ac, bc);
       }
 
@@ -4231,7 +4231,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private PayloadChannelFilterManager.Inner_CachePool init_bB_CachePool(String channel) {
-         String normalized = PayloadRegistrationManager.init_Str_Str(channel);
+         String normalized = PayloadRegistrationManager.normalize(channel);
          if (normalized.isBlank()) {
             return null;
          }
@@ -4287,12 +4287,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-         return PayloadRegistrationManager.load_Z_Str(pattern) ? 1 : 0;
+         return PayloadRegistrationManager.isExactChannel(pattern) ? 1 : 0;
       }
 
       private PayloadSubscriptionManager.Inner_CachePool init_bD_CachePool(String pattern) {
          String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
-         return normalized.isBlank() ? new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of()) : this.sync_Map.computeIfAbsent(normalized, PayloadSubscriptionManager::init_bD_CachePool);
+         return normalized.isBlank() ? new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of()) : this.sync_Map.computeIfAbsent(normalized, PayloadSubscriptionManager::impactOf);
       }
 
       private int load_I(PayloadChannelFilterManager.Inner_CachePool preset) {
@@ -4375,7 +4375,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private boolean init_Z_AutismConfig_Paylo_Str(AutismConfig.PayloadChannelRegistrationRule rule, String query) {
          if (query != null && !query.isBlank()) {
-            String hay = ((rule.label == null ? "" : rule.label) + " " + (rule.channel == null ? "" : rule.channel) + " " + PayloadRegistrationManager.load_Str_Str(rule.source))
+            String hay = ((rule.label == null ? "" : rule.label) + " " + (rule.channel == null ? "" : rule.channel) + " " + PayloadRegistrationManager.sourceLabel(rule.source))
                .toLowerCase(Locale.ROOT);
             return hay.contains(query);
          } else {
@@ -4407,9 +4407,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.ACTIVE && row.init_AutismConfig_Paylo != null) {
                return "custom:" + PayloadChannelFilterManager.normalizePattern(row.init_AutismConfig_Paylo.pattern);
             } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.REGISTRATION && row.init_AutismConfig_Paylo_2 != null) {
-               return "reg:" + PayloadRegistrationManager.init_Str_Str(row.init_AutismConfig_Paylo_2.channel);
+               return "reg:" + PayloadRegistrationManager.normalize(row.init_AutismConfig_Paylo_2.channel);
             } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.LEARNED && row.load_Str != null) {
-               return "learned:" + PayloadRegistrationManager.init_Str_Str(row.load_Str);
+               return "learned:" + PayloadRegistrationManager.normalize(row.load_Str);
             } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.PRESET && row.init_bB_CachePool != null) {
                return "preset:" + row.init_bB_CachePool.init_Str();
             } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.ChannelRowKind.FAMILY && row.init_AutismPacketLogger_2 != null) {
@@ -4548,7 +4548,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          cx += controls.init_IArr[5] + controls.init_I;
          if (inControlsRow && mx >= cx && mx < cx + controls.init_IArr[6]) {
             AutismPacketLoggerOverlay.this.init_bB.disableAllInMemory();
-            AutismPacketLoggerOverlay.this.init_bC.read_V();
+            AutismPacketLoggerOverlay.this.init_bC.disableAll();
             this.sync_V_15();
             this.put_V_7();
             AutismPacketLoggerOverlay.this.pop_Z = true;
@@ -4559,7 +4559,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int lockX = this.windowX + this.windowWidth - 8 - lockW;
          int lockY = this.set_I_17();
          if (button == 0 && my >= lockY && my < lockY + AutismPacketLoggerOverlay.this.add_I_13() && mx >= lockX && mx < lockX + lockW) {
-            if (PayloadSubscriptionManager.init_Z()) {
+            if (PayloadSubscriptionManager.isRegistrationUnlocked()) {
                this.open_V_11();
             } else {
                this.close_V_13();
@@ -4595,7 +4595,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                         this.init_V_I_AutismConfig_Paylo_2(row.load_I, row.init_AutismConfig_Paylo_2);
                      } else {
                         this.init_V_I_Runnable(index, () -> {
-                           AutismPacketLoggerOverlay.this.init_bC.load_V_I(row.load_I);
+                           AutismPacketLoggerOverlay.this.init_bC.toggle(row.load_I);
                            this.sync_V_15();
                         });
                      }
@@ -4720,7 +4720,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else {
             this.poll = index;
             this.open_I = -1;
-            this.load_k.setValue(PayloadRegistrationManager.init_Str_Str(rule.channel));
+            this.load_k.setValue(PayloadRegistrationManager.normalize(rule.channel));
             this.load_k.setPlaceholder(Component.literal("edit exact channel"));
             this.load_k.setFocused(true);
          }
@@ -4752,7 +4752,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             } else {
                boolean filterChanged = AutismPacketLoggerOverlay.this.init_bB.addRuleInMemory(label, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY);
                boolean registrationChanged = false;
-               if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+               if (PayloadRegistrationManager.isExactChannel(normalized)) {
                   registrationChanged = AutismPacketLoggerOverlay.this.init_bC.load(label, normalized, "custom");
                }
 
@@ -4765,7 +4765,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.flush_I = 0;
                   this.init_CacheEntry.jumpTo(0, Math.max(0, this.init_List.size() * 14 - this.next_I_6()));
                   AutismPacketLoggerOverlay.this.pop_Z = true;
-                  if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+                  if (PayloadRegistrationManager.isExactChannel(normalized)) {
                      bi.init("Payload channel added. Press Apply to register.");
                   } else {
                      bi.init("Payload highlight added.");
@@ -4776,16 +4776,16 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void init_V_3(String normalized) {
-         if (!PayloadRegistrationManager.load_Z_Str(normalized)) {
+         if (!PayloadRegistrationManager.isExactChannel(normalized)) {
             bi.read("Exact registered channels need namespace:path.");
          } else {
-            List<AutismConfig.PayloadChannelRegistrationRule> regs = AutismPacketLoggerOverlay.this.init_bC.load_List();
+            List<AutismConfig.PayloadChannelRegistrationRule> regs = AutismPacketLoggerOverlay.this.init_bC.mutableRules();
             if (this.poll >= 0 && this.poll < regs.size()) {
-               int existing = AutismPacketLoggerOverlay.this.init_bC.init_I_Str(normalized);
+               int existing = AutismPacketLoggerOverlay.this.init_bC.indexOf(normalized);
                String oldChannel = "";
                AutismConfig.PayloadChannelRegistrationRule currentRule = this.poll >= 0 && this.poll < regs.size() ? regs.get(this.poll) : null;
                if (currentRule != null) {
-                  oldChannel = PayloadRegistrationManager.init_Str_Str(currentRule.channel);
+                  oldChannel = PayloadRegistrationManager.normalize(currentRule.channel);
                }
 
                if (existing >= 0 && existing != this.poll) {
@@ -4826,11 +4826,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                rule.pattern = normalized;
                rule.label = normalized;
                rule.enabled = true;
-               if (PayloadRegistrationManager.load_Z_Str(oldPattern)) {
+               if (PayloadRegistrationManager.isExactChannel(oldPattern)) {
                   this.flush(oldPattern);
                }
 
-               if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+               if (PayloadRegistrationManager.isExactChannel(normalized)) {
                   AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "custom");
                }
             }
@@ -4875,7 +4875,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             String pattern = PayloadChannelFilterManager.normalizePattern(rule.pattern);
             boolean enabling = !rule.enabled;
             AutismPacketLoggerOverlay.this.init_bB.toggleRuleInMemory(ruleIndex);
-            if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+            if (PayloadRegistrationManager.isExactChannel(pattern)) {
                if (enabling) {
                   AutismPacketLoggerOverlay.this.init_bC.load(rule.label, pattern, "custom");
                } else {
@@ -4890,7 +4890,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       private void read_V_I_AutismConfig_Paylo(int ruleIndex, AutismConfig.PayloadChannelFilterRule rule) {
          String pattern = rule == null ? "" : PayloadChannelFilterManager.normalizePattern(rule.pattern);
          AutismPacketLoggerOverlay.this.init_bB.removeRuleInMemory(ruleIndex);
-         if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+         if (PayloadRegistrationManager.isExactChannel(pattern)) {
             this.flush(pattern);
          }
 
@@ -4898,7 +4898,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void load_V_I_AutismConfig_Paylo_2(int registrationIndex, AutismConfig.PayloadChannelRegistrationRule rule) {
-         String channel = rule == null ? "" : PayloadRegistrationManager.init_Str_Str(rule.channel);
+         String channel = rule == null ? "" : PayloadRegistrationManager.normalize(rule.channel);
          AutismPacketLoggerOverlay.this.init_bC.write(registrationIndex);
          this.read_V_2(channel);
       }
@@ -5007,10 +5007,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
          int skipped = 0;
 
-         for (String channel : impact.init_List()) {
-            String normalized = PayloadRegistrationManager.init_Str_Str(channel);
-            if (PayloadRegistrationManager.load_Z_Str(normalized)) {
-               if (!AutismPacketLoggerOverlay.this.init_bC.init_Z_Str(normalized) && !this.init_Z(List.of(normalized))) {
+         for (String channel : impact.channels()) {
+            String normalized = PayloadRegistrationManager.normalize(channel);
+            if (PayloadRegistrationManager.isExactChannel(normalized)) {
+               if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
                   skipped++;
                } else {
                   AutismPacketLoggerOverlay.this.init_bC.load(label, normalized, source);
@@ -5024,16 +5024,16 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       private void init_V_Str_6(String label, List<String> patterns, int skipped) {
          if (!AutismPacketLoggerOverlay.this.update_Z && this.push_Z_11()) {
             this.flush_V_14();
-            PayloadSubscriptionManager.init_V();
+            PayloadSubscriptionManager.requestSync();
             PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
-            PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.init_bD_BufferHelper();
+            PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
             if (skipped > 0 || status != null && status.read() > 0) {
-               int count = status == null ? 0 : status.init_I();
-               int limit = status == null ? 96 : status.load_I();
+               int count = status == null ? 0 : status.registered();
+               int limit = status == null ? 96 : status.limit();
                bi.write("Payload channel cap: registered " + count + "/" + limit + ".");
             }
 
-            List<String> applied = status == null ? List.of() : status.init_List();
+            List<String> applied = status == null ? List.of() : status.applied();
             PayloadStudyTracker.init(label, patterns == null ? List.of() : patterns, applied);
             this.setVisible(false);
             if (AutismPacketLoggerOverlay.init_Minecraft != null) {
@@ -5096,9 +5096,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
             for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
                String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-               if (PayloadRegistrationManager.load_Z_Str(pattern)) {
+               if (PayloadRegistrationManager.isExactChannel(pattern)) {
                   if (enable) {
-                     if (!AutismPacketLoggerOverlay.this.init_bC.init_Z_Str(pattern) && !this.init_Z(List.of(pattern))) {
+                     if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(pattern) && !this.init_Z(List.of(pattern))) {
                         capHit = true;
                      } else {
                         AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
@@ -5123,9 +5123,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void sync(String channel) {
-         int index = AutismPacketLoggerOverlay.this.init_bC.init_I_Str(channel);
+         int index = AutismPacketLoggerOverlay.this.init_bC.indexOf(channel);
          if (index >= 0) {
-            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.init_List();
+            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.rules();
             if (index < rules.size()) {
                AutismConfig.PayloadChannelRegistrationRule rule = rules.get(index);
                if (rule != null && "preset".equals(rule.source)) {
@@ -5136,9 +5136,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void flush(String channel) {
-         int index = AutismPacketLoggerOverlay.this.init_bC.init_I_Str(channel);
+         int index = AutismPacketLoggerOverlay.this.init_bC.indexOf(channel);
          if (index >= 0) {
-            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.init_List();
+            List<AutismConfig.PayloadChannelRegistrationRule> rules = AutismPacketLoggerOverlay.this.init_bC.rules();
             if (index < rules.size()) {
                AutismConfig.PayloadChannelRegistrationRule rule = rules.get(index);
                if (rule != null) {
@@ -5152,21 +5152,21 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void load(boolean replaceExisting) {
-         List<String> learned = PayloadSubscriptionManager.init_List();
+         List<String> learned = PayloadSubscriptionManager.learnedChannels();
          if (learned.isEmpty()) {
             bi.read("No captured payload channels yet.");
          } else {
             if (replaceExisting) {
-               AutismPacketLoggerOverlay.this.init_bC.read_V();
+               AutismPacketLoggerOverlay.this.init_bC.disableAll();
             }
 
             int added = 0;
             int skipped = 0;
 
             for (String channel : learned) {
-               String normalized = PayloadRegistrationManager.init_Str_Str(channel);
-               if (PayloadRegistrationManager.load_Z_Str(normalized)) {
-                  if (!AutismPacketLoggerOverlay.this.init_bC.init_Z_Str(normalized) && !this.init_Z(List.of(normalized))) {
+               String normalized = PayloadRegistrationManager.normalize(channel);
+               if (PayloadRegistrationManager.isExactChannel(normalized)) {
+                  if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
                      skipped++;
                   } else {
                      boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
@@ -5193,10 +5193,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int added = 0;
          int skipped = 0;
 
-         for (String channel : PayloadSubscriptionManager.init_List()) {
-            String normalized = PayloadRegistrationManager.init_Str_Str(channel);
-            if (PayloadRegistrationManager.load_Z_Str(normalized)) {
-               if (!AutismPacketLoggerOverlay.this.init_bC.init_Z_Str(normalized) && !this.init_Z(List.of(normalized))) {
+         for (String channel : PayloadSubscriptionManager.learnedChannels()) {
+            String normalized = PayloadRegistrationManager.normalize(channel);
+            if (PayloadRegistrationManager.isExactChannel(normalized)) {
+               if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
                   skipped++;
                } else {
                   boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
@@ -5213,9 +5213,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          for (PayloadChannelFilterManager.Inner_CachePool preset : this.write_Map.values()) {
             if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
                AutismPacketLoggerOverlay.this.init_bB.enablePresetInMemory(preset);
-               String normalized = PayloadRegistrationManager.init_Str_Str(preset.read());
-               if (PayloadRegistrationManager.load_Z_Str(normalized)) {
-                  if (!AutismPacketLoggerOverlay.this.init_bC.init_Z_Str(normalized) && !this.init_Z(List.of(normalized))) {
+               String normalized = PayloadRegistrationManager.normalize(preset.read());
+               if (PayloadRegistrationManager.isExactChannel(normalized)) {
+                  if (!AutismPacketLoggerOverlay.this.init_bC.isEnabled(normalized) && !this.init_Z(List.of(normalized))) {
                      skipped++;
                   } else {
                      boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(preset.load(), normalized, "preset");
@@ -5246,10 +5246,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       private LinkedHashSet<String> init_LinkedHashSet(Collection<String> patterns) {
          LinkedHashSet<String> projected = new LinkedHashSet<>();
 
-         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.init_List()) {
+         for (AutismConfig.PayloadChannelRegistrationRule rule : AutismPacketLoggerOverlay.this.init_bC.rules()) {
             if (rule != null && rule.enabled) {
-               String channel = PayloadRegistrationManager.init_Str_Str(rule.channel);
-               if (PayloadRegistrationManager.load_Z_Str(channel)) {
+               String channel = PayloadRegistrationManager.normalize(rule.channel);
+               if (PayloadRegistrationManager.isExactChannel(channel)) {
                   projected.add(channel);
                }
             }
@@ -5259,9 +5259,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             for (String pattern : patterns) {
                PayloadSubscriptionManager.Inner_CachePool impact = this.init_bD_CachePool(pattern);
 
-               for (String channel : impact.init_List()) {
-                  String normalized = PayloadRegistrationManager.init_Str_Str(channel);
-                  if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+               for (String channel : impact.channels()) {
+                  String normalized = PayloadRegistrationManager.normalize(channel);
+                  if (PayloadRegistrationManager.isExactChannel(normalized)) {
                      projected.add(normalized);
                   }
                }
@@ -5276,8 +5276,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int buffer() {
-         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.init_bD_BufferHelper();
-         return status != null && status.load_I() > 0 ? status.load_I() : 96;
+         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
+         return status != null && status.limit() > 0 ? status.limit() : 96;
       }
 
       private List<String> init_List(String group) {
@@ -5303,8 +5303,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private String read_Str_7() {
-         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.init_bD_BufferHelper();
-         Set<String> applied = new LinkedHashSet<>(status == null ? List.of() : status.init_List());
+         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
+         Set<String> applied = new LinkedHashSet<>(status == null ? List.of() : status.applied());
          Set<String> wanted = this.write_Set;
          int added = 0;
 
@@ -5327,17 +5327,17 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       private void next_V_6() {
          this.flush_V_14();
-         if (!PayloadSubscriptionManager.init_Z()) {
-            PayloadSubscriptionManager.init_V();
+         if (!PayloadSubscriptionManager.isRegistrationUnlocked()) {
+            PayloadSubscriptionManager.requestSync();
             PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
             bi.read("Registration locked. Saved, nothing sent.");
             this.put_V_7();
          } else {
-            PayloadSubscriptionManager.init_V();
+            PayloadSubscriptionManager.requestSync();
             PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.init_Minecraft, false);
-            PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.init_bD_BufferHelper();
+            PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
             if (status != null && status.read() > 0) {
-               bi.write("Payload channel cap reached: " + status.init_I() + "/" + status.load_I());
+               bi.write("Payload channel cap reached: " + status.registered() + "/" + status.limit());
             } else {
                bi.init("Payload channels applied.");
             }
@@ -5347,9 +5347,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void prev_V_6() {
-         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.init_bD_BufferHelper();
-         AutismPacketLoggerOverlay.this.init_bC.init_V_Collection(status == null ? List.of() : status.init_List());
-         AutismPacketLoggerOverlay.this.init_bC.init_V();
+         PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.status();
+         AutismPacketLoggerOverlay.this.init_bC.enableApplied(status == null ? List.of() : status.applied());
+         AutismPacketLoggerOverlay.this.init_bC.reloadFromConfig();
          this.put_V_7();
          bi.init("Payload channels reverted.");
       }

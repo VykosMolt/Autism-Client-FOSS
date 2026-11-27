@@ -21,14 +21,14 @@ public final class ContainerCloseGuard {
    private ContainerCloseGuard() {
    }
 
-   public static void init_V(int containerId) {
+   public static void holdOpen(int containerId) {
       if (containerId >= 0) {
          init_Map.computeIfAbsent(containerId, id -> new AtomicInteger(0)).incrementAndGet();
          read.put(containerId, System.currentTimeMillis());
       }
    }
 
-   public static boolean init_Z(int containerId) {
+   public static boolean isHeldOpen(int containerId) {
       AtomicInteger counter = init_Map.get(containerId);
       return counter != null && counter.get() > 0;
    }
@@ -63,7 +63,7 @@ public final class ContainerCloseGuard {
       }
    }
 
-   public static void init_V() {
+   public static void clear() {
       init_Map.clear();
       load.clear();
       read.clear();
@@ -93,7 +93,7 @@ public final class ContainerCloseGuard {
       }
    }
 
-   public static void load_V() {
+   public static void expireStale() {
       if (!read.isEmpty()) {
          long now = System.currentTimeMillis();
          List<Integer> expired = new ArrayList<>();
@@ -122,7 +122,7 @@ public final class ContainerCloseGuard {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean hasHolds() {
       return !read.isEmpty();
    }
 
@@ -130,7 +130,7 @@ public final class ContainerCloseGuard {
       init_Consumer = consumer;
    }
 
-   public static boolean load_Z() {
+   public static boolean isCapturing() {
       return init_Consumer != null;
    }
 

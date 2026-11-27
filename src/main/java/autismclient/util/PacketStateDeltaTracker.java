@@ -51,8 +51,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class PacketStateDeltaTracker {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   public static final PacketStateDeltaTracker.Inner_DataUtil init_bq_DataUtil = new PacketStateDeltaTracker.Inner_DataUtil(
-      PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool, PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool, List.of(), false
+   public static final PacketStateDeltaTracker.Inner_DataUtil EMPTY_CAPTURE = new PacketStateDeltaTracker.Inner_DataUtil(
+      PacketStateDeltaTracker.Inner_CachePool.EMPTY, PacketStateDeltaTracker.Inner_CachePool.EMPTY, List.of(), false
    );
    private boolean init_Z;
    private int init_I = -1;
@@ -75,7 +75,7 @@ public final class PacketStateDeltaTracker {
    private final Map<Integer, String> init_Map = new LinkedHashMap<>();
    private final Map<Integer, String> load_Map = new LinkedHashMap<>();
 
-   public synchronized void init_V() {
+   public synchronized void reset() {
       this.init_Z = false;
       this.init_I = -1;
       this.load_I = -1;
@@ -98,9 +98,9 @@ public final class PacketStateDeltaTracker {
       this.load_Map.clear();
    }
 
-   public synchronized PacketStateDeltaTracker.Inner_DataUtil init_bq_DataUtil_Packet_Str(Packet<?> packet, String direction) {
+   public synchronized PacketStateDeltaTracker.Inner_DataUtil capture(Packet<?> packet, String direction) {
       if (!init_Z_Packet(packet)) {
-         return init_bq_DataUtil;
+         return EMPTY_CAPTURE;
       }
 
       this.load();
@@ -170,7 +170,7 @@ public final class PacketStateDeltaTracker {
          changes.add("Configuration phase finished");
       } else if (packet instanceof ClientboundDisconnectPacket) {
          changes.add("Disconnected; tracked packet context cleared");
-         this.init_V();
+         this.reset();
       } else if (packet instanceof ClientboundOpenScreenPacket open) {
          this.init_I = open.getContainerId();
          this.load_I = -1;
@@ -188,15 +188,15 @@ public final class PacketStateDeltaTracker {
          this.init_Map.clear();
 
          for (int i = 0; i < content.items().size(); i++) {
-            this.init_Map.put(i, init_Str_ItemStack(content.items().get(i)));
+            this.init_Map.put(i, describeStack(content.items().get(i)));
          }
 
-         this.read_Str = init_Str_ItemStack(content.carriedItem());
+         this.read_Str = describeStack(content.carriedItem());
          changes.add("Synced " + this.read_I + " slots (" + init_I_List(content.items()) + " non-empty)");
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
          this.load_I = slot.getStateId();
          String previous = this.init_Str_I(slot.getSlot());
-         String next = init_Str_ItemStack(slot.getItem());
+         String next = describeStack(slot.getItem());
          if (slot.getContainerId() == -1) {
             this.read_Str = next;
             changes.add("Cursor changed " + previous + " -> " + next);
@@ -213,11 +213,11 @@ public final class PacketStateDeltaTracker {
          }
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
          String previous = this.read_Str;
-         this.read_Str = init_Str_ItemStack(cursor.contents());
+         this.read_Str = describeStack(cursor.contents());
          changes.add("Cursor changed " + previous + " -> " + this.read_Str);
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
          String previous = this.load_Map.getOrDefault(inventory.slot(), "unknown");
-         String next = init_Str_ItemStack(inventory.contents());
+         String next = describeStack(inventory.contents());
          this.load_Map.put(inventory.slot(), next);
          changes.add("Player inventory slot " + inventory.slot() + " changed " + previous + " -> " + next);
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
@@ -232,7 +232,7 @@ public final class PacketStateDeltaTracker {
          this.init_I = click.containerId();
          this.load_I = click.stateId();
          this.init_V_Int2ObjectMap(click.changedSlots());
-         this.read_Str = init_Str_HashedStack(click.carriedItem());
+         this.read_Str = describeHashedStack(click.carriedItem());
          changes.add(
             "Client " + init_Str_ContainerInput(click.containerInput()) + " on slot " + click.slotNum() + " changed " + click.changedSlots().size() + " slots"
          );
@@ -255,7 +255,7 @@ public final class PacketStateDeltaTracker {
          PacketStateDeltaTracker.Inner_StreamUtil next = init_bq_StreamUtil_bq_StreamUtil(base, position.change(), position.relatives());
          this.load_bq_StreamUtil = next;
          this.sync = position.id();
-         changes.add("Server correction/teleport #" + this.sync + " -> " + init_Str_bq_StreamUtil(next));
+         changes.add("Server correction/teleport #" + this.sync + " -> " + formatPosition(next));
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
          changes.add("Client acknowledged teleport #" + ack.id() + (ack.id() == this.sync ? " (matches pending)" : " (tracked pending " + this.sync + ")"));
          if (ack.id() == this.sync) {
@@ -340,7 +340,7 @@ public final class PacketStateDeltaTracker {
    private void init_V_Int2ObjectMap(Int2ObjectMap<HashedStack> changedSlots) {
       if (changedSlots != null) {
          for (Entry<HashedStack> entry : changedSlots.int2ObjectEntrySet()) {
-            this.init_Map.put(entry.getIntKey(), init_Str_HashedStack(entry.getValue()));
+            this.init_Map.put(entry.getIntKey(), describeHashedStack(entry.getValue()));
          }
       }
    }
@@ -377,7 +377,7 @@ public final class PacketStateDeltaTracker {
       return count;
    }
 
-   public static String init_Str_ItemStack(ItemStack stack) {
+   public static String describeStack(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
          StringBuilder out = new StringBuilder();
@@ -407,7 +407,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   public static String init_Str_HashedStack(HashedStack stack) {
+   public static String describeHashedStack(HashedStack stack) {
       if (stack == null || stack == HashedStack.EMPTY) {
          return "empty";
       } else if (stack instanceof ActualItem actual) {
@@ -512,7 +512,7 @@ public final class PacketStateDeltaTracker {
       return String.format(Locale.ROOT, "%.3f", value);
    }
 
-   public static String init_Str_bq_StreamUtil(PacketStateDeltaTracker.Inner_StreamUtil position) {
+   public static String formatPosition(PacketStateDeltaTracker.Inner_StreamUtil position) {
       return position == null
          ? "unknown"
          : String.format(
@@ -526,13 +526,13 @@ public final class PacketStateDeltaTracker {
          );
    }
 
-   public static String init_Str_bq_CachePool_I(PacketStateDeltaTracker.Inner_CachePool snapshot, int slot) {
+   public static String describeSlot(PacketStateDeltaTracker.Inner_CachePool snapshot, int slot) {
       if (slot < 0) {
          return "outside / carried item area";
       }
 
-      if (snapshot != null && snapshot.read_I() > 0 && snapshot.write_I() >= 0) {
-         int containerSlots = snapshot.write_I();
+      if (snapshot != null && snapshot.totalSlots() > 0 && snapshot.containerSlots() >= 0) {
+         int containerSlots = snapshot.containerSlots();
          if (slot < containerSlots) {
             return "container slot " + slot;
          } else {
@@ -573,39 +573,39 @@ public final class PacketStateDeltaTracker {
    }
 
    public record Inner_CachePool(
-      boolean init_Z,
-      int init_I,
+      boolean tracked,
+      int containerId,
       int load_I,
-      String init_Str,
-      String load_Str,
-      int read_I,
-      int write_I,
-      String read_Str,
-      int update_I,
-      PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil,
-      PacketStateDeltaTracker.Inner_StreamUtil load_bq_StreamUtil,
+      String menuType,
+      String screenTitle,
+      int totalSlots,
+      int containerSlots,
+      String carriedItem,
+      int selectedSlot,
+      PacketStateDeltaTracker.Inner_StreamUtil clientPosition,
+      PacketStateDeltaTracker.Inner_StreamUtil serverPosition,
       int sync,
-      String write_Str,
-      Integer init_Integer,
-      Integer load_Integer,
-      Integer read_Integer,
-      Integer write_Integer,
-      String update_Str,
+      String dimension,
+      Integer chunkCenterX,
+      Integer chunkCenterZ,
+      Integer chunkRadius,
+      Integer simulationDistance,
+      String protocolState,
       Map<Integer, String> init_Map,
-      Map<Integer, String> load_Map
+      Map<Integer, String> inventoryItems
    ) {
-      public static final PacketStateDeltaTracker.Inner_CachePool init_bq_CachePool = new PacketStateDeltaTracker.Inner_CachePool(
+      public static final PacketStateDeltaTracker.Inner_CachePool EMPTY = new PacketStateDeltaTracker.Inner_CachePool(
          false, -1, -1, "", "", -1, -1, "unknown", -1, null, null, -1, "", null, null, null, null, "unknown", Map.of(), Map.of()
       );
 
       public Inner_CachePool {
-         init_Str = init_Str == null ? "" : init_Str;
-         load_Str = load_Str == null ? "" : load_Str;
-         read_Str = read_Str == null ? "unknown" : read_Str;
-         write_Str = write_Str == null ? "" : write_Str;
-         update_Str = update_Str == null ? "unknown" : update_Str;
+         menuType = menuType == null ? "" : menuType;
+         screenTitle = screenTitle == null ? "" : screenTitle;
+         carriedItem = carriedItem == null ? "unknown" : carriedItem;
+         dimension = dimension == null ? "" : dimension;
+         protocolState = protocolState == null ? "unknown" : protocolState;
          init_Map = init_Map == null ? Map.of() : Map.copyOf(init_Map);
-         load_Map = load_Map == null ? Map.of() : Map.copyOf(load_Map);
+         inventoryItems = inventoryItems == null ? Map.of() : Map.copyOf(inventoryItems);
       }
 
       public String init(int slot) {
@@ -614,15 +614,15 @@ public final class PacketStateDeltaTracker {
          }
 
          String value = this.init_Map.get(slot);
-         return value != null ? value : this.load_Map.getOrDefault(slot, "unknown");
+         return value != null ? value : this.inventoryItems.getOrDefault(slot, "unknown");
       }
    }
 
-   public record Inner_DataUtil(PacketStateDeltaTracker.Inner_CachePool init_bq_CachePool, PacketStateDeltaTracker.Inner_CachePool load, List<String> init_List, boolean init_Z) {
+   public record Inner_DataUtil(PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool load, List<String> changes, boolean captured) {
       public Inner_DataUtil {
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
-         init_bq_CachePool = init_bq_CachePool == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : init_bq_CachePool;
-         load = load == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : load;
+         changes = changes == null ? List.of() : List.copyOf(changes);
+         before = before == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : before;
+         load = load == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : load;
       }
    }
 

@@ -63,11 +63,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          .setPlaceholderTone(autismclient.gui.f.b.l.write);
    }
 
-   public AutismCustomFilterPresetOverlay init_AutismCustomFilter() {
+   public AutismCustomFilterPresetOverlay getPresetOverlay() {
       return this.init_AutismCustomFilter_2;
    }
 
-   public AutismPacketSelectorOverlay init_AutismPacketSelect() {
+   public AutismPacketSelectorOverlay getPacketSelector() {
       return this.init_AutismPacketSelect;
    }
 
@@ -111,7 +111,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          OverlayManager.getInstance().bringToFront(this);
       } else {
          this.write_V_6();
-         this.init_AutismPacketSelect.write_V_21();
+         this.init_AutismPacketSelect.resetSelection();
       }
 
       this.saveBounds();
@@ -137,7 +137,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          this.update_Z = collapsed;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
-            this.init_AutismPacketSelect.write_V_21();
+            this.init_AutismPacketSelect.resetSelection();
          }
 
          this.saveBounds();
@@ -206,7 +206,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                );
                int presetsY = y;
                y = this.init(context, mouseX, mouseY, x, y, width, "Presets", () -> {
-                  this.init_AutismCustomFilter_2.load_V_6();
+                  this.init_AutismCustomFilter_2.toggleVisible();
                   OverlayManager.getInstance().bringToFront(this.init_AutismCustomFilter_2);
                }, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true);
                String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
@@ -278,10 +278,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          () -> {
             if (c2s) {
                this.init_AutismPacketSelect
-                  .init_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(true, packetClass, selected), module.getCustomC2sPacketsCopy());
+                  .openC2sMultiSelect((packetClass, selected) -> this.init_V_Z_2(true, packetClass, selected), module.getCustomC2sPacketsCopy());
             } else {
                this.init_AutismPacketSelect
-                  .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.getCustomS2cPacketsCopy());
+                  .openS2cMultiSelect((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.getCustomS2cPacketsCopy());
             }
          },
          autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
@@ -306,7 +306,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                (index, rowY) -> {
                   Class<? extends Packet<?>> packetClass = filteredPackets.get(index);
                   boolean hovered = mouseX >= x + 2 && mouseX < x + 2 + contentWidth && mouseY >= rowY && mouseY < rowY + this.reset();
-                  String packetName = PacketNameResolver.init_Str_Class(packetClass);
+                  String packetName = PacketNameResolver.nameOfClass(packetClass);
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                      context,
                      this.init_Font,
@@ -402,7 +402,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          List<Class<? extends Packet<?>>> filtered = new ArrayList<>();
 
          for (Class<? extends Packet<?>> packetClass : packets) {
-            String name = PacketNameResolver.init_Str_Class(packetClass).toLowerCase(Locale.ROOT);
+            String name = PacketNameResolver.nameOfClass(packetClass).toLowerCase(Locale.ROOT);
             String fullName = packetClass.getName().toLowerCase(Locale.ROOT);
             if (name.contains(lowered) || fullName.contains(lowered)) {
                filtered.add(packetClass);
@@ -426,7 +426,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
 
       List<Class<? extends Packet<?>>> sorted = packets == null ? new ArrayList<>() : new ArrayList<>(packets);
-      sorted.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      sorted.sort(Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER));
       state.init_List = List.copyOf(this.init_List_List_Str_2(sorted, normalizedQuery));
       state.update = sourceHash;
       state.sync = sourceSize;

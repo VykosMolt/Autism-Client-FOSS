@@ -158,7 +158,7 @@ public final class LagWatchdogReporter {
                + " capture="
                + capture
                + " payloadStudy="
-               + PayloadStudyTracker.init_Z()
+               + PayloadStudyTracker.isActive()
                + " packHide="
                + autismclient.modules.aD.init_Z();
          }
@@ -167,7 +167,7 @@ public final class LagWatchdogReporter {
       init(sb, "packetLogger", () -> {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          AutismPacketLoggerOverlay logger = module == null ? null : module.getPacketLoggerOverlay();
-         return logger == null ? "not created" : logger.load_Str_9();
+         return logger == null ? "not created" : logger.debugSummary();
       });
       init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.pendingCount());
       init(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);

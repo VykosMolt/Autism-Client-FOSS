@@ -909,7 +909,7 @@ final class AiDimension {
                            state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE),
                            state == this.init_BlockState,
                            AiServerEvidence.blockRevision(this.init_BlockPos),
-                           autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_n_CachePool.init_I())
+                           autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(mc.level, this.init_n_CachePool.init_I())
                         );
                      if (!this.init_n_CachePool.init_Z() && !this.init_n_CachePool.load()) {
                         this.get++;

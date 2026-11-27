@@ -599,7 +599,7 @@ public class MacroLibraryManager {
                this.save();
                this.libraryFile = newFile;
                File backup = new File(newFile.getParentFile(), newFile.getName() + ".bak");
-               if (AuditMacroRead.exists_Z_File(newFile) || backup.exists()) {
+               if (AuditMacroRead.fileExists(newFile) || backup.exists()) {
                   this.macros = new ArrayList<>();
                   this.folderLayout = new MacroFolderLayout();
                   this.revision++;
@@ -633,9 +633,9 @@ public class MacroLibraryManager {
    public synchronized void load() {
       Path target = this.libraryFile.toPath();
       Path backup = target.resolveSibling(this.libraryFile.getName() + ".bak");
-      if (AuditMacroRead.exists_Z_Path_LinkOptionArr(target) || Files.exists(backup)) {
+      if (AuditMacroRead.pathExists(target) || Files.exists(backup)) {
          try {
-            if (!AuditMacroRead.exists_Z_Path_LinkOptionArr(target)) {
+            if (!AuditMacroRead.pathExists(target)) {
                throw new IllegalStateException("Main macro file is missing");
             }
 

@@ -313,7 +313,7 @@ public final class PayloadChannelFilterManager {
    }
 
    public List<String> getSubscribedChannels(boolean includeLoggerDefaults) {
-      return PayloadSubscriptionManager.init(includeLoggerDefaults).init_List();
+      return PayloadSubscriptionManager.init(includeLoggerDefaults).channels();
    }
 
    public int countPresetsInGroup(String group) {
@@ -725,7 +725,7 @@ public final class PayloadChannelFilterManager {
    }
 
    public static boolean isRegisterableExactPreset(PayloadChannelFilterManager.Inner_CachePool preset) {
-      return preset != null && preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT ? PayloadRegistrationManager.load_Z_Str(preset.read()) : false;
+      return preset != null && preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT ? PayloadRegistrationManager.isExactChannel(preset.read()) : false;
    }
 
    public static String editablePrefixFor(PayloadChannelFilterManager.Inner_CachePool preset) {
@@ -767,7 +767,7 @@ public final class PayloadChannelFilterManager {
       } else if (normalized.indexOf(42) >= 0) {
          return PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE;
       } else {
-         return PayloadRegistrationManager.load_Z_Str(normalized) ? PayloadChannelFilterManager.Inner_BufferHelper.UNVERIFIED : PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE;
+         return PayloadRegistrationManager.isExactChannel(normalized) ? PayloadChannelFilterManager.Inner_BufferHelper.UNVERIFIED : PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE;
       }
    }
 
@@ -955,7 +955,7 @@ public final class PayloadChannelFilterManager {
                      warnings.add("exact preset uses wildcard " + preset.read());
                   }
 
-                  if (!PayloadRegistrationManager.load_Z_Str(pattern)) {
+                  if (!PayloadRegistrationManager.isExactChannel(pattern)) {
                      warnings.add("exact preset is not registerable " + preset.read());
                   }
 
@@ -1048,7 +1048,7 @@ public final class PayloadChannelFilterManager {
       String safeEvidence = evidence == null ? "" : evidence;
       String safeTemplate = templatePrefix == null ? "" : templatePrefix;
       boolean invalidExact = safeKind == PayloadChannelFilterManager.Inner_BufferHelper.EXACT
-         && (safeEvidence.isBlank() || normalized.indexOf(42) >= 0 || !PayloadRegistrationManager.load_Z_Str(normalized));
+         && (safeEvidence.isBlank() || normalized.indexOf(42) >= 0 || !PayloadRegistrationManager.isExactChannel(normalized));
       if (invalidExact) {
          safeKind = PayloadChannelFilterManager.Inner_BufferHelper.UNVERIFIED;
          safeTemplate = safeTemplate.isBlank() ? stripWildcardSuffix(normalized) : safeTemplate;

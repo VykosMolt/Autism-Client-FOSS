@@ -17,9 +17,9 @@ public final class BacktrackPacketQueue<T> {
       this.init_I = Math.max(1, capacity);
    }
 
-   public void init_V(Object world, Object player, Object listener, Object target) {
-      if (!this.init_Z(world, player, listener, target)) {
-         this.init_V();
+   public void bind(Object world, Object player, Object listener, Object target) {
+      if (!this.isBoundTo(world, player, listener, target)) {
+         this.clear();
          this.init_Obj = world;
          this.load_Obj = player;
          this.read = listener;
@@ -27,7 +27,7 @@ public final class BacktrackPacketQueue<T> {
       }
    }
 
-   public boolean init_Z(Object world, Object player, Object listener, Object target) {
+   public boolean isBoundTo(Object world, Object player, Object listener, Object target) {
       return this.init_Obj == world && this.load_Obj == player && this.read == listener && this.write == target;
    }
 
@@ -55,7 +55,7 @@ public final class BacktrackPacketQueue<T> {
          try {
             apply.accept(first.init_Obj());
          } catch (RuntimeException | Error failure) {
-            this.init_V();
+            this.clear();
             throw failure;
          }
       }
@@ -67,11 +67,11 @@ public final class BacktrackPacketQueue<T> {
       return this.init_ArrayDeque.isEmpty() ? 0L : Math.max(0L, now - this.init_ArrayDeque.peekFirst().init_J());
    }
 
-   public int init_I() {
+   public int size() {
       return this.init_ArrayDeque.size();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_ArrayDeque.clear();
       this.load_J++;
       this.init_Obj = this.load_Obj = this.read = this.write = null;

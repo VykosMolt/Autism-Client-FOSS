@@ -103,7 +103,7 @@ public final class FreecamController {
          Entity startingView = MC.getCameraEntity() == null ? MC.player : MC.getCameraEntity();
          float startingYaw = startingView.getYRot();
          float startingPitch = startingView.getXRot();
-         if (RemoteViewController.init_Z()) {
+         if (RemoteViewController.isActive()) {
             RemoteViewController.init(false);
          }
 

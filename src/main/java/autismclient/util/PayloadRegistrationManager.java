@@ -18,10 +18,10 @@ public final class PayloadRegistrationManager {
    private final List<AutismConfig.PayloadChannelRegistrationRule> init_List = new ArrayList<>();
 
    public PayloadRegistrationManager() {
-      this.init_V();
+      this.reloadFromConfig();
    }
 
-   public void init_V() {
+   public void reloadFromConfig() {
       this.init_List.clear();
       AutismConfig config = AutismConfig.getGlobal();
       if (config.packetLoggerPayloadRegistrations == null) {
@@ -44,34 +44,34 @@ public final class PayloadRegistrationManager {
       this.init_List.addAll(merged.values());
    }
 
-   public List<AutismConfig.PayloadChannelRegistrationRule> init_List() {
+   public List<AutismConfig.PayloadChannelRegistrationRule> rules() {
       return Collections.unmodifiableList(this.init_List);
    }
 
-   List<AutismConfig.PayloadChannelRegistrationRule> load_List() {
+   List<AutismConfig.PayloadChannelRegistrationRule> mutableRules() {
       return this.init_List;
    }
 
-   public List<String> read_List() {
+   public List<String> enabledChannels() {
       List<String> channels = new ArrayList<>();
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
-         if (rule != null && rule.enabled && load_Z_Str(rule.channel)) {
-            channels.add(init_Str_Str(rule.channel));
+         if (rule != null && rule.enabled && isExactChannel(rule.channel)) {
+            channels.add(normalize(rule.channel));
          }
       }
 
       return channels;
    }
 
-   public boolean init_Z_Str(String channel) {
-      String normalized = init_Str_Str(channel);
+   public boolean isEnabled(String channel) {
+      String normalized = normalize(channel);
       if (normalized.isBlank()) {
          return false;
       }
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
-         if (rule != null && rule.enabled && normalized.equals(init_Str_Str(rule.channel))) {
+         if (rule != null && rule.enabled && normalized.equals(normalize(rule.channel))) {
             return true;
          }
       }
@@ -79,12 +79,12 @@ public final class PayloadRegistrationManager {
       return false;
    }
 
-   public int init_I_Str(String channel) {
-      String normalized = init_Str_Str(channel);
+   public int indexOf(String channel) {
+      String normalized = normalize(channel);
 
       for (int i = 0; i < this.init_List.size(); i++) {
          AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(i);
-         if (rule != null && normalized.equals(init_Str_Str(rule.channel))) {
+         if (rule != null && normalized.equals(normalize(rule.channel))) {
             return i;
          }
       }
@@ -102,12 +102,12 @@ public final class PayloadRegistrationManager {
    }
 
    public boolean load(String label, String channel, String source) {
-      String normalized = init_Str_Str(channel);
-      if (!load_Z_Str(normalized)) {
+      String normalized = normalize(channel);
+      if (!isExactChannel(normalized)) {
          return false;
       }
 
-      int index = this.init_I_Str(normalized);
+      int index = this.indexOf(normalized);
       if (index >= 0) {
          AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
          boolean changed = false;
@@ -140,12 +140,12 @@ public final class PayloadRegistrationManager {
    }
 
    public boolean init_Z_Str_Str(String label, String channel) {
-      String normalized = init_Str_Str(channel);
-      if (!load_Z_Str(normalized)) {
+      String normalized = normalize(channel);
+      if (!isExactChannel(normalized)) {
          return false;
       }
 
-      if (this.init_I_Str(normalized) >= 0) {
+      if (this.indexOf(normalized) >= 0) {
          return false;
       }
 
@@ -169,7 +169,7 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public void load_V_I(int index) {
+   public void toggle(int index) {
       if (index >= 0 && index < this.init_List.size()) {
          AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
          if (rule != null) {
@@ -206,7 +206,7 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public void read_V() {
+   public void disableAll() {
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
          if (rule != null) {
             rule.enabled = false;
@@ -214,12 +214,12 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public void init_V_Collection(Collection<String> channels) {
+   public void enableApplied(Collection<String> channels) {
       Set<String> applied = new LinkedHashSet<>();
       if (channels != null) {
          for (String channel : channels) {
-            String normalized = init_Str_Str(channel);
-            if (load_Z_Str(normalized)) {
+            String normalized = normalize(channel);
+            if (isExactChannel(normalized)) {
                applied.add(normalized);
             }
          }
@@ -228,7 +228,7 @@ public final class PayloadRegistrationManager {
       boolean changed = false;
 
       for (String channel : applied) {
-         int index = this.init_I_Str(channel);
+         int index = this.indexOf(channel);
          if (index >= 0) {
             AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
             if (!rule.enabled) {
@@ -248,7 +248,7 @@ public final class PayloadRegistrationManager {
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
          if (rule != null) {
-            boolean shouldEnable = applied.contains(init_Str_Str(rule.channel));
+            boolean shouldEnable = applied.contains(normalize(rule.channel));
             if (rule.enabled != shouldEnable) {
                rule.enabled = shouldEnable;
                changed = true;
@@ -276,7 +276,7 @@ public final class PayloadRegistrationManager {
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
          if (rule != null) {
-            boolean shouldEnable = defaults.contains(init_Str_Str(rule.channel));
+            boolean shouldEnable = defaults.contains(normalize(rule.channel));
             if (rule.enabled != shouldEnable) {
                rule.enabled = shouldEnable;
                changed = true;
@@ -312,7 +312,7 @@ public final class PayloadRegistrationManager {
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
          if (rule != null) {
-            rule.enabled = defaults.contains(init_Str_Str(rule.channel));
+            rule.enabled = defaults.contains(normalize(rule.channel));
          }
       }
 
@@ -326,8 +326,8 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public static boolean load_Z_Str(String channel) {
-      String normalized = init_Str_Str(channel);
+   public static boolean isExactChannel(String channel) {
+      String normalized = normalize(channel);
       if (!normalized.isBlank() && normalized.indexOf(42) < 0 && normalized.indexOf(58) > 0) {
          return !"minecraft:register".equals(normalized) && !"minecraft:unregister".equals(normalized) && !"minecraft:brand".equals(normalized)
             ? Identifier.tryParse(normalized) != null
@@ -337,11 +337,11 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public static String init_Str_Str(String channel) {
+   public static String normalize(String channel) {
       return channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
    }
 
-   public static String load_Str_Str(String source) {
+   public static String sourceLabel(String source) {
       String var10000;
       switch (read_Str_Str(source)) {
          case "preset":
@@ -361,7 +361,7 @@ public final class PayloadRegistrationManager {
       for (AutismConfig.PayloadChannelFilterRule filter : filterRules) {
          if (filter != null && filter.enabled) {
             String pattern = PayloadChannelFilterManager.normalizePattern(filter.pattern);
-            if (load_Z_Str(pattern)) {
+            if (isExactChannel(pattern)) {
                AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
                rule.channel = pattern;
                rule.label = init_Str_Str_Str(filter.label, pattern);
@@ -374,12 +374,12 @@ public final class PayloadRegistrationManager {
    }
 
    private boolean read(String label, String channel, String source) {
-      String normalized = init_Str_Str(channel);
-      if (!load_Z_Str(normalized)) {
+      String normalized = normalize(channel);
+      if (!isExactChannel(normalized)) {
          return false;
       }
 
-      int index = this.init_I_Str(normalized);
+      int index = this.indexOf(normalized);
       if (index >= 0) {
          AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
          boolean changed = false;
@@ -408,7 +408,7 @@ public final class PayloadRegistrationManager {
    private static void init_V_Map_AutismConfig_Paylo(
       Map<String, AutismConfig.PayloadChannelRegistrationRule> merged, AutismConfig.PayloadChannelRegistrationRule clean
    ) {
-      String key = init_Str_Str(clean.channel);
+      String key = normalize(clean.channel);
       AutismConfig.PayloadChannelRegistrationRule existing = merged.get(key);
       if (existing == null) {
          merged.put(key, clean);
@@ -428,8 +428,8 @@ public final class PayloadRegistrationManager {
       if (rule == null) {
          return null;
       } else {
-         String channel = init_Str_Str(rule.channel);
-         if (!load_Z_Str(channel)) {
+         String channel = normalize(rule.channel);
+         if (!isExactChannel(channel)) {
             return null;
          } else {
             String label = rule.label == null ? "" : rule.label.trim();
@@ -468,7 +468,7 @@ public final class PayloadRegistrationManager {
    }
 
    private static boolean read_Z_Str(String value) {
-      String normalized = init_Str_Str(value);
+      String normalized = normalize(value);
       return normalized.isBlank()
          ? false
          : normalized.contains("autismtest")
@@ -480,10 +480,10 @@ public final class PayloadRegistrationManager {
    }
 
    private void sync() {
-      this.init_V_Z(true);
+      this.save(true);
    }
 
-   public void init_V_Z(boolean writeFile) {
+   public void save(boolean writeFile) {
       AutismConfig config = AutismConfig.getGlobal();
       config.packetLoggerPayloadRegistrations = new ArrayList<>(this.init_List);
       if (writeFile) {

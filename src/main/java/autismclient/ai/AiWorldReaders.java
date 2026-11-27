@@ -95,8 +95,8 @@ final class AiWorldReaders {
                break;
             }
 
-            if (player != null && player.init_Str() != null) {
-               players.add(AiJson.objectOf("name", init(player.init_Str(), 64), "prefix", init(player.load(), 128)));
+            if (player != null && player.name() != null) {
+               players.add(AiJson.objectOf("name", init(player.name(), 64), "prefix", init(player.load(), 128)));
             }
          }
       } catch (Throwable var4) {

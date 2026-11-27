@@ -817,16 +817,16 @@ final class ModuleSettingsView {
    }
 
    private static String init_Str_Setting_Str(Setting<?, ?> option, String value) {
-      boolean c2s = PacketFilterListCodec.init_Z(option == null ? "" : option.id());
-      Set<Class<? extends Packet<?>>> packets = PacketFilterListCodec.init_Set(value, c2s);
-      List<String> invalid = PacketFilterListCodec.init_List(value, c2s);
+      boolean c2s = PacketFilterListCodec.isC2sOption(option == null ? "" : option.id());
+      Set<Class<? extends Packet<?>>> packets = PacketFilterListCodec.parse(value, c2s);
+      List<String> invalid = PacketFilterListCodec.invalidEntries(value, c2s);
       int count = packets.size() + invalid.size();
       if (count <= 0) {
          return "Empty";
       } else if (count > 1) {
          return count + " packets";
       } else {
-         return !packets.isEmpty() ? PacketNameResolver.init_Str_Class(packets.iterator().next()) : invalid.get(0);
+         return !packets.isEmpty() ? PacketNameResolver.nameOfClass(packets.iterator().next()) : invalid.get(0);
       }
    }
 

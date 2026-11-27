@@ -88,7 +88,7 @@ public final class LeafDupeValidator {
       return pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
    }
 
-   public static String init_Str_BlockState(BlockState state, BlockState below, boolean loaded) {
+   public static String dripleafProblem(BlockState state, BlockState below, boolean loaded) {
       if (!loaded) {
          return "chunk is not loaded.";
       } else if (!state.is(Blocks.SMALL_DRIPLEAF)) {
@@ -102,7 +102,7 @@ public final class LeafDupeValidator {
       }
    }
 
-   public static String init_Str_BlockState_2(BlockState state, boolean loaded, boolean menu) {
+   public static String targetProblem(BlockState state, boolean loaded, boolean menu) {
       if (!loaded) {
          return "chunk is not loaded.";
       } else if (state.isAir()) {
@@ -133,7 +133,7 @@ public final class LeafDupeValidator {
       }
    }
 
-   public static float[] init_FArr_Vec3(Vec3 eye, Vec3 point, float lastYaw) {
+   public static float[] aimAt(Vec3 eye, Vec3 point, float lastYaw) {
       double dx = point.x - eye.x;
       double dy = point.y - eye.y;
       double dz = point.z - eye.z;
@@ -178,7 +178,7 @@ public final class LeafDupeValidator {
                for (int y = 0; y < 5; y++) {
                   for (int z = 0; z < 5; z++) {
                      Vec3 point = new Vec3(pos.getX() + 0.1 + 0.2 * x, pos.getY() + 0.1 + 0.2 * y, pos.getZ() + 0.1 + 0.2 * z);
-                     float[] look = init_FArr_Vec3(eye, point, lastYaw);
+                     float[] look = aimAt(eye, point, lastYaw);
                      if (init(eye, look[0], look[1], reset, reach) && init(eye, look[0], look[1], leaf, reach)) {
                         double cost = Math.abs(look[0] - lastYaw) + Math.abs(look[1] - lastPitch);
                         if (cost < bestCost) {
@@ -274,7 +274,7 @@ public final class LeafDupeValidator {
       return null;
    }
 
-   public static <T> List<T> init_List_List(List<T> candidates, long page, int limit) {
+   public static <T> List<T> page(List<T> candidates, long page, int limit) {
       if (candidates.size() <= limit) {
          return candidates;
       }

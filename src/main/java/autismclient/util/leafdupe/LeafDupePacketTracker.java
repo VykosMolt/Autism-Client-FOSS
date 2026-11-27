@@ -42,7 +42,7 @@ public final class LeafDupePacketTracker {
       return read_BlockPos;
    }
 
-   public static synchronized int init_I() {
+   public static synchronized int trackedSlot() {
       return init_I;
    }
 
@@ -94,7 +94,7 @@ public final class LeafDupePacketTracker {
       return receipt;
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init_DataUtil_StreamUti(Packet<?> packet) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil receiptFor(Packet<?> packet) {
       return load_Map.get(packet);
    }
 
@@ -137,7 +137,7 @@ public final class LeafDupePacketTracker {
       return !pos.equals(load_BlockPos) && !init_Z && !pos.equals(init_BlockPos);
    }
 
-   public static synchronized long init_J() {
+   public static synchronized long waitMs() {
       if (write == null) {
          return 0L;
       } else {
@@ -265,14 +265,14 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   public static synchronized void init_V() {
+   public static synchronized void reset() {
       load();
       init_I = -1;
    }
 
    public static synchronized void load() {
       for (LeafDupePacketTracker.Inner_StreamUtil receipt : load_Map.values()) {
-         receipt.init_V();
+         receipt.markConsumed();
       }
 
       read_J++;
@@ -357,11 +357,11 @@ public final class LeafDupePacketTracker {
          this.init_DataUtil_StreamUti = previous;
       }
 
-      public Object init_Obj() {
+      public Object proof() {
          return this.init_Obj;
       }
 
-      public int init_I() {
+      public int slot() {
          return this.init_I;
       }
 
@@ -373,7 +373,7 @@ public final class LeafDupePacketTracker {
          return now - this.init_J > 250000000L;
       }
 
-      public boolean init_Z() {
+      public boolean isSent() {
          return this.init_Z;
       }
 
@@ -381,7 +381,7 @@ public final class LeafDupePacketTracker {
          return this.load_Z;
       }
 
-      public void init_V() {
+      public void markConsumed() {
          this.load_Z = true;
       }
    }

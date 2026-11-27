@@ -16,23 +16,23 @@ public class PrefixCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("Current prefix: " + CommandPrefixHelper.init_Str());
+         AutismClientMessaging.sendPrefixed("Current prefix: " + CommandPrefixHelper.currentPrefix());
          return 1;
       });
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("reset").executes(ctx -> {
-         String prefix = CommandPrefixHelper.load_Str();
+         String prefix = CommandPrefixHelper.defaultPrefix();
          autismclient.modules.ModuleRuntimeManager.getInstance().setCommandPrefix(prefix);
          AutismClientMessaging.sendPrefixed("Prefix reset to " + prefix);
          return 1;
       }));
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("new", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::add).executes(ctx -> {
          String requested = StringArgumentType.getString(ctx, "new");
-         if (!CommandPrefixHelper.init_List.contains(requested)) {
+         if (!CommandPrefixHelper.ALLOWED_PREFIXES.contains(requested)) {
             AutismClientMessaging.sendPrefixed("Prefix must be one of: . % - _ * # @ & =");
             return 1;
          }
 
-         String selected = CommandPrefixHelper.init_Str(requested);
+         String selected = CommandPrefixHelper.normalizePrefix(requested);
          autismclient.modules.ModuleRuntimeManager.getInstance().setCommandPrefix(selected);
          AutismClientMessaging.sendPrefixed("Prefix set to " + selected);
          return 1;

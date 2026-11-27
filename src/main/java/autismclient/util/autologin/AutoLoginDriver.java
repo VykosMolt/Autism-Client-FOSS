@@ -29,8 +29,8 @@ public final class AutoLoginDriver {
    private String load_Str;
 
    public AutoLoginDriver(AutoLoginBackend host) {
-      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
-      this.init_StreamUtil = AutoLoginTimings.load_StreamUtil();
+      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
+      this.init_StreamUtil = AutoLoginTimings.defaults();
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.IDLE;
       this.close = -9223372036854775808L;
       this.init_Str = "";
@@ -44,14 +44,14 @@ public final class AutoLoginDriver {
       }
    }
 
-   public void init_V(long now) {
-      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
+   public void reset(long now) {
+      this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
       this.init_J = now == 0L ? 1L : now;
    }
 
    public void init(String line) {
       AuthPromptParser.Inner_DataUtil detection = AuthPromptParser.init(line);
-      if (detection.init_DataUtil_StreamUti() != AuthPromptParser.Inner_StreamUtil.NONE) {
+      if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
          this.init_DataUtil_DataUtil = detection;
       }
    }
@@ -72,7 +72,7 @@ public final class AutoLoginDriver {
    public void load(long now) {
       this.init_V();
       if (this.init_CachePool_DataUtil != AutoLoginDriver.Inner_DataUtil.IDLE && !this.init_Z()) {
-         if (now - this.load_J >= this.init_StreamUtil.init_J()) {
+         if (now - this.load_J >= this.init_StreamUtil.giveUpMs()) {
             this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
          } else if (!this.init_Z(now)) {
             this.read(now);
@@ -177,31 +177,31 @@ public final class AutoLoginDriver {
             this.read_J = now;
          }
 
-         if (now - this.read_J >= this.init_StreamUtil.load_J()) {
+         if (now - this.read_J >= this.init_StreamUtil.promptDelayMs()) {
             AuthPromptParser.Inner_DataUtil detection = this.init_DataUtil_DataUtil;
-            if (detection.init_DataUtil_StreamUti() != AuthPromptParser.Inner_StreamUtil.NONE) {
+            if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
                if (now >= this.write) {
-                  if (this.init_I >= this.init_StreamUtil.init_I()) {
+                  if (this.init_I >= this.init_StreamUtil.maxAttempts()) {
                      this.load();
                   } else {
                      String password = this.init_BufferHelper.password();
                      if (password.isEmpty()) {
                         this.load("AuthMe login");
                      } else if (this.init_BufferHelper.load()) {
-                        this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
+                        this.init_DataUtil_DataUtil = AuthPromptParser.Inner_DataUtil.NONE;
                         if (!this.init_BufferHelper.sendCommand(detection.init(password))) {
                            this.init_DataUtil_DataUtil = detection;
                            this.write = now + 250L;
                         } else {
                            this.init_I++;
                            this.write = now + this.init_StreamUtil.read();
-                           if (detection.init_DataUtil_StreamUti() == AuthPromptParser.Inner_StreamUtil.REGISTER) {
-                              this.init_Str = detection.init_Str();
+                           if (detection.kind() == AuthPromptParser.Inner_StreamUtil.REGISTER) {
+                              this.init_Str = detection.command();
                               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.REGISTERING;
                               this.init_Z = true;
                               this.flush = now + this.init_StreamUtil.update();
                            } else {
-                              this.load_Str = detection.init_Str();
+                              this.load_Str = detection.command();
                               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
                               this.init_Z = false;
                               this.sync = now + this.init_StreamUtil.read();
@@ -221,7 +221,7 @@ public final class AutoLoginDriver {
 
    private void write(long now) {
       this.init_Z = false;
-      if (this.init_I >= this.init_StreamUtil.init_I()) {
+      if (this.init_I >= this.init_StreamUtil.maxAttempts()) {
          this.load();
       } else {
          String password = this.init_BufferHelper.password();
@@ -243,7 +243,7 @@ public final class AutoLoginDriver {
    private void load() {
       if (!this.load_Z) {
          this.load_Z = true;
-         this.init_BufferHelper.report("Auto login failed after " + this.init_StreamUtil.init_I() + " attempts - check the password.");
+         this.init_BufferHelper.report("Auto login failed after " + this.init_StreamUtil.maxAttempts() + " attempts - check the password.");
       }
 
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;

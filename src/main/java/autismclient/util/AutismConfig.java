@@ -174,9 +174,9 @@ public final class AutismConfig implements Cloneable {
       }
 
       Map<String, AutismConfig.PluginScanCacheEntry> legacyScans = config.serverPluginScans;
-      ServerPluginScanCache cache = ServerPluginScanCache.init_ServerPluginScanCa();
-      boolean migrated = cache.init_Z_Map(legacyScans);
-      config.serverPluginScans = cache.init_Map();
+      ServerPluginScanCache cache = ServerPluginScanCache.getInstance();
+      boolean migrated = cache.migrateLegacy(legacyScans);
+      config.serverPluginScans = cache.publishedView();
       config.applyRuntimeDefaults();
       if (migrated) {
          config.save();
@@ -251,11 +251,11 @@ public final class AutismConfig implements Cloneable {
    }
 
    static String toJson(AutismConfig config) {
-      return toJson(config, ServerPluginScanCache.init_ServerPluginScanCa());
+      return toJson(config, ServerPluginScanCache.getInstance());
    }
 
    static String toJson(AutismConfig config, ServerPluginScanCache pluginScanCache) {
-      Map<String, AutismConfig.PluginScanCacheEntry> fallback = pluginScanCache.load_Map();
+      Map<String, AutismConfig.PluginScanCacheEntry> fallback = pluginScanCache.legacyFallback();
       if (fallback.isEmpty()) {
          return GSON.toJson(config);
       }
@@ -660,7 +660,7 @@ public final class AutismConfig implements Cloneable {
          this.hudEdgePadding = 4;
       }
 
-      this.commandPrefix = CommandPrefixHelper.init_Str(this.commandPrefix);
+      this.commandPrefix = CommandPrefixHelper.normalizePrefix(this.commandPrefix);
       if (!this.resourcePackChoiceInitialized) {
          this.pretendPackAccepted = false;
          this.resourcePackChoiceInitialized = true;
@@ -681,7 +681,7 @@ public final class AutismConfig implements Cloneable {
 
    public AutismConfig.PluginScanCacheEntry getPluginScan(String address, String contextSignature) {
       return address != null && !address.isBlank()
-         ? ServerPluginScanCache.init_ServerPluginScanCa().init_AutismConfig_Plugi_Str(pluginScanKey(address, contextSignature))
+         ? ServerPluginScanCache.getInstance().getScan(pluginScanKey(address, contextSignature))
          : null;
    }
 
@@ -692,7 +692,7 @@ public final class AutismConfig implements Cloneable {
 
    public AutismConfig.PluginScanCacheEntry getPluginScanByAddress(String address) {
       return address != null && !address.isBlank()
-         ? ServerPluginScanCache.init_ServerPluginScanCa().load_AutismConfig_Plugi_Str(address.trim().toLowerCase(Locale.ROOT))
+         ? ServerPluginScanCache.getInstance().findByAddress(address.trim().toLowerCase(Locale.ROOT))
          : null;
    }
 
@@ -702,11 +702,11 @@ public final class AutismConfig implements Cloneable {
    }
 
    public Map<String, AutismConfig.PluginScanCacheEntry> allPluginScans() {
-      return ServerPluginScanCache.init_ServerPluginScanCa().read_Map();
+      return ServerPluginScanCache.getInstance().snapshot();
    }
 
    public long pluginScanRevision() {
-      return ServerPluginScanCache.init_ServerPluginScanCa().init_J();
+      return ServerPluginScanCache.getInstance().revision();
    }
 
    public void putPluginScan(String address, String contextSignature, List<String> plugins, Map<String, List<String>> commands, Map<String, String> evidence) {
@@ -792,23 +792,23 @@ public final class AutismConfig implements Cloneable {
          e.retriedProbes = Math.max(0, retriedProbes);
          e.failedProbes = Math.max(0, failedProbes);
          e.scannedAtMs = System.currentTimeMillis();
-         ServerPluginScanCache.init_ServerPluginScanCa().init_V_Str_AutismConfig_Plugi(pluginScanKey(address, contextSignature), e);
-         this.serverPluginScans = ServerPluginScanCache.init_ServerPluginScanCa().init_Map();
+         ServerPluginScanCache.getInstance().putScan(pluginScanKey(address, contextSignature), e);
+         this.serverPluginScans = ServerPluginScanCache.getInstance().publishedView();
       }
    }
 
    public void removePluginScan(String address, String contextSignature) {
       if (address != null) {
-         ServerPluginScanCache.init_ServerPluginScanCa().init_V_Str(pluginScanKey(address, contextSignature));
-         this.serverPluginScans = ServerPluginScanCache.init_ServerPluginScanCa().init_Map();
+         ServerPluginScanCache.getInstance().removeScan(pluginScanKey(address, contextSignature));
+         this.serverPluginScans = ServerPluginScanCache.getInstance().publishedView();
       }
    }
 
    public void removePluginScan(String address) {
       if (address != null) {
          String a = pluginScanKey(address, "");
-         ServerPluginScanCache.init_ServerPluginScanCa().load_V_Str(a);
-         this.serverPluginScans = ServerPluginScanCache.init_ServerPluginScanCa().init_Map();
+         ServerPluginScanCache.getInstance().removeByAddress(a);
+         this.serverPluginScans = ServerPluginScanCache.getInstance().publishedView();
       }
    }
 

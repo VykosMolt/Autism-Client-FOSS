@@ -742,7 +742,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_AutismServerInfoOv_2.init(0.0F);
    }
 
-   public void write_V_24() {
+   public void saveState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.flags_V_2();
       String stateAddress = this.load_Str_11();
@@ -763,7 +763,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.saveBounds();
    }
 
-   public void update_V_21() {
+   public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
       this.start = Math.max(0, Math.min(init_StrArr.length - 1, shared.getServerInfoActiveTab()));
@@ -805,7 +805,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_AutismServerInfoOv_5.load_AutismServerInfoOv(this.state);
    }
 
-   public static boolean poll_Z_16() {
+   public static boolean isSavedVisible() {
       OverlayBounds layout = AutismSessionState.getInstance().getOverlayBounds("autism-serverinfo");
       return layout != null && layout.visible;
    }
@@ -826,7 +826,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.pool_V_2();
       }
 
-      this.write_V_24();
+      this.saveState();
    }
 
    private void next_V_7() {
@@ -994,7 +994,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.pop_Z = true;
                this.tick_Z = false;
                this.pool_V_2();
-               this.write_V_24();
+               this.saveState();
             }).setFixedHeight(this.count_I_2()));
       }
    }
@@ -1094,7 +1094,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       cfg.save();
       this.open_Str = null;
       this.prev_V_7();
-      this.write_V_24();
+      this.saveState();
    }
 
    private void queue_V_2() {
@@ -1108,7 +1108,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_CacheEntry.jumpTo(0, 0);
       this.start = 1;
       this.node_V_2();
-      this.write_V_24();
+      this.saveState();
    }
 
    private String load_Str_11() {
@@ -1599,7 +1599,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String load_Str_2(String plugin) {
-      return PluginSignatureCatalog.init_Str(plugin);
+      return PluginSignatureCatalog.canonicalName(plugin);
    }
 
    private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.EvidenceSource evidence) {
@@ -3032,16 +3032,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (address != null && !address.isBlank()) {
          boolean changed = false;
 
-         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.init_List(address, this.close_Str_2())) {
-            if (fingerprint != null && fingerprint.init_Str() != null && !fingerprint.init_Str().isBlank()) {
+         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.fingerprints(address, this.close_Str_2())) {
+            if (fingerprint != null && fingerprint.plugin() != null && !fingerprint.plugin().isBlank()) {
                changed |= this.init_Z_Map_bQ_CachePool(entries, fingerprint);
                AutismServerInfoOverlay.MatchConfidence confidence = this.init_AutismServerInfoOv_bQ_CachePool(fingerprint);
                changed |= this.init_Z_Map(
                   entries,
                   fingerprint.load(),
-                  fingerprint.init_Str(),
+                  fingerprint.plugin(),
                   List.of(),
-                  fingerprint.init_List(),
+                  fingerprint.channels(),
                   List.of(),
                   false,
                   AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
@@ -3078,9 +3078,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                changed |= this.init_Z_Map(
                   entries,
                   fingerprint.load(),
-                  fingerprint.init_Str(),
+                  fingerprint.plugin(),
                   entry.init_Set,
-                  fingerprint.init_List(),
+                  fingerprint.channels(),
                   entry.write,
                   entry.init_Z,
                   AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
@@ -3106,10 +3106,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private Set<String> init_Set_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       LinkedHashSet<String> keywords = new LinkedHashSet<>();
-      this.init_V_Set_Str_3(keywords, fingerprint.init_Str());
+      this.init_V_Set_Str_3(keywords, fingerprint.plugin());
       this.init_V_Set_Str_3(keywords, fingerprint.load());
-      if (fingerprint.init_List() != null) {
-         for (String channel : fingerprint.init_List()) {
+      if (fingerprint.channels() != null) {
+         for (String channel : fingerprint.channels()) {
             this.init_V_Set_Str_3(keywords, channel);
          }
       }
@@ -3169,7 +3169,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
       } else if (this.pop_Z) {
          String address = this.load_Str_11();
-         long revision = PluginSignatureCatalog.init_J(address, this.close_Str_2());
+         long revision = PluginSignatureCatalog.revision(address, this.close_Str_2());
          if (revision != this.sync_J) {
             this.sync_J = revision;
             if (revision > 0L) {
@@ -3249,11 +3249,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return this.init_bR.init();
    }
 
-   public boolean push_Z_12() {
+   public boolean hasServer() {
       return init_Minecraft != null && init_Minecraft.getConnection() != null && !this.load_Str_11().isBlank();
    }
 
-   public boolean pop_Z_7() {
+   public boolean hasCommandTree() {
       try {
          if (init_Minecraft != null && init_Minecraft.getConnection() != null) {
             CommandDispatcher<?> dispatcher = init_Minecraft.getConnection().getCommands();
@@ -3266,8 +3266,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public boolean tick_Z_6() {
-      if (!this.push_Z_12()) {
+   public boolean startAutoScan() {
+      if (!this.hasServer()) {
          return false;
       } else {
          String address = this.load_Str_11();
@@ -3298,7 +3298,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.open_Str = null;
    }
 
-   public void flush_V_17() {
+   public void resetForDisconnect() {
       this.level_V_2();
       this.open_Str = null;
       this.init_V_Str_Str_3(null, "");
@@ -3453,7 +3453,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void table_V_2() {
       if (autismclient.modules.aD.read_Z()) {
-         this.poll_V_9();
+         this.hardLock();
       } else {
          AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (this.tick_Z && session != null && !session.init_bS.load() && init_Minecraft.getConnection() != null) {
@@ -3621,16 +3621,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public boolean run_Z_5() {
+   public boolean isScanRunning() {
       return this.tick_Z;
    }
 
-   public boolean put_Z_4() {
+   public boolean hasPendingWork() {
       return this.write_Z || this.tick_Z || this.pop_Z || !this.load_List.isEmpty();
    }
 
-   public void init_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx) {
-      if (this.run_Z_5() && init_Minecraft != null && init_Minecraft.getWindow() != null && this.init_Font != null) {
+   public void renderProbeBanner(GuiGraphicsExtractor ctx) {
+      if (this.isScanRunning() && init_Minecraft != null && init_Minecraft.getWindow() != null && this.init_Font != null) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
          String status = this.write_Str_5();
          String phase = this.update_Str_3();
@@ -3762,7 +3762,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void close_V_15() {
+   public void tickScan() {
       try {
          this.flush(false);
          this.frame_V_2();
@@ -3838,7 +3838,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       );
    }
 
-   public void open_V_12() {
+   public void clearSearch() {
       this.init_V_Str_Str_3(null, "");
       this.init_BitSetUtil.setValue("");
       this.init_BitSetUtil.setFocused(false);
@@ -3847,7 +3847,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.buffer_V_2();
    }
 
-   public void poll_V_9() {
+   public void hardLock() {
       this.read_V_3("hard-lock");
       this.poll_Map.clear();
       this.push_Map.clear();
@@ -3881,7 +3881,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          AutismConfig.getGlobal().removePluginScan(address);
          this.fill_V_2();
          this.read(true);
-         this.write_V_24();
+         this.saveState();
       }
    }
 
@@ -3971,7 +3971,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void init_V_Packet(Packet<?> packet) {
+   public void onOutgoingPacket(Packet<?> packet) {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ServerboundCommandSuggestionPacket".equals(packet.getClass().getSimpleName())) {
          int id = this.init_I_Obj(packet, -1, "getId", "id");
          String command = this.init_Str_Obj_StrArr(packet, "getCommand", "command");
@@ -4207,7 +4207,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void init_V_I_ClientboundCommand(int id, ClientboundCommandSuggestionsPacket packet) {
+   public void onCommandSuggestions(int id, ClientboundCommandSuggestionsPacket packet) {
       if (!CommandProbeIdAllocator.init(id)) {
          init_Minecraft.execute(
             () -> {
@@ -4457,7 +4457,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void set_V_9() {
+   public void onCommandTreeReceived() {
       this.buffer_V_2();
       init_Minecraft.execute(() -> {
          try {
@@ -4502,18 +4502,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void put_V_8() {
+   public void onSignaturesChanged() {
       this.sync_J = -1L;
       this.a_V_2();
       this.buffer_V_2();
    }
 
-   public void add_V_9() {
+   public void showOverviewTab() {
       this.setVisible(true);
       this.init_V_I_9(0);
    }
 
-   public void clear_V_8() {
+   public void showPluginsTab() {
       this.setVisible(true);
       this.init_V_I_9(1);
    }
@@ -4540,7 +4540,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
       }
 
-      this.write_V_24();
+      this.saveState();
    }
 
    @Override
@@ -4570,7 +4570,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.pool_V_2();
          }
 
-         this.write_V_24();
+         this.saveState();
       }
    }
 
@@ -4900,7 +4900,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                                  .add(new AutismServerInfoOverlay.ClickHotspot(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
                                     this.sync_Str = this.read_Z_Str_Str(clickedPlugin, this.sync_Str) ? null : clickedPlugin;
                                     this.b_V_2();
-                                    this.write_V_24();
+                                    this.saveState();
                                  }));
                            } else {
                               String hintCommand = row.load;
@@ -5105,7 +5105,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return observed;
       }
 
-      List<String> probableNamespaces = PluginSignatureCatalog.init_List(plugin);
+      List<String> probableNamespaces = PluginSignatureCatalog.namespacesFor(plugin);
       if (!probableNamespaces.isEmpty()) {
          List<String> rows = new ArrayList<>();
 
@@ -6619,7 +6619,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.open_Z = true;
             this.clear_I = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.thumbY());
             this.init_CacheEntry.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.clear_I, this.o());
-            this.write_V_24();
+            this.saveState();
             return true;
          }
       }
@@ -6646,11 +6646,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    public boolean mouseReleased(double mx, double my, int button) {
       if (button == 0 && this.open_Z) {
          this.open_Z = false;
-         this.write_V_24();
+         this.saveState();
          return true;
       } else if (this.flush_Z) {
          this.flush_Z = false;
-         this.write_V_24();
+         this.saveState();
          return true;
       } else {
          return this.init_TextFormat.mouseReleased(mx, my, button);

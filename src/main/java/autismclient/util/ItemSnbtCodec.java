@@ -41,7 +41,7 @@ public final class ItemSnbtCodec {
       }
    }
 
-   public static ItemStack init_ItemStack(String snbt) {
+   public static ItemStack parseStack(String snbt) {
       if (snbt != null && !snbt.isBlank() && init.player != null) {
          try {
             CompoundTag tag = TagParser.parseCompoundFully(snbt.trim());

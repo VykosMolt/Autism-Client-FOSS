@@ -50,8 +50,8 @@ public final class PayloadStudyTracker {
 
       if (registeredNow != null) {
          for (String channel : registeredNow) {
-            String normalized = PayloadRegistrationManager.init_Str_Str(channel);
-            if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+            String normalized = PayloadRegistrationManager.normalize(channel);
+            if (PayloadRegistrationManager.isExactChannel(normalized)) {
                init_LinkedHashSet.add(normalized);
             }
          }
@@ -60,15 +60,15 @@ public final class PayloadStudyTracker {
       PacketCaptureState.write();
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return init_Z;
    }
 
-   public static synchronized String init_Str() {
+   public static synchronized String title() {
       return init_Z ? "Payload Study: " + init_Str : "";
    }
 
-   public static synchronized String load_Str() {
+   public static synchronized String statusLine() {
       return !init_Z ? "" : read_I + " payloads | " + init_LinkedHashMap.size() + " channels | ESC to finish";
    }
 
@@ -106,7 +106,7 @@ public final class PayloadStudyTracker {
       return sb.toString();
    }
 
-   public static synchronized void init_V() {
+   public static synchronized void reset() {
       init_Z = false;
       init_Str = "";
       init_J = 0L;
@@ -121,9 +121,9 @@ public final class PayloadStudyTracker {
       PacketCaptureState.write();
    }
 
-   public static synchronized boolean init_Z(AutismPayloadSupport.PayloadEntry snapshot) {
+   public static synchronized boolean recordPayload(AutismPayloadSupport.PayloadEntry snapshot) {
       if (init_Z && snapshot != null) {
-         String channel = PayloadRegistrationManager.init_Str_Str(snapshot.channel());
+         String channel = PayloadRegistrationManager.normalize(snapshot.channel());
          if (channel.isBlank()) {
             return false;
          }
@@ -170,8 +170,8 @@ public final class PayloadStudyTracker {
             update++;
 
             for (String hinted : registerChannels) {
-               String normalized = PayloadRegistrationManager.init_Str_Str(hinted);
-               if (PayloadRegistrationManager.load_Z_Str(normalized)) {
+               String normalized = PayloadRegistrationManager.normalize(hinted);
+               if (PayloadRegistrationManager.isExactChannel(normalized)) {
                   load_LinkedHashSet.add(normalized);
                }
             }
@@ -183,7 +183,7 @@ public final class PayloadStudyTracker {
       }
    }
 
-   public static synchronized boolean load_Z() {
+   public static synchronized boolean finish() {
       if (!init_Z) {
          return false;
       }

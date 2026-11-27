@@ -36,7 +36,7 @@ public final class CoordinateSpoofer {
    private CoordinateSpoofer() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return init_Z && !autismclient.modules.aD.init_Z();
    }
 
@@ -47,7 +47,7 @@ public final class CoordinateSpoofer {
       init_Z = true;
    }
 
-   public static void init_V() {
+   public static void disable() {
       init_Z = false;
    }
 
@@ -78,7 +78,7 @@ public final class CoordinateSpoofer {
       tick = init_D();
    }
 
-   public static void init_V(double cx, double cy, double cz) {
+   public static void setCustomCoords(double cx, double cy, double cz) {
       run = cx;
       get = cy;
       set = cz;
@@ -96,7 +96,7 @@ public final class CoordinateSpoofer {
       stop = set - clear;
    }
 
-   public static double[] init_DArr(double x, double y, double z) {
+   public static double[] spoof(double x, double y, double z) {
       if (!init_Z) {
          return new double[]{x, y, z};
       }

@@ -47,12 +47,12 @@ public class NbtCommand extends Command {
       ItemStack stack = init_ItemStack();
       if (stack.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");
-      } else if (!AutismItemNbtInspectOverlay.init_Z_ItemStack(stack)) {
+      } else if (!AutismItemNbtInspectOverlay.inspectStack(stack)) {
          AutismClientMessaging.sendPrefixed("§cCould not open the NBT inspector.");
       } else {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null) {
-            AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(mc.font);
+            AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.getOrCreate(mc.font);
             mc.execute(() -> {
                if (mc.gui.screen() == null) {
                   mc.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(overlay));

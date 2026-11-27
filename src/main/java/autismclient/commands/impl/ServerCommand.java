@@ -49,9 +49,9 @@ public class ServerCommand extends Command {
       } else {
          OverlayManager.getInstance().register(overlay);
          if (pluginsTab) {
-            overlay.clear_V_8();
+            overlay.showPluginsTab();
          } else {
-            overlay.add_V_9();
+            overlay.showOverviewTab();
          }
 
          Minecraft mc = Minecraft.getInstance();

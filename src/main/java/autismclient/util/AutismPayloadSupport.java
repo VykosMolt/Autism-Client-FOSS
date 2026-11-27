@@ -77,7 +77,7 @@ public final class AutismPayloadSupport {
    }
 
    private static boolean isWireCaptureActive() {
-      return PacketCaptureState.load(PacketCaptureState.load_J());
+      return PacketCaptureState.load(PacketCaptureState.effectiveState());
    }
 
    public static void rememberRawBytes(CustomPacketPayload payload, byte[] rawBytes) {
@@ -95,7 +95,7 @@ public final class AutismPayloadSupport {
 
    private static void storeRawBytes(CustomPacketPayload payload, byte[] rawBytes) {
       if (payload != null) {
-         CAPTURED_PAYLOAD_BYTES.put(payload, rawBytes == null ? PacketCaptureState.init_BArr : rawBytes);
+         CAPTURED_PAYLOAD_BYTES.put(payload, rawBytes == null ? PacketCaptureState.EMPTY_BYTES : rawBytes);
       }
    }
 
@@ -129,7 +129,7 @@ public final class AutismPayloadSupport {
       Integer commandApiValue = detectCommandApiValue(payload, channel, rawBytes);
       String dump = formatJsonDump(direction, channel, rawBytes, commandApiValue);
       String protocolPhase = packetSnapshot == null ? PACKET_PROTOCOL_PHASES.getOrDefault(packet, "") : packetSnapshot.load();
-      int packetId = packetSnapshot == null ? -1 : packetSnapshot.init_I();
+      int packetId = packetSnapshot == null ? -1 : packetSnapshot.packetId();
       if (packetId < 0) {
          packetId = PacketWireCaptureStore.init(protocolPhase, direction, packet.type());
       }
@@ -278,7 +278,7 @@ public final class AutismPayloadSupport {
          return null;
       }
 
-      byte[] bytes = packetSnapshot.init_BArr();
+      byte[] bytes = packetSnapshot.plaintext();
       if (bytes.length == 0) {
          return null;
       }
@@ -622,7 +622,7 @@ public final class AutismPayloadSupport {
 
    public static ServerboundCustomPayloadPacket buildServerboundPacket(String channel, byte[] bytes) {
       Identifier id = parseChannelId(channel);
-      PayloadSubscriptionManager.init_V(id.toString());
+      PayloadSubscriptionManager.learnCodecChannel(id.toString());
       AutismPayloadSupport.RawCustomPacketPayload payload = new AutismPayloadSupport.RawCustomPacketPayload(id, bytes);
       rememberRawBytes(payload, bytes);
       return new ServerboundCustomPayloadPacket(payload);
@@ -662,7 +662,7 @@ public final class AutismPayloadSupport {
 
    private static void validateOutgoingPayload(String channel, byte[] bytes, String sourceProtocol) {
       Identifier id = parseChannelId(channel);
-      if (isRegisterChannel(id.toString()) && !PayloadSubscriptionManager.init_Z()) {
+      if (isRegisterChannel(id.toString()) && !PayloadSubscriptionManager.isRegistrationUnlocked()) {
          throw new IllegalStateException("Payload registration is locked. Unlock it in Packet Logger > Payload > Channels.");
       }
 
@@ -748,11 +748,11 @@ public final class AutismPayloadSupport {
       if (entry == null) {
          return null;
       } else {
-         AutismPayloadSupport.PayloadEntry cached = entry.init_AutismPayloadSuppo;
-         if (entry.init_Packet == null) {
+         AutismPayloadSupport.PayloadEntry cached = entry.payloadSnapshot;
+         if (entry.packet == null) {
             return cached;
          } else {
-            AutismPayloadSupport.PayloadEntry refreshed = inspectPacket(entry.init_Packet, entry.init_Str);
+            AutismPayloadSupport.PayloadEntry refreshed = inspectPacket(entry.packet, entry.direction);
             if (cached == null) {
                return refreshed;
             } else {
@@ -772,7 +772,7 @@ public final class AutismPayloadSupport {
       action.channel = snapshot.channel();
       action.payloadData = toHexString(snapshot.rawBytes());
       action.payloadClassName = "";
-      CustomPacketPayload payload = entry != null && entry.init_Packet != null ? extractPayload(entry.init_Packet) : null;
+      CustomPacketPayload payload = entry != null && entry.packet != null ? extractPayload(entry.packet) : null;
       action.payloadJson = PayloadJsonCodec.init(
          snapshot.direction(),
          action.channel,

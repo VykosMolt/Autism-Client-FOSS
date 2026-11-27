@@ -54,7 +54,7 @@ public final class bi {
    }
 
    public static boolean init_Z() {
-      return autismclient.modules.aD.write_Z() ? false : init_f.hasToasts() || NameScrapeController.init_Z();
+      return autismclient.modules.aD.write_Z() ? false : init_f.hasToasts() || NameScrapeController.isRunning();
    }
 
    public static int init_I() {

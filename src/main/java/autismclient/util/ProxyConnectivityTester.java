@@ -22,11 +22,11 @@ public final class ProxyConnectivityTester {
             ProxyProtocolType primary = proxy.init_bZ == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             ProxyProtocolType secondary = primary == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks5 : ProxyProtocolType.Socks4;
             ProxyConnectivityTester.Inner_DataUtil first = init(proxy, primary, host, destPort, timeout);
-            if (first.init_Z()) {
+            if (first.success()) {
                return first;
             } else {
                ProxyConnectivityTester.Inner_DataUtil second = init(proxy, secondary, host, destPort, timeout);
-               if (second.init_Z()) {
+               if (second.success()) {
                   return second;
                } else {
                   return (first.init_ca_StreamUtil() == ProxyConnectivityTester.Inner_StreamUtil.REFUSED || first.init_ca_StreamUtil() == ProxyConnectivityTester.Inner_StreamUtil.TIMEOUT)
@@ -233,7 +233,7 @@ public final class ProxyConnectivityTester {
       return out;
    }
 
-   public record Inner_DataUtil(boolean init_Z, long init_J, ProxyProtocolType init_bZ, ProxyConnectivityTester.Inner_StreamUtil init_ca_StreamUtil) {
+   public record Inner_DataUtil(boolean success, long latencyMs, ProxyProtocolType protocol, ProxyConnectivityTester.Inner_StreamUtil init_ca_StreamUtil) {
       public Inner_DataUtil(boolean ok, long latencyMs, ProxyProtocolType workingType) {
          this(ok, latencyMs, workingType, ok ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.OFFLINE);
       }

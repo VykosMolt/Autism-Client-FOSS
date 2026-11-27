@@ -44,7 +44,7 @@ public final class PacketSchemaRegistry {
       return null;
    }
 
-   public static int init_I() {
+   public static int schemaClassCount() {
       return init_Map().values().stream().map(PacketSchemaRegistry.Inner_StreamUtil::load_Str).collect(Collectors.toSet()).size();
    }
 
@@ -109,9 +109,9 @@ public final class PacketSchemaRegistry {
       return value != null && !value.isBlank() ? value : fallback;
    }
 
-   public record Inner_DataUtil(String init_Str, String load, String read, boolean init_Z) {
+   public record Inner_DataUtil(String name, String load, String read, boolean editableCandidate) {
       public Inner_DataUtil {
-         init_Str = PacketSchemaRegistry.init(init_Str, "field");
+         name = PacketSchemaRegistry.init(name, "field");
          load = PacketSchemaRegistry.init(load, "Object");
          read = PacketSchemaRegistry.init(read, "object");
       }
@@ -124,9 +124,9 @@ public final class PacketSchemaRegistry {
       String write,
       String update,
       String sync,
-      boolean init_Z,
-      List<PacketSchemaRegistry.Inner_DataUtil> init_List,
-      boolean load_Z
+      boolean complete,
+      List<PacketSchemaRegistry.Inner_DataUtil> fields,
+      boolean inherited
    ) {
       public Inner_StreamUtil {
          load_Str = PacketSchemaRegistry.init(load_Str, "unknown");
@@ -134,7 +134,7 @@ public final class PacketSchemaRegistry {
          write = PacketSchemaRegistry.init(write, "unknown");
          update = update == null ? "" : update;
          sync = PacketSchemaRegistry.init(sync, "fallback");
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
+         fields = fields == null ? List.of() : List.copyOf(fields);
       }
 
       public String init_Str() {
@@ -145,7 +145,7 @@ public final class PacketSchemaRegistry {
       public PacketSchemaRegistry.Inner_StreamUtil init(Class<?> concreteClass) {
          return concreteClass == null
             ? this
-            : new PacketSchemaRegistry.Inner_StreamUtil(concreteClass.getName(), this.load_Str, this.read, this.write, this.update, this.sync, this.init_Z, this.init_List, true);
+            : new PacketSchemaRegistry.Inner_StreamUtil(concreteClass.getName(), this.load_Str, this.read, this.write, this.update, this.sync, this.complete, this.fields, true);
       }
 
       public String load_Str() {

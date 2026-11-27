@@ -51,17 +51,17 @@ public final class VirtualInputDispatcher {
    }
 
    public static boolean init_Z_Str(String owner) {
-      return load_cW != null && load_cW.init_Str.equals(owner);
+      return load_cW != null && load_cW.owner.equals(owner);
    }
 
    public static void init_V_Str(String owner) {
       if (init_Z_Str(owner)) {
-         load_cW.init_V();
+         load_cW.markSent();
       }
    }
 
    public static void load(String owner) {
-      if (init_cW != null && init_cW.init_Str.equals(owner)) {
+      if (init_cW != null && init_cW.owner.equals(owner)) {
          GuardedInputTicket old = init_cW;
          init_cW = null;
          old.read();
@@ -269,7 +269,7 @@ public final class VirtualInputDispatcher {
       } else {
          boolean combatOwnsUse = ClientInteractionOverride.ownsUseInput();
          boolean combatOwnsAttack = ClientInteractionOverride.ownsAttackInput();
-         if (init_cW != null && !init_cW.init_Z()) {
+         if (init_cW != null && !init_cW.isValid()) {
             run();
          }
 

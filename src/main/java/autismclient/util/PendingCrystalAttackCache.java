@@ -13,7 +13,7 @@ public final class PendingCrystalAttackCache {
          this.init.clear();
       }
 
-      this.init.put(crystal, new PendingCrystalAttackCache.Inner_DataUtil(cell.immutable(), tick + LatencyTickWindow.init_I_I(latencyMs), false));
+      this.init.put(crystal, new PendingCrystalAttackCache.Inner_DataUtil(cell.immutable(), tick + LatencyTickWindow.windowTicks(latencyMs), false));
    }
 
    public boolean init(Object crystal, int tick) {

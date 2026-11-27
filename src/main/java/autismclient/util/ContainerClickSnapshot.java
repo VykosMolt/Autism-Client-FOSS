@@ -46,12 +46,12 @@ public final class ContainerClickSnapshot {
    }
 
    public record Inner_StreamUtil(
-      int init_I, int load_I, int read_I, int write, String init_Str, String load_Str, String read_Str, ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil, long init_J
+      int containerId, int load_I, int read_I, int write, String init_Str, String load_Str, String read_Str, ContainerClickSnapshot.Inner_DataUtil mode, long init_J
    ) {
-      public ServerboundContainerClickPacket init_ServerboundContain() {
-         ContainerClickSnapshot.Inner_DataUtil effectiveMode = this.init_bo_DataUtil == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil;
+      public ServerboundContainerClickPacket toPacket() {
+         ContainerClickSnapshot.Inner_DataUtil effectiveMode = this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode;
          return new ServerboundContainerClickPacket(
-            this.init_I,
+            this.containerId,
             this.load_I,
             (short)this.read_I,
             (byte)effectiveMode.init_I,
@@ -61,9 +61,9 @@ public final class ContainerClickSnapshot {
          );
       }
 
-      public ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil_bo_DataUtil(ContainerClickSnapshot.Inner_DataUtil newMode) {
+      public ContainerClickSnapshot.Inner_StreamUtil withMode(ContainerClickSnapshot.Inner_DataUtil newMode) {
          return new ContainerClickSnapshot.Inner_StreamUtil(
-            this.init_I,
+            this.containerId,
             this.load_I,
             this.read_I,
             this.write,
@@ -76,26 +76,26 @@ public final class ContainerClickSnapshot {
       }
 
       public String init_Str() {
-         String modeName = (this.init_bo_DataUtil == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil).init_Str;
+         String modeName = (this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode).init_Str;
          String item = this.read_Str != null && !this.read_Str.isBlank() ? this.read_Str : "empty";
-         return modeName + " slot " + this.write + " [" + item + "] menu " + this.init_I + ":" + this.load_I;
+         return modeName + " slot " + this.write + " [" + item + "] menu " + this.containerId + ":" + this.load_I;
       }
 
-      public CompoundTag init_CompoundTag() {
+      public CompoundTag toTag() {
          CompoundTag tag = new CompoundTag();
-         tag.putInt("containerId", this.init_I);
+         tag.putInt("containerId", this.containerId);
          tag.putInt("stateId", this.load_I);
          tag.putInt("handlerSlot", this.read_I);
          tag.putInt("visibleSlot", this.write);
          tag.putString("screenTitle", this.init_Str == null ? "" : this.init_Str);
          tag.putString("menuClass", this.load_Str == null ? "" : this.load_Str);
          tag.putString("itemSummary", this.read_Str == null ? "" : this.read_Str);
-         tag.putString("mode", (this.init_bo_DataUtil == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil).name());
+         tag.putString("mode", (this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode).name());
          tag.putLong("capturedAtMs", this.init_J);
          return tag;
       }
 
-      public static ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil_CompoundTag(CompoundTag tag) {
+      public static ContainerClickSnapshot.Inner_StreamUtil fromTag(CompoundTag tag) {
          if (tag == null) {
             return null;
          }

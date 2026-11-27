@@ -197,8 +197,8 @@ public class AutismMinecraftClientMixin {
 
          MacroExecutor.onClientTick();
          VillagerDupeDriver.init_V_Minecraft((Minecraft)(Object)this);
-         if (ContainerCloseGuard.init_Z()) {
-            ContainerCloseGuard.load_V();
+         if (ContainerCloseGuard.hasHolds()) {
+            ContainerCloseGuard.expireStale();
          }
 
          autismclient.modules.ModuleRuntimeManager autism = autismclient.modules.ModuleRuntimeManager.getInstance();
@@ -269,7 +269,7 @@ public class AutismMinecraftClientMixin {
             Minecraft client = (Minecraft)(Object)this;
             if (client.hitResult instanceof BlockHitResult && autismclient.util.BlockAttackGraceWindow.init(client)) {
                cir.setReturnValue(false);
-            } else if (RemoteViewController.init_Z()) {
+            } else if (RemoteViewController.isActive()) {
                cir.setReturnValue(false);
             } else if (AutismSessionState.getInstance().hasEntityCaptureCallback()) {
                cir.setReturnValue(false);
@@ -293,7 +293,7 @@ public class AutismMinecraftClientMixin {
          ci.cancel();
       } else if (!AutismLiteVariant.enabled() && CombatInteractionController.update()) {
          ci.cancel();
-      } else if (RemoteViewController.init_Z()) {
+      } else if (RemoteViewController.isActive()) {
          ci.cancel();
       } else if (autismclient.util.BlockAttackGraceWindow.init((Minecraft)(Object)this)) {
          ci.cancel();
@@ -345,11 +345,11 @@ public class AutismMinecraftClientMixin {
             }
          } else {
             Minecraft client = (Minecraft)(Object)this;
-            if (RemoteViewController.init_Z()) {
+            if (RemoteViewController.isActive()) {
                ci.cancel();
             } else if (ManualInteractionYield.load()) {
                ci.cancel();
-            } else if (BlockInspectionService.init_Z(client)) {
+            } else if (BlockInspectionService.tryInspect(client)) {
                ci.cancel();
             } else {
                AutismSessionState captureState = AutismSessionState.getInstance();
@@ -462,7 +462,7 @@ public class AutismMinecraftClientMixin {
          CombatInteractionController.init_V((Minecraft)(Object)this);
       }
 
-      ManualInteractionYield.init_V((Minecraft)(Object)this);
+      ManualInteractionYield.tick((Minecraft)(Object)this);
       ClientInteractionOverride.applyBeforeInputTick();
       VirtualInputDispatcher.close();
       Minecraft client = (Minecraft)(Object)this;
@@ -480,7 +480,7 @@ public class AutismMinecraftClientMixin {
          boolean inventoryJustPressed = inventoryDown && !this.autism$inventoryWasDown;
          this.autism$inventoryWasDown = inventoryDown;
          if (justPressed || inventoryJustPressed) {
-            if (justPressed && PayloadStudyTracker.load_Z()) {
+            if (justPressed && PayloadStudyTracker.finish()) {
                ClientInteractionOverride.cleanupAfterInputTick();
                VirtualInputDispatcher.poll();
                ci.cancel();
@@ -533,7 +533,7 @@ public class AutismMinecraftClientMixin {
    private void autism$cancelLostFocusPause(boolean suppressPauseMenuIfWeReallyArePausing, CallbackInfo ci) {
       if (!aD.read_Z()) {
          Minecraft client = (Minecraft)(Object)this;
-         if (PayloadStudyTracker.load_Z()) {
+         if (PayloadStudyTracker.finish()) {
             ci.cancel();
          } else if (AutismSessionState.getInstance().triggerCaptureCancelCallback()) {
             ci.cancel();

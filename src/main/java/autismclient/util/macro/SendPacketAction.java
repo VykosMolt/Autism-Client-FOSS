@@ -157,7 +157,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
             for (int i = 0; i < packetList.size(); i++) {
                Tag element = packetList.get(i);
                if (element instanceof CompoundTag) {
-                  AutismSessionState.DelayedPacket qp = autismclient.util.MacroClipboardCodec.init_ck_CachePool((CompoundTag)element);
+                  AutismSessionState.DelayedPacket qp = autismclient.util.MacroClipboardCodec.readDelayedPacket((CompoundTag)element);
                   if (qp != null) {
                      this.packets.add(qp);
                   }
@@ -179,7 +179,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
 
          for (AutismSessionState.DelayedPacket qp : this.packets) {
             if (qp.packet != null) {
-               String name = PacketNameResolver.init_Str_Packet(qp.packet);
+               String name = PacketNameResolver.nameOf(qp.packet);
                nameCounts.merge(name, 1, Integer::sum);
             }
          }

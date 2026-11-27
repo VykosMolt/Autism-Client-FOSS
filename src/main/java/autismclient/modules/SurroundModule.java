@@ -202,7 +202,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          && MC.gui.overlay() == null
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.isRunning()
          && !MC.player.isDeadOrDying()

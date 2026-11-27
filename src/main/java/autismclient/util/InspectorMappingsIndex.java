@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class InspectorMappingsIndex {
-   private static final String init_Str = "/autism-inspector-mappings.tsv";
+   private static final String RESOURCE_PATH = "/autism-inspector-mappings.tsv";
    private static final Map<String, String> init_Map = new HashMap<>();
    private static final Map<String, String> load = new HashMap<>();
    private static final Map<String, String> read = new HashMap<>();
@@ -22,10 +22,10 @@ public final class InspectorMappingsIndex {
    }
 
    public static String init(Class<?> type) {
-      return type == null ? null : init_Str(type.getName());
+      return type == null ? null : aliasForClass(type.getName());
    }
 
-   public static String init_Str(String className) {
+   public static String aliasForClass(String className) {
       if (className != null && !className.isBlank()) {
          init();
          return init_Map.get(className.replace('/', '.'));

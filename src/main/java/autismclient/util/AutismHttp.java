@@ -16,7 +16,7 @@ public final class AutismHttp {
    private AutismHttp() {
    }
 
-   public static JsonObject init_JsonObject(String url, String bearerToken) {
+   public static JsonObject getJson(String url, String bearerToken) {
       return init_JsonObject(url, bearerToken, Map.of());
    }
 
@@ -221,7 +221,7 @@ public final class AutismHttp {
    }
 
    private static HttpURLConnection load(String url, int timeoutMs) throws IOException {
-      HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MinecraftProxySelector.init_Proxy());
+      HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MinecraftProxySelector.currentProxy());
       init_V(connection, timeoutMs);
       return connection;
    }
@@ -271,14 +271,14 @@ public final class AutismHttp {
       }
    }
 
-   public record Inner_DataUtil(int init_I, JsonObject init_JsonObject) {
+   public record Inner_DataUtil(int status, JsonObject body) {
       public boolean init_Z() {
-         return this.init_I >= 200 && this.init_I < 300;
+         return this.status >= 200 && this.status < 300;
       }
 
       public String init_Str() {
          try {
-            return this.init_JsonObject != null && this.init_JsonObject.has("error") ? this.init_JsonObject.get("error").getAsString() : "";
+            return this.body != null && this.body.has("error") ? this.body.get("error").getAsString() : "";
          } catch (Exception e) {
             return "";
          }

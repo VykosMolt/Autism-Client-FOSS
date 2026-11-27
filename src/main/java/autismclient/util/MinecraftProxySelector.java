@@ -15,7 +15,7 @@ public final class MinecraftProxySelector {
          if (uri == null) {
             throw new IllegalArgumentException("URI is required");
          } else {
-            return List.of(MinecraftProxySelector.init_Proxy());
+            return List.of(MinecraftProxySelector.currentProxy());
          }
       }
 
@@ -28,7 +28,7 @@ public final class MinecraftProxySelector {
    }
 
    // Account and session requests carry tokens, so they use the game's proxy like vanilla does.
-   public static Proxy init_Proxy() {
+   public static Proxy currentProxy() {
       Minecraft mc = Minecraft.getInstance();
       return mc == null ? Proxy.NO_PROXY : mc.getProxy();
    }

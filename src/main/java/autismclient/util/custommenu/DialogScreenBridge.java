@@ -18,12 +18,12 @@ public final class DialogScreenBridge {
    private DialogScreenBridge() {
    }
 
-   public static CustomMenuSnapshot init_CustomMenuSnapshot(Minecraft mc) {
+   public static CustomMenuSnapshot snapshot(Minecraft mc) {
       Dialog dialog = init_Dialog(mc);
       return dialog == null ? null : VanillaDialogMenuAdapter.init(dialog, mc.getConnection() != null ? "PLAY" : "CONFIGURATION");
    }
 
-   public static Screen init_Screen(Minecraft mc) {
+   public static Screen currentScreen(Minecraft mc) {
       return mc != null && mc.gui != null ? mc.gui.screen() : null;
    }
 

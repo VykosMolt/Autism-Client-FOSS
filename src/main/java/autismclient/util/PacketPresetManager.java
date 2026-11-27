@@ -34,11 +34,11 @@ public class PacketPresetManager {
       }
    }
 
-   public static PacketPresetManager init_bT() {
+   public static PacketPresetManager getInstance() {
       return init_bT;
    }
 
-   public boolean init_Z(String name) {
+   public boolean savePreset(String name) {
       String sanitized = this.load_Str(name);
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§ePreset name cannot be empty.");
@@ -74,7 +74,7 @@ public class PacketPresetManager {
       return name;
    }
 
-   public boolean load_Z(String name) {
+   public boolean overwritePreset(String name) {
       String sanitized = this.load_Str(name);
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§eSelect a user preset first.");
@@ -95,19 +95,19 @@ public class PacketPresetManager {
       }
    }
 
-   public boolean read_Z(String name) {
-      PacketPresetManager.Inner_DataUtil entry = this.init_bT_DataUtil(name);
+   public boolean loadPreset(String name) {
+      PacketPresetManager.Inner_DataUtil entry = this.findPreset(name);
       if (entry == null) {
          AutismClientMessaging.sendPrefixed("§cPreset not found: " + name);
          return false;
       } else {
          this.init(entry.init_AutismPacketPreset());
-         AutismClientMessaging.sendPrefixed("§aLoaded preset: " + entry.init_Str());
+         AutismClientMessaging.sendPrefixed("§aLoaded preset: " + entry.name());
          return true;
       }
    }
 
-   public boolean write_Z(String name) {
+   public boolean deletePreset(String name) {
       String sanitized = this.load_Str(name);
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§eSelect a user preset first.");
@@ -165,8 +165,8 @@ public class PacketPresetManager {
          return false;
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.init_List()) {
-         if (this.read_Str(entry.init_Str()).equals(normalized)) {
+      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+         if (this.read_Str(entry.name()).equals(normalized)) {
             return true;
          }
       }
@@ -174,20 +174,20 @@ public class PacketPresetManager {
       return false;
    }
 
-   public PacketPresetManager.Inner_DataUtil init_bT_DataUtil(String name) {
+   public PacketPresetManager.Inner_DataUtil findPreset(String name) {
       String normalized = this.read_Str(name);
       if (normalized.isEmpty()) {
          return null;
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.init_List()) {
-         if (this.read_Str(entry.init_Str()).equals(normalized)) {
+      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+         if (this.read_Str(entry.name()).equals(normalized)) {
             return entry;
          }
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.load_List()) {
-         if (this.read_Str(entry.init_Str()).equals(normalized)) {
+      for (PacketPresetManager.Inner_DataUtil entry : this.userPresets()) {
+         if (this.read_Str(entry.name()).equals(normalized)) {
             return entry;
          }
       }
@@ -195,7 +195,7 @@ public class PacketPresetManager {
       return null;
    }
 
-   public List<PacketPresetManager.Inner_DataUtil> init_List() {
+   public List<PacketPresetManager.Inner_DataUtil> builtInPresets() {
       if (this.init_List != null) {
          return this.init_List;
       }
@@ -313,7 +313,7 @@ public class PacketPresetManager {
       return this.init_List;
    }
 
-   public List<PacketPresetManager.Inner_DataUtil> load_List() {
+   public List<PacketPresetManager.Inner_DataUtil> userPresets() {
       String signature = this.read_Str();
       if (this.load_List != null && this.load_Str.equals(signature)) {
          return this.load_List;
@@ -354,7 +354,7 @@ public class PacketPresetManager {
          }
       }
 
-      entries.sort(Comparator.comparing(entry -> entry.init_Str().toLowerCase(Locale.ROOT)));
+      entries.sort(Comparator.comparing(entry -> entry.name().toLowerCase(Locale.ROOT)));
       this.load_Str = signature;
       this.load_List = List.copyOf(entries);
       return this.load_List;
@@ -363,12 +363,12 @@ public class PacketPresetManager {
    public List<String> read_List() {
       List<String> names = new ArrayList<>();
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.init_List()) {
-         names.add(entry.init_Str());
+      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+         names.add(entry.name());
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.load_List()) {
-         names.add(entry.init_Str());
+      for (PacketPresetManager.Inner_DataUtil entry : this.userPresets()) {
+         names.add(entry.name());
       }
 
       return names;
@@ -414,7 +414,7 @@ public class PacketPresetManager {
             String resolvedName = this.write_Str(packetName);
             Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(resolvedName);
             if (packetClass == null) {
-               packetClass = PacketTypeRegistry.resolvePacketClass(PacketNameResolver.init_Str_Str(resolvedName));
+               packetClass = PacketTypeRegistry.resolvePacketClass(PacketNameResolver.friendlyName(resolvedName));
             }
 
             if (packetClass != null && pool.contains(packetClass)) {
@@ -458,7 +458,7 @@ public class PacketPresetManager {
 
       while (true) {
          String candidate = "User Preset " + index;
-         if (this.init_bT_DataUtil(candidate) == null) {
+         if (this.findPreset(candidate) == null) {
             return candidate;
          }
 
@@ -475,7 +475,7 @@ public class PacketPresetManager {
       String candidate = baseName;
       int suffix = 1;
 
-      while (this.init_bT_DataUtil(candidate) != null || this.update(candidate)) {
+      while (this.findPreset(candidate) != null || this.update(candidate)) {
          candidate = baseName + " (" + suffix++ + ")";
       }
 
@@ -577,15 +577,15 @@ public class PacketPresetManager {
    }
 
    public record Inner_DataUtil(AutismPacketPreset init_AutismPacketPreset, boolean init_Z) {
-      public String init_Str() {
+      public String name() {
          return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.name != null ? this.init_AutismPacketPreset.name : "";
       }
 
-      public int init_I() {
+      public int c2sCount() {
          return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.c2sPackets != null ? this.init_AutismPacketPreset.c2sPackets.size() : 0;
       }
 
-      public int load_I() {
+      public int s2cCount() {
          return this.init_AutismPacketPreset != null && this.init_AutismPacketPreset.s2cPackets != null ? this.init_AutismPacketPreset.s2cPackets.size() : 0;
       }
 
@@ -593,7 +593,7 @@ public class PacketPresetManager {
          return !this.init_Z;
       }
 
-      public boolean load_Z() {
+      public boolean isBuiltIn() {
          return this.init_Z;
       }
    }

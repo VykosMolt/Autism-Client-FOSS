@@ -519,7 +519,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
                   title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText(GuiScreenMatcher.screenTypeName(screen))))
                );
             } else {
-               CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
+               CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.snapshot();
                if (menu == null) {
                   var10000 = null;
                } else {
@@ -573,9 +573,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       Map<String, String> prefixes = new HashMap<>();
 
       for (TabPlayerListParser.ParsedPlayer player : players) {
-         names.add(player.init_Str());
-         if (player.init_Z()) {
-            prefixes.put(player.init_Str(), player.load());
+         names.add(player.name());
+         if (player.hasPrefix()) {
+            prefixes.put(player.name(), player.load());
          }
       }
 

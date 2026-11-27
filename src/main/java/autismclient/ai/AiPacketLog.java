@@ -71,7 +71,7 @@ public final class AiPacketLog {
             overlay.read(true);
             break;
          case "clear":
-            overlay.sync_V_14();
+            overlay.clearEntries();
          case "state":
             break;
          default:
@@ -82,7 +82,7 @@ public final class AiPacketLog {
          init(overlay, args.getAsJsonObject("filters"));
       }
 
-      return overlay.init_JsonObject_2();
+      return overlay.stateJson();
    }
 
    private static void init(AutismPacketLoggerOverlay overlay, JsonObject filters) {
@@ -90,7 +90,7 @@ public final class AiPacketLog {
       String direction = filters.has("direction") ? init(AiJson.getString(filters, "direction", "")) : null;
       String category = filters.has("category") ? load(AiJson.getString(filters, "category", "")) : null;
       if (search != null || direction != null || category != null) {
-         overlay.init_V_Str_5(search, direction, category);
+         overlay.applyFilters(search, direction, category);
       }
 
       if (filters.has("block") && filters.get("block").isJsonArray()) {
@@ -113,7 +113,7 @@ public final class AiPacketLog {
                throw new IllegalArgumentException("unblock accepts at most 64 names per call");
             }
 
-            overlay.init_V_Str_9(name.getAsString());
+            overlay.unblock(name.getAsString());
          }
       }
    }
@@ -129,11 +129,11 @@ public final class AiPacketLog {
       int limit = init(AiJson.getInt(args, "limit", 20), detail ? 10 : 50);
       int offset = init(AiJson.getInt(args, "offset", 0));
       String query = AiJson.getString(args, "query", "").toLowerCase(Locale.ROOT);
-      List<AutismPacketLoggerOverlay.LoggedPacketEntry> buffered = overlay.init_List_Str_3(category, 0, -1);
+      List<AutismPacketLoggerOverlay.LoggedPacketEntry> buffered = overlay.queryEntries(category, 0, -1);
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> matched = new ArrayList<>();
 
       for (AutismPacketLoggerOverlay.LoggedPacketEntry entry : buffered) {
-         if (query.isEmpty() || entry.load_Str != null && entry.load_Str.toLowerCase(Locale.ROOT).contains(query)) {
+         if (query.isEmpty() || entry.name != null && entry.name.toLowerCase(Locale.ROOT).contains(query)) {
             matched.add(entry);
          }
       }
@@ -171,7 +171,7 @@ public final class AiPacketLog {
          "truncated",
          truncated,
          "capture",
-         overlay.init_JsonObject_2(),
+         overlay.stateJson(),
          "entries",
          entries
       );
@@ -182,23 +182,23 @@ public final class AiPacketLog {
          "index",
          index,
          "timestampMs",
-         entry.load_J,
+         entry.timestampMs,
          "gameTick",
-         entry.init_I,
+         entry.tick,
          "direction",
-         entry.init_Str,
+         entry.direction,
          "shortName",
-         entry.load_Str,
+         entry.name,
          "packetClass",
-         entry.init_Class == null ? "" : entry.init_Class.getName(),
+         entry.packetClass == null ? "" : entry.packetClass.getName(),
          "groupKey",
-         entry.read_Str,
+         entry.key,
          "inventory",
-         entry.init_Z,
+         entry.inventoryPacket,
          "movement",
-         entry.load_Z,
+         entry.movementPacket,
          "payload",
-         entry.read_Z
+         entry.payloadPacket
       );
       if (entry.write != null) {
          out.addProperty("blockState", entry.write);
@@ -208,9 +208,9 @@ public final class AiPacketLog {
          out.addProperty("screen", entry.update);
       }
 
-      if (entry.init_AutismPayloadSuppo != null) {
-         out.addProperty("payloadChannel", entry.init_AutismPayloadSuppo.channel());
-         out.addProperty("payloadSize", entry.init_AutismPayloadSuppo.byteLength());
+      if (entry.payloadSnapshot != null) {
+         out.addProperty("payloadChannel", entry.payloadSnapshot.channel());
+         out.addProperty("payloadSize", entry.payloadSnapshot.byteLength());
       }
 
       if (detail) {
@@ -221,14 +221,14 @@ public final class AiPacketLog {
    }
 
    private static void init(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (entry.init_Class != null) {
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.init_Class);
+      if (entry.packetClass != null) {
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.packetClass);
          if (schema != null) {
             JsonArray fields = new JsonArray();
 
-            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
+            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
                fields.add(
-                  AiJson.objectOf("name", field.init_Str(), "javaType", field.load(), "valueKind", field.read(), "editableCandidate", field.init_Z())
+                  AiJson.objectOf("name", field.name(), "javaType", field.load(), "valueKind", field.read(), "editableCandidate", field.editableCandidate())
                );
                if (fields.toString().length() > 2048) {
                   break;
@@ -239,7 +239,7 @@ public final class AiPacketLog {
                "schema",
                AiJson.objectOf(
                   "complete",
-                  schema.init_Z(),
+                  schema.complete(),
                   "direction",
                   schema.write(),
                   "codecStyle",
@@ -247,7 +247,7 @@ public final class AiPacketLog {
                   "packetType",
                   schema.sync(),
                   "inheritedFallback",
-                  schema.load_Z(),
+                  schema.inherited(),
                   "fields",
                   fields
                )
@@ -255,14 +255,14 @@ public final class AiPacketLog {
          }
       }
 
-      if (entry.init_Packet != null) {
-         PacketSchemaSnapshot view = PacketSchemaSnapshot.init_br_Packet(entry.init_Packet);
+      if (entry.packet != null) {
+         PacketSchemaSnapshot view = PacketSchemaSnapshot.capture(entry.packet);
          JsonArray decoded = new JsonArray();
 
-         for (autismclient.util.PacketFieldSnapshot field : view.init_List()) {
+         for (autismclient.util.PacketFieldSnapshot field : view.fields()) {
             decoded.add(
                AiJson.objectOf(
-                  "name", field.init_Str(), "value", init(field.write(), 220), "readable", field.init_Z(), "editableCandidate", field.load_Z()
+                  "name", field.name(), "value", init(field.write(), 220), "readable", field.readable(), "editableCandidate", field.editableCandidate()
                )
             );
             if (decoded.toString().length() > 2048) {
@@ -270,15 +270,15 @@ public final class AiPacketLog {
             }
          }
 
-         out.add("decoded", AiJson.objectOf("status", view.init_Str(), "complete", view.read(), "fields", decoded));
-         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
+         out.add("decoded", AiJson.objectOf("status", view.status(), "complete", view.read(), "fields", decoded));
+         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
          if (snapshot != null) {
-            byte[] plaintext = snapshot.init_BArr();
+            byte[] plaintext = snapshot.plaintext();
             out.add(
                "wire",
                AiJson.objectOf(
                   "numericPacketId",
-                  snapshot.init_I(),
+                  snapshot.packetId(),
                   "protocolPhase",
                   snapshot.load(),
                   "plaintextLength",
@@ -290,8 +290,8 @@ public final class AiPacketLog {
          }
       }
 
-      if (entry.init_Class != null) {
-         out.addProperty("inspector", init(PacketInspectorEngine.init_bu_JsonUtil_AutismPacketLogger(entry).load(), 4096));
+      if (entry.packetClass != null) {
+         out.addProperty("inspector", init(PacketInspectorEngine.inspect(entry).load(), 4096));
       }
    }
 
@@ -320,9 +320,9 @@ public final class AiPacketLog {
          if (schema != null) {
             JsonArray editable = new JsonArray();
 
-            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
-               if (field.init_Z()) {
-                  editable.add(field.init_Str());
+            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+               if (field.editableCandidate()) {
+                  editable.add(field.name());
                }
             }
 

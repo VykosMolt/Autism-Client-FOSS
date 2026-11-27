@@ -1452,7 +1452,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && (bedBudget || this.level != AutismSessionState.getInstance().getClientTick())
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !f.load()

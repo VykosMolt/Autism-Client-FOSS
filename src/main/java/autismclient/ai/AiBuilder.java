@@ -7173,7 +7173,7 @@ final class AiBuilder {
                      .poll(
                         AiServerEvidence.blockRevision(pos),
                         AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), true),
-                        autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.sentSequence()),
+                        autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(mc.level, this.init_TableIndex_StateCa.sentSequence()),
                         mc.player.tickCount
                      );
                   if (outcome == AiBuilder.PlaceAckTracker.AckState.CONFIRMED) {

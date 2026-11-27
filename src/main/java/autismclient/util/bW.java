@@ -188,15 +188,15 @@ public class bW {
 
    public synchronized bW.Inner_DataUtil init_bW_DataUtil_I(int timeoutMs) {
       ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(this, "example.com", 80, timeoutMs);
-      if (!verified.init_Z()) {
+      if (!verified.success()) {
          return new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
       }
 
-      if (verified.init_bZ() != null) {
-         this.init_bZ = verified.init_bZ();
+      if (verified.protocol() != null) {
+         this.init_bZ = verified.protocol();
       }
 
-      return new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.init_J(), 1);
+      return new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.latencyMs(), 1);
    }
 
    public synchronized void init_V_bW_DataUtil(bW.Inner_DataUtil result) {

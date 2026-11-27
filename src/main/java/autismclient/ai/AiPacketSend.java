@@ -49,9 +49,9 @@ public final class AiPacketSend {
       }
 
       String rawArgs = AiJson.getString(args, "args", "");
-      PacketCommandBuilder.Inner_StreamUtil built = PacketCommandBuilder.init_bm_StreamUtil_Class_Str(packetClass, rawArgs);
-      if (built != null && built.init_Z() && built.init_Packet() != null) {
-         Packet<?> packet = built.init_Packet();
+      PacketCommandBuilder.Inner_StreamUtil built = PacketCommandBuilder.build(packetClass, rawArgs);
+      if (built != null && built.success() && built.packet() != null) {
+         Packet<?> packet = built.packet();
          boolean regenerate = AiJson.getBoolean(args, "regenerate", false);
          String mode = AiJson.getString(args, "mode", "send").trim().toLowerCase(Locale.ROOT);
          JsonObject out = new JsonObject();
@@ -60,8 +60,8 @@ public final class AiPacketSend {
          out.addProperty("mode", mode);
          out.addProperty("numericPacketId", AiPacketLog.init(packet.type(), "C2S"));
          autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
-         out.addProperty("schemaComplete", schema != null && schema.init_Z() && !schema.load_Z());
-         out.addProperty("builderSource", built.load_Str() == null ? "" : built.load_Str());
+         out.addProperty("schemaComplete", schema != null && schema.complete() && !schema.inherited());
+         out.addProperty("builderSource", built.source() == null ? "" : built.source());
          switch (mode) {
             case "send":
                Packet<?> wire = regenerate ? PacketRegenerator.init(packet) : packet;
@@ -109,8 +109,8 @@ public final class AiPacketSend {
 
          return out;
       } else {
-         String reason = built == null ? "no builder accepted the arguments" : built.init_Str();
-         String help = init(PacketCommandBuilder.init_Str_Class(packetClass), 2000);
+         String reason = built == null ? "no builder accepted the arguments" : built.message();
+         String help = init(PacketCommandBuilder.usage(packetClass), 2000);
          throw new IllegalArgumentException("Could not build " + name + ": " + reason + (help.isEmpty() ? "" : "\n" + help));
       }
    }

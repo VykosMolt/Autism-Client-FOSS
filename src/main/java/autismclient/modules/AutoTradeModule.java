@@ -561,7 +561,7 @@ public final class AutoTradeModule extends Module {
 
                   Block current = MC.level.getBlockState(this.init_BlockPos).getBlock();
                   if (MC.level.getBlockState(this.init_BlockPos).isAir()) {
-                     if (this.push >= 0 && !autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
+                     if (this.push >= 0 && !autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.push)) {
                         return;
                      }
 
@@ -628,8 +628,8 @@ public final class AutoTradeModule extends Module {
                case ACQUIRE_JOB:
                   if (!this.init_Z_Villager(villager)
                      || !MC.level.getBlockState(this.init_BlockPos).is(this.init_MethodUtil_StreamU.init_Block)
-                     || this.pop >= 0 && !autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
-                     if (this.pop >= 0 && autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop) && MC.level.getBlockState(this.init_BlockPos).isAir()) {
+                     || this.pop >= 0 && !autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.pop)) {
+                     if (this.pop >= 0 && autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.pop) && MC.level.getBlockState(this.init_BlockPos).isAir()) {
                         this.init(AutoTradeModule.Inner_DataUtil.PLACE, "Retrying workstation placement");
                      } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE) && !this.init_Z_Villager(villager)) {
                         this.init("Villager claimed another workstation", false);
@@ -916,9 +916,9 @@ public final class AutoTradeModule extends Module {
          this.flush_Z = false;
          this.open();
          autismclient.util.bi.read("Replace workstation at " + this.init_BlockPos.toShortString());
-      } else if (this.push < 0 || autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
+      } else if (this.push < 0 || autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.push)) {
          if (!MC.level.getBlockState(this.init_BlockPos).isAir()) {
-            if (this.pop < 0 || autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
+            if (this.pop < 0 || autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.pop)) {
                this.flush_Z = false;
                this.write_Z = false;
                this.open();

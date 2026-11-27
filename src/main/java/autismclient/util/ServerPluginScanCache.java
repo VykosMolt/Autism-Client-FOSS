@@ -42,7 +42,7 @@ final class ServerPluginScanCache {
       this.read_V();
    }
 
-   static ServerPluginScanCache init_ServerPluginScanCa() {
+   static ServerPluginScanCache getInstance() {
       ServerPluginScanCache current = init_ServerPluginScanCa;
       if (current != null) {
          return current;
@@ -61,19 +61,19 @@ final class ServerPluginScanCache {
       return new ServerPluginScanCache(file);
    }
 
-   Map<String, AutismConfig.PluginScanCacheEntry> init_Map() {
+   Map<String, AutismConfig.PluginScanCacheEntry> publishedView() {
       return this.init_Map;
    }
 
-   Map<String, AutismConfig.PluginScanCacheEntry> load_Map() {
+   Map<String, AutismConfig.PluginScanCacheEntry> legacyFallback() {
       return this.load_Map;
    }
 
-   synchronized AutismConfig.PluginScanCacheEntry init_AutismConfig_Plugi_Str(String key) {
+   synchronized AutismConfig.PluginScanCacheEntry getScan(String key) {
       return init_AutismConfig_Plugi_AutismConfig_Plugi(this.init_LinkedHashMap.get(key));
    }
 
-   synchronized AutismConfig.PluginScanCacheEntry load_AutismConfig_Plugi_Str(String normalizedAddress) {
+   synchronized AutismConfig.PluginScanCacheEntry findByAddress(String normalizedAddress) {
       if (normalizedAddress != null && !normalizedAddress.isBlank()) {
          AutismConfig.PluginScanCacheEntry newest = null;
 
@@ -95,15 +95,15 @@ final class ServerPluginScanCache {
       return this.init_LinkedHashMap.size();
    }
 
-   synchronized long init_J() {
+   synchronized long revision() {
       return this.load_J;
    }
 
-   synchronized Map<String, AutismConfig.PluginScanCacheEntry> read_Map() {
+   synchronized Map<String, AutismConfig.PluginScanCacheEntry> snapshot() {
       return init_LinkedHashMap_Map(this.init_LinkedHashMap);
    }
 
-   void init_V_Str_AutismConfig_Plugi(String key, AutismConfig.PluginScanCacheEntry entry) {
+   void putScan(String key, AutismConfig.PluginScanCacheEntry entry) {
       if (key != null && !key.isBlank() && entry != null) {
          AutismConfig.PluginScanCacheEntry copied = init_AutismConfig_Plugi_AutismConfig_Plugi(entry);
          long serializedSize = init_J_Str_AutismConfig_Plugi(key, copied);
@@ -117,7 +117,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   synchronized void init_V_Str(String key) {
+   synchronized void removeScan(String key) {
       if (key != null && this.init_LinkedHashMap.remove(key) != null) {
          this.load_LinkedHashMap.remove(key);
          this.load_J++;
@@ -125,7 +125,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   synchronized void load_V_Str(String normalizedAddress) {
+   synchronized void removeByAddress(String normalizedAddress) {
       if (normalizedAddress != null) {
          boolean changed = this.init_LinkedHashMap.keySet().removeIf(key -> key.equals(normalizedAddress) || key.startsWith(normalizedAddress + "|"));
          if (changed) {
@@ -136,7 +136,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   boolean init_Z_Map(Map<String, AutismConfig.PluginScanCacheEntry> legacy) {
+   boolean migrateLegacy(Map<String, AutismConfig.PluginScanCacheEntry> legacy) {
       if (legacy != null && !legacy.isEmpty()) {
          LinkedHashMap<String, AutismConfig.PluginScanCacheEntry> candidates = new LinkedHashMap<>();
          LinkedHashMap<String, Long> candidateSizes = new LinkedHashMap<>();

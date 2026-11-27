@@ -195,7 +195,7 @@ public final class AntiVanishModule extends Module {
                this.write_J = at;
                AutismClientMessaging.sendPrefixed(
                   "Unexplained block activity: "
-                     + init_Str_BlockPos(readings.getFirst().init_BlockPos())
+                     + init_Str_BlockPos(readings.getFirst().pos())
                      + ". Possible hidden activity; no player identity established."
                );
             }
@@ -213,7 +213,7 @@ public final class AntiVanishModule extends Module {
             this.init_V_17();
          } else {
             if (!this.bool("environmental")) {
-               this.init_CachePool.init_V();
+               this.init_CachePool.resetProbes();
             }
 
             if (this.bool("completion-probe")) {
@@ -229,7 +229,7 @@ public final class AntiVanishModule extends Module {
             }
 
             if (this.bool("completion-probe")
-               && this.init_CachePool.init_Z_J(at)
+               && this.init_CachePool.hasRecentHiddenAction(at)
                && this.write_Map.isEmpty()
                && (this.update_J < 0L || at - this.update_J >= 1500L)) {
                this.load_V_J(at);
@@ -300,7 +300,7 @@ public final class AntiVanishModule extends Module {
             if (!chat.overlay()) {
                String text = chat.content() == null ? "" : chat.content().getString();
                this.init_CachePool.init(text, at);
-               this.init_StreamUtil.init_V_Component_J(chat.content(), at);
+               this.init_StreamUtil.onChat(chat.content(), at);
             }
 
             this.write_V_J(at);
@@ -368,7 +368,7 @@ public final class AntiVanishModule extends Module {
    private boolean init_Z_UUID_Str(UUID id, String name) {
       return id != null
          && !id.equals(MC.player.getUUID())
-         && TabPlayerListParser.load_Z(name)
+         && TabPlayerListParser.isPlausibleName(name)
          && !ArmorFilterMatcher.init_Z_UUID(id)
          && !AntiBotTracker.isConfirmedBotUuid(id)
          && this.init_Z_Str(name);
@@ -399,7 +399,7 @@ public final class AntiVanishModule extends Module {
       }
 
       this.init_CachePool.init(roster, at);
-      this.init_StreamUtil.init_V_Collection_J(roster, at);
+      this.init_StreamUtil.updateRoster(roster, at);
       this.read_Map.clear();
 
       for (PlayerInfo info : this.init_ClientPacketListen.getOnlinePlayers()) {
@@ -526,12 +526,12 @@ public final class AntiVanishModule extends Module {
                .stream()
                .map(
                   p -> new autismclient.util.AntiVanishRosterTracker.Inner_ConfigStore(
-                     p.init_UUID(), p.init_Str(), listed.contains(p.init_UUID()), module.init_Z_UUID_Str(p.init_UUID(), p.init_Str())
+                     p.uuid(), p.name(), listed.contains(p.uuid()), module.init_Z_UUID_Str(p.uuid(), p.name())
                   )
                )
                .toList();
             module.init_CachePool.init(profiles, request.init_J, at);
-            module.flush = at + (module.init_CachePool.init_Z() ? 2000 : 10000);
+            module.flush = at + (module.init_CachePool.needsRecheck() ? 2000 : 10000);
             module.write_V_J(at);
             return true;
          } else {
@@ -567,7 +567,7 @@ public final class AntiVanishModule extends Module {
    }
 
    private boolean init_Z_UUID(UUID id, AntiVanishModule.Inner_DataUtil detection, long at) {
-      return detection.load_Z ? this.init_StreamUtil.init_Z_UUID_J(id, at) && !this.init_CachePool.init(id, at) : this.init_CachePool.init(id, at);
+      return detection.load_Z ? this.init_StreamUtil.isSuspect(id, at) && !this.init_CachePool.init(id, at) : this.init_CachePool.init(id, at);
    }
 
    private void write_V_J(long at) {
@@ -581,7 +581,7 @@ public final class AntiVanishModule extends Module {
          this.init_V_17();
       } else {
          if (!this.bool("environmental")) {
-            this.init_CachePool.init_V();
+            this.init_CachePool.resetProbes();
          }
 
          this.load_Map
@@ -595,23 +595,23 @@ public final class AntiVanishModule extends Module {
             this.init_V_17();
          }
 
-         for (autismclient.util.AntiVanishRosterTracker.Inner_StreamUtil alert : this.init_CachePool.init_List_J(at)) {
-            if (this.init_Z_UUID_2(alert.init_UUID(), alert.init_Str(), alert.init_Z())) {
+         for (autismclient.util.AntiVanishRosterTracker.Inner_StreamUtil alert : this.init_CachePool.collectAlerts(at)) {
+            if (this.init_Z_UUID_2(alert.uuid(), alert.name(), alert.uuidOnly())) {
                AntiVanishModule.Inner_DataUtil detection = new AntiVanishModule.Inner_DataUtil(
-                  alert.init_Str(), "Hidden player: " + alert.load(), 100, at + 20000L, alert.init_Z(), false
+                  alert.name(), "Hidden player: " + alert.load(), 100, at + 20000L, alert.uuidOnly(), false
                );
-               this.load_Map.put(alert.init_UUID(), detection);
-               this.init_Map.put(alert.init_UUID(), detection);
+               this.load_Map.put(alert.uuid(), detection);
+               this.init_Map.put(alert.uuid(), detection);
             }
          }
 
-         for (autismclient.util.PlayerQuitEventTracker.Inner_DataUtil alert : this.init_StreamUtil.init_List_J(at)) {
-            if (!this.init_CachePool.init(alert.init_UUID(), at) && this.init_Z_UUID_Str(alert.init_UUID(), alert.init_Str())) {
+         for (autismclient.util.PlayerQuitEventTracker.Inner_DataUtil alert : this.init_StreamUtil.collectAlerts(at)) {
+            if (!this.init_CachePool.init(alert.uuid(), at) && this.init_Z_UUID_Str(alert.uuid(), alert.name())) {
                AntiVanishModule.Inner_DataUtil detection = new AntiVanishModule.Inner_DataUtil(
-                  alert.init_Str(), "Possible vanish: left TAB without a matching leave message", 0, alert.init_J(), false, true
+                  alert.name(), "Possible vanish: left TAB without a matching leave message", 0, alert.expiresAt(), false, true
                );
-               this.load_Map.put(alert.init_UUID(), detection);
-               this.init_Map.put(alert.init_UUID(), detection);
+               this.load_Map.put(alert.uuid(), detection);
+               this.init_Map.put(alert.uuid(), detection);
             }
          }
 
@@ -703,7 +703,7 @@ public final class AntiVanishModule extends Module {
       );
       if (this.write()) {
          for (autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper reading : this.init_UiHelper.unexplained(at)) {
-            rows.add(new AntiVanishModule.Inner_StreamUtil(init_Str_BlockPos(reading.init_BlockPos()), reading.init_Str(), 0));
+            rows.add(new AntiVanishModule.Inner_StreamUtil(init_Str_BlockPos(reading.pos()), reading.label(), 0));
          }
       }
 
@@ -847,7 +847,7 @@ public final class AntiVanishModule extends Module {
    public static String debugSummary() {
       AntiVanishModule module = init_SyncManager();
       return module != null && module.isEnabled()
-         ? "known=" + module.init_CachePool.init_I() + " det=" + module.load_Map.size() + " probes=" + module.write_Map.size()
+         ? "known=" + module.init_CachePool.trackedCount() + " det=" + module.load_Map.size() + " probes=" + module.write_Map.size()
          : "off";
    }
 

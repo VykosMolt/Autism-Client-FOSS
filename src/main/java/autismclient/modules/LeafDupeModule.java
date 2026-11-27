@@ -314,7 +314,7 @@ public final class LeafDupeModule extends Module {
             }
 
             if (this.init_DataUtil_StreamUti != null) {
-               if (!this.init_DataUtil_StreamUti.init_Z()) {
+               if (!this.init_DataUtil_StreamUti.isSent()) {
                   if (!this.init_DataUtil_StreamUti.load() && !this.init_DataUtil_StreamUti.init(System.nanoTime())) {
                      this.read_Str = "";
                      return;
@@ -398,15 +398,15 @@ public final class LeafDupeModule extends Module {
                                     eye, lastYaw, lastPitch, this.init_BlockPos, MC.player.blockInteractionRange()
                                  );
                                  if (resetVisible) {
-                                    aim = autismclient.util.leafdupe.LeafDupeValidator.init_FArr_Vec3(
+                                    aim = autismclient.util.leafdupe.LeafDupeValidator.aimAt(
                                        eye, autismclient.util.leafdupe.LeafDupeValidator.init(eye, this.init_BlockPos), lastYaw
                                     );
                                  } else if (leafVisible) {
-                                    aim = autismclient.util.leafdupe.LeafDupeValidator.init_FArr_Vec3(
+                                    aim = autismclient.util.leafdupe.LeafDupeValidator.aimAt(
                                        eye, autismclient.util.leafdupe.LeafDupeValidator.init(eye, this.read_BlockPos), lastYaw
                                     );
                                  } else {
-                                    aim = autismclient.util.leafdupe.LeafDupeValidator.init_FArr_Vec3(
+                                    aim = autismclient.util.leafdupe.LeafDupeValidator.aimAt(
                                        eye, autismclient.util.leafdupe.LeafDupeValidator.init(eye, this.read_BlockPos), lastYaw
                                     );
                                     this.read_Str = "No shared aim";
@@ -490,7 +490,7 @@ public final class LeafDupeModule extends Module {
             !current.init_BlockPos.equals(this.load_BlockPos)
                || current.init_BlockState != state
                || System.nanoTime() - current.init_J > 500000000L
-               || current.init_DataUtil_StreamUti != null && current.init_DataUtil_StreamUti.init_Z()
+               || current.init_DataUtil_StreamUti != null && current.init_DataUtil_StreamUti.isSent()
          )) {
          this.sync();
          current = null;
@@ -534,7 +534,7 @@ public final class LeafDupeModule extends Module {
             return false;
          } else {
             Vec3 point = hit.getLocation().add(hit.getLocation().subtract(this.init_Vec3_5()).normalize().scale(0.01));
-            float[] aim = autismclient.util.leafdupe.LeafDupeValidator.init_FArr_Vec3(this.init_Vec3_5(), point, this.init_F_6());
+            float[] aim = autismclient.util.leafdupe.LeafDupeValidator.aimAt(this.init_Vec3_5(), point, this.init_F_6());
             init_V_F(aim[0], aim[1], 100);
             this.read_Z = true;
             this.read_Str = current.init_DataUtil_StreamUti != null && current.init_DataUtil_StreamUti.load() ? "Target start blocked" : "";
@@ -547,7 +547,7 @@ public final class LeafDupeModule extends Module {
       this.read_Z = false;
       LeafDupeModule.Inner_DataUtil current = this.init_ac_DataUtil;
       if (current != null && current.init_DataUtil_StreamUti == null && this.load_Str_4() == null) {
-         if (autismclient.util.leafdupe.LeafDupePacketTracker.init_I() == current.init_I) {
+         if (autismclient.util.leafdupe.LeafDupePacketTracker.trackedSlot() == current.init_I) {
             if (MC.player.getInventory().getSelectedSlot() == current.init_I
                && ItemStack.isSameItemSameComponents(current.init_ItemStack, MC.player.getMainHandItem())) {
                BlockHitResult hit = this.init_BlockHitResult_Vec3_BlockPos(this.init_Vec3_5(), current.init_BlockPos);
@@ -630,7 +630,7 @@ public final class LeafDupeModule extends Module {
       if (slot >= 0 && slot <= 8 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "leaf-dupe")) {
          MC.player.getInventory().setSelectedSlot(slot);
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(slot);
-         if (previous == null && autismclient.util.leafdupe.LeafDupePacketTracker.init_I() == slot) {
+         if (previous == null && autismclient.util.leafdupe.LeafDupePacketTracker.trackedSlot() == slot) {
             return true;
          }
 
@@ -639,13 +639,13 @@ public final class LeafDupeModule extends Module {
             && owner.load_I == slot
             && !owner.load_DataUtil_StreamUti.load()
             && !owner.load_DataUtil_StreamUti.init(System.nanoTime())
-            && owner.load_DataUtil_StreamUti.init_Obj() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof
+            && owner.load_DataUtil_StreamUti.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof
             && proof.init(owner, MC.player.getEyePosition(), this.init_Vec3_5())) {
             return true;
          }
 
-         if (previous == null && owner.load_DataUtil_StreamUti != null && !owner.load_DataUtil_StreamUti.init_Z()) {
-            owner.load_DataUtil_StreamUti.init_V();
+         if (previous == null && owner.load_DataUtil_StreamUti != null && !owner.load_DataUtil_StreamUti.isSent()) {
+            owner.load_DataUtil_StreamUti.markConsumed();
          }
 
          ServerboundSetCarriedItemPacket packet = new ServerboundSetCarriedItemPacket(slot);
@@ -675,11 +675,11 @@ public final class LeafDupeModule extends Module {
       this.init_ac_DataUtil = null;
       if (current != null) {
          if (current.init_DataUtil_StreamUti != null) {
-            current.init_DataUtil_StreamUti.init_V();
+            current.init_DataUtil_StreamUti.markConsumed();
          }
 
          if (current.load_DataUtil_StreamUti != null) {
-            current.load_DataUtil_StreamUti.init_V();
+            current.load_DataUtil_StreamUti.markConsumed();
          }
 
          if (load_Z_13()
@@ -689,17 +689,17 @@ public final class LeafDupeModule extends Module {
             && MC.gameMode != null
             && MC.player.getInventory().getSelectedSlot() == current.load_I
             && autismclient.util.InventorySlotArbiter.canBeginActionGroup("leaf-dupe")
-            && autismclient.util.leafdupe.LeafDupePacketTracker.init_I() >= 0) {
-            ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(autismclient.util.leafdupe.LeafDupePacketTracker.init_I());
+            && autismclient.util.leafdupe.LeafDupePacketTracker.trackedSlot() >= 0) {
+            ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(autismclient.util.leafdupe.LeafDupePacketTracker.trackedSlot());
          }
       }
 
       if (this.init_DataUtil_StreamUti != null) {
-         if (this.init_DataUtil_StreamUti.init_Z()) {
+         if (this.init_DataUtil_StreamUti.isSent()) {
             this.open++;
             this.close = 0;
          } else {
-            this.init_DataUtil_StreamUti.init_V();
+            this.init_DataUtil_StreamUti.markConsumed();
          }
 
          this.init_DataUtil_StreamUti = null;
@@ -711,13 +711,13 @@ public final class LeafDupeModule extends Module {
    }
 
    public static boolean allowSend(Connection connection, Packet<?> packet) {
-      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil receipt = autismclient.util.leafdupe.LeafDupePacketTracker.init_DataUtil_StreamUti(packet);
+      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil receipt = autismclient.util.leafdupe.LeafDupePacketTracker.receiptFor(packet);
       if (receipt == null) {
          return true;
       }
 
       LeafDupeModule module = init_ac;
-      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof = receipt.init_Obj() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool value ? value : null;
+      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof = receipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool value ? value : null;
       LeafDupeModule.Inner_DataUtil owner = proof != null && proof.init() instanceof LeafDupeModule.Inner_DataUtil value ? value : null;
       boolean valid = module != null
          && owner != null
@@ -739,10 +739,10 @@ public final class LeafDupeModule extends Module {
          && MC.player.isAlive()
          && !MC.player.hasInfiniteMaterials()
          && autismclient.util.InventorySlotArbiter.canBeginActionGroup("leaf-dupe")
-         && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(receipt.init_I(), "leaf-dupe")
+         && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(receipt.slot(), "leaf-dupe")
          && proof.init(owner, MC.player.getEyePosition(), module.init_Vec3_5());
       if (valid && packet instanceof ServerboundUseItemOnPacket use) {
-         ItemStack stack = use.hand() == InteractionHand.OFF_HAND ? MC.player.getOffhandItem() : MC.player.getInventory().getItem(receipt.init_I());
+         ItemStack stack = use.hand() == InteractionHand.OFF_HAND ? MC.player.getOffhandItem() : MC.player.getInventory().getItem(receipt.slot());
          valid = stack.is(Items.BONE_MEAL)
             && autismclient.util.leafdupe.LeafDupePacketTracker.init(owner.init_DataUtil_StreamUti, owner.init_BlockPos)
             && (use.hand() != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("leaf-dupe"));
@@ -900,7 +900,7 @@ public final class LeafDupeModule extends Module {
                   && state.getFluidState().isEmpty()
                   && !state.hasBlockEntity()
                   && !(state.getBlock() instanceof BonemealableBlock)
-                  && autismclient.util.leafdupe.LeafDupeValidator.init_Str_BlockState_2(state, true, false) == null) {
+                  && autismclient.util.leafdupe.LeafDupeValidator.targetProblem(state, true, false) == null) {
                   resets.add(new LeafDupeModule.Inner_StreamUtil(pos.immutable(), distance));
                }
             }
@@ -965,7 +965,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private List<LeafDupeModule.Inner_StreamUtil> init_List_List_2(List<LeafDupeModule.Inner_StreamUtil> candidates) {
-      return autismclient.util.leafdupe.LeafDupeValidator.init_List_List(candidates, this.init_J, 6);
+      return autismclient.util.leafdupe.LeafDupeValidator.page(candidates, this.init_J, 6);
    }
 
    private boolean init_Z_BlockPos_Vec3_2(BlockPos pos, Vec3 eye) {
@@ -996,7 +996,7 @@ public final class LeafDupeModule extends Module {
       if (this.load_BlockPos != null && autismclient.util.leafdupe.LeafDupePacketTracker.load(this.load_BlockPos)) {
          return "Restoring target";
       } else {
-         long wait = autismclient.util.leafdupe.LeafDupePacketTracker.init_J();
+         long wait = autismclient.util.leafdupe.LeafDupePacketTracker.waitMs();
          if (wait == 9223372036854775807L) {
             return "Use suitable tool";
          } else if (wait > 0L) {
@@ -1128,11 +1128,11 @@ public final class LeafDupeModule extends Module {
    }
 
    private int init_I_21() {
-      return this.init_CachePool.init_I(this.read_IntSetting.get(), System.currentTimeMillis());
+      return this.init_CachePool.remaining(this.read_IntSetting.get(), System.currentTimeMillis());
    }
 
    private void init_V_InteractionHand(InteractionHand hand, BlockPos pos, Vec3 point, Direction face) {
-      this.init_CachePool.init_V(this.read_IntSetting.get(), System.currentTimeMillis());
+      this.init_CachePool.recordUse(this.read_IntSetting.get(), System.currentTimeMillis());
       BlockHitResult hit = new BlockHitResult(point, face, pos, false);
 
       try (BlockStatePredictionHandler prediction = this.init_BlockStatePredicti().startPredicting()) {
@@ -1143,7 +1143,7 @@ public final class LeafDupeModule extends Module {
    private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil init_DataUtil_StreamUti_InteractionHand(
       InteractionHand hand, BlockHitResult hit, int slot, LeafDupeModule.Inner_DataUtil owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous
    ) {
-      this.init_CachePool.init_V(this.read_IntSetting.get(), System.currentTimeMillis());
+      this.init_CachePool.recordUse(this.read_IntSetting.get(), System.currentTimeMillis());
 
       try (BlockStatePredictionHandler prediction = this.init_BlockStatePredicti().startPredicting()) {
          ServerboundUseItemOnPacket packet = new ServerboundUseItemOnPacket(hand, hit, prediction.currentSequence());
@@ -1205,7 +1205,7 @@ public final class LeafDupeModule extends Module {
       } else {
          return !MC.level.isLoaded(pos)
             ? "chunk is not loaded."
-            : autismclient.util.leafdupe.LeafDupeValidator.init_Str_BlockState(MC.level.getBlockState(pos), MC.level.getBlockState(pos.below()), true);
+            : autismclient.util.leafdupe.LeafDupeValidator.dripleafProblem(MC.level.getBlockState(pos), MC.level.getBlockState(pos.below()), true);
       }
    }
 
@@ -1219,7 +1219,7 @@ public final class LeafDupeModule extends Module {
       }
 
       BlockState state = MC.level.getBlockState(pos);
-      return autismclient.util.leafdupe.LeafDupeValidator.init_Str_BlockState_2(state, true, state.getMenuProvider(MC.level, pos) != null);
+      return autismclient.util.leafdupe.LeafDupeValidator.targetProblem(state, true, state.getMenuProvider(MC.level, pos) != null);
    }
 
    private String read_Str_BlockPos(BlockPos pos) {
@@ -1356,7 +1356,7 @@ public final class LeafDupeModule extends Module {
          init_ac.close();
       }
 
-      autismclient.util.leafdupe.LeafDupePacketTracker.init_V();
+      autismclient.util.leafdupe.LeafDupePacketTracker.reset();
       autismclient.util.leafdupe.LeafDupePacketTracker.init(0);
    }
 
@@ -1366,7 +1366,7 @@ public final class LeafDupeModule extends Module {
          init_ac.close();
       }
 
-      autismclient.util.leafdupe.LeafDupePacketTracker.init_V();
+      autismclient.util.leafdupe.LeafDupePacketTracker.reset();
    }
 
    private void close() {
@@ -1421,7 +1421,7 @@ public final class LeafDupeModule extends Module {
          } else if (this.init_InteractionHand != InteractionHand.MAIN_HAND || LeafDupeModule.this.init_Z_I_8(this.init_I)) {
             Vec3 eye = LeafDupeModule.this.init_Vec3_5();
             float lastYaw = LeafDupeModule.this.init_F_6();
-            float[] aim = autismclient.util.leafdupe.LeafDupeValidator.init_FArr_Vec3(eye, autismclient.util.leafdupe.LeafDupeValidator.init(eye, this.init_BlockPos), lastYaw);
+            float[] aim = autismclient.util.leafdupe.LeafDupeValidator.aimAt(eye, autismclient.util.leafdupe.LeafDupeValidator.init(eye, this.init_BlockPos), lastYaw);
             LeafDupeModule.init_V_F(aim[0], aim[1], 100);
          } else if (autismclient.util.InventorySlotArbiter.beginActionGroup("leaf-dupe")) {
             try {

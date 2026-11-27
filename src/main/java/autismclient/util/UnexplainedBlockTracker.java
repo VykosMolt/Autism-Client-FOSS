@@ -37,7 +37,7 @@ public final class UnexplainedBlockTracker {
       }
    }
 
-   public void init_V_DataUtil_StreamUti(UnexplainedBlockTracker.Inner_StreamUtil change) {
+   public void onChange(UnexplainedBlockTracker.Inner_StreamUtil change) {
       if (change != null && change.init_BlockPos != null && !change.init_Str.equals(change.load)) {
          long chunk = init_J_BlockPos(change.init_BlockPos);
          Deque<UnexplainedBlockTracker.Inner_StreamUtil> burst = this.load_Map.computeIfAbsent(chunk, k -> new ArrayDeque<>());
@@ -48,7 +48,7 @@ public final class UnexplainedBlockTracker {
          }
 
          if (burst.stream().map(c -> c.init_BlockPos.asLong()).distinct().count() > 8L) {
-            this.init_V(change.init_BlockPos, change.init_J + 3500L);
+            this.suppress(change.init_BlockPos, change.init_J + 3500L);
          } else if (this.read_Map.getOrDefault(chunk, 0L) <= change.init_J && !this.init_Z(change.init_BlockPos, change.init_J)) {
             if (this.init_Map.size() >= 1024) {
                this.init_Map.remove(this.init_Map.keySet().iterator().next());
@@ -59,7 +59,7 @@ public final class UnexplainedBlockTracker {
       }
    }
 
-   public void init_V(BlockPos pos, long until) {
+   public void suppress(BlockPos pos, long until) {
       long chunk = init_J_BlockPos(pos);
       this.read_Map.merge(chunk, until, Math::max);
       this.init_Map.values().removeIf(c -> init_J_BlockPos(c.init_BlockPos) == chunk);
@@ -123,7 +123,7 @@ public final class UnexplainedBlockTracker {
       this.load_List.removeIf(s -> now - s.init_J > 14000L);
    }
 
-   public List<UnexplainedBlockTracker.Inner_BufferHelper> init_List_J(long now) {
+   public List<UnexplainedBlockTracker.Inner_BufferHelper> activeReadings(long now) {
       return this.load_List
          .stream()
          .map(s -> s.init_DataUtil_BufferHel)
@@ -133,7 +133,7 @@ public final class UnexplainedBlockTracker {
          .toList();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_Map.clear();
       this.load_Map.clear();
       this.read_Map.clear();
@@ -149,8 +149,8 @@ public final class UnexplainedBlockTracker {
       return (long)(p.getX() >> 4) << 32 ^ p.getZ() >> 4 & 4294967295L;
    }
 
-   public record Inner_BufferHelper(BlockPos init_BlockPos, int init_I, int load, long init_J) {
-      public String init_Str() {
+   public record Inner_BufferHelper(BlockPos pos, int init_I, int load, long init_J) {
+      public String label() {
          return this.init_I > 0 && this.load > 0 ? "Unexplained block changes" : (this.init_I > 0 ? "Unexplained placements" : "Unexplained breaks");
       }
    }

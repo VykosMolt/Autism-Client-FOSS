@@ -65,12 +65,12 @@ public final class TabPlayerListParser {
 
       init(byName);
       List<TabPlayerListParser.ParsedPlayer> result = new ArrayList<>(byName.values());
-      result.sort((a, b) -> a.init_Str().compareToIgnoreCase(b.init_Str()));
+      result.sort((a, b) -> a.name().compareToIgnoreCase(b.name()));
       return result;
    }
 
    private static void init(Map<String, TabPlayerListParser.ParsedPlayer> byName) {
-      if (!byName.isEmpty() && !byName.values().stream().allMatch(TabPlayerListParser.ParsedPlayer::init_Z)) {
+      if (!byName.isEmpty() && !byName.values().stream().allMatch(TabPlayerListParser.ParsedPlayer::hasPrefix)) {
          List<String> keys = new ArrayList<>(byName.keySet());
          keys.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
@@ -84,12 +84,12 @@ public final class TabPlayerListParser {
 
                   for (String key : keys) {
                      TabPlayerListParser.ParsedPlayer player = byName.get(key);
-                     if (player != null && !player.init_Z()) {
+                     if (player != null && !player.hasPrefix()) {
                         int nameIdx = lowerHeader.indexOf(key);
                         if (nameIdx > 0) {
                            String rank = read_Str(header.substring(0, nameIdx));
                            if (!rank.isBlank()) {
-                              byName.put(key, new TabPlayerListParser.ParsedPlayer(player.init_Str(), rank, null));
+                              byName.put(key, new TabPlayerListParser.ParsedPlayer(player.name(), rank, null));
                               break;
                            }
                         }
@@ -107,14 +107,14 @@ public final class TabPlayerListParser {
    }
 
    private static boolean init(GameProfile profile) {
-      return profile != null && init_Z(profile.name());
+      return profile != null && isRealPlayerName(profile.name());
    }
 
-   public static boolean init_Z(String name) {
-      return load_Z(name) && !read_Z(name);
+   public static boolean isRealPlayerName(String name) {
+      return isPlausibleName(name) && !read_Z(name);
    }
 
-   public static boolean load_Z(String name) {
+   public static boolean isPlausibleName(String name) {
       if (name == null) {
          return false;
       }
@@ -149,8 +149,8 @@ public final class TabPlayerListParser {
       TabPlayerListParser.ParsedPlayer existing = byName.get(key);
       if (existing == null) {
          byName.put(key, new TabPlayerListParser.ParsedPlayer(name, prefix, prefixComponent));
-      } else if (!existing.init_Z() && prefix != null && !prefix.isBlank()) {
-         byName.put(key, new TabPlayerListParser.ParsedPlayer(existing.init_Str(), prefix, prefixComponent));
+      } else if (!existing.hasPrefix() && prefix != null && !prefix.isBlank()) {
+         byName.put(key, new TabPlayerListParser.ParsedPlayer(existing.name(), prefix, prefixComponent));
       }
    }
 
@@ -170,7 +170,7 @@ public final class TabPlayerListParser {
       }
 
       String name = load_Str(text);
-      return !name.isBlank() && load_Z(name) && !read_Z(name) ? new TabPlayerListParser.RawEntry(name, rank, init_MutableComponent(display)) : null;
+      return !name.isBlank() && isPlausibleName(name) && !read_Z(name) ? new TabPlayerListParser.RawEntry(name, rank, init_MutableComponent(display)) : null;
    }
 
    private static MutableComponent init_MutableComponent(Component display) {
@@ -333,8 +333,8 @@ public final class TabPlayerListParser {
    private record RawEntry(String init_Str, String load, Component init_Component) {
    }
 
-   public record ParsedPlayer(String init_Str, String load, Component init_Component) {
-      public boolean init_Z() {
+   public record ParsedPlayer(String name, String load, Component prefixComponent) {
+      public boolean hasPrefix() {
          return this.load != null && !this.load.isBlank();
       }
    }

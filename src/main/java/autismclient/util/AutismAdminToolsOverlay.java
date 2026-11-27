@@ -645,7 +645,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.init_V_AutismAdminToolsOv(
          new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.ACTION, preview, null, "edit-item-stack")
       );
-      List<String> lines = ItemNbtInspector.init_List_Str(module.value("nbt-item-stack"));
+      List<String> lines = ItemNbtInspector.prettyLines(module.value("nbt-item-stack"));
       int x = preview.read() + 6;
       int y = preview.write() + 14 + 3;
       int width = Math.max(1, preview.update() - 12);
@@ -684,14 +684,14 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       int cursor = x;
       int remaining = maxWidth;
 
-      for (ItemNbtInspector.Inner_TaskQueue token : ItemNbtInspector.init_List_Str_I(line, context.init_TableIndex().colors().textPrimary)) {
-         if (token != null && token.init_Str() != null && !token.init_Str().isEmpty() && remaining > 0) {
-            String text = context.init_PoolEntry().ellipsize(token.init_Str(), remaining);
-            context.init_PoolEntry().draw(context.init_GuiGraphicsExtract(), text, cursor, y, token.init_I());
+      for (ItemNbtInspector.Inner_TaskQueue token : ItemNbtInspector.highlight(line, context.init_TableIndex().colors().textPrimary)) {
+         if (token != null && token.text() != null && !token.text().isEmpty() && remaining > 0) {
+            String text = context.init_PoolEntry().ellipsize(token.text(), remaining);
+            context.init_PoolEntry().draw(context.init_GuiGraphicsExtract(), text, cursor, y, token.color());
             int width = context.init_PoolEntry().measureWidth(text);
             cursor += width;
             remaining -= width;
-            if (!text.equals(token.init_Str())) {
+            if (!text.equals(token.text())) {
                break;
             }
          }

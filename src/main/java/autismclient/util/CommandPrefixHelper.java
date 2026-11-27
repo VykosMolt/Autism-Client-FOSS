@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CommandPrefixHelper {
-   public static final List<String> init_List = List.of(".", "%", "-", "_", "*", "#", "@", "&", "=");
+   public static final List<String> ALLOWED_PREFIXES = List.of(".", "%", "-", "_", "*", "#", "@", "&", "=");
    private static volatile String write;
    private static volatile String update;
    private static volatile int init_I = -2147483648;
@@ -13,7 +13,7 @@ public final class CommandPrefixHelper {
    private CommandPrefixHelper() {
    }
 
-   public static String init_Str() {
+   public static String currentPrefix() {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       String stored = module == null ? AutismConfig.getGlobal().commandPrefix : module.getCommandPrefix();
       String safeStored = stored == null ? "" : stored;
@@ -23,27 +23,27 @@ public final class CommandPrefixHelper {
          return cachedPrefix;
       }
 
-      String normalized = init_Str(safeStored);
+      String normalized = normalizePrefix(safeStored);
       write = safeStored;
       update = normalized;
       return normalized;
    }
 
-   public static String load_Str() {
+   public static String defaultPrefix() {
       return ".";
    }
 
-   public static String init_Str(String prefix) {
+   public static String normalizePrefix(String prefix) {
       String selected = prefix == null ? "" : prefix.trim();
-      return init_List.contains(selected) ? selected : load_Str();
+      return ALLOWED_PREFIXES.contains(selected) ? selected : defaultPrefix();
    }
 
    public static boolean init_Z(String prefix) {
       String selected = prefix == null ? "" : prefix.trim();
-      return init_List.contains(selected);
+      return ALLOWED_PREFIXES.contains(selected);
    }
 
-   public static List<String> read_List() {
+   public static List<String> moduleNames() {
       int revision = autismclient.modules.al.init_I();
       List<String> names = load_List;
       if (init_I != revision) {

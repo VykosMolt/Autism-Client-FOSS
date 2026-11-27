@@ -1049,8 +1049,8 @@ public final class L {
             form,
             proof
          );
-         status = result.init_I();
-         r = result.init_JsonObject();
+         status = result.status();
+         r = result.body();
          if ((
                status == 401
                   || r != null
@@ -1191,8 +1191,8 @@ public final class L {
                         retryForm,
                         retryProof
                      );
-                     status = retry.init_I();
-                     r = retry.init_JsonObject();
+                     status = retry.status();
+                     r = retry.body();
                   }
                }
             } catch (Throwable var14) {

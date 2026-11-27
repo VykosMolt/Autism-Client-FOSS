@@ -22,7 +22,7 @@ public final class OnlinePlayerCollector {
       LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
-         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
+         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
          CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.Inner_DataUtil() {
             @Override
             public boolean isCancelled() {

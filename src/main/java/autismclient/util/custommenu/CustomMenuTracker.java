@@ -17,12 +17,12 @@ public final class CustomMenuTracker {
       init.load(packet, phase);
    }
 
-   public static CustomMenuSnapshot init_CustomMenuSnapshot() {
-      return init.init_CustomMenuSnapshot();
+   public static CustomMenuSnapshot snapshot() {
+      return init.snapshot();
    }
 
-   public static long init_J() {
-      return init.init_J();
+   public static long generation() {
+      return init.generation();
    }
 
    public static void init(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
@@ -33,7 +33,7 @@ public final class CustomMenuTracker {
       init.init(seenGeneration, replacement, phase);
    }
 
-   public static void init_V() {
-      init.init_V();
+   public static void clear() {
+      init.clear();
    }
 }

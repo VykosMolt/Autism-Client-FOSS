@@ -34,7 +34,7 @@ public final class ItemNbtInspector {
    private ItemNbtInspector() {
    }
 
-   public static ItemNbtInspector.Inner_ConfigStore init_az_ConfigStore_ItemStack(ItemStack source) {
+   public static ItemNbtInspector.Inner_ConfigStore inspect(ItemStack source) {
       ItemStack stack = source == null ? ItemStack.EMPTY : source.copy();
       String title = stack.isEmpty() ? "Item NBT" : stack.getHoverName().getString();
       ItemNbtInspector.Inner_CachePool nice = new ItemNbtInspector.Inner_CachePool(title);
@@ -326,7 +326,7 @@ public final class ItemNbtInspector {
       boolean truncated = rawSnbt != null && rawSnbt.length() > 40000;
       String shown = truncated ? rawSnbt.substring(0, 40000) : rawSnbt;
 
-      for (String line : init_List_Str(shown)) {
+      for (String line : prettyLines(shown)) {
          builder.init(line);
       }
 
@@ -561,11 +561,11 @@ public final class ItemNbtInspector {
       return var10000;
    }
 
-   public static String init_Str_Str(String text) {
-      return String.join("\n", init_List_Str(text));
+   public static String prettyPrint(String text) {
+      return String.join("\n", prettyLines(text));
    }
 
-   public static List<String> init_List_Str(String text) {
+   public static List<String> prettyLines(String text) {
       if (text != null && !text.isBlank()) {
          List<String> out = new ArrayList<>();
          StringBuilder current = new StringBuilder();
@@ -641,7 +641,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   public static List<ItemNbtInspector.Inner_TaskQueue> init_List_Str_I(String text, int fallbackColor) {
+   public static List<ItemNbtInspector.Inner_TaskQueue> highlight(String text, int fallbackColor) {
       if (text != null && !text.isEmpty()) {
          List<ItemNbtInspector.Inner_TaskQueue> tokens = new ArrayList<>();
          int i = 0;
@@ -731,7 +731,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   public record Inner_BufferHelper(String init_Str, int init_I, List<ItemNbtInspector.Inner_TaskQueue> init_List) {
+   public record Inner_BufferHelper(String text, int color, List<ItemNbtInspector.Inner_TaskQueue> tokens) {
       public Inner_BufferHelper(String text, int color) {
          this(text, color, List.of());
       }
@@ -755,7 +755,7 @@ public final class ItemNbtInspector {
 
       private void init(String text) {
          String safe = text == null ? "" : text;
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(safe, UiColorPalette.softWhite(), ItemNbtInspector.init_List_Str_I(safe, UiColorPalette.softWhite())));
+         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(safe, UiColorPalette.softWhite(), ItemNbtInspector.highlight(safe, UiColorPalette.softWhite())));
       }
 
       private void init_V() {
@@ -770,7 +770,7 @@ public final class ItemNbtInspector {
          StringBuilder out = new StringBuilder(this.init_Str);
 
          for (ItemNbtInspector.Inner_BufferHelper line : this.init_List) {
-            out.append('\n').append(line.init_Str());
+            out.append('\n').append(line.text());
          }
 
          return out.toString();
@@ -779,9 +779,9 @@ public final class ItemNbtInspector {
 
    public record Inner_ConfigStore(
       String init_Str,
-      ItemStack init_ItemStack,
-      List<ItemNbtInspector.Inner_BufferHelper> init_List,
-      List<ItemNbtInspector.Inner_BufferHelper> load_List,
+      ItemStack stack,
+      List<ItemNbtInspector.Inner_BufferHelper> lines,
+      List<ItemNbtInspector.Inner_BufferHelper> rawLines,
       String load_Str,
       String read,
       String write
@@ -826,17 +826,17 @@ public final class ItemNbtInspector {
 
       String load_Str();
 
-      ItemStack init_ItemStack();
+      ItemStack stack();
 
-      List<ItemNbtInspector.Inner_BufferHelper> init_List();
+      List<ItemNbtInspector.Inner_BufferHelper> lines();
 
-      List<ItemNbtInspector.Inner_BufferHelper> load_List();
+      List<ItemNbtInspector.Inner_BufferHelper> rawLines();
 
       String write();
 
       String update();
    }
 
-   public record Inner_TaskQueue(String init_Str, int init_I) {
+   public record Inner_TaskQueue(String text, int color) {
    }
 }

@@ -158,7 +158,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(WaitGamemodeChangeAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.WaitGamemodeEntry condition = new MacroWaitRegistry.WaitGamemodeEntry(action, autismclient.util.FakeGamemodeManager.init_W_StreamUtil(), future);
+      MacroWaitRegistry.WaitGamemodeEntry condition = new MacroWaitRegistry.WaitGamemodeEntry(action, autismclient.util.FakeGamemodeManager.snapshot(), future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -1003,16 +1003,16 @@ public class MacroWaitRegistry {
 
       WaitGamemodeEntry(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
          this.init_aI = action == null ? new WaitGamemodeChangeAction() : action;
-         this.init_W_StreamUtil = baseline == null ? autismclient.util.FakeGamemodeManager.init_W_StreamUtil() : baseline;
+         this.init_W_StreamUtil = baseline == null ? autismclient.util.FakeGamemodeManager.snapshot() : baseline;
          this.init_CompletableFuture = future;
       }
 
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
-         autismclient.util.FakeGamemodeManager.Inner_StreamUtil now = autismclient.util.FakeGamemodeManager.init_W_StreamUtil();
-         return now.init_J() > this.init_W_StreamUtil.init_J() && this.init_aI.init(this.init(now.init_GameType()))
+         autismclient.util.FakeGamemodeManager.Inner_StreamUtil now = autismclient.util.FakeGamemodeManager.snapshot();
+         return now.realRevision() > this.init_W_StreamUtil.realRevision() && this.init_aI.init(this.init(now.realMode()))
             ? true
-            : this.init_aI.detectFake && now.load_J() > this.init_W_StreamUtil.load_J() && this.init_aI.init(this.init(now.load_GameType()));
+            : this.init_aI.detectFake && now.fakeRevision() > this.init_W_StreamUtil.fakeRevision() && this.init_aI.init(this.init(now.displayedMode()));
       }
 
       private GameType init(GameType mode) {

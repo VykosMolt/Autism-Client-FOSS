@@ -16,11 +16,11 @@ public final class PacketFilterListCodec {
       return value == null ? "" : value.replace(',', '|');
    }
 
-   public static boolean init_Z(String optionId) {
+   public static boolean isC2sOption(String optionId) {
       return optionId != null && optionId.toLowerCase(Locale.ROOT).contains("c2s");
    }
 
-   public static Set<Class<? extends Packet<?>>> init_Set(String value, boolean c2s) {
+   public static Set<Class<? extends Packet<?>>> parse(String value, boolean c2s) {
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>();
       Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
@@ -34,7 +34,7 @@ public final class PacketFilterListCodec {
       return packets;
    }
 
-   public static List<String> init_List(String value, boolean c2s) {
+   public static List<String> invalidEntries(String value, boolean c2s) {
       List<String> invalid = new ArrayList<>();
       Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
@@ -63,7 +63,7 @@ public final class PacketFilterListCodec {
    }
 
    public static String init_Str(String value, boolean c2s) {
-      return init(init_Set(value, c2s));
+      return init(parse(value, c2s));
    }
 
    private static List<String> init_List(String value) {
@@ -89,7 +89,7 @@ public final class PacketFilterListCodec {
          return packetClass;
       }
 
-      String friendly = PacketNameResolver.init_Str_Str(token);
+      String friendly = PacketNameResolver.friendlyName(token);
       packetClass = PacketTypeRegistry.resolvePacketClass(friendly);
       if (packetClass != null && pool.contains(packetClass)) {
          return packetClass;
@@ -115,7 +115,7 @@ public final class PacketFilterListCodec {
       String registryNoSuffix = registry.endsWith("packet") ? registry.substring(0, registry.length() - 6) : registry;
       String simple = load(candidate.getSimpleName());
       String full = load(candidate.getName());
-      String friendly = load(PacketNameResolver.init_Str_Class(candidate));
+      String friendly = load(PacketNameResolver.nameOfClass(candidate));
       return needle.equals(registry)
          || needle.equals(registryNoSuffix)
          || needle.equals(simple)

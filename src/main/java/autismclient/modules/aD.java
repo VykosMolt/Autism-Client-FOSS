@@ -153,7 +153,7 @@ public final class aD {
       autismclient.util.bi.init_V();
       OverlayManager.getInstance().closeAll();
       autismclient.util.BlockPreviewRenderer.load();
-      PayloadStudyTracker.init_V();
+      PayloadStudyTracker.reset();
       PayloadSubscriptionManager.load();
       AutismClientMessaging.clearClientMessages();
       AutismClientMessaging.clearChatInputHistory();
@@ -168,7 +168,7 @@ public final class aD {
          MacroExecutor.stopAll();
       }
 
-      autismclient.util.ContainerCloseGuard.init_V();
+      autismclient.util.ContainerCloseGuard.clear();
       autismclient.util.macro.PacketGateManager.clearAll();
       BlinkPacketManager.disableAndFlush();
       autismclient.util.SilentRotationManager.resetAll();

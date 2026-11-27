@@ -18,9 +18,9 @@ public final class RealGamemodeSender {
          return FakeGamemodeManager.Inner_DataUtil.load("Unknown game mode.");
       }
 
-      boolean clearedFake = FakeGamemodeManager.init_W_StreamUtil().init_Z();
+      boolean clearedFake = FakeGamemodeManager.snapshot().fakeActive();
       if (clearedFake) {
-         FakeGamemodeManager.init_W_DataUtil();
+         FakeGamemodeManager.clearFake();
       }
 
       mc.player.connection.send(new ServerboundChangeGameModePacket(mode));

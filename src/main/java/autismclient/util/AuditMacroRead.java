@@ -37,8 +37,8 @@ public final class AuditMacroRead {
       }
    }
 
-   static boolean exists_Z_File(File var0) {
-      return exists_Z_Path_LinkOptionArr(var0.toPath());
+   static boolean fileExists(File var0) {
+      return pathExists(var0.toPath());
    }
 
    static boolean duplicateExists(File var0) {
@@ -50,7 +50,7 @@ public final class AuditMacroRead {
       return var0 != null && var1 != null && key(var0.toPath()).equals(key(var1.toPath()));
    }
 
-   static boolean exists_Z_Path_LinkOptionArr(Path var0, LinkOption... var1) {
+   static boolean pathExists(Path var0, LinkOption... var1) {
       return pending.containsKey(key(var0)) || Files.exists(var0, var1);
    }
 

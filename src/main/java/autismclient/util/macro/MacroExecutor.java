@@ -2401,11 +2401,11 @@ public class MacroExecutor {
       }
 
       String normalizedExpected = parsed.read();
-      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.init_Str_Packet_Str(packet, direction))) {
+      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.directionalName(packet, direction))) {
          return true;
       }
 
-      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.init_Str_Packet(packet))) {
+      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.nameOf(packet))) {
          return true;
       }
 
@@ -2832,7 +2832,7 @@ public class MacroExecutor {
    private static List<String> init_List_Minecraft_ClientPacketListen(Minecraft mc, final ClientPacketListener connection) {
       String self = mc.player == null ? "" : mc.player.getName().getString();
       LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
-      List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
+      List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
       CommandTabNameProber.Inner_DataUtil control = new CommandTabNameProber.Inner_DataUtil() {
          @Override
          public boolean isCancelled() {
@@ -3030,12 +3030,12 @@ public class MacroExecutor {
          load_V_Str("TP " + action.init());
 
          try {
-            while (close_Z() && PacedTpJobManager.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == PacedTpJobManager.Inner_DataUtil.PENDING) {
+            while (close_Z() && PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
                pop();
             }
          } finally {
-            if (PacedTpJobManager.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == PacedTpJobManager.Inner_DataUtil.PENDING) {
-               mc.execute(() -> PacedTpJobManager.init(handle.init_J(), "macro stopped"));
+            if (PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
+               mc.execute(() -> PacedTpJobManager.init(handle.id(), "macro stopped"));
             }
          }
       }
@@ -3971,7 +3971,7 @@ public class MacroExecutor {
       }
 
       LinkedHashMap<String, MacroVarValue> properties = new LinkedHashMap<>();
-      String packetName = PacketNameResolver.init_Str_Packet_Str(packet, direction);
+      String packetName = PacketNameResolver.directionalName(packet, direction);
       properties.put("name", MacroVarValue.ofText(packetName));
       properties.put("class", MacroVarValue.ofText(packet.getClass().getName()));
       properties.put("direction", MacroVarValue.ofText(direction));
@@ -9490,7 +9490,7 @@ public class MacroExecutor {
 
                   String target = load_AtomicReference.get();
                   if (init_Z_Str_2(target, packet, direction)) {
-                     init_AtomicReference.set(direction + " " + PacketNameResolver.init_Str_Packet_Str(packet, direction));
+                     init_AtomicReference.set(direction + " " + PacketNameResolver.directionalName(packet, direction));
                      f = init_CompletableFuture;
                   }
                }
@@ -11313,7 +11313,7 @@ public class MacroExecutor {
          }
 
          String dir = this.init_Str != null && !this.init_Str.isBlank() ? this.init_Str + " " : "";
-         return dir + PacketNameResolver.init_Str_Packet_Str(this.init_Packet, this.init_Str == null ? "" : this.init_Str);
+         return dir + PacketNameResolver.directionalName(this.init_Packet, this.init_Str == null ? "" : this.init_Str);
       }
 
       public String load() {

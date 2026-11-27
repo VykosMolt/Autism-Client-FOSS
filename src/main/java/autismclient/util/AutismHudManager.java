@@ -1153,7 +1153,7 @@ public final class AutismHudManager {
             break;
          case "coordinates":
             Vec3 v = init_Vec3();
-            double[] p = CoordinateSpoofer.init_DArr(v.x, v.y, v.z);
+            double[] p = CoordinateSpoofer.spoof(v.x, v.y, v.z);
             lines.add(init_al_NetHelper_Str(id, "Pos", init_Str_D(p[0], p[1], p[2])));
             break;
          case "nether_coords":
@@ -1386,7 +1386,7 @@ public final class AutismHudManager {
          Identifier dimension = init_Minecraft.level.dimension().identifier();
          String path = dimension.getPath();
          Vec3 v = init_Vec3();
-         double[] p = CoordinateSpoofer.init_DArr(v.x, v.y, v.z);
+         double[] p = CoordinateSpoofer.spoof(v.x, v.y, v.z);
          double x = p[0];
          double y = p[1];
          double z = p[2];

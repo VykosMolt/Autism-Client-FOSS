@@ -18,7 +18,7 @@ public final class RemoteViewController {
    private RemoteViewController() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isActive() {
       return !AutismLiteVariant.enabled() && !autismclient.e.TableIndex.init() ? false : init_UUID != null;
    }
 
@@ -26,7 +26,7 @@ public final class RemoteViewController {
       return init_Str;
    }
 
-   public static RemoteViewController.Inner_DataUtil init_cd_DataUtil(Player player) {
+   public static RemoteViewController.Inner_DataUtil startViewing(Player player) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null && mc.getConnection() != null) {
          if (player == null || player.isRemoved() || player.level() != mc.level) {
@@ -41,12 +41,12 @@ public final class RemoteViewController {
             return new RemoteViewController.Inner_DataUtil(false, "Disable Freecam first.");
          }
 
-         if (init_Z() && player.getUUID().equals(init_UUID)) {
+         if (isActive() && player.getUUID().equals(init_UUID)) {
             init(false);
             return new RemoteViewController.Inner_DataUtil(true, "Remote view stopped.");
          }
 
-         if (init_Z()) {
+         if (isActive()) {
             init(false);
          }
 
@@ -87,8 +87,8 @@ public final class RemoteViewController {
       }
    }
 
-   public static void init_V() {
-      if (init_Z()) {
+   public static void tick() {
+      if (isActive()) {
          Minecraft mc = Minecraft.getInstance();
          Player current = init_Player;
          if (mc == null
@@ -108,7 +108,7 @@ public final class RemoteViewController {
    public static Player init_Player() {
       Minecraft mc = Minecraft.getInstance();
       Player current = init_Player;
-      return init_Z() && current != null && !current.isRemoved() && mc != null && mc.level == init_ClientLevel && mc.getCameraEntity() == current
+      return isActive() && current != null && !current.isRemoved() && mc != null && mc.level == init_ClientLevel && mc.getCameraEntity() == current
          ? current
          : null;
    }
@@ -128,7 +128,7 @@ public final class RemoteViewController {
    }
 
    public static void init(Minecraft mc, Entity restore) {
-      if (mc != null && restore != null && init_Z() && restore == init_Player && !restore.isRemoved() && mc.getCameraEntity() == mc.player) {
+      if (mc != null && restore != null && isActive() && restore == init_Player && !restore.isRemoved() && mc.getCameraEntity() == mc.player) {
          mc.setCameraEntity(restore);
       }
    }
@@ -151,6 +151,6 @@ public final class RemoteViewController {
       init_Z = false;
    }
 
-   public record Inner_DataUtil(boolean init_Z, String init_Str) {
+   public record Inner_DataUtil(boolean success, String message) {
    }
 }

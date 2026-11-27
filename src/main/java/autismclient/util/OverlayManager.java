@@ -485,7 +485,7 @@ public class OverlayManager {
    public void bringOwnerToFront(Object childComponent) {
       if (childComponent != null) {
          for (AutismOverlay overlay : this.overlays) {
-            if (overlay instanceof AutismCustomFilterOverlay filterOverlay && filterOverlay.init_AutismPacketSelect() == childComponent) {
+            if (overlay instanceof AutismCustomFilterOverlay filterOverlay && filterOverlay.getPacketSelector() == childComponent) {
                this.bringToFront(overlay);
                return;
             }

@@ -103,7 +103,7 @@ public final class PacketCommandBuilder {
    private PacketCommandBuilder() {
    }
 
-   public static PacketCommandBuilder.Inner_DataUtil init_bm_DataUtil_Str(String rawArgs) {
+   public static PacketCommandBuilder.Inner_DataUtil prepareArgs(String rawArgs) {
       List<String> tokens = init_List_Str(rawArgs == null ? "" : rawArgs);
       boolean dryRun = false;
       List<String> kept = new ArrayList<>();
@@ -122,7 +122,7 @@ public final class PacketCommandBuilder {
       return new PacketCommandBuilder.Inner_DataUtil(init_Str_List(kept), dryRun);
    }
 
-   public static PacketCommandBuilder.Inner_StreamUtil init_bm_StreamUtil_Class_Str(Class<? extends Packet<?>> packetClass, String rawArgs) {
+   public static PacketCommandBuilder.Inner_StreamUtil build(Class<? extends Packet<?>> packetClass, String rawArgs) {
       if (packetClass == null) {
          return PacketCommandBuilder.Inner_StreamUtil.init("Packet class is missing.");
       }
@@ -149,7 +149,7 @@ public final class PacketCommandBuilder {
             Packet<?> noArg = init_Packet_Class(packetClass);
             return noArg != null
                ? PacketCommandBuilder.Inner_StreamUtil.init(noArg, "no-arg")
-               : PacketCommandBuilder.Inner_StreamUtil.init("Packet needs arguments. " + init_Str_Class(packetClass));
+               : PacketCommandBuilder.Inner_StreamUtil.init("Packet needs arguments. " + usage(packetClass));
          }
 
          if (packetClass.isRecord()) {
@@ -160,13 +160,13 @@ public final class PacketCommandBuilder {
          }
 
          PacketCommandBuilder.Inner_StreamUtil schema = write(packetClass, args);
-         return schema != null ? schema : PacketCommandBuilder.Inner_StreamUtil.init("Could not build " + read_Str(packetClass) + ". " + init_Str_Class(packetClass));
+         return schema != null ? schema : PacketCommandBuilder.Inner_StreamUtil.init("Could not build " + read_Str(packetClass) + ". " + usage(packetClass));
       } else {
-         return PacketCommandBuilder.Inner_StreamUtil.load(init_Str_Class(packetClass));
+         return PacketCommandBuilder.Inner_StreamUtil.load(usage(packetClass));
       }
    }
 
-   public static String init_Str_Class(Class<? extends Packet<?>> packetClass) {
+   public static String usage(Class<? extends Packet<?>> packetClass) {
       if (packetClass == null) {
          return "";
       }
@@ -174,8 +174,8 @@ public final class PacketCommandBuilder {
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
       List<String> fields = new ArrayList<>();
       if (schema != null) {
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
-            fields.add(field.init_Str() + "=" + init_Str_Str_Str(field.load(), field.read()) + " (" + load(field.load(), field.read()) + ")");
+         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+            fields.add(field.name() + "=" + init_Str_Str_Str(field.load(), field.read()) + " (" + load(field.load(), field.read()) + ")");
          }
       }
 
@@ -205,7 +205,7 @@ public final class PacketCommandBuilder {
       return out.toString();
    }
 
-   public static CompletableFuture<Suggestions> init_CompletableFuture_Class_SuggestionsBuilder(
+   public static CompletableFuture<Suggestions> suggest(
       Class<? extends Packet<?>> packetClass, SuggestionsBuilder builder
    ) {
       if (packetClass == null) {
@@ -292,7 +292,7 @@ public final class PacketCommandBuilder {
             sourceBytes = init_BArr_Str(fullPacket ? fullPacketHex : bodyHex);
          }
 
-         Packet<?> packet = fullPacket ? PacketStreamCodecDecoder.init_bp_CachePool(packetClass, sourceBytes, null).init_Packet() : PacketStreamCodecDecoder.init_Packet(packetClass, sourceBytes, null);
+         Packet<?> packet = fullPacket ? PacketStreamCodecDecoder.decodeFrame(packetClass, sourceBytes, null).packet() : PacketStreamCodecDecoder.decodeBody(packetClass, sourceBytes, null);
          return PacketCommandBuilder.Inner_StreamUtil.init(packet, fullPacket ? "minecraft packet STREAM_CODEC" : "minecraft body STREAM_CODEC");
       } catch (IllegalArgumentException e) {
          return PacketCommandBuilder.Inner_StreamUtil.init(e.getMessage());
@@ -732,18 +732,18 @@ public final class PacketCommandBuilder {
 
    private static PacketCommandBuilder.Inner_StreamUtil write(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
-      if (schema != null && !schema.init_List().isEmpty()) {
+      if (schema != null && !schema.fields().isEmpty()) {
          String firstError = null;
 
          for (Constructor<?> constructor : packetClass.getDeclaredConstructors()) {
-            if (constructor.getParameterCount() == schema.init_List().size() && !init_Z_Constructor(constructor)) {
+            if (constructor.getParameterCount() == schema.fields().size() && !init_Z_Constructor(constructor)) {
                try {
-                  Object[] values = new Object[schema.init_List().size()];
+                  Object[] values = new Object[schema.fields().size()];
                   Class<?>[] parameterTypes = constructor.getParameterTypes();
                   List<String> names = new ArrayList<>();
 
-                  for (int i = 0; i < schema.init_List().size(); i++) {
-                     String fieldName = schema.init_List().get(i).init_Str();
+                  for (int i = 0; i < schema.fields().size(); i++) {
+                     String fieldName = schema.fields().get(i).name();
                      names.add(fieldName);
                      values[i] = init_Obj_Map(args, fieldName, parameterTypes[i], parameterTypes[i]);
                   }
@@ -919,11 +919,11 @@ public final class PacketCommandBuilder {
       }
 
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
-      if (schema != null && !schema.init_List().isEmpty()) {
+      if (schema != null && !schema.fields().isEmpty()) {
          List<String> out = new ArrayList<>();
 
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
-            out.add(field.init_Str());
+         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+            out.add(field.name());
          }
 
          return init_List_List(out);
@@ -1096,8 +1096,8 @@ public final class PacketCommandBuilder {
                return null;
             }
 
-            for (PacketSchemaRegistry.Inner_DataUtil schemaField : schema.init_List()) {
-               if (sync(schemaField.init_Str()).equals(field)) {
+            for (PacketSchemaRegistry.Inner_DataUtil schemaField : schema.fields()) {
+               if (sync(schemaField.name()).equals(field)) {
                   try {
                      Class<?> cls = Class.forName(load_Str(schemaField.load()));
                      return (Class<? extends Enum<?>>)(cls.isEnum() ? cls : null);
@@ -2362,10 +2362,10 @@ public final class PacketCommandBuilder {
       write = List.copyOf(names);
    }
 
-   public record Inner_DataUtil(String init_Str, boolean init_Z) {
+   public record Inner_DataUtil(String args, boolean dryRun) {
    }
 
-   public record Inner_StreamUtil(Packet<?> init_Packet, boolean init_Z, boolean load_Z, String init_Str, String load_Str) {
+   public record Inner_StreamUtil(Packet<?> packet, boolean success, boolean infoOnly, String message, String source) {
       static PacketCommandBuilder.Inner_StreamUtil init(Packet<?> packet, String source) {
          return new PacketCommandBuilder.Inner_StreamUtil(packet, true, false, "", source == null ? "builder" : source);
       }

@@ -33,13 +33,13 @@ public final class PacedTpJobManager {
       return handle;
    }
 
-   public static PacedTpJobManager.Inner_CachePool init_bl_CachePool(long id) {
+   public static PacedTpJobManager.Inner_CachePool status(long id) {
       AsyncJobRegistry.Inner_StreamUtil state = init_dc.init_dc_StreamUtil(id);
       return new PacedTpJobManager.Inner_CachePool(state.init_J(), state.init_Str(), init(state.init_dc_DataUtil()), state.load_Z(), state.read(), state.load_J());
    }
 
    public static PacedTpJobManager.Inner_DataUtil init_bl_DataUtil(long id) {
-      return init_bl_CachePool(id).init_bl_DataUtil();
+      return status(id).state();
    }
 
    public static void init(long id, String reason) {
@@ -78,7 +78,7 @@ public final class PacedTpJobManager {
       return PacedTpJobManager.Inner_DataUtil.valueOf(completion.name());
    }
 
-   public record Inner_CachePool(long init_J, String init_Str, PacedTpJobManager.Inner_DataUtil init_bl_DataUtil, boolean init_Z, boolean load_Z, long load_J) {
+   public record Inner_CachePool(long init_J, String init_Str, PacedTpJobManager.Inner_DataUtil state, boolean init_Z, boolean load_Z, long load_J) {
    }
 
    public enum Inner_DataUtil {
@@ -88,6 +88,6 @@ public final class PacedTpJobManager {
       CANCELLED;
    }
 
-   public record Inner_StreamUtil(long init_J, String init_Str) {
+   public record Inner_StreamUtil(long id, String init_Str) {
    }
 }

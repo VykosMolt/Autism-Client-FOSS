@@ -300,7 +300,7 @@ public final class CommandManager {
    }
 
    public static String getPrefix() {
-      return CommandPrefixHelper.init_Str();
+      return CommandPrefixHelper.currentPrefix();
    }
 
    public static boolean hasCommandPrefix(String message) {

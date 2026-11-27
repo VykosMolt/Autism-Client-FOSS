@@ -15,7 +15,7 @@ public final class FakeGamemodeManager {
    private FakeGamemodeManager() {
    }
 
-   public static synchronized FakeGamemodeManager.Inner_DataUtil init_W_DataUtil(GameType mode) {
+   public static synchronized FakeGamemodeManager.Inner_DataUtil applyFake(GameType mode) {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.player == null || mc.gameMode == null) {
          return FakeGamemodeManager.Inner_DataUtil.load("Not connected.");
@@ -40,10 +40,10 @@ public final class FakeGamemodeManager {
       return FakeGamemodeManager.Inner_DataUtil.init("Fake gamemode: " + mode.getName());
    }
 
-   public static synchronized FakeGamemodeManager.Inner_DataUtil init_W_DataUtil() {
+   public static synchronized FakeGamemodeManager.Inner_DataUtil clearFake() {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.player == null || mc.gameMode == null) {
-         init_V();
+         reset();
          return FakeGamemodeManager.Inner_DataUtil.load("Not connected.");
       }
 
@@ -64,7 +64,7 @@ public final class FakeGamemodeManager {
       return FakeGamemodeManager.Inner_DataUtil.init("Fake gamemode reset: " + restore.getName());
    }
 
-   public static synchronized void init_V(GameType mode) {
+   public static synchronized void onRealGamemodeChanged(GameType mode) {
       if (!load_Z && mode != null) {
          if (init_GameType != mode) {
             init_GameType = mode;
@@ -80,7 +80,7 @@ public final class FakeGamemodeManager {
       }
    }
 
-   public static synchronized void init_V() {
+   public static synchronized void reset() {
       init_Z = false;
       load_Z = false;
       init_GameType = null;
@@ -89,7 +89,7 @@ public final class FakeGamemodeManager {
       load_J++;
    }
 
-   public static synchronized FakeGamemodeManager.Inner_StreamUtil init_W_StreamUtil() {
+   public static synchronized FakeGamemodeManager.Inner_StreamUtil snapshot() {
       Minecraft mc = Minecraft.getInstance();
       GameType current = mc != null && mc.gameMode != null ? mc.gameMode.getPlayerMode() : null;
       GameType real = init_GameType != null ? init_GameType : current;
@@ -164,7 +164,7 @@ public final class FakeGamemodeManager {
       return mc != null && mc.gameMode != null ? mc.gameMode.getPlayerMode() : null;
    }
 
-   public record Inner_DataUtil(boolean init_Z, String init_Str) {
+   public record Inner_DataUtil(boolean success, String message) {
       public static FakeGamemodeManager.Inner_DataUtil init(String message) {
          return new FakeGamemodeManager.Inner_DataUtil(true, message == null ? "" : message);
       }
@@ -174,6 +174,6 @@ public final class FakeGamemodeManager {
       }
    }
 
-   public record Inner_StreamUtil(GameType init_GameType, GameType load_GameType, boolean init_Z, long init_J, long load_J) {
+   public record Inner_StreamUtil(GameType realMode, GameType displayedMode, boolean fakeActive, long realRevision, long fakeRevision) {
    }
 }

@@ -21,7 +21,7 @@ public class PacketNameResolver {
       return name != null && name.endsWith("Packet") ? name.substring(0, name.length() - 6) : name;
    }
 
-   public static String init_Str_Packet(Packet<?> packet) {
+   public static String nameOf(Packet<?> packet) {
       Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
       String cached = init_ConcurrentMap.get(packetClass);
       if (cached != null) {
@@ -47,7 +47,7 @@ public class PacketNameResolver {
       return init_Str_Class_Str(packetClass, readable != null ? readable : "Unknown Packet");
    }
 
-   public static String init_Str_Packet_Str(Packet<?> packet, String direction) {
+   public static String directionalName(Packet<?> packet, String direction) {
       Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
       ConcurrentMap<Class<?>, String> classCache = init_ConcurrentMap_Str(direction);
       if (classCache != null) {
@@ -98,7 +98,7 @@ public class PacketNameResolver {
       return value;
    }
 
-   public static String init_Str_Class(Class<? extends Packet<?>> packetClass) {
+   public static String nameOfClass(Class<? extends Packet<?>> packetClass) {
       String cached = init_ConcurrentMap.get(packetClass);
       if (cached != null) {
          return cached;
@@ -136,7 +136,7 @@ public class PacketNameResolver {
       return dir + "|" + (packetClass == null ? "" : packetClass.getName());
    }
 
-   public static String init_Str_Str(String name) {
+   public static String friendlyName(String name) {
       if (name != null && !name.isEmpty()) {
          Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(name);
          if (packetClass != null) {

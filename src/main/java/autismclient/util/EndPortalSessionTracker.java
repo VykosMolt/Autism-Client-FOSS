@@ -31,21 +31,21 @@ public final class EndPortalSessionTracker {
       return true;
    }
 
-   public boolean init_Z_Obj_Obj(Object world, Object connection) {
+   public boolean isSameSession(Object world, Object connection) {
       return world != null && connection != null && this.init_Obj == world && this.load_Obj == connection;
    }
 
-   public EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil() {
+   public EndPortalMemoryCache.Inner_DataUtil getMemory() {
       return this.init_cR_DataUtil;
    }
 
-   public void init_V() {
+   public void reset() {
       this.init_Obj = this.load_Obj = null;
       this.init_Str = this.load_Str = null;
       this.init_cR_DataUtil = null;
    }
 
-   public static boolean init_Z_Z_Z(boolean skylight, boolean dragonFight) {
+   public static boolean isStrongholdDimension(boolean skylight, boolean dragonFight) {
       return skylight && !dragonFight;
    }
 }

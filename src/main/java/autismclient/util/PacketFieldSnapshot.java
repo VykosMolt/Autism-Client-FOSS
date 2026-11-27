@@ -2,16 +2,16 @@ package autismclient.util;
 
 import java.util.List;
 
-public record PacketFieldSnapshot(PacketSchemaRegistry.Inner_DataUtil init_bx_DataUtil, Object init_Obj, List<String> init_List, boolean init_Z, boolean load) {
+public record PacketFieldSnapshot(PacketSchemaRegistry.Inner_DataUtil init_bx_DataUtil, Object init_Obj, List<String> init_List, boolean readable, boolean load) {
    public PacketFieldSnapshot {
       init_List = init_List == null ? List.of() : List.copyOf(init_List);
    }
 
-   public String init_Str() {
-      return this.init_bx_DataUtil == null ? "field" : this.init_bx_DataUtil.init_Str();
+   public String name() {
+      return this.init_bx_DataUtil == null ? "field" : this.init_bx_DataUtil.name();
    }
 
-   public String load_Str() {
+   public String typeName() {
       return this.init_bx_DataUtil == null ? "Object" : this.init_bx_DataUtil.load();
    }
 
@@ -31,7 +31,7 @@ public record PacketFieldSnapshot(PacketSchemaRegistry.Inner_DataUtil init_bx_Da
       return this.init_List;
    }
 
-   public boolean load_Z() {
+   public boolean editableCandidate() {
       return this.load;
    }
 }

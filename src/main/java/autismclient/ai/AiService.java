@@ -515,7 +515,7 @@ public final class AiService {
                   this.init_AiRegions.init(this.init_AiMemoryStore.directory());
                   AiSourceKnowledge.load();
                   AiPlaybooks.load();
-                  autismclient.util.PacketSchemaRegistry.init_I();
+                  autismclient.util.PacketSchemaRegistry.schemaClassCount();
                   AiMemoryStore.prune(this.init_AiMemoryStore.directory().resolve("images"), 32);
                   synchronized (this) {
                      this.init_cd = new AiSessions(this.init_AiMemoryStore.directory());

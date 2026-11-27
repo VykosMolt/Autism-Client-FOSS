@@ -33,7 +33,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       this.windowY = 42;
    }
 
-   public static AutismItemNbtInspectOverlay init_AutismItemNbtInspe_Font(Font textRenderer) {
+   public static AutismItemNbtInspectOverlay getOrCreate(Font textRenderer) {
       if (textRenderer == null) {
          return null;
       }
@@ -45,16 +45,16 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return init_AutismItemNbtInspe;
    }
 
-   public static void load_V_8() {
+   public static void hide() {
       if (init_AutismItemNbtInspe != null) {
          init_AutismItemNbtInspe.setVisible(false);
          OverlayManager.getInstance().unregister(init_AutismItemNbtInspe);
       }
    }
 
-   public static boolean init_Z_ItemStack(ItemStack stack) {
+   public static boolean inspectStack(ItemStack stack) {
       if (stack != null && !stack.isEmpty() && init_Minecraft.font != null) {
-         AutismItemNbtInspectOverlay overlay = init_AutismItemNbtInspe_Font(init_Minecraft.font);
+         AutismItemNbtInspectOverlay overlay = getOrCreate(init_Minecraft.font);
          if (overlay == null) {
             return false;
          }
@@ -68,9 +68,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public static boolean init_Z_az_StreamUtil(ItemNbtInspector.Inner_StreamUtil inspection) {
+   public static boolean inspectSource(ItemNbtInspector.Inner_StreamUtil inspection) {
       if (inspection != null && init_Minecraft.font != null) {
-         AutismItemNbtInspectOverlay overlay = init_AutismItemNbtInspe_Font(init_Minecraft.font);
+         AutismItemNbtInspectOverlay overlay = getOrCreate(init_Minecraft.font);
          if (overlay == null) {
             return false;
          }
@@ -85,7 +85,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    public void init_V_ItemStack(ItemStack stack, int anchorX, int anchorY) {
       if (stack != null && !stack.isEmpty()) {
-         this.init_V_az_StreamUtil(ItemNbtInspector.init_az_ConfigStore_ItemStack(stack), anchorX, anchorY);
+         this.init_V_az_StreamUtil(ItemNbtInspector.inspect(stack), anchorX, anchorY);
       }
    }
 
@@ -433,7 +433,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       if (this.init_az_StreamUtil == null) {
          return List.of();
       } else {
-         return this.sync_Z ? this.init_az_StreamUtil.load_List() : this.init_az_StreamUtil.init_List();
+         return this.sync_Z ? this.init_az_StreamUtil.rawLines() : this.init_az_StreamUtil.lines();
       }
    }
 
@@ -460,14 +460,14 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_az_BufferHelper(ItemNbtInspector.Inner_BufferHelper line, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
-      if (line.init_List() != null && !line.init_List().isEmpty()) {
-         this.init_V_List_2(line.init_List(), maxWidth, target);
+      if (line.tokens() != null && !line.tokens().isEmpty()) {
+         this.init_V_List_2(line.tokens(), maxWidth, target);
       } else {
-         String text = line.init_Str();
+         String text = line.text();
          if (text == null || text.isEmpty()) {
-            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, line.init_I()));
+            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, line.color()));
          } else if (this.init_Z_Str_2(text)) {
-            this.init_V_Str_3(text, 0, line.init_I(), maxWidth, target);
+            this.init_V_Str_3(text, 0, line.color(), maxWidth, target);
          } else {
             int leadingSpaces = this.init_I_Str_2(text);
             String indentComponent = " ".repeat(leadingSpaces);
@@ -479,9 +479,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                String prefix = indentComponent + label + " ";
                int prefixWidth = this.load(prefix);
                int continuationOffset = Math.min(prefixWidth, indentWidth + this.stop());
-               this.init(prefix, value, line.init_I(), prefixWidth, continuationOffset, maxWidth, target);
+               this.init(prefix, value, line.color(), prefixWidth, continuationOffset, maxWidth, target);
             } else {
-               this.init_V_Str_3(text.substring(leadingSpaces), indentWidth, line.init_I(), maxWidth, target);
+               this.init_V_Str_3(text.substring(leadingSpaces), indentWidth, line.color(), maxWidth, target);
             }
          }
       }
@@ -548,18 +548,18 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          int cursor = x + line.init_I();
 
          for (ItemNbtInspector.Inner_TaskQueue token : line.init_List()) {
-            if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
+            if (token != null && token.text() != null && !token.text().isEmpty()) {
                autismclient.gui.f.b.k.init(
                   context,
                   this.init_Font,
-                  token.init_Str(),
+                  token.text(),
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-                  token.init_I(),
+                  token.color(),
                   cursor,
                   y,
                   false
                );
-               cursor += this.load(token.init_Str());
+               cursor += this.load(token.text());
             }
          }
       }
@@ -574,8 +574,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          boolean continuation = false;
 
          for (ItemNbtInspector.Inner_TaskQueue token : source) {
-            if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
-               String remaining = token.init_Str();
+            if (token != null && token.text() != null && !token.text().isEmpty()) {
+               String remaining = token.text();
 
                while (!remaining.isEmpty()) {
                   int limit = maxWidth - (continuation ? continuationOffset : 0);
@@ -593,7 +593,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      piece = remaining.substring(0, 1);
                   }
 
-                  current.add(new ItemNbtInspector.Inner_TaskQueue(piece, token.init_I()));
+                  current.add(new ItemNbtInspector.Inner_TaskQueue(piece, token.color()));
                   currentWidth += this.load(piece);
                   remaining = remaining.substring(piece.length());
                   if (!remaining.isEmpty()) {
@@ -634,8 +634,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       int width = 0;
 
       for (ItemNbtInspector.Inner_TaskQueue token : tokens) {
-         if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
-            String text = token.init_Str();
+         if (token != null && token.text() != null && !token.text().isEmpty()) {
+            String text = token.text();
             int spaces = 0;
 
             while (spaces < text.length() && Character.isWhitespace(text.charAt(spaces))) {
@@ -715,9 +715,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                break;
             case "Fill Editor":
                if (!AutismLiteVariant.enabled()
-                  && this.init_az_StreamUtil.init_ItemStack() != null
-                  && !this.init_az_StreamUtil.init_ItemStack().isEmpty()
-                  && autismclient.modules.AdminToolsItemHelper.load(this.init_az_StreamUtil.init_ItemStack())) {
+                  && this.init_az_StreamUtil.stack() != null
+                  && !this.init_az_StreamUtil.stack().isEmpty()
+                  && autismclient.modules.AdminToolsItemHelper.load(this.init_az_StreamUtil.stack())) {
                   bi.init("Filled Admin Tools with complete item NBT.", -13248397);
                } else {
                   AutismClientMessaging.sendPrefixed("Admin Tools: could not fill NBT editor.");
@@ -749,8 +749,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private boolean poll_Z_6() {
       return !AutismLiteVariant.enabled()
          && this.init_az_StreamUtil != null
-         && this.init_az_StreamUtil.init_ItemStack() != null
-         && !this.init_az_StreamUtil.init_ItemStack().isEmpty();
+         && this.init_az_StreamUtil.stack() != null
+         && !this.init_az_StreamUtil.stack().isEmpty();
    }
 
    private boolean push_Z_5() {
@@ -775,8 +775,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       ArrayList<AutismItemNbtInspectOverlay.Inner_DataUtil> buttons = new ArrayList<>();
       boolean editor = !AutismLiteVariant.enabled()
          && this.init_az_StreamUtil != null
-         && this.init_az_StreamUtil.init_ItemStack() != null
-         && !this.init_az_StreamUtil.init_ItemStack().isEmpty();
+         && this.init_az_StreamUtil.stack() != null
+         && !this.init_az_StreamUtil.stack().isEmpty();
       if (!this.push_Z_5()) {
          int firstCursor = this.windowX + this.windowWidth - this.set_I_6();
          if (editor) {

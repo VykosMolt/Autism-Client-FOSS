@@ -48,7 +48,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class MacroClipboardCodec {
    private static final int init_I = 1;
-   private static final String init_Str = "autism_macro";
+   private static final String MACRO_TYPE = "autism_macro";
    private static final String load = "autism_macro_steps";
    private static final String read = "autism_macro_list";
    private static String write;
@@ -57,7 +57,7 @@ public class MacroClipboardCodec {
    private static final long init_J = 8388608L;
    private static volatile Set<String> init_Set;
 
-   public static void init_V(List<AutismSessionState.DelayedPacket> queue) {
+   public static void copyQueue(List<AutismSessionState.DelayedPacket> queue) {
       try {
          CompoundTag rootTag = new CompoundTag();
          ListTag packetList = new ListTag();
@@ -103,7 +103,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static boolean init_Z(List<AutismMacro> macros, boolean cut) {
+   public static boolean copyMacros(List<AutismMacro> macros, boolean cut) {
       if (macros != null && !macros.isEmpty()) {
          List<AutismMacro> live = new ArrayList<>();
 
@@ -167,7 +167,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static MacroClipboardCodec.Inner_StreamUtil init_o_StreamUtil() {
+   public static MacroClipboardCodec.Inner_StreamUtil pasteMacros() {
       String clipboard;
       try {
          clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
@@ -195,12 +195,12 @@ public class MacroClipboardCodec {
             return new MacroClipboardCodec.Inner_StreamUtil(list, false);
          }
 
-         AutismMacro single = init_aM();
+         AutismMacro single = pasteMacro();
          return new MacroClipboardCodec.Inner_StreamUtil(single == null ? List.of() : List.of(single), false);
       }
    }
 
-   public static MacroClipboardCodec.Inner_DataUtil init_o_DataUtil() {
+   public static MacroClipboardCodec.Inner_DataUtil clipboardKind() {
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
          return MacroClipboardCodec.Inner_DataUtil.NONE;
@@ -219,7 +219,7 @@ public class MacroClipboardCodec {
          String base64 = Minecraft.getInstance().keyboardHandler.getClipboard();
          if (base64 != null && !base64.trim().isEmpty()) {
             byte[] data = Base64.getDecoder().decode(base64.trim());
-            CompoundTag rootTag = NbtIo.readCompressed(new ByteArrayInputStream(data), init_NbtAccounter());
+            CompoundTag rootTag = NbtIo.readCompressed(new ByteArrayInputStream(data), createNbtAccounter());
             int version = rootTag.getIntOr("version", 0);
             if (version != 1) {
                AutismClientAddon.LOG.warn("[Autism] Unsupported clipboard version: {}", version);
@@ -275,7 +275,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static AutismMacro init_aM() {
+   public static AutismMacro pasteMacro() {
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
          return null;
@@ -332,7 +332,7 @@ public class MacroClipboardCodec {
       try {
          if (base64 != null && !base64.trim().isEmpty()) {
             byte[] data = Base64.getDecoder().decode(base64.trim());
-            CompoundTag rootTag = NbtIo.readCompressed(new ByteArrayInputStream(data), init_NbtAccounter());
+            CompoundTag rootTag = NbtIo.readCompressed(new ByteArrayInputStream(data), createNbtAccounter());
             return rootTag.getIntOr("version", 0) == 1 ? rootTag : null;
          } else {
             return null;
@@ -342,7 +342,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static String init_Str(AutismMacro macro) {
+   public static String encodeMacro(AutismMacro macro) {
       if (macro == null) {
          return null;
       }
@@ -401,7 +401,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static boolean init_Z(List<MacroAction> actions) {
+   public static boolean copySteps(List<MacroAction> actions) {
       if (actions != null && !actions.isEmpty()) {
          try {
             CompoundTag rootTag = new CompoundTag();
@@ -439,7 +439,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<MacroAction> load_List() {
+   public static List<MacroAction> pasteSteps() {
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
          return null;
@@ -479,7 +479,7 @@ public class MacroClipboardCodec {
          if (base64 != null && !base64.trim().isEmpty()) {
             byte[] data = Base64.getDecoder().decode(base64.trim());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
-            CompoundTag rootTag = NbtIo.readCompressed(inputStream, init_NbtAccounter());
+            CompoundTag rootTag = NbtIo.readCompressed(inputStream, createNbtAccounter());
             int version = rootTag.getIntOr("version", 0);
             if (version != 1) {
                AutismClientAddon.LOG.error("[Autism] Unsupported clipboard format version: {}", version);
@@ -491,7 +491,7 @@ public class MacroClipboardCodec {
 
             for (int i = 0; i < packetList.size(); i++) {
                CompoundTag packetTag = (CompoundTag)packetList.get(i);
-               AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
+               AutismSessionState.DelayedPacket qp = readDelayedPacket(packetTag);
                if (qp != null) {
                   queue.add(qp);
                }
@@ -509,23 +509,23 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static Packet<?> init_Packet(String base64) {
+   public static Packet<?> decodePacket(String base64) {
       try {
          if (base64 != null && !base64.trim().isEmpty()) {
             byte[] data = Base64.getDecoder().decode(base64.trim());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
-            CompoundTag tag = NbtIo.readCompressed(inputStream, init_NbtAccounter());
+            CompoundTag tag = NbtIo.readCompressed(inputStream, createNbtAccounter());
             if (tag.contains("packets")) {
                ListTag list = (ListTag)tag.get("packets");
                if (list != null && !list.isEmpty()) {
                   CompoundTag packetTag = (CompoundTag)list.get(0);
-                  AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
+                  AutismSessionState.DelayedPacket qp = readDelayedPacket(packetTag);
                   return qp != null ? qp.packet : null;
                } else {
                   return null;
                }
             } else if (tag.contains("packet")) {
-               AutismSessionState.DelayedPacket qp = init_ck_CachePool(tag);
+               AutismSessionState.DelayedPacket qp = readDelayedPacket(tag);
                return qp != null ? qp.packet : null;
             } else {
                return init_Packet(tag);
@@ -558,7 +558,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static AutismSessionState.DelayedPacket init_ck_CachePool(CompoundTag tag) {
+   public static AutismSessionState.DelayedPacket readDelayedPacket(CompoundTag tag) {
       try {
          int delay = tag.getIntOr("delay", 0);
          int id = tag.getIntOr("id", 0);
@@ -1106,7 +1106,7 @@ public class MacroClipboardCodec {
       return load_HolderLookup_Provi();
    }
 
-   public static NbtAccounter init_NbtAccounter() {
+   public static NbtAccounter createNbtAccounter() {
       return NbtAccounter.create(8388608L);
    }
 
@@ -1276,7 +1276,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static String init_Str(List<AutismSessionState.DelayedPacket> queue) {
+   public static String encodeQueue(List<AutismSessionState.DelayedPacket> queue) {
       try {
          CompoundTag rootTag = new CompoundTag();
          ListTag packetList = new ListTag();
@@ -1299,17 +1299,17 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<AutismSessionState.DelayedPacket> init_List(String base64) {
+   public static List<AutismSessionState.DelayedPacket> decodeQueue(String base64) {
       try {
          byte[] compressed = Base64.getDecoder().decode(base64);
          ByteArrayInputStream inputStream = new ByteArrayInputStream(compressed);
-         CompoundTag rootTag = NbtIo.readCompressed(inputStream, init_NbtAccounter());
+         CompoundTag rootTag = NbtIo.readCompressed(inputStream, createNbtAccounter());
          ListTag packetList = rootTag.getList("packets").orElse(new ListTag());
          List<AutismSessionState.DelayedPacket> queue = new ArrayList<>();
 
          for (int i = 0; i < packetList.size(); i++) {
             CompoundTag packetTag = (CompoundTag)packetList.get(i);
-            AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
+            AutismSessionState.DelayedPacket qp = readDelayedPacket(packetTag);
             if (qp != null) {
                queue.add(qp);
             }
@@ -1439,6 +1439,6 @@ public class MacroClipboardCodec {
       STEPS;
    }
 
-   public record Inner_StreamUtil(List<AutismMacro> init_List, boolean init_Z) {
+   public record Inner_StreamUtil(List<AutismMacro> macros, boolean fromInternalCopy) {
    }
 }

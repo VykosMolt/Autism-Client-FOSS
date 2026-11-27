@@ -57,7 +57,7 @@ public final class ManualInteractionYield {
       return SilentMovementCoordinator.activeRotation() != null && SilentRotationManager.isReturningToPlayer();
    }
 
-   public static void init_V(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       if (mc != null && mc.options != null) {
          KeyMapping attack = mc.options.keyAttack;
          KeyMapping use = mc.options.keyUse;

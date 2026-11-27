@@ -184,7 +184,7 @@ public final class AntiBotTracker {
             return "impossible pitch " + pitch;
          } else {
             GameProfile profile = player.getGameProfile();
-            if (profile != null && TabPlayerListParser.load_Z(profile.name())) {
+            if (profile != null && TabPlayerListParser.isPlausibleName(profile.name())) {
                return ArmorFilterMatcher.init_Z_UUID(player.getUUID()) ? "NPC uuid (version 2)" : null;
             } else {
                return "invalid profile name '" + (profile == null ? "<null>" : profile.name()) + "'";

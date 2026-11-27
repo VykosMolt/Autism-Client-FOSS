@@ -634,7 +634,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.push_Map.clear();
       this.pop_Map.clear();
       this.tick_Map.clear();
-      this.init_AutismPacketSelect.write_V_21();
+      this.init_AutismPacketSelect.resetSelection();
       this.read(action);
       this.load_V_MacroAction(action);
       if (action instanceof UseItemAction useItemAction) {
@@ -1162,8 +1162,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       try {
          channelField.setValue(target);
          if (this.init_bE != null) {
-            this.init_bE.read_Str = target;
-            this.init_bE.init_V();
+            this.init_bE.channel = target;
+            this.init_bE.bumpRevision();
             this.init_ActionEditorOverla = null;
          }
 
@@ -3879,7 +3879,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int iy = packetViewport.getRowY(i);
          if (iy != -2147483648) {
             AutismSessionState.DelayedPacket qp = packets.get(i);
-            String pname = qp != null && qp.packet != null ? PacketNameResolver.init_Str_Packet(qp.packet) : "???";
+            String pname = qp != null && qp.packet != null ? PacketNameResolver.nameOf(qp.packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.getDelay() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
             autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
@@ -3979,7 +3979,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void load_V_H(PayloadAction seedAction) {
-      this.init_bE = PayloadEditorModel.init_bE_H(seedAction);
+      this.init_bE = PayloadEditorModel.fromAction(seedAction);
       this.init_ActionEditorOverla_2 = null;
       this.write_J = -9223372036854775808L;
       this.init_ActionEditorOverla = null;
@@ -3999,8 +3999,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (!this.start_Z) {
             this.put_Z = true;
             if (this.init_bE != null) {
-               this.init_bE.read_Str = text != null && !text.isBlank() ? text.strip() : "minecraft:brand";
-               this.init_bE.init_V();
+               this.init_bE.channel = text != null && !text.isBlank() ? text.strip() : "minecraft:brand";
+               this.init_bE.bumpRevision();
                this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.PREVIEW_ONLY, "");
             }
 
@@ -4009,7 +4009,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
       this.init_Map.put("payload_channel", channelField);
       if (seedAction != null) {
-         seedAction.payloadPhase = this.init_bE.load_Str;
+         seedAction.payloadPhase = this.init_bE.phase;
       }
 
       ThemedTextInputBox contentField = this.init_k_I(126);
@@ -4086,15 +4086,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_Map.put("payload_logical_view", logicalView);
       ThemedTextInputBox commandField = this.init_k_I(66);
       commandField.setIntegerOnlyFilter(true);
-      commandField.setValue(String.valueOf(this.init_bE.load_I));
+      commandField.setValue(String.valueOf(this.init_bE.commandApiValue));
       commandField.setPlaceholder(Component.literal("value"));
       commandField.setChangedListener(text -> {
          if (!this.start_Z && this.init_bE != null) {
             try {
-               this.init_bE.load_I = Integer.parseInt((text == null ? "" : text).strip());
-               this.init_bE.init_Z = true;
-               this.init_bE.load_Z = true;
-               this.init_bE.init_V();
+               this.init_bE.commandApiValue = Integer.parseInt((text == null ? "" : text).strip());
+               this.init_bE.hasCommandApiValue = true;
+               this.init_bE.commandApiOverride = true;
+               this.init_bE.bumpRevision();
                this.init_ActionEditorOverla = null;
                this.load_Map.put("payload_command_api", true);
                this.get_Z = true;
@@ -4103,7 +4103,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       });
       this.init_Map.put("payload_command_value", commandField);
-      this.load_Map.put("payload_command_api", this.init_bE.load_Z);
+      this.load_Map.put("payload_command_api", this.init_bE.commandApiOverride);
       this.pop(true);
       PayloadFieldCodec.Inner_JsonUtil template = this.load_bJ_JsonUtil();
       PayloadFieldCodec.Inner_StreamUtil suggestedMode = this.init_bJ_StreamUtil_Str(template.channel(), template.fields(), template.encodingMode());
@@ -4132,14 +4132,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (action.payloadJson != null && !action.payloadJson.isBlank()) {
          try {
-            action.payloadJson = PayloadJsonCodec.init_Str(action.payloadJson);
-            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(action);
-            if (channel.isBlank() && encoded.init_Str() != null && !encoded.init_Str().isBlank()) {
-               channel = encoded.init_Str();
+            action.payloadJson = PayloadJsonCodec.prettyPrint(action.payloadJson);
+            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.encode(action);
+            if (channel.isBlank() && encoded.channel() != null && !encoded.channel().isBlank()) {
+               channel = encoded.channel();
             }
 
             if (!haveBytes) {
-               bytes = encoded.init_BArr();
+               bytes = encoded.bytes();
                if (bytes.length <= 0 && action.payloadData != null && !action.payloadData.isBlank()) {
                   boolean var16 = false;
                } else {
@@ -4210,7 +4210,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void open(boolean syncPreview) {
       ThemedTextInputBox jsonField = this.init_Map.get("payload_json");
       if (jsonField != null) {
-         jsonField.setValue(PayloadJsonCodec.init_Str(jsonField.getValue()));
+         jsonField.setValue(PayloadJsonCodec.prettyPrint(jsonField.getValue()));
          if (syncPreview) {
             this.poll(true);
          }
@@ -4241,22 +4241,22 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          try {
-            preview.payloadJson = PayloadJsonCodec.init_Str(preview.payloadJson);
-            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(preview);
+            preview.payloadJson = PayloadJsonCodec.prettyPrint(preview.payloadJson);
+            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.encode(preview);
             this.start_Z = true;
 
             try {
                jsonField.setValue(preview.payloadJson);
                if (channelField != null) {
-                  channelField.setValue(encoded.init_Str());
+                  channelField.setValue(encoded.channel());
                }
 
                if (rawField != null) {
-                  rawField.setValue(AutismPayloadSupport.toHexString(encoded.init_BArr()));
+                  rawField.setValue(AutismPayloadSupport.toHexString(encoded.bytes()));
                }
 
                if (textField != null) {
-                  textField.setValue(AutismPayloadSupport.decodePrintableUtf8(encoded.init_BArr()));
+                  textField.setValue(AutismPayloadSupport.decodePrintableUtf8(encoded.bytes()));
                }
 
                this.put_Z = true;
@@ -4266,7 +4266,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.start_Z = false;
             }
 
-            Integer commandValue = AutismPayloadSupport.detectCommandApiValue(null, encoded.init_Str(), encoded.init_BArr());
+            Integer commandValue = AutismPayloadSupport.detectCommandApiValue(null, encoded.channel(), encoded.bytes());
             if (commandValue != null) {
                this.load_Map.put("payload_command_api", true);
                if (commandField != null) {
@@ -4286,9 +4286,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<PayloadFieldCodec.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
       this.f_h_I = safeFields.size();
       if (this.init_bE != null) {
-         this.init_bE.init_List = new ArrayList<>(safeFields);
-         this.init_bE.init_V();
-         this.init_bE.init_Z_Str(this.init_bE.init_Str());
+         this.init_bE.fields = new ArrayList<>(safeFields);
+         this.init_bE.bumpRevision();
+         this.init_bE.parseScript(this.init_bE.toScript());
          this.init_ActionEditorOverla = null;
          this.pop(true);
       } else {
@@ -4308,7 +4308,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private List<PayloadFieldCodec.Inner_CachePool> load_List() {
       if (this.init_bE != null) {
-         return this.init_bE.init_List == null ? List.of() : this.init_bE.init_List;
+         return this.init_bE.fields == null ? List.of() : this.init_bE.fields;
       }
 
       ThemedTextInputBox contentField = this.init_Map.get("payload_content");
@@ -4334,8 +4334,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String write_Str() {
-      if (this.init_bE != null && this.init_bE.read_Str != null && !this.init_bE.read_Str.isBlank()) {
-         return this.init_bE.read_Str.strip();
+      if (this.init_bE != null && this.init_bE.channel != null && !this.init_bE.channel.isBlank()) {
+         return this.init_bE.channel.strip();
       } else {
          ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null && !channelField.getValue().isBlank()) {
@@ -4435,7 +4435,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          } else {
             switch (edit.init_ActionEditorOverla()) {
                case SCRIPT:
-                  if (this.init_bE.init_Z_Str(edit.init_Str())) {
+                  if (this.init_bE.parseScript(edit.init_Str())) {
                      this.tick(false);
                      this.run(false);
                   }
@@ -4461,7 +4461,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Str_2(String text) {
-      if (this.init_bE != null && this.init_bE.load_Z_Str(text)) {
+      if (this.init_bE != null && this.init_bE.parseHex(text)) {
          this.get_Z = true;
          this.pop(false);
       }
@@ -4494,16 +4494,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          try {
             ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
             if (channelField != null && (force || !channelField.isFocused())) {
-               channelField.setValue(this.init_bE.read_Str == null ? "" : this.init_bE.read_Str);
+               channelField.setValue(this.init_bE.channel == null ? "" : this.init_bE.channel);
             }
 
-            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.parse(this.init_bE.sync, this.init_bE.read_Str)));
+            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.parse(this.init_bE.sync, this.init_bE.channel)));
             ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
             if (commandField != null && (force || !commandField.isFocused())) {
-               commandField.setValue(String.valueOf(this.init_bE.load_I));
+               commandField.setValue(String.valueOf(this.init_bE.commandApiValue));
             }
 
-            this.load_Map.put("payload_command_api", this.init_bE.load_Z);
+            this.load_Map.put("payload_command_api", this.init_bE.commandApiOverride);
          } finally {
             this.start_Z = false;
          }
@@ -4512,19 +4512,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void run(boolean force) {
       if (this.init_bE != null) {
-         long revision = this.init_bE.init_J();
+         long revision = this.init_bE.revision();
          if (force || this.write_J != revision) {
             this.start_Z = true;
 
             try {
                ThemedTextInputBox contentField = this.init_Map.get("payload_content");
                if (contentField != null && (force || !contentField.isFocused())) {
-                  contentField.setValue(this.init_bE.init_Str());
+                  contentField.setValue(this.init_bE.toScript());
                }
 
                ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
                if (hexView != null && (force || !hexView.isFocused())) {
-                  hexView.setValue(this.init_bE.load_Str());
+                  hexView.setValue(this.init_bE.toHexDump());
                }
 
                ThemedTextInputBox utf8View = this.init_Map.get("payload_utf8_view");
@@ -4598,8 +4598,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ctx, x + dirLabelW, cy, dirW, 13, template.direction().name(), OverlayActionButton.ButtonTone.SECONDARY, true, mx, my, () -> {
             this.push(true);
             if (this.init_bE != null) {
-               this.init_bE.init_Str = PayloadFieldCodec.toggleDirection(this.init_bE.init_Str);
-               this.init_bE.init_V();
+               this.init_bE.direction = PayloadFieldCodec.toggleDirection(this.init_bE.direction);
+               this.init_bE.bumpRevision();
                this.init_ActionEditorOverla = null;
                this.pop(false);
             } else if (this.init_H != null) {
@@ -4628,7 +4628,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          cy += 16;
       }
 
-      if (this.init_bE != null && this.init_bE.init_Z) {
+      if (this.init_bE != null && this.init_bE.hasCommandApiValue) {
          ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
          if (commandField != null) {
             int lw = this.init_I_I(w, "CommandApi", font, 64);
@@ -4641,7 +4641,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             commandField.setY(cy + 2);
             commandField.setWidth(fieldW);
             commandField.render(ctx, mx, my, delta);
-            boolean override = this.load_Map.getOrDefault("payload_command_api", this.init_bE.load_Z);
+            boolean override = this.load_Map.getOrDefault("payload_command_api", this.init_bE.commandApiOverride);
             this.init_ByteReader_GuiGraphicsExtract_2(
                ctx,
                ctrlX + fieldW + 3,
@@ -4655,10 +4655,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                my,
                () -> {
                   if (this.init_bE != null) {
-                     this.init_bE.load_Z = !this.init_bE.load_Z;
-                     this.init_bE.init_V();
+                     this.init_bE.commandApiOverride = !this.init_bE.commandApiOverride;
+                     this.init_bE.bumpRevision();
                      this.init_ActionEditorOverla = null;
-                     this.load_Map.put("payload_command_api", this.init_bE.load_Z);
+                     this.load_Map.put("payload_command_api", this.init_bE.commandApiOverride);
                      this.get_Z = true;
                   }
 
@@ -4714,7 +4714,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.run(false);
          ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
          if (hexView != null) {
-            int bytes = this.init_bE == null ? built.bytes().length : this.init_bE.init_BArr.length;
+            int bytes = this.init_bE == null ? built.bytes().length : this.init_bE.bodyBytes.length;
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "Body Hex - payload body only (" + bytes + " bytes)", font, UiColorPalette.textBody(), x, cy + 2, false);
             cy += 14;
             hexView.setX(x);
@@ -5025,7 +5025,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private long init_J() {
-      return this.init_bE == null ? 0L : this.init_bE.init_J();
+      return this.init_bE == null ? 0L : this.init_bE.revision();
    }
 
    private Component init_Component_Str(String source) {
@@ -5271,7 +5271,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                if (this.init_bE != null) {
                   this.init_bE.sync = add_List.get(newIdx).name();
-                  this.init_bE.init_V();
+                  this.init_bE.bumpRevision();
                   this.init_ActionEditorOverla = null;
                   this.run(false);
                }
@@ -5290,7 +5290,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             if (this.init_bE != null) {
                this.init_bE.sync = add_List.get(newIdx).name();
-               this.init_bE.init_V();
+               this.init_bE.bumpRevision();
                this.init_ActionEditorOverla = null;
                this.run(false);
             }
@@ -5409,7 +5409,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return new ActionEditorOverlay.ConfigStore(-9223372036854775808L, template, template.encode());
       }
 
-      long revision = this.init_bE.init_J();
+      long revision = this.init_bE.revision();
       ActionEditorOverlay.ConfigStore hit = this.init_ActionEditorOverla;
       if (hit != null && hit.init_J() == revision) {
          return hit;
@@ -5422,7 +5422,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private PayloadFieldCodec.Inner_JsonUtil load_bJ_JsonUtil() {
-      return this.init_bE == null ? PayloadFieldCodec.fromAction(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
+      return this.init_bE == null ? PayloadFieldCodec.fromAction(new PayloadAction()) : this.init_bE.toSpec();
    }
 
    private void write_V(String line) {
@@ -5448,13 +5448,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          try {
             if (this.init_bE != null) {
-               this.init_bE.read_Str = template.channel();
-               this.init_bE.init_Str = template.direction().name();
-               this.init_bE.load_Str = template.phase().name();
+               this.init_bE.channel = template.channel();
+               this.init_bE.direction = template.direction().name();
+               this.init_bE.phase = template.phase().name();
                this.init_bE.sync = template.encodingMode().name();
-               this.init_bE.init_List = new ArrayList<>(template.fields());
-               this.init_bE.init_V();
-               this.init_bE.init_Z_Str(this.init_bE.init_Str());
+               this.init_bE.fields = new ArrayList<>(template.fields());
+               this.init_bE.bumpRevision();
+               this.init_bE.parseScript(this.init_bE.toScript());
                this.init_ActionEditorOverla = null;
             }
 
@@ -5483,7 +5483,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String status = this.sync_Str();
       String transport = this.init_bE == null
          ? "Encoder: vanilla"
-         : this.init_bE.init_Str + " / " + this.init_bE.load_Str + (this.init_bE.init_I >= 0 ? " / id " + this.init_bE.init_I : " / id ?");
+         : this.init_bE.direction + " / " + this.init_bE.phase + (this.init_bE.packetId >= 0 ? " / id " + this.init_bE.packetId : " / id ?");
       autismclient.gui.f.b.k.init(
          ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, status, Math.max(10, w), font, UiColorPalette.textBright()), font, UiColorPalette.textBright(), x, y + 2, false
       );
@@ -5497,7 +5497,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private String sync_Str() {
       if (this.init_bE != null) {
          String decoded = this.init_bE.close == null ? "payload" : this.init_bE.close;
-         int bytes = this.init_bE.init_BArr == null ? 0 : this.init_bE.init_BArr.length;
+         int bytes = this.init_bE.bodyBytes == null ? 0 : this.init_bE.bodyBytes.length;
          return !this.get_Z && !this.put_Z ? "Ready: " + bytes + "B " + decoded : "Edited: " + bytes + "B " + decoded;
       } else if (this.get_Z) {
          return "Edited: script rebuilds bytes";
@@ -5533,14 +5533,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean start_Z() {
-      return this.init_bE != null && this.init_bE.load_Str != null
-         ? this.init_bE.load_Str.toLowerCase(Locale.ROOT).contains("config")
+      return this.init_bE != null && this.init_bE.phase != null
+         ? this.init_bE.phase.toLowerCase(Locale.ROOT).contains("config")
          : this.init_H != null && this.init_H.payloadPhase != null && this.init_H.payloadPhase.toLowerCase(Locale.ROOT).contains("config");
    }
 
    private void cache() {
       this.init_ActionEditorOverla_2 = null;
-      this.init_bE = PayloadEditorModel.init_bE_H(this.init_H);
+      this.init_bE = PayloadEditorModel.fromAction(this.init_H);
       this.write_J = -9223372036854775808L;
       this.init_ActionEditorOverla = null;
       ActionEditorOverlay.JsonUtil state = this.init_ActionEditorOverla_H(this.init_H);
@@ -5574,12 +5574,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             throw new IllegalArgumentException(this.init_bE.flush);
          }
 
-         PayloadAction action = this.init_bE.init_H_H(this.init_H);
+         PayloadAction action = this.init_bE.toAction(this.init_H);
          if (action.channel == null || action.channel.isBlank()) {
             action.channel = "minecraft:brand";
          }
 
-         PayloadFieldCodec.Inner_DataUtil built = this.init_bE.init_bJ_JsonUtil().encode();
+         PayloadFieldCodec.Inner_DataUtil built = this.init_bE.toSpec().encode();
          if (!built.isValid()) {
             throw new IllegalArgumentException(String.join("; ", built.errors()));
          }
@@ -5805,10 +5805,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          boolean jsonUsable = false;
          PayloadJsonCodec.Inner_DataUtil jsonEncoded = null;
          if (action.payloadJson != null && !action.payloadJson.isBlank()) {
-            action.payloadJson = PayloadJsonCodec.init_Str(action.payloadJson);
+            action.payloadJson = PayloadJsonCodec.prettyPrint(action.payloadJson);
 
             try {
-               jsonEncoded = PayloadJsonCodec.init_bG_DataUtil(action);
+               jsonEncoded = PayloadJsonCodec.encode(action);
                jsonUsable = true;
             } catch (Exception var13) {
             }
@@ -5850,9 +5850,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          if (this.add_Z && jsonUsable && jsonEncoded != null && !this.set_Z && !this.put_Z) {
             try {
-               jsonEncoded = PayloadJsonCodec.init_bG_DataUtil(action);
-               action.channel = jsonEncoded.init_Str();
-               action.payloadData = AutismPayloadSupport.toHexString(jsonEncoded.init_BArr());
+               jsonEncoded = PayloadJsonCodec.encode(action);
+               action.channel = jsonEncoded.channel();
+               action.payloadData = AutismPayloadSupport.toHexString(jsonEncoded.bytes());
             } catch (Exception var11) {
             }
          }
@@ -6711,7 +6711,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private String open_Str() {
       if (this.init_MacroAction instanceof PacketClickAction pca) {
-         return pca.target == null ? null : pca.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil()).init_Str();
+         return pca.target == null ? null : pca.target.withMode(this.init_bo_DataUtil()).init_Str();
       } else {
          return null;
       }
@@ -6928,10 +6928,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (this.init_MacroAction instanceof PacketClickAction pca) {
             ContainerClickSnapshot.Inner_DataUtil mode = this.init_bo_DataUtil();
             pca.mode = mode.name();
-            pca.init(target.init_bo_StreamUtil_bo_DataUtil(mode));
+            pca.init(target.withMode(mode));
             if (this.init_CompoundTag != null) {
                this.init_CompoundTag.putString("mode", mode.name());
-               this.init_CompoundTag.put("target", target.init_bo_StreamUtil_bo_DataUtil(mode).init_CompoundTag());
+               this.init_CompoundTag.put("target", target.withMode(mode).toTag());
             }
          }
 
@@ -6965,7 +6965,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean pop_Z() {
-      return this.write_Str != null && ContainerCloseGuard.load_Z();
+      return this.write_Str != null && ContainerCloseGuard.isCapturing();
    }
 
    public boolean tick_Z() {
@@ -7114,7 +7114,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void flush_V(String key) {
-      CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
+      CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.snapshot();
       if (menu == null) {
          bi.read("No custom screen is open to pick a button from.");
       } else {
@@ -8303,7 +8303,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      this.init_AutismPacketSelect.write_V_21();
+      this.init_AutismPacketSelect.resetSelection();
       this.init_RaceStepSelectorOv.dismiss();
       this.write_Z = false;
       this.init_MacroAction = null;
@@ -10951,7 +10951,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       for (AutismSessionState.DelayedPacket qp : packets) {
          if (qp != null && qp.packet != null) {
-            autoName = PacketNameResolver.init_Str_Packet(qp.packet);
+            autoName = PacketNameResolver.nameOf(qp.packet);
             break;
          }
       }
@@ -10966,11 +10966,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_ck_CachePool(AutismSessionState.DelayedPacket packet) {
       if (this.init_CompoundTag != null && packet != null) {
          List<AutismSessionState.DelayedPacket> single = Collections.singletonList(packet);
-         String base64 = MacroClipboardCodec.init_Str(single);
+         String base64 = MacroClipboardCodec.encodeQueue(single);
          if (base64 != null && !base64.isBlank()) {
             this.init_CompoundTag.putString("packetData", base64);
             if (!this.init_CompoundTag.contains("description") || this.init_CompoundTag.getStringOr("description", "").isBlank()) {
-               String name = packet.packet != null ? PacketNameResolver.init_Str_Packet(packet.packet) : "Packet";
+               String name = packet.packet != null ? PacketNameResolver.nameOf(packet.packet) : "Packet";
                this.init_CompoundTag.putString("description", name);
             }
          }
@@ -11840,12 +11840,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(init_Minecraft)) {
-         if (player != null && player.init_Str() != null && !player.init_Str().isBlank() && !this.init_Z_List_Str(this.start_List, player.init_Str())) {
-            this.start_List.add(player.init_Str());
-            if (player.init_Z()) {
-               this.get_Map.put(player.init_Str().toLowerCase(Locale.ROOT), player.load());
-               if (player.init_Component() != null) {
-                  this.set_Map.putIfAbsent(player.load(), player.init_Component());
+         if (player != null && player.name() != null && !player.name().isBlank() && !this.init_Z_List_Str(this.start_List, player.name())) {
+            this.start_List.add(player.name());
+            if (player.hasPrefix()) {
+               this.get_Map.put(player.name().toLowerCase(Locale.ROOT), player.load());
+               if (player.prefixComponent() != null) {
+                  this.set_Map.putIfAbsent(player.load(), player.prefixComponent());
                }
             }
          }
@@ -11907,7 +11907,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          emptyVp.setScrollOffset(0);
       }
 
-      for (String moduleName : autismclient.util.CommandPrefixHelper.read_List()) {
+      for (String moduleName : autismclient.util.CommandPrefixHelper.moduleNames()) {
          if (moduleName != null && !moduleName.isBlank() && !this.init_Z_List_Str(this.stop_List, moduleName)) {
             this.stop_List.add(moduleName);
          }
@@ -12720,7 +12720,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          List<String> names = new ArrayList<>(players.size());
 
          for (TabPlayerListParser.ParsedPlayer player : players) {
-            names.add(player.init_Str());
+            names.add(player.name());
          }
 
          this.value_List = names;
@@ -13827,10 +13827,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void put(boolean c2s) {
       if (c2s) {
          this.init_AutismPacketSelect
-            .init_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z(true, packetClass, selected), this.load_List_Z(true));
+            .openC2sMultiSelect((packetClass, selected) -> this.init_V_Z(true, packetClass, selected), this.load_List_Z(true));
       } else {
          this.init_AutismPacketSelect
-            .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z(false, packetClass, selected), this.load_List_Z(false));
+            .openS2cMultiSelect((packetClass, selected) -> this.init_V_Z(false, packetClass, selected), this.load_List_Z(false));
       }
    }
 
@@ -13855,7 +13855,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                return candidate;
             }
 
-            if (this.init_Z_Str_Str(target, PacketNameResolver.init_Str_Class(candidate))) {
+            if (this.init_Z_Str_Str(target, PacketNameResolver.nameOfClass(candidate))) {
                return candidate;
             }
 
@@ -13875,7 +13875,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          List<String> targets = this.init_List_Z(c2s);
          if (selected) {
             if (!this.init_Z_List(targets, packetClass, c2s)) {
-               targets.add(PacketNameResolver.init_Str_Class(packetClass));
+               targets.add(PacketNameResolver.nameOfClass(packetClass));
             }
          } else {
             targets.removeIf(existing -> packetClass.equals(this.init_Class_Str_Z(existing, c2s)));
@@ -13954,7 +13954,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       for (int i = 0; i < targets.size() && i < 3; i++) {
          String target = targets.get(i);
          Class<? extends Packet<?>> packetClass = this.init_Class_Str_Z(target, c2s);
-         labels.add(packetClass != null ? PacketNameResolver.init_Str_Class(packetClass) : target);
+         labels.add(packetClass != null ? PacketNameResolver.nameOfClass(packetClass) : target);
       }
 
       String summary = direction + ": " + targets.size();
@@ -14872,7 +14872,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool();
             rule.direction = c2s ? autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.C2S : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.S2C;
             String name = PacketTypeRegistry.getPacketName(packetClass);
-            rule.packetName = name != null && !name.isBlank() ? name : PacketNameResolver.init_Str_Class(packetClass);
+            rule.packetName = name != null && !name.isBlank() ? name : PacketNameResolver.nameOfClass(packetClass);
             this.reset_List.add(rule);
             this.f_z_I = this.reset_List.size() - 1;
             this.z();
@@ -14890,14 +14890,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Consumer<Class<? extends Packet<?>>> set = packetClass -> {
          if (packetClass != null && field != null) {
             String name = PacketTypeRegistry.getPacketName(packetClass);
-            field.setValue(name != null && !name.isBlank() ? name : PacketNameResolver.init_Str_Class(packetClass));
+            field.setValue(name != null && !name.isBlank() ? name : PacketNameResolver.nameOfClass(packetClass));
          }
       };
       String direction = this.tick_Str("direction");
       if ("S2C".equals(direction)) {
          this.init_AutismPacketSelect.read(set);
       } else if ("ANY".equals(direction)) {
-         this.init_AutismPacketSelect.init_V_Consumer(set);
+         this.init_AutismPacketSelect.openSinglePicker(set);
       } else {
          this.init_AutismPacketSelect.load(set);
       }
@@ -14932,7 +14932,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return Component.literal("(empty)");
       }
 
-      String label = rule.direction + " " + (rule.packetName != null && !rule.packetName.isBlank() ? PacketNameResolver.init_Str_Str(rule.packetName) : "Any Packet");
+      String label = rule.direction + " " + (rule.packetName != null && !rule.packetName.isBlank() ? PacketNameResolver.friendlyName(rule.packetName) : "Any Packet");
       if (rule.load != null && !rule.load.isBlank()) {
          label = label + " / " + rule.load;
       }
@@ -15047,10 +15047,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void clear_V_Z(boolean c2s) {
       if (c2s) {
          this.init_AutismPacketSelect
-            .init_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Str("C2S", packetClass, selected), this.write_List("C2S"));
+            .openC2sMultiSelect((packetClass, selected) -> this.init_V_Str("C2S", packetClass, selected), this.write_List("C2S"));
       } else {
          this.init_AutismPacketSelect
-            .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Str("S2C", packetClass, selected), this.write_List("S2C"));
+            .openS2cMultiSelect((packetClass, selected) -> this.init_V_Str("S2C", packetClass, selected), this.write_List("S2C"));
       }
    }
 
@@ -15126,7 +15126,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       String name = PacketTypeRegistry.getPacketName(packetClass);
       if (name == null || name.isBlank()) {
-         name = PacketNameResolver.init_Str_Class(packetClass);
+         name = PacketNameResolver.nameOfClass(packetClass);
       }
 
       return WaitForPacketAction.init(direction, name);
@@ -15169,7 +15169,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             return candidate;
          }
 
-         if (this.init_Z_Str_Str(packetName, PacketNameResolver.init_Str_Class(candidate))) {
+         if (this.init_Z_Str_Str(packetName, PacketNameResolver.nameOfClass(candidate))) {
             return candidate;
          }
 
@@ -15986,7 +15986,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (packetClass != null && lst != null) {
                   String namex = PacketTypeRegistry.getPacketName(packetClass);
                   if (namex == null || namex.isBlank()) {
-                     namex = PacketNameResolver.init_Str_Class(packetClass);
+                     namex = PacketNameResolver.nameOfClass(packetClass);
                   }
 
                   if (!lst.contains(namex)) {
@@ -15996,7 +15996,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             };
             String direction = this.tick_Str("direction");
             if ("ANY".equals(direction)) {
-               this.init_AutismPacketSelect.init_V_Consumer(add);
+               this.init_AutismPacketSelect.openSinglePicker(add);
             } else if ("S2C".equals(direction)) {
                this.init_AutismPacketSelect.read(add);
             } else {
@@ -16007,7 +16007,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (packetClass != null && lst != null) {
                   String namex = PacketTypeRegistry.getPacketName(packetClass);
                   if (namex == null || namex.isBlank()) {
-                     namex = PacketNameResolver.init_Str_Class(packetClass);
+                     namex = PacketNameResolver.nameOfClass(packetClass);
                   }
 
                   if (selected) {
@@ -16029,7 +16029,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
             }
 
-            this.init_AutismPacketSelect.read_V_BiConsumer_Collection(toggle, selected);
+            this.init_AutismPacketSelect.openAnyMultiSelect(toggle, selected);
          }
       } else if (this.put_Z()) {
          this.load_Screen = init_Minecraft.gui.screen();

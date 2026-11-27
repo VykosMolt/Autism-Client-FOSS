@@ -813,7 +813,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && MC.gui.overlay() == null
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !BlinkPacketManager.isBlinking()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.isRunning()

@@ -58,7 +58,7 @@ public final class FriendCommand extends Command {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {
-         String name = player.init_Str();
+         String name = player.name();
          if (name != null && name.toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(name);
          }

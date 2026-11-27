@@ -147,11 +147,11 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))
    private void autism$trackServerMode(GameType mode, CallbackInfo ci) {
-      FakeGamemodeManager.init_V(mode);
+      FakeGamemodeManager.onRealGamemodeChanged(mode);
    }
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))
    private void autism$trackServerMode(GameType mode, @Nullable GameType previousMode, CallbackInfo ci) {
-      FakeGamemodeManager.init_V(mode);
+      FakeGamemodeManager.onRealGamemodeChanged(mode);
    }
 }

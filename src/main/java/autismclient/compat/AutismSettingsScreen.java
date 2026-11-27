@@ -190,8 +190,8 @@ public class AutismSettingsScreen extends Screen {
          cfg.save();
       }));
       out.add(this.init("Overlay Scale", cA.init_Str(), () -> cA.init_V_D(cA.load_D()), () -> cA.init_V_D(cA.read())));
-      List<String> prefixes = new ArrayList<>(CommandPrefixHelper.init_List);
-      String cur = CommandPrefixHelper.init_Str();
+      List<String> prefixes = new ArrayList<>(CommandPrefixHelper.ALLOWED_PREFIXES);
+      String cur = CommandPrefixHelper.currentPrefix();
       if (!prefixes.contains(cur)) {
          cur = prefixes.isEmpty() ? "." : prefixes.get(0);
       }

@@ -26,15 +26,15 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
 
    @WrapMethod(method = "encode(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;Lio/netty/buffer/ByteBuf;)V")
    private void autism$captureEncodedPlaintext(ChannelHandlerContext ctx, Packet<T> packet, ByteBuf output, Operation<Void> original) {
-      long captureState = PacketCaptureState.init_J();
-      if (PacketCaptureState.init_I_J(captureState) == 0) {
+      long captureState = PacketCaptureState.getState();
+      if (PacketCaptureState.captureFlags(captureState) == 0) {
          original.call(ctx, packet, output);
       } else {
          original.call(ctx, packet, output);
          ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
          if (module != null) {
             String protocol = this.protocolInfo.id().id();
-            if (PacketCaptureState.init_Z_J(captureState)) {
+            if (PacketCaptureState.isLoggerCapture(captureState)) {
                PacketWireCaptureStore.init(packet, "C2S", protocol, packet.type(), output);
             }
 

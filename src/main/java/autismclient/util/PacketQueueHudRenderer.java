@@ -10,7 +10,7 @@ import net.minecraft.resources.Identifier;
 public final class PacketQueueHudRenderer {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final long init_J = 50000000L;
-   private static final int init_I = -1581859;
+   private static final int ROW_COLOR = -1581859;
    private static final int load_I = -601459;
    private static final int read_I = -6366544;
    private static final int write = -9184882;
@@ -37,7 +37,7 @@ public final class PacketQueueHudRenderer {
       init(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
    }
 
-   public static int init_I(Font textRenderer, int panelWidth, int maxLines) {
+   public static int layoutHeight(Font textRenderer, int panelWidth, int maxLines) {
       if (textRenderer == null) {
          return 0;
       }
@@ -111,7 +111,7 @@ public final class PacketQueueHudRenderer {
       } else {
          for (int i = 0; i < visibleCount; i++) {
             AutismSessionState.DelayedPacket qp = packets.get(i);
-            String simpleName = PacketNameResolver.init_Str_Packet(qp.packet);
+            String simpleName = PacketNameResolver.nameOf(qp.packet);
             String delayStr = qp.getDelay() > 0 ? " +" + qp.getDelay() + modeStr : "";
             String label = "#" + qp.getId() + " " + (qp.isExactReplay() ? "[Exact] " : "") + simpleName + delayStr;
             int color = isSending && i == 0 ? -601459 : -1581859;

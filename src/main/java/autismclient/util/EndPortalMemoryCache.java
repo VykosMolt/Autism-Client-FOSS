@@ -41,7 +41,7 @@ public final class EndPortalMemoryCache {
       this.load = -1L;
    }
 
-   public boolean init_Z() {
+   public boolean hasMemory() {
       return !this.init_Map.isEmpty();
    }
 
@@ -50,15 +50,15 @@ public final class EndPortalMemoryCache {
    }
 
    public static final class Inner_DataUtil {
-      public final StrongholdTriangulator init_cS = new StrongholdTriangulator();
-      public final Map<Long, StrongholdTriangulator.Inner_CachePool> init_Map = new LinkedHashMap<>();
+      public final StrongholdTriangulator triangulator = new StrongholdTriangulator();
+      public final Map<Long, StrongholdTriangulator.Inner_CachePool> frames = new LinkedHashMap<>();
 
       public void init(StrongholdTriangulator.Inner_CachePool frame) {
-         if (this.init_Map.size() >= 512 && !this.init_Map.containsKey(frame.init_BlockPos().asLong())) {
-            this.init_Map.remove(this.init_Map.keySet().iterator().next());
+         if (this.frames.size() >= 512 && !this.frames.containsKey(frame.init_BlockPos().asLong())) {
+            this.frames.remove(this.frames.keySet().iterator().next());
          }
 
-         this.init_Map.put(frame.init_BlockPos().asLong(), frame);
+         this.frames.put(frame.init_BlockPos().asLong(), frame);
       }
    }
 }

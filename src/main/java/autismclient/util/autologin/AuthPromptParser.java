@@ -14,11 +14,11 @@ public final class AuthPromptParser {
 
    public static AuthPromptParser.Inner_DataUtil init(String rawLine) {
       if (rawLine == null) {
-         return AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
+         return AuthPromptParser.Inner_DataUtil.NONE;
       } else {
          String line = rawLine.trim();
          if (line.isEmpty()) {
-            return AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
+            return AuthPromptParser.Inner_DataUtil.NONE;
          } else {
             Matcher reg = init.matcher(line);
             if (reg.find()) {
@@ -28,7 +28,7 @@ public final class AuthPromptParser {
                Matcher log = load.matcher(line);
                return log.find()
                   ? new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.LOGIN, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
-                  : AuthPromptParser.Inner_DataUtil.init_DataUtil_DataUtil;
+                  : AuthPromptParser.Inner_DataUtil.NONE;
             }
          }
       }
@@ -63,11 +63,11 @@ public final class AuthPromptParser {
       }
    }
 
-   public record Inner_DataUtil(AuthPromptParser.Inner_StreamUtil init_DataUtil_StreamUti, String init_Str, int init_I) {
-      public static final AuthPromptParser.Inner_DataUtil init_DataUtil_DataUtil = new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.NONE, "", 0);
+   public record Inner_DataUtil(AuthPromptParser.Inner_StreamUtil kind, String command, int init_I) {
+      public static final AuthPromptParser.Inner_DataUtil NONE = new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.NONE, "", 0);
 
       public String init(String password) {
-         String line = this.init_Str + " " + password;
+         String line = this.command + " " + password;
          return this.init_I >= 2 ? line + " " + password : line;
       }
    }

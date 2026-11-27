@@ -122,7 +122,7 @@ public final class JoinMacroController {
       init_V();
       init_Z = false;
       init_aM = null;
-      autismclient.util.custommenu.CustomMenuTracker.init_V();
+      autismclient.util.custommenu.CustomMenuTracker.clear();
       init_ClientConfiguratio = null;
       Thread worker = init_Thread;
       init_Thread = null;
@@ -228,12 +228,12 @@ public final class JoinMacroController {
                String lastError = "";
 
                while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-                  seenGeneration = autismclient.util.custommenu.CustomMenuTracker.init_J();
-                  snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
+                  seenGeneration = autismclient.util.custommenu.CustomMenuTracker.generation();
+                  snapshot = autismclient.util.custommenu.CustomMenuTracker.snapshot();
                   if (snapshot != null) {
                      seenGeneration = snapshot.generation();
                   } else {
-                     snapshot = autismclient.util.custommenu.DialogScreenBridge.init_CustomMenuSnapshot(mc);
+                     snapshot = autismclient.util.custommenu.DialogScreenBridge.snapshot(mc);
                   }
 
                   if (snapshot == null) {
@@ -258,7 +258,7 @@ public final class JoinMacroController {
                   if (!prepared.isReady()) {
                      load_V(prepared.error());
                   } else {
-                     Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
+                     Screen answered = autismclient.util.custommenu.DialogScreenBridge.currentScreen(mc);
                      CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
                      if (!result.success()) {
                         load_V(result.error());
@@ -307,7 +307,7 @@ public final class JoinMacroController {
       long deadline = System.currentTimeMillis() + Math.max(100L, Math.min(120000L, timeoutMs));
 
       while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-         if (autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot() != null) {
+         if (autismclient.util.custommenu.CustomMenuTracker.snapshot() != null) {
             return;
          }
 

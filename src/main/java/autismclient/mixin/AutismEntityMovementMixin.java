@@ -69,7 +69,7 @@ public class AutismEntityMovementMixin {
          if (FreecamController.isActive()) {
             FreecamController.applyMouseTurn(deltaYaw, deltaPitch);
             ci.cancel();
-         } else if (RemoteViewController.init_Z()) {
+         } else if (RemoteViewController.isActive()) {
             ci.cancel();
          } else if (!AutismLiteVariant.enabled()) {
             AiService ai = AiService.getExistingInstance();

@@ -659,10 +659,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.poll = 0;
 
          for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(this.minecraft)) {
-            if (player != null && player.init_Str() != null && !player.init_Str().isBlank() && !load(this.write_List, player.init_Str())) {
-               this.write_List.add(player.init_Str());
-               if (player.init_Z()) {
-                  this.init_Map.put(player.init_Str().toLowerCase(Locale.ROOT), player.load().trim());
+            if (player != null && player.name() != null && !player.name().isBlank() && !load(this.write_List, player.name())) {
+               this.write_List.add(player.name());
+               if (player.hasPrefix()) {
+                  this.init_Map.put(player.name().toLowerCase(Locale.ROOT), player.load().trim());
                }
             }
          }
@@ -817,7 +817,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          int added = 0;
 
          for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(this.minecraft)) {
-            if (player != null && player.init_Z()) {
+            if (player != null && player.hasPrefix()) {
                String tag = player.load().trim();
                if (!tag.isEmpty() && !load(values, tag)) {
                   values.add(tag);

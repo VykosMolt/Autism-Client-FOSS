@@ -162,7 +162,7 @@ final class VanishActivityDetector {
                .put(pos.asLong(), new VanishActivityDetector.Inner_CachePool(kind == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE ? after : before, kind, at + 10000L));
             if (this.init_Map.getOrDefault(pos.asLong(), 0L) <= at && at >= this.load_J && !this.init_Z_BlockPos_J(pos, at)) {
                this.init_DataUtil
-                  .init_V_DataUtil_StreamUti(
+                  .onChange(
                      new autismclient.util.UnexplainedBlockTracker.Inner_StreamUtil(pos.immutable(), init_Str_BlockState(before), init_Str_BlockState(after), kind, at)
                   );
             } else {
@@ -191,16 +191,16 @@ final class VanishActivityDetector {
             this.init(update.getKey(), update.getValue(), at);
          }
       } else if (first[0] != null) {
-         this.init_DataUtil.init_V(first[0], at + 3500L);
+         this.init_DataUtil.suppress(first[0], at + 3500L);
       }
    }
 
    boolean init_Z_Packet_J(Packet<?> packet, long at) {
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunk) {
-         this.init_DataUtil.init_V(new BlockPos(chunk.x() << 4, 0, chunk.z() << 4), at + 3000L);
+         this.init_DataUtil.suppress(new BlockPos(chunk.x() << 4, 0, chunk.z() << 4), at + 3000L);
          return true;
       } else if (packet instanceof ClientboundForgetLevelChunkPacket chunk) {
-         this.init_DataUtil.init_V(new BlockPos(chunk.pos().x() << 4, 0, chunk.pos().z() << 4), at + 3000L);
+         this.init_DataUtil.suppress(new BlockPos(chunk.pos().x() << 4, 0, chunk.pos().z() << 4), at + 3000L);
          return true;
       } else if (packet instanceof ClientboundBlockEventPacket event) {
          if (event.getBlock() instanceof PistonBaseBlock) {
@@ -521,11 +521,11 @@ final class VanishActivityDetector {
    }
 
    List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> unexplained(long at) {
-      return this.init_DataUtil.init_List_J(at);
+      return this.init_DataUtil.activeReadings(at);
    }
 
    void init() {
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.clear();
       this.init_Map.clear();
       this.load_Map.clear();
       this.init_ArrayDeque.clear();

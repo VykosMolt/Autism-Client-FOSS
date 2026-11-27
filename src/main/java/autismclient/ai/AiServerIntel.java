@@ -55,7 +55,7 @@ public final class AiServerIntel {
             out.add(
                new AiServerIntel.Inner_DataUtil(
                   display,
-                  autismclient.util.PluginSignatureCatalog.init_Str(display),
+                  autismclient.util.PluginSignatureCatalog.canonicalName(display),
                   load_Str(init_Str(confidence, display)),
                   load_Str(init_Str(evidence, display)),
                   init_List(init_List(commands, display), maxCommands),
@@ -198,10 +198,10 @@ public final class AiServerIntel {
             return direct;
          }
 
-         String key = autismclient.util.PluginSignatureCatalog.init_Str(plugin);
+         String key = autismclient.util.PluginSignatureCatalog.canonicalName(plugin);
 
          for (Entry<String, List<String>> entry : map.entrySet()) {
-            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.init_Str(entry.getKey()).equals(key)) {
+            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.canonicalName(entry.getKey()).equals(key)) {
                return entry.getValue();
             }
          }
@@ -219,10 +219,10 @@ public final class AiServerIntel {
             return direct;
          }
 
-         String key = autismclient.util.PluginSignatureCatalog.init_Str(plugin);
+         String key = autismclient.util.PluginSignatureCatalog.canonicalName(plugin);
 
          for (Entry<String, String> entry : map.entrySet()) {
-            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.init_Str(entry.getKey()).equals(key)) {
+            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.canonicalName(entry.getKey()).equals(key)) {
                return entry.getValue();
             }
          }
@@ -276,12 +276,12 @@ public final class AiServerIntel {
       final int timeoutSeconds = Math.max(1, Math.min(150, AiJson.getInt(args, "timeoutSeconds", 150)));
       final AutismServerInfoOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
       if (force) {
-         overlay.open_V_12();
+         overlay.clearSearch();
       }
 
       final long startRevision = AutismConfig.getGlobal().pluginScanRevision();
       final String brand = load(mc);
-      overlay.tick_Z_6();
+      overlay.startAutoScan();
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          long load_J = startRevision;
@@ -316,7 +316,7 @@ public final class AiServerIntel {
                this.init_I++;
             }
 
-            boolean scanning = overlay.run_Z_5();
+            boolean scanning = overlay.isScanRunning();
             this.init_Z |= scanning;
             this.load_I++;
             if (!scanning && this.init_I >= 5) {
@@ -329,7 +329,7 @@ public final class AiServerIntel {
                }
 
                if (this.load_I % 20 == 0) {
-                  overlay.tick_Z_6();
+                  overlay.startAutoScan();
                }
             }
 
@@ -464,7 +464,7 @@ public final class AiServerIntel {
       if (!address.isBlank()) {
          List<autismclient.util.PluginSignatureCatalog.Inner_CachePool> fingerprints;
          try {
-            fingerprints = autismclient.util.PluginSignatureCatalog.init_List(address, brand);
+            fingerprints = autismclient.util.PluginSignatureCatalog.fingerprints(address, brand);
          } catch (Throwable ignored) {
             return;
          }
@@ -481,13 +481,13 @@ public final class AiServerIntel {
                array.add(
                   AiJson.objectOf(
                      "plugin",
-                     read(fingerprint.init_Str()),
+                     read(fingerprint.plugin()),
                      "key",
                      read(fingerprint.load()),
                      "channels",
-                     init_List(fingerprint.init_List(), 8),
+                     init_List(fingerprint.channels(), 8),
                      "score",
-                     fingerprint.init_I(),
+                     fingerprint.score(),
                      "basis",
                      read(fingerprint.read())
                   )

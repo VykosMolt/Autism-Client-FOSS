@@ -183,7 +183,7 @@ public final class AutismClientMod implements ClientModInitializer {
       ClientTickEvents.END_CLIENT_TICK.register(client -> {
          try {
             if (BlockInspectionService.init()) {
-               BlockInspectionService.init_V(client);
+               BlockInspectionService.tick(client);
             }
          } catch (Throwable t) {
             logTickError("blockNbtCapture", t);
@@ -255,7 +255,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            RemoteViewController.init_V();
+            RemoteViewController.tick();
          } catch (Throwable t) {
             logTickError("remoteView", t);
          }
@@ -278,7 +278,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.remoteView", () -> RemoteViewController.init(false));
          runSafe("cfg.persist", AutismConfig::enqueuePendingSaveNow);
          runSafe("cfg.pacedTp", () -> PacedTpJobManager.init("connection changed"));
-         runSafe("cfg.fakeGamemode", FakeGamemodeManager::init_V);
+         runSafe("cfg.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("cfg.instaBreak", BlockPreviewRenderer::load);
          runSafe("cfg.packFailureGuard", PackFailureGuard::load);
          runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
@@ -311,7 +311,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.stopMacro", () -> MacroExecutor.onServerDisconnect(AutismConfig.getGlobal().stopMacroOnLeave));
          runSafe("leave.pacedTp", () -> PacedTpJobManager.init("disconnected"));
          runSafe("leave.movementGrace", NoFallPauseTimer::load);
-         runSafe("leave.fakeGamemode", FakeGamemodeManager::init_V);
+         runSafe("leave.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("leave.instaBreak", BlockPreviewRenderer::load);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
          runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));

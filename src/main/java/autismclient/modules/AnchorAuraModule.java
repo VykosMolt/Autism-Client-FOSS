@@ -139,7 +139,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private String read_Str;
 
    private static int init_I() {
-      return autismclient.util.LatencyTickWindow.init_I_I(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
+      return autismclient.util.LatencyTickWindow.windowTicks(autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
    }
 
    public AnchorAuraModule() {
@@ -508,7 +508,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !BlinkPacketManager.isHoldingActionsOnly()

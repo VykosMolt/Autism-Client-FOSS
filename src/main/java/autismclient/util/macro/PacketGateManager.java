@@ -270,11 +270,11 @@ public final class PacketGateManager {
          return false;
       }
 
-      if (init(want, init_Str(PacketNameResolver.init_Str_Packet_Str(packet, direction)))) {
+      if (init(want, init_Str(PacketNameResolver.directionalName(packet, direction)))) {
          return true;
       }
 
-      if (init(want, init_Str(PacketNameResolver.init_Str_Packet(packet)))) {
+      if (init(want, init_Str(PacketNameResolver.nameOf(packet)))) {
          return true;
       }
 

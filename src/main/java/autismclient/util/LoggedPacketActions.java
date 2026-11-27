@@ -9,7 +9,7 @@ public final class LoggedPacketActions {
    }
 
    public static boolean init(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      return entry != null && "C2S".equalsIgnoreCase(entry.init_Str) && entry.init_Packet != null;
+      return entry != null && "C2S".equalsIgnoreCase(entry.direction) && entry.packet != null;
    }
 
    public static boolean load(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
@@ -22,19 +22,19 @@ public final class LoggedPacketActions {
          return false;
       }
 
-      if (entry.init_Packet instanceof ServerboundCustomPayloadPacket) {
+      if (entry.packet instanceof ServerboundCustomPayloadPacket) {
          return tick(entry);
       }
 
-      Packet<?> regenerated = PacketRegenerator.init(entry.init_Packet);
+      Packet<?> regenerated = PacketRegenerator.init(entry.packet);
       if (regenerated == null) {
-         AutismClientMessaging.sendPrefixed("§cCannot regenerate: " + entry.load_Str);
+         AutismClientMessaging.sendPrefixed("§cCannot regenerate: " + entry.name);
          return false;
       }
 
       try {
          DirectPacketSender.init(regenerated);
-         AutismClientMessaging.sendPrefixed("Sent: " + entry.load_Str);
+         AutismClientMessaging.sendPrefixed("Sent: " + entry.name);
          return true;
       } catch (Exception e) {
          AutismClientMessaging.sendPrefixed("§cSend failed: " + e.getMessage());
@@ -47,25 +47,25 @@ public final class LoggedPacketActions {
       if (snapshot != null && snapshot.channel() != null && !snapshot.channel().isBlank()) {
          byte[] rawBytes = snapshot.rawBytes();
          if (!AutismPayloadSupport.sendCustomPayload(snapshot.channel(), rawBytes, snapshot.protocolPhase())) {
-            AutismClientMessaging.sendPrefixed("§cFailed to send payload: " + entry.load_Str);
+            AutismClientMessaging.sendPrefixed("§cFailed to send payload: " + entry.name);
             return false;
          } else {
             AutismClientMessaging.sendPrefixed("Sent payload: " + snapshot.channel());
             return true;
          }
       } else {
-         Packet<?> regenerated = PacketRegenerator.init(entry.init_Packet);
+         Packet<?> regenerated = PacketRegenerator.init(entry.packet);
          if (regenerated != null) {
             try {
                DirectPacketSender.init(regenerated);
-               AutismClientMessaging.sendPrefixed("Sent: " + entry.load_Str);
+               AutismClientMessaging.sendPrefixed("Sent: " + entry.name);
                return true;
             } catch (Exception e) {
                AutismClientMessaging.sendPrefixed("§cSend failed: " + e.getMessage());
                return false;
             }
          } else {
-            AutismClientMessaging.sendPrefixed("§cCannot send: no payload data for " + entry.load_Str);
+            AutismClientMessaging.sendPrefixed("§cCannot send: no payload data for " + entry.name);
             return false;
          }
       }
@@ -76,11 +76,11 @@ public final class LoggedPacketActions {
    }
 
    public static boolean update(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      return entry != null && entry.load_Str != null && !entry.load_Str.isBlank() && entry.init_Str != null && !entry.init_Str.isBlank();
+      return entry != null && entry.name != null && !entry.name.isBlank() && entry.direction != null && !entry.direction.isBlank();
    }
 
    public static boolean sync(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      return entry != null && entry.read_Z && "C2S".equalsIgnoreCase(entry.init_Str);
+      return entry != null && entry.payloadPacket && "C2S".equalsIgnoreCase(entry.direction);
    }
 
    public static boolean flush(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
@@ -92,8 +92,8 @@ public final class LoggedPacketActions {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be queued.");
          return false;
       } else {
-         AutismSessionState.getInstance().enqueueDelayedPacket(entry.init_Packet);
-         AutismClientMessaging.sendPrefixed("Queued: " + entry.load_Str);
+         AutismSessionState.getInstance().enqueueDelayedPacket(entry.packet);
+         AutismClientMessaging.sendPrefixed("Queued: " + entry.name);
          return true;
       }
    }
@@ -112,10 +112,10 @@ public final class LoggedPacketActions {
             action.waitForGuiBefore = false;
             action.waitForGuiAfter = false;
             action.guiName = "";
-            action.packets.add(new AutismSessionState.DelayedPacket(entry.init_Packet, 0, AutismSessionState.ReplayMode.EXACT));
+            action.packets.add(new AutismSessionState.DelayedPacket(entry.packet, 0, AutismSessionState.ReplayMode.EXACT));
             macroEditor.init_V_MacroAction_2(action);
             OverlayManager.getInstance().bringToFront(macroEditor);
-            AutismClientMessaging.sendPrefixed("Added send action: " + entry.load_Str);
+            AutismClientMessaging.sendPrefixed("Added send action: " + entry.name);
             return true;
          }
       }
@@ -131,7 +131,7 @@ public final class LoggedPacketActions {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            String target = autismclient.util.macro.WaitForPacketAction.init(entry.init_Str, entry.load_Str);
+            String target = autismclient.util.macro.WaitForPacketAction.init(entry.direction, entry.name);
             if (target.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cCannot add this packet as a wait condition.");
                return false;
@@ -181,7 +181,7 @@ public final class LoggedPacketActions {
             } else {
                macroEditor.init_V_MacroAction_2(action);
                OverlayManager.getInstance().bringToFront(macroEditor);
-               AutismClientMessaging.sendPrefixed("Added payload action: " + entry.load_Str);
+               AutismClientMessaging.sendPrefixed("Added payload action: " + entry.name);
                return true;
             }
          }

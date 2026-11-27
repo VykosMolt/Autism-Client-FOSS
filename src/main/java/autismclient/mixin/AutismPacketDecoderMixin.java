@@ -27,16 +27,16 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
 
    @WrapMethod(method = "decode")
    private void autism$captureIncomingPlaintext(ChannelHandlerContext ctx, ByteBuf input, List<Object> out, Operation<Void> original) {
-      long captureState = PacketCaptureState.init_J();
-      if (PacketCaptureState.init_I_J(captureState) == 0) {
+      long captureState = PacketCaptureState.getState();
+      if (PacketCaptureState.captureFlags(captureState) == 0) {
          original.call(ctx, input, out);
       } else {
          int outSizeBeforeDecode = out == null ? 0 : out.size();
-         byte[] incomingPlaintext = PacketCaptureState.init_Z_J(captureState) ? PacketWireCaptureStore.init(input) : PacketCaptureState.init_BArr;
+         byte[] incomingPlaintext = PacketCaptureState.isLoggerCapture(captureState) ? PacketWireCaptureStore.init(input) : PacketCaptureState.EMPTY_BYTES;
          original.call(ctx, input, out);
          if (out != null && !out.isEmpty()) {
             int start = Math.max(0, Math.min(outSizeBeforeDecode, out.size()));
-            boolean capturePlaintext = PacketCaptureState.init_Z_J(captureState) && incomingPlaintext.length > 0;
+            boolean capturePlaintext = PacketCaptureState.isLoggerCapture(captureState) && incomingPlaintext.length > 0;
             boolean capturePayloads = PacketCaptureState.load(captureState);
             ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             if (module != null) {

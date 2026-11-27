@@ -65,8 +65,8 @@ public final class BlockNbtFormatter {
       boolean truncated = raw.length() > 40000;
       String shown = truncated ? raw.substring(0, 40000) : raw;
 
-      for (String rawLine : ItemNbtInspector.init_List_Str(shown)) {
-         rawLines.add(new ItemNbtInspector.Inner_BufferHelper(rawLine, UiColorPalette.softWhite(), ItemNbtInspector.init_List_Str_I(rawLine, UiColorPalette.softWhite())));
+      for (String rawLine : ItemNbtInspector.prettyLines(shown)) {
+         rawLines.add(new ItemNbtInspector.Inner_BufferHelper(rawLine, UiColorPalette.softWhite(), ItemNbtInspector.highlight(rawLine, UiColorPalette.softWhite())));
       }
 
       if (truncated) {
@@ -76,7 +76,7 @@ public final class BlockNbtFormatter {
       StringBuilder pretty = new StringBuilder("Block NBT - ").append(blockId);
 
       for (ItemNbtInspector.Inner_BufferHelper inspectionLine : nice) {
-         pretty.append('\n').append(inspectionLine.init_Str());
+         pretty.append('\n').append(inspectionLine.text());
       }
 
       return new BlockNbtFormatter.Inner_DataUtil(blockId, List.copyOf(nice), List.copyOf(rawLines), pretty.toString(), raw);
@@ -112,7 +112,7 @@ public final class BlockNbtFormatter {
       load(lines, "", UiColorPalette.textMuted());
    }
 
-   public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.Inner_BufferHelper> init_List, List<ItemNbtInspector.Inner_BufferHelper> load_List, String load_Str, String read)
+   public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.Inner_BufferHelper> lines, List<ItemNbtInspector.Inner_BufferHelper> rawLines, String load_Str, String read)
       implements ItemNbtInspector.Inner_StreamUtil {
       @Override
       public String init_Str() {
@@ -125,7 +125,7 @@ public final class BlockNbtFormatter {
       }
 
       @Override
-      public ItemStack init_ItemStack() {
+      public ItemStack stack() {
          return ItemStack.EMPTY;
       }
 

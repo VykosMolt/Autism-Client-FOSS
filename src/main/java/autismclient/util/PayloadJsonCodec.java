@@ -103,7 +103,7 @@ public final class PayloadJsonCodec {
       }
 
       if (action.payloadJson != null && !action.payloadJson.isBlank()) {
-         return init_Str(action.payloadJson);
+         return prettyPrint(action.payloadJson);
       }
 
       if (action.payloadClassName != null && !action.payloadClassName.isBlank() && action.payloadData != null && !action.payloadData.isBlank()) {
@@ -119,7 +119,7 @@ public final class PayloadJsonCodec {
       return init(action.sourceDirection, action.channel);
    }
 
-   public static String init_Str(String jsonText) {
+   public static String prettyPrint(String jsonText) {
       if (jsonText != null && !jsonText.isBlank()) {
          try {
             return init_Gson.toJson(JsonParser.parseString(jsonText));
@@ -131,7 +131,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   public static PayloadJsonCodec.Inner_DataUtil init_bG_DataUtil(autismclient.util.macro.PayloadAction action) {
+   public static PayloadJsonCodec.Inner_DataUtil encode(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          throw new IllegalArgumentException("Missing payload action");
       }
@@ -165,7 +165,7 @@ public final class PayloadJsonCodec {
 
             try {
                PayloadJsonCodec.Inner_DataUtil fallback = load(action, root, channel, rawFallbackBytes);
-               if (fallback.init_BArr().length == 0 && root.has("payload")) {
+               if (fallback.bytes().length == 0 && root.has("payload")) {
                   throw new IllegalArgumentException("Known payload rebuild failed and no raw fallback bytes were available", primaryFailure);
                } else {
                   return fallback;
@@ -958,13 +958,13 @@ public final class PayloadJsonCodec {
       return rawBytes != null && rawBytes.length >= 4 ? ByteBuffer.wrap(rawBytes, 0, 4).order(ByteOrder.BIG_ENDIAN).getInt() : 0;
    }
 
-   public record Inner_DataUtil(String init_Str, byte[] init_BArr) {
+   public record Inner_DataUtil(String channel, byte[] bytes) {
       public Inner_DataUtil {
-         init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
+         bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       }
 
-      public byte[] init_BArr() {
-         return (byte[])this.init_BArr.clone();
+      public byte[] bytes() {
+         return (byte[])this.bytes.clone();
       }
    }
 }

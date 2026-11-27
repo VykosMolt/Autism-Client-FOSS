@@ -55,7 +55,7 @@ public final class PacketWireCaptureStore {
       return packet == null ? null : init.get(packet);
    }
 
-   public static void init_V(Channel channel) {
+   public static void markEncrypted(Channel channel) {
       if (channel != null) {
          PacketWireCaptureStore.Inner_DataUtil previous = load.get(channel);
          load.put(channel, previous == null ? PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil() : previous.init(true));
@@ -79,12 +79,12 @@ public final class PacketWireCaptureStore {
 
    public static byte[] init(ByteBuf source) {
       if (source == null) {
-         return PacketCaptureState.init_BArr;
+         return PacketCaptureState.EMPTY_BYTES;
       }
 
       int length = Math.max(0, source.readableBytes());
       if (length == 0) {
-         return PacketCaptureState.init_BArr;
+         return PacketCaptureState.EMPTY_BYTES;
       }
 
       byte[] bytes = new byte[length];
@@ -218,9 +218,9 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, String load, String read, String write, int init_I, byte[] init_BArr, long init_J) {
-      public byte[] init_BArr() {
-         return this.init_BArr == null ? new byte[0] : (byte[])this.init_BArr.clone();
+   public record Inner_StreamUtil(String direction, String load, String read, String write, int packetId, byte[] plaintext, long init_J) {
+      public byte[] plaintext() {
+         return this.plaintext == null ? new byte[0] : (byte[])this.plaintext.clone();
       }
    }
 }

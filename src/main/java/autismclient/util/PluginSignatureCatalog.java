@@ -191,7 +191,7 @@ public final class PluginSignatureCatalog {
    private PluginSignatureCatalog() {
    }
 
-   public static boolean init_Z(String channel) {
+   public static boolean isKnownPluginChannel(String channel) {
       String normalized = write(channel);
       if (normalized.isBlank()) {
          return false;
@@ -228,19 +228,19 @@ public final class PluginSignatureCatalog {
       state.init_Str = sync(brand);
       boolean changed = false;
       String channel = write(snapshot.channel());
-      if (!channel.isBlank() && init_Z(channel)) {
+      if (!channel.isBlank() && isKnownPluginChannel(channel)) {
          changed |= state.init(channel, snapshot.direction());
       }
 
       if (load_Z(channel)) {
          for (String registered : init(snapshot.rawBytes())) {
-            if (init_Z(registered)) {
+            if (isKnownPluginChannel(registered)) {
                changed |= state.load(registered, snapshot.direction());
             }
          }
       } else {
          for (String embedded : load(snapshot.rawBytes())) {
-            if (init_Z(embedded)) {
+            if (isKnownPluginChannel(embedded)) {
                changed |= state.read(embedded, snapshot.direction());
             }
          }
@@ -253,7 +253,7 @@ public final class PluginSignatureCatalog {
       return changed;
    }
 
-   public static synchronized List<PluginSignatureCatalog.Inner_CachePool> init_List(String serverAddress, String brand) {
+   public static synchronized List<PluginSignatureCatalog.Inner_CachePool> fingerprints(String serverAddress, String brand) {
       PluginSignatureCatalog.Inner_ConfigStore state = init_Map.get(update(serverAddress));
       if (state == null) {
          return List.of();
@@ -284,7 +284,7 @@ public final class PluginSignatureCatalog {
       return out;
    }
 
-   public static synchronized long init_J(String serverAddress, String brand) {
+   public static synchronized long revision(String serverAddress, String brand) {
       PluginSignatureCatalog.Inner_ConfigStore state = init_Map.get(update(serverAddress));
       return state == null ? 0L : state.init_J;
    }
@@ -449,7 +449,7 @@ public final class PluginSignatureCatalog {
       return brand == null ? "" : brand.trim().toLowerCase(Locale.ROOT);
    }
 
-   public static String init_Str(String value) {
+   public static String canonicalName(String value) {
       if (value == null) {
          return "";
       }
@@ -468,8 +468,8 @@ public final class PluginSignatureCatalog {
       return alias != null ? flush(alias) : flush(clean);
    }
 
-   public static List<String> init_List(String pluginName) {
-      String canonical = init_Str(pluginName);
+   public static List<String> namespacesFor(String pluginName) {
+      String canonical = canonicalName(pluginName);
       if (canonical.isBlank()) {
          return List.of();
       }
@@ -477,7 +477,7 @@ public final class PluginSignatureCatalog {
       LinkedHashSet<String> namespaces = new LinkedHashSet<>();
 
       for (Entry<String, String> entry : load_Map.entrySet()) {
-         if (init_Str(entry.getKey()).equals(canonical) || init_Str(entry.getValue()).equals(canonical)) {
+         if (canonicalName(entry.getKey()).equals(canonical) || canonicalName(entry.getValue()).equals(canonical)) {
             namespaces.add(entry.getKey());
          }
       }
@@ -544,11 +544,11 @@ public final class PluginSignatureCatalog {
    private record Inner_BufferHelper(String init, String load) {
       Inner_BufferHelper {
          init = init == null ? "" : init.trim();
-         load = PluginSignatureCatalog.init_Str(load != null && !load.isBlank() ? load : init);
+         load = PluginSignatureCatalog.canonicalName(load != null && !load.isBlank() ? load : init);
       }
    }
 
-   public record Inner_CachePool(String init_Str, String load, List<String> init_List, int init_I, String read) {
+   public record Inner_CachePool(String plugin, String load, List<String> channels, int score, String read) {
    }
 
    private static final class Inner_ConfigStore {

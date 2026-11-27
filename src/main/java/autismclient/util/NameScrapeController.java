@@ -62,7 +62,7 @@ public final class NameScrapeController {
    private NameScrapeController() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isRunning() {
       return init_Z;
    }
 
@@ -96,12 +96,12 @@ public final class NameScrapeController {
          String self = mc.player.getName().getString();
          LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
          read_I = names.size();
-         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
+         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
          BackgroundTaskExecutor.init_Future_Str_Runnable("namescrape", () -> init(names, connection, self, vectors));
       }
    }
 
-   public static void init_V() {
+   public static void pause() {
       if (!init_Z) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to pause.");
       } else {
@@ -110,7 +110,7 @@ public final class NameScrapeController {
       }
    }
 
-   public static void load_V() {
+   public static void resume() {
       if (!init_Z) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to resume.");
       } else {
@@ -119,7 +119,7 @@ public final class NameScrapeController {
       }
    }
 
-   public static void read_V() {
+   public static void stop() {
       if (!init_Z) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to stop.");
       } else {

@@ -1,11 +1,11 @@
 package autismclient.util.autologin;
 
-public record AutoLoginTimings(long init_J, long load, long read, int init_I, long write, long update) {
+public record AutoLoginTimings(long giveUpMs, long load, long read, int maxAttempts, long write, long update) {
    public AutoLoginTimings {
-      init_J = init(init_J, 1000L, 300000L);
+      giveUpMs = init(giveUpMs, 1000L, 300000L);
       load = init(load, 0L, 60000L);
       read = init(read, 250L, 30000L);
-      init_I = (int)init(init_I, 1L, 20L);
+      maxAttempts = (int)init(maxAttempts, 1L, 20L);
       write = init(write, 100L, 10000L);
       update = init(update, 250L, 30000L);
    }
@@ -14,7 +14,7 @@ public record AutoLoginTimings(long init_J, long load, long read, int init_I, lo
       return new AutoLoginTimings(40000L, 2000L, 2500L, 4, 1000L, 3000L);
    }
 
-   public static AutoLoginTimings load_StreamUtil() {
+   public static AutoLoginTimings defaults() {
       return new AutoLoginTimings(10000L, 2000L, 2500L, 4, 1000L, 3000L);
    }
 
@@ -22,7 +22,7 @@ public record AutoLoginTimings(long init_J, long load, long read, int init_I, lo
       return Math.max(low, Math.min(high, value));
    }
 
-   public long load_J() {
+   public long promptDelayMs() {
       return this.load;
    }
 }

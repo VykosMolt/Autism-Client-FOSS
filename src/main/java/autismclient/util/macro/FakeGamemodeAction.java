@@ -15,14 +15,14 @@ public class FakeGamemodeAction implements MacroAction {
    public void execute(Minecraft mc) {
       autismclient.util.FakeGamemodeManager.Inner_DataUtil result;
       if (this.mode == FakeGamemodeAction.Inner_StreamUtil.RESET) {
-         result = autismclient.util.FakeGamemodeManager.init_W_DataUtil();
+         result = autismclient.util.FakeGamemodeManager.clearFake();
       } else if (this.method == FakeGamemodeAction.Inner_DataUtil.REAL) {
          result = autismclient.util.RealGamemodeSender.init(init_GameType(this.mode));
       } else {
-         result = autismclient.util.FakeGamemodeManager.init_W_DataUtil(init_GameType(this.mode));
+         result = autismclient.util.FakeGamemodeManager.applyFake(init_GameType(this.mode));
       }
 
-      AutismClientMessaging.sendPrefixed((result.init_Z() ? "§a" : "§c") + result.init_Str());
+      AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
    }
 
    @Override

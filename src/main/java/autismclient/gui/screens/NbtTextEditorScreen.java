@@ -294,7 +294,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      ItemStack stack = ItemSnbtCodec.init_ItemStack(this.init_BitSetUtil.getValue());
+      ItemStack stack = ItemSnbtCodec.parseStack(this.init_BitSetUtil.getValue());
       if (stack.isEmpty()) {
          this.init_Z = false;
          this.init_Str = "Invalid ItemStack SNBT";
@@ -316,15 +316,15 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    private void read() {
       if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
-         String repaired = SnbtBraceRepairer.init_Str(this.init_BitSetUtil.getValue());
-         ItemStack stack = ItemSnbtCodec.init_ItemStack(repaired);
+         String repaired = SnbtBraceRepairer.repair(this.init_BitSetUtil.getValue());
+         ItemStack stack = ItemSnbtCodec.parseStack(repaired);
          if (stack.isEmpty()) {
-            this.init_BitSetUtil.setValue(ItemNbtInspector.init_Str_Str(repaired));
+            this.init_BitSetUtil.setValue(ItemNbtInspector.prettyPrint(repaired));
             this.init_Z = false;
             this.init_Str = "Formatted (structure repaired — still not a valid ItemStack; check ids/values)";
          } else {
             String error = ItemSnbtCodec.read(stack);
-            this.init_BitSetUtil.setValue(ItemNbtInspector.init_Str_Str(ItemSnbtCodec.load(stack)));
+            this.init_BitSetUtil.setValue(ItemNbtInspector.prettyPrint(ItemSnbtCodec.load(stack)));
             this.init_Z = error.isBlank();
             this.init_Str = this.init_Z ? "Formatted and valid" : "Formatted — " + error;
          }
@@ -430,7 +430,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
             var10000 = value;
             break;
          case FULL_NBT:
-            var10000 = ItemNbtInspector.init_Str_Str(value);
+            var10000 = ItemNbtInspector.prettyPrint(value);
       }
 
       return var10000;

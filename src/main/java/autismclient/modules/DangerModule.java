@@ -626,7 +626,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && MC.gui.screen() == null
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && !BlinkPacketManager.isBlinking()
          && !PkgCls_a.init_Z()

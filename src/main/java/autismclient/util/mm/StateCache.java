@@ -46,7 +46,7 @@ public final class StateCache {
       init_J = now;
 
       try {
-         JsonObject r = AutismHttp.init_JsonObject(
+         JsonObject r = AutismHttp.getJson(
             autismclient.e.DataUtil.init(
                new int[]{
                   1179736741,

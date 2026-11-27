@@ -24,7 +24,7 @@ public final class BacktrackTrailHistory {
       this.init_ArrayDeque.clear();
    }
 
-   public boolean init_Z_Obj_J(Object target, long now) {
+   public boolean hasRecentTrail(Object target, long now) {
       return this.init_Obj == target && this.init_cP_DataUtil != null && now - this.read < 450000000L;
    }
 

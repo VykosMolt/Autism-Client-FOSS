@@ -24,7 +24,7 @@ public final class PlayerQuitEventTracker {
    private final Map<UUID, PlayerQuitEventTracker.Inner_StreamUtil> init_Map = new HashMap<>();
    private final ArrayDeque<PlayerQuitEventTracker.Inner_CachePool> init_ArrayDeque = new ArrayDeque<>();
 
-   public void init_V_Collection_J(Collection<AntiVanishRosterTracker.Inner_ConfigStore> profiles, long now) {
+   public void updateRoster(Collection<AntiVanishRosterTracker.Inner_ConfigStore> profiles, long now) {
       if (profiles.size() > 4096) {
          this.init();
       } else {
@@ -34,51 +34,51 @@ public final class PlayerQuitEventTracker {
          Set<UUID> duplicateIds = new HashSet<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
-            if (p.init_UUID() != null && p.init_Str() != null) {
-               if (live.putIfAbsent(p.init_UUID(), p) != null) {
-                  duplicateIds.add(p.init_UUID());
+            if (p.uuid() != null && p.name() != null) {
+               if (live.putIfAbsent(p.uuid(), p) != null) {
+                  duplicateIds.add(p.uuid());
                }
 
-               if (!names.add(init_Str_Str(p.init_Str()))) {
-                  duplicates.add(init_Str_Str(p.init_Str()));
+               if (!names.add(init_Str_Str(p.name()))) {
+                  duplicates.add(init_Str_Str(p.name()));
                }
             }
          }
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
             if (p.load()
-               && p.init_Str().matches("[A-Za-z0-9_]{1,16}")
-               && !duplicates.contains(init_Str_Str(p.init_Str()))
-               && !duplicateIds.contains(p.init_UUID())) {
-               PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(p.init_UUID());
-               if (m != null && !m.init_Str.equals(p.init_Str())) {
-                  this.init_Map.remove(p.init_UUID());
+               && p.name().matches("[A-Za-z0-9_]{1,16}")
+               && !duplicates.contains(init_Str_Str(p.name()))
+               && !duplicateIds.contains(p.uuid())) {
+               PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(p.uuid());
+               if (m != null && !m.init_Str.equals(p.name())) {
+                  this.init_Map.remove(p.uuid());
                   m = null;
                }
 
                if (m == null) {
-                  if (!p.init_Z()) {
+                  if (!p.listed()) {
                      continue;
                   }
 
-                  m = new PlayerQuitEventTracker.Inner_StreamUtil(p.init_UUID(), p.init_Str());
-                  this.init_Map.put(p.init_UUID(), m);
+                  m = new PlayerQuitEventTracker.Inner_StreamUtil(p.uuid(), p.name());
+                  this.init_Map.put(p.uuid(), m);
                }
 
-               if (p.init_Z()) {
+               if (p.listed()) {
                   m.init(now);
                } else {
                   this.init_V_StreamUtil_StreamU_J(m, now);
                }
             } else {
-               this.init_Map.remove(p.init_UUID());
+               this.init_Map.remove(p.uuid());
             }
          }
 
          Map<String, UUID> owners = new HashMap<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
-            owners.put(init_Str_Str(p.init_Str()), p.init_UUID());
+            owners.put(init_Str_Str(p.name()), p.uuid());
          }
 
          this.init_Map.values().removeIf(mx -> !live.containsKey(mx.init_UUID) && owners.containsKey(init_Str_Str(mx.init_Str)));
@@ -122,7 +122,7 @@ public final class PlayerQuitEventTracker {
       }
    }
 
-   public void init_V_Component_J(Component message, long now) {
+   public void onChat(Component message, long now) {
       if (message != null) {
          ArrayDeque<Component> work = new ArrayDeque<>();
          work.add(message);
@@ -177,7 +177,7 @@ public final class PlayerQuitEventTracker {
       }
    }
 
-   public List<PlayerQuitEventTracker.Inner_DataUtil> init_List_J(long now) {
+   public List<PlayerQuitEventTracker.Inner_DataUtil> collectAlerts(long now) {
       List<PlayerQuitEventTracker.Inner_DataUtil> alerts = new ArrayList<>();
 
       for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
@@ -190,7 +190,7 @@ public final class PlayerQuitEventTracker {
       return List.copyOf(alerts);
    }
 
-   public boolean init_Z_UUID_J(UUID id, long now) {
+   public boolean isSuspect(UUID id, long now) {
       PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(id);
       return m != null && init_Z_StreamUtil_StreamU_J(m, now);
    }
@@ -218,7 +218,7 @@ public final class PlayerQuitEventTracker {
    private record Inner_CachePool(UUID init_UUID, long init_J) {
    }
 
-   public record Inner_DataUtil(UUID init_UUID, String init_Str, long init_J) {
+   public record Inner_DataUtil(UUID uuid, String name, long expiresAt) {
    }
 
    private static final class Inner_StreamUtil {

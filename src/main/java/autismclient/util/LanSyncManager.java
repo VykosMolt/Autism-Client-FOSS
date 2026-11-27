@@ -2150,7 +2150,7 @@ public class LanSyncManager {
       if (packet instanceof autismclient.util.sync.LanSyncPacket.IoWorker && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.IoWorker p = (autismclient.util.sync.LanSyncPacket.IoWorker)packet;
          if ((p.senderUsername == null || !p.senderUsername.equals(this.localUsername))
-            && PacketPresetManager.init_bT().init(p.presetName, p.presetJson, p.senderUsername)
+            && PacketPresetManager.getInstance().init(p.presetName, p.presetJson, p.senderUsername)
             && this.isHost
             && p.senderUsername != null
             && !p.senderUsername.isBlank()) {
@@ -2206,7 +2206,7 @@ public class LanSyncManager {
          }
 
          AutismSessionState.DelayedPacket.resetIdCounter();
-         List<AutismSessionState.DelayedPacket> receivedQueue = MacroClipboardCodec.init_List(queueData);
+         List<AutismSessionState.DelayedPacket> receivedQueue = MacroClipboardCodec.decodeQueue(queueData);
          if (receivedQueue == null || receivedQueue.isEmpty()) {
             AutismClientMessaging.sendPrefixed("§cReceived empty queue");
             return;

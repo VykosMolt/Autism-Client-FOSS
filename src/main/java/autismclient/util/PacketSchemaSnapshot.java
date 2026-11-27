@@ -37,19 +37,19 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 public record PacketSchemaSnapshot(
-   Packet<?> init_Packet, PacketSchemaRegistry.Inner_StreamUtil init_bx_StreamUtil, List<PacketFieldSnapshot> init_List, boolean init_Z, boolean load_Z, String init_Str, String load_Str
+   Packet<?> init_Packet, PacketSchemaRegistry.Inner_StreamUtil schema, List<PacketFieldSnapshot> fields, boolean init_Z, boolean load_Z, String status, String fallbackNote
 ) {
    private static final int init_I = 12;
    private static final int load_I = 220;
    private static final Object init_Obj = new Object();
 
    public PacketSchemaSnapshot {
-      init_List = init_List == null ? List.of() : List.copyOf(init_List);
-      init_Str = init_Str == null ? "fallback" : init_Str;
-      load_Str = load_Str == null ? "" : load_Str;
+      fields = fields == null ? List.of() : List.copyOf(fields);
+      status = status == null ? "fallback" : status;
+      fallbackNote = fallbackNote == null ? "" : fallbackNote;
    }
 
-   public static PacketSchemaSnapshot init_br_Packet(Packet<?> packet) {
+   public static PacketSchemaSnapshot capture(Packet<?> packet) {
       if (packet == null) {
          return new PacketSchemaSnapshot(null, null, List.of(), false, false, "fallback", "packet object missing");
       }
@@ -60,7 +60,7 @@ public record PacketSchemaSnapshot(
          return new PacketSchemaSnapshot(packet, null, reflected, false, false, "fallback", "no generated schema for packet class");
       }
 
-      if (schema.init_List().isEmpty()) {
+      if (schema.fields().isEmpty()) {
          if ("UNIT".equalsIgnoreCase(schema.update())) {
             return new PacketSchemaSnapshot(packet, schema, List.of(), true, true, "complete", "");
          }
@@ -71,19 +71,19 @@ public record PacketSchemaSnapshot(
          List<PacketFieldSnapshot> values = new ArrayList<>();
          boolean allReadable = true;
 
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
-            Object value = init(packet, field.init_Str());
+         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+            Object value = init(packet, field.name());
             boolean readable = value != init_Obj;
             if (!readable) {
                allReadable = false;
             }
 
             values.add(
-               new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.init_Z())
+               new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
             );
          }
 
-         boolean complete = schema.init_Z() && allReadable && !schema.load_Z();
+         boolean complete = schema.complete() && allReadable && !schema.inherited();
          return new PacketSchemaSnapshot(
             packet,
             schema,
@@ -91,15 +91,15 @@ public record PacketSchemaSnapshot(
             true,
             complete,
             complete ? "complete" : "fallback",
-            complete ? "" : (schema.load_Z() ? "schema inherited from parent packet class" : "one or more schema fields were not readable")
+            complete ? "" : (schema.inherited() ? "schema inherited from parent packet class" : "one or more schema fields were not readable")
          );
       }
    }
 
    public Optional<PacketFieldSnapshot> init_Optional_Str(String name) {
       if (name != null && !name.isBlank()) {
-         for (PacketFieldSnapshot field : this.init_List) {
-            if (field.init_Str().equals(name)) {
+         for (PacketFieldSnapshot field : this.fields) {
+            if (field.name().equals(name)) {
                return Optional.of(field);
             }
          }
@@ -177,10 +177,10 @@ public record PacketSchemaSnapshot(
       List<PacketFieldSnapshot> values = new ArrayList<>();
 
       for (PacketSchemaRegistry.Inner_DataUtil field : fieldSchemas) {
-         Object value = init(packet, field.init_Str());
+         Object value = init(packet, field.name());
          boolean readable = value != init_Obj;
          values.add(
-            new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.init_Z())
+            new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
          );
       }
 

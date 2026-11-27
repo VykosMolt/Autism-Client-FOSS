@@ -103,7 +103,7 @@ public final class TotemHitModule extends Module {
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()

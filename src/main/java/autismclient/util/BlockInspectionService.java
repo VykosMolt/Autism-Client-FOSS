@@ -35,7 +35,7 @@ public final class BlockInspectionService {
       return init_Z || init_StreamGate_DataUti != null;
    }
 
-   public static void init_V(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       if (mc == null || mc.options == null || !mc.options.keyUse.isDown() || !load(mc)) {
          init_Z = false;
       }
@@ -62,7 +62,7 @@ public final class BlockInspectionService {
       }
    }
 
-   public static boolean init_Z(Minecraft mc) {
+   public static boolean tryInspect(Minecraft mc) {
       if (!load()) {
          return false;
       }
@@ -269,10 +269,10 @@ public final class BlockInspectionService {
             }
 
             BlockNbtFormatter.Inner_DataUtil inspection = BlockNbtFormatter.init(displayRoot, displayItems, note);
-            if (!AutismItemNbtInspectOverlay.init_Z_az_StreamUtil(inspection)) {
+            if (!AutismItemNbtInspectOverlay.inspectSource(inspection)) {
                bi.write("NBT overlay unavailable.");
             } else {
-               AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(mc.font);
+               AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.getOrCreate(mc.font);
                if (!(mc.gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.init(overlay))) {
                   mc.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(overlay));
                }

@@ -11005,7 +11005,7 @@ public final class ScaffoldModule extends Module {
             && !MC.player.isHandsBusy()
             && !aD.init_Z()
             && !FreecamController.isActive()
-            && !RemoteViewController.init_Z()
+            && !RemoteViewController.isActive()
             && !f.load()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.isRunning()

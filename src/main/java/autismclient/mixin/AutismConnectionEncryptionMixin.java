@@ -20,8 +20,8 @@ public abstract class AutismConnectionEncryptionMixin {
    @Inject(method = "setEncryptionKey", at = @At("TAIL"))
    private void autism$observeEncryptionBoundary(Cipher decryptCipher, Cipher encryptCipher, CallbackInfo ci) {
       if (this.channel != null) {
-         if (PacketCaptureState.init_Z()) {
-            PacketWireCaptureStore.init_V(this.channel);
+         if (PacketCaptureState.isLoggerCaptureActive()) {
+            PacketWireCaptureStore.markEncrypted(this.channel);
          }
 
          try {

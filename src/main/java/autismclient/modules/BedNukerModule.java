@@ -258,7 +258,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !FreecamController.isAiControllingBody()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.isRunning()
          && !f.load()

@@ -94,7 +94,7 @@ public final class ScreenOverlayHost {
       this.macroListOverlay = new AutismMacroListOverlay(font);
       this.queueEditorOverlay = new AutismQueueEditorOverlay(font);
       this.customFilterOverlay = new AutismCustomFilterOverlay(font);
-      this.customFilterPresetOverlay = this.customFilterOverlay.init_AutismCustomFilter();
+      this.customFilterPresetOverlay = this.customFilterOverlay.getPresetOverlay();
       this.lanSyncOverlay.write_V_10();
       this.macroListOverlay.update_V_11();
       this.queueEditorOverlay.sync_V_17();
@@ -145,7 +145,7 @@ public final class ScreenOverlayHost {
          if (this.packetLoggerOverlay == null && autismModule != null) {
             this.packetLoggerOverlay = autismModule.getOrCreatePacketLoggerOverlay();
             if (this.packetLoggerOverlay != null) {
-               this.packetLoggerOverlay.flush_V_13();
+               this.packetLoggerOverlay.restoreState();
             }
          }
 
@@ -169,22 +169,22 @@ public final class ScreenOverlayHost {
 
          return this.serverInfoOverlay;
       });
-      if (this.packetLoggerOverlay == null && AutismPacketLoggerOverlay.poll_Z_13()) {
+      if (this.packetLoggerOverlay == null && AutismPacketLoggerOverlay.isSavedVisible()) {
          ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
          this.packetLoggerOverlay = mod == null ? null : mod.getOrCreatePacketLoggerOverlay();
          if (this.packetLoggerOverlay != null) {
-            this.packetLoggerOverlay.flush_V_13();
+            this.packetLoggerOverlay.restoreState();
             if (this.packetLoggerOverlay.isVisible()) {
                manager.register(this.packetLoggerOverlay);
             }
          }
       }
 
-      if (this.serverInfoOverlay == null && AutismServerInfoOverlay.poll_Z_16()) {
+      if (this.serverInfoOverlay == null && AutismServerInfoOverlay.isSavedVisible()) {
          ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
          this.serverInfoOverlay = mod == null ? null : mod.getOrCreateServerInfoOverlay();
          if (this.serverInfoOverlay != null) {
-            this.serverInfoOverlay.update_V_21();
+            this.serverInfoOverlay.restoreState();
             if (this.serverInfoOverlay.isVisible()) {
                manager.register(this.serverInfoOverlay);
             }
@@ -248,7 +248,7 @@ public final class ScreenOverlayHost {
       }
 
       if (this.packetLoggerOverlay != null) {
-         this.packetLoggerOverlay.write_V_18();
+         this.packetLoggerOverlay.saveState();
       }
 
       if (this.customFilterOverlay != null) {
@@ -264,7 +264,7 @@ public final class ScreenOverlayHost {
       }
 
       if (this.serverInfoOverlay != null) {
-         this.serverInfoOverlay.write_V_24();
+         this.serverInfoOverlay.saveState();
       }
    }
 

@@ -57,7 +57,7 @@ public final class PacketDetailFormatter {
    private PacketDetailFormatter() {
    }
 
-   public static PacketDetailFormatter.Inner_DataUtil init_bh_DataUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static PacketDetailFormatter.Inner_DataUtil analyze(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       PacketDetailFormatter.Inner_StreamUtil out = new PacketDetailFormatter.Inner_StreamUtil();
       if (entry == null) {
          return out.init(false, "fallback");
@@ -65,7 +65,7 @@ public final class PacketDetailFormatter {
 
       init_V_AutismPacketLogger_bh_StreamUtil(entry, out);
       PacketDetailFormatter.Inner_CachePool wireDecode = init_bh_CachePool_AutismPacketLogger(entry);
-      Packet<?> packet = wireDecode.init_Packet != null ? wireDecode.init_Packet : entry.init_Packet;
+      Packet<?> packet = wireDecode.init_Packet != null ? wireDecode.init_Packet : entry.packet;
       if (packet == null) {
          if (wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
             out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
@@ -78,21 +78,21 @@ public final class PacketDetailFormatter {
       }
    }
 
-   public static String init_Str_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      PacketDetailFormatter.Inner_DataUtil analysis = init_bh_DataUtil_AutismPacketLogger(entry);
-      if (!analysis.init_Z() && !analysis.load_Z()) {
+   public static String describe(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      PacketDetailFormatter.Inner_DataUtil analysis = analyze(entry);
+      if (!analysis.init_Z() && !analysis.hasMeaning()) {
          return "";
       }
 
       StringBuilder out = new StringBuilder();
       if (analysis.init_Z()) {
          out.append("[Reality]\n");
-         init_V_StringBuilder_List(out, analysis.init_List());
+         init_V_StringBuilder_List(out, analysis.lines());
       }
 
-      if (analysis.load_Z()) {
+      if (analysis.hasMeaning()) {
          out.append("\n[Meaning]\n");
-         init_V_StringBuilder_List(out, analysis.load_List());
+         init_V_StringBuilder_List(out, analysis.meaningLines());
       }
 
       return out.toString().stripTrailing();
@@ -101,26 +101,26 @@ public final class PacketDetailFormatter {
    private static void init_V_StringBuilder_List(StringBuilder out, List<PacketInspectorEngine.ColoredLine> lines) {
       for (PacketInspectorEngine.ColoredLine line : lines) {
          if (line != null) {
-            out.append(line.init_Str()).append('\n');
+            out.append(line.text()).append('\n');
          }
       }
    }
 
    private static PacketDetailFormatter.Inner_CachePool init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (entry == null || entry.init_Packet == null || entry.init_Class == null) {
+      if (entry == null || entry.packet == null || entry.packetClass == null) {
          return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
       }
 
-      if (!Packet.class.isAssignableFrom(entry.init_Class)) {
+      if (!Packet.class.isAssignableFrom(entry.packetClass)) {
          return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
       }
 
-      PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
-      if (snapshot != null && snapshot.init_BArr().length != 0) {
+      PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
+      if (snapshot != null && snapshot.plaintext().length != 0) {
          try {
-            Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.init_Class;
-            PacketStreamCodecDecoder.Inner_CachePool decoded = PacketStreamCodecDecoder.init_bp_CachePool(packetClass, snapshot.init_BArr(), snapshot.load());
-            return PacketDetailFormatter.Inner_CachePool.init(decoded.init_Packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
+            Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.packetClass;
+            PacketStreamCodecDecoder.Inner_CachePool decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.load());
+            return PacketDetailFormatter.Inner_CachePool.init(decoded.packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
          } catch (Throwable t) {
             return PacketDetailFormatter.Inner_CachePool.init("captured plaintext was kept, but STREAM_CODEC decode failed: " + load(t));
          }
@@ -134,7 +134,7 @@ public final class PacketDetailFormatter {
          out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.mint() : UiColorPalette.warningYellow());
       }
 
-      PacketSchemaSnapshot view = PacketSchemaSnapshot.init_br_Packet(packet);
+      PacketSchemaSnapshot view = PacketSchemaSnapshot.capture(packet);
       init_V_br_bh_StreamUtil(view, out);
       init_V_Packet(packet, view, out);
       return view.read();
@@ -145,8 +145,8 @@ public final class PacketDetailFormatter {
          out.init("Status: fallback", UiColorPalette.warningYellow());
          out.init("No packet object was available.", UiColorPalette.errorText());
       } else {
-         PacketSchemaRegistry.Inner_StreamUtil schema = view.init_bx_StreamUtil();
-         out.init("Status: " + view.init_Str(), view.read() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
+         PacketSchemaRegistry.Inner_StreamUtil schema = view.schema();
+         out.init("Status: " + view.status(), view.read() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          if (schema != null) {
             out.init("Schema: " + (view.load_Z() ? "Minecraft source-backed schema" : "reflection fallback"), UiColorPalette.textBright());
             out.init("Protocol: " + schema.read() + " | Direction: " + schema.write(), UiColorPalette.textBody());
@@ -155,25 +155,25 @@ public final class PacketDetailFormatter {
                out.init("Packet Type: " + schema.sync(), UiColorPalette.textBody());
             }
 
-            if (schema.load_Z()) {
+            if (schema.inherited()) {
                out.init("Field Note: using parent packet schema for nested packet variant", UiColorPalette.warningYellow());
             }
          } else {
             out.init("Schema: reflection fallback", UiColorPalette.warningYellow());
          }
 
-         if (!view.load_Str().isBlank()) {
-            out.init("Fallback Note: " + view.load_Str(), UiColorPalette.textMuted());
+         if (!view.fallbackNote().isBlank()) {
+            out.init("Fallback Note: " + view.fallbackNote(), UiColorPalette.textMuted());
          }
 
-         if (view.init_List().isEmpty()) {
+         if (view.fields().isEmpty()) {
             out.init("Fields: none", UiColorPalette.textMuted());
          } else {
-            out.init("Fields: " + view.init_List().size(), UiColorPalette.textBright());
+            out.init("Fields: " + view.fields().size(), UiColorPalette.textBright());
 
-            for (PacketFieldSnapshot field : view.init_List()) {
-               int color = field.init_Z() ? UiColorPalette.softWhite() : UiColorPalette.errorText();
-               out.init(field.init_Str() + " (" + field.load_Str() + "): " + field.write(), color);
+            for (PacketFieldSnapshot field : view.fields()) {
+               int color = field.readable() ? UiColorPalette.softWhite() : UiColorPalette.errorText();
+               out.init(field.name() + " (" + field.typeName() + "): " + field.write(), color);
 
                for (String detail : field.init_List()) {
                   out.init("  " + detail, UiColorPalette.textBody());
@@ -192,20 +192,20 @@ public final class PacketDetailFormatter {
          out.load("Server replaces the full contents of a container.", UiColorPalette.textBright());
          out.load("Container: #" + content.containerId() + " state=" + content.stateId(), UiColorPalette.blue());
          out.load("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
-         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.successText());
+         out.load("Carried Item: " + PacketStateDeltaTracker.describeStack(content.carriedItem()), UiColorPalette.successText());
          init_V_List_bh_StreamUtil(content.items(), out);
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
          out.load("Server updates one container slot.", UiColorPalette.textBright());
          out.load("Container: #" + slot.getContainerId() + " state=" + slot.getStateId(), UiColorPalette.blue());
          out.load("Slot: " + slot.getSlot(), UiColorPalette.textBright());
-         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.successText());
+         out.load("Item: " + PacketStateDeltaTracker.describeStack(slot.getItem()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
          out.load("Server sets the carried cursor item.", UiColorPalette.textBright());
-         out.load("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.successText());
+         out.load("Cursor: " + PacketStateDeltaTracker.describeStack(cursor.contents()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
          out.load("Server updates a player inventory slot.", UiColorPalette.textBright());
          out.load("Inventory Slot: " + inventory.slot(), UiColorPalette.blue());
-         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.successText());
+         out.load("Item: " + PacketStateDeltaTracker.describeStack(inventory.contents()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
          out.load("Server changes the selected hotbar slot.", UiColorPalette.textBright());
          out.load("Selected Slot: " + held.slot(), UiColorPalette.successText());
@@ -226,11 +226,11 @@ public final class PacketDetailFormatter {
                break;
             }
 
-            out.load("  #" + slot.getIntKey() + " -> " + PacketStateDeltaTracker.init_Str_HashedStack(slot.getValue()), UiColorPalette.textBody());
+            out.load("  #" + slot.getIntKey() + " -> " + PacketStateDeltaTracker.describeHashedStack(slot.getValue()), UiColorPalette.textBody());
             shown++;
          }
 
-         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.successText());
+         out.load("Carried Item: " + PacketStateDeltaTracker.describeHashedStack(click.carriedItem()), UiColorPalette.successText());
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
          out.load("Client presses a handled-screen button.", UiColorPalette.textBright());
          out.load("Container: #" + load(init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
@@ -350,16 +350,16 @@ public final class PacketDetailFormatter {
                return;
             }
 
-            out.load("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.textBody());
+            out.load("  #" + i + " " + PacketStateDeltaTracker.describeStack(stack), UiColorPalette.textBody());
             shown++;
          }
       }
    }
 
    private static boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry, Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out) {
-      PacketStateDeltaTracker.Inner_DataUtil capture = entry.init_bq_DataUtil;
-      PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.init_bq_CachePool();
-      PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.load();
+      PacketStateDeltaTracker.Inner_DataUtil capture = entry.packetContext;
+      PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : capture.before();
+      PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : capture.load();
       if (packet instanceof ClientboundOpenScreenPacket open) {
          out.init("Status: complete", UiColorPalette.mint());
          out.init("Meaning: server opened a handled screen", UiColorPalette.textBright());
@@ -374,7 +374,7 @@ public final class PacketDetailFormatter {
          out.init("State Id: " + content.stateId(), UiColorPalette.textBody());
          out.init("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
          out.init("Container Area: " + init_Str_bq_CachePool(after), UiColorPalette.textBright());
-         out.init("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.successText());
+         out.init("Cursor: " + PacketStateDeltaTracker.describeStack(content.carriedItem()), UiColorPalette.successText());
          load(content.items(), out);
          return true;
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
@@ -382,33 +382,33 @@ public final class PacketDetailFormatter {
          out.init("Meaning: server updated one container slot", UiColorPalette.textBright());
          out.init("Container Id: " + slot.getContainerId(), UiColorPalette.blue());
          out.init("State Id: " + slot.getStateId(), UiColorPalette.textBody());
-         out.init("Slot: " + slot.getSlot() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(after, slot.getSlot()) + ")", UiColorPalette.textBright());
+         out.init("Slot: " + slot.getSlot() + " (" + PacketStateDeltaTracker.describeSlot(after, slot.getSlot()) + ")", UiColorPalette.textBright());
          out.init("Before: " + before.init(slot.getSlot()), UiColorPalette.textMuted());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.successText());
+         out.init("After: " + PacketStateDeltaTracker.describeStack(slot.getItem()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
          out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server updated carried cursor item", UiColorPalette.textBright());
-         out.init("Before: " + before.read_Str(), UiColorPalette.textMuted());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.successText());
+         out.init("Before: " + before.carriedItem(), UiColorPalette.textMuted());
+         out.init("After: " + PacketStateDeltaTracker.describeStack(cursor.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
          out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server updated a player inventory slot", UiColorPalette.textBright());
          out.init("Inventory Slot: " + inventory.slot(), UiColorPalette.blue());
-         out.init("Before: " + before.load_Map().getOrDefault(inventory.slot(), "unknown"), UiColorPalette.textMuted());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.successText());
+         out.init("Before: " + before.inventoryItems().getOrDefault(inventory.slot(), "unknown"), UiColorPalette.textMuted());
+         out.init("After: " + PacketStateDeltaTracker.describeStack(inventory.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
          out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: server selected held hotbar slot", UiColorPalette.textBright());
-         out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
+         out.init("Before: " + before.selectedSlot(), UiColorPalette.textMuted());
          out.init("After: " + held.slot(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCarriedItemPacket carried) {
          out.init("Status: context-aware", UiColorPalette.mint());
          out.init("Meaning: client selected hotbar slot", UiColorPalette.textBright());
-         out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
+         out.init("Before: " + before.selectedSlot(), UiColorPalette.textMuted());
          out.init("After: " + carried.getSlot(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundContainerClickPacket click) {
@@ -429,8 +429,8 @@ public final class PacketDetailFormatter {
             ? close.getContainerId()
             : init_Obj_Obj_StrArr(packet, "containerId", "getContainerId");
          out.init("Container Id: " + load(id), UiColorPalette.blue());
-         if (!before.load_Str().isBlank()) {
-            out.init("Closed Screen: " + init_Str_Str(before.load_Str()), UiColorPalette.successText());
+         if (!before.screenTitle().isBlank()) {
+            out.init("Closed Screen: " + init_Str_Str(before.screenTitle()), UiColorPalette.successText());
          }
 
          return true;
@@ -557,12 +557,12 @@ public final class PacketDetailFormatter {
       out.init("Container Id: " + click.containerId(), UiColorPalette.blue());
       out.init("State Id: " + click.stateId(), UiColorPalette.textBody());
       out.init("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
-      out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(before, click.slotNum()) + ")", UiColorPalette.textBright());
+      out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.describeSlot(before, click.slotNum()) + ")", UiColorPalette.textBright());
       out.init("Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
       out.init("Slot Before: " + before.init(click.slotNum()), UiColorPalette.textMuted());
       out.init("Slot After: " + after.init(click.slotNum()), UiColorPalette.successText());
-      out.init("Cursor Before: " + before.read_Str(), UiColorPalette.textMuted());
-      out.init("Cursor After: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.successText());
+      out.init("Cursor Before: " + before.carriedItem(), UiColorPalette.textMuted());
+      out.init("Cursor After: " + PacketStateDeltaTracker.describeHashedStack(click.carriedItem()), UiColorPalette.successText());
       out.init("Changed Slots: " + click.changedSlots().size(), UiColorPalette.textBright());
       int shown = 0;
 
@@ -573,7 +573,7 @@ public final class PacketDetailFormatter {
          }
 
          out.init(
-            "  #" + slot.getIntKey() + " " + PacketStateDeltaTracker.init_Str_bq_CachePool_I(before, slot.getIntKey()) + " -> " + PacketStateDeltaTracker.init_Str_HashedStack(slot.getValue()),
+            "  #" + slot.getIntKey() + " " + PacketStateDeltaTracker.describeSlot(before, slot.getIntKey()) + " -> " + PacketStateDeltaTracker.describeHashedStack(slot.getValue()),
             UiColorPalette.textBody()
          );
          shown++;
@@ -591,12 +591,12 @@ public final class PacketDetailFormatter {
       out.init("Raw Position Change: " + init_Str_Vec3(change.position()), UiColorPalette.textBright());
       out.init("Raw Delta Movement: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.textBright());
       out.init("Raw Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.textBright());
-      if (before.load_bq_StreamUtil() != null) {
-         out.init("Before Server Pos: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.load_bq_StreamUtil()), UiColorPalette.textMuted());
+      if (before.serverPosition() != null) {
+         out.init("Before Server Pos: " + PacketStateDeltaTracker.formatPosition(before.serverPosition()), UiColorPalette.textMuted());
       }
 
-      if (after.load_bq_StreamUtil() != null) {
-         out.init("Computed After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.load_bq_StreamUtil()), UiColorPalette.successText());
+      if (after.serverPosition() != null) {
+         out.init("Computed After: " + PacketStateDeltaTracker.formatPosition(after.serverPosition()), UiColorPalette.successText());
       }
 
       out.init("Ack Expected: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.amber());
@@ -610,14 +610,14 @@ public final class PacketDetailFormatter {
       out.init("Has Rotation: " + move.hasRotation(), UiColorPalette.textBright());
       out.init("On Ground: " + move.isOnGround(), UiColorPalette.textBright());
       out.init("Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.textBright());
-      if (before.init_bq_StreamUtil() != null) {
-         out.init("Before: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.init_bq_StreamUtil()), UiColorPalette.textMuted());
+      if (before.clientPosition() != null) {
+         out.init("Before: " + PacketStateDeltaTracker.formatPosition(before.clientPosition()), UiColorPalette.textMuted());
       }
 
-      if (after.init_bq_StreamUtil() != null) {
-         out.init("After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.init_bq_StreamUtil()), UiColorPalette.successText());
-         if (before.init_bq_StreamUtil() != null) {
-            out.init("Distance Delta: " + String.format(Locale.ROOT, "%.4f blocks", before.init_bq_StreamUtil().init(after.init_bq_StreamUtil())), UiColorPalette.warningYellow());
+      if (after.clientPosition() != null) {
+         out.init("After: " + PacketStateDeltaTracker.formatPosition(after.clientPosition()), UiColorPalette.successText());
+         if (before.clientPosition() != null) {
+            out.init("Distance Delta: " + String.format(Locale.ROOT, "%.4f blocks", before.clientPosition().init(after.clientPosition())), UiColorPalette.warningYellow());
          }
       }
    }
@@ -637,42 +637,42 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_bq_DataUtil_bh_StreamUtil(PacketStateDeltaTracker.Inner_DataUtil capture, PacketDetailFormatter.Inner_StreamUtil out) {
-      if (capture != null && capture.init_Z()) {
-         PacketStateDeltaTracker.Inner_CachePool before = capture.init_bq_CachePool();
+      if (capture != null && capture.captured()) {
+         PacketStateDeltaTracker.Inner_CachePool before = capture.before();
          PacketStateDeltaTracker.Inner_CachePool after = capture.load();
-         out.load("Context Status: " + (before.init_Z() ? "tracked" : "started mid-stream / partial"), before.init_Z() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
-         if (!after.update_Str().isBlank()) {
-            out.load("Protocol State: " + after.update_Str(), UiColorPalette.textBright());
+         out.load("Context Status: " + (before.tracked() ? "tracked" : "started mid-stream / partial"), before.tracked() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
+         if (!after.protocolState().isBlank()) {
+            out.load("Protocol State: " + after.protocolState(), UiColorPalette.textBright());
          }
 
-         if (after.init_I() >= 0 || !after.load_Str().isBlank()) {
-            out.load("Screen: #" + after.init_I() + " " + init_Str_Str(after.load_Str()) + " " + after.init_Str(), UiColorPalette.successText());
+         if (after.containerId() >= 0 || !after.screenTitle().isBlank()) {
+            out.load("Screen: #" + after.containerId() + " " + init_Str_Str(after.screenTitle()) + " " + after.menuType(), UiColorPalette.successText());
          }
 
-         if (!after.write_Str().isBlank()) {
-            out.load("Dimension: " + after.write_Str(), UiColorPalette.successText());
+         if (!after.dimension().isBlank()) {
+            out.load("Dimension: " + after.dimension(), UiColorPalette.successText());
          }
 
-         if (after.init_Integer() != null && after.load_Integer() != null) {
-            out.load("Chunk Center: " + after.init_Integer() + ", " + after.load_Integer(), UiColorPalette.textBright());
+         if (after.chunkCenterX() != null && after.chunkCenterZ() != null) {
+            out.load("Chunk Center: " + after.chunkCenterX() + ", " + after.chunkCenterZ(), UiColorPalette.textBright());
          }
 
-         if (after.read_Integer() != null) {
-            out.load("Chunk Radius: " + after.read_Integer(), UiColorPalette.textBright());
+         if (after.chunkRadius() != null) {
+            out.load("Chunk Radius: " + after.chunkRadius(), UiColorPalette.textBright());
          }
 
-         if (after.write_Integer() != null) {
-            out.load("Simulation Distance: " + after.write_Integer(), UiColorPalette.textBright());
+         if (after.simulationDistance() != null) {
+            out.load("Simulation Distance: " + after.simulationDistance(), UiColorPalette.textBright());
          }
 
          if (after.sync() >= 0) {
             out.load("Pending Teleport Ack: " + after.sync(), UiColorPalette.amber());
          }
 
-         if (!capture.init_List().isEmpty()) {
+         if (!capture.changes().isEmpty()) {
             out.load("Changes:", UiColorPalette.textBright());
 
-            for (String change : capture.init_List()) {
+            for (String change : capture.changes()) {
                out.load("  - " + change, UiColorPalette.textBody());
             }
          }
@@ -680,20 +680,20 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.Inner_StreamUtil out) {
-      if (entry != null && entry.init_Packet != null) {
-         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
+      if (entry != null && entry.packet != null) {
+         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
          if (snapshot != null) {
             out.read("Protocol: " + snapshot.load(), UiColorPalette.textBody());
-            out.read("Direction: " + snapshot.init_Str(), "C2S".equalsIgnoreCase(snapshot.init_Str()) ? UiColorPalette.amber() : UiColorPalette.cyan());
-            if (snapshot.init_I() >= 0) {
-               out.read("Packet ID: " + snapshot.init_I(), UiColorPalette.textBody());
+            out.read("Direction: " + snapshot.direction(), "C2S".equalsIgnoreCase(snapshot.direction()) ? UiColorPalette.amber() : UiColorPalette.cyan());
+            if (snapshot.packetId() >= 0) {
+               out.read("Packet ID: " + snapshot.packetId(), UiColorPalette.textBody());
             }
 
             if (snapshot.write() != null && !snapshot.write().isBlank()) {
                out.read("Packet Type: " + snapshot.write(), UiColorPalette.textBody());
             }
 
-            byte[] bytes = snapshot.init_BArr();
+            byte[] bytes = snapshot.plaintext();
             out.read("Plaintext: " + bytes.length + " bytes " + PacketWireCaptureStore.init(bytes, 48), UiColorPalette.textMuted());
          }
       }
@@ -714,16 +714,16 @@ public final class PacketDetailFormatter {
                return;
             }
 
-            out.init("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.textBody());
+            out.init("  #" + i + " " + PacketStateDeltaTracker.describeStack(stack), UiColorPalette.textBody());
             shown++;
          }
       }
    }
 
    private static String init_Str_bq_CachePool(PacketStateDeltaTracker.Inner_CachePool snapshot) {
-      if (snapshot != null && snapshot.read_I() >= 0) {
-         int containerSlots = Math.max(0, snapshot.write_I());
-         int playerSlots = Math.max(0, snapshot.read_I() - containerSlots);
+      if (snapshot != null && snapshot.totalSlots() >= 0) {
+         int containerSlots = Math.max(0, snapshot.containerSlots());
+         int playerSlots = Math.max(0, snapshot.totalSlots() - containerSlots);
          return containerSlots + " container slots + " + playerSlots + " player slots";
       } else {
          return "unknown";
@@ -793,7 +793,7 @@ public final class PacketDetailFormatter {
    }
 
    private static String init_Str_Obj(Object value) {
-      return value instanceof ItemStack stack ? PacketStateDeltaTracker.init_Str_ItemStack(stack) : load(value);
+      return value instanceof ItemStack stack ? PacketStateDeltaTracker.describeStack(stack) : load(value);
    }
 
    private static String init_Str_Set(Set<Relative> relatives) {
@@ -832,7 +832,7 @@ public final class PacketDetailFormatter {
       if (value == null) {
          return "unknown";
       } else if (value instanceof ItemStack stack) {
-         return PacketStateDeltaTracker.init_Str_ItemStack(stack);
+         return PacketStateDeltaTracker.describeStack(stack);
       } else {
          try {
             if (value instanceof Optional<?> optional) {
@@ -880,32 +880,32 @@ public final class PacketDetailFormatter {
    }
 
    public record Inner_DataUtil(
-      List<PacketInspectorEngine.ColoredLine> init_List, List<PacketInspectorEngine.ColoredLine> load, List<PacketInspectorEngine.ColoredLine> read, boolean init_Z, String init_Str
+      List<PacketInspectorEngine.ColoredLine> lines, List<PacketInspectorEngine.ColoredLine> load, List<PacketInspectorEngine.ColoredLine> read, boolean init_Z, String init_Str
    ) {
       public Inner_DataUtil {
-         init_List = init_List == null ? List.of() : List.copyOf(init_List);
+         lines = lines == null ? List.of() : List.copyOf(lines);
          load = load == null ? List.of() : List.copyOf(load);
          read = read == null ? List.of() : List.copyOf(read);
          init_Str = init_Str == null ? "fallback" : init_Str;
       }
 
       public boolean init_Z() {
-         return !this.init_List.isEmpty();
+         return !this.lines.isEmpty();
       }
 
-      public boolean load_Z() {
+      public boolean hasMeaning() {
          return !this.load.isEmpty();
       }
 
-      public boolean read_Z() {
+      public boolean hasWire() {
          return !this.read.isEmpty();
       }
 
-      public List<PacketInspectorEngine.ColoredLine> load_List() {
+      public List<PacketInspectorEngine.ColoredLine> meaningLines() {
          return this.load;
       }
 
-      public List<PacketInspectorEngine.ColoredLine> read_List() {
+      public List<PacketInspectorEngine.ColoredLine> wireLines() {
          return this.read;
       }
 

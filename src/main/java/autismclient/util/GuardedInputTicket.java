@@ -4,23 +4,23 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 final class GuardedInputTicket {
-   final String init_Str;
+   final String owner;
    private final BooleanSupplier init_BooleanSupplier;
    private final Consumer<Boolean> init_Consumer;
    private boolean init_Z;
    private boolean load;
 
    GuardedInputTicket(String owner, BooleanSupplier guard, Consumer<Boolean> receipt) {
-      this.init_Str = owner;
+      this.owner = owner;
       this.init_BooleanSupplier = guard;
       this.init_Consumer = receipt;
    }
 
-   boolean init_Z() {
+   boolean isValid() {
       return !this.load && this.init_BooleanSupplier.getAsBoolean();
    }
 
-   void init_V() {
+   void markSent() {
       if (!this.load) {
          this.init_Z = true;
       }

@@ -97,7 +97,7 @@ public abstract class AutismInGameHudMixin {
                boolean queueSending = shared.hasSendingPackets();
                boolean queueVisible = shared.isDelayPacketsEnabled() || shared.hasDelayedPackets() || queueSending;
                boolean captureActive = this.hasAnyCaptureSession(shared);
-               boolean payloadStudyActive = PayloadStudyTracker.init_Z();
+               boolean payloadStudyActive = PayloadStudyTracker.isActive();
                Module hud = activity.init(64L) ? autismclient.modules.al.init_Module_Str("hud") : null;
                boolean nativeHudVisible = hud != null && AutismHudManager.init_Z_Screen_Module(screen, hud);
                boolean esp2dVisible = am.add();
@@ -123,7 +123,7 @@ public abstract class AutismInGameHudMixin {
                boolean overlayVisible = false;
                if (screen == null) {
                   serverInfoOverlay = ModuleRuntimeManager.getInstance().getServerInfoOverlay();
-                  serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.run_Z_5();
+                  serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.isScanRunning();
                   if (activity.init(256L)) {
                      overlayManager = OverlayManager.getInstance();
                      overlayVisible = overlayManager.isActive();
@@ -174,7 +174,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (queueVisible) {
-                        int queueHeight = PacketQueueHudRenderer.init_I(MC.font, 172, 8);
+                        int queueHeight = PacketQueueHudRenderer.layoutHeight(MC.font, 172, 8);
                         if (queueHeight > 0) {
                            hudOccluders.add(new AutismHudManager.HudElementBounds("packet_queue", x, y, 172, queueHeight));
                            y += queueHeight;
@@ -273,7 +273,7 @@ public abstract class AutismInGameHudMixin {
                         cA.init_V_GuiGraphicsExtract(context);
 
                         try {
-                           serverInfoOverlay.init_V_GuiGraphicsExtract(context);
+                           serverInfoOverlay.renderProbeBanner(context);
                         } catch (Throwable t) {
                            this.autism$logRenderError("probeBanner", t);
                         } finally {
@@ -368,12 +368,12 @@ public abstract class AutismInGameHudMixin {
 
    @Unique
    private HudBannerSpec payloadStudyBannerSpec(GuiGraphicsExtractor graphics, int topOffset) {
-      String title = PayloadStudyTracker.init_Str();
+      String title = PayloadStudyTracker.title();
       if (title.isBlank()) {
          return null;
       }
 
-      String line1 = PayloadStudyTracker.load_Str();
+      String line1 = PayloadStudyTracker.statusLine();
       String line2 = PayloadStudyTracker.read();
       int sw = cA.init_I();
       autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);

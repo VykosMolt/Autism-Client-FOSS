@@ -5,7 +5,7 @@ public final class LeafDupeRateLimiter {
    private long init_J;
    private int load;
 
-   public int init_I(int windowMs, long now) {
+   public int remaining(int windowMs, long now) {
       if (windowMs <= 0) {
          return 2147483647;
       }
@@ -17,9 +17,9 @@ public final class LeafDupeRateLimiter {
       return Math.max(0, 9 - this.load);
    }
 
-   public void init_V(int windowMs, long now) {
+   public void recordUse(int windowMs, long now) {
       if (windowMs > 0) {
-         if (this.init_I(windowMs, now) == 9) {
+         if (this.remaining(windowMs, now) == 9) {
             this.init_J = now;
          }
 

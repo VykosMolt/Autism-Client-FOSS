@@ -72,14 +72,14 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    public AutismPacketSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
       this.load_List.addAll(PacketTypeRegistry.getC2sPackets());
-      this.load_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.load_List.sort(Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER));
       this.read_List.addAll(PacketTypeRegistry.getS2cPackets());
-      this.read_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.read_List.sort(Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER));
       this.init_Set.addAll(this.load_List);
       this.write_List.addAll(this.load_List);
       this.write_List.addAll(this.read_List);
       this.init_List.addAll(this.write_List);
-      this.init_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.init_List.sort(Comparator.comparing(PacketNameResolver::nameOfClass, String.CASE_INSENSITIVE_ORDER));
 
       for (Class<? extends Packet<?>> packetClass : this.init_List) {
          this.init_Map.put(packetClass, init_Str_Class_2(packetClass));
@@ -122,7 +122,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       return visibleRows * this.pop_I_22() + 2;
    }
 
-   public void init_V_Consumer(Consumer<Class<? extends Packet<?>>> onSelect) {
+   public void openSinglePicker(Consumer<Class<? extends Packet<?>>> onSelect) {
       this.init_V_Consumer(onSelect, this.init_List, Set.of(), true);
    }
 
@@ -146,7 +146,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.init_V_Consumer(onSelect, this.write_List, excludedPackets, closeOnSelect);
    }
 
-   public void init_V_BiConsumer_Collection(
+   public void openC2sMultiSelect(
       BiConsumer<Class<? extends Packet<?>>, Boolean> onToggleSelect, Collection<Class<? extends Packet<?>>> selectedPackets
    ) {
       this.init_V_BiConsumer(onToggleSelect, this.load_List, selectedPackets, Set.of());
@@ -160,7 +160,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.init_V_BiConsumer(onToggleSelect, this.load_List, selectedPackets, excludedPackets);
    }
 
-   public void load_V_BiConsumer_Collection(
+   public void openS2cMultiSelect(
       BiConsumer<Class<? extends Packet<?>>, Boolean> onToggleSelect, Collection<Class<? extends Packet<?>>> selectedPackets
    ) {
       this.init_V_BiConsumer(onToggleSelect, this.read_List, selectedPackets, Set.of());
@@ -174,7 +174,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.init_V_BiConsumer(onToggleSelect, this.read_List, selectedPackets, excludedPackets);
    }
 
-   public void read_V_BiConsumer_Collection(
+   public void openAnyMultiSelect(
       BiConsumer<Class<? extends Packet<?>>, Boolean> onToggleSelect, Collection<Class<? extends Packet<?>>> selectedPackets
    ) {
       this.init_V_BiConsumer(onToggleSelect, this.write_List, selectedPackets, Set.of());
@@ -239,7 +239,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       OverlayManager.getInstance().bringOwnerToFront(this);
    }
 
-   public void write_V_21() {
+   public void resetSelection() {
       this.write_Z = false;
       this.update_Z = false;
       this.sync_Z = false;
@@ -360,7 +360,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       int rowColor = selected ? UiColorPalette.filterRowFill(false) : UiColorPalette.packetRowFill(c2s, index, false);
       int color = selected ? UiColorPalette.filterActiveText() : UiColorPalette.packetRowAccent(c2s, index);
       autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(context, x, y, width, this.pop_I_22(), rowColor);
-      String name = PacketNameResolver.init_Str_Class(packetClass);
+      String name = PacketNameResolver.nameOfClass(packetClass);
       int textWidth = width - 10;
       String trimmed = autismclient.gui.f.b.k.init(
          this.init_Font, name, textWidth, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color
@@ -388,7 +388,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
       if (button == 0 && this.load_Z_F_F_4(uiMouseX, uiMouseY)) {
-         this.write_V_21();
+         this.resetSelection();
          return true;
       }
 
@@ -459,7 +459,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.open_Z) {
-                  this.write_V_21();
+                  this.resetSelection();
                } else {
                   this.load_Set = new LinkedHashSet<>(this.load_Set);
                   this.load_Set.add(selectedPacket);
@@ -562,7 +562,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
             this.init_BitSetUtil.setFocused(false);
             return true;
          } else {
-            this.write_V_21();
+            this.resetSelection();
             return true;
          }
       } else {
@@ -627,7 +627,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private static String init_Str_Class_2(Class<? extends Packet<?>> packetClass) {
-      return packetClass == null ? "" : (packetClass.getSimpleName() + "\n" + PacketNameResolver.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
+      return packetClass == null ? "" : (packetClass.getSimpleName() + "\n" + PacketNameResolver.nameOfClass(packetClass)).toLowerCase(Locale.ROOT);
    }
 
    @Override

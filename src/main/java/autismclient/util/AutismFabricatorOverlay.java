@@ -1983,12 +1983,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil() {
-      return this.init_bo_StreamUtil == null ? null : this.init_bo_StreamUtil.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil_2());
+      return this.init_bo_StreamUtil == null ? null : this.init_bo_StreamUtil.withMode(this.init_bo_DataUtil_2());
    }
 
    private Packet<?> init_Packet() {
       ContainerClickSnapshot.Inner_StreamUtil target = this.init_bo_StreamUtil();
-      return target == null ? null : target.init_ServerboundContain();
+      return target == null ? null : target.toPacket();
    }
 
    private Packet<?> init_Packet_I(int slot) {
@@ -2088,7 +2088,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          List<Packet<?>> packets = new ArrayList<>(repeats);
 
          for (int i = 0; i < repeats; i++) {
-            packets.add(target.init_ServerboundContain());
+            packets.add(target.toPacket());
          }
 
          if (queue) {

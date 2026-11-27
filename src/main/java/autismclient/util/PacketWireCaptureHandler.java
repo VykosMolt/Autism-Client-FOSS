@@ -31,6 +31,6 @@ public final class PacketWireCaptureHandler extends ChannelDuplexHandler {
    }
 
    private static boolean init() {
-      return PacketCaptureState.init_Z();
+      return PacketCaptureState.isLoggerCaptureActive();
    }
 }

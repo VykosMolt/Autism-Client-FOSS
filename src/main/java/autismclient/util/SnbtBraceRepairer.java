@@ -8,7 +8,7 @@ public final class SnbtBraceRepairer {
    private SnbtBraceRepairer() {
    }
 
-   public static String init_Str(String raw) {
+   public static String repair(String raw) {
       if (raw != null && !raw.isBlank()) {
          try {
             return init_Str(init_List(raw));

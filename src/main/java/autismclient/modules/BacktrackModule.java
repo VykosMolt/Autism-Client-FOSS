@@ -207,7 +207,7 @@ public final class BacktrackModule extends Module {
 
    @Override
    public String info() {
-      return this.integer("hold-time") + "ms" + (this.init_cN.init_I() > 0 ? " · " + this.init_cN.init_I() : "");
+      return this.integer("hold-time") + "ms" + (this.init_cN.size() > 0 ? " · " + this.init_cN.size() : "");
    }
 
    private boolean init_Z_21() {
@@ -239,7 +239,7 @@ public final class BacktrackModule extends Module {
          && !init_Minecraft.player.isUsingItem()
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && BlinkPacketManager.getQueuedPacketCount() == 0;
    }
 
@@ -359,7 +359,7 @@ public final class BacktrackModule extends Module {
                ? Compat263.interpPos(interpolation)
                : this.init_LivingEntity.position();
             this.init_cO.init(this.init_LivingEntity.getPositionCodec().getBase(), received);
-            this.init_cN.init_V(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity);
+            this.init_cN.bind(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity);
             this.init_V_AABB(this.init_LivingEntity.getBoundingBox(), received, this.init_LocalPlayer.getEyePosition(), System.nanoTime());
          }
       }
@@ -496,7 +496,7 @@ public final class BacktrackModule extends Module {
             AABB latest = drawn.move(this.init_cO.init().subtract(current));
             if (init_Z_AABB_2(latest, eye, look, reach - 0.035)) {
                return true;
-            } else if (this.init_cN.init_I() != 0 && this.read(now)) {
+            } else if (this.init_cN.size() != 0 && this.read(now)) {
                AABB reachable = drawn.move(this.init_Vec3.subtract(current));
                return init_Z_AABB_2(drawn, eye, look, reach - 0.035)
                   && init_Z_AABB_2(reachable, eye, look, reach - 0.06)
@@ -689,7 +689,7 @@ public final class BacktrackModule extends Module {
                   return false;
                }
 
-               if (!moved && this.init_cN.init_I() == 0) {
+               if (!moved && this.init_cN.size() == 0) {
                   return false;
                }
 
@@ -776,11 +776,11 @@ public final class BacktrackModule extends Module {
    }
 
    private void init_V_Z_4(boolean all) {
-      if (this.init_cN.init_I() != 0) {
+      if (this.init_cN.size() != 0) {
          if (this.init_Z_21()
             && this.init_LivingEntity != null
             && this.init_ClientLevel.getEntity(this.init_LivingEntity.getId()) == this.init_LivingEntity
-            && this.init_cN.init_Z(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity)) {
+            && this.init_cN.isBoundTo(this.init_ClientLevel, this.init_LocalPlayer, this.init_ClientPacketListen, this.init_LivingEntity)) {
             long now = System.nanoTime();
             this.load_D = Math.max(this.load_D, this.init_cN.init(now) / 1000000.0);
             if (all) {
@@ -795,8 +795,8 @@ public final class BacktrackModule extends Module {
                this.init_Z = false;
             }
          } else {
-            this.tick = this.tick + this.init_cN.init_I();
-            this.init_cN.init_V();
+            this.tick = this.tick + this.init_cN.size();
+            this.init_cN.clear();
          }
       }
    }
@@ -811,8 +811,8 @@ public final class BacktrackModule extends Module {
          this.init_V_Z_4(true);
       }
 
-      this.tick = this.tick + this.init_cN.init_I();
-      this.init_cN.init_V();
+      this.tick = this.tick + this.init_cN.size();
+      this.init_cN.clear();
       synchronized (this.init_Map) {
          this.init_Map.clear();
       }
@@ -839,7 +839,7 @@ public final class BacktrackModule extends Module {
 
    static Vec3 init_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 eyes) {
       BacktrackModule module = init_TaskTimer;
-      if (module != null && module.init_LivingEntity == entity && module.init_cN.init_I() != 0 && module.init_Z_21()) {
+      if (module != null && module.init_LivingEntity == entity && module.init_cN.size() != 0 && module.init_Z_21()) {
          Vec3 received = module.init_cO.init();
          AABB drawn = entity.getBoundingBox();
          long now = System.nanoTime();
@@ -870,7 +870,7 @@ public final class BacktrackModule extends Module {
       long now = System.nanoTime();
       return new BacktrackModule.Inner_StreamUtil(
          this.init_LivingEntity == null ? -1 : this.init_LivingEntity.getId(),
-         this.init_cN.init_I(),
+         this.init_cN.size(),
          this.push,
          this.pop,
          this.tick,
@@ -881,7 +881,7 @@ public final class BacktrackModule extends Module {
          this.read_J,
          this.read_Str,
          this.init_Z_21() ? this.init_I_13() : 0,
-         live && this.bool("server-position") && (this.init_cN.init_I() > 0 || this.init_cP.init_Z_Obj_J(this.init_LivingEntity, now)),
+         live && this.bool("server-position") && (this.init_cN.size() > 0 || this.init_cP.hasRecentTrail(this.init_LivingEntity, now)),
          live && this.load(now),
          this.set
       );
@@ -903,7 +903,7 @@ public final class BacktrackModule extends Module {
                body.move(received.subtract(module.init_LivingEntity.position())),
                received,
                System.nanoTime(),
-               module.init_cN.init_I() > 0,
+               module.init_cN.size() > 0,
                module.choice("render-style"),
                module.bool("delayed-position"),
                module.bool("position-trail"),

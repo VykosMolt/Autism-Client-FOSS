@@ -13,7 +13,7 @@ public final class LatencyTickWindow<K> {
    }
 
    public void init(K key, int tick, int latencyMs) {
-      int expiry = tick + init_I_I(latencyMs);
+      int expiry = tick + windowTicks(latencyMs);
       this.init_Map.put(key, expiry);
       this.init_V_I(tick);
 
@@ -34,7 +34,7 @@ public final class LatencyTickWindow<K> {
       }
    }
 
-   public void init_V_Obj(K key) {
+   public void remove(K key) {
       this.init_Map.remove(key);
    }
 
@@ -42,7 +42,7 @@ public final class LatencyTickWindow<K> {
       this.init_Map.entrySet().removeIf(entry -> tick - entry.getValue() >= 0);
    }
 
-   public int init_I() {
+   public int size() {
       return this.init_Map.size();
    }
 
@@ -50,16 +50,16 @@ public final class LatencyTickWindow<K> {
       return this.init_Map.keySet();
    }
 
-   public Set<K> init_Set_I(int tick) {
+   public Set<K> activeKeys(int tick) {
       this.init_V_I(tick);
       return this.init_Map.keySet();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_Map.clear();
    }
 
-   public static int init_I_I(int latencyMs) {
+   public static int windowTicks(int latencyMs) {
       return Math.max(3, Math.min(16, (int)Math.ceil(Math.max(0, latencyMs) / 50.0) + 2));
    }
 }

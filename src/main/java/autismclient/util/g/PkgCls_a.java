@@ -197,7 +197,7 @@ public final class PkgCls_a {
 
       init_V_Str("replaced by macro TP");
       Entity vehicle = player.getVehicle();
-      PkgCls_a.Inner_ConfigStore job = PkgCls_a.Inner_ConfigStore.init(player, mc.getConnection(), player.level(), vehicle, request, handle.init_J());
+      PkgCls_a.Inner_ConfigStore job = PkgCls_a.Inner_ConfigStore.init(player, mc.getConnection(), player.level(), vehicle, request, handle.id());
       synchronized (init_Obj) {
          init_a_ConfigStore = job;
       }

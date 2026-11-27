@@ -29,15 +29,15 @@ public final class NameScrapeCommand extends Command {
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("pause").executes(ctx -> {
-         NameScrapeController.init_V();
+         NameScrapeController.pause();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("resume").executes(ctx -> {
-         NameScrapeController.load_V();
+         NameScrapeController.resume();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         NameScrapeController.read_V();
+         NameScrapeController.stop();
          return 1;
       }));
    }

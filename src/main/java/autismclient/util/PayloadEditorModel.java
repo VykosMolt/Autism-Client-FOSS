@@ -7,22 +7,22 @@ import java.util.Locale;
 
 public final class PayloadEditorModel {
    private static final char[] init_CArr = "0123456789ABCDEF".toCharArray();
-   public String init_Str = "C2S";
-   public String load_Str = "PLAY";
-   public String read_Str = "minecraft:brand";
+   public String direction = "C2S";
+   public String phase = "PLAY";
+   public String channel = "minecraft:brand";
    public String write_Str = "";
-   public int init_I = -1;
+   public int packetId = -1;
    public String update_Str = "";
    public String sync = "";
-   public List<PayloadFieldCodec.Inner_CachePool> init_List = new ArrayList<>();
-   public byte[] init_BArr = new byte[0];
+   public List<PayloadFieldCodec.Inner_CachePool> fields = new ArrayList<>();
+   public byte[] bodyBytes = new byte[0];
    public byte[] load_BArr = new byte[0];
    public PayloadEditorModel.Inner_StreamUtil init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
    public String flush = "";
    public String close = "Binary";
-   public boolean init_Z = false;
-   public boolean load_Z = false;
-   public int load_I = 2147483639;
+   public boolean hasCommandApiValue = false;
+   public boolean commandApiOverride = false;
+   public int commandApiValue = 2147483639;
    private long init_J = 1L;
    private long load_J = -9223372036854775808L;
    private String open = "";
@@ -33,33 +33,33 @@ public final class PayloadEditorModel {
    private long update_J = -9223372036854775808L;
    private String pop = "";
 
-   public long init_J() {
+   public long revision() {
       return this.init_J;
    }
 
-   public void init_V() {
+   public void bumpRevision() {
       this.init_J++;
    }
 
-   public static PayloadEditorModel init_bE_H(autismclient.util.macro.PayloadAction action) {
+   public static PayloadEditorModel fromAction(autismclient.util.macro.PayloadAction action) {
       PayloadEditorModel model = new PayloadEditorModel();
       if (action == null) {
-         model.init_List = new ArrayList<>(PayloadFieldCodec.defaultBrandTemplate().fields());
+         model.fields = new ArrayList<>(PayloadFieldCodec.defaultBrandTemplate().fields());
          model.init_Z_Z(false);
          return model;
       }
 
-      model.init_Str = init_Str_Str(action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection);
-      model.load_Str = load_Str_Str(action.payloadPhase);
-      model.read_Str = action.channel != null && !action.channel.isBlank() ? action.channel.strip() : "minecraft:brand";
+      model.direction = init_Str_Str(action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection);
+      model.phase = load_Str_Str(action.payloadPhase);
+      model.channel = action.channel != null && !action.channel.isBlank() ? action.channel.strip() : "minecraft:brand";
       model.write_Str = action.payloadClassName == null ? "" : action.payloadClassName;
-      model.init_I = action.payloadPacketId;
+      model.packetId = action.payloadPacketId;
       model.update_Str = action.sourceProtocol == null ? "" : action.sourceProtocol;
       model.sync = action.payloadEncodingMode == null ? "" : action.payloadEncodingMode;
       model.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.init(action.payloadProvenance);
-      model.init_Z = action.commandApiRecognized;
-      model.load_Z = action.commandApiOverride;
-      model.load_I = action.commandApiValue;
+      model.hasCommandApiValue = action.commandApiRecognized;
+      model.commandApiOverride = action.commandApiOverride;
+      model.commandApiValue = action.commandApiValue;
       byte[] raw = new byte[0];
       boolean haveRaw = false;
       if (action.payloadData != null && !action.payloadData.isBlank()) {
@@ -72,7 +72,7 @@ public final class PayloadEditorModel {
 
       List<PayloadFieldCodec.Inner_CachePool> fields = PayloadFieldCodec.parseFields(action.payloadFields);
       if (!fields.isEmpty()) {
-         model.init_List = new ArrayList<>(fields);
+         model.fields = new ArrayList<>(fields);
          if (!model.init_Z_Z(false) && haveRaw) {
             model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.Inner_StreamUtil.init(action.payloadProvenance));
          }
@@ -83,45 +83,45 @@ public final class PayloadEditorModel {
       return model;
    }
 
-   public autismclient.util.macro.PayloadAction init_H_H(autismclient.util.macro.PayloadAction base) {
+   public autismclient.util.macro.PayloadAction toAction(autismclient.util.macro.PayloadAction base) {
       autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
       if (base != null) {
          action.fromTag(base.toTag());
       }
 
-      action.channel = this.read_Str != null && !this.read_Str.isBlank() ? this.read_Str.strip() : "minecraft:brand";
-      action.payloadDirection = init_Str_Str(this.init_Str);
+      action.channel = this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand";
+      action.payloadDirection = init_Str_Str(this.direction);
       action.sourceDirection = action.payloadDirection;
-      action.payloadPhase = load_Str_Str(this.load_Str);
+      action.payloadPhase = load_Str_Str(this.phase);
       action.sourceProtocol = this.update_Str != null && !this.update_Str.isBlank()
          ? this.update_Str
          : ("CONFIGURATION".equals(action.payloadPhase) ? "CONFIGURATION" : "");
       action.payloadClassName = this.write_Str == null ? "" : this.write_Str;
-      action.payloadPacketId = this.init_I;
+      action.payloadPacketId = this.packetId;
       action.payloadProvenance = this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init();
       action.payloadEncodingMode = this.sync();
-      action.payloadFields = PayloadFieldCodec.formatFields(this.init_List);
-      action.payloadData = AutismPayloadSupport.toHexString(this.init_BArr);
+      action.payloadFields = PayloadFieldCodec.formatFields(this.fields);
+      action.payloadData = AutismPayloadSupport.toHexString(this.bodyBytes);
       action.payloadJson = "";
-      action.commandApiRecognized = this.init_Z;
-      action.commandApiOverride = this.load_Z;
-      action.commandApiValue = this.load_I;
+      action.commandApiRecognized = this.hasCommandApiValue;
+      action.commandApiOverride = this.commandApiOverride;
+      action.commandApiValue = this.commandApiValue;
       action.payloadScriptEnabled = false;
       action.javaSource = "";
       return action;
    }
 
-   public PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil() {
+   public PayloadFieldCodec.Inner_JsonUtil toSpec() {
       return new PayloadFieldCodec.Inner_JsonUtil(
-         this.read_Str,
-         PayloadFieldCodec.Inner_ConfigStore.parse(this.init_Str),
-         PayloadFieldCodec.Inner_TaskQueue.parse(this.load_Str),
-         PayloadFieldCodec.Inner_StreamUtil.parse(this.sync(), this.read_Str),
-         this.init_List == null ? List.of() : this.init_List
+         this.channel,
+         PayloadFieldCodec.Inner_ConfigStore.parse(this.direction),
+         PayloadFieldCodec.Inner_TaskQueue.parse(this.phase),
+         PayloadFieldCodec.Inner_StreamUtil.parse(this.sync(), this.channel),
+         this.fields == null ? List.of() : this.fields
       );
    }
 
-   public boolean init_Z_Str(String script) {
+   public boolean parseScript(String script) {
       PayloadEditorModel parsed = this.init_bE();
       List<String> writerLines = new ArrayList<>();
       String[] lines = (script == null ? "" : script).replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
@@ -137,13 +137,13 @@ public final class PayloadEditorModel {
                String value = line.substring(split + 1).strip();
                switch (key) {
                   case "direction":
-                     parsed.init_Str = init_Str_Str(value);
+                     parsed.direction = init_Str_Str(value);
                      break;
                   case "phase":
-                     parsed.load_Str = load_Str_Str(value);
+                     parsed.phase = load_Str_Str(value);
                      break;
                   case "channel":
-                     parsed.read_Str = value.isBlank() ? "minecraft:brand" : value;
+                     parsed.channel = value.isBlank() ? "minecraft:brand" : value;
                      break;
                   case "packetclass":
                   case "packet_class":
@@ -151,7 +151,7 @@ public final class PayloadEditorModel {
                      break;
                   case "packetid":
                   case "packet_id":
-                     parsed.init_I = init_I_Str_I(value, -1);
+                     parsed.packetId = init_I_Str_I(value, -1);
                      break;
                   case "sourceprotocol":
                   case "source_protocol":
@@ -166,27 +166,27 @@ public final class PayloadEditorModel {
          }
       }
 
-      parsed.init_List = new ArrayList<>(PayloadFieldCodec.parseFields(String.join("\n", writerLines)));
+      parsed.fields = new ArrayList<>(PayloadFieldCodec.parseFields(String.join("\n", writerLines)));
       if (!parsed.init_Z_Z(true)) {
          this.flush = parsed.flush;
-         this.init_V();
+         this.bumpRevision();
          return false;
       } else {
          this.init_V_bE(parsed);
          this.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
-         this.init_V();
+         this.bumpRevision();
          return true;
       }
    }
 
-   public boolean load_Z_Str(String hex) {
+   public boolean parseHex(String hex) {
       try {
          this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          this.flush = "";
          return true;
       } catch (Throwable t) {
          this.flush = AutismPayloadSupport.describeError(t);
-         this.init_V();
+         this.bumpRevision();
          return false;
       }
    }
@@ -211,17 +211,17 @@ public final class PayloadEditorModel {
                String value = line.substring(split + 1).strip();
                switch (key) {
                   case "direction":
-                     parsed.init_Str = init_Str_Str(value);
+                     parsed.direction = init_Str_Str(value);
                      break;
                   case "phase":
-                     parsed.load_Str = load_Str_Str(value);
+                     parsed.phase = load_Str_Str(value);
                      break;
                   case "channel":
-                     parsed.read_Str = value.isBlank() ? parsed.read_Str : value;
+                     parsed.channel = value.isBlank() ? parsed.channel : value;
                      break;
                   case "packetid":
                   case "packet_id":
-                     parsed.init_I = init_I_Str_I(value, -1);
+                     parsed.packetId = init_I_Str_I(value, -1);
                      break;
                   case "bodyhex":
                   case "body_hex":
@@ -246,40 +246,40 @@ public final class PayloadEditorModel {
       try {
          if (logicalHex != null && !logicalHex.isBlank()) {
             PayloadEditorModel.Inner_DataUtil logical = init_bE_DataUtil_Str(logicalHex);
-            if (parsed.init_I >= 0 && logical.init_I != parsed.init_I) {
+            if (parsed.packetId >= 0 && logical.init_I != parsed.packetId) {
                throw new IllegalArgumentException("Logical packet id does not match packetId");
             }
 
-            parsed.init_I = logical.init_I;
-            parsed.read_Str = logical.init_Str;
+            parsed.packetId = logical.init_I;
+            parsed.channel = logical.init_Str;
             parsed.init_V_BArr_bE_StreamUtil(logical.init_BArr, PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          } else if (bodyHex != null) {
             parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
          }
       } catch (Throwable t) {
          this.flush = AutismPayloadSupport.describeError(t);
-         this.init_V();
+         this.bumpRevision();
          return false;
       }
 
       this.init_V_bE(parsed);
       this.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
       this.flush = "";
-      this.init_V();
+      this.bumpRevision();
       return true;
    }
 
-   public String init_Str() {
+   public String toScript() {
       if (this.load_J == this.init_J) {
          return this.open;
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.append("direction = ").append(init_Str_Str(this.init_Str)).append('\n');
-      sb.append("phase = ").append(load_Str_Str(this.load_Str)).append('\n');
-      sb.append("channel = ").append(this.read_Str != null && !this.read_Str.isBlank() ? this.read_Str.strip() : "minecraft:brand").append('\n');
-      if (this.init_I >= 0) {
-         sb.append("packetId = ").append(this.init_I).append('\n');
+      sb.append("direction = ").append(init_Str_Str(this.direction)).append('\n');
+      sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
+      sb.append("channel = ").append(this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand").append('\n');
+      if (this.packetId >= 0) {
+         sb.append("packetId = ").append(this.packetId).append('\n');
       }
 
       if (this.write_Str != null && !this.write_Str.isBlank()) {
@@ -291,26 +291,26 @@ public final class PayloadEditorModel {
       }
 
       sb.append('\n');
-      sb.append(PayloadFieldCodec.formatFields(this.init_List));
+      sb.append(PayloadFieldCodec.formatFields(this.fields));
       this.open = sb.toString();
       this.load_J = this.init_J;
       return this.open;
    }
 
-   public String load_Str() {
-      if (this.init_BArr != null && this.init_BArr.length != 0) {
+   public String toHexDump() {
+      if (this.bodyBytes != null && this.bodyBytes.length != 0) {
          if (this.read_J == this.init_J) {
             return this.poll;
          }
 
-         StringBuilder sb = new StringBuilder(this.init_BArr.length * 3 + this.init_BArr.length / 16 * 10);
+         StringBuilder sb = new StringBuilder(this.bodyBytes.length * 3 + this.bodyBytes.length / 16 * 10);
 
-         for (int i = 0; i < this.init_BArr.length; i++) {
+         for (int i = 0; i < this.bodyBytes.length; i++) {
             if (i > 0) {
                sb.append((char)(i % 16 == 0 ? '\n' : ' '));
             }
 
-            int value = this.init_BArr[i] & 255;
+            int value = this.bodyBytes[i] & 255;
             sb.append(init_CArr[value >>> 4]).append(init_CArr[value & 15]);
          }
 
@@ -327,7 +327,7 @@ public final class PayloadEditorModel {
          return this.push;
       }
 
-      String text = AutismPayloadSupport.decodePrintableUtf8(this.init_BArr);
+      String text = AutismPayloadSupport.decodePrintableUtf8(this.bodyBytes);
       this.push = text == null ? "" : text;
       this.write_J = this.init_J;
       return this.push;
@@ -339,10 +339,10 @@ public final class PayloadEditorModel {
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.append("direction = ").append(init_Str_Str(this.init_Str)).append('\n');
-      sb.append("phase = ").append(load_Str_Str(this.load_Str)).append('\n');
-      sb.append("channel = ").append(this.read_Str == null ? "" : this.read_Str).append('\n');
-      sb.append("packetId = ").append(this.init_I >= 0 ? this.init_I : "unavailable").append('\n');
+      sb.append("direction = ").append(init_Str_Str(this.direction)).append('\n');
+      sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
+      sb.append("channel = ").append(this.channel == null ? "" : this.channel).append('\n');
+      sb.append("packetId = ").append(this.packetId >= 0 ? this.packetId : "unavailable").append('\n');
       if (this.write_Str != null && !this.write_Str.isBlank()) {
          sb.append("packetClass = ").append(this.write_Str).append('\n');
       }
@@ -352,10 +352,10 @@ public final class PayloadEditorModel {
       }
 
       sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
-      sb.append("bodyBytes = ").append(this.init_BArr == null ? 0 : this.init_BArr.length).append('\n');
+      sb.append("bodyBytes = ").append(this.bodyBytes == null ? 0 : this.bodyBytes.length).append('\n');
       sb.append("decoded = ").append(this.update()).append('\n');
-      sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.init_BArr)).append('\n');
-      if (this.init_I >= 0) {
+      sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.bodyBytes)).append('\n');
+      if (this.packetId >= 0) {
          sb.append("logicalHex = ").append(AutismPayloadSupport.toHexString(this.init_BArr())).append('\n');
       } else {
          sb.append("logicalHex = unavailable; packet id was not captured/resolved\n");
@@ -367,13 +367,13 @@ public final class PayloadEditorModel {
    }
 
    public byte[] init_BArr() {
-      if (this.init_I < 0) {
+      if (this.packetId < 0) {
          return new byte[0];
       }
 
-      byte[] packet = init_BArr_I(this.init_I);
-      byte[] channelBytes = AutismPayloadSupport.encodeMcString(this.read_Str == null ? "" : this.read_Str);
-      byte[] body = this.init_BArr == null ? new byte[0] : this.init_BArr;
+      byte[] packet = init_BArr_I(this.packetId);
+      byte[] channelBytes = AutismPayloadSupport.encodeMcString(this.channel == null ? "" : this.channel);
+      byte[] body = this.bodyBytes == null ? new byte[0] : this.bodyBytes;
       byte[] out = new byte[packet.length + channelBytes.length + body.length];
       System.arraycopy(packet, 0, out, 0, packet.length);
       System.arraycopy(channelBytes, 0, out, packet.length, channelBytes.length);
@@ -382,59 +382,59 @@ public final class PayloadEditorModel {
    }
 
    public String update() {
-      return this.init_List != null && !this.init_List.isEmpty() ? this.init_List.get(0).init_Str() : "empty";
+      return this.fields != null && !this.fields.isEmpty() ? this.fields.get(0).init_Str() : "empty";
    }
 
    private boolean init_Z_Z(boolean strict) {
-      PayloadFieldCodec.Inner_JsonUtil template = this.init_bJ_JsonUtil();
+      PayloadFieldCodec.Inner_JsonUtil template = this.toSpec();
       PayloadFieldCodec.Inner_DataUtil built = template.encode();
       if (!built.isValid()) {
          this.flush = String.join("; ", built.errors());
          if (strict) {
-            this.init_V();
+            this.bumpRevision();
             return false;
          }
       }
 
-      this.read_Str = template.channel();
-      this.init_Str = template.direction().name();
-      this.load_Str = template.phase().name();
+      this.channel = template.channel();
+      this.direction = template.direction().name();
+      this.phase = template.phase().name();
       this.sync = template.encodingMode().name();
-      this.init_BArr = built.bytes();
-      this.load_BArr = (byte[])this.init_BArr.clone();
-      this.close = init_Str_BArr(this.init_BArr);
+      this.bodyBytes = built.bytes();
+      this.load_BArr = (byte[])this.bodyBytes.clone();
+      this.close = init_Str_BArr(this.bodyBytes);
       this.load_V();
       this.flush = "";
-      this.init_V();
+      this.bumpRevision();
       return true;
    }
 
    private void init_V_BArr_bE_StreamUtil(byte[] bytes, PayloadEditorModel.Inner_StreamUtil source) {
-      this.init_BArr = bytes == null ? new byte[0] : (byte[])bytes.clone();
-      this.load_BArr = (byte[])this.init_BArr.clone();
-      this.init_List = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.init_BArr));
-      this.sync = AutismPayloadSupport.inferEncodingMode(this.read_Str, this.init_BArr);
-      this.close = init_Str_BArr(this.init_BArr);
+      this.bodyBytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
+      this.load_BArr = (byte[])this.bodyBytes.clone();
+      this.fields = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.bodyBytes));
+      this.sync = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
+      this.close = init_Str_BArr(this.bodyBytes);
       this.init_bE_StreamUtil = source == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED : source;
       this.load_V();
       this.flush = "";
-      this.init_V();
+      this.bumpRevision();
    }
 
    private void load_V() {
-      Integer parsed = AutismPayloadSupport.detectCommandApiValue(null, this.read_Str, this.init_BArr);
+      Integer parsed = AutismPayloadSupport.detectCommandApiValue(null, this.channel, this.bodyBytes);
       if (parsed != null) {
-         this.init_Z = true;
-         if (!this.load_Z) {
-            this.load_I = parsed;
+         this.hasCommandApiValue = true;
+         if (!this.commandApiOverride) {
+            this.commandApiValue = parsed;
          }
-      } else if (!this.load_Z) {
-         this.init_Z = false;
+      } else if (!this.commandApiOverride) {
+         this.hasCommandApiValue = false;
       }
    }
 
    private String sync() {
-      return this.sync != null && !this.sync.isBlank() ? this.sync : AutismPayloadSupport.inferEncodingMode(this.read_Str, this.init_BArr);
+      return this.sync != null && !this.sync.isBlank() ? this.sync : AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
    }
 
    private static String init_Str_BArr(byte[] bytes) {
@@ -457,23 +457,23 @@ public final class PayloadEditorModel {
    }
 
    private void init_V_bE(PayloadEditorModel other) {
-      this.init_Str = other.init_Str;
-      this.load_Str = other.load_Str;
-      this.read_Str = other.read_Str;
+      this.direction = other.direction;
+      this.phase = other.phase;
+      this.channel = other.channel;
       this.write_Str = other.write_Str;
-      this.init_I = other.init_I;
+      this.packetId = other.packetId;
       this.update_Str = other.update_Str;
       this.sync = other.sync;
-      this.init_List = new ArrayList<>(other.init_List == null ? List.of() : other.init_List);
-      this.init_BArr = other.init_BArr == null ? new byte[0] : (byte[])other.init_BArr.clone();
+      this.fields = new ArrayList<>(other.fields == null ? List.of() : other.fields);
+      this.bodyBytes = other.bodyBytes == null ? new byte[0] : (byte[])other.bodyBytes.clone();
       this.load_BArr = other.load_BArr == null ? new byte[0] : (byte[])other.load_BArr.clone();
       this.init_bE_StreamUtil = other.init_bE_StreamUtil;
       this.flush = other.flush;
       this.close = other.close;
-      this.init_Z = other.init_Z;
-      this.load_Z = other.load_Z;
-      this.load_I = other.load_I;
-      this.init_V();
+      this.hasCommandApiValue = other.hasCommandApiValue;
+      this.commandApiOverride = other.commandApiOverride;
+      this.commandApiValue = other.commandApiValue;
+      this.bumpRevision();
    }
 
    private static byte[] init_BArr_Str(String text) {

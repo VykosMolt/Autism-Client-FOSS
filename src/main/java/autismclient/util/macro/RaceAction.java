@@ -107,7 +107,7 @@ public class RaceAction implements MacroAction {
          this.init_Z = true;
          this.load = tag.getBooleanOr("useNextAction", false);
          this.init_I = Math.max(1, tag.getIntOr("times", 1));
-         this.init_bo_StreamUtil = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
+         this.init_bo_StreamUtil = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
       }
 
       if (!isRaceCondition(this.triggerAction)) {

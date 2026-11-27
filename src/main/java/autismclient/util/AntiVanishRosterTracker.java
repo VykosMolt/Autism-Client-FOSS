@@ -38,10 +38,10 @@ public final class AntiVanishRosterTracker {
          Set<String> duplicates = new HashSet<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
-            if (p.init_UUID != null && p.init_Str != null) {
-               live.put(p.init_UUID, p);
-               if (!names.add(init_Str_Str(p.init_Str))) {
-                  duplicates.add(init_Str_Str(p.init_Str));
+            if (p.uuid != null && p.name != null) {
+               live.put(p.uuid, p);
+               if (!names.add(init_Str_Str(p.name))) {
+                  duplicates.add(init_Str_Str(p.name));
                }
             }
          }
@@ -50,7 +50,7 @@ public final class AntiVanishRosterTracker {
          Map<String, UUID> byName = new HashMap<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
-            byName.put(init_Str_Str(p.init_Str), p.init_UUID);
+            byName.put(init_Str_Str(p.name), p.uuid);
          }
 
          this.sync_Map = Map.copyOf(byName);
@@ -64,35 +64,35 @@ public final class AntiVanishRosterTracker {
                   UUID client = byName.get(name);
                   return duplicates.contains(name)
                      || client != null && !client.equals(entry.getKey())
-                     || px != null && (px.init_Z || !px.load || !px.init_Str.equals(entry.getValue().init_Str));
+                     || px != null && (px.listed || !px.load || !px.name.equals(entry.getValue().init_Str));
                }
             );
          int departures = 0;
 
          for (AntiVanishRosterTracker.Inner_CachePool m : this.init_Map.values()) {
             AntiVanishRosterTracker.Inner_ConfigStore p = live.get(m.init_UUID);
-            if (m.init_Z && (p == null || !p.init_Z)) {
+            if (m.init_Z && (p == null || !p.listed)) {
                departures++;
             }
          }
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
-            if (p.load && !duplicates.contains(init_Str_Str(p.init_Str)) && p.init_Str.matches("[A-Za-z0-9_]{1,16}")) {
-               AntiVanishRosterTracker.Inner_CachePool m = this.init_Map.get(p.init_UUID);
-               if (m == null || !m.init_Str.equals(p.init_Str)) {
-                  m = new AntiVanishRosterTracker.Inner_CachePool(p.init_UUID, p.init_Str);
-                  this.init_Map.put(p.init_UUID, m);
+            if (p.load && !duplicates.contains(init_Str_Str(p.name)) && p.name.matches("[A-Za-z0-9_]{1,16}")) {
+               AntiVanishRosterTracker.Inner_CachePool m = this.init_Map.get(p.uuid);
+               if (m == null || !m.init_Str.equals(p.name)) {
+                  m = new AntiVanishRosterTracker.Inner_CachePool(p.uuid, p.name);
+                  this.init_Map.put(p.uuid, m);
                }
 
                m.write_Z = true;
                m.read_J = now;
-               if (p.init_Z) {
+               if (p.listed) {
                   m.init_V(now);
                } else {
                   m.init(now, departures >= 4);
                }
             } else {
-               this.init_Map.remove(p.init_UUID);
+               this.init_Map.remove(p.uuid);
             }
          }
 
@@ -116,7 +116,7 @@ public final class AntiVanishRosterTracker {
          Set<String> names = new HashSet<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
-            if (p.init_UUID == null || p.init_Str == null || !ids.add(p.init_UUID) || !names.add(init_Str_Str(p.init_Str))) {
+            if (p.uuid == null || p.name == null || !ids.add(p.uuid) || !names.add(init_Str_Str(p.name))) {
                return;
             }
          }
@@ -124,19 +124,19 @@ public final class AntiVanishRosterTracker {
          Set<UUID> seen = new HashSet<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
-            if (p.init_UUID != null && p.init_Str != null && p.load && !p.init_Z && p.init_Str.matches("[A-Za-z0-9_]{1,16}")) {
-               AntiVanishRosterTracker.Inner_ConfigStore client = this.update_Map.get(p.init_UUID);
-               if (client == null || !client.init_Z && client.load && client.init_Str.equals(p.init_Str)) {
-                  UUID other = this.sync_Map.get(init_Str_Str(p.init_Str));
-                  if (other == null || other.equals(p.init_UUID)) {
-                     if (!seen.add(p.init_UUID)) {
-                        this.load_Map.remove(p.init_UUID);
+            if (p.uuid != null && p.name != null && p.load && !p.listed && p.name.matches("[A-Za-z0-9_]{1,16}")) {
+               AntiVanishRosterTracker.Inner_ConfigStore client = this.update_Map.get(p.uuid);
+               if (client == null || !client.listed && client.load && client.name.equals(p.name)) {
+                  UUID other = this.sync_Map.get(init_Str_Str(p.name));
+                  if (other == null || other.equals(p.uuid)) {
+                     if (!seen.add(p.uuid)) {
+                        this.load_Map.remove(p.uuid);
                      } else {
-                        AntiVanishRosterTracker.Inner_BufferHelper fact = this.load_Map.get(p.init_UUID);
-                        if (fact == null || !fact.init_Str.equals(p.init_Str) || now - fact.load > 20000L) {
-                           this.load_Map.put(p.init_UUID, new AntiVanishRosterTracker.Inner_BufferHelper(p.init_Str, requestedAt, now, 1));
+                        AntiVanishRosterTracker.Inner_BufferHelper fact = this.load_Map.get(p.uuid);
+                        if (fact == null || !fact.init_Str.equals(p.name) || now - fact.load > 20000L) {
+                           this.load_Map.put(p.uuid, new AntiVanishRosterTracker.Inner_BufferHelper(p.name, requestedAt, now, 1));
                         } else if (requestedAt - fact.init_J >= 1500L) {
-                           this.load_Map.put(p.init_UUID, new AntiVanishRosterTracker.Inner_BufferHelper(p.init_Str, requestedAt, now, Math.min(2, fact.init_I + 1)));
+                           this.load_Map.put(p.uuid, new AntiVanishRosterTracker.Inner_BufferHelper(p.name, requestedAt, now, Math.min(2, fact.init_I + 1)));
                         }
                      }
                   }
@@ -212,7 +212,7 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public List<AntiVanishRosterTracker.Inner_StreamUtil> init_List_J(long now) {
+   public List<AntiVanishRosterTracker.Inner_StreamUtil> collectAlerts(long now) {
       List<AntiVanishRosterTracker.Inner_StreamUtil> out = new ArrayList<>();
       this.load_Map.entrySet().removeIf(entry -> now - entry.getValue().load > 20000L);
 
@@ -267,11 +267,11 @@ public final class AntiVanishRosterTracker {
       return m != null && m.load_Z(now);
    }
 
-   public boolean init_Z_J(long now) {
+   public boolean hasRecentHiddenAction(long now) {
       return this.init_Map.values().stream().anyMatch(m -> m.init_Z(now) && m.update >= 0L && now - m.update <= 4000L);
    }
 
-   public boolean init_Z() {
+   public boolean needsRecheck() {
       return this.load_Map.values().stream().anyMatch(fact -> fact.init_I < 2);
    }
 
@@ -290,11 +290,11 @@ public final class AntiVanishRosterTracker {
       this.load_Map.values().removeIf(p -> NormalizedTextMatcher.load(systemMessage, p.init_Str));
    }
 
-   public int init_I() {
+   public int trackedCount() {
       return this.init_Map.size() + this.load_Map.size() + this.read_Map.size();
    }
 
-   public void init_V() {
+   public void resetProbes() {
       this.init_Map.values().forEach(AntiVanishRosterTracker.Inner_CachePool::init);
    }
 
@@ -402,13 +402,13 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public record Inner_ConfigStore(UUID init_UUID, String init_Str, boolean init_Z, boolean load) {
+   public record Inner_ConfigStore(UUID uuid, String name, boolean listed, boolean load) {
    }
 
    public record Inner_DataUtil(UUID init_UUID, String init_Str, boolean init_Z, boolean load) {
    }
 
-   public record Inner_StreamUtil(UUID init_UUID, String init_Str, String load, boolean init_Z) {
+   public record Inner_StreamUtil(UUID uuid, String name, String load, boolean uuidOnly) {
       public Inner_StreamUtil(UUID id, String name, String evidence) {
          this(id, name, evidence, false);
       }

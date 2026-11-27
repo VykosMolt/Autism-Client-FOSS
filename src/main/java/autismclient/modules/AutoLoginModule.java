@@ -37,12 +37,12 @@ public final class AutoLoginModule extends Module {
 
    @Override
    public void onGameJoin() {
-      this.init_CachePool.init_V(System.currentTimeMillis());
+      this.init_CachePool.reset(System.currentTimeMillis());
    }
 
    @Override
    public void onGameLeft() {
-      this.init_CachePool.init_V(System.currentTimeMillis());
+      this.init_CachePool.reset(System.currentTimeMillis());
    }
 
    @Override
@@ -97,7 +97,7 @@ public final class AutoLoginModule extends Module {
 
       @Override
       public CustomMenuSnapshot currentMenu() {
-         return autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
+         return autismclient.util.custommenu.CustomMenuTracker.snapshot();
       }
 
       @Override

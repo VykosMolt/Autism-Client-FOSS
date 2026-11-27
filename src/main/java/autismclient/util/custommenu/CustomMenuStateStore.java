@@ -31,11 +31,11 @@ public final class CustomMenuStateStore {
       }
    }
 
-   public CustomMenuSnapshot init_CustomMenuSnapshot() {
+   public CustomMenuSnapshot snapshot() {
       return this.init_CustomMenuSnapshot;
    }
 
-   public long init_J() {
+   public long generation() {
       return this.init_J;
    }
 
@@ -52,7 +52,7 @@ public final class CustomMenuStateStore {
       }
    }
 
-   public void init_V() {
+   public void clear() {
       if (this.init_CustomMenuSnapshot != null) {
          synchronized (this) {
             if (this.init_CustomMenuSnapshot != null) {

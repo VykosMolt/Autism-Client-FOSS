@@ -79,7 +79,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
 
    public static String write(String target) {
       String packet = load(target);
-      String friendly = PacketNameResolver.init_Str_Str(packet);
+      String friendly = PacketNameResolver.friendlyName(packet);
       String direction = init(target);
       return direction.isEmpty() ? friendly : direction + " " + friendly;
    }

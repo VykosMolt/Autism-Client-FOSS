@@ -27,13 +27,13 @@ public class PacketClickAction implements MacroAction {
 
    public void init(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
       this.read();
-      this.target = newTarget == null ? null : newTarget.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
+      this.target = newTarget == null ? null : newTarget.withMode(this.init_bo_DataUtil());
       this.load();
    }
 
    private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil() {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
-         return this.target.init_bo_DataUtil() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.init_bo_DataUtil();
+         return this.target.mode() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.mode();
       } else {
          return ContainerClickSnapshot.Inner_DataUtil.init(this.mode);
       }
@@ -41,14 +41,14 @@ public class PacketClickAction implements MacroAction {
 
    private void load() {
       if (this.target != null && !this.init) {
-         autismclient.util.ContainerCloseGuard.init_V(this.target.init_I());
+         autismclient.util.ContainerCloseGuard.holdOpen(this.target.containerId());
          this.init = true;
       }
    }
 
    private void load(ClientPacketListener conn) {
       if (this.init && this.target != null) {
-         autismclient.util.ContainerCloseGuard.init(this.target.init_I(), conn);
+         autismclient.util.ContainerCloseGuard.init(this.target.containerId(), conn);
          this.init = false;
       } else {
          this.init = false;
@@ -57,7 +57,7 @@ public class PacketClickAction implements MacroAction {
 
    private void read() {
       if (this.init && this.target != null) {
-         autismclient.util.ContainerCloseGuard.init(this.target.init_I(), (ClientPacketListener)null);
+         autismclient.util.ContainerCloseGuard.init(this.target.containerId(), (ClientPacketListener)null);
          this.init = false;
       } else {
          this.init = false;
@@ -73,10 +73,10 @@ public class PacketClickAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cPacket Click has no captured target.");
          } else {
             int count = Math.max(1, this.times);
-            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
+            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.withMode(this.init_bo_DataUtil());
 
             for (int i = 0; i < count; i++) {
-               ServerboundContainerClickPacket packet = effectiveTarget.init_ServerboundContain();
+               ServerboundContainerClickPacket packet = effectiveTarget.toPacket();
                if (this.queue) {
                   AutismSessionState.getInstance().enqueueExactPacket(packet);
                } else {
@@ -105,7 +105,7 @@ public class PacketClickAction implements MacroAction {
       tag.putInt("times", Math.max(1, this.times));
       tag.putBoolean("queue", this.queue);
       if (this.target != null) {
-         tag.put("target", this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil()).init_CompoundTag());
+         tag.put("target", this.target.withMode(this.init_bo_DataUtil()).toTag());
       }
 
       return tag;
@@ -116,15 +116,15 @@ public class PacketClickAction implements MacroAction {
       this.times = Math.max(1, tag.getIntOr("times", 1));
       this.queue = tag.getBooleanOr("queue", false);
       this.mode = tag.getStringOr("mode", "");
-      this.target = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
+      this.target = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
       if (this.mode == null || this.mode.isBlank()) {
-         this.mode = this.target != null && this.target.init_bo_DataUtil() != null
-            ? this.target.init_bo_DataUtil().name()
+         this.mode = this.target != null && this.target.mode() != null
+            ? this.target.mode().name()
             : ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
       }
 
       if (this.target != null) {
-         this.target = this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
+         this.target = this.target.withMode(this.init_bo_DataUtil());
       }
    }
 
@@ -140,7 +140,7 @@ public class PacketClickAction implements MacroAction {
       }
 
       String suffix = this.times > 1 ? " x" + this.times : "";
-      return "Packet Click " + this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil()).init_Str() + suffix;
+      return "Packet Click " + this.target.withMode(this.init_bo_DataUtil()).init_Str() + suffix;
    }
 
    @Override

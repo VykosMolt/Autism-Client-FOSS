@@ -24,7 +24,7 @@ public final class PacketStreamCodecDecoder {
    private PacketStreamCodecDecoder() {
    }
 
-   public static PacketStreamCodecDecoder.Inner_CachePool init_bp_CachePool(Class<? extends Packet<?>> packetClass, byte[] plaintextBytes, String protocolPhase) {
+   public static PacketStreamCodecDecoder.Inner_CachePool decodeFrame(Class<? extends Packet<?>> packetClass, byte[] plaintextBytes, String protocolPhase) {
       ByteBuf buf = Unpooled.wrappedBuffer(plaintextBytes == null ? new byte[0] : plaintextBytes);
 
       try {
@@ -34,14 +34,14 @@ public final class PacketStreamCodecDecoder {
             buf.readBytes(body);
          }
 
-         Packet<?> packet = init_Packet(packetClass, body, protocolPhase);
+         Packet<?> packet = decodeBody(packetClass, body, protocolPhase);
          return new PacketStreamCodecDecoder.Inner_CachePool(packet, packetId, body, "minecraft full packet STREAM_CODEC");
       } finally {
          buf.release();
       }
    }
 
-   public static Packet<?> init_Packet(Class<? extends Packet<?>> packetClass, byte[] bodyBytes, String protocolPhase) {
+   public static Packet<?> decodeBody(Class<? extends Packet<?>> packetClass, byte[] bodyBytes, String protocolPhase) {
       if (packetClass == null) {
          throw new IllegalArgumentException("Packet class is missing.");
       }
@@ -192,7 +192,7 @@ public final class PacketStreamCodecDecoder {
          AutismPayloadSupport.RawCustomPacketPayload rawPayload = new AutismPayloadSupport.RawCustomPacketPayload(channel, payload);
          AutismPayloadSupport.rememberRawBytes(rawPayload, payload);
          if (packetClass == ServerboundCustomPayloadPacket.class) {
-            PayloadSubscriptionManager.init_V(channel.toString());
+            PayloadSubscriptionManager.learnCodecChannel(channel.toString());
             return new ServerboundCustomPayloadPacket(rawPayload);
          } else {
             return new ClientboundCustomPayloadPacket(rawPayload);
@@ -233,7 +233,7 @@ public final class PacketStreamCodecDecoder {
       return message != null && !message.isBlank() ? message : t.getClass().getSimpleName();
    }
 
-   public record Inner_CachePool(Packet<?> init_Packet, int init_I, byte[] init_BArr, String init_Str) {
+   public record Inner_CachePool(Packet<?> packet, int init_I, byte[] init_BArr, String init_Str) {
       public Inner_CachePool {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
          init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : "minecraft STREAM_CODEC";

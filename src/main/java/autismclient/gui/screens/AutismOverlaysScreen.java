@@ -204,7 +204,7 @@ public class AutismOverlaysScreen extends Screen {
             OverlayManager.getInstance().unregister(this.init_cX);
          }
 
-         AutismItemNbtInspectOverlay.load_V_8();
+         AutismItemNbtInspectOverlay.hide();
       }
 
       if (this.minecraft != null) {

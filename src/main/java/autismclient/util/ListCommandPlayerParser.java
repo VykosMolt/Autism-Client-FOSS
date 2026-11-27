@@ -31,7 +31,7 @@ public final class ListCommandPlayerParser {
                   Set<String> usernames = new HashSet<>();
 
                   for (ListCommandPlayerParser.Inner_DataUtil p : players) {
-                     if (!ids.add(p.init_UUID) || !usernames.add(p.init_Str.toLowerCase(Locale.ROOT))) {
+                     if (!ids.add(p.uuid) || !usernames.add(p.name.toLowerCase(Locale.ROOT))) {
                         return Optional.empty();
                      }
                   }
@@ -109,6 +109,6 @@ public final class ListCommandPlayerParser {
       }
    }
 
-   public record Inner_DataUtil(UUID init_UUID, String init_Str) {
+   public record Inner_DataUtil(UUID uuid, String name) {
    }
 }

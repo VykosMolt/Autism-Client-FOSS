@@ -80,12 +80,12 @@ public class PayloadAction implements MacroAction {
                      sendProtocol = template.phase().name();
                   }
                } else if (useJsonModel) {
-                  PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(this);
+                  PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.encode(this);
                   if (!MacroTemplateResolver.containsPlaceholder(this.channel)) {
-                     targetChannel = encoded.init_Str();
+                     targetChannel = encoded.channel();
                   }
 
-                  rawBytes = encoded.init_BArr();
+                  rawBytes = encoded.bytes();
                } else {
                   rawBytes = AutismPayloadSupport.parseHexOrBase64(resolvedPayloadData);
                }
@@ -102,8 +102,8 @@ public class PayloadAction implements MacroAction {
                   targetChannel, rawBytes, this.commandApiRecognized && this.commandApiOverride ? this.commandApiValue : null
                );
                PayloadScriptRunner.Inner_StreamUtil result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
-               if (AutismPayloadSupport.sendCustomPayload(result.init_Str(), result.init_BArr(), sendProtocol)) {
-                  AutismClientMessaging.sendPrefixed("Sent payload: " + result.init_Str());
+               if (AutismPayloadSupport.sendCustomPayload(result.channel(), result.bytes(), sendProtocol)) {
+                  AutismClientMessaging.sendPrefixed("Sent payload: " + result.channel());
                }
             } catch (Exception e) {
                AutismClientMessaging.sendPrefixed("§cPayload action failed: " + AutismPayloadSupport.describeError(e));

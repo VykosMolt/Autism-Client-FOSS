@@ -3276,7 +3276,7 @@ public final class f {
             this.setValue("nbt-imported-components", imported);
             this.setValue("nbt-imported-signature", this.read_Str_3());
             this.setValue("nbt-item-components", imported);
-            this.setValue("nbt-item-stack", autismclient.util.ItemNbtInspector.init_Str_Str(autismclient.util.ItemSnbtCodec.load(stack)));
+            this.setValue("nbt-item-stack", autismclient.util.ItemNbtInspector.prettyPrint(autismclient.util.ItemSnbtCodec.load(stack)));
             this.setValue("nbt-item-stack-signature", this.read_Str_3());
             return true;
          } else {
@@ -3327,7 +3327,7 @@ public final class f {
       private ItemStack init_ItemStack(boolean notifyErrors) {
          String rawStack = this.value("nbt-item-stack").trim();
          boolean hasRawBase = !rawStack.isBlank();
-         ItemStack rawBase = hasRawBase ? autismclient.util.ItemSnbtCodec.init_ItemStack(rawStack) : ItemStack.EMPTY;
+         ItemStack rawBase = hasRawBase ? autismclient.util.ItemSnbtCodec.parseStack(rawStack) : ItemStack.EMPTY;
          if (hasRawBase && rawBase.isEmpty()) {
             if (notifyErrors) {
                AutismClientMessaging.sendPrefixed("Admin Tools: invalid full item SNBT.");
@@ -3543,7 +3543,7 @@ public final class f {
       }
 
       public boolean init_Z(String rawSnbt) {
-         ItemStack parsed = autismclient.util.ItemSnbtCodec.init_ItemStack(rawSnbt);
+         ItemStack parsed = autismclient.util.ItemSnbtCodec.parseStack(rawSnbt);
          return !parsed.isEmpty() && autismclient.util.ItemSnbtCodec.read(parsed).isBlank() ? this.init(parsed, false) : false;
       }
 
@@ -4636,7 +4636,7 @@ public final class f {
             && !MC.player.isSpectator()
             && !aD.read_Z()
             && !FreecamController.isActive()
-            && !RemoteViewController.init_Z()
+            && !RemoteViewController.isActive()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.isRunning();
       }
@@ -4824,14 +4824,14 @@ public final class f {
          if (c2s) {
             if (!value.equals(this.init_Str)) {
                this.init_Str = value;
-               this.init_Set = PacketFilterListCodec.init_Set(value, true);
+               this.init_Set = PacketFilterListCodec.parse(value, true);
             }
 
             return this.init_Set;
          } else {
             if (!value.equals(this.load_Str)) {
                this.load_Str = value;
-               this.load_Set = PacketFilterListCodec.init_Set(value, false);
+               this.load_Set = PacketFilterListCodec.parse(value, false);
             }
 
             return this.load_Set;
@@ -8541,7 +8541,7 @@ public final class f {
 
       @Override
       public void onDisable() {
-         autismclient.util.CoordinateSpoofer.init_V();
+         autismclient.util.CoordinateSpoofer.disable();
       }
 
       @Override
@@ -8555,7 +8555,7 @@ public final class f {
       }
 
       private void init_V_48() {
-         autismclient.util.CoordinateSpoofer.init_V(this.decimal("custom-x"), this.decimal("custom-y"), this.decimal("custom-z"));
+         autismclient.util.CoordinateSpoofer.setCustomCoords(this.decimal("custom-x"), this.decimal("custom-y"), this.decimal("custom-z"));
       }
 
       private void load() {

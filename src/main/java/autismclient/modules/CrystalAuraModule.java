@@ -473,8 +473,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.flush_BlockPos = null;
       this.index = -2147483648;
       this.count = 0;
-      this.init_FileCache.init_V();
-      this.load_FileCache.init_V();
+      this.init_FileCache.clear();
+      this.load_FileCache.clear();
       this.init_RenderState.init();
       this.flags = -2147483648;
       this.close_BlockPos = null;
@@ -749,7 +749,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && !RemoteViewController.init_Z()
+         && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !BlinkPacketManager.isHoldingActionsOnly()
@@ -1268,16 +1268,16 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       double rangeSq = range * range;
       int tick = AutismSessionState.getInstance().getClientTick();
 
-      for (EndCrystal tracked : new ArrayList<>(this.load_FileCache.init_Set_I(tick))) {
+      for (EndCrystal tracked : new ArrayList<>(this.load_FileCache.activeKeys(tick))) {
          if (MC.level.getEntity(tracked.getId()) != tracked || !tracked.isAlive()) {
-            this.load_FileCache.init_V_Obj(tracked);
+            this.load_FileCache.remove(tracked);
          }
       }
 
-      if (this.init_FileCache.init_I() > 0) {
+      if (this.init_FileCache.size() > 0) {
          for (EndCrystal crystal : crystals) {
             if (!this.init_RenderState.init(crystal, tick)) {
-               this.init_FileCache.init_V_Obj(BlockPos.containing(crystal.position()));
+               this.init_FileCache.remove(BlockPos.containing(crystal.position()));
             }
          }
       }
@@ -1692,10 +1692,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private void init_V_BlockPos_List(BlockPos cell, List<Entity> occupants) {
-      if (this.init_FileCache.init_I() != 0) {
+      if (this.init_FileCache.size() != 0) {
          for (Entity occupant : occupants) {
             if (occupant instanceof EndCrystal && !this.init_RenderState.init(occupant, AutismSessionState.getInstance().getClientTick())) {
-               this.init_FileCache.init_V_Obj(cell);
+               this.init_FileCache.remove(cell);
                return;
             }
          }
@@ -1737,13 +1737,13 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       int radius = Mth.clamp(Mth.ceil(MC.player.blockInteractionRange()), 0, 8);
       BlockPos origin = MC.player.blockPosition();
 
-      for (EndCrystal dying : this.load_FileCache.init_Set_I(tick)) {
+      for (EndCrystal dying : this.load_FileCache.activeKeys(tick)) {
          if (MC.level.getEntity(dying.getId()) == dying && init_Z_BlockPos_8(origin, BlockPos.containing(dying.position()).below(), radius)) {
             return true;
          }
       }
 
-      for (BlockPos cell : this.init_FileCache.init_Set_I(tick)) {
+      for (BlockPos cell : this.init_FileCache.activeKeys(tick)) {
          if (init_Z_BlockPos_8(origin, cell.below(), radius)) {
             return true;
          }

@@ -86,7 +86,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       this.saveBounds();
    }
 
-   public void load_V_6() {
+   public void toggleVisible() {
       this.setVisible(!this.write_Z);
    }
 
@@ -246,7 +246,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                         autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                      );
                   } else if (row.init_bT_DataUtil != null) {
-                     boolean selected = row.init_bT_DataUtil.init_Str().equals(this.init_Str_2);
+                     boolean selected = row.init_bT_DataUtil.name().equals(this.init_Str_2);
                      boolean hovered = mouseX >= x + 2 && mouseX < x + 2 + contentWidth && mouseY >= rowY && mouseY < rowY + this.stop();
                      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
                         context,
@@ -258,13 +258,13 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                         this.stop(),
                         hovered,
                         selected,
-                        row.init_bT_DataUtil.load_Z() ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
+                        row.init_bT_DataUtil.isBuiltIn() ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                      );
-                     int textColor = selected ? UiColorPalette.selectedText() : (row.init_bT_DataUtil.load_Z() ? -4729601 : UiColorPalette.menuItemText());
-                     String prefix = row.init_bT_DataUtil.load_Z() ? "[DEV] " : "[USR] ";
-                     String name = ThemedTextHelper.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
+                     int textColor = selected ? UiColorPalette.selectedText() : (row.init_bT_DataUtil.isBuiltIn() ? -4729601 : UiColorPalette.menuItemText());
+                     String prefix = row.init_bT_DataUtil.isBuiltIn() ? "[DEV] " : "[USR] ";
+                     String name = ThemedTextHelper.init(this.init_Font, prefix + row.init_bT_DataUtil.name(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
                      ThemedTextHelper.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
-                     String counts = row.init_bT_DataUtil.init_I() + " / " + row.init_bT_DataUtil.load_I();
+                     String counts = row.init_bT_DataUtil.c2sCount() + " / " + row.init_bT_DataUtil.s2cCount();
                      int countsWidth = ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.BODY);
                      ThemedTextHelper.init(context, this.init_Font, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
                   }
@@ -313,9 +313,9 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    private List<AutismCustomFilterPresetOverlay.Inner_CachePool> init_List_3() {
-      PacketPresetManager manager = PacketPresetManager.init_bT();
-      List<PacketPresetManager.Inner_DataUtil> builtInEntries = manager.init_List();
-      List<PacketPresetManager.Inner_DataUtil> userEntries = manager.load_List();
+      PacketPresetManager manager = PacketPresetManager.getInstance();
+      List<PacketPresetManager.Inner_DataUtil> builtInEntries = manager.builtInPresets();
+      List<PacketPresetManager.Inner_DataUtil> userEntries = manager.userPresets();
       if (builtInEntries == this.load_List && userEntries == this.read_List) {
          return this.write_List;
       }
@@ -346,7 +346,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       String name = this.load_Str_4();
       if (name == null) {
          AutismClientMessaging.sendPrefixed("Enter a preset name first.");
-      } else if (PacketPresetManager.init_bT().init_Z(name)) {
+      } else if (PacketPresetManager.getInstance().savePreset(name)) {
          this.init_Str_2 = name;
          this.init_BitSetUtil.setValue(name);
       }
@@ -356,8 +356,8 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       String presetName = this.read_Str_3();
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a preset first.");
-      } else if (PacketPresetManager.init_bT().read_Z(presetName)) {
-         this.init_Str_2 = PacketPresetManager.init_bT().init_bT_DataUtil(presetName) != null ? PacketPresetManager.init_bT().init_bT_DataUtil(presetName).init_Str() : presetName;
+      } else if (PacketPresetManager.getInstance().loadPreset(presetName)) {
+         this.init_Str_2 = PacketPresetManager.getInstance().findPreset(presetName) != null ? PacketPresetManager.getInstance().findPreset(presetName).name() : presetName;
          this.init_BitSetUtil.setValue(this.init_Str_2);
       }
    }
@@ -367,11 +367,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.init_bT().init_bT_DataUtil(presetName);
-         if (entry != null && !entry.load_Z()) {
-            if (PacketPresetManager.init_bT().load_Z(entry.init_Str())) {
-               this.init_Str_2 = entry.init_Str();
-               this.init_BitSetUtil.setValue(entry.init_Str());
+         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.getInstance().findPreset(presetName);
+         if (entry != null && !entry.isBuiltIn()) {
+            if (PacketPresetManager.getInstance().overwritePreset(entry.name())) {
+               this.init_Str_2 = entry.name();
+               this.init_BitSetUtil.setValue(entry.name());
             }
          } else {
             AutismClientMessaging.sendPrefixed("Select a user preset to overwrite.");
@@ -384,10 +384,10 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.init_bT().init_bT_DataUtil(presetName);
-         if (entry != null && !entry.load_Z()) {
-            if (PacketPresetManager.init_bT().write_Z(entry.init_Str())) {
-               if (entry.init_Str().equals(this.init_Str_2)) {
+         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.getInstance().findPreset(presetName);
+         if (entry != null && !entry.isBuiltIn()) {
+            if (PacketPresetManager.getInstance().deletePreset(entry.name())) {
+               if (entry.name().equals(this.init_Str_2)) {
                   this.init_Str_2 = null;
                }
 
@@ -418,9 +418,9 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private String read_Str_3() {
       if (this.init_Str_2 != null) {
-         PacketPresetManager.Inner_DataUtil selectedEntry = PacketPresetManager.init_bT().init_bT_DataUtil(this.init_Str_2);
+         PacketPresetManager.Inner_DataUtil selectedEntry = PacketPresetManager.getInstance().findPreset(this.init_Str_2);
          if (selectedEntry != null) {
-            return selectedEntry.init_Str();
+            return selectedEntry.name();
          }
       }
 
@@ -429,17 +429,17 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      PacketPresetManager.Inner_DataUtil typedEntry = PacketPresetManager.init_bT().init_bT_DataUtil(typedName);
-      return typedEntry != null ? typedEntry.init_Str() : null;
+      PacketPresetManager.Inner_DataUtil typedEntry = PacketPresetManager.getInstance().findPreset(typedName);
+      return typedEntry != null ? typedEntry.name() : null;
    }
 
    private PacketPresetManager.Inner_DataUtil init_bT_DataUtil() {
-      return this.init_Str_2 == null ? null : PacketPresetManager.init_bT().init_bT_DataUtil(this.init_Str_2);
+      return this.init_Str_2 == null ? null : PacketPresetManager.getInstance().findPreset(this.init_Str_2);
    }
 
    private boolean poll_Z_4() {
       String name = this.load_Str_4();
-      return name != null && !PacketPresetManager.init_bT().update(name);
+      return name != null && !PacketPresetManager.getInstance().update(name);
    }
 
    private boolean push_Z_3() {
@@ -448,7 +448,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private boolean pop_Z_2() {
       PacketPresetManager.Inner_DataUtil entry = this.init_bT_DataUtil();
-      return entry != null && !entry.load_Z();
+      return entry != null && !entry.isBuiltIn();
    }
 
    private boolean tick_Z_2() {
@@ -532,7 +532,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          if (button == 0 && this.init_AutismCustomFilter.init(mouseX, mouseY)) {
             AutismCustomFilterPresetOverlay.Inner_CachePool row = this.init_AutismCustomFilter.init(mouseY);
             if (row != null && row.init_bT_DataUtil != null) {
-               this.init_Str_2 = row.init_bT_DataUtil.init_Str();
+               this.init_Str_2 = row.init_bT_DataUtil.name();
                this.init_BitSetUtil.setValue(this.init_Str_2);
                this.open_V_4();
                return true;

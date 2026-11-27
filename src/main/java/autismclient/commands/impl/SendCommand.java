@@ -31,7 +31,7 @@ public class SendCommand extends Command {
                .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
                Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"));
-               return PacketCommandBuilder.init_CompletableFuture_Class_SuggestionsBuilder(cls, builder);
+               return PacketCommandBuilder.suggest(cls, builder);
             }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
@@ -50,21 +50,21 @@ public class SendCommand extends Command {
 
       PacketCommandBuilder.Inner_DataUtil prepared;
       try {
-         prepared = PacketCommandBuilder.init_bm_DataUtil_Str(args);
+         prepared = PacketCommandBuilder.prepareArgs(args);
       } catch (IllegalArgumentException e) {
          AutismClientMessaging.sendPrefixed("§cBad arguments: " + e.getMessage());
          return 1;
       }
 
-      PacketCommandBuilder.Inner_StreamUtil result = PacketCommandBuilder.init_bm_StreamUtil_Class_Str(cls, prepared.init_Str());
-      if (result.load_Z()) {
-         init_V_Str_Str("§e", result.init_Str());
+      PacketCommandBuilder.Inner_StreamUtil result = PacketCommandBuilder.build(cls, prepared.args());
+      if (result.infoOnly()) {
+         init_V_Str_Str("§e", result.message());
          return 1;
-      } else if (!result.init_Z()) {
-         init_V_Str_Str("§c", "Failed to build §f" + name + "§c: " + result.init_Str());
+      } else if (!result.success()) {
+         init_V_Str_Str("§c", "Failed to build §f" + name + "§c: " + result.message());
          return 1;
-      } else if (prepared.init_Z()) {
-         AutismClientMessaging.sendPrefixed("§eBuilt §f" + name + "§7 (" + result.load_Str() + ") §e- dry run, not sent.");
+      } else if (prepared.dryRun()) {
+         AutismClientMessaging.sendPrefixed("§eBuilt §f" + name + "§7 (" + result.source() + ") §e- dry run, not sent.");
          return 1;
       } else {
          ClientPacketListener conn = Minecraft.getInstance().getConnection();
@@ -72,8 +72,8 @@ public class SendCommand extends Command {
             AutismClientMessaging.sendPrefixed("§cNo network connection.");
             return 1;
          } else {
-            AutismSessionState.getInstance().sendPacketBypassingInterception(conn, result.init_Packet());
-            AutismClientMessaging.sendPrefixed("§aSent §f" + name + "§7 (" + result.load_Str() + ")");
+            AutismSessionState.getInstance().sendPacketBypassingInterception(conn, result.packet());
+            AutismClientMessaging.sendPrefixed("§aSent §f" + name + "§7 (" + result.source() + ")");
             return 1;
          }
       }
