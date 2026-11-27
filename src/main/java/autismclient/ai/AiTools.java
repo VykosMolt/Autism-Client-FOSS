@@ -3356,7 +3356,7 @@ final class AiTools {
                ? gated
                : (
                   !AiJson.getBoolean(args, "backfill", false) && !AiOreRoute.init_Z
-                     ? autismclient.ai.engine.AiBlockMine.init_AiOperation(
+                     ? autismclient.ai.engine.AiBlockMine.create(
                         AiJson.objectOf(
                            "block",
                            targets.spec(),

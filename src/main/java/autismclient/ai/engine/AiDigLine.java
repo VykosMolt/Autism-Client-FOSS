@@ -34,16 +34,16 @@ public final class AiDigLine {
    public static AiDigLine.Inner_DataUtil init_EventBus_DataUtil_Vec3(
       Vec3 eye, float yaw, float pitch, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach
    ) {
-      return init_EventBus_DataUtil_Vec3(eye, yaw, pitch, targets, targets, shapes, reach);
+      return planLine(eye, yaw, pitch, targets, targets, shapes, reach);
    }
 
-   public static AiDigLine.Inner_DataUtil init_EventBus_DataUtil_Vec3(
+   public static AiDigLine.Inner_DataUtil planLine(
       Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach
    ) {
-      return init_EventBus_DataUtil_Vec3(eye, yaw, pitch, heads, targets, shapes, reach, 0.0F / 0.0F);
+      return planLine(eye, yaw, pitch, heads, targets, shapes, reach, 0.0F / 0.0F);
    }
 
-   public static AiDigLine.Inner_DataUtil init_EventBus_DataUtil_Vec3(
+   public static AiDigLine.Inner_DataUtil planLine(
       Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach, float pathYaw
    ) {
       Set<BlockPos> set = new HashSet<>(targets);
@@ -163,10 +163,10 @@ public final class AiDigLine {
       AiDigLine.Inner_CachePool shapes,
       double reach
    ) {
-      return init_EventBus_DataUtil_EventBus_DataUtil(latched, changed, eye, yaw, pitch, remaining, targets, shapes, reach, 0.0F / 0.0F);
+      return updateLatched(latched, changed, eye, yaw, pitch, remaining, targets, shapes, reach, 0.0F / 0.0F);
    }
 
-   public static AiDigLine.Inner_DataUtil init_EventBus_DataUtil_EventBus_DataUtil(
+   public static AiDigLine.Inner_DataUtil updateLatched(
       AiDigLine.Inner_DataUtil latched,
       boolean changed,
       Vec3 eye,
@@ -179,12 +179,12 @@ public final class AiDigLine {
       float pathYaw
    ) {
       if (latched == null || init(latched, eye, remaining, shapes, reach) == null) {
-         return init_EventBus_DataUtil_Vec3(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
+         return planLine(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
       } else if (!changed) {
          return latched;
       } else {
          List<BlockPos> keptChain = init_List_Vec3(eye, latched.direction(), reach, new HashSet<>(targets), shapes, null);
-         AiDigLine.Inner_DataUtil best = init_EventBus_DataUtil_Vec3(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
+         AiDigLine.Inner_DataUtil best = planLine(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
          if (best == null) {
             return latched;
          } else {
@@ -260,7 +260,7 @@ public final class AiDigLine {
       return best == null ? List.of() : best.lines();
    }
 
-   public static List<AiDigLine.Inner_DataUtil> init_List_Vec3(
+   public static List<AiDigLine.Inner_DataUtil> planLines(
       Vec3 eye,
       float yaw,
       float pitch,
@@ -288,7 +288,7 @@ public final class AiDigLine {
          );
          Vec3 direction = Vec3.directionFromRotation(lookPitch, lookYaw);
          double[] margin = new double[]{0.0};
-         List<BlockPos> alreadyAimed = init_List_Vec3_2(eye, direction, reach, all, gone, cached, margin);
+         List<BlockPos> alreadyAimed = chainAlong(eye, direction, reach, all, gone, cached, margin);
          if (!alreadyAimed.isEmpty() && visible.contains(alreadyAimed.get(0))) {
             options.add(new AiDigLine.Inner_DataUtil(lookYaw, lookPitch, List.copyOf(alreadyAimed), margin[0]));
          }
@@ -375,7 +375,7 @@ public final class AiDigLine {
                            if (!(d.length() > reach) && !(d.lengthSqr() < 1.0E-8)) {
                               Vec3 dir = d.normalize();
                               double[] margin = new double[]{0.0};
-                              List<BlockPos> chain = init_List_Vec3_2(eye, dir, reach, left, gone, shapes, margin);
+                              List<BlockPos> chain = chainAlong(eye, dir, reach, left, gone, shapes, margin);
                               if (!chain.isEmpty() && heads.contains(chain.get(0))) {
                                  float ly = init(dir);
                                  float lp = load(dir);
@@ -400,7 +400,7 @@ public final class AiDigLine {
       return out.size() > limit ? List.copyOf(out.subList(0, limit)) : out;
    }
 
-   static List<BlockPos> init_List_Vec3_2(
+   static List<BlockPos> chainAlong(
       Vec3 eye, Vec3 dir, double reach, Set<BlockPos> targets, Set<BlockPos> gone, AiDigLine.Inner_CachePool shapes, double[] marginOut
    ) {
       if (gone.isEmpty()) {

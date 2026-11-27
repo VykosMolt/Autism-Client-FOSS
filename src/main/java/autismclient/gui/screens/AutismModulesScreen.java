@@ -349,7 +349,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       OverlayManager manager = OverlayManager.getInstance();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.AiAssistant.init_ConfigStore().load_V();
-         SchematicWorkspace.read_V();
+         SchematicWorkspace.restoreWindow();
       }
 
       this.init_AutismMacroListOve = this.init(AutismMacroListOverlay.class, null);
@@ -652,7 +652,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private void load(String id) {
       if ("schematics".equals(id)) {
          if (!AutismLiteVariant.enabled()) {
-            SchematicWorkspace.load_V();
+            SchematicWorkspace.toggleWindow();
          }
       } else if ("ai".equals(id)) {
          if (!AutismLiteVariant.enabled()) {

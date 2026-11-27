@@ -199,7 +199,7 @@ final class AiParkourRoute implements AiOperation {
          Minecraft var2 = Minecraft.getInstance();
          ItemStack[] var3 = new ItemStack[9];
          Arrays.fill(var3, ItemStack.EMPTY);
-         this.putAt_PoolStore = new autismclient.ai.engine.AiLiveGrid(var2, var3, autismclient.ai.engine.AiChunkMemory.init_StateCache());
+         this.putAt_PoolStore = new autismclient.ai.engine.AiLiveGrid(var2, var3, autismclient.ai.engine.AiChunkMemory.getInstance());
          autismclient.ai.engine.AiPhysics.MotionState var4 = autismclient.ai.engine.AiPhysics.MotionState.of(var1);
          float var5 = var1.getYRot();
          int var6 = AiJson.getInt(this.putAt_JsonObject, "parkourSpeed", -1);

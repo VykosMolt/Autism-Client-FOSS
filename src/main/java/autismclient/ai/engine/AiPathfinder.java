@@ -462,13 +462,13 @@ public final class AiPathfinder {
          @Override
          public short putAt_S_I(int var1, int var2x, int var3) {
             AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var7.get(BlockPos.asLong(var1, var2x, var3));
-            return var4 == null ? var0.putAt_S_I(var1, var2x, var3) : AiShapes.init_S_ClassCache_FileCac(var4);
+            return var4 == null ? var0.putAt_S_I(var1, var2x, var3) : AiShapes.shapeIdOf(var4);
          }
 
          @Override
          public short fill_S(int var1, int var2x, int var3) {
             AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var7.get(BlockPos.asLong(var1, var2x, var3));
-            return var4 == null ? var0.fill_S(var1, var2x, var3) : AiShapes.init_S_ClassCache_FileCac(var4);
+            return var4 == null ? var0.fill_S(var1, var2x, var3) : AiShapes.shapeIdOf(var4);
          }
 
          @Override
@@ -1849,7 +1849,7 @@ public final class AiPathfinder {
          short var8 = var0.putAt_S_I(var1.getX(), var1.getY(), var1.getZ());
          double var9 = -1.0 / 0.0;
 
-         for (AABB var12 : AiShapes.init_List_S(var8)) {
+         for (AABB var12 : AiShapes.boxes(var8)) {
             if ((var2 <= 0 || !(var12.minX > 1.0E-6))
                && (var2 >= 0 || !(var12.maxX < 0.999999))
                && (var3 <= 0 || !(var12.minZ > 1.0E-6))
@@ -4441,7 +4441,7 @@ public final class AiPathfinder {
             if (var2.door() && var2.passable()) {
                short var3 = this.delegate.putAt_S_I(var1.getX(), var1.getY(), var1.getZ());
                if (var3 != 0 && var3 != 1 && var3 != -1) {
-                  List var4 = AiShapes.init_List_S(var3);
+                  List var4 = AiShapes.boxes(var3);
                   if (var4.isEmpty()) {
                      return 0;
                   }
@@ -4924,11 +4924,11 @@ public final class AiPathfinder {
             if (this.activeNode != null) {
                int var7 = 0;
 
-               for (NavigationOpenSet.Inner_DataUtil var9 = this.activeNode.init_t_DataUtil;
-                  var9 != null && var9.init_ClassCache_UiHelpe != null && var7 < 6;
+               for (NavigationOpenSet.Inner_DataUtil var9 = this.activeNode.parent;
+                  var9 != null && var9.move != null && var7 < 6;
                   var7++
                ) {
-                  AiPathfinder.UiHelper var3 = var9.init_ClassCache_UiHelpe;
+                  AiPathfinder.UiHelper var3 = var9.move;
 
                   for (BlockPos var5 : var3.cellsToPlace()) {
                      this.putOverlayCell(var5.asLong(), PLACED_SOLID_CELL);
@@ -4938,7 +4938,7 @@ public final class AiPathfinder {
                      this.putOverlayCell(var11.asLong(), AiPathfinder.CellInfo.air());
                   }
 
-                  var9 = var9.init_t_DataUtil;
+                  var9 = var9.parent;
                }
             }
          }
@@ -5026,7 +5026,7 @@ public final class AiPathfinder {
             if ((this.overlayBloomMask & overlayBloomBit(var4)) != 0L) {
                for (int var6 = 0; var6 < this.overlayCount; var6++) {
                   if (this.overlayKeys[var6] == var4) {
-                     return AiShapes.init_S_ClassCache_FileCac(this.overlayValues[var6]);
+                     return AiShapes.shapeIdOf(this.overlayValues[var6]);
                   }
                }
             }
@@ -5046,7 +5046,7 @@ public final class AiPathfinder {
             if ((this.overlayBloomMask & overlayBloomBit(var4)) != 0L) {
                for (int var6 = 0; var6 < this.overlayCount; var6++) {
                   if (this.overlayKeys[var6] == var4) {
-                     return AiShapes.init_S_ClassCache_FileCac(this.overlayValues[var6]);
+                     return AiShapes.shapeIdOf(this.overlayValues[var6]);
                   }
                }
             }
@@ -5260,7 +5260,7 @@ public final class AiPathfinder {
          }
 
          this.bestNode = new NavigationOpenSet.Inner_DataUtil(this.startPos, var3.heuristic(var2.getX(), var2.getY(), var2.getZ()));
-         this.bestNode.load_D = 0.0;
+         this.bestNode.cost = 0.0;
          this.nodeTable.put(this.startPos.asLong(), this.bestNode);
          this.openSet.init(this.bestNode);
          this.peakOpenSize = 1;
@@ -5273,14 +5273,14 @@ public final class AiPathfinder {
 
       private NavigationOpenSet.Inner_DataUtil selectProgressNode() {
          for (NavigationOpenSet.Inner_DataUtil var4 : this.bestWeightedNodes) {
-            if (var4 != null && var4.init_BlockPos.distSqr(this.startPos) > 25.0) {
+            if (var4 != null && var4.pos.distSqr(this.startPos) > 25.0) {
                return var4;
             }
          }
 
          return this.bestNode != null
-               && this.bestNode.init_t_DataUtil != null
-               && this.bestNode.init_BlockPos.distSqr(this.startPos) > 25.0
+               && this.bestNode.parent != null
+               && this.bestNode.pos.distSqr(this.startPos) > 25.0
             ? this.bestNode
             : null;
       }
@@ -5308,15 +5308,15 @@ public final class AiPathfinder {
 
             double var5 = this.optimisticJumpCost(var1);
             if (!this.cachedGrid.quickJumpMode
-               || !this.isJumpDominated(var2, var3, var2.load_D + var5)
-               || var4 != null && !this.isJumpDominated(var2, var4, var2.load_D + var5)) {
+               || !this.isJumpDominated(var2, var3, var2.cost + var5)
+               || var4 != null && !this.isJumpDominated(var2, var4, var2.cost + var5)) {
                double var7 = this.adjustedHeuristic(var3.getX(), var3.getY(), var3.getZ());
                if (var4 != null) {
                   var7 = Math.min(var7, this.adjustedHeuristic(var4.getX(), var4.getY(), var4.getZ()));
                }
 
-               double var9 = this.openSet.init(var2.load_D + var5, var7);
-               this.deferredJumpQueue.add(new AiPathfinder.SearchSession.QueuedJump(var1, var4, var2, var2.load_D, var9, this.queuedJumpSeq++));
+               double var9 = this.openSet.init(var2.cost + var5, var7);
+               this.deferredJumpQueue.add(new AiPathfinder.SearchSession.QueuedJump(var1, var4, var2, var2.cost, var9, this.queuedJumpSeq++));
             }
          }
       }
@@ -5380,8 +5380,8 @@ public final class AiPathfinder {
       }
 
       private boolean isDominatedAt(BlockPos var1, double var2, int var4) {
-         for (NavigationOpenSet.Inner_DataUtil var5 = this.nodeTable.get(var1.asLong()); var5 != null; var5 = var5.load_t_DataUtil) {
-            if (!var5.init_Z && var5.load_D <= var2 && var5.load_I <= var4) {
+         for (NavigationOpenSet.Inner_DataUtil var5 = this.nodeTable.get(var1.asLong()); var5 != null; var5 = var5.nextInCell) {
+            if (!var5.closed && var5.cost <= var2 && var5.load_I <= var4) {
                return true;
             }
          }
@@ -5395,19 +5395,19 @@ public final class AiPathfinder {
             : this.cachedGrid.fallPolicy == AiPathfinder.FallPolicy.STANDARD
                && !this.cachedGrid.fastPassMode
                && this.isDominatedAt(var2, var3 + 20.0, var1.load_I)
-               && AiPathfinder.MoveGenerator.hasDeepDropUnderJump(this.cachedGrid, var1.init_BlockPos, var2);
+               && AiPathfinder.MoveGenerator.hasDeepDropUnderJump(this.cachedGrid, var1.pos, var2);
       }
 
       private boolean stepDeferredJump() {
          if (this.deferredJumpQueue != null
             && !this.deferredJumpQueue.isEmpty()
-            && !(this.deferredJumpQueue.peek().priority() > this.openSet.init_D())) {
+            && !(this.deferredJumpQueue.peek().priority() > this.openSet.peekPriority())) {
             AiPathfinder.SearchSession.QueuedJump var1 = this.deferredJumpQueue.remove();
             NavigationOpenSet.Inner_DataUtil var2 = var1.source();
-            if (!var2.init_Z && var2.load_D == var1.sourceCost()) {
+            if (!var2.closed && var2.cost == var1.sourceCost()) {
                double var3 = this.deferredJumpLowerBound(var1);
                this.cachedGrid.queryFlags = 0;
-               this.cachedGrid.incomingMove = var2.init_ClassCache_UiHelpe;
+               this.cachedGrid.incomingMove = var2.move;
                this.cachedGrid.activeNode = var2;
                if (!this.isJumpDominated(var2, var1.candidate().to(), var3)
                   || var1.continuation() != null && !this.isJumpDominated(var2, var1.continuation(), var3)) {
@@ -5463,13 +5463,13 @@ public final class AiPathfinder {
                   }
 
                   NavigationOpenSet.Inner_DataUtil var6 = var5.source();
-                  if (!var6.init_Z && var6.load_D == var5.sourceCost() && !this.pendingJumpFutures.containsKey(var5)) {
+                  if (!var6.closed && var6.cost == var5.sourceCost() && !this.pendingJumpFutures.containsKey(var5)) {
                      double var7 = this.deferredJumpLowerBound(var5);
                      if ((
                            !this.isDominatedAt(var5.candidate().to(), var7, var6.load_I)
                               || var5.continuation() != null && !this.isDominatedAt(var5.continuation(), var7, var6.load_I)
                         )
-                        && (var6.init_ClassCache_UiHelpe == null || var6.init_ClassCache_UiHelpe.type() != AiPathfinder.MoveType.DOOR)) {
+                        && (var6.move == null || var6.move.type() != AiPathfinder.MoveType.DOOR)) {
                         this.pendingJumpFutures.computeIfAbsent(var5, this::submitAsyncJumpSolve);
                      }
                   }
@@ -5500,7 +5500,7 @@ public final class AiPathfinder {
       }
 
       private Future<AiPathfinder.SearchSession.JumpSolveStats> submitAsyncJumpSolve(AiPathfinder.SearchSession.QueuedJump var1) {
-         AiPathfinder.UiHelper var2 = var1.source().init_ClassCache_UiHelpe;
+         AiPathfinder.UiHelper var2 = var1.source().move;
          return JUMP_PROOF_EXECUTOR.submit(
             () -> {
                AiPathfinder.MoveGenerator.CachedGrid var3 = this.workerGridPool.poll();
@@ -5570,22 +5570,22 @@ public final class AiPathfinder {
             }
 
             boolean var3 = this.deferredJumpQueue != null && !this.deferredJumpQueue.isEmpty();
-            if (!var3 && this.openSet.init_Z() || this.expandedCount >= 2000000 || this.allocatedNodeCount + (var3 ? this.deferredJumpQueue.size() : 0) >= 3000000) {
-               this.exhaustedSearch = this.exhaustedSearch | (var3 || !this.openSet.init_Z());
+            if (!var3 && this.openSet.isEmpty() || this.expandedCount >= 2000000 || this.allocatedNodeCount + (var3 ? this.deferredJumpQueue.size() : 0) >= 3000000) {
+               this.exhaustedSearch = this.exhaustedSearch | (var3 || !this.openSet.isEmpty());
                this.finished = true;
                break;
             }
 
             if (!this.stepDeferredJump()) {
-               NavigationOpenSet.Inner_DataUtil var4 = this.openSet.init_t_DataUtil();
-               if (!var4.init_Z) {
+               NavigationOpenSet.Inner_DataUtil var4 = this.openSet.poll();
+               if (!var4.closed) {
                   this.expandedCount++;
-                  BlockPos var5 = var4.init_BlockPos;
-                  if (var4.init_D < this.bestNode.init_D) {
+                  BlockPos var5 = var4.pos;
+                  if (var4.heuristic < this.bestNode.heuristic) {
                      this.bestNode = var4;
                   }
 
-                  this.cachedGrid.incomingMove = var4.init_ClassCache_UiHelpe;
+                  this.cachedGrid.incomingMove = var4.move;
                   this.cachedGrid.activeNode = var4;
                   if (this.goal.putAt_Z_I(var5.getX(), var5.getY(), var5.getZ(), this.cachedGrid)) {
                      this.bestNode = var4;
@@ -5594,7 +5594,7 @@ public final class AiPathfinder {
                      break;
                   }
 
-                  if (this.routeProofMode && this.destinationUnknown && this.isAtOrCloserThanStart(var5, var4.init_D) && this.isAtUnknownTerrainEdge(var5)) {
+                  if (this.routeProofMode && this.destinationUnknown && this.isAtOrCloserThanStart(var5, var4.heuristic) && this.isAtUnknownTerrainEdge(var5)) {
                      this.bestUnknownEdgeNode = var4;
                      this.finished = true;
                      break;
@@ -5602,7 +5602,7 @@ public final class AiPathfinder {
 
                   if (!this.routeProofMode
                      && this.goal.outsideSearchBox(this.startPos, 64, 40)
-                     && var4.init_D
+                     && var4.heuristic
                         < this.goal.heuristic(this.startPos.getX(), this.startPos.getY(), this.startPos.getZ())
                      && (
                         Math.abs(var5.getX() - this.startPos.getX()) == 64
@@ -5737,17 +5737,17 @@ public final class AiPathfinder {
                         var7 += AiPathfinder.effectiveMoveTicks(var2) - var2.costTicks();
                      }
 
-                     double var9 = var1.load_D
+                     double var9 = var1.cost
                         + var7
                         + var22
                         + var2.cellsToPlace().size() * this.goal.putAt_D()
                         + AiPathfinder.MoveCosts.avoidPlacementPenalty(var2.cellsToPlace());
                      if (this.worldRecordMode) {
-                        var9 += AiPathfinder.transitionPenalty(var1.init_ClassCache_UiHelpe, var2);
+                        var9 += AiPathfinder.transitionPenalty(var1.move, var2);
                      }
 
                      for (BlockPos var12 : var2.cellsToPlace()) {
-                        if (AiEditLedger.read_Z(var12)) {
+                        if (AiEditLedger.wasRecentlyBroken(var12)) {
                            var9 += 200.0;
                         }
                      }
@@ -5765,8 +5765,8 @@ public final class AiPathfinder {
                         }
                      }
 
-                     if (var9 < var1.load_D + 1.0) {
-                        var9 = var1.load_D + 1.0;
+                     if (var9 < var1.cost + 1.0) {
+                        var9 = var1.cost + 1.0;
                      }
 
                      if (Double.isFinite(var9) && !(var2.costTicks() <= 0.0) && !(var22 < 0.0)) {
@@ -5777,9 +5777,9 @@ public final class AiPathfinder {
                            boolean var14 = false;
                            int var15 = this.trackHeadingState ? AiPathfinder.headingBucket(var2) : 0;
 
-                           for (NavigationOpenSet.Inner_DataUtil var16 = var26; var16 != null; var16 = var16.load_t_DataUtil) {
-                              if (!var16.init_Z && (!this.trackHeadingState || AiPathfinder.headingBucket(var16.init_ClassCache_UiHelpe) == var15)) {
-                                 if (var16.load_I <= var24 && var16.load_D <= var9) {
+                           for (NavigationOpenSet.Inner_DataUtil var16 = var26; var16 != null; var16 = var16.nextInCell) {
+                              if (!var16.closed && (!this.trackHeadingState || AiPathfinder.headingBucket(var16.move) == var15)) {
+                                 if (var16.load_I <= var24 && var16.cost <= var9) {
                                     var14 = true;
                                     break;
                                  }
@@ -5794,29 +5794,29 @@ public final class AiPathfinder {
                               if (var27 == null) {
                                  var27 = new NavigationOpenSet.Inner_DataUtil(var20, this.adjustedHeuristic(var20.getX(), var20.getY(), var20.getZ()));
                                  var27.load_I = var24;
-                                 var27.load_t_DataUtil = var26;
+                                 var27.nextInCell = var26;
                                  this.nodeTable.put(var20.asLong(), var27);
                                  this.allocatedNodeCount++;
                               }
 
-                              for (NavigationOpenSet.Inner_DataUtil var28 = var26; var28 != null; var28 = var28.load_t_DataUtil) {
+                              for (NavigationOpenSet.Inner_DataUtil var28 = var26; var28 != null; var28 = var28.nextInCell) {
                                  if (var28 != var27
                                     && var28.load_I >= var24
-                                    && var28.load_D >= var9
-                                    && (!this.trackHeadingState || AiPathfinder.headingBucket(var28.init_ClassCache_UiHelpe) == var15)) {
-                                    var28.init_Z = true;
+                                    && var28.cost >= var9
+                                    && (!this.trackHeadingState || AiPathfinder.headingBucket(var28.move) == var15)) {
+                                    var28.closed = true;
                                  }
                               }
 
-                              if (var9 < var27.load_D) {
-                                 var27.load_D = var9;
-                                 var27.init_t_DataUtil = var1;
-                                 var27.init_ClassCache_UiHelpe = var2;
+                              if (var9 < var27.cost) {
+                                 var27.cost = var9;
+                                 var27.parent = var1;
+                                 var27.move = var2;
                                  this.openSet.init(var27);
-                                 this.peakOpenSize = Math.max(this.peakOpenSize, this.openSet.init_I());
+                                 this.peakOpenSize = Math.max(this.peakOpenSize, this.openSet.size());
 
                                  for (int var29 = 0; var29 < PROGRESS_WEIGHTS.length; var29++) {
-                                    double var17 = var27.init_D + var9 / PROGRESS_WEIGHTS[var29];
+                                    double var17 = var27.heuristic + var9 / PROGRESS_WEIGHTS[var29];
                                     if (var17 < this.bestWeightedScores[var29]) {
                                        this.bestWeightedScores[var29] = var17;
                                        this.bestWeightedNodes[var29] = var27;
@@ -5845,7 +5845,7 @@ public final class AiPathfinder {
          if (this.routeProofMode && !this.reachedGoal && this.bestUnknownEdgeNode == null) {
             if (AiNavDebug.isEnabled()) {
                AiNavDebug.log(
-                  "unproved route nearest=" + this.bestNode.init_BlockPos + " unknown=" + this.destinationUnknown + " pending=" + this.hitPendingChunk
+                  "unproved route nearest=" + this.bestNode.pos + " unknown=" + this.destinationUnknown + " pending=" + this.hitPendingChunk
                );
             }
 
@@ -5855,20 +5855,20 @@ public final class AiPathfinder {
          } else {
             ArrayDeque var1 = new ArrayDeque();
             NavigationOpenSet.Inner_DataUtil var2 = this.routeProofMode && !this.reachedGoal ? this.bestUnknownEdgeNode : this.bestNode;
-            if (!this.routeProofMode && !this.reachedGoal && var2.init_BlockPos.distSqr(this.startPos) <= 25.0) {
+            if (!this.routeProofMode && !this.reachedGoal && var2.pos.distSqr(this.startPos) <= 25.0) {
                NavigationOpenSet.Inner_DataUtil var3 = this.selectProgressNode();
                if (var3 != null) {
                   var2 = var3;
                }
             }
 
-            while (var2.init_t_DataUtil != null) {
+            while (var2.parent != null) {
                if (var1.size() >= this.allocatedNodeCount) {
                   throw new IllegalStateException("Cyclic path parent chain");
                }
 
-               var1.addFirst(var2.init_ClassCache_UiHelpe);
-               var2 = var2.init_t_DataUtil;
+               var1.addFirst(var2.move);
+               var2 = var2.parent;
             }
 
             return new AiPathfinder.PathResult(
@@ -5882,7 +5882,7 @@ public final class AiPathfinder {
                this.routeProofMode
                   && !this.reachedGoal
                   && this.bestUnknownEdgeNode != null
-                  && this.bestUnknownEdgeNode.init_BlockPos.equals(this.startPos)
+                  && this.bestUnknownEdgeNode.pos.equals(this.startPos)
             );
          }
       }
@@ -5891,10 +5891,10 @@ public final class AiPathfinder {
          ArrayDeque var1 = new ArrayDeque();
 
          for (NavigationOpenSet.Inner_DataUtil var2 = this.bestNode;
-            var2.init_t_DataUtil != null && var1.size() < 64;
-            var2 = var2.init_t_DataUtil
+            var2.parent != null && var1.size() < 64;
+            var2 = var2.parent
          ) {
-            var1.addFirst(var2.init_ClassCache_UiHelpe);
+            var1.addFirst(var2.move);
          }
 
          return List.copyOf(var1);
@@ -6876,7 +6876,7 @@ public final class AiPathfinder {
                if (!this.cellSource.putAt(var15, var17)) {
                   AiPathfinder.LiveGridView.SectionSlice var19 = this.chunkMemory == null
                      ? null
-                     : this.chunkMemory.init_ClassCache_StreamU_I(var15, var17, this.minY, var5, AiGridRevisions.init(var13));
+                     : this.chunkMemory.sectionSlice(var15, var17, this.minY, var5, AiGridRevisions.init(var13));
                   if (var19 != null) {
                      this.loadedSlices.put(var13, var19);
                      this.memoryFallbackSlices.put(var13, var19);
@@ -7151,7 +7151,7 @@ public final class AiPathfinder {
       }
 
       private static long packChunkKey(int var0, int var1) {
-         return AiGridRevisions.init_J(var0, var1);
+         return AiGridRevisions.chunkKey(var0, var1);
       }
 
       public static AiPathfinder.CellInfo classifyCell(Minecraft var0, ClientLevel var1, BlockPos var2, ItemStack[] var3) {
@@ -7352,7 +7352,7 @@ public final class AiPathfinder {
                if (var3.isEmpty()) {
                   return 0;
                } else {
-                  return var3 == Shapes.block() ? 1 : AiShapes.init_S_List(var3.toAabbs());
+                  return var3 == Shapes.block() ? 1 : AiShapes.shapeId(var3.toAabbs());
                }
             }
          } else {
@@ -7551,11 +7551,11 @@ public final class AiPathfinder {
       }
 
       static double fastestBreakTicks(Minecraft var0, BlockState var1, float var2, ItemStack[] var3, MiningCost.Inner_DataUtil var4) {
-         double var5 = MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4);
+         double var5 = MiningCost.breakTicks(var0, ItemStack.EMPTY, var1, var2, var4);
 
          for (ItemStack var10 : var3) {
             if (var10 != null && !var10.isEmpty() && AiItems.hasEnoughDurability(var10, 2)) {
-               var5 = Math.min(var5, MiningCost.init_D_Minecraft(var0, var10, var1, var2, var4));
+               var5 = Math.min(var5, MiningCost.breakTicks(var0, var10, var1, var2, var4));
             }
          }
 
@@ -7567,11 +7567,11 @@ public final class AiPathfinder {
       ) {
          var4 = adjustMiningEnvForAcceptedTool(var4, var3, var1, var5);
          boolean var6 = var1.requiresCorrectToolForDrops() && !var4.creative();
-         double var7 = !var6 && var5.test(var1, ItemStack.EMPTY) ? MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4) : 1.0 / 0.0;
+         double var7 = !var6 && var5.test(var1, ItemStack.EMPTY) ? MiningCost.breakTicks(var0, ItemStack.EMPTY, var1, var2, var4) : 1.0 / 0.0;
 
          for (ItemStack var12 : var3) {
             if (var12 != null && !var12.isEmpty() && AiItems.hasEnoughDurability(var12, 2) && (!var6 || var12.isCorrectToolForDrops(var1)) && var5.test(var1, var12)) {
-               var7 = Math.min(var7, MiningCost.init_D_Minecraft(var0, var12, var1, var2, var4));
+               var7 = Math.min(var7, MiningCost.breakTicks(var0, var12, var1, var2, var4));
             }
          }
 
@@ -7645,7 +7645,7 @@ public final class AiPathfinder {
          boolean putAt(int var1, int var2);
 
          default short putAt_S(BlockPos var1) {
-            return AiShapes.init_S_ClassCache_FileCac(this.putAt_FileStore_BitCache(var1));
+            return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1));
          }
 
          default byte putAt_B(BlockPos var1) {
@@ -8422,13 +8422,13 @@ public final class AiPathfinder {
    public interface GridView {
       AiPathfinder.CellInfo probe(int var1, int var2, int var3);
 
-      default AiPathfinder.CellInfo init_ClassCache_FileCac_I(int var1, int var2, int var3) {
+      default AiPathfinder.CellInfo probeCell(int var1, int var2, int var3) {
          return this.probe(var1, var2, var3);
       }
 
       default long init_J() { return this.putAt_J(); }
       default short init_S_I(int x, int y, int z) { return this.putAt_S_I(x, y, z); }
-      default short load_S(int x, int y, int z) { return this.fill_S(x, y, z); }
+      default short collisionShapeCode(int x, int y, int z) { return this.fill_S(x, y, z); }
       default byte init_B_I(int x, int y, int z) { return this.putAt_B_I(x, y, z); }
 
       default long putAt_J() {
@@ -8436,7 +8436,7 @@ public final class AiPathfinder {
       }
 
       default short putAt_S_I(int var1, int var2, int var3) {
-         return AiShapes.init_S_ClassCache_FileCac(this.probe(var1, var2, var3));
+         return AiShapes.shapeIdOf(this.probe(var1, var2, var3));
       }
 
       default short fill_S(int var1, int var2, int var3) {
@@ -8474,24 +8474,24 @@ public final class AiPathfinder {
 
    public interface PathGoal {
       // 5.3 external ABI bridges for untouched ai/* goals
-      default boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) { return this.isInGoal(x, y, z); }
+      default boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) { return this.isInGoal(x, y, z); }
       default AiPathfinder.PathGoal init(AiPathfinder.GridView grid) { return this; }
-      default boolean init_Z(BlockPos cell) { return true; }
+      default boolean allowsCell(BlockPos cell) { return true; }
       default boolean read(BlockPos cell) { return true; }
       default boolean init_Z() { return false; }
       default boolean load(BlockPos cell) { return true; }
       default int init(ItemStack stack) { return 0; }
-      default double init_D() { return 40.0; }
+      default double blockPlaceCost() { return 40.0; }
       default boolean write(BlockPos cell) { return false; }
-      default Set<AiPathfinder.MoveType> init_Set() { return Set.of(); }
-      default BlockPos init_BlockPos() { return null; }
+      default Set<AiPathfinder.MoveType> disallowedMoves() { return Set.of(); }
+      default BlockPos getTargetBlock() { return null; }
       static AiPathfinder.PathGoal nearCompat(BlockPos target, double radius) {
          return near(target, radius);
       }
       boolean isInGoal(int var1, int var2, int var3);
 
       default boolean putAt_Z_I(int var1, int var2, int var3, AiPathfinder.GridView var4) {
-         return this.init_Z_I(var1, var2, var3, var4);
+         return this.isInGoalWithGrid(var1, var2, var3, var4);
       }
 
       double heuristic(int var1, int var2, int var3);
@@ -8517,7 +8517,7 @@ public final class AiPathfinder {
       }
 
       default double putAt_D() {
-         return this.init_D();
+         return this.blockPlaceCost();
       }
 
       default boolean value(BlockPos var1) {
@@ -8525,11 +8525,11 @@ public final class AiPathfinder {
       }
 
       default boolean putAt_Z_BlockPos(BlockPos var1) {
-         return this.init_Z(var1);
+         return this.allowsCell(var1);
       }
 
       default Set<AiPathfinder.MoveType> putAt_Set() {
-         return this.init_Set();
+         return this.disallowedMoves();
       }
 
       default boolean outsideSearchBox(BlockPos var1, int var2, int var3) {
@@ -8537,7 +8537,7 @@ public final class AiPathfinder {
       }
 
       default BlockPos putAt_BlockPos() {
-         return this.init_BlockPos();
+         return this.getTargetBlock();
       }
 
       static AiPathfinder.PathGoal near(BlockPos var0, double var1) {
@@ -8554,12 +8554,12 @@ public final class AiPathfinder {
             }
 
             @Override
-            public BlockPos init_BlockPos() {
+            public BlockPos getTargetBlock() {
                return this.putAt_BlockPos();
             }
 
             @Override
-            public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
+            public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) {
                return this.putAt_Z_I(x, y, z, planned);
             }
 

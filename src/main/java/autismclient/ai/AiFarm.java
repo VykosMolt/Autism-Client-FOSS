@@ -470,7 +470,7 @@ final class AiFarm {
             }
 
             AiOperation.Result init_AiOperation_Result() {
-               long revision = autismclient.ai.engine.AiGridRevisions.init_J();
+               long revision = autismclient.ai.engine.AiGridRevisions.globalRevision();
                if (this.read_J != revision) {
                   this.init_IdentityHashMap.clear();
                   this.read_J = revision;

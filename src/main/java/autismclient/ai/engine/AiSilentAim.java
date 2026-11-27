@@ -20,7 +20,7 @@ public final class AiSilentAim {
       init = value;
    }
 
-   public static void init_V() {
+   public static void release() {
       init = false;
       SilentRotationManager.releaseOwner("ai-assistant");
    }

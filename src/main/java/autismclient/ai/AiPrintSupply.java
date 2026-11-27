@@ -62,15 +62,15 @@ final class AiPrintSupply {
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private ItemStack load_ItemStack = ItemStack.EMPTY;
    private final List<ItemStack> load_List = new ArrayList<>();
-   int init_I;
-   int load_I;
+   int shulkerRefills;
+   int terrainCleared;
    private int write = 1;
 
    int init_I() {
       return this.write;
    }
 
-   static void init_V_TableIndex_ConfigS(AiBuilder.BuildOptions power) {
+   static void validateOptions(AiBuilder.BuildOptions power) {
       if (!power.substitutes().isEmpty()) {
          throw new IllegalArgumentException("The schematic printer requires exact materials; remove substitutes or use the legacy builder");
       }
@@ -89,16 +89,16 @@ final class AiPrintSupply {
          this.init_Minecraft.player == null ? BlockPos.ZERO : this.init_Minecraft.player.blockPosition(),
          clearTerrain
       );
-      this.init_Map = this.init_bj_CachePool.init_Map;
+      this.init_Map = this.init_bj_CachePool.cells;
       this.init_List = this.init_bj_CachePool.init_List;
    }
 
-   boolean init_Z_I(int workBudget) {
+   boolean prepare(int workBudget) {
       this.init_bj_CachePool.init_V_I(workBudget);
       return this.init_Z();
    }
 
-   void init_V_BlockPos(BlockPos position) {
+   void notifyBlockChanged(BlockPos position) {
       this.init_bj_CachePool.init_V_BlockPos(position);
    }
 
@@ -106,11 +106,11 @@ final class AiPrintSupply {
       return this.init_bj_CachePool.init_Z();
    }
 
-   boolean load_Z() {
+   boolean isPrepared() {
       return this.init_bj_CachePool.load_Z;
    }
 
-   long init_J() {
+   long preparationDone() {
       return this.init_bj_CachePool.load_I
          + 6L * this.init_bj_CachePool.read_I
          + this.init_bj_CachePool.write_I
@@ -118,7 +118,7 @@ final class AiPrintSupply {
          + this.init_bj_CachePool.init_J;
    }
 
-   long load_J() {
+   long preparationTotal() {
       return 7L * this.init_bj_CachePool.init_TableIndex_DataUti.cells().size()
          + this.init_bj_CachePool.init_bj_DataUtil.total
          + (
@@ -128,7 +128,7 @@ final class AiPrintSupply {
          );
    }
 
-   String init_Str() {
+   String getStatus() {
       return this.init_bj_CachePool.init_Str();
    }
 
@@ -136,7 +136,7 @@ final class AiPrintSupply {
       this.init_bj_CachePool.load(pos);
    }
 
-   void init_V_J(long key) {
+   void notifyChunkChanged(long key) {
       this.init_bj_CachePool.init_V_J(key);
    }
 
@@ -149,45 +149,45 @@ final class AiPrintSupply {
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(stack, item)) {
+         if (autismclient.ai.print.PrintCore.matchesItem(stack, item)) {
             count += stack.getCount();
          }
       }
 
       ItemStack offhand = inventory.getItem(40);
-      return autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(offhand, item) ? count + offhand.getCount() : count;
+      return autismclient.ai.print.PrintCore.matchesItem(offhand, item) ? count + offhand.getCount() : count;
    }
 
-   boolean init_Z_Item(Item item) {
+   boolean canSupply(Item item) {
       return this.init_bj_TaskQueue.init(item, item == null ? 0 : load(this.init_Minecraft.player.getInventory(), item));
    }
 
-   Item init_Item() {
+   Item getMissingItem() {
       return this.init_bj_TaskQueue.init_Item;
    }
 
-   boolean read_Z() {
+   boolean hasPortableStock() {
       return this.init_bj_TaskQueue.init_Item != null
          && !AiCarriedShulker.init(this.init_Minecraft.player.getInventory(), this.init_bj_TaskQueue.init_Item, this.init_bj_TaskQueue.init_List, true).isEmpty();
    }
 
-   void init_V() {
+   void completeRefill() {
       this.init_bj_TaskQueue.init();
       this.init_bj_BufferHelper = null;
       this.init_ItemStack = ItemStack.EMPTY;
-      this.init_I++;
+      this.shulkerRefills++;
    }
 
-   void load_V() {
+   void resetRefill() {
       this.init_bj_TaskQueue.init();
       this.init_bj_BufferHelper = null;
       this.init_ItemStack = ItemStack.EMPTY;
    }
 
-   AiOperation init_AiOperation_ItemStack(ItemStack wanted, int additional, Set<Long> owned) {
+   AiOperation refillOperation(ItemStack wanted, int additional, Set<Long> owned) {
       if (!wanted.isEmpty() && additional > 0 && this.init_Minecraft.player != null && !this.init_Minecraft.player.hasInfiniteMaterials()) {
          if (!ItemStack.isSameItemSameComponents(this.load_ItemStack, wanted)) {
-            this.write_V();
+            this.clearContentsRequest();
             this.load_ItemStack = wanted.copyWithCount(1);
          }
 
@@ -201,23 +201,23 @@ final class AiPrintSupply {
          }
 
          this.load_List.add(box.copy());
-         return new AiCarriedShulker(box, wanted, additional, init(this.init_Set(), owned));
+         return new AiCarriedShulker(box, wanted, additional, init(this.ownedCells(), owned));
       } else {
          return null;
       }
    }
 
-   void read_V() {
-      this.init_I++;
+   void countRefill() {
+      this.shulkerRefills++;
    }
 
-   void write_V() {
+   void clearContentsRequest() {
       this.load_ItemStack = ItemStack.EMPTY;
       this.load_List.clear();
    }
 
-   Set<Long> init_Set() {
-      if (!this.load_Z()) {
+   Set<Long> ownedCells() {
+      if (!this.isPrepared()) {
          throw new IllegalStateException("Schematic supply preparation is still running");
       } else {
          return this.init_bj_CachePool.update_Set;
@@ -225,7 +225,7 @@ final class AiPrintSupply {
    }
 
    boolean load(int workBudget) {
-      if (!this.load_Z()) {
+      if (!this.isPrepared()) {
          return false;
       }
 
@@ -274,14 +274,14 @@ final class AiPrintSupply {
       }
    }
 
-   AiOperation init_AiOperation_Set(Set<Long> owned) {
+   AiOperation stockRefillOperation(Set<Long> owned) {
       if (this.init_bj_TaskQueue.init_Item != null && (!this.init_ItemStack.isEmpty() || this.init_bj_TaskQueue.init_Set.size() < 3)) {
          if (this.init_bj_BufferHelper != null && this.init_bj_BufferHelper.load_Z && this.init_bj_BufferHelper.init_Item == this.init_bj_TaskQueue.init_Item) {
             BlockPos source = this.init_bj_BufferHelper.init_BlockPos;
             int need = this.init_bj_BufferHelper.load();
             this.write = this.init_bj_BufferHelper.init_I();
             this.init_bj_BufferHelper = null;
-            Set<Long> keep = init(this.init_Set(), owned);
+            Set<Long> keep = init(this.ownedCells(), owned);
             if (!this.init_ItemStack.isEmpty()) {
                ItemStack selected = this.init_ItemStack;
                this.init_ItemStack = ItemStack.EMPTY;
@@ -345,8 +345,8 @@ final class AiPrintSupply {
       }
    }
 
-   BlockPos init_BlockPos() {
-      if (!this.load_Z()) {
+   BlockPos nextTerrainCell() {
+      if (!this.isPrepared()) {
          throw new IllegalStateException("Schematic terrain preparation is still running");
       }
 
@@ -370,8 +370,8 @@ final class AiPrintSupply {
       return null;
    }
 
-   boolean write_Z() {
-      return this.load_Z() && this.read >= this.init_List.size();
+   boolean isTerrainCleared() {
+      return this.isPrepared() && this.read >= this.init_List.size();
    }
 
    private static Set<Long> load_Set() {
@@ -420,7 +420,7 @@ final class AiPrintSupply {
       }
    }
 
-   static void init_V_AbstractSignEditSc(AbstractSignEditScreen editor, BlockPos origin, Map<Long, String> text) throws IllegalAccessException, NoSuchFieldException {
+   static void fillSignText(AbstractSignEditScreen editor, BlockPos origin, Map<Long, String> text) throws IllegalAccessException, NoSuchFieldException {
       Class<AbstractSignEditScreen> screen = AbstractSignEditScreen.class;
       Field signField = screen.getDeclaredField("sign");
       Field slotField = screen.getDeclaredField("slot");
@@ -434,7 +434,7 @@ final class AiPrintSupply {
       }
    }
 
-   static BlockPos init_BlockPos_AbstractSignEditSc(AbstractSignEditScreen editor) throws IllegalAccessException, NoSuchFieldException {
+   static BlockPos signPos(AbstractSignEditScreen editor) throws IllegalAccessException, NoSuchFieldException {
       Field field = AbstractSignEditScreen.class.getDeclaredField("sign");
       field.setAccessible(true);
       return ((SignBlockEntity)field.get(editor)).getBlockPos();
@@ -540,12 +540,12 @@ final class AiPrintSupply {
       final AiBuilder.Blueprint init_TableIndex_DataUti;
       final LevelReader init_LevelReader;
       final Predicate<BlockPos> init_Predicate;
-      final Map<Long, AiBuilder.CellSpec> init_Map = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, AiBuilder.CellSpec> cells = new AiPrintSupply.Inner_ConfigStore<>();
       final Set<Long> init_Set = AiPrintSupply.load_Set();
       final Set<Long> load_Set = AiPrintSupply.load_Set();
       final Set<Long> read_Set = AiPrintSupply.load_Set();
       final Set<Long> write_Set = ConcurrentHashMap.newKeySet();
-      final Map<Long, Set<Long>> load_Map = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, Set<Long>> chunksByCell = new AiPrintSupply.Inner_ConfigStore<>();
       final Set<Long> update_Set = Collections.unmodifiableSet(
          new AbstractSet<Long>() {
             @Override
@@ -559,7 +559,7 @@ final class AiPrintSupply {
                   return true;
                }
 
-               Set<Long> chunks = Inner_CachePool.this.load_Map.get(key);
+               Set<Long> chunks = Inner_CachePool.this.chunksByCell.get(key);
                if (chunks != null) {
                   for (long chunk : chunks) {
                      if (Inner_CachePool.this.write_Set.contains(chunk)) {
@@ -599,8 +599,8 @@ final class AiPrintSupply {
          }
       );
       final List<BlockPos> init_List = new AiPrintSupply.Inner_JsonUtil();
-      final Map<Long, Set<Long>> read_Map = new AiPrintSupply.Inner_ConfigStore<>();
-      final Map<Long, Set<Long>> write_Map = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, Set<Long>> readsByCell = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, Set<Long>> ownersByChunk = new AiPrintSupply.Inner_ConfigStore<>();
       private final LinkedHashMap<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> init_LinkedHashMap = new LinkedHashMap<>();
       private Iterator<Long> init_Iterator;
       final AiPrintSupply.Inner_DataUtil init_bj_DataUtil;
@@ -665,7 +665,7 @@ final class AiPrintSupply {
                if (this.load_I < this.init_TableIndex_DataUti.cells().size()) {
                   AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.load_I++);
                   BlockPos p = this.init_BlockPos_TableIndex_StreamU(cell);
-                  this.init_Map.put(p.asLong(), cell);
+                  this.cells.put(p.asLong(), cell);
                   this.load_Set.add(p.asLong());
                   this.update_I = Math.min(this.update_I, cell.dx());
                   this.close = Math.max(this.close, cell.dx());
@@ -676,7 +676,7 @@ final class AiPrintSupply {
                } else if (this.init_BlockPos != null) {
                   BlockPos stock = this.init_BlockPos;
                   this.init_BlockPos = null;
-                  if (!this.init_Map.containsKey(stock.asLong())
+                  if (!this.cells.containsKey(stock.asLong())
                      && this.init_Predicate.test(stock)
                      && this.init_BlockState_BlockPos(stock).getBlock() instanceof ShulkerBoxBlock) {
                      this.init_Set.add(stock.asLong());
@@ -689,7 +689,7 @@ final class AiPrintSupply {
                      this.read_I++;
                   }
 
-                  if (!this.init_Map.containsKey(p.asLong()) && this.read_Set.add(p.asLong()) && this.init_Z_BlockPos(p)) {
+                  if (!this.cells.containsKey(p.asLong()) && this.read_Set.add(p.asLong()) && this.init_Z_BlockPos(p)) {
                      this.load_Set.add(p.asLong());
                   }
                } else if (!this.init_bj_DataUtil.init()) {
@@ -725,7 +725,7 @@ final class AiPrintSupply {
          int y = this.open - (int)(i / (width * depth));
          long row = i % (width * depth);
          BlockPos p = this.init_TableIndex_DataUti.origin().offset(this.update_I + (int)(row / depth), y, this.flush + (int)(row % depth));
-         if (!this.init_Map.containsKey(p.asLong())) {
+         if (!this.cells.containsKey(p.asLong())) {
             if (!this.init_Predicate.test(p)) {
                throw new IllegalStateException("Terrain must be loaded before clearing at " + p.toShortString());
             }
@@ -735,10 +735,10 @@ final class AiPrintSupply {
                && (
                   !state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
                      || state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) != DoubleBlockHalf.UPPER
-                     || !this.init_Map.containsKey(p.below().asLong())
+                     || !this.cells.containsKey(p.below().asLong())
                )) {
                if (this.auditHull == null) {
-                  this.auditHull = new AuditBuilderHull(this.init_Map.keySet());
+                  this.auditHull = new AuditBuilderHull(this.cells.keySet());
                }
 
                if (this.auditHull.encloses(p.getX(), p.getY(), p.getZ())) {
@@ -749,10 +749,10 @@ final class AiPrintSupply {
       }
 
       void load(BlockPos pos) {
-         boolean relevant = this.init_Map.containsKey(pos.asLong()) || this.read_Map.containsKey(pos.asLong());
+         boolean relevant = this.cells.containsKey(pos.asLong()) || this.readsByCell.containsKey(pos.asLong());
 
          for (Direction d : AiPrintSupply.init_DirectionArr) {
-            relevant |= this.init_Map.containsKey(pos.relative(d).asLong());
+            relevant |= this.cells.containsKey(pos.relative(d).asLong());
          }
 
          if (relevant) {
@@ -767,7 +767,7 @@ final class AiPrintSupply {
       }
 
       void init_V_J(long key) {
-         Set<Long> owners = this.write_Map.get(key);
+         Set<Long> owners = this.ownersByChunk.get(key);
          if (owners != null && !owners.isEmpty()) {
             this.write_Set.add(key);
             this.init(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, key), owners);
@@ -861,7 +861,7 @@ final class AiPrintSupply {
          );
 
          try {
-            return AiSchematicActions.init(candidate, this.init_Map, metered);
+            return AiSchematicActions.init(candidate, this.cells, metered);
          } catch (AiPrintSupply.Inner_CachePool.Inner_StreamUtil incomplete) {
             return true;
          } finally {
@@ -872,11 +872,11 @@ final class AiPrintSupply {
                   break;
                } else {
                   long key = (Long)var15.next();
-                  this.read_Map.computeIfAbsent(key, ignored -> AiPrintSupply.load_Set()).add(candidate.asLong());
+                  this.readsByCell.computeIfAbsent(key, ignored -> AiPrintSupply.load_Set()).add(candidate.asLong());
                   long chunk = (long)(BlockPos.getX(key) >> 4) << 32 | BlockPos.getZ(key) >> 4 & 4294967295L;
-                  Set<Long> owners = this.write_Map.computeIfAbsent(chunk, ignored -> AiPrintSupply.load_Set());
+                  Set<Long> owners = this.ownersByChunk.computeIfAbsent(chunk, ignored -> AiPrintSupply.load_Set());
                   boolean added = owners.add(candidate.asLong());
-                  this.load_Map.computeIfAbsent(candidate.asLong(), ignored -> ConcurrentHashMap.newKeySet()).add(chunk);
+                  this.chunksByCell.computeIfAbsent(candidate.asLong(), ignored -> ConcurrentHashMap.newKeySet()).add(chunk);
                   if (added && this.write_Set.contains(chunk) && this.init_Iterator == null) {
                      this.init_LinkedHashMap.put(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, chunk), owners.iterator());
                   }
@@ -1036,7 +1036,7 @@ final class AiPrintSupply {
             p = this.init_BlockPos.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
          }
 
-         if (!prep.init_Map.containsKey(p.asLong()) && prep.init_Predicate.test(p) && prep.init_BlockState_BlockPos(p).getBlock() instanceof ShulkerBoxBlock) {
+         if (!prep.cells.containsKey(p.asLong()) && prep.init_Predicate.test(p) && prep.init_BlockState_BlockPos(p).getBlock() instanceof ShulkerBoxBlock) {
             prep.init_Set.add(p.asLong());
          }
       }

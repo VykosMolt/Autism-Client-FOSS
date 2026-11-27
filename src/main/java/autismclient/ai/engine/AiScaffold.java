@@ -49,7 +49,7 @@ public final class AiScaffold {
    );
    private static final LinkedHashMap<Long, AiScaffold.Inner_DataUtil> load_LinkedHashMap = new LinkedHashMap<>();
 
-   public static AiScaffold.Inner_StreamUtil init_a_StreamUtil() {
+   public static AiScaffold.Inner_StreamUtil openJobScope() {
       return new AiScaffold.Inner_StreamUtil();
    }
 
@@ -57,7 +57,7 @@ public final class AiScaffold {
       AiScaffold.Inner_StreamUtil scope = new AiScaffold.Inner_StreamUtil();
 
       for (BlockPos pos : existing) {
-         Block block = init_Block(pos);
+         Block block = recordedBlock(pos);
          if (block != null) {
             scope.init_LinkedHashMap.put(pos.asLong(), block);
          }
@@ -109,7 +109,7 @@ public final class AiScaffold {
       }
 
       for (BlockPos pos : existing) {
-         Block block = init_Block(pos);
+         Block block = recordedBlock(pos);
          if (block != null) {
             records.put(pos.asLong(), block);
          }
@@ -141,7 +141,7 @@ public final class AiScaffold {
       }
    }
 
-   public static void init_V(BlockPos cell) {
+   public static void forget(BlockPos cell) {
       Block was = init_LinkedHashMap.remove(cell.asLong());
       if (was != null) {
          ArrayList<AiScaffold.Inner_StreamUtil> holders = new ArrayList<>();
@@ -201,12 +201,12 @@ public final class AiScaffold {
       }
    }
 
-   public static Block init_Block(BlockPos cell) {
+   public static Block recordedBlock(BlockPos cell) {
       return init_LinkedHashMap.get(cell.asLong());
    }
 
-   public static boolean init_Z(BlockPos cell) {
-      if (init_Block(cell) != null) {
+   public static boolean isScaffold(BlockPos cell) {
+      if (recordedBlock(cell) != null) {
          return true;
       }
 
@@ -245,7 +245,7 @@ public final class AiScaffold {
       return init_LinkedHashMap.size();
    }
 
-   public static void init_V() {
+   public static void reset() {
       init_LinkedHashMap.clear();
       load_LinkedHashMap.clear();
       init_Set.clear();
@@ -272,7 +272,7 @@ public final class AiScaffold {
          AiScaffold.init_Set.add(this);
       }
 
-      public List<BlockPos> init_List() {
+      public List<BlockPos> ownedCells() {
          return this.init_LinkedHashMap.keySet().stream().map(BlockPos::of).toList();
       }
 
@@ -280,7 +280,7 @@ public final class AiScaffold {
          return this.init_LinkedHashMap.get(pos.asLong());
       }
 
-      public void init_V() {
+      public void persist() {
          if (this.init_Path != null && (this.load != this.init_J || this.init_CompletableFuture.isCompletedExceptionally())) {
             LinkedHashMap<Long, Block> snapshot = new LinkedHashMap<>(this.init_LinkedHashMap);
             JsonArray rows = new JsonArray();
@@ -324,13 +324,13 @@ public final class AiScaffold {
 
       @Override
       public void close() {
-         this.init_V();
+         this.persist();
          if (this.init_Path != null) {
             // Nothing saves this scope after close, so wait for the write and retry it once if it failed.
             try {
                this.init_CompletableFuture.join();
             } catch (RuntimeException failed) {
-               this.init_V();
+               this.persist();
                try {
                   this.init_CompletableFuture.join();
                } catch (RuntimeException again) {

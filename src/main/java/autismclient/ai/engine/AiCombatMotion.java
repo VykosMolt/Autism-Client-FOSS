@@ -25,8 +25,8 @@ public final class AiCombatMotion {
             if (!mc.level.isInsideBuildHeight(feet)
                || mc.level.getChunkSource().getChunk(feet.getX() >> 4, feet.getZ() >> 4, ChunkStatus.FULL, false) == null
                || state.y() < floorY - 0.1
-               || world.init_Z_I(feet.getX(), feet.getY(), feet.getZ())
-               || world.write_Z(feet.getX(), feet.getY(), feet.getZ())) {
+               || world.isLavaOrUnloaded(feet.getX(), feet.getY(), feet.getZ())
+               || world.isPressurePlate(feet.getX(), feet.getY(), feet.getZ())) {
                return false;
             }
 
@@ -75,9 +75,9 @@ public final class AiCombatMotion {
                || mc.level.getChunkSource().getChunk(feet.getX() >> 4, feet.getZ() >> 4, ChunkStatus.FULL, false) == null
                || !next.onGround()
                || next.y() < mc.player.getY() - 0.1
-               || world.init_Z_I(feet.getX(), feet.getY(), feet.getZ())
-               || world.load_Z(feet.getX(), feet.getY(), feet.getZ())
-               || world.write_Z(feet.getX(), feet.getY(), feet.getZ())
+               || world.isLavaOrUnloaded(feet.getX(), feet.getY(), feet.getZ())
+               || world.isWater(feet.getX(), feet.getY(), feet.getZ())
+               || world.isPressurePlate(feet.getX(), feet.getY(), feet.getZ())
                || world.update(feet.getX(), feet.getY() - 1, feet.getZ())) {
                return null;
             }

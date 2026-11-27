@@ -38,7 +38,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       return this.init_RingBuffer_StreamU;
    }
 
-   public UUID init_UUID_2() {
+   public UUID frameEntityUuid() {
       return this.init_RingBuffer_CachePo == PrintItemFrame.Inner_CachePool.HANG ? null : this.init_UUID;
    }
 
@@ -70,7 +70,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    }
 
    @Override
-   public int load_I() {
+   public int fillCount() {
       return 0;
    }
 
@@ -219,7 +219,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus pollStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SENT) {
          return this.init_BitSetUtil_DataUti;
       }
@@ -269,7 +269,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus init_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus verifyStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SUCCEEDED) {
          return this.init_BitSetUtil_DataUti;
       }

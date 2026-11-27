@@ -49,11 +49,11 @@ public final class AiMotionAudit {
    private static int put = -2147483648;
    private static Object init_Obj;
 
-   public static String init_Str() {
+   public static String lastContext() {
       return write_Str == null ? "" : write_Str;
    }
 
-   public static void init_V(String what) {
+   public static void note(String what) {
       if (init_Z) {
          write_Str = what;
       }
@@ -62,7 +62,7 @@ public final class AiMotionAudit {
    private AiMotionAudit() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isEnabled() {
       return init_Z;
    }
 
@@ -77,7 +77,7 @@ public final class AiMotionAudit {
          put = mc.player.tickCount;
          init_Obj = mc.player;
          if (!id.equals(init_Str)) {
-            init_V();
+            finishOperation();
             init_Str = id;
          }
 
@@ -156,7 +156,7 @@ public final class AiMotionAudit {
                         player.horizontalCollision ? "h" : "-",
                         player.verticalCollision && !player.verticalCollisionBelow ? "c" : "-",
                         player.onClimbable() ? "l" : "-",
-                        AiDecisionAudit.init_Z(mc) ? "on" : "-",
+                        AiDecisionAudit.isDigging(mc) ? "on" : "-",
                         init_Str_Str_I(activity, 90),
                         write_Str.isEmpty() ? "" : " | " + write_Str
                      )
@@ -171,7 +171,7 @@ public final class AiMotionAudit {
       }
    }
 
-   public static void init_V() {
+   public static void finishOperation() {
       if (init_Z && init_Str != null) {
          load();
          AiDecisionAudit.init(init_Str);

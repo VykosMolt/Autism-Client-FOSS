@@ -35,10 +35,10 @@ public final class AiStaircase {
    }
 
    public static List<BlockPos> init_List_BlockPos(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked) {
-      return init_List_BlockPos(start, target, maxSteps, blocked, cell -> false);
+      return planSteps(start, target, maxSteps, blocked, cell -> false);
    }
 
-   public static List<BlockPos> init_List_BlockPos(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
+   public static List<BlockPos> planSteps(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
       List<BlockPos> out = new ArrayList<>();
       Set<Long> floors = new HashSet<>();
       floors.add(start.below().asLong());
@@ -198,7 +198,7 @@ public final class AiStaircase {
    }
 
    public static List<BlockPos> read(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
-      List<BlockPos> down = init_List_BlockPos(start, target, maxSteps, blocked, noFloor);
+      List<BlockPos> down = planSteps(start, target, maxSteps, blocked, noFloor);
       if (!down.isEmpty()) {
          return down;
       }
@@ -218,7 +218,7 @@ public final class AiStaircase {
          for (int i = 0; i < level.size(); i++) {
             BlockPos at = level.get(i);
             floors.add(at.below().asLong());
-            List<BlockPos> continuation = init_List_BlockPos(
+            List<BlockPos> continuation = planSteps(
                at, target, maxSteps - i - 1, cell -> floors.contains(cell.asLong()) || blocked.test(cell), noFloor
             );
             if (!continuation.isEmpty()) {
@@ -255,7 +255,7 @@ public final class AiStaircase {
       return out;
    }
 
-   public static BlockPos init_BlockPos_Level_3(Level level, BlockPos feet, BlockPos ore, Predicate<BlockPos> blocked, int maxDepth) {
+   public static BlockPos findStairTop(Level level, BlockPos feet, BlockPos ore, Predicate<BlockPos> blocked, int maxDepth) {
       return init_BlockPos_BlockGetter(level, feet, ore, blocked, maxDepth, (x, z) -> level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z));
    }
 
@@ -300,7 +300,7 @@ public final class AiStaircase {
       return best;
    }
 
-   public static AiOperation init_AiOperation_BlockPos(final BlockPos top, final int bottomY, final int timeoutSeconds, final BooleanSupplier enough) {
+   public static AiOperation digDownOperation(final BlockPos top, final int bottomY, final int timeoutSeconds, final BooleanSupplier enough) {
       final Minecraft mc = Minecraft.getInstance();
       final AiStaircase.Inner_DataUtil goal = new AiStaircase.Inner_DataUtil(top, bottomY);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
@@ -338,7 +338,7 @@ public final class AiStaircase {
                );
             }
 
-            if (this.init_HashUtil_CachePool.init_Z_13()) {
+            if (this.init_HashUtil_CachePool.isAtGoal()) {
                this.init_HashUtil_CachePool.cancel();
                return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Shaft dug to y " + bottomY, "{}", List.of());
             } else {
@@ -350,7 +350,7 @@ public final class AiStaircase {
          public boolean canInterruptNow() {
             return this.init_AiOperation != null
                ? this.init_AiOperation.canInterruptNow()
-               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8();
+               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt();
          }
 
          @Override
@@ -413,7 +413,7 @@ public final class AiStaircase {
       return state -> AiMine.init(family, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
    }
 
-   public static BlockPos init_BlockPos_Level(Level level, BlockPos from, int radius, Predicate<BlockState> matches) {
+   public static BlockPos findNearestBlock(Level level, BlockPos from, int radius, Predicate<BlockState> matches) {
       return init_BlockPos_Level_2(level, from, radius, matches, p -> p.distSqr(from));
    }
 
@@ -574,10 +574,10 @@ public final class AiStaircase {
    }
 
    public static AiOperation init_AiOperation_List(List<BlockPos> steps, int timeoutSeconds, BooleanSupplier enough) {
-      return init_AiOperation_List(steps, timeoutSeconds, enough, null);
+      return followStepsOperation(steps, timeoutSeconds, enough, null);
    }
 
-   public static AiOperation init_AiOperation_List(final List<BlockPos> steps, final int timeoutSeconds, final BooleanSupplier enough, final BlockPos approach) {
+   public static AiOperation followStepsOperation(final List<BlockPos> steps, final int timeoutSeconds, final BooleanSupplier enough, final BlockPos approach) {
       final Minecraft mc = Minecraft.getInstance();
       final AiStaircase.Inner_StreamUtil goal = new AiStaircase.Inner_StreamUtil(steps);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
@@ -616,7 +616,7 @@ public final class AiStaircase {
                );
             }
 
-            if (this.init_HashUtil_CachePool.init_Z_13()) {
+            if (this.init_HashUtil_CachePool.isAtGoal()) {
                this.init_HashUtil_CachePool.cancel();
                return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Staircase dug to " + goal.init_BlockPos.toShortString(), "{}", List.of());
             } else {
@@ -628,7 +628,7 @@ public final class AiStaircase {
          public boolean canInterruptNow() {
             return this.init_AiOperation != null
                ? this.init_AiOperation.canInterruptNow()
-               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8();
+               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt();
          }
 
          @Override
@@ -651,7 +651,7 @@ public final class AiStaircase {
       };
    }
 
-   public static BlockPos init_BlockPos_Level(Level level, BlockPos feet, BlockPos target) {
+   public static BlockPos findStairStart(Level level, BlockPos feet, BlockPos target) {
       BlockPos start = feet;
 
       for (int pass = 0; pass < 2; pass++) {
@@ -716,7 +716,7 @@ public final class AiStaircase {
       }
 
       @Override
-      public boolean init_Z(BlockPos cell) {
+      public boolean allowsCell(BlockPos cell) {
          return this.update(cell);
       }
 
@@ -726,7 +726,7 @@ public final class AiStaircase {
       }
 
       @Override
-      public Set<AiPathfinder.MoveType> init_Set() {
+      public Set<AiPathfinder.MoveType> disallowedMoves() {
          return EnumSet.of(AiPathfinder.MoveType.PILLAR);
       }
 
@@ -767,7 +767,7 @@ public final class AiStaircase {
       }
 
       @Override
-      public boolean init_Z(BlockPos cell) {
+      public boolean allowsCell(BlockPos cell) {
          return this.init_Set.contains(cell.asLong());
       }
 
@@ -777,7 +777,7 @@ public final class AiStaircase {
       }
 
       @Override
-      public Set<AiPathfinder.MoveType> init_Set() {
+      public Set<AiPathfinder.MoveType> disallowedMoves() {
          return EnumSet.of(AiPathfinder.MoveType.DIG_DOWN_1, AiPathfinder.MoveType.PILLAR);
       }
 

@@ -1244,25 +1244,25 @@ public final class AiPhysics {
 
    public interface PhysicsWorld {
       // 5.3 external ABI defaults (overridden by modules/i.java and ai/b/ArrayUtil.java)
-      default double init_D() { return 4.0; }
+      default double maxDropBlocks() { return 4.0; }
       default double load() { return 0.1; }
-      default double init_D_I(int x, int y, int z) { return 0.6; }
-      default double load_D(int x, int y, int z) { return 1.0; }
+      default double blockFriction(int x, int y, int z) { return 0.6; }
+      default double speedFactor(int x, int y, int z) { return 1.0; }
       default boolean flush(int x, int y, int z) { return false; }
-      default double read_D(int x, int y, int z) { return this.flush(x, y, z) ? 1.0 : 0.0; }
-      default double write_D(int x, int y, int z) { return 1.0; }
+      default double bounceFactor(int x, int y, int z) { return this.flush(x, y, z) ? 1.0 : 0.0; }
+      default double jumpFactor(int x, int y, int z) { return 1.0; }
       default boolean sync(int x, int y, int z) { return false; }
-      default int init_I(AABB box) { return 0; }
-      default boolean init_Z() { return false; }
-      default boolean init_Z_I(int x, int y, int z) { return false; }
-      default boolean load_Z(int x, int y, int z) { return false; }
-      default boolean read_Z(int x, int y, int z) { return false; }
-      default boolean write_Z(int x, int y, int z) { return false; }
+      default int stuckBlockKindIn(AABB box) { return 0; }
+      default boolean tracksStuckBlocks() { return false; }
+      default boolean isLavaOrUnloaded(int x, int y, int z) { return false; }
+      default boolean isWater(int x, int y, int z) { return false; }
+      default boolean isInvisibleLightBlock(int x, int y, int z) { return false; }
+      default boolean isPressurePlate(int x, int y, int z) { return false; }
       default boolean update(int x, int y, int z) { return false; }
       default boolean init_Z(AABB q) { return this.putAt_Z_AABB(q); }
 
       default double putAt_D() {
-         return this.init_D();
+         return this.maxDropBlocks();
       }
 
       default double movementSpeed() {
@@ -1270,10 +1270,10 @@ public final class AiPhysics {
       }
 
       default List<AABB> collisions(AABB var1) {
-         return this.init_List(var1);
+         return this.collisionBoxes(var1);
       }
 
-      default List<AABB> init_List(AABB var1) {
+      default List<AABB> collisionBoxes(AABB var1) {
          return this.collisions(var1);
       }
 
@@ -1326,11 +1326,11 @@ public final class AiPhysics {
       }
 
       default double putAt_D_I(int var1, int var2, int var3) {
-         return this.init_D_I(var1, var2, var3);
+         return this.blockFriction(var1, var2, var3);
       }
 
       default double fill_D(int var1, int var2, int var3) {
-         return this.load_D(var1, var2, var3);
+         return this.speedFactor(var1, var2, var3);
       }
 
       default boolean closeOf(int var1, int var2, int var3) {
@@ -1338,11 +1338,11 @@ public final class AiPhysics {
       }
 
       default double readEx_D(int var1, int var2, int var3) {
-         return this.closeOf(var1, var2, var3) ? 1.0 : this.read_D(var1, var2, var3);
+         return this.closeOf(var1, var2, var3) ? 1.0 : this.bounceFactor(var1, var2, var3);
       }
 
       default double value_D(int var1, int var2, int var3) {
-         return this.write_D(var1, var2, var3);
+         return this.jumpFactor(var1, var2, var3);
       }
 
       default boolean state(int var1, int var2, int var3) {
@@ -1350,19 +1350,19 @@ public final class AiPhysics {
       }
 
       default int putAt_I_AABB(AABB var1) {
-         return this.init_I(var1);
+         return this.stuckBlockKindIn(var1);
       }
 
       default boolean putAt_Z() {
-         return this.init_Z();
+         return this.tracksStuckBlocks();
       }
 
       default boolean putAt_Z_I_2(int var1, int var2, int var3) {
-         return this.init_Z_I(var1, var2, var3);
+         return this.isLavaOrUnloaded(var1, var2, var3);
       }
 
       default boolean fill_Z(int var1, int var2, int var3) {
-         return this.load_Z(var1, var2, var3);
+         return this.isWater(var1, var2, var3);
       }
 
       default boolean prevEx(int var1, int var2, int var3) {
@@ -1378,11 +1378,11 @@ public final class AiPhysics {
       }
 
       default boolean readEx_Z(int var1, int var2, int var3) {
-         return this.read_Z(var1, var2, var3);
+         return this.isInvisibleLightBlock(var1, var2, var3);
       }
 
       default boolean value_Z(int var1, int var2, int var3) {
-         return this.write_Z(var1, var2, var3);
+         return this.isPressurePlate(var1, var2, var3);
       }
 
       default boolean putAt(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {

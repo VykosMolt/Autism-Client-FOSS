@@ -32,17 +32,17 @@ final class SchematicDocument {
    static final long init_J = 134217728L;
    static final long load_J = 268435456L;
    static final int init_I = 2097152;
-   final List<SchematicDocument.Inner_CachePool> init_List;
-   final List<SchematicDocument.Inner_DataUtil> load_List;
-   final List<SchematicDocument.Inner_BufferHelper> read_List;
-   final int load_I;
-   final int read_I;
-   final int write_I;
+   final List<SchematicDocument.Inner_CachePool> regions;
+   final List<SchematicDocument.Inner_DataUtil> blockEntities;
+   final List<SchematicDocument.Inner_BufferHelper> entities;
+   final int sizeX;
+   final int sizeY;
+   final int sizeZ;
    final long read_J;
    private final Long2ObjectOpenHashMap<SchematicDocument.Inner_CachePool[]> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
    private volatile long write_J = -1L;
 
-   static int init_I_I(int size) {
+   static int bitsForPaletteSize(int size) {
       return Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, size - 1)));
    }
 
@@ -72,48 +72,48 @@ final class SchematicDocument {
                throw new IllegalArgumentException("Schematic exceeds the 128 million voxel limit");
             }
 
-            minX = Math.min(minX, r.init_I);
+            minX = Math.min(minX, r.originX);
             minY = Math.min(minY, r.load);
             minZ = Math.min(minZ, r.read);
-            maxX = Math.max(maxX, Math.addExact(r.init_I, r.write));
+            maxX = Math.max(maxX, Math.addExact(r.originX, r.write));
             maxY = Math.max(maxY, Math.addExact(r.load, r.update));
             maxZ = Math.max(maxZ, Math.addExact(r.read, r.sync));
          }
 
-         this.load_I = Math.subtractExact(maxX, minX);
-         this.read_I = Math.subtractExact(maxY, minY);
-         this.write_I = Math.subtractExact(maxZ, minZ);
-         if (this.load_I <= 4096 && this.read_I <= 4096 && this.write_I <= 4096) {
+         this.sizeX = Math.subtractExact(maxX, minX);
+         this.sizeY = Math.subtractExact(maxY, minY);
+         this.sizeZ = Math.subtractExact(maxZ, minZ);
+         if (this.sizeX <= 4096 && this.sizeY <= 4096 && this.sizeZ <= 4096) {
             this.read_J = volume;
             ArrayList<SchematicDocument.Inner_CachePool> normalized = new ArrayList<>();
 
             for (SchematicDocument.Inner_CachePool r : raw) {
                normalized.add(
                   new SchematicDocument.Inner_CachePool(
-                     r.init_I - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.init_BlockStateArr, r.init_JArr, r.init_IArr
+                     r.originX - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.palette, r.init_JArr, r.init_IArr
                   )
                );
             }
 
-            this.init_List = List.copyOf(normalized);
+            this.regions = List.copyOf(normalized);
             ArrayList<SchematicDocument.Inner_DataUtil> normalizedBes = new ArrayList<>();
 
             for (SchematicDocument.Inner_DataUtil be : bes) {
                normalizedBes.add(new SchematicDocument.Inner_DataUtil(be.position.offset(-minX, -minY, -minZ), be.data));
             }
 
-            this.load_List = List.copyOf(normalizedBes);
+            this.blockEntities = List.copyOf(normalizedBes);
             ArrayList<SchematicDocument.Inner_BufferHelper> normalizedEntities = new ArrayList<>();
 
             for (SchematicDocument.Inner_BufferHelper e : entities) {
                normalizedEntities.add(new SchematicDocument.Inner_BufferHelper(e.x - minX, e.y - minY, e.z - minZ, e.data));
             }
 
-            this.read_List = List.copyOf(normalizedEntities);
+            this.entities = List.copyOf(normalizedEntities);
             Long2ObjectOpenHashMap<ArrayList<SchematicDocument.Inner_CachePool>> build = new Long2ObjectOpenHashMap<>();
 
-            for (SchematicDocument.Inner_CachePool r : this.init_List) {
-               for (int sx = r.init_I >> 4; sx <= r.init_I + r.write - 1 >> 4; sx++) {
+            for (SchematicDocument.Inner_CachePool r : this.regions) {
+               for (int sx = r.originX >> 4; sx <= r.originX + r.write - 1 >> 4; sx++) {
                   for (int sy = r.load >> 4; sy <= r.load + r.update - 1 >> 4; sy++) {
                      for (int sz = r.read >> 4; sz <= r.read + r.sync - 1 >> 4; sz++) {
                         long key = BlockPos.asLong(sx, sy, sz);
@@ -135,7 +135,7 @@ final class SchematicDocument {
       }
    }
 
-   SchematicDocument.Inner_CachePool init_cQ_CachePool_I(int x, int y, int z) {
+   SchematicDocument.Inner_CachePool regionAt(int x, int y, int z) {
       SchematicDocument.Inner_CachePool[] candidates = this.init_Long2ObjectOpenHas.get(BlockPos.asLong(x >> 4, y >> 4, z >> 4));
       if (candidates != null) {
          for (int i = candidates.length - 1; i >= 0; i--) {
@@ -149,15 +149,15 @@ final class SchematicDocument {
    }
 
    BlockState init_BlockState_I(int x, int y, int z) {
-      SchematicDocument.Inner_CachePool r = this.init_cQ_CachePool_I(x, y, z);
-      return r == null ? Blocks.AIR.defaultBlockState() : r.init_BlockState(x, y, z);
+      SchematicDocument.Inner_CachePool r = this.regionAt(x, y, z);
+      return r == null ? Blocks.AIR.defaultBlockState() : r.stateAt(x, y, z);
    }
 
    boolean init_Z_I(int x, int y, int z) {
-      return this.init_cQ_CachePool_I(x, y, z) != null;
+      return this.regionAt(x, y, z) != null;
    }
 
-   long init_J_IntConsumer(IntConsumer progress) {
+   long countBlocks(IntConsumer progress) {
       if (this.write_J >= 0L) {
          return this.write_J;
       }
@@ -165,7 +165,7 @@ final class SchematicDocument {
       long count = 0L;
       long done = 0L;
 
-      for (SchematicDocument.Inner_CachePool r : this.init_List) {
+      for (SchematicDocument.Inner_CachePool r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
@@ -176,7 +176,7 @@ final class SchematicDocument {
             int rest = i % (r.write * r.sync);
             int z = rest / r.write;
             int x = rest % r.write;
-            if (!r.init_BlockState(i).isAir() && this.init_cQ_CachePool_I(r.init_I + x, r.load + y, r.read + z) == r) {
+            if (!r.stateAtIndex(i).isAir() && this.regionAt(r.originX + x, r.load + y, r.read + z) == r) {
                count++;
             }
 
@@ -189,7 +189,7 @@ final class SchematicDocument {
       return count;
    }
 
-   SchematicDocument.Inner_StreamUtil init_cQ_StreamUtil_I(int rotation, String mirror, IntConsumer progress) {
+   SchematicDocument.Inner_StreamUtil buildPreview(int rotation, String mirror, IntConsumer progress) {
       ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>();
       long count = 0L;
       long done = 0L;
@@ -198,7 +198,7 @@ final class SchematicDocument {
       int minZ = minX;
       IdentityHashMap<BlockState, AiBuilder.CellSpec> cache = new IdentityHashMap<>();
 
-      for (SchematicDocument.Inner_CachePool r : this.init_List) {
+      for (SchematicDocument.Inner_CachePool r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
@@ -206,13 +206,13 @@ final class SchematicDocument {
             }
 
             done++;
-            BlockState s = r.init_BlockState(i);
+            BlockState s = r.stateAtIndex(i);
             if (!s.isAir()) {
                int y = r.load + i / (r.write * r.sync);
                int rest = i % (r.write * r.sync);
                int z = r.read + rest / r.write;
-               int x = r.init_I + rest % r.write;
-               if (this.init_cQ_CachePool_I(x, y, z) == r) {
+               int x = r.originX + rest % r.write;
+               if (this.regionAt(x, y, z) == r) {
                   count++;
                   BlockPos at = this.init(x, y, z, rotation, mirror);
                   minX = Math.min(minX, at.getX());
@@ -230,7 +230,7 @@ final class SchematicDocument {
                      }
 
                      AiBuilder.CellSpec template = cache.computeIfAbsent(
-                        s, k -> init_TableIndex_StreamU_BlockState(init_BlockState_BlockState(k, rotation, mirror))
+                        s, k -> cellSpecOf(transformState(k, rotation, mirror))
                      );
                      cells.add(new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), template.block(), template.properties()));
                   }
@@ -244,36 +244,36 @@ final class SchematicDocument {
       return new SchematicDocument.Inner_StreamUtil(List.copyOf(cells), count == 0L ? BlockPos.ZERO : new BlockPos(minX, minY, minZ), count);
    }
 
-   boolean init_Z_BlockPos(BlockPos at, int rotation, String mirror) {
+   boolean isSolidAt(BlockPos at, int rotation, String mirror) {
       BlockPos source = this.load(at.getX(), at.getY(), at.getZ(), rotation, mirror);
       return this.init_BlockState_I(source.getX(), source.getY(), source.getZ()).isSolidRender();
    }
 
-   int init_I_I_Str(int rotation, String mirror) {
-      return rotation % 180 == 0 ? this.load_I : this.write_I;
+   int rotatedSizeX(int rotation, String mirror) {
+      return rotation % 180 == 0 ? this.sizeX : this.sizeZ;
    }
 
-   int load_I_I(int rotation) {
-      return rotation % 180 == 0 ? this.write_I : this.load_I;
+   int rotatedSizeZ(int rotation) {
+      return rotation % 180 == 0 ? this.sizeZ : this.sizeX;
    }
 
    BlockPos init(int x, int y, int z, int rotation, String mirror) {
       if (mirror.equals("x")) {
-         x = this.load_I - 1 - x;
+         x = this.sizeX - 1 - x;
       } else if (mirror.equals("z")) {
-         z = this.write_I - 1 - z;
+         z = this.sizeZ - 1 - z;
       }
 
       BlockPos var10000;
       switch (Math.floorMod(rotation, 360)) {
          case 90:
-            var10000 = new BlockPos(this.write_I - 1 - z, y, x);
+            var10000 = new BlockPos(this.sizeZ - 1 - z, y, x);
             break;
          case 180:
-            var10000 = new BlockPos(this.load_I - 1 - x, y, this.write_I - 1 - z);
+            var10000 = new BlockPos(this.sizeX - 1 - x, y, this.sizeZ - 1 - z);
             break;
          case 270:
-            var10000 = new BlockPos(z, y, this.load_I - 1 - x);
+            var10000 = new BlockPos(z, y, this.sizeX - 1 - x);
             break;
          default:
             var10000 = new BlockPos(x, y, z);
@@ -288,14 +288,14 @@ final class SchematicDocument {
       switch (Math.floorMod(rotation, 360)) {
          case 90:
             sx = z;
-            sz = this.write_I - 1 - x;
+            sz = this.sizeZ - 1 - x;
             break;
          case 180:
-            sx = this.load_I - 1 - x;
-            sz = this.write_I - 1 - z;
+            sx = this.sizeX - 1 - x;
+            sz = this.sizeZ - 1 - z;
             break;
          case 270:
-            sx = this.load_I - 1 - z;
+            sx = this.sizeX - 1 - z;
             sz = x;
             break;
          default:
@@ -304,15 +304,15 @@ final class SchematicDocument {
       }
 
       if (mirror.equals("x")) {
-         sx = this.load_I - 1 - sx;
+         sx = this.sizeX - 1 - sx;
       } else if (mirror.equals("z")) {
-         sz = this.write_I - 1 - sz;
+         sz = this.sizeZ - 1 - sz;
       }
 
       return new BlockPos(sx, y, sz);
    }
 
-   static BlockState init_BlockState_BlockState(BlockState state, int rotation, String mirror) {
+   static BlockState transformState(BlockState state, int rotation, String mirror) {
       Mirror m = mirror.equals("x") ? Mirror.FRONT_BACK : (mirror.equals("z") ? Mirror.LEFT_RIGHT : Mirror.NONE);
       Rotation var10000;
       switch (Math.floorMod(rotation, 360)) {
@@ -339,7 +339,7 @@ final class SchematicDocument {
       return mirrored.rotate(r);
    }
 
-   static AiBuilder.CellSpec init_TableIndex_StreamU_BlockState(BlockState state) {
+   static AiBuilder.CellSpec cellSpecOf(BlockState state) {
       TreeMap<String, String> properties = new TreeMap<>();
 
       for (Property<?> p : state.getProperties()) {
@@ -359,15 +359,15 @@ final class SchematicDocument {
       }
    }
 
-   static SchematicDocument init_cQ_Path(Path file) {
-      CompoundTag root = AiSchematic.init_CompoundTag_Path_J(file, 268435456L);
+   static SchematicDocument loadFile(Path file) {
+      CompoundTag root = AiSchematic.readNbt(file, 268435456L);
       if (root.getCompound("Regions").isPresent()) {
-         return init_cQ_CompoundTag(root);
+         return parseLitematic(root);
       }
 
       CompoundTag body = root.getCompound("Schematic").orElse(root);
       if (!body.getCompound("Palette").isPresent() && !body.getCompound("Blocks").flatMap(b -> b.getCompound("Palette")).isPresent()) {
-         AiSchematic.Inner_DataUtil decoded = AiSchematic.init_bP_DataUtil_CompoundTag_Z(body, false);
+         AiSchematic.Inner_DataUtil decoded = AiSchematic.decodeSponge(body, false);
          int minX = body.getIntOr("WEOffsetX", 0);
          int minY = body.getIntOr("WEOffsetY", 0);
          int minZ = body.getIntOr("WEOffsetZ", 0);
@@ -395,11 +395,11 @@ final class SchematicDocument {
 
          return new SchematicDocument(List.of(new SchematicDocument.Inner_CachePool(minX, minY, minZ, w, h, l, palette.toArray(BlockState[]::new), null, ids)), List.of(), List.of());
       } else {
-         return load_cQ_CompoundTag(body);
+         return parseSponge(body);
       }
    }
 
-   static SchematicDocument init_cQ_CompoundTag(CompoundTag root) {
+   static SchematicDocument parseLitematic(CompoundTag root) {
       int version = root.getIntOr("Version", 0);
       if (version >= 1 && version <= 7) {
          int dataVersion = root.getIntOr("MinecraftDataVersion", 1631);
@@ -468,7 +468,7 @@ final class SchematicDocument {
       }
    }
 
-   static SchematicDocument load_cQ_CompoundTag(CompoundTag body) {
+   static SchematicDocument parseSponge(CompoundTag body) {
       int version = body.getIntOr("Version", 1);
       if (version >= 1 && version <= 3) {
          int w = body.getShortOr("Width", (short)0) & '\uffff';
@@ -488,7 +488,7 @@ final class SchematicDocument {
                   throw new IllegalArgumentException("Invalid Sponge palette id");
                }
 
-               AiSchematic.Inner_ConfigStore parsed = AiSchematic.init_bP_ConfigStore_Str_I(state, dataVersion);
+               AiSchematic.Inner_ConfigStore parsed = AiSchematic.parseState(state, dataVersion);
                ids.put(id, palette.size());
                palette.add(AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties())));
             }
@@ -496,7 +496,7 @@ final class SchematicDocument {
             byte[] raw = blockData.getByteArray("Data")
                .orElseGet(() -> blockData.getByteArray("BlockData").orElseThrow(() -> new IllegalArgumentException("Missing Sponge block data")));
             if (!palette.isEmpty() && palette.size() <= 65536) {
-               int bits = init_I_I(palette.size());
+               int bits = bitsForPaletteSize(palette.size());
                long[] packed = new long[(int)((volume * bits + 63L) / 64L)];
                int cursor = 0;
                int i = 0;
@@ -615,20 +615,20 @@ final class SchematicDocument {
    }
 
    static final class Inner_CachePool {
-      final int init_I;
+      final int originX;
       final int load;
       final int read;
       final int write;
       final int update;
       final int sync;
       final int flush;
-      final BlockState[] init_BlockStateArr;
+      final BlockState[] palette;
       final long[] init_JArr;
       final int[] init_IArr;
       final int close;
 
       Inner_CachePool(int x, int y, int z, int width, int height, int length, BlockState[] palette, long[] packed, int[] values) {
-         this.init_I = x;
+         this.originX = x;
          this.load = y;
          this.read = z;
          this.write = width;
@@ -638,10 +638,10 @@ final class SchematicDocument {
             long volume = (long)width * height * length;
             if (volume <= 134217728L && palette.length >= 1 && palette.length <= 65536) {
                this.flush = (int)volume;
-               this.init_BlockStateArr = palette;
+               this.palette = palette;
                this.init_JArr = packed;
                this.init_IArr = values;
-               this.close = SchematicDocument.init_I_I(palette.length);
+               this.close = SchematicDocument.bitsForPaletteSize(palette.length);
                if (values != null && values.length != volume
                   || values == null && (packed == null || packed.length != ((long)this.flush * this.close + 63L) / 64L)) {
                   throw new IllegalArgumentException("Schematic region data does not match its size");
@@ -670,22 +670,22 @@ final class SchematicDocument {
          return (int)(value & (1L << this.close) - 1L);
       }
 
-      BlockState init_BlockState(int index) {
+      BlockState stateAtIndex(int index) {
          int id = this.init_I(index);
-         if (id >= 0 && id < this.init_BlockStateArr.length) {
-            return this.init_BlockStateArr[id];
+         if (id >= 0 && id < this.palette.length) {
+            return this.palette[id];
          } else {
             throw new IllegalArgumentException("Invalid schematic palette index " + id);
          }
       }
 
-      BlockState init_BlockState(int px, int py, int pz) {
-         return this.init_BlockState(((py - this.load) * this.sync + pz - this.read) * this.write + px - this.init_I);
+      BlockState stateAt(int px, int py, int pz) {
+         return this.stateAtIndex(((py - this.load) * this.sync + pz - this.read) * this.write + px - this.originX);
       }
 
       boolean init_Z(int px, int py, int pz) {
-         return px >= this.init_I
-            && px < this.init_I + this.write
+         return px >= this.originX
+            && px < this.originX + this.write
             && py >= this.load
             && py < this.load + this.update
             && pz >= this.read

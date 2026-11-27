@@ -54,58 +54,58 @@ final class AiFarmPlacement extends AiPlacementSession {
       }
    }
 
-   String init_Str() {
+   String getCrop() {
       return this.init_Str;
    }
 
-   String load_Str() {
+   String getSubstrate() {
       return this.load_Str;
    }
 
-   boolean init_Z() {
+   boolean isComplete() {
       return this.load_Z;
    }
 
-   AiFarmArea.Inner_DataUtil init_C_DataUtil() {
+   AiFarmArea.Inner_DataUtil getArea() {
       return this.load_Z ? new AiFarmArea.Inner_DataUtil(this.read_BlockPos, this.write) : null;
    }
 
    @Override
-   public boolean load_Z() {
-      AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
-      return area != null && area.validate(this.load_Str).isEmpty() && this.read_Z();
+   public boolean isReadyToConfirm() {
+      AiFarmArea.Inner_DataUtil area = this.getArea();
+      return area != null && area.validate(this.load_Str).isEmpty() && this.isActive();
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isActive() {
       return !this.read_Z && Minecraft.getInstance().level == this.init_ClientLevel;
    }
 
    @Override
-   public BlockPos init_BlockPos() {
+   public BlockPos getOrigin() {
       return this.write;
    }
 
    @Override
-   public int init_I() {
+   public int getRotation() {
       return 0;
    }
 
    @Override
-   public String read_Str() {
+   public String getMirror() {
       return "none";
    }
 
    @Override
-   public void init_V_I(int steps) {
+   public void rotate(int steps) {
    }
 
    @Override
-   public void init_V() {
+   public void cycleMirror() {
    }
 
-   boolean write_Z() {
-      if (!this.read_Z()) {
+   boolean confirmCorner() {
+      if (!this.isActive()) {
          return false;
       } else if (!this.load_Z) {
          this.read_BlockPos = this.write.immutable();
@@ -113,16 +113,16 @@ final class AiFarmPlacement extends AiPlacementSession {
          this.write_V();
          return false;
       } else {
-         return this.load_Z();
+         return this.isReadyToConfirm();
       }
    }
 
-   String write_Str() {
+   String getStatus() {
       if (!this.load_Z) {
          return "Choose the first corner";
       }
 
-      AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
+      AiFarmArea.Inner_DataUtil area = this.getArea();
       String issue = area.validate(this.load_Str);
       return !issue.isEmpty()
          ? issue
@@ -139,8 +139,8 @@ final class AiFarmPlacement extends AiPlacementSession {
       return this.load_Z ? "Aim at the opposite corner. E: confirm | Esc: cancel" : "Aim at the first corner. E: set | Esc: cancel";
    }
 
-   JsonObject init_JsonObject() {
-      AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
+   JsonObject areaJson() {
+      AiFarmArea.Inner_DataUtil area = this.getArea();
       if (area == null) {
          throw new IllegalArgumentException("Choose both farm corners first");
       } else {
@@ -153,23 +153,23 @@ final class AiFarmPlacement extends AiPlacementSession {
       }
    }
 
-   JsonObject load_JsonObject() {
-      AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
+   JsonObject statusJson() {
+      AiFarmArea.Inner_DataUtil area = this.getArea();
       return AiJson.objectOf(
          "crop",
          this.init_Str,
          "substrate",
          this.load_Str,
          "complete",
-         this.init_Z(),
+         this.isComplete(),
          "ready",
-         this.load_Z(),
+         this.isReadyToConfirm(),
          "first",
          this.read_BlockPos == null ? new JsonObject() : init_JsonObject_BlockPos(this.read_BlockPos),
          "second",
          init_JsonObject_BlockPos(this.write),
          "status",
-         this.write_Str(),
+         this.getStatus(),
          "width",
          area == null ? 0 : area.width(),
          "length",
@@ -178,8 +178,8 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    @Override
-   public void init_V_Z(boolean surface) {
-      if (this.read_Z()) {
+   public void moveToAim(boolean surface) {
+      if (this.isActive()) {
          Minecraft mc = Minecraft.getInstance();
          Camera camera = mc.gameRenderer.mainCamera();
          Vec3 eye = camera.position();
@@ -223,22 +223,22 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    @Override
    public void init(double scroll, double screenX, double screenY, double width, double height) {
-      if (this.read_Z()) {
+      if (this.isActive()) {
          Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
          if (this.init_Vec3 == null) {
             Vec3 delta = Vec3.atCenterOf(this.write).subtract(eye);
             this.init_Vec3 = delta.lengthSqr() < 0.01 ? Minecraft.getInstance().player.getLookAngle() : delta.normalize();
          }
 
-         this.init_D = AiPlacementControls.init_D_D_D(this.init_D, scroll);
+         this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
          this.write = this.init_BlockPos_Vec3(AiPlacementControls.init(eye, this.init_Vec3, this.init_D));
          this.write_V();
       }
    }
 
    @Override
-   public void load_V() {
-      if (this.read_Z()) {
+   public void snapToGround() {
+      if (this.isActive()) {
          this.write = new BlockPos(
             this.write.getX(), this.init_ClientLevel.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.write.getX(), this.write.getZ()) - 1, this.write.getZ()
          );
@@ -248,7 +248,7 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    @Override
    public void init(int x, int y, int z) {
-      if (this.read_Z()) {
+      if (this.isActive()) {
          this.write = this.write.offset(x, y, z);
          this.write_V();
       }
@@ -256,7 +256,7 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    @Override
    public void init(BlockPos position, int rotation, String mirror) {
-      if (this.read_Z()) {
+      if (this.isActive()) {
          this.read_BlockPos = this.init_BlockPos;
          this.write = this.load_BlockPos;
          this.load_Z = this.init_Z;
@@ -271,7 +271,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          origin = this.write;
          cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
       } else {
-         AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
+         AiFarmArea.Inner_DataUtil area = this.getArea();
          origin = area.origin();
          cells = new ArrayList<>();
          if (!area.validate(this.load_Str).isEmpty()) {
@@ -296,7 +296,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    @Override
-   public void read_V() {
+   public void cancel() {
       if (!this.read_Z) {
          this.read_Z = true;
          AiVisualization.init_V(this);

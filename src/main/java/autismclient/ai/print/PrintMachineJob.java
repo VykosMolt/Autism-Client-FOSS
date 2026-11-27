@@ -25,7 +25,7 @@ public interface PrintMachineJob {
 
    boolean beginDispatch();
 
-   PrintMachineJob.JobStatus poll_BitSetUtil_DataUti();
+   PrintMachineJob.JobStatus pollStatus();
 
    void cancel();
 
@@ -33,7 +33,7 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default PrintMachineJob init_BitSetUtil() {
+   default PrintMachineJob currentAction() {
       return this;
    }
 
@@ -49,15 +49,15 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default Set<BlockPos> init_Set() {
+   default Set<BlockPos> accessCells() {
       return Set.of(this.position());
    }
 
-   default Set<BlockPos> load_Set() {
+   default Set<BlockPos> dynamicCells() {
       return Set.of();
    }
 
-   default boolean init_Z_BlockPos_BlockState(BlockPos position, BlockState actual) {
+   default boolean allowsDynamicState(BlockPos position, BlockState actual) {
       return false;
    }
 
@@ -65,19 +65,19 @@ public interface PrintMachineJob {
       return true;
    }
 
-   default PrintMachineJob.JobStatus init_BitSetUtil_DataUti() {
+   default PrintMachineJob.JobStatus verifyStatus() {
       return PrintMachineJob.JobStatus.SUCCEEDED;
    }
 
-   default int load_I() {
+   default int fillCount() {
       return 1;
    }
 
-   default int read_I() {
+   default int verifiedItems() {
       return 0;
    }
 
-   default int write_I() {
+   default int completedPhases() {
       return 0;
    }
 
@@ -85,7 +85,7 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default String init_Str() {
+   default String receiptJson() {
       return "{}";
    }
 
@@ -102,32 +102,32 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default boolean read_Z() {
+   default boolean isProvenFull() {
       return false;
    }
 
-   default void init_V() {
+   default void invalidateCapacityProof() {
    }
 
    default boolean write_Z() {
       return false;
    }
 
-   default boolean update_Z() {
+   default boolean needsRevisit() {
       return false;
    }
 
-   default ItemStack init_ItemStack() {
+   default ItemStack extraMaterial() {
       return ItemStack.EMPTY;
    }
 
-   default void load_V() {
+   default void onContentsAvailable() {
    }
 
-   default void read_V() {
+   default void onContentsUnavailable() {
    }
 
-   default int init_I() {
+   default int verifiedSlots() {
       return 0;
    }
 

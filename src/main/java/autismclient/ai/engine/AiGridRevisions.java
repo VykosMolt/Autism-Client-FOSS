@@ -15,7 +15,7 @@ public final class AiGridRevisions {
    private static volatile int load;
    private static final AtomicLong init_AtomicLong = new AtomicLong();
 
-   public static long init_J() {
+   public static long globalRevision() {
       return init_AtomicLong.get();
    }
 
@@ -23,11 +23,11 @@ public final class AiGridRevisions {
    }
 
    public static void init(BlockPos pos) {
-      init_V(pos.getX() >> 4, pos.getZ() >> 4);
+      bumpChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
-   public static void init_V(int cx, int cz) {
-      init_Map.computeIfAbsent(HashCommon.mix(init_J(cx, cz)), k -> new AtomicInteger()).set(init_AtomicInteger.incrementAndGet());
+   public static void bumpChunk(int cx, int cz) {
+      init_Map.computeIfAbsent(HashCommon.mix(chunkKey(cx, cz)), k -> new AtomicInteger()).set(init_AtomicInteger.incrementAndGet());
       init_AtomicLong.incrementAndGet();
       if (init_Map.size() > 8192) {
          load();
@@ -39,7 +39,7 @@ public final class AiGridRevisions {
       return revision == null ? load : revision.get();
    }
 
-   public static long init_J(int cx, int cz) {
+   public static long chunkKey(int cx, int cz) {
       return (long)cx << 32 | cz & 4294967295L;
    }
 
@@ -54,7 +54,7 @@ public final class AiGridRevisions {
       return init_Map.size();
    }
 
-   public static void init_V() {
+   public static void resetAll() {
       load = init_AtomicInteger.incrementAndGet();
       init_Map.clear();
       init_AtomicLong.incrementAndGet();

@@ -97,12 +97,12 @@ final class AiGameOperations {
             public AiOperation.Result tick() {
                if (!this.init && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > deadline) {
-                     placer.init_V();
+                     placer.cancel();
                      return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "No spot for " + id + " before the timeout", new JsonObject());
                   } else {
-                     AiStationPlacer.Inner_DataUtil status = placer.init_cn_DataUtil();
+                     AiStationPlacer.Inner_DataUtil status = placer.tick();
                      if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
-                        BlockPos at = placer.init_BlockPos();
+                        BlockPos at = placer.getPlaced();
                         return AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
                            "Placed " + id + " at " + at.toShortString(),
@@ -110,8 +110,8 @@ final class AiGameOperations {
                         );
                      } else {
                         return status == AiStationPlacer.Inner_DataUtil.FAILED
-                           ? AiGameOperations.result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.load_Str(), new JsonObject())
-                           : AiGameOperations.result(AiOperation.Status.RUNNING, placer.init_Str(), new JsonObject());
+                           ? AiGameOperations.result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.getFailureReason(), new JsonObject())
+                           : AiGameOperations.result(AiOperation.Status.RUNNING, placer.getStatus(), new JsonObject());
                      }
                   }
                } else {
@@ -121,18 +121,18 @@ final class AiGameOperations {
 
             @Override
             public boolean canInterruptNow() {
-               return placer.init_Z();
+               return placer.canInterrupt();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return placer.load_Z();
+               return placer.needsReconciliation();
             }
 
             @Override
             public void cancel() {
                this.init = true;
-               placer.init_V();
+               placer.cancel();
             }
          };
       } else {

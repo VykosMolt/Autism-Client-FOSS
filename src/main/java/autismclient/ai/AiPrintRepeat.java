@@ -131,7 +131,7 @@ final class AiPrintRepeat implements AiOperation {
       if (this.init_I == 0 && this.init_List != null) {
          AiPrintOp operation = new AiPrintOp(shifted, remaining, this.init_TableIndex_ConfigS, this.init_List, this.init_bV_StreamUtil, this.init_UiHelper_ao);
          if (this.init_BlockPos != null) {
-            operation.init_V_BlockPos_2(this.init_BlockPos);
+            operation.notifyBlockChanged(this.init_BlockPos);
          }
 
          this.init_List = null;
@@ -154,8 +154,8 @@ final class AiPrintRepeat implements AiOperation {
                            AiPrintPreparation.Inner_JsonUtil.of(shifted),
                            this.init_TableIndex_ConfigS
                               .machine()
-                              .init_bV_StreamUtil_BlockPos_HolderLookup_Provi(shifted.origin(), this.init_HolderLookup_Provi),
-                           autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::checkNotCancelled)
+                              .machineSpec(shifted.origin(), this.init_HolderLookup_Provi),
+                           autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled)
                         );
                      }
                   );
@@ -188,13 +188,13 @@ final class AiPrintRepeat implements AiOperation {
             && this.init_Minecraft.gameMode.getPlayerMode() == GameType.CREATIVE
             && this.init_Minecraft.player.getAbilities().instabuild;
          if (!creative) {
-            if (!this.init_bg_CachePool.init_Z()) {
+            if (!this.init_bg_CachePool.isDone()) {
                this.init_bg_CachePool.init(4096, System.nanoTime() + 2000000L, this.init_Minecraft.level);
                return this.init("Checking materials for copy " + (this.init_I + 1));
             }
 
             JsonObject missing = AiBuilder.missingMaterialsForContainer(
-               this.init_bg_CachePool.init_List(), this.init_Minecraft.player.getInventory(), this.init_TableIndex_ConfigS.shulkerStock()
+               this.init_bg_CachePool.requirements(), this.init_Minecraft.player.getInventory(), this.init_TableIndex_ConfigS.shulkerStock()
             );
             if (!missing.isEmpty()) {
                if (this.init_TableIndex_ConfigS.shulkerStock()) {
@@ -206,16 +206,16 @@ final class AiPrintRepeat implements AiOperation {
 
                   this.init_bg_NetHelper
                      .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
-                  if (!this.init_bg_NetHelper.init_Z && !this.init_bg_NetHelper.init_Z()) {
+                  if (!this.init_bg_NetHelper.done && !this.init_bg_NetHelper.isDone()) {
                      return this.init("Checking stock for copy " + (this.init_I + 1));
                   }
 
-                  if (this.init_bg_NetHelper.init_Z) {
-                     this.init_BlockPos = this.init_bg_NetHelper.init_BlockPos;
+                  if (this.init_bg_NetHelper.done) {
+                     this.init_BlockPos = this.init_bg_NetHelper.stockPos;
                   }
                }
 
-               if (this.init_bg_NetHelper == null || !this.init_bg_NetHelper.init_Z) {
+               if (this.init_bg_NetHelper == null || !this.init_bg_NetHelper.done) {
                   JsonObject data = this.init_JsonObject_44();
                   data.add("missing", missing);
                   return this.init_I > 0 && this.init_TableIndex_ConfigS.repeat().count() < 0
@@ -234,7 +234,7 @@ final class AiPrintRepeat implements AiOperation {
             this.init_bh_DataUtil.geometry()
          );
          if (this.init_BlockPos != null) {
-            operation.init_V_BlockPos_2(this.init_BlockPos);
+            operation.notifyBlockChanged(this.init_BlockPos);
          }
 
          this.init_AiOperation = operation;

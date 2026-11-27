@@ -182,7 +182,7 @@ public record PrintClockSpec(
 
       if (!at.equals(this.firstPayload) && !at.equals(this.secondPayload)) {
          if (!this.outputs.contains(at) || !(wanted.getBlock() instanceof TrapDoorBlock) && !(wanted.getBlock() instanceof DoorBlock)) {
-            return !this.mechanical(at) && !this.outputs.contains(at) ? actual == wanted : PrintRules.write_Z_BlockState_BlockState(wanted, actual);
+            return !this.mechanical(at) && !this.outputs.contains(at) ? actual == wanted : PrintRules.matchesLayout(wanted, actual);
          }
 
          boolean poweredOnly = wanted.is(Blocks.IRON_TRAPDOOR) || wanted.is(Blocks.IRON_DOOR);
@@ -191,7 +191,7 @@ public record PrintClockSpec(
                actual.getValue(BlockStateProperties.OPEN) == actual.getValue(BlockStateProperties.POWERED)
                   || !poweredOnly && actual.getValue(BlockStateProperties.OPEN) == wanted.getValue(BlockStateProperties.OPEN)
             )
-            && PrintRules.write_Z_BlockState_BlockState(wanted, actual.setValue(BlockStateProperties.OPEN, wanted.getValue(BlockStateProperties.OPEN)));
+            && PrintRules.matchesLayout(wanted, actual.setValue(BlockStateProperties.OPEN, wanted.getValue(BlockStateProperties.OPEN)));
       } else {
          Direction facing = at.equals(this.firstPayload) ? this.direction : this.direction.getOpposite();
          return actual.is(Blocks.REDSTONE_BLOCK) || head(actual, facing);

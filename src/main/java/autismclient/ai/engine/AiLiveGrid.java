@@ -246,7 +246,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       } else {
          BlockState var4 = this.putAt_BlockState(var1, var2, var3);
          if (var4 == null) {
-            return AiShapes.init_S_ClassCache_FileCac(this.putAt_FileStore_BitCache(var1, var2, var3));
+            return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1, var2, var3));
          } else {
             AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
             if (var5 == null) {
@@ -285,7 +285,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
       BlockState var4 = this.putAt_BlockState(var1, var2, var3);
       if (var4 == null) {
-         return AiShapes.init_S_ClassCache_FileCac(this.putAt_FileStore_BitCache(var1, var2, var3));
+         return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1, var2, var3));
       }
 
       AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
@@ -298,7 +298,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
 
       try {
-         return AiShapes.init_S_List(var4.getShape(EmptyBlockGetter.INSTANCE, new BlockPos(var1, var2, var3)).toAabbs());
+         return AiShapes.shapeId(var4.getShape(EmptyBlockGetter.INSTANCE, new BlockPos(var1, var2, var3)).toAabbs());
       } catch (RuntimeException var7) {
          return 1;
       }
@@ -328,7 +328,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    private AiPathfinder.CellInfo putAt_FileStore_BitCache(int var1, int var2, int var3) {
-      return this.putAt_PacketHelper == null ? AiPathfinder.CellInfo.UNLOADED : this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1, var2, var3);
+      return this.putAt_PacketHelper == null ? AiPathfinder.CellInfo.UNLOADED : this.putAt_PacketHelper.probeCell(var1, var2, var3);
    }
 
    private double putAt(BlockState var1, AiLiveGrid.Inner_StreamUtil var2, int var3, int var4, int var5) {
@@ -594,10 +594,10 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             var27 = AiPathfinder.CellInfo.air();
          }
 
-         short var28 = var6.isEmpty() ? 0 : (var6 == Shapes.block() ? 1 : AiShapes.init_S_List(var6.toAabbs()));
+         short var28 = var6.isEmpty() ? 0 : (var6 == Shapes.block() ? 1 : AiShapes.shapeId(var6.toAabbs()));
          double var29 = var4 instanceof SlimeBlock ? 1.0 : (var4 instanceof BedBlock ? 0.75 : 0.0);
          byte var31 = AiSurface.init(var4.getFriction(), var4.getSpeedFactor(), var4.getJumpFactor(), var29).init();
-         short var32 = AiShapes.init_S_List(var0.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
+         short var32 = AiShapes.shapeId(var0.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
          return new AiLiveGrid.Inner_StreamUtil(
             var27,
             var28,
@@ -622,7 +622,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          if (var2.isEmpty()) {
             return 0;
          } else {
-            return var2 == Shapes.block() ? 1 : AiShapes.init_S_List(var2.toAabbs());
+            return var2 == Shapes.block() ? 1 : AiShapes.shapeId(var2.toAabbs());
          }
       } catch (RuntimeException var3) {
          return 1;
@@ -700,7 +700,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                   if (Math.max(Math.abs(var7), Math.abs(var8)) == var6) {
                      int var9 = var4 + var7;
                      int var10 = var5 + var8;
-                     long var11 = AiGridRevisions.init_J(var9, var10);
+                     long var11 = AiGridRevisions.chunkKey(var9, var10);
                      Long var13 = putAt_Map.get(var11);
                      if ((var13 == null || var2 - var13 >= 30000000000L)
                         && var0.level.getChunkSource().getChunk(var9, var10, ChunkStatus.FULL, false) instanceof LevelChunk var14) {

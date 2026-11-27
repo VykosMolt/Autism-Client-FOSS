@@ -38,12 +38,12 @@ final class PrintTools {
    private PrintTools() {
    }
 
-   static Item init_Item(PrintEnv env, BlockState state) {
-      PrintTools.Inner_StreamUtil best = init_MapStore_StreamUti(env, state);
+   static Item bestToolItem(PrintEnv env, BlockState state) {
+      PrintTools.Inner_StreamUtil best = bestTool(env, state);
       return best != null && !best.stack().isEmpty() ? best.stack().getItem() : null;
    }
 
-   static PrintTools.Inner_StreamUtil init_MapStore_StreamUti(PrintEnv env, BlockState state) {
+   static PrintTools.Inner_StreamUtil bestTool(PrintEnv env, BlockState state) {
       return init(env, state, null);
    }
 
@@ -56,7 +56,7 @@ final class PrintTools {
             if (!stack.isEmpty()
                && AiItems.hasEnoughDurability(stack, 2)
                && (!state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state))
-               && (wantedDrop == null || init_Item(env, state, stack) == wantedDrop)) {
+               && (wantedDrop == null || droppedItem(env, state, stack) == wantedDrop)) {
                float speed = stack.getDestroySpeed(state);
                if (best == null || speed > best.speed()) {
                   best = new PrintTools.Inner_StreamUtil(stack, speed);
@@ -65,7 +65,7 @@ final class PrintTools {
          }
       }
 
-      if (wantedDrop != null && init_Item(env, state, ItemStack.EMPTY) == wantedDrop) {
+      if (wantedDrop != null && droppedItem(env, state, ItemStack.EMPTY) == wantedDrop) {
          float speed = ItemStack.EMPTY.getDestroySpeed(state);
          if (best == null || speed >= best.speed()) {
             return new PrintTools.Inner_StreamUtil(ItemStack.EMPTY, speed);
@@ -75,7 +75,7 @@ final class PrintTools {
       return best;
    }
 
-   static Item init_Item(PrintEnv env, BlockState state, ItemStack tool) {
+   static Item droppedItem(PrintEnv env, BlockState state, ItemStack tool) {
       Item blockItem = state.getBlock().asItem();
       if (blockItem == Items.AIR) {
          return Items.AIR;
@@ -199,8 +199,8 @@ final class PrintTools {
       }
    }
 
-   static int init_I(PrintEnv env, BlockState state, ItemStack tool) {
-      Item dropped = init_Item(env, state, tool);
+   static int dropCount(PrintEnv env, BlockState state, ItemStack tool) {
+      Item dropped = droppedItem(env, state, tool);
       if (dropped == Items.AIR) {
          return 0;
       } else {

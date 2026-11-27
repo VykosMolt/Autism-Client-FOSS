@@ -40,31 +40,31 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   public InteractionGoal init_q() {
+   public InteractionGoal forSnapshotGrids() {
       return new InteractionGoal(this.init_BlockPos, this.init_D, this.load, this.init_ClassCache_StateCa, this.init_Set, this.init_Direction, true);
    }
 
-   public boolean load_Z() {
+   public boolean breaksTarget() {
       return this.init_Z;
    }
 
-   public BlockPos load_BlockPos() {
+   public BlockPos getTarget() {
       return this.init_BlockPos;
    }
 
-   public double load_D() {
+   public double getReach() {
       return this.init_D;
    }
 
-   public Direction init_Direction() {
+   public Direction getFace() {
       return this.init_Direction;
    }
 
-   public void init_V(BlockPos feet) {
+   public void rejectStance(BlockPos feet) {
       this.init_Set.add(feet.asLong());
    }
 
-   public int init_I() {
+   public int rejectedStanceCount() {
       return this.init_Set.size();
    }
 
@@ -79,7 +79,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
    }
 
    @Override
-   public BlockPos init_BlockPos() {
+   public BlockPos getTargetBlock() {
       return this.init_BlockPos;
    }
 
@@ -99,11 +99,11 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean isInGoal(int x, int y, int z) {
-      return this.init_Z_I(x, y, z, this.init_ClassCache_StateCa);
+      return this.isInGoalWithGrid(x, y, z, this.init_ClassCache_StateCa);
    }
 
    @Override
-   public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
+   public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) {
       if (this.init_Direction == null
          && x == this.init_BlockPos.getX()
          && z == this.init_BlockPos.getZ()
@@ -130,7 +130,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
          return false;
       }
 
-      List<AABB> boxes = AiShapes.init_List_S(planned.load_S(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ()));
+      List<AABB> boxes = AiShapes.boxes(planned.collisionShapeCode(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ()));
       if (boxes.isEmpty()) {
          boxes = List.of(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
       }
@@ -195,7 +195,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
                }
 
                if (bx != x || bz != z || by != y && by != y + 1) {
-                  AiPathfinder.CellInfo p = grid.init_ClassCache_FileCac_I(bx, by, bz);
+                  AiPathfinder.CellInfo p = grid.probeCell(bx, by, bz);
                   if (p == null || !p.loaded() || !p.passable() || p.lava()) {
                      return false;
                   }
@@ -255,9 +255,9 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
 
       for (int cells = 0; cells < 64; cells++) {
          if (bx != target.getX() || by - 1 != target.getY() || bz != target.getZ()) {
-            short below = grid.load_S(bx, by - 1, bz);
-            if (AiShapes.init_D_S(below) > 1.0) {
-               for (AABB box : AiShapes.init_List_S(below)) {
+            short below = grid.collisionShapeCode(bx, by - 1, bz);
+            if (AiShapes.topOf(below) > 1.0) {
+               for (AABB box : AiShapes.boxes(below)) {
                   if (box.move(bx, by - 1, bz).clip(from, to).isPresent()) {
                      return false;
                   }
@@ -274,7 +274,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
             Direction firstFace = null;
             double distance = 1.7976931348623157E308;
 
-            for (AABB local : AiShapes.init_List_S(grid.load_S(bx, by, bz))) {
+            for (AABB local : AiShapes.boxes(grid.collisionShapeCode(bx, by, bz))) {
                AABB box = local.move(bx, by, bz);
                Optional<Vec3> entry = box.clip(from, to);
                if (!entry.isEmpty() && !(from.distanceToSqr(entry.get()) >= distance)) {
@@ -301,12 +301,12 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
             return first != null && firstFace == requiredFace && (highHalf == null || !requiredFace.getAxis().isHorizontal() || highHalf == first.y - by > 0.5);
          }
 
-         AiPathfinder.CellInfo probe = grid.init_ClassCache_FileCac_I(bx, by, bz);
+         AiPathfinder.CellInfo probe = grid.probeCell(bx, by, bz);
          if (probe == null || !probe.loaded() || probe.lava()) {
             return false;
          }
 
-         for (AABB box : AiShapes.init_List_S(grid.load_S(bx, by, bz))) {
+         for (AABB box : AiShapes.boxes(grid.collisionShapeCode(bx, by, bz))) {
             if (box.move(bx, by, bz).clip(from, to).isPresent()) {
                return false;
             }

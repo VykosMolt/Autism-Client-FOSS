@@ -60,7 +60,7 @@ final class SchematicRecording {
       if (var1.level != null && var1.player != null) {
          this.putAt_ClientLevel = var1.level;
          this.fill_Path = var2;
-         this.readEx_Str = SchematicCapture.init_Str_Str(var3);
+         this.readEx_Str = SchematicCapture.normalizeName(var3);
          this.value_Z = var4;
          this.prevEx_I = this.putAt_ClientLevel.getMinY();
          this.prev_I = this.putAt_ClientLevel.getMaxY();
@@ -139,7 +139,7 @@ final class SchematicRecording {
 
    void putAt_V_Str(String var1) {
       if (this.prevEx_Z) {
-         this.readEx_Str = SchematicCapture.init_Str_Str(var1);
+         this.readEx_Str = SchematicCapture.normalizeName(var1);
          this.putAt_V();
       }
    }
@@ -169,13 +169,13 @@ final class SchematicRecording {
          this.readEx_Z = true;
       } else {
          try {
-            this.putAt_Future = SchematicLibrary.init_ExecutorService.submit(
+            this.putAt_Future = SchematicLibrary.EXECUTOR.submit(
                   () -> {
                      try {
                         this.putAt_Str = "Trimming recording";
                         var2.sort(
-                           Comparator.<SchematicCapture.Inner_CachePool>comparingInt(var0 -> var0.init_ChunkPos.z())
-                              .thenComparingInt(var0 -> var0.init_ChunkPos.x())
+                           Comparator.<SchematicCapture.Inner_CachePool>comparingInt(var0 -> var0.chunkPos.z())
+                              .thenComparingInt(var0 -> var0.chunkPos.x())
                         );
                         this.putAt_Path = SchematicCapture.init(this.fill_Path, var1, var2, true, var1xx -> this.flowTemp = 5 + var1xx * 85 / 100);
                         this.flowTemp = 100;
@@ -185,7 +185,7 @@ final class SchematicRecording {
                         this.fill_Z = true;
                         this.putAt_Str = "Cancelled";
                      } catch (Exception var9) {
-                        this.fill_Str = SchematicLibrary.init_Str_Throwable(var9);
+                        this.fill_Str = SchematicLibrary.describeError(var9);
                         this.putAt_Str = "Save failed";
                         this.readEx_Z = true;
                      } finally {
@@ -225,12 +225,12 @@ final class SchematicRecording {
    }
 
    private void putAt_V_NetHelper_JsonCach(SchematicCapture.Inner_CachePool var1) {
-      boolean var2 = !var1.init_Map.isEmpty() || !var1.init_List.isEmpty() || !var1.load.isEmpty();
+      boolean var2 = !var1.init_Map.isEmpty() || !var1.blockEntityTags.isEmpty() || !var1.load.isEmpty();
       if (var2) {
-         int var3 = Math.min(this.chunkAt_I, var1.init_ChunkPos.x());
-         int var4 = Math.max(this.state, var1.init_ChunkPos.x());
-         int var5 = Math.min(this.closeOf, var1.init_ChunkPos.z());
-         int var6 = Math.max(this.pollAt, var1.init_ChunkPos.z());
+         int var3 = Math.min(this.chunkAt_I, var1.chunkPos.x());
+         int var4 = Math.max(this.state, var1.chunkPos.x());
+         int var5 = Math.min(this.closeOf, var1.chunkPos.z());
+         int var6 = Math.max(this.pollAt, var1.chunkPos.z());
          int var7 = 2147483647;
          int var8 = -2147483648;
 
@@ -239,13 +239,13 @@ final class SchematicRecording {
             var8 = Math.max(var8, var10);
          }
 
-         for (CompoundTag var14 : var1.init_List) {
-            int var11 = var1.init_cP_DataUtil.min().getY() + var14.getIntOr("y", 0) >> 4;
+         for (CompoundTag var14 : var1.blockEntityTags) {
+            int var11 = var1.area.min().getY() + var14.getIntOr("y", 0) >> 4;
             var7 = Math.min(var7, var11);
             var8 = Math.max(var8, var11);
          }
 
-         long var13 = var1.load.isEmpty() ? putAt_J_I_I(var7, var8) : var1.init_cP_DataUtil.volume();
+         long var13 = var1.load.isEmpty() ? putAt_J_I_I(var7, var8) : var1.area.volume();
          if (putAt(var3, var4, var5, var6) || this.fill_J + var13 > 134217728L) {
             this.chunkAt_Z = true;
             this.readEx();
@@ -260,7 +260,7 @@ final class SchematicRecording {
          this.pollOf++;
       }
 
-      this.putAt_Long2ObjectOpenHas.put(var1.init_ChunkPos.pack(), var1);
+      this.putAt_Long2ObjectOpenHas.put(var1.chunkPos.pack(), var1);
       if (this.pollOf >= 4096 || this.putAt_Long2ObjectOpenHas.size() >= 16384) {
          this.chunkAt_Z = true;
          this.readEx();
@@ -300,7 +300,7 @@ final class SchematicRecording {
                var11.putInt("x", var9.getX() - var4.min().getX());
                var11.putInt("y", var9.getY() - var4.min().getY());
                var11.putInt("z", var9.getZ() - var4.min().getZ());
-               var5.init_List.add(var11);
+               var5.blockEntityTags.add(var11);
             }
          }
       }

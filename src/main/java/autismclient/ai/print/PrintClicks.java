@@ -85,7 +85,7 @@ final class PrintClicks {
 
    static boolean isServerLookAlignedWithTarget(PrintView view, PrintEnv env, PrintTarget target, PrintClicks.Inner_CachePool mode) {
       Vec3 eye = env.serverEyePos();
-      BlockHitResult hit = view.raycastOutline(eye, eye.add(PrintGeometry.init_Vec3(env.serverYaw(), env.serverPitch()).scale(4.5)));
+      BlockHitResult hit = view.raycastOutline(eye, eye.add(PrintGeometry.lookDirection(env.serverYaw(), env.serverPitch()).scale(4.5)));
       if (hit != null && !(hit.getLocation().distanceTo(eye) > 4.4)) {
          BlockState state = view.getBlockState(hit.getBlockPos());
          boolean waterloggable = state.getBlock() instanceof LiquidBlockContainer && getFluidBucketItem(target) == Items.WATER_BUCKET;
@@ -98,7 +98,7 @@ final class PrintClicks {
 
    static boolean isOrientationSensitive(PrintTarget target, PlacementGoal.PlaceConstraint constraint) {
       BlockState state = target.wanted();
-      return PrintCore.sync_Z_BlockState(state)
+      return PrintCore.hasSixWayLookFacing(state)
          || state.getBlock() instanceof HopperBlock
          || state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
          || state.hasProperty(BlockStateProperties.HALF)
@@ -280,7 +280,7 @@ final class PrintClicks {
 
          Vec3 eye = PrintGeometry.init(feet, compact);
          budget.raycastCount++;
-         BlockHitResult hit = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
+         BlockHitResult hit = view.raycastBlock(eye, eye.add(PrintGeometry.lookDirection(yaw, pitch).scale(reach)));
          if (hit != null
             && hit.getBlockPos().relative(hit.getDirection()).equals(target.pos())
             && !(hit.getLocation().distanceTo(eye) > reach)
@@ -513,7 +513,7 @@ final class PrintClicks {
 
                                              if (exact) {
                                                 BlockHitResult wire = view.raycastBlock(
-                                                   eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach))
+                                                   eye, eye.add(PrintGeometry.lookDirection(yaw, pitch).scale(reach))
                                                 );
                                                 if (wire == null || !wire.getBlockPos().equals(support) || wire.getDirection() != face) {
                                                    continue;
@@ -593,7 +593,7 @@ final class PrintClicks {
             : predicted == target.wanted();
       }
 
-      if (!rules.load_Z_ListPool_BlockState(target, predicted)) {
+      if (!rules.isPlacedCorrectly(target, predicted)) {
          return false;
       }
 
@@ -810,8 +810,8 @@ final class PrintClicks {
       }
 
       Direction merge = mode == PrintClicks.Inner_CachePool.INTERACT && item == state.getBlock().asItem() ? getDoubleSlabMergeFace(state, target.wanted()) : null;
-      Set<Direction> pulse = mode == PrintClicks.Inner_CachePool.INTERACT && PrintCore.init_Z_ListPool_Item(target, item)
-         ? PrintCore.init_Set_ArrayUtil_BlockPos(view, cell)
+      Set<Direction> pulse = mode == PrintClicks.Inner_CachePool.INTERACT && PrintCore.isBulbPulseItem(target, item)
+         ? PrintCore.bulbPulseFaces(view, cell)
          : null;
       if (pulse != null && pulse.isEmpty()) {
          return null;
@@ -843,7 +843,7 @@ final class PrintClicks {
                               return new PrintClicks.Inner_StreamUtil(target, mode, item, cell, hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, null);
                            }
 
-                           BlockHitResult wire = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
+                           BlockHitResult wire = view.raycastBlock(eye, eye.add(PrintGeometry.lookDirection(yaw, pitch).scale(reach)));
                            if (wire != null
                               && wire.getBlockPos().equals(cell)
                               && canExtendMultifaceBlock(view, env, rules, target, item, wire, yaw, pitch, crouch, exact)) {
@@ -880,7 +880,7 @@ final class PrintClicks {
             }
          }
 
-         return var17 != null && var17 != live && rules.load_Z_ListPool_BlockState(target, var17);
+         return var17 != null && var17 != live && rules.isPlacedCorrectly(target, var17);
       }
    }
 

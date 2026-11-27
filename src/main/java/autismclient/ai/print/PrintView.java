@@ -1520,7 +1520,7 @@ public final class PrintView implements SignalGetter {
          }
 
          @Override
-         public List<AABB> init_List(AABB query) {
+         public List<AABB> collisionBoxes(AABB query) {
             List<AABB> out = new ArrayList<>();
 
             for (int x = PrintView.floorInt(query.minX); x <= PrintView.floorInt(query.maxX); x++) {
@@ -1539,17 +1539,17 @@ public final class PrintView implements SignalGetter {
          }
 
          @Override
-         public double init_D_I(int x, int y, int z) {
+         public double blockFriction(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).getBlock().getFriction();
          }
 
          @Override
-         public double load_D(int x, int y, int z) {
+         public double speedFactor(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).getBlock().getSpeedFactor();
          }
 
          @Override
-         public double write_D(int x, int y, int z) {
+         public double jumpFactor(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).getBlock().getJumpFactor();
          }
 
@@ -1559,18 +1559,18 @@ public final class PrintView implements SignalGetter {
          }
 
          @Override
-         public double read_D(int x, int y, int z) {
+         public double bounceFactor(int x, int y, int z) {
             Block block = view.getBlockStateAt(x, y, z).getBlock();
             return block instanceof SlimeBlock ? 1.0 : (block instanceof BedBlock ? 0.75 : 0.0);
          }
 
          @Override
-         public boolean init_Z() {
+         public boolean tracksStuckBlocks() {
             return true;
          }
 
          @Override
-         public int init_I(AABB box) {
+         public int stuckBlockKindIn(AABB box) {
             int hold = 0;
 
             for (int x = PrintView.floorInt(box.minX); x <= PrintView.floorInt(box.maxX); x++) {
@@ -1592,17 +1592,17 @@ public final class PrintView implements SignalGetter {
          }
 
          @Override
-         public boolean init_Z_I(int x, int y, int z) {
+         public boolean isLavaOrUnloaded(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).getFluidState().getType().isSame(Fluids.LAVA);
          }
 
          @Override
-         public boolean load_Z(int x, int y, int z) {
+         public boolean isWater(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).getFluidState().getType().isSame(Fluids.WATER);
          }
 
          @Override
-         public boolean read_Z(int x, int y, int z) {
+         public boolean isInvisibleLightBlock(int x, int y, int z) {
             return PrintView.isHazardBlock(view.getBlockStateAt(x, y, z));
          }
       };

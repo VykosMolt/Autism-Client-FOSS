@@ -54,7 +54,7 @@ final class AiOreRoute {
             args.addProperty("focusZ", focus.getZ());
          }
 
-         return autismclient.ai.engine.AiBlockMine.init_AiOperation(args);
+         return autismclient.ai.engine.AiBlockMine.create(args);
       } else {
          return init(family, drop, targetHeld, blocks, bestY, seconds, false);
       }
@@ -66,7 +66,7 @@ final class AiOreRoute {
          args.addProperty("exploreY", bestY);
       }
 
-      return autismclient.ai.engine.AiBlockMine.init_AiOperation(args);
+      return autismclient.ai.engine.AiBlockMine.create(args);
    }
 
    private static AiOperation init(

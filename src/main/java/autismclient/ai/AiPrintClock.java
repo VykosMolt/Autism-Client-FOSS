@@ -23,7 +23,7 @@ final class AiPrintClock {
 
          @Override
          public autismclient.ai.print.PrintMachineJob init(BlockPos at, BlockState source) {
-            return AiPrintContainer.init_bd_DataUtil_bV_DataUtil(env, new AiSchematicMachinePlan.ContainerPlan(at, Map.of(), source));
+            return AiPrintContainer.forClock(env, new AiSchematicMachinePlan.ContainerPlan(at, Map.of(), source));
          }
 
          @Override
@@ -173,7 +173,7 @@ final class AiPrintClock {
       }
 
       @Override
-      public autismclient.ai.print.PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+      public autismclient.ai.print.PrintMachineJob.JobStatus pollStatus() {
          if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
             return this.init_BitSetUtil_DataUti;
          }

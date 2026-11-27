@@ -51,9 +51,9 @@ final class AiBuildIntent {
          return AiBuildSite.Inner_CachePool.FLUID;
       } else if (!init_List(cell).isEmpty()) {
          return AiBuildSite.Inner_CachePool.SKIP;
-      } else if (AiSchematicActions.read_Z(cell) || "upper".equals(cell.properties().get("half")) || "head".equals(cell.properties().get("part"))) {
+      } else if (AiSchematicActions.isBedHead(cell) || "upper".equals(cell.properties().get("half")) || "head".equals(cell.properties().get("part"))) {
          return AiBuildSite.Inner_CachePool.PARTNER;
-      } else if (AiSchematicActions.init_Z(cell)) {
+      } else if (AiSchematicActions.needsAction(cell)) {
          return AiBuildSite.Inner_CachePool.SPECIAL;
       } else if (write(cell)) {
          return AiBuildSite.Inner_CachePool.INTERACT;
@@ -81,7 +81,7 @@ final class AiBuildIntent {
          }
       } else {
          if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
-            for (Item material : AiSchematicActions.read_List(cell)) {
+            for (Item material : AiSchematicActions.materials(cell)) {
                if (material != Items.AIR) {
                   return material;
                }
@@ -314,7 +314,7 @@ final class AiBuildIntent {
    }
 
    private static Direction init_Direction(AiBuilder.CellSpec cell) {
-      if (!AiSchematicActions.read_Z(cell)) {
+      if (!AiSchematicActions.isBedHead(cell)) {
          return Direction.DOWN;
       }
 

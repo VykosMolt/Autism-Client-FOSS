@@ -57,7 +57,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       this.init_BitSetUtil = actions.init(spec.preload(), spec.source().get(spec.preload()));
    }
 
-   public PrintClockSpec init_NetHelper() {
+   public PrintClockSpec getSpec() {
       return this.init_NetHelper;
    }
 
@@ -65,7 +65,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       return this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.AUDIT && this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.PREPARING;
    }
 
-   public BlockPos init_BlockPos_2() {
+   public BlockPos firstUnloadedCell() {
       for (BlockPos at : this.init_NetHelper.source().keySet()) {
          if (!this.init_EventBus.hasChunkAt(at)) {
             return at;
@@ -103,12 +103,12 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob init_BitSetUtil() {
+   public PrintMachineJob currentAction() {
       return this.init_BitSetUtil == null ? this : this.init_BitSetUtil;
    }
 
    @Override
-   public Set<BlockPos> init_Set() {
+   public Set<BlockPos> accessCells() {
       return Set.of(this.init_NetHelper.preload(), this.init_NetHelper.other(), this.init_NetHelper.lever());
    }
 
@@ -128,7 +128,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public int load_I() {
+   public int fillCount() {
       return 2;
    }
 
@@ -143,22 +143,22 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public int read_I() {
+   public int verifiedItems() {
       return this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.SUCCEEDED ? this.init_NetHelper.quantity() : 0;
    }
 
    @Override
-   public int write_I() {
+   public int completedPhases() {
       return this.init_I;
    }
 
    @Override
-   public Set<BlockPos> load_Set() {
+   public Set<BlockPos> dynamicCells() {
       return this.init_NetHelper.dynamicCells();
    }
 
    @Override
-   public boolean init_Z_BlockPos_BlockState(BlockPos at, BlockState actual) {
+   public boolean allowsDynamicState(BlockPos at, BlockState actual) {
       return !this.init_Z || !this.open() || !this.init_NetHelper.allows(at, actual, !this.load_Z, true)
          ? false
          : !actual.is(Blocks.MOVING_PISTON)
@@ -236,7 +236,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus pollStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SENT) {
          return this.init_BitSetUtil_DataUti;
       } else if (!this.open()) {
@@ -246,7 +246,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          if (changed != null) {
             return this.init(changed);
          } else {
-            PrintMachineJob.JobStatus result = this.init_BitSetUtil.poll_BitSetUtil_DataUti();
+            PrintMachineJob.JobStatus result = this.init_BitSetUtil.pollStatus();
             this.init_Str = this.init_BitSetUtil.detail();
             if (result == PrintMachineJob.JobStatus.SENT) {
                return this.init_BitSetUtil_DataUti;
@@ -364,19 +364,19 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public ItemStack init_ItemStack() {
+   public ItemStack extraMaterial() {
       return this.init_ItemStack.copy();
    }
 
    @Override
-   public void load_V() {
+   public void onContentsAvailable() {
       if (this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
          this.write_V();
       }
    }
 
    @Override
-   public void read_V() {
+   public void onContentsUnavailable() {
       if (this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
          this.write_Z = true;
          this.write_V();
@@ -427,7 +427,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus init_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus verifyStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SUCCEEDED) {
          return this.init_BitSetUtil_DataUti;
       }
@@ -537,7 +537,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public String init_Str() {
+   public String receiptJson() {
       JsonObject data = new JsonObject();
       data.addProperty("clockStartup", true);
       data.addProperty("stage", this.init_TaskQueue_StreamUt.name());
@@ -567,8 +567,8 @@ public final class PrintClockSequence implements PrintMachineJob {
       receipt.addProperty("position", action.position().toShortString());
       receipt.addProperty("description", action.description());
       receipt.addProperty("detail", action.detail());
-      receipt.addProperty("verifiedSlots", action.init_I());
-      receipt.add("nativeReceipt", JsonParser.parseString(action.init_Str()));
+      receipt.addProperty("verifiedSlots", action.verifiedSlots());
+      receipt.add("nativeReceipt", JsonParser.parseString(action.receiptJson()));
       return receipt;
    }
 

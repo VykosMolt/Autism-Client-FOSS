@@ -28,11 +28,11 @@ final class AiAttachments {
    }
 
    static String init() {
-      PointerBuffer filters = BufferUtils.createPointerBuffer(AiSchematic.init_StrArr.length);
+      PointerBuffer filters = BufferUtils.createPointerBuffer(AiSchematic.EXTENSIONS.length);
       ArrayList<ByteBuffer> buffers = new ArrayList<>();
 
       try {
-         for (String extension : AiSchematic.init_StrArr) {
+         for (String extension : AiSchematic.EXTENSIONS) {
             ByteBuffer buffer = MemoryUtil.memASCII("*" + extension);
             buffers.add(buffer);
             filters.put(buffer);
@@ -46,13 +46,13 @@ final class AiAttachments {
    }
 
    static AiAttachments.Inner_DataUtil init(Path source, Path directory) throws IOException, NoSuchAlgorithmException {
-      String name = AiSchematic.init_Str(source.getFileName().toString());
+      String name = AiSchematic.validateName(source.getFileName().toString());
       if (name.chars().anyMatch(c -> c < 32 || c == 34)) {
          throw new IllegalArgumentException("Invalid file name");
       }
 
       String lower = name.toLowerCase(Locale.ROOT);
-      String extension = Arrays.stream(AiSchematic.init_StrArr)
+      String extension = Arrays.stream(AiSchematic.EXTENSIONS)
          .filter(lower::endsWith)
          .findFirst()
          .orElseThrow(() -> new IllegalArgumentException("Choose a .schem, .schematic or .litematic file"));
@@ -70,7 +70,7 @@ final class AiAttachments {
             throw new IllegalArgumentException("Schematic exceeds 64 MB");
          }
 
-         AiSchematic.Inner_DataUtil decoded = AiSchematic.init_bP_DataUtil_Path_Z(temporary, false);
+         AiSchematic.Inner_DataUtil decoded = AiSchematic.decodeFile(temporary, false);
          AiSchematic.init(AiBuilder.normalizeCells(decoded.cells(), 2097152, 1023));
          Path target = directory.resolve(name);
          if (Files.exists(target) && Files.mismatch(temporary, target) != -1L) {

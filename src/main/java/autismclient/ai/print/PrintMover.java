@@ -174,7 +174,7 @@ final class PrintMover {
             return 1.0 / 0.0;
          }
 
-         if (world.read_Z((int)Math.floor(s.x()), (int)Math.floor(s.y()), (int)Math.floor(s.z())) || init(world, start, s, true)) {
+         if (world.isInvisibleLightBlock((int)Math.floor(s.x()), (int)Math.floor(s.y()), (int)Math.floor(s.z())) || init(world, start, s, true)) {
             return 1.0 / 0.0;
          }
       }
@@ -204,7 +204,7 @@ final class PrintMover {
          for (int z = z0; z <= z1; z++) {
             for (int sample = 0; sample < 3; sample++) {
                int y = (int)Math.floor(next.y() + (sample == 0 ? 0.01 : (sample == 1 ? 0.9 : 1.75)));
-               if ((x < sx0 || x > sx1 || z < sz0 || z > sz1 || y != sy0 && y != sy1 && y != sy2) && (world.read_Z(x, y, z) || dry && world.load_Z(x, y, z))) {
+               if ((x < sx0 || x > sx1 || z < sz0 || z > sz1 || y != sy0 && y != sy1 && y != sy2) && (world.isInvisibleLightBlock(x, y, z) || dry && world.isWater(x, y, z))) {
                   return true;
                }
             }
@@ -234,7 +234,7 @@ final class PrintMover {
       int by = (int)Math.floor(y);
       int bz = (int)Math.floor(z);
       long k = BlockPos.asLong(bx, by, bz);
-      return k != skipA && k != skipB && world.read_Z(bx, by, bz);
+      return k != skipA && k != skipB && world.isInvisibleLightBlock(bx, by, bz);
    }
 
    static AiPhysics.MoveInput init(PrintMover.Inner_StreamUtil k, float yaw) {

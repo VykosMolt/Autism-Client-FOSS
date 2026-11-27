@@ -51,7 +51,7 @@ public final class AiSavedContents {
          actual = actual.setValue(BarrelBlock.OPEN, expected.getValue(BarrelBlock.OPEN));
       }
 
-      return !typedSource || autismclient.ai.print.PrintRules.write_Z_BlockState_BlockState(expected, actual);
+      return !typedSource || autismclient.ai.print.PrintRules.matchesLayout(expected, actual);
    }
 
    static int init_I(BlockState state) {

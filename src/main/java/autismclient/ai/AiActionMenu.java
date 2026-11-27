@@ -117,7 +117,7 @@ final class AiActionMenu {
          this.open();
       } else {
          String[] parts = actionName.split(":", 2);
-         if (parts[0].equals("FARM") && parts.length > 1 && parts[1].equals("REVIEW") && this.init_E != null && this.init_E.init_Z()) {
+         if (parts[0].equals("FARM") && parts.length > 1 && parts[1].equals("REVIEW") && this.init_E != null && this.init_E.isComplete()) {
             this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.REVIEW;
          } else {
             this.init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil.valueOf(parts[0]));
@@ -159,11 +159,11 @@ final class AiActionMenu {
 
    void load_V() {
       if (this.init_bW != null) {
-         this.init_bW.read_V();
+         this.init_bW.cancel();
       }
 
       if (this.init_E != null) {
-         this.init_E.read_V();
+         this.init_E.cancel();
       }
 
       this.init_bW = null;
@@ -239,7 +239,7 @@ final class AiActionMenu {
                   * (
                      this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                         ? this.read_Map.size() + 3
-                        : (this.init_E != null ? 7 : (this.init_bW == null ? 4 : 8 + this.init_bW.init_List().size()))
+                        : (this.init_E != null ? 7 : (this.init_bW == null ? 4 : 8 + this.init_bW.missingMaterialLines().size()))
                   )
                + 8;
             break;
@@ -278,18 +278,18 @@ final class AiActionMenu {
                this.sync_V();
             }
          } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS
-            && (this.init_bW == null || this.init_bW.load_Z())
-            && (this.init_E == null || this.init_E.init_Z())) {
+            && (this.init_bW == null || this.init_bW.isReadyToConfirm())
+            && (this.init_E == null || this.init_E.isComplete())) {
             this.sync_V();
          }
       }
 
-      if (this.init_bW != null && !this.init_bW.load_Z() && !this.init_bW.init_Str_2().isEmpty()) {
-         this.read_Str = this.init_bW.init_Str_2();
+      if (this.init_bW != null && !this.init_bW.isReadyToConfirm() && !this.init_bW.getError().isEmpty()) {
+         this.read_Str = this.init_bW.getError();
       }
 
-      if (this.init_E != null && this.init_E.init_Z() && !this.init_E.load_Z()) {
-         this.read_Str = this.init_E.write_Str();
+      if (this.init_E != null && this.init_E.isComplete() && !this.init_E.isReadyToConfirm()) {
+         this.read_Str = this.init_E.getStatus();
       }
 
       if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
@@ -427,8 +427,8 @@ final class AiActionMenu {
                            : this.init_StreamUtil_CachePo_List(this.write_List) != null
                      )
                )
-               && (this.init_bW == null || this.init_bW.load_Z() && !this.init_bW.init_Z_2())
-               && (this.init_E == null || this.init_E.init_Z()),
+               && (this.init_bW == null || this.init_bW.isReadyToConfirm() && !this.init_bW.isSearching())
+               && (this.init_E == null || this.init_E.isComplete()),
             this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? this::poll : this::sync_V
          );
       }
@@ -545,7 +545,7 @@ final class AiActionMenu {
                }
 
                if (this.init_E != null) {
-                  this.init_E.read_V();
+                  this.init_E.cancel();
                }
 
                this.init_E = null;
@@ -562,7 +562,7 @@ final class AiActionMenu {
          );
          int var25 = var24 + h + 2;
          kit.drawCenteredRowText(
-            this.init_E == null ? "Select the exact field footprint in the world." : this.init_E.write_Str(),
+            this.init_E == null ? "Select the exact field footprint in the world." : this.init_E.getStatus(),
             autismclient.gui.f.NetHelper.init(x, var25, w, line),
             x,
             w,
@@ -577,10 +577,10 @@ final class AiActionMenu {
             kit.colors.textSecondary
          );
       } else if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD && this.init_bW != null) {
-         kit.drawCenteredRowText(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
+         kit.drawCenteredRowText(this.init_bW.getStatus(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
          y += line;
          kit.drawCenteredRowText(
-            "Size " + this.init_bW.update_Str() + " / origin " + this.load_Str(),
+            "Size " + this.init_bW.sizeText() + " / origin " + this.load_Str(),
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
@@ -592,7 +592,7 @@ final class AiActionMenu {
             kit,
             autismclient.gui.f.NetHelper.init(x, y, half, h),
             "Choose in world",
-            this.init_bW.load_Z() && !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
+            this.init_bW.isReadyToConfirm() && !this.init_cF.isWorking() && !AiDirectOps.load_Z(),
             () -> aP.init_V_bW_Runnable(this.init_bW, () -> {})
          );
          if (this.init_cF.isWorking() || AiDirectOps.load_Z()) {
@@ -602,8 +602,8 @@ final class AiActionMenu {
          this.init(
             kit,
             autismclient.gui.f.NetHelper.init(x + half + 2, y, half, h),
-            this.init_bW.init_Z_2() ? "Searching..." : "Best nearby site",
-            this.init_bW.load_Z(),
+            this.init_bW.isSearching() ? "Searching..." : "Best nearby site",
+            this.init_bW.isReadyToConfirm(),
             this.init_bW::flush
          );
          int var18 = y + h + 2;
@@ -613,35 +613,35 @@ final class AiActionMenu {
          int var19 = var18 + line + 2;
          kit.drawButton(
             autismclient.gui.f.NetHelper.init(x, var19, half, h),
-            "Rotate: " + this.init_bW.init_I(),
+            "Rotate: " + this.init_bW.getRotation(),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-            this.init_bW::sync_V
+            this.init_bW::rotateOnce
          );
          kit.drawButton(
             autismclient.gui.f.NetHelper.init(x + half + 2, var19, half, h),
-            "Mirror: " + this.init_bW.read_Str(),
+            "Mirror: " + this.init_bW.getMirror(),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-            this.init_bW::init_V
+            this.init_bW::cycleMirror
          );
          int var20 = var19 + h + 2;
          kit.drawToggleSwitch(
             autismclient.gui.f.NetHelper.init(x, var20, w, h),
             "Clear natural terrain in empty space",
-            this.init_bW.write_Z_2(),
+            this.init_bW.isClearTerrain(),
             "local-terrain",
-            () -> this.init_bW.load(!this.init_bW.write_Z_2())
+            () -> this.init_bW.load(!this.init_bW.isClearTerrain())
          );
          int var21 = var20 + h + 2;
          autismclient.gui.f.NetHelper flyToggle = autismclient.gui.f.NetHelper.init(x, var21, w, h);
-         kit.drawToggleSwitch(flyToggle, "Assume Fly", this.init_bW.update_Z(), "local-assume-fly", () -> this.init_bW.read(!this.init_bW.update_Z()));
+         kit.drawToggleSwitch(flyToggle, "Assume Fly", this.init_bW.isAssumeFly(), "local-assume-fly", () -> this.init_bW.read(!this.init_bW.isAssumeFly()));
          kit.addTooltipRegion(
             flyToggle,
             "Use native flight already granted in Survival, including singleplayer. Never grants flight or items. Without permission, use ground movement."
          );
          int var22 = var21 + h + 2;
          autismclient.gui.f.NetHelper flyHint = autismclient.gui.f.NetHelper.init(x, var22, w, line);
-         kit.drawCenteredRowText(this.init_bW.load_Str_2(), flyHint, x, w, kit.colors.textSecondary);
-         kit.addTooltipRegion(flyHint, this.init_bW.load_Str_2());
+         kit.drawCenteredRowText(this.init_bW.getFlyHint(), flyHint, x, w, kit.colors.textSecondary);
+         kit.addTooltipRegion(flyHint, this.init_bW.getFlyHint());
          y = var22 + line + 2;
          kit.drawCenteredRowText("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
       } else if (this.init_StreamUtil_DataUti.init_Z) {
@@ -729,26 +729,26 @@ final class AiActionMenu {
       w -= 10;
       String[] lines;
       if (this.init_E != null) {
-         AiFarmArea.Inner_DataUtil farmArea = this.init_E.init_C_DataUtil();
+         AiFarmArea.Inner_DataUtil farmArea = this.init_E.getArea();
          lines = new String[]{
             this.init_StreamUtil_CachePo.label(),
             "Soil: " + (AiFarmArea.init_Z(this.write_Str) ? "soul sand" : "dirt and water"),
             "Area: " + farmArea.width() + "x" + farmArea.length() + " / " + farmArea.layout(this.write_Str).plots() + " plots",
             "First: " + this.init_Str_BlockPos(farmArea.from()),
             "Second: " + this.init_Str_BlockPos(farmArea.to()),
-            this.init_E.write_Str(),
+            this.init_E.getStatus(),
             this.init_cF.isWorking() ? "Starting replaces the current local task." : "Ready to start."
          };
       } else if (this.init_bW != null) {
          lines = new String[]{
             this.init_StreamUtil_CachePo.label(),
             "Origin: " + this.load_Str(),
-            "Rotation: " + this.init_bW.init_I() + " / mirror: " + this.init_bW.read_Str(),
-            this.init_bW.load_I() + " blocks / " + this.init_bW.update_Str(),
-            this.init_bW.write_Z_2() ? "Clear natural terrain in schematic air" : "Keep terrain in schematic air",
-            this.init_bW.load_Str_2(),
+            "Rotation: " + this.init_bW.getRotation() + " / mirror: " + this.init_bW.getMirror(),
+            this.init_bW.getCellCount() + " blocks / " + this.init_bW.sizeText(),
+            this.init_bW.isClearTerrain() ? "Clear natural terrain in schematic air" : "Keep terrain in schematic air",
+            this.init_bW.getFlyHint(),
             "Assume Fly never grants flight or items",
-            this.init_bW.write_Str_2()
+            this.init_bW.getStatus()
          };
       } else {
          String quantity = this.init_StreamUtil_DataUti.init_Z
@@ -782,7 +782,7 @@ final class AiActionMenu {
 
       if (this.init_bW != null) {
          List<String> extended = new ArrayList<>(List.of(lines));
-         extended.addAll(this.init_bW.init_List());
+         extended.addAll(this.init_bW.missingMaterialLines());
          lines = extended.toArray(String[]::new);
       }
 
@@ -800,7 +800,7 @@ final class AiActionMenu {
    }
 
    private String load_Str() {
-      BlockPos p = this.init_bW.init_BlockPos();
+      BlockPos p = this.init_bW.getOrigin();
       return p.getX() + " " + p.getY() + " " + p.getZ();
    }
 
@@ -1016,11 +1016,11 @@ final class AiActionMenu {
 
    private void init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil next) {
       if (this.init_bW != null) {
-         this.init_bW.read_V();
+         this.init_bW.cancel();
       }
 
       if (this.init_E != null) {
-         this.init_E.read_V();
+         this.init_E.cancel();
       }
 
       this.init_bW = null;
@@ -1080,7 +1080,7 @@ final class AiActionMenu {
                this.load_StreamUtil_CachePo = null;
                this.write_Str = AiFarmArea.init_Str(AiJson.getString(farmStep.arguments(), "crop", "minecraft:wheat"));
                if (this.init_E != null) {
-                  this.init_E.read_V();
+                  this.init_E.cancel();
                }
 
                this.init_E = null;
@@ -1106,14 +1106,14 @@ final class AiActionMenu {
             this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.OPTIONS;
          } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS) {
             try {
-               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z && (this.init_E == null || !this.init_E.init_Z())) {
+               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z && (this.init_E == null || !this.init_E.isComplete())) {
                   this.flush();
                   return;
                }
 
                this.init_ad_BufferHelper();
                if (this.init_bW != null) {
-                  String issue = this.init_bW.sync_Str();
+                  String issue = this.init_bW.getStartIssue();
                   if (!issue.isEmpty()) {
                      this.read_Str = issue;
                      return;
@@ -1156,7 +1156,7 @@ final class AiActionMenu {
 
             String crop = AiJson.getString(step.arguments(), "crop", "minecraft:wheat");
             AiFarmArea.init_Str(AiJson.objectOf("substrate", this.write_Str), crop);
-            if (this.init_E == null || !this.init_E.init_Str().equals(crop) || !this.init_E.load_Str().equals(this.write_Str)) {
+            if (this.init_E == null || !this.init_E.getCrop().equals(crop) || !this.init_E.getSubstrate().equals(this.write_Str)) {
                this.init_E = new AiFarmPlacement(crop, this.write_Str);
             }
 
@@ -1177,11 +1177,11 @@ final class AiActionMenu {
          this.init_StreamUtil_BufferH = this.init_StreamUtil_DataUti.init() ? AiActionMenu.Inner_BufferHelper.OPTIONS : AiActionMenu.Inner_BufferHelper.HOME;
       } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS) {
          if (this.init_bW != null) {
-            this.init_bW.read_V();
+            this.init_bW.cancel();
          }
 
          if (this.init_E != null) {
-            this.init_E.read_V();
+            this.init_E.cancel();
          }
 
          this.init_bW = null;
@@ -1194,11 +1194,11 @@ final class AiActionMenu {
 
    private void open() {
       if (this.init_bW != null) {
-         this.init_bW.read_V();
+         this.init_bW.cancel();
       }
 
       if (this.init_E != null) {
-         this.init_E.read_V();
+         this.init_E.cancel();
       }
 
       this.init_bW = null;
@@ -1248,13 +1248,13 @@ final class AiActionMenu {
          throw new IllegalArgumentException("That option is unavailable. Choose the target again.");
       }
 
-      JsonObject args = this.init_bW == null ? step.arguments().deepCopy() : this.init_bW.load_JsonObject_2();
+      JsonObject args = this.init_bW == null ? step.arguments().deepCopy() : this.init_bW.buildArguments();
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
-         if (this.init_E == null || !this.init_E.init_Z()) {
+         if (this.init_E == null || !this.init_E.isComplete()) {
             throw new IllegalArgumentException("Choose both farm corners first");
          }
 
-         JsonObject selectedArea = this.init_E.init_JsonObject();
+         JsonObject selectedArea = this.init_E.areaJson();
          selectedArea.entrySet().forEach(entry -> args.add(entry.getKey(), entry.getValue()));
          String crop = AiJson.getString(args, "crop", "minecraft:wheat");
          AiFarmArea.init_Str(args, crop);
@@ -1280,7 +1280,7 @@ final class AiActionMenu {
          } else {
             try {
                if (this.init_bW != null) {
-                  String issue = this.init_bW.sync_Str();
+                  String issue = this.init_bW.getStartIssue();
                   if (!issue.isEmpty()) {
                      this.read_Str = issue;
                      return;
@@ -1296,7 +1296,7 @@ final class AiActionMenu {
                }
 
                String label = this.init_E != null
-                  ? this.init_StreamUtil_CachePo.label() + " / " + this.init_E.write_Str()
+                  ? this.init_StreamUtil_CachePo.label() + " / " + this.init_E.getStatus()
                   : (
                      this.init_bW == null
                         ? step.clause()
@@ -1305,19 +1305,19 @@ final class AiActionMenu {
                            + " at "
                            + this.load_Str()
                            + " ("
-                           + this.init_bW.init_I()
+                           + this.init_bW.getRotation()
                            + " degrees, mirror "
-                           + this.init_bW.read_Str()
+                           + this.init_bW.getMirror()
                            + ")"
                   );
                this.init_cc.submitBuiltInAction(label, step.capability(), step.arguments());
                if (this.init_E != null) {
-                  this.init_E.read_V();
+                  this.init_E.cancel();
                   this.init_E = null;
                }
 
                if (this.init_bW != null) {
-                  this.init_bW.update_V();
+                  this.init_bW.handOff();
                   this.init_bW = null;
                }
 
@@ -1334,7 +1334,7 @@ final class AiActionMenu {
    void read_V() {
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          this.flush();
-      } else if (this.init_bW != null && this.init_bW.load_Z()) {
+      } else if (this.init_bW != null && this.init_bW.isReadyToConfirm()) {
          aP.init_V_bW_Runnable(this.init_bW, () -> {});
       } else if (this.init_E != null) {
          aP.init_V_E_Runnable(this.init_E, () -> {});
@@ -1352,7 +1352,7 @@ final class AiActionMenu {
    }
 
    JsonObject init_JsonObject() {
-      return this.init_E != null ? this.init_E.load_JsonObject() : (this.init_bW == null ? new JsonObject() : this.init_bW.init_JsonObject_2());
+      return this.init_E != null ? this.init_E.statusJson() : (this.init_bW == null ? new JsonObject() : this.init_bW.statusJson());
    }
 
    private boolean write_Z() {
@@ -1798,7 +1798,7 @@ final class AiActionMenu {
    private static boolean init_Z_Str(String name) {
       String lower = name.toLowerCase(Locale.ROOT);
 
-      for (String extension : AiSchematic.init_StrArr) {
+      for (String extension : AiSchematic.EXTENSIONS) {
          if (lower.endsWith(extension)) {
             return true;
          }

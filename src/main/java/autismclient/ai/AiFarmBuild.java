@@ -850,7 +850,7 @@ final class AiFarmBuild {
                this.init_AiOperation = this.init(base, AiCraft.countItem(base) + need, 900);
                return this.init_AiOperation_Result_3("Getting soul sand for the field");
             } else {
-               this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
+               this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
                      autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),

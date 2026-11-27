@@ -754,14 +754,14 @@ public final class AiVisualization {
       }
 
       if (preview) {
-         l.init_aT.init_V_BlockPos(origin);
+         l.init_aT.setOrigin(origin);
       }
 
-      l.init_aT.init_V_Z(l.load_Z);
-      l.init_aT.init_V_ClientLevel(l.init_ClientLevel);
-      if (!l.init_aT.init_Z()) {
+      l.init_aT.setMoving(l.load_Z);
+      l.init_aT.refreshFromWorld(l.init_ClientLevel);
+      if (!l.init_aT.isReady()) {
          l.init_cs_StreamUtil = AiTaskStatus.init(
-            preview ? "Preparing schematic preview" : "Preparing build plan", "Reading every planned block", l.init_aT.init_I(), cells.size()
+            preview ? "Preparing schematic preview" : "Preparing build plan", "Reading every planned block", l.init_aT.preparedCount(), cells.size()
          );
          l.init_AABB = null;
          l.init_List = List.of();
@@ -775,9 +775,9 @@ public final class AiVisualization {
                origin.getX(),
                origin.getY(),
                origin.getZ(),
-               origin.getX() + l.init_aT.init_I,
-               origin.getY() + l.init_aT.load_I,
-               origin.getZ() + l.init_aT.read_I
+               origin.getX() + l.init_aT.sizeX,
+               origin.getY() + l.init_aT.sizeY,
+               origin.getZ() + l.init_aT.sizeZ
             );
          Minecraft mc = Minecraft.getInstance();
          Vec3 eye = mc.player == null ? Vec3.atCenterOf(origin) : mc.player.getEyePosition();
@@ -786,9 +786,9 @@ public final class AiVisualization {
          List<AiVisualization.Inner_StreamUtil> out = new ArrayList<>(nearest.size());
 
          for (int i : nearest) {
-            if (l.init_aT.init_I_I(i) != -12067963) {
-               BlockState state = l.init_aT.init_BlockState_I(i);
-               out.add(new AiVisualization.Inner_StreamUtil(l.init_aT.init_BlockPos_I(i), state, l.init_aT.init_I_I(i), state.isSolidRender(), false, false, true));
+            if (l.init_aT.colorAt(i) != -12067963) {
+               BlockState state = l.init_aT.stateAt(i);
+               out.add(new AiVisualization.Inner_StreamUtil(l.init_aT.posAt(i), state, l.init_aT.colorAt(i), state.isSolidRender(), false, false, true));
             }
          }
 
@@ -808,7 +808,7 @@ public final class AiVisualization {
       if (l != null) {
          l.load_Z = moving;
          if (l.init_aT != null) {
-            l.init_aT.init_V_Z(moving);
+            l.init_aT.setMoving(moving);
          }
       }
    }
@@ -995,7 +995,7 @@ public final class AiVisualization {
          if (alpha > 0) {
             for (AiPlanMesh plan : f.plans) {
                try {
-                  plan.init_V_PoseStack_Pose(pose, f.camera, alpha, 512.0, started + 4000000L, f.world);
+                  plan.render(pose, f.camera, alpha, 512.0, started + 4000000L, f.world);
                   quads += plan.close;
                   planCells += plan.flush;
                } catch (Throwable error) {
@@ -1080,13 +1080,13 @@ public final class AiVisualization {
             Vec3 offset = f.camera.scale(-1.0);
             SchematicSelection selection = aP.init_cU();
             if (selection != null) {
-               SchematicCapture.Inner_DataUtil area = selection.init_cP_DataUtil();
+               SchematicCapture.Inner_DataUtil area = selection.getArea();
                if (area != null) {
                   autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
                }
 
-               if (selection.init_BlockPos != null) {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.init_BlockPos).move(offset), -12067963, 1.8F);
+               if (selection.cornerA != null) {
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.cornerA).move(offset), -12067963, 1.8F);
                }
 
                if (selection.load != null) {

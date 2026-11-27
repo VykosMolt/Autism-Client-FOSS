@@ -57,7 +57,7 @@ final class AiSchematic {
    static final int read_I = 1024;
    static final long init_J = 66049L;
    private static final int update_I = 2097152;
-   static final String[] init_StrArr = new String[]{".schem", ".schematic", ".litematic"};
+   static final String[] EXTENSIONS = new String[]{".schem", ".schematic", ".litematic"};
    private static final String[] load_StrArr = new String[]{
       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
    };
@@ -242,7 +242,7 @@ final class AiSchematic {
       return Minecraft.getInstance().gameDirectory.toPath().resolve("schematics");
    }
 
-   static String init_Str(String name) {
+   static String validateName(String name) {
       String clean = name == null ? "" : name.trim();
       if (clean.isEmpty() || clean.length() > 128) {
          throw new IllegalArgumentException("schematic name must be 1..128 characters");
@@ -253,19 +253,19 @@ final class AiSchematic {
       }
    }
 
-   static Path init_Path_Path_Str(Path schematicsDir, String name) {
+   static Path resolveFile(Path schematicsDir, String name) {
       if (!AutismLiteVariant.enabled()) {
-         Path registered = SchematicLibrary.init_Path_Str(name == null ? "" : name.trim());
+         Path registered = SchematicLibrary.resolveToken(name == null ? "" : name.trim());
          if (registered != null) {
             return registered;
          }
       }
 
-      String clean = init_Str(name);
+      String clean = validateName(name);
       String lower = clean.toLowerCase(Locale.ROOT);
       boolean suffixed = false;
 
-      for (String extension : init_StrArr) {
+      for (String extension : EXTENSIONS) {
          suffixed |= lower.endsWith(extension);
       }
 
@@ -273,7 +273,7 @@ final class AiSchematic {
       if (suffixed) {
          candidates.add(clean);
       } else {
-         for (String extension : init_StrArr) {
+         for (String extension : EXTENSIONS) {
             candidates.add(clean + extension);
          }
       }
@@ -295,7 +295,7 @@ final class AiSchematic {
    }
 
    static AiBuilder.Blueprint init_TableIndex_DataUti(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
-      return init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells).blueprint();
+      return load(file, origin, rotation, mirror, skipUnknown, maxCells).blueprint();
    }
 
    static AiBuilder.Blueprint init_TableIndex_DataUti(
@@ -304,7 +304,7 @@ final class AiSchematic {
       return init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells, maxOffset).blueprint();
    }
 
-   static AiSchematic.Inner_BufferHelper init_bP_BufferHelper(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
+   static AiSchematic.Inner_BufferHelper load(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
       AiSchematic.Inner_BufferHelper loaded = init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
       init(loaded.blueprint().cells());
       return loaded;
@@ -348,7 +348,7 @@ final class AiSchematic {
    }
 
    static AiSchematic.Inner_BufferHelper init_bP_BufferHelper(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
-      AiSchematic.Inner_DataUtil decoded = init_bP_DataUtil_Path_Z(file, skipUnknown);
+      AiSchematic.Inner_DataUtil decoded = decodeFile(file, skipUnknown);
       List<AiBuilder.CellSpec> cells = AiBuilder.transformCells(decoded.cells(), rotation, mirror);
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("Schematic contains no blocks to build");
@@ -365,7 +365,7 @@ final class AiSchematic {
       );
    }
 
-   static CompoundTag init_CompoundTag_Path_J(Path file, long nbtBudget) {
+   static CompoundTag readNbt(Path file, long nbtBudget) {
       String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
 
       long size;
@@ -379,8 +379,8 @@ final class AiSchematic {
          throw new IllegalArgumentException("Schematic " + file.getFileName() + " is " + size + " bytes; the limit is 67108864");
       }
 
-      if (Arrays.stream(init_StrArr).noneMatch(name::endsWith)) {
-         throw new IllegalArgumentException("Unsupported schematic extension for " + file.getFileName() + "; supported: " + String.join(", ", init_StrArr));
+      if (Arrays.stream(EXTENSIONS).noneMatch(name::endsWith)) {
+         throw new IllegalArgumentException("Unsupported schematic extension for " + file.getFileName() + "; supported: " + String.join(", ", EXTENSIONS));
       }
 
       try (BufferedInputStream input = new BufferedInputStream(Files.newInputStream(file))) {
@@ -409,9 +409,9 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil init_bP_DataUtil_Path_Z(Path file, boolean skipUnknown) {
+   static AiSchematic.Inner_DataUtil decodeFile(Path file, boolean skipUnknown) {
       String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
-      CompoundTag root = init_CompoundTag_Path_J(file, 67108864L);
+      CompoundTag root = readNbt(file, 67108864L);
       if (root.getCompound("Regions").isPresent()) {
          return load(root, skipUnknown);
       } else {
@@ -419,11 +419,11 @@ final class AiSchematic {
          if (body.getCompound("Palette").isPresent() || body.getCompound("Blocks").flatMap(blocks -> blocks.getCompound("Palette")).isPresent()) {
             return init_bP_DataUtil(root, skipUnknown);
          } else if (body.getByteArray("Blocks").isPresent()) {
-            return init_bP_DataUtil_CompoundTag_Z(body, skipUnknown);
+            return decodeSponge(body, skipUnknown);
          } else if (name.endsWith(".schem")) {
             return init_bP_DataUtil(root, skipUnknown);
          } else {
-            return name.endsWith(".schematic") ? init_bP_DataUtil_CompoundTag_Z(root, skipUnknown) : load(root, skipUnknown);
+            return name.endsWith(".schematic") ? decodeSponge(root, skipUnknown) : load(root, skipUnknown);
          }
       }
    }
@@ -601,7 +601,7 @@ final class AiSchematic {
       return init(raw, context, 0);
    }
 
-   static AiSchematic.Inner_ConfigStore init_bP_ConfigStore_Str_I(String raw, int dataVersion) {
+   static AiSchematic.Inner_ConfigStore parseState(String raw, int dataVersion) {
       return init(raw, "palette state " + raw, Math.max(1, dataVersion));
    }
 
@@ -898,7 +898,7 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil init_bP_DataUtil_CompoundTag_Z(CompoundTag root, boolean skipUnknown) {
+   static AiSchematic.Inner_DataUtil decodeSponge(CompoundTag root, boolean skipUnknown) {
       int width = init_I_CompoundTag_Str(root, "Width");
       int height = init_I_CompoundTag_Str(root, "Height");
       int length = init_I_CompoundTag_Str(root, "Length");

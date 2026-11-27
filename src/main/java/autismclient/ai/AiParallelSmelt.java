@@ -148,7 +148,7 @@ final class AiParallelSmelt implements AiOperation {
          }
 
          if (this.init_cn != null) {
-            this.init_cn.init_V();
+            this.init_cn.cancel();
             this.init_cn = null;
          }
 
@@ -292,18 +292,18 @@ final class AiParallelSmelt implements AiOperation {
 
    private AiOperation.Result init_AiOperation_Result_19() {
       if (this.init_cn != null) {
-         AiStationPlacer.Inner_DataUtil state = this.init_cn.init_cn_DataUtil();
+         AiStationPlacer.Inner_DataUtil state = this.init_cn.tick();
          if (state == AiStationPlacer.Inner_DataUtil.PLACED) {
-            this.init_List.add(this.init_cn.init_BlockPos());
+            this.init_List.add(this.init_cn.getPlaced());
             this.init_cn = null;
             this.update_I++;
          } else {
             if (state != AiStationPlacer.Inner_DataUtil.FAILED) {
-               return this.init_AiOperation_Result_Str_8(this.init_cn.init_Str());
+               return this.init_AiOperation_Result_Str_8(this.init_cn.getStatus());
             }
 
-            String why = this.init_cn.load_Str();
-            this.init_cn.init_V();
+            String why = this.init_cn.getFailureReason();
+            this.init_cn.cancel();
             this.init_cn = null;
             if (this.init_List.isEmpty()) {
                return this.init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status.FAILED, "Cannot place furnace: " + why);
@@ -343,7 +343,7 @@ final class AiParallelSmelt implements AiOperation {
       if (easy) {
          if (deficit > 0) {
             this.write_Str = "Mine nearby cobblestone for a faster smelt without spending the requested input";
-            this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
+            this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                AiJson.objectOf(
                   "blocks",
                   autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
@@ -429,14 +429,14 @@ final class AiParallelSmelt implements AiOperation {
    public boolean canInterruptNow() {
       return this.init_Y.canInterruptNow()
          && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-         && (this.init_cn == null || this.init_cn.init_Z());
+         && (this.init_cn == null || this.init_cn.canInterrupt());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
       return this.init_Y.requiresReconciliation()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.init_cn != null && this.init_cn.load_Z();
+         || this.init_cn != null && this.init_cn.needsReconciliation();
    }
 
    @Override
@@ -449,7 +449,7 @@ final class AiParallelSmelt implements AiOperation {
       }
 
       if (this.init_cn != null) {
-         this.init_cn.init_V();
+         this.init_cn.cancel();
       }
    }
 }

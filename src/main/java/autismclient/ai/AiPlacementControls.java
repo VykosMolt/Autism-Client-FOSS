@@ -6,11 +6,11 @@ final class AiPlacementControls {
    private AiPlacementControls() {
    }
 
-   static int init_I_I_I(int current, int steps) {
+   static int rotateBy(int current, int steps) {
       return Math.floorMod(current + Math.floorMod(steps, 4) * 90, 360);
    }
 
-   static double init_D_D_D(double current, double scroll) {
+   static double adjustDistance(double current, double scroll) {
       return Math.max(0.5, Math.min(5.9999968E7, current + scroll));
    }
 

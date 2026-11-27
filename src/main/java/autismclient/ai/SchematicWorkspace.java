@@ -51,7 +51,7 @@ public final class SchematicWorkspace {
    private static ClientLevel loadedChunkLevel;
    static final int init_I = 256;
    private final Minecraft init_Minecraft;
-   final SchematicLibrary init_cR;
+   final SchematicLibrary library;
    private final Map<String, SchematicLibrary.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
    private final Map<String, SchematicWorkspace.Inner_StreamUtil> load_Map = new LinkedHashMap<>();
    private final Set<String> init_Set = new HashSet<>();
@@ -77,12 +77,12 @@ public final class SchematicWorkspace {
    private SchematicWorkspace.Inner_DataUtil init_cV_DataUtil;
    private final Object init_Obj = new Object();
    private final Object recordingVisOwner = new Object();
-   SchematicCapture.Inner_DataUtil init_cP_DataUtil;
-   String init_Str = "";
-   String load_Str = "";
-   String read_Str = "";
+   SchematicCapture.Inner_DataUtil selectedArea;
+   String captureName = "";
+   String selectedFileId = "";
+   String selectedPlacementId = "";
 
-   public static SchematicWorkspace init_cV() {
+   public static SchematicWorkspace getInstance() {
       if (init_cV == null) {
          init_cV = new SchematicWorkspace(Minecraft.getInstance());
       }
@@ -90,7 +90,7 @@ public final class SchematicWorkspace {
       return init_cV;
    }
 
-   public static void init_V() {
+   public static void registerEvents() {
       ClientChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
          if (loadedChunkLevel != level) {
             loadedChunkKeys.clear();
@@ -114,7 +114,7 @@ public final class SchematicWorkspace {
          }
 
          if (init_cV == null && client.level != null && autismclient.e.FileCache.init()) {
-            init_cV();
+            getInstance();
          }
 
          if (init_cV != null) {
@@ -143,20 +143,20 @@ public final class SchematicWorkspace {
       return chunks;
    }
 
-   public static void load_V() {
+   public static void toggleWindow() {
       if (close_Z()) {
-         SchematicWorkspace workspace = init_cV();
+         SchematicWorkspace workspace = getInstance();
          OverlayManager manager = OverlayManager.getInstance();
          SchematicLibraryOverlay window = workspace.init_SchematicLibraryOv;
          if (window != null && window.isVisible() && manager.getOverlays().contains(window) && !manager.isHidden(window)) {
             window.setVisible(false);
          } else {
-            workspace.init_SchematicLibraryOv();
+            workspace.showOverlay();
          }
       }
    }
 
-   public static void read_V() {
+   public static void restoreWindow() {
       if (close_Z()) {
          if (init_cV == null || init_cV.init_SchematicLibraryOv == null) {
             OverlayBounds saved = autismclient.util.AutismSessionState.getInstance().getOverlayBounds("schematic-library");
@@ -164,7 +164,7 @@ public final class SchematicWorkspace {
                return;
             }
 
-            SchematicWorkspace workspace = init_cV();
+            SchematicWorkspace workspace = getInstance();
             workspace.init_SchematicLibraryOv = new SchematicLibraryOverlay(workspace);
          }
 
@@ -182,34 +182,34 @@ public final class SchematicWorkspace {
 
    private SchematicWorkspace(Minecraft mc) {
       this.init_Minecraft = mc;
-      this.init_cR = new SchematicLibrary(mc.gameDirectory.toPath());
-      SchematicLibrary.init_ExecutorService.execute(() -> {
+      this.library = new SchematicLibrary(mc.gameDirectory.toPath());
+      SchematicLibrary.EXECUTOR.execute(() -> {
          String problem = "";
 
          SchematicLibrary.Inner_CachePool state;
          try {
-            state = this.init_cR.init();
+            state = this.library.init();
          } catch (Exception e) {
-            state = new SchematicLibrary.Inner_CachePool(List.of(this.init_cR.load_Path.toString()), List.of());
-            problem = SchematicLibrary.init_Str_Throwable(e);
+            state = new SchematicLibrary.Inner_CachePool(List.of(this.library.defaultRoot.toString()), List.of());
+            problem = SchematicLibrary.describeError(e);
          }
 
          SchematicLibrary.Inner_CachePool result = state;
          String failure = problem;
          mc.execute(() -> {
-            this.init_cR.init_V_cR_CachePool(result);
+            this.library.applyState(result);
             result.placements().forEach(p -> this.init_Map.put(p.id(), p));
             this.load_Z = true;
             if (!failure.isEmpty()) {
                this.close = "Could not read saved placements: " + failure;
             }
 
-            this.write_V();
+            this.refresh();
          });
       });
    }
 
-   SchematicLibraryOverlay init_SchematicLibraryOv() {
+   SchematicLibraryOverlay showOverlay() {
       if (this.init_SchematicLibraryOv == null) {
          this.init_SchematicLibraryOv = new SchematicLibraryOverlay(this);
       }
@@ -227,7 +227,7 @@ public final class SchematicWorkspace {
       return this.init_SchematicLibraryOv;
    }
 
-   boolean init_Z() {
+   boolean isPasting() {
       return this.init_cT != null;
    }
 
@@ -235,7 +235,7 @@ public final class SchematicWorkspace {
       return this.init_cV_DataUtil != null && !this.init_cV_DataUtil.job().load().isDone() ? this.init_cV_DataUtil : null;
    }
 
-   boolean load_Z() {
+   boolean hasActiveBuild() {
       return this.init_cV_DataUtil() != null;
    }
 
@@ -244,20 +244,20 @@ public final class SchematicWorkspace {
       return active != null && active.placementId().equals(placementId);
    }
 
-   String init_Str() {
+   String activeBuildLabel() {
       SchematicWorkspace.Inner_DataUtil active = this.init_cV_DataUtil();
-      SchematicLibrary.Inner_StreamUtil placement = active == null ? null : this.init_cR_StreamUtil_Str(active.placementId());
-      return placement == null ? "" : load_Str_cR_StreamUtil(placement);
+      SchematicLibrary.Inner_StreamUtil placement = active == null ? null : this.placementById(active.placementId());
+      return placement == null ? "" : displayName(placement);
    }
 
-   SchematicLibrary.Inner_StreamUtil init_cR_StreamUtil_cR_DataUtil(SchematicLibrary.Inner_DataUtil file) {
+   SchematicLibrary.Inner_StreamUtil placementForFile(SchematicLibrary.Inner_DataUtil file) {
       if (file == null) {
          return null;
       }
 
       String path = file.file().toString();
       SchematicWorkspace.Inner_DataUtil active = this.init_cV_DataUtil();
-      SchematicLibrary.Inner_StreamUtil building = active == null ? null : this.init_cR_StreamUtil_Str(active.placementId());
+      SchematicLibrary.Inner_StreamUtil building = active == null ? null : this.placementById(active.placementId());
       if (building != null && building.visible() && building.file().equals(path)) {
          return building;
       }
@@ -271,78 +271,78 @@ public final class SchematicWorkspace {
       return null;
    }
 
-   boolean read_Z() {
+   boolean isLibraryReady() {
       return this.load_Z;
    }
 
-   boolean write_Z() {
+   boolean isInWorld() {
       return this.init_ClientLevel != null && this.init_Minecraft.player != null && !this.write_Str.isEmpty();
    }
 
-   boolean update_Z() {
+   boolean isLocalWorld() {
       IntegratedServer server = this.init_Minecraft.getSingleplayerServer();
-      return this.write_Z() && server != null && !server.isPublished();
+      return this.isInWorld() && server != null && !server.isPublished();
    }
 
    boolean sync_Z() {
       return this.read_Z;
    }
 
-   boolean flush_Z() {
+   boolean isBusy() {
       return this.read_Z || this.init_Future != null || this.init_cP != null || this.activeRecording != null || this.init_cT != null;
    }
 
-   boolean init_Z_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
+   boolean isLoaded(SchematicLibrary.Inner_StreamUtil p) {
       return p != null && this.load_Map.containsKey(p.id());
    }
 
-   boolean load_Z_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
-      return this.init_Z_cR_StreamUtil(p) && !this.init_Z_Str(p.id()) && p.paste().isEmpty() && this.load_Map.get(p.id()).init_cQ_StreamUtil != null;
+   boolean canMove(SchematicLibrary.Inner_StreamUtil p) {
+      return this.isLoaded(p) && !this.init_Z_Str(p.id()) && p.paste().isEmpty() && this.load_Map.get(p.id()).init_cQ_StreamUtil != null;
    }
 
-   boolean read_Z(SchematicLibrary.Inner_StreamUtil p) {
-      return p != null && (!this.flush_Z() || this.init_Z_Str(p.id()));
+   boolean canModify(SchematicLibrary.Inner_StreamUtil p) {
+      return p != null && (!this.isBusy() || this.init_Z_Str(p.id()));
    }
 
-   String load_Str() {
+   String getStatus() {
       if (this.init_cP != null) {
-         return this.init_cP.init_Str;
+         return this.init_cP.stage;
       } else if (this.activeRecording != null) {
          return this.activeRecording.putAt_Str;
       } else if (this.init_cT != null) {
-         return this.init_cT.init_cT_StreamUtil.phase();
+         return this.init_cT.progress.phase();
       } else if (this.read_Z || this.init_Future != null) {
          return this.flush;
       } else if (!this.close.isEmpty()) {
          return this.close;
       } else {
-         return !this.flush.isEmpty() ? this.flush : this.init_cR.init_Str;
+         return !this.flush.isEmpty() ? this.flush : this.library.status;
       }
    }
 
-   int init_I() {
+   int getProgress() {
       if (this.init_cP != null) {
-         return this.init_cP.init_I;
+         return this.init_cP.progress;
       } else if (this.activeRecording != null) {
          return this.activeRecording.flowTemp();
       } else if (this.init_cT != null) {
-         return this.init_cT.init_cT_StreamUtil.percent();
+         return this.init_cT.progress.percent();
       } else {
          return this.init_Future != null ? this.load_I : -1;
       }
    }
 
-   List<SchematicLibrary.Inner_StreamUtil> init_List() {
+   List<SchematicLibrary.Inner_StreamUtil> placements() {
       return this.init_Map.values().stream().filter(p -> p.scope().equals(this.write_Str) && p.dimension().equals(this.update_Str)).toList();
    }
 
-   SchematicLibrary.Inner_StreamUtil init_cR_StreamUtil_Str(String id) {
+   SchematicLibrary.Inner_StreamUtil placementById(String id) {
       SchematicLibrary.Inner_StreamUtil p = this.init_Map.get(id);
       return p != null && p.scope().equals(this.write_Str) && p.dimension().equals(this.update_Str) ? p : null;
    }
 
    SchematicLibrary.Inner_DataUtil init_cR_DataUtil_Str(String id) {
-      for (SchematicLibrary.Inner_DataUtil e : this.init_cR.load_List) {
+      for (SchematicLibrary.Inner_DataUtil e : this.library.entries) {
          if (e.id().equals(id)) {
             return e;
          }
@@ -351,7 +351,7 @@ public final class SchematicWorkspace {
       return null;
    }
 
-   String init_Str_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
+   String placementStatus(SchematicLibrary.Inner_StreamUtil p) {
       if (this.init_Z_Str(p.id())) {
          return "Building";
       } else if (!p.paste().isEmpty()) {
@@ -370,18 +370,18 @@ public final class SchematicWorkspace {
       }
    }
 
-   void write_V() {
+   void refresh() {
       if (this.load_Z) {
          this.close = "";
          this.flush = "";
          this.init_Set.clear();
-         this.init_cR.init_V_Consumer(this.init_Minecraft::execute);
+         this.library.rescan(this.init_Minecraft::execute);
       }
    }
 
-   void update_V() {
+   void addFolder() {
       if (this.load_Z) {
-         String selected = TinyFileDialogs.tinyfd_selectFolderDialog("Add schematic folder", this.init_cR.load_Path.toString());
+         String selected = TinyFileDialogs.tinyfd_selectFolderDialog("Add schematic folder", this.library.defaultRoot.toString());
          if (selected != null && !selected.isBlank()) {
             this.init_V_Str(selected);
          }
@@ -390,7 +390,7 @@ public final class SchematicWorkspace {
 
    void init_V_Str(String path) {
       if (this.load_Z) {
-         SchematicLibrary.init_ExecutorService.execute(() -> {
+         SchematicLibrary.EXECUTOR.execute(() -> {
             try {
                Path folder = Path.of(path).toRealPath();
                if (!Files.isDirectory(folder)) {
@@ -398,54 +398,54 @@ public final class SchematicWorkspace {
                }
 
                this.init_Minecraft.execute(() -> {
-                  LinkedHashSet<Path> roots = new LinkedHashSet<>(this.init_cR.init_List);
+                  LinkedHashSet<Path> roots = new LinkedHashSet<>(this.library.roots);
                   if (roots.size() >= 32 && !roots.contains(folder)) {
                      this.read("Up to 32 folders can be indexed");
                   } else if (roots.add(folder)) {
-                     this.init_cR.init_List = List.copyOf(roots);
+                     this.library.roots = List.copyOf(roots);
                      this.push();
-                     this.write_V();
+                     this.refresh();
                   }
                });
             } catch (Exception e) {
-               this.init_Minecraft.execute(() -> this.read(SchematicLibrary.init_Str_Throwable(e)));
+               this.init_Minecraft.execute(() -> this.read(SchematicLibrary.describeError(e)));
             }
          });
       }
    }
 
-   void init_V_Path(Path root) {
-      if (this.load_Z && !root.equals(this.init_cR.load_Path)) {
-         this.init_cR.init_List = this.init_cR.init_List.stream().filter(p -> !p.equals(root)).toList();
+   void removeFolder(Path root) {
+      if (this.load_Z && !root.equals(this.library.defaultRoot)) {
+         this.library.roots = this.library.roots.stream().filter(p -> !p.equals(root)).toList();
          this.push();
-         this.write_V();
+         this.refresh();
       }
    }
 
-   void load_V_Path(Path path) {
+   void openPath(Path path) {
       Compat263.openPath(Util.getPlatform(), path);
    }
 
-   void sync_V() {
-      if (this.write_Z() && !this.flush_Z()) {
+   void selectArea() {
+      if (this.isInWorld() && !this.isBusy()) {
          SchematicSelection selector = new SchematicSelection(this.init_Minecraft);
-         if (!aP.init_Z_aR_Runnable(selector, () -> this.init_cP_DataUtil = selector.init_cP_DataUtil())) {
+         if (!aP.init_Z_aR_Runnable(selector, () -> this.selectedArea = selector.getArea())) {
             this.read("Stop the current AI task before selecting an area");
          }
       }
    }
 
-   void init_V_Z_Z(boolean allLoaded, boolean entities) {
-      if (this.read_Z() && this.write_Z() && !this.flush_Z()) {
-         if (!allLoaded && this.init_cP_DataUtil == null) {
+   void startCapture(boolean allLoaded, boolean entities) {
+      if (this.isLibraryReady() && this.isInWorld() && !this.isBusy()) {
+         if (!allLoaded && this.selectedArea == null) {
             this.read("Select two corners first");
          } else {
             try {
-               this.init_cP = new SchematicCapture(this.init_Minecraft, this.init_cR.load_Path, this.init_Str, allLoaded ? null : this.init_cP_DataUtil, entities);
+               this.init_cP = new SchematicCapture(this.init_Minecraft, this.library.defaultRoot, this.captureName, allLoaded ? null : this.selectedArea, entities);
                this.close = "";
                this.flush = "";
             } catch (Exception e) {
-               this.read(SchematicLibrary.init_Str_Throwable(e));
+               this.read(SchematicLibrary.describeError(e));
             }
          }
       }
@@ -456,13 +456,13 @@ public final class SchematicWorkspace {
    }
 
    void startRecording(boolean entities) {
-      if (this.read_Z() && this.write_Z() && !this.flush_Z()) {
+      if (this.isLibraryReady() && this.isInWorld() && !this.isBusy()) {
          try {
-            this.activeRecording = new SchematicRecording(this.init_Minecraft, this.init_cR.load_Path, this.init_Str, entities);
+            this.activeRecording = new SchematicRecording(this.init_Minecraft, this.library.defaultRoot, this.captureName, entities);
             this.close = "";
             this.flush = "";
          } catch (Exception e) {
-            this.read(SchematicLibrary.init_Str_Throwable(e));
+            this.read(SchematicLibrary.describeError(e));
          }
       }
    }
@@ -470,36 +470,36 @@ public final class SchematicWorkspace {
    void stopAndSaveRecording() {
       if (this.activeRecording != null) {
          try {
-            this.activeRecording.putAt_V_Str(this.init_Str);
+            this.activeRecording.putAt_V_Str(this.captureName);
          } catch (IllegalArgumentException e) {
-            this.read(SchematicLibrary.init_Str_Throwable(e));
+            this.read(SchematicLibrary.describeError(e));
          }
       }
    }
 
-   void init_V_cR_DataUtil(SchematicLibrary.Inner_DataUtil file) {
-      if (this.read_Z() && !this.flush_Z() && file != null) {
+   void renameFile(SchematicLibrary.Inner_DataUtil file) {
+      if (this.isLibraryReady() && !this.isBusy() && file != null) {
          PromptDialogScreen screen = new PromptDialogScreen("Rename file", file.name(), name -> this.init_V_cR_DataUtil_Str(file, name));
          autismclient.util.OverlayScreenController.openModalScreen(this.init_Minecraft, screen);
       }
    }
 
    private void init_V_cR_DataUtil_Str(SchematicLibrary.Inner_DataUtil file, String name) {
-      if (this.read_Z() && !this.flush_Z() && this.init_cR_DataUtil_Str(file.id()) != null) {
+      if (this.isLibraryReady() && !this.isBusy() && this.init_cR_DataUtil_Str(file.id()) != null) {
          this.read_Z = true;
          this.flush = "Renaming file";
          this.close = "";
 
          try {
-            SchematicLibrary.init_ExecutorService.execute(() -> {
+            SchematicLibrary.EXECUTOR.execute(() -> {
                try {
-                  SchematicLibrary.Inner_DataUtil updated = this.init_cR.init_cR_DataUtil_cR_DataUtil_Str(file, name);
+                  SchematicLibrary.Inner_DataUtil updated = this.library.rename(file, name);
                   this.init_Minecraft.execute(() -> {
                      this.read_Z = false;
                      this.init_Map.replaceAll((id, p) -> p.file().equals(file.file().toString()) ? p.movedTo(updated) : p);
-                     this.load_Str = updated.id();
+                     this.selectedFileId = updated.id();
                      this.init_Set.clear();
-                     this.init_cR.init_V_cR_DataUtil(file, updated, this.init_Minecraft::execute);
+                     this.library.replaceEntry(file, updated, this.init_Minecraft::execute);
                      this.push();
                      this.flush = "";
                      autismclient.util.bi.load("Renamed to " + updated.name());
@@ -507,7 +507,7 @@ public final class SchematicWorkspace {
                } catch (Exception e) {
                   this.init_Minecraft.execute(() -> {
                      this.read_Z = false;
-                     this.read(SchematicLibrary.init_Str_Throwable(e));
+                     this.read(SchematicLibrary.describeError(e));
                   });
                }
             });
@@ -518,11 +518,11 @@ public final class SchematicWorkspace {
       }
    }
 
-   void init_V_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
-      if (!this.flush_Z() && p != null) {
-         PromptDialogScreen screen = new PromptDialogScreen("Rename schematic", load_Str_cR_StreamUtil(p), name -> {
-            SchematicLibrary.Inner_StreamUtil current = this.init_cR_StreamUtil_Str(p.id());
-            if (current != null && !this.flush_Z()) {
+   void renamePlacement(SchematicLibrary.Inner_StreamUtil p) {
+      if (!this.isBusy() && p != null) {
+         PromptDialogScreen screen = new PromptDialogScreen("Rename schematic", displayName(p), name -> {
+            SchematicLibrary.Inner_StreamUtil current = this.placementById(p.id());
+            if (current != null && !this.isBusy()) {
                this.init_Map.put(current.id(), current.named(name));
                this.push();
             }
@@ -531,8 +531,8 @@ public final class SchematicWorkspace {
       }
    }
 
-   void load_V_cR_DataUtil(SchematicLibrary.Inner_DataUtil file) {
-      if (this.read_Z() && this.write_Z() && !this.flush_Z() && file != null) {
+   void placeFile(SchematicLibrary.Inner_DataUtil file) {
+      if (this.isLibraryReady() && this.isInWorld() && !this.isBusy() && file != null) {
          if (this.init_Map.size() >= 256) {
             this.read("Remove an existing placement first");
          } else {
@@ -559,29 +559,29 @@ public final class SchematicWorkspace {
    }
 
    void init_V_cR_StreamUtil_Z(SchematicLibrary.Inner_StreamUtil p, boolean add) {
-      if (p != null && this.init_Future == null && this.write_Z()) {
+      if (p != null && this.init_Future == null && this.isInWorld()) {
          Path file = Path.of(p.file());
-         if (this.init_cR.init_Z_Path(file)) {
+         if (this.library.isInRoots(file)) {
             long generation = ++this.init_J;
             ClientLevel capturedWorld = this.init_ClientLevel;
             this.sync = p.id();
             this.load_I = 0;
             this.flush = "Reading schematic";
             this.close = "";
-            this.init_Future = SchematicLibrary.init_ExecutorService.submit(() -> {
+            this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> {
                try {
                   init_V_cR_StreamUtil_Path(p, file);
-                  SchematicDocument document = SchematicDocument.init_cQ_Path(file);
+                  SchematicDocument document = SchematicDocument.loadFile(file);
                   init_V_cR_StreamUtil_Path(p, file);
                   SchematicDocument.Inner_StreamUtil preview = null;
                   String previewError = null;
 
                   try {
-                     preview = document.init_cQ_StreamUtil_I(p.rotation(), p.mirror(), value -> this.load_I = 15 + value * 70 / 100);
+                     preview = document.buildPreview(p.rotation(), p.mirror(), value -> this.load_I = 15 + value * 70 / 100);
                   } catch (CancellationException e) {
                      throw e;
                   } catch (IllegalArgumentException e) {
-                     previewError = SchematicLibrary.init_Str_Throwable(e);
+                     previewError = SchematicLibrary.describeError(e);
                   }
 
                   SchematicWorkspace.Inner_StreamUtil data = new SchematicWorkspace.Inner_StreamUtil(document, preview, previewError);
@@ -591,12 +591,12 @@ public final class SchematicWorkspace {
                         this.sync = "";
                         if (add) {
                            this.init_Map.put(p.id(), p);
-                           this.read_Str = p.id();
+                           this.selectedPlacementId = p.id();
                            this.push();
                         }
 
                         this.load_Map.put(p.id(), data);
-                        this.flush = data.init_Str != null ? "Loaded · " + data.init_Str : "Loaded " + load_Str_cR_StreamUtil(p);
+                        this.flush = data.init_Str != null ? "Loaded · " + data.init_Str : "Loaded " + displayName(p);
                      }
                   });
                } catch (CancellationException var13) {
@@ -606,26 +606,26 @@ public final class SchematicWorkspace {
                         this.init_Future = null;
                         this.sync = "";
                         this.init_Set.add(p.id());
-                        this.read(SchematicLibrary.init_Str_Throwable(e));
+                        this.read(SchematicLibrary.describeError(e));
                      }
                   });
                }
             });
          } else {
             this.init_Set.add(p.id());
-            if (add || p.id().equals(this.read_Str)) {
+            if (add || p.id().equals(this.selectedPlacementId)) {
                this.read("Add this schematic's folder to the library");
             }
          }
       }
    }
 
-   void load_V_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
-      p = p == null ? null : this.init_cR_StreamUtil_Str(p.id());
-      if (this.read_Z(p)) {
+   void toggleShown(SchematicLibrary.Inner_StreamUtil p) {
+      p = p == null ? null : this.placementById(p.id());
+      if (this.canModify(p)) {
          if (p.visible()) {
             if (this.init_Z_Str(p.id())) {
-               this.flush_V();
+               this.stopBuild();
             }
 
             this.init_Map.put(p.id(), p.shown(false));
@@ -639,11 +639,11 @@ public final class SchematicWorkspace {
       }
    }
 
-   void read_V(SchematicLibrary.Inner_StreamUtil p) {
-      p = p == null ? null : this.init_cR_StreamUtil_Str(p.id());
-      if (this.read_Z(p)) {
+   void removePlacement(SchematicLibrary.Inner_StreamUtil p) {
+      p = p == null ? null : this.placementById(p.id());
+      if (this.canModify(p)) {
          if (this.init_Z_Str(p.id())) {
-            this.flush_V();
+            this.stopBuild();
          }
 
          this.init_Map.remove(p.id());
@@ -653,7 +653,7 @@ public final class SchematicWorkspace {
    }
 
    void write(SchematicLibrary.Inner_StreamUtil p) {
-      if (this.load_Z_cR_StreamUtil(p) && !this.flush_Z()) {
+      if (this.canMove(p) && !this.isBusy()) {
          SchematicWorkspace.Inner_StreamUtil data = this.load_Map.get(p.id());
          if (data.init_cV_CachePool == null) {
             data.init_cV_CachePool = new SchematicWorkspace.Inner_CachePool(this, p.id());
@@ -673,7 +673,7 @@ public final class SchematicWorkspace {
    }
 
    void init(SchematicLibrary.Inner_StreamUtil p, boolean includeAir, boolean includeEntities) {
-      if (p != null && this.update_Z() && this.init_Z_cR_StreamUtil(p) && !this.flush_Z() && !this.load_Z()) {
+      if (p != null && this.isLocalWorld() && this.isLoaded(p) && !this.isBusy() && !this.hasActiveBuild()) {
          JsonObject checkpoint = p.paste();
 
          try {
@@ -695,7 +695,7 @@ public final class SchematicWorkspace {
             this.open = p.id();
             SchematicWorkspace.Inner_StreamUtil preview = this.load_Map.get(p.id());
             AiVisualization.init_V(preview.init_cV_CachePool == null ? preview : preview.init_cV_CachePool);
-            this.init_Map.put(p.id(), p.checkpoint(this.init_cT.init_cT_StreamUtil.checkpoint()));
+            this.init_Map.put(p.id(), p.checkpoint(this.init_cT.progress.checkpoint()));
             this.push();
             this.close = "";
             this.flush = "";
@@ -705,21 +705,21 @@ public final class SchematicWorkspace {
 
             autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);
          } catch (Exception e) {
-            this.read(SchematicLibrary.init_Str_Throwable(e));
+            this.read(SchematicLibrary.describeError(e));
          }
       }
    }
 
    void update(SchematicLibrary.Inner_StreamUtil p) {
-      p = p == null ? null : this.init_cR_StreamUtil_Str(p.id());
-      if (p != null && p.visible() && p.paste().isEmpty() && this.write_Z() && this.init_Z_cR_StreamUtil(p) && !this.flush_Z() && !this.load_Z()) {
+      p = p == null ? null : this.placementById(p.id());
+      if (p != null && p.visible() && p.paste().isEmpty() && this.isInWorld() && this.isLoaded(p) && !this.isBusy() && !this.hasActiveBuild()) {
          SchematicWorkspace.Inner_StreamUtil data = this.load_Map.get(p.id());
          if (data.init_cQ_StreamUtil == null) {
             this.read("This schematic exceeds the AI builder's preview limit");
          } else if (data.init_cQ_StreamUtil.blocks() > 2097152L) {
             this.read("This schematic exceeds the AI builder's block limit");
          } else {
-            SchematicLibrary.Inner_DataUtil entry = this.init_cR_DataUtil_Str(SchematicLibrary.init_Str_Path(Path.of(p.file())));
+            SchematicLibrary.Inner_DataUtil entry = this.init_cR_DataUtil_Str(SchematicLibrary.idOf(Path.of(p.file())));
             if (entry != null && entry.bytes() == p.bytes() && entry.modified() == p.modified()) {
                BlockPos at = init_BlockPos_cR_StreamUtil(p).offset(data.init_cQ_StreamUtil.nonAirMinimum());
 
@@ -741,7 +741,7 @@ public final class SchematicWorkspace {
                   this.init_cV_DataUtil = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.init_k_StreamUtil("game:build", args));
                   autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);
                } catch (Exception e) {
-                  this.read(SchematicLibrary.init_Str_Throwable(e));
+                  this.read(SchematicLibrary.describeError(e));
                }
             } else {
                this.read("Refresh the file list and load the current file");
@@ -750,7 +750,7 @@ public final class SchematicWorkspace {
       }
    }
 
-   void flush_V() {
+   void stopBuild() {
       if (this.open_Z()) {
          autismclient.util.bi.read("Build stopped");
       }
@@ -767,13 +767,13 @@ public final class SchematicWorkspace {
       return true;
    }
 
-   void close_V() {
+   void cancelOperation() {
       this.close_V(false);
    }
 
    private void close_V(boolean keepRecording) {
       if (this.init_cP != null) {
-         this.init_cP.init_V();
+         this.init_cP.cancel();
          this.init_cP = null;
          this.flush = "Save cancelled";
       }
@@ -808,7 +808,7 @@ public final class SchematicWorkspace {
 
          this.close_V(true);
          this.poll();
-         this.init_cP_DataUtil = null;
+         this.selectedArea = null;
          this.init_ClientLevel = this.init_Minecraft.level;
          this.write_Str = this.init_ClientLevel == null ? "" : init_Str_Minecraft(this.init_Minecraft);
          this.update_Str = this.init_ClientLevel == null ? "" : AiWorldIdentity.currentDimensionId(this.init_Minecraft);
@@ -823,16 +823,16 @@ public final class SchematicWorkspace {
 
       if (this.load_Z) {
          if (this.init_cP != null) {
-            this.init_cP.init_V_Minecraft(this.init_Minecraft);
-            if (this.init_cP.load_Z || this.init_cP.init_Z) {
+            this.init_cP.tick(this.init_Minecraft);
+            if (this.init_cP.finished || this.init_cP.cancelled) {
                SchematicCapture finished = this.init_cP;
                this.init_cP = null;
-               if (finished.init_Path != null) {
-                  this.write_V();
-                  this.flush = "Saved " + finished.init_Path.getFileName();
+               if (finished.savedPath != null) {
+                  this.refresh();
+                  this.flush = "Saved " + finished.savedPath.getFileName();
                   autismclient.util.bi.load(this.flush);
-               } else if (!finished.load_Str.isEmpty()) {
-                  this.read(finished.load_Str);
+               } else if (!finished.error.isEmpty()) {
+                  this.read(finished.error);
                }
             }
          }
@@ -852,7 +852,7 @@ public final class SchematicWorkspace {
                this.activeRecording = null;
                AiVisualization.init_V(this.recordingVisOwner);
                if (finished.putAt_Path != null) {
-                  this.write_V();
+                  this.refresh();
                   if (finished.fill_Z()) {
                      this.flush = "Recording limit reached · saved " + finished.putAt_Path.getFileName();
                      autismclient.util.bi.read(this.flush);
@@ -869,8 +869,8 @@ public final class SchematicWorkspace {
          }
 
          if (this.init_cT != null) {
-            boolean terminal = this.init_cT.load_Z;
-            SchematicPaste.Inner_StreamUtil progress = this.init_cT.init_cT_StreamUtil;
+            boolean terminal = this.init_cT.finished;
+            SchematicPaste.Inner_StreamUtil progress = this.init_cT.progress;
             AiVisualization.init(this.init_Obj, "Schematic paste", progress.phase(), progress.percent(), 100);
             if (terminal || System.nanoTime() - this.load_J > 2000000000L) {
                SchematicLibrary.Inner_StreamUtil p = this.init_Map.get(this.open);
@@ -902,9 +902,9 @@ public final class SchematicWorkspace {
             }
          }
 
-         if (this.write_Z()) {
-            if (!this.flush_Z()) {
-               for (SchematicLibrary.Inner_StreamUtil p : this.init_List()) {
+         if (this.isInWorld()) {
+            if (!this.isBusy()) {
+               for (SchematicLibrary.Inner_StreamUtil p : this.placements()) {
                   if ((p.visible() || !p.paste().isEmpty()) && !this.load_Map.containsKey(p.id()) && !this.init_Set.contains(p.id())) {
                      this.init_V_cR_StreamUtil_Z(p, false);
                      break;
@@ -934,7 +934,7 @@ public final class SchematicWorkspace {
                SchematicWorkspace.Inner_StreamUtil data = oldest;
                Object owner = data.init_cV_CachePool == null ? data : data.init_cV_CachePool;
                AiVisualization.init_V_Obj_2(
-                  owner, init_BlockPos_cR_StreamUtil(p), data.init_cQ_StreamUtil.cells(), at -> data.init_cQ.init_Z_BlockPos(at, p.rotation(), p.mirror())
+                  owner, init_BlockPos_cR_StreamUtil(p), data.init_cQ_StreamUtil.cells(), at -> data.init_cQ.isSolidAt(at, p.rotation(), p.mirror())
                );
             }
          }
@@ -971,15 +971,15 @@ public final class SchematicWorkspace {
             this.write_Z = true;
             this.update_Z = false;
             SchematicLibrary.Inner_CachePool snapshot = new SchematicLibrary.Inner_CachePool(
-               this.init_cR.init_List.stream().map(Path::toString).toList(), List.copyOf(this.init_Map.values())
+               this.library.roots.stream().map(Path::toString).toList(), List.copyOf(this.init_Map.values())
             );
-            SchematicLibrary.init_ExecutorService.execute(() -> {
+            SchematicLibrary.EXECUTOR.execute(() -> {
                String problem = "";
 
                try {
-                  this.init_cR.load_V_cR_CachePool(snapshot);
+                  this.library.saveState(snapshot);
                } catch (Exception e) {
-                  problem = SchematicLibrary.init_Str_Throwable(e);
+                  problem = SchematicLibrary.describeError(e);
                }
 
                String failure = problem;
@@ -1009,7 +1009,7 @@ public final class SchematicWorkspace {
       return new BlockPos(p.x(), p.y(), p.z());
    }
 
-   static String load_Str_cR_StreamUtil(SchematicLibrary.Inner_StreamUtil p) {
+   static String displayName(SchematicLibrary.Inner_StreamUtil p) {
       return p.name().isBlank() ? Path.of(p.file()).getFileName().toString() : p.name();
    }
 
@@ -1023,8 +1023,8 @@ public final class SchematicWorkspace {
    }
 
    private BlockPos init_BlockPos_Z_D(boolean surface, double depth) {
-      Vec3 eye = SchematicSelection.init_Vec3_Minecraft(this.init_Minecraft);
-      Vec3 direction = SchematicSelection.load_Vec3_Minecraft(this.init_Minecraft);
+      Vec3 eye = SchematicSelection.eyePosition(this.init_Minecraft);
+      Vec3 direction = SchematicSelection.lookDirection(this.init_Minecraft);
       Vec3 end = eye.add(direction.scale(depth));
       if (surface) {
          BlockHitResult hit = this.init_Minecraft
@@ -1055,44 +1055,44 @@ public final class SchematicWorkspace {
       }
 
       @Override
-      boolean load_Z() {
-         return this.read_Z() && this.init_cV.init_Future == null;
+      boolean isReadyToConfirm() {
+         return this.isActive() && this.init_cV.init_Future == null;
       }
 
       @Override
-      boolean read_Z() {
-         return this.init_cV.write_Z() && this.init_cV.init_cR_StreamUtil_Str(this.init_Str) != null && this.init_cV.load_Map.containsKey(this.init_Str);
+      boolean isActive() {
+         return this.init_cV.isInWorld() && this.init_cV.placementById(this.init_Str) != null && this.init_cV.load_Map.containsKey(this.init_Str);
       }
 
       @Override
-      BlockPos init_BlockPos() {
+      BlockPos getOrigin() {
          return SchematicWorkspace.init_BlockPos_cR_StreamUtil(this.init_cR_StreamUtil());
       }
 
       @Override
-      int init_I() {
+      int getRotation() {
          return this.init_cR_StreamUtil().rotation();
       }
 
       @Override
-      String read_Str() {
+      String getMirror() {
          return this.init_cR_StreamUtil().mirror();
       }
 
       @Override
-      void init_V_Z(boolean surface) {
+      void moveToAim(boolean surface) {
          this.init(this.init_cV.init_BlockPos_Z_D(surface, this.init_D));
       }
 
       @Override
       void init(double scroll, double x, double y, double w, double h) {
          this.init_D = Math.max(1.0, Math.min(96.0, this.init_D + scroll));
-         this.init_V_Z(false);
+         this.moveToAim(false);
       }
 
       @Override
-      void load_V() {
-         BlockPos p = this.init_BlockPos();
+      void snapToGround() {
+         BlockPos p = this.getOrigin();
          ClientLevel level = this.init_cV.init_ClientLevel;
          if (level.hasChunkAt(p)) {
             int y = level.getHeight(Types.MOTION_BLOCKING, p.getX(), p.getZ());
@@ -1102,7 +1102,7 @@ public final class SchematicWorkspace {
 
       @Override
       void init(int x, int y, int z) {
-         this.init(this.init_BlockPos().offset(x, y, z));
+         this.init(this.getOrigin().offset(x, y, z));
       }
 
       private void init(BlockPos at) {
@@ -1110,15 +1110,15 @@ public final class SchematicWorkspace {
       }
 
       @Override
-      void init_V_I(int steps) {
-         this.init(Math.floorMod(this.init_I() + steps * 90, 360), this.read_Str());
+      void rotate(int steps) {
+         this.init(Math.floorMod(this.getRotation() + steps * 90, 360), this.getMirror());
       }
 
       @Override
-      void init_V() {
-         int var10001 = this.init_I();
+      void cycleMirror() {
+         int var10001 = this.getRotation();
          String var10002;
-         switch (this.read_Str()) {
+         switch (this.getMirror()) {
             case "none":
                var10002 = "x";
                break;
@@ -1135,13 +1135,13 @@ public final class SchematicWorkspace {
       @Override
       void init(BlockPos at, int r, String m) {
          this.init(at);
-         if (this.init_I() != r || !this.read_Str().equals(m)) {
+         if (this.getRotation() != r || !this.getMirror().equals(m)) {
             this.init(r, m);
          }
       }
 
       @Override
-      void read_V() {
+      void cancel() {
       }
 
       private void init(int r, String m) {
@@ -1149,22 +1149,22 @@ public final class SchematicWorkspace {
          SchematicWorkspace.Inner_StreamUtil data = this.init_cV.load_Map.get(this.init_Str);
          if (r == p.rotation() && m.equals(p.mirror())) {
             if (this.init_cV.sync.equals(this.init_Str)) {
-               this.init_cV.close_V();
+               this.init_cV.cancelOperation();
             }
          } else {
             if (this.init_cV.init_Future != null) {
-               this.init_cV.close_V();
+               this.init_cV.cancelOperation();
             }
 
             long token = ++this.init_cV.init_J;
             this.init_cV.sync = this.init_Str;
             this.init_cV.flush = "Rotating hologram";
             this.init_cV.load_I = 0;
-            this.init_cV.init_Future = SchematicLibrary.init_ExecutorService.submit(() -> {
+            this.init_cV.init_Future = SchematicLibrary.EXECUTOR.submit(() -> {
                try {
-                  SchematicDocument.Inner_StreamUtil result = data.init_cQ.init_cQ_StreamUtil_I(r, m, value -> this.init_cV.load_I = value);
+                  SchematicDocument.Inner_StreamUtil result = data.init_cQ.buildPreview(r, m, value -> this.init_cV.load_I = value);
                   this.init_cV.init_Minecraft.execute(() -> {
-                     if (this.init_cV.init_J == token && this.read_Z()) {
+                     if (this.init_cV.init_J == token && this.isActive()) {
                         SchematicLibrary.Inner_StreamUtil latest = this.init_cR_StreamUtil();
                         this.init_cV.init_Map.put(this.init_Str, latest.at(latest.x(), latest.y(), latest.z(), r, m));
                         data.init_cQ_StreamUtil = result;
@@ -1179,7 +1179,7 @@ public final class SchematicWorkspace {
                      if (this.init_cV.init_J == token) {
                         this.init_cV.init_Future = null;
                         this.init_cV.sync = "";
-                        this.init_cV.read(SchematicLibrary.init_Str_Throwable(e));
+                        this.init_cV.read(SchematicLibrary.describeError(e));
                      }
                   });
                }

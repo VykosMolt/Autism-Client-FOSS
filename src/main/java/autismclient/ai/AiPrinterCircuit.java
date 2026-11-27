@@ -71,7 +71,7 @@ final class AiPrinterCircuit {
          : new AiPrinterCircuit.Inner_TaskQueue(world, source.immutable(), target.immutable(), quasi, Math.max(0, budget)).init();
    }
 
-   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> init_Map(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> influences(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       return init_Map(world, source, targets, 256);
    }
 
@@ -86,7 +86,7 @@ final class AiPrinterCircuit {
       return Map.copyOf(result);
    }
 
-   static AiPrinterCircuit.Inner_JsonUtil init_bl_JsonUtil(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   static AiPrinterCircuit.Inner_JsonUtil trace(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       return init_bl_JsonUtil(world, source, targets, 256);
    }
 

@@ -181,7 +181,7 @@ final class AiCarriedShulker implements AiOperation {
       }
 
       for (ItemStack stored : init_List_ItemStack(box)) {
-         if (autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
+         if (autismclient.ai.print.PrintCore.matchesItem(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
             return stored.getItem();
          }
       }
@@ -576,12 +576,12 @@ final class AiCarriedShulker implements AiOperation {
          }
 
          @Override
-         public boolean init_Z(BlockPos cell) {
+         public boolean allowsCell(BlockPos cell) {
             return cell.getY() == box.getY() && Math.abs(cell.getX() - box.getX()) <= 2 && Math.abs(cell.getZ() - box.getZ()) <= 2;
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> disallowedMoves() {
             return walks;
          }
       };

@@ -623,7 +623,7 @@ final class AiGuard {
    }
 
    private static boolean hasClearShotLine(Minecraft mc, Entity shooter) {
-      return autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
+      return autismclient.ai.engine.AiSight.hasLineOfSight(
          mc.level, shooter.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
       );
    }
@@ -1146,7 +1146,7 @@ final class AiGuard {
    }
 
    static boolean isLowHealthOverrideActive() {
-      return autismclient.ai.engine.AiLowHealth.init_Z();
+      return autismclient.ai.engine.AiLowHealth.isOverrideActive();
    }
 
    static String formatLowHealthAbort(String activity, float health, float maxHealth) {
@@ -1157,7 +1157,7 @@ final class AiGuard {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            autismclient.ai.engine.AiLowHealth.init_V();
+            autismclient.ai.engine.AiLowHealth.enterOverride();
 
             try {
                return inner.tick();

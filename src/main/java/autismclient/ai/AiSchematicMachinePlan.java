@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiSchematicMachinePlan {
-   static final AiSchematicMachinePlan init_bV = new AiSchematicMachinePlan(Map.of(), List.of());
+   static final AiSchematicMachinePlan EMPTY = new AiSchematicMachinePlan(Map.of(), List.of());
    private final Map<Long, ListTag> init_Map;
    private final List<AiSchematic.Inner_TaskQueue> init_List;
    private final List<AiSchematic.Inner_StreamUtil> load_List;
@@ -71,7 +71,7 @@ public final class AiSchematicMachinePlan {
       this.read_Set = Set.copyOf(clockSections);
    }
 
-   static AiSchematicMachinePlan init_bV_bP_BufferHelper_TableIndex_DataUti(AiSchematic.Inner_BufferHelper source, AiBuilder.Blueprint selected) {
+   static AiSchematicMachinePlan fromSchematic(AiSchematic.Inner_BufferHelper source, AiBuilder.Blueprint selected) {
       AiSchematicMachinePlan plan = new AiSchematicMachinePlan(source.containerContents(), source.railVehicles(), source.itemFrames()).init(selected);
       HashMap<Long, BlockState> outcomes = new HashMap<>();
       HashSet<Long> vehicleCells = new HashSet<>();
@@ -102,7 +102,7 @@ public final class AiSchematicMachinePlan {
 
    AiSchematicMachinePlan init(AiBuilder.Blueprint selected) {
       if (this.init_Z()) {
-         return init_bV;
+         return EMPTY;
       }
 
       HashSet<Long> vehicleCells = new HashSet<>();
@@ -210,7 +210,7 @@ public final class AiSchematicMachinePlan {
 
       List<AiSchematic.Inner_StreamUtil> hung = this.load_List.stream().filter(frame -> supported.contains(frame.support().asLong())).toList();
       return kept.isEmpty() && carts.isEmpty() && selectedOutcomes.isEmpty() && hung.isEmpty()
-         ? init_bV
+         ? EMPTY
          : new AiSchematicMachinePlan(kept, carts, offRail, hoppers, storage, selectedOutcomes, context, sections, hung);
    }
 
@@ -218,7 +218,7 @@ public final class AiSchematicMachinePlan {
       return this.init_Map.isEmpty() && this.init_List.isEmpty() && this.read_Map.isEmpty() && this.load_List.isEmpty();
    }
 
-   boolean load_Z() {
+   boolean hasActions() {
       return !this.init_List.isEmpty() || !this.load_Map.isEmpty() || !this.read_Map.isEmpty() || !this.load_List.isEmpty();
    }
 
@@ -250,8 +250,8 @@ public final class AiSchematicMachinePlan {
       return this.init(origin, registries, this.load_Map.keySet());
    }
 
-   AiSchematicMachinePlan.MachineSpec init_bV_StreamUtil_BlockPos_HolderLookup_Provi(BlockPos origin, Provider registries) {
-      if (!this.load_Z()) {
+   AiSchematicMachinePlan.MachineSpec machineSpec(BlockPos origin, Provider registries) {
+      if (!this.hasActions()) {
          return AiSchematicMachinePlan.MachineSpec.EMPTY;
       }
 

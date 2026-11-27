@@ -741,7 +741,7 @@ public final class AiGoto {
    public static AiOperation approachBlockToBreak(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4, boolean var6) {
       Minecraft var7 = Minecraft.getInstance();
       AiPathfinder.PathGoal var8 = protectingCells(
-         new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY()).init_q(), var2
+         new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY()).forSnapshotGrids(), var2
       );
       return travelTo(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, var6 ? requiringDryStandCell(var8) : var8);
    }
@@ -1166,8 +1166,8 @@ public final class AiGoto {
             final BlockPos putAt_BlockPos = this.readEx_BlockPos_5();
             final int flowTemp = this.putAt_Minecraft.player.getInventory().getSelectedSlot();
             final AiPathfinder.GridView putAt_FileStore_TextStor = AiGoto.SNAPSHOT_GRID_ENABLED
-               ? new AiPathfinder.LiveGridView(this.putAt_Minecraft, this.putAt_BlockPos, var0, this.fill_ItemStackArr(), AiChunkMemory.init_StateCache())
-               : new AiLiveGrid(this.putAt_Minecraft, this.fill_ItemStackArr(), AiChunkMemory.init_StateCache());
+               ? new AiPathfinder.LiveGridView(this.putAt_Minecraft, this.putAt_BlockPos, var0, this.fill_ItemStackArr(), AiChunkMemory.getInstance())
+               : new AiLiveGrid(this.putAt_Minecraft, this.fill_ItemStackArr(), AiChunkMemory.getInstance());
             AiPathfinder.PathGoal putAt_FileStore_TokenCod = var11 != null
                ? var11.putAt_FileStore_TokenCod_FileStore_TextStor(this.putAt_FileStore_TextStor)
                : AiPathfinder.PathGoal.near(var0, var24, var15);
@@ -1256,7 +1256,7 @@ public final class AiGoto {
                this.putAt_RingCache.prev(var11 != null && var11.putAt_Z());
                this.putAt_RingCache.putAt_V_Predicate(var1x -> this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var1x));
                this.putAt_RingCache.putAt_V_Z(var8);
-               this.putAt_RingCache.putAt_V_PacketHelper(AiChunkMemory.init_StateCache());
+               this.putAt_RingCache.putAt_V_PacketHelper(AiChunkMemory.getInstance());
                this.putAt_RingCache.value(var12 == null || var12.bunnyhop());
                this.putAt_RingCache.prevEx_V_Z(var12 == null || var12.sprint());
                this.putAt_RingCache.fill(var20);
@@ -1281,7 +1281,7 @@ public final class AiGoto {
 
             @Override
             public AiOperation.Result tick() {
-               AiFallGuard.init_V();
+               AiFallGuard.markDriven();
                if (!this.flushOf_Z && this.putAt_Minecraft.player != null && this.putAt_Minecraft.level != null) {
                   if (this.putAt_Minecraft.level != this.putAt_Obj) {
                      return this.putAt(autismclient.ai.AiFailure.WORLD_CHANGED, "World changed during travel");
@@ -1301,7 +1301,7 @@ public final class AiGoto {
                      return this.putAt(AiOperation.Status.TIMED_OUT, "Goto deadline reached");
                   }
 
-                  if (this.putAt_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z() && !var15) {
+                  if (this.putAt_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive() && !var15) {
                      return this.putAt(
                         autismclient.ai.AiFailure.LOW_HEALTH,
                         AiLowHealth.init("travel", this.putAt_Minecraft.player.getHealth(), this.putAt_Minecraft.player.getMaxHealth())
@@ -1343,7 +1343,7 @@ public final class AiGoto {
                         var1x.setFocus(this.stateOf_Z ? this.putAt_FileStore_TaskStat.activeOrigin() : this.putAt_Minecraft.player.blockPosition());
                         var1x.scanBudget(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill ? 750000L : 4000000L);
                      } else {
-                        AiLiveGrid.putAt(this.putAt_Minecraft, AiChunkMemory.init_StateCache());
+                        AiLiveGrid.putAt(this.putAt_Minecraft, AiChunkMemory.getInstance());
                      }
 
                      long var13x = System.nanoTime();
@@ -2079,7 +2079,7 @@ public final class AiGoto {
             private boolean tick_Z_2() {
                return var12.sprint()
                   && this.putAt_Minecraft.player.getFoodData().getFoodLevel() > 6
-                  && (!AiLowHealth.init_Z() || this.putAt_Minecraft.player.getHealth() > 4.0F);
+                  && (!AiLowHealth.isOverrideActive() || this.putAt_Minecraft.player.getHealth() > 4.0F);
             }
 
             private void value_V_9() {
@@ -2341,13 +2341,13 @@ public final class AiGoto {
                   );
                if (!var15
                   && !this.frameOf
-                  && !AiLowHealth.init_Z()
+                  && !AiLowHealth.isOverrideActive()
                   && this.putAt_Minecraft.player.mayBuild()
                   && var2.startsWith("No route toward the target")
                   && this.readEx_Z_15()) {
                   this.frameOf = true;
-                  if (var11 instanceof PlacementGoal var8x && var8x.init_AABB() != null && !var8x.load()) {
-                     AABB var9x = var8x.init_AABB();
+                  if (var11 instanceof PlacementGoal var8x && var8x.getWorkVolume() != null && !var8x.load()) {
+                     AABB var9x = var8x.getWorkVolume();
                      BlockPos var10 = AiGoto.findStandableNear(
                         new BlockPos((int)Math.floor(var9x.minX) - 2, this.putAt_Minecraft.player.blockPosition().getY(), (int)Math.floor(var9x.getCenter().z)),
                         12
@@ -2579,7 +2579,7 @@ public final class AiGoto {
 
             boolean readEx_Z_15() {
                BlockPos var1x = this.putAt_Minecraft.player.blockPosition();
-               AABB var2 = var11 instanceof PlacementGoal var3x ? var3x.init_AABB() : null;
+               AABB var2 = var11 instanceof PlacementGoal var3x ? var3x.getWorkVolume() : null;
                ArrayDeque<BlockPos> var12x = new ArrayDeque<>();
                HashSet<Long> var4x = new HashSet<>();
                var12x.add(var1x);
@@ -2868,7 +2868,7 @@ public final class AiGoto {
                      return this.fill("Leaving the partial construction footing before replanning");
                   }
 
-                  if (!var15 && !this.frameOf && !AiLowHealth.init_Z() && this.putAt_Minecraft.player.mayBuild() && this.readEx_Z_15()) {
+                  if (!var15 && !this.frameOf && !AiLowHealth.isOverrideActive() && this.putAt_Minecraft.player.mayBuild() && this.readEx_Z_15()) {
                      this.frameOf = true;
                      AiPathfinder.PathOptions var5x = this.putAt_FileStore_CacheHel().withDig();
                      if (this.putAt(this.putAt_RingCache.putAt_BlockPos(), 3)) {
@@ -2922,7 +2922,7 @@ public final class AiGoto {
                boolean var9x = this.putAt_Minecraft.player.hasEffect(MobEffects.JUMP_BOOST);
                boolean var10 = this.putAt_Minecraft.player.hasEffect(MobEffects.SLOW_FALLING);
                boolean var12x = this.putAt_Minecraft.player.hasEffect(MobEffects.LEVITATION);
-               boolean var5x = AiLowHealth.init_Z() && this.putAt_Minecraft.player.getHealth() <= 4.0F;
+               boolean var5x = AiLowHealth.isOverrideActive() && this.putAt_Minecraft.player.getHealth() <= 4.0F;
                boolean var6x = this.putAt_Minecraft.player.mayBuild();
                var var7x = new HashSet<>(this.fill_Set);
                if (!var12.bunnyhop()) {
@@ -3206,7 +3206,7 @@ public final class AiGoto {
                   return 0.0;
                }
 
-               return AiEditLedger.write_Z(var4x) ? 0.0 : 12.0;
+               return AiEditLedger.hasBreakRecord(var4x) ? 0.0 : 12.0;
             }
 
             int prevEx_I_3() {
@@ -3279,12 +3279,12 @@ public final class AiGoto {
                         ? false
                         : var6x.init(this.putAt_Minecraft);
                   } else if (var1x instanceof InteractionGoal var3x) {
-                     if (var3x.load_Z() && !AiMotionSafety.isSafeToBreakSupport(var3x.load_BlockPos())) {
-                        var3x.init_V(var5x);
+                     if (var3x.breaksTarget() && !AiMotionSafety.isSafeToBreakSupport(var3x.getTarget())) {
+                        var3x.rejectStance(var5x);
                         return false;
                      } else {
-                        BlockHitResult var4x = AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var3x.load_BlockPos(), var3x.init_Direction());
-                        return var4x != null && AiBlockInteraction.conservativeEyePos(this.putAt_Minecraft).distanceTo(var4x.getLocation()) <= var3x.load_D() + 0.25;
+                        BlockHitResult var4x = AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var3x.getTarget(), var3x.getFace());
+                        return var4x != null && AiBlockInteraction.conservativeEyePos(this.putAt_Minecraft).distanceTo(var4x.getLocation()) <= var3x.getReach() + 0.25;
                      }
                   } else if (!this.putAt_FileStore_TokenCod.putAt_Z_I(var5x.getX(), var5x.getY(), var5x.getZ(), this.putAt_FileStore_TextStor)) {
                      return false;
@@ -3604,18 +3604,18 @@ public final class AiGoto {
                   AutismClientAddon.LOG.info("[AI] stance {} cannot place at {}; picking another", var6x.toShortString(), var0.toShortString());
                   this.putAt_FileStore_TaskStat.replanFrom(var6x);
                   return true;
-               } else if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof InteractionGoal var1x && this.chunkAt_Z_6() && var1x.init_I() < 16) {
+               } else if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof InteractionGoal var1x && this.chunkAt_Z_6() && var1x.rejectedStanceCount() < 16) {
                   BlockPos var5x = this.putAt_RingCache.putAt_BlockPos();
                   if (!this.putAt_FileStore_TokenCod.isInGoal(var5x.getX(), var5x.getY(), var5x.getZ())) {
                      return false;
                   }
 
-                  if (AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var1x.load_BlockPos(), var1x.init_Direction()) != null) {
+                  if (AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var1x.getTarget(), var1x.getFace()) != null) {
                      return false;
                   }
 
-                  var1x.init_V(var5x);
-                  AutismClientAddon.LOG.info("[AI] stance {} has no clear line to {}; picking another", var5x.toShortString(), var1x.load_BlockPos().toShortString());
+                  var1x.rejectStance(var5x);
+                  AutismClientAddon.LOG.info("[AI] stance {} has no clear line to {}; picking another", var5x.toShortString(), var1x.getTarget().toShortString());
                   this.putAt_FileStore_TaskStat.replanFrom(var5x);
                   return true;
                } else {
@@ -3839,7 +3839,7 @@ public final class AiGoto {
       AiPathfinder.PathGoal putAt_FileStore_TokenCod();
 
       @Override
-      default boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
+      default boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) {
          return this.putAt_Z_I(x, y, z, planned);
       }
 
@@ -3849,7 +3849,7 @@ public final class AiGoto {
       }
 
       @Override
-      default boolean init_Z(BlockPos cell) {
+      default boolean allowsCell(BlockPos cell) {
          return this.putAt_Z_BlockPos(cell);
       }
 
@@ -3869,17 +3869,17 @@ public final class AiGoto {
       }
 
       @Override
-      default double init_D() {
+      default double blockPlaceCost() {
          return this.putAt_D();
       }
 
       @Override
-      default Set<AiPathfinder.MoveType> init_Set() {
+      default Set<AiPathfinder.MoveType> disallowedMoves() {
          return this.putAt_Set();
       }
 
       @Override
-      default BlockPos init_BlockPos() {
+      default BlockPos getTargetBlock() {
          return this.putAt_BlockPos();
       }
    }
@@ -3973,12 +3973,12 @@ public final class AiGoto {
       }
 
       @Override
-      public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
+      public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) {
          return this.putAt_Z_I(x, y, z, planned);
       }
 
       @Override
-      public boolean init_Z(BlockPos cell) {
+      public boolean allowsCell(BlockPos cell) {
          return this.putAt_Z_BlockPos(cell);
       }
 
@@ -4137,23 +4137,23 @@ public final class AiGoto {
 
    public interface GotoOp extends AiOperation {
       // 5.3 external ABI bridges
-      default void init_V_ClassCache_JsonUti(AiPathfinder.PathGoal goal) { this.putAt_V_FileStore_TokenCod(goal); }
+      default void retarget(AiPathfinder.PathGoal goal) { this.putAt_V_FileStore_TokenCod(goal); }
       default void init_V_15() { this.putAt_V_41(); }
-      default boolean init_Z_13() { return this.putAt_Z_30(); }
+      default boolean isAtGoal() { return this.putAt_Z_30(); }
       default void load(boolean paused) { this.fill(paused); }
       default void init_V_Z(boolean hold) { this.putAt_V_Z_2(hold); }
       default void init(boolean hold, Predicate<BlockPos> keeps) { this.putAt(hold, keeps); }
-      default BlockPos load_BlockPos_3() { return this.fill_BlockPos_9(); }
-      default void init_V_BlockPos(BlockPos cell) { this.putAt_V_BlockPos_6(cell); }
-      default int init_I_14() { return this.putAt_I_43(); }
+      default BlockPos getStuckCell() { return this.fill_BlockPos_9(); }
+      default void blacklistCell(BlockPos cell) { this.putAt_V_BlockPos_6(cell); }
+      default int remainingSteps() { return this.putAt_I_43(); }
       default int load_I_8() { return this.fill_I_18(); }
-      default boolean load_Z_8() { return this.fill_Z_18(); }
-      default BlockPos init_BlockPos_6() { return this.putAt_BlockPos_23(); }
-      default Set<BlockPos> init_Set_4() { return this.putAt_Set_9(); }
+      default boolean canInterrupt() { return this.fill_Z_18(); }
+      default BlockPos getPathEnd() { return this.putAt_BlockPos_23(); }
+      default Set<BlockPos> getRouteDigCells() { return this.putAt_Set_9(); }
       default Set<BlockPos> load_Set_2() { return this.fill_Set_4(); }
-      default void init_V_Function(Function<BlockPos, Vec3> aim) { this.putAt_V_Function(aim); }
+      default void setAimFunction(Function<BlockPos, Vec3> aim) { this.putAt_V_Function(aim); }
       default void init_V_I_2(int blocks) { this.putAt_V_I_6(blocks); }
-      default void init_V_BiPredicate(BiPredicate<BlockState, ItemStack> accepted) { this.putAt_V_BiPredicate(accepted); }
+      default void setAcceptedTool(BiPredicate<BlockState, ItemStack> accepted) { this.putAt_V_BiPredicate(accepted); }
       void putAt_V_FileStore_TokenCod(AiPathfinder.PathGoal var1);
 
       default void putAt_V_41() {

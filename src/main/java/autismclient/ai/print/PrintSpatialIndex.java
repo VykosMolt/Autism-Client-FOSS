@@ -28,7 +28,7 @@ final class PrintSpatialIndex {
       this(size, false);
       PrintSpatialIndex.Inner_DataUtil build = new PrintSpatialIndex.Inner_DataUtil(this, null, positions, i -> true);
 
-      while (!build.init_Z) {
+      while (!build.done) {
          build.init(2147483647);
       }
    }
@@ -37,7 +37,7 @@ final class PrintSpatialIndex {
       this(source.size(), true);
       PrintSpatialIndex.Inner_DataUtil build = new PrintSpatialIndex.Inner_DataUtil(this, source, positions, i -> true);
 
-      while (!build.init_Z) {
+      while (!build.done) {
          build.init(2147483647);
       }
    }
@@ -71,7 +71,7 @@ final class PrintSpatialIndex {
       this.init_IArr[b] = value;
    }
 
-   void init_V_I_Z(int id, boolean value) {
+   void setEligible(int id, boolean value) {
       int point = this.init_Int2IntOpenHashMap == null ? id : this.init_Int2IntOpenHashMap.get(id);
       if (point >= 0 && point < this.init_ZArr.length) {
          if (this.init_ZArr[point] != value) {
@@ -122,17 +122,17 @@ final class PrintSpatialIndex {
       }
    }
 
-   IntArrayList init_IntArrayList(Vec3 from, int top, int limit, IntPredicate eligible) {
-      PrintSpatialIndex.Inner_ConfigStore search = this.init_RefQueue_ConfigSto(from, top, limit, eligible);
+   IntArrayList nearest(Vec3 from, int top, int limit, IntPredicate eligible) {
+      PrintSpatialIndex.Inner_ConfigStore search = this.startSearch(from, top, limit, eligible);
 
-      while (!search.init_Z) {
+      while (!search.done) {
          search.init(2147483647);
       }
 
-      return search.init_IntArrayList;
+      return search.results;
    }
 
-   PrintSpatialIndex.Inner_ConfigStore init_RefQueue_ConfigSto(Vec3 from, int top, int limit, IntPredicate eligible) {
+   PrintSpatialIndex.Inner_ConfigStore startSearch(Vec3 from, int top, int limit, IntPredicate eligible) {
       return new PrintSpatialIndex.Inner_ConfigStore(from, top, limit, eligible);
    }
 
@@ -229,7 +229,7 @@ final class PrintSpatialIndex {
    }
 
    final class Inner_ConfigStore {
-      final IntArrayList init_IntArrayList = new IntArrayList();
+      final IntArrayList results = new IntArrayList();
       private final Vec3 init_Vec3;
       private final int init_I;
       private final int load_I;
@@ -239,8 +239,8 @@ final class PrintSpatialIndex {
       private PrintSpatialIndex.Inner_TaskQueue init_RefQueue_TaskQueue;
       private int read;
       long init_J;
-      boolean init_Z;
-      boolean load_Z;
+      boolean done;
+      boolean exhausted;
 
       private Inner_ConfigStore(Vec3 from, int top, int limit, IntPredicate eligible) {
          this.load_J = PrintSpatialIndex.this.init_J;
@@ -258,7 +258,7 @@ final class PrintSpatialIndex {
             this.init_PriorityQueue
                .add(new PrintSpatialIndex.Inner_CachePool(PrintSpatialIndex.this.init_RefQueue_TaskQueue.init(from), PrintSpatialIndex.this.init_RefQueue_TaskQueue, -1));
          } else {
-            this.init_Z = true;
+            this.done = true;
          }
       }
 
@@ -267,11 +267,11 @@ final class PrintSpatialIndex {
       }
 
       int init(int maxSteps, LongSupplier clock, long allowance) {
-         if (this.init() && !this.init_Z && maxSteps > 0) {
+         if (this.init() && !this.done && maxSteps > 0) {
             int used = 0;
             long started = clock == null ? 0L : clock.getAsLong();
 
-            while (!this.init_Z && used < maxSteps && this.init() && (used <= 0 || clock == null || clock.getAsLong() - started < Math.max(1L, allowance))) {
+            while (!this.done && used < maxSteps && this.init() && (used <= 0 || clock == null || clock.getAsLong() - started < Math.max(1L, allowance))) {
                used++;
                this.init_J++;
                if (this.init_RefQueue_TaskQueue != null) {
@@ -296,7 +296,7 @@ final class PrintSpatialIndex {
                      }
 
                      if (accepted) {
-                        this.init_IntArrayList.add(PrintSpatialIndex.this.load[entry.id]);
+                        this.results.add(PrintSpatialIndex.this.load[entry.id]);
                      }
                   } else if (node.init_RefQueue_TaskQueue != null) {
                      if (node.init_RefQueue_TaskQueue.open > 0 && node.init_RefQueue_TaskQueue.write < this.init_I) {
@@ -314,8 +314,8 @@ final class PrintSpatialIndex {
                   }
                }
 
-               if (this.init_IntArrayList.size() >= this.load_I || this.init_RefQueue_TaskQueue == null && this.init_PriorityQueue.isEmpty()) {
-                  this.init_Z = true;
+               if (this.results.size() >= this.load_I || this.init_RefQueue_TaskQueue == null && this.init_PriorityQueue.isEmpty()) {
+                  this.done = true;
                }
             }
 
@@ -326,32 +326,32 @@ final class PrintSpatialIndex {
       }
 
       private boolean init() {
-         if (!this.load_Z && this.load_J == PrintSpatialIndex.this.init_J) {
+         if (!this.exhausted && this.load_J == PrintSpatialIndex.this.init_J) {
             return true;
          }
 
-         this.load_Z = this.init_Z = true;
-         this.init_IntArrayList.clear();
+         this.exhausted = this.done = true;
+         this.results.clear();
          return false;
       }
    }
 
    static final class Inner_DataUtil {
-      final PrintSpatialIndex init_RefQueue;
+      final PrintSpatialIndex result;
       private final IntArrayList init_IntArrayList;
       private final IntFunction<BlockPos> init_IntFunction;
       private final IntPredicate init_IntPredicate;
       private final ArrayDeque<PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2> init_ArrayDeque = new ArrayDeque<>();
       private int init_I;
       long init_J;
-      boolean init_Z;
+      boolean done;
 
       Inner_DataUtil(int size, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
          this(new PrintSpatialIndex(size, false), null, positions, initiallyActive);
       }
 
       private Inner_DataUtil(PrintSpatialIndex result, IntArrayList source, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
-         this.init_RefQueue = result;
+         this.result = result;
          this.init_IntArrayList = source;
          this.init_IntFunction = positions;
          this.init_IntPredicate = initiallyActive;
@@ -360,53 +360,53 @@ final class PrintSpatialIndex {
       int init(int budget) {
          int used = 0;
 
-         while (!this.init_Z && used < budget) {
+         while (!this.done && used < budget) {
             used++;
             this.init_J++;
-            if (this.init_I < this.init_RefQueue.init_IArr.length) {
+            if (this.init_I < this.result.init_IArr.length) {
                int i = this.init_I++;
                int id = this.init_IntArrayList == null ? i : this.init_IntArrayList.getInt(i);
-               this.init_RefQueue.init_IArr[i] = i;
-               this.init_RefQueue.load[i] = id;
+               this.result.init_IArr[i] = i;
+               this.result.load[i] = id;
                BlockPos p = this.init_IntFunction.apply(id);
-               this.init_RefQueue.read[i] = p.getX();
-               this.init_RefQueue.write[i] = p.getY();
-               this.init_RefQueue.update[i] = p.getZ();
-               this.init_RefQueue.init_ZArr[i] = this.init_IntPredicate.test(id);
-               if (this.init_RefQueue.init_Int2IntOpenHashMap != null && this.init_RefQueue.init_Int2IntOpenHashMap.put(id, i) != -1) {
+               this.result.read[i] = p.getX();
+               this.result.write[i] = p.getY();
+               this.result.update[i] = p.getZ();
+               this.result.init_ZArr[i] = this.init_IntPredicate.test(id);
+               if (this.result.init_Int2IntOpenHashMap != null && this.result.init_Int2IntOpenHashMap.put(id, i) != -1) {
                   throw new IllegalArgumentException("Duplicate spatial point " + id);
                }
 
-               if (this.init_I == this.init_RefQueue.init_IArr.length) {
-                  this.init_RefQueue.init_RefQueue_TaskQueue = new PrintSpatialIndex.Inner_TaskQueue(0, this.init_I, 0, 0, 0, 0, 0, 0);
-                  this.init_ArrayDeque.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(this.init_RefQueue.init_RefQueue_TaskQueue));
+               if (this.init_I == this.result.init_IArr.length) {
+                  this.result.init_RefQueue_TaskQueue = new PrintSpatialIndex.Inner_TaskQueue(0, this.init_I, 0, 0, 0, 0, 0, 0);
+                  this.init_ArrayDeque.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(this.result.init_RefQueue_TaskQueue));
                }
             } else if (this.init_ArrayDeque.isEmpty()) {
-               this.init_Z = true;
+               this.done = true;
             } else {
                PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2 frame = this.init_ArrayDeque.peek();
                PrintSpatialIndex.Inner_TaskQueue node = frame.init_RefQueue_TaskQueue;
                if (frame.load == 0) {
                   if (frame.init_I < node.load_I) {
-                     int point = this.init_RefQueue.init_IArr[frame.init_I++];
-                     node.read_I = Math.min(node.read_I, this.init_RefQueue.read[point]);
-                     node.sync = Math.max(node.sync, this.init_RefQueue.read[point]);
-                     node.write = Math.min(node.write, this.init_RefQueue.write[point]);
-                     node.flush = Math.max(node.flush, this.init_RefQueue.write[point]);
-                     node.update = Math.min(node.update, this.init_RefQueue.update[point]);
-                     node.close = Math.max(node.close, this.init_RefQueue.update[point]);
+                     int point = this.result.init_IArr[frame.init_I++];
+                     node.read_I = Math.min(node.read_I, this.result.read[point]);
+                     node.sync = Math.max(node.sync, this.result.read[point]);
+                     node.write = Math.min(node.write, this.result.write[point]);
+                     node.flush = Math.max(node.flush, this.result.write[point]);
+                     node.update = Math.min(node.update, this.result.update[point]);
+                     node.close = Math.max(node.close, this.result.update[point]);
                   } else if (node.load_I - node.init_I <= 12) {
                      for (int i = node.init_I; i < node.load_I; i++) {
-                        this.init_RefQueue.init_RefQueue_TaskQueueArr[this.init_RefQueue.init_IArr[i]] = node;
+                        this.result.init_RefQueue_TaskQueueArr[this.result.init_IArr[i]] = node;
                      }
 
-                     this.init_RefQueue.init(node);
+                     this.result.init(node);
                      this.init_ArrayDeque.pop();
                   } else {
                      int axis = node.sync - node.read_I >= node.flush - node.write && node.sync - node.read_I >= node.close - node.update
                         ? 0
                         : (node.flush - node.write >= node.close - node.update ? 1 : 2);
-                     frame.init_RefQueue_NetHelper = this.init_RefQueue.new Inner_NetHelper(node.init_I, node.load_I, node.init_I + node.load_I >>> 1, axis);
+                     frame.init_RefQueue_NetHelper = this.result.new Inner_NetHelper(node.init_I, node.load_I, node.init_I + node.load_I >>> 1, axis);
                      frame.load = 1;
                   }
                } else if (frame.load == 1) {
@@ -424,7 +424,7 @@ final class PrintSpatialIndex {
                   frame.load = 3;
                   this.init_ArrayDeque.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(node.load_RefQueue_TaskQueue));
                } else {
-                  this.init_RefQueue.init(node);
+                  this.result.init(node);
                   this.init_ArrayDeque.pop();
                }
             }

@@ -100,7 +100,7 @@ public final class PrintContainerOrder {
       return !this.init_Long2ObjectLinkedO.isEmpty();
    }
 
-   public PrintMachineJob init_BitSetUtil() {
+   public PrintMachineJob pollNext() {
       return this.init_Long2ObjectLinkedO.isEmpty() ? null : this.init_Long2ObjectLinkedO.removeFirst();
    }
 
@@ -156,7 +156,7 @@ public final class PrintContainerOrder {
       return this.init_LongLinkedOpenHash.isEmpty();
    }
 
-   public List<BlockPos> init_List(BlockPos at) {
+   public List<BlockPos> dependenciesOf(BlockPos at) {
       LinkedHashSet<BlockPos> result = new LinkedHashSet<>();
       BlockState state = this.init_Function.apply(at);
       if (state.is(Blocks.HOPPER)) {
@@ -255,7 +255,7 @@ public final class PrintContainerOrder {
 
    private boolean init(PrintContainerOrder.Inner_DataUtil receipt, BlockState state) {
       return receipt != null
-         && PrintRules.write_Z_BlockState_BlockState(receipt.source(), state)
+         && PrintRules.matchesLayout(receipt.source(), state)
          && (!(state.getBlock() instanceof CrafterBlock) || !state.getValue(CrafterBlock.TRIGGERED) && !state.getValue(CrafterBlock.CRAFTING))
          && (!(state.getBlock() instanceof DispenserBlock) || !state.getValue(DispenserBlock.TRIGGERED));
    }

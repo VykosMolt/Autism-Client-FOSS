@@ -1613,7 +1613,7 @@ final class AiSpeedrun {
                      this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
                         "food_trip",
                         "gather observed hay",
-                        autismclient.ai.engine.AiBlockMine.init_AiOperation(
+                        autismclient.ai.engine.AiBlockMine.create(
                            AiJson.objectOf(
                               "block",
                               "minecraft:hay_block",

@@ -390,7 +390,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
       long var8 = this.putAt_J;
       short var10 = this.putAt_S_I(var1, var2, var3, var4);
-      var var11 = AiShapes.init_List_S(var10);
+      var var11 = AiShapes.boxes(var10);
       AABB[] var12 = var11.isEmpty() ? putAt_AABBArr : new AABB[var11.size()];
 
       for (int var13 = 0; var13 < var12.length; var13++) {

@@ -330,15 +330,15 @@ final class AiNetherRun {
                   }
 
                   vein.init(present, atxx -> !allowed.test(atxx) || AiTerrain.isLoaded(mc.level, atxx) && !kind.test(mc.level.getBlockState(atxx)));
-                  if (vein.init_Z() && vein.init(now, true, 250000000L)) {
+                  if (vein.isActive() && vein.init(now, true, 250000000L)) {
                      AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
-                        AiJson.objectOf("transition", "complete", "kind", block ? "block" : "ore", "anchor", vein.init_BlockPos().toShortString())
+                        AiJson.objectOf("transition", "complete", "kind", block ? "block" : "ore", "anchor", vein.getAnchor().toShortString())
                      );
-                     vein.init_V();
+                     vein.clear();
                   }
 
-                  if (!vein.init_Z()) {
+                  if (!vein.isActive()) {
                      BlockPos seed = null;
 
                      for (BlockPos at : observed) {
@@ -355,14 +355,14 @@ final class AiNetherRun {
                      AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
                         AiJson.objectOf(
-                           "transition", "start", "kind", block ? "block" : "ore", "anchor", seed.toShortString(), "remaining", vein.init_I()
+                           "transition", "start", "kind", block ? "block" : "ore", "anchor", seed.toShortString(), "remaining", vein.remainingCount()
                         )
                      );
                   }
 
                   BlockPos best = null;
 
-                  for (BlockPos at : vein.init_List()) {
+                  for (BlockPos at : vein.remainingCells()) {
                      if (best == null || at.distSqr(mc.player.blockPosition()) < best.distSqr(mc.player.blockPosition())) {
                         best = at;
                      }
@@ -375,11 +375,11 @@ final class AiNetherRun {
                            "kind",
                            block ? "block" : "ore",
                            "anchor",
-                           vein.init_BlockPos().toShortString(),
+                           vein.getAnchor().toShortString(),
                            "target",
                            best.toShortString(),
                            "remaining",
-                           vein.init_I()
+                           vein.remainingCount()
                         )
                      );
                   }
@@ -881,7 +881,7 @@ final class AiNetherRun {
                      }
                   }
 
-                  boolean committedGoldVein = this.init_aB_StreamUtil.init_FieldCache.init_Z() && this.init_aB_StreamUtil.init_FieldCache.init_I() > 0;
+                  boolean committedGoldVein = this.init_aB_StreamUtil.init_FieldCache.isActive() && this.init_aB_StreamUtil.init_FieldCache.remainingCount() > 0;
                   boolean earlyGoldPartner = this.init_I_18() < this.size && !committedGoldVein && this.init_Z_D(32.0);
                   if (this.load_I_11() < pearls
                      && !this.write_Z
@@ -2514,7 +2514,7 @@ final class AiNetherRun {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            if (travel.init_Z_13()) {
+            if (travel.isAtGoal()) {
                travel.cancel();
                return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Arrived", new JsonObject());
             } else {
@@ -2524,7 +2524,7 @@ final class AiNetherRun {
 
          @Override
          public boolean canInterruptNow() {
-            return travel.load_Z_8();
+            return travel.canInterrupt();
          }
 
          @Override

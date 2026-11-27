@@ -229,7 +229,7 @@ final class PrintFlight {
       vz += (forward * cos + left * sin) * horizontalSpeed / length;
       vy += ((keys.jump() ? 1 : 0) - (keys.sneak() ? 1 : 0)) * speed * 3.0F;
       AABB box = PrintGeometry.init(body.x(), body.y(), body.z(), false);
-      List<VoxelShape> shapes = world.init_List(box.expandTowards(vx, vy, vz).inflate(1.0E-7)).stream().map(Shapes::create).toList();
+      List<VoxelShape> shapes = world.collisionBoxes(box.expandTowards(vx, vy, vz).inflate(1.0E-7)).stream().map(Shapes::create).toList();
       double y = Shapes.collide(Axis.Y, box, shapes, vy);
       box = box.move(0.0, y, 0.0);
       double x;

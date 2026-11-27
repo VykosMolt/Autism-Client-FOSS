@@ -77,8 +77,8 @@ final class SchematicPaste {
    private long read_J;
    private LevelChunk cachedChunk;
    volatile boolean init_Z;
-   volatile boolean load_Z;
-   volatile SchematicPaste.Inner_StreamUtil init_cT_StreamUtil;
+   volatile boolean finished;
+   volatile SchematicPaste.Inner_StreamUtil progress;
 
    private SchematicPaste(
       IntegratedServer server,
@@ -99,32 +99,32 @@ final class SchematicPaste {
       this.init_Str = mirror;
       this.write_Z = includeAir;
       this.update_Z = includeEntities;
-      long top = (long)origin.getY() + document.read_I - 1L;
+      long top = (long)origin.getY() + document.sizeY - 1L;
       if (origin.getY() >= level.getMinY() && top <= level.getMaxY()) {
-         int endX = Math.addExact(origin.getX(), document.init_I_I_Str(rotation, mirror) - 1);
-         int endZ = Math.addExact(origin.getZ(), document.load_I_I(rotation) - 1);
+         int endX = Math.addExact(origin.getX(), document.rotatedSizeX(rotation, mirror) - 1);
+         int endZ = Math.addExact(origin.getZ(), document.rotatedSizeZ(rotation) - 1);
          if (level.getWorldBorder().isWithinBounds(origin) && level.getWorldBorder().isWithinBounds(new BlockPos(endX, origin.getY(), endZ))) {
             this.sync_Z = !checkpoint.isEmpty();
-            this.load_Str = SchematicLibrary.init_Str_JsonObject(checkpoint, "operation", UUID.randomUUID().toString());
-            this.load_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "phase", 0L);
-            this.read_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "column", 0L);
-            this.write_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "range", 0L);
-            this.update_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "cell", 0L);
-            this.sync_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "blockEntity", 0L);
-            this.flush_I = (int)SchematicLibrary.init_J_JsonObject(checkpoint, "entity", 0L);
-            this.load_J = SchematicLibrary.init_J_JsonObject(checkpoint, "done", 0L);
-            this.init_J = Math.max(0L, SchematicLibrary.init_J_JsonObject(checkpoint, "total", 0L));
+            this.load_Str = SchematicLibrary.getString(checkpoint, "operation", UUID.randomUUID().toString());
+            this.load_I = (int)SchematicLibrary.getLong(checkpoint, "phase", 0L);
+            this.read_I = (int)SchematicLibrary.getLong(checkpoint, "column", 0L);
+            this.write_I = (int)SchematicLibrary.getLong(checkpoint, "range", 0L);
+            this.update_I = (int)SchematicLibrary.getLong(checkpoint, "cell", 0L);
+            this.sync_I = (int)SchematicLibrary.getLong(checkpoint, "blockEntity", 0L);
+            this.flush_I = (int)SchematicLibrary.getLong(checkpoint, "entity", 0L);
+            this.load_J = SchematicLibrary.getLong(checkpoint, "done", 0L);
+            this.init_J = Math.max(0L, SchematicLibrary.getLong(checkpoint, "total", 0L));
             if (this.load_I >= 0
                && this.load_I <= 4
                && this.read_I >= 0
                && this.write_I >= 0
                && this.update_I >= 0
                && this.sync_I >= 0
-               && this.sync_I <= document.load_List.size()
+               && this.sync_I <= document.blockEntities.size()
                && this.flush_I >= 0
-               && this.flush_I <= document.read_List.size()
+               && this.flush_I <= document.entities.size()
                && this.load_J >= 0L) {
-               this.init_Future = SchematicLibrary.init_ExecutorService.submit(() -> prepare(document, this.init_BlockPos, rotation, mirror, includeAir));
+               this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> prepare(document, this.init_BlockPos, rotation, mirror, includeAir));
                this.load("");
             } else {
                throw new IllegalArgumentException("Invalid paste checkpoint");
@@ -142,7 +142,7 @@ final class SchematicPaste {
    private void applyPrepared(SchematicPaste.Inner_TableCache prepared) {
       this.init_List = prepared.columns();
       this.occupiedMasks = prepared.occupied();
-      this.init_J = 2L * prepared.work() + this.init_cQ.load_List.size() + (this.update_Z ? this.init_cQ.read_List.size() : 0);
+      this.init_J = 2L * prepared.work() + this.init_cQ.blockEntities.size() + (this.update_Z ? this.init_cQ.entities.size() : 0);
       if (this.read_I <= this.init_List.size() && this.load_J <= this.init_J) {
          if (this.read_I < this.init_List.size()
             && (
@@ -170,7 +170,7 @@ final class SchematicPaste {
             throw new IllegalStateException("World is unavailable");
          }
 
-         if (init_cT != null && !init_cT.load_Z) {
+         if (init_cT != null && !init_cT.finished) {
             throw new IllegalStateException("Another paste is still running");
          }
 
@@ -203,7 +203,7 @@ final class SchematicPaste {
    }
 
    private void load() {
-      if (!this.init_Z && !this.init_cT_StreamUtil.complete && !this.init_IntegratedServer.isPublished()) {
+      if (!this.init_Z && !this.progress.complete && !this.init_IntegratedServer.isPublished()) {
          long deadline = System.nanoTime() + Math.clamp(37000000L - this.init_IntegratedServer.getAverageTickTimeNanos(), 4000000L, 14000000L);
          this.cachedChunk = null;
 
@@ -260,15 +260,15 @@ final class SchematicPaste {
                         int tz = z - this.init_BlockPos.getZ();
                         this.init_V_I(tx, y - this.init_BlockPos.getY(), tz);
                         SchematicDocument.Inner_CachePool region = this.init_cQ
-                           .init_cQ_CachePool_I(this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ());
+                           .regionAt(this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ());
                         if (region != null) {
-                           BlockState saved = region.init_BlockState(
+                           BlockState saved = region.stateAt(
                               this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ()
                            );
                            if (this.write_Z || !saved.isAir()) {
                               this.load_BlockPos_MutableBl.set(x, y, z);
                               if (this.load_I == 0) {
-                                 BlockState state = this.init_Map.computeIfAbsent(saved, s -> SchematicDocument.init_BlockState_BlockState(s, this.init_I, this.init_Str));
+                                 BlockState state = this.init_Map.computeIfAbsent(saved, s -> SchematicDocument.transformState(s, this.init_I, this.init_Str));
                                  if (this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
                                     boolean written = this.init_ServerLevel.setBlock(this.load_BlockPos_MutableBl, state, 818);
                                     if (!written && this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
@@ -294,10 +294,10 @@ final class SchematicPaste {
                      }
                   }
                } else if (this.load_I == 1) {
-                  if (this.sync_I >= this.init_cQ.load_List.size()) {
+                  if (this.sync_I >= this.init_cQ.blockEntities.size()) {
                      this.load_I = 2;
                   } else {
-                     SchematicDocument.Inner_DataUtil saved = this.init_cQ.load_List.get(this.sync_I);
+                     SchematicDocument.Inner_DataUtil saved = this.init_cQ.blockEntities.get(this.sync_I);
                      BlockPos local = this.init_cQ.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.init_I, this.init_Str);
                      BlockPos at = this.init_BlockPos.offset(local);
                      if (!this.init(at.getX() >> 4, at.getZ() >> 4)) {
@@ -324,8 +324,8 @@ final class SchematicPaste {
                      return;
                   }
 
-                  if (this.update_Z && this.flush_I < this.init_cQ.read_List.size()) {
-                     SchematicDocument.Inner_BufferHelper saved = this.init_cQ.read_List.get(this.flush_I);
+                  if (this.update_Z && this.flush_I < this.init_cQ.entities.size()) {
+                     SchematicDocument.Inner_BufferHelper saved = this.init_cQ.entities.get(this.flush_I);
                      double[] at = this.init_DArr_D(saved.x(), saved.y(), saved.z());
                      if (!this.init((int)Math.floor(at[0]) >> 4, (int)Math.floor(at[2]) >> 4)) {
                         break;
@@ -392,7 +392,7 @@ final class SchematicPaste {
 
             this.load("");
          } catch (Exception e) {
-            this.init(SchematicLibrary.init_Str_Throwable(e));
+            this.init(SchematicLibrary.describeError(e));
          }
       } else {
          this.init("");
@@ -405,7 +405,7 @@ final class SchematicPaste {
       }
 
       this.load(error);
-      this.load_Z = true;
+      this.finished = true;
       if (init_cT == this) {
          init_cT = null;
       }
@@ -430,7 +430,7 @@ final class SchematicPaste {
       if (!pos.equals(this.init_ChunkPos)) {
          this.init_ChunkPos = pos;
          this.init_CompletableFuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
-               () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), SchematicLibrary.init_ExecutorService
+               () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), SchematicLibrary.EXECUTOR
             )
             .thenCompose(future -> (CompletionStage<ChunkResult<ChunkAccess>>)future);
          this.close = this.init_IntegratedServer.getTickCount();
@@ -453,14 +453,14 @@ final class SchematicPaste {
       switch (this.init_I) {
          case 90:
             sx = z;
-            sz = this.init_cQ.write_I - 1 - x;
+            sz = this.init_cQ.sizeZ - 1 - x;
             break;
          case 180:
-            sx = this.init_cQ.load_I - 1 - x;
-            sz = this.init_cQ.write_I - 1 - z;
+            sx = this.init_cQ.sizeX - 1 - x;
+            sz = this.init_cQ.sizeZ - 1 - z;
             break;
          case 270:
-            sx = this.init_cQ.load_I - 1 - z;
+            sx = this.init_cQ.sizeX - 1 - z;
             sz = x;
             break;
          default:
@@ -469,9 +469,9 @@ final class SchematicPaste {
       }
 
       if (this.init_Str.equals("x")) {
-         sx = this.init_cQ.load_I - 1 - sx;
+         sx = this.init_cQ.sizeX - 1 - sx;
       } else if (this.init_Str.equals("z")) {
-         sz = this.init_cQ.write_I - 1 - sz;
+         sz = this.init_cQ.sizeZ - 1 - sz;
       }
 
       this.init_BlockPos_MutableBl.set(sx, y, sz);
@@ -479,25 +479,25 @@ final class SchematicPaste {
 
    private double[] init_DArr_D(double x, double y, double z) {
       if (this.init_Str.equals("x")) {
-         x = this.init_cQ.load_I - x;
+         x = this.init_cQ.sizeX - x;
       } else if (this.init_Str.equals("z")) {
-         z = this.init_cQ.write_I - z;
+         z = this.init_cQ.sizeZ - z;
       }
 
       double tx;
       double tz;
       switch (this.init_I) {
          case 90:
-            tx = this.init_cQ.write_I - z;
+            tx = this.init_cQ.sizeZ - z;
             tz = x;
             break;
          case 180:
-            tx = this.init_cQ.load_I - x;
-            tz = this.init_cQ.write_I - z;
+            tx = this.init_cQ.sizeX - x;
+            tz = this.init_cQ.sizeZ - z;
             break;
          case 270:
             tx = z;
-            tz = this.init_cQ.load_I - x;
+            tz = this.init_cQ.sizeX - x;
             break;
          default:
             tx = x;
@@ -555,7 +555,7 @@ final class SchematicPaste {
       }
 
       String status = var10000;
-      this.init_cT_StreamUtil = new SchematicPaste.Inner_StreamUtil(
+      this.progress = new SchematicPaste.Inner_StreamUtil(
          status,
          this.load_I == 4 ? 100 : (this.init_J == 0L ? 0 : (int)Math.min(99L, 100L * this.load_J / this.init_J)),
          this.load_J,
@@ -589,31 +589,31 @@ final class SchematicPaste {
       BlockPos p0 = doc.init(0, 0, 0, rotation, mirror);
       BlockPos dx = doc.init(1, 0, 0, rotation, mirror).subtract(p0);
       BlockPos dz = doc.init(0, 0, 1, rotation, mirror).subtract(p0);
-      boolean multiRegion = doc.init_List.size() > 1;
+      boolean multiRegion = doc.regions.size() > 1;
 
-      for (SchematicDocument.Inner_CachePool r : doc.init_List) {
+      for (SchematicDocument.Inner_CachePool r : doc.regions) {
          SchematicDocument.init();
-         if (includeAir || !Arrays.stream(r.init_BlockStateArr).allMatch(BlockStateBase::isAir)) {
+         if (includeAir || !Arrays.stream(r.palette).allMatch(BlockStateBase::isAir)) {
             int cellIndex = 0;
 
             for (int sy = r.load; sy < r.load + r.update; sy++) {
                int wy = sy + origin.getY();
 
                for (int sz = r.read; sz < r.read + r.sync; sz++) {
-                  int wx = origin.getX() + p0.getX() + dx.getX() * r.init_I + dz.getX() * sz;
-                  int wz = origin.getZ() + p0.getZ() + dx.getZ() * r.init_I + dz.getZ() * sz;
+                  int wx = origin.getX() + p0.getX() + dx.getX() * r.originX + dz.getX() * sz;
+                  int wz = origin.getZ() + p0.getZ() + dx.getZ() * r.originX + dz.getZ() * sz;
                   int lastCol = -1;
                   int rangeIdx = 0;
                   int yOffset = 0;
                   BitSet bits = null;
 
-                  for (int sx = r.init_I; sx < r.init_I + r.write; wz += dx.getZ()) {
+                  for (int sx = r.originX; sx < r.originX + r.write; wz += dx.getZ()) {
                      int idx = cellIndex++;
                      if ((idx & 4095) == 0) {
                         SchematicDocument.init();
                      }
 
-                     if (includeAir || !r.init_BlockState(idx).isAir() && (!multiRegion || doc.init_cQ_CachePool_I(sx, sy, sz) == r)) {
+                     if (includeAir || !r.stateAtIndex(idx).isAir() && (!multiRegion || doc.regionAt(sx, sy, sz) == r)) {
                         int colIdx = columnIndex.get(ChunkPos.pack(wx >> 4, wz >> 4));
                         if (colIdx != lastCol) {
                            List<SchematicPaste.Inner_CachePool> ranges = columns.get(colIdx).ranges();
@@ -649,9 +649,9 @@ final class SchematicPaste {
    static List<SchematicPaste.Inner_DataUtil> init(SchematicDocument doc, BlockPos origin, int rotation, String mirror) {
       TreeMap<Long, List<SchematicPaste.Inner_CachePool>> ranges = new TreeMap<>();
 
-      for (SchematicDocument.Inner_CachePool r : doc.init_List) {
-         BlockPos a = doc.init(r.init_I, r.load, r.read, rotation, mirror);
-         BlockPos b = doc.init(r.init_I + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
+      for (SchematicDocument.Inner_CachePool r : doc.regions) {
+         BlockPos a = doc.init(r.originX, r.load, r.read, rotation, mirror);
+         BlockPos b = doc.init(r.originX + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
          int x0 = origin.getX() + Math.min(a.getX(), b.getX()) >> 4;
          int x1 = origin.getX() + Math.max(a.getX(), b.getX()) >> 4;
          int z0 = origin.getZ() + Math.min(a.getZ(), b.getZ()) >> 4;

@@ -22,10 +22,10 @@ public final class ChestMirrorCheck {
          blocks++;
          String id = BuiltInRegistries.BLOCK.getKey(block).toString();
          for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-            AiBuilder.CellSpec source = SchematicDocument.init_TableIndex_StreamU_BlockState(state);
+            AiBuilder.CellSpec source = SchematicDocument.cellSpecOf(state);
             for (int rotation = 0; rotation < 360; rotation += 90) {
                for (String mirror : new String[]{"none", "x", "z"}) {
-                  var preview = SchematicDocument.init_TableIndex_StreamU_BlockState(SchematicDocument.init_BlockState_BlockState(state, rotation, mirror)).properties();
+                  var preview = SchematicDocument.cellSpecOf(SchematicDocument.transformState(state, rotation, mirror)).properties();
                   var build = AiBuilder.transformCell(
                         new AiBuilder.CellSpec(0, 0, 0, id, source.properties()), rotation, mirror
                      )

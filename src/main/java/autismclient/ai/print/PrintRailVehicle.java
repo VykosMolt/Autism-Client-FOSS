@@ -45,7 +45,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
    }
 
-   public PrintRailVehicle.Inner_StreamUtil init_MethodUtil_StreamU() {
+   public PrintRailVehicle.Inner_StreamUtil getSpec() {
       return this.init_MethodUtil_StreamU;
    }
 
@@ -81,7 +81,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       return this.init_AABB;
    }
 
-   public BlockPos init_BlockPos() {
+   public BlockPos firstUnloadedCell() {
       BlockPos rail = this.init_MethodUtil_StreamU.rail();
 
       for (int x = rail.getX() - 2 >> 4; x <= rail.getX() + 2 >> 4; x++) {
@@ -230,7 +230,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus pollStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SENT) {
          return this.init_BitSetUtil_DataUti;
       }
@@ -273,7 +273,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
    }
 
    @Override
-   public PrintMachineJob.JobStatus init_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus verifyStatus() {
       if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SUCCEEDED) {
          return this.init_BitSetUtil_DataUti;
       }
@@ -283,7 +283,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
-      if (this.init_BlockPos() != null) {
+      if (this.firstUnloadedCell() != null) {
          this.load = -9223372036854775808L;
          return PrintMachineJob.JobStatus.PREPARING;
       }

@@ -156,7 +156,7 @@ final class AiChop {
             gather.addProperty("treeLimit", 1);
          }
 
-         return autismclient.ai.engine.AiBlockMine.init_AiOperation(gather);
+         return autismclient.ai.engine.AiBlockMine.create(gather);
       } else {
          throw new IllegalArgumentException("Chopping requires a connected living player");
       }

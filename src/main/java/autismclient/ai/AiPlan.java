@@ -21,7 +21,7 @@ final class AiPlan {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          List<AiPlanRunner.Inner_BufferHelper> declared = init_List(args);
-         final List<AiPlanRunner.Inner_BufferHelper> ordered = AiPlanRunner.init_List(declared);
+         final List<AiPlanRunner.Inner_BufferHelper> ordered = AiPlanRunner.orderSteps(declared);
          final AiPlanRunner.Inner_DataUtil policy = init(AiJson.getString(args, "onFailure", "stop"));
          final int timeoutSeconds = Math.max(30, Math.min(7200, AiJson.getInt(args, "timeoutSeconds", 1800)));
          final boolean guarded = AiJson.getBoolean(args, "survival", true);
@@ -54,46 +54,46 @@ final class AiPlan {
                   if (this.init_AiOperation != null) {
                      AiOperation.Result result = this.init_AiOperation.tick();
                      if (!result.terminal()) {
-                        return this.init("[" + this.init_aU_StreamUtil.init_aU_BufferHelper.id() + "] " + result.message());
+                        return this.init("[" + this.init_aU_StreamUtil.step.id() + "] " + result.message());
                      }
 
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;
                      boolean succeeded = result.status() == AiOperation.Status.SUCCEEDED;
                      if (result.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(AiOperation.Status.CANCELLED, "Plan cancelled during " + this.init_aU_StreamUtil.init_aU_BufferHelper.id());
+                        return this.init(AiOperation.Status.CANCELLED, "Plan cancelled during " + this.init_aU_StreamUtil.step.id());
                      }
 
                      this.init_Z = result.status() == AiOperation.Status.UNCERTAIN
                         ? AiPlanRunner.init(this.init_aU_StreamUtil, result.status() + ": " + result.message(), policy)
                         : AiPlanRunner.init(this.init_aU_StreamUtil, succeeded, result.status() + ": " + result.message(), policy);
-                     String id = this.init_aU_StreamUtil.init_aU_BufferHelper.id();
+                     String id = this.init_aU_StreamUtil.step.id();
                      this.init_aU_StreamUtil = null;
                      return this.init_Z
                         ? this.init(AiOperation.Status.FAILED, "Step '" + id + "' failed and onFailure is stop; " + this.init_Str_12())
                         : this.init("Step '" + id + "' " + (succeeded ? "done" : "failed") + "; " + this.init_Str_12());
                   } else {
-                     if (AiPlanRunner.init_Z(this.init_List)) {
+                     if (AiPlanRunner.isFinished(this.init_List)) {
                         return this.init_AiOperation_Result_20();
                      }
 
-                     this.init_aU_StreamUtil = AiPlanRunner.init_aU_StreamUtil(this.init_List);
+                     this.init_aU_StreamUtil = AiPlanRunner.nextRunnable(this.init_List);
                      if (this.init_aU_StreamUtil == null) {
                         return this.init_AiOperation_Result_20();
                      }
 
-                     this.init_aU_StreamUtil.init_aU_CachePool = AiPlanRunner.Inner_CachePool.RUNNING;
-                     this.init_aU_StreamUtil.init_I++;
+                     this.init_aU_StreamUtil.state = AiPlanRunner.Inner_CachePool.RUNNING;
+                     this.init_aU_StreamUtil.attempts++;
 
                      try {
                         this.init_AiOperation = AiTools.init_AiOperation_Str_JsonObject(
-                           this.init_aU_StreamUtil.init_aU_BufferHelper.capability(),
-                           AiJson.parseObject(this.init_aU_StreamUtil.init_aU_BufferHelper.argumentsJson()).getAsJsonObject()
+                           this.init_aU_StreamUtil.step.capability(),
+                           AiJson.parseObject(this.init_aU_StreamUtil.step.argumentsJson()).getAsJsonObject()
                         );
                      } catch (RuntimeException e) {
                         this.init_AiOperation = null;
                         this.init_Z = AiPlanRunner.init(this.init_aU_StreamUtil, false, "rejected: " + e.getMessage(), policy);
-                        String id = this.init_aU_StreamUtil.init_aU_BufferHelper.id();
+                        String id = this.init_aU_StreamUtil.step.id();
                         this.init_aU_StreamUtil = null;
                         if (this.init_Z) {
                            return this.init(AiOperation.Status.FAILED, "Step '" + id + "' was rejected and onFailure is stop; " + this.init_Str_12());
@@ -104,9 +104,9 @@ final class AiPlan {
 
                      if (this.init_AiOperation == null) {
                         this.init_Z = AiPlanRunner.init(
-                           this.init_aU_StreamUtil, false, "unknown capability " + this.init_aU_StreamUtil.init_aU_BufferHelper.capability(), policy
+                           this.init_aU_StreamUtil, false, "unknown capability " + this.init_aU_StreamUtil.step.capability(), policy
                         );
-                        String id = this.init_aU_StreamUtil.init_aU_BufferHelper.id();
+                        String id = this.init_aU_StreamUtil.step.id();
                         this.init_aU_StreamUtil = null;
                         return this.init_Z
                            ? this.init(AiOperation.Status.FAILED, "Step '" + id + "' names an unknown capability; " + this.init_Str_12())
@@ -114,9 +114,9 @@ final class AiPlan {
                      } else {
                         return this.init(
                            "Starting step '"
-                              + this.init_aU_StreamUtil.init_aU_BufferHelper.id()
+                              + this.init_aU_StreamUtil.step.id()
                               + "' ("
-                              + this.init_aU_StreamUtil.init_aU_BufferHelper.capability()
+                              + this.init_aU_StreamUtil.step.capability()
                               + ")"
                         );
                      }
@@ -127,7 +127,7 @@ final class AiPlan {
             }
 
             AiOperation.Result init_AiOperation_Result_20() {
-               Map<String, Integer> tally = AiPlanRunner.init_Map(this.init_List);
+               Map<String, Integer> tally = AiPlanRunner.tally(this.init_List);
                int failed = tally.getOrDefault("failed", 0) + tally.getOrDefault("skipped", 0);
                if (failed == 0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Plan complete: " + this.init_Str_12());
@@ -167,7 +167,7 @@ final class AiPlan {
             }
 
             String init_Str_12() {
-               Map<String, Integer> tally = AiPlanRunner.init_Map(this.init_List);
+               Map<String, Integer> tally = AiPlanRunner.tally(this.init_List);
                return tally.getOrDefault("done", 0)
                   + " done, "
                   + tally.getOrDefault("failed", 0)
@@ -189,17 +189,17 @@ final class AiPlan {
                   steps.add(
                      AiJson.objectOf(
                         "id",
-                        progress.init_aU_BufferHelper.id(),
+                        progress.step.id(),
                         "capability",
-                        progress.init_aU_BufferHelper.capability(),
+                        progress.step.capability(),
                         "state",
-                        progress.init_aU_CachePool.name().toLowerCase(Locale.ROOT),
+                        progress.state.name().toLowerCase(Locale.ROOT),
                         "attempts",
-                        progress.init_I,
+                        progress.attempts,
                         "message",
-                        progress.init_Str,
+                        progress.message,
                         "needs",
-                        AiJson.GSON.toJsonTree(progress.init_aU_BufferHelper.needs())
+                        AiJson.GSON.toJsonTree(progress.step.needs())
                      )
                   );
                }
@@ -207,10 +207,10 @@ final class AiPlan {
                JsonObject out = AiJson.objectOf("onFailure", policy.name().toLowerCase(Locale.ROOT));
                out.add("steps", steps);
                JsonObject tally = new JsonObject();
-               AiPlanRunner.init_Map(this.init_List).forEach(tally::addProperty);
+               AiPlanRunner.tally(this.init_List).forEach(tally::addProperty);
                out.add("tally", tally);
                if (this.init_aU_StreamUtil != null) {
-                  out.addProperty("currentStep", this.init_aU_StreamUtil.init_aU_BufferHelper.id());
+                  out.addProperty("currentStep", this.init_aU_StreamUtil.step.id());
                }
 
                out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));

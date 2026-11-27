@@ -61,7 +61,7 @@ public final class OverlaySuiteController {
       autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.AiAssistant.init_ConfigStore().load_V();
-         autismclient.ai.SchematicWorkspace.read_V();
+         autismclient.ai.SchematicWorkspace.restoreWindow();
       }
 
       this.init_AutismKeybindOverl = new AutismKeybindOverlay();

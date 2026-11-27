@@ -45,8 +45,8 @@ final class AiFurnaceReturn implements AiOperation {
          }
 
          @Override
-         public boolean init_Z_I(int x, int y, int z, autismclient.ai.engine.AiPathfinder.GridView grid) {
-            return interaction.init_Z_I(x, y, z, grid);
+         public boolean isInGoalWithGrid(int x, int y, int z, autismclient.ai.engine.AiPathfinder.GridView grid) {
+            return interaction.isInGoalWithGrid(x, y, z, grid);
          }
 
          @Override
@@ -55,7 +55,7 @@ final class AiFurnaceReturn implements AiOperation {
          }
 
          @Override
-         public boolean init_Z(BlockPos p) {
+         public boolean allowsCell(BlockPos p) {
             return p.getX() >= Math.min(origin.getX(), station.getX()) - 12
                && p.getX() <= Math.max(origin.getX(), station.getX()) + 12
                && p.getZ() >= Math.min(origin.getZ(), station.getZ()) - 12
@@ -66,16 +66,16 @@ final class AiFurnaceReturn implements AiOperation {
 
          @Override
          public boolean load(BlockPos p) {
-            return repairs && this.init_Z(p) && !p.equals(station) && !p.equals(station.below()) && interaction.load(p);
+            return repairs && this.allowsCell(p) && !p.equals(station) && !p.equals(station.below()) && interaction.load(p);
          }
 
          @Override
          public boolean read(BlockPos p) {
-            return repairs && this.init_Z(p) && !p.equals(station) && !p.equals(station.above());
+            return repairs && this.allowsCell(p) && !p.equals(station) && !p.equals(station.above());
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> disallowedMoves() {
             return Set.of(
                autismclient.ai.engine.AiPathfinder.MoveType.DIG_DOWN_1,
                autismclient.ai.engine.AiPathfinder.MoveType.JUMP,

@@ -38,7 +38,7 @@ final class PrintWitnessCache {
       }
    }
 
-   PrintCore.aM init_UiHelper_aM_I(int id) {
+   PrintCore.aM witness(int id) {
       PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.getAndMoveToLast(id);
       return entry == null ? null : entry.witness();
    }
@@ -52,7 +52,7 @@ final class PrintWitnessCache {
       return this.init_Int2ObjectLinkedOp.containsKey(id);
    }
 
-   int init_I() {
+   int size() {
       return this.init_Int2ObjectLinkedOp.size();
    }
 
@@ -68,7 +68,7 @@ final class PrintWitnessCache {
       return this.init_Long2ObjectOpenHas.size();
    }
 
-   int init_I_I(int id) {
+   int cellCount(int id) {
       PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.get(id);
       return entry == null ? 0 : entry.cells().length;
    }
@@ -135,7 +135,7 @@ final class PrintWitnessCache {
       this.write = this.write - entry.cells().length;
    }
 
-   void init_V() {
+   void clear() {
       this.init_Int2ObjectLinkedOp.clear();
       this.init_Long2ObjectOpenHas.clear();
       this.write = 0;
@@ -153,7 +153,7 @@ final class PrintWitnessCache {
       }
    }
 
-   int[] init_IArr_J(long cell) {
+   int[] witnessesAt(long cell) {
       IntOpenHashSet ids = this.init_Long2ObjectOpenHas.get(cell);
       return ids == null ? init_IArr : ids.toIntArray();
    }

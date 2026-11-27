@@ -101,7 +101,7 @@ public final class AiSchematicApproach implements AiOperation {
          this.init_Z = this.init_Z | mc.player.position().distanceToSqr(this.init_Vec3) > 0.0625;
          this.init_Z = this.init_Z
             | (this.init_AiOperation != null && (!this.init_AiOperation.canInterruptNow() || this.init_AiOperation.requiresReconciliationAfterEmergency()));
-         if (!this.init_Z && this.init_c_DataUtil.init_Z()) {
+         if (!this.init_Z && this.init_c_DataUtil.isExpired()) {
             if (this.init_AiOperation != null) {
                this.init_AiOperation.cancel();
             }
@@ -127,8 +127,8 @@ public final class AiSchematicApproach implements AiOperation {
             }
 
             if (this.init_AiOperation == null) {
-               this.init_b_DataUtil.init_V_J(2000000L);
-               if (!this.init_b_DataUtil.init_Z()) {
+               this.init_b_DataUtil.planSlice(2000000L);
+               if (!this.init_b_DataUtil.isFinished()) {
                   return init(AiOperation.Status.RUNNING, "Planning reusable construction batch (" + this.init_b_DataUtil.load_I + " click checks)");
                }
 
@@ -173,7 +173,7 @@ public final class AiSchematicApproach implements AiOperation {
                         AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
-                        edits ? goal : goal.init_u(),
+                        edits ? goal : goal.clientThreadProofsOnly(),
                         options
                      );
                      this.init_BlockPos = next.pos();
@@ -241,7 +241,7 @@ public final class AiSchematicApproach implements AiOperation {
    @Override
    public void cancel() {
       this.load_Z = true;
-      this.init_b_DataUtil.init_V();
+      this.init_b_DataUtil.cancel();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
       }
@@ -356,24 +356,24 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      public boolean init_Z() {
+      public boolean isFinished() {
          return this.init_Z || this.load_Z;
       }
 
-      public boolean init_Z_BlockPos(BlockPos target) {
+      public boolean covers(BlockPos target) {
          return !this.load_Z && this.init_Set.contains(target);
       }
 
-      public Set<BlockPos> init_Set() {
+      public Set<BlockPos> getTargets() {
          return this.init_Set;
       }
 
-      public void init_V() {
+      public void cancel() {
          this.load_Z = true;
          this.init_b_DataUtil_DataUti = null;
-         this.init_c_DataUtil.init_V();
+         this.init_c_DataUtil.start();
          if (this.load_c_DataUtil != null) {
-            this.load_c_DataUtil.init_V();
+            this.load_c_DataUtil.start();
          }
       }
 
@@ -381,25 +381,25 @@ public final class AiSchematicApproach implements AiOperation {
          this.init_c_DataUtil.init(5000000000L);
       }
 
-      public double init_D() {
-         return this.init_c_DataUtil.init_D() + (this.load_c_DataUtil == null ? 0.0 : this.load_c_DataUtil.init_D());
+      public double elapsedMs() {
+         return this.init_c_DataUtil.elapsedMs() + (this.load_c_DataUtil == null ? 0.0 : this.load_c_DataUtil.elapsedMs());
       }
 
-      public BlockPos init_BlockPos() {
+      public BlockPos getRejected() {
          return this.load_BlockPos;
       }
 
-      public int init_I() {
+      public int stopCount() {
          return this.init_c_StreamUtil == null ? 0 : this.init_c_StreamUtil.stops().size();
       }
 
-      public Vec3 init_Vec3() {
+      public Vec3 endPosition() {
          return this.init_c_StreamUtil != null && !this.init_c_StreamUtil.stops().isEmpty()
             ? this.update.get(this.init_c_StreamUtil.stops().getLast().station()).probe.init_Vec3
             : this.init_Minecraft.player.position();
       }
 
-      public void init_V_Vec3(Vec3 worker) {
+      public void setWorkerPosition(Vec3 worker) {
          if (this.init_c_CachePool == null) {
             this.init_Vec3 = worker;
          }
@@ -409,11 +409,11 @@ public final class AiSchematicApproach implements AiOperation {
          this.read_Set = Collections.unmodifiableSet(cells);
       }
 
-      public static List<PlacementGoal.PlacementRequest> init_List_List_Vec3(List<PlacementGoal.PlacementRequest> candidates, Vec3 start) {
+      public static List<PlacementGoal.PlacementRequest> orderByRoute(List<PlacementGoal.PlacementRequest> candidates, Vec3 start) {
          return AiSchematicBatchPlan.init(candidates, start, PlacementGoal.PlacementRequest::pos);
       }
 
-      public AiOperation init_AiOperation_I(int seconds, Set<Long> keep, Set<Long> avoid) {
+      public AiOperation operation(int seconds, Set<Long> keep, Set<Long> avoid) {
          return new AiSchematicApproach(this, seconds, keep, avoid);
       }
 
@@ -423,7 +423,7 @@ public final class AiSchematicApproach implements AiOperation {
          } else {
             this.write_Z = true;
             if (this.load_Vec3 != null && !(this.load_Vec3.distanceToSqr(worker) <= 2.25) && this.init_c_StreamUtil != null) {
-               long remaining = Math.max(1L, (long)((10000.0 - this.init_D()) * 1000000.0));
+               long remaining = Math.max(1L, (long)((10000.0 - this.elapsedMs()) * 1000000.0));
                this.load_c_DataUtil = new AiSchematicBatchPlan.Inner_DataUtil(System::nanoTime, Math.min(2000000000L, remaining));
                this.init_c_CachePool = null;
                this.init_c_StreamUtil = null;
@@ -437,8 +437,8 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      public void init_V_J(long sliceNanos) {
-         if (!this.init_Z()) {
+      public void planSlice(long sliceNanos) {
+         if (!this.isFinished()) {
             if (this.init_Minecraft.level == this.init_ClientLevel && this.init_Minecraft.player != null) {
                long stop = System.nanoTime() + Math.max(1L, Math.min(2000000L, sliceNanos));
                int units = 0;
@@ -446,14 +446,14 @@ public final class AiSchematicApproach implements AiOperation {
                while (units++ < 256 && System.nanoTime() < stop) {
                   if (this.init_c_CachePool != null) {
                      AiSchematicBatchPlan.Inner_DataUtil activeBudget = this.load_c_DataUtil == null ? this.init_c_DataUtil : this.load_c_DataUtil;
-                     if (activeBudget.init_Z() || this.init_c_CachePool.init_Z()) {
-                        this.read_Z = this.read_Z | activeBudget.init_Z();
+                     if (activeBudget.isExpired() || this.init_c_CachePool.isDone()) {
+                        this.read_Z = this.read_Z | activeBudget.isExpired();
                         this.read();
                         return;
                      }
 
-                     this.init_c_CachePool.init_V();
-                  } else if (this.init_c_DataUtil.init_J() <= 1000000000L) {
+                     this.init_c_CachePool.step();
+                  } else if (this.init_c_DataUtil.remainingNanos() <= 1000000000L) {
                      this.write();
                   } else {
                      if (this.init_b_DataUtil_DataUti == null) {
@@ -481,20 +481,20 @@ public final class AiSchematicApproach implements AiOperation {
                   }
                }
             } else {
-               this.init_V();
+               this.cancel();
             }
          }
       }
 
       private void read() {
          if (this.init_c_CachePool != null) {
-            this.init_c_StreamUtil = this.init_c_CachePool.init_c_StreamUtil();
+            this.init_c_StreamUtil = this.init_c_CachePool.getChoice();
          }
 
          this.init_Z = true;
-         this.init_c_DataUtil.init_V();
+         this.init_c_DataUtil.start();
          if (this.load_c_DataUtil != null) {
-            this.load_c_DataUtil.init_V();
+            this.load_c_DataUtil.start();
          }
 
          AutismClientAddon.LOG
@@ -506,7 +506,7 @@ public final class AiSchematicApproach implements AiOperation {
                this.write_List.size(),
                this.init_c_StreamUtil == null ? 0 : this.init_c_StreamUtil.stops().size(),
                this.init_c_StreamUtil == null ? 0 : Long.bitCount(this.init_c_StreamUtil.covered()),
-               Math.round(this.init_D()),
+               Math.round(this.elapsedMs()),
                this.read_Z ? " (budget)" : ""
             );
       }
@@ -898,7 +898,7 @@ public final class AiSchematicApproach implements AiOperation {
          return result;
       }
 
-      public List<BlockPos> init_List_BlockPos(BlockPos feet) {
+      public List<BlockPos> positionsFrom(BlockPos feet) {
          AiSchematicBatchPlan.Inner_ConfigStore stop = this.init_c_ConfigStore();
          if (stop != null && this.update.get(stop.station()).probe.init_BlockPos.equals(feet)) {
             return this.init_c_StreamUtil
@@ -913,7 +913,7 @@ public final class AiSchematicApproach implements AiOperation {
          return List.of();
       }
 
-      public double init_D_BlockPos(BlockPos feet) {
+      public double estimatedSeconds(BlockPos feet) {
          if (this.init_c_StreamUtil != null) {
             return this.init_c_StreamUtil.ticks() / 20.0;
          }
@@ -929,7 +929,7 @@ public final class AiSchematicApproach implements AiOperation {
          return 0.0;
       }
 
-      public int init_I_BlockPos(BlockPos feet) {
+      public int supportCount(BlockPos feet) {
          if (this.init_c_StreamUtil != null) {
             return this.init_c_StreamUtil.supports();
          }
@@ -1022,7 +1022,7 @@ public final class AiSchematicApproach implements AiOperation {
                && !this.init_Set.contains(cell)
                && !this.read_Set.contains(cell.asLong())
                && (!station.probe.init_Set.contains(cell) || !live.isAir())
-               && (!cell.equals(station.probe.init_BlockPos.below()) || AiScaffold.init_Block(cell) == null)) {
+               && (!cell.equals(station.probe.init_BlockPos.below()) || AiScaffold.recordedBlock(cell) == null)) {
                return Map.of();
             }
          }
@@ -1053,11 +1053,11 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      public static <T> void init_V_List(List<T> source, int cursor, List<T> batch) {
+      public static <T> void fillBatch(List<T> source, int cursor, List<T> batch) {
          AiSchematicBatchPlan.init(source, cursor, batch);
       }
 
-      public static <T> Set<Long> init_Set_List(List<T> source, int cursor, Set<Long> existing, ToLongFunction<T> position) {
+      public static <T> Set<Long> batchKeepCells(List<T> source, int cursor, Set<Long> existing, ToLongFunction<T> position) {
          return AiSchematicBatchPlan.init(source, cursor, existing, position);
       }
 
@@ -1086,7 +1086,7 @@ public final class AiSchematicApproach implements AiOperation {
          }
 
          if (constraint != null && constraint.placedShape() != null) {
-            for (AABB box : AiShapes.init_List_S(constraint.placedShape())) {
+            for (AABB box : AiShapes.boxes(constraint.placedShape())) {
                if (box.move(target.pos()).intersects(body)) {
                   return null;
                }
@@ -1121,10 +1121,10 @@ public final class AiSchematicApproach implements AiOperation {
          for (BlockPlacementPlanner.SupportCandidate option : options) {
             if (!clear.contains(option.supportPos())) {
                AABB rect = constraint != null && constraint.highHalf() != null
-                  ? PlacementGoal.init_AABB_AABB(option.faceRect(), option.face(), option.supportPos().getY(), constraint.highHalf())
+                  ? PlacementGoal.clipToHalf(option.faceRect(), option.face(), option.supportPos().getY(), constraint.highHalf())
                   : option.faceRect();
                if (rect != null && constraint != null && constraint.crouchForLook()) {
-                  rect = PlacementGoal.init_AABB_AABB(rect, option.face(), eye);
+                  rect = PlacementGoal.clipToEyeCone(rect, option.face(), eye);
                }
 
                if (rect != null) {

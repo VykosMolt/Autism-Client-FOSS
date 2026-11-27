@@ -7,11 +7,11 @@ public final class AiLowHealth {
    private AiLowHealth() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isOverrideActive() {
       return init_I > 0;
    }
 
-   public static void init_V() {
+   public static void enterOverride() {
       init_I++;
    }
 

@@ -50,7 +50,7 @@ public final class AiSight {
          || entity instanceof Ghast;
    }
 
-   public static boolean init_Z_BlockGetter_3(BlockGetter level, Vec3 from, Vec3 to, long ownA, long ownB) {
+   public static boolean hasLineOfSight(BlockGetter level, Vec3 from, Vec3 to, long ownA, long ownB) {
       if (from.distanceToSqr(to) < 1.0E-7) {
          return true;
       }
@@ -89,7 +89,7 @@ public final class AiSight {
       return List.of(eye, new Vec3(eye.x + px, eye.y, eye.z + pz), new Vec3(eye.x - px, eye.y, eye.z - pz));
    }
 
-   public static boolean init_Z_BlockGetter(BlockGetter level, List<Vec3> eyes, int x, int y, int z) {
+   public static boolean isVisibleFrom(BlockGetter level, List<Vec3> eyes, int x, int y, int z) {
       Vec3 eye = init(x, y, z);
       long feet = BlockPos.asLong(x, y, z);
       long head = BlockPos.asLong(x, y + 1, z);
@@ -97,7 +97,7 @@ public final class AiSight {
       for (Vec3 shooter : eyes) {
          if (!(shooter.distanceToSqr(eye) > 289.0)) {
             for (Vec3 point : init(shooter, eye)) {
-               if (init_Z_BlockGetter_3(level, point, eye, feet, head)) {
+               if (hasLineOfSight(level, point, eye, feet, head)) {
                   return true;
                }
             }
@@ -154,8 +154,8 @@ public final class AiSight {
                   boolean water = allowSurfaceWater && read(level, cell, x, y, z);
                   if ((water || load(level, cell, x, y, z))
                      && (!openOnly || init_Z_BlockGetter_2(level, cell, x, y, z))
-                     && !init_Z_BlockGetter(level, eyes, x, y, z)
-                     && (!water || !init_Z_BlockGetter(level, eyes, x, y + 1, z))) {
+                     && !isVisibleFrom(level, eyes, x, y, z)
+                     && (!water || !isVisibleFrom(level, eyes, x, y + 1, z))) {
                      found.add(new BlockPos(x, y, z));
                   }
                }
@@ -352,7 +352,7 @@ public final class AiSight {
                for (int i = 0; i < eyes.size(); i++) {
                   Vec3 eye = eyes.get(i);
                   double c = i < charges.size() ? charges.get(i) : 10.0;
-                  if (c > charge && eye.distanceToSqr(target) <= range && init_Z_BlockGetter_3(level, eye, target, feet, head)) {
+                  if (c > charge && eye.distanceToSqr(target) <= range && hasLineOfSight(level, eye, target, feet, head)) {
                      charge = c;
                   }
                }

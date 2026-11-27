@@ -256,7 +256,7 @@ final class AiThreats {
                         double len0 = to0.length();
                         if (len0 > 0.001 && len0 < 64.0 && mc.player.getViewVector(1.0F).normalize().dot(to0.scale(1.0 / len0)) > 1.0 - 0.025 / len0) {
                            lastEndermanStareTick.put(mob.getId(), tick);
-                           lastEndermanStareContext.put(mob.getId(), autismclient.ai.engine.AiMotionAudit.init_Str() + "; " + autismclient.ai.engine.AiAim.lastDebugState());
+                           lastEndermanStareContext.put(mob.getId(), autismclient.ai.engine.AiMotionAudit.lastContext() + "; " + autismclient.ai.engine.AiAim.lastDebugState());
                         }
 
                         if (enderman.isCreepy() && loggedAngryEndermen.add(mob.getId())) {
@@ -266,7 +266,7 @@ final class AiThreats {
                                  "[AI] enderman angered: last stare {} ticks ago, last hurt by the player {}, during '{}'",
                                  stared == null ? "never" : String.valueOf(tick - stared),
                                  mc.player.getLastHurtMob() == mob ? mc.player.tickCount - mc.player.getLastHurtMobTimestamp() + " ticks ago" : "no",
-                                 autismclient.ai.engine.AiMotionAudit.init_Str()
+                                 autismclient.ai.engine.AiMotionAudit.lastContext()
                                     + "; "
                                     + autismclient.ai.engine.AiAim.lastDebugState()
                                     + (lastEndermanStareContext.containsKey(mob.getId()) ? "; stared during: " + lastEndermanStareContext.get(mob.getId()) : "")

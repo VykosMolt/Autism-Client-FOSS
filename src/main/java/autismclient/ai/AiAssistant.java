@@ -29,7 +29,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       if (!assistant.init_Z) {
          assistant.init_Z = true;
          AiVisualization.init_V();
-         AiSchematicPlacement.write_V_2();
+         AiSchematicPlacement.ensureTickHandler();
          AutismConfig config = AutismConfig.getGlobal();
          AutismConfig.ModuleState legacy = config.modules.remove("ai-assistant");
          if (legacy != null) {

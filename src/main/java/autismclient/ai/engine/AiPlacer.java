@@ -245,7 +245,7 @@ public final class AiPlacer {
             }
 
             if (this.clicked && !this.targetBlock.defaultBlockState().hasBlockEntity() && this.targetBlock != Blocks.CRAFTING_TABLE) {
-               AiEditLedger.write_V(this.targetPos);
+               AiEditLedger.recordPlacement(this.targetPos);
             }
 
             return AiPlacer.PlaceStatus.PLACED;

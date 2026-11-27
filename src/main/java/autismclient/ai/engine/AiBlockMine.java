@@ -260,7 +260,7 @@ public final class AiBlockMine {
    }
 
    static BlockPos init(AiDigLine.Inner_DataUtil next, Vec3 eye, BlockPos current, AiDigLine.Inner_CachePool shapes, double reach) {
-      List<BlockPos> chain = AiDigLine.init_List_Vec3_2(eye, next.direction(), reach, new HashSet<>(next.chain()), Set.of(current), shapes, null);
+      List<BlockPos> chain = AiDigLine.chainAlong(eye, next.direction(), reach, new HashSet<>(next.chain()), Set.of(current), shapes, null);
       return chain.isEmpty() ? null : chain.get(0);
    }
 
@@ -410,7 +410,7 @@ public final class AiBlockMine {
       return out;
    }
 
-   public static AiOperation init_AiOperation(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       if (!AutismLiteVariant.enabled()) {
          AiOperation preparation = AiMiningPreparation.load(args);
          if (preparation != null) {
@@ -698,7 +698,7 @@ public final class AiBlockMine {
                }
 
                BlockState state = mc.level.getBlockState(cell);
-               double breakTicks = MiningCost.init_D_Minecraft(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
+               double breakTicks = MiningCost.breakTicks(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
                if (AiBlockMine.init_I(cell) >= 2 || breakTicks + AiBlockDigger.airTicksToSurfaceCompat(mc) + 40.0 > mc.player.getMaxAirSupply()) {
                   this.init_Set.add(cell.asLong());
                }
@@ -768,9 +768,9 @@ public final class AiBlockMine {
 
                long now = System.nanoTime();
                int heldx = this.load_I_6();
-               int toGo = this.init_HashUtil_CachePool == null ? -1 : this.init_HashUtil_CachePool.init_I_14();
-               if (toGo < 0 && this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.init_BlockPos_6() != null) {
-                  BlockPos end = this.init_HashUtil_CachePool.init_BlockPos_6();
+               int toGo = this.init_HashUtil_CachePool == null ? -1 : this.init_HashUtil_CachePool.remainingSteps();
+               if (toGo < 0 && this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.getPathEnd() != null) {
+                  BlockPos end = this.init_HashUtil_CachePool.getPathEnd();
                   double e = 1.7976931348623157E308;
 
                   for (BlockPos t : goalCells) {
@@ -791,7 +791,7 @@ public final class AiBlockMine {
                }
 
                boolean along = this.init_BufferHelper_Confi
-                  .init(this.init_HashUtil_CachePool == null ? null : this.init_HashUtil_CachePool.init_BlockPos_6(), toGo);
+                  .init(this.init_HashUtil_CachePool == null ? null : this.init_HashUtil_CachePool.getPathEnd(), toGo);
                boolean down = nearest != null && feet.getY() - nearest.getY() > 4 && feet.getY() < this.set - 1;
                if (!changedWork && !(d < this.init_D - 1.0) && !along && !down) {
                   if (now - this.update_J < 12000000000L) {
@@ -851,7 +851,7 @@ public final class AiBlockMine {
                      ? this.init_AiOperation.canInterruptNow()
                      : (this.read_BlockPos == null || !this.read_RefQueue_DataUtil.isDiggingTargetCompat(this.read_BlockPos))
                         && !this.init_DataPipe.needsReconciliation()
-                        && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8());
+                        && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt());
                }
             }
 
@@ -967,7 +967,7 @@ public final class AiBlockMine {
                                  this.init_List.size(),
                                  this.close_Set.size(),
                                  this.write_Set.size(),
-                                 this.init_HashUtil_CachePool == null ? "none" : (this.init_HashUtil_CachePool.init_Z_13() ? "at goal" : "on")
+                                 this.init_HashUtil_CachePool == null ? "none" : (this.init_HashUtil_CachePool.isAtGoal() ? "at goal" : "on")
                               );
                         }
 
@@ -983,8 +983,8 @@ public final class AiBlockMine {
                               this.init_HashUtil_CachePool.tick();
                            }
 
-                           if (AiMotionAudit.init_Z()) {
-                              AiMotionAudit.init_V("gather dig " + this.read_BlockPos.toShortString());
+                           if (AiMotionAudit.isEnabled()) {
+                              AiMotionAudit.note("gather dig " + this.read_BlockPos.toShortString());
                            }
 
                            AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.read_BlockPos);
@@ -1056,7 +1056,7 @@ public final class AiBlockMine {
                               && mc.gameMode instanceof AutismMultiPlayerGameModeAccessor activeDig
                               && (activeDig.autism$isDestroying() || activeDig.autism$getDestroyProgress() > 0.0F)) {
                               BlockPos cell = activeDig.autism$getDestroyBlockPos();
-                              if (cell != null && this.init_HashUtil_CachePool.init_Set_4().contains(cell)) {
+                              if (cell != null && this.init_HashUtil_CachePool.getRouteDigCells().contains(cell)) {
                                  this.flush_Z = false;
                                  this.load_List.clear();
                                  return this.init(this.init_ClassCache_JsonUti, "Finishing the route block at " + cell.toShortString());
@@ -1065,7 +1065,7 @@ public final class AiBlockMine {
 
                            if (!dropsOnly && !collectFirst && !approach) {
                               boolean unsettled = !mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()
-                                 || this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.load_Z_8()
+                                 || this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.canInterrupt()
                                  || this.update_Z_3();
                               BlockPos inReach = unsettled ? null : this.load_BlockPos_2();
                               if (inReach == null
@@ -1143,8 +1143,8 @@ public final class AiBlockMine {
                                  this.poll_I = this.flush_I;
                                  this.read_RefQueue_DataUtil.stopCompat();
                                  this.read_RefQueue_DataUtil = this.init_Z ? this.init_RefQueue_DataUtil : this.load_RefQueue_DataUtil;
-                                 if (AiMotionAudit.init_Z()) {
-                                    AiMotionAudit.init_V("gather dig " + inReach.toShortString());
+                                 if (AiMotionAudit.isEnabled()) {
+                                    AiMotionAudit.note("gather dig " + inReach.toShortString());
                                  }
 
                                  AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
@@ -1271,7 +1271,7 @@ public final class AiBlockMine {
                                  return this.init_AiOperation_Result_6("Waiting for the last mined drops");
                               }
 
-                              if (this.init_FieldCache.init_Z()) {
+                              if (this.init_FieldCache.isActive()) {
                                  return this.init_AiOperation_Result_6("Finishing the committed " + label + " vein scan");
                               }
 
@@ -1407,7 +1407,7 @@ public final class AiBlockMine {
                                        }
 
                                        this.init_BufferHelper_Strea = AiBlockMine.Inner_StreamUtil.init_BufferHelper_Strea_BlockPos_BlockPos(feet, nearest);
-                                       if (this.init_FieldCache.load_Z()) {
+                                       if (this.init_FieldCache.isIdle()) {
                                           this.init_V_3(nearest);
                                        }
 
@@ -1424,7 +1424,7 @@ public final class AiBlockMine {
                                              nearest.toShortString(),
                                              goalCells.size(),
                                              this.init_List.size(),
-                                             this.init_FieldCache.init_I(),
+                                             this.init_FieldCache.remainingCount(),
                                              this.init_List.isEmpty()
                                                 ? "none"
                                                 : this.init_Str(this.init_List.stream().min(Comparator.comparingDouble(t -> t.distSqr(feet))).get())
@@ -1489,10 +1489,10 @@ public final class AiBlockMine {
                                  && goalItems.isEmpty()
                                  && goal.read_List.isEmpty()
                                  && this.init_HashUtil_CachePool != null
-                                 && this.init_HashUtil_CachePool.init_Z_13()
+                                 && this.init_HashUtil_CachePool.isAtGoal()
                                  && goal.init(this.init_BufferHelper_TaskQ)
                                  && mc.player.onGround()
-                                 && this.init_HashUtil_CachePool.load_Z_8()) {
+                                 && this.init_HashUtil_CachePool.canInterrupt()) {
                                  boolean visible = false;
                                  Vec3 eye = mc.player.getEyePosition();
 
@@ -1524,7 +1524,7 @@ public final class AiBlockMine {
                                  }
                               }
 
-                              if (this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.init_Z_13() && goal.init(this.init_BufferHelper_TaskQ)) {
+                              if (this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.isAtGoal() && goal.init(this.init_BufferHelper_TaskQ)) {
                                  if (dropsOnly) {
                                     List<ItemStack> observed = new ArrayList<>();
                                     List<Vec3> positions = new ArrayList<>();
@@ -1607,7 +1607,7 @@ public final class AiBlockMine {
 
                               if (goalCells.isEmpty()
                                  && this.init_HashUtil_CachePool != null
-                                 && this.init_HashUtil_CachePool.init_Z_13()
+                                 && this.init_HashUtil_CachePool.isAtGoal()
                                  && goal.init(this.init_BufferHelper_TaskQ)
                                  && mc.player.onGround()) {
                                  Vec3 at = mc.player.position();
@@ -1660,7 +1660,7 @@ public final class AiBlockMine {
             }
 
             AiOperation.Result init(AiPathfinder.PathGoal goal, String message) {
-               if (this.init_FieldCache.load_Z() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.init_List.isEmpty()) {
+               if (this.init_FieldCache.isIdle() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.init_List.isEmpty()) {
                   this.init_V_3(t.init_List.getFirst());
                }
 
@@ -1694,10 +1694,10 @@ public final class AiBlockMine {
                   this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
                      mc.player.blockPosition(), AiGoto.protectingCellsCompat(goal, protectedCells), (int)Math.max(20L, (deadline - System.nanoTime()) / 1000000000L)
                   );
-                  this.init_HashUtil_CachePool.init_V_BiPredicate(this.init_BiPredicate);
+                  this.init_HashUtil_CachePool.setAcceptedTool(this.init_BiPredicate);
 
                   for (Long cell : this.flush_Set) {
-                     this.init_HashUtil_CachePool.init_V_BlockPos(BlockPos.of(cell));
+                     this.init_HashUtil_CachePool.blacklistCell(BlockPos.of(cell));
                   }
                } else {
                   this.init_HashUtil_CachePool.load(false);
@@ -1708,7 +1708,7 @@ public final class AiBlockMine {
                   }
 
                   if (changed) {
-                     this.init_HashUtil_CachePool.init_V_ClassCache_JsonUti(AiGoto.protectingCellsCompat(goal, protectedCells));
+                     this.init_HashUtil_CachePool.retarget(AiGoto.protectingCellsCompat(goal, protectedCells));
                   }
                }
 
@@ -1720,9 +1720,9 @@ public final class AiBlockMine {
                   : List.of();
                if (!work.isEmpty()) {
                   boolean trees = treeMode;
-                  this.init_HashUtil_CachePool.init_V_Function(end -> this.init_Vec3_BlockPos(end, work, trees));
+                  this.init_HashUtil_CachePool.setAimFunction(end -> this.init_Vec3_BlockPos(end, work, trees));
                } else {
-                  this.init_HashUtil_CachePool.init_V_Function(null);
+                  this.init_HashUtil_CachePool.setAimFunction(null);
                }
 
                this.init_ClassCache_JsonUti = goal;
@@ -1733,7 +1733,7 @@ public final class AiBlockMine {
                }
 
                AiBlockMine.Inner_TaskQueue failedGoal = this.init_BufferHelper_TaskQ;
-               BlockPos stuck = this.init_HashUtil_CachePool.load_BlockPos_3();
+               BlockPos stuck = this.init_HashUtil_CachePool.getStuckCell();
                if (stuck != null) {
                   this.flush_Set.add(stuck.asLong());
                }
@@ -1768,7 +1768,7 @@ public final class AiBlockMine {
                   this.write_Set.clear();
                }
 
-               this.init_FieldCache.init_V();
+               this.init_FieldCache.clear();
                AutismClientAddon.LOG
                   .info(
                      "[AI] block mine {}: route failed ({}), blacklisted {}: {}",
@@ -1886,7 +1886,7 @@ public final class AiBlockMine {
                   this.init_FieldCache.init(seed, this.init_List, cell -> !this.init_Set.contains(cell.asLong()));
                   this.close_Set.clear();
                } else {
-                  this.init_FieldCache.init_V();
+                  this.init_FieldCache.clear();
                }
             }
 
@@ -1931,7 +1931,7 @@ public final class AiBlockMine {
 
             void write_V(BlockPos cell) {
                this.load_V_2(cell);
-               if (this.init_FieldCache.load_Z()) {
+               if (this.init_FieldCache.isIdle()) {
                   this.init_V_3(cell);
                } else {
                   this.read_V_5();
@@ -2005,17 +2005,17 @@ public final class AiBlockMine {
                      }
                   }
 
-                  if (near != null && this.init_FieldCache.load_Z()) {
+                  if (near != null && this.init_FieldCache.isIdle()) {
                      this.init_V_3(near);
                   }
 
                   this.load_BlockPos = null;
                }
 
-               if (this.init_FieldCache.init_Z()) {
+               if (this.init_FieldCache.isActive()) {
                   this.init_FieldCache.init(this.init_Set_3());
                   if (this.init_FieldCache.init(System.nanoTime(), this.open_Z, 250000000L)) {
-                     this.init_FieldCache.init_V();
+                     this.init_FieldCache.clear();
                   }
                }
 
@@ -2023,8 +2023,8 @@ public final class AiBlockMine {
                   for (Long cell : this.write_Set) {
                      out.add(BlockPos.of(cell));
                   }
-               } else if (this.init_FieldCache.init_Z() && !dropsOnly) {
-                  out.addAll(this.init_FieldCache.init_List());
+               } else if (this.init_FieldCache.isActive() && !dropsOnly) {
+                  out.addAll(this.init_FieldCache.remainingCells());
                } else if (!dropsOnly) {
                   Set<Long> known = new HashSet<>();
 
@@ -2054,7 +2054,7 @@ public final class AiBlockMine {
                      : AiBlockMine.init_List_List(out, feet, gx -> AiBlockMine.init(mc, gx), this::init_D_2);
                }
 
-               if (oreJob && this.write_Set.isEmpty() && this.init_FieldCache.load_Z()) {
+               if (oreJob && this.write_Set.isEmpty() && this.init_FieldCache.isIdle()) {
                   List<BlockPos> buried = new ArrayList<>();
 
                   for (BlockPos g : out) {
@@ -2247,7 +2247,7 @@ public final class AiBlockMine {
                   || this.init_ClassCache_JsonUti instanceof AiBlockMine.Inner_TaskQueue target && target.init_List.isEmpty() && !target.load_List.isEmpty()) {
                   return "Collecting drops";
                } else if (!this.load_Z && !this.init_List.isEmpty()) {
-                  return this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.init_Z_13()
+                  return this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.isAtGoal()
                      ? "Moving to the next blocks"
                      : "Mining the nearby batch";
                } else {
@@ -2262,8 +2262,8 @@ public final class AiBlockMine {
             ToDoubleFunction<BlockPos> init_ToDoubleFunction() {
                Map<BlockState, Double> costs = new IdentityHashMap<>();
                return cell -> costs.computeIfAbsent(mc.level.getBlockState(cell), state -> {
-                  int slot = MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, wantedDrops));
-                  return slot < 0 ? 1.0 / 0.0 : MiningCost.init_D_Minecraft(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, cell));
+                  int slot = MiningCost.bestToolSlot(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, wantedDrops));
+                  return slot < 0 ? 1.0 / 0.0 : MiningCost.breakTicks(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, cell));
                });
             }
 
@@ -2470,7 +2470,7 @@ public final class AiBlockMine {
                   this.write_List.clear();
                   this.write_List
                      .addAll(
-                        AiDigLine.init_List_Vec3(
+                        AiDigLine.planLines(
                            from,
                            mc.player.getYRot(),
                            mc.player.getXRot(),
@@ -2518,7 +2518,7 @@ public final class AiBlockMine {
                      && this.write_Z_2(led)
                      && this.sync(led)
                      && AiBlockMine.init(mc.player.blockPosition(), led, treeMode && this.write_Set.contains(led.asLong()))) {
-                     return MiningCost.init_I_Minecraft_2(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops)) < 0
+                     return MiningCost.bestToolSlot(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops)) < 0
                         ? null
                         : next.direction();
                   } else {
@@ -2548,7 +2548,7 @@ public final class AiBlockMine {
                      }
                   }
 
-                  AiDigLine.Inner_DataUtil again = AiDigLine.init_EventBus_DataUtil_Vec3(
+                  AiDigLine.Inner_DataUtil again = AiDigLine.planLine(
                      from, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.init_EventBus_CachePool(), reach
                   );
                   if (again != null && again.chain().get(0).equals(cell)) {
@@ -2582,7 +2582,7 @@ public final class AiBlockMine {
                }
 
                rest.add(cell);
-               AiDigLine.Inner_DataUtil here = AiDigLine.init_EventBus_DataUtil_Vec3(
+               AiDigLine.Inner_DataUtil here = AiDigLine.planLine(
                   eye, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.init_EventBus_CachePool(), reach
                );
                if (here != null && here.chain().get(0).equals(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
@@ -2620,7 +2620,7 @@ public final class AiBlockMine {
                if (!beside.isEmpty()) {
                   Vec3 eye = new Vec3(end.getX() + 0.5, end.getY() + mc.player.getEyeHeight(), end.getZ() + 0.5);
                   double reach = mc.player.blockInteractionRange();
-                  List<AiDigLine.Inner_DataUtil> lines = AiDigLine.init_List_Vec3(
+                  List<AiDigLine.Inner_DataUtil> lines = AiDigLine.planLines(
                      eye, mc.player.getYRot(), mc.player.getXRot(), beside, beside, this.init_EventBus_CachePool(), reach, 1, this.init_ToDoubleFunction()
                   );
                   if (!lines.isEmpty()) {
@@ -2669,7 +2669,7 @@ public final class AiBlockMine {
                   if (!candidates.contains(nearby)
                      && !this.init_Set.contains(nearby.asLong())
                      && this.write_Z_2(nearby)
-                     && (!this.init_FieldCache.init_Z() || this.init_FieldCache.init(nearby.asLong()))
+                     && (!this.init_FieldCache.isActive() || this.init_FieldCache.init(nearby.asLong()))
                      && (!treeMode || this.write_Set.isEmpty() || this.write_Set.contains(nearby.asLong()))
                      && AiBlockMine.init(feet, nearby, treeMode && this.write_Set.contains(nearby.asLong()))) {
                      candidates.add(nearby);
@@ -2684,14 +2684,14 @@ public final class AiBlockMine {
                List<BlockPos> direct = new ArrayList<>();
                List<BlockPos> hidden = new ArrayList<>();
                boolean moving = this.init_HashUtil_CachePool != null
-                  && !this.init_HashUtil_CachePool.init_Z_13()
+                  && !this.init_HashUtil_CachePool.isAtGoal()
                   && mc.player.getDeltaMovement().horizontalDistanceSqr() > 0.003;
                Vec3 drift = mc.player.getDeltaMovement();
                Vec3 rest = drift.horizontalDistanceSqr() > 1.0E-4 ? eye.add(drift.x * 2.2026431718061676, 0.0, drift.z * 2.2026431718061676) : null;
-               Set<BlockPos> routeCells = this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.init_Z_13()
-                  ? this.init_HashUtil_CachePool.init_Set_4()
+               Set<BlockPos> routeCells = this.init_HashUtil_CachePool != null && !this.init_HashUtil_CachePool.isAtGoal()
+                  ? this.init_HashUtil_CachePool.getRouteDigCells()
                   : Set.of();
-               BlockPos end = moving ? this.init_HashUtil_CachePool.init_BlockPos_6() : null;
+               BlockPos end = moving ? this.init_HashUtil_CachePool.getPathEnd() : null;
 
                for (BlockPos t : candidates) {
                   if (!routeCells.contains(t)
@@ -2800,7 +2800,7 @@ public final class AiBlockMine {
                double reach = mc.player.blockInteractionRange() - 0.2;
                BlockPos feet = mc.player.blockPosition();
                StringBuilder out = new StringBuilder(
-                  "ground=" + mc.player.onGround() + " pause=" + (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8())
+                  "ground=" + mc.player.onGround() + " pause=" + (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt())
                );
                int n = 0;
 
@@ -2873,13 +2873,13 @@ public final class AiBlockMine {
                               && !cell.equals(feet.above())
                               && !this.init_Set.contains(key)
                               && this.write_Z_2(cell)
-                              && (!known.contains(key) || !this.init_FieldCache.load(key) && (!this.init_FieldCache.load_Z() || !this.close_Set.contains(key)))
+                              && (!known.contains(key) || !this.init_FieldCache.load(key) && (!this.init_FieldCache.isIdle() || !this.close_Set.contains(key)))
                               && this.sync(cell)) {
                               if (known.add(key)) {
                                  this.init_List.add(cell);
                               }
 
-                              if (this.init_FieldCache.load_Z()) {
+                              if (this.init_FieldCache.isIdle()) {
                                  this.init_V_Set(this.close_Set, cell, feet);
                               }
                            }
@@ -2887,7 +2887,7 @@ public final class AiBlockMine {
                      }
                   }
 
-                  if (this.init_FieldCache.init_Z()) {
+                  if (this.init_FieldCache.isActive()) {
                      this.read_V_5();
                   }
                }
@@ -3056,7 +3056,7 @@ public final class AiBlockMine {
             }
 
             boolean sync(BlockPos pos) {
-               if (AiEditLedger.init_Z(pos)) {
+               if (AiEditLedger.wasRecentlyPlaced(pos)) {
                   return false;
                }
 
@@ -3314,7 +3314,7 @@ public final class AiBlockMine {
                               BlockState over = mc.level.getBlockState(p.above());
                               if (!over.is(BlockTags.LOGS)
                                  && over.getCollisionShape(mc.level, p.above()).isEmpty()
-                                 && !AiEditLedger.init_Z(p)
+                                 && !AiEditLedger.wasRecentlyPlaced(p)
                                  && AiBlockInteraction.findReachableHit(mc, p) != null
                                  && !this.init_Set.contains(p.asLong())
                                  && AiPathfinder.LiveGridView.isSafeToDigCompat(mc.level, p)
@@ -3565,7 +3565,7 @@ public final class AiBlockMine {
          return 1.0 / 0.0;
       }
 
-      double dryTicks = MiningCost.init_D_Minecraft(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, pos), MiningCost.Inner_DataUtil.of(mc));
+      double dryTicks = MiningCost.breakTicks(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, pos), MiningCost.Inner_DataUtil.of(mc));
       double submergedSpeed = mc.player.getAttributeValue(Attributes.SUBMERGED_MINING_SPEED);
       double slowdown = submergedSpeed > 0.0 && submergedSpeed < 1.0 ? 1.0 / submergedSpeed : 1.0;
       return swim + dryTicks / 20.0 * (slowdown - 1.0);
@@ -3882,12 +3882,12 @@ public final class AiBlockMine {
       }
 
       @Override
-      public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
+      public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView planned) {
          if (!this.isInGoal(x, y, z)) {
             return false;
          }
 
-         if (planned != null && planned.init_ClassCache_FileCac_I(x, y, z).water()) {
+         if (planned != null && planned.probeCell(x, y, z).water()) {
             for (Vec3 item : this.load_List) {
                if (AiBlockMine.init_Z_I(x, y, z, item)) {
                   return true;

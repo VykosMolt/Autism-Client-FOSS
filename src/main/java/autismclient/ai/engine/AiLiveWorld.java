@@ -397,21 +397,21 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    // 5.3 external ABI bridges
-   ClientLevel init_ClientLevel() { return this.putAt_ClientLevel(); }
-   void init_V() { this.putAt_V(); }
-   @Override public double init_D() { return this.putAt_D(); }
+   ClientLevel getLevel() { return this.putAt_ClientLevel(); }
+   void clearCaches() { this.putAt_V(); }
+   @Override public double maxDropBlocks() { return this.putAt_D(); }
    @Override public double load() { return this.movementSpeed(); }
-   @Override public double init_D_I(int x, int y, int z) { return this.putAt_D_I(x, y, z); }
-   @Override public double load_D(int x, int y, int z) { return this.fill_D(x, y, z); }
+   @Override public double blockFriction(int x, int y, int z) { return this.putAt_D_I(x, y, z); }
+   @Override public double speedFactor(int x, int y, int z) { return this.fill_D(x, y, z); }
    @Override public boolean flush(int x, int y, int z) { return this.closeOf(x, y, z); }
-   @Override public double read_D(int x, int y, int z) { return this.readEx_D(x, y, z); }
-   @Override public double write_D(int x, int y, int z) { return this.value_D(x, y, z); }
+   @Override public double bounceFactor(int x, int y, int z) { return this.readEx_D(x, y, z); }
+   @Override public double jumpFactor(int x, int y, int z) { return this.value_D(x, y, z); }
    @Override public boolean sync(int x, int y, int z) { return this.state(x, y, z); }
-   @Override public int init_I(AABB box) { return this.putAt_I_AABB(box); }
-   @Override public boolean init_Z() { return this.putAt_Z(); }
-   @Override public boolean init_Z_I(int x, int y, int z) { return this.putAt_Z_I_2(x, y, z); }
-   @Override public boolean load_Z(int x, int y, int z) { return this.fill_Z(x, y, z); }
-   @Override public boolean read_Z(int x, int y, int z) { return this.readEx_Z(x, y, z); }
-   @Override public boolean write_Z(int x, int y, int z) { return this.value_Z(x, y, z); }
+   @Override public int stuckBlockKindIn(AABB box) { return this.putAt_I_AABB(box); }
+   @Override public boolean tracksStuckBlocks() { return this.putAt_Z(); }
+   @Override public boolean isLavaOrUnloaded(int x, int y, int z) { return this.putAt_Z_I_2(x, y, z); }
+   @Override public boolean isWater(int x, int y, int z) { return this.fill_Z(x, y, z); }
+   @Override public boolean isInvisibleLightBlock(int x, int y, int z) { return this.readEx_Z(x, y, z); }
+   @Override public boolean isPressurePlate(int x, int y, int z) { return this.value_Z(x, y, z); }
    @Override public boolean update(int x, int y, int z) { return this.prevEx(x, y, z); }
 }

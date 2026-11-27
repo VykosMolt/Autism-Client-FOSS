@@ -577,7 +577,7 @@ final class AiBurrow {
                      }
 
                      this.write_BlockPos = this.init_List.get(this.init_I);
-                     autismclient.ai.engine.AiEditLedger.init_V(this.write_BlockPos);
+                     autismclient.ai.engine.AiEditLedger.forgetBreak(this.write_BlockPos);
                      this.init_Item = mc.player.getInventory().getItem(slot).getItem();
                      this.init_DataPipe.start(this.write_BlockPos, this.init_Item);
                      this.init_Z = true;

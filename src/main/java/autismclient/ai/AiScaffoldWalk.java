@@ -269,7 +269,7 @@ final class AiScaffoldWalk {
                   );
                   this.init_NetHelper = new autismclient.ai.engine.AiBridgeDriver(
                      cells,
-                     autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(
+                     autismclient.ai.engine.AiBridgeDriver.chooseStyle(
                         this.init_bN_StreamUtil() == AiScaffoldWalk.Inner_StreamUtil.TELLY, cells, mc.player, this.init_I_27()
                      ),
                      this.init_DataUtil
@@ -280,7 +280,7 @@ final class AiScaffoldWalk {
                if (pos.y < this.update_D - 2.0) {
                   return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
                } else {
-                  BlockPos support = this.init_NetHelper.init_BlockPos();
+                  BlockPos support = this.init_NetHelper.nextSupport();
                   if (support != null && this.load(support)) {
                      return this.init(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + support.toShortString());
                   } else {
@@ -310,7 +310,7 @@ final class AiScaffoldWalk {
                         } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL) {
                            return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
                         } else {
-                           String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
+                           String style = this.init_NetHelper.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
                            if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                               this.read_BlockPos = mc.player.blockPosition();
                               this.init_NetHelper = null;

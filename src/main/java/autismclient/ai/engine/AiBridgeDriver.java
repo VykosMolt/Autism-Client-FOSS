@@ -35,15 +35,15 @@ public final class AiBridgeDriver {
       this.init_DataUtil = aim;
    }
 
-   public AiBridger init_JsonUtil() {
+   public AiBridger getBridger() {
       return this.init_JsonUtil;
    }
 
-   public AiBridger.Inner_CachePool init_JsonUtil_CachePool() {
-      return this.init_JsonUtil.init_JsonUtil_CachePool();
+   public AiBridger.Inner_CachePool getLane() {
+      return this.init_JsonUtil.getLane();
    }
 
-   public int init_I() {
+   public int getTicks() {
       return this.init_I;
    }
 
@@ -51,18 +51,18 @@ public final class AiBridgeDriver {
       return this.load;
    }
 
-   public BlockPos init_BlockPos() {
-      if (this.init_BitSetUtil == null || this.init_BitSetUtil.init_ClientLevel() != this.init_Minecraft.level) {
+   public BlockPos nextSupport() {
+      if (this.init_BitSetUtil == null || this.init_BitSetUtil.getLevel() != this.init_Minecraft.level) {
          this.init_BitSetUtil = new AiLiveWorld(this.init_Minecraft.level, this.init_Minecraft.player);
       }
 
-      this.init_BitSetUtil.init_V();
+      this.init_BitSetUtil.clearCaches();
       int next = this.init_JsonUtil.init_I_NodeWalker_CachePo(this.init_BitSetUtil);
-      AiBridger.Inner_CachePool lane = this.init_JsonUtil.init_JsonUtil_CachePool();
+      AiBridger.Inner_CachePool lane = this.init_JsonUtil.getLane();
       return next > lane.length() ? null : new BlockPos(lane.cellX(next), lane.floorY(), lane.cellZ(next));
    }
 
-   public static AiBridger.Inner_ConfigStore init_JsonUtil_ConfigSto_Z(boolean telly, AiBridger.Inner_CachePool lane, LocalPlayer player, int blocks) {
+   public static AiBridger.Inner_ConfigStore chooseStyle(boolean telly, AiBridger.Inner_CachePool lane, LocalPlayer player, int blocks) {
       if (telly && player.getFoodData().getFoodLevel() > 6 && blocks >= lane.length() && !AiPathfinder.MoveCosts.isCautiousParkourActiveCompat()) {
          ClientLevel level = Minecraft.getInstance().level;
 
@@ -87,7 +87,7 @@ public final class AiBridgeDriver {
 
    public AiBridgeDriver.Inner_DataUtil init(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
       LocalPlayer player = this.init_Minecraft.player;
-      AiBridger.Inner_CachePool lane = this.init_JsonUtil.init_JsonUtil_CachePool();
+      AiBridger.Inner_CachePool lane = this.init_JsonUtil.getLane();
       this.init_I++;
       if (this.init_I == 1) {
          BlockPos footing = new BlockPos(lane.cellX(0), lane.floorY(), lane.cellZ(0));
@@ -105,11 +105,11 @@ public final class AiBridgeDriver {
          return AiBridgeDriver.Inner_DataUtil.FELL;
       }
 
-      if (this.init_BitSetUtil == null || this.init_BitSetUtil.init_ClientLevel() != this.init_Minecraft.level) {
+      if (this.init_BitSetUtil == null || this.init_BitSetUtil.getLevel() != this.init_Minecraft.level) {
          this.init_BitSetUtil = new AiLiveWorld(this.init_Minecraft.level, player);
       }
 
-      this.init_BitSetUtil.init_V();
+      this.init_BitSetUtil.clearCaches();
       AiBridger.Inner_DataUtil currentRot = new AiBridger.Inner_DataUtil(player.getYRot(), player.getXRot());
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.init()

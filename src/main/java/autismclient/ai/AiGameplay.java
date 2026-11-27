@@ -507,7 +507,7 @@ final class AiGameplay {
                }
 
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
+                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "blocks",
                         autismclient.ai.engine.AiBlockMine.init(ids),
@@ -1047,8 +1047,8 @@ final class AiGameplay {
             final int load_I = 49;
             final int read = this.init_I * this.init_I * 49;
             final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> init_List = new ArrayList<>();
-            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> load_List = autismclient.ai.engine.AiChunkMemory.init_StateCache()
-               .init_List_BlockPos(this.init_BlockPos, radius, wanted::contains);
+            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> load_List = autismclient.ai.engine.AiChunkMemory.getInstance()
+               .findRemembered(this.init_BlockPos, radius, wanted::contains);
             int write;
             boolean init_Z;
 
@@ -1087,7 +1087,7 @@ final class AiGameplay {
                      .removeIf(hitx -> !AiTerrain.isLoaded(this.init_Minecraft.level, hitx.pos()) || !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
                   this.load_List
                      .removeIf(hitx -> AiTerrain.isLoaded(this.init_Minecraft.level, hitx.pos()) && !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
-                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.init_List_List(this.init_List, this.load_List, limit);
+                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.merge(this.init_List, this.load_List, limit);
                   JsonArray results = new JsonArray();
 
                   for (autismclient.ai.engine.AiChunkMemory.Inner_CachePool hit : merged) {
@@ -1136,7 +1136,7 @@ final class AiGameplay {
                         "remembered",
                         this.load_List.size(),
                         "terrainRevision",
-                        autismclient.ai.engine.AiGridRevisions.init_J(),
+                        autismclient.ai.engine.AiGridRevisions.globalRevision(),
                         "verticalRange",
                         49,
                         "globalAbsenceProven",

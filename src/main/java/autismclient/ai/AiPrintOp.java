@@ -81,11 +81,11 @@ final class AiPrintOp implements AiOperation {
    private long update_J;
 
    void init_V_Map(Map<BlockPos, BlockState> blocks) {
-      blocks.forEach(this.init_UiHelper::init_V_BlockPos_BlockState);
+      blocks.forEach(this.init_UiHelper::notifyBlockChanged);
    }
 
-   void init_V_BlockPos_2(BlockPos position) {
-      this.init_bj.init_V_BlockPos(position);
+   void notifyBlockChanged(BlockPos position) {
+      this.init_bj.notifyBlockChanged(position);
    }
 
    AiPrintOp(AiBuilder.Blueprint blueprint, int timeoutSeconds, AiBuilder.BuildOptions power) {
@@ -98,7 +98,7 @@ final class AiPrintOp implements AiOperation {
          timeoutSeconds,
          power,
          preparedTargets,
-         power.machine().init_bV_StreamUtil_BlockPos_HolderLookup_Provi(blueprint.origin(), Minecraft.getInstance().level.registryAccess())
+         power.machine().machineSpec(blueprint.origin(), Minecraft.getInstance().level.registryAccess())
       );
    }
 
@@ -120,40 +120,40 @@ final class AiPrintOp implements AiOperation {
       AiSchematicMachinePlan.MachineSpec actions,
       autismclient.ai.print.PrintCore.ao geometry
    ) {
-      AiPrintSupply.init_V_TableIndex_ConfigS(power);
+      AiPrintSupply.validateOptions(power);
       this.init_TableIndex_DataUti = blueprint;
       this.init_TableIndex_ConfigS = power;
       this.init_bj = new AiPrintSupply(blueprint, power.clearTerrain());
       this.init_Z = !power.clearTerrain();
       this.init_List = preparedTargets;
       this.init_DataUtil.setFlightAllowed(power.assumeFly());
-      this.init_UiHelper = autismclient.ai.print.PrintCore.init_UiHelper_EventBus(this.init_DataUtil, AiPrintRules.init_bi, this.init_List, geometry);
+      this.init_UiHelper = autismclient.ai.print.PrintCore.create(this.init_DataUtil, AiPrintRules.INSTANCE, this.init_List, geometry);
       this.load_a_StreamUtil = AiScaffold.init(AiBuilder.checkpointPath(blueprint), List.of());
-      this.init_ArrayDeque.addAll(this.load_a_StreamUtil.init_List());
-      this.init_UiHelper.init_V_List(actions.vehicles());
-      this.init_UiHelper.load_V_List(actions.frames());
-      this.init_UiHelper.init_V_Map(actions.outcomes());
+      this.init_ArrayDeque.addAll(this.load_a_StreamUtil.ownedCells());
+      this.init_UiHelper.attachRailVehicles(actions.vehicles());
+      this.init_UiHelper.attachItemFrames(actions.frames());
+      this.init_UiHelper.attachMachineOutcomes(actions.outcomes());
 
       for (AiSchematicMachinePlan.ContainerPlan saved : actions.containers()) {
-         this.init_UiHelper.init_V_BitSetUtil(new AiPrintContainer(this.init_DataUtil, saved));
+         this.init_UiHelper.attachMachineJob(new AiPrintContainer(this.init_DataUtil, saved));
       }
 
       for (autismclient.ai.print.PrintSkippedContents unavailable : actions.unavailable()) {
-         this.init_UiHelper.init_V_BitSetUtil(unavailable);
+         this.init_UiHelper.attachMachineJob(unavailable);
       }
 
       for (autismclient.ai.print.PrintClockSpec clock : actions.clocks()) {
-         this.init_UiHelper.init_V_BitSetUtil(AiPrintClock.init(this.init_DataUtil, clock));
+         this.init_UiHelper.attachMachineJob(AiPrintClock.init(this.init_DataUtil, clock));
       }
 
-      this.init_UiHelper.start_Z = Boolean.getBoolean("autism.ai.print.trace");
+      this.init_UiHelper.trace = Boolean.getBoolean("autism.ai.print.trace");
       this.init_Consumer = pos -> {
          this.init_DataUtil.notifyBlockChanged(pos);
          this.init_bj.load(pos);
       };
       this.init_LongConsumer = key -> {
          this.init_DataUtil.notifyChunkChanged(key);
-         this.init_bj.init_V_J(key);
+         this.init_bj.notifyChunkChanged(key);
       };
       this.load_J = Math.max(0, timeoutSeconds) * 1000000000L;
       this.sync_I = this.init_Minecraft.player == null ? 0 : this.init_Minecraft.player.getInventory().getSelectedSlot();
@@ -171,7 +171,7 @@ final class AiPrintOp implements AiOperation {
          result = this.init_AiOperation_Result_25();
       } finally {
          if (!this.open && System.nanoTime() >= this.update_J) {
-            this.load_a_StreamUtil.init_V();
+            this.load_a_StreamUtil.persist();
             this.update_J = System.nanoTime() + 1000000000L;
          }
 
@@ -226,27 +226,27 @@ final class AiPrintOp implements AiOperation {
       this.init_V_23();
 
       try {
-         this.init_bj.init_Z_I(16384);
+         this.init_bj.prepare(16384);
       } catch (IllegalStateException failure) {
          return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.WORLD_UNKNOWN);
       }
 
-      if (!this.init_bj.load_Z()) {
+      if (!this.init_bj.isPrepared()) {
          this.init_DataUtil.releaseControls();
-         return this.init_AiOperation_Result_Str_9(this.init_bj.init_Str());
+         return this.init_AiOperation_Result_Str_9(this.init_bj.getStatus());
       }
 
-      if (this.init_UiHelper.init_Z()) {
+      if (this.init_UiHelper.isPreparing()) {
          this.read_J++;
          this.init_DataUtil.advanceTick();
-         this.init_DataUtil.applyControls(this.init_UiHelper.read_SyncManager());
-         return this.init_AiOperation_Result_Str_9(this.init_UiHelper.load_Str());
+         this.init_DataUtil.applyControls(this.init_UiHelper.tick());
+         return this.init_AiOperation_Result_Str_9(this.init_UiHelper.getStatus());
       }
 
       if (this.init_Minecraft.gui.screen() instanceof AbstractSignEditScreen editor) {
          try {
-            if (this.init_DataUtil.consumePlacedSign(AiPrintSupply.init_BlockPos_AbstractSignEditSc(editor))) {
-               AiPrintSupply.init_V_AbstractSignEditSc(editor, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_ConfigS.signText());
+            if (this.init_DataUtil.consumePlacedSign(AiPrintSupply.signPos(editor))) {
+               AiPrintSupply.fillSignText(editor, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_ConfigS.signText());
                this.init_Minecraft.gui.setScreen(null);
                this.init_DataUtil.clearRecentClick();
             }
@@ -255,7 +255,7 @@ final class AiPrintOp implements AiOperation {
          }
       }
 
-      autismclient.ai.engine.AiRoutePolicy.putAt(this.init_bj.init_Set()::contains);
+      autismclient.ai.engine.AiRoutePolicy.putAt(this.init_bj.ownedCells()::contains);
       if (!this.init_DataUtil.isCreativeMode()) {
          AiOperation.Result guarded = this.init_Y
             .tick(
@@ -282,7 +282,7 @@ final class AiPrintOp implements AiOperation {
       if (this.flush_Z) {
          this.flush_Z = false;
          this.read_V_8();
-         this.init_UiHelper.load_V();
+         this.init_UiHelper.resetActivity();
       }
 
       if (this.update_Z || this.sync_Z) {
@@ -301,16 +301,16 @@ final class AiPrintOp implements AiOperation {
          }
 
          this.read_V_8();
-         this.init_bj.load_V();
+         this.init_bj.resetRefill();
          this.init_Item = null;
-         this.init_UiHelper.load_V();
+         this.init_UiHelper.resetActivity();
          return this.init_AiOperation_Result_Str_9("Creative inventory is available; resuming construction");
       } else {
          if (this.init_AiOperation != null) {
             return this.sync_AiOperation_Result_3();
          }
 
-         if (!this.init_UiHelper.write_Z()
+         if (!this.init_UiHelper.hasPendingMachineJob()
             && this.init_Minecraft.gui.screen() instanceof AbstractContainerScreen<?> opened
             && !(opened instanceof InventoryScreen)
             && this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu
@@ -322,21 +322,21 @@ final class AiPrintOp implements AiOperation {
             return this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
          }
 
-         if (this.init_Minecraft.gui.screen() != null && !this.init_UiHelper.write_Z()) {
+         if (this.init_Minecraft.gui.screen() != null && !this.init_UiHelper.hasPendingMachineJob()) {
             this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Paused while a screen is open");
          }
 
-         if (this.init_DataUtil.isFlying() && !this.init_DataUtil.canUseFlight() && !this.init_UiHelper.write_Z()) {
+         if (this.init_DataUtil.isFlying() && !this.init_DataUtil.canUseFlight() && !this.init_UiHelper.hasPendingMachineJob()) {
             this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Paused: land or disable native flight before continuing ground construction");
          }
 
          if (!this.init_DataUtil.isCreativeMode()
-            && !this.init_UiHelper.read_Z()
+            && !this.init_UiHelper.isMachineJobRunning()
             && !this.init_UiHelper.flush_Z()
             && this.init_Minecraft.player.getFoodData().getFoodLevel() <= 14
-            && !this.init_UiHelper.close_Z()) {
+            && !this.init_UiHelper.isRestingOnGround()) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
                return this.load("Settling before a meal");
@@ -346,14 +346,14 @@ final class AiPrintOp implements AiOperation {
          if (!this.init_Z) {
             try {
                if (this.init_BlockPos == null) {
-                  this.init_BlockPos = this.init_bj.init_BlockPos();
+                  this.init_BlockPos = this.init_bj.nextTerrainCell();
                }
             } catch (IllegalStateException failure) {
                return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.UNREACHABLE);
             }
 
             if (this.init_BlockPos != null) {
-               if (!this.init_UiHelper.close_Z()) {
+               if (!this.init_UiHelper.isRestingOnGround()) {
                   return this.load("Settling before clearing the site");
                }
 
@@ -362,17 +362,17 @@ final class AiPrintOp implements AiOperation {
                return this.init_AiOperation_Result_Str_9("Clearing terrain from the schematic's air at " + this.init_BlockPos.toShortString());
             }
 
-            if (!this.init_bj.write_Z()) {
+            if (!this.init_bj.isTerrainCleared()) {
                return this.init_AiOperation_Result_Str_9("Checking remaining terrain");
             }
 
             this.init_Z = true;
-            this.init_UiHelper.load_V();
+            this.init_UiHelper.resetActivity();
             this.read_Z = false;
          }
 
          if (this.read_Z) {
-            this.init_UiHelper.load_V();
+            this.init_UiHelper.resetActivity();
             this.read_Z = false;
          }
 
@@ -390,73 +390,73 @@ final class AiPrintOp implements AiOperation {
 
          this.read_J++;
          this.init_DataUtil.advanceTick();
-         autismclient.ai.print.PrintControls controls = this.init_UiHelper.read_SyncManager();
-         ItemStack requestedContents = this.init_UiHelper.init_ItemStack();
+         autismclient.ai.print.PrintControls controls = this.init_UiHelper.tick();
+         ItemStack requestedContents = this.init_UiHelper.getRequestedContents();
          if (!requestedContents.isEmpty()) {
             this.init_ItemStack = requestedContents;
             this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing carried stock for saved container contents");
          }
 
-         if (this.init_UiHelper.init_Item() == Items.AIR && this.init_UiHelper.close_Z()) {
+         if (this.init_UiHelper.getMissingHandItem() == Items.AIR && this.init_UiHelper.isRestingOnGround()) {
             return this.init(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.INVENTORY_FULL);
          }
 
-         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.load_Item() != null) {
-            this.load_Item = this.init_UiHelper.load_Item();
+         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.getRequestedItem() != null) {
+            this.load_Item = this.init_UiHelper.getRequestedItem();
             this.load_I = AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.load_Item);
             this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing to recover " + init_Str_Item(this.load_Item));
          }
 
-         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.init_Z_Item(this.init_UiHelper.init_Item())) {
+         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.init_Z_Item(this.init_UiHelper.getMissingHandItem())) {
             this.init_DataUtil.applyControls(controls);
-            return this.init_AiOperation_Result_Str_9("Recovering temporary " + init_Str_Item(this.init_UiHelper.init_Item()));
+            return this.init_AiOperation_Result_Str_9("Recovering temporary " + init_Str_Item(this.init_UiHelper.getMissingHandItem()));
          }
 
-         if (this.init_DataUtil.isCreativeMode() || !this.init_bj.init_Z_Item(this.init_UiHelper.init_Item())) {
+         if (this.init_DataUtil.isCreativeMode() || !this.init_bj.canSupply(this.init_UiHelper.getMissingHandItem())) {
             this.init_DataUtil.applyControls(controls);
             if (this.read_J % 4L == 0L) {
-               AiVisualization.init(this, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_DataUti.cells(), this.init_UiHelper.update_I(), false, true);
+               AiVisualization.init(this, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_DataUti.cells(), this.init_UiHelper.placedCount(), false, true);
             }
 
             AiOperation.Result var10000;
-            switch (this.init_UiHelper.init_UiHelper_J()) {
+            switch (this.init_UiHelper.getPhase()) {
                case DONE:
                   if (this.init_ArrayDeque.isEmpty()) {
                      var10000 = this.init_AiOperation_Result_AiOperation_Status_Str_8(
                         AiOperation.Status.SUCCEEDED,
                         "Built "
-                           + this.init_UiHelper.update_I()
+                           + this.init_UiHelper.placedCount()
                            + " of "
-                           + this.init_UiHelper.write_I()
+                           + this.init_UiHelper.cellCount()
                            + " cells"
-                           + (this.init_UiHelper.set_I() == 0 ? "" : ". Skipped unavailable contents in " + this.init_UiHelper.set_I() + " containers")
-                           + (this.init_UiHelper.put_I() == 0 ? "" : ". Off-rail minecarts still require assembly: " + this.init_UiHelper.put_I())
-                           + (this.init_UiHelper.start_I() == 0 ? "" : ". Saved rail shapes still differ: " + this.init_UiHelper.start_I())
+                           + (this.init_UiHelper.containersSkipped() == 0 ? "" : ". Skipped unavailable contents in " + this.init_UiHelper.containersSkipped() + " containers")
+                           + (this.init_UiHelper.railVehiclesSkipped() == 0 ? "" : ". Off-rail minecarts still require assembly: " + this.init_UiHelper.railVehiclesSkipped())
+                           + (this.init_UiHelper.railShapeDifferences() == 0 ? "" : ". Saved rail shapes still differ: " + this.init_UiHelper.railShapeDifferences())
                      );
                   } else {
-                     this.init_UiHelper.init_V_BlockPos(this.init_ArrayDeque.peekFirst());
+                     this.init_UiHelper.revisitCell(this.init_ArrayDeque.peekFirst());
                      var10000 = this.init_AiOperation_Result_Str_9("Loading saved construction blocks before final cleanup");
                   }
                   break;
                case FAILED:
                   var10000 = this.init_AiOperation_Result_AiOperation_Status_Str_8(
-                     this.init_UiHelper.update_Z() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
-                     "Build stopped: " + this.init_UiHelper.write_Str()
+                     this.init_UiHelper.hasUncertainMachineWork() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
+                     "Build stopped: " + this.init_UiHelper.getStopReason()
                   );
                   break;
                default:
-                  var10000 = this.init_AiOperation_Result_Str_9(this.init_UiHelper.load_Str());
+                  var10000 = this.init_AiOperation_Result_Str_9(this.init_UiHelper.getStatus());
             }
 
             return var10000;
          } else {
             if (!this.init_TableIndex_ConfigS.shulkerStock()) {
-               return this.init(AiOperation.Status.FAILED, "Missing material: " + init_Str_Item(this.init_bj.init_Item()), AiFailure.MISSING_MATERIALS);
+               return this.init(AiOperation.Status.FAILED, "Missing material: " + init_Str_Item(this.init_bj.getMissingItem()), AiFailure.MISSING_MATERIALS);
             }
 
-            this.init_Item = this.init_bj.init_Item();
+            this.init_Item = this.init_bj.getMissingItem();
             this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing to fetch " + init_Str_Item(this.init_Item));
          }
@@ -473,9 +473,9 @@ final class AiPrintOp implements AiOperation {
          } else {
             BlockState state = this.init_DataUtil.getBlockState(position);
             if (AiScaffold.init(this.load_a_StreamUtil.init(position), state.getBlock())) {
-               this.init_UiHelper.init_V_BlockPos_BlockState(position, state);
+               this.init_UiHelper.notifyBlockChanged(position, state);
             } else {
-               AiScaffold.init_V(position);
+               AiScaffold.forget(position);
             }
          }
       }
@@ -483,7 +483,7 @@ final class AiPrintOp implements AiOperation {
 
    private AiOperation.Result init_AiOperation_Result_Str_9(String message) {
       String phase;
-      if (!this.init_bj.load_Z() || this.init_UiHelper.init_Z()) {
+      if (!this.init_bj.isPrepared() || this.init_UiHelper.isPreparing()) {
          phase = "Preparing site";
       } else if (!this.init_Z) {
          phase = "Clearing terrain";
@@ -493,7 +493,7 @@ final class AiPrintOp implements AiOperation {
          phase = "Recovering drops";
       } else {
          String var10000;
-         switch (this.init_UiHelper.init_UiHelper_J()) {
+         switch (this.init_UiHelper.getPhase()) {
             case FLUIDS:
                var10000 = "Placing fluids";
                break;
@@ -510,7 +510,7 @@ final class AiPrintOp implements AiOperation {
          phase = var10000;
       }
 
-      AiVisualization.init(this, "Building schematic", phase, this.init_UiHelper.update_I(), this.init_UiHelper.write_I());
+      AiVisualization.init(this, "Building schematic", phase, this.init_UiHelper.placedCount(), this.init_UiHelper.cellCount());
       return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_42().toString(), List.of());
    }
 
@@ -518,7 +518,7 @@ final class AiPrintOp implements AiOperation {
       this.read_J++;
       this.init_DataUtil.advanceTick();
       this.read_Z = true;
-      autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
+      autismclient.ai.print.PrintControls controls = this.init_UiHelper.refillHereControls();
       if (controls == null) {
          return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.UNREACHABLE);
       }
@@ -528,25 +528,25 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result load_AiOperation_Result_14() {
-      if ((this.init_DataUtil.isCreativeMode() || AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) > 0) && this.init_UiHelper.close_Z()) {
-         this.init_bj.load_V();
+      if ((this.init_DataUtil.isCreativeMode() || AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) > 0) && this.init_UiHelper.isRestingOnGround()) {
+         this.init_bj.resetRefill();
          this.init_Item = null;
-         this.init_UiHelper.load_V();
+         this.init_UiHelper.resetActivity();
          return this.init_AiOperation_Result_Str_9("Material is available; resuming construction");
       }
 
       this.read_J++;
       this.init_DataUtil.advanceTick();
-      boolean portableHere = this.init_UiHelper.close_Z()
-         && this.init_bj.read_Z()
+      boolean portableHere = this.init_UiHelper.isRestingOnGround()
+         && this.init_bj.hasPortableStock()
          && AiCarriedShulker.init_BlockPos_Minecraft_Set(this.init_Minecraft, this.init_Set_7()) != null;
-      autismclient.ai.print.PrintControls controls = portableHere ? this.init_UiHelper.init_SyncManager() : this.init_UiHelper.load_SyncManager();
+      autismclient.ai.print.PrintControls controls = portableHere ? this.init_UiHelper.refillHereControls() : this.init_UiHelper.stockRouteControls();
       if (controls == null) {
          return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.UNREACHABLE);
       }
 
       this.init_DataUtil.applyControls(controls);
-      if (!portableHere && !this.init_UiHelper.open_Z()) {
+      if (!portableHere && !this.init_UiHelper.isAtStockStance()) {
          return this.init_AiOperation_Result_Str_9("Returning to ground for " + init_Str_Item(this.init_Item));
       }
 
@@ -556,7 +556,7 @@ final class AiPrintOp implements AiOperation {
             return this.init_AiOperation_Result_Str_9("Checking shulker stock for " + init_Str_Item(this.init_Item));
          }
 
-         AiOperation refill = this.init_bj.init_AiOperation_Set(this.init_UiHelper.init_Set());
+         AiOperation refill = this.init_bj.stockRefillOperation(this.init_UiHelper.constructionCells());
          if (refill == null && this.init_Item == Items.DIRT) {
             return this.read_AiOperation_Result_9();
          }
@@ -574,9 +574,9 @@ final class AiPrintOp implements AiOperation {
          this.init_V_AiOperation(refill);
          return this.init_AiOperation_Result_Str_9("Fetching " + init_Str_Item(this.init_Item) + " from shulker stock");
       } else {
-         this.init_bj.load_V();
+         this.init_bj.resetRefill();
          this.init_Item = null;
-         this.init_UiHelper.load_V();
+         this.init_UiHelper.resetActivity();
          return this.init_AiOperation_Result_Str_9("Material is available; resuming construction");
       }
    }
@@ -600,26 +600,26 @@ final class AiPrintOp implements AiOperation {
    private AiOperation.Result write_AiOperation_Result_5() {
       int held = AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.load_Item);
       if (held > this.load_I) {
-         this.init_UiHelper.init_V_Item_I(this.load_Item, held - this.load_I);
+         this.init_UiHelper.recordSupplied(this.load_Item, held - this.load_I);
          this.load_Item = null;
-         this.init_UiHelper.load_V();
+         this.init_UiHelper.resetActivity();
          return this.init_AiOperation_Result_Str_9("Recovered temporary material; resuming construction");
       } else {
          this.read_J++;
          this.init_DataUtil.advanceTick();
-         autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
+         autismclient.ai.print.PrintControls controls = this.init_UiHelper.refillHereControls();
          if (controls == null) {
             return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.UNREACHABLE);
          } else {
             this.init_DataUtil.applyControls(controls);
-            if (!this.init_UiHelper.close_Z()) {
+            if (!this.init_UiHelper.isRestingOnGround()) {
                return this.init_AiOperation_Result_Str_9("Settling before recovering " + init_Str_Item(this.load_Item));
             } else {
-               int remaining = this.init_UiHelper.init_I_Item(this.load_Item);
+               int remaining = this.init_UiHelper.remainingNeed(this.load_Item);
                if (remaining <= 0) {
-                  this.init_UiHelper.init_V_Item_I(this.load_Item, 0);
+                  this.init_UiHelper.recordSupplied(this.load_Item, 0);
                   this.load_Item = null;
-                  this.init_UiHelper.load_V();
+                  this.init_UiHelper.resetActivity();
                   return this.init_AiOperation_Result_Str_9("Temporary material reconciled; resuming construction");
                } else {
                   this.init_V_AiOperation(
@@ -643,17 +643,17 @@ final class AiPrintOp implements AiOperation {
 
       this.read_J++;
       this.init_DataUtil.advanceTick();
-      autismclient.ai.print.PrintControls controls = this.init_UiHelper.load_SyncManager();
+      autismclient.ai.print.PrintControls controls = this.init_UiHelper.stockRouteControls();
       if (controls == null) {
          return this.init_AiOperation_Result_Z_Str(false, "No safe stock route for the optional saved contents");
       }
 
       this.init_DataUtil.applyControls(controls);
-      if (!this.init_UiHelper.open_Z()) {
+      if (!this.init_UiHelper.isAtStockStance()) {
          return this.init_AiOperation_Result_Str_9("Returning to a safe stock workstation for saved contents");
       }
 
-      AiOperation refill = this.init_bj.init_AiOperation_ItemStack(this.init_ItemStack, this.init_ItemStack.getCount(), this.init_UiHelper.init_Set());
+      AiOperation refill = this.init_bj.refillOperation(this.init_ItemStack, this.init_ItemStack.getCount(), this.init_UiHelper.constructionCells());
       if (refill == null) {
          return this.init_AiOperation_Result_Z_Str(false, "No carried box can supply the exact saved item");
       }
@@ -664,13 +664,13 @@ final class AiPrintOp implements AiOperation {
 
    private AiOperation.Result init_AiOperation_Result_Z_Str(boolean available, String message) {
       if (available) {
-         this.init_bj.read_V();
+         this.init_bj.countRefill();
       }
 
-      this.init_UiHelper.init_V_Z(available);
-      this.init_bj.write_V();
+      this.init_UiHelper.resolveContentsRequest(available);
+      this.init_bj.clearContentsRequest();
       this.init_ItemStack = ItemStack.EMPTY;
-      this.init_UiHelper.load_V();
+      this.init_UiHelper.resetActivity();
       this.read_Z = false;
       return this.init_AiOperation_Result_Str_9(message);
    }
@@ -681,7 +681,7 @@ final class AiPrintOp implements AiOperation {
 
    private AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
       this.sync_V_3();
-      if (status != AiOperation.Status.SUCCEEDED && (this.init_UiHelper.update_Z() || this.update_Z || this.sync_Z)) {
+      if (status != AiOperation.Status.SUCCEEDED && (this.init_UiHelper.hasUncertainMachineWork() || this.update_Z || this.sync_Z)) {
          status = AiOperation.Status.UNCERTAIN;
       }
 
@@ -693,7 +693,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private Set<Long> init_Set_7() {
-      return init_Set_Set_Set(this.init_UiHelper.init_Set(), this.init_bj.init_Set());
+      return init_Set_Set_Set(this.init_UiHelper.constructionCells(), this.init_bj.ownedCells());
    }
 
    static Set<Long> init_Set_Set_Set(final Set<Long> first, final Set<Long> second) {
@@ -734,17 +734,17 @@ final class AiPrintOp implements AiOperation {
 
    private void init_V_AiOperation(AiOperation operation) {
       this.init_DataUtil.releaseControls();
-      this.init_a_StreamUtil = AiScaffold.init_a_StreamUtil();
+      this.init_a_StreamUtil = AiScaffold.openJobScope();
       this.init_AiOperation = operation;
    }
 
    private void read_V_8() {
       if (this.init_a_StreamUtil != null) {
          if (this.init_Minecraft.level == this.init_ClientLevel) {
-            for (BlockPos p : this.init_a_StreamUtil.init_List()) {
+            for (BlockPos p : this.init_a_StreamUtil.ownedCells()) {
                BlockState state = this.init_Minecraft.level.getBlockState(p);
                if (AiScaffold.init(this.init_a_StreamUtil.init(p), state.getBlock())) {
-                  this.init_UiHelper.init_V_BlockPos_BlockState(p, state);
+                  this.init_UiHelper.notifyBlockChanged(p, state);
                }
             }
          }
@@ -794,7 +794,7 @@ final class AiPrintOp implements AiOperation {
                BlockPos p = this.init_BlockPos;
                this.init_BlockPos = null;
                if (result.status() == AiOperation.Status.SUCCEEDED && !AiSchematicActions.init(this.init_Minecraft.level.getBlockState(p))) {
-                  this.init_bj.load_I++;
+                  this.init_bj.terrainCleared++;
                   return this.init_AiOperation_Result_Str_9("Terrain removed; checking the next obstruction");
                } else {
                   return this.init(AiOperation.Status.FAILED, "Could not clear terrain at " + p.toShortString() + ": " + result.message(), result.failure());
@@ -802,28 +802,28 @@ final class AiPrintOp implements AiOperation {
             }
          } else if (this.load_Item != null) {
             int gained = Math.max(0, AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.load_Item) - this.load_I);
-            this.init_UiHelper.init_V_Item_I(this.load_Item, gained);
+            this.init_UiHelper.recordSupplied(this.load_Item, gained);
             if (result.status() == AiOperation.Status.SUCCEEDED) {
                this.load_Item = null;
-               this.init_UiHelper.load_V();
+               this.init_UiHelper.resetActivity();
                this.read_Z = false;
                return this.init_AiOperation_Result_Str_9("Temporary drops recovered; resuming construction");
             } else {
-               this.init_UiHelper.init_V_Item(this.load_Item);
+               this.init_UiHelper.giveUpItem(this.load_Item);
                this.load_Item = null;
-               this.init_UiHelper.load_V();
+               this.init_UiHelper.resetActivity();
                this.read_Z = false;
                return this.init_AiOperation_Result_Str_9("Drop recovery was inconclusive; checking ordinary stock");
             }
          } else if (this.init_ItemStack.isEmpty()) {
-            this.init_UiHelper.load_V();
+            this.init_UiHelper.resetActivity();
             this.read_Z = false;
             if (AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) > this.init_I) {
-               this.init_bj.init_V();
+               this.init_bj.completeRefill();
                this.init_Item = null;
                return this.init_AiOperation_Result_Str_9("Shulker stock received; resuming construction");
             } else if (this.init_DataUtil.isCreativeMode()) {
-               this.init_bj.load_V();
+               this.init_bj.resetRefill();
                this.init_Item = null;
                return this.init_AiOperation_Result_Str_9("Creative inventory is available; resuming construction");
             } else {
@@ -841,16 +841,16 @@ final class AiPrintOp implements AiOperation {
 
    private void write_V_6() {
       this.init_DataUtil.releaseControls();
-      if (this.init_UiHelper.read_Z()) {
-         this.init_UiHelper.init_V();
+      if (this.init_UiHelper.isMachineJobRunning()) {
+         this.init_UiHelper.cancelMachineJob();
          this.sync_Z = true;
       }
 
       this.update_V_4();
       this.read_V_8();
-      this.init_UiHelper.load_V();
+      this.init_UiHelper.resetActivity();
       this.read_Z = false;
-      this.init_a_StreamUtil = AiScaffold.init_a_StreamUtil();
+      this.init_a_StreamUtil = AiScaffold.openJobScope();
    }
 
    private void update_V_4() {
@@ -874,10 +874,10 @@ final class AiPrintOp implements AiOperation {
    private JsonObject init_JsonObject_42() {
       JsonObject o = new JsonObject();
       o.addProperty("engine", "print-v2");
-      o.addProperty("phase", this.init_UiHelper.init_UiHelper_J().name());
+      o.addProperty("phase", this.init_UiHelper.getPhase().name());
       o.addProperty(
          "stage",
-         !this.init_bj.load_Z() || this.init_UiHelper.init_Z()
+         !this.init_bj.isPrepared() || this.init_UiHelper.isPreparing()
             ? "prepare"
             : (
                !this.init_Z
@@ -888,83 +888,83 @@ final class AiPrintOp implements AiOperation {
                         : (
                            this.init_Item == null && this.init_ItemStack.isEmpty()
                               ? (
-                                 this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.TEARDOWN
+                                 this.init_UiHelper.getPhase() == autismclient.ai.print.PrintCore.J.TEARDOWN
                                     ? "drain"
-                                    : this.init_UiHelper.init_UiHelper_J().name().toLowerCase(Locale.ROOT)
+                                    : this.init_UiHelper.getPhase().name().toLowerCase(Locale.ROOT)
                               )
                               : "stock"
                         )
                   )
             )
       );
-      o.addProperty("temporaryClickBlocksRemoved", this.init_UiHelper.pop_I);
-      o.addProperty("climbSteps", this.init_UiHelper.f_j_I);
-      o.addProperty("supportsDrained", this.init_UiHelper.pop_I);
-      o.addProperty("originalSupportsDrained", this.init_UiHelper.init_I());
-      o.addProperty("originalCleanupRise", this.init_UiHelper.init_J());
-      o.addProperty("cleanupBlocksRecovered", this.init_UiHelper.load_J());
-      o.addProperty("cells", this.init_UiHelper.write_I());
-      o.addProperty("placed", this.init_UiHelper.update_I());
-      o.addProperty("railVehiclesVerified", this.init_UiHelper.pop_I());
-      o.addProperty("railSlopesVerified", this.init_UiHelper.close_I());
-      o.addProperty("railShapeDifferences", this.init_UiHelper.start_I());
-      o.addProperty("movingPlacements", this.init_UiHelper.put_I);
-      o.addProperty("headFacingProofReuses", this.init_UiHelper.f_q_I);
-      o.addProperty("hoppersFilled", this.init_UiHelper.tick_I());
-      o.addProperty("containersFilled", this.init_UiHelper.get_I());
-      o.addProperty("itemFramesVerified", this.init_UiHelper.run_I());
-      o.addProperty("clockPhasesVerified", this.init_UiHelper.push_I());
-      o.addProperty("clockAwaitingCycle", this.init_UiHelper.load_Z());
-      o.addProperty("clocksVerified", this.init_UiHelper.open_I());
-      o.addProperty("clockItemsVerified", this.init_UiHelper.poll_I());
-      String recovery = this.open ? this.init_UiHelper.update_Str() : null;
+      o.addProperty("temporaryClickBlocksRemoved", this.init_UiHelper.temporaryBlocksRemoved);
+      o.addProperty("climbSteps", this.init_UiHelper.climbSteps);
+      o.addProperty("supportsDrained", this.init_UiHelper.temporaryBlocksRemoved);
+      o.addProperty("originalSupportsDrained", this.init_UiHelper.originalSupportsDrained());
+      o.addProperty("originalCleanupRise", this.init_UiHelper.originalCleanupRise());
+      o.addProperty("cleanupBlocksRecovered", this.init_UiHelper.cleanupBlocksRecovered());
+      o.addProperty("cells", this.init_UiHelper.cellCount());
+      o.addProperty("placed", this.init_UiHelper.placedCount());
+      o.addProperty("railVehiclesVerified", this.init_UiHelper.railVehiclesVerified());
+      o.addProperty("railSlopesVerified", this.init_UiHelper.railSlopesVerified());
+      o.addProperty("railShapeDifferences", this.init_UiHelper.railShapeDifferences());
+      o.addProperty("movingPlacements", this.init_UiHelper.movingPlacements);
+      o.addProperty("headFacingProofReuses", this.init_UiHelper.headFacingProofReuses);
+      o.addProperty("hoppersFilled", this.init_UiHelper.hoppersFilled());
+      o.addProperty("containersFilled", this.init_UiHelper.containersFilled());
+      o.addProperty("itemFramesVerified", this.init_UiHelper.itemFramesVerified());
+      o.addProperty("clockPhasesVerified", this.init_UiHelper.clockPhasesVerified());
+      o.addProperty("clockAwaitingCycle", this.init_UiHelper.isClockAwaitingCycle());
+      o.addProperty("clocksVerified", this.init_UiHelper.clocksVerified());
+      o.addProperty("clockItemsVerified", this.init_UiHelper.clockItemsVerified());
+      String recovery = this.open ? this.init_UiHelper.machineJobDetail() : null;
       if (recovery != null) {
          o.add("machineRecovery", JsonParser.parseString(recovery));
       }
 
-      o.addProperty("containersSkipped", this.init_UiHelper.set_I());
-      o.addProperty("railVehiclesSkipped", this.init_UiHelper.put_I());
-      o.addProperty("savedSlotsSkipped", this.init_UiHelper.add_I());
-      o.addProperty("savedSlotsVerified", this.init_UiHelper.clear_I());
-      o.addProperty("machineOutcomesUnverified", this.init_UiHelper.reset_I());
+      o.addProperty("containersSkipped", this.init_UiHelper.containersSkipped());
+      o.addProperty("railVehiclesSkipped", this.init_UiHelper.railVehiclesSkipped());
+      o.addProperty("savedSlotsSkipped", this.init_UiHelper.savedSlotsSkipped());
+      o.addProperty("savedSlotsVerified", this.init_UiHelper.savedSlotsVerified());
+      o.addProperty("machineOutcomesUnverified", this.init_UiHelper.machineOutcomesUnverified());
       o.addProperty(
          "machineComplete",
-         this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.DONE
-            && this.init_UiHelper.set_I() == 0
-            && this.init_UiHelper.put_I() == 0
-            && this.init_UiHelper.reset_I() == 0
-            && this.init_UiHelper.start_I() == 0
+         this.init_UiHelper.getPhase() == autismclient.ai.print.PrintCore.J.DONE
+            && this.init_UiHelper.containersSkipped() == 0
+            && this.init_UiHelper.railVehiclesSkipped() == 0
+            && this.init_UiHelper.machineOutcomesUnverified() == 0
+            && this.init_UiHelper.railShapeDifferences() == 0
       );
       JsonArray omissions = new JsonArray();
-      this.init_UiHelper.init_List().forEach(omissions::add);
+      this.init_UiHelper.omissions().forEach(omissions::add);
       o.add("skippedContents", omissions);
-      int open = this.init_UiHelper.sync_I();
+      int open = this.init_UiHelper.openCells();
       o.addProperty("open", open);
-      o.addProperty("pending", open - this.init_UiHelper.queue_I);
-      o.addProperty("failedTotal", this.init_UiHelper.queue_I);
+      o.addProperty("pending", open - this.init_UiHelper.failedTotal);
+      o.addProperty("failedTotal", this.init_UiHelper.failedTotal);
       if (Boolean.getBoolean("autism.ai.schematics")) {
-         o.addProperty("pendingPlanning", this.init_UiHelper.read_Str());
+         o.addProperty("pendingPlanning", this.init_UiHelper.pendingPlanning());
       }
 
-      o.addProperty("scaffolds", this.init_UiHelper.push_I);
-      o.addProperty("scaffoldingRemaining", this.init_UiHelper.flush_I());
-      o.addProperty("clicks", this.init_UiHelper.open_I);
-      o.addProperty("decisions", this.init_UiHelper.tick_I);
-      o.addProperty("planMs", this.init_UiHelper.init_J / 1000000L);
-      o.addProperty("totalCoreMs", this.init_UiHelper.load_J / 1000000L);
-      o.addProperty("maxDecisionMs", this.init_UiHelper.read_J / 1000000L);
+      o.addProperty("scaffolds", this.init_UiHelper.scaffoldsPlaced);
+      o.addProperty("scaffoldingRemaining", this.init_UiHelper.scaffoldingRemaining());
+      o.addProperty("clicks", this.init_UiHelper.clicks);
+      o.addProperty("decisions", this.init_UiHelper.decisions);
+      o.addProperty("planMs", this.init_UiHelper.planNanos / 1000000L);
+      o.addProperty("totalCoreMs", this.init_UiHelper.totalCoreNanos / 1000000L);
+      o.addProperty("maxDecisionMs", this.init_UiHelper.maxDecisionNanos / 1000000L);
       o.addProperty("maxOperationTickMs", this.write_J / 1000000L);
-      o.addProperty("initializationMs", this.init_UiHelper.write_J / 1000000L);
-      if (!this.init_bj.load_Z() || this.init_UiHelper.init_Z()) {
-         o.addProperty("preparationDone", this.init_bj.init_J() + this.init_UiHelper.load_I());
-         o.addProperty("preparationTotal", this.init_bj.load_J() + this.init_UiHelper.read_I());
-         o.addProperty("supplyPreparationDone", this.init_bj.init_J());
-         o.addProperty("corePreparationDone", this.init_UiHelper.read_J());
+      o.addProperty("initializationMs", this.init_UiHelper.initializationNanos / 1000000L);
+      if (!this.init_bj.isPrepared() || this.init_UiHelper.isPreparing()) {
+         o.addProperty("preparationDone", this.init_bj.preparationDone() + this.init_UiHelper.preparationDone());
+         o.addProperty("preparationTotal", this.init_bj.preparationTotal() + this.init_UiHelper.preparationTotal());
+         o.addProperty("supplyPreparationDone", this.init_bj.preparationDone());
+         o.addProperty("corePreparationDone", this.init_UiHelper.corePreparationDone());
       }
 
       o.addProperty("ticks", this.read_J);
-      o.addProperty("shulkerRefills", this.init_bj.init_I);
-      o.addProperty("terrainCleared", this.init_bj.load_I);
+      o.addProperty("shulkerRefills", this.init_bj.shulkerRefills);
+      o.addProperty("terrainCleared", this.init_bj.terrainCleared);
       o.addProperty("soilCollected", this.init_I_28());
       o.addProperty("soilBroken", this.update_I);
       o.addProperty("interactionAwaitingAck", this.init_DataUtil.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING);
@@ -973,7 +973,7 @@ final class AiPrintOp implements AiOperation {
          AiMenuClose.load()
             || this.update_Z
             || this.sync_Z
-            || this.init_UiHelper.update_Z()
+            || this.init_UiHelper.hasUncertainMachineWork()
             || this.init_DataUtil.hasPendingHandSwap()
             || this.init_DataUtil.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
       );
@@ -981,13 +981,13 @@ final class AiPrintOp implements AiOperation {
          o.add("externalWork", this.init_JsonObject.deepCopy());
       }
 
-      if (this.init_UiHelper.write_Str() != null) {
-         o.addProperty("why", this.init_UiHelper.write_Str());
+      if (this.init_UiHelper.getStopReason() != null) {
+         o.addProperty("why", this.init_UiHelper.getStopReason());
       }
 
       JsonArray materials = new JsonArray();
-      if (!this.init_UiHelper.init_Z()) {
-         for (Item item : this.init_UiHelper.init_List_I(24)) {
+      if (!this.init_UiHelper.isPreparing()) {
+         for (Item item : this.init_UiHelper.neededMaterials(24)) {
             materials.add(BuiltInRegistries.ITEM.getKey(item).toString());
          }
       }
@@ -1002,12 +1002,12 @@ final class AiPrintOp implements AiOperation {
          && !this.update_Z
          && !this.sync_Z
          && !this.init_DataUtil.hasPendingHandSwap()
-         && !this.init_UiHelper.read_Z()
+         && !this.init_UiHelper.isMachineJobRunning()
          && this.init_Y.canInterruptNow()
          && (
             this.init_AiOperation != null
                ? this.init_AiOperation.canInterruptNow()
-               : !this.init_UiHelper.sync_Z() && this.init_Minecraft.player != null && this.init_Minecraft.player.onGround()
+               : !this.init_UiHelper.isAwaitingInteractionReceipt() && this.init_Minecraft.player != null && this.init_Minecraft.player.onGround()
          );
    }
 
@@ -1019,8 +1019,8 @@ final class AiPrintOp implements AiOperation {
          || this.sync_Z
          || this.init_DataUtil.hasPendingHandSwap()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.init_UiHelper.read_Z()
-         || this.init_AiOperation == null && this.init_UiHelper.sync_Z();
+         || this.init_UiHelper.isMachineJobRunning()
+         || this.init_AiOperation == null && this.init_UiHelper.isAwaitingInteractionReceipt();
    }
 
    @Override
@@ -1032,7 +1032,7 @@ final class AiPrintOp implements AiOperation {
    private void sync_V_3() {
       if (!this.open) {
          this.open = true;
-         this.init_UiHelper.init_V();
+         this.init_UiHelper.cancelMachineJob();
          this.update_V_4();
          this.sync_Z = this.sync_Z | this.init_Y.requiresReconciliation();
          this.init_Y.cancel();
@@ -1144,7 +1144,7 @@ final class AiPrintOp implements AiOperation {
          this.init_bb.cancelChild(completed);
          if (result.status() != AiOperation.Status.SUCCEEDED) {
             AiPrintOp.this.init_Set.add(this.init_BlockPos.asLong());
-            if (AiPrintOp.this.init_UiHelper.start_Z) {
+            if (AiPrintOp.this.init_UiHelper.trace) {
                AiPrintOp.Inner_DataUtil.init("[AI] print v2: local soil at {} skipped: {}", this.init_BlockPos.toShortString(), result.message());
             }
 

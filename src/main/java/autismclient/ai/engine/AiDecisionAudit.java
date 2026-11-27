@@ -60,7 +60,7 @@ public final class AiDecisionAudit {
    private static int prev;
    public static volatile AiDecisionAudit.Inner_StreamUtil init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(0, 0, 0, 0, 0, 0, 0);
 
-   public static boolean init_Z(Minecraft mc) {
+   public static boolean isDigging(Minecraft mc) {
       if (!(mc.gameMode instanceof AutismMultiPlayerGameModeAccessor dig && mc.level != null)) {
          return false;
       } else {

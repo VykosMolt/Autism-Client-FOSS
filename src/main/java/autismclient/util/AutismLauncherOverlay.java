@@ -267,7 +267,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             }),
             this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
-                  autismclient.ai.SchematicWorkspace.load_V();
+                  autismclient.ai.SchematicWorkspace.toggleWindow();
                }
             })
          );

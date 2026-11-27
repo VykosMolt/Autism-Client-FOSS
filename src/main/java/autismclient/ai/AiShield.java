@@ -162,7 +162,7 @@ final class AiShield {
             double d = mob.distanceTo(mc.player);
             if (!(d <= beyond)
                && !(d > 16.5)
-               && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
+               && autismclient.ai.engine.AiSight.hasLineOfSight(
                   mc.level, mob.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
                )) {
                return mob;

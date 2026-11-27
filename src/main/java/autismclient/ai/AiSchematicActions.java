@@ -60,7 +60,7 @@ final class AiSchematicActions {
    private AiSchematicActions() {
    }
 
-   static boolean init_Z_BlockPos(BlockPos worker, AABB site, int budget, Predicate<BlockPos> open) {
+   static boolean hasApproach(BlockPos worker, AABB site, int budget, Predicate<BlockPos> open) {
       return !init_Set_BlockPos(worker, site, budget, open).isEmpty();
    }
 
@@ -97,7 +97,7 @@ final class AiSchematicActions {
       if (cell != null && AiBuilder.toBlockState(cell).getBlock() instanceof BedBlock && !AiBuilder.matchesIgnoringUnpairedChest(cell, world.getBlockState(below))) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          if (facing != null && facing.getAxis().isHorizontal()) {
-            BlockPos foot = read_Z(cell) ? below.relative(facing.getOpposite()) : below;
+            BlockPos foot = isBedHead(cell) ? below.relative(facing.getOpposite()) : below;
             BlockPos head = foot.relative(facing);
             return !world.getBlockState(foot.below()).getCollisionShape(world, foot.below()).isEmpty()
                   && !world.getBlockState(head.below()).getCollisionShape(world, head.below()).isEmpty()
@@ -135,7 +135,7 @@ final class AiSchematicActions {
       });
    }
 
-   static BlockPos init_BlockPos_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Set<Long> sourceCells) {
+   static BlockPos foundationFor(AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Set<Long> sourceCells) {
       BlockState requested = AiBuilder.toBlockState(cell);
       if (requested.canSurvive(world, target)) {
          return null;
@@ -150,7 +150,7 @@ final class AiSchematicActions {
       }
    }
 
-   static BlockPos init_BlockPos_TableIndex_StreamU(
+   static BlockPos dependencyFor(
       AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Map<Long, AiBuilder.CellSpec> source
    ) {
       BlockState requested = AiBuilder.toBlockState(cell);
@@ -845,7 +845,7 @@ final class AiSchematicActions {
    }
 
    static List<BlockPos> init(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
-      return init_List_TableIndex_DataUti(blueprint, wanted, world, AiSchematicActions::init);
+      return cellsToClear(blueprint, wanted, world, AiSchematicActions::init);
    }
 
    static List<BlockPos> load(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
@@ -880,7 +880,7 @@ final class AiSchematicActions {
       }
    }
 
-   static List<BlockPos> init_List_TableIndex_DataUti(
+   static List<BlockPos> cellsToClear(
       AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world, Predicate<BlockState> clearable
    ) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
@@ -939,23 +939,23 @@ final class AiSchematicActions {
       }
    }
 
-   static boolean init_Z(AiBuilder.CellSpec cell) {
+   static boolean needsAction(AiBuilder.CellSpec cell) {
       String id = cell.block();
       return id.equals("minecraft:farmland")
          || id.equals("minecraft:dirt_path")
          || AiBuilder.fluidOfCell(cell) != null
          || id.startsWith("minecraft:potted_")
          || "upper".equals(cell.properties().get("half"))
-         || read_Z(cell)
+         || isBedHead(cell)
          || write(cell)
-         || load_Z(cell);
+         || isFilledComposter(cell);
    }
 
-   static boolean load_Z(AiBuilder.CellSpec cell) {
+   static boolean isFilledComposter(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:composter") && !"0".equals(cell.properties().getOrDefault("level", "0"));
    }
 
-   static boolean read_Z(AiBuilder.CellSpec cell) {
+   static boolean isBedHead(AiBuilder.CellSpec cell) {
       return "head".equals(cell.properties().get("part")) && cell.block().endsWith("_bed");
    }
 
@@ -965,7 +965,7 @@ final class AiSchematicActions {
          || cell.block().equals("minecraft:powder_snow_cauldron");
    }
 
-   static Item init_Item(AiBuilder.CellSpec cell) {
+   static Item cauldronFillItem(AiBuilder.CellSpec cell) {
       Item var10000;
       switch (cell.block()) {
          case "minecraft:lava_cauldron":
@@ -981,7 +981,7 @@ final class AiSchematicActions {
       return var10000;
    }
 
-   static boolean init_Z(AiBuilder.CellSpec cell, BlockState live) {
+   static boolean isPartialFill(AiBuilder.CellSpec cell, BlockState live) {
       if (write(cell) && live != null) {
          Block wantedBlock = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()));
          if (live.getBlock() != wantedBlock) {
@@ -1001,13 +1001,13 @@ final class AiSchematicActions {
       }
    }
 
-   static List<String> init_List(AiBuilder.CellSpec cell) {
+   static List<String> actionsFor(AiBuilder.CellSpec cell) {
       String id = cell.block();
-      if (AiBuilder.fluidOfCell(cell) != null || id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path") || read_Z(cell)) {
+      if (AiBuilder.fluidOfCell(cell) != null || id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path") || isBedHead(cell)) {
          return List.of();
       }
 
-      if (load_Z(cell)) {
+      if (isFilledComposter(cell)) {
          return List.of();
       }
 
@@ -1170,7 +1170,7 @@ final class AiSchematicActions {
       };
    }
 
-   static List<AiCellMaterials.Inner_CachePool> load_List(AiBuilder.CellSpec cell) {
+   static List<AiCellMaterials.Inner_CachePool> materialPlans(AiBuilder.CellSpec cell) {
       return AiCellMaterials.init(cell);
    }
 
@@ -1180,8 +1180,8 @@ final class AiSchematicActions {
       return AiCellMaterials.init(cell, mc.level.getBlockState(target), waterAbove);
    }
 
-   static List<Item> read_List(AiBuilder.CellSpec cell) {
-      return init(load_List(cell));
+   static List<Item> materials(AiBuilder.CellSpec cell) {
+      return init(materialPlans(cell));
    }
 
    static List<Item> load(AiBuilder.CellSpec cell, BlockPos target) {
@@ -1255,7 +1255,7 @@ final class AiSchematicActions {
                }
 
                String id = cell.block();
-               if (AiSchematicActions.read_Z(cell)) {
+               if (AiSchematicActions.isBedHead(cell)) {
                   Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
                   if (facing != null && facing.getAxis().isHorizontal()) {
                      BlockPos foot = target.relative(facing.getOpposite());
@@ -1286,7 +1286,7 @@ final class AiSchematicActions {
                   } else {
                      return this.init(AiOperation.Status.FAILED, "A bed head needs a horizontal facing");
                   }
-               } else if (AiSchematicActions.load_Z(cell)) {
+               } else if (AiSchematicActions.isFilledComposter(cell)) {
                   if (live.is(Blocks.COMPOSTER)) {
                      int level = live.getValue(ComposterBlock.LEVEL);
                      int wanted = Integer.parseInt(cell.properties().get("level"));
@@ -1470,12 +1470,12 @@ final class AiSchematicActions {
                   }
 
                   if (live.is(Blocks.CAULDRON)) {
-                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.init_Item(cell)).toString(), false);
+                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
                      return this.init_AiOperation_Result_11("Filling the cauldron");
                   }
 
-                  if (AiSchematicActions.init_Z(cell, live)) {
-                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.init_Item(cell)).toString(), false);
+                  if (AiSchematicActions.isPartialFill(cell, live)) {
+                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
                      return this.init_AiOperation_Result_11("Refilling the cauldron");
                   }
 
@@ -1589,7 +1589,7 @@ final class AiSchematicActions {
    }
 
    static void init(BlockPos support, Block block, boolean createdByOperation) {
-      if (createdByOperation && !AiScaffold.init_Z(support)) {
+      if (createdByOperation && !AiScaffold.isScaffold(support)) {
          AiScaffold.init(support, block);
       }
    }

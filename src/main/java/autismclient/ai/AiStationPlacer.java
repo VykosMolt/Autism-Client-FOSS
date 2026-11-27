@@ -39,7 +39,7 @@ final class AiStationPlacer {
       this.init_Str = name;
    }
 
-   AiStationPlacer.Inner_DataUtil init_cn_DataUtil() {
+   AiStationPlacer.Inner_DataUtil tick() {
       if (this.load_BlockPos != null) {
          return AiStationPlacer.Inner_DataUtil.PLACED;
       }
@@ -86,7 +86,7 @@ final class AiStationPlacer {
             boolean allOurs = !this.init_List.isEmpty();
 
             for (BlockPos spot : this.init_List) {
-               if (!autismclient.ai.engine.AiEditLedger.write_Z(spot)) {
+               if (!autismclient.ai.engine.AiEditLedger.hasBreakRecord(spot)) {
                   allOurs = false;
                   break;
                }
@@ -314,31 +314,31 @@ final class AiStationPlacer {
       };
    }
 
-   BlockPos init_BlockPos() {
+   BlockPos getPlaced() {
       return this.load_BlockPos;
    }
 
-   String init_Str() {
+   String getStatus() {
       return this.read_Str;
    }
 
-   String load_Str() {
+   String getFailureReason() {
       return this.load_Str;
    }
 
-   boolean init_Z() {
+   boolean canInterrupt() {
       return !this.init_DataPipe.needsReconciliation()
          && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
          && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
    }
 
-   boolean load_Z() {
+   boolean needsReconciliation() {
       return this.init_DataPipe.needsReconciliation()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
          || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
    }
 
-   void init_V() {
+   void cancel() {
       this.init_DataPipe.reset();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();

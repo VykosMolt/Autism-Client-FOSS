@@ -292,7 +292,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         AiGridRevisions.init_V(packet.pos().x(), packet.pos().z());
+         AiGridRevisions.bumpChunk(packet.pos().x(), packet.pos().z());
          AiServerEvidence.recordChunkUnload(packet.pos().x(), packet.pos().z());
       }
    }
@@ -306,7 +306,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.recordChunkUpdate(packet.x(), packet.z());
-         AiGridRevisions.init_V(packet.x(), packet.z());
+         AiGridRevisions.bumpChunk(packet.x(), packet.z());
       }
    }
 

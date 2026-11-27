@@ -27,7 +27,7 @@ final class AiPlacementInput {
       return this.init_Set.contains(key);
    }
 
-   Set<Integer> init_Set() {
+   Set<Integer> heldKeys() {
       return Set.copyOf(this.init_Set);
    }
 

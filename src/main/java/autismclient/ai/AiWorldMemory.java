@@ -79,7 +79,7 @@ final class AiWorldMemory {
                int z = cz + offset[1];
                LevelChunk live = mc.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false);
                if (live != null) {
-                  long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
+                  long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
                   AiWorldMemory.Inner_DataUtil remembered = init_LinkedHashMap.get(key);
                   int revision = autismclient.ai.engine.AiGridRevisions.init(key);
                   if (remembered == null) {
@@ -160,7 +160,7 @@ final class AiWorldMemory {
    static void init(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.isLoaded(mc.level, pos)) {
-         AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
+         AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
          if (load_Map.remove(pos.asLong()) != null) {
             load_J++;
          }
@@ -214,7 +214,7 @@ final class AiWorldMemory {
                               if (!block.isEmpty() && !category.isEmpty() && block.length() <= 256 && category.length() <= 64) {
                                  long observed = saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L;
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
-                                    AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
+                                    AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
                                     if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
                                        && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.blockId(client.level.getBlockState(pos))))) {
                                        load_Map.put(pos.asLong(), new AiWorldMemory.Inner_StreamUtil(pos, category, block, -1L, -1L, observed));
@@ -404,7 +404,7 @@ final class AiWorldMemory {
 
          label41:
          for (int[] offset : AiWorldScan.sortedChunkOffsets(radiusChunks)) {
-            AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(cx + offset[0], cz + offset[1]));
+            AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(cx + offset[0], cz + offset[1]));
             if (chunk != null) {
                int found = 0;
                Iterator var12 = chunk.init_Map.values().iterator();
@@ -472,7 +472,7 @@ final class AiWorldMemory {
 
          for (AiWorldMemory.Inner_StreamUtil fact : load_Map.values()) {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
-               AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
+               AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
                if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
                   && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
@@ -546,7 +546,7 @@ final class AiWorldMemory {
             "indexRevision",
             load_J,
             "terrainRevision",
-            autismclient.ai.engine.AiGridRevisions.init_J(),
+            autismclient.ai.engine.AiGridRevisions.globalRevision(),
             "candidates",
             candidates,
             "entities",
@@ -598,7 +598,7 @@ final class AiWorldMemory {
          "source",
          "client-block-state",
          "revision",
-         live ? autismclient.ai.engine.AiGridRevisions.init_J() : fact.revision,
+         live ? autismclient.ai.engine.AiGridRevisions.globalRevision() : fact.revision,
          "indexedRevision",
          fact.revision,
          "verifyBeforeAction",
@@ -725,7 +725,7 @@ final class AiWorldMemory {
    }
 
    static void load(BlockPos at) {
-      init_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(at.getX() >> 4, at.getZ() >> 4), AiThreats.currentClientTick() + 600L);
+      init_Map.put(autismclient.ai.engine.AiGridRevisions.chunkKey(at.getX() >> 4, at.getZ() >> 4), AiThreats.currentClientTick() + 600L);
       if (init_Map.size() > 256) {
          init_Map.remove(init_Map.keySet().iterator().next());
       }
@@ -753,7 +753,7 @@ final class AiWorldMemory {
                for (Direction direction : Plane.HORIZONTAL) {
                   int x = cx + direction.getStepX();
                   int z = cz + direction.getStepZ();
-                  long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
+                  long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
                   if (init_Map.getOrDefault(key, 0L) <= AiThreats.currentClientTick() && !init_LinkedHashMap.containsKey(key)) {
                      borders.add(new BlockPos((cx << 4) + 8 + direction.getStepX() * 7, mc.player.getBlockY(), (cz << 4) + 8 + direction.getStepZ() * 7));
                   }
@@ -813,7 +813,7 @@ final class AiWorldMemory {
                .put(
                   pos.asLong(),
                   new AiWorldMemory.Inner_StreamUtil(
-                     pos.immutable(), category, AiWorldScan.blockId(state), AiThreats.currentClientTick(), autismclient.ai.engine.AiGridRevisions.init_J(), System.currentTimeMillis()
+                     pos.immutable(), category, AiWorldScan.blockId(state), AiThreats.currentClientTick(), autismclient.ai.engine.AiGridRevisions.globalRevision(), System.currentTimeMillis()
                   )
                );
             AiWorldMemory.load_J++;

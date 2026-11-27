@@ -24,7 +24,7 @@ public final class AiEditLedger {
    private AiEditLedger() {
    }
 
-   public static synchronized void init_V(BlockPos cell) {
+   public static synchronized void forgetBreak(BlockPos cell) {
       load_Map.remove(cell.asLong());
    }
 
@@ -37,7 +37,7 @@ public final class AiEditLedger {
       load_Map.remove(cell.asLong());
    }
 
-   public static synchronized void write_V(BlockPos cell) {
+   public static synchronized void recordPlacement(BlockPos cell) {
       long now = System.nanoTime();
       Long brokeAt = load_Map.remove(cell.asLong());
       if (brokeAt != null && now - brokeAt < 20000000000L && !init_Set.contains(cell.asLong())) {
@@ -49,9 +49,9 @@ public final class AiEditLedger {
    }
 
    public static synchronized void init(BlockPos cell, BlockState was) {
-      boolean ownedSupport = AiScaffold.init_Block(cell) != null;
+      boolean ownedSupport = AiScaffold.recordedBlock(cell) != null;
       boolean teardownExpected = read.remove(cell.asLong());
-      AiScaffold.init_V(cell);
+      AiScaffold.forget(cell);
       long now = System.nanoTime();
       Long placedAt = init_Map.remove(cell.asLong());
       boolean station = was != null && (was.hasBlockEntity() || was.is(Blocks.CRAFTING_TABLE));
@@ -88,7 +88,7 @@ public final class AiEditLedger {
       init(now);
    }
 
-   public static synchronized boolean init_Z(BlockPos cell) {
+   public static synchronized boolean wasRecentlyPlaced(BlockPos cell) {
       Long at = init_Map.get(cell.asLong());
       return at != null && System.nanoTime() - at < 120000000000L;
    }
@@ -98,7 +98,7 @@ public final class AiEditLedger {
       return at != null && System.nanoTime() - at < 120000000000L && !load_Set.contains(cell.asLong());
    }
 
-   public static synchronized boolean read_Z(BlockPos cell) {
+   public static synchronized boolean wasRecentlyBroken(BlockPos cell) {
       if (init_Set.contains(cell.asLong())) {
          return false;
       }
@@ -107,7 +107,7 @@ public final class AiEditLedger {
       return at != null && System.nanoTime() - at < 20000000000L;
    }
 
-   public static synchronized boolean write_Z(BlockPos cell) {
+   public static synchronized boolean hasBreakRecord(BlockPos cell) {
       return load_Map.containsKey(cell.asLong());
    }
 

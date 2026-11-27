@@ -112,7 +112,7 @@ final class AiNetherStructures {
          && init_aC_DataUtil.at.distSqr(at) < 64.0
          && AiThreats.currentClientTick() - load >= 0L
          && AiThreats.currentClientTick() - load < 100L
-         && init_aC_DataUtil.revision == autismclient.ai.engine.AiGridRevisions.init_J()) {
+         && init_aC_DataUtil.revision == autismclient.ai.engine.AiGridRevisions.globalRevision()) {
          return init_aC_DataUtil;
       }
 
@@ -206,7 +206,7 @@ final class AiNetherStructures {
          AiWorldIdentity.currentWorldKey(mc),
          AiWorldIdentity.currentDimensionId(mc),
          load,
-         autismclient.ai.engine.AiGridRevisions.init_J()
+         autismclient.ai.engine.AiGridRevisions.globalRevision()
       );
       init_WeakReference = new WeakReference<>(mc.level);
       return init_aC_DataUtil;

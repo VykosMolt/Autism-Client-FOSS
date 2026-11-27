@@ -90,7 +90,7 @@ public final class AiMine {
                this.init_Minecraft.player.blockPosition(),
                this.init_Minecraft.player.blockPosition(),
                this.init_ItemStackArr_2(),
-               AiChunkMemory.init_StateCache()
+               AiChunkMemory.getInstance()
             );
             FutureTask<MiningTargetSearch.Inner_StreamUtil> init_FutureTask;
             long load_J = -1L;
@@ -130,7 +130,7 @@ public final class AiMine {
                   return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during mining");
                }
 
-               if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
+               if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      AiFailure.LOW_HEALTH,
@@ -246,7 +246,7 @@ public final class AiMine {
                            }
 
                            if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.init_V(this.load_BlockPos);
+                              this.init_StreamUtil.recordDugCell(this.load_BlockPos);
                            }
 
                            this.init_V_5(this.load_BlockPos);
@@ -268,7 +268,7 @@ public final class AiMine {
                         if (this.init_Minecraft.player.distanceToSqr(drop) <= 2.25) {
                            this.init_Minecraft.options.keyUp.setDown(false);
                            if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.init_V();
+                              this.init_StreamUtil.tick();
                            }
 
                            if (++this.open > 10) {
@@ -297,7 +297,7 @@ public final class AiMine {
                      if (this.read_BlockPos != null && ++this.poll <= 8) {
                         this.load_V_3(this.read_BlockPos);
                         if (this.init_StreamUtil != null) {
-                           this.init_StreamUtil.init_V();
+                           this.init_StreamUtil.tick();
                         }
 
                         return this.init_AiOperation_Result_7("Waiting for drops");
@@ -340,7 +340,7 @@ public final class AiMine {
 
                         if (!this.read_Z) {
                            if (this.init_StreamUtil != null) {
-                              this.init_StreamUtil.init_V();
+                              this.init_StreamUtil.tick();
                            }
 
                            return this.init_AiOperation_Result_7("Scanning for sources");
@@ -388,7 +388,7 @@ public final class AiMine {
 
                   for (int dx = -this.update_I; dx <= this.update_I; dx++) {
                      for (int dz = -this.update_I; dz <= this.update_I; dz++) {
-                        this.load_List.add(AiGridRevisions.init_J(ox + dx, oz + dz));
+                        this.load_List.add(AiGridRevisions.chunkKey(ox + dx, oz + dz));
                      }
                   }
 
@@ -399,7 +399,7 @@ public final class AiMine {
                   }));
                }
 
-               long revision = AiGridRevisions.init_J();
+               long revision = AiGridRevisions.globalRevision();
                if (this.write_J != revision) {
                   this.init_IdentityHashMap.clear();
                   this.write_J = revision;
@@ -563,7 +563,7 @@ public final class AiMine {
                            if (memoized == null) {
                               memoized = state.requiresCorrectToolForDrops() && !stack.isCorrectToolForDrops(state)
                                  ? 1.0 / 0.0
-                                 : MiningCost.init_D_Minecraft(this.init_Minecraft, stack, state, state.getDestroySpeed(this.init_Minecraft.level, candidate));
+                                 : MiningCost.breakTicks(this.init_Minecraft, stack, state, state.getDestroySpeed(this.init_Minecraft.level, candidate));
                               this.write_Map.put(key, memoized);
                            }
 
@@ -838,7 +838,7 @@ public final class AiMine {
                   "blacklist",
                   this.init_JsonArray,
                   "backfilled",
-                  this.init_StreamUtil == null ? 0 : this.init_StreamUtil.init_I(),
+                  this.init_StreamUtil == null ? 0 : this.init_StreamUtil.getBackfilledCount(),
                   "target",
                   this.load_BlockPos == null ? null : this.load_BlockPos.toShortString(),
                   "scanned",
@@ -880,7 +880,7 @@ public final class AiMine {
                   }
 
                   if (this.init_StreamUtil != null) {
-                     this.init_StreamUtil.load_V();
+                     this.init_StreamUtil.reset();
                   }
 
                   if (this.init_Minecraft.options != null) {

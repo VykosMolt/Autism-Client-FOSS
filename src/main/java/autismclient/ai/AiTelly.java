@@ -130,7 +130,7 @@ final class AiTelly {
                );
                return new autismclient.ai.engine.AiBridgeDriver(
                   lane,
-                  autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(plan.mode() == AiTelly.Inner_StreamUtil.TELLY, lane, mc.player, AiTelly.init_I(mc)),
+                  autismclient.ai.engine.AiBridgeDriver.chooseStyle(plan.mode() == AiTelly.Inner_StreamUtil.TELLY, lane, mc.player, AiTelly.init_I(mc)),
                   this.init_DataUtil
                );
             }
@@ -187,7 +187,7 @@ final class AiTelly {
                         }
                      }
 
-                     BlockPos support = this.init_NetHelper.init_BlockPos();
+                     BlockPos support = this.init_NetHelper.nextSupport();
                      if (support != null && AiTelly.init_Z_Minecraft_BlockPos(mc, support)) {
                         return this.init(AiOperation.Status.FAILED, "Refusing to bridge over lava at " + support.toShortString());
                      }
@@ -215,8 +215,8 @@ final class AiTelly {
                      }
 
                      if (step != autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL
-                        && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.init_JsonUtil_CachePool().floorY() + 1)) {
-                        String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
+                        && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.getLane().floorY() + 1)) {
+                        String style = this.init_NetHelper.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
                         if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                            this.init_NetHelper = null;
                            return AiGameOperations.result(

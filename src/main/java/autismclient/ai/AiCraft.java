@@ -433,7 +433,7 @@ final class AiCraft {
 
                AiOperation.Result init_AiOperation_Result_38() {
                   BlockPos standing = this.read_I < 2
-                     ? autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE))
+                     ? autismclient.ai.engine.AiStaircase.findNearestBlock(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE))
                      : null;
                   if (standing == null) {
                      return null;
@@ -465,7 +465,7 @@ final class AiCraft {
                      }
                   }
 
-                  AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
+                  AiStationPlacer.Inner_DataUtil status = this.init_cn.tick();
                   if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                      this.init_cn = null;
                      this.read_Z = true;
@@ -473,11 +473,11 @@ final class AiCraft {
                      AutismClientAddon.LOG.info("[AI] craft {}: crafting table placed in {} ms", outputId, this.update);
                      return this.init("Crafting table placed");
                   } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
-                     String why = this.init_cn.load_Str();
+                     String why = this.init_cn.getFailureReason();
                      this.init_cn = null;
                      return this.init(AiOperation.Status.FAILED, "Could not place a crafting table: " + why);
                   } else {
-                     return this.init(this.init_cn.init_Str());
+                     return this.init(this.init_cn.getStatus());
                   }
                }
 
@@ -609,7 +609,7 @@ final class AiCraft {
                      AiVisualization.init_V(this);
                      this.init_DataPipe.reset();
                      if (this.init_cn != null) {
-                        this.init_cn.init_V();
+                        this.init_cn.cancel();
                         this.init_cn = null;
                      }
 
@@ -789,16 +789,16 @@ final class AiCraft {
                   this.init_I = 0;
                }
 
-               AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
+               AiStationPlacer.Inner_DataUtil status = this.init_cn.tick();
                if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
-                  this.init_BlockPos = this.init_cn.init_BlockPos();
+                  this.init_BlockPos = this.init_cn.getPlaced();
                   this.init_Z = false;
                   return this.init("Stonecutter placed");
                } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                   this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place a stonecutter: " + this.init_cn.load_Str());
+                  return this.init(AiOperation.Status.FAILED, "Could not place a stonecutter: " + this.init_cn.getFailureReason());
                } else {
-                  return this.init(this.init_cn.init_Str());
+                  return this.init(this.init_cn.getStatus());
                }
             } else {
                double reach = Math.max(4.5, mc.player.blockInteractionRange());
@@ -909,7 +909,7 @@ final class AiCraft {
                this.init_DataUtil.clear();
                this.init_DataPipe.reset();
                if (this.init_cn != null) {
-                  this.init_cn.init_V();
+                  this.init_cn.cancel();
                }
             }
          }
@@ -976,7 +976,7 @@ final class AiCraft {
       } else {
          return mc.player != null
                && mc.level != null
-               && autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
+               && autismclient.ai.engine.AiStaircase.findNearestBlock(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
             ? true
             : AiCraftPlanner.init(buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
       }
@@ -1147,7 +1147,7 @@ final class AiCraft {
          Vec3 eye = mc.player.getEyePosition();
          Vec3 look = mc.player.getLookAngle();
          out.sort(
-            Comparator.<BlockPos>comparingInt(c -> autismclient.ai.engine.AiEditLedger.write_Z(c) ? 1 : 0)
+            Comparator.<BlockPos>comparingInt(c -> autismclient.ai.engine.AiEditLedger.hasBreakRecord(c) ? 1 : 0)
                .thenComparingInt(c -> hasClearTopFaceSupport(mc, eye, c) ? 0 : 1)
                .thenComparingInt(c -> c.getY() < feet.getY() ? 1 : 0)
                .thenComparingDouble(c -> -new Vec3(c.getX() + 0.5, c.getY(), c.getZ() + 0.5).subtract(eye).normalize().dot(look))

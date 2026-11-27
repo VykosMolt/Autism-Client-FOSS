@@ -25,7 +25,7 @@ final class AiNavigationSelection extends AiPlacementSession {
       this.options = options == null ? new AiToolCallParser.Inner_CachePool(false, -1) : options;
    }
 
-   autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
+   autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil getTarget() {
       return this.init_j_StreamUtil;
    }
 
@@ -86,32 +86,32 @@ final class AiNavigationSelection extends AiPlacementSession {
    }
 
    @Override
-   boolean load_Z() {
+   boolean isReadyToConfirm() {
       return this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
    }
 
    @Override
-   boolean read_Z() {
+   boolean isActive() {
       return this.init_Minecraft.level != null && this.init_Minecraft.level == this.init_Obj && this.init_Minecraft.player != null;
    }
 
    @Override
-   BlockPos init_BlockPos() {
-      return this.load_Z() ? this.init_j_StreamUtil.stance() : BlockPos.ZERO;
+   BlockPos getOrigin() {
+      return this.isReadyToConfirm() ? this.init_j_StreamUtil.stance() : BlockPos.ZERO;
    }
 
    @Override
-   int init_I() {
+   int getRotation() {
       return 0;
    }
 
    @Override
-   String read_Str() {
+   String getMirror() {
       return "none";
    }
 
    @Override
-   void init_V_Z(boolean surface) {
+   void moveToAim(boolean surface) {
       this.load(false);
    }
 
@@ -121,17 +121,17 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    boolean updateAndCheck() {
       this.load(true);
-      if (!this.load_Z()) {
+      if (!this.isReadyToConfirm()) {
          autismclient.util.bi.write("Aim at a safe standing surface");
       }
 
-      return this.load_Z();
+      return this.isReadyToConfirm();
    }
 
    private void load(boolean fresh) {
-      if (this.read_Z()) {
+      if (this.isActive()) {
          this.init_j_StreamUtil = this.init_j_DataUtil
-            .init(this.init_Minecraft, SchematicSelection.init_Vec3_Minecraft(this.init_Minecraft), SchematicSelection.load_Vec3_Minecraft(this.init_Minecraft), 250.0, false, fresh);
+            .init(this.init_Minecraft, SchematicSelection.eyePosition(this.init_Minecraft), SchematicSelection.lookDirection(this.init_Minecraft), 250.0, false, fresh);
       }
    }
 
@@ -140,7 +140,7 @@ final class AiNavigationSelection extends AiPlacementSession {
    }
 
    @Override
-   void load_V() {
+   void snapToGround() {
    }
 
    @Override
@@ -148,11 +148,11 @@ final class AiNavigationSelection extends AiPlacementSession {
    }
 
    @Override
-   void init_V_I(int steps) {
+   void rotate(int steps) {
    }
 
    @Override
-   void init_V() {
+   void cycleMirror() {
    }
 
    @Override
@@ -160,6 +160,6 @@ final class AiNavigationSelection extends AiPlacementSession {
    }
 
    @Override
-   void read_V() {
+   void cancel() {
    }
 }

@@ -564,7 +564,7 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          @Override
-         public boolean init_Z(BlockPos p) {
+         public boolean allowsCell(BlockPos p) {
             return permitted.contains(p);
          }
 
@@ -579,7 +579,7 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> disallowedMoves() {
             return Set.of(
                autismclient.ai.engine.AiPathfinder.MoveType.JUMP,
                autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_2,

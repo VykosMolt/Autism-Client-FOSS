@@ -17,7 +17,7 @@ public final class AiShapes {
    private AiShapes() {
    }
 
-   public static short init_S_List(List<AABB> boxes) {
+   public static short shapeId(List<AABB> boxes) {
       if (boxes != null && !boxes.isEmpty()) {
          List<AABB> key = List.copyOf(boxes);
          if (key.size() == 1 && init_Z_AABB(key.get(0))) {
@@ -49,14 +49,14 @@ public final class AiShapes {
       }
    }
 
-   public static List<AABB> init_List_S(short id) {
+   public static List<AABB> boxes(short id) {
       return id >= 0 && id < load_List.size() ? load_List.get(id) : init_List;
    }
 
-   public static double init_D_S(short id) {
+   public static double topOf(short id) {
       double top = 0.0;
 
-      for (AABB b : init_List_S(id)) {
+      for (AABB b : boxes(id)) {
          top = Math.max(top, b.maxY);
       }
 
@@ -67,7 +67,7 @@ public final class AiShapes {
       if (top16 <= 0) {
          return 0;
       } else {
-         return top16 >= 16 ? 1 : init_S_List(List.of(new AABB(0.0, 0.0, 0.0, 1.0, top16 / 16.0, 1.0)));
+         return top16 >= 16 ? 1 : shapeId(List.of(new AABB(0.0, 0.0, 0.0, 1.0, top16 / 16.0, 1.0)));
       }
    }
 
@@ -79,7 +79,7 @@ public final class AiShapes {
       }
    }
 
-   public static short init_S_ClassCache_FileCac(AiPathfinder.CellInfo probe) {
+   public static short shapeIdOf(AiPathfinder.CellInfo probe) {
       return probe == null ? -1 : init(probe.loaded(), probe.passable(), probe.top16());
    }
 

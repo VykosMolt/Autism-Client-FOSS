@@ -459,16 +459,16 @@ final class AiSmelt {
                         this.read_Z = true;
                      }
 
-                     AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
+                     AiStationPlacer.Inner_DataUtil status = this.init_cn.tick();
                      if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
-                        this.load_BlockPos = this.init_cn.init_BlockPos();
+                        this.load_BlockPos = this.init_cn.getPlaced();
                         this.read_Z = false;
                         return this.init(resolved.stationId() + " placed");
                      } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                         this.read_Z = false;
-                        return this.init(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.init_cn.load_Str());
+                        return this.init(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.init_cn.getFailureReason());
                      } else {
-                        return this.init(this.init_cn.init_Str());
+                        return this.init(this.init_cn.getStatus());
                      }
                   } else {
                      BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.load_BlockPos);
@@ -637,7 +637,7 @@ final class AiSmelt {
                   }
 
                   if (this.init_cn != null) {
-                     this.init_cn.init_V();
+                     this.init_cn.cancel();
                      this.init_cn = null;
                   }
 
@@ -678,7 +678,7 @@ final class AiSmelt {
                      }
 
                      if (this.init_cn != null) {
-                        this.init_cn.init_V();
+                        this.init_cn.cancel();
                      }
 
                      if (this.init_AiOperation != null) {
@@ -699,7 +699,7 @@ final class AiSmelt {
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_Q == null || this.init_Q.canInterruptNow())
                      && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-                     && (this.init_cn == null || this.init_cn.init_Z());
+                     && (this.init_cn == null || this.init_cn.canInterrupt());
                }
 
                @Override
@@ -708,7 +708,7 @@ final class AiSmelt {
                      || this.init_Q != null && this.init_Q.requiresReconciliationAfterEmergency()
                      || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
                      || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                     || this.init_cn != null && this.init_cn.load_Z();
+                     || this.init_cn != null && this.init_cn.needsReconciliation();
                }
             };
          } else {

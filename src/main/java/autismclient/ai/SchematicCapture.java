@@ -66,12 +66,12 @@ final class SchematicCapture {
    private int sync_I;
    private int flush;
    private List<BlockPos> write_List;
-   volatile boolean init_Z;
-   volatile boolean load_Z;
-   volatile int init_I;
-   volatile String init_Str = "Copying chunks";
-   volatile String load_Str = "";
-   volatile Path init_Path;
+   volatile boolean cancelled;
+   volatile boolean finished;
+   volatile int progress;
+   volatile String stage = "Copying chunks";
+   volatile String error = "";
+   volatile Path savedPath;
    private Future<?> init_Future;
 
    SchematicCapture(Minecraft mc, Path folder, String name, SchematicCapture.Inner_DataUtil selection, boolean includeEntities) {
@@ -79,7 +79,7 @@ final class SchematicCapture {
          this.init_ClientLevel = mc.level;
          this.init_IntegratedServer = mc.getSingleplayerServer();
          this.load_Path = folder;
-         this.read_Str = init_Str_Str(name);
+         this.read_Str = normalizeName(name);
          this.read_Z = includeEntities;
          ArrayList<LevelChunk> chunks = new ArrayList<>();
          if (selection != null) {
@@ -129,25 +129,25 @@ final class SchematicCapture {
          }
 
          this.init_List = List.copyOf(captured);
-         this.read_I = this.init_List.get(0).init_cP_DataUtil.min.getY() >> 4;
+         this.read_I = this.init_List.get(0).area.min.getY() >> 4;
       } else {
          throw new IllegalStateException("Join a world first");
       }
    }
 
-   void init_V() {
-      this.init_Z = true;
+   void cancel() {
+      this.cancelled = true;
       if (this.init_Future != null) {
          this.init_Future.cancel(true);
       }
 
-      this.init_Str = "Cancelled";
+      this.stage = "Cancelled";
    }
 
-   void init_V_Minecraft(Minecraft mc) {
-      if (!this.load_Z && !this.init_Z && !this.update_Z) {
+   void tick(Minecraft mc) {
+      if (!this.finished && !this.cancelled && !this.update_Z) {
          if (mc.level != this.init_ClientLevel) {
-            this.init_V();
+            this.cancel();
          } else {
             long deadline = System.nanoTime() + 1500000L;
 
@@ -157,12 +157,12 @@ final class SchematicCapture {
                      SchematicCapture.Inner_CachePool target = this.init_List.get(this.load_I);
                      LevelChunk live = this.init_ClientLevel
                         .getChunkSource()
-                        .getChunk(target.init_ChunkPos.x(), target.init_ChunkPos.z(), ChunkStatus.FULL, false);
+                        .getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
                      if (live == null) {
                         throw new IllegalStateException("A chunk unloaded during capture; save again");
                      }
 
-                     if (this.read_I <= target.init_cP_DataUtil.max.getY() >> 4) {
+                     if (this.read_I <= target.area.max.getY() >> 4) {
                         int index = live.getSectionIndex(this.read_I << 4);
                         LevelChunkSection section = live.getSections()[index];
                         if (section != null && !section.hasOnlyAir()) {
@@ -170,14 +170,14 @@ final class SchematicCapture {
                         }
 
                         this.read_I++;
-                        this.init_I = Math.max(
-                           this.init_I,
+                        this.progress = Math.max(
+                           this.progress,
                            (int)(
                               65.0
                                  * (
                                     this.load_I
-                                       + (double)(this.read_I - (target.init_cP_DataUtil.min.getY() >> 4))
-                                          / Math.max(1, (target.init_cP_DataUtil.max.getY() >> 4) - (target.init_cP_DataUtil.min.getY() >> 4) + 1)
+                                       + (double)(this.read_I - (target.area.min.getY() >> 4))
+                                          / Math.max(1, (target.area.max.getY() >> 4) - (target.area.min.getY() >> 4) + 1)
                                  )
                                  / this.init_List.size()
                            )
@@ -185,7 +185,7 @@ final class SchematicCapture {
                      } else if (this.init_IntegratedServer != null) {
                         this.load_I++;
                         if (this.load_I < this.init_List.size()) {
-                           this.read_I = this.init_List.get(this.load_I).init_cP_DataUtil.min.getY() >> 4;
+                           this.read_I = this.init_List.get(this.load_I).area.min.getY() >> 4;
                         }
                      } else {
                         if (this.load_List == null) {
@@ -195,21 +195,21 @@ final class SchematicCapture {
 
                         if (this.write_I < this.load_List.size()) {
                            BlockPos p = this.load_List.get(this.write_I++);
-                           if (target.init_cP_DataUtil.contains(p.getX(), p.getY(), p.getZ())) {
+                           if (target.area.contains(p.getX(), p.getY(), p.getZ())) {
                               BlockEntity be = this.init_ClientLevel.getBlockEntity(p);
                               if (be != null) {
                                  CompoundTag tag = be.saveWithFullMetadata(this.init_ClientLevel.registryAccess());
-                                 tag.putInt("x", p.getX() - target.init_cP_DataUtil.min.getX());
-                                 tag.putInt("y", p.getY() - target.init_cP_DataUtil.min.getY());
-                                 tag.putInt("z", p.getZ() - target.init_cP_DataUtil.min.getZ());
-                                 target.init_List.add(tag);
+                                 tag.putInt("x", p.getX() - target.area.min.getX());
+                                 tag.putInt("y", p.getY() - target.area.min.getY());
+                                 tag.putInt("z", p.getZ() - target.area.min.getZ());
+                                 target.blockEntityTags.add(tag);
                               }
                            }
                         } else {
                            this.load_I++;
                            this.load_List = null;
                            if (this.load_I < this.init_List.size()) {
-                              this.read_I = this.init_List.get(this.load_I).init_cP_DataUtil.min.getY() >> 4;
+                              this.read_I = this.init_List.get(this.load_I).area.min.getY() >> 4;
                            }
                         }
                      }
@@ -219,7 +219,7 @@ final class SchematicCapture {
                      }
 
                      if (this.init_CompletableFuture == null || !this.init_CompletableFuture.join()) {
-                        this.init_Str = "Copying block data";
+                        this.stage = "Copying block data";
                         this.init_CompletableFuture = this.init_IntegratedServer.submit(this::init_Z);
                         return;
                      }
@@ -253,11 +253,11 @@ final class SchematicCapture {
                      Entity entity = this.init_ClientLevel.getEntity(this.read_List.get(this.update_I++));
                      if (entity != null) {
                         SchematicCapture.Inner_CachePool target = this.init_Map.get(ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4));
-                        if (target != null && target.init_cP_DataUtil.contains(entity.getX(), entity.getY(), entity.getZ())) {
+                        if (target != null && target.area.contains(entity.getX(), entity.getY(), entity.getZ())) {
                            TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.init_ClientLevel.registryAccess());
                            if (entity.save(output)) {
                               CompoundTag tag = output.buildResult();
-                              init(tag, target.init_cP_DataUtil.min);
+                              init(tag, target.area.min);
                               target.load.add(tag);
                            }
                         }
@@ -265,9 +265,9 @@ final class SchematicCapture {
                   }
                } while (System.nanoTime() < deadline);
             } catch (Exception e) {
-               this.load_Str = SchematicLibrary.init_Str_Throwable(e);
-               this.init_Str = "Save failed";
-               this.load_Z = true;
+               this.error = SchematicLibrary.describeError(e);
+               this.stage = "Save failed";
+               this.finished = true;
             }
          }
       }
@@ -281,9 +281,9 @@ final class SchematicCapture {
 
       long deadline = System.nanoTime() + 1200000L;
 
-      while (this.sync_I < this.init_List.size() && !this.init_Z && System.nanoTime() < deadline) {
+      while (this.sync_I < this.init_List.size() && !this.cancelled && System.nanoTime() < deadline) {
          SchematicCapture.Inner_CachePool target = this.init_List.get(this.sync_I);
-         ChunkAccess live = level.getChunkSource().getChunk(target.init_ChunkPos.x(), target.init_ChunkPos.z(), ChunkStatus.FULL, false);
+         ChunkAccess live = level.getChunkSource().getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
          if (live == null) {
             throw new IllegalStateException("A chunk unloaded during capture; save again");
          }
@@ -298,15 +298,15 @@ final class SchematicCapture {
             this.sync_I++;
          } else {
             BlockPos at = this.write_List.get(this.flush++);
-            if (target.init_cP_DataUtil.contains(at.getX(), at.getY(), at.getZ())) {
+            if (target.area.contains(at.getX(), at.getY(), at.getZ())) {
                CompoundTag tag = live.getBlockEntityNbtForSaving(at, level.registryAccess());
                if (tag != null) {
                   tag = tag.copy();
                   tag.remove("keepPacked");
-                  tag.putInt("x", at.getX() - target.init_cP_DataUtil.min.getX());
-                  tag.putInt("y", at.getY() - target.init_cP_DataUtil.min.getY());
-                  tag.putInt("z", at.getZ() - target.init_cP_DataUtil.min.getZ());
-                  target.init_List.add(tag);
+                  tag.putInt("x", at.getX() - target.area.min.getX());
+                  tag.putInt("y", at.getY() - target.area.min.getY());
+                  tag.putInt("z", at.getZ() - target.area.min.getZ());
+                  target.blockEntityTags.add(tag);
                }
             }
          }
@@ -317,23 +317,23 @@ final class SchematicCapture {
 
    private void load() {
       this.update_Z = true;
-      this.init_I = 70;
-      this.init_Str = "Packing schematic";
-      this.init_Future = SchematicLibrary.init_ExecutorService.submit(() -> {
+      this.progress = 70;
+      this.stage = "Packing schematic";
+      this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> {
          try {
-            this.init_Path = init(this.load_Path, this.read_Str, this.init_List, true, p -> {
-               this.init_I = 70 + p / 5;
+            this.savedPath = init(this.load_Path, this.read_Str, this.init_List, true, p -> {
+               this.progress = 70 + p / 5;
                this.read();
             });
-            this.init_I = 100;
-            this.init_Str = "Saved";
-            this.load_Z = true;
+            this.progress = 100;
+            this.stage = "Saved";
+            this.finished = true;
          } catch (CancellationException ignored) {
-            this.init_Z = true;
+            this.cancelled = true;
          } catch (Exception e) {
-            this.load_Str = SchematicLibrary.init_Str_Throwable(e);
-            this.init_Str = "Save failed";
-            this.load_Z = true;
+            this.error = SchematicLibrary.describeError(e);
+            this.stage = "Save failed";
+            this.finished = true;
          } finally {
             Thread.interrupted();
          }
@@ -370,7 +370,7 @@ final class SchematicCapture {
 
    private void read() {
       SchematicDocument.init();
-      if (this.init_Z) {
+      if (this.cancelled) {
          throw new CancellationException();
       }
    }
@@ -396,8 +396,8 @@ final class SchematicCapture {
          }
       } else {
          for (SchematicCapture.Inner_CachePool chunk : chunks) {
-            BlockPos lo = chunk.init_cP_DataUtil.min;
-            BlockPos hi = chunk.init_cP_DataUtil.max;
+            BlockPos lo = chunk.area.min;
+            BlockPos hi = chunk.area.max;
             bounds.init(lo.getX(), lo.getY(), lo.getZ());
             bounds.init(hi.getX(), hi.getY(), hi.getZ());
          }
@@ -415,9 +415,9 @@ final class SchematicCapture {
                continue;
             }
 
-            area = chunk.init_cP_DataUtil.intersection(chunkBounds.init());
+            area = chunk.area.intersection(chunkBounds.init());
          } else {
-            area = chunk.init_cP_DataUtil.intersection(enclosing);
+            area = chunk.area.intersection(enclosing);
          }
 
          if (area != null) {
@@ -486,10 +486,10 @@ final class SchematicCapture {
 
          region.put("BlockStatePalette", entries);
          region.putLongArray("BlockStates", init(values, palette.size()));
-         BlockPos shift = a.min.subtract(chunk.init_cP_DataUtil.min);
+         BlockPos shift = a.min.subtract(chunk.area.min);
          ListTag bes = new ListTag();
 
-         for (CompoundTag saved : chunk.init_List) {
+         for (CompoundTag saved : chunk.blockEntityTags) {
             CompoundTag tag = saved.copy();
             tag.putInt("x", tag.getIntOr("x", 0) - shift.getX());
             tag.putInt("y", tag.getIntOr("y", 0) - shift.getY());
@@ -507,7 +507,7 @@ final class SchematicCapture {
          }
 
          region.put("Entities", entities);
-         regions.put("chunk_" + chunk.init_ChunkPos.x() + "_" + chunk.init_ChunkPos.z(), region);
+         regions.put("chunk_" + chunk.chunkPos.x() + "_" + chunk.chunkPos.z(), region);
          done++;
          progress.accept(20 + done * 80 / areas.size());
       }
@@ -534,7 +534,7 @@ final class SchematicCapture {
          throw new IllegalArgumentException("A captured region has " + paletteSize + " block states; schematics are limited to 65536");
       }
 
-      int bits = SchematicDocument.init_I_I(paletteSize);
+      int bits = SchematicDocument.bitsForPaletteSize(paletteSize);
       long[] data = new long[(int)(((long)ids.length * bits + 63L) / 64L)];
 
       for (int i = 0; i < ids.length; i++) {
@@ -569,7 +569,7 @@ final class SchematicCapture {
       }
    }
 
-   static String init_Str_Str(String name) {
+   static String normalizeName(String name) {
       String n = name == null ? "" : name.trim().replaceFirst("(?i)\\.litematic$", "");
       if (n.isEmpty()) {
          n = "Capture " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss"));
@@ -583,15 +583,15 @@ final class SchematicCapture {
    }
 
    static final class Inner_CachePool {
-      final ChunkPos init_ChunkPos;
-      final SchematicCapture.Inner_DataUtil init_cP_DataUtil;
+      final ChunkPos chunkPos;
+      final SchematicCapture.Inner_DataUtil area;
       final Int2ObjectOpenHashMap<PalettedContainer<BlockState>> init_Map = new Int2ObjectOpenHashMap<>();
-      final List<CompoundTag> init_List = new ArrayList<>();
+      final List<CompoundTag> blockEntityTags = new ArrayList<>();
       final List<CompoundTag> load = new ArrayList<>();
 
       Inner_CachePool(ChunkPos pos, SchematicCapture.Inner_DataUtil area) {
-         this.init_ChunkPos = pos;
-         this.init_cP_DataUtil = area;
+         this.chunkPos = pos;
+         this.area = area;
       }
    }
 
@@ -670,7 +670,7 @@ final class SchematicCapture {
       }
 
       void init(SchematicCapture.Inner_CachePool chunk) {
-         SchematicCapture.Inner_DataUtil a = chunk.init_cP_DataUtil;
+         SchematicCapture.Inner_DataUtil a = chunk.area;
          int x0 = a.min.getX();
          int x1 = a.max.getX();
          int z0 = a.min.getZ();
@@ -706,9 +706,9 @@ final class SchematicCapture {
       }
 
       void load(SchematicCapture.Inner_CachePool chunk) {
-         BlockPos at = chunk.init_cP_DataUtil.min;
+         BlockPos at = chunk.area.min;
 
-         for (CompoundTag tag : chunk.init_List) {
+         for (CompoundTag tag : chunk.blockEntityTags) {
             this.init(at.getX() + tag.getIntOr("x", 0), at.getY() + tag.getIntOr("y", 0), at.getZ() + tag.getIntOr("z", 0));
          }
 

@@ -15,15 +15,15 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
 
 public interface PrintRules {
-   boolean init_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+   boolean isFinished(PrintTarget var1, BlockState var2);
 
-   boolean load_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+   boolean isPlacedCorrectly(PrintTarget var1, BlockState var2);
 
-   default boolean read_Z_ListPool_BlockState(PrintTarget target, BlockState live) {
+   default boolean acceptsUnpoweredOutput(PrintTarget target, BlockState live) {
       return false;
    }
 
-   static boolean load_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+   static boolean facesWithinSavedShape(BlockState wanted, BlockState live) {
       if (!live.is(wanted.getBlock())) {
          return false;
       }
@@ -37,13 +37,13 @@ public interface PrintRules {
       return true;
    }
 
-   PrintRules.Inner_CachePool init_PathHelper_CachePo_ListPool_BlockState(PrintTarget var1, BlockState var2);
+   PrintRules.Inner_CachePool nextInteraction(PrintTarget var1, BlockState var2);
 
-   default boolean init_Z_ListPool_SignalGetter(PrintTarget target, SignalGetter world) {
+   default boolean isSafeToClick(PrintTarget target, SignalGetter world) {
       return true;
    }
 
-   static boolean read_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+   static boolean matchesIgnoringNotePower(BlockState wanted, BlockState live) {
       return wanted == live
          ? true
          : wanted.is(Blocks.NOTE_BLOCK)
@@ -51,7 +51,7 @@ public interface PrintRules {
             && live.setValue(BlockStateProperties.POWERED, wanted.getValue(BlockStateProperties.POWERED)) == wanted;
    }
 
-   static boolean write_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+   static boolean matchesLayout(BlockState wanted, BlockState live) {
       if (!live.is(wanted.getBlock())) {
          return false;
       }
@@ -69,21 +69,21 @@ public interface PrintRules {
       return true;
    }
 
-   default PrintRules.Inner_StreamUtil init_PathHelper_StreamU(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      return new PrintRules.Inner_StreamUtil(this.init_Map(world, source, targets), PrintRules.Inner_DataUtil.NO_PATH);
+   default PrintRules.Inner_StreamUtil traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      return new PrintRules.Inner_StreamUtil(this.signalPaths(world, source, targets), PrintRules.Inner_DataUtil.NO_PATH);
    }
 
-   default PrintRules.Inner_StreamUtil init_PathHelper_StreamU_BlockGetter(
+   default PrintRules.Inner_StreamUtil traceSignalsWithConfiguration(
       BlockGetter world, BlockPos source, Set<BlockPos> targets, Set<BlockPos> configurationTargets
    ) {
-      return this.init_PathHelper_StreamU(world, source, targets);
+      return this.traceSignals(world, source, targets);
    }
 
-   default Set<BlockPos> init_Set_BlockGetter_BlockPos(BlockGetter world, BlockPos source) {
+   default Set<BlockPos> sourceInputs(BlockGetter world, BlockPos source) {
       return Set.of();
    }
 
-   default Map<BlockPos, PrintRules.Inner_DataUtil> init_Map(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   default Map<BlockPos, PrintRules.Inner_DataUtil> signalPaths(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       HashMap<BlockPos, PrintRules.Inner_DataUtil> result = new HashMap<>();
 
       for (BlockPos at : targets) {
@@ -93,7 +93,7 @@ public interface PrintRules {
       return result;
    }
 
-   boolean write_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+   boolean isWaterlogMissing(PrintTarget var1, BlockState var2);
 
    record Inner_CachePool(Item item, String property) {
    }

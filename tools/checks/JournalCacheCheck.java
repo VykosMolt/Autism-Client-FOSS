@@ -20,7 +20,7 @@ public class JournalCacheCheck {
       SharedConstants.tryDetectVersion();
       Bootstrap.bootStrap();
       Path dir = Files.createTempDirectory("journals");
-      AiScaffold.init_V();
+      AiScaffold.reset();
       Path live = dir.resolve("live.json");
       AiScaffold.Inner_StreamUtil open = AiScaffold.init(live, List.of());
       BlockPos pos = new BlockPos(1, 2, 3);

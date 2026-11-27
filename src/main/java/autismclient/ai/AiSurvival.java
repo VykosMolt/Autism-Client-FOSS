@@ -701,7 +701,7 @@ final class AiSurvival {
          }
 
          @Override
-         public boolean init_Z(BlockPos cell) {
+         public boolean allowsCell(BlockPos cell) {
             double dx = cell.getX() - start.getX();
             double dz = cell.getZ() - start.getZ();
             return dx * dx + dz * dz <= 64.0 && Math.abs(cell.getY() - start.getY()) <= 3;

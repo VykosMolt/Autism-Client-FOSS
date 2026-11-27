@@ -331,7 +331,7 @@ final class AiObsidian {
             }) != 1.7976931348623157E308
             ? new AiOperation() {
                final long init_J = System.nanoTime() + Math.max(10, seconds) * 1000000000L;
-               AiOperation init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
+               AiOperation init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf("block", "obsidian", "held", held, "timeoutSeconds", Math.min(120, seconds))
                );
                boolean init_Z;

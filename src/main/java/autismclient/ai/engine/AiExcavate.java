@@ -367,7 +367,7 @@ public final class AiExcavate {
                return AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "World changed during excavation", this.load_JsonObject_2().toString());
             }
 
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
+            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                this.cancel();
                return AiOperation.Result.failed(
                   AiFailure.LOW_HEALTH,
@@ -444,7 +444,7 @@ public final class AiExcavate {
                } else {
                   this.write_I++;
                   if (this.init_StreamUtil != null) {
-                     this.init_StreamUtil.init_V(this.load_BlockPos);
+                     this.init_StreamUtil.recordDugCell(this.load_BlockPos);
                   }
 
                   if (this.init_Z) {
@@ -464,9 +464,9 @@ public final class AiExcavate {
                   }
                }
 
-               if (this.init_StreamUtil != null && !this.init_StreamUtil.load_Z()) {
-                  this.init_StreamUtil.init_V();
-                  if (this.init_StreamUtil.init_Z()) {
+               if (this.init_StreamUtil != null && !this.init_StreamUtil.isIdle()) {
+                  this.init_StreamUtil.tick();
+                  if (this.init_StreamUtil.isBackfilling()) {
                      return this.load("Backfilling behind the dig");
                   }
                }
@@ -557,7 +557,7 @@ public final class AiExcavate {
       }
 
       AiOperation.Result init(String message) {
-         if (this.init_StreamUtil != null && !this.init_StreamUtil.load_Z()) {
+         if (this.init_StreamUtil != null && !this.init_StreamUtil.isIdle()) {
             if (!this.load_Z) {
                if (this.load_AiOperation == null) {
                   this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 1.5, false, false, false, 20);
@@ -596,7 +596,7 @@ public final class AiExcavate {
 
                this.init_DataUtil.aimAt(this.init_Vec3);
                this.init_DataUtil.tick();
-               this.init_StreamUtil.init_V();
+               this.init_StreamUtil.tick();
                return this.load("Backfilling behind the dig");
             }
          }
@@ -612,7 +612,7 @@ public final class AiExcavate {
             }
 
             if (this.init_StreamUtil != null) {
-               this.init_StreamUtil.init_V();
+               this.init_StreamUtil.tick();
             }
 
             return this.load("Waiting for drops");
@@ -639,7 +639,7 @@ public final class AiExcavate {
 
             if (this.init_Minecraft.player.distanceToSqr(drop) <= 2.25) {
                if (this.init_StreamUtil != null) {
-                  this.init_StreamUtil.init_V();
+                  this.init_StreamUtil.tick();
                }
 
                if (++this.close > 20) {
@@ -775,7 +775,7 @@ public final class AiExcavate {
             "drops",
             this.init_JsonObject_26(),
             "backfilled",
-            this.init_StreamUtil == null ? 0 : this.init_StreamUtil.init_I(),
+            this.init_StreamUtil == null ? 0 : this.init_StreamUtil.getBackfilledCount(),
             "position",
             this.init_Minecraft.player == null ? null : this.init_Minecraft.player.blockPosition().toShortString()
          );
@@ -811,7 +811,7 @@ public final class AiExcavate {
             }
 
             if (this.init_StreamUtil != null) {
-               this.init_StreamUtil.load_V();
+               this.init_StreamUtil.reset();
             }
 
             if (this.init_Minecraft.options != null) {

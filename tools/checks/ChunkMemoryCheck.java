@@ -41,7 +41,7 @@ public class ChunkMemoryCheck {
       Path tmp = Files.createTempDirectory("chunkmem");
       short[] flags = new short[256 * 4];
       flags[0] = 1;
-      AiChunkMemory m = AiChunkMemory.init_StateCache();
+      AiChunkMemory m = AiChunkMemory.getInstance();
       Set<Long> dirty = (Set<Long>) field(m, "load_Set");
       Set<Long> read = (Set<Long>) field(m, "read_Set");
       Map<Long, ?> memory = (Map<Long, ?>) field(m, "init_LinkedHashMap");
@@ -53,7 +53,7 @@ public class ChunkMemoryCheck {
       m.init(0, 0, 60, 4, flags, Map.of());
       save.invoke(m);
       drain(m);
-      check(dirty.contains(AiGridRevisions.init_J(0, 0)), "failed save must re-mark the chunk dirty");
+      check(dirty.contains(AiGridRevisions.chunkKey(0, 0)), "failed save must re-mark the chunk dirty");
 
       // (d) a written region is not marked read, so the file's other chunks still get loaded.
       Path dir = tmp.resolve("ok");
@@ -61,37 +61,37 @@ public class ChunkMemoryCheck {
       save.invoke(m);
       drain(m);
       check(Files.isRegularFile(dir.resolve("r.0.0.bin.gz")) && dirty.isEmpty(), "save after the failure writes the region");
-      check(!read.contains(AiGridRevisions.init_J(0, 0)), "written region must not be marked read");
+      check(!read.contains(AiGridRevisions.chunkKey(0, 0)), "written region must not be marked read");
       synchronized (field(m, "init_Obj")) {
          memory.clear();
       }
-      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.CellInfo.UNLOADED, "first query misses");
+      check(m.probeCell(0, 60, 0) == AiPathfinder.CellInfo.UNLOADED, "first query misses");
       drain(m);
-      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.CellInfo.CACHED_SOLID, "region file is read back on a miss");
-      check(read.contains(AiGridRevisions.init_J(0, 0)), "successful read is recorded");
+      check(m.probeCell(0, 60, 0) == AiPathfinder.CellInfo.CACHED_SOLID, "region file is read back on a miss");
+      check(read.contains(AiGridRevisions.chunkKey(0, 0)), "successful read is recorded");
 
       // (b) a corrupt region is moved aside and marked read, so it is read once.
       Files.writeString(dir.resolve("r.1.0.bin.gz"), "garbage");
-      m.init_ClassCache_FileCac_I(32 * 16, 60, 0);
+      m.probeCell(32 * 16, 60, 0);
       drain(m);
       check(!Files.exists(dir.resolve("r.1.0.bin.gz")), "corrupt region file must be moved aside");
       try (var files = Files.list(dir)) {
          check(files.anyMatch(f -> f.getFileName().toString().startsWith("r.1.0.bin.gz.corrupt-")), "corrupt region kept as .corrupt-*");
       }
-      check(read.contains(AiGridRevisions.init_J(1, 0)), "corrupt region is marked read");
+      check(read.contains(AiGridRevisions.chunkKey(1, 0)), "corrupt region is marked read");
 
       // An unreadable region is not marked read and is not retried within 30 s.
       Path locked = dir.resolve("r.2.0.bin.gz");
       Files.writeString(locked, "x");
       check(locked.toFile().setReadable(false) && !Files.isReadable(locked), "cannot make a file unreadable here (running as root?)");
-      m.init_ClassCache_FileCac_I(64 * 16, 60, 0);
+      m.probeCell(64 * 16, 60, 0);
       drain(m);
-      check(!read.contains(AiGridRevisions.init_J(2, 0)), "IO failure must not be marked read");
+      check(!read.contains(AiGridRevisions.chunkKey(2, 0)), "IO failure must not be marked read");
       locked.toFile().setReadable(true);
       Files.write(locked, Files.readAllBytes(dir.resolve("r.0.0.bin.gz")));
-      m.init_ClassCache_FileCac_I(64 * 16, 60, 0);
+      m.probeCell(64 * 16, 60, 0);
       drain(m);
-      check(!read.contains(AiGridRevisions.init_J(2, 0)), "IO failure is not retried within 30 s");
+      check(!read.contains(AiGridRevisions.chunkKey(2, 0)), "IO failure is not retried within 30 s");
 
       // (c) old .corrupt-* files are pruned down to four.
       for (int i = 0; i < 7; i++) {

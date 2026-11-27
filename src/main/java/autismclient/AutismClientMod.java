@@ -151,7 +151,7 @@ public final class AutismClientMod implements ClientModInitializer {
          AiDirectOps.init_V();
          AiMacroTools.init_V();
          AiAssistant.init_V();
-         SchematicWorkspace.init_V();
+         SchematicWorkspace.registerEvents();
       }
 
       AiChunkMemory.init(AutismClientAddon.FOLDER.toPath().resolve("ai").resolve("chunkmemory"));

@@ -1455,7 +1455,7 @@ final class AiCombat {
                      && (
                         now - this.load_J > 2500000000L
                            || distance > this.load_D + 2.0
-                              && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
+                              && autismclient.ai.engine.AiSight.hasLineOfSight(
                                  mc.level, this.init_Entity.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
                               )
                      )) {
@@ -2417,7 +2417,7 @@ final class AiCombat {
                            && entity.isAlive()
                            && autismclient.ai.engine.AiSight.init(entity)
                            && entity.distanceTo(mc.player) <= 16.5
-                           && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, entity.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
+                           && autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, entity.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
                            exposure++;
                         }
                      }

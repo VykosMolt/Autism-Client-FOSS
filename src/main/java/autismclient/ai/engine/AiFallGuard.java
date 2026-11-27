@@ -42,7 +42,7 @@ public final class AiFallGuard {
    private AiFallGuard() {
    }
 
-   public static void init_V() {
+   public static void markDriven() {
       init_J = System.nanoTime();
    }
 
@@ -75,7 +75,7 @@ public final class AiFallGuard {
          : false;
    }
 
-   public static boolean init_Z() {
+   public static boolean isHolding() {
       LocalPlayer player = Minecraft.getInstance().player;
       return player != null && player.tickCount - read_I <= 1;
    }
@@ -180,7 +180,7 @@ public final class AiFallGuard {
          int x = (int)Math.floor(state.x());
          int y = (int)Math.floor(state.y() + 0.001);
          int z = (int)Math.floor(state.z());
-         return !world.load_Z(x, y, z) && !world.init_Z_I(x, y, z) && !world.sync(x, y, z) && !world.sync(x, y + 1, z)
+         return !world.isWater(x, y, z) && !world.isLavaOrUnloaded(x, y, z) && !world.sync(x, y, z) && !world.sync(x, y + 1, z)
             ? load(world, state, new AiPhysics.MoveInput(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw()))
             : false;
       } else {
@@ -262,6 +262,6 @@ public final class AiFallGuard {
    }
 
    private static boolean load(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s) {
-      return world.load_Z((int)Math.floor(s.x()), (int)Math.floor(s.y() + 0.1), (int)Math.floor(s.z()));
+      return world.isWater((int)Math.floor(s.x()), (int)Math.floor(s.y() + 0.1), (int)Math.floor(s.z()));
    }
 }

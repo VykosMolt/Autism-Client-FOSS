@@ -110,14 +110,14 @@ final class AiSchematicReadiness {
    }
 
    static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Blueprint blueprint, int exampleLimit) {
-      return init_bX_TaskQueue(blueprint, exampleLimit, null);
+      return assess(blueprint, exampleLimit, null);
    }
 
-   static AiSchematicReadiness.Inner_TaskQueue init_bX_TaskQueue(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
+   static AiSchematicReadiness.Inner_TaskQueue assess(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
       return init(blueprint, exampleLimit, context, null);
    }
 
-   static AiSchematicReadiness.Inner_DataUtil init_bX_DataUtil(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
+   static AiSchematicReadiness.Inner_DataUtil assessBuildable(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
       AiBuilder.Blueprint blueprint = requested;
       LongOpenHashSet omitted = new LongOpenHashSet();
       ArrayList<AiSchematicReadiness.Inner_StreamUtil> examples = new ArrayList<>();
@@ -724,7 +724,7 @@ final class AiSchematicReadiness {
          problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE, gap));
       }
 
-      if (!init_Z(cell) && AiSchematicActions.load_List(cell).isEmpty()) {
+      if (!init_Z(cell) && AiSchematicActions.materialPlans(cell).isEmpty()) {
          problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN, "required work has no placement, material, or verified interaction action"));
       }
 

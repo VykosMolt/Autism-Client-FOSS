@@ -409,7 +409,7 @@ final class AiIntents {
       }
 
       try {
-         String name = AiSchematic.init_Str(m.group(1) != null ? m.group(1) : m.group(2));
+         String name = AiSchematic.validateName(m.group(1) != null ? m.group(1) : m.group(2));
          JsonObject args = AiJson.objectOf("schematic", name, "craftMissing", false, "timeoutSeconds", 2592000);
          if (m.group(3) != null) {
             args.add(

@@ -102,7 +102,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       this(env, saved, optional, false, false);
    }
 
-   static AiPrintContainer init_bd_DataUtil_bV_DataUtil(autismclient.ai.print.LivePrintEnv env, AiSchematicMachinePlan.ContainerPlan source) {
+   static AiPrintContainer forClock(autismclient.ai.print.LivePrintEnv env, AiSchematicMachinePlan.ContainerPlan source) {
       return new AiPrintContainer(env, source, true, true, false);
    }
 
@@ -147,7 +147,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public int init_I() {
+   public int verifiedSlots() {
       return this.write_I;
    }
 
@@ -187,7 +187,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isProvenFull() {
       if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.b_() && this.pop()) {
          this.write_V_2();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
@@ -200,7 +200,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public void init_V() {
+   public void invalidateCapacityProof() {
       this.init_AbstractContainerM = null;
       this.init_bM_DataUtil = null;
       this.init_CompletableFuture = null;
@@ -224,7 +224,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public boolean update_Z() {
+   public boolean needsRevisit() {
       if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED
          && this.close
          && this.init_BlockState.is(Blocks.CHEST)
@@ -561,7 +561,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public autismclient.ai.print.PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+   public autismclient.ai.print.PrintMachineJob.JobStatus pollStatus() {
       if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
          return this.init_BitSetUtil_DataUti;
       }
@@ -880,12 +880,12 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public ItemStack init_ItemStack() {
+   public ItemStack extraMaterial() {
       return this.init_ItemStack.copy();
    }
 
    @Override
-   public void load_V() {
+   public void onContentsAvailable() {
       if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
          this.init_ItemStack = ItemStack.EMPTY;
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
@@ -895,7 +895,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public void read_V() {
+   public void onContentsUnavailable() {
       if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
          this.init_ArrayList.add(this.init_ItemStack.copyWithCount(1));
          this.init_ItemStack = ItemStack.EMPTY;
@@ -945,7 +945,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public String init_Str() {
+   public String receiptJson() {
       JsonObject receipt = AiJson.objectOf(
          "position",
          this.init_BlockPos.toShortString(),

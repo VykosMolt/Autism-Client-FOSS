@@ -83,7 +83,7 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public void clearPlacedBlock(BlockPos position) {
-      AiScaffold.init_V(position);
+      AiScaffold.forget(position);
    }
 
    @Override
@@ -576,7 +576,7 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public boolean isFallGuardActive() {
-      return autismclient.ai.engine.AiFallGuard.init_Z();
+      return autismclient.ai.engine.AiFallGuard.isHolding();
    }
 
    @Override

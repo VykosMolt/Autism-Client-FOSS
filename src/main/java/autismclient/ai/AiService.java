@@ -1125,7 +1125,7 @@ public final class AiService {
 
       if (capability.equals("game:build") && arguments.has("schematic")) {
          try {
-            AiLocalRequest.init_V(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
+            AiLocalRequest.init_V(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
          } catch (IOException e) {
             throw new IllegalArgumentException("Schematic is no longer available: " + e.getMessage(), e);
          }
@@ -1661,8 +1661,8 @@ public final class AiService {
 
             AiServerEvidence.clearAll();
             AiChatLedger.init_V();
-            autismclient.ai.engine.AiGridRevisions.init_V();
-            AiScaffold.init_V();
+            autismclient.ai.engine.AiGridRevisions.resetAll();
+            AiScaffold.reset();
             this.init_Obj = mc.level;
             this.flush_Str = UUID.randomUUID().toString();
             this.update_Map = null;
@@ -2326,7 +2326,7 @@ public final class AiService {
                               }
 
                               if (result.terminal()) {
-                                 autismclient.ai.engine.AiMotionAudit.init_V();
+                                 autismclient.ai.engine.AiMotionAudit.finishOperation();
                                  this.init_cc_SyncManager = null;
                                  this.init_V_cc_SyncManager_Z(current, false);
                                  AiService.SessionState s = this.init_cc_RenderState();
@@ -3709,7 +3709,7 @@ public final class AiService {
 
             boolean unchanged;
             try {
-               unchanged = AiLocalRequest.init_Z(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
+               unchanged = AiLocalRequest.init_Z(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
             } catch (IllegalArgumentException missing) {
                unchanged = false;
             }

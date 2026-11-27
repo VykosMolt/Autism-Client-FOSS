@@ -139,7 +139,7 @@ public final class AiAim {
       this.targetRotation = null;
       this.settledTicks = 0;
       if (this.silent) {
-         AiSilentAim.init_V();
+         AiSilentAim.release();
       }
    }
 

@@ -240,7 +240,7 @@ public final class AiBlockDigger {
                   this.stop();
                   return this.failWithReason("lost sight of it while breaking");
                } else {
-                  int var17 = MiningCost.init_I_Minecraft_2(this.minecraft, var14, this.requireDrops, this.acceptedTool);
+                  int var17 = MiningCost.bestToolSlot(this.minecraft, var14, this.requireDrops, this.acceptedTool);
                   if (var17 < 0) {
                      this.stop();
                      return this.failWithReason("no tool left that gets its drops");
@@ -344,7 +344,7 @@ public final class AiBlockDigger {
 
                      return this.failWithReason("sand or gravel over it");
                   } else {
-                     int var5 = MiningCost.init_I_Minecraft_2(this.minecraft, var13, this.requireDrops, this.acceptedTool);
+                     int var5 = MiningCost.bestToolSlot(this.minecraft, var13, this.requireDrops, this.acceptedTool);
                      if (var5 < 0) {
                         if (DEBUG_NAV) {
                            AiNavDebug.log("digger fail no-tool " + var1);
@@ -365,7 +365,7 @@ public final class AiBlockDigger {
 
                         if (hasInsufficientUnderwaterAir(
                            this.minecraft,
-                           MiningCost.init_D_Minecraft(
+                           MiningCost.breakTicks(
                               this.minecraft,
                               this.minecraft.player.getInventory().getItem(var5),
                               var13,
@@ -599,7 +599,7 @@ public final class AiBlockDigger {
       this.aimPointConsumer.accept(this.resolveAimPoint(var1, var2));
       this.continueBreakingBlock(this.activeTarget, var2.getDirection());
       this.breakElapsedTicks = 0;
-      this.expectedBreakTicks = (float)MiningCost.init_D_Minecraft(
+      this.expectedBreakTicks = (float)MiningCost.breakTicks(
          this.minecraft,
          this.minecraft.player.getMainHandItem(),
          this.activeTargetState,

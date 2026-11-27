@@ -14,7 +14,7 @@ final class PrintFailedWalks {
       return this.init_LinkedHashMap.size();
    }
 
-   void init_V() {
+   void clear() {
       this.init_LinkedHashMap.clear();
    }
 

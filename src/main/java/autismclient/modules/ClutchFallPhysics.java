@@ -199,7 +199,7 @@ final class ClutchFallPhysics {
 
          if (airborne
             && state.onGround()
-            && world.init_List(body.move(0.0, -0.04, 0.0)).stream().anyMatch(block -> block.intersects(body.move(0.0, -0.04, 0.0)))
+            && world.collisionBoxes(body.move(0.0, -0.04, 0.0)).stream().anyMatch(block -> block.intersects(body.move(0.0, -0.04, 0.0)))
             && canMotionSettleSafely(state, world, maxDrop, medium)) {
             return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
          }
@@ -280,8 +280,8 @@ final class ClutchFallPhysics {
       final int[] at = new int[]{0};
       autismclient.ai.engine.AiPhysics.PhysicsWorld collisionWorld = extra.isEmpty() ? world : new autismclient.ai.engine.AiPhysics.PhysicsWorld() {
          @Override
-         public List<AABB> init_List(AABB query) {
-            List<AABB> base = world.init_List(query);
+         public List<AABB> collisionBoxes(AABB query) {
+            List<AABB> base = world.collisionBoxes(query);
             if (at[0] <= placementTick) {
                return base;
             }
@@ -303,23 +303,23 @@ final class ClutchFallPhysics {
          }
 
          @Override
-         public double init_D_I(int x, int y, int z) {
-            return world.init_D_I(x, y, z);
+         public double blockFriction(int x, int y, int z) {
+            return world.blockFriction(x, y, z);
          }
 
          @Override
-         public double load_D(int x, int y, int z) {
-            return world.load_D(x, y, z);
+         public double speedFactor(int x, int y, int z) {
+            return world.speedFactor(x, y, z);
          }
 
          @Override
-         public double write_D(int x, int y, int z) {
-            return world.write_D(x, y, z);
+         public double jumpFactor(int x, int y, int z) {
+            return world.jumpFactor(x, y, z);
          }
 
          @Override
-         public double read_D(int x, int y, int z) {
-            return world.read_D(x, y, z);
+         public double bounceFactor(int x, int y, int z) {
+            return world.bounceFactor(x, y, z);
          }
 
          @Override
@@ -328,33 +328,33 @@ final class ClutchFallPhysics {
          }
 
          @Override
-         public boolean init_Z() {
-            return world.init_Z();
+         public boolean tracksStuckBlocks() {
+            return world.tracksStuckBlocks();
          }
 
          @Override
-         public int init_I(AABB box) {
-            return world.init_I(box);
+         public int stuckBlockKindIn(AABB box) {
+            return world.stuckBlockKindIn(box);
          }
 
          @Override
-         public boolean load_Z(int x, int y, int z) {
-            return world.load_Z(x, y, z);
+         public boolean isWater(int x, int y, int z) {
+            return world.isWater(x, y, z);
          }
 
          @Override
-         public boolean init_Z_I(int x, int y, int z) {
-            return world.init_Z_I(x, y, z);
+         public boolean isLavaOrUnloaded(int x, int y, int z) {
+            return world.isLavaOrUnloaded(x, y, z);
          }
 
          @Override
-         public boolean read_Z(int x, int y, int z) {
-            return world.read_Z(x, y, z);
+         public boolean isInvisibleLightBlock(int x, int y, int z) {
+            return world.isInvisibleLightBlock(x, y, z);
          }
 
          @Override
-         public boolean write_Z(int x, int y, int z) {
-            return world.write_Z(x, y, z);
+         public boolean isPressurePlate(int x, int y, int z) {
+            return world.isPressurePlate(x, y, z);
          }
 
          @Override
@@ -396,7 +396,7 @@ final class ClutchFallPhysics {
          if (state.onGround()) {
             AABB feet = body.move(0.0, -0.04, 0.0);
             if (!exceeded
-               && collisionWorld.init_List(feet).stream().anyMatch(feet::intersects)
+               && collisionWorld.collisionBoxes(feet).stream().anyMatch(feet::intersects)
                && canMotionSettleSafely(state, collisionWorld, allowed, medium)) {
                return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge, List.copyOf(eyes));
             }
@@ -693,7 +693,7 @@ final class ClutchFallPhysics {
 
          if (state.onGround()) {
             AABB feet = body.move(0.0, -0.04, 0.0);
-            if (state.vx() * state.vx() + state.vz() * state.vz() < 1.0E-12 && world.init_List(feet).stream().anyMatch(feet::intersects)) {
+            if (state.vx() * state.vx() + state.vz() * state.vz() < 1.0E-12 && world.collisionBoxes(feet).stream().anyMatch(feet::intersects)) {
                return true;
             }
 

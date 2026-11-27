@@ -47,7 +47,7 @@ public record PrintSkippedContents(BlockPos position, BlockState source, int ski
    }
 
    @Override
-   public PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+   public PrintMachineJob.JobStatus pollStatus() {
       return PrintMachineJob.JobStatus.SKIPPED;
    }
 

@@ -19,7 +19,7 @@ public final class AiMiningCommitment {
    private long init_J = -1L;
 
    public void init(BlockPos seed, Collection<BlockPos> observed, Predicate<BlockPos> allowed) {
-      this.init_V();
+      this.clear();
       this.init_BlockPos = seed.immutable();
       this.init_Set.add(seed.asLong());
       if (observed.contains(seed) && allowed.test(seed)) {
@@ -111,7 +111,7 @@ public final class AiMiningCommitment {
       }
    }
 
-   public List<BlockPos> init_List() {
+   public List<BlockPos> remainingCells() {
       List<BlockPos> out = new ArrayList<>(this.load.size());
 
       for (long cell : this.load) {
@@ -121,15 +121,15 @@ public final class AiMiningCommitment {
       return out;
    }
 
-   public boolean init_Z() {
+   public boolean isActive() {
       return this.init_BlockPos != null;
    }
 
-   public boolean load_Z() {
-      return !this.init_Z();
+   public boolean isIdle() {
+      return !this.isActive();
    }
 
-   public int init_I() {
+   public int remainingCount() {
       return this.load.size();
    }
 
@@ -141,7 +141,7 @@ public final class AiMiningCommitment {
       return this.init_Set.contains(cell);
    }
 
-   public BlockPos init_BlockPos() {
+   public BlockPos getAnchor() {
       return this.init_BlockPos;
    }
 
@@ -149,7 +149,7 @@ public final class AiMiningCommitment {
       return this.init_Set.size();
    }
 
-   public void init_V() {
+   public void clear() {
       this.init_Set.clear();
       this.load.clear();
       this.init_BlockPos = null;

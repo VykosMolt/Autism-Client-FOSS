@@ -50,7 +50,7 @@ public class BuilderCollectionsCheck {
       });
       AiPrintSupply.Inner_CachePool prep = new AiPrintSupply.Inner_CachePool(new AiBuilder.Blueprint(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
       BlockPos candidate = new BlockPos(3, 64, 3);
-      prep.init_Map.put(candidate.above().asLong(), new AiBuilder.CellSpec(3, 65, 3, "minecraft:torch"));
+      prep.cells.put(candidate.above().asLong(), new AiBuilder.CellSpec(3, 65, 3, "minecraft:torch"));
       boolean[] result = new boolean[]{true};
       Thread t = new Thread(() -> result[0] = prep.init_Z_BlockPos(candidate));
       t.setDaemon(true);
@@ -58,9 +58,9 @@ public class BuilderCollectionsCheck {
       t.join(10_000);
       check(!t.isAlive(), "init_Z_BlockPos finally loop did not terminate");
       check(!result[0], "torch on air is not a support");
-      check(prep.read_Map.get(candidate.asLong()).contains(candidate.asLong()), "read_Map recorded the read");
+      check(prep.readsByCell.get(candidate.asLong()).contains(candidate.asLong()), "read_Map recorded the read");
       long chunk = (long) (candidate.getX() >> 4) << 32 | candidate.getZ() >> 4 & 4294967295L;
-      check(prep.write_Map.get(chunk).contains(candidate.asLong()) && prep.load_Map.get(candidate.asLong()).contains(chunk), "chunk owners recorded");
+      check(prep.ownersByChunk.get(chunk).contains(candidate.asLong()) && prep.chunksByCell.get(candidate.asLong()).contains(chunk), "chunk owners recorded");
       System.out.println("PASS BuilderCollectionsCheck");
    }
 }

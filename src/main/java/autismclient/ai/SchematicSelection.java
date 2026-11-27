@@ -12,20 +12,20 @@ import net.minecraft.world.phys.HitResult.Type;
 
 final class SchematicSelection extends AiPlacementSession {
    private final Object init_Obj;
-   BlockPos init_BlockPos;
+   BlockPos cornerA;
    BlockPos load;
    BlockPos read;
    private double init_D = 2.0;
 
-   void init_V_D(double scroll) {
+   void adjustDistance(double scroll) {
       if (Double.isFinite(scroll)) {
          this.init_D = Math.clamp(this.init_D + scroll * Math.max(0.5, this.init_D * 0.15), 0.5, 250.0);
       }
 
-      this.init_V_Z(true);
+      this.moveToAim(true);
    }
 
-   String init_Str_3() {
+   String distanceText() {
       return String.format(Locale.ROOT, "%.1f blocks", this.init_D);
    }
 
@@ -33,40 +33,40 @@ final class SchematicSelection extends AiPlacementSession {
       this.init_Obj = mc.level;
    }
 
-   void load_V_Z(boolean left) {
-      this.init_V_Z(true);
+   void pickCorner(boolean left) {
+      this.moveToAim(true);
       if (this.read != null) {
          if (left) {
-            this.init_BlockPos = this.read;
+            this.cornerA = this.read;
          } else {
             this.load = this.read;
          }
       }
    }
 
-   SchematicCapture.Inner_DataUtil init_cP_DataUtil() {
-      return this.load_Z() ? SchematicCapture.Inner_DataUtil.between(this.init_BlockPos, this.load) : null;
+   SchematicCapture.Inner_DataUtil getArea() {
+      return this.isReadyToConfirm() ? SchematicCapture.Inner_DataUtil.between(this.cornerA, this.load) : null;
    }
 
    @Override
-   boolean load_Z() {
-      return this.init_BlockPos != null && this.load != null;
+   boolean isReadyToConfirm() {
+      return this.cornerA != null && this.load != null;
    }
 
    @Override
-   boolean read_Z() {
+   boolean isActive() {
       Minecraft mc = Minecraft.getInstance();
       return this.init_Obj != null && mc.level == this.init_Obj && mc.player != null;
    }
 
    @Override
-   void init_V_Z(boolean surface) {
+   void moveToAim(boolean surface) {
       Minecraft mc = Minecraft.getInstance();
-      if (!this.read_Z()) {
+      if (!this.isActive()) {
          this.read = null;
       } else {
-         Vec3 eye = init_Vec3_Minecraft(mc);
-         Vec3 direction = load_Vec3_Minecraft(mc);
+         Vec3 eye = eyePosition(mc);
+         Vec3 direction = lookDirection(mc);
          BlockHitResult hit = mc.level.clip(new ClipContext(eye, eye.add(direction.scale(this.init_D)), Block.OUTLINE, Fluid.NONE, mc.player));
          if (hit.getType() == Type.BLOCK) {
             this.read = hit.getBlockPos().immutable();
@@ -76,11 +76,11 @@ final class SchematicSelection extends AiPlacementSession {
       }
    }
 
-   static Vec3 init_Vec3_Minecraft(Minecraft mc) {
+   static Vec3 eyePosition(Minecraft mc) {
       return autismclient.modules.FreecamController.isActive() ? autismclient.modules.FreecamController.getInterpolatedEyePos(1.0F) : mc.player.getEyePosition();
    }
 
-   static Vec3 load_Vec3_Minecraft(Minecraft mc) {
+   static Vec3 lookDirection(Minecraft mc) {
       return autismclient.modules.FreecamController.isActive()
          ? Vec3.directionFromRotation(autismclient.modules.FreecamController.getInterpolatedPitch(1.0F), autismclient.modules.FreecamController.getInterpolatedYaw(1.0F))
          : mc.player.getViewVector(1.0F);
@@ -91,17 +91,17 @@ final class SchematicSelection extends AiPlacementSession {
    }
 
    @Override
-   BlockPos init_BlockPos() {
-      return this.init_BlockPos == null ? BlockPos.ZERO : this.init_BlockPos;
+   BlockPos getOrigin() {
+      return this.cornerA == null ? BlockPos.ZERO : this.cornerA;
    }
 
    @Override
-   int init_I() {
+   int getRotation() {
       return 0;
    }
 
    @Override
-   String read_Str() {
+   String getMirror() {
       return "none";
    }
 
@@ -110,7 +110,7 @@ final class SchematicSelection extends AiPlacementSession {
    }
 
    @Override
-   void load_V() {
+   void snapToGround() {
    }
 
    @Override
@@ -118,11 +118,11 @@ final class SchematicSelection extends AiPlacementSession {
    }
 
    @Override
-   void init_V_I(int steps) {
+   void rotate(int steps) {
    }
 
    @Override
-   void init_V() {
+   void cycleMirror() {
    }
 
    @Override
@@ -130,6 +130,6 @@ final class SchematicSelection extends AiPlacementSession {
    }
 
    @Override
-   void read_V() {
+   void cancel() {
    }
 }

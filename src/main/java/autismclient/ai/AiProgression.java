@@ -531,7 +531,7 @@ final class AiProgression {
    }
 
    static AiOperation init_AiOperation_I(int held, int heldMin, int timeoutSeconds) {
-      return autismclient.ai.engine.AiBlockMine.init_AiOperation(
+      return autismclient.ai.engine.AiBlockMine.create(
          AiJson.objectOf(
             "block", "log", "held", held, "heldMin", heldMin, "nearRadius", 20, "trees", true, "radius", 64, "timeoutSeconds", Math.max(30, timeoutSeconds)
          )
@@ -898,7 +898,7 @@ final class AiProgression {
 
                      boolean allowHurt = mc.player.getHealth() <= 6.0F && this.init_Z_D_2(24.0);
                      if (allowHurt) {
-                        autismclient.ai.engine.AiLowHealth.init_V();
+                        autismclient.ai.engine.AiLowHealth.enterOverride();
                      }
 
                      AiOperation.Result r;
@@ -1186,7 +1186,7 @@ final class AiProgression {
             String stoneKey = "stock-stone:" + have;
             if ((have == AiProgression.Inner_CachePool.WOOD || have == AiProgression.Inner_CachePool.STONE) && AiProgression.init() < stoneBatch && this.init_Map.getOrDefault(stoneKey, 0) == 0) {
                int seconds = Math.min(240, this.load_I_12());
-               Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.init_AiOperation(
+               Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
                      autismclient.ai.engine.AiBlockMine.init(AiProgression.read_List),
@@ -1448,8 +1448,8 @@ final class AiProgression {
 
                ItemStack current = mc.player.getInventory().getItem(slot);
                ItemStack upgraded = new ItemStack(Items.DIAMOND_PICKAXE);
-               double before = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, ordinaryOre, ordinaryOre.getBlock().defaultDestroyTime());
-               double after = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, upgraded, ordinaryOre, ordinaryOre.getBlock().defaultDestroyTime());
+               double before = autismclient.ai.engine.MiningCost.breakTicks(mc, current, ordinaryOre, ordinaryOre.getBlock().defaultDestroyTime());
+               double after = autismclient.ai.engine.MiningCost.breakTicks(mc, upgraded, ordinaryOre, ordinaryOre.getBlock().defaultDestroyTime());
                if (after >= before) {
                   return -1;
                }
@@ -1681,7 +1681,7 @@ final class AiProgression {
 
             Predicate<BlockState> keep = state -> ore.test(state) || state.requiresCorrectToolForDrops() && !this.init_Z_BlockState(state);
             if (toOre) {
-               BlockPos top = autismclient.ai.engine.AiStaircase.init_BlockPos_Level_3(mc.level, feet, target, autismclient.ai.engine.AiStaircase.init(mc.level, keep), 40);
+               BlockPos top = autismclient.ai.engine.AiStaircase.findStairTop(mc.level, feet, target, autismclient.ai.engine.AiStaircase.init(mc.level, keep), 40);
                if (top != null) {
                   int inShaft = AiProgression.init();
 
@@ -1701,18 +1701,18 @@ final class AiProgression {
                            top.getY() - target.getY(),
                            inShaft - AiProgression.init()
                         );
-                     return autismclient.ai.engine.AiStaircase.init_AiOperation_BlockPos(top, target.getY(), seconds, () -> AiProgression.init() >= stockGoal);
+                     return autismclient.ai.engine.AiStaircase.digDownOperation(top, target.getY(), seconds, () -> AiProgression.init() >= stockGoal);
                   }
                }
             }
 
-            BlockPos start = toOre ? autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, feet, target) : null;
-            List<BlockPos> steps = autismclient.ai.engine.AiStaircase.init_List_BlockPos(
+            BlockPos start = toOre ? autismclient.ai.engine.AiStaircase.findStairStart(mc.level, feet, target) : null;
+            List<BlockPos> steps = autismclient.ai.engine.AiStaircase.planSteps(
                start != null ? start : feet, target, 32, autismclient.ai.engine.AiStaircase.init(mc.level, keep), autismclient.ai.engine.AiStaircase.init(mc.level)
             );
             if (start != null && steps.size() < 2) {
                start = null;
-               steps = autismclient.ai.engine.AiStaircase.init_List_BlockPos(feet, target, 32, autismclient.ai.engine.AiStaircase.init(mc.level, keep), autismclient.ai.engine.AiStaircase.init(mc.level));
+               steps = autismclient.ai.engine.AiStaircase.planSteps(feet, target, 32, autismclient.ai.engine.AiStaircase.init(mc.level, keep), autismclient.ai.engine.AiStaircase.init(mc.level));
             }
 
             if (start != null) {
@@ -1793,7 +1793,7 @@ final class AiProgression {
                   );
             }
 
-            return autismclient.ai.engine.AiStaircase.init_AiOperation_List(steps, seconds, toTheIron ? () -> false : () -> AiProgression.init() >= stockGoal, start);
+            return autismclient.ai.engine.AiStaircase.followStepsOperation(steps, seconds, toTheIron ? () -> false : () -> AiProgression.init() >= stockGoal, start);
          }
 
          boolean init_Z_BlockPos_6(BlockPos pos) {

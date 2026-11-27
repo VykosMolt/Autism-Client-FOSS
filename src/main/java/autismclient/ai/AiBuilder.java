@@ -1068,8 +1068,8 @@ final class AiBuilder {
          return List.of();
       }
 
-      if (AiSchematicActions.init_Z(cell)) {
-         return AiSchematicActions.init_List(cell);
+      if (AiSchematicActions.needsAction(cell)) {
+         return AiSchematicActions.actionsFor(cell);
       }
 
       Block block = resolveBlock(cell);
@@ -1229,7 +1229,7 @@ final class AiBuilder {
          requiresUpperHalfClick(cell, block),
          fullDirection,
          block instanceof TrapDoorBlock ? Direction.byName(cell.properties().getOrDefault("facing", "north")) : null,
-         autismclient.ai.engine.AiShapes.init_S_List(toBlockState(cell).getCollisionShape(world, pos).toAabbs()),
+         autismclient.ai.engine.AiShapes.shapeId(toBlockState(cell).getCollisionShape(world, pos).toAabbs()),
          yaw,
          tolerance
       );
@@ -1505,7 +1505,7 @@ final class AiBuilder {
          return false;
       }
 
-      if (live.getBlock() instanceof MultifaceBlock && !autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(toBlockState(cell), live)) {
+      if (live.getBlock() instanceof MultifaceBlock && !autismclient.ai.print.PrintRules.facesWithinSavedShape(toBlockState(cell), live)) {
          return false;
       }
 
@@ -2225,7 +2225,7 @@ final class AiBuilder {
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         List<AiCellMaterials.Inner_CachePool> cellPlans = AiSchematicActions.load_List(cell);
+         List<AiCellMaterials.Inner_CachePool> cellPlans = AiSchematicActions.materialPlans(cell);
          plans.addAll(cellPlans);
          collectSubstituteAlternatives(cell, cellPlans, substitutes, alternatives);
       }
@@ -2282,7 +2282,7 @@ final class AiBuilder {
    }
 
    static JsonObject missingMaterialsForInventory(Iterable<AiCellMaterials.Inner_CachePool> plans, Inventory inventory, Map<String, Set<String>> alternatives) {
-      return solveMissingMaterialsFlow(plans, alternatives, spec -> AiSchematicPlacement.init_I_Inventory_Str(inventory, spec));
+      return solveMissingMaterialsFlow(plans, alternatives, spec -> AiSchematicPlacement.countItem(inventory, spec));
    }
 
    static JsonObject missingMaterialsForContainer(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
@@ -2296,7 +2296,7 @@ final class AiBuilder {
       Map<String, Integer> required = new TreeMap<>();
       Map<String, Set<String>> pools = new TreeMap<>();
 
-      for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init_List(plans)) {
+      for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.combine(plans)) {
          required.merge(requirement.itemSpec(), requirement.count(), Integer::sum);
          Set<String> pool = pools.computeIfAbsent(requirement.itemSpec(), k -> new TreeSet<>());
          pool.add(requirement.itemSpec());
@@ -2647,8 +2647,8 @@ final class AiBuilder {
             }
 
             BlockPos origin = auditOrigin(args, mc.player.blockPosition());
-            AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(
-               AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", "")),
+            AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(
+               AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")),
                origin,
                power.rotation(),
                power.mirror(),
@@ -2677,7 +2677,7 @@ final class AiBuilder {
          }
 
          if (decodedSchematic != null) {
-            power = power.withMachine(AiSchematicMachinePlan.init_bV_bP_BufferHelper_TableIndex_DataUti(decodedSchematic, blueprint));
+            power = power.withMachine(AiSchematicMachinePlan.fromSchematic(decodedSchematic, blueprint));
          }
 
          boolean schematic = args.has("schematic");
@@ -3380,7 +3380,7 @@ final class AiBuilder {
 
             @Override
             public AiOperation.Result tick() {
-               AiFallGuard.init_V();
+               AiFallGuard.markDriven();
                if (schematic
                   && this.close_Z
                   && mc.player != null
@@ -3474,7 +3474,7 @@ final class AiBuilder {
                   }
 
                   if (this.init_a_StreamUtil != null && ++this.f_a_I % 200 == 0) {
-                     this.init_a_StreamUtil.init_V();
+                     this.init_a_StreamUtil.persist();
                   }
 
                   if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
@@ -3677,7 +3677,7 @@ final class AiBuilder {
                         }
 
                         if (this.load_b_DataUtil != null && this.init_AiOperation != this.load_AiOperation) {
-                           this.load_b_DataUtil.init_V();
+                           this.load_b_DataUtil.cancel();
                            this.load_b_DataUtil = null;
                            this.read_b_DataUtil = null;
                            this.load_AiOperation = null;
@@ -3700,16 +3700,16 @@ final class AiBuilder {
 
                         this.init_AiOperation = null;
                         if (this.load_b_DataUtil != null) {
-                           this.init_D = this.load_b_DataUtil.init_D();
+                           this.init_D = this.load_b_DataUtil.elapsedMs();
                            if (r.status() != AiOperation.Status.SUCCEEDED) {
                               this.read_b_DataUtil = null;
-                              BlockPos rejected = this.load_b_DataUtil.init_BlockPos();
+                              BlockPos rejected = this.load_b_DataUtil.getRejected();
                               if (rejected != null) {
                                  this.load_Set.add(rejected.asLong());
                               }
                            } else {
                               BlockPos feet = autismclient.ai.engine.AiStance.init(mc);
-                              List<BlockPos> positions = this.load_b_DataUtil.init_List_BlockPos(feet);
+                              List<BlockPos> positions = this.load_b_DataUtil.positionsFrom(feet);
                               ArrayList<AiBuilder.CellSpec> scheduled = new ArrayList<>();
 
                               for (BlockPos at : positions) {
@@ -3720,7 +3720,7 @@ final class AiBuilder {
                               }
 
                               AiBuilder.CellSpec previous = this.data < this.init_List.size() ? this.init_List.get(this.data) : null;
-                              AiSchematicApproach.Inner_DataUtil.init_V_List(this.init_List, this.data, scheduled);
+                              AiSchematicApproach.Inner_DataUtil.fillBatch(this.init_List, this.data, scheduled);
                               if (this.data < this.init_List.size() && !this.init_List.get(this.data).equals(previous)) {
                                  this.sync();
                               }
@@ -3728,9 +3728,9 @@ final class AiBuilder {
                               this.write_List = List.copyOf(positions);
                               this.read_b_DataUtil = positions.isEmpty() ? null : this.load_b_DataUtil;
                               this.get_I = scheduled.size();
-                              this.set_I = this.load_b_DataUtil.init_I();
-                              this.load_D = this.load_b_DataUtil.init_D_BlockPos(feet);
-                              this.clear_I = this.load_b_DataUtil.init_I_BlockPos(feet);
+                              this.set_I = this.load_b_DataUtil.stopCount();
+                              this.load_D = this.load_b_DataUtil.estimatedSeconds(feet);
+                              this.clear_I = this.load_b_DataUtil.supportCount(feet);
                            }
 
                            this.load_b_DataUtil = null;
@@ -3755,7 +3755,7 @@ final class AiBuilder {
                            BlockPos foundation = this.read_BlockPos;
                            this.read_BlockPos = null;
                            if (r.status() == AiOperation.Status.SUCCEEDED) {
-                              AiScaffold.init_V(foundation);
+                              AiScaffold.forget(foundation);
                               this.tick_Set.add(foundation.asLong());
                            } else {
                               this.read("Required foundation failed: " + r.message());
@@ -3963,7 +3963,7 @@ final class AiBuilder {
                                  }
 
                                  if (schematic) {
-                                    BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, pos, mc.level, this.close_Set);
+                                    BlockPos foundation = AiSchematicActions.foundationFor(cell, pos, mc.level, this.close_Set);
                                     if (foundation != null) {
                                        this.read_BlockPos = foundation;
                                        this.init_AiOperation = AiBuilder.buildSchematicSubtask(
@@ -3973,7 +3973,7 @@ final class AiBuilder {
                                        return this.init_AiOperation_Result_5("Restoring the source cell's permanent foundation");
                                     }
 
-                                    BlockPos dependency = AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, pos, mc.level, this.load_Map);
+                                    BlockPos dependency = AiSchematicActions.dependencyFor(cell, pos, mc.level, this.load_Map);
                                     if (AiTerrain.isLoaded(mc.level, pos) && (dependency != null || !AiBuilder.toBlockState(cell).canSurvive(mc.level, pos))) {
                                        if (dependency != null && this.poll_Map.getOrDefault(cell, 0) < 4) {
                                           boolean later = false;
@@ -4041,7 +4041,7 @@ final class AiBuilder {
                                     }
                                  }
 
-                                 if (schematic && AiSchematicActions.init_Z(cell)) {
+                                 if (schematic && AiSchematicActions.needsAction(cell)) {
                                     if (this.pop(pos)) {
                                        return this.init_AiOperation_Result_5("Opening access to the buried interaction cell");
                                     }
@@ -4297,7 +4297,7 @@ final class AiBuilder {
                                                    && (
                                                       holdSneak
                                                          || this.set_Z
-                                                         || autismclient.ai.engine.PlacementGoal.init_Z_Minecraft(
+                                                         || autismclient.ai.engine.PlacementGoal.canPlace(
                                                             mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target)
                                                          )
                                                    );
@@ -4884,7 +4884,7 @@ final class AiBuilder {
                      (int)Math.ceil(box.maxZ) - 1
                   )) {
                      if (!this.init_AABB.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5)
-                        && AiScaffold.init(AiScaffold.init_Block(cell), mc.level.getBlockState(cell).getBlock())) {
+                        && AiScaffold.init(AiScaffold.recordedBlock(cell), mc.level.getBlockState(cell).getBlock())) {
                         this.flush_List.add(cell);
                      }
                   }
@@ -4917,7 +4917,7 @@ final class AiBuilder {
                         }
                      } else {
                         this.tick_Set.add(candidate.asLong());
-                        AiScaffold.init_V(candidate);
+                        AiScaffold.forget(candidate);
                      }
                   }
 
@@ -5124,7 +5124,7 @@ final class AiBuilder {
 
                            if (AiSchematicActions.init(candidate, this.load_Map, mc.level)) {
                               this.tick_Set.add(candidate.asLong());
-                              AiScaffold.init_V(candidate);
+                              AiScaffold.forget(candidate);
                               continue;
                            }
 
@@ -5201,7 +5201,7 @@ final class AiBuilder {
                      this.drain++;
                      this.write_J = System.currentTimeMillis();
                      if (this.write_BlockPos != null) {
-                        AiScaffold.init_V(this.write_BlockPos);
+                        AiScaffold.forget(this.write_BlockPos);
                      }
                   } else if (this.write_BlockPos != null) {
                      int failedAttempts = this.write_Map.getOrDefault(this.write_BlockPos.asLong(), 0) + 1;
@@ -5411,7 +5411,7 @@ final class AiBuilder {
             List<BlockPos> init_List_4() {
                LinkedHashSet<BlockPos> owned = new LinkedHashSet<>();
                if (this.init_a_StreamUtil != null) {
-                  owned.addAll(this.init_a_StreamUtil.init_List());
+                  owned.addAll(this.init_a_StreamUtil.ownedCells());
                }
 
                for (long key : this.poll_Set) {
@@ -5431,7 +5431,7 @@ final class AiBuilder {
 
                      this.tick_Set.add(p.asLong());
                      this.poll_Set.remove(p.asLong());
-                     AiScaffold.init_V(p);
+                     AiScaffold.forget(p);
                      return false;
                   })
                   .sorted(Comparator.<BlockPos>comparingInt(p -> p.getY()).reversed())
@@ -5444,7 +5444,7 @@ final class AiBuilder {
 
             Block init_Block(BlockPos pos) {
                Block tracked = this.init_a_StreamUtil == null ? null : this.init_a_StreamUtil.init(pos);
-               return tracked == null ? AiScaffold.init_Block(pos) : tracked;
+               return tracked == null ? AiScaffold.recordedBlock(pos) : tracked;
             }
 
             AiOperation init_AiOperation() {
@@ -5553,7 +5553,7 @@ final class AiBuilder {
                }
 
                if (this.sync_List == null) {
-                  this.sync_List = new ArrayList<>(AiSchematicActions.init_List_TableIndex_DataUti(blueprint, this.load_Map, mc.level, this.update_Z ? AiSchematicActions::load : AiSchematicActions::init));
+                  this.sync_List = new ArrayList<>(AiSchematicActions.cellsToClear(blueprint, this.load_Map, mc.level, this.update_Z ? AiSchematicActions::load : AiSchematicActions::init));
                   this.sync_List.removeIf(px -> this.open_Set.contains(px.asLong()));
                   if (this.update_Z) {
                      for (BlockPos stray : AiSchematicActions.load(blueprint, this.load_Map, mc.level)) {
@@ -5612,7 +5612,7 @@ final class AiBuilder {
             }
 
             boolean init_Z_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
-               if (!AiSchematicActions.init_Z(cell) && !AiBuilder.isDoubleSlabCell(cell)) {
+               if (!AiSchematicActions.needsAction(cell) && !AiBuilder.isDoubleSlabCell(cell)) {
                   Block block = AiBuilder.resolveBlock(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : block.asItem();
                   if (item != Items.AIR && this.init(item) > 0) {
@@ -5806,7 +5806,7 @@ final class AiBuilder {
                   AiBuilder.CellSpec completed = this.init_List.get(this.data);
                   BlockPos pos = blueprint.origin().offset(completed.dx(), completed.dy(), completed.dz());
                   if (AiBuilder.isCellSatisfied(completed, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
-                     AiScaffold.init_V(pos);
+                     AiScaffold.forget(pos);
                      if (schematic && this.pool > 0) {
                         this.pop_Set.add(pos.asLong());
                      }
@@ -5897,7 +5897,7 @@ final class AiBuilder {
                keep.addAll(this.poll_Set);
                keep.addAll(this.tick_Set);
                if (this.init_a_StreamUtil != null) {
-                  for (BlockPos support : this.init_a_StreamUtil.init_List()) {
+                  for (BlockPos support : this.init_a_StreamUtil.ownedCells()) {
                      if (!this.close_Set.contains(support.asLong())
                         && AiScaffold.init(this.init_a_StreamUtil.init(support), mc.level.getBlockState(support).getBlock())
                         && AiSchematicActions.init(support, this.load_Map, mc.level)) {
@@ -6126,11 +6126,11 @@ final class AiBuilder {
 
                this.flush_J = worker.asLong();
                this.f_g_I = mc.player.tickCount;
-               return this.reset_Z = AiSchematicActions.init_Z_BlockPos(worker, this.init_AABB.inflate(1.0), 600, this::poll);
+               return this.reset_Z = AiSchematicActions.hasApproach(worker, this.init_AABB.inflate(1.0), 600, this::poll);
             }
 
             boolean open(BlockPos worker) {
-               return AiSchematicActions.init_Z_BlockPos(worker, this.init_AABB.inflate(1.0), 24000, this::poll);
+               return AiSchematicActions.hasApproach(worker, this.init_AABB.inflate(1.0), 24000, this::poll);
             }
 
             boolean openExit(BlockPos worker) {
@@ -7092,7 +7092,7 @@ final class AiBuilder {
                   && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
                   Item item = AiBuilder.resolveBlock(cell).asItem();
                   if (this.init(item) != 0
-                     && !autismclient.ai.engine.PlacementGoal.init_Z_Minecraft(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)))) {
+                     && !autismclient.ai.engine.PlacementGoal.canPlace(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)))) {
                      BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.init(
                         mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.resolveBlock(cell)), 32
                      );
@@ -7182,7 +7182,7 @@ final class AiBuilder {
                         this.close_I++;
                      }
 
-                     AiScaffold.init_V(pos);
+                     AiScaffold.forget(pos);
                      this.load_TableIndex_StreamU = null;
                      this.init_Map.remove(pos.asLong());
                   } else if (outcome == AiBuilder.PlaceAckTracker.AckState.RETRY) {
@@ -7242,7 +7242,7 @@ final class AiBuilder {
                                     for (int dz = -2; dz <= 2 && blocking == null; dz++) {
                                        BlockPos cell = pos.offset(dx, dy, dz);
                                        if (!this.init_AABB.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5)
-                                          && AiScaffold.init_Block(cell) != null
+                                          && AiScaffold.recordedBlock(cell) != null
                                           && AiScaffold.init(this.init_Block(cell), mc.level.getBlockState(cell).getBlock())) {
                                           blocking = cell;
                                        }
@@ -7316,7 +7316,7 @@ final class AiBuilder {
                            }
 
                            if (schematic) {
-                              Set<Long> batchKeep = AiSchematicApproach.Inner_DataUtil.init_Set_List(
+                              Set<Long> batchKeep = AiSchematicApproach.Inner_DataUtil.batchKeepCells(
                                  this.init_List, this.data, this.init_Set_2(), next -> blueprint.origin().offset(next.dx(), next.dy(), next.dz()).asLong()
                               );
                               if (this.read_b_DataUtil != null && this.read_b_DataUtil.load(pos)) {
@@ -7332,7 +7332,7 @@ final class AiBuilder {
                                  this.read_b_DataUtil = null;
                                  this.write_List = List.of();
                                  if (this.init_b_DataUtil != null) {
-                                    this.init_b_DataUtil.init_V();
+                                    this.init_b_DataUtil.cancel();
                                     this.init_b_DataUtil = null;
                                  }
 
@@ -7345,7 +7345,7 @@ final class AiBuilder {
                               }
 
                               this.init_AiOperation = this.load_AiOperation = this.load_b_DataUtil
-                                 .init_AiOperation_I(30, batchKeep, this.init_Set_TableIndex_StreamU_BlockPos(cell, pos));
+                                 .operation(30, batchKeep, this.init_Set_TableIndex_StreamU_BlockPos(cell, pos));
                            } else {
                               this.init_AiOperation = this.bind > 0
                                  ? AiGoto.approachToPlaceWithDigCompat(pos, block.asItem(), 30, this.init_AABB)
@@ -7380,7 +7380,7 @@ final class AiBuilder {
 
                for (int j = this.data + 1; j < this.init_List.size() && j < this.data + 192; j++) {
                   AiBuilder.CellSpec next = this.init_List.get(j);
-                  if (next.dy() == cell.dy() && !AiSchematicActions.init_Z(next) && !AiBuilder.isDoubleSlabCell(next)) {
+                  if (next.dy() == cell.dy() && !AiSchematicActions.needsAction(next) && !AiBuilder.isDoubleSlabCell(next)) {
                      Block nextBlock = AiBuilder.resolveBlock(next);
                      Item item = next.block().equals("minecraft:grass_block") ? Items.DIRT : nextBlock.asItem();
                      if (item != Items.AIR && this.init(item) > 0) {
@@ -7391,7 +7391,7 @@ final class AiBuilder {
                            && !AiBuilder.isCellSatisfied(next, live, power.substitutes(), schematic)
                            && AiTerrain.isLoaded(mc.level, at)
                            && AiBuilder.toBlockState(next).canSurvive(mc.level, at)
-                           && AiSchematicActions.init_BlockPos_TableIndex_StreamU(next, at, mc.level, this.load_Map) == null
+                           && AiSchematicActions.dependencyFor(next, at, mc.level, this.load_Map) == null
                            && !this.load_Z(next, at)) {
                            boolean supported = false;
 
@@ -7413,7 +7413,7 @@ final class AiBuilder {
                   }
                }
 
-               return AiSchematicApproach.Inner_DataUtil.init_List_List_Vec3(batch, mc.player.position());
+               return AiSchematicApproach.Inner_DataUtil.orderByRoute(batch, mc.player.position());
             }
 
             boolean read(AiBuilder.CellSpec currentCell) {
@@ -7425,7 +7425,7 @@ final class AiBuilder {
                   AiBuilder.CellSpec next = this.init_List.get(i);
                   if (next.dy() == currentCell.dy()) {
                      BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
-                     if (this.init_b_DataUtil.init_Z_BlockPos(at) && !AiBuilder.isCellSatisfied(next, mc.level.getBlockState(at), power.substitutes(), true)) {
+                     if (this.init_b_DataUtil.covers(at) && !AiBuilder.isCellSatisfied(next, mc.level.getBlockState(at), power.substitutes(), true)) {
                         return true;
                      }
                   }
@@ -7438,7 +7438,7 @@ final class AiBuilder {
                boolean working = this.init_AiOperation != null || this.read_AiOperation != null || this.load_BlockPos != null || this.sync_AiOperation != null;
                if (working && this.data < this.init_List.size()) {
                   if (this.init_b_DataUtil != null && this.data - this.read_I >= 192) {
-                     this.init_b_DataUtil.init_V();
+                     this.init_b_DataUtil.cancel();
                      this.init_b_DataUtil = null;
                   }
 
@@ -7447,8 +7447,8 @@ final class AiBuilder {
                      this.update_I = this.sync_I = this.data;
                      this.flush_I = -2147483648;
                      this.init_Set = this.load_b_DataUtil != null
-                        ? this.load_b_DataUtil.init_Set()
-                        : (this.read_b_DataUtil != null ? this.read_b_DataUtil.init_Set() : Set.copyOf(this.write_List));
+                        ? this.load_b_DataUtil.getTargets()
+                        : (this.read_b_DataUtil != null ? this.read_b_DataUtil.getTargets() : Set.copyOf(this.write_List));
                   }
 
                   if (this.read_List != null) {
@@ -7468,7 +7468,7 @@ final class AiBuilder {
 
                      if (this.sync_I >= end) {
                         if (!this.read_List.isEmpty()) {
-                           List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = AiSchematicApproach.Inner_DataUtil.init_List_List_Vec3(this.read_List, this.init_Vec3_3());
+                           List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = AiSchematicApproach.Inner_DataUtil.orderByRoute(this.read_List, this.init_Vec3_3());
                            autismclient.ai.engine.PlacementGoal.PlacementRequest first = targets.getFirst();
                            AiBuilder.CellSpec wanted = this.load_Map.get(first.pos().asLong());
                            this.init_b_DataUtil = new AiSchematicApproach.Inner_DataUtil(
@@ -7490,12 +7490,12 @@ final class AiBuilder {
                   }
 
                   if (this.init_b_DataUtil != null) {
-                     if (!this.init_b_DataUtil.init_Z() && this.init_Vec3 != null && mc.player.position().distanceToSqr(this.init_Vec3) > 1.0E-4) {
+                     if (!this.init_b_DataUtil.isFinished() && this.init_Vec3 != null && mc.player.position().distanceToSqr(this.init_Vec3) > 1.0E-4) {
                         this.add_I++;
                      }
 
-                     this.init_b_DataUtil.init_V_Vec3(this.init_Vec3_3());
-                     this.init_b_DataUtil.init_V_J(750000L);
+                     this.init_b_DataUtil.setWorkerPosition(this.init_Vec3_3());
+                     this.init_b_DataUtil.planSlice(750000L);
                   }
 
                   this.init_Vec3 = mc.player.position();
@@ -7504,8 +7504,8 @@ final class AiBuilder {
 
             Vec3 init_Vec3_3() {
                return this.load_b_DataUtil != null
-                  ? this.load_b_DataUtil.init_Vec3()
-                  : (this.read_b_DataUtil != null ? this.read_b_DataUtil.init_Vec3() : mc.player.position());
+                  ? this.load_b_DataUtil.endPosition()
+                  : (this.read_b_DataUtil != null ? this.read_b_DataUtil.endPosition() : mc.player.position());
             }
 
             BlockPos init(List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets) {
@@ -7529,7 +7529,7 @@ final class AiBuilder {
 
             autismclient.ai.engine.PlacementGoal.PlacementRequest init_u_CachePool_TableIndex_StreamU_Set(AiBuilder.CellSpec cell, Set<BlockPos> omit) {
                BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.isDoubleSlabCell(cell) && AiTerrain.isLoaded(mc.level, at)) {
+               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.needsAction(cell) && !AiBuilder.isDoubleSlabCell(cell) && AiTerrain.isLoaded(mc.level, at)) {
                   BlockState live = mc.level.getBlockState(at);
                   Block target = AiBuilder.resolveBlock(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : target.asItem();
@@ -7539,7 +7539,7 @@ final class AiBuilder {
                         && live.getFluidState().isEmpty()
                         && !AiBuilder.isCellSatisfied(cell, live, power.substitutes(), true)
                         && AiBuilder.toBlockState(cell).canSurvive(mc.level, at)
-                        && AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, at, mc.level, this.load_Map) == null
+                        && AiSchematicActions.dependencyFor(cell, at, mc.level, this.load_Map) == null
                         && !this.load_Z(cell, at)
                      ? new autismclient.ai.engine.PlacementGoal.PlacementRequest(
                         at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), AiBuilder.toBlockState(cell)
@@ -7877,7 +7877,7 @@ final class AiBuilder {
                      "continuedStops",
                      this.put_I,
                      "nextReady",
-                     this.init_b_DataUtil != null && this.init_b_DataUtil.init_Z(),
+                     this.init_b_DataUtil != null && this.init_b_DataUtil.isFinished(),
                      "overlapTicks",
                      this.add_I
                   ),
@@ -8132,15 +8132,15 @@ final class AiBuilder {
 
             void pop() {
                if (this.init_b_DataUtil != null) {
-                  this.init_b_DataUtil.init_V();
+                  this.init_b_DataUtil.cancel();
                }
 
                if (this.load_b_DataUtil != null) {
-                  this.load_b_DataUtil.init_V();
+                  this.load_b_DataUtil.cancel();
                }
 
                if (this.read_b_DataUtil != null) {
-                  this.read_b_DataUtil.init_V();
+                  this.read_b_DataUtil.cancel();
                }
 
                this.init_b_DataUtil = this.load_b_DataUtil = this.read_b_DataUtil = null;
@@ -8322,7 +8322,7 @@ final class AiBuilder {
          boolean shulkerStock,
          Map<Long, String> signText
       ) {
-         this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock, signText, AiSchematicMachinePlan.init_bV);
+         this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock, signText, AiSchematicMachinePlan.EMPTY);
       }
 
       BuildOptions(
@@ -8520,7 +8520,7 @@ final class AiBuilder {
 
             int remaining = (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
             if (!AutismLiteVariant.enabled()
-               && (this.options.machine().load_Z() || this.options.assumeFly())
+               && (this.options.machine().hasActions() || this.options.assumeFly())
                && !System.getProperty("autism.ai.build.schematic.engine", "printer").equalsIgnoreCase("old")) {
                this.activeCopyOp = new AiPrintOp(shifted, remaining, this.options);
             } else {

@@ -150,13 +150,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             var10000 = this.init_List().size();
             break;
          case PLACEMENTS:
-            var10000 = this.init_cV.init_List().size();
+            var10000 = this.init_cV.placements().size();
             break;
          case CAPTURE:
             var10000 = 0;
             break;
          case FOLDERS:
-            var10000 = this.init_cV.init_cR.init_List.size();
+            var10000 = this.init_cV.library.roots.size();
             break;
          default:
             throw new MatchException(null, null);
@@ -166,13 +166,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private int pop_I() {
-      return 20 + (this.init_cV.load_Z() ? 16 : 0) + (this.init_cV.init_I() >= 0 ? 13 : 0);
+      return 20 + (this.init_cV.hasActiveBuild() ? 16 : 0) + (this.init_cV.getProgress() >= 0 ? 13 : 0);
    }
 
    private int captureHeight() {
       int bodyTop = 34;
       int contentBottom = bodyTop + 48 + 14;
-      return contentBottom + 4 + (this.init_cV.load_Z() ? 16 : 0) + (this.init_cV.init_I() >= 0 ? 13 : 0);
+      return contentBottom + 4 + (this.init_cV.hasActiveBuild() ? 16 : 0) + (this.init_cV.getProgress() >= 0 ? 13 : 0);
    }
 
    private int init_I_I(int rows) {
@@ -187,7 +187,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             var10000 = 16;
             break;
          case PLACEMENTS:
-            var10000 = (byte)(this.init_cV.update_Z() ? 17 : 0);
+            var10000 = (byte)(this.init_cV.isLocalWorld() ? 17 : 0);
             break;
          default:
             var10000 = 0;
@@ -234,13 +234,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                      this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? "Search schematics" : "File name (optional)"
                   )
                );
-            this.init_k.setValue(this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? this.load_Str : this.init_cV.init_Str);
+            this.init_k.setValue(this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? this.load_Str : this.init_cV.captureName);
             this.init_k.setChangedListener(value -> {
                if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES) {
                   this.load_Str = value;
                   this.init_CacheEntry.setOffsetUnclamped(0);
                } else {
-                  this.init_cV.init_Str = value;
+                  this.init_cV.captureName = value;
                }
             });
          }
@@ -314,25 +314,25 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                      this.load(ui, x, y, w, bottom);
                }
 
-               if (this.init_cV.load_Z()) {
+               if (this.init_cV.hasActiveBuild()) {
                   int buildY = bottom + 6 + 13;
                   String label = "Stop Build";
                   int buttonWidth = ui.init_PoolEntry().measureWidth(label) + 12;
-                  this.init_V_SyncManager_5(ui, this.init_cV.init_Str(), x, buildY + 2, w - buttonWidth - 3, ui.init_TableIndex().colors().textSecondary);
+                  this.init_V_SyncManager_5(ui, this.init_cV.activeBuildLabel(), x, buildY + 2, w - buttonWidth - 3, ui.init_TableIndex().colors().textSecondary);
                   this.init_V_SyncManager_2(
                      ui,
                      autismclient.gui.f.NetHelper.init(x + w - buttonWidth, buildY, buttonWidth, 13),
                      label,
                      autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
                      true,
-                     this.init_cV::flush_V
+                     this.init_cV::stopBuild
                   );
                }
 
-               int progress = this.init_cV.init_I();
+               int progress = this.init_cV.getProgress();
                if (progress >= 0) {
                   SchematicRecording recording = this.init_cV.activeRecording();
-                  String statusText = recording != null && !recording.putAt_Z ? recording.putAt_Str() : this.init_cV.load_Str();
+                  String statusText = recording != null && !recording.putAt_Z ? recording.putAt_Str() : this.init_cV.getStatus();
                   String pctText = progress + "%";
                   int pctWidth = ui.init_PoolEntry().measureWidth(pctText);
                   int barWidth = Math.min(90, w / 3);
@@ -371,8 +371,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          autismclient.gui.f.NetHelper.init(refreshX, y, refreshWidth, 13),
          "Refresh",
          autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-         this.init_cV.read_Z(),
-         this.init_cV::write_V
+         this.init_cV.isLibraryReady(),
+         this.init_cV::refresh
       );
       List<SchematicLibrary.Inner_DataUtil> entries = this.init_List();
       this.init(
@@ -393,9 +393,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                ui,
                row,
                e.name(),
-               blocks + " · " + init_Str_J(e.bytes()) + " · " + date + (this.init_cV.init_cR_StreamUtil_cR_DataUtil(e) != null ? " · Loaded" : ""),
-               this.init_cV.load_Str.equals(e.id()),
-               () -> this.init_cV.load_Str = e.id()
+               blocks + " · " + init_Str_J(e.bytes()) + " · " + date + (this.init_cV.placementForFile(e) != null ? " · Loaded" : ""),
+               this.init_cV.selectedFileId.equals(e.id()),
+               () -> this.init_cV.selectedFileId = e.id()
             );
          }
       );
@@ -403,8 +403,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.init_V_SyncManager_4(ui, "No schematic files", x, y + 13 + 12, width);
       }
 
-      SchematicLibrary.Inner_DataUtil file = entries.stream().filter(e -> e.id().equals(this.init_cV.load_Str)).findFirst().orElse(null);
-      SchematicLibrary.Inner_StreamUtil active = this.init_cV.init_cR_StreamUtil_cR_DataUtil(file);
+      SchematicLibrary.Inner_DataUtil file = entries.stream().filter(e -> e.id().equals(this.init_cV.selectedFileId)).findFirst().orElse(null);
+      SchematicLibrary.Inner_StreamUtil active = this.init_cV.placementForFile(file);
       this.init_V_SyncManager_3(
          ui,
          x,
@@ -414,42 +414,42 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             new SchematicLibraryOverlay.Inner_DataUtil(
                active == null ? "Load" : "Unload",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-               this.init_cV.read_Z()
-                  && this.init_cV.write_Z()
-                  && (active != null ? this.init_cV.read_Z(active) : !this.init_cV.flush_Z() && file != null && file.error().isEmpty()),
+               this.init_cV.isLibraryReady()
+                  && this.init_cV.isInWorld()
+                  && (active != null ? this.init_cV.canModify(active) : !this.init_cV.isBusy() && file != null && file.error().isEmpty()),
                () -> {
                   if (active == null) {
-                     this.init_cV.load_V_cR_DataUtil(file);
+                     this.init_cV.placeFile(file);
                      this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.Inner_ConfigStore.PLACEMENTS);
                   } else {
-                     this.init_cV.load_V_cR_StreamUtil(active);
+                     this.init_cV.toggleShown(active);
                   }
                }
             ),
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Rename",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-               file != null && !this.init_cV.flush_Z(),
-               () -> this.init_cV.init_V_cR_DataUtil(file)
+               file != null && !this.init_cV.isBusy(),
+               () -> this.init_cV.renameFile(file)
             ),
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Open folder",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-               this.init_cV.read_Z(),
-               () -> this.init_cV.load_V_Path(this.init_cV.init_cR.load_Path)
+               this.init_cV.isLibraryReady(),
+               () -> this.init_cV.openPath(this.init_cV.library.defaultRoot)
             )
          )
       );
    }
 
    private List<SchematicLibrary.Inner_DataUtil> init_List() {
-      List<SchematicLibrary.Inner_DataUtil> current = this.init_cV.init_cR.load_List;
+      List<SchematicLibrary.Inner_DataUtil> current = this.init_cV.library.entries;
       Set<String> loaded = Set.of();
       if (this.init_SchematicLibraryOv_3 == SchematicLibraryOverlay.Inner_StreamUtil.LOADED
          || this.init_SchematicLibraryOv_3 == SchematicLibraryOverlay.Inner_StreamUtil.UNLOADED) {
          loaded = new HashSet<>();
 
-         for (SchematicLibrary.Inner_StreamUtil placement : this.init_cV.init_List()) {
+         for (SchematicLibrary.Inner_StreamUtil placement : this.init_cV.placements()) {
             if (placement.visible()) {
                loaded.add(placement.file());
             }
@@ -512,17 +512,17 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {
-      List<SchematicLibrary.Inner_StreamUtil> placements = this.init_cV.init_List();
-      SchematicLibrary.Inner_StreamUtil picked = this.init_cV.init_cR_StreamUtil_Str(this.init_cV.read_Str);
-      boolean local = this.init_cV.update_Z();
+      List<SchematicLibrary.Inner_StreamUtil> placements = this.init_cV.placements();
+      SchematicLibrary.Inner_StreamUtil picked = this.init_cV.placementById(this.init_cV.selectedPlacementId);
+      boolean local = this.init_cV.isLocalWorld();
       int listBottom = bottom - (local ? 17 : 0);
       this.init(ui, x, y, width, Math.max(4, listBottom - y), placements.size(), (index, row) -> {
          SchematicLibrary.Inner_StreamUtil p = placements.get(index);
-         String detail = p.x() + ", " + p.y() + ", " + p.z() + "  ·  " + p.rotation() + "°  ·  " + this.init_cV.init_Str_cR_StreamUtil(p);
-         this.init_V_SyncManager_3(ui, row, SchematicWorkspace.load_Str_cR_StreamUtil(p), detail, p.id().equals(this.init_cV.read_Str), () -> this.init_cV.read_Str = p.id());
+         String detail = p.x() + ", " + p.y() + ", " + p.z() + "  ·  " + p.rotation() + "°  ·  " + this.init_cV.placementStatus(p);
+         this.init_V_SyncManager_3(ui, row, SchematicWorkspace.displayName(p), detail, p.id().equals(this.init_cV.selectedPlacementId), () -> this.init_cV.selectedPlacementId = p.id());
       });
       if (placements.isEmpty()) {
-         this.init_V_SyncManager_4(ui, this.init_cV.write_Z() ? "Load a file to place its hologram" : "Join a world to place schematics", x, y + 8, width);
+         this.init_V_SyncManager_4(ui, this.init_cV.isInWorld() ? "Load a file to place its hologram" : "Join a world to place schematics", x, y + 8, width);
       }
 
       if (local) {
@@ -533,7 +533,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             autismclient.gui.f.NetHelper.init(x, listBottom + 3, airWidth, 14),
             "Paste air",
             this.sync_Z,
-            !this.init_cV.flush_Z(),
+            !this.init_cV.isBusy(),
             () -> this.sync_Z = !this.sync_Z
          );
          this.init_V_SyncManager_4(
@@ -541,33 +541,33 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             autismclient.gui.f.NetHelper.init(x + airWidth + 6, listBottom + 3, entityWidth, 14),
             "Entities",
             this.flush_Z,
-            !this.init_cV.flush_Z(),
+            !this.init_cV.isBusy(),
             () -> this.flush_Z = !this.flush_Z
          );
       }
 
-      if (!this.init_cV.flush_Z() || this.init_cV.read_Z(picked)) {
-         boolean available = this.init_cV.init_Z_cR_StreamUtil(picked);
+      if (!this.init_cV.isBusy() || this.init_cV.canModify(picked)) {
+         boolean available = this.init_cV.isLoaded(picked);
          boolean paused = picked != null && !picked.paste().isEmpty();
          ArrayList<SchematicLibraryOverlay.Inner_DataUtil> actions = new ArrayList<>();
          actions.add(
             new SchematicLibraryOverlay.Inner_DataUtil(
                picked != null && picked.visible() ? "Unload" : "Show",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-               this.init_cV.read_Z(picked) && !paused,
-               () -> this.init_cV.load_V_cR_StreamUtil(picked)
+               this.init_cV.canModify(picked) && !paused,
+               () -> this.init_cV.toggleShown(picked)
             )
          );
          actions.add(
             new SchematicLibraryOverlay.Inner_DataUtil(
-               "Move", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.init_cV.load_Z_cR_StreamUtil(picked), () -> this.init_cV.write(picked)
+               "Move", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.init_cV.canMove(picked), () -> this.init_cV.write(picked)
             )
          );
          actions.add(
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Build",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-               available && !paused && !this.init_cV.load_Z() && !this.init_cV.flush_Z(),
+               available && !paused && !this.init_cV.hasActiveBuild() && !this.init_cV.isBusy(),
                () -> this.init_cV.update(picked)
             )
          );
@@ -576,7 +576,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                new SchematicLibraryOverlay.Inner_DataUtil(
                   paused ? "Resume" : "Paste",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
-                  available && !this.init_cV.load_Z() && !this.init_cV.flush_Z(),
+                  available && !this.init_cV.hasActiveBuild() && !this.init_cV.isBusy(),
                   () -> this.init_cV.init(picked, this.sync_Z, this.flush_Z)
                )
             );
@@ -586,13 +586,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Rename",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-               picked != null && !this.init_cV.flush_Z(),
-               () -> this.init_cV.init_V_cR_StreamUtil(picked)
+               picked != null && !this.init_cV.isBusy(),
+               () -> this.init_cV.renamePlacement(picked)
             )
          );
          actions.add(
             new SchematicLibraryOverlay.Inner_DataUtil(
-               "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.init_cV.read_Z(picked), () -> this.init_cV.read_V(picked)
+               "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.init_cV.canModify(picked), () -> this.init_cV.removePlacement(picked)
             )
          );
          this.init_V_SyncManager_3(ui, x, bottom + 3, width, actions);
@@ -604,7 +604,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             width,
             List.of(
                new SchematicLibraryOverlay.Inner_DataUtil(
-                  this.init_cV.init_Z() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::close_V
+                  this.init_cV.isPasting() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::cancelOperation
                )
             )
          );
@@ -613,7 +613,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    private void load(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom, float delta) {
       this.init_V_SyncManager(ui, x, y, width, delta);
-      boolean busy = this.init_cV.flush_Z();
+      boolean busy = this.init_cV.isBusy();
       int step = 16;
       int rowY = y + step;
       this.init_V_SyncManager_3(
@@ -625,14 +625,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Select corners",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-               this.init_cV.write_Z() && !busy,
-               this.init_cV::sync_V
+               this.init_cV.isInWorld() && !busy,
+               this.init_cV::selectArea
             ),
             new SchematicLibraryOverlay.Inner_DataUtil(
                "Save area",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-               this.init_cV.read_Z() && this.init_cV.write_Z() && this.init_cV.init_cP_DataUtil != null && !busy,
-               () -> this.init_cV.init_V_Z_Z(false, this.flush_Z)
+               this.init_cV.isLibraryReady() && this.init_cV.isInWorld() && this.init_cV.selectedArea != null && !busy,
+               () -> this.init_cV.startCapture(false, this.flush_Z)
             )
          )
       );
@@ -649,7 +649,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   "Stop & save", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, true, this.init_cV::stopAndSaveRecording
                ),
                new SchematicLibraryOverlay.Inner_DataUtil(
-                  "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::close_V
+                  "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::cancelOperation
                )
             )
          );
@@ -661,7 +661,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             width,
             List.of(
                new SchematicLibraryOverlay.Inner_DataUtil(
-                  this.init_cV.init_Z() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::close_V
+                  this.init_cV.isPasting() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::cancelOperation
                )
             )
          );
@@ -675,14 +675,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                new SchematicLibraryOverlay.Inner_DataUtil(
                   "Record chunks",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
-                  this.init_cV.read_Z() && this.init_cV.write_Z(),
+                  this.init_cV.isLibraryReady() && this.init_cV.isInWorld(),
                   () -> this.init_cV.startRecording(this.flush_Z)
                ),
                new SchematicLibraryOverlay.Inner_DataUtil(
                   "Save loaded chunks",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
-                  this.init_cV.read_Z() && this.init_cV.write_Z(),
-                  () -> this.init_cV.init_V_Z_Z(true, this.flush_Z)
+                  this.init_cV.isLibraryReady() && this.init_cV.isInWorld(),
+                  () -> this.init_cV.startCapture(true, this.flush_Z)
                )
             )
          );
@@ -699,7 +699,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void load(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {
-      List<Path> folders = this.init_cV.init_cR.init_List;
+      List<Path> folders = this.init_cV.library.roots;
       this.init(
          ui,
          x,
@@ -709,7 +709,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          folders.size(),
          (index, row) -> {
             Path directory = folders.get(index);
-            boolean local = directory.equals(this.init_cV.init_cR.load_Path);
+            boolean local = directory.equals(this.init_cV.library.defaultRoot);
             this.init_V_SyncManager_3(
                ui,
                row,
@@ -728,14 +728,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          width,
          List.of(
             new SchematicLibraryOverlay.Inner_DataUtil(
-               "Add folder", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this.init_cV.read_Z(), this.init_cV::update_V
+               "Add folder", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this.init_cV.isLibraryReady(), this.init_cV::addFolder
             ),
             new SchematicLibraryOverlay.Inner_DataUtil(
-               "Open", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, selected, () -> this.init_cV.load_V_Path(this.init_Path)
+               "Open", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, selected, () -> this.init_cV.openPath(this.init_Path)
             ),
             new SchematicLibraryOverlay.Inner_DataUtil(
-               "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, selected && !this.init_Path.equals(this.init_cV.init_cR.load_Path), () -> {
-                  this.init_cV.init_V_Path(this.init_Path);
+               "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, selected && !this.init_Path.equals(this.init_cV.library.defaultRoot), () -> {
+                  this.init_cV.removeFolder(this.init_Path);
                   this.init_Path = null;
                }
             )

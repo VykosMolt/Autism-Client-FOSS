@@ -771,8 +771,8 @@ public final class AiBridger {
    }
 
    // 5.3 external ABI bridges
-   public AiBridger.Inner_CachePool init_JsonUtil_CachePool() { return this.putAt_TextStore_JsonCach(); }
-   public AiBridger.Inner_ConfigStore init_JsonUtil_ConfigSto() { return this.putAt_TextStore_BitCore(); }
+   public AiBridger.Inner_CachePool getLane() { return this.putAt_TextStore_JsonCach(); }
+   public AiBridger.Inner_ConfigStore getStyle() { return this.putAt_TextStore_BitCore(); }
    public void init_V_JsonUtil_ConfigSto(AiBridger.Inner_ConfigStore value) { this.putAt_V_TextStore_BitCore(value); }
    public int init_I_NodeWalker_CachePo(AiPhysics.PhysicsWorld world) { return this.putAt_I_TokenCore_TaskStat(world); }
    public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.MotionState s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.PhysicsWorld world) {

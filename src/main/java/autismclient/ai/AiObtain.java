@@ -427,7 +427,7 @@ final class AiObtain {
                }
 
                boolean init(BlockState state) {
-                  return autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
+                  return autismclient.ai.engine.MiningCost.bestToolSlot(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
                }
 
                AiOperation init_AiOperation(AiObtain.Inner_DataUtil strategy) {
@@ -985,7 +985,7 @@ final class AiObtain {
                   }
 
                   boolean trees = blocks.stream().anyMatch(id -> id.endsWith("_log"));
-                  return autismclient.ai.engine.AiBlockMine.init_AiOperation(
+                  return autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "blocks",
                         autismclient.ai.engine.AiBlockMine.init(blocks),

@@ -48,13 +48,13 @@ public final class aP {
       this.init_aR = placement;
       this.init_Runnable = done;
       this.init_Screen = Minecraft.getInstance().gui.screen();
-      this.init_BlockPos = placement.init_BlockPos();
-      this.init_I = placement.init_I();
-      this.init_Str = placement.read_Str();
+      this.init_BlockPos = placement.getOrigin();
+      this.init_I = placement.getRotation();
+      this.init_Str = placement.getMirror();
    }
 
    static void init_V_bW_Runnable(AiSchematicPlacement placement, Runnable done) {
-      if (placement.load_Z()) {
+      if (placement.isReadyToConfirm()) {
          init_V_aR_Runnable(placement, done);
       }
    }
@@ -75,7 +75,7 @@ public final class aP {
    private static void init_V_aR_Runnable(AiPlacementSession placement, Runnable done) {
       Minecraft mc = Minecraft.getInstance();
       AiService service = AiService.getExistingInstance();
-      if (placement.read_Z() && !AiDirectOps.load_Z() && (service == null || !service.isActivelyDriving())) {
+      if (placement.isActive() && !AiDirectOps.load_Z() && (service == null || !service.isActivelyDriving())) {
          if (!init_Z) {
             init_Z = true;
             ClientTickEvents.END_CLIENT_TICK.register(client -> load_V());
@@ -142,7 +142,7 @@ public final class aP {
    }
 
    public static autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
-      return init_aP != null && init_aP.init_aR instanceof AiNavigationSelection navigation ? navigation.init_j_StreamUtil() : null;
+      return init_aP != null && init_aP.init_aR instanceof AiNavigationSelection navigation ? navigation.getTarget() : null;
    }
 
    static AiNavigationSelection activeNavigationSelection() {
@@ -174,7 +174,7 @@ public final class aP {
    private static void load_V() {
       Minecraft mc = Minecraft.getInstance();
 
-      for (int key : init_aO.init_Set()) {
+      for (int key : init_aO.heldKeys()) {
          boolean down = mc.isWindowActive()
             && (
                key <= -1000
@@ -188,13 +188,13 @@ public final class aP {
 
       aP mode = init_aP;
       if (mode != null) {
-         if (mode.init_aR.read_Z() && mc.gui.screen() == null && mc.isWindowActive()) {
+         if (mode.init_aR.isActive() && mc.gui.screen() == null && mc.isWindowActive()) {
             if (load(mode.init_aR)) {
                AiVisualization.init(mode.init_aR, mode.load_Z);
             }
 
             if (mode.load_Z) {
-               mode.init_aR.init_V_Z(!mode.read);
+               mode.init_aR.moveToAim(!mode.read);
             }
          } else {
             mode.init_V_Z_Z(false, false);
@@ -241,13 +241,13 @@ public final class aP {
                   break;
                case 71:
                   mode.load_Z = false;
-                  mode.init_aR.load_V();
+                  mode.init_aR.snapToGround();
                   break;
                case 77:
-                  mode.init_aR.init_V();
+                  mode.init_aR.cycleMirror();
                   break;
                case 82:
-                  mode.init_aR.init_V_I(1);
+                  mode.init_aR.rotate(1);
                   break;
                case 256:
                   mode.init_V_Z_Z(false, true);
@@ -315,7 +315,7 @@ public final class aP {
             }
          } else if (mode.init_aR instanceof SchematicSelection selection) {
             if (button == 0 || button == 1) {
-               selection.load_V_Z(button == 0);
+               selection.pickCorner(button == 0);
             }
          } else if (button == 1) {
             mode.load_Z = !mode.load_Z;
@@ -332,7 +332,7 @@ public final class aP {
       } else if (mode.init_aR instanceof AiNavigationSelection) {
          return true;
       } else if (mode.init_aR instanceof SchematicSelection selection) {
-         selection.init_V_D(amount);
+         selection.adjustDistance(amount);
          return true;
       } else {
          if (!Double.isFinite(amount)) {
@@ -350,7 +350,7 @@ public final class aP {
             int steps = (int)mode.init_D;
             if (steps != 0) {
                mode.init_D -= steps;
-               mode.init_aR.init_V_I(steps);
+               mode.init_aR.rotate(steps);
             }
          }
 
@@ -364,7 +364,7 @@ public final class aP {
    }
 
    private void init_V_Z_Z(boolean use, boolean review) {
-      if (init_aP == this && (!use || !(this.init_aR instanceof AiFarmPlacement farm && !farm.write_Z())) && (!use || this.init_aR.load_Z())) {
+      if (init_aP == this && (!use || !(this.init_aR instanceof AiFarmPlacement farm && !farm.confirmCorner())) && (!use || this.init_aR.isReadyToConfirm())) {
          init_aP = null;
          init_aO.load_V();
          if (this.init_aP_StreamUtil != null) {
@@ -376,7 +376,7 @@ public final class aP {
             AiVisualization.init(this.init_aR, false);
          }
 
-         if (!use && this.init_aR.read_Z()) {
+         if (!use && this.init_aR.isActive()) {
             this.init_aR.init(this.init_BlockPos, this.init_I, this.init_Str);
          }
 
@@ -391,12 +391,12 @@ public final class aP {
             if (use) {
                this.init_Runnable.run();
             }
-         } else if (review && this.init_aR.read_Z()) {
+         } else if (review && this.init_aR.isActive()) {
             autismclient.util.OverlayScreenController.setScreenExplicit(mc, this.init_Screen);
             if (!init_Z_aR(this.init_aR)) {
                AiAssistant.init_ConfigStore().write_V();
             } else {
-               SchematicWorkspace.init_cV().init_SchematicLibraryOv();
+               SchematicWorkspace.getInstance().showOverlay();
             }
 
             if (use) {
@@ -409,7 +409,7 @@ public final class aP {
    private static aP.Inner_DataUtil init_aP_DataUtil() {
       aP mode = init_aP;
       if (mode.init_aR instanceof AiNavigationSelection selection) {
-         String message = selection.load_Z() ? "Destination " + selection.init_BlockPos().toShortString() : "Aim at a standing surface";
+         String message = selection.isReadyToConfirm() ? "Destination " + selection.getOrigin().toShortString() : "Aim at a standing surface";
          if (selection.isParkour()) {
             int count = selection.checkpoints().size();
             if (count > 0) {
@@ -421,10 +421,10 @@ public final class aP {
             return new aP.Inner_DataUtil(message, "Right-click: route  ·  Left-click: cancel");
          }
       } else if (mode.init_aR instanceof SchematicSelection selection) {
-         String label = selection.load_Z()
-            ? selection.init_cP_DataUtil().size() + "  |  Enter to use area"
-            : (selection.init_BlockPos == null ? "Pick corner A" : "Pick corner B");
-         return new aP.Inner_DataUtil(label, "Left: A  ·  Right: B  ·  Wheel: " + selection.init_Str_3() + "  ·  E: cancel");
+         String label = selection.isReadyToConfirm()
+            ? selection.getArea().size() + "  |  Enter to use area"
+            : (selection.cornerA == null ? "Pick corner A" : "Pick corner B");
+         return new aP.Inner_DataUtil(label, "Left: A  ·  Right: B  ·  Wheel: " + selection.distanceText() + "  ·  E: cancel");
       } else if (mode.init_aR instanceof AiFarmPlacement farm) {
          return new aP.Inner_DataUtil(
             farm.update(),
@@ -433,7 +433,7 @@ public final class aP {
                + " | Shift+wheel: distance | Arrows + Page Up/Down: move | G: ground"
          );
       } else {
-         String message = mode.init_aR.load_Z() ? "Move and look normally. E: confirm | Esc: cancel" : "Updating preview. Move and look normally. Esc: cancel";
+         String message = mode.init_aR.isReadyToConfirm() ? "Move and look normally. E: confirm | Esc: cancel" : "Updating preview. Move and look normally. Esc: cancel";
          String detail = "Wheel / R: rotate | Shift+wheel: distance | Right-click: "
             + (mode.load_Z ? "lock" : "follow aim")
             + " | Arrows + Page Up/Down: move | M: mirror | G: ground"
@@ -493,7 +493,7 @@ public final class aP {
          keyboard.autism$invokeKeyPress(window, 1, Compat263.newGlfwKeyEvent(69, 0, 0));
          keyboard.autism$invokeKeyPress(window, 0, Compat263.newGlfwKeyEvent(69, 0, 0));
          mode.load_I++;
-         return AiJson.objectOf("confirmation", mode.load_I, "active", init_Z(), "report", farm.load_JsonObject());
+         return AiJson.objectOf("confirmation", mode.load_I, "active", init_Z(), "report", farm.statusJson());
       } else {
          Minecraft mc = Minecraft.getInstance();
          if (mode.init_JsonObject != null) {
@@ -503,7 +503,7 @@ public final class aP {
                mode.write = true;
             }
 
-            if (!mode.init_aR.load_Z()) {
+            if (!mode.init_aR.isReadyToConfirm()) {
                return AiJson.objectOf("pending", true);
             }
 
@@ -537,15 +537,15 @@ public final class aP {
                mc.hitResult = previousHit;
             }
 
-            BlockPos origin = mode.init_aR.init_BlockPos();
+            BlockPos origin = mode.init_aR.getOrigin();
             mode.init(1, 0, 0);
-            boolean moved = !origin.equals(mode.init_aR.init_BlockPos());
-            int rotation = mode.init_aR.init_I();
-            mode.init_aR.init_V_I(-1);
-            boolean rotated = mode.init_aR.init_I() == AiPlacementControls.init_I_I_I(rotation, -1);
-            origin = mode.init_aR.init_BlockPos();
+            boolean moved = !origin.equals(mode.init_aR.getOrigin());
+            int rotation = mode.init_aR.getRotation();
+            mode.init_aR.rotate(-1);
+            boolean rotated = mode.init_aR.getRotation() == AiPlacementControls.rotateBy(rotation, -1);
+            origin = mode.init_aR.getOrigin();
             mode.init_aR.init(8.0, 0.5, 0.5, 1.0, 1.0);
-            boolean depth = !origin.equals(mode.init_aR.init_BlockPos());
+            boolean depth = !origin.equals(mode.init_aR.getOrigin());
             float yaw = mc.player.getYRot();
             float pitch = mc.player.getXRot();
             mc.player.turn(12.0, -3.0);
@@ -569,7 +569,7 @@ public final class aP {
                "keybindsBlocked",
                !autismclient.util.at.init(),
                "unlimitedMath",
-               AiPlacementControls.init_D_D_D(128.0, 1.0) == 129.0
+               AiPlacementControls.adjustDistance(128.0, 1.0) == 129.0
             );
             return AiJson.objectOf("pending", true);
          }

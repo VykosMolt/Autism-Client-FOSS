@@ -12,11 +12,11 @@ final class NavigationOpenSet {
       this.init_D = weight;
    }
 
-   int init_I() {
+   int size() {
       return this.init_I;
    }
 
-   boolean init_Z() {
+   boolean isEmpty() {
       return this.init_I == 0;
    }
 
@@ -24,18 +24,18 @@ final class NavigationOpenSet {
       return cost + this.init_D * heuristic;
    }
 
-   double init_D() {
-      return this.init_Z() ? 1.0 / 0.0 : this.init(this.init_t_DataUtilArr[0].load_D, this.init_t_DataUtilArr[0].init_D);
+   double peekPriority() {
+      return this.isEmpty() ? 1.0 / 0.0 : this.init(this.init_t_DataUtilArr[0].cost, this.init_t_DataUtilArr[0].heuristic);
    }
 
    private boolean init(NavigationOpenSet.Inner_DataUtil a, NavigationOpenSet.Inner_DataUtil b) {
-      int order = Double.compare(this.init(a.load_D, a.init_D), this.init(b.load_D, b.init_D));
+      int order = Double.compare(this.init(a.cost, a.heuristic), this.init(b.cost, b.heuristic));
       if (order == 0) {
-         order = Double.compare(a.init_D, b.init_D);
+         order = Double.compare(a.heuristic, b.heuristic);
       }
 
       if (order == 0) {
-         order = Long.compare(a.init_BlockPos.asLong(), b.init_BlockPos.asLong());
+         order = Long.compare(a.pos.asLong(), b.pos.asLong());
       }
 
       if (order == 0) {
@@ -70,7 +70,7 @@ final class NavigationOpenSet {
       node.init_I = i;
    }
 
-   NavigationOpenSet.Inner_DataUtil init_t_DataUtil() {
+   NavigationOpenSet.Inner_DataUtil poll() {
       NavigationOpenSet.Inner_DataUtil result = this.init_t_DataUtilArr[0];
       NavigationOpenSet.Inner_DataUtil tail = this.init_t_DataUtilArr[--this.init_I];
       this.init_t_DataUtilArr[this.init_I] = null;
@@ -102,19 +102,19 @@ final class NavigationOpenSet {
    }
 
    static final class Inner_DataUtil {
-      final BlockPos init_BlockPos;
-      final double init_D;
-      double load_D = 1.0 / 0.0;
-      NavigationOpenSet.Inner_DataUtil init_t_DataUtil;
-      AiPathfinder.UiHelper init_ClassCache_UiHelpe;
+      final BlockPos pos;
+      final double heuristic;
+      double cost = 1.0 / 0.0;
+      NavigationOpenSet.Inner_DataUtil parent;
+      AiPathfinder.UiHelper move;
       int init_I = -1;
       int load_I;
-      NavigationOpenSet.Inner_DataUtil load_t_DataUtil;
-      boolean init_Z;
+      NavigationOpenSet.Inner_DataUtil nextInCell;
+      boolean closed;
 
       Inner_DataUtil(BlockPos cell, double heuristic) {
-         this.init_BlockPos = cell;
-         this.init_D = heuristic;
+         this.pos = cell;
+         this.heuristic = heuristic;
       }
    }
 }

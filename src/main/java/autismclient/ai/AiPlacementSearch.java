@@ -74,7 +74,7 @@ final class AiPlacementSearch {
          AiPlacementSearch.Inner_DataUtil candidate = this.init_List.get(this.init_I);
          AiBuilder.CellSpec cell = this.load_Map.get(init(this.load_I, this.read, this.write));
          BlockPos pos = candidate.origin().offset(this.load_I, this.read, this.write);
-         AiPlacementSearch.Inner_StreamUtil edit = this.init_aQ_ConfigStore.init_aQ_StreamUtil(pos, cell);
+         AiPlacementSearch.Inner_StreamUtil edit = this.init_aQ_ConfigStore.classify(pos, cell);
          this.init_J++;
          if (edit == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
             this.init_V();
@@ -129,15 +129,15 @@ final class AiPlacementSearch {
       return (x & 65535L) << 32 | (y & 65535L) << 16 | z & 65535L;
    }
 
-   AiPlacementSearch.Inner_CachePool init_aQ_CachePool() {
+   AiPlacementSearch.Inner_CachePool getResult() {
       return this.init_aQ_CachePool;
    }
 
-   boolean init_Z() {
+   boolean isDone() {
       return this.load_Z;
    }
 
-   int init_I() {
+   int comparedCount() {
       return Math.min(this.init_I, this.init_List.size());
    }
 
@@ -164,7 +164,7 @@ final class AiPlacementSearch {
    }
 
    interface Inner_ConfigStore {
-      AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos var1, AiBuilder.CellSpec var2);
+      AiPlacementSearch.Inner_StreamUtil classify(BlockPos var1, AiBuilder.CellSpec var2);
 
       boolean init_Z(BlockPos var1, AiBuilder.CellSpec var2);
    }

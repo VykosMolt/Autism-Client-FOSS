@@ -119,7 +119,7 @@ final class AiCover {
                for (Entity shooter : shooters) {
                   double d = shooter.distanceTo(mc.player);
                   if (!(d > 16.5)
-                     && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, shooter.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
+                     && autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, shooter.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
                      this.load_Set.add(shooter.getId());
                      if (shooter instanceof Creeper) {
                         creeperSees = true;
@@ -181,7 +181,7 @@ final class AiCover {
                      && this.init_Z_2(shooters)
                      && (
                         this.load_Vec3.distanceTo(eye) < 6.0
-                           || autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, this.load_Vec3, eye, -9223372036854775808L, -9223372036854775808L)
+                           || autismclient.ai.engine.AiSight.hasLineOfSight(mc.level, this.load_Vec3, eye, -9223372036854775808L, -9223372036854775808L)
                      );
                   if (seer != null || !sealOnly && baitExposed) {
                      this.load_I = 0;
@@ -362,7 +362,7 @@ final class AiCover {
                      if (this.init_HashUtil_CachePool != null) {
                         BlockPos feet = mc.player.blockPosition();
                         if (!mc.player.onGround()
-                           || autismclient.ai.engine.AiSight.init_Z_BlockGetter(mc.level, this.init_List_2(shooters), feet.getX(), feet.getY(), feet.getZ())) {
+                           || autismclient.ai.engine.AiSight.isVisibleFrom(mc.level, this.init_List_2(shooters), feet.getX(), feet.getY(), feet.getZ())) {
                            AiOperation.Result r = this.init_HashUtil_CachePool.tick();
                            if (r.terminal()) {
                               this.write();

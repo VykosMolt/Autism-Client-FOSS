@@ -75,10 +75,10 @@ final class AiPrintPreparation implements AiOperation {
 
    AiPrintPreparation(JsonObject args, AiBuilder.BuildOptions power) {
       if (!args.has("blocks") && !args.has("blueprint")) {
-         AiPrintSupply.init_V_TableIndex_ConfigS(power);
+         AiPrintSupply.validateOptions(power);
          this.init_TableIndex_ConfigS = power;
          this.load_BlockPos = AiBuilder.auditOrigin(args, this.init_BlockPos);
-         this.init_Path = AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
+         this.init_Path = AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
          this.init_Z = AiJson.getBoolean(args, "skipUnknown", false);
          this.load_Z = AiJson.getBoolean(args, "verify", true);
          int seconds = args.has("timeoutSeconds") ? AiJson.getInt(args, "timeoutSeconds", 0) : 0;
@@ -91,7 +91,7 @@ final class AiPrintPreparation implements AiOperation {
 
    private AiPrintPreparation.Inner_DataUtil init_bg_DataUtil() throws IOException {
       AiPrintPreparation.Inner_StateCache stamp = AiPrintPreparation.Inner_StateCache.read(this.init_Path);
-      AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(
+      AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(
          this.init_Path, this.load_BlockPos, this.init_TableIndex_ConfigS.rotation(), this.init_TableIndex_ConfigS.mirror(), this.init_Z, 2097152
       );
       AiBuilder.checkNotCancelled();
@@ -109,7 +109,7 @@ final class AiPrintPreparation implements AiOperation {
       } else {
          return new AiPrintPreparation.Inner_DataUtil(
             blueprint,
-            this.init_TableIndex_ConfigS.withSignText(loaded.signText()).withMachine(AiSchematicMachinePlan.init_bV_bP_BufferHelper_TableIndex_DataUti(loaded, blueprint)),
+            this.init_TableIndex_ConfigS.withSignText(loaded.signText()).withMachine(AiSchematicMachinePlan.fromSchematic(loaded, blueprint)),
             List.copyOf(neighbors),
             stamp
          );
@@ -120,11 +120,11 @@ final class AiPrintPreparation implements AiOperation {
       AiBuilder.Blueprint blueprint = AiBuilder.normalizeSchematicBlueprint(input.blueprint(), snapshot);
       init_V_TableIndex_DataUti(blueprint);
       AiBuilder.checkNotCancelled();
-      AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.init_bX_DataUtil(blueprint, 16, snapshot);
+      AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.assessBuildable(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
       AiBuilder.checkNotCancelled();
       List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
-      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::checkNotCancelled);
+      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled);
       AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
       AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
@@ -141,7 +141,7 @@ final class AiPrintPreparation implements AiOperation {
          buildable.skipped(),
          targets,
          source,
-         power.machine().init_bV_StreamUtil_BlockPos_HolderLookup_Provi(blueprint.origin(), this.init_HolderLookup_Provi),
+         power.machine().machineSpec(blueprint.origin(), this.init_HolderLookup_Provi),
          geometry
       );
    }
@@ -295,7 +295,7 @@ final class AiPrintPreparation implements AiOperation {
                         int beforeWrite = this.init_bg_CachePool.init_I;
                         this.init_bg_CachePool.init(4096, System.nanoTime() + 2000000L, this.init_Minecraft.level);
                         this.write_J = this.write_J + (this.init_bg_CachePool.init_I - beforeWrite);
-                        if (this.init_bg_CachePool.init_Z()) {
+                        if (this.init_bg_CachePool.isDone()) {
                            this.init_JsonObject = this.init_JsonObject_43();
                            this.read_Z = true;
                            if (this.init_JsonObject.isEmpty()) {
@@ -322,9 +322,9 @@ final class AiPrintPreparation implements AiOperation {
                         this.init_bg_NetHelper
                            .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
                         this.write_J = this.write_J + (this.init_bg_NetHelper.init_J - beforeUpdate);
-                        if (this.init_bg_NetHelper.init_Z) {
+                        if (this.init_bg_NetHelper.done) {
                            this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
-                        } else if (this.init_bg_NetHelper.init_Z()) {
+                        } else if (this.init_bg_NetHelper.isDone()) {
                            this.init_JsonObject = this.init_JsonObject_43();
                            if (!this.init_JsonObject.isEmpty()) {
                               return this.load();
@@ -338,7 +338,7 @@ final class AiPrintPreparation implements AiOperation {
                      if (!this.init_Z_22() && !this.read_Z) {
                         this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.MATERIALS;
                      } else {
-                        if (this.init_Z_22() || this.init_bg_NetHelper != null && this.init_bg_NetHelper.init_Z) {
+                        if (this.init_Z_22() || this.init_bg_NetHelper != null && this.init_bg_NetHelper.done) {
                            break label216;
                         }
 
@@ -394,7 +394,7 @@ final class AiPrintPreparation implements AiOperation {
                   this.load_Z,
                   seconds,
                   this.init_bg_ConfigStore.targets(),
-                  this.init_bg_NetHelper == null ? null : this.init_bg_NetHelper.init_BlockPos,
+                  this.init_bg_NetHelper == null ? null : this.init_bg_NetHelper.stockPos,
                   this.init_bg_ConfigStore.nativeActions(),
                   this.init_bg_ConfigStore.geometry()
                );
@@ -407,8 +407,8 @@ final class AiPrintPreparation implements AiOperation {
                   this.init_bg_ConfigStore.nativeActions(),
                   this.init_bg_ConfigStore.geometry()
                );
-               if (this.init_bg_NetHelper != null && this.init_bg_NetHelper.init_BlockPos != null) {
-                  operation.init_V_BlockPos_2(this.init_bg_NetHelper.init_BlockPos);
+               if (this.init_bg_NetHelper != null && this.init_bg_NetHelper.stockPos != null) {
+                  operation.notifyBlockChanged(this.init_bg_NetHelper.stockPos);
                }
 
                this.init_AiOperation = operation;
@@ -448,7 +448,7 @@ final class AiPrintPreparation implements AiOperation {
 
    private JsonObject init_JsonObject_43() {
       return AiBuilder.missingMaterialsForContainer(
-         this.init_bg_CachePool.init_List(), this.init_Minecraft.player.getInventory(), this.init_bg_ConfigStore.power().shulkerStock()
+         this.init_bg_CachePool.requirements(), this.init_Minecraft.player.getInventory(), this.init_bg_ConfigStore.power().shulkerStock()
       );
    }
 
@@ -568,7 +568,7 @@ final class AiPrintPreparation implements AiOperation {
                      this.init(requirement);
                   }
 
-                  BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, at, world, this.init_Set);
+                  BlockPos foundation = AiSchematicActions.foundationFor(cell, at, world, this.init_Set);
                   if (foundation != null && this.load.add(foundation)) {
                      this.init(
                         new AiCellMaterials.Inner_CachePool(AiCellMaterials.Inner_DataUtil.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME)
@@ -595,11 +595,11 @@ final class AiPrintPreparation implements AiOperation {
          }
       }
 
-      boolean init_Z() {
+      boolean isDone() {
          return this.init_I == this.init_TableIndex_DataUti.cells().size();
       }
 
-      List<AiCellMaterials.Inner_CachePool> init_List() {
+      List<AiCellMaterials.Inner_CachePool> requirements() {
          return List.copyOf(this.init_Map.values());
       }
 
@@ -653,8 +653,8 @@ final class AiPrintPreparation implements AiOperation {
       int read;
       int write;
       long init_J;
-      boolean init_Z;
-      BlockPos init_BlockPos;
+      boolean done;
+      BlockPos stockPos;
 
       Inner_NetHelper(BlockPos player, BlockPos origin, AiPrintPreparation.Inner_JsonUtil index) {
          this.init_Set = index.keys();
@@ -674,8 +674,8 @@ final class AiPrintPreparation implements AiOperation {
             player, index.minX(), index.maxX(), index.minZ(), index.maxZ(), this.init_Set
          );
          if (anyHeightStock != null) {
-            this.init_Z = true;
-            this.init_BlockPos = anyHeightStock;
+            this.done = true;
+            this.stockPos = anyHeightStock;
          }
       }
 
@@ -693,7 +693,7 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       void init(int limit, long deadline, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
-         for (int inSlice = 0; inSlice < Math.max(1, limit) && !this.init_Z() && (inSlice == 0 || System.nanoTime() < deadline); inSlice++) {
+         for (int inSlice = 0; inSlice < Math.max(1, limit) && !this.isDone() && (inSlice == 0 || System.nanoTime() < deadline); inSlice++) {
             this.init_J++;
             BlockPos at = new BlockPos(this.load, this.read, this.write);
             BlockPos max = this.init_List.get(this.init_I).max();
@@ -709,8 +709,8 @@ final class AiPrintPreparation implements AiOperation {
             }
 
             if (!this.init_Set.contains(at.asLong()) && loaded.test(at) && state.apply(at).getBlock() instanceof ShulkerBoxBlock) {
-               this.init_Z = true;
-               this.init_BlockPos = at;
+               this.done = true;
+               this.stockPos = at;
             }
          }
       }
@@ -727,8 +727,8 @@ final class AiPrintPreparation implements AiOperation {
          return total;
       }
 
-      boolean init_Z() {
-         return this.init_Z || this.init_I >= this.init_List.size();
+      boolean isDone() {
+         return this.done || this.init_I >= this.init_List.size();
       }
 
       private record Inner_DataUtil(BlockPos min, BlockPos max) {

@@ -128,7 +128,7 @@ public final class AiSeek {
                return this.init(AiOperation.Status.TIMED_OUT, this.init_Str_10() + " deadline reached");
             }
 
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
+            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
                return this.init(
                   AiOperation.Status.FAILED,
                   AiFailure.LOW_HEALTH,

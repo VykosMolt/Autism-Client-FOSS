@@ -58,7 +58,7 @@ final class AiCellMaterials {
                   }
 
                   return List.copyOf(out);
-               } else if (AiSchematicActions.load_Z(cell)) {
+               } else if (AiSchematicActions.isFilledComposter(cell)) {
                   boolean present = live != null && live.is(Blocks.COMPOSTER);
                   int wanted = Integer.parseInt(cell.properties().get("level"));
                   int current = present ? live.getValue(ComposterBlock.LEVEL) : 0;
@@ -104,7 +104,7 @@ final class AiCellMaterials {
                      boolean replacing = false;
                      if (block instanceof MultifaceBlock) {
                         BlockState wanted = AiBuilder.toBlockState(cell);
-                        boolean partial = same && autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(wanted, live);
+                        boolean partial = same && autismclient.ai.print.PrintRules.facesWithinSavedShape(wanted, live);
                         int remaining = 0;
 
                         for (Direction side : Direction.values()) {
@@ -196,7 +196,7 @@ final class AiCellMaterials {
             BlockState live = world.getBlockState(target);
             if (!AiBuilder.matchesSchematicCell(cell, live)) {
                out.addAll(init(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
-               BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, target, world, sourceCells);
+               BlockPos foundation = AiSchematicActions.foundationFor(cell, target, world, sourceCells);
                if (foundation != null && foundations.add(foundation)) {
                   init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                }
@@ -207,7 +207,7 @@ final class AiCellMaterials {
       return List.copyOf(out);
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init_List(Iterable<AiCellMaterials.Inner_CachePool> requirements) {
+   static List<AiCellMaterials.Inner_CachePool> combine(Iterable<AiCellMaterials.Inner_CachePool> requirements) {
       LinkedHashMap<AiCellMaterials.Inner_StreamUtil, AiCellMaterials.Inner_CachePool> combined = new LinkedHashMap<>();
 
       for (AiCellMaterials.Inner_CachePool requirement : requirements) {
@@ -226,10 +226,10 @@ final class AiCellMaterials {
       return List.copyOf(combined.values());
    }
 
-   static Map<Item, Integer> init_Map(Iterable<AiCellMaterials.Inner_CachePool> requirements) {
+   static Map<Item, Integer> itemCounts(Iterable<AiCellMaterials.Inner_CachePool> requirements) {
       LinkedHashMap<Item, Integer> out = new LinkedHashMap<>();
 
-      for (AiCellMaterials.Inner_CachePool requirement : init_List(requirements)) {
+      for (AiCellMaterials.Inner_CachePool requirement : combine(requirements)) {
          out.merge(requirement.item(), requirement.count(), Integer::sum);
       }
 
@@ -251,10 +251,10 @@ final class AiCellMaterials {
          init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.BUCKET, 1, AiCellMaterials.Inner_BufferHelper.REUSE);
       }
 
-      boolean partialFill = AiSchematicActions.init_Z(cell, live);
+      boolean partialFill = AiSchematicActions.isPartialFill(cell, live);
       boolean fill = !present || live.is(Blocks.CAULDRON) || wrongContents || partialFill;
       if (fill) {
-         init(out, AiCellMaterials.Inner_DataUtil.FILL, AiSchematicActions.init_Item(cell), 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
+         init(out, AiCellMaterials.Inner_DataUtil.FILL, AiSchematicActions.cauldronFillItem(cell), 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
       }
 
       if (!water) {

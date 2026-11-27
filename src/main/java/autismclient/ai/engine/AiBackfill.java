@@ -37,15 +37,15 @@ public final class AiBackfill {
       this.init_Minecraft = mc;
    }
 
-   public int init_I() {
+   public int getBackfilledCount() {
       return this.sync;
    }
 
-   boolean init_Z() {
+   boolean isBackfilling() {
       return this.init_BlockPos != null;
    }
 
-   boolean load_Z() {
+   boolean isIdle() {
       return this.init_BlockPos == null && this.init_Deque.isEmpty();
    }
 
@@ -53,7 +53,7 @@ public final class AiBackfill {
       return this.init_Deque.size();
    }
 
-   public void init_V(BlockPos cell) {
+   public void recordDugCell(BlockPos cell) {
       BlockPos immutable = cell.immutable();
       if (this.init_Set.add(immutable.asLong())) {
          this.init_Deque.addLast(immutable);
@@ -72,7 +72,7 @@ public final class AiBackfill {
       return toCell.normalize().dot(lookVec.normalize());
    }
 
-   public void init_V() {
+   public void tick() {
       if (this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
          if (this.init_BlockPos != null) {
             this.read_V();
@@ -184,7 +184,7 @@ public final class AiBackfill {
       }
    }
 
-   public void load_V() {
+   public void reset() {
       this.init_Deque.clear();
       this.init_Set.clear();
       if (this.init_BlockPos != null) {

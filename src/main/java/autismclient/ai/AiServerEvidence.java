@@ -98,7 +98,7 @@ public final class AiServerEvidence {
    }
 
    private static void notifyChunkObservers(int x, int z) {
-      long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
+      long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
 
       for (LongConsumer observer : List.copyOf(chunkObservers)) {
          observer.accept(key);
@@ -217,7 +217,7 @@ public final class AiServerEvidence {
 
    public static void recordChunkUpdate(int x, int z) {
       evictChunkBlockStates(x, z);
-      chunkRevisions.put(autismclient.ai.engine.AiGridRevisions.init_J(x, z), ++blockRevisionCounter);
+      chunkRevisions.put(autismclient.ai.engine.AiGridRevisions.chunkKey(x, z), ++blockRevisionCounter);
 
       while (chunkRevisions.size() > 512) {
          chunkRevisions.remove(chunkRevisions.keySet().iterator().next());
@@ -227,7 +227,7 @@ public final class AiServerEvidence {
    }
 
    public static long blockRevision(BlockPos pos) {
-      return Math.max(blockRevisions.getOrDefault(pos.asLong(), 0L), chunkRevisions.getOrDefault(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4), 0L));
+      return Math.max(blockRevisions.getOrDefault(pos.asLong(), 0L), chunkRevisions.getOrDefault(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4), 0L));
    }
 
    public static long inventoryRevision() {

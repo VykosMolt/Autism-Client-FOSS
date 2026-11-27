@@ -40,17 +40,17 @@ import java.util.stream.Stream;
 
 final class SchematicLibrary {
    private static volatile SchematicLibrary init_cR;
-   static final ExecutorService init_ExecutorService = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(32), r -> {
+   static final ExecutorService EXECUTOR = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(32), r -> {
       Thread t = new Thread(r, "Schematic files");
       t.setDaemon(true);
       return t;
    }, new AbortPolicy());
    final Path init_Path;
-   final Path load_Path;
+   final Path defaultRoot;
    final Path read;
-   volatile List<Path> init_List = List.of();
-   volatile List<SchematicLibrary.Inner_DataUtil> load_List = List.of();
-   volatile String init_Str = "";
+   volatile List<Path> roots = List.of();
+   volatile List<SchematicLibrary.Inner_DataUtil> entries = List.of();
+   volatile String status = "";
    volatile int init_I;
    private Future<?> init_Future;
    private long init_J;
@@ -59,16 +59,16 @@ final class SchematicLibrary {
 
    SchematicLibrary(Path game) {
       this.init_Path = game;
-      this.load_Path = game.resolve("autismclient/schematics").toAbsolutePath().normalize();
+      this.defaultRoot = game.resolve("autismclient/schematics").toAbsolutePath().normalize();
       this.read = game.resolve("config/autism/schematic-library.json");
-      this.init_List = List.of(this.load_Path);
+      this.roots = List.of(this.defaultRoot);
       init_cR = this;
    }
 
-   static Path init_Path_Str(String token) {
+   static Path resolveToken(String token) {
       if (init_cR != null && token.matches("sc_[0-9a-f]{24}")) {
-         for (SchematicLibrary.Inner_DataUtil entry : init_cR.load_List) {
-            if (token.equals("sc_" + entry.id) && init_cR.init_Z_Path(entry.file)) {
+         for (SchematicLibrary.Inner_DataUtil entry : init_cR.entries) {
+            if (token.equals("sc_" + entry.id) && init_cR.isInRoots(entry.file)) {
                return entry.file;
             }
          }
@@ -80,9 +80,9 @@ final class SchematicLibrary {
    }
 
    SchematicLibrary.Inner_CachePool init() throws IOException {
-      Files.createDirectories(this.load_Path);
+      Files.createDirectories(this.defaultRoot);
       LinkedHashSet<String> roots = new LinkedHashSet<>();
-      roots.add(this.load_Path.toString());
+      roots.add(this.defaultRoot.toString());
       ArrayList<SchematicLibrary.Inner_StreamUtil> placed = new ArrayList<>();
       Path legacy = this.init_Path.resolve("schematics").toAbsolutePath().normalize();
       if (!Files.exists(this.read) && Files.isDirectory(legacy)) {
@@ -110,26 +110,26 @@ final class SchematicLibrary {
 
                try {
                   JsonObject v = value.getAsJsonObject();
-                  String mirror = init_Str_JsonObject(v, "mirror", "none");
+                  String mirror = getString(v, "mirror", "none");
                   if (!Set.of("none", "x", "z").contains(mirror)) {
                      mirror = "none";
                   }
 
                   placed.add(
                      new SchematicLibrary.Inner_StreamUtil(
-                        init_Str_JsonObject(v, "id", UUID.randomUUID().toString()),
-                        init_Str_JsonObject(v, "scope", ""),
-                        init_Str_JsonObject(v, "dimension", ""),
-                        init_Str_JsonObject(v, "file", ""),
-                        init_J_JsonObject(v, "bytes", 0L),
-                        init_J_JsonObject(v, "modified", 0L),
-                        (int)init_J_JsonObject(v, "x", 0L),
-                        (int)init_J_JsonObject(v, "y", 0L),
-                        (int)init_J_JsonObject(v, "z", 0L),
-                        Math.floorMod((int)init_J_JsonObject(v, "rotation", 0L), 360) / 90 * 90,
+                        getString(v, "id", UUID.randomUUID().toString()),
+                        getString(v, "scope", ""),
+                        getString(v, "dimension", ""),
+                        getString(v, "file", ""),
+                        getLong(v, "bytes", 0L),
+                        getLong(v, "modified", 0L),
+                        (int)getLong(v, "x", 0L),
+                        (int)getLong(v, "y", 0L),
+                        (int)getLong(v, "z", 0L),
+                        Math.floorMod((int)getLong(v, "rotation", 0L), 360) / 90 * 90,
                         mirror,
                         !v.has("visible") || v.get("visible").getAsBoolean(),
-                        init_Str_JsonObject(v, "name", ""),
+                        getString(v, "name", ""),
                         v.has("paste") && v.get("paste").isJsonObject() ? v.getAsJsonObject("paste").deepCopy() : new JsonObject()
                      )
                   );
@@ -142,11 +142,11 @@ final class SchematicLibrary {
       return new SchematicLibrary.Inner_CachePool(List.copyOf(roots), List.copyOf(placed));
    }
 
-   void init_V_cR_CachePool(SchematicLibrary.Inner_CachePool state) {
-      this.init_List = state.folders.stream().map(x$0 -> Path.of(x$0)).toList();
+   void applyState(SchematicLibrary.Inner_CachePool state) {
+      this.roots = state.folders.stream().map(x$0 -> Path.of(x$0)).toList();
    }
 
-   void load_V_cR_CachePool(SchematicLibrary.Inner_CachePool state) throws IOException {
+   void saveState(SchematicLibrary.Inner_CachePool state) throws IOException {
       JsonObject root = new JsonObject();
       root.addProperty("version", 1);
       JsonArray folders = new JsonArray();
@@ -191,17 +191,17 @@ final class SchematicLibrary {
       }
    }
 
-   synchronized void init_V_Consumer(Consumer<Runnable> client) {
+   synchronized void rescan(Consumer<Runnable> client) {
       long token = ++this.init_J;
       if (this.init_Future != null) {
          this.init_Future.cancel(true);
       }
 
-      List<Path> roots = List.copyOf(this.init_List);
-      this.init_Str = "Finding files";
+      List<Path> roots = List.copyOf(this.roots);
+      this.status = "Finding files";
       this.init_I = 0;
       Map<String, SchematicLibrary.Inner_DataUtil> cached = new HashMap<>(this.init_Map);
-      this.init_Future = init_ExecutorService.submit(
+      this.init_Future = EXECUTOR.submit(
          () -> {
             LinkedHashMap<Path, SchematicLibrary.Inner_DataUtil> found = new LinkedHashMap<>();
 
@@ -222,7 +222,7 @@ final class SchematicLibrary {
                               if (real.startsWith(base)) {
                                  BasicFileAttributes a = Files.readAttributes(real, BasicFileAttributes.class);
                                  SchematicLibrary.Inner_DataUtil entry = new SchematicLibrary.Inner_DataUtil(
-                                    init_Str_Path(real),
+                                    idOf(real),
                                     real,
                                     folder.getFileName() == null ? folder.toString() : folder.getFileName().toString(),
                                     file.getFileName().toString(),
@@ -257,8 +257,8 @@ final class SchematicLibrary {
                   SchematicLibrary.Inner_DataUtil entry = rows.get(i);
                   if (entry.blocks < 0L && entry.error.isEmpty()) {
                      try {
-                        SchematicDocument d = SchematicDocument.init_cQ_Path(entry.file);
-                        long count = d.init_J_IntConsumer(p -> {});
+                        SchematicDocument d = SchematicDocument.loadFile(entry.file);
+                        long count = d.countBlocks(p -> {});
                         BasicFileAttributes after = Files.readAttributes(entry.file, BasicFileAttributes.class);
                         if (after.size() != entry.bytes || after.lastModifiedTime().toMillis() != entry.modified) {
                            throw new IOException("File changed; refresh the library");
@@ -268,7 +268,7 @@ final class SchematicLibrary {
                      } catch (CancellationException e) {
                         throw e;
                      } catch (Exception e) {
-                        entry = entry.metadata(-1L, init_Str_Throwable(e));
+                        entry = entry.metadata(-1L, describeError(e));
                      }
                   }
 
@@ -281,7 +281,7 @@ final class SchematicLibrary {
                this.init(client, token, rows, "", 100);
             } catch (CancellationException var21) {
             } catch (Exception failure) {
-               this.init(client, token, List.copyOf(found.values()), init_Str_Throwable(failure), 0);
+               this.init(client, token, List.copyOf(found.values()), describeError(failure), 0);
             }
          }
       );
@@ -292,7 +292,7 @@ final class SchematicLibrary {
       client.accept(() -> {
          synchronized (this) {
             if (token == this.init_J) {
-               this.load_List = snapshot;
+               this.entries = snapshot;
                if (status.isEmpty()) {
                   this.init_Map.clear();
 
@@ -301,17 +301,17 @@ final class SchematicLibrary {
                   }
                }
 
-               this.init_Str = status;
+               this.status = status;
                this.init_I = percent;
             }
          }
       });
    }
 
-   boolean init_Z_Path(Path file) {
+   boolean isInRoots(Path file) {
       Path p = file.toAbsolutePath().normalize();
 
-      for (Path root : this.init_List) {
+      for (Path root : this.roots) {
          if (p.startsWith(root.toAbsolutePath().normalize())) {
             return true;
          }
@@ -320,9 +320,9 @@ final class SchematicLibrary {
       return false;
    }
 
-   SchematicLibrary.Inner_DataUtil init_cR_DataUtil_cR_DataUtil_Str(SchematicLibrary.Inner_DataUtil entry, String name) throws IOException {
+   SchematicLibrary.Inner_DataUtil rename(SchematicLibrary.Inner_DataUtil entry, String name) throws IOException {
       Path source = entry.file();
-      if (this.init_Z_Path(source) && source.toRealPath().equals(source)) {
+      if (this.isInRoots(source) && source.toRealPath().equals(source)) {
          BasicFileAttributes attributes = Files.readAttributes(source, BasicFileAttributes.class);
          if (attributes.isRegularFile() && attributes.size() == entry.bytes() && attributes.lastModifiedTime().toMillis() == entry.modified()) {
             String sourceName = source.getFileName().toString();
@@ -363,7 +363,7 @@ final class SchematicLibrary {
                }
 
                return new SchematicLibrary.Inner_DataUtil(
-                  init_Str_Path(target),
+                  idOf(target),
                   target,
                   entry.folder(),
                   target.getFileName().toString(),
@@ -384,11 +384,11 @@ final class SchematicLibrary {
       }
    }
 
-   synchronized void init_V_cR_DataUtil(SchematicLibrary.Inner_DataUtil old, SchematicLibrary.Inner_DataUtil updated, Consumer<Runnable> client) {
-      this.load_List = this.load_List.stream().map(row -> row.id().equals(old.id()) ? updated : row).toList();
+   synchronized void replaceEntry(SchematicLibrary.Inner_DataUtil old, SchematicLibrary.Inner_DataUtil updated, Consumer<Runnable> client) {
+      this.entries = this.entries.stream().map(row -> row.id().equals(old.id()) ? updated : row).toList();
       this.init_Map.remove(old.id());
       this.init_Map.put(updated.id(), updated);
-      this.init_V_Consumer(client);
+      this.rescan(client);
    }
 
    static boolean load_Z_Path(Path p) {
@@ -396,7 +396,7 @@ final class SchematicLibrary {
       return n.endsWith(".schem") || n.endsWith(".litematic") || n.endsWith(".schematic");
    }
 
-   static String init_Str_Path(Path path) {
+   static String idOf(Path path) {
       try {
          return HexFormat.of()
             .formatHex(MessageDigest.getInstance("SHA-256").digest(path.toAbsolutePath().normalize().toString().getBytes(StandardCharsets.UTF_8)))
@@ -406,7 +406,7 @@ final class SchematicLibrary {
       }
    }
 
-   static String init_Str_Throwable(Throwable error) {
+   static String describeError(Throwable error) {
       Throwable e = error;
 
       while (e instanceof CompletionException && e.getCause() != null) {
@@ -417,11 +417,11 @@ final class SchematicLibrary {
       return s != null && !s.isBlank() ? s : e.getClass().getSimpleName();
    }
 
-   static String init_Str_JsonObject(JsonObject o, String key, String fallback) {
+   static String getString(JsonObject o, String key, String fallback) {
       return o.has(key) && !o.get(key).isJsonNull() ? o.get(key).getAsString() : fallback;
    }
 
-   static long init_J_JsonObject(JsonObject o, String key, long fallback) {
+   static long getLong(JsonObject o, String key, long fallback) {
       return o.has(key) ? o.get(key).getAsLong() : fallback;
    }
 

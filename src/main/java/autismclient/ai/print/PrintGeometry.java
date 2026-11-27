@@ -39,11 +39,11 @@ public final class PrintGeometry {
       return (float)(-(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * 57.2957763671875));
    }
 
-   public static Vec3 init_Vec3(float yaw, float pitch) {
+   public static Vec3 lookDirection(float yaw, float pitch) {
       return Vec3.directionFromRotation(pitch, yaw);
    }
 
-   public static float init_F(float from, float to) {
+   public static float yawDelta(float from, float to) {
       return Mth.wrapDegrees(to - from);
    }
 

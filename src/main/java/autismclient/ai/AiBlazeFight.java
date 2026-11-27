@@ -115,7 +115,7 @@ final class AiBlazeFight {
                         && level.getFluidState(feet).isEmpty()
                         && level.getFluidState(feet.above()).isEmpty()
                         && level.getFluidState(feet.below()).isEmpty()
-                        && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(level, eye, targetEye, -9223372036854775808L, -9223372036854775808L)) {
+                        && autismclient.ai.engine.AiSight.hasLineOfSight(level, eye, targetEye, -9223372036854775808L, -9223372036854775808L)) {
                         boolean vertical = target.minY > eye.y && Math.sqrt(target.distanceToSqr(eye.add(0.0, 1.15, 0.0))) > reach;
                         if (!vertical || jump && init(level, feet, loaded)) {
                            stances.add(feet);
@@ -368,7 +368,7 @@ final class AiBlazeFight {
 
                AiBlazeFight.init_V(mc);
                AiBlazeFight.init_J = System.nanoTime() + 400000000L;
-               AiFallGuard.init_V();
+               AiFallGuard.markDriven();
                this.push++;
                this.init_DataPipe.init(mc);
                this.load_I = this.init_DataPipe.init_I();

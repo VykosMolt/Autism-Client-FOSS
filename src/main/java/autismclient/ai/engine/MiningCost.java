@@ -57,7 +57,7 @@ public final class MiningCost {
       return base * (1.0 + haste * 0.2) * slow * blockSpeed * submerged / (grounded ? 1 : 5);
    }
 
-   public static double init_D_Minecraft(Minecraft mc, ItemStack stack, BlockState state, float hardness) {
+   public static double breakTicks(Minecraft mc, ItemStack stack, BlockState state, float hardness) {
       if (mc.player.hasInfiniteMaterials()) {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       } else {
@@ -67,7 +67,7 @@ public final class MiningCost {
       }
    }
 
-   public static double init_D_Minecraft(Minecraft mc, ItemStack stack, BlockState state, float hardness, MiningCost.Inner_DataUtil f) {
+   public static double breakTicks(Minecraft mc, ItemStack stack, BlockState state, float hardness, MiningCost.Inner_DataUtil f) {
       if (f.creative()) {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       }
@@ -92,7 +92,7 @@ public final class MiningCost {
       return init_I_Minecraft(mc, state, requireDrops, 36);
    }
 
-   public static int init_I_Minecraft_2(Minecraft mc, BlockState state, boolean requireDrops, BiPredicate<BlockState, ItemStack> accepted) {
+   public static int bestToolSlot(Minecraft mc, BlockState state, boolean requireDrops, BiPredicate<BlockState, ItemStack> accepted) {
       return init_I_Minecraft(mc, state, requireDrops, 36, accepted);
    }
 

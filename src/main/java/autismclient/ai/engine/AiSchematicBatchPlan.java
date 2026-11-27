@@ -259,11 +259,11 @@ final class AiSchematicBatchPlan {
          }
       }
 
-      boolean init_Z() {
+      boolean isDone() {
          return this.init_Z;
       }
 
-      void init_V() {
+      void step() {
          if (!this.init_Z) {
             if (this.read_I < 3) {
                this.load();
@@ -503,7 +503,7 @@ final class AiSchematicBatchPlan {
          return prior == null || candidate.supports < prior.supports || candidate.supports == prior.supports && this.init(candidate) < this.init(prior);
       }
 
-      AiSchematicBatchPlan.Inner_StreamUtil init_c_StreamUtil() {
+      AiSchematicBatchPlan.Inner_StreamUtil getChoice() {
          AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil chosen = this.init_c_CachePool_Stream == null ? this.load_c_CachePool_Stream : this.init_c_CachePool_Stream;
          return new AiSchematicBatchPlan.Inner_StreamUtil(chosen.stops, chosen.done, this.init_J, this.init(chosen) + Long.bitCount(chosen.done) * 10.0, chosen.supports);
       }
@@ -544,21 +544,21 @@ final class AiSchematicBatchPlan {
          this.load = Math.min(this.load, this.init_LongSupplier.getAsLong() + Math.max(0L, nanos));
       }
 
-      boolean init_Z() {
+      boolean isExpired() {
          return this.init_LongSupplier.getAsLong() >= this.load;
       }
 
-      long init_J() {
+      long remainingNanos() {
          return Math.max(0L, this.load - this.init_LongSupplier.getAsLong());
       }
 
-      void init_V() {
+      void start() {
          if (this.read == -9223372036854775808L) {
             this.read = this.init_LongSupplier.getAsLong();
          }
       }
 
-      double init_D() {
+      double elapsedMs() {
          return ((this.read == -9223372036854775808L ? this.init_LongSupplier.getAsLong() : this.read) - this.init_J) / 1000000.0;
       }
    }

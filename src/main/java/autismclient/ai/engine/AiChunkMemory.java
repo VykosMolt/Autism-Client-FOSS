@@ -101,7 +101,7 @@ public final class AiChunkMemory {
       return observed;
    }
 
-   public static AiChunkMemory init_StateCache() {
+   public static AiChunkMemory getInstance() {
       return init_StateCache;
    }
 
@@ -156,7 +156,7 @@ public final class AiChunkMemory {
       if (height > 0 && height <= 128) {
          byte[] fresh = init_BArr_SArr(flags, yLo, height);
          Map<Integer, String> freshNotables = notables == null ? Map.of() : notables;
-         long key = AiGridRevisions.init_J(cx, cz);
+         long key = AiGridRevisions.chunkKey(cx, cz);
          synchronized (this.init_Obj) {
             AiChunkMemory.Inner_DataUtil old = this.init_LinkedHashMap.get(key);
             AiChunkMemory.Inner_DataUtil merged = old == null
@@ -235,7 +235,7 @@ public final class AiChunkMemory {
       return new AiChunkMemory.Inner_DataUtil(newLo, newHeight, merged, notables, observed);
    }
 
-   public AiPathfinder.CellInfo init_ClassCache_FileCac_I(int x, int y, int z) {
+   public AiPathfinder.CellInfo probeCell(int x, int y, int z) {
       AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(x >> 4, z >> 4);
       if (mem == null) {
          return AiPathfinder.CellInfo.UNLOADED;
@@ -264,7 +264,7 @@ public final class AiChunkMemory {
       }
    }
 
-   public AiPathfinder.LiveGridView.SectionSlice init_ClassCache_StreamU_I(int cx, int cz, int yLo, int height, int revision) {
+   public AiPathfinder.LiveGridView.SectionSlice sectionSlice(int cx, int cz, int yLo, int height, int revision) {
       AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(cx, cz);
       if (mem == null) {
          return null;
@@ -311,7 +311,7 @@ public final class AiChunkMemory {
    }
 
    private AiChunkMemory.Inner_DataUtil init_StateCache_DataUti_I_I(int cx, int cz) {
-      long key = AiGridRevisions.init_J(cx, cz);
+      long key = AiGridRevisions.chunkKey(cx, cz);
       AiChunkMemory.Inner_DataUtil mem;
       synchronized (this.init_Obj) {
          mem = this.init_LinkedHashMap.get(key);
@@ -324,7 +324,7 @@ public final class AiChunkMemory {
       return mem;
    }
 
-   public List<AiChunkMemory.Inner_CachePool> init_List_BlockPos(BlockPos origin, int radius, Predicate<String> idMatch) {
+   public List<AiChunkMemory.Inner_CachePool> findRemembered(BlockPos origin, int radius, Predicate<String> idMatch) {
       List<Entry<Long, AiChunkMemory.Inner_DataUtil>> snapshot;
       synchronized (this.init_Obj) {
          snapshot = new ArrayList<>(this.init_LinkedHashMap.entrySet());
@@ -360,7 +360,7 @@ public final class AiChunkMemory {
       return out;
    }
 
-   public static List<AiChunkMemory.Inner_CachePool> init_List_List(List<AiChunkMemory.Inner_CachePool> live, List<AiChunkMemory.Inner_CachePool> cached, int limit) {
+   public static List<AiChunkMemory.Inner_CachePool> merge(List<AiChunkMemory.Inner_CachePool> live, List<AiChunkMemory.Inner_CachePool> cached, int limit) {
       Map<Long, AiChunkMemory.Inner_CachePool> byCell = new LinkedHashMap<>();
 
       for (AiChunkMemory.Inner_CachePool hit : live) {
@@ -433,7 +433,7 @@ public final class AiChunkMemory {
          for (Entry<Long, AiChunkMemory.Inner_DataUtil> entry : saving.entrySet()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
-            byRegion.computeIfAbsent(AiGridRevisions.init_J(cx >> 5, cz >> 5), k -> new HashMap<>()).put(entry.getKey(), entry.getValue());
+            byRegion.computeIfAbsent(AiGridRevisions.chunkKey(cx >> 5, cz >> 5), k -> new HashMap<>()).put(entry.getKey(), entry.getValue());
          }
 
          Files.createDirectories(dir);
@@ -473,7 +473,7 @@ public final class AiChunkMemory {
       Path dir = this.init_Path;
       long generation = this.read_J;
       if (dir != null) {
-         long regionKey = AiGridRevisions.init_J(cx >> 5, cz >> 5);
+         long regionKey = AiGridRevisions.chunkKey(cx >> 5, cz >> 5);
          Long failedAt = this.auditReadFailedAt.get(regionKey);
          if (failedAt != null && System.nanoTime() - failedAt < 30000000000L) {
             return;
@@ -653,7 +653,7 @@ public final class AiChunkMemory {
                notables.put(index, palette.get(paletteIndex));
             }
 
-            chunks.put(AiGridRevisions.init_J(cx, cz), new AiChunkMemory.Inner_DataUtil(yLo, height, packed, notables, observed));
+            chunks.put(AiGridRevisions.chunkKey(cx, cz), new AiChunkMemory.Inner_DataUtil(yLo, height, packed, notables, observed));
          }
 
          return new AiChunkMemory.Inner_StreamUtil(regionX, regionZ, chunks);

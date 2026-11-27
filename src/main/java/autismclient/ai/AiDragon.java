@@ -967,7 +967,7 @@ final class AiDragon {
 
             AiOperation.Result close() {
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
+                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "block",
                         "minecraft:end_stone",
